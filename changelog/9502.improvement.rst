@@ -1,0 +1,1 @@
+Added :envvar:`PYTEST_VERSION` environment variable which is defined at the start of the pytest session and undefined afterwards. It contains the value of ``pytest.__version__``, and among other things can be used to easily check if code is running from within a pytest run.

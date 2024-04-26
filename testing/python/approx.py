@@ -763,6 +763,23 @@ class TestApprox:
         assert a12 != approx(a21)
         assert a21 != approx(a12)
 
+    def test_numpy_array_implicit_conversion(self):
+        np = pytest.importorskip("numpy")
+
+        class ImplicitArray:
+            """Type which is implicitly convertible to a numpy array."""
+
+            def __init__(self, vals):
+                self.vals = vals
+
+            def __array__(self, dtype=None, copy=None):
+                return np.array(self.vals)
+
+        vec1 = ImplicitArray([1.0, 2.0, 3.0])
+        vec2 = ImplicitArray([1.0, 2.0, 4.0])
+        # see issue #12114 for test case
+        assert vec1 != approx(vec2)
+
     def test_numpy_array_protocol(self):
         """
         array-like objects such as tensorflow's DeviceArray are handled like ndarray.

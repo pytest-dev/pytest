@@ -121,6 +121,32 @@ def test_hookproxy_warnings_for_pathlib(tmp_path, hooktype, request):
             )
 
 
+def test_hookimpl_warnings_for_pathlib() -> None:
+    class Plugin:
+        def pytest_ignore_collect(self, path: object) -> None:
+            raise NotImplementedError()
+
+        def pytest_collect_file(self, path: object) -> None:
+            raise NotImplementedError()
+
+        def pytest_pycollect_makemodule(self, path: object) -> None:
+            raise NotImplementedError()
+
+        def pytest_report_header(self, startdir: object) -> str:
+            raise NotImplementedError()
+
+        def pytest_report_collectionfinish(self, startdir: object) -> str:
+            raise NotImplementedError()
+
+    pm = pytest.PytestPluginManager()
+    with pytest.warns(
+        pytest.PytestRemovedIn9Warning,
+        match=r"py\.path\.local.* argument is deprecated",
+    ) as wc:
+        pm.register(Plugin())
+    assert len(wc.list) == 5
+
+
 def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
     mod = pytester.getmodulecol("")
 

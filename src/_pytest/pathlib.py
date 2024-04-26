@@ -1,4 +1,3 @@
-# mypy: allow-untyped-defs
 import atexit
 import contextlib
 from enum import Enum
@@ -23,6 +22,7 @@ import shutil
 import sys
 import types
 from types import ModuleType
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterable
@@ -59,7 +59,7 @@ _IGNORED_WINERRORS = (
 )
 
 
-def _ignore_error(exception):
+def _ignore_error(exception: Exception) -> bool:
     return (
         getattr(exception, "errno", None) in _IGNORED_ERRORS
         or getattr(exception, "winerror", None) in _IGNORED_WINERRORS
@@ -71,7 +71,7 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
 
 
 def on_rm_rf_error(
-    func,
+    func: Optional[Callable[..., Any]],
     path: str,
     excinfo: Union[
         BaseException,
@@ -196,7 +196,7 @@ def find_suffixes(root: Path, prefix: str) -> Iterator[str]:
     return extract_suffixes(find_prefixed(root, prefix), prefix)
 
 
-def parse_num(maybe_num) -> int:
+def parse_num(maybe_num: str) -> int:
     """Parse number path suffixes, returns -1 on error."""
     try:
         return int(maybe_num)
@@ -264,7 +264,9 @@ def create_cleanup_lock(p: Path) -> Path:
         return lock_path
 
 
-def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
+def register_cleanup_lock_removal(
+    lock_path: Path, register: Any = atexit.register
+) -> Any:
     """Register a cleanup function for removing a lock, by default on atexit."""
     pid = os.getpid()
 
@@ -355,7 +357,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
             yield Path(entry)
 
 
-def cleanup_dead_symlinks(root: Path):
+def cleanup_dead_symlinks(root: Path) -> None:
     for left_dir in root.iterdir():
         if left_dir.is_symlink():
             if not left_dir.resolve().exists():
@@ -459,10 +461,14 @@ def parts(s: str) -> Set[str]:
     return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
 
 
-def symlink_or_skip(src, dst, **kwargs):
+def symlink_or_skip(
+    src: Union["os.PathLike[str]", str],
+    dst: Union["os.PathLike[str]", str],
+    **kwargs: Any,
+) -> None:
     """Make a symlink, or skip the test in case symlinks are not supported."""
     try:
-        os.symlink(str(src), str(dst), **kwargs)
+        os.symlink(src, dst, **kwargs)
     except OSError as e:
         skip(f"symlinks not supported: {e}")
 
@@ -620,10 +626,6 @@ def _import_module_using_spec(
     :param insert_modules:
         If True, will call insert_missing_modules to create empty intermediate modules
         for made-up module names (when importing test files not reachable from sys.path).
-        Note: we can probably drop insert_missing_modules altogether: instead of
-        generating module names such as "src.tests.test_foo", which require intermediate
-        empty modules, we might just as well generate unique module names like
-        "src_tests_test_foo".
     """
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
@@ -636,9 +638,41 @@ def _import_module_using_spec(
 
     if spec_matches_module_path(spec, module_path):
         assert spec is not None
+        # Attempt to import the parent module, seems is our responsibility:
+        # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
+        parent_module_name, _, name = module_name.rpartition(".")
+        parent_module: Optional[ModuleType] = None
+        if parent_module_name:
+            parent_module = sys.modules.get(parent_module_name)
+            if parent_module is None:
+                # Find the directory of this module's parent.
+                parent_dir = (
+                    module_path.parent.parent
+                    if module_path.name == "__init__.py"
+                    else module_path.parent
+                )
+                # Consider the parent module path as its __init__.py file, if it has one.
+                parent_module_path = (
+                    parent_dir / "__init__.py"
+                    if (parent_dir / "__init__.py").is_file()
+                    else parent_dir
+                )
+                parent_module = _import_module_using_spec(
+                    parent_module_name,
+                    parent_module_path,
+                    parent_dir,
+                    insert_modules=insert_modules,
+                )
+
+        # Find spec and import this module.
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
         spec.loader.exec_module(mod)  # type: ignore[union-attr]
+
+        # Set this module as an attribute of the parent module (#12194).
+        if parent_module is not None:
+            setattr(parent_module, name, mod)
+
         if insert_modules:
             insert_missing_modules(sys.modules, module_name)
         return mod
@@ -709,34 +743,31 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
     otherwise "src.tests.test_foo" is not importable by ``__import__``.
     """
     module_parts = module_name.split(".")
-    child_module: Union[ModuleType, None] = None
-    module: Union[ModuleType, None] = None
-    child_name: str = ""
     while module_name:
-        if module_name not in modules:
-            try:
-                # If sys.meta_path is empty, calling import_module will issue
-                # a warning and raise ModuleNotFoundError. To avoid the
-                # warning, we check sys.meta_path explicitly and raise the error
-                # ourselves to fall back to creating a dummy module.
-                if not sys.meta_path:
-                    raise ModuleNotFoundError
-                module = importlib.import_module(module_name)
-            except ModuleNotFoundError:
-                module = ModuleType(
-                    module_name,
-                    doc="Empty module created by pytest's importmode=importlib.",
-                )
-        else:
-            module = modules[module_name]
-        if child_module:
+        parent_module_name, _, child_name = module_name.rpartition(".")
+        if parent_module_name:
+            parent_module = modules.get(parent_module_name)
+            if parent_module is None:
+                try:
+                    # If sys.meta_path is empty, calling import_module will issue
+                    # a warning and raise ModuleNotFoundError. To avoid the
+                    # warning, we check sys.meta_path explicitly and raise the error
+                    # ourselves to fall back to creating a dummy module.
+                    if not sys.meta_path:
+                        raise ModuleNotFoundError
+                    parent_module = importlib.import_module(parent_module_name)
+                except ModuleNotFoundError:
+                    parent_module = ModuleType(
+                        module_name,
+                        doc="Empty module created by pytest's importmode=importlib.",
+                    )
+                modules[parent_module_name] = parent_module
+
             # Add child attribute to the parent that can reference the child
             # modules.
-            if not hasattr(module, child_name):
-                setattr(module, child_name, child_module)
-                modules[module_name] = module
-        # Keep track of the child module while moving up the tree.
-        child_module, child_name = module, module_name.rpartition(".")[-1]
+            if not hasattr(parent_module, child_name):
+                setattr(parent_module, child_name, modules[module_name])
+
         module_parts.pop(-1)
         module_name = ".".join(module_parts)
 
