@@ -28,6 +28,15 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.1.2 (2024-04-26)
+=========================
+
+Bug Fixes
+---------
+
+- `#12114 <https://github.com/pytest-dev/pytest/issues/12114>`_: Fixed error in :func:`pytest.approx` when used with `numpy` arrays and comparing with other types.
+
+
 pytest 8.1.1 (2024-03-08)
 =========================
 
