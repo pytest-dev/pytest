@@ -678,13 +678,6 @@ class TestAssert_reprcompare:
         assert expl is not None
         assert len(expl) > 1
 
-    def test_dict_truncate(self) -> None:
-        dict1 = {"asdf": [1, 1, 1, 1, 1, 1, 1, 1]}
-        dict2 = {"asdf": [1, 1, 1, 1, 1, 1, 1, 2]}
-        expl = callequal(dict1, dict2)
-        print(expl)
-        assert False
-
     def test_dict_omitting(self) -> None:
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1})
         assert lines is not None
