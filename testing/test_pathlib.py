@@ -1126,6 +1126,139 @@ def test_safe_exists(tmp_path: Path) -> None:
         assert safe_exists(p) is False
 
 
+def test_import_sets_module_as_attribute(pytester: Pytester) -> None:
+    """Unittest test for #12194."""
+    pytester.path.joinpath("foo/bar/baz").mkdir(parents=True)
+    pytester.path.joinpath("foo/__init__.py").touch()
+    pytester.path.joinpath("foo/bar/__init__.py").touch()
+    pytester.path.joinpath("foo/bar/baz/__init__.py").touch()
+    pytester.syspathinsert()
+
+    # Import foo.bar.baz and ensure parent modules also ended up imported.
+    baz = import_path(
+        pytester.path.joinpath("foo/bar/baz/__init__.py"),
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    assert baz.__name__ == "foo.bar.baz"
+    foo = sys.modules["foo"]
+    assert foo.__name__ == "foo"
+    bar = sys.modules["foo.bar"]
+    assert bar.__name__ == "foo.bar"
+
+    # Check parent modules have an attribute pointing to their children.
+    assert bar.baz is baz
+    assert foo.bar is bar
+
+    # Ensure we returned the "foo.bar" module cached in sys.modules.
+    bar_2 = import_path(
+        pytester.path.joinpath("foo/bar/__init__.py"),
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    assert bar_2 is bar
+
+
+def test_import_sets_module_as_attribute_without_init_files(pytester: Pytester) -> None:
+    """Similar to test_import_sets_module_as_attribute, but without __init__.py files."""
+    pytester.path.joinpath("foo/bar").mkdir(parents=True)
+    pytester.path.joinpath("foo/bar/baz.py").touch()
+    pytester.syspathinsert()
+
+    # Import foo.bar.baz and ensure parent modules also ended up imported.
+    baz = import_path(
+        pytester.path.joinpath("foo/bar/baz.py"),
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    assert baz.__name__ == "foo.bar.baz"
+    foo = sys.modules["foo"]
+    assert foo.__name__ == "foo"
+    bar = sys.modules["foo.bar"]
+    assert bar.__name__ == "foo.bar"
+
+    # Check parent modules have an attribute pointing to their children.
+    assert bar.baz is baz
+    assert foo.bar is bar
+
+    # Ensure we returned the "foo.bar.baz" module cached in sys.modules.
+    baz_2 = import_path(
+        pytester.path.joinpath("foo/bar/baz.py"),
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    assert baz_2 is baz
+
+
+def test_import_sets_module_as_attribute_regression(pytester: Pytester) -> None:
+    """Regression test for #12194."""
+    pytester.path.joinpath("foo/bar/baz").mkdir(parents=True)
+    pytester.path.joinpath("foo/__init__.py").touch()
+    pytester.path.joinpath("foo/bar/__init__.py").touch()
+    pytester.path.joinpath("foo/bar/baz/__init__.py").touch()
+    f = pytester.makepyfile(
+        """
+        import foo
+        from foo.bar import baz
+        foo.bar.baz
+
+        def test_foo() -> None:
+            pass
+        """
+    )
+
+    pytester.syspathinsert()
+    result = pytester.runpython(f)
+    assert result.ret == 0
+
+    result = pytester.runpytest("--import-mode=importlib", "--doctest-modules")
+    assert result.ret == 0
+
+
+def test_import_submodule_not_namespace(pytester: Pytester) -> None:
+    """
+    Regression test for importing a submodule 'foo.bar' while there is a 'bar' directory
+    reachable from sys.path -- ensuring the top-level module does not end up imported as a namespace
+    package.
+
+    #12194
+    https://github.com/pytest-dev/pytest/pull/12208#issuecomment-2056458432
+    """
+    pytester.syspathinsert()
+    # Create package 'foo' with a submodule 'bar'.
+    pytester.path.joinpath("foo").mkdir()
+    foo_path = pytester.path.joinpath("foo/__init__.py")
+    foo_path.touch()
+    bar_path = pytester.path.joinpath("foo/bar.py")
+    bar_path.touch()
+    # Create top-level directory in `sys.path` with the same name as that submodule.
+    pytester.path.joinpath("bar").mkdir()
+
+    # Import `foo`, then `foo.bar`, and check they were imported from the correct location.
+    foo = import_path(
+        foo_path,
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    bar = import_path(
+        bar_path,
+        mode=ImportMode.importlib,
+        root=pytester.path,
+        consider_namespace_packages=False,
+    )
+    assert foo.__name__ == "foo"
+    assert bar.__name__ == "foo.bar"
+    assert foo.__file__ is not None
+    assert bar.__file__ is not None
+    assert Path(foo.__file__) == foo_path
+    assert Path(bar.__file__) == bar_path
+
+
 class TestNamespacePackages:
     """Test import_path support when importing from properly namespace packages."""
 

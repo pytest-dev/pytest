@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.3.7"
+  rev: "v0.4.1"
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -34,7 +34,7 @@ repos:
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0
-          - pluggy>=1.4.0
+          - pluggy>=1.5.0
           - packaging
           - tomli
           - types-pkg_resources
@@ -43,7 +43,7 @@ repos:
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "1.7.0"
+  rev: "1.8.0"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
