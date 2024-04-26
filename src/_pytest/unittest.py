@@ -33,7 +33,7 @@ import pytest
 
 
 if sys.version_info[:2] < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
+    from exceptiongroup import ExceptionGroup
 
 if TYPE_CHECKING:
     import unittest
@@ -122,11 +122,11 @@ class UnitTestCase(Class):
                 return
             exceptions = [exc for (_, exc, _) in exc_infos]
             # If a single exception, raise it directly as this provides a more readable
-            # error.
+            # error (hopefully this will improve in #12255).
             if len(exceptions) == 1:
                 raise exceptions[0]
             else:
-                raise BaseExceptionGroup("Unittest class cleanup errors", exceptions)
+                raise ExceptionGroup("Unittest class cleanup errors", exceptions)
 
         def unittest_setup_class_fixture(
             request: FixtureRequest,
