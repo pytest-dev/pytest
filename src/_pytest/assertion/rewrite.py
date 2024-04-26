@@ -29,6 +29,7 @@ from typing import Set
 from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
@@ -175,7 +176,9 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
                     self._writing_pyc = False
         else:
             state.trace(f"found cached rewritten pyc for {fn}")
-        exec(co, module.__dict__)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            exec(co, module.__dict__)
 
     def _early_rewrite_bailout(self, name: str, state: "AssertionState") -> bool:
         """A fast way to get out of rewriting modules.
@@ -859,8 +862,6 @@ class AssertionRewriter(ast.NodeVisitor):
         the expression is false.
         """
         if isinstance(assert_.test, ast.Tuple) and len(assert_.test.elts) >= 1:
-            import warnings
-
             from _pytest.warning_types import PytestAssertRewriteWarning
 
             # TODO: This assert should not be needed.
