@@ -1516,18 +1516,22 @@ def test_class_cleanups_failure_in_setup(pytester: Pytester) -> None:
                 pass
     """
     )
-    result = pytester.runpytest('-s', testpath)
+    result = pytester.runpytest("-s", testpath)
     result.assert_outcomes(passed=0, errors=1)
-    result.stderr.fnmatch_lines([
-        'class cleanup error (1 of 2):',
-        'Exception: fail 1',
-        'class cleanup error (2 of 2):',
-        'Exception: fail 2',
-    ])
-    result.stdout.fnmatch_lines([
-        '* ERROR at setup of MyTestCase.test *',
-        'E * Exception: fail 0',
-    ])
+    result.stderr.fnmatch_lines(
+        [
+            "class cleanup error (1 of 2):",
+            "Exception: fail 1",
+            "class cleanup error (2 of 2):",
+            "Exception: fail 2",
+        ]
+    )
+    result.stdout.fnmatch_lines(
+        [
+            "* ERROR at setup of MyTestCase.test *",
+            "E * Exception: fail 0",
+        ]
+    )
 
 
 def test_class_cleanups_failure_in_teardown(pytester: Pytester) -> None:
@@ -1545,17 +1549,21 @@ def test_class_cleanups_failure_in_teardown(pytester: Pytester) -> None:
                 pass
     """
     )
-    result = pytester.runpytest('-s', testpath)
+    result = pytester.runpytest("-s", testpath)
     result.assert_outcomes(passed=1, errors=1)
-    result.stderr.fnmatch_lines([
-        'class cleanup error (1 of 2):',
-        'Traceback *',
-        'Exception: fail 1',
-    ])
-    result.stdout.fnmatch_lines([
-        '* ERROR at teardown of MyTestCase.test *',
-        'E * Exception: fail 2',
-    ])
+    result.stderr.fnmatch_lines(
+        [
+            "class cleanup error (1 of 2):",
+            "Traceback *",
+            "Exception: fail 1",
+        ]
+    )
+    result.stdout.fnmatch_lines(
+        [
+            "* ERROR at teardown of MyTestCase.test *",
+            "E * Exception: fail 2",
+        ]
+    )
 
 
 def test_traceback_pruning(pytester: Pytester) -> None:
