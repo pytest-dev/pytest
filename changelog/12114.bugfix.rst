@@ -1,1 +1,0 @@
-Fixed error in :func:`pytest.approx` when used with `numpy` arrays and comparing with other types.
