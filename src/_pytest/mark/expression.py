@@ -26,6 +26,7 @@ from typing import Mapping
 from typing import NoReturn
 from typing import Optional
 from typing import Sequence
+from .structures import MARK_GEN
 
 
 __all__ = [
@@ -96,6 +97,7 @@ class Scanner:
                     elif value == "not":
                         yield Token(TokenType.NOT, value, pos)
                     else:
+                        MARK_GEN.verify_mark(value)
                         yield Token(TokenType.IDENT, value, pos)
                     pos += len(value)
                 else:
