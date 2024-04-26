@@ -98,7 +98,6 @@ class Scanner:
                     elif value == "not":
                         yield Token(TokenType.NOT, value, pos)
                     else:
-                        MARK_GEN.verify_mark(value)
                         yield Token(TokenType.IDENT, value, pos)
                     pos += len(value)
                 else:
