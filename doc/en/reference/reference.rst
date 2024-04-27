@@ -2107,6 +2107,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --log-cli-date-format=LOG_CLI_DATE_FORMAT
                             Log date format used by the logging module
       --log-file=LOG_FILE   Path to a file when logging will be written to
+      --log-file-verbose    Log file verbosity
       --log-file-mode={w,a}
                             Log file open mode
       --log-file-level=LOG_FILE_LEVEL

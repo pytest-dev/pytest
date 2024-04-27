@@ -300,6 +300,12 @@ def pytest_addoption(parser: Parser) -> None:
         help="Path to a file when logging will be written to",
     )
     add_option_ini(
+        "--log-file-verbose",
+        dest="log_file_verbosity",
+        default=None,
+        help="Log file verbose",
+    )
+    add_option_ini(
         "--log-file-mode",
         dest="log_file_mode",
         default="w",
@@ -676,6 +682,8 @@ class LoggingPlugin:
             directory = os.path.dirname(os.path.abspath(log_file))
             if not os.path.isdir(directory):
                 os.makedirs(directory)
+
+        self.log_file_verbose = get_option_ini(config, "log_file_verbose")
 
         self.log_file_mode = get_option_ini(config, "log_file_mode") or "w"
         self.log_file_handler = _FileHandler(
