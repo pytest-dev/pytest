@@ -294,9 +294,47 @@ Now if we increase verbosity even more:
 
     test_verbosity_example.py:19: AssertionError
     ========================= short test summary info ==========================
-    FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
-    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
-    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
+    FAILED test_verbosity_example.py::test_words_fail - AssertionError: assert ['banana', 'apple', 'grapes', 'melon', 'kiwi'] == ['banana', 'apple', 'orange', 'melon', 'kiwi']
+
+      At index 2 diff: 'grapes' != 'orange'
+
+      Full diff:
+        [
+            'banana',
+            'apple',
+      -     'orange',
+      ?      ^  ^^
+      +     'grapes',
+      ?      ^  ^ +
+            'melon',
+            'kiwi',
+        ]
+    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: assert {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4} == {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}
+
+      Common items:
+      {'0': 0}
+      Left contains 4 more items:
+      {'1': 1, '2': 2, '3': 3, '4': 4}
+      Right contains 4 more items:
+      {'10': 10, '20': 20, '30': 30, '40': 40}
+
+      Full diff:
+        {
+            '0': 0,
+      -     '10': 10,
+      ?       -    -
+      +     '1': 1,
+      -     '20': 20,
+      ?       -    -
+      +     '2': 2,
+      -     '30': 30,
+      ?       -    -
+      +     '3': 3,
+      -     '40': 40,
+      ?       -    -
+      +     '4': 4,
+        }
+    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
     ======================= 3 failed, 1 passed in 0.12s ========================
 
 Notice now that:
