@@ -1,1 +1,0 @@
-Fixed a bug with ``--importmode=importlib`` and ``--doctest-modules`` where child modules did not appear as attributes in parent modules.
