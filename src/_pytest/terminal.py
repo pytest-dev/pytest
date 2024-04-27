@@ -604,10 +604,18 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
+        self._progress_nodeids_reported.add(rep.nodeid)
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
+            # When running in xdist, the logreport and logfinish of multiple
+            # items are interspersed, e.g. `logreport`, `logreport`,
+            # `logfinish`, `logfinish`. To avoid the "past edge" calculation
+            # from getting confused and overflowing (#7166), do the past edge
+            # printing here and not in logfinish, except for the 100% which
+            # should only be printed after all teardowns are finished.
+            if self._show_progress_info and not self._is_last_item:
+                self._write_progress_information_if_past_edge()
         else:
-            self._progress_nodeids_reported.add(rep.nodeid)
             line = self._locationline(rep.nodeid, *rep.location)
             running_xdist = hasattr(rep, "node")
             if not running_xdist:
@@ -649,17 +657,19 @@ class TerminalReporter:
         assert self._session is not None
         return len(self._progress_nodeids_reported) == self._session.testscollected
 
-    def pytest_runtest_logfinish(self, nodeid: str) -> None:
+    @hookimpl(wrapper=True)
+    def pytest_runtestloop(self) -> Generator[None, object, object]:
+        result = yield
+
+        # Write the final/100% progress -- deferred until the loop is complete.
         if (
             self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0
             and self._show_progress_info
+            and self._progress_nodeids_reported
         ):
-            self._progress_nodeids_reported.add(nodeid)
+            self._write_progress_information_filling_space()
 
-            if self._is_last_item:
-                self._write_progress_information_filling_space()
-            else:
-                self._write_progress_information_if_past_edge()
+        return result
 
     def _get_progress_information_message(self) -> str:
         assert self._session
