@@ -1146,7 +1146,7 @@ def test_errors_in_xfail_skip_expressions(pytester: Pytester) -> None:
     if pypy_version_info is not None and pypy_version_info < (6,):
         markline = markline[1:]
 
-    if sys.version_info[:2] >= (3, 10):
+    if sys.version_info >= (3, 10):
         expected = [
             "*ERROR*test_nameerror*",
             "*asd*",

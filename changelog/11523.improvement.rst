@@ -1,0 +1,5 @@
+:func:`pytest.importorskip` will now issue a warning if the module could be found, but raised :class:`ImportError` instead of :class:`ModuleNotFoundError`.
+
+The warning can be suppressed by passing ``exc_type=ImportError`` to :func:`pytest.importorskip`.
+
+See :ref:`import-or-skip-import-error` for details.

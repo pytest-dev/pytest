@@ -35,6 +35,7 @@ import warnings
 import _pytest
 from _pytest import nodes
 from _pytest._code import getfslineno
+from _pytest._code import Source
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
@@ -69,7 +70,7 @@ from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 
 
-if sys.version_info[:2] < (3, 11):
+if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 
@@ -410,41 +411,6 @@ class FixtureRequest(abc.ABC):
         """Underlying collection node (depends on current request scope)."""
         raise NotImplementedError()
 
-    def _getnextfixturedef(self, argname: str) -> "FixtureDef[Any]":
-        fixturedefs = self._arg2fixturedefs.get(argname, None)
-        if fixturedefs is None:
-            # We arrive here because of a dynamic call to
-            # getfixturevalue(argname) usage which was naturally
-            # not known at parsing/collection time.
-            fixturedefs = self._fixturemanager.getfixturedefs(argname, self._pyfuncitem)
-            if fixturedefs is not None:
-                self._arg2fixturedefs[argname] = fixturedefs
-        # No fixtures defined with this name.
-        if fixturedefs is None:
-            raise FixtureLookupError(argname, self)
-        # The are no fixtures with this name applicable for the function.
-        if not fixturedefs:
-            raise FixtureLookupError(argname, self)
-
-        # A fixture may override another fixture with the same name, e.g. a
-        # fixture in a module can override a fixture in a conftest, a fixture in
-        # a class can override a fixture in the module, and so on.
-        # An overriding fixture can request its own name (possibly indirectly);
-        # in this case it gets the value of the fixture it overrides, one level
-        # up.
-        # Check how many `argname`s deep we are, and take the next one.
-        # `fixturedefs` is sorted from furthest to closest, so use negative
-        # indexing to go in reverse.
-        index = -1
-        for request in self._iter_chain():
-            if request.fixturename == argname:
-                index -= 1
-        # If already consumed all of the available levels, fail.
-        if -index > len(fixturedefs):
-            raise FixtureLookupError(argname, self)
-
-        return fixturedefs[index]
-
     @property
     def config(self) -> Config:
         """The pytest config object associated with this request."""
@@ -569,39 +535,53 @@ class FixtureRequest(abc.ABC):
     def _get_active_fixturedef(
         self, argname: str
     ) -> Union["FixtureDef[object]", PseudoFixtureDef[object]]:
+        if argname == "request":
+            cached_result = (self, [0], None)
+            return PseudoFixtureDef(cached_result, Scope.Function)
+
+        # If we already finished computing a fixture by this name in this item,
+        # return it.
         fixturedef = self._fixture_defs.get(argname)
-        if fixturedef is None:
-            try:
-                fixturedef = self._getnextfixturedef(argname)
-            except FixtureLookupError:
-                if argname == "request":
-                    cached_result = (self, [0], None)
-                    return PseudoFixtureDef(cached_result, Scope.Function)
-                raise
-            self._compute_fixture_value(fixturedef)
-            self._fixture_defs[argname] = fixturedef
-        else:
+        if fixturedef is not None:
             self._check_scope(fixturedef, fixturedef._scope)
-        return fixturedef
+            return fixturedef
 
-    def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
-        values = [request._fixturedef for request in self._iter_chain()]
-        values.reverse()
-        return values
+        # Find the appropriate fixturedef.
+        fixturedefs = self._arg2fixturedefs.get(argname, None)
+        if fixturedefs is None:
+            # We arrive here because of a dynamic call to
+            # getfixturevalue(argname) which was naturally
+            # not known at parsing/collection time.
+            fixturedefs = self._fixturemanager.getfixturedefs(argname, self._pyfuncitem)
+            if fixturedefs is not None:
+                self._arg2fixturedefs[argname] = fixturedefs
+        # No fixtures defined with this name.
+        if fixturedefs is None:
+            raise FixtureLookupError(argname, self)
+        # The are no fixtures with this name applicable for the function.
+        if not fixturedefs:
+            raise FixtureLookupError(argname, self)
+        # A fixture may override another fixture with the same name, e.g. a
+        # fixture in a module can override a fixture in a conftest, a fixture in
+        # a class can override a fixture in the module, and so on.
+        # An overriding fixture can request its own name (possibly indirectly);
+        # in this case it gets the value of the fixture it overrides, one level
+        # up.
+        # Check how many `argname`s deep we are, and take the next one.
+        # `fixturedefs` is sorted from furthest to closest, so use negative
+        # indexing to go in reverse.
+        index = -1
+        for request in self._iter_chain():
+            if request.fixturename == argname:
+                index -= 1
+        # If already consumed all of the available levels, fail.
+        if -index > len(fixturedefs):
+            raise FixtureLookupError(argname, self)
+        fixturedef = fixturedefs[index]
 
-    def _compute_fixture_value(self, fixturedef: "FixtureDef[object]") -> None:
-        """Create a SubRequest based on "self" and call the execute method
-        of the given FixtureDef object.
-
-        If the FixtureDef has cached the result it will do nothing, otherwise it will
-        setup and run the fixture, cache the value, and schedule a finalizer for it.
-        """
-        # prepare a subrequest object before calling fixture function
-        # (latter managed by fixturedef)
-        argname = fixturedef.argname
-        funcitem = self._pyfuncitem
+        # Prepare a SubRequest object for calling the fixture.
         try:
-            callspec = funcitem.callspec
+            callspec = self._pyfuncitem.callspec
         except AttributeError:
             callspec = None
         if callspec is not None and argname in callspec.params:
@@ -613,47 +593,55 @@ class FixtureRequest(abc.ABC):
             param = NOTSET
             param_index = 0
             scope = fixturedef._scope
-
-            has_params = fixturedef.params is not None
-            fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
-            if has_params and fixtures_not_supported:
-                msg = (
-                    f"{funcitem.name} does not support fixtures, maybe unittest.TestCase subclass?\n"
-                    f"Node id: {funcitem.nodeid}\n"
-                    f"Function type: {type(funcitem).__name__}"
-                )
-                fail(msg, pytrace=False)
-            if has_params:
-                frame = inspect.stack()[3]
-                frameinfo = inspect.getframeinfo(frame[0])
-                source_path = absolutepath(frameinfo.filename)
-                source_lineno = frameinfo.lineno
-                try:
-                    source_path_str = str(
-                        source_path.relative_to(funcitem.config.rootpath)
-                    )
-                except ValueError:
-                    source_path_str = str(source_path)
-                location = getlocation(fixturedef.func, funcitem.config.rootpath)
-                msg = (
-                    "The requested fixture has no parameter defined for test:\n"
-                    f"    {funcitem.nodeid}\n\n"
-                    f"Requested fixture '{fixturedef.argname}' defined in:\n"
-                    f"{location}\n\n"
-                    f"Requested here:\n"
-                    f"{source_path_str}:{source_lineno}"
-                )
-                fail(msg, pytrace=False)
-
-        # Check if a higher-level scoped fixture accesses a lower level one.
+            self._check_fixturedef_without_param(fixturedef)
         self._check_scope(fixturedef, scope)
-
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
 
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
+
+        self._fixture_defs[argname] = fixturedef
+        return fixturedef
+
+    def _check_fixturedef_without_param(self, fixturedef: "FixtureDef[object]") -> None:
+        """Check that this request is allowed to execute this fixturedef without
+        a param."""
+        funcitem = self._pyfuncitem
+        has_params = fixturedef.params is not None
+        fixtures_not_supported = getattr(funcitem, "nofuncargs", False)
+        if has_params and fixtures_not_supported:
+            msg = (
+                f"{funcitem.name} does not support fixtures, maybe unittest.TestCase subclass?\n"
+                f"Node id: {funcitem.nodeid}\n"
+                f"Function type: {type(funcitem).__name__}"
+            )
+            fail(msg, pytrace=False)
+        if has_params:
+            frame = inspect.stack()[3]
+            frameinfo = inspect.getframeinfo(frame[0])
+            source_path = absolutepath(frameinfo.filename)
+            source_lineno = frameinfo.lineno
+            try:
+                source_path_str = str(source_path.relative_to(funcitem.config.rootpath))
+            except ValueError:
+                source_path_str = str(source_path)
+            location = getlocation(fixturedef.func, funcitem.config.rootpath)
+            msg = (
+                "The requested fixture has no parameter defined for test:\n"
+                f"    {funcitem.nodeid}\n\n"
+                f"Requested fixture '{fixturedef.argname}' defined in:\n"
+                f"{location}\n\n"
+                f"Requested here:\n"
+                f"{source_path_str}:{source_lineno}"
+            )
+            fail(msg, pytrace=False)
+
+    def _get_fixturestack(self) -> List["FixtureDef[Any]"]:
+        values = [request._fixturedef for request in self._iter_chain()]
+        values.reverse()
+        return values
 
 
 @final
@@ -877,13 +865,6 @@ class FixtureLookupErrorRepr(TerminalRepr):
         tw.line("%s:%d" % (os.fspath(self.filename), self.firstlineno + 1))
 
 
-def fail_fixturefunc(fixturefunc, msg: str) -> NoReturn:
-    fs, lineno = getfslineno(fixturefunc)
-    location = f"{fs}:{lineno + 1}"
-    source = _pytest._code.Source(fixturefunc)
-    fail(msg + ":\n\n" + str(source.indent()) + "\n" + location, pytrace=False)
-
-
 def call_fixture_func(
     fixturefunc: "_FixtureFunc[FixtureValue]", request: FixtureRequest, kwargs
 ) -> FixtureValue:
@@ -913,7 +894,13 @@ def _teardown_yield_fixture(fixturefunc, it) -> None:
     except StopIteration:
         pass
     else:
-        fail_fixturefunc(fixturefunc, "fixture function has more than one 'yield'")
+        fs, lineno = getfslineno(fixturefunc)
+        fail(
+            f"fixture function has more than one 'yield':\n\n"
+            f"{Source(fixturefunc).indent()}\n"
+            f"{fs}:{lineno + 1}",
+            pytrace=False,
+        )
 
 
 def _eval_scope_callable(

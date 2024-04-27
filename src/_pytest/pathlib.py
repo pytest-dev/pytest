@@ -924,13 +924,13 @@ def visit(
             yield from visit(entry.path, recurse)
 
 
-def absolutepath(path: Union[Path, str]) -> Path:
+def absolutepath(path: "Union[str, os.PathLike[str]]") -> Path:
     """Convert a path to an absolute path using os.path.abspath.
 
     Prefer this over Path.resolve() (see #6523).
     Prefer this over Path.absolute() (not public, doesn't normalize).
     """
-    return Path(os.path.abspath(str(path)))
+    return Path(os.path.abspath(path))
 
 
 def commonpath(path1: Path, path2: Path) -> Optional[Path]:
