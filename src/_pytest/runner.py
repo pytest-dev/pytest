@@ -180,7 +180,7 @@ def pytest_runtest_call(item: Item) -> None:
         assert e.__traceback__ is not None
         # Skip *this* frame
         sys.last_traceback = e.__traceback__.tb_next
-        raise e
+        raise
 
 
 def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
@@ -512,7 +512,7 @@ class SetupState:
                 col.setup()
             except TEST_OUTCOME as exc:
                 self.stack[col] = (self.stack[col][0], exc)
-                raise exc
+                raise
 
     def addfinalizer(self, finalizer: Callable[[], object], node: Node) -> None:
         """Attach a finalizer to the given node.
