@@ -162,25 +162,24 @@ class ParameterSet(NamedTuple):
         del argvalues
 
         if parameters:
+
             # Check all parameter sets have the correct number of values.
             for param in parameters:
                 if len(param.values) != len(argnames):
+                    # Construct a string representation of the expected parameter names
+                    expected_argnames = ', '.join(argnames)
+                    # Construct a string representation of the provided parameter values
+                    provided_values = ', '.join(map(repr, param.values))
                     msg = (
-                        '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
-                        "  {names}\n"
-                        "must be equal to the number of values ({values_len}):\n"
-                        "  {values}"
+                        f'{nodeid}: \n\n Error in parameterization for test "{func.__name__}".\n '
+                        f'The number of specified parameters ({len(argnames)}) '
+                        f'does not match the number of provided values ({len(param.values)}): {provided_values}. \n'
+                        f' Please ensure that the correct number of parameter names '
+                        f'({len(param.values)}) are separated by commas within quotes.\n\n'
+                        f'Require more than parameter names: \"{expected_argnames}\"'
                     )
-                    fail(
-                        msg.format(
-                            nodeid=nodeid,
-                            values=param.values,
-                            names=argnames,
-                            names_len=len(argnames),
-                            values_len=len(param.values),
-                        ),
-                        pytrace=False,
-                    )
+
+                    fail(msg, pytrace=False)
         else:
             # Empty parameter set (likely computed at runtime): create a single
             # parameter set with NOTSET values, with the "empty parameter set" mark applied to it.
