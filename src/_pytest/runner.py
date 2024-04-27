@@ -39,7 +39,7 @@ from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
 
-if sys.version_info[:2] < (3, 11):
+if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 if TYPE_CHECKING:

@@ -765,7 +765,7 @@ class Item(Node, abc.ABC):
         and lineno is a 0-based line number.
         """
         location = self.reportinfo()
-        path = absolutepath(os.fspath(location[0]))
+        path = absolutepath(location[0])
         relfspath = self.session._node_location_to_relpath(path)
         assert type(location[2]) is str
         return (relfspath, location[1], location[2])
