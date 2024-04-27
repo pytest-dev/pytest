@@ -54,6 +54,8 @@ Features
 
 - `#11871 <https://github.com/pytest-dev/pytest/issues/11871>`_: Added support for reading command line arguments from a file using the prefix character ``@``, like e.g.: ``pytest @tests.txt``. The file must have one argument per line.
 
+  See :ref:`Read arguments from file <args-from-file>` for details.
+
 
 
 Improvements
@@ -72,7 +74,7 @@ Improvements
 - `#11777 <https://github.com/pytest-dev/pytest/issues/11777>`_: Text is no longer truncated in the ``short test summary info`` section when ``-vv`` is given.
 
 
-- `#12112 <https://github.com/pytest-dev/pytest/issues/12112>`_: Improve namespace packages detection when :confval:`consider_namespace_packages` is enabled, covering more situations (like editable installs).
+- `#12112 <https://github.com/pytest-dev/pytest/issues/12112>`_: Improved namespace packages detection when :confval:`consider_namespace_packages` is enabled, covering more situations (like editable installs).
 
 
 - `#9502 <https://github.com/pytest-dev/pytest/issues/9502>`_: Added :envvar:`PYTEST_VERSION` environment variable which is defined at the start of the pytest session and undefined afterwards. It contains the value of ``pytest.__version__``, and among other things can be used to easily check if code is running from within a pytest run.
@@ -88,13 +90,13 @@ Bug Fixes
   Previously it was ``None``, and all fixtures of such tests would share a single ``self``.
 
 
-- `#12135 <https://github.com/pytest-dev/pytest/issues/12135>`_: Fix fixtures adding their finalizer multiple times to fixtures they request, causing unreliable and non-intuitive teardown ordering in some instances.
+- `#12135 <https://github.com/pytest-dev/pytest/issues/12135>`_: Fixed issue where fixtures adding their finalizer multiple times to fixtures they request would cause unreliable and non-intuitive teardown ordering in some instances.
 
 
 - `#12194 <https://github.com/pytest-dev/pytest/issues/12194>`_: Fixed a bug with ``--importmode=importlib`` and ``--doctest-modules`` where child modules did not appear as attributes in parent modules.
 
 
-- `#1489 <https://github.com/pytest-dev/pytest/issues/1489>`_: Fix some instances where teardown of higher-scoped fixtures was not happening in the reverse order they were initialized in.
+- `#1489 <https://github.com/pytest-dev/pytest/issues/1489>`_: Fixed some instances where teardown of higher-scoped fixtures was not happening in the reverse order they were initialized in.
 
 
 
@@ -104,7 +106,7 @@ Trivial/Internal Changes
 - `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`_: ``pluggy>=1.5.0`` is now required.
 
 
-- `#12167 <https://github.com/pytest-dev/pytest/issues/12167>`_: cache: create cache directory supporting files (``CACHEDIR.TAG``, ``.gitignore``, etc.) in a temporary directory to provide atomic semantics.
+- `#12167 <https://github.com/pytest-dev/pytest/issues/12167>`_: :ref:`cache <cache>`: create supporting files (``CACHEDIR.TAG``, ``.gitignore``, etc.) in a temporary directory to provide atomic semantics.
 
 
 pytest 8.1.2 (2024-04-26)
