@@ -301,8 +301,9 @@ def pytest_addoption(parser: Parser) -> None:
     )
     add_option_ini(
         "--log-file-verbose",
-        dest="log_file_verbosity",
-        default=None,
+        dest="log_file_verbose",
+        default=0,
+        type="int",
         help="Log file verbose",
     )
     add_option_ini(
@@ -845,6 +846,14 @@ class LoggingPlugin:
 
     @hookimpl(wrapper=True)
     def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None, None, None]:
+
+        if self.log_file_verbose:
+            old_log_file_formatter = self.log_file_handler.formatter
+            self.log_file_handler.setFormatter(logging.Formatter())
+
+            self.log_file_handler.emit(logging.LogRecord('N/A', logging.WARNING, 'N/A', 0, f"Running at {item.nodeid}", None, None))
+            self.log_file_handler.setFormatter(old_log_file_formatter)
+
         self.log_cli_handler.set_when("setup")
 
         empty: Dict[str, List[logging.LogRecord]] = {}
