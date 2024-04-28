@@ -2933,7 +2933,7 @@ def test_xfail_tb_default(pytester: Pytester) -> None:
             "*= 1 xfailed in * =*",
         ]
     )
-    
+
 
 def test_xfail_tb_short(pytester: Pytester) -> None:
     pytester.makepyfile(
