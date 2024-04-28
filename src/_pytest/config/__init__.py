@@ -1644,7 +1644,7 @@ class Config:
                 return value
         elif type == "bool":
             return _strtobool(str(value).strip())
-        elif type is "int":
+        elif type == "int":
             return int(value)
         elif type == "string":
             return value

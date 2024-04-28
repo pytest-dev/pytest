@@ -850,8 +850,7 @@ class LoggingPlugin:
         if self.log_file_verbose:
             old_log_file_formatter = self.log_file_handler.formatter
             self.log_file_handler.setFormatter(logging.Formatter())
-
-            self.log_file_handler.emit(logging.LogRecord('N/A', logging.WARNING, 'N/A', 0, f"Running at {item.nodeid}", None, None))
+            self.log_file_handler.emit(logging.LogRecord('N/A', logging.INFO, 'N/A', 0, f"Running at {item.nodeid}", None, None))
             self.log_file_handler.setFormatter(old_log_file_formatter)
 
         self.log_cli_handler.set_when("setup")

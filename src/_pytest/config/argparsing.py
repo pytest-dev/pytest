@@ -236,7 +236,7 @@ def get_ini_default_for_type(
         return []
     elif type == "bool":
         return False
-    elif type is "int":
+    elif type == "int":
         return 0
     else:
         return ""
