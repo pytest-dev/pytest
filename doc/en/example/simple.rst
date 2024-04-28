@@ -405,49 +405,14 @@ Detect if running from within a pytest run
 Usually it is a bad idea to make application code
 behave differently if called from a test.  But if you
 absolutely must find out if your application code is
-running from a test, you can follow one of the two ways listed below.
-
-This is a simple way to do it:
-
-.. code-block:: python
-
-    import sys
-
-
-    _called_from_test_by_pytest = "pytest" in sys.modules
-
-    if _called_from_test_by_pytest:
-        # called from within a test run by pytest
-        ...
-    else:
-        # called "normally"
-        ...
-
-This works great, but you should be aware that there is an issue with it. If there is a pytest import anywhere
-in your code flow, ``"pytest" in sys.modules`` will return True even if your code is not actually running from within a pytest run.
-
-.. code-block:: python
-
-    import sys
-
-    import pytest  # unused anywhere in your code
-
-
-    def is_called_from_test_by_pytest():
-        return "pytest" in sys.modules
-
-
-    # This method above will return True even if your code is not actually running from within a pytest run
-    # as there is a pytest import in your code flow
-
-This is a bit long but a robust way to do it:
+running from a test you can do something like this:
 
 .. code-block:: python
 
     # content of your_module.py
 
 
-    _called_from_test_by_pytest = False
+    _called_from_test = False
 
 .. code-block:: python
 
@@ -455,13 +420,13 @@ This is a bit long but a robust way to do it:
 
 
     def pytest_configure(config):
-        your_module._called_from_test_by_pytest = True
+        your_module._called_from_test = True
 
-and then check for the ``your_module._called_from_test_by_pytest`` flag:
+and then check for the ``your_module._called_from_test`` flag:
 
 .. code-block:: python
 
-    if your_module._called_from_test_by_pytest:
+    if your_module._called_from_test:
         # called from within a test run
         ...
     else:
