@@ -1090,8 +1090,7 @@ class TerminalReporter:
         self, which_reports: str, sep_title: str, needed_opt: Optional[str] = None, style = None
     ) -> None:
         if style is None:
-            style == self.config.option.tbstyle
-
+            style = self.config.option.tbstyle
         if style != "no":
             if not needed_opt or self.hasopt(needed_opt):
                 reports: List[BaseReport] = self.getreports(which_reports)

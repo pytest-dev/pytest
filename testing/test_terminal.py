@@ -2949,7 +2949,7 @@ def test_xfail_tb_line(pytester: Pytester) -> None:
             assert a == b
         """
     )
-    result = pytester.runpytest("-rx", "--tb=line")
+    result = pytester.runpytest("-rx", "--xfail-tb=line")
     result.stdout.fnmatch_lines(
         [
             "*= XFAILURES =*",
