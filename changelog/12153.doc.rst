@@ -1,1 +1,1 @@
-Updated docs: Documented new way to detect if a code is running from within a pytest run
+Documented using :envvar:`PYTEST_VERSION` to detect if code is running from within a pytest run.

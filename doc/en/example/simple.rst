@@ -413,10 +413,10 @@ running from a test you can do this:
 
 
     if os.environ.get("PYTEST_VERSION") is not None:
-        # things you want to to do if your code is called by pytest
+        # Things you want to to do if your code is called by pytest.
         ...
     else:
-        # things you want to to do if your code is not called by pytest
+        # Things you want to to do if your code is not called by pytest.
         ...
 
 
