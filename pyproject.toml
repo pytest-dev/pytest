@@ -107,6 +107,7 @@ select = [
     "PLE", # pylint error
     "PLW", # pylint warning
     "PLR1714", # Consider merging multiple comparisons
+    "T100", # flake8-debugger
 ]
 ignore = [
     # bugbear ignore

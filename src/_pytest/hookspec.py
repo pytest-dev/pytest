@@ -1,4 +1,5 @@
 # mypy: allow-untyped-defs
+# ruff: noqa: T100
 """Hook specifications for pytest plugins which are invoked by pytest itself
 and by builtin plugins."""
 
