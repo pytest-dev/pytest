@@ -1087,7 +1087,11 @@ class TerminalReporter:
         self.summary_failures_combined("xfailed", "XFAILURES", "x", style=style)
 
     def summary_failures_combined(
-        self, which_reports: str, sep_title: str, needed_opt: Optional[str] = None, style = None
+        self,
+        which_reports: str,
+        sep_title: str,
+        needed_opt: Optional[str] = None,
+        style=None,
     ) -> None:
         if style is None:
             style = self.config.option.tbstyle
