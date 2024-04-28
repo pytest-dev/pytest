@@ -1,0 +1,1 @@
+Updated docs: Documented new way to detect if a code is running from within a pytest run
