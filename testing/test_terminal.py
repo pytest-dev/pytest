@@ -2909,7 +2909,7 @@ def test_summary_xfail_reason(pytester: Pytester) -> None:
     assert result.stdout.lines.count(expect2) == 1
 
 
-def test_summary_xfail_tb(pytester: Pytester) -> None:
+def test_xfail_tb_default(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         import pytest
@@ -2920,19 +2920,44 @@ def test_summary_xfail_tb(pytester: Pytester) -> None:
             assert a == b
         """
     )
+    # defaults to "no", so this is the same as `runpytest("-rx", "--xfail-tb=no")`
     result = pytester.runpytest("-rx")
+    # Don't show traceback
+    result.stdout.no_fnmatch_line("*= XFAILURES =*")
+    result.stdout.no_fnmatch_line("*test_xfail_tb_line.py:6: assert 1 == 2")
+    # still print summary
+    result.stdout.fnmatch_lines(
+        [
+            "*= short test summary info =*",
+            "XFAIL test_xfail_tb_default.py::test_xfail",
+            "*= 1 xfailed in * =*",
+        ]
+    )
+    
+
+def test_xfail_tb_short(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail
+        def test_xfail():
+            a, b = 1, 2
+            assert a == b
+        """
+    )
+    result = pytester.runpytest("-rx", "--xfail-tb=short")
     result.stdout.fnmatch_lines(
         [
             "*= XFAILURES =*",
             "*_ test_xfail _*",
-            "* @pytest.mark.xfail*",
-            "* def test_xfail():*",
-            "*    a, b = 1, 2*",
-            "> *assert a == b*",
-            "E *assert 1 == 2*",
-            "test_summary_xfail_tb.py:6: AssertionError*",
+            "*@pytest.mark.xfail*",
+            "*def test_xfail():*",
+            "* a, b = 1, 2*",
+            "*> *assert a == b*",
+            "*E *assert 1 == 2*",
             "*= short test summary info =*",
-            "XFAIL test_summary_xfail_tb.py::test_xfail",
+            "XFAIL test_xfail_tb_short.py::test_xfail",
             "*= 1 xfailed in * =*",
         ]
     )

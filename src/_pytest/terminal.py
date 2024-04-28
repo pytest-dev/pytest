@@ -221,9 +221,9 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="style",
         action="store",
         dest="xfail_tbstyle",
-        default="auto",
+        default="no",
         choices=["auto", "long", "short", "no", "line", "native"],
-        help="Traceback print mode for xfail(auto/long/short/line/native/no)",
+        help="Traceback print mode for xfail (auto/long/short/line/native/no)",
     )
     group._addoption(
         "--show-capture",
@@ -1091,7 +1091,7 @@ class TerminalReporter:
         which_reports: str,
         sep_title: str,
         needed_opt: Optional[str] = None,
-        style=None,
+        style: Optional[str] = None,
     ) -> None:
         if style is None:
             style = self.config.option.tbstyle
