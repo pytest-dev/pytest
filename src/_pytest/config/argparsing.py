@@ -215,7 +215,16 @@ class Parser:
         The value of ini-variables can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
-        assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool", "int")
+        assert type in (
+            None,
+            "string",
+            "paths",
+            "pathlist",
+            "args",
+            "linelist",
+            "bool",
+            "int",
+        )
         if default is NOT_SET:
             default = get_ini_default_for_type(type)
 
@@ -224,7 +233,9 @@ class Parser:
 
 
 def get_ini_default_for_type(
-    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool", "int"]],
+    type: Optional[
+        Literal["string", "paths", "pathlist", "args", "linelist", "bool", "int"]
+    ],
 ) -> Any:
     """
     Used by addini to get the default value for a given ini-option type, when
