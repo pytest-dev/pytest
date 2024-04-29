@@ -421,8 +421,8 @@ def test_parametrized_collect_with_wrong_format(pytester: Pytester) -> None:
     result = pytester.runpytest(py_file)
     result.stdout.fnmatch_lines(
         [
-            """In function test_parametrization: ['arg1'] is not a valid parameter.
-               Expected 2 sub parameters, but only 1 were provided. """,
+            "In function test_parametrization: ['arg1'] is not a valid parameter. ",
+            "Expected 2 sub parameters, but only 1 were provided. ",
             "",
             "Make sure to pass parameter names as strings without quotes, separated by commas, ",
             " e.g., '@pytest.mark.parametrize(\"arg1\", <Input Values>)'",

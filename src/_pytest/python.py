@@ -1419,7 +1419,7 @@ class Metafunc:
                     actual_param_count = len(argnames)
 
                     fail(
-                        f"In function {self.function.__name__}: {argnames} is not a valid parameter. "
+                        f"In function {self.function.__name__}: {argnames} is not a valid parameter. \n"
                         f"Expected {expected_param_count} sub parameters, "
                         f"but only {actual_param_count} were provided. \n\n"
                         f"Make sure to pass parameter names as strings without quotes, separated by commas, \n "
