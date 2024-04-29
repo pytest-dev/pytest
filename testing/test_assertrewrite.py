@@ -4,6 +4,7 @@ import errno
 from functools import partial
 import glob
 import importlib
+from importlib.util import source_hash
 import marshal
 import os
 from pathlib import Path
@@ -20,6 +21,8 @@ from typing import Optional
 from typing import Set
 from unittest import mock
 import zipfile
+
+import _imp
 
 import _pytest._code
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
@@ -1043,12 +1046,14 @@ class TestAssertionRewriteHookDetails:
         state = AssertionState(config, "rewrite")
         tmp_path.joinpath("source.py").touch()
         source_path = str(tmp_path)
+        source_bytes = tmp_path.joinpath("source.py").read_bytes()
         pycpath = tmp_path.joinpath("pyc")
         co = compile("1", "f.py", "single")
-        assert _write_pyc(state, co, os.stat(source_path), pycpath)
+        hash = source_hash(source_bytes)
+        assert _write_pyc(state, co, os.stat(source_path), hash, pycpath)
 
         with mock.patch.object(os, "replace", side_effect=OSError):
-            assert not _write_pyc(state, co, os.stat(source_path), pycpath)
+            assert not _write_pyc(state, co, os.stat(source_path), hash, pycpath)
 
     def test_resources_provider_for_loader(self, pytester: Pytester) -> None:
         """
@@ -1121,9 +1126,40 @@ class TestAssertionRewriteHookDetails:
 
         fn.write_text("def test(): assert True", encoding="utf-8")
 
-        source_stat, co = _rewrite_test(fn, config)
-        _write_pyc(state, co, source_stat, pyc)
+        source_stat, hash, co = _rewrite_test(fn, config)
+        _write_pyc(state, co, source_stat, hash, pyc)
         assert _read_pyc(fn, pyc, state.trace) is not None
+
+        pyc_bytes = pyc.read_bytes()
+        assert pyc_bytes[4] == 0  # timestamp flag set
+
+    def test_read_pyc_success_hash(self, tmp_path: Path, pytester: Pytester) -> None:
+        from _pytest.assertion import AssertionState
+        from _pytest.assertion.rewrite import _read_pyc
+        from _pytest.assertion.rewrite import _rewrite_test
+        from _pytest.assertion.rewrite import _write_pyc
+
+        config = pytester.parseconfig("--invalidation-mode=checked-hash")
+        state = AssertionState(config, "rewrite")
+
+        fn = tmp_path / "source.py"
+        pyc = Path(str(fn) + "c")
+
+        # Test private attribute didn't change
+        assert getattr(_imp, "check_hash_based_pycs", None) in {
+            "default",
+            "always",
+            "never",
+        }
+
+        fn.write_text("def test(): assert True", encoding="utf-8")
+        source_stat, hash, co = _rewrite_test(fn, config)
+        _write_pyc(state, co, source_stat, hash, pyc)
+        assert _read_pyc(fn, pyc, state.trace) is not None
+
+        pyc_bytes = pyc.read_bytes()
+        assert pyc_bytes[4] == 3  # checked-hash flag set
+        assert pyc_bytes[8:16] == hash
 
     def test_read_pyc_more_invalid(self, tmp_path: Path) -> None:
         from _pytest.assertion.rewrite import _read_pyc
@@ -1169,6 +1205,50 @@ class TestAssertionRewriteHookDetails:
         # Bad size.
         pyc.write_bytes(magic + flags + mtime + b"\x99\x00\x00\x00" + code)
         assert _read_pyc(source, pyc, print) is None
+
+    def test_read_pyc_more_invalid_hash(self, tmp_path: Path) -> None:
+        from _pytest.assertion.rewrite import _read_pyc
+
+        source = tmp_path / "source.py"
+        pyc = tmp_path / "source.pyc"
+
+        source_bytes = b"def test(): pass\n"
+        source.write_bytes(source_bytes)
+
+        magic = importlib.util.MAGIC_NUMBER
+
+        flags = b"\x00\x00\x00\x00"
+        flags_hash = b"\x03\x00\x00\x00"
+
+        mtime = b"\x58\x3c\xb0\x5f"
+        mtime_int = int.from_bytes(mtime, "little")
+        os.utime(source, (mtime_int, mtime_int))
+
+        size = len(source_bytes).to_bytes(4, "little")
+
+        hash = source_hash(source_bytes)
+        hash = hash[:8]
+
+        code = marshal.dumps(compile(source_bytes, str(source), "exec"))
+
+        # check_hash_based_pycs == "default" with hash based pyc file.
+        pyc.write_bytes(magic + flags_hash + hash + code)
+        assert _read_pyc(source, pyc, print) is not None
+
+        # check_hash_based_pycs == "always" with hash based pyc file.
+        with mock.patch.object(_imp, "check_hash_based_pycs", "always"):
+            pyc.write_bytes(magic + flags_hash + hash + code)
+            assert _read_pyc(source, pyc, print) is not None
+
+        # Bad hash.
+        with mock.patch.object(_imp, "check_hash_based_pycs", "always"):
+            pyc.write_bytes(magic + flags_hash + b"\x00" * 8 + code)
+            assert _read_pyc(source, pyc, print) is None
+
+        # check_hash_based_pycs == "always" with timestamp based pyc file.
+        with mock.patch.object(_imp, "check_hash_based_pycs", "always"):
+            pyc.write_bytes(magic + flags + mtime + size + code)
+            assert _read_pyc(source, pyc, print) is None
 
     def test_reload_is_same_and_reloads(self, pytester: Pytester) -> None:
         """Reloading a (collected) module after change picks up the change."""
