@@ -2965,7 +2965,7 @@ def test_xfail_tb_true(xfail_testfile, pytester: Pytester) -> None:
             "*E       assert 3 == 4*",
         ]
     )
-    
+
 
 def test_xfail_tb_line(xfail_testfile, pytester: Pytester) -> None:
     result = pytester.runpytest(xfail_testfile, "--xfail-tb", "--tb=line")

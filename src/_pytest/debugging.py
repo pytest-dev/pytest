@@ -1,4 +1,5 @@
 # mypy: allow-untyped-defs
+# ruff: noqa: T100
 """Interactive debugging with PDB, the Python Debugger."""
 
 import argparse

@@ -4,7 +4,7 @@ Add `--xfail-tb` flag, which turns traceback output for XFAIL results.
 * The style of traceback for XFAIL is set with `--tb`, and can be `auto|long|short|line|native|no`.
 * Note: Even if you have `--xfail-tb` set, you won't see them if `--tb=no`.
 
-Some history:  
+Some history:
 
 * This is a behavior break, but brings default behavior back to pre-8.0.0 behavior.
 * With this change, default `-rx`/ `-ra` behavior is identical to pre-8.0 with respect to xfail tracebacks.

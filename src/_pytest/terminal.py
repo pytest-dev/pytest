@@ -439,7 +439,7 @@ class TerminalReporter:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
         return char in self.reportchars
 
-    def write_fspath_result(self, nodeid: str, res, **markup: bool) -> None:
+    def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
         fspath = self.config.rootpath / nodeid.split("::")[0]
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
@@ -572,10 +572,11 @@ class TerminalReporter:
     def pytest_runtest_logstart(
         self, nodeid: str, location: Tuple[str, Optional[int], str]
     ) -> None:
+        fspath, lineno, domain = location
         # Ensure that the path is printed before the
         # 1st test of a module starts running.
         if self.showlongtestinfo:
-            line = self._locationline(nodeid, *location)
+            line = self._locationline(nodeid, fspath, lineno, domain)
             self.write_ensure_prefix(line, "")
             self.flush()
         elif self.showfspath:
@@ -598,7 +599,6 @@ class TerminalReporter:
         if not letter and not word:
             # Probably passed setup/teardown.
             return
-        running_xdist = hasattr(rep, "node")
         if markup is None:
             was_xfail = hasattr(report, "wasxfail")
             if rep.passed and not was_xfail:
@@ -611,11 +611,20 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
+        self._progress_nodeids_reported.add(rep.nodeid)
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
+            # When running in xdist, the logreport and logfinish of multiple
+            # items are interspersed, e.g. `logreport`, `logreport`,
+            # `logfinish`, `logfinish`. To avoid the "past edge" calculation
+            # from getting confused and overflowing (#7166), do the past edge
+            # printing here and not in logfinish, except for the 100% which
+            # should only be printed after all teardowns are finished.
+            if self._show_progress_info and not self._is_last_item:
+                self._write_progress_information_if_past_edge()
         else:
-            self._progress_nodeids_reported.add(rep.nodeid)
             line = self._locationline(rep.nodeid, *rep.location)
+            running_xdist = hasattr(rep, "node")
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
                 if rep.skipped or hasattr(report, "wasxfail"):
@@ -655,39 +664,29 @@ class TerminalReporter:
         assert self._session is not None
         return len(self._progress_nodeids_reported) == self._session.testscollected
 
-    def pytest_runtest_logfinish(self, nodeid: str) -> None:
-        assert self._session
+    @hookimpl(wrapper=True)
+    def pytest_runtestloop(self) -> Generator[None, object, object]:
+        result = yield
+
+        # Write the final/100% progress -- deferred until the loop is complete.
         if (
             self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0
             and self._show_progress_info
+            and self._progress_nodeids_reported
         ):
-            if self._show_progress_info == "count":
-                num_tests = self._session.testscollected
-                progress_length = len(f" [{num_tests}/{num_tests}]")
-            else:
-                progress_length = len(" [100%]")
+            self._write_progress_information_filling_space()
 
-            self._progress_nodeids_reported.add(nodeid)
-
-            if self._is_last_item:
-                self._write_progress_information_filling_space()
-            else:
-                main_color, _ = self._get_main_color()
-                w = self._width_of_current_line
-                past_edge = w + progress_length + 1 >= self._screen_width
-                if past_edge:
-                    msg = self._get_progress_information_message()
-                    self._tw.write(msg + "\n", **{main_color: True})
+        return result
 
     def _get_progress_information_message(self) -> str:
         assert self._session
         collected = self._session.testscollected
         if self._show_progress_info == "count":
             if collected:
-                progress = self._progress_nodeids_reported
+                progress = len(self._progress_nodeids_reported)
                 counter_format = f"{{:{len(str(collected))}d}}"
                 format_string = f" [{counter_format}/{{}}]"
-                return format_string.format(len(progress), collected)
+                return format_string.format(progress, collected)
             return f" [ {collected} / {collected} ]"
         else:
             if collected:
@@ -695,6 +694,20 @@ class TerminalReporter:
                     f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
                 )
             return " [100%]"
+
+    def _write_progress_information_if_past_edge(self) -> None:
+        w = self._width_of_current_line
+        if self._show_progress_info == "count":
+            assert self._session
+            num_tests = self._session.testscollected
+            progress_length = len(f" [{num_tests}/{num_tests}]")
+        else:
+            progress_length = len(" [100%]")
+        past_edge = w + progress_length + 1 >= self._screen_width
+        if past_edge:
+            main_color, _ = self._get_main_color()
+            msg = self._get_progress_information_message()
+            self._tw.write(msg + "\n", **{main_color: True})
 
     def _write_progress_information_filling_space(self) -> None:
         color, _ = self._get_main_color()
@@ -944,7 +957,7 @@ class TerminalReporter:
                 line += "[".join(values)
             return line
 
-        # collect_fspath comes from testid which has a "/"-normalized path.
+        # fspath comes from testid which has a "/"-normalized path.
         if fspath:
             res = mkrel(nodeid)
             if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
