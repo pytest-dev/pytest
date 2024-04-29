@@ -5,6 +5,7 @@ import bdb
 import dataclasses
 import os
 import sys
+import types
 from typing import Callable
 from typing import cast
 from typing import Dict
@@ -488,8 +489,13 @@ class SetupState:
             Tuple[
                 # Node's finalizers.
                 List[Callable[[], object]],
-                # Node's exception, if its setup raised.
-                Optional[Union[OutcomeException, Exception]],
+                # Node's exception and original traceback, if its setup raised.
+                Optional[
+                    Tuple[
+                        Union[OutcomeException, Exception],
+                        Optional[types.TracebackType],
+                    ]
+                ],
             ],
         ] = {}
 
@@ -502,7 +508,7 @@ class SetupState:
         for col, (finalizers, exc) in self.stack.items():
             assert col in needed_collectors, "previous item was not torn down properly"
             if exc:
-                raise exc
+                raise exc[0].with_traceback(exc[1])
 
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
@@ -511,7 +517,7 @@ class SetupState:
             try:
                 col.setup()
             except TEST_OUTCOME as exc:
-                self.stack[col] = (self.stack[col][0], exc)
+                self.stack[col] = (self.stack[col][0], (exc, exc.__traceback__))
                 raise
 
     def addfinalizer(self, finalizer: Callable[[], object], node: Node) -> None:

@@ -3397,6 +3397,28 @@ class TestErrors:
             ["*def gen(qwe123):*", "*fixture*qwe123*not found*", "*1 error*"]
         )
 
+    def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
+        """Regression test for #12204."""
+        pytester.makepyfile(
+            """
+            import pytest
+            @pytest.fixture(scope="session")
+            def bad(): 1 / 0
+
+            def test_1(bad): pass
+            def test_2(bad): pass
+            def test_3(bad): pass
+            """
+        )
+
+        result = pytester.runpytest_inprocess("--tb=native")
+        assert result.ret == ExitCode.TESTS_FAILED
+        failures = result.reprec.getfailures()  # type: ignore[attr-defined]
+        assert len(failures) == 3
+        lines1 = failures[1].longrepr.reprtraceback.reprentries[0].lines
+        lines2 = failures[2].longrepr.reprtraceback.reprentries[0].lines
+        assert len(lines1) == len(lines2)
+
 
 class TestShowFixtures:
     def test_funcarg_compat(self, pytester: Pytester) -> None:
