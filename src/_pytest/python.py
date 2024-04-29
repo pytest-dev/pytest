@@ -1371,8 +1371,15 @@ class Metafunc:
 
         # num_ids == 0 is a special case: https://github.com/pytest-dev/pytest/issues/1849
         if num_ids != len(parametersets) and num_ids != 0:
-            msg = "In {}: {} parameter sets specified, with different number of ids: {}"
-            fail(msg.format(func_name, len(parametersets), num_ids), pytrace=False)
+            # Construct a string representation of the expected parameter sets
+            expected_paramsets = len(parametersets)
+
+            msg = (
+                f"In {func_name}: \n\n"
+                f" Specified {expected_paramsets} parameter sets with {num_ids} different ids. \n"
+                f" Ensure all subparameters are correctly grouped within a single set of quotation marks."
+            )
+            fail(msg, pytrace=False)
 
         return list(itertools.islice(ids, num_ids))
 
