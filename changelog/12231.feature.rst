@@ -1,4 +1,4 @@
-Add `--xfail-tb` flag, which turns traceback output for XFAIL results.   
+Add `--xfail-tb` flag, which turns traceback output for XFAIL results.
 
 * If the `--xfail-tb` flag is not sent, tracebacks for XFAIL results are NOT shown.
 * The style of traceback for XFAIL is set with `--tb`, and can be `auto|long|short|line|native|no`.

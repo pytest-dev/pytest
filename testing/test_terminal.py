@@ -2918,7 +2918,7 @@ def xfail_testfile(pytester: Pytester) -> Path:
         def test_fail():
             a, b = 1, 2
             assert a == b
-        
+
         @pytest.mark.xfail
         def test_xfail():
             c, d = 3, 4
@@ -2926,9 +2926,10 @@ def xfail_testfile(pytester: Pytester) -> Path:
         """
     )
 
+
 def test_xfail_tb_default(xfail_testfile, pytester: Pytester) -> None:
     result = pytester.runpytest(xfail_testfile)
-    
+
     # test_fail, show traceback
     result.stdout.fnmatch_lines(
         [
@@ -2947,7 +2948,7 @@ def test_xfail_tb_default(xfail_testfile, pytester: Pytester) -> None:
 
 def test_xfail_tb_true(xfail_testfile, pytester: Pytester) -> None:
     result = pytester.runpytest(xfail_testfile, "--xfail-tb")
-    
+
     # both test_fail and test_xfail, show traceback
     result.stdout.fnmatch_lines(
         [
