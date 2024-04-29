@@ -404,6 +404,35 @@ def test_parametrized_collected_from_command_line(pytester: Pytester) -> None:
     rec.assertoutcome(passed=3)
 
 
+def test_parametrized_collect_with_wrong_format(pytester: Pytester) -> None:
+    """Parametrized test argument format not intuitive
+    line issue#8593"""
+    py_file = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("arg1", "arg2", [(1, 1)])
+        def test_parametrization(arg1: int, arg2: int) -> None:
+            assert arg1 == arg2
+            assert arg1 + 1 == arg2 + 1
+    """
+    )
+
+    result = pytester.runpytest(py_file)
+    result.stdout.fnmatch_lines(
+        [
+            """In function test_parametrization: ['arg1'] is not a valid parameter.
+               Expected 2 sub parameters, but only 1 were provided. """,
+            "",
+            "Make sure to pass parameter names as strings without quotes, separated by commas, ",
+            " e.g., '@pytest.mark.parametrize(\"arg1\", <Input Values>)'",
+            "",
+            "Or if multiple parameters are used, separate them by commas. ",
+            " e.g., '@pytest.mark.parametrize(\"arg1, arg2\", <Input Tuples>)'",
+        ]
+    )
+
+
 def test_parametrized_collect_with_wrong_args(pytester: Pytester) -> None:
     """Test collect parametrized func with wrong number of args."""
     py_file = pytester.makepyfile(
