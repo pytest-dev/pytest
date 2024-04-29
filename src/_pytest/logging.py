@@ -300,6 +300,13 @@ def pytest_addoption(parser: Parser) -> None:
         help="Path to a file when logging will be written to",
     )
     add_option_ini(
+        "--log-file-verbose",
+        dest="log_file_verbose",
+        default=0,
+        type="int",
+        help="Log file verbose",
+    )
+    add_option_ini(
         "--log-file-mode",
         dest="log_file_mode",
         default="w",
@@ -677,6 +684,8 @@ class LoggingPlugin:
             if not os.path.isdir(directory):
                 os.makedirs(directory)
 
+        self.log_file_verbose = get_option_ini(config, "log_file_verbose")
+
         self.log_file_mode = get_option_ini(config, "log_file_mode") or "w"
         self.log_file_handler = _FileHandler(
             log_file, mode=self.log_file_mode, encoding="UTF-8"
@@ -837,6 +846,22 @@ class LoggingPlugin:
 
     @hookimpl(wrapper=True)
     def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None, None, None]:
+        if self.log_file_verbose and int(self.log_file_verbose) >= 1:
+            old_log_file_formatter = self.log_file_handler.formatter
+            self.log_file_handler.setFormatter(logging.Formatter())
+            self.log_file_handler.emit(
+                logging.LogRecord(
+                    "N/A",
+                    logging.INFO,
+                    "N/A",
+                    0,
+                    f"Running at {item.nodeid}",
+                    None,
+                    None,
+                )
+            )
+            self.log_file_handler.setFormatter(old_log_file_formatter)
+
         self.log_cli_handler.set_when("setup")
 
         empty: Dict[str, List[logging.LogRecord]] = {}
