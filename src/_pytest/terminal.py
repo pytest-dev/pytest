@@ -218,12 +218,10 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group._addoption(
         "--xfail-tb",
-        metavar="style",
-        action="store",
-        dest="xfail_tbstyle",
-        default="no",
-        choices=["auto", "long", "short", "no", "line", "native"],
-        help="Traceback print mode for xfail (auto/long/short/line/native/no)",
+        action="store_true",
+        dest="xfail_tb",
+        default=False,
+        help="Show tracebacks for xfail (as long as --tb != no)",
     )
     group._addoption(
         "--show-capture",
@@ -1080,11 +1078,13 @@ class TerminalReporter:
                 self._tw.line(content)
 
     def summary_failures(self) -> None:
-        self.summary_failures_combined("failed", "FAILURES")
+        style = self.config.option.tbstyle
+        self.summary_failures_combined("failed", "FAILURES", style=style)
 
     def summary_xfailures(self) -> None:
-        style = self.config.option.xfail_tbstyle
-        self.summary_failures_combined("xfailed", "XFAILURES", "x", style=style)
+        show_tb = self.config.option.xfail_tb
+        style = self.config.option.tbstyle if show_tb else "no"
+        self.summary_failures_combined("xfailed", "XFAILURES", style=style)
 
     def summary_failures_combined(
         self,
@@ -1093,8 +1093,6 @@ class TerminalReporter:
         needed_opt: Optional[str] = None,
         style: Optional[str] = None,
     ) -> None:
-        if style is None:
-            style = self.config.option.tbstyle
         if style != "no":
             if not needed_opt or self.hasopt(needed_opt):
                 reports: List[BaseReport] = self.getreports(which_reports)
