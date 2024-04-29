@@ -8,6 +8,7 @@ import inspect
 import os
 from pathlib import Path
 import sys
+import types
 from typing import AbstractSet
 from typing import Any
 from typing import Callable
@@ -104,8 +105,8 @@ _FixtureCachedResult = Union[
         None,
         # Cache key.
         object,
-        # Exception if raised.
-        BaseException,
+        # The exception and the original traceback.
+        Tuple[BaseException, Optional[types.TracebackType]],
     ],
 ]
 
@@ -1049,8 +1050,8 @@ class FixtureDef(Generic[FixtureValue]):
             # numpy arrays (#6497).
             if my_cache_key is cache_key:
                 if self.cached_result[2] is not None:
-                    exc = self.cached_result[2]
-                    raise exc
+                    exc, exc_tb = self.cached_result[2]
+                    raise exc.with_traceback(exc_tb)
                 else:
                     result = self.cached_result[0]
                     return result
@@ -1126,7 +1127,7 @@ def pytest_fixture_setup(
             # Don't show the fixture as the skip location, as then the user
             # wouldn't know which test skipped.
             e._use_item_location = True
-        fixturedef.cached_result = (None, my_cache_key, e)
+        fixturedef.cached_result = (None, my_cache_key, (e, e.__traceback__))
         raise
     fixturedef.cached_result = (result, my_cache_key, None)
     return result

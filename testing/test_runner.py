@@ -142,6 +142,43 @@ class TestSetupState:
         assert isinstance(func.exceptions[0], TypeError)  # type: ignore
         assert isinstance(func.exceptions[1], ValueError)  # type: ignore
 
+    def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
+        """Regression test for #12204 (the "BTW" case)."""
+        pytester.makepyfile(test="")
+        # If the collector.setup() raises, all collected items error with this
+        # exception.
+        pytester.makeconftest(
+            """
+            import pytest
+
+            class MyItem(pytest.Item):
+                def runtest(self) -> None: pass
+
+            class MyBadCollector(pytest.Collector):
+                def collect(self):
+                    return [
+                        MyItem.from_parent(self, name="one"),
+                        MyItem.from_parent(self, name="two"),
+                        MyItem.from_parent(self, name="three"),
+                    ]
+
+                def setup(self):
+                    1 / 0
+
+            def pytest_collect_file(file_path, parent):
+                if file_path.name == "test.py":
+                    return MyBadCollector.from_parent(parent, name='bad')
+            """
+        )
+
+        result = pytester.runpytest_inprocess("--tb=native")
+        assert result.ret == ExitCode.TESTS_FAILED
+        failures = result.reprec.getfailures()  # type: ignore[attr-defined]
+        assert len(failures) == 3
+        lines1 = failures[1].longrepr.reprtraceback.reprentries[0].lines
+        lines2 = failures[2].longrepr.reprtraceback.reprentries[0].lines
+        assert len(lines1) == len(lines2)
+
 
 class BaseFunctionalTests:
     def test_passfunction(self, pytester: Pytester) -> None:
