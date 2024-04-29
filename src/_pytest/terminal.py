@@ -217,6 +217,13 @@ def pytest_addoption(parser: Parser) -> None:
         help="Traceback print mode (auto/long/short/line/native/no)",
     )
     group._addoption(
+        "--xfail-tb",
+        action="store_true",
+        dest="xfail_tb",
+        default=False,
+        help="Show tracebacks for xfail (as long as --tb != no)",
+    )
+    group._addoption(
         "--show-capture",
         action="store",
         dest="showcapture",
@@ -1084,21 +1091,28 @@ class TerminalReporter:
                 self._tw.line(content)
 
     def summary_failures(self) -> None:
-        self.summary_failures_combined("failed", "FAILURES")
+        style = self.config.option.tbstyle
+        self.summary_failures_combined("failed", "FAILURES", style=style)
 
     def summary_xfailures(self) -> None:
-        self.summary_failures_combined("xfailed", "XFAILURES", "x")
+        show_tb = self.config.option.xfail_tb
+        style = self.config.option.tbstyle if show_tb else "no"
+        self.summary_failures_combined("xfailed", "XFAILURES", style=style)
 
     def summary_failures_combined(
-        self, which_reports: str, sep_title: str, needed_opt: Optional[str] = None
+        self,
+        which_reports: str,
+        sep_title: str,
+        needed_opt: Optional[str] = None,
+        style: Optional[str] = None,
     ) -> None:
-        if self.config.option.tbstyle != "no":
+        if style != "no":
             if not needed_opt or self.hasopt(needed_opt):
                 reports: List[BaseReport] = self.getreports(which_reports)
                 if not reports:
                     return
                 self.write_sep("=", sep_title)
-                if self.config.option.tbstyle == "line":
+                if style == "line":
                     for rep in reports:
                         line = self._getcrashline(rep)
                         self.write_line(line)
