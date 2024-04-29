@@ -1,8 +1,8 @@
 import pytest
 
 
-@pytest.mark.parametrize("arg1,arg2", [(1, 1)])
-def test_parametrization(arg1, arg2):
+@pytest.mark.parametrize("arg1, arg2", [(1, 1)])
+def test_parametrization(arg1: int, arg2: int) -> None:
     assert arg1 == arg2
     assert arg1 + 1 == arg2 + 1
 

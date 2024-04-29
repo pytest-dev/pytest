@@ -419,10 +419,13 @@ def test_parametrized_collect_with_wrong_args(pytester: Pytester) -> None:
     result = pytester.runpytest(py_file)
     result.stdout.fnmatch_lines(
         [
-            'test_parametrized_collect_with_wrong_args.py::test_func: in "parametrize" the number of names (2):',
-            "  ['foo', 'bar']",
-            "must be equal to the number of values (3):",
-            "  (1, 2, 3)",
+            "test_parametrized_collect_with_wrong_args.py::test_func: ",
+            "",
+            ' Error in parameterization for test "test_func".',
+            " The number of specified parameters (2) does not match the number of provided values (3): 1, 2, 3. ",
+            " Please ensure that the correct number of parameter names (3) are separated by commas within quotes.",
+            "",
+            'Require more than parameter names: "foo, bar"',
         ]
     )
 

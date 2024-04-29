@@ -1402,8 +1402,24 @@ class Metafunc:
             arg_directness = dict.fromkeys(argnames, "direct")
             for arg in indirect:
                 if arg not in argnames:
+                    # Construct a list of valid parameter names
+                    valid_params = ", ".join([f'"{name}"' for name in argnames])
+
+                    # Construct a string representing the expected number of parameters
+                    expected_param_count = len(indirect[0])
+
+                    # Construct a string representing the actual number of parameters provided
+                    actual_param_count = len(argnames)
+
                     fail(
-                        f"In {self.function.__name__}: indirect fixture '{arg}' doesn't exist",
+                        f"In function {self.function.__name__}: {argnames} is not a valid parameter. "
+                        f"Expected {expected_param_count} sub parameters, "
+                        f"but only {actual_param_count} were provided. \n\n"
+                        f"Make sure to pass parameter names as strings without quotes, separated by commas, \n "
+                        f"e.g., '@pytest.mark.parametrize({valid_params}, <Input Values>)'"
+                        f"\n\n"
+                        f"Or if multiple parameters are used, separate them by commas. \n "
+                        f"e.g., '@pytest.mark.parametrize(\"arg1, arg2\", <Input Tuples>)'",
                         pytrace=False,
                     )
                 arg_directness[arg] = "indirect"
