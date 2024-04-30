@@ -1032,7 +1032,7 @@ def test_store_except_info_on_error() -> None:
     assert sys.last_type is IndexError
     assert isinstance(sys.last_value, IndexError)
     if sys.version_info >= (3, 12, 0):
-        assert isinstance(sys.last_exc, IndexError)  # type: ignore[attr-defined]
+        assert isinstance(sys.last_exc, IndexError)
 
     assert sys.last_value.args[0] == "TEST"
     assert sys.last_traceback
