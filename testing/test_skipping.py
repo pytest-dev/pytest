@@ -297,13 +297,12 @@ class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_xfail_simple(self, pytester: Pytester, strict: bool) -> None:
         item = pytester.getitem(
-            """
+            f"""
             import pytest
-            @pytest.mark.xfail(strict=%s)
+            @pytest.mark.xfail(strict={strict})
             def test_func():
                 assert 0
         """
-            % strict
         )
         reports = runtestprotocol(item, log=False)
         assert len(reports) == 3
@@ -630,15 +629,14 @@ class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_strict_xfail(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
-            """
+            f"""
             import pytest
 
-            @pytest.mark.xfail(reason='unsupported feature', strict=%s)
+            @pytest.mark.xfail(reason='unsupported feature', strict={strict})
             def test_foo():
                 with open('foo_executed', 'w', encoding='utf-8'):
                     pass  # make sure test executes
         """
-            % strict
         )
         result = pytester.runpytest(p, "-rxX")
         if strict:
@@ -658,14 +656,13 @@ class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_strict_xfail_condition(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
-            """
+            f"""
             import pytest
 
-            @pytest.mark.xfail(False, reason='unsupported feature', strict=%s)
+            @pytest.mark.xfail(False, reason='unsupported feature', strict={strict})
             def test_foo():
                 pass
         """
-            % strict
         )
         result = pytester.runpytest(p, "-rxX")
         result.stdout.fnmatch_lines(["*1 passed*"])
@@ -674,14 +671,13 @@ class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_xfail_condition_keyword(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
-            """
+            f"""
             import pytest
 
-            @pytest.mark.xfail(condition=False, reason='unsupported feature', strict=%s)
+            @pytest.mark.xfail(condition=False, reason='unsupported feature', strict={strict})
             def test_foo():
                 pass
         """
-            % strict
         )
         result = pytester.runpytest(p, "-rxX")
         result.stdout.fnmatch_lines(["*1 passed*"])
@@ -692,11 +688,10 @@ class TestXFail:
         self, pytester: Pytester, strict_val
     ) -> None:
         pytester.makeini(
-            """
+            f"""
             [pytest]
-            xfail_strict = %s
+            xfail_strict = {strict_val}
         """
-            % strict_val
         )
         p = pytester.makepyfile(
             """

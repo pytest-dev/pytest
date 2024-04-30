@@ -280,7 +280,7 @@ def test_conftest_confcutdir(pytester: Pytester) -> None:
         ),
         encoding="utf-8",
     )
-    result = pytester.runpytest("-h", "--confcutdir=%s" % x, x)
+    result = pytester.runpytest("-h", f"--confcutdir={x}", x)
     result.stdout.fnmatch_lines(["*--xyz*"])
     result.stdout.no_fnmatch_line("*warning: could not load initial*")
 
@@ -380,7 +380,7 @@ def test_conftest_symlink_files(pytester: Pytester) -> None:
             """
         ),
     }
-    pytester.makepyfile(**{"real/%s" % k: v for k, v in source.items()})
+    pytester.makepyfile(**{f"real/{k}": v for k, v in source.items()})
 
     # Create a build directory that contains symlinks to actual files
     # but doesn't symlink actual directories.
@@ -402,7 +402,7 @@ def test_conftest_badcase(pytester: Pytester) -> None:
     """Check conftest.py loading when directory casing is wrong (#5792)."""
     pytester.path.joinpath("JenkinsRoot/test").mkdir(parents=True)
     source = {"setup.py": "", "test/__init__.py": "", "test/conftest.py": ""}
-    pytester.makepyfile(**{"JenkinsRoot/%s" % k: v for k, v in source.items()})
+    pytester.makepyfile(**{f"JenkinsRoot/{k}": v for k, v in source.items()})
 
     os.chdir(pytester.path.joinpath("jenkinsroot/test"))
     result = pytester.runpytest()
@@ -638,9 +638,9 @@ class TestConftestVisibility:
     ) -> None:
         """#616"""
         dirs = self._setup_tree(pytester)
-        print("pytest run in cwd: %s" % (dirs[chdir].relative_to(pytester.path)))
-        print("pytestarg        : %s" % testarg)
-        print("expected pass    : %s" % expect_ntests_passed)
+        print(f"pytest run in cwd: {dirs[chdir].relative_to(pytester.path)}")
+        print(f"pytestarg        : {testarg}")
+        print(f"expected pass    : {expect_ntests_passed}")
         os.chdir(dirs[chdir])
         reprec = pytester.inline_run(
             testarg,
@@ -699,7 +699,7 @@ def test_search_conftest_up_to_inifile(
 
     args = [str(src)]
     if confcutdir:
-        args = ["--confcutdir=%s" % root.joinpath(confcutdir)]
+        args = [f"--confcutdir={root.joinpath(confcutdir)}"]
     result = pytester.runpytest(*args)
     match = ""
     if passed:

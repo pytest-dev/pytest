@@ -232,10 +232,10 @@ def _report_unserialization_failure(
     url = "https://github.com/pytest-dev/pytest/issues"
     stream = StringIO()
     pprint("-" * 100, stream=stream)
-    pprint("INTERNALERROR: Unknown entry type returned: %s" % type_name, stream=stream)
-    pprint("report_name: %s" % report_class, stream=stream)
+    pprint(f"INTERNALERROR: Unknown entry type returned: {type_name}", stream=stream)
+    pprint(f"report_name: {report_class}", stream=stream)
     pprint(reportdict, stream=stream)
-    pprint("Please report this bug at %s" % url, stream=stream)
+    pprint(f"Please report this bug at {url}", stream=stream)
     pprint("-" * 100, stream=stream)
     raise RuntimeError(stream.getvalue())
 

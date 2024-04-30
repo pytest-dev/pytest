@@ -454,7 +454,7 @@ class ApproxScalar(ApproxBase):
             return False
 
         # Return true if the two numbers are within the tolerance.
-        result: bool = abs(self.expected - actual) <= self.tolerance  # type: ignore[arg-type]
+        result: bool = abs(self.expected - actual) <= self.tolerance
         return result
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.

@@ -191,7 +191,7 @@ def test_cache_reportheader(
         monkeypatch.delenv("TOX_ENV_DIR", raising=False)
         expected = ".pytest_cache"
     result = pytester.runpytest("-v")
-    result.stdout.fnmatch_lines(["cachedir: %s" % expected])
+    result.stdout.fnmatch_lines([f"cachedir: {expected}"])
 
 
 def test_cache_reportheader_external_abspath(

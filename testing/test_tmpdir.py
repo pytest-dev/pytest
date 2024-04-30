@@ -87,11 +87,11 @@ class TestConfigTmpPath:
                 pass
         """
         )
-        pytester.runpytest(p, "--basetemp=%s" % mytemp)
+        pytester.runpytest(p, f"--basetemp={mytemp}")
         assert mytemp.exists()
         mytemp.joinpath("hello").touch()
 
-        pytester.runpytest(p, "--basetemp=%s" % mytemp)
+        pytester.runpytest(p, f"--basetemp={mytemp}")
         assert mytemp.exists()
         assert not mytemp.joinpath("hello").exists()
 
@@ -248,7 +248,7 @@ def test_mktemp(pytester: Pytester, basename: str, is_ok: bool) -> None:
         """
     )
 
-    result = pytester.runpytest(p, "--basetemp=%s" % mytemp)
+    result = pytester.runpytest(p, f"--basetemp={mytemp}")
     if is_ok:
         assert result.ret == 0
         assert mytemp.joinpath(basename).exists()

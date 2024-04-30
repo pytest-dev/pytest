@@ -659,7 +659,7 @@ class LocalPath:
         )
         if "basename" in kw:
             if "purebasename" in kw or "ext" in kw:
-                raise ValueError("invalid specification %r" % kw)
+                raise ValueError(f"invalid specification {kw!r}")
         else:
             pb = kw.setdefault("purebasename", purebasename)
             try:
@@ -705,7 +705,7 @@ class LocalPath:
                     elif name == "ext":
                         res.append(ext)
                     else:
-                        raise ValueError("invalid part specification %r" % name)
+                        raise ValueError(f"invalid part specification {name!r}")
         return res
 
     def dirpath(self, *args, **kwargs):
@@ -1026,7 +1026,7 @@ class LocalPath:
         return self.stat().atime
 
     def __repr__(self):
-        return "local(%r)" % self.strpath
+        return f"local({self.strpath!r})"
 
     def __str__(self):
         """Return string representation of the Path."""

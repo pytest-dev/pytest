@@ -400,7 +400,7 @@ class TestGeneralUsage:
 
         for name, value in vars(hookspec).items():
             if name.startswith("pytest_"):
-                assert value.__doc__, "no docstring for %s" % name
+                assert value.__doc__, f"no docstring for {name}"
 
     def test_initialization_error_issue49(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -973,7 +973,7 @@ class TestDurations:
         for x in tested:
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
-                    if ("test_%s" % x) in line and y in line:
+                    if (f"test_{x}") in line and y in line:
                         break
                 else:
                     raise AssertionError(f"not found {x} {y}")
@@ -986,7 +986,7 @@ class TestDurations:
         for x in "123":
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
-                    if ("test_%s" % x) in line and y in line:
+                    if (f"test_{x}") in line and y in line:
                         break
                 else:
                     raise AssertionError(f"not found {x} {y}")

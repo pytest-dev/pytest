@@ -53,9 +53,9 @@ def bin_xml_escape(arg: object) -> str:
     def repl(matchobj: Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
-            return "#x%02X" % i
+            return f"#x{i:02X}"
         else:
-            return "#x%04X" % i
+            return f"#x{i:04X}"
 
     # The spec range of valid chars is:
     # Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
@@ -149,7 +149,7 @@ class _NodeReporter:
         self.attrs = temp_attrs
 
     def to_xml(self) -> ET.Element:
-        testcase = ET.Element("testcase", self.attrs, time="%.3f" % self.duration)
+        testcase = ET.Element("testcase", self.attrs, time=f"{self.duration:.3f}")
         properties = self.make_properties_node()
         if properties is not None:
             testcase.append(properties)
@@ -670,7 +670,7 @@ class LogXML:
                 failures=str(self.stats["failure"]),
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
-                time="%.3f" % suite_time_delta,
+                time=f"{suite_time_delta:.3f}",
                 timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
                 hostname=platform.node(),
             )

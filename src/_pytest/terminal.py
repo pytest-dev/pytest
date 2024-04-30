@@ -640,7 +640,7 @@ class TerminalReporter:
                     self._write_progress_information_filling_space()
             else:
                 self.ensure_newline()
-                self._tw.write("[%s]" % rep.node.gateway.id)
+                self._tw.write(f"[{rep.node.gateway.id}]")
                 if self._show_progress_info:
                     self._tw.write(
                         self._get_progress_information_message() + " ", cyan=True
@@ -818,7 +818,9 @@ class TerminalReporter:
 
         plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:
-            result.append("plugins: %s" % ", ".join(_plugin_nameversions(plugininfo)))
+            result.append(
+                "plugins: {}".format(", ".join(_plugin_nameversions(plugininfo)))
+            )
         return result
 
     def pytest_collection_finish(self, session: "Session") -> None:

@@ -90,7 +90,7 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
     if not durations:
         tr.write_sep("=", "slowest durations")
     else:
-        tr.write_sep("=", "slowest %s durations" % durations)
+        tr.write_sep("=", f"slowest {durations} durations")
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):
@@ -167,7 +167,7 @@ def pytest_runtest_call(item: Item) -> None:
         del sys.last_value
         del sys.last_traceback
         if sys.version_info >= (3, 12, 0):
-            del sys.last_exc  # type: ignore[attr-defined]
+            del sys.last_exc
     except AttributeError:
         pass
     try:
@@ -177,7 +177,7 @@ def pytest_runtest_call(item: Item) -> None:
         sys.last_type = type(e)
         sys.last_value = e
         if sys.version_info >= (3, 12, 0):
-            sys.last_exc = e  # type: ignore[attr-defined]
+            sys.last_exc = e
         assert e.__traceback__ is not None
         # Skip *this* frame
         sys.last_traceback = e.__traceback__.tb_next

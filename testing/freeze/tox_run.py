@@ -10,4 +10,4 @@ if __name__ == "__main__":
     executable = os.path.join(os.getcwd(), "dist", "runtests_script", "runtests_script")
     if sys.platform.startswith("win"):
         executable += ".exe"
-    sys.exit(os.system("%s tests" % executable))
+    sys.exit(os.system(f"{executable} tests"))

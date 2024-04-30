@@ -101,7 +101,7 @@ class TestImportHookInstallation:
             """,
         }
         pytester.makepyfile(**contents)
-        result = pytester.runpytest_subprocess("--assert=%s" % mode)
+        result = pytester.runpytest_subprocess(f"--assert={mode}")
         if mode == "plain":
             expected = "E       AssertionError"
         elif mode == "rewrite":
@@ -163,7 +163,7 @@ class TestImportHookInstallation:
             """,
         }
         pytester.makepyfile(**contents)
-        result = pytester.runpytest_subprocess("--assert=%s" % mode)
+        result = pytester.runpytest_subprocess(f"--assert={mode}")
         if mode == "plain":
             expected = "E       AssertionError"
         elif mode == "rewrite":
@@ -280,7 +280,7 @@ class TestImportHookInstallation:
         }
         pytester.makepyfile(**contents)
         result = pytester.run(
-            sys.executable, "mainwrapper.py", "-s", "--assert=%s" % mode
+            sys.executable, "mainwrapper.py", "-s", f"--assert={mode}"
         )
         if mode == "plain":
             expected = "E       AssertionError"

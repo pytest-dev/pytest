@@ -122,7 +122,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
             parts = line.split(":", 1)
             name = parts[0]
             rest = parts[1] if len(parts) == 2 else ""
-            tw.write("@pytest.mark.%s:" % name, bold=True)
+            tw.write(f"@pytest.mark.{name}:", bold=True)
             tw.line(rest)
             tw.line()
         config._ensure_unconfigure()
