@@ -275,14 +275,14 @@ class TestCollectFS:
         # collects the tests
         for dirname in ("a", "b", "c"):
             items, reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
-            assert [x.name for x in items] == ["test_%s" % dirname]
+            assert [x.name for x in items] == [f"test_{dirname}"]
 
         # changing cwd to each subdirectory and running pytest without
         # arguments collects the tests in that directory normally
         for dirname in ("a", "b", "c"):
             monkeypatch.chdir(pytester.path.joinpath(dirname))
             items, reprec = pytester.inline_genitems()
-            assert [x.name for x in items] == ["test_%s" % dirname]
+            assert [x.name for x in items] == [f"test_{dirname}"]
 
 
 class TestCollectPluginHookRelay:
@@ -572,7 +572,7 @@ class TestSession:
     def test_collect_custom_nodes_multi_id(self, pytester: Pytester) -> None:
         p = pytester.makepyfile("def test_func(): pass")
         pytester.makeconftest(
-            """
+            f"""
             import pytest
             class SpecialItem(pytest.Item):
                 def runtest(self):
@@ -581,10 +581,9 @@ class TestSession:
                 def collect(self):
                     return [SpecialItem.from_parent(name="check", parent=self)]
             def pytest_collect_file(file_path, parent):
-                if file_path.name == %r:
+                if file_path.name == {p.name!r}:
                     return SpecialFile.from_parent(path=file_path, parent=parent)
         """
-            % p.name
         )
         id = p.name
 
@@ -862,7 +861,7 @@ def test_matchnodes_two_collections_same_file(pytester: Pytester) -> None:
     result = pytester.runpytest()
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*2 passed*"])
-    res = pytester.runpytest("%s::item2" % p.name)
+    res = pytester.runpytest(f"{p.name}::item2")
     res.stdout.fnmatch_lines(["*1 passed*"])
 
 
@@ -1444,7 +1443,7 @@ def test_collect_symlink_out_of_tree(pytester: Pytester) -> None:
     symlink_to_sub = out_of_tree.joinpath("symlink_to_sub")
     symlink_or_skip(sub, symlink_to_sub)
     os.chdir(sub)
-    result = pytester.runpytest("-vs", "--rootdir=%s" % sub, symlink_to_sub)
+    result = pytester.runpytest("-vs", f"--rootdir={sub}", symlink_to_sub)
     result.stdout.fnmatch_lines(
         [
             # Should not contain "sub/"!

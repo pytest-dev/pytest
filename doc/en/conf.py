@@ -236,7 +236,7 @@ html_theme = "flask"
 html_title = "pytest documentation"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "pytest-%s" % release
+html_short_title = f"pytest-{release}"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.

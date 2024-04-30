@@ -374,7 +374,7 @@ class DoctestItem(Item):
                 ).split("\n")
             else:
                 inner_excinfo = ExceptionInfo.from_exc_info(failure.exc_info)
-                lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
+                lines += [f"UNEXPECTED EXCEPTION: {inner_excinfo.value!r}"]
                 lines += [
                     x.strip("\n") for x in traceback.format_exception(*failure.exc_info)
                 ]
@@ -382,7 +382,7 @@ class DoctestItem(Item):
         return ReprFailDoctest(reprlocation_lines)
 
     def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
-        return self.path, self.dtest.lineno, "[doctest] %s" % self.name
+        return self.path, self.dtest.lineno, f"[doctest] {self.name}"
 
 
 def _get_flag_lookup() -> Dict[str, int]:
@@ -563,7 +563,7 @@ class DoctestModule(Module):
             module = self.obj
         except Collector.CollectError:
             if self.config.getvalue("doctest_ignore_import_errors"):
-                skip("unable to import module %r" % self.path)
+                skip(f"unable to import module {self.path!r}")
             else:
                 raise
 

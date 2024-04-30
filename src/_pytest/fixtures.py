@@ -675,7 +675,7 @@ class TopRequest(FixtureRequest):
         return self._pyfuncitem
 
     def __repr__(self) -> str:
-        return "<FixtureRequest for %r>" % (self.node)
+        return f"<FixtureRequest for {self.node!r}>"
 
     def _fillfixtures(self) -> None:
         item = self._pyfuncitem
@@ -1897,7 +1897,7 @@ def _showfixtures_main(config: Config, session: "Session") -> None:
             continue
         tw.write(f"{argname}", green=True)
         if fixturedef.scope != "function":
-            tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
+            tw.write(f" [{fixturedef.scope} scope]", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
         doc = inspect.getdoc(fixturedef.func)

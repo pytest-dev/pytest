@@ -940,7 +940,7 @@ class FormattedExcinfo:
             s = self.get_source(source, line_index, excinfo, short=short)
             lines.extend(s)
             if short:
-                message = "in %s" % (entry.name)
+                message = f"in {entry.name}"
             else:
                 message = excinfo and excinfo.typename or ""
             entry_path = entry.path

@@ -1160,7 +1160,7 @@ class TestDoctestSkips:
                 pytester.maketxtfile(doctest)
             else:
                 assert mode == "module"
-                pytester.makepyfile('"""\n%s"""' % doctest)
+                pytester.makepyfile(f'"""\n{doctest}"""')
 
         return makeit
 

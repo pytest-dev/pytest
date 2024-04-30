@@ -182,13 +182,13 @@ class LsofFdLeakChecker:
             leaked_files = [t for t in lines2 if t[0] in new_fds]
             if leaked_files:
                 error = [
-                    "***** %s FD leakage detected" % len(leaked_files),
+                    f"***** {len(leaked_files)} FD leakage detected",
                     *(str(f) for f in leaked_files),
                     "*** Before:",
                     *(str(f) for f in lines1),
                     "*** After:",
                     *(str(f) for f in lines2),
-                    "***** %s FD leakage detected" % len(leaked_files),
+                    f"***** {len(leaked_files)} FD leakage detected",
                     "*** function {}:{}: {} ".format(*item.location),
                     "See issue #2366",
                 ]
@@ -313,7 +313,7 @@ class HookRecorder:
                 del self.calls[i]
                 return call
         lines = [f"could not find call {name!r}, in:"]
-        lines.extend(["  %s" % x for x in self.calls])
+        lines.extend([f"  {x}" for x in self.calls])
         fail("\n".join(lines))
 
     def getcall(self, name: str) -> RecordedHookCall:
@@ -1204,7 +1204,9 @@ class Pytester:
             if str(x).startswith("--basetemp"):
                 break
         else:
-            new_args.append("--basetemp=%s" % self.path.parent.joinpath("basetemp"))
+            new_args.append(
+                "--basetemp={}".format(self.path.parent.joinpath("basetemp"))
+            )
         return new_args
 
     def parseconfig(self, *args: Union[str, "os.PathLike[str]"]) -> Config:
@@ -1485,7 +1487,7 @@ class Pytester:
         """
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
-        args = ("--basetemp=%s" % p, *args)
+        args = (f"--basetemp={p}", *args)
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
             args = ("-p", plugins[0], *args)
@@ -1593,7 +1595,7 @@ class LineMatcher:
                     self._log("matched: ", repr(line))
                     break
             else:
-                msg = "line %r not found in output" % line
+                msg = f"line {line!r} not found in output"
                 self._log(msg)
                 self._fail(msg)
 
@@ -1605,7 +1607,7 @@ class LineMatcher:
         for i, line in enumerate(self.lines):
             if fnline == line or fnmatch(line, fnline):
                 return self.lines[i + 1 :]
-        raise ValueError("line %r not found in output" % fnline)
+        raise ValueError(f"line {fnline!r} not found in output")
 
     def _log(self, *args) -> None:
         self._log_output.append(" ".join(str(x) for x in args))
@@ -1690,7 +1692,7 @@ class LineMatcher:
                     started = True
                     break
                 elif match_func(nextline, line):
-                    self._log("%s:" % match_nickname, repr(line))
+                    self._log(f"{match_nickname}:", repr(line))
                     self._log(
                         "{:>{width}}".format("with:", width=wnick), repr(nextline)
                     )

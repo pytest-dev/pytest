@@ -224,7 +224,7 @@ def pytest_pycollect_makeitem(
             filename, lineno = getfslineno(obj)
             warnings.warn_explicit(
                 message=PytestCollectionWarning(
-                    "cannot collect %r because it is not a function." % name
+                    f"cannot collect {name!r} because it is not a function."
                 ),
                 category=None,
                 filename=str(filename),

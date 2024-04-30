@@ -798,7 +798,7 @@ class PytestPluginManager(PluginManager):
         if arg.startswith("no:"):
             name = arg[3:]
             if name in essential_plugins:
-                raise UsageError("plugin %s cannot be disabled" % name)
+                raise UsageError(f"plugin {name} cannot be disabled")
 
             # PR #4304: remove stepwise if cacheprovider is blocked.
             if name == "cacheprovider":
@@ -847,9 +847,9 @@ class PytestPluginManager(PluginManager):
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, str), (
-            "module name as text required, got %r" % modname
-        )
+        assert isinstance(
+            modname, str
+        ), f"module name as text required, got {modname!r}"
         if self.is_blocked(modname) or self.get_plugin(modname) is not None:
             return
 
@@ -892,8 +892,7 @@ def _get_plugin_specs_as_list(
     if isinstance(specs, collections.abc.Sequence):
         return list(specs)
     raise UsageError(
-        "Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: %r"
-        % specs
+        f"Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: {specs!r}"
     )
 
 
@@ -1185,7 +1184,7 @@ class Config:
         res = self.hook.pytest_internalerror(excrepr=excrepr, excinfo=excinfo)
         if not any(res):
             for line in str(excrepr).split("\n"):
-                sys.stderr.write("INTERNALERROR> %s\n" % line)
+                sys.stderr.write(f"INTERNALERROR> {line}\n")
                 sys.stderr.flush()
 
     def cwd_relative_nodeid(self, nodeid: str) -> str:
@@ -1435,7 +1434,7 @@ class Config:
 
             if not isinstance(minver, str):
                 raise pytest.UsageError(
-                    "%s: 'minversion' must be a single value" % self.inipath
+                    f"{self.inipath}: 'minversion' must be a single value"
                 )
 
             if Version(minver) > Version(pytest.__version__):

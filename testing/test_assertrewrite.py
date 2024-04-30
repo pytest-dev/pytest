@@ -308,9 +308,7 @@ class TestAssertionRewrite:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(
-            ["*AssertionError*%s*" % repr((1, 2)), "*assert 1 == 2*"]
-        )
+        result.stdout.fnmatch_lines([f"*AssertionError*{(1, 2)!r}*", "*assert 1 == 2*"])
 
     def test_assertion_message_expr(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -908,7 +906,7 @@ def test_rewritten():
                 assert test_optimized.__doc__ is None"""
         )
         p = make_numbered_dir(root=Path(pytester.path), prefix="runpytest-")
-        tmp = "--basetemp=%s" % p
+        tmp = f"--basetemp={p}"
         with monkeypatch.context() as mp:
             mp.setenv("PYTHONOPTIMIZE", "2")
             mp.delenv("PYTHONDONTWRITEBYTECODE", raising=False)

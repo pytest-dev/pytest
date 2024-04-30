@@ -44,7 +44,7 @@ class RunAndParse:
         if family:
             args = ("-o", "junit_family=" + family, *args)
         xml_path = self.pytester.path.joinpath("junit.xml")
-        result = self.pytester.runpytest("--junitxml=%s" % xml_path, *args)
+        result = self.pytester.runpytest(f"--junitxml={xml_path}", *args)
         if family == "xunit2":
             with xml_path.open(encoding="utf-8") as f:
                 self.schema.validate(f)
@@ -520,7 +520,7 @@ class TestPython:
         )
 
         result, dom = run_and_parse(
-            "-o", "junit_logging=%s" % junit_logging, family=xunit_family
+            "-o", f"junit_logging={junit_logging}", family=xunit_family
         )
         assert result.ret, "Expected ret > 0"
         node = dom.find_first_by_tag("testsuite")
@@ -605,11 +605,11 @@ class TestPython:
         for index, char in enumerate("<&'"):
             tnode = node.find_nth_by_tag("testcase", index)
             tnode.assert_attr(
-                classname="test_failure_escape", name="test_func[%s]" % char
+                classname="test_failure_escape", name=f"test_func[{char}]"
             )
             sysout = tnode.find_first_by_tag("system-out")
             text = sysout.text
-            assert "%s\n" % char in text
+            assert f"{char}\n" in text
 
     @parametrize_families
     def test_junit_prefixing(
@@ -694,7 +694,7 @@ class TestPython:
                 assert 0
         """
         )
-        result, dom = run_and_parse("-o", "junit_logging=%s" % junit_logging)
+        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         if junit_logging in ["system-err", "out-err", "all"]:
@@ -764,13 +764,12 @@ class TestPython:
     def test_unicode(self, pytester: Pytester, run_and_parse: RunAndParse) -> None:
         value = "hx\xc4\x85\xc4\x87\n"
         pytester.makepyfile(
-            """\
+            f"""\
             # coding: latin1
             def test_hello():
-                print(%r)
+                print({value!r})
                 assert 0
             """
-            % value
         )
         result, dom = run_and_parse()
         assert result.ret == 1
@@ -805,7 +804,7 @@ class TestPython:
                 print('hello-stdout')
         """
         )
-        result, dom = run_and_parse("-o", "junit_logging=%s" % junit_logging)
+        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
@@ -829,7 +828,7 @@ class TestPython:
                 sys.stderr.write('hello-stderr')
         """
         )
-        result, dom = run_and_parse("-o", "junit_logging=%s" % junit_logging)
+        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
@@ -858,7 +857,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse("-o", "junit_logging=%s" % junit_logging)
+        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
@@ -888,7 +887,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse("-o", "junit_logging=%s" % junit_logging)
+        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
@@ -919,7 +918,7 @@ class TestPython:
                 sys.stdout.write('hello-stdout call')
         """
         )
-        result, dom = run_and_parse("-o", "junit_logging=%s" % junit_logging)
+        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
@@ -1013,7 +1012,7 @@ def test_nullbyte(pytester: Pytester, junit_logging: str) -> None:
     """
     )
     xmlf = pytester.path.joinpath("junit.xml")
-    pytester.runpytest("--junitxml=%s" % xmlf, "-o", "junit_logging=%s" % junit_logging)
+    pytester.runpytest(f"--junitxml={xmlf}", "-o", f"junit_logging={junit_logging}")
     text = xmlf.read_text(encoding="utf-8")
     assert "\x00" not in text
     if junit_logging == "system-out":
@@ -1035,7 +1034,7 @@ def test_nullbyte_replace(pytester: Pytester, junit_logging: str) -> None:
     """
     )
     xmlf = pytester.path.joinpath("junit.xml")
-    pytester.runpytest("--junitxml=%s" % xmlf, "-o", "junit_logging=%s" % junit_logging)
+    pytester.runpytest(f"--junitxml={xmlf}", "-o", f"junit_logging={junit_logging}")
     text = xmlf.read_text(encoding="utf-8")
     if junit_logging == "system-out":
         assert "#x0" in text
@@ -1071,9 +1070,9 @@ def test_invalid_xml_escape() -> None:
     for i in invalid:
         got = bin_xml_escape(chr(i))
         if i <= 0xFF:
-            expected = "#x%02X" % i
+            expected = f"#x{i:02X}"
         else:
-            expected = "#x%04X" % i
+            expected = f"#x{i:04X}"
         assert got == expected
     for i in valid:
         assert chr(i) == bin_xml_escape(chr(i))
@@ -1748,7 +1747,7 @@ def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
     """
     )
     result, dom = run_and_parse(
-        "-o", "junit_logging=%s" % junit_logging, family=xunit_family
+        "-o", f"junit_logging={junit_logging}", family=xunit_family
     )
     assert result.ret == 1
     node = dom.find_first_by_tag("testcase")

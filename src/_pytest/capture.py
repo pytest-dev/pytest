@@ -738,7 +738,7 @@ class CaptureManager:
         if self.is_globally_capturing():
             return "global"
         if self._capture_fixture:
-            return "fixture %s" % self._capture_fixture.request.fixturename
+            return f"fixture {self._capture_fixture.request.fixturename}"
         return False
 
     # Global capturing control

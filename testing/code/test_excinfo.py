@@ -1406,7 +1406,7 @@ raise ValueError()
             mod.f()
 
         # emulate the issue described in #1984
-        attr = "__%s__" % reason
+        attr = f"__{reason}__"
         getattr(excinfo.value, attr).__traceback__ = None
 
         r = excinfo.getrepr()

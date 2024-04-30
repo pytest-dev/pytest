@@ -104,7 +104,7 @@ class TerminalWriter:
         if self.hasmarkup:
             esc = [self._esctable[name] for name, on in markup.items() if on]
             if esc:
-                text = "".join("\x1b[%sm" % cod for cod in esc) + text + "\x1b[0m"
+                text = "".join(f"\x1b[{cod}m" for cod in esc) + text + "\x1b[0m"
         return text
 
     def sep(

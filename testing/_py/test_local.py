@@ -551,7 +551,7 @@ def batch_make_numbered_dirs(rootdir, repeats):
     for i in range(repeats):
         dir_ = local.make_numbered_dir(prefix="repro-", rootdir=rootdir)
         file_ = dir_.join("foo")
-        file_.write_text("%s" % i, encoding="utf-8")
+        file_.write_text(f"{i}", encoding="utf-8")
         actual = int(file_.read_text(encoding="utf-8"))
         assert (
             actual == i
@@ -563,9 +563,9 @@ def batch_make_numbered_dirs(rootdir, repeats):
 class TestLocalPath(CommonFSTests):
     def test_join_normpath(self, tmpdir):
         assert tmpdir.join(".") == tmpdir
-        p = tmpdir.join("../%s" % tmpdir.basename)
+        p = tmpdir.join(f"../{tmpdir.basename}")
         assert p == tmpdir
-        p = tmpdir.join("..//%s/" % tmpdir.basename)
+        p = tmpdir.join(f"..//{tmpdir.basename}/")
         assert p == tmpdir
 
     @skiponwin32
@@ -722,7 +722,7 @@ class TestLocalPath(CommonFSTests):
 
     @pytest.mark.parametrize("bin", (False, True))
     def test_dump(self, tmpdir, bin):
-        path = tmpdir.join("dumpfile%s" % int(bin))
+        path = tmpdir.join(f"dumpfile{int(bin)}")
         try:
             d = {"answer": 42}
             path.dump(d, bin=bin)

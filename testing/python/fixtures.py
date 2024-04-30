@@ -2268,18 +2268,17 @@ class TestFixtureMarker:
         This was a regression introduced in the fix for #736.
         """
         pytester.makepyfile(
-            """
+            f"""
             import pytest
 
             @pytest.fixture(params=[1, 2])
             def fixt(request):
                 return request.param
 
-            @pytest.mark.parametrize(%s, [(3, 'x'), (4, 'x')])
+            @pytest.mark.parametrize({param_args}, [(3, 'x'), (4, 'x')])
             def test_foo(fixt, val):
                 pass
         """
-            % param_args
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
