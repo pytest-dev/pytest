@@ -1216,3 +1216,53 @@ def test_pytest_version_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) ->
     result = pytester.runpytest_inprocess()
     assert result.ret == ExitCode.OK
     assert os.environ["PYTEST_VERSION"] == "old version"
+
+
+def test_teardown_session_failed(pytester: Pytester) -> None:
+    """Test that higher-scoped fixture teardowns run in the context of the last
+    item after the test session bails early due to --maxfail.
+
+    Regression test for #11706.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def baz():
+            yield
+            pytest.fail("This is a failing teardown")
+
+        def test_foo(baz):
+            pytest.fail("This is a failing test")
+
+        def test_bar(): pass
+        """
+    )
+    result = pytester.runpytest("--maxfail=1")
+    result.assert_outcomes(failed=1, errors=1)
+
+
+def test_teardown_session_stopped(pytester: Pytester) -> None:
+    """Test that higher-scoped fixture teardowns run in the context of the last
+    item after the test session bails early due to --stepwise.
+
+    Regression test for #11706.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def baz():
+            yield
+            pytest.fail("This is a failing teardown")
+
+        def test_foo(baz):
+            pytest.fail("This is a failing test")
+
+        def test_bar(): pass
+        """
+    )
+    result = pytester.runpytest("--stepwise")
+    result.assert_outcomes(failed=1, errors=1)
