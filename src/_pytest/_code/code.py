@@ -52,7 +52,7 @@ from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 
 
-if sys.version_info[:2] < (3, 11):
+if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
@@ -703,7 +703,7 @@ class ExceptionInfo(Generic[E]):
             # Workaround for https://github.com/python/cpython/issues/98778 on
             # Python <= 3.9, and some 3.10 and 3.11 patch versions.
             HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
-            if sys.version_info[:2] <= (3, 11) and isinstance(exc, HTTPError):
+            if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
                 notes = []
             else:
                 raise
@@ -940,7 +940,7 @@ class FormattedExcinfo:
             s = self.get_source(source, line_index, excinfo, short=short)
             lines.extend(s)
             if short:
-                message = "in %s" % (entry.name)
+                message = f"in {entry.name}"
             else:
                 message = excinfo and excinfo.typename or ""
             entry_path = entry.path

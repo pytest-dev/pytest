@@ -552,9 +552,9 @@ class MarkGenerator:
                     fail(f"Unknown '{name}' mark, did you mean 'parametrize'?")
 
                 warnings.warn(
-                    "Unknown pytest.mark.%s - is this a typo?  You can register "
+                    f"Unknown pytest.mark.{name} - is this a typo?  You can register "
                     "custom marks to avoid this warning - for details, see "
-                    "https://docs.pytest.org/en/stable/how-to/mark.html" % name,
+                    "https://docs.pytest.org/en/stable/how-to/mark.html",
                     PytestUnknownMarkWarning,
                     2,
                 )

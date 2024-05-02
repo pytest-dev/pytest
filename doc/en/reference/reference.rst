@@ -1117,6 +1117,11 @@ When set (regardless of value), pytest acknowledges that is running in a CI proc
 This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
 by the user, see :ref:`adding default options` for more information.
 
+.. envvar:: PYTEST_VERSION
+
+This environment variable is defined at the start of the pytest session and is undefined afterwards.
+It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
+
 .. envvar:: PYTEST_CURRENT_TEST
 
 This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
@@ -1279,8 +1284,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
    when collecting Python modules. Default is ``False``.
 
-   Set to ``True`` if you are testing namespace packages installed into a virtual environment and it is important for
-   your packages to be imported using their full namespace package name.
+   Set to ``True`` if the package you are testing is part of a namespace package.
 
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.

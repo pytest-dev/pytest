@@ -292,7 +292,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
         if i > 42:
             i -= 10  # Provide some context
             explanation = [
-                "Skipping %s identical leading characters in diff, use -v to show" % i
+                f"Skipping {i} identical leading characters in diff, use -v to show"
             ]
             left = left[i:]
             right = right[i:]
@@ -493,7 +493,7 @@ def _compare_eq_dict(
     common = set_left.intersection(set_right)
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
-        explanation += ["Omitting %s identical items, use -vv to show" % len(same)]
+        explanation += [f"Omitting {len(same)} identical items, use -vv to show"]
     elif same:
         explanation += ["Common items:"]
         explanation += highlighter(pprint.pformat(same)).splitlines()
@@ -560,7 +560,7 @@ def _compare_eq_cls(
     if same or diff:
         explanation += [""]
     if same and verbose < 2:
-        explanation.append("Omitting %s identical items, use -vv to show" % len(same))
+        explanation.append(f"Omitting {len(same)} identical items, use -vv to show")
     elif same:
         explanation += ["Matching attributes:"]
         explanation += highlighter(pprint.pformat(same)).splitlines()
@@ -590,7 +590,7 @@ def _notin_text(term: str, text: str, verbose: int = 0) -> List[str]:
     tail = text[index + len(term) :]
     correct_text = head + tail
     diff = _diff_text(text, correct_text, verbose)
-    newdiff = ["%s is contained here:" % saferepr(term, maxsize=42)]
+    newdiff = [f"{saferepr(term, maxsize=42)} is contained here:"]
     for line in diff:
         if line.startswith("Skipping"):
             continue

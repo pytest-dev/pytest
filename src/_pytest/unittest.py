@@ -32,6 +32,9 @@ from _pytest.runner import CallInfo
 import pytest
 
 
+if sys.version_info[:2] < (3, 11):
+    from exceptiongroup import ExceptionGroup
+
 if TYPE_CHECKING:
     import unittest
 
@@ -111,6 +114,20 @@ class UnitTestCase(Class):
             return None
         cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
+        def process_teardown_exceptions() -> None:
+            # tearDown_exceptions is a list set in the class containing exc_infos for errors during
+            # teardown for the class.
+            exc_infos = getattr(cls, "tearDown_exceptions", None)
+            if not exc_infos:
+                return
+            exceptions = [exc for (_, exc, _) in exc_infos]
+            # If a single exception, raise it directly as this provides a more readable
+            # error (hopefully this will improve in #12255).
+            if len(exceptions) == 1:
+                raise exceptions[0]
+            else:
+                raise ExceptionGroup("Unittest class cleanup errors", exceptions)
+
         def unittest_setup_class_fixture(
             request: FixtureRequest,
         ) -> Generator[None, None, None]:
@@ -125,6 +142,7 @@ class UnitTestCase(Class):
                 # follow this here.
                 except Exception:
                     cleanup()
+                    process_teardown_exceptions()
                     raise
             yield
             try:
@@ -132,6 +150,7 @@ class UnitTestCase(Class):
                     teardown()
             finally:
                 cleanup()
+                process_teardown_exceptions()
 
         self.session._fixturemanager._register_fixture(
             # Use a unique name to speed up lookup.

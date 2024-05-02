@@ -28,6 +28,96 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.2.0 (2024-04-27)
+=========================
+
+Deprecations
+------------
+
+- `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`_: A deprecation warning is now raised when implementations of one of the following hooks request a deprecated ``py.path.local`` parameter instead of the ``pathlib.Path`` parameter which replaced it:
+
+  - :hook:`pytest_ignore_collect` - the ``path`` parameter - use ``collection_path`` instead.
+  - :hook:`pytest_collect_file` - the ``path`` parameter - use ``file_path`` instead.
+  - :hook:`pytest_pycollect_makemodule` - the ``path`` parameter - use ``module_path`` instead.
+  - :hook:`pytest_report_header` - the ``startdir`` parameter - use ``start_path`` instead.
+  - :hook:`pytest_report_collectionfinish` - the ``startdir`` parameter - use ``start_path`` instead.
+
+  The replacement parameters are available since pytest 7.0.0.
+  The old parameters will be removed in pytest 9.0.0.
+
+  See :ref:`legacy-path-hooks-deprecated` for more details.
+
+
+
+Features
+--------
+
+- `#11871 <https://github.com/pytest-dev/pytest/issues/11871>`_: Added support for reading command line arguments from a file using the prefix character ``@``, like e.g.: ``pytest @tests.txt``. The file must have one argument per line.
+
+  See :ref:`Read arguments from file <args-from-file>` for details.
+
+
+
+Improvements
+------------
+
+- `#11523 <https://github.com/pytest-dev/pytest/issues/11523>`_: :func:`pytest.importorskip` will now issue a warning if the module could be found, but raised :class:`ImportError` instead of :class:`ModuleNotFoundError`.
+
+  The warning can be suppressed by passing ``exc_type=ImportError`` to :func:`pytest.importorskip`.
+
+  See :ref:`import-or-skip-import-error` for details.
+
+
+- `#11728 <https://github.com/pytest-dev/pytest/issues/11728>`_: For ``unittest``-based tests, exceptions during class cleanup (as raised by functions registered with :meth:`TestCase.addClassCleanup <unittest.TestCase.addClassCleanup>`) are now reported instead of silently failing.
+
+
+- `#11777 <https://github.com/pytest-dev/pytest/issues/11777>`_: Text is no longer truncated in the ``short test summary info`` section when ``-vv`` is given.
+
+
+- `#12112 <https://github.com/pytest-dev/pytest/issues/12112>`_: Improved namespace packages detection when :confval:`consider_namespace_packages` is enabled, covering more situations (like editable installs).
+
+
+- `#9502 <https://github.com/pytest-dev/pytest/issues/9502>`_: Added :envvar:`PYTEST_VERSION` environment variable which is defined at the start of the pytest session and undefined afterwards. It contains the value of ``pytest.__version__``, and among other things can be used to easily check if code is running from within a pytest run.
+
+
+
+Bug Fixes
+---------
+
+- `#12065 <https://github.com/pytest-dev/pytest/issues/12065>`_: Fixed a regression in pytest 8.0.0 where test classes containing ``setup_method`` and tests using ``@staticmethod`` or ``@classmethod`` would crash with ``AttributeError: 'NoneType' object has no attribute 'setup_method'``.
+
+  Now the :attr:`request.instance <pytest.FixtureRequest.instance>` attribute of tests using ``@staticmethod`` and ``@classmethod`` is no longer ``None``, but a fresh instance of the class, like in non-static methods.
+  Previously it was ``None``, and all fixtures of such tests would share a single ``self``.
+
+
+- `#12135 <https://github.com/pytest-dev/pytest/issues/12135>`_: Fixed issue where fixtures adding their finalizer multiple times to fixtures they request would cause unreliable and non-intuitive teardown ordering in some instances.
+
+
+- `#12194 <https://github.com/pytest-dev/pytest/issues/12194>`_: Fixed a bug with ``--importmode=importlib`` and ``--doctest-modules`` where child modules did not appear as attributes in parent modules.
+
+
+- `#1489 <https://github.com/pytest-dev/pytest/issues/1489>`_: Fixed some instances where teardown of higher-scoped fixtures was not happening in the reverse order they were initialized in.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#12069 <https://github.com/pytest-dev/pytest/issues/12069>`_: ``pluggy>=1.5.0`` is now required.
+
+
+- `#12167 <https://github.com/pytest-dev/pytest/issues/12167>`_: :ref:`cache <cache>`: create supporting files (``CACHEDIR.TAG``, ``.gitignore``, etc.) in a temporary directory to provide atomic semantics.
+
+
+pytest 8.1.2 (2024-04-26)
+=========================
+
+Bug Fixes
+---------
+
+- `#12114 <https://github.com/pytest-dev/pytest/issues/12114>`_: Fixed error in :func:`pytest.approx` when used with `numpy` arrays and comparing with other types.
+
+
 pytest 8.1.1 (2024-03-08)
 =========================
 

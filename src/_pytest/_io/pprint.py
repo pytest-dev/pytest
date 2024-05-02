@@ -616,7 +616,7 @@ class PrettyPrinter:
                 vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
             context.remove(objid)
-            return "{%s}" % ", ".join(components)
+            return "{{{}}}".format(", ".join(components))
 
         if (issubclass(typ, list) and r is list.__repr__) or (
             issubclass(typ, tuple) and r is tuple.__repr__

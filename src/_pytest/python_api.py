@@ -142,7 +142,7 @@ class ApproxNumpy(ApproxBase):
         )
         return f"approx({list_scalars!r})"
 
-    def _repr_compare(self, other_side: "ndarray") -> List[str]:
+    def _repr_compare(self, other_side: Union["ndarray", List[Any]]) -> List[str]:
         import itertools
         import math
 
@@ -163,10 +163,14 @@ class ApproxNumpy(ApproxBase):
             self._approx_scalar, self.expected.tolist()
         )
 
-        if np_array_shape != other_side.shape:
+        # convert other_side to numpy array to ensure shape attribute is available
+        other_side_as_array = _as_numpy_array(other_side)
+        assert other_side_as_array is not None
+
+        if np_array_shape != other_side_as_array.shape:
             return [
                 "Impossible to compare arrays with different shapes.",
-                f"Shapes: {np_array_shape} and {other_side.shape}",
+                f"Shapes: {np_array_shape} and {other_side_as_array.shape}",
             ]
 
         number_of_elements = self.expected.size
@@ -175,7 +179,7 @@ class ApproxNumpy(ApproxBase):
         different_ids = []
         for index in itertools.product(*(range(i) for i in np_array_shape)):
             approx_value = get_value_from_nested_list(approx_side_as_seq, index)
-            other_value = get_value_from_nested_list(other_side, index)
+            other_value = get_value_from_nested_list(other_side_as_array, index)
             if approx_value != other_value:
                 abs_diff = abs(approx_value.expected - other_value)
                 max_abs_diff = max(max_abs_diff, abs_diff)
@@ -188,7 +192,7 @@ class ApproxNumpy(ApproxBase):
         message_data = [
             (
                 str(index),
-                str(get_value_from_nested_list(other_side, index)),
+                str(get_value_from_nested_list(other_side_as_array, index)),
                 str(get_value_from_nested_list(approx_side_as_seq, index)),
             )
             for index in different_ids
@@ -450,7 +454,7 @@ class ApproxScalar(ApproxBase):
             return False
 
         # Return true if the two numbers are within the tolerance.
-        result: bool = abs(self.expected - actual) <= self.tolerance  # type: ignore[arg-type]
+        result: bool = abs(self.expected - actual) <= self.tolerance
         return result
 
     # Ignore type because of https://github.com/python/mypy/issues/4266.

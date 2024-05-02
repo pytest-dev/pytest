@@ -1,4 +1,5 @@
 # mypy: allow-untyped-defs
+# ruff: noqa: T100
 """Interactive debugging with PDB, the Python Debugger."""
 
 import argparse
@@ -180,8 +181,7 @@ class pytestPDB:
                         else:
                             tw.sep(
                                 ">",
-                                "PDB continue (IO-capturing resumed for %s)"
-                                % capturing,
+                                f"PDB continue (IO-capturing resumed for {capturing})",
                             )
                         assert capman is not None
                         capman.resume()

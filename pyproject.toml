@@ -43,7 +43,7 @@ dependencies = [
     'exceptiongroup>=1.0.0rc8; python_version < "3.11"',
     "iniconfig",
     "packaging",
-    "pluggy<2.0,>=1.4",
+    "pluggy<2.0,>=1.5",
     'tomli>=1; python_version < "3.11"',
 ]
 [project.optional-dependencies]
@@ -107,6 +107,7 @@ select = [
     "PLE", # pylint error
     "PLW", # pylint warning
     "PLR1714", # Consider merging multiple comparisons
+    "T100", # flake8-debugger
 ]
 ignore = [
     # bugbear ignore

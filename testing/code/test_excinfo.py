@@ -28,7 +28,7 @@ import pytest
 if TYPE_CHECKING:
     from _pytest._code.code import _TracebackStyle
 
-if sys.version_info[:2] < (3, 11):
+if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
@@ -1406,7 +1406,7 @@ raise ValueError()
             mod.f()
 
         # emulate the issue described in #1984
-        attr = "__%s__" % reason
+        attr = f"__{reason}__"
         getattr(excinfo.value, attr).__traceback__ = None
 
         r = excinfo.getrepr()

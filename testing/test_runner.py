@@ -9,6 +9,7 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import Type
+import warnings
 
 from _pytest import outcomes
 from _pytest import reports
@@ -22,7 +23,7 @@ from _pytest.pytester import Pytester
 import pytest
 
 
-if sys.version_info[:2] < (3, 11):
+if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
@@ -140,6 +141,43 @@ class TestSetupState:
         assert isinstance(mod, KeyError)
         assert isinstance(func.exceptions[0], TypeError)  # type: ignore
         assert isinstance(func.exceptions[1], ValueError)  # type: ignore
+
+    def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
+        """Regression test for #12204 (the "BTW" case)."""
+        pytester.makepyfile(test="")
+        # If the collector.setup() raises, all collected items error with this
+        # exception.
+        pytester.makeconftest(
+            """
+            import pytest
+
+            class MyItem(pytest.Item):
+                def runtest(self) -> None: pass
+
+            class MyBadCollector(pytest.Collector):
+                def collect(self):
+                    return [
+                        MyItem.from_parent(self, name="one"),
+                        MyItem.from_parent(self, name="two"),
+                        MyItem.from_parent(self, name="three"),
+                    ]
+
+                def setup(self):
+                    1 / 0
+
+            def pytest_collect_file(file_path, parent):
+                if file_path.name == "test.py":
+                    return MyBadCollector.from_parent(parent, name='bad')
+            """
+        )
+
+        result = pytester.runpytest_inprocess("--tb=native")
+        assert result.ret == ExitCode.TESTS_FAILED
+        failures = result.reprec.getfailures()  # type: ignore[attr-defined]
+        assert len(failures) == 3
+        lines1 = failures[1].longrepr.reprtraceback.reprentries[0].lines
+        lines2 = failures[2].longrepr.reprtraceback.reprentries[0].lines
+        assert len(lines1) == len(lines2)
 
 
 class BaseFunctionalTests:
@@ -762,6 +800,73 @@ def test_importorskip_imports_last_module_part() -> None:
     assert os.path == ospath
 
 
+class TestImportOrSkipExcType:
+    """Tests for #11523."""
+
+    def test_no_warning(self) -> None:
+        # An attempt on a module which does not exist will raise ModuleNotFoundError, so it will
+        # be skipped normally and no warning will be issued.
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("always")
+
+            with pytest.raises(pytest.skip.Exception):
+                pytest.importorskip("TestImportOrSkipExcType_test_no_warning")
+
+        assert captured == []
+
+    def test_import_error_with_warning(self, pytester: Pytester) -> None:
+        # Create a module which exists and can be imported, however it raises
+        # ImportError due to some other problem. In this case we will issue a warning
+        # about the future behavior change.
+        fn = pytester.makepyfile("raise ImportError('some specific problem')")
+        pytester.syspathinsert()
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("always")
+
+            with pytest.raises(pytest.skip.Exception):
+                pytest.importorskip(fn.stem)
+
+        [warning] = captured
+        assert warning.category is pytest.PytestDeprecationWarning
+
+    def test_import_error_suppress_warning(self, pytester: Pytester) -> None:
+        # Same as test_import_error_with_warning, but we can suppress the warning
+        # by passing ImportError as exc_type.
+        fn = pytester.makepyfile("raise ImportError('some specific problem')")
+        pytester.syspathinsert()
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("always")
+
+            with pytest.raises(pytest.skip.Exception):
+                pytest.importorskip(fn.stem, exc_type=ImportError)
+
+        assert captured == []
+
+    def test_warning_integration(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+            def test_foo():
+                pytest.importorskip("warning_integration_module")
+            """
+        )
+        pytester.makepyfile(
+            warning_integration_module="""
+                raise ImportError("required library foobar not compiled properly")
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*Module 'warning_integration_module' was found, but when imported by pytest it raised:",
+                "*      ImportError('required library foobar not compiled properly')",
+                "*1 skipped, 1 warning*",
+            ]
+        )
+
+
 def test_importorskip_dev_module(monkeypatch) -> None:
     try:
         mod = types.ModuleType("mockmodule")
@@ -927,7 +1032,7 @@ def test_store_except_info_on_error() -> None:
     assert sys.last_type is IndexError
     assert isinstance(sys.last_value, IndexError)
     if sys.version_info >= (3, 12, 0):
-        assert isinstance(sys.last_exc, IndexError)  # type: ignore[attr-defined]
+        assert isinstance(sys.last_exc, IndexError)
 
     assert sys.last_value.args[0] == "TEST"
     assert sys.last_traceback
@@ -1094,3 +1199,70 @@ def test_outcome_exception_bad_msg() -> None:
     with pytest.raises(TypeError) as excinfo:
         OutcomeException(func)  # type: ignore
     assert str(excinfo.value) == expected
+
+
+def test_pytest_version_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("PYTEST_VERSION", "old version")
+    pytester.makepyfile(
+        """
+        import pytest
+        import os
+
+
+        def test():
+            assert os.environ.get("PYTEST_VERSION") == pytest.__version__
+    """
+    )
+    result = pytester.runpytest_inprocess()
+    assert result.ret == ExitCode.OK
+    assert os.environ["PYTEST_VERSION"] == "old version"
+
+
+def test_teardown_session_failed(pytester: Pytester) -> None:
+    """Test that higher-scoped fixture teardowns run in the context of the last
+    item after the test session bails early due to --maxfail.
+
+    Regression test for #11706.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def baz():
+            yield
+            pytest.fail("This is a failing teardown")
+
+        def test_foo(baz):
+            pytest.fail("This is a failing test")
+
+        def test_bar(): pass
+        """
+    )
+    result = pytester.runpytest("--maxfail=1")
+    result.assert_outcomes(failed=1, errors=1)
+
+
+def test_teardown_session_stopped(pytester: Pytester) -> None:
+    """Test that higher-scoped fixture teardowns run in the context of the last
+    item after the test session bails early due to --stepwise.
+
+    Regression test for #11706.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def baz():
+            yield
+            pytest.fail("This is a failing teardown")
+
+        def test_foo(baz):
+            pytest.fail("This is a failing test")
+
+        def test_bar(): pass
+        """
+    )
+    result = pytester.runpytest("--stepwise")
+    result.assert_outcomes(failed=1, errors=1)

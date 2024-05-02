@@ -1421,7 +1421,7 @@ def test_tbstyle_short(pytester: Pytester) -> None:
     s = result.stdout.str()
     assert "arg = 42" not in s
     assert "x = 0" not in s
-    result.stdout.fnmatch_lines(["*%s:8*" % p.name, "    assert x", "E   assert*"])
+    result.stdout.fnmatch_lines([f"*{p.name}:8*", "    assert x", "E   assert*"])
     result = pytester.runpytest()
     s = result.stdout.str()
     assert "x = 0" in s
@@ -1497,8 +1497,8 @@ class TestGenericReporting:
         """
         )
         for tbopt in ["long", "short", "no"]:
-            print("testing --tb=%s..." % tbopt)
-            result = pytester.runpytest("-rN", "--tb=%s" % tbopt)
+            print(f"testing --tb={tbopt}...")
+            result = pytester.runpytest("-rN", f"--tb={tbopt}")
             s = result.stdout.str()
             if tbopt == "long":
                 assert "print(6*7)" in s
@@ -1528,7 +1528,7 @@ class TestGenericReporting:
         result = pytester.runpytest("--tb=line")
         bn = p.name
         result.stdout.fnmatch_lines(
-            ["*%s:3: IndexError*" % bn, "*%s:8: AssertionError: hello*" % bn]
+            [f"*{bn}:3: IndexError*", f"*{bn}:8: AssertionError: hello*"]
         )
         s = result.stdout.str()
         assert "def test_func2" not in s
@@ -1544,7 +1544,7 @@ class TestGenericReporting:
         result = pytester.runpytest("--tb=line")
         result.stdout.str()
         bn = p.name
-        result.stdout.fnmatch_lines(["*%s:3: Failed: test_func1" % bn])
+        result.stdout.fnmatch_lines([f"*{bn}:3: Failed: test_func1"])
 
     def test_pytest_report_header(self, pytester: Pytester, option) -> None:
         pytester.makeconftest(
@@ -1945,7 +1945,7 @@ def test_summary_stats(
     # Reset cache.
     tr._main_color = None
 
-    print("Based on stats: %s" % stats_arg)
+    print(f"Based on stats: {stats_arg}")
     print(f'Expect summary: "{exp_line}"; with color "{exp_color}"')
     (line, color) = tr.build_summary_stats_line()
     print(f'Actually got:   "{line}"; with color "{color}"')
@@ -2377,8 +2377,13 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
 
     monkeypatch.setattr(_pytest.terminal, "_get_node_id_with_markup", mock_get_pos)
 
+    class Namespace:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
     class config:
-        pass
+        def __init__(self):
+            self.option = Namespace(verbose=0)
 
     class rep:
         def _get_verbose_word(self, *args):
@@ -2399,7 +2404,7 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
         if msg:
             rep.longrepr.reprcrash.message = msg  # type: ignore
         actual = _get_line_with_reprcrash_message(
-            config,  # type: ignore[arg-type]
+            config(),  # type: ignore[arg-type]
             rep(),  # type: ignore[arg-type]
             DummyTerminalWriter(),  # type: ignore[arg-type]
             {},
@@ -2441,6 +2446,43 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
     check("🉐🉐🉐🉐🉐\n2nd line", 41, "FAILED nodeid::🉐::withunicode - 🉐🉐...")
     check("🉐🉐🉐🉐🉐\n2nd line", 42, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐...")
     check("🉐🉐🉐🉐🉐\n2nd line", 80, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐")
+
+
+def test_short_summary_with_verbose(
+    monkeypatch: MonkeyPatch, pytester: Pytester
+) -> None:
+    """With -vv do not truncate the summary info (#11777)."""
+    # On CI we also do not truncate the summary info, monkeypatch it to ensure we
+    # are testing against the -vv flag on CI.
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+
+    string_length = 200
+    pytester.makepyfile(
+        f"""
+        def test():
+            s1 = "A" * {string_length}
+            s2 = "B" * {string_length}
+            assert s1 == s2
+        """
+    )
+
+    # No -vv, summary info should be truncated.
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            "* assert 'AAA...",
+        ],
+    )
+
+    # No truncation with -vv.
+    result = pytester.runpytest("-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            f"*{'A' * string_length}*{'B' * string_length}'",
+        ]
+    )
 
 
 @pytest.mark.parametrize(

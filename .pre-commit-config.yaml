@@ -1,21 +1,16 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.3.5"
+  rev: "v0.4.2"
   hooks:
     - id: ruff
       args: ["--fix"]
     - id: ruff-format
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
-    -   id: fix-encoding-pragma
-        args: [--remove]
     -   id: check-yaml
-    -   id: debug-statements
-        exclude: _pytest/(debugging|hookspec).py
-        language_version: python3
 -   repo: https://github.com/adamchainz/blacken-docs
     rev: 1.16.0
     hooks:
@@ -26,7 +21,7 @@ repos:
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
@@ -34,7 +29,7 @@ repos:
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0
-          - pluggy>=1.4.0
+          - pluggy>=1.5.0
           - packaging
           - tomli
           - types-pkg_resources
@@ -43,20 +38,20 @@ repos:
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "1.7.0"
+  rev: "1.8.0"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
 -   repo: local
     hooks:
-    - id: pylint
-      name: pylint
-      entry: pylint
-      language: system
-      types: [python]
-      args: ["-rn", "-sn", "--fail-on=I"]
-      stages: [manual]
+    -   id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args: ["-rn", "-sn", "--fail-on=I"]
+        stages: [manual]
     -   id: rst
         name: rst
         entry: rst-lint --encoding utf-8

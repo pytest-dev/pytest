@@ -121,11 +121,11 @@ def pytest_cmdline_parse() -> Generator[None, Config, Config]:
         )
         config.trace.root.setwriter(debugfile.write)
         undo_tracing = config.pluginmanager.enable_tracing()
-        sys.stderr.write("writing pytest debug information to %s\n" % path)
+        sys.stderr.write(f"writing pytest debug information to {path}\n")
 
         def unset_tracing() -> None:
             debugfile.close()
-            sys.stderr.write("wrote pytest debug information to %s\n" % debugfile.name)
+            sys.stderr.write(f"wrote pytest debug information to {debugfile.name}\n")
             config.trace.root.setwriter(None)
             undo_tracing()
 
@@ -185,7 +185,7 @@ def showhelp(config: Config) -> None:
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         spec = f"{name} ({type}):"
-        tw.write("  %s" % spec)
+        tw.write(f"  {spec}")
         spec_len = len(spec)
         if spec_len > (indent_len - 3):
             # Display help starting at a new line.

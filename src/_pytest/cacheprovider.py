@@ -332,7 +332,7 @@ class LFPlugin:
 
     def pytest_report_collectionfinish(self) -> Optional[str]:
         if self.active and self.config.getoption("verbose") >= 0:
-            return "run-last-failure: %s" % self._report_status
+            return f"run-last-failure: {self._report_status}"
         return None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
@@ -588,21 +588,21 @@ def cacheshow(config: Config, session: Session) -> int:
     dummy = object()
     basedir = config.cache._cachedir
     vdir = basedir / Cache._CACHE_PREFIX_VALUES
-    tw.sep("-", "cache values for %r" % glob)
+    tw.sep("-", f"cache values for {glob!r}")
     for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
         key = str(valpath.relative_to(vdir))
         val = config.cache.get(key, dummy)
         if val is dummy:
-            tw.line("%s contains unreadable content, will be ignored" % key)
+            tw.line(f"{key} contains unreadable content, will be ignored")
         else:
-            tw.line("%s contains:" % key)
+            tw.line(f"{key} contains:")
             for line in pformat(val).splitlines():
                 tw.line("  " + line)
 
     ddir = basedir / Cache._CACHE_PREFIX_DIRS
     if ddir.is_dir():
         contents = sorted(ddir.rglob(glob))
-        tw.sep("-", "cache directories for %r" % glob)
+        tw.sep("-", f"cache directories for {glob!r}")
         for p in contents:
             # if p.is_dir():
             #    print("%s/" % p.relative_to(basedir))

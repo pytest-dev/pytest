@@ -5,6 +5,7 @@ import bdb
 import dataclasses
 import os
 import sys
+import types
 from typing import Callable
 from typing import cast
 from typing import Dict
@@ -39,7 +40,7 @@ from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
 
-if sys.version_info[:2] < (3, 11):
+if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 if TYPE_CHECKING:
@@ -89,7 +90,7 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
     if not durations:
         tr.write_sep("=", "slowest durations")
     else:
-        tr.write_sep("=", "slowest %s durations" % durations)
+        tr.write_sep("=", f"slowest {durations} durations")
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):
@@ -133,6 +134,10 @@ def runtestprotocol(
             show_test_item(item)
         if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
+    # If the session is about to fail or stop, teardown everything - this is
+    # necessary to correctly report fixture teardown errors (see #11706)
+    if item.session.shouldfail or item.session.shouldstop:
+        nextitem = None
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # After all teardown hooks have been called
     # want funcargs and request info to go away.
@@ -166,7 +171,7 @@ def pytest_runtest_call(item: Item) -> None:
         del sys.last_value
         del sys.last_traceback
         if sys.version_info >= (3, 12, 0):
-            del sys.last_exc  # type: ignore[attr-defined]
+            del sys.last_exc
     except AttributeError:
         pass
     try:
@@ -176,11 +181,11 @@ def pytest_runtest_call(item: Item) -> None:
         sys.last_type = type(e)
         sys.last_value = e
         if sys.version_info >= (3, 12, 0):
-            sys.last_exc = e  # type: ignore[attr-defined]
+            sys.last_exc = e
         assert e.__traceback__ is not None
         # Skip *this* frame
         sys.last_traceback = e.__traceback__.tb_next
-        raise e
+        raise
 
 
 def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
@@ -490,8 +495,13 @@ class SetupState:
             Tuple[
                 # Node's finalizers.
                 List[Callable[[], object]],
-                # Node's exception, if its setup raised.
-                Optional[Union[OutcomeException, Exception]],
+                # Node's exception and original traceback, if its setup raised.
+                Optional[
+                    Tuple[
+                        Union[OutcomeException, Exception],
+                        Optional[types.TracebackType],
+                    ]
+                ],
             ],
         ] = {}
 
@@ -504,7 +514,7 @@ class SetupState:
         for col, (finalizers, exc) in self.stack.items():
             assert col in needed_collectors, "previous item was not torn down properly"
             if exc:
-                raise exc
+                raise exc[0].with_traceback(exc[1])
 
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
@@ -513,8 +523,8 @@ class SetupState:
             try:
                 col.setup()
             except TEST_OUTCOME as exc:
-                self.stack[col] = (self.stack[col][0], exc)
-                raise exc
+                self.stack[col] = (self.stack[col][0], (exc, exc.__traceback__))
+                raise
 
     def addfinalizer(self, finalizer: Callable[[], object], node: Node) -> None:
         """Attach a finalizer to the given node.

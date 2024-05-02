@@ -1,5 +1,5 @@
 pallets-sphinx-themes
-pluggy>=1.2.0
+pluggy>=1.5.0
 pygments-pytest>=2.3.0
 sphinx-removed-in>=0.2.0
 sphinx>=7

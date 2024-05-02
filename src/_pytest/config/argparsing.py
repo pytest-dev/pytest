@@ -313,23 +313,23 @@ class Argument:
         for opt in opts:
             if len(opt) < 2:
                 raise ArgumentError(
-                    "invalid option string %r: "
-                    "must be at least two characters long" % opt,
+                    f"invalid option string {opt!r}: "
+                    "must be at least two characters long",
                     self,
                 )
             elif len(opt) == 2:
                 if not (opt[0] == "-" and opt[1] != "-"):
                     raise ArgumentError(
-                        "invalid short option string %r: "
-                        "must be of the form -x, (x any non-dash char)" % opt,
+                        f"invalid short option string {opt!r}: "
+                        "must be of the form -x, (x any non-dash char)",
                         self,
                     )
                 self._short_opts.append(opt)
             else:
                 if not (opt[0:2] == "--" and opt[2] != "-"):
                     raise ArgumentError(
-                        "invalid long option string %r: "
-                        "must start with --, followed by non-dash" % opt,
+                        f"invalid long option string {opt!r}: "
+                        "must start with --, followed by non-dash",
                         self,
                     )
                 self._long_opts.append(opt)
@@ -383,7 +383,7 @@ class OptionGroup:
             name for opt in self.options for name in opt.names()
         )
         if conflict:
-            raise ValueError("option names %s already added" % conflict)
+            raise ValueError(f"option names {conflict} already added")
         option = Argument(*opts, **attrs)
         self._addoption_instance(option, shortupper=False)
 
@@ -441,14 +441,16 @@ class MyOptionParser(argparse.ArgumentParser):
         if unrecognized:
             for arg in unrecognized:
                 if arg and arg[0] == "-":
-                    lines = ["unrecognized arguments: %s" % (" ".join(unrecognized))]
+                    lines = [
+                        "unrecognized arguments: {}".format(" ".join(unrecognized))
+                    ]
                     for k, v in sorted(self.extra_info.items()):
                         lines.append(f"  {k}: {v}")
                     self.error("\n".join(lines))
             getattr(parsed, FILE_OR_DIR).extend(unrecognized)
         return parsed
 
-    if sys.version_info[:2] < (3, 9):  # pragma: no cover
+    if sys.version_info < (3, 9):  # pragma: no cover
         # Backport of https://github.com/python/cpython/pull/14316 so we can
         # disable long --argument abbreviations without breaking short flags.
         def _parse_optional(
@@ -520,7 +522,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
                 continue
             if not option.startswith("--"):
                 raise ArgumentError(
-                    'long optional argument without "--": [%s]' % (option), option
+                    f'long optional argument without "--": [{option}]', option
                 )
             xxoption = option[2:]
             shortened = xxoption.replace("-", "")

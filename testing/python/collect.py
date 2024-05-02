@@ -36,9 +36,9 @@ class TestModule:
             [
                 "*import*mismatch*",
                 "*imported*test_whatever*",
-                "*%s*" % p1,
+                f"*{p1}*",
                 "*not the same*",
-                "*%s*" % p2,
+                f"*{p2}*",
                 "*HINT*",
             ]
         )

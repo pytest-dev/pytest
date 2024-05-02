@@ -171,7 +171,7 @@ class TestPaste:
         assert type(data) is bytes
         lexer = "text"
         assert url == "https://bpa.st"
-        assert "lexer=%s" % lexer in data.decode()
+        assert f"lexer={lexer}" in data.decode()
         assert "code=full-paste-contents" in data.decode()
         assert "expiry=1week" in data.decode()
 

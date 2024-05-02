@@ -44,7 +44,7 @@ def test_normal_flow(pytester: Pytester, pyfile_with_warnings) -> None:
     result = pytester.runpytest(pyfile_with_warnings)
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "test_normal_flow.py::test_func",
             "*normal_flow_module.py:3: UserWarning: user warning",
             '*  warnings.warn(UserWarning("user warning"))',
@@ -75,7 +75,7 @@ def test_setup_teardown_warnings(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "*test_setup_teardown_warnings.py:6: UserWarning: warning during setup",
             '*warnings.warn(UserWarning("warning during setup"))',
             "*test_setup_teardown_warnings.py:8: UserWarning: warning during teardown",
@@ -143,7 +143,7 @@ def test_unicode(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "*test_unicode.py:7: UserWarning: \u6d4b\u8bd5*",
             "* 1 passed, 1 warning*",
         ]
@@ -315,7 +315,7 @@ def test_collection_warnings(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "  *collection_warnings.py:3: UserWarning: collection warning",
             '    warnings.warn(UserWarning("collection warning"))',
             "* 1 passed, 1 warning*",
@@ -374,7 +374,7 @@ def test_hide_pytest_internal_warnings(
     else:
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                f"*== {WARNINGS_SUMMARY_HEADER} ==*",
                 "*test_hide_pytest_internal_warnings.py:4: PytestWarning: some internal warning",
                 "* 1 passed, 1 warning *",
             ]
@@ -461,7 +461,7 @@ class TestDeprecationWarningsByDefault:
         result = pytester.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                f"*== {WARNINGS_SUMMARY_HEADER} ==*",
                 "*test_shown_by_default.py:3: DeprecationWarning: collection",
                 "*test_shown_by_default.py:7: PendingDeprecationWarning: test run",
                 "* 1 passed, 2 warnings*",
@@ -492,7 +492,7 @@ class TestDeprecationWarningsByDefault:
         result = pytester.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                f"*== {WARNINGS_SUMMARY_HEADER} ==*",
                 "*test_hidden_by_mark.py:3: DeprecationWarning: collection",
                 "* 1 passed, 1 warning*",
             ]
@@ -555,7 +555,7 @@ def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> No
 class TestAssertionWarnings:
     @staticmethod
     def assert_result_warns(result, msg) -> None:
-        result.stdout.fnmatch_lines(["*PytestAssertRewriteWarning: %s*" % msg])
+        result.stdout.fnmatch_lines([f"*PytestAssertRewriteWarning: {msg}*"])
 
     def test_tuple_warning(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -585,7 +585,7 @@ def test_group_warnings_by_message(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "test_group_warnings_by_message.py::test_foo[[]0[]]",
             "test_group_warnings_by_message.py::test_foo[[]1[]]",
             "test_group_warnings_by_message.py::test_foo[[]2[]]",
@@ -617,7 +617,7 @@ def test_group_warnings_by_message_summary(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "test_1.py: 21 warnings",
             "test_2.py: 1 warning",
             "  */test_1.py:8: UserWarning: foo",

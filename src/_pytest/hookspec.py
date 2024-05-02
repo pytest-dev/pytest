@@ -1,4 +1,5 @@
 # mypy: allow-untyped-defs
+# ruff: noqa: T100
 """Hook specifications for pytest plugins which are invoked by pytest itself
 and by builtin plugins."""
 
@@ -14,6 +15,8 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 from pluggy import HookspecMarker
+
+from .deprecated import HOOK_LEGACY_PATH_ARG
 
 
 if TYPE_CHECKING:
@@ -297,7 +300,14 @@ def pytest_collection_finish(session: "Session") -> None:
     """
 
 
-@hookspec(firstresult=True)
+@hookspec(
+    firstresult=True,
+    warn_on_impl_args={
+        "path": HOOK_LEGACY_PATH_ARG.format(
+            pylib_path_arg="path", pathlib_path_arg="collection_path"
+        ),
+    },
+)
 def pytest_ignore_collect(
     collection_path: Path, path: "LEGACY_PATH", config: "Config"
 ) -> Optional[bool]:
@@ -356,6 +366,13 @@ def pytest_collect_directory(path: Path, parent: "Collector") -> "Optional[Colle
     """
 
 
+@hookspec(
+    warn_on_impl_args={
+        "path": HOOK_LEGACY_PATH_ARG.format(
+            pylib_path_arg="path", pathlib_path_arg="file_path"
+        ),
+    },
+)
 def pytest_collect_file(
     file_path: Path, path: "LEGACY_PATH", parent: "Collector"
 ) -> "Optional[Collector]":
@@ -468,7 +485,14 @@ def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectRepor
 # -------------------------------------------------------------------------
 
 
-@hookspec(firstresult=True)
+@hookspec(
+    firstresult=True,
+    warn_on_impl_args={
+        "path": HOOK_LEGACY_PATH_ARG.format(
+            pylib_path_arg="path", pathlib_path_arg="module_path"
+        ),
+    },
+)
 def pytest_pycollect_makemodule(
     module_path: Path, path: "LEGACY_PATH", parent
 ) -> Optional["Module"]:
@@ -994,6 +1018,13 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
 # -------------------------------------------------------------------------
 
 
+@hookspec(
+    warn_on_impl_args={
+        "startdir": HOOK_LEGACY_PATH_ARG.format(
+            pylib_path_arg="startdir", pathlib_path_arg="start_path"
+        ),
+    },
+)
 def pytest_report_header(  # type:ignore[empty-body]
     config: "Config", start_path: Path, startdir: "LEGACY_PATH"
 ) -> Union[str, List[str]]:
@@ -1022,6 +1053,13 @@ def pytest_report_header(  # type:ignore[empty-body]
     """
 
 
+@hookspec(
+    warn_on_impl_args={
+        "startdir": HOOK_LEGACY_PATH_ARG.format(
+            pylib_path_arg="startdir", pathlib_path_arg="start_path"
+        ),
+    },
+)
 def pytest_report_collectionfinish(  # type:ignore[empty-body]
     config: "Config",
     start_path: Path,
