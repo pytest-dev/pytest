@@ -1860,9 +1860,17 @@ def test_do_not_collect_symlink_siblings(
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.parametrize("exception_class", (KeyboardInterrupt, SystemExit))
+@pytest.mark.parametrize(
+    "exception_class, msg",
+    [
+        (KeyboardInterrupt, "*!!! KeyboardInterrupt !!!*"),
+        (SystemExit, "INTERNALERROR> SystemExit"),
+    ],
+)
 def test_respect_system_exceptions(
-    pytester: Pytester, exception_class: Type[BaseException]
+    pytester: Pytester,
+    exception_class: Type[BaseException],
+    msg: str,
 ):
     head = "Before exception"
     tail = "After exception"
@@ -1878,5 +1886,5 @@ def test_respect_system_exceptions(
 
     result = pytester.runpytest_subprocess("-s")
     result.stdout.fnmatch_lines([f"*{head}*"])
-    result.stdout.fnmatch_lines([f"*{exception_class.__name__}*"])
+    result.stdout.fnmatch_lines([msg])
     result.stdout.no_fnmatch_line(f"*{tail}*")
