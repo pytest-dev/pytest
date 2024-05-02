@@ -1,1 +1,1 @@
-Keyboard interrupts and system exits are now probably handled during the test collection.
+Keyboard interrupts and system exits are now properly handled during the test collection.
