@@ -7,6 +7,7 @@ import sys
 import tempfile
 import textwrap
 from typing import List
+from typing import Type
 
 from _pytest.assertion.util import running_on_ci
 from _pytest.config import ExitCode
@@ -1857,3 +1858,33 @@ def test_do_not_collect_symlink_siblings(
     # Ensure we collect it only once if we pass the symlinked directory.
     result = pytester.runpytest(symlink_path, "-sv")
     result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize(
+    "exception_class, msg",
+    [
+        (KeyboardInterrupt, "*!!! KeyboardInterrupt !!!*"),
+        (SystemExit, "INTERNALERROR> SystemExit"),
+    ],
+)
+def test_respect_system_exceptions(
+    pytester: Pytester,
+    exception_class: Type[BaseException],
+    msg: str,
+):
+    head = "Before exception"
+    tail = "After exception"
+    ensure_file(pytester.path / "test_eggs.py").write_text(
+        f"print('{head}')", encoding="UTF-8"
+    )
+    ensure_file(pytester.path / "test_ham.py").write_text(
+        f"raise {exception_class.__name__}()", encoding="UTF-8"
+    )
+    ensure_file(pytester.path / "test_spam.py").write_text(
+        f"print('{tail}')", encoding="UTF-8"
+    )
+
+    result = pytester.runpytest_subprocess("-s")
+    result.stdout.fnmatch_lines([f"*{head}*"])
+    result.stdout.fnmatch_lines([msg])
+    result.stdout.no_fnmatch_line(f"*{tail}*")
