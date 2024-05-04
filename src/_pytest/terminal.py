@@ -1105,8 +1105,9 @@ class TerminalReporter:
         self,
         which_reports: str,
         sep_title: str,
-        needed_opt: Optional[str] = None,
-        style: Optional[str] = None,
+        *,
+        style: str,
+        needed_opt: Optional[str] = None,        
     ) -> None:
         if style != "no":
             if not needed_opt or self.hasopt(needed_opt):
