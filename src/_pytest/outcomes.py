@@ -114,6 +114,9 @@ def exit(
 
     :param returncode:
         Return code to be used when exiting pytest. None means the same as ``0`` (no error), same as :func:`sys.exit`.
+
+    :raises pytest.exit.Exception:
+        The exception that is raised.
     """
     __tracebackhide__ = True
     raise Exit(reason, returncode)
@@ -142,6 +145,9 @@ def skip(
 
         Defaults to False.
 
+    :raises pytest.skip.Exception:
+        The exception that is raised.
+
     .. note::
         It is better to use the :ref:`pytest.mark.skipif ref` marker when
         possible to declare a test to be skipped under certain conditions
@@ -163,6 +169,9 @@ def fail(reason: str = "", pytrace: bool = True) -> NoReturn:
     :param pytrace:
         If False, msg represents the full failure information and no
         python traceback will be reported.
+
+    :raises pytest.fail.Exception:
+        The exception that is raised.
     """
     __tracebackhide__ = True
     raise Failed(msg=reason, pytrace=pytrace)
@@ -188,6 +197,9 @@ def xfail(reason: str = "") -> NoReturn:
         It is better to use the :ref:`pytest.mark.xfail ref` marker when
         possible to declare a test to be xfailed under certain conditions
         like known bugs or missing features.
+
+    :raises pytest.xfail.Exception:
+        The exception that is raised.
     """
     __tracebackhide__ = True
     raise XFailed(reason)
@@ -226,6 +238,9 @@ def importorskip(
 
     :returns:
         The imported module. This should be assigned to its canonical name.
+
+    :raises pytest.skip.Exception:
+        If the module cannot be imported.
 
     Example::
 
