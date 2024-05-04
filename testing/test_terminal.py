@@ -2978,6 +2978,7 @@ def test_xfail_tb_line(xfail_testfile, pytester: Pytester) -> None:
             "*test_xfail_tb_line.py:5: assert 1 == 2",
             "*= XFAILURES =*",
             "*test_xfail_tb_line.py:10: assert 3 == 4",
+            "*short test summary info*",
         ]
     )
 
