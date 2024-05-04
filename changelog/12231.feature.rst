@@ -6,8 +6,6 @@ Added `--xfail-tb` flag, which turns on traceback output for XFAIL results.
 
 Some history:
 
-* This is a behavior break, but brings default behavior back to pre-8.0.0 behavior.
-* With this change, default `-rx`/ `-ra` behavior is identical to pre-8.0 with respect to xfail tracebacks.
-* With pytest 8.0, `-rx` or `-ra` would not only turn on summary reports for xfail, but also report the tracebacks for xfail results.
-* This caused issues with some projects that utilize xfail, but don't want to see all of the xfail tracebacks.
-* This change detaches xfail tracebacks from `-rx`, and now we turn on xfail tracebacks with `--xfail-tb`.
+With pytest 8.0, `-rx` or `-ra` would not only turn on summary reports for xfail, but also report the tracebacks for xfail results. This caused issues with some projects that utilize xfail, but don't want to see all of the xfail tracebacks.
+
+This change detaches xfail tracebacks from `-rx`, and now we turn on xfail tracebacks with `--xfail-tb`. With this, the default `-rx`/ `-ra` behavior is identical to pre-8.0 with respect to xfail tracebacks. While this is a behavior change, it brings default behavior back to pre-8.0.0 behavior, which ultimately was considered the better course of action.
