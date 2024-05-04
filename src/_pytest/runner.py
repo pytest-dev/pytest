@@ -134,6 +134,10 @@ def runtestprotocol(
             show_test_item(item)
         if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
+    # If the session is about to fail or stop, teardown everything - this is
+    # necessary to correctly report fixture teardown errors (see #11706)
+    if item.session.shouldfail or item.session.shouldstop:
+        nextitem = None
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # After all teardown hooks have been called
     # want funcargs and request info to go away.
@@ -389,7 +393,9 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
 
         return list(collector.collect())
 
-    call = CallInfo.from_call(collect, "collect")
+    call = CallInfo.from_call(
+        collect, "collect", reraise=(KeyboardInterrupt, SystemExit)
+    )
     longrepr: Union[None, Tuple[str, int, str], str, TerminalRepr] = None
     if not call.excinfo:
         outcome: Literal["passed", "skipped", "failed"] = "passed"

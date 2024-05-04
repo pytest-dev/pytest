@@ -1,0 +1,4 @@
+Fix reporting of teardown errors in higher-scoped fixtures when using `--maxfail` or `--stepwise`.
+
+Originally added in pytest 8.0.0, but reverted in 8.0.2 due to a regression in pytest-xdist.
+This regression was fixed in pytest-xdist 3.6.1.
