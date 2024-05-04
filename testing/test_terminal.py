@@ -2964,6 +2964,7 @@ def test_xfail_tb_true(xfail_testfile, pytester: Pytester) -> None:
             "*        c, d = 3, 4*",
             "*>       assert c == d*",
             "*E       assert 3 == 4*",
+            "*short test summary info*",
         ]
     )
 
