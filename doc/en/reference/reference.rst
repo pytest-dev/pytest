@@ -262,9 +262,10 @@ Marks a test function as *expected to fail*.
         to specify ``reason`` (see :ref:`condition string <string conditions>`).
     :keyword str reason:
         Reason why the test function is marked as xfail.
-    :keyword Type raises:
+    :keyword raises:
         Exception class (or tuple of classes) expected to be raised by the test function; other exceptions will fail the test.
         Note that subclasses of the classes passed will also result in a match (similar to how the ``except`` statement works).
+    :type raises: Type[:py:exc:`Exception`]
 
     :keyword bool run:
         Whether the test function should actually be executed. If ``False``, the function will always xfail and will
