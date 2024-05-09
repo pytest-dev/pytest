@@ -1171,7 +1171,10 @@ def try_makedirs(cache_dir: Path) -> bool:
         return False
     except OSError as e:
         # as of now, EROFS doesn't have an equivalent OSError-subclass
-        if e.errno == errno.EROFS:
+        #
+        # squashfuse_ll returns ENOSYS "OSError: [Errno 38] Function not
+        # implemented" for a read-only error
+        if e.errno in {errno.EROFS, errno.ENOSYS}:
             return False
         raise
     return True
