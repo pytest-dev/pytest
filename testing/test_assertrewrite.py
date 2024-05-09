@@ -1972,6 +1972,11 @@ def test_try_makedirs(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(os, "makedirs", partial(fake_mkdir, exc=err))
     assert not try_makedirs(p)
 
+    err = OSError()
+    err.errno = errno.ENOSYS
+    monkeypatch.setattr(os, "makedirs", partial(fake_mkdir, exc=err))
+    assert not try_makedirs(p)
+
     # unhandled OSError should raise
     err = OSError()
     err.errno = errno.ECHILD
