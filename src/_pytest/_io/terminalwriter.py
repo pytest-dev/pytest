@@ -9,6 +9,8 @@ from typing import Optional
 from typing import Sequence
 from typing import TextIO
 
+from pygments.style import Style
+
 from ..compat import assert_never
 from .wcwidth import wcswidth
 
@@ -218,14 +220,75 @@ class TerminalWriter:
             return source
         else:
             try:
-                highlighted: str = highlight(
-                    source,
-                    Lexer(),
-                    TerminalFormatter(
+                # Establishes the style to be used.
+                if os.environ.get("COLORTERM", "") not in (
+                    "truecolor",
+                    "24bit",
+                ) and "256" not in os.environ.get("TERM", ""):
+                    # The default case
+
+                    PytestTerminalFormat = TerminalFormatter(
                         bg=os.getenv("PYTEST_THEME_MODE", "dark"),
                         style=os.getenv("PYTEST_THEME"),
-                    ),
-                )
+                    )
+
+                else:
+                    if os.getenv("PYTEST_THEME") is None:
+                        if os.getenv("PYTEST_THEME_MODE") is None:
+                            # Neither PYTEST_THEME nor PYTEST_THEME_MODE have been set so using dark mode
+                            SelectedStyle = DarkModeStyle
+
+                        elif os.getenv("PYTEST_THEME_MODE") == "light":
+                            # PYTEST_THEME has not been set but PYTEST_THEME_MODE has been set to light mode
+                            SelectedStyle = LightModeStyle
+
+                        else:
+                            # PYTEST_THEME has not been set and PYTEST_THEME_MODE is not light so use dark
+                            SelectedStyle = DarkModeStyle
+
+                    else:
+                        # PYTEST_THEME has been set so use it
+                        SelectedStyle = None
+
+                    # The style has now been selected the right formatter needs to be used
+                    if os.environ.get("COLORTERM", "") in ("truecolor", "24bit"):
+                        # The true color formatter
+                        from pygments.formatters.terminal256 import (
+                            TerminalTrueColorFormatter,
+                        )
+
+                        # If the style is user input
+                        if SelectedStyle is None:
+                            PytestTerminalFormat = TerminalTrueColorFormatter(
+                                style=os.getenv("PYTEST_THEME")
+                            )
+                        else:
+                            PytestTerminalFormat = TerminalTrueColorFormatter(
+                                style=SelectedStyle
+                            )
+
+                    elif "256" in os.environ.get("TERM", ""):
+                        # The 256 color formater
+                        from pygments.formatters.terminal256 import Terminal256Formatter
+
+                        # If the style is user input
+                        if SelectedStyle is None:
+                            PytestTerminalFormat = Terminal256Formatter(
+                                style=os.getenv("PYTEST_THEME")
+                            )
+                        else:
+                            PytestTerminalFormat = Terminal256Formatter(
+                                style=SelectedStyle
+                            )
+
+                    else:
+                        # The default case (Although this code should not be reached)
+                        PytestTerminalFormat = TerminalFormatter(
+                            bg=os.getenv("PYTEST_THEME_MODE", "dark"),
+                            style=os.getenv("PYTEST_THEME"),
+                        )
+
+                highlighted: str = highlight(source, Lexer(), PytestTerminalFormat)
                 # pygments terminal formatter may add a newline when there wasn't one.
                 # We don't want this, remove.
                 if highlighted[-1] == "\n" and source[-1] != "\n":
@@ -249,3 +312,89 @@ class TerminalWriter:
                         os.getenv("PYTEST_THEME_MODE")
                     )
                 ) from e
+
+
+class DarkModeStyle(Style):
+    # The default dark mode style class from TerminalFormatter recreated to work with
+    # both TerminalTrueColorFormatter and Terminal256Formatter
+
+    from pygments.token import Comment
+    from pygments.token import Error
+    from pygments.token import Generic
+    from pygments.token import Keyword
+    from pygments.token import Name
+    from pygments.token import Number
+    from pygments.token import Operator
+    from pygments.token import String
+    from pygments.token import Token
+    from pygments.token import Whitespace
+
+    styles = {
+        Token: "",
+        Whitespace: "ansibrightblack",
+        Comment: "ansibrightblack",
+        Comment.Preproc: "ansibrightcyan",
+        Keyword: "ansibrightblue",
+        Keyword.Type: "ansibrightcyan",
+        Operator.Word: "ansibrightmagenta",
+        Name.Builtin: "ansibrightcyan",
+        Name.Function: "ansibrightgreen",
+        Name.Namespace: "ansibrightcyan",
+        Name.Class: "ansibrightgreen",
+        Name.Exception: "ansibrightcyan",
+        Name.Decorator: "ansigray",
+        Name.Variable: "ansibrightred",
+        Name.Constant: "ansibrightred",
+        Name.Attribute: "ansibrightcyan",
+        Name.Tag: "ansibrightblue",
+        String: "ansiyellow",
+        Number: "ansibrightblue",
+        Generic.Deleted: "ansibrightred",
+        Generic.Inserted: "ansigreen",
+        Generic.Subheading: "ansimagenta",
+        Generic.Error: "ansibrightred",
+        Error: "ansibrightred",
+    }
+
+
+class LightModeStyle(Style):
+    # The default light mode style class from TerminalFormatter recreated to work with
+    # both TerminalTrueColorFormatter and Terminal256Formatter
+
+    from pygments.token import Comment
+    from pygments.token import Error
+    from pygments.token import Generic
+    from pygments.token import Keyword
+    from pygments.token import Name
+    from pygments.token import Number
+    from pygments.token import Operator
+    from pygments.token import String
+    from pygments.token import Token
+    from pygments.token import Whitespace
+
+    styles = {
+        Token: "",
+        Whitespace: "ansigray",
+        Comment: "ansigray",
+        Comment.Preproc: "ansicyan",
+        Keyword: "ansiblue",
+        Keyword.Type: "ansicyan",
+        Operator.Word: "ansimagenta",
+        Name.Builtin: "ansicyan",
+        Name.Function: "ansigreen",
+        Name.Namespace: "ansicyan",
+        Name.Class: "ansigreen",
+        Name.Exception: "ansicyan",
+        Name.Decorator: "ansibrightblack",
+        Name.Variable: "ansired",
+        Name.Constant: "ansired",
+        Name.Attribute: "ansicyan",
+        Name.Tag: "ansibrightblue",
+        String: "ansiyellow",
+        Number: "ansiblue",
+        Generic.Deleted: "ansibrightred",
+        Generic.Inserted: "ansigreen",
+        Generic.Subheading: "ansimagenta",
+        Generic.Error: "ansibrightred",
+        Error: "ansibrightred",
+    }
