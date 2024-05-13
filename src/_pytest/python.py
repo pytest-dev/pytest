@@ -176,7 +176,12 @@ def pytest_collect_directory(
     path: Path, parent: nodes.Collector
 ) -> Optional[nodes.Collector]:
     pkginit = path / "__init__.py"
-    if pkginit.is_file():
+    try:
+        has_pkginit = pkginit.is_file()
+    except PermissionError:
+        # See https://github.com/pytest-dev/pytest/issues/12120#issuecomment-2106349096.
+        return None
+    if has_pkginit:
         return Package.from_parent(parent, path=path)
     return None
 
