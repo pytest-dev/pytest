@@ -194,9 +194,8 @@ class TerminalWriter:
         for indent, new_line in zip(indents, new_lines):
             self.line(indent + new_line)
 
-def _highlight(
-    self, source: str, lexer: Literal["diff", "python"] = "python"
-) -> str:
+
+def _highlight(self, source: str, lexer: Literal["diff", "python"] = "python") -> str:
     """Highlight the given source if we have markup support."""
     from _pytest.config.exceptions import UsageError
 
@@ -219,14 +218,22 @@ def _highlight(
         # Terminal set to newer pygment formatters depending on user environment variables
         if os.getenv("COLORTERM", "") in ("truecolor", "24bit"):
             from pygments.formatters.terminal256 import TerminalTrueColorFormatter
-            terminal_formatter = TerminalTrueColorFormatter(style=os.getenv("PYTEST_THEME", "default"))
+
+            terminal_formatter = TerminalTrueColorFormatter(
+                style=os.getenv("PYTEST_THEME", "default")
+            )
         elif "256" in os.getenv("TERM", ""):
             from pygments.formatters.terminal256 import Terminal256Formatter
-            terminal_formatter = Terminal256Formatter(style=os.getenv("PYTEST_THEME", "default"))
+
+            terminal_formatter = Terminal256Formatter(
+                style=os.getenv("PYTEST_THEME", "default")
+            )
         # Otherwise use the terminal formatter used previously
         else:
-            terminal_formatter = TerminalFormatter(bg=os.getenv("PYTEST_THEME_MODE", "dark"),
-                                                    style=os.getenv("PYTEST_THEME", "default"))
+            terminal_formatter = TerminalFormatter(
+                bg=os.getenv("PYTEST_THEME_MODE", "dark"),
+                style=os.getenv("PYTEST_THEME", "default"),
+            )
 
     except ImportError:
         return source
