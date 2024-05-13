@@ -194,58 +194,67 @@ class TerminalWriter:
         for indent, new_line in zip(indents, new_lines):
             self.line(indent + new_line)
 
-    def _highlight(
-        self, source: str, lexer: Literal["diff", "python"] = "python"
-    ) -> str:
-        """Highlight the given source if we have markup support."""
-        from _pytest.config.exceptions import UsageError
+def _highlight(
+    self, source: str, lexer: Literal["diff", "python"] = "python"
+) -> str:
+    """Highlight the given source if we have markup support."""
+    from _pytest.config.exceptions import UsageError
 
-        if not source or not self.hasmarkup or not self.code_highlight:
-            return source
+    if not source or not self.hasmarkup or not self.code_highlight:
+        return source
 
-        try:
-            from pygments.formatters.terminal import TerminalFormatter
+    try:
+        from pygments.formatters.terminal import TerminalFormatter
 
-            if lexer == "python":
-                from pygments.lexers.python import PythonLexer as Lexer
-            elif lexer == "diff":
-                from pygments.lexers.diff import DiffLexer as Lexer
-            else:
-                assert_never(lexer)
-            from pygments import highlight
-            import pygments.util
-        except ImportError:
-            return source
+        if lexer == "python":
+            from pygments.lexers.python import PythonLexer as Lexer
+        elif lexer == "diff":
+            from pygments.lexers.diff import DiffLexer as Lexer
         else:
-            try:
-                highlighted: str = highlight(
-                    source,
-                    Lexer(),
-                    TerminalFormatter(
-                        bg=os.getenv("PYTEST_THEME_MODE", "dark"),
-                        style=os.getenv("PYTEST_THEME"),
-                    ),
-                )
-                # pygments terminal formatter may add a newline when there wasn't one.
-                # We don't want this, remove.
-                if highlighted[-1] == "\n" and source[-1] != "\n":
-                    highlighted = highlighted[:-1]
+            assert_never(lexer)
 
-                # Some lexers will not set the initial color explicitly
-                # which may lead to the previous color being propagated to the
-                # start of the expression, so reset first.
-                return "\x1b[0m" + highlighted
-            except pygments.util.ClassNotFound as e:
-                raise UsageError(
-                    "PYTEST_THEME environment variable had an invalid value: '{}'. "
-                    "Only valid pygment styles are allowed.".format(
-                        os.getenv("PYTEST_THEME")
-                    )
-                ) from e
-            except pygments.util.OptionError as e:
-                raise UsageError(
-                    "PYTEST_THEME_MODE environment variable had an invalid value: '{}'. "
-                    "The only allowed values are 'dark' and 'light'.".format(
-                        os.getenv("PYTEST_THEME_MODE")
-                    )
-                ) from e
+        from pygments import highlight
+        import pygments.util
+
+        if os.getenv("COLORTERM", "") in ("truecolor", "24bit"):
+            from pygments.formatters.terminal256 import TerminalTrueColorFormatter
+            terminal_formatter = TerminalTrueColorFormatter(style=os.getenv("PYTEST_THEME", "default"))
+        elif "256" in os.getenv("TERM", ""):
+            from pygments.formatters.terminal256 import Terminal256Formatter
+            terminal_formatter = Terminal256Formatter(style=os.getenv("PYTEST_THEME", "default"))
+        else:
+            terminal_formatter = TerminalFormatter(bg=os.getenv("PYTEST_THEME_MODE", "dark"),
+                                                    style=os.getenv("PYTEST_THEME", "default"))
+
+    except ImportError:
+        return source
+    else:
+        try:
+            highlighted: str = highlight(
+                source,
+                Lexer(),
+                terminal_formatter,
+            )
+            # pygments terminal formatter may add a newline when there wasn't one.
+            # We don't want this, remove.
+            if highlighted[-1] == "\n" and source[-1] != "\n":
+                highlighted = highlighted[:-1]
+
+            # Some lexers will not set the initial color explicitly
+            # which may lead to the previous color being propagated to the
+            # start of the expression, so reset first.
+            return "\x1b[0m" + highlighted
+        except pygments.util.ClassNotFound as e:
+            raise UsageError(
+                "PYTEST_THEME environment variable had an invalid value: '{}'. "
+                "Only valid pygment styles are allowed.".format(
+                    os.getenv("PYTEST_THEME")
+                )
+            ) from e
+        except pygments.util.OptionError as e:
+            raise UsageError(
+                "PYTEST_THEME_MODE environment variable had an invalid value: '{}'. "
+                "The only allowed values are 'dark' and 'light'.".format(
+                    os.getenv("PYTEST_THEME_MODE")
+                )
+            ) from e
