@@ -285,6 +285,23 @@ class TestCollectFS:
             items, reprec = pytester.inline_genitems()
             assert [x.name for x in items] == [f"test_{dirname}"]
 
+    def test_missing_permissions_on_unselected_directory_doesnt_crash(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #12120."""
+        test = pytester.makepyfile(test="def test(): pass")
+        bad = pytester.mkdir("bad")
+        try:
+            bad.chmod(0)
+
+            result = pytester.runpytest(test)
+        finally:
+            bad.chmod(750)
+            bad.rmdir()
+
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=1)
+
 
 class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, pytester: Pytester) -> None:
