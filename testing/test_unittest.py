@@ -1640,3 +1640,31 @@ def test_raising_unittest_skiptest_during_collection(
     assert skipped == 1
     assert failed == 0
     assert reprec.ret == ExitCode.NO_TESTS_COLLECTED
+
+
+def test_abstract_testcase_is_not_collected(pytester: Pytester) -> None:
+    """Regression test for #12275."""
+    pytester.makepyfile(
+        """
+        import abc
+        import unittest
+
+        class TestBase(unittest.TestCase, abc.ABC):
+            @abc.abstractmethod
+            def abstract1(self): pass
+
+            @abc.abstractmethod
+            def abstract2(self): pass
+
+            def test_it(self): pass
+
+        class TestPartial(TestBase):
+            def abstract1(self): pass
+
+        class TestConcrete(TestPartial):
+            def abstract2(self): pass
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK
+    result.assert_outcomes(passed=1)
