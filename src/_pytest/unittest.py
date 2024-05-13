@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 """Discover and run std-library "unittest" style tests."""
 
+import inspect
 import sys
 import traceback
 import types
@@ -49,13 +50,18 @@ if TYPE_CHECKING:
 def pytest_pycollect_makeitem(
     collector: Union[Module, Class], name: str, obj: object
 ) -> Optional["UnitTestCase"]:
-    # Has unittest been imported and is obj a subclass of its TestCase?
     try:
+        # Has unittest been imported?
         ut = sys.modules["unittest"]
+        # Is obj a subclass of unittest.TestCase?
         # Type ignored because `ut` is an opaque module.
         if not issubclass(obj, ut.TestCase):  # type: ignore
             return None
     except Exception:
+        return None
+    # Is obj a concrete class?
+    # Abstract classes can't be instantiated so no point collecting them.
+    if inspect.isabstract(obj):
         return None
     # Yes, so let's collect it.
     return UnitTestCase.from_parent(collector, name=name, obj=obj)

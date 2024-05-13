@@ -368,7 +368,11 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
             return False
 
     def istestclass(self, obj: object, name: str) -> bool:
-        return self.classnamefilter(name) or self.isnosetest(obj)
+        if not (self.classnamefilter(name) or self.isnosetest(obj)):
+            return False
+        if inspect.isabstract(obj):
+            return False
+        return True
 
     def _matches_prefix_or_glob_option(self, option_name: str, name: str) -> bool:
         """Check if the given name matches the prefix or glob-pattern defined
