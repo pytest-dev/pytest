@@ -31,6 +31,24 @@ with advance notice in the **Deprecations** section of releases.
 pytest 8.2.0 (2024-04-27)
 =========================
 
+Breaking Changes
+----------------
+
+- `#12089 <https://github.com/pytest-dev/pytest/pull/12089>`_: pytest now requires that :class:`unittest.TestCase` subclasses can be instantiated freely using ``MyTestCase('runTest')``.
+
+  If the class doesn't allow this, you may see an error during collection such as ``AttributeError: 'MyTestCase' object has no attribute 'runTest'``.
+
+  Classes which do not override ``__init__``, or do not access the test method in ``__init__`` using ``getattr`` or similar, are unaffected.
+
+  Classes which do should take care to not crash when ``"runTest"`` is given, as is shown in `unittest.TestCases's implementation <https://github.com/python/cpython/blob/51aefc5bf907ddffaaf083ded0de773adcdf08c8/Lib/unittest/case.py#L419-L426>`_.
+  Alternatively, consider using :meth:`setUp <unittest.TestCase.setUp>` instead of ``__init__``.
+
+  If you run into this issue using ``tornado.AsyncTestCase``, please see `issue 12263 <https://github.com/pytest-dev/pytest/issues/12263>`_.
+
+  If you run into this issue using an abstract ``TestCase`` subclass, please see `issue 12275 <https://github.com/pytest-dev/pytest/issues/12275>`_.
+
+  Historical note: the effect of this change on custom TestCase implementations was not properly considered initially, this is why it was done in a minor release. We apologize for the inconvenience.
+
 Deprecations
 ------------
 
