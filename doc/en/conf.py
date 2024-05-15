@@ -221,7 +221,7 @@ html_theme_path = ["_themes"]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "flask"
+html_theme = "furo"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -266,18 +266,24 @@ html_favicon = "img/favicon.png"
 
 html_sidebars = {
     "index": [
-        "slim_searchbox.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
         "sidebarintro.html",
         "globaltoc.html",
         "links.html",
-        "sourcelink.html",
+        "sidebar/scroll-end.html",
+        "style.html",
     ],
     "**": [
-        "slim_searchbox.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
         "globaltoc.html",
         "relations.html",
         "links.html",
-        "sourcelink.html",
+        "sidebar/scroll-end.html",
+        "style.html",
     ],
 }
 
@@ -336,10 +342,6 @@ latex_documents = [
         "manual",
     )
 ]
-
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-latex_logo = "img/pytest1.png"
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
