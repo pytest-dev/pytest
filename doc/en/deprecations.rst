@@ -7,10 +7,6 @@ This page lists all pytest features that are currently deprecated or have been r
 The objective is to give users a clear rationale why a certain feature has been removed, and what alternatives
 should be used instead.
 
-.. contents::
-    :depth: 3
-    :local:
-
 
 Deprecated Features
 -------------------
