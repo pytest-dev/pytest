@@ -168,7 +168,7 @@ Improvements
 - `#11311 <https://github.com/pytest-dev/pytest/issues/11311>`_: When using ``--override-ini`` for paths in invocations without a configuration file defined, the current working directory is used
   as the relative directory.
 
-  Previoulsy this would raise an :class:`AssertionError`.
+  Previously this would raise an :class:`AssertionError`.
 
 
 - `#11475 <https://github.com/pytest-dev/pytest/issues/11475>`_: :ref:`--import-mode=importlib <import-mode-importlib>` now tries to import modules using the standard import mechanism (but still without changing :py:data:`sys.path`), falling back to importing modules directly only if that fails.
@@ -1411,7 +1411,7 @@ Deprecations
   ``__init__`` method, they should take ``**kwargs``. See
   :ref:`uncooperative-constructors-deprecated` for details.
 
-  Note that a deprection warning is only emitted when there is a conflict in the
+  Note that a deprecation warning is only emitted when there is a conflict in the
   arguments pytest expected to pass. This deprecation was already part of pytest
   7.0.0rc1 but wasn't documented.
 
@@ -1453,7 +1453,7 @@ Breaking Changes
 - `#7259 <https://github.com/pytest-dev/pytest/issues/7259>`_: The :ref:`Node.reportinfo() <non-python tests>` function first return value type has been expanded from `py.path.local | str` to `os.PathLike[str] | str`.
 
   Most plugins which refer to `reportinfo()` only define it as part of a custom :class:`pytest.Item` implementation.
-  Since `py.path.local` is an `os.PathLike[str]`, these plugins are unaffacted.
+  Since `py.path.local` is an `os.PathLike[str]`, these plugins are unaffected.
 
   Plugins and users which call `reportinfo()`, use the first return value and interact with it as a `py.path.local`, would need to adjust by calling `py.path.local(fspath)`.
   Although preferably, avoid the legacy `py.path.local` and use `pathlib.Path`, or use `item.location` or `item.path`, instead.
@@ -1961,7 +1961,7 @@ Bug Fixes
   the ``tmp_path``/``tmpdir`` fixture). Now the directories are created with
   private permissions.
 
-  pytest used to silently use a pre-existing ``/tmp/pytest-of-<username>`` directory,
+  pytest used to silently use a preexisting ``/tmp/pytest-of-<username>`` directory,
   even if owned by another user. This means another user could pre-create such a
   directory and gain control of another user's temporary directory. Now such a
   condition results in an error.
@@ -2688,7 +2688,7 @@ Features
   also changes ``sys.modules`` as a side-effect), which works but has a number of drawbacks, like requiring test modules
   that don't live in packages to have unique names (as they need to reside under a unique name in ``sys.modules``).
 
-  ``--import-mode=importlib`` uses more fine grained import mechanisms from ``importlib`` which don't
+  ``--import-mode=importlib`` uses more fine-grained import mechanisms from ``importlib`` which don't
   require pytest to change ``sys.path`` or ``sys.modules`` at all, eliminating much of the drawbacks
   of the previous mode.
 
@@ -2705,7 +2705,7 @@ Improvements
 ------------
 
 - :issue:`4375`: The ``pytest`` command now suppresses the ``BrokenPipeError`` error message that
-  is printed to stderr when the output of ``pytest`` is piped and and the pipe is
+  is printed to stderr when the output of ``pytest`` is piped and the pipe is
   closed by the piped-to program (common examples are ``less`` and ``head``).
 
 
@@ -3007,7 +3007,7 @@ Breaking Changes
   This hook has been marked as deprecated and not been even called by pytest for over 10 years now.
 
 
-- :issue:`6673`: Reversed / fix meaning of "+/-" in error diffs.  "-" means that sth. expected is missing in the result and "+" means that there are unexpected extras in the result.
+- :issue:`6673`: Reversed / fix meaning of "+/-" in error diffs.  "-" means that something expected is missing in the result and "+" means that there are unexpected extras in the result.
 
 
 - :issue:`6737`: The ``cached_result`` attribute of ``FixtureDef`` is now set to ``None`` when
@@ -4612,7 +4612,7 @@ Bug Fixes
 Improved Documentation
 ----------------------
 
-- :issue:`4974`: Update docs for ``pytest_cmdline_parse`` hook to note availability liminations
+- :issue:`4974`: Update docs for ``pytest_cmdline_parse`` hook to note availability limitations
 
 
 
@@ -6470,7 +6470,7 @@ Features
 Bug Fixes
 ---------
 
-- Fix hanging pexpect test on MacOS by using flush() instead of wait().
+- Fix hanging pexpect test on macOS by using flush() instead of wait().
   (:issue:`2022`)
 
 - Fix restoring Python state after in-process pytest runs with the
@@ -6518,7 +6518,7 @@ Trivial/Internal Changes
 ------------------------
 
 - Show a simple and easy error when keyword expressions trigger a syntax error
-  (for example, ``"-k foo and import"`` will show an error that you can not use
+  (for example, ``"-k foo and import"`` will show an error that you cannot use
   the ``import`` keyword in expressions). (:issue:`2953`)
 
 - Change parametrized automatic test id generation to use the ``__name__``
@@ -8294,7 +8294,7 @@ time or change existing behaviors in order to make them less surprising/more use
   one will also have a "reprec" attribute with the recorded events/reports.
 
 - fix monkeypatch.setattr("x.y", raising=False) to actually not raise
-  if "y" is not a pre-existing attribute. Thanks Florian Bruhin.
+  if "y" is not a preexisting attribute. Thanks Florian Bruhin.
 
 - fix issue741: make running output from testdir.run copy/pasteable
   Thanks Bruno Oliveira.
@@ -8350,7 +8350,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue854: autouse yield_fixtures defined as class members of
   unittest.TestCase subclasses now work as expected.
-  Thannks xmo-odoo for the report and Bruno Oliveira for the PR.
+  Thanks xmo-odoo for the report and Bruno Oliveira for the PR.
 
 - fix issue833: --fixtures now shows all fixtures of collected test files, instead of just the
   fixtures declared on the first one.
@@ -8454,7 +8454,7 @@ time or change existing behaviors in order to make them less surprising/more use
   github.  See https://pytest.org/en/stable/contributing.html .
   Thanks to Anatoly for pushing and initial work on this.
 
-- fix issue650: new option ``--docttest-ignore-import-errors`` which
+- fix issue650: new option ``--doctest-ignore-import-errors`` which
   will turn import errors in doctests into skips.  Thanks Charles Cloud
   for the complete PR.
 
@@ -8642,7 +8642,7 @@ time or change existing behaviors in order to make them less surprising/more use
 - cleanup setup.py a bit and specify supported versions. Thanks Jurko
   Gospodnetic for the PR.
 
-- change XPASS colour to yellow rather then red when tests are run
+- change XPASS colour to yellow rather than red when tests are run
   with -v.
 
 - fix issue473: work around mock putting an unbound method into a class
@@ -8815,7 +8815,7 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks Ralph Schmitt for the precise failure example.
 
 - fix issue244 by implementing special index for parameters to only use
-  indices for paramentrized test ids
+  indices for parametrized test ids
 
 - fix issue287 by running all finalizers but saving the exception
   from the first failing finalizer and re-raising it so teardown will
@@ -8823,7 +8823,7 @@ time or change existing behaviors in order to make them less surprising/more use
   it might be the cause for other finalizers to fail.
 
 - fix ordering when mock.patch or other standard decorator-wrappings
-  are used with test methods.  This fixues issue346 and should
+  are used with test methods.  This fixes issue346 and should
   help with random "xdist" collection failures.  Thanks to
   Ronny Pfannschmidt and Donald Stufft for helping to isolate it.
 
@@ -9080,7 +9080,7 @@ Bug fixes:
   partially failed (finalizers would not always be called before)
 
 - fix issue320 - fix class scope for fixtures when mixed with
-  module-level functions.  Thanks Anatloy Bubenkoff.
+  module-level functions.  Thanks Anatoly Bubenkoff.
 
 - you can specify "-q" or "-qq" to get different levels of "quieter"
   reporting (thanks Katarzyna Jachim)
@@ -9502,7 +9502,7 @@ Bug fixes:
   unexpected exceptions
 - fix issue47: timing output in junitxml for test cases is now correct
 - fix issue48: typo in MarkInfo repr leading to exception
-- fix issue49: avoid confusing error when initizaliation partially fails
+- fix issue49: avoid confusing error when initialization partially fails
 - fix issue44: env/username expansion for junitxml file path
 - show releaselevel information in test runs for pypy
 - reworked doc pages for better navigation and PDF generation
@@ -9627,7 +9627,7 @@ Bug fixes:
   collection-before-running semantics were not
   setup as with pytest 1.3.4.  Note, however, that
   the recommended and much cleaner way to do test
-  parametraization remains the "pytest_generate_tests"
+  parameterization remains the "pytest_generate_tests"
   mechanism, see the docs.
 
 2.0.0 (2010-11-25)
