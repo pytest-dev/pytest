@@ -61,7 +61,7 @@ def test_basic(expr: str, expected: bool) -> None:
         ("not not not not not true", False),
     ),
 )
-def test_syntax_oddeties(expr: str, expected: bool) -> None:
+def test_syntax_oddities(expr: str, expected: bool) -> None:
     matcher = {"true": True, "false": False}.__getitem__
     assert evaluate(expr, matcher) is expected
 

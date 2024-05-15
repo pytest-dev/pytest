@@ -1940,7 +1940,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
 
     general:
       -k EXPRESSION         Only run tests which match the given substring
-                            expression. An expression is a Python evaluatable
+                            expression. An expression is a Python evaluable
                             expression where all names are substring-matched
                             against test names and their parent classes.
                             Example: -k 'test_method or test_other' matches all

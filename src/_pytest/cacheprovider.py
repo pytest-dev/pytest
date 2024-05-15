@@ -251,7 +251,7 @@ class LFPluginCollWrapper:
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 
-            # Use stable sort to priorize last failed.
+            # Use stable sort to prioritize last failed.
             def sort_key(node: Union[nodes.Item, nodes.Collector]) -> bool:
                 return node.path in lf_paths
 
