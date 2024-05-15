@@ -31,6 +31,21 @@ class TestNewAPI:
         p = config.cache.mkdir("name")
         assert p.is_dir()
 
+    def test_cache_dir_permissions(self, pytester: Pytester) -> None:
+        """The .pytest_cache directory should have world-readable permissions
+        (depending on umask).
+
+        Regression test for #12308.
+        """
+        pytester.makeini("[pytest]")
+        config = pytester.parseconfigure()
+        assert config.cache is not None
+        p = config.cache.mkdir("name")
+        assert p.is_dir()
+        # Instead of messing with umask, make sure .pytest_cache has the same
+        # permissions as the default that `mkdir` gives `p`.
+        assert (p.parent.stat().st_mode & 0o777) == (p.stat().st_mode & 0o777)
+
     def test_config_cache_dataerror(self, pytester: Pytester) -> None:
         pytester.makeini("[pytest]")
         config = pytester.parseconfigure()
