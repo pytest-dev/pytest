@@ -213,6 +213,13 @@ class Cache:
             dir=self._cachedir.parent,
         ) as newpath:
             path = Path(newpath)
+
+            # Reset permissions to the default, see #12308.
+            # Note: there's no way to get the current umask atomically, eek.
+            umask = os.umask(0o022)
+            os.umask(umask)
+            path.chmod(0o777 - umask)
+
             with open(path.joinpath("README.md"), "xt", encoding="UTF-8") as f:
                 f.write(README_CONTENT)
             with open(path.joinpath(".gitignore"), "xt", encoding="UTF-8") as f:
@@ -244,7 +251,7 @@ class LFPluginCollWrapper:
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 
-            # Use stable sort to priorize last failed.
+            # Use stable sort to prioritize last failed.
             def sort_key(node: Union[nodes.Item, nodes.Collector]) -> bool:
                 return node.path in lf_paths
 
