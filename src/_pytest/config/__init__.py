@@ -462,7 +462,7 @@ class PytestPluginManager(PluginManager):
         # (see issue #1073).
         if not name.startswith("pytest_"):
             return None
-        # Ignore names which can not be hooks.
+        # Ignore names which cannot be hooks.
         if name == "pytest_plugins":
             return None
 
@@ -574,8 +574,8 @@ class PytestPluginManager(PluginManager):
         self._noconftest = noconftest
         self._using_pyargs = pyargs
         foundanchor = False
-        for intitial_path in args:
-            path = str(intitial_path)
+        for initial_path in args:
+            path = str(initial_path)
             # remove node-id syntax
             i = path.find("::")
             if i != -1:

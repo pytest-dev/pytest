@@ -396,7 +396,7 @@ class TestDoctests:
             ]
         )
 
-    def test_doctest_no_linedata_on_overriden_property(self, pytester: Pytester):
+    def test_doctest_no_linedata_on_overridden_property(self, pytester: Pytester):
         pytester.makepyfile(
             """
             class Sample(object):
@@ -414,7 +414,7 @@ class TestDoctests:
         result.stdout.fnmatch_lines(
             [
                 "*= FAILURES =*",
-                "*_ [[]doctest[]] test_doctest_no_linedata_on_overriden_property.Sample.some_property _*",
+                "*_ [[]doctest[]] test_doctest_no_linedata_on_overridden_property.Sample.some_property _*",
                 "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example",
                 "[?][?][?] >>> Sample().some_property",
                 "Expected:",
@@ -422,7 +422,7 @@ class TestDoctests:
                 "Got:",
                 "    'something'",
                 "",
-                "*/test_doctest_no_linedata_on_overriden_property.py:None: DocTestFailure",
+                "*/test_doctest_no_linedata_on_overridden_property.py:None: DocTestFailure",
                 "*= 1 failed in *",
             ]
         )
