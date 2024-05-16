@@ -29,19 +29,13 @@ permissions: {}
 jobs:
   package:
     runs-on: ubuntu-latest
-    # Required by attest-build-provenance-github.
-    permissions:
-      id-token: write
-      attestations: write
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.5.0
-      with:
-        attest-build-provenance-github: 'true'
+      uses: hynek/build-and-inspect-python-package@v2.4.0
 
   build:
     needs: [package]
