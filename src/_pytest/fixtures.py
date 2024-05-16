@@ -187,7 +187,8 @@ def get_parametrized_fixture_keys(
         if scope is Scope.Session:
             scoped_item_path = None
         elif scope is Scope.Package:
-            scoped_item_path = item.path
+            # Package key = module's directory.
+            scoped_item_path = item.path.parent
         elif scope is Scope.Module:
             scoped_item_path = item.path
         elif scope is Scope.Class:
