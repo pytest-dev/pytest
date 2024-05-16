@@ -15,9 +15,7 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-import os
 import shutil
-import sys
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -65,7 +63,6 @@ latex_elements = {
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "pallets_sphinx_themes",
     "pygments_pytest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -215,9 +212,6 @@ nitpick_ignore = [
 
 
 # -- Options for HTML output ---------------------------------------------------
-
-sys.path.append(os.path.abspath("_themes"))
-html_theme_path = ["_themes"]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
