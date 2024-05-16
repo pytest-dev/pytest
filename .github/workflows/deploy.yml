@@ -18,6 +18,11 @@ jobs:
     env:
       SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.event.inputs.version }}
     timeout-minutes: 10
+    
+    # Required by attest-build-provenance-github.
+    permissions:
+      id-token: write
+      attestations: write
 
     steps:
     - uses: actions/checkout@v4
@@ -26,7 +31,9 @@ jobs:
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.4.0
+      uses: hynek/build-and-inspect-python-package@v2.5.0
+      with:
+        attest-build-provenance-github: 'true'
 
   deploy:
     if: github.repository == 'pytest-dev/pytest'
