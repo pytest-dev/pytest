@@ -424,15 +424,14 @@ class Traceback(List[TracebackEntry]):
             # which generates code objects that have hash/value equality
             # XXX needs a test
             key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
-            # print "checking for recursion at", key
             values = cache.setdefault(key, [])
+            # Since Python 3.13 f_locals is a proxy, freeze it.
+            loc = dict(entry.frame.f_locals)
             if values:
-                f = entry.frame
-                loc = f.f_locals
                 for otherloc in values:
                     if otherloc == loc:
                         return i
-            values.append(entry.frame.f_locals)
+            values.append(loc)
         return None
 
 

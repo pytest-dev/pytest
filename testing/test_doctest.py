@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 import inspect
 from pathlib import Path
+import sys
 import textwrap
 from typing import Callable
 from typing import Optional
@@ -223,6 +224,7 @@ class TestDoctests:
                 "Traceback (most recent call last):",
                 '  File "*/doctest.py", line *, in __run',
                 "    *",
+                *((" *^^^^*", " *", " *") if sys.version_info >= (3, 13) else ()),
                 '  File "<doctest test_doctest_unexpected_exception.txt[1]>", line 1, in <module>',
                 "ZeroDivisionError: division by zero",
                 "*/test_doctest_unexpected_exception.txt:2: UnexpectedException",
@@ -379,7 +381,7 @@ class TestDoctests:
                 "*= FAILURES =*",
                 "*_ [[]doctest[]] test_doctest_linedata_on_property.Sample.some_property _*",
                 "004 ",
-                "005         >>> Sample().some_property",
+                "005 *>>> Sample().some_property",
                 "Expected:",
                 "    'another thing'",
                 "Got:",

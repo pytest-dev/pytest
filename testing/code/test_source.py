@@ -370,7 +370,11 @@ def test_getfslineno() -> None:
         pass
 
     B.__name__ = B.__qualname__ = "B2"
-    assert getfslineno(B)[1] == -1
+    # Since Python 3.13 this started working.
+    if sys.version_info >= (3, 13):
+        assert getfslineno(B)[1] != -1
+    else:
+        assert getfslineno(B)[1] == -1
 
 
 def test_code_of_object_instance_with_call() -> None:
