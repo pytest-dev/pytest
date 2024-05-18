@@ -835,7 +835,7 @@ class AssertionRewriter(ast.NodeVisitor):
         current = self.stack.pop()
         if self.stack:
             self.explanation_specifiers = self.stack[-1]
-        keys: List[ast.expr] = [ast.Constant(key) for key in current.keys()]
+        keys: List[Optional[ast.expr]] = [ast.Constant(key) for key in current.keys()]
         format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))
@@ -959,9 +959,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
         # Clear temporary variables by setting them to None.
         if self.variables:
-            variables: List[ast.expr] = [
-                ast.Name(name, ast.Store()) for name in self.variables
-            ]
+            variables = [ast.Name(name, ast.Store()) for name in self.variables]
             clear = ast.Assign(variables, ast.Constant(None))
             self.statements.append(clear)
         # Fix locations (line numbers/column offsets).
