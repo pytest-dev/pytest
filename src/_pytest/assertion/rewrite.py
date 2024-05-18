@@ -959,7 +959,9 @@ class AssertionRewriter(ast.NodeVisitor):
 
         # Clear temporary variables by setting them to None.
         if self.variables:
-            variables: List[ast.expr] = [ast.Name(name, ast.Store()) for name in self.variables]
+            variables: List[ast.expr] = [
+                ast.Name(name, ast.Store()) for name in self.variables
+            ]
             clear = ast.Assign(variables, ast.Constant(None))
             self.statements.append(clear)
         # Fix locations (line numbers/column offsets).
