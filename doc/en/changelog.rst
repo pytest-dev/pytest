@@ -57,7 +57,7 @@ Bug Fixes
 Trivial/Internal Changes
 ------------------------
 
-- `#12333 <https://github.com/pytest-dev/pytest/issues/12333>`_: pytest releases are now attested using the recent `Artifact Attestation <https://github.blog/2024-05-02-introducing-artifact-attestations-now-in-public-beta/>` support from GitHub, allowing users to verify the provenance of pytest's sdist and wheel artifacts.
+- `#12333 <https://github.com/pytest-dev/pytest/issues/12333>`_: pytest releases are now attested using the recent `Artifact Attestation <https://github.blog/2024-05-02-introducing-artifact-attestations-now-in-public-beta/>`_ support from GitHub, allowing users to verify the provenance of pytest's sdist and wheel artifacts.
 
 
 pytest 8.2.0 (2024-04-27)
