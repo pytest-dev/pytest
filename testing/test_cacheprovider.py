@@ -194,7 +194,7 @@ class TestNewAPI:
         assert pytester.path.joinpath("custom_cache_dir").is_dir()
 
 
-@pytest.mark.parametrize("env", ((), ("TOX_ENV_DIR", "/tox_env_dir")))
+@pytest.mark.parametrize("env", ((), ("TOX_ENV_DIR", "mydir/tox-env")))
 def test_cache_reportheader(
     env: Sequence[str], pytester: Pytester, monkeypatch: MonkeyPatch
 ) -> None:
