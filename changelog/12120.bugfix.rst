@@ -1,1 +1,0 @@
-Fix `PermissionError` crashes arising from directories which are not selected on the command-line.
