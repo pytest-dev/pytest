@@ -1,1 +1,0 @@
-pytest releases are now attested using the recent `Artifact Attestation <https://github.blog/2024-05-02-introducing-artifact-attestations-now-in-public-beta/>` support from GitHub, allowing users to verify the provenance of pytest's sdist and wheel artifacts.
