@@ -835,7 +835,7 @@ class AssertionRewriter(ast.NodeVisitor):
         current = self.stack.pop()
         if self.stack:
             self.explanation_specifiers = self.stack[-1]
-        keys = [ast.Constant(key) for key in current.keys()]
+        keys: List[Optional[ast.expr]] = [ast.Constant(key) for key in current.keys()]
         format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))
@@ -926,13 +926,13 @@ class AssertionRewriter(ast.NodeVisitor):
                 [*self.expl_stmts, hook_call_pass],
                 [],
             )
-            statements_pass = [hook_impl_test]
+            statements_pass: List[ast.stmt] = [hook_impl_test]
 
             # Test for assertion condition
             main_test = ast.If(negation, statements_fail, statements_pass)
             self.statements.append(main_test)
             if self.format_variables:
-                variables = [
+                variables: List[ast.expr] = [
                     ast.Name(name, ast.Store()) for name in self.format_variables
                 ]
                 clear_format = ast.Assign(variables, ast.Constant(None))
@@ -1114,11 +1114,11 @@ class AssertionRewriter(ast.NodeVisitor):
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
             left_expl = f"({left_expl})"
         res_variables = [self.variable() for i in range(len(comp.ops))]
-        load_names = [ast.Name(v, ast.Load()) for v in res_variables]
+        load_names: List[ast.expr] = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
         it = zip(range(len(comp.ops)), comp.ops, comp.comparators)
-        expls = []
-        syms = []
+        expls: List[ast.expr] = []
+        syms: List[ast.expr] = []
         results = [left_res]
         for i, op, next_operand in it:
             if (

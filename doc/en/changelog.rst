@@ -28,6 +28,38 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.2.1 (2024-05-19)
+=========================
+
+Improvements
+------------
+
+- `#12334 <https://github.com/pytest-dev/pytest/issues/12334>`_: Support for Python 3.13 (beta1 at the time of writing).
+
+
+
+Bug Fixes
+---------
+
+- `#12120 <https://github.com/pytest-dev/pytest/issues/12120>`_: Fix `PermissionError` crashes arising from directories which are not selected on the command-line.
+
+
+- `#12191 <https://github.com/pytest-dev/pytest/issues/12191>`_: Keyboard interrupts and system exits are now properly handled during the test collection.
+
+
+- `#12300 <https://github.com/pytest-dev/pytest/issues/12300>`_: Fixed handling of 'Function not implemented' error under squashfuse_ll, which is a different way to say that the mountpoint is read-only.
+
+
+- `#12308 <https://github.com/pytest-dev/pytest/issues/12308>`_: Fix a regression in pytest 8.2.0 where the permissions of automatically-created ``.pytest_cache`` directories became ``rwx------`` instead of the expected ``rwxr-xr-x``.
+
+
+
+Trivial/Internal Changes
+------------------------
+
+- `#12333 <https://github.com/pytest-dev/pytest/issues/12333>`_: pytest releases are now attested using the recent `Artifact Attestation <https://github.blog/2024-05-02-introducing-artifact-attestations-now-in-public-beta/>`_ support from GitHub, allowing users to verify the provenance of pytest's sdist and wheel artifacts.
+
+
 pytest 8.2.0 (2024-04-27)
 =========================
 

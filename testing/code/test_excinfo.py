@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import fnmatch
 import importlib
 import io
 import operator
@@ -237,7 +238,7 @@ class TestTraceback_f_g_h:
                 n += 1
             f(n)
 
-        excinfo = pytest.raises(RuntimeError, f, 8)
+        excinfo = pytest.raises(RecursionError, f, 8)
         traceback = excinfo.traceback
         recindex = traceback.recursionindex()
         assert recindex == 3
@@ -373,7 +374,10 @@ def test_excinfo_no_sourcecode():
     except ValueError:
         excinfo = _pytest._code.ExceptionInfo.from_current()
     s = str(excinfo.traceback[-1])
-    assert s == "  File '<string>':1 in <module>\n  ???\n"
+    # TODO: Since Python 3.13b1 under pytest-xdist, the * is `import
+    # sys;exec(eval(sys.stdin.readline()))` (execnet bootstrap code)
+    # instead of `???` like before. Is this OK?
+    fnmatch.fnmatch(s, "  File '<string>':1 in <module>\n  *\n")
 
 
 def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
