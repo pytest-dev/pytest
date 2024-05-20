@@ -1,3 +1,10 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=61",
+    "setuptools-scm[toml]>=6.2.3",
+]
+
 [project]
 name = "pytest"
 description = "pytest: simple powerful testing with Python"
@@ -6,15 +13,15 @@ keywords = [
     "test",
     "unittest",
 ]
-license = {text = "MIT"}
+license = { text = "MIT" }
 authors = [
-    {name = "Holger Krekel"},
-    {name = "Bruno Oliveira"},
-    {name = "Ronny Pfannschmidt"},
-    {name = "Floris Bruynooghe"},
-    {name = "Brianna Laugher"},
-    {name = "Florian Bruhin"},
-    {name = "Others (See AUTHORS)"},
+    { name = "Holger Krekel" },
+    { name = "Bruno Oliveira" },
+    { name = "Ronny Pfannschmidt" },
+    { name = "Floris Bruynooghe" },
+    { name = "Brianna Laugher" },
+    { name = "Florian Bruhin" },
+    { name = "Others (See AUTHORS)" },
 ]
 requires-python = ">=3.8"
 classifiers = [
@@ -31,7 +38,6 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Testing",
     "Topic :: Utilities",
@@ -40,15 +46,14 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    'colorama; sys_platform == "win32"',
-    'exceptiongroup>=1.0.0rc8; python_version < "3.11"',
+    "colorama; sys_platform=='win32'",
+    "exceptiongroup>=1.0.0rc8; python_version<'3.11'",
     "iniconfig",
     "packaging",
-    "pluggy<2.0,>=1.5",
-    'tomli>=1; python_version < "3.11"',
+    "pluggy<2,>=1.5",
+    "tomli>=1; python_version<'3.11'",
 ]
-[project.optional-dependencies]
-dev = [
+optional-dependencies.dev = [
     "argcomplete",
     "attrs>=19.2",
     "hypothesis>=3.56",
@@ -58,59 +63,55 @@ dev = [
     "setuptools",
     "xmlschema",
 ]
-[project.urls]
-Changelog = "https://docs.pytest.org/en/stable/changelog.html"
-Homepage = "https://docs.pytest.org/en/latest/"
-Source = "https://github.com/pytest-dev/pytest"
-Tracker = "https://github.com/pytest-dev/pytest/issues"
-Twitter = "https://twitter.com/pytestdotorg"
-[project.scripts]
-"py.test" = "pytest:console_main"
-pytest = "pytest:console_main"
-
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = [
-    "setuptools>=61",
-    "setuptools-scm[toml]>=6.2.3",
-]
+urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
+urls.Homepage = "https://docs.pytest.org/en/latest/"
+urls.Source = "https://github.com/pytest-dev/pytest"
+urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
+urls.Twitter = "https://twitter.com/pytestdotorg"
+scripts."py.test" = "pytest:console_main"
+scripts.pytest = "pytest:console_main"
 
 [tool.setuptools.package-data]
-"_pytest" = ["py.typed"]
-"pytest" = ["py.typed"]
+"_pytest" = [
+    "py.typed",
+]
+"pytest" = [
+    "py.typed",
+]
 
 [tool.setuptools_scm]
 write_to = "src/_pytest/_version.py"
 
 [tool.black]
-target-version = ['py38']
+target-version = [
+    'py38',
+]
 
 [tool.ruff]
-src = ["src"]
 line-length = 88
 
-[tool.ruff.format]
-docstring-code-format = true
-
-[tool.ruff.lint]
-select = [
-    "B",  # bugbear
-    "D",  # pydocstyle
-    "E",  # pycodestyle
-    "F",  # pyflakes
-    "I",  # isort
-    "PYI", # flake8-pyi
-    "UP", # pyupgrade
-    "RUF", # ruff
-    "W",  # pycodestyle
-    "PIE", # flake8-pie
-    "PGH004", # pygrep-hooks - Use specific rule codes when using noqa
-    "PLE", # pylint error
-    "PLW", # pylint warning
-    "PLR1714", # Consider merging multiple comparisons
-    "T100", # flake8-debugger
+src = [
+    "src",
 ]
-ignore = [
+format.docstring-code-format = true
+lint.select = [
+    "B",       # bugbear
+    "D",       # pydocstyle
+    "E",       # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "PGH004",  # pygrep-hooks - Use specific rule codes when using noqa
+    "PIE",     # flake8-pie
+    "PLE",     # pylint error
+    "PLR1714", # Consider merging multiple comparisons
+    "PLW",     # pylint warning
+    "PYI",     # flake8-pyi
+    "RUF",     # ruff
+    "T100",    # flake8-debugger
+    "UP",      # pyupgrade
+    "W",       # pycodestyle
+]
+lint.ignore = [
     # bugbear ignore
     "B004", # Using `hasattr(x, "__call__")` to test if x is callable is unreliable.
     "B007", # Loop control variable `i` not used within loop body
@@ -118,10 +119,6 @@ ignore = [
     "B010", # [*] Do not call `setattr` with a constant attribute value.
     "B011", # Do not `assert False` (`python -O` removes these calls)
     "B028", # No explicit `stacklevel` keyword argument found
-    # pycodestyle ignore
-    # pytest can do weird low-level things, and we usually know
-    # what we're doing when we use type(..) is ...
-    "E721", # Do not compare types, use `isinstance()`
     # pydocstyle ignore
     "D100", # Missing docstring in public module
     "D101", # Missing docstring in public class
@@ -131,46 +128,52 @@ ignore = [
     "D105", # Missing docstring in magic method
     "D106", # Missing docstring in public nested class
     "D107", # Missing docstring in `__init__`
-    "D209", # [*] Multi-line docstring closing quotes should be on a separate line
     "D205", # 1 blank line required between summary line and description
+    "D209", # [*] Multi-line docstring closing quotes should be on a separate line
     "D400", # First line should end with a period
     "D401", # First line of docstring should be in imperative mood
     "D402", # First line should not be the function's signature
     "D404", # First word of the docstring should not be "This"
     "D415", # First line should end with a period, question mark, or exclamation point
+    # pycodestyle ignore
+    # pytest can do weird low-level things, and we usually know
+    # what we're doing when we use type(..) is ...
+    "E721",    # Do not compare types, use `isinstance()`
+    "PLR5501", # Use `elif` instead of `else` then `if`
+    "PLW0120", # remove the else and dedent its contents
+    # pylint ignore
+    "PLW0603", # Using the global statement
+    "PLW2901", # for loop variable overwritten by assignment target
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
-    # pylint ignore
-    "PLW0603",  # Using the global statement
-    "PLW0120",  # remove the else and dedent its contents
-    "PLW2901",  # for loop variable overwritten by assignment target
-    "PLR5501",  # Use `elif` instead of `else` then `if`
 ]
-
-[tool.ruff.lint.pycodestyle]
+lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
+    "B",
+    "PYI",
+]
+lint.per-file-ignores."src/_pytest/_version.py" = [
+    "I001",
+]
+lint.per-file-ignores."testing/python/approx.py" = [
+    "B015",
+]
+lint.isort.combine-as-imports = true
+lint.isort.force-single-line = true
+lint.isort.force-sort-within-sections = true
+lint.isort.known-local-folder = [
+    "pytest",
+    "_pytest",
+]
+lint.isort.lines-after-imports = 2
+lint.isort.order-by-type = false
 # In order to be able to format for 88 char in ruff format
-max-line-length = 120
-
-[tool.ruff.lint.pydocstyle]
-convention = "pep257"
-
-[tool.ruff.lint.isort]
-force-single-line = true
-combine-as-imports = true
-force-sort-within-sections = true
-order-by-type = false
-known-local-folder = ["pytest", "_pytest"]
-lines-after-imports = 2
-
-[tool.ruff.lint.per-file-ignores]
-"src/_pytest/_py/**/*.py" = ["B", "PYI"]
-"src/_pytest/_version.py" = ["I001"]
-"testing/python/approx.py" = ["B015"]
+lint.pycodestyle.max-line-length = 120
+lint.pydocstyle.convention = "pep257"
 
 [tool.pylint.main]
 # Maximum number of characters on a single line.
 max-line-length = 120
-disable= [
+disable = [
     "abstract-method",
     "arguments-differ",
     "arguments-renamed",
@@ -291,16 +294,27 @@ indent = 4
 [tool.pytest.ini_options]
 minversion = "2.0"
 addopts = "-rfEX -p pytester --strict-markers"
-python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
-python_classes = ["Test", "Acceptance"]
-python_functions = ["test"]
+python_files = [
+    "test_*.py",
+    "*_test.py",
+    "testing/python/*.py",
+]
+python_classes = [
+    "Test",
+    "Acceptance",
+]
+python_functions = [
+    "test",
+]
 # NOTE: "doc" is not included here, but gets tested explicitly via "doctesting".
-testpaths = ["testing"]
+testpaths = [
+    "testing",
+]
 norecursedirs = [
-  "testing/example_scripts",
-  ".*",
-  "build",
-  "dist",
+    "testing/example_scripts",
+    ".*",
+    "build",
+    "dist",
 ]
 xfail_strict = true
 filterwarnings = [
@@ -355,49 +369,55 @@ directory = "changelog/"
 title_format = "pytest {version} ({project_date})"
 template = "changelog/_template.rst"
 
-  [[tool.towncrier.type]]
-  directory = "breaking"
-  name = "Breaking Changes"
-  showcontent = true
+[[tool.towncrier.type]]
+directory = "breaking"
+name = "Breaking Changes"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "deprecation"
-  name = "Deprecations"
-  showcontent = true
+[[tool.towncrier.type]]
+directory = "deprecation"
+name = "Deprecations"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "feature"
-  name = "Features"
-  showcontent = true
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "improvement"
-  name = "Improvements"
-  showcontent = true
+[[tool.towncrier.type]]
+directory = "improvement"
+name = "Improvements"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "bugfix"
-  name = "Bug Fixes"
-  showcontent = true
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bug Fixes"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "vendor"
-  name = "Vendored Libraries"
-  showcontent = true
+[[tool.towncrier.type]]
+directory = "vendor"
+name = "Vendored Libraries"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "doc"
-  name = "Improved Documentation"
-  showcontent = true
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Improved Documentation"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "trivial"
-  name = "Trivial/Internal Changes"
-  showcontent = true
+[[tool.towncrier.type]]
+directory = "trivial"
+name = "Trivial/Internal Changes"
+showcontent = true
 
 [tool.mypy]
-files = ["src", "testing", "scripts"]
-mypy_path = ["src"]
+files = [
+    "src",
+    "testing",
+    "scripts",
+]
+mypy_path = [
+    "src",
+]
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true
