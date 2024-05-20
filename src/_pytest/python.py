@@ -54,6 +54,7 @@ from _pytest.compat import safe_isclass
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
@@ -77,7 +78,6 @@ from _pytest.scope import Scope
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
-from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 
 if TYPE_CHECKING:
@@ -138,6 +138,16 @@ def pytest_configure(config: Config) -> None:
     )
 
 
+@final
+class PytestUnhandledCoroutineError(UsageError):
+    """An unraisable exception resulted in an error.
+
+    Unraisable exceptions are exceptions raised in :meth:`__del__ <object.__del__>`
+    implementations and similar situations when the exception cannot be raised
+    as normal.
+    """
+
+
 def async_warn_and_skip(nodeid: str) -> None:
     msg = "async def functions are not natively supported and have been skipped.\n"
     msg += (
@@ -148,7 +158,9 @@ def async_warn_and_skip(nodeid: str) -> None:
     msg += "  - pytest-tornasync\n"
     msg += "  - pytest-trio\n"
     msg += "  - pytest-twisted"
-    warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
+    raise PytestUnhandledCoroutineError(
+        msg.format(nodeid)
+    )  # TODO: This is the warning to look at
     skip(reason="async def function and no async plugin installed (see warnings)")
 
 
