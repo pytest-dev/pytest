@@ -89,7 +89,6 @@ target-version = [
 
 [tool.ruff]
 line-length = 88
-
 src = [
     "src",
 ]
@@ -135,13 +134,12 @@ lint.ignore = [
     "D402", # First line should not be the function's signature
     "D404", # First word of the docstring should not be "This"
     "D415", # First line should end with a period, question mark, or exclamation point
-    # pycodestyle ignore
     # pytest can do weird low-level things, and we usually know
     # what we're doing when we use type(..) is ...
-    "E721",    # Do not compare types, use `isinstance()`
+    "E721", # Do not compare types, use `isinstance()`
+    # pylint ignore
     "PLR5501", # Use `elif` instead of `else` then `if`
     "PLW0120", # remove the else and dedent its contents
-    # pylint ignore
     "PLW0603", # Using the global statement
     "PLW2901", # for loop variable overwritten by assignment target
     # ruff ignore
