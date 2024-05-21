@@ -7,9 +7,6 @@ API Reference
 
 This page contains the full reference to pytest's API.
 
-.. contents::
-    :depth: 3
-    :local:
 
 Constants
 ---------

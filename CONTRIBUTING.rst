@@ -5,10 +5,6 @@ Contribution getting started
 Contributions are highly welcomed and appreciated.  Every little bit of help counts,
 so do not hesitate!
 
-.. contents::
-   :depth: 2
-   :backlinks: none
-
 
 .. _submitfeedback:
 
