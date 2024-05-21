@@ -1413,7 +1413,7 @@ that it could go anywhere between ``g`` and ``b``.
 This isn't necessarily bad, but it's something to keep in mind. If the order
 they execute in could affect the behavior a test is targetting, or could
 otherwise influence the result of a test, then the order should be defined
-explicitely in a way that allows pytest to linearize/"flatten" that order.
+explicitly in a way that allows pytest to linearize/"flatten" that order.
 
 .. _`autouse order`:
 
