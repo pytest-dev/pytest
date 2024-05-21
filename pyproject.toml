@@ -228,6 +228,7 @@ disable = [
     "pointless-exception-statement",
     "pointless-statement",
     "pointless-string-statement",
+    "possibly-used-before-assignment",
     "protected-access",
     "raise-missing-from",
     "redefined-argument-from-local",
