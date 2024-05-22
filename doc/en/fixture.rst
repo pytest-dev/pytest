@@ -17,7 +17,7 @@ pytest fixtures: explicit, modular, scalable
 
 `Software test fixtures`_ initialize test functions.  They provide a
 fixed baseline so that tests execute reliably and produce consistent,
-repeatable, results.  Initialization may setup services, state, or
+repeatable results.  Initialization may setup services, state, or
 other operating environments.  These are accessed by test functions
 through arguments; for each fixture used by a test function there is
 typically a parameter (named after the fixture) in the test function's
