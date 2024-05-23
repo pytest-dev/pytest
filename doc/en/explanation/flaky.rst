@@ -30,6 +30,12 @@ Overly strict assertion
 
 Overly strict assertions can cause problems with floating point comparison as well as timing issues. :func:`pytest.approx` is useful here.
 
+Pytest is not thread safe
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pytest is not designed to be safe to use in a multithreaded environment. Multiple pytest tests cannot run simultaneously in different threads within a single Python process and pytest assumes that only one test per process is ever executing.
+
+It is possible to use threads within a single test, but care must be taken to avoid using primitives provided by pytest inside a multithreaded context. For example, :func:`pytest.warns` is not thread safe because it is implemented using the standard library :class:`warnings.catch_warnings` context manager, which is not thread safe. Fixtures are also not automatically thread safe and care should be taken sharing the values returned by fixtures between threads. If you are running a test that uses threads and are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself.
 
 Pytest features
 ^^^^^^^^^^^^^^^
