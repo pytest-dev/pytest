@@ -752,8 +752,11 @@ class AssertionRewriter(ast.NodeVisitor):
                     new: List[ast.AST] = []
                     for i, child in enumerate(field):
                         if isinstance(child, ast.Assert):
-                            # Transform assert.
-                            new.extend(self.visit(child))
+                            # Transform assert if no message
+                            if child.msg is None:
+                                new.extend(self.visit(child))
+                            else:
+                                new.append(child)
                         else:
                             new.append(child)
                             if isinstance(child, ast.AST):
