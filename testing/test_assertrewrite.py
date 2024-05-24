@@ -118,10 +118,13 @@ class TestAssertionRewrite:
         s = textwrap.dedent(
             """
 
-        assert False, (
-
-            "Ouch"
-          )
+          assert abs(
+              123
+              - 456) == round(
+                  1000
+                  / 3,
+                  ndigits=1
+              )
 
         """
         )
@@ -133,8 +136,8 @@ class TestAssertionRewrite:
                 assert isinstance(n, (ast.stmt, ast.expr))
                 assert n.lineno == 3
                 assert n.col_offset == 0
-                assert n.end_lineno == 6
-                assert n.end_col_offset == 3
+                assert n.end_lineno == 9
+                assert n.end_col_offset == 5
 
     def test_dont_rewrite(self) -> None:
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
