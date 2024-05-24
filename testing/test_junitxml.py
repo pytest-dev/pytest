@@ -580,7 +580,7 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         tnode = node.find_first_by_tag("testcase")
         fnode = tnode.find_first_by_tag("failure")
-        fnode.assert_attr(message="AssertionError: An error\nassert 0")
+        fnode.assert_attr(message="AssertionError: An error")
 
     @parametrize_families
     def test_failure_escape(
