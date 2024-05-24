@@ -30,12 +30,19 @@ Overly strict assertion
 
 Overly strict assertions can cause problems with floating point comparison as well as timing issues. :func:`pytest.approx` is useful here.
 
-Pytest is not thread safe
-~~~~~~~~~~~~~~~~~~~~~~~~~
+pytest thread safety
+~~~~~~~~~~~~~~~~~~~~
 
-Pytest is not designed to be safe to use in a multithreaded environment. Multiple pytest tests cannot run simultaneously in different threads within a single Python process and pytest assumes that only one test per process is ever executing.
+pytest is single-threaded, executing its tests always in the same thread, sequentially, never spawning any threads itself.
 
-It is possible to use threads within a single test, but care must be taken to avoid using primitives provided by pytest inside a multithreaded context. For example, :func:`pytest.warns` is not thread safe because it is implemented using the standard library :class:`warnings.catch_warnings` context manager, which is not thread safe. Fixtures are also not automatically thread safe and care should be taken sharing the values returned by fixtures between threads. If you are running a test that uses threads and are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself.
+Even in case of plugins which run tests in parallel, for example `pytest-xdist`_, usually work by spawns multiple *processes* and running tests in batches, without using threads.
+
+It is of course possible (and common) for tests and fixtures to spawn threads themselves as part of their testing workflow (for example, a fixture that starts a server thread in the background, or a test which executes production code which itself spawns threads), but some care must be taken:
+
+* Make sure to eventually wait on any spawned threads -- for example at the end of a test, or during teardown of a fixture.
+* Avoid using primitives provided by pytest (:func:`pytest.warns`, :func:`pytest.raises`, etc) from multiple threads, as they are not thread-safe. 
+
+If your test suite uses threads and your are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself. 
 
 Pytest features
 ^^^^^^^^^^^^^^^
