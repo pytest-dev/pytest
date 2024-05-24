@@ -18,7 +18,7 @@ System state
 
 Broadly speaking, a flaky test indicates that the test relies on some system state that is not being appropriately controlled - the test environment is not sufficiently isolated. Higher level tests are more likely to be flaky as they rely on more state.
 
-Flaky tests sometimes appear when a test suite is run in parallel (such as use of pytest-xdist). This can indicate a test is reliant on test ordering.
+Flaky tests sometimes appear when a test suite is run in parallel (such as use of `pytest-xdist`_). This can indicate a test is reliant on test ordering.
 
 -  Perhaps a different test is failing to clean up after itself and leaving behind data which causes the flaky test to fail.
 - The flaky test is reliant on data from a previous test that doesn't clean up after itself, and in parallel runs that previous test is not always present
