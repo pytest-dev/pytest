@@ -124,7 +124,7 @@ For example:
 Submitting Plugins to pytest-dev
 --------------------------------
 
-Pytest development of the core, some plugins and support code happens
+Development of the pytest core, support code, and some plugins happens
 in repositories living under the ``pytest-dev`` organisations:
 
 - `pytest-dev on GitHub <https://github.com/pytest-dev>`_
