@@ -40,9 +40,9 @@ Even in case of plugins which run tests in parallel, for example `pytest-xdist`_
 It is of course possible (and common) for tests and fixtures to spawn threads themselves as part of their testing workflow (for example, a fixture that starts a server thread in the background, or a test which executes production code which itself spawns threads), but some care must be taken:
 
 * Make sure to eventually wait on any spawned threads -- for example at the end of a test, or during teardown of a fixture.
-* Avoid using primitives provided by pytest (:func:`pytest.warns`, :func:`pytest.raises`, etc) from multiple threads, as they are not thread-safe. 
+* Avoid using primitives provided by pytest (:func:`pytest.warns`, :func:`pytest.raises`, etc) from multiple threads, as they are not thread-safe.
 
-If your test suite uses threads and your are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself. 
+If your test suite uses threads and your are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself.
 
 Pytest features
 ^^^^^^^^^^^^^^^
