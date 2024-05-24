@@ -283,9 +283,7 @@ class TestAssertionRewrite:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(
-            ["*AssertionError*The failure message*"]
-        )
+        result.stdout.fnmatch_lines(["*AssertionError*The failure message*"])
 
     def test_assertion_message_multiline(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -331,9 +329,7 @@ class TestAssertionRewrite:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(
-            ["*AssertionError: To be escaped: %"]
-        )
+        result.stdout.fnmatch_lines(["*AssertionError: To be escaped: %"])
 
     def test_assertion_messages_bytes(self, pytester: Pytester) -> None:
         pytester.makepyfile("def test_bytes_assertion():\n    assert False, b'ohai!'\n")
