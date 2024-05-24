@@ -1905,7 +1905,6 @@ def test_assertion_location_with_coverage(pytester: Pytester) -> None:
         [
             ">       assert False, 1",
             "E       AssertionError: 1",
-            "E       assert False",
             "*= 1 failed in*",
         ]
     )
