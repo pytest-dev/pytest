@@ -30,22 +30,22 @@ Overly strict assertion
 
 Overly strict assertions can cause problems with floating point comparison as well as timing issues. :func:`pytest.approx` is useful here.
 
-pytest thread safety
-~~~~~~~~~~~~~~~~~~~~
+Thread safety
+~~~~~~~~~~~~~
 
 pytest is single-threaded, executing its tests always in the same thread, sequentially, never spawning any threads itself.
 
-Even in case of plugins which run tests in parallel, for example `pytest-xdist`_, usually work by spawns multiple *processes* and running tests in batches, without using threads.
+Even in case of plugins which run tests in parallel, for example `pytest-xdist`_, usually work by spawning multiple *processes* and running tests in batches, without using multiple threads.
 
-It is of course possible (and common) for tests and fixtures to spawn threads themselves as part of their testing workflow (for example, a fixture that starts a server thread in the background, or a test which executes production code which itself spawns threads), but some care must be taken:
+It is of course possible (and common) for tests and fixtures to spawn threads themselves as part of their testing workflow (for example, a fixture that starts a server thread in the background, or a test which executes production code that spawns threads), but some care must be taken:
 
-* Make sure to eventually wait on any spawned threads -- for example at the end of a test, or during teardown of a fixture.
+* Make sure to eventually wait on any spawned threads -- for example at the end of a test, or during the teardown of a fixture.
 * Avoid using primitives provided by pytest (:func:`pytest.warns`, :func:`pytest.raises`, etc) from multiple threads, as they are not thread-safe.
 
 If your test suite uses threads and your are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself.
 
-Pytest features
-^^^^^^^^^^^^^^^
+Related features
+^^^^^^^^^^^^^^^^
 
 Xfail strict
 ~~~~~~~~~~~~
@@ -136,3 +136,6 @@ Resources
 
   * `Flaky Tests at Google and How We Mitigate Them <https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html>`_ by John Micco, 2016
   * `Where do Google's flaky tests come from? <https://testing.googleblog.com/2017/04/where-do-our-flaky-tests-come-from.html>`_  by Jeff Listfield, 2017
+
+
+.. _pytest-xdist: https://github.com/pytest-dev/pytest-xdist
