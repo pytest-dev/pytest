@@ -1,5 +1,5 @@
 ============================
-Contribution getting started
+Contributing
 ============================
 
 Contributions are highly welcomed and appreciated.  Every little bit of help counts,
