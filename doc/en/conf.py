@@ -316,6 +316,9 @@ html_show_sourcelink = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = "pytestdoc"
 
+# The base URL which points to the root of the HTML documentation. It is used
+# to indicate the location of document using the canonical link relation (#12363).
+html_baseurl = "https://docs.pytest.org/en/stable/"
 
 # -- Options for LaTeX output --------------------------------------------------
 
