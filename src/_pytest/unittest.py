@@ -212,11 +212,12 @@ class TestCaseFunction(Function):
         super().setup()
 
     def teardown(self) -> None:
-        super().teardown()
         if self._explicit_tearDown is not None:
             self._explicit_tearDown()
             self._explicit_tearDown = None
         self._obj = None
+        self._instance = None
+        super().teardown()
 
     def startTest(self, testcase: "unittest.TestCase") -> None:
         pass
