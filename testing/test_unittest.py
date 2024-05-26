@@ -1,5 +1,4 @@
 # mypy: allow-untyped-defs
-import gc
 import sys
 from typing import List
 
@@ -192,30 +191,35 @@ def test_teardown(pytester: Pytester) -> None:
 def test_teardown_issue1649(pytester: Pytester) -> None:
     """
     Are TestCase objects cleaned up? Often unittest TestCase objects set
-    attributes that are large and expensive during setUp.
+    attributes that are large and expensive during test run or setUp.
 
     The TestCase will not be cleaned up if the test fails, because it
     would then exist in the stackframe.
+
+    Regression test for #1649 (see also #12367).
     """
-    testpath = pytester.makepyfile(
+    pytester.makepyfile(
         """
         import unittest
-        class TestCaseObjectsShouldBeCleanedUp(unittest.TestCase):
-            def setUp(self):
-                self.an_expensive_object = 1
-            def test_demo(self):
-                pass
+        import gc
 
-    """
+        class TestCaseObjectsShouldBeCleanedUp(unittest.TestCase):
+            def test_expensive(self):
+                self.an_expensive_obj = object()
+
+            def test_is_it_still_alive(self):
+                gc.collect()
+                for obj in gc.get_objects():
+                    if type(obj).__name__ == "TestCaseObjectsShouldBeCleanedUp":
+                        assert not hasattr(obj, "an_expensive_obj")
+                        break
+                else:
+                    assert False, "Could not find TestCaseObjectsShouldBeCleanedUp instance"
+        """
     )
 
-    pytester.inline_run("-s", testpath)
-    gc.collect()
-
-    # Either already destroyed, or didn't run setUp.
-    for obj in gc.get_objects():
-        if type(obj).__name__ == "TestCaseObjectsShouldBeCleanedUp":
-            assert not hasattr(obj, "an_expensive_obj")
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.OK
 
 
 def test_unittest_skip_issue148(pytester: Pytester) -> None:
