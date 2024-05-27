@@ -1913,7 +1913,7 @@ def parse_warning_filter(
         parts.append("")
     action_, message, category_, module, lineno_ = (s.strip() for s in parts)
     try:
-        action: "warnings._ActionKind" = warnings._getaction(action_)  # type: ignore[attr-defined]
+        action: warnings._ActionKind = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
         raise UsageError(error_template.format(error=str(e))) from None
     try:
