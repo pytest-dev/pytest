@@ -199,8 +199,8 @@ class TracebackEntry:
         rawentry: TracebackType,
         repr_style: Optional['Literal["short", "long"]'] = None,
     ) -> None:
-        self._rawentry: "Final" = rawentry
-        self._repr_style: "Final" = repr_style
+        self._rawentry: Final = rawentry
+        self._repr_style: Final = repr_style
 
     def with_repr_style(
         self, repr_style: Optional['Literal["short", "long"]']

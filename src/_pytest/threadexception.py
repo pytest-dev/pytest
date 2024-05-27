@@ -34,8 +34,8 @@ class catch_threading_exception:
     """
 
     def __init__(self) -> None:
-        self.args: Optional["threading.ExceptHookArgs"] = None
-        self._old_hook: Optional[Callable[["threading.ExceptHookArgs"], Any]] = None
+        self.args: Optional[threading.ExceptHookArgs] = None
+        self._old_hook: Optional[Callable[[threading.ExceptHookArgs], Any]] = None
 
     def _hook(self, args: "threading.ExceptHookArgs") -> None:
         self.args = args
