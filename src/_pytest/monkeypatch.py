@@ -142,6 +142,7 @@ class MonkeyPatch:
         which undoes any patching done inside the ``with`` block upon exit.
 
         Example:
+
         .. code-block:: python
 
             import functools
