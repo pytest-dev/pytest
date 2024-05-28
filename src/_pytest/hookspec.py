@@ -311,12 +311,12 @@ def pytest_collection_finish(session: "Session") -> None:
 def pytest_ignore_collect(
     collection_path: Path, path: "LEGACY_PATH", config: "Config"
 ) -> Optional[bool]:
-    """Return ``True`` to prevent considering this path for collection.
+    """Return ``True`` to ignore this path for collection.
 
     Return ``None`` to let other plugins ignore the path for collection.
 
-    Returning ``False`` will forcefully consider this path to be considered
-    for collection, without giving a chance of other plugins to ignore this file.
+    Returning ``False`` will forcefully *not* ignore this path for collection,
+    without giving a chance for other plugins to ignore this path.
 
     This hook is consulted for all files and directories prior to calling
     more specific hooks.
