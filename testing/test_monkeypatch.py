@@ -6,11 +6,45 @@ import sys
 import textwrap
 from typing import Dict
 from typing import Generator
+from typing import NoReturn
+from typing import Optional
+from typing import overload
 from typing import Type
+from typing import TypeVar
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 import pytest
+
+T = TypeVar("T")
+
+
+class SomeDescriptor:
+    @overload
+    def __get__(self, instance: None, owner: type) -> int:
+        ...
+
+    @overload
+    def __get__(self, instance: T, owner: Optional[Type[T]] = ...) -> int:
+        ...
+
+    def __get__(self, instance: Optional[T], owner: Optional[Type[T]] = None) -> int:
+        return 1
+
+
+class RaisingDescriptor:
+    @overload
+    def __get__(self, instance: None, owner: type) -> NoReturn:
+        ...
+
+    @overload
+    def __get__(self, instance: T, owner: Optional[Type[T]] = ...) -> NoReturn:
+        ...
+
+    def __get__(
+        self, instance: Optional[T], owner: Optional[Type[T]] = None
+    ) -> NoReturn:
+        assert False, "descriptor was bound"
 
 
 @pytest.fixture
@@ -23,15 +57,22 @@ def mp() -> Generator[MonkeyPatch, None, None]:
 
 
 def test_setattr() -> None:
+    import inspect
+
     class A:
         x = 1
+        y = SomeDescriptor()
+        z = RaisingDescriptor()
 
     monkeypatch = MonkeyPatch()
     pytest.raises(AttributeError, monkeypatch.setattr, A, "notexists", 2)
-    monkeypatch.setattr(A, "y", 2, raising=False)
-    assert A.y == 2  # type: ignore
+    monkeypatch.setattr(A, "w", 2, raising=False)
+    assert A.w == 2  # type: ignore
     monkeypatch.undo()
-    assert not hasattr(A, "y")
+    assert not hasattr(A, "w")
+
+    with pytest.raises(TypeError):
+        monkeypatch.setattr(A, "w")  # type: ignore[call-overload]
 
     monkeypatch = MonkeyPatch()
     monkeypatch.setattr(A, "x", 2)
@@ -45,8 +86,32 @@ def test_setattr() -> None:
     monkeypatch.undo()  # double-undo makes no modification
     assert A.x == 5
 
-    with pytest.raises(TypeError):
-        monkeypatch.setattr(A, "y")  # type: ignore[call-overload]
+    # Test that inherited attributes don't get written into the target's instance
+    # dictionary.
+    a = A()
+    monkeypatch = MonkeyPatch()
+    assert "x" not in vars(a)
+    monkeypatch.setattr(a, "x", 2)
+    monkeypatch.undo()
+    assert "x" not in vars(a)
+
+    for obj in (A, A()):
+        # Test that class/instance descriptors don't get bound and written into the
+        # target's dictionary.
+        monkeypatch = MonkeyPatch()
+        assert isinstance(inspect.getattr_static(obj, "y"), SomeDescriptor)
+        monkeypatch.setattr(obj, "y", 2)
+        monkeypatch.undo()
+        assert isinstance(inspect.getattr_static(obj, "y"), SomeDescriptor)
+
+        # Test that the `raising=True` check binds descriptors (to check if they raise
+        # AttributeError).
+        monkeypatch = MonkeyPatch()
+        with pytest.raises(AssertionError, match="descriptor was bound"):
+            monkeypatch.setattr(obj, "z", 2)
+        # Test that descriptors don't get bound if `raising=False`.
+        monkeypatch.setattr(obj, "z", 2, raising=False)
+        monkeypatch.undo()
 
 
 class TestSetattrWithImportPath:
@@ -97,8 +162,12 @@ class TestSetattrWithImportPath:
 
 
 def test_delattr() -> None:
+    import inspect
+
     class A:
         x = 1
+        y = SomeDescriptor()
+        z = RaisingDescriptor()
 
     monkeypatch = MonkeyPatch()
     monkeypatch.delattr(A, "x")
@@ -107,13 +176,30 @@ def test_delattr() -> None:
     assert A.x == 1
 
     monkeypatch = MonkeyPatch()
+    pytest.raises(AttributeError, monkeypatch.delattr, A, "w")
+    monkeypatch.delattr(A, "w", raising=False)
     monkeypatch.delattr(A, "x")
-    pytest.raises(AttributeError, monkeypatch.delattr, A, "y")
-    monkeypatch.delattr(A, "y", raising=False)
     monkeypatch.setattr(A, "x", 5, raising=False)
     assert A.x == 5
     monkeypatch.undo()
     assert A.x == 1
+
+    # Test that (non-inherited) class descriptors don't get bound and written into the
+    # target's dictionary.
+    monkeypatch = MonkeyPatch()
+    assert isinstance(inspect.getattr_static(A, "y"), SomeDescriptor)
+    monkeypatch.delattr(A, "y")
+    monkeypatch.undo()
+    assert isinstance(inspect.getattr_static(A, "y"), SomeDescriptor)
+
+    # Test that the `raising=True` check binds descriptors (to check if they raise
+    # AttributeError).
+    monkeypatch = MonkeyPatch()
+    with pytest.raises(AssertionError, match="descriptor was bound"):
+        monkeypatch.delattr(A, "z")
+    # Test that descriptor's don't get bound if `raising=False`.
+    monkeypatch.delattr(A, "z", raising=False)
+    monkeypatch.undo()
 
 
 def test_setitem() -> None:
