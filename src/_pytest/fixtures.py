@@ -25,6 +25,7 @@ from typing import Mapping
 from typing import MutableMapping
 from typing import NoReturn
 from typing import Optional
+from typing import OrderedDict
 from typing import overload
 from typing import Sequence
 from typing import Set
@@ -77,8 +78,6 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
-    from typing import Deque
-
     from _pytest.main import Session
     from _pytest.python import CallSpec2
     from _pytest.python import Function
@@ -215,16 +214,18 @@ def get_parametrized_fixture_argkeys(
 
 def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
     argkeys_by_item: Dict[Scope, Dict[nodes.Item, OrderedSet[FixtureArgKey]]] = {}
-    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, Deque[nodes.Item]]] = {}
+    items_by_argkey: Dict[
+        Scope, Dict[FixtureArgKey, OrderedDict[nodes.Item, None]]
+    ] = {}
     for scope in HIGH_SCOPES:
         scoped_argkeys_by_item = argkeys_by_item[scope] = {}
-        scoped_items_by_argkey = items_by_argkey[scope] = defaultdict(deque)
+        scoped_items_by_argkey = items_by_argkey[scope] = defaultdict(OrderedDict)
         for item in items:
             argkeys = dict.fromkeys(get_parametrized_fixture_argkeys(item, scope))
             if argkeys:
                 scoped_argkeys_by_item[item] = argkeys
                 for argkey in argkeys:
-                    scoped_items_by_argkey[argkey].append(item)
+                    scoped_items_by_argkey[argkey][item] = None
 
     items_set = dict.fromkeys(items)
     return list(
@@ -237,7 +238,9 @@ def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
 def reorder_items_atscope(
     items: OrderedSet[nodes.Item],
     argkeys_by_item: Mapping[Scope, Mapping[nodes.Item, OrderedSet[FixtureArgKey]]],
-    items_by_argkey: Mapping[Scope, Mapping[FixtureArgKey, "Deque[nodes.Item]"]],
+    items_by_argkey: Mapping[
+        Scope, Mapping[FixtureArgKey, OrderedDict[nodes.Item, None]]
+    ],
     scope: Scope,
 ) -> OrderedSet[nodes.Item]:
     if scope is Scope.Function or len(items) < 3:
@@ -274,7 +277,10 @@ def reorder_items_atscope(
                     for other_scope in HIGH_SCOPES:
                         other_scoped_items_by_argkey = items_by_argkey[other_scope]
                         for argkey in argkeys_by_item[other_scope].get(i, ()):
-                            other_scoped_items_by_argkey[argkey].appendleft(i)
+                            other_scoped_items_by_argkey[argkey][i] = None
+                            other_scoped_items_by_argkey[argkey].move_to_end(
+                                i, last=False
+                            )
                 break
         if no_argkey_items:
             reordered_no_argkey_items = reorder_items_atscope(
