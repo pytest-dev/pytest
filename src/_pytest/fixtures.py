@@ -23,6 +23,7 @@ from typing import List
 from typing import MutableMapping
 from typing import NoReturn
 from typing import Optional
+from typing import OrderedDict
 from typing import overload
 from typing import Sequence
 from typing import Set
@@ -75,8 +76,6 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
-    from typing import Deque
-
     from _pytest.main import Session
     from _pytest.python import CallSpec2
     from _pytest.python import Function
@@ -207,16 +206,18 @@ def get_parametrized_fixture_keys(
 
 def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
     argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]] = {}
-    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, Deque[nodes.Item]]] = {}
+    items_by_argkey: Dict[
+        Scope, Dict[FixtureArgKey, OrderedDict[nodes.Item, None]]
+    ] = {}
     for scope in HIGH_SCOPES:
         scoped_argkeys_cache = argkeys_cache[scope] = {}
-        scoped_items_by_argkey = items_by_argkey[scope] = defaultdict(deque)
+        scoped_items_by_argkey = items_by_argkey[scope] = defaultdict(OrderedDict)
         for item in items:
             keys = dict.fromkeys(get_parametrized_fixture_keys(item, scope), None)
             if keys:
                 scoped_argkeys_cache[item] = keys
                 for key in keys:
-                    scoped_items_by_argkey[key].append(item)
+                    scoped_items_by_argkey[key][item] = None
     items_dict = dict.fromkeys(items, None)
     return list(
         reorder_items_atscope(items_dict, argkeys_cache, items_by_argkey, Scope.Session)
@@ -226,17 +227,19 @@ def reorder_items(items: Sequence[nodes.Item]) -> List[nodes.Item]:
 def fix_cache_order(
     item: nodes.Item,
     argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
-    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, "Deque[nodes.Item]"]],
+    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, OrderedDict[nodes.Item, None]]],
 ) -> None:
     for scope in HIGH_SCOPES:
+        scoped_items_by_argkey = items_by_argkey[scope]
         for key in argkeys_cache[scope].get(item, []):
-            items_by_argkey[scope][key].appendleft(item)
+            scoped_items_by_argkey[key][item] = None
+            scoped_items_by_argkey[key].move_to_end(item, last=False)
 
 
 def reorder_items_atscope(
     items: Dict[nodes.Item, None],
     argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
-    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, "Deque[nodes.Item]"]],
+    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, OrderedDict[nodes.Item, None]]],
     scope: Scope,
 ) -> Dict[nodes.Item, None]:
     if scope is Scope.Function or len(items) < 3:

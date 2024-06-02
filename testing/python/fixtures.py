@@ -2219,6 +2219,25 @@ class TestAutouseManagement:
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(passed=2)
 
+    def test_reordering_catastrophic_performance(self, pytester: Pytester) -> None:
+        """Check that a certain high-scope parametrization pattern doesn't cause
+        a catasrophic slowdown.
+
+        Regression test for #12355.
+        """
+        pytester.makepyfile("""
+            import pytest
+
+            params = tuple("abcdefghijklmnopqrstuvwxyz")
+            @pytest.mark.parametrize(params, [range(len(params))] * 3, scope="module")
+            def test_parametrize(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z):
+                pass
+        """)
+
+        result = pytester.runpytest()
+
+        result.assert_outcomes(passed=3)
+
 
 class TestFixtureMarker:
     def test_parametrize(self, pytester: Pytester) -> None:
