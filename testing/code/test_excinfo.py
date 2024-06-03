@@ -10,6 +10,7 @@ import re
 import sys
 import textwrap
 from typing import Any
+from typing import cast
 from typing import TYPE_CHECKING
 
 import _pytest._code
@@ -721,14 +722,15 @@ raise ValueError()
         p = FormattedExcinfo(funcargs=True, truncate_args=True)
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
-        assert len(reprfuncargs.args[0][1]) < 500
-        assert "..." in reprfuncargs.args[0][1]
+        arg1 = cast(str, reprfuncargs.args[0][1])
+        assert len(arg1) < 500
+        assert "..." in arg1
         # again without truncate
         p = FormattedExcinfo(funcargs=True, truncate_args=False)
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
         assert reprfuncargs.args[0] == ("m", repr("m" * 500))
-        assert "..." not in reprfuncargs.args[0][1]
+        assert "..." not in cast(str, reprfuncargs.args[0][1])
 
     def test_repr_tracebackentry_lines(self, importasmod) -> None:
         mod = importasmod(
