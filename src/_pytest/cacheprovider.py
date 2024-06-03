@@ -4,6 +4,7 @@
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
 import dataclasses
+import errno
 import json
 import os
 from pathlib import Path
@@ -227,14 +228,24 @@ class Cache:
             with open(path.joinpath("CACHEDIR.TAG"), "xb") as f:
                 f.write(CACHEDIR_TAG_CONTENT)
 
-            path.rename(self._cachedir)
-            # Create a directory in place of the one we just moved so that `TemporaryDirectory`'s
-            # cleanup doesn't complain.
-            #
-            # TODO: pass ignore_cleanup_errors=True when we no longer support python < 3.10. See
-            # https://github.com/python/cpython/issues/74168. Note that passing delete=False would
-            # do the wrong thing in case of errors and isn't supported until python 3.12.
-            path.mkdir()
+            try:
+                path.rename(self._cachedir)
+            except OSError as e:
+                # If 2 concurrent pytests both race to the rename, the loser
+                # gets "Directory not empty" from the rename. In this case,
+                # everything is handled so just continue (while letting the
+                # temporary directory be cleaned up).
+                if e.errno != errno.ENOTEMPTY:
+                    raise
+            else:
+                # Create a directory in place of the one we just moved so that
+                # `TemporaryDirectory`'s cleanup doesn't complain.
+                #
+                # TODO: pass ignore_cleanup_errors=True when we no longer support python < 3.10.
+                # See https://github.com/python/cpython/issues/74168. Note that passing
+                # delete=False would do the wrong thing in case of errors and isn't supported
+                # until python 3.12.
+                path.mkdir()
 
 
 class LFPluginCollWrapper:
