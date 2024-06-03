@@ -635,6 +635,7 @@ class ExceptionInfo(Generic[E]):
         ] = True,
         funcargs: bool = False,
         truncate_locals: bool = True,
+        truncate_args: bool = True,
         chain: bool = True,
     ) -> Union["ReprExceptionInfo", "ExceptionChainRepr"]:
         """Return str()able representation of this exception info.
@@ -665,6 +666,9 @@ class ExceptionInfo(Generic[E]):
         :param bool truncate_locals:
             With ``showlocals==True``, make sure locals can be safely represented as strings.
 
+        :param bool truncate_args:
+            With ``showargs==True``, make sure args can be safely represented as strings.
+
         :param bool chain:
             If chained exceptions in Python 3 should be shown.
 
@@ -691,6 +695,7 @@ class ExceptionInfo(Generic[E]):
             tbfilter=tbfilter,
             funcargs=funcargs,
             truncate_locals=truncate_locals,
+            truncate_args=truncate_args,
             chain=chain,
         )
         return fmt.repr_excinfo(self)
@@ -809,6 +814,7 @@ class FormattedExcinfo:
     tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]] = True
     funcargs: bool = False
     truncate_locals: bool = True
+    truncate_args: bool = True
     chain: bool = True
     astcache: Dict[Union[str, Path], ast.AST] = dataclasses.field(
         default_factory=dict, init=False, repr=False
@@ -839,7 +845,11 @@ class FormattedExcinfo:
         if self.funcargs:
             args = []
             for argname, argvalue in entry.frame.getargs(var=True):
-                args.append((argname, saferepr(argvalue)))
+                if self.truncate_args:
+                    str_repr = saferepr(argvalue)
+                else:
+                    str_repr = saferepr(argvalue, maxsize=None)
+                args.append((argname, str_repr))
             return ReprFuncArgs(args)
         return None
 

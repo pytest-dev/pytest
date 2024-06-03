@@ -448,6 +448,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
         else:
             truncate_locals = True
 
+        truncate_args = False if self.config.getoption("verbose", 0) > 2 else True
+
         # excinfo.getrepr() formats paths relative to the CWD if `abspath` is False.
         # It is possible for a fixture/test to change the CWD while this code runs, which
         # would then result in the user seeing confusing paths in the failure message.
@@ -466,6 +468,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
             style=style,
             tbfilter=tbfilter,
             truncate_locals=truncate_locals,
+            truncate_args=truncate_args,
         )
 
     def repr_failure(
