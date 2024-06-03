@@ -849,7 +849,7 @@ class FormattedExcinfo:
                 if self.truncate_args:
                     str_repr = saferepr(argvalue)
                 else:
-                    str_repr = safeformat(argvalue)
+                    str_repr = saferepr(argvalue, maxsize=None)
                 args.append((argname, str_repr))
             return ReprFuncArgs(args)
         return None

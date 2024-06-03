@@ -448,10 +448,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         else:
             truncate_locals = True
 
-        if self.config.getoption("verbose", 0) > 2:
-            truncate_args = False
-        else:
-            truncate_args = True
+        truncate_args = False if self.config.getoption("verbose", 0) > 2 else True
 
         # excinfo.getrepr() formats paths relative to the CWD if `abspath` is False.
         # It is possible for a fixture/test to change the CWD while this code runs, which
