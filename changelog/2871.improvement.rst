@@ -7,7 +7,13 @@ and `capture_output=True`. When passing `-vvv` the full content of
 
 ```python
 def test_vvv():
-   subprocess.run(["sh","-c","seq 400|xargs echo; false"], capture_output=True, text=True, encoding="utf8", check=True)
+    subprocess.run(
+        ["sh", "-c", "seq 400|xargs echo; false"],
+        capture_output=True,
+        text=True,
+        encoding="utf8",
+        check=True,
+    )
 ```
 
 will now output:
