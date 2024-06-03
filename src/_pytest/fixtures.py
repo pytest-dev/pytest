@@ -1636,7 +1636,7 @@ class FixtureManager:
         func: "_FixtureFunc[object]",
         nodeid: Optional[str],
         scope: Union[
-            Scope, _ScopeName, Callable[[str, Config], _ScopeName], None
+            Scope, _ScopeName, Callable[[str, Config], _ScopeName]
         ] = "function",
         params: Optional[Sequence[object]] = None,
         ids: Optional[
