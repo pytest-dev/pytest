@@ -1,1 +1,0 @@
-Fix possible "Directory not empty" crashes arising from concurent cache dir (``.pytest_cache``) creation. Regressed in pytest 8.2.0.

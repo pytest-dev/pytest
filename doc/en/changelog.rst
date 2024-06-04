@@ -28,6 +28,35 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.2.2 (2024-06-04)
+=========================
+
+Bug Fixes
+---------
+
+- `#12355 <https://github.com/pytest-dev/pytest/issues/12355>`_: Fix possible catastrophic performance slowdown on a certain parametrization pattern involving many higher-scoped parameters.
+
+
+- `#12367 <https://github.com/pytest-dev/pytest/issues/12367>`_: Fix a regression in pytest 8.2.0 where unittest class instances (a fresh one is created for each test) were not released promptly on test teardown but only on session teardown.
+
+
+- `#12381 <https://github.com/pytest-dev/pytest/issues/12381>`_: Fix possible "Directory not empty" crashes arising from concurent cache dir (``.pytest_cache``) creation. Regressed in pytest 8.2.0.
+
+
+
+Improved Documentation
+----------------------
+
+- `#12290 <https://github.com/pytest-dev/pytest/issues/12290>`_: Updated Sphinx theme to use Furo instead of Flask, enabling Dark mode theme.
+
+
+- `#12356 <https://github.com/pytest-dev/pytest/issues/12356>`_: Added a subsection to the documentation for debugging flaky tests to mention
+  lack of thread safety in pytest as a possible source of flakyness.
+
+
+- `#12363 <https://github.com/pytest-dev/pytest/issues/12363>`_: The documentation webpages now links to a canonical version to reduce outdated documentation in search engine results.
+
+
 pytest 8.2.1 (2024-05-19)
 =========================
 
