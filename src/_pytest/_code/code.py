@@ -55,7 +55,7 @@ from _pytest.pathlib import bestrelpath
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
-_TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
+TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 
 class Code:
@@ -628,7 +628,7 @@ class ExceptionInfo(Generic[E]):
     def getrepr(
         self,
         showlocals: bool = False,
-        style: _TracebackStyle = "long",
+        style: TracebackStyle = "long",
         abspath: bool = False,
         tbfilter: Union[
             bool, Callable[["ExceptionInfo[BaseException]"], Traceback]
@@ -809,7 +809,7 @@ class FormattedExcinfo:
     fail_marker: ClassVar = "E"
 
     showlocals: bool = False
-    style: _TracebackStyle = "long"
+    style: TracebackStyle = "long"
     abspath: bool = True
     tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]] = True
     funcargs: bool = False
@@ -1174,7 +1174,7 @@ class ReprExceptionInfo(ExceptionRepr):
 class ReprTraceback(TerminalRepr):
     reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]]
     extraline: Optional[str]
-    style: _TracebackStyle
+    style: TracebackStyle
 
     entrysep: ClassVar = "_ "
 
@@ -1208,7 +1208,7 @@ class ReprTracebackNative(ReprTraceback):
 class ReprEntryNative(TerminalRepr):
     lines: Sequence[str]
 
-    style: ClassVar[_TracebackStyle] = "native"
+    style: ClassVar[TracebackStyle] = "native"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         tw.write("".join(self.lines))
@@ -1220,7 +1220,7 @@ class ReprEntry(TerminalRepr):
     reprfuncargs: Optional["ReprFuncArgs"]
     reprlocals: Optional["ReprLocals"]
     reprfileloc: Optional["ReprFileLocation"]
-    style: _TracebackStyle
+    style: TracebackStyle
 
     def _write_entry_lines(self, tw: TerminalWriter) -> None:
         """Write the source code portions of a list of traceback entries with syntax highlighting.

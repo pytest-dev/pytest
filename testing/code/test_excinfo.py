@@ -28,7 +28,7 @@ import pytest
 
 
 if TYPE_CHECKING:
-    from _pytest._code.code import _TracebackStyle
+    from _pytest._code.code import TracebackStyle
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -925,7 +925,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: tuple[_TracebackStyle, ...] = ("long", "short")
+        styles: tuple[TracebackStyle, ...] = ("long", "short")
         for style in styles:
             p = FormattedExcinfo(style=style)
             reprtb = p.repr_traceback(excinfo)
@@ -1052,7 +1052,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: tuple[_TracebackStyle, ...] = ("short", "long", "no")
+        styles: tuple[TracebackStyle, ...] = ("short", "long", "no")
         for style in styles:
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)

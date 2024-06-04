@@ -38,7 +38,6 @@ from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.config.compat import PathAwareHookProxy
-from _pytest.fixtures import FixtureManager
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -54,6 +53,8 @@ from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     from typing import Self
+
+    from _pytest.fixtures import FixtureManager
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -551,7 +552,7 @@ class Session(nodes.Collector):
     # Set on the session by runner.pytest_sessionstart.
     _setupstate: SetupState
     # Set on the session by fixtures.pytest_sessionstart.
-    _fixturemanager: FixtureManager
+    _fixturemanager: "FixtureManager"
     exitstatus: Union[int, ExitCode]
 
     def __init__(self, config: Config) -> None:
