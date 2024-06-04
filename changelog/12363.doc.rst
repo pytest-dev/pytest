@@ -1,1 +1,0 @@
-The documentation webpages now links to a canonical version to reduce outdated documentation in search engine results.
