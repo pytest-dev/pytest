@@ -559,9 +559,6 @@ class DoctestModule(Module):
                     # Type ignored because this is a private function.
                     return super()._from_module(module, object)  # type: ignore[misc]
 
-            else:  # pragma: no cover
-                pass
-
         try:
             module = self.obj
         except Collector.CollectError:
