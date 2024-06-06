@@ -514,11 +514,11 @@ class DoctestModule(Module):
             if sys.version_info < (3, 11):
 
                 def _find_lineno(self, obj, source_lines):
-                    """Doctest code does not take into account `@property`, this
-                    is a hackish way to fix it. https://bugs.python.org/issue17446
+                    """On older Pythons, doctest code does not take into account
+                    `@property`. https://github.com/python/cpython/issues/61648
 
-                    Wrapped Doctests will need to be unwrapped so the correct
-                    line number is returned. This will be reported upstream. #8796
+                    Moreover, wrapped Doctests need to be unwrapped so the correct
+                    line number is returned. #8796
                     """
                     if isinstance(obj, property):
                         obj = getattr(obj, "fget", obj)
