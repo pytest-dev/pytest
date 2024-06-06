@@ -538,7 +538,7 @@ class DoctestModule(Module):
                     https://github.com/python/cpython/issues/69718
                     """
                     if _is_mocked(obj):
-                        return
+                        return  # pragma: no cover
                     with _patch_unwrap_mock_aware():
                         # Type ignored because this is a private function.
                         super()._find(  # type:ignore[misc]
