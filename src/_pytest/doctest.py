@@ -511,25 +511,27 @@ class DoctestModule(Module):
             https://bugs.python.org/issue25532
             """
 
-            def _find_lineno(self, obj, source_lines):
-                """Doctest code does not take into account `@property`, this
-                is a hackish way to fix it. https://bugs.python.org/issue17446
+            if sys.version_info < (3, 11):
 
-                Wrapped Doctests will need to be unwrapped so the correct
-                line number is returned. This will be reported upstream. #8796
-                """
-                if isinstance(obj, property):
-                    obj = getattr(obj, "fget", obj)
+                def _find_lineno(self, obj, source_lines):
+                    """Doctest code does not take into account `@property`, this
+                    is a hackish way to fix it. https://bugs.python.org/issue17446
 
-                if hasattr(obj, "__wrapped__"):
-                    # Get the main obj in case of it being wrapped
-                    obj = inspect.unwrap(obj)
+                    Wrapped Doctests will need to be unwrapped so the correct
+                    line number is returned. This will be reported upstream. #8796
+                    """
+                    if isinstance(obj, property):
+                        obj = getattr(obj, "fget", obj)
 
-                # Type ignored because this is a private function.
-                return super()._find_lineno(  # type:ignore[misc]
-                    obj,
-                    source_lines,
-                )
+                    if hasattr(obj, "__wrapped__"):
+                        # Get the main obj in case of it being wrapped
+                        obj = inspect.unwrap(obj)
+
+                    # Type ignored because this is a private function.
+                    return super()._find_lineno(  # type:ignore[misc]
+                        obj,
+                        source_lines,
+                    )
 
             def _find(
                 self, tests, obj, name, module, source_lines, globs, seen
