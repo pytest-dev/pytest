@@ -505,12 +505,6 @@ class DoctestModule(Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
-            """A hackish doctest finder that overrides stdlib internals to fix a stdlib bug.
-
-            https://github.com/pytest-dev/pytest/issues/3456
-            https://bugs.python.org/issue25532
-            """
-
             if sys.version_info < (3, 11):
 
                 def _find_lineno(self, obj, source_lines):
@@ -533,16 +527,23 @@ class DoctestModule(Module):
                         source_lines,
                     )
 
-            def _find(
-                self, tests, obj, name, module, source_lines, globs, seen
-            ) -> None:
-                if _is_mocked(obj):
-                    return
-                with _patch_unwrap_mock_aware():
-                    # Type ignored because this is a private function.
-                    super()._find(  # type:ignore[misc]
-                        tests, obj, name, module, source_lines, globs, seen
-                    )
+            if sys.version_info < (3, 10):
+
+                def _find(
+                    self, tests, obj, name, module, source_lines, globs, seen
+                ) -> None:
+                    """Override _find to work around issue in stdlib.
+
+                    https://github.com/pytest-dev/pytest/issues/3456
+                    https://github.com/python/cpython/issues/69718
+                    """
+                    if _is_mocked(obj):
+                        return
+                    with _patch_unwrap_mock_aware():
+                        # Type ignored because this is a private function.
+                        super()._find(  # type:ignore[misc]
+                            tests, obj, name, module, source_lines, globs, seen
+                        )
 
             if sys.version_info < (3, 13):
 
