@@ -384,7 +384,7 @@ def test_testcase_adderrorandfailure_defers(pytester: Pytester, type: str) -> No
 @pytest.mark.parametrize("type", ["Error", "Failure"])
 def test_testcase_custom_exception_info(pytester: Pytester, type: str) -> None:
     pytester.makepyfile(
-        """
+        f"""
         from typing import Generic, TypeVar
         from unittest import TestCase
         import pytest, _pytest._code
@@ -413,7 +413,7 @@ def test_testcase_custom_exception_info(pytester: Pytester, type: str) -> None:
 
             def test_hello(self):
                 pass
-    """.format(**locals())
+    """
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
