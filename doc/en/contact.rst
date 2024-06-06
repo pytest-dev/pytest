@@ -26,18 +26,11 @@ Contact channels
   <https://web.libera.chat/#pytest>`_, or `via Matrix
   <https://matrix.to/#/%23pytest:libera.chat>`_).
 
-- private mail to Holger.Krekel at gmail com if you want to communicate sensitive issues
-
-
-- `merlinux.eu`_ offers pytest and tox-related professional teaching and
-  consulting.
 
 .. _`pytest issue tracker`: https://github.com/pytest-dev/pytest/issues
 .. _`old issue tracker`: https://bitbucket.org/hpk42/py-trunk/issues/
 
 .. _`pytest discussions`: https://github.com/pytest-dev/pytest/discussions
-
-.. _`merlinux.eu`: https://merlinux.eu/
 
 .. _`get an account`:
 
