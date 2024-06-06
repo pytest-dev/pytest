@@ -43,6 +43,11 @@ repos:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.2
+    hooks:
+    -   id: pyupgrade
+        stages: [manual]
 -   repo: local
     hooks:
     -   id: pylint
