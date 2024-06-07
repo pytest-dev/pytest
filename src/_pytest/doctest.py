@@ -505,42 +505,45 @@ class DoctestModule(Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
-            """A hackish doctest finder that overrides stdlib internals to fix a stdlib bug.
+            if sys.version_info < (3, 11):
 
-            https://github.com/pytest-dev/pytest/issues/3456
-            https://bugs.python.org/issue25532
-            """
+                def _find_lineno(self, obj, source_lines):
+                    """On older Pythons, doctest code does not take into account
+                    `@property`. https://github.com/python/cpython/issues/61648
 
-            def _find_lineno(self, obj, source_lines):
-                """Doctest code does not take into account `@property`, this
-                is a hackish way to fix it. https://bugs.python.org/issue17446
+                    Moreover, wrapped Doctests need to be unwrapped so the correct
+                    line number is returned. #8796
+                    """
+                    if isinstance(obj, property):
+                        obj = getattr(obj, "fget", obj)
 
-                Wrapped Doctests will need to be unwrapped so the correct
-                line number is returned. This will be reported upstream. #8796
-                """
-                if isinstance(obj, property):
-                    obj = getattr(obj, "fget", obj)
+                    if hasattr(obj, "__wrapped__"):
+                        # Get the main obj in case of it being wrapped
+                        obj = inspect.unwrap(obj)
 
-                if hasattr(obj, "__wrapped__"):
-                    # Get the main obj in case of it being wrapped
-                    obj = inspect.unwrap(obj)
-
-                # Type ignored because this is a private function.
-                return super()._find_lineno(  # type:ignore[misc]
-                    obj,
-                    source_lines,
-                )
-
-            def _find(
-                self, tests, obj, name, module, source_lines, globs, seen
-            ) -> None:
-                if _is_mocked(obj):
-                    return
-                with _patch_unwrap_mock_aware():
                     # Type ignored because this is a private function.
-                    super()._find(  # type:ignore[misc]
-                        tests, obj, name, module, source_lines, globs, seen
+                    return super()._find_lineno(  # type:ignore[misc]
+                        obj,
+                        source_lines,
                     )
+
+            if sys.version_info < (3, 10):
+
+                def _find(
+                    self, tests, obj, name, module, source_lines, globs, seen
+                ) -> None:
+                    """Override _find to work around issue in stdlib.
+
+                    https://github.com/pytest-dev/pytest/issues/3456
+                    https://github.com/python/cpython/issues/69718
+                    """
+                    if _is_mocked(obj):
+                        return  # pragma: no cover
+                    with _patch_unwrap_mock_aware():
+                        # Type ignored because this is a private function.
+                        super()._find(  # type:ignore[misc]
+                            tests, obj, name, module, source_lines, globs, seen
+                        )
 
             if sys.version_info < (3, 13):
 
@@ -555,9 +558,6 @@ class DoctestModule(Module):
 
                     # Type ignored because this is a private function.
                     return super()._from_module(module, object)  # type: ignore[misc]
-
-            else:  # pragma: no cover
-                pass
 
         try:
             module = self.obj
