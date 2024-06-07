@@ -54,7 +54,10 @@ from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
+from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
+from _pytest.config.argparsing import Argument
+from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
 from _pytest.outcomes import fail
@@ -71,9 +74,7 @@ from _pytest.warning_types import warn_explicit_for
 
 
 if TYPE_CHECKING:
-    from .argparsing import Argument
-    from .argparsing import Parser
-    from _pytest._code.code import _TracebackStyle
+    from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
 
 
@@ -1030,6 +1031,9 @@ class Config:
         #: 'testpaths' configuration value.
         TESTPATHS = enum.auto()
 
+    # Set by cacheprovider plugin.
+    cache: Optional["Cache"]
+
     def __init__(
         self,
         pluginmanager: PytestPluginManager,
@@ -1090,11 +1094,6 @@ class Config:
         )
         self.args_source = Config.ArgsSource.ARGS
         self.args: List[str] = []
-
-        if TYPE_CHECKING:
-            from _pytest.cacheprovider import Cache
-
-            self.cache: Optional[Cache] = None
 
     @property
     def rootpath(self) -> Path:
@@ -1175,7 +1174,7 @@ class Config:
         option: Optional[argparse.Namespace] = None,
     ) -> None:
         if option and getattr(option, "fulltrace", False):
-            style: _TracebackStyle = "long"
+            style: TracebackStyle = "long"
         else:
             style = "native"
         excrepr = excinfo.getrepr(

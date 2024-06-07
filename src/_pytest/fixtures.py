@@ -60,6 +60,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import YIELD_FIXTURE
+from _pytest.main import Session
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import MarkDecorator
@@ -78,7 +79,6 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
-    from _pytest.main import Session
     from _pytest.python import CallSpec2
     from _pytest.python import Function
     from _pytest.python import Metafunc
