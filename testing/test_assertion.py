@@ -2045,3 +2045,36 @@ def test_fine_grained_assertion_verbosity(pytester: Pytester):
             f"E       AssertionError: assert 'hello world' in '{long_text}'",
         ]
     )
+
+
+def test_full_output_vvv(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        r"""
+        def crash_helper(m):
+            assert 1 == 2
+        def test_vvv():
+            crash_helper(500 * "a")
+    """
+    )
+    result = pytester.runpytest("")
+    # without -vvv, the passed args are truncated
+    expected_non_vvv_arg_line = "m = 'aaaaaaaaaaaaaaa*..aaaaaaaaaaaa*"
+    result.stdout.fnmatch_lines(
+        [
+            expected_non_vvv_arg_line,
+            "test_full_output_vvv.py:2: AssertionError",
+        ],
+    )
+    # double check that the untruncated part is not in the output
+    expected_vvv_arg_line = "m = '{}'".format(500 * "a")
+    result.stdout.no_fnmatch_line(expected_vvv_arg_line)
+
+    # but with "-vvv" the args are not truncated
+    result = pytester.runpytest("-vvv")
+    result.stdout.fnmatch_lines(
+        [
+            expected_vvv_arg_line,
+            "test_full_output_vvv.py:2: AssertionError",
+        ]
+    )
+    result.stdout.no_fnmatch_line(expected_non_vvv_arg_line)

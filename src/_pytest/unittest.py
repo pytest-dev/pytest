@@ -41,10 +41,11 @@ if TYPE_CHECKING:
 
     import twisted.trial.unittest
 
-    _SysExcInfoType = Union[
-        Tuple[Type[BaseException], BaseException, types.TracebackType],
-        Tuple[None, None, None],
-    ]
+
+_SysExcInfoType = Union[
+    Tuple[Type[BaseException], BaseException, types.TracebackType],
+    Tuple[None, None, None],
+]
 
 
 def pytest_pycollect_makeitem(
@@ -218,16 +219,17 @@ class TestCaseFunction(Function):
         super().setup()
 
     def teardown(self) -> None:
-        super().teardown()
         if self._explicit_tearDown is not None:
             self._explicit_tearDown()
             self._explicit_tearDown = None
         self._obj = None
+        del self._instance
+        super().teardown()
 
     def startTest(self, testcase: "unittest.TestCase") -> None:
         pass
 
-    def _addexcinfo(self, rawexcinfo: "_SysExcInfoType") -> None:
+    def _addexcinfo(self, rawexcinfo: _SysExcInfoType) -> None:
         # Unwrap potential exception info (see twisted trial support below).
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
@@ -263,7 +265,7 @@ class TestCaseFunction(Function):
         self.__dict__.setdefault("_excinfo", []).append(excinfo)
 
     def addError(
-        self, testcase: "unittest.TestCase", rawexcinfo: "_SysExcInfoType"
+        self, testcase: "unittest.TestCase", rawexcinfo: _SysExcInfoType
     ) -> None:
         try:
             if isinstance(rawexcinfo[1], exit.Exception):
@@ -273,7 +275,7 @@ class TestCaseFunction(Function):
         self._addexcinfo(rawexcinfo)
 
     def addFailure(
-        self, testcase: "unittest.TestCase", rawexcinfo: "_SysExcInfoType"
+        self, testcase: "unittest.TestCase", rawexcinfo: _SysExcInfoType
     ) -> None:
         self._addexcinfo(rawexcinfo)
 
@@ -286,7 +288,7 @@ class TestCaseFunction(Function):
     def addExpectedFailure(
         self,
         testcase: "unittest.TestCase",
-        rawexcinfo: "_SysExcInfoType",
+        rawexcinfo: _SysExcInfoType,
         reason: str = "",
     ) -> None:
         try:

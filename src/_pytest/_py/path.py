@@ -161,15 +161,13 @@ class Visitor:
         )
         if not self.breadthfirst:
             for subdir in dirs:
-                for p in self.gen(subdir):
-                    yield p
+                yield from self.gen(subdir)
         for p in self.optsort(entries):
             if self.fil is None or self.fil(p):
                 yield p
         if self.breadthfirst:
             for subdir in dirs:
-                for p in self.gen(subdir):
-                    yield p
+                yield from self.gen(subdir)
 
 
 class FNMatcher:

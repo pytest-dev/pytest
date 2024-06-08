@@ -30,6 +30,7 @@ from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
+from _pytest._code.code import TracebackStyle
 from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
@@ -49,7 +50,6 @@ if TYPE_CHECKING:
     from typing import Self
 
     # Imported here due to circular import.
-    from _pytest._code.code import _TracebackStyle
     from _pytest.main import Session
 
 
@@ -416,7 +416,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def _repr_failure_py(
         self,
         excinfo: ExceptionInfo[BaseException],
-        style: "Optional[_TracebackStyle]" = None,
+        style: "Optional[TracebackStyle]" = None,
     ) -> TerminalRepr:
         from _pytest.fixtures import FixtureLookupError
 
@@ -448,6 +448,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
         else:
             truncate_locals = True
 
+        truncate_args = False if self.config.getoption("verbose", 0) > 2 else True
+
         # excinfo.getrepr() formats paths relative to the CWD if `abspath` is False.
         # It is possible for a fixture/test to change the CWD while this code runs, which
         # would then result in the user seeing confusing paths in the failure message.
@@ -466,12 +468,13 @@ class Node(abc.ABC, metaclass=NodeMeta):
             style=style,
             tbfilter=tbfilter,
             truncate_locals=truncate_locals,
+            truncate_args=truncate_args,
         )
 
     def repr_failure(
         self,
         excinfo: ExceptionInfo[BaseException],
-        style: "Optional[_TracebackStyle]" = None,
+        style: "Optional[TracebackStyle]" = None,
     ) -> Union[str, TerminalRepr]:
         """Return a representation of a collection or test failure.
 
