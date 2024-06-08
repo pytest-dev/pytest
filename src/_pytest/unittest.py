@@ -216,7 +216,7 @@ class TestCaseFunction(Function):
             self._explicit_tearDown()
             self._explicit_tearDown = None
         self._obj = None
-        self._instance = None
+        del self._instance
         super().teardown()
 
     def startTest(self, testcase: "unittest.TestCase") -> None:
