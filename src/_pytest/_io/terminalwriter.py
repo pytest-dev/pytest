@@ -235,13 +235,13 @@ class TerminalWriter:
 
         except pygments.util.ClassNotFound as e:
             raise UsageError(
-                f"PYTEST_THEME environment variable had an invalid value: '{theme}'. "
-                "Only valid pygment styles are allowed."
+                f"PYTEST_THEME environment variable has an invalid value: '{theme}'. "
+                "Hint: See available pygments styles with `pygmentize -L styles`."
             ) from e
         except pygments.util.OptionError as e:
             raise UsageError(
-                f"PYTEST_THEME_MODE environment variable had an invalid value: '{theme_mode}'. "
-                "The only allowed values are 'dark' and 'light'."
+                f"PYTEST_THEME_MODE environment variable has an invalid value: '{theme_mode}'. "
+                "The allowed values are 'dark' (default) and 'light'."
             ) from e
 
     def _highlight(
