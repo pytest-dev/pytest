@@ -218,13 +218,28 @@ class TerminalWriter:
             return source
         else:
             try:
+                # Import new more rich color formatters from the pygments library
+                from pygments.formatters.terminal256 import Terminal256Formatter
+                from pygments.formatters.terminal256 import TerminalTrueColorFormatter
+
+                # Use terminal formatters depending on user environment variables
+                if os.environ.get("COLORTERM", "") in ("truecolor", "24bit"):
+                    # Style determined by user set environment variable, if none then use default style
+                    terminal_formatter = TerminalTrueColorFormatter(
+                        style=os.getenv("PYTEST_THEME", "default")
+                    )
+                elif "256" in os.environ.get("TERM", ""):
+                    terminal_formatter = Terminal256Formatter(
+                        style=os.getenv("PYTEST_THEME", "default")
+                    )
+                else:
+                    terminal_formatter = TerminalFormatter(
+                        bg=os.getenv("PYTEST_THEME_MODE", "dark"),
+                        style=os.getenv("PYTEST_THEME"),
+                    )
                 highlighted: str = highlight(
                     source,
                     Lexer(),
-                    TerminalFormatter(
-                        bg=os.getenv("PYTEST_THEME_MODE", "dark"),
-                        style=os.getenv("PYTEST_THEME"),
-                    ),
                 )
                 # pygments terminal formatter may add a newline when there wasn't one.
                 # We don't want this, remove.

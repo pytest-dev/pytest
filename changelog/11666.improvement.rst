@@ -1,0 +1,5 @@
+Improved the terminal writer to be able to use Terminal256Formatter and TerminalTrueColorFormatter.
+
+These are newer versions of TerminalFormmater from the pygments library that is currently in use.
+
+These style of these formatters are set by the users through the environmental variable PYTEST_THEME.
