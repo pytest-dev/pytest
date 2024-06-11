@@ -221,9 +221,9 @@ class Cache:
             os.umask(umask)
             path.chmod(0o777 - umask)
 
-            with open(path.joinpath("README.md"), "xt", encoding="UTF-8") as f:
+            with open(path.joinpath("README.md"), "x", encoding="UTF-8") as f:
                 f.write(README_CONTENT)
-            with open(path.joinpath(".gitignore"), "xt", encoding="UTF-8") as f:
+            with open(path.joinpath(".gitignore"), "x", encoding="UTF-8") as f:
                 f.write("# Created by pytest automatically.\n*\n")
             with open(path.joinpath("CACHEDIR.TAG"), "xb") as f:
                 f.write(CACHEDIR_TAG_CONTENT)
