@@ -983,6 +983,7 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
     Example:
+
     .. code-block:: python
 
         def test_output(capsys):
@@ -1010,6 +1011,7 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, 
     Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
 
     Example:
+
     .. code-block:: python
 
         def test_output(capsysbinary):
@@ -1037,6 +1039,7 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
     Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
     Example:
+
     .. code-block:: python
 
         def test_system_echo(capfd):
@@ -1064,6 +1067,7 @@ def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, N
     Returns an instance of :class:`CaptureFixture[bytes] <pytest.CaptureFixture>`.
 
     Example:
+
     .. code-block:: python
 
         def test_system_echo(capfdbinary):

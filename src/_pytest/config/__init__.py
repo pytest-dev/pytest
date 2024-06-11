@@ -1737,6 +1737,7 @@ class Config:
         can be used to explicitly use the global verbosity level.
 
         Example:
+
         .. code-block:: ini
 
             # content of pytest.ini
