@@ -805,7 +805,6 @@ class Pytester:
             The first created file.
 
         Examples:
-
         .. code-block:: python
 
             pytester.makefile(".txt", "line1", "line2")
@@ -859,7 +858,6 @@ class Pytester:
         existing files.
 
         Examples:
-
         .. code-block:: python
 
             def test_something(pytester):
@@ -879,7 +877,6 @@ class Pytester:
         existing files.
 
         Examples:
-
         .. code-block:: python
 
             def test_something(pytester):
