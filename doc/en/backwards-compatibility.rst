@@ -5,7 +5,7 @@ Backwards Compatibility Policy
 
 .. versionadded: 6.0
 
-Pytest is an actively evolving project that has been decades in the making. 
+Pytest is an actively evolving project that has been decades in the making.
 We keep learning about new and better structures to express different details about testing.
 
 While we implement those modifications, we try to ensure an easy transition and don't want to impose unnecessary churn on our users and community/plugin authors.
@@ -91,4 +91,3 @@ pytest version  min. Python version
 ==============  ===================
 
 `Status of Python Versions <https://devguide.python.org/versions/>`__.
-
