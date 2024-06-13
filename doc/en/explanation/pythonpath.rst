@@ -8,7 +8,7 @@ pytest import mechanisms and ``sys.path``/``PYTHONPATH``
 Import modes
 ------------
 
-Pytest as a testing framework that needs to import test modules and ``conftest.py`` files for execution.
+pytest as a testing framework that needs to import test modules and ``conftest.py`` files for execution.
 
 Importing files in Python is a non-trivial process, so aspects of the
 import process can be controlled through the ``--import-mode`` command-line flag, which can assume
