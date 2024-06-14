@@ -1,16 +1,15 @@
 :orphan:
 
-.. sidebar:: Next Open Trainings and Events
-
-   - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training):
-      * **June 11th to 13th 2024**, Remote
-      * **March 4th to 6th 2025**, Leipzig, Germany / Remote
-   - `pytest development sprint <https://github.com/pytest-dev/sprint>`_, **June 17th -- 22nd 2024**
-   - pytest tips and tricks for a better testsuite, `Europython 2024 <https://ep2024.europython.eu/>`_, **July 8th -- 14th 2024** (3h), Prague
-
-   Also see :doc:`previous talks and blogposts <talks>`.
-
 .. _features:
+
+.. sidebar:: **Next Open Trainings and Events**
+
+    - `pytest development sprint <https://github.com/pytest-dev/sprint>`_, **June 17th -- 22nd 2024**, Klaus (AT) / Remote
+    - `pytest tips and tricks for a better testsuite <https://ep2024.europython.eu/session/pytest-tips-and-tricks-for-a-better-testsuite>`_, at `Europython 2024 <https://ep2024.europython.eu/>`_, **July 8th -- 14th 2024** (3h), Prague (CZ)
+    - `pytest: Professionelles Testen (nicht nur) für Python <https://pretalx.com/workshoptage-2024/talk/9VUHYB/>`_, at `CH Open Workshoptage <https://workshoptage.ch/>`_, **September 2nd 2024**, HSLU Rotkreuz (CH)
+    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 4th -- 6th 2025**, Leipzig (DE) / Remote
+
+    Also see :doc:`previous talks and blogposts <talks>`
 
 pytest: helps you write better programs
 =======================================
@@ -24,7 +23,6 @@ scale to support complex functional testing for applications and libraries.
 ``pytest`` requires: Python 3.8+ or PyPy3.
 
 **PyPI package name**: :pypi:`pytest`
-
 
 A quick example
 ---------------

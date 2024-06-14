@@ -176,7 +176,12 @@ def pytest_collect_directory(
     path: Path, parent: nodes.Collector
 ) -> Optional[nodes.Collector]:
     pkginit = path / "__init__.py"
-    if pkginit.is_file():
+    try:
+        has_pkginit = pkginit.is_file()
+    except PermissionError:
+        # See https://github.com/pytest-dev/pytest/issues/12120#issuecomment-2106349096.
+        return None
+    if has_pkginit:
         return Package.from_parent(parent, path=path)
     return None
 
@@ -368,7 +373,11 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
             return False
 
     def istestclass(self, obj: object, name: str) -> bool:
-        return self.classnamefilter(name) or self.isnosetest(obj)
+        if not (self.classnamefilter(name) or self.isnosetest(obj)):
+            return False
+        if inspect.isabstract(obj):
+            return False
+        return True
 
     def _matches_prefix_or_glob_option(self, option_name: str, name: str) -> bool:
         """Check if the given name matches the prefix or glob-pattern defined

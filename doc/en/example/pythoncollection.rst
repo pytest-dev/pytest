@@ -152,7 +152,7 @@ The test collection would look like this:
     configfile: pytest.ini
     collected 2 items
 
-    <Dir pythoncollection.rst-199>
+    <Dir pythoncollection.rst-201>
       <Module check_myapp.py>
         <Class CheckMyApp>
           <Function simple_check>
@@ -215,7 +215,7 @@ You can always peek at the collection tree without running tests like this:
     configfile: pytest.ini
     collected 3 items
 
-    <Dir pythoncollection.rst-199>
+    <Dir pythoncollection.rst-201>
       <Dir CWD>
         <Module pythoncollection.py>
           <Function test_function>

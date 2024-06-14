@@ -15,9 +15,7 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-import os
 import shutil
-import sys
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
@@ -65,7 +63,6 @@ latex_elements = {
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "pallets_sphinx_themes",
     "pygments_pytest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -140,10 +137,6 @@ add_module_names = False
 # output. They are ignored by default.
 # show_authors = False
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
-
-
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
 
@@ -216,12 +209,9 @@ nitpick_ignore = [
 
 # -- Options for HTML output ---------------------------------------------------
 
-sys.path.append(os.path.abspath("_themes"))
-html_theme_path = ["_themes"]
-
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "flask"
+html_theme = "furo"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -266,18 +256,24 @@ html_favicon = "img/favicon.png"
 
 html_sidebars = {
     "index": [
-        "slim_searchbox.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
         "sidebarintro.html",
         "globaltoc.html",
         "links.html",
-        "sourcelink.html",
+        "sidebar/scroll-end.html",
+        "style.html",
     ],
     "**": [
-        "slim_searchbox.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
         "globaltoc.html",
         "relations.html",
         "links.html",
-        "sourcelink.html",
+        "sidebar/scroll-end.html",
+        "style.html",
     ],
 }
 
@@ -316,6 +312,9 @@ html_show_sourcelink = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = "pytestdoc"
 
+# The base URL which points to the root of the HTML documentation. It is used
+# to indicate the location of document using the canonical link relation (#12363).
+html_baseurl = "https://docs.pytest.org/en/stable/"
 
 # -- Options for LaTeX output --------------------------------------------------
 
@@ -336,10 +335,6 @@ latex_documents = [
         "manual",
     )
 ]
-
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-latex_logo = "img/pytest1.png"
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.

@@ -224,11 +224,7 @@ class TestDoctests:
                 "Traceback (most recent call last):",
                 '  File "*/doctest.py", line *, in __run',
                 "    *",
-                *(
-                    (" *^^^^*",)
-                    if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
-                    else ()
-                ),
+                *((" *^^^^*", " *", " *") if sys.version_info >= (3, 13) else ()),
                 '  File "<doctest test_doctest_unexpected_exception.txt[1]>", line 1, in <module>',
                 "ZeroDivisionError: division by zero",
                 "*/test_doctest_unexpected_exception.txt:2: UnexpectedException",
@@ -385,7 +381,7 @@ class TestDoctests:
                 "*= FAILURES =*",
                 "*_ [[]doctest[]] test_doctest_linedata_on_property.Sample.some_property _*",
                 "004 ",
-                "005         >>> Sample().some_property",
+                "005 *>>> Sample().some_property",
                 "Expected:",
                 "    'another thing'",
                 "Got:",
@@ -396,7 +392,7 @@ class TestDoctests:
             ]
         )
 
-    def test_doctest_no_linedata_on_overriden_property(self, pytester: Pytester):
+    def test_doctest_no_linedata_on_overridden_property(self, pytester: Pytester):
         pytester.makepyfile(
             """
             class Sample(object):
@@ -414,7 +410,7 @@ class TestDoctests:
         result.stdout.fnmatch_lines(
             [
                 "*= FAILURES =*",
-                "*_ [[]doctest[]] test_doctest_no_linedata_on_overriden_property.Sample.some_property _*",
+                "*_ [[]doctest[]] test_doctest_no_linedata_on_overridden_property.Sample.some_property _*",
                 "EXAMPLE LOCATION UNKNOWN, not showing all tests of that example",
                 "[?][?][?] >>> Sample().some_property",
                 "Expected:",
@@ -422,7 +418,7 @@ class TestDoctests:
                 "Got:",
                 "    'something'",
                 "",
-                "*/test_doctest_no_linedata_on_overriden_property.py:None: DocTestFailure",
+                "*/test_doctest_no_linedata_on_overridden_property.py:None: DocTestFailure",
                 "*= 1 failed in *",
             ]
         )

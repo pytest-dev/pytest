@@ -262,6 +262,32 @@ class TestClass:
         result = pytester.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
+    def test_abstract_class_is_not_collected(self, pytester: Pytester) -> None:
+        """Regression test for #12275 (non-unittest version)."""
+        pytester.makepyfile(
+            """
+            import abc
+
+            class TestBase(abc.ABC):
+                @abc.abstractmethod
+                def abstract1(self): pass
+
+                @abc.abstractmethod
+                def abstract2(self): pass
+
+                def test_it(self): pass
+
+            class TestPartial(TestBase):
+                def abstract1(self): pass
+
+            class TestConcrete(TestPartial):
+                def abstract2(self): pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=1)
+
 
 class TestFunction:
     def test_getmodulecollector(self, pytester: Pytester) -> None:

@@ -4,6 +4,7 @@
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
 import dataclasses
+import errno
 import json
 import os
 from pathlib import Path
@@ -213,21 +214,38 @@ class Cache:
             dir=self._cachedir.parent,
         ) as newpath:
             path = Path(newpath)
-            with open(path.joinpath("README.md"), "xt", encoding="UTF-8") as f:
+
+            # Reset permissions to the default, see #12308.
+            # Note: there's no way to get the current umask atomically, eek.
+            umask = os.umask(0o022)
+            os.umask(umask)
+            path.chmod(0o777 - umask)
+
+            with open(path.joinpath("README.md"), "x", encoding="UTF-8") as f:
                 f.write(README_CONTENT)
-            with open(path.joinpath(".gitignore"), "xt", encoding="UTF-8") as f:
+            with open(path.joinpath(".gitignore"), "x", encoding="UTF-8") as f:
                 f.write("# Created by pytest automatically.\n*\n")
             with open(path.joinpath("CACHEDIR.TAG"), "xb") as f:
                 f.write(CACHEDIR_TAG_CONTENT)
 
-            path.rename(self._cachedir)
-            # Create a directory in place of the one we just moved so that `TemporaryDirectory`'s
-            # cleanup doesn't complain.
-            #
-            # TODO: pass ignore_cleanup_errors=True when we no longer support python < 3.10. See
-            # https://github.com/python/cpython/issues/74168. Note that passing delete=False would
-            # do the wrong thing in case of errors and isn't supported until python 3.12.
-            path.mkdir()
+            try:
+                path.rename(self._cachedir)
+            except OSError as e:
+                # If 2 concurrent pytests both race to the rename, the loser
+                # gets "Directory not empty" from the rename. In this case,
+                # everything is handled so just continue (while letting the
+                # temporary directory be cleaned up).
+                if e.errno != errno.ENOTEMPTY:
+                    raise
+            else:
+                # Create a directory in place of the one we just moved so that
+                # `TemporaryDirectory`'s cleanup doesn't complain.
+                #
+                # TODO: pass ignore_cleanup_errors=True when we no longer support python < 3.10.
+                # See https://github.com/python/cpython/issues/74168. Note that passing
+                # delete=False would do the wrong thing in case of errors and isn't supported
+                # until python 3.12.
+                path.mkdir()
 
 
 class LFPluginCollWrapper:
@@ -244,7 +262,7 @@ class LFPluginCollWrapper:
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 
-            # Use stable sort to priorize last failed.
+            # Use stable sort to prioritize last failed.
             def sort_key(node: Union[nodes.Item, nodes.Collector]) -> bool:
                 return node.path in lf_paths
 

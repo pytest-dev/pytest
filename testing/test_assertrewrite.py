@@ -130,6 +130,7 @@ class TestAssertionRewrite:
             if isinstance(node, ast.Import):
                 continue
             for n in [node, *ast.iter_child_nodes(node)]:
+                assert isinstance(n, (ast.stmt, ast.expr))
                 assert n.lineno == 3
                 assert n.col_offset == 0
                 assert n.end_lineno == 6

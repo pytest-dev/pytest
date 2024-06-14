@@ -54,7 +54,10 @@ from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
+from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
+from _pytest.config.argparsing import Argument
+from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
 from _pytest.outcomes import fail
@@ -71,9 +74,7 @@ from _pytest.warning_types import warn_explicit_for
 
 
 if TYPE_CHECKING:
-    from .argparsing import Argument
-    from .argparsing import Parser
-    from _pytest._code.code import _TracebackStyle
+    from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
 
 
@@ -462,7 +463,7 @@ class PytestPluginManager(PluginManager):
         # (see issue #1073).
         if not name.startswith("pytest_"):
             return None
-        # Ignore names which can not be hooks.
+        # Ignore names which cannot be hooks.
         if name == "pytest_plugins":
             return None
 
@@ -574,8 +575,8 @@ class PytestPluginManager(PluginManager):
         self._noconftest = noconftest
         self._using_pyargs = pyargs
         foundanchor = False
-        for intitial_path in args:
-            path = str(intitial_path)
+        for initial_path in args:
+            path = str(initial_path)
             # remove node-id syntax
             i = path.find("::")
             if i != -1:
@@ -1030,6 +1031,9 @@ class Config:
         #: 'testpaths' configuration value.
         TESTPATHS = enum.auto()
 
+    # Set by cacheprovider plugin.
+    cache: Optional["Cache"]
+
     def __init__(
         self,
         pluginmanager: PytestPluginManager,
@@ -1090,11 +1094,6 @@ class Config:
         )
         self.args_source = Config.ArgsSource.ARGS
         self.args: List[str] = []
-
-        if TYPE_CHECKING:
-            from _pytest.cacheprovider import Cache
-
-            self.cache: Optional[Cache] = None
 
     @property
     def rootpath(self) -> Path:
@@ -1175,7 +1174,7 @@ class Config:
         option: Optional[argparse.Namespace] = None,
     ) -> None:
         if option and getattr(option, "fulltrace", False):
-            style: _TracebackStyle = "long"
+            style: TracebackStyle = "long"
         else:
             style = "native"
         excrepr = excinfo.getrepr(
@@ -1736,6 +1735,7 @@ class Config:
         can be used to explicitly use the global verbosity level.
 
         Example:
+
         .. code-block:: ini
 
             # content of pytest.ini
@@ -1913,7 +1913,7 @@ def parse_warning_filter(
         parts.append("")
     action_, message, category_, module, lineno_ = (s.strip() for s in parts)
     try:
-        action: "warnings._ActionKind" = warnings._getaction(action_)  # type: ignore[attr-defined]
+        action: warnings._ActionKind = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
         raise UsageError(error_template.format(error=str(e))) from None
     try:

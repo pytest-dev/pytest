@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 """Discover and run std-library "unittest" style tests."""
 
+import inspect
 import sys
 import traceback
 import types
@@ -40,22 +41,28 @@ if TYPE_CHECKING:
 
     import twisted.trial.unittest
 
-    _SysExcInfoType = Union[
-        Tuple[Type[BaseException], BaseException, types.TracebackType],
-        Tuple[None, None, None],
-    ]
+
+_SysExcInfoType = Union[
+    Tuple[Type[BaseException], BaseException, types.TracebackType],
+    Tuple[None, None, None],
+]
 
 
 def pytest_pycollect_makeitem(
     collector: Union[Module, Class], name: str, obj: object
 ) -> Optional["UnitTestCase"]:
-    # Has unittest been imported and is obj a subclass of its TestCase?
     try:
+        # Has unittest been imported?
         ut = sys.modules["unittest"]
+        # Is obj a subclass of unittest.TestCase?
         # Type ignored because `ut` is an opaque module.
         if not issubclass(obj, ut.TestCase):  # type: ignore
             return None
     except Exception:
+        return None
+    # Is obj a concrete class?
+    # Abstract classes can't be instantiated so no point collecting them.
+    if inspect.isabstract(obj):
         return None
     # Yes, so let's collect it.
     return UnitTestCase.from_parent(collector, name=name, obj=obj)
@@ -212,16 +219,17 @@ class TestCaseFunction(Function):
         super().setup()
 
     def teardown(self) -> None:
-        super().teardown()
         if self._explicit_tearDown is not None:
             self._explicit_tearDown()
             self._explicit_tearDown = None
         self._obj = None
+        del self._instance
+        super().teardown()
 
     def startTest(self, testcase: "unittest.TestCase") -> None:
         pass
 
-    def _addexcinfo(self, rawexcinfo: "_SysExcInfoType") -> None:
+    def _addexcinfo(self, rawexcinfo: _SysExcInfoType) -> None:
         # Unwrap potential exception info (see twisted trial support below).
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
@@ -257,7 +265,7 @@ class TestCaseFunction(Function):
         self.__dict__.setdefault("_excinfo", []).append(excinfo)
 
     def addError(
-        self, testcase: "unittest.TestCase", rawexcinfo: "_SysExcInfoType"
+        self, testcase: "unittest.TestCase", rawexcinfo: _SysExcInfoType
     ) -> None:
         try:
             if isinstance(rawexcinfo[1], exit.Exception):
@@ -267,7 +275,7 @@ class TestCaseFunction(Function):
         self._addexcinfo(rawexcinfo)
 
     def addFailure(
-        self, testcase: "unittest.TestCase", rawexcinfo: "_SysExcInfoType"
+        self, testcase: "unittest.TestCase", rawexcinfo: _SysExcInfoType
     ) -> None:
         self._addexcinfo(rawexcinfo)
 
@@ -280,7 +288,7 @@ class TestCaseFunction(Function):
     def addExpectedFailure(
         self,
         testcase: "unittest.TestCase",
-        rawexcinfo: "_SysExcInfoType",
+        rawexcinfo: _SysExcInfoType,
         reason: str = "",
     ) -> None:
         try:

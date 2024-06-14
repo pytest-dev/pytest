@@ -311,7 +311,12 @@ def pytest_collection_finish(session: "Session") -> None:
 def pytest_ignore_collect(
     collection_path: Path, path: "LEGACY_PATH", config: "Config"
 ) -> Optional[bool]:
-    """Return True to prevent considering this path for collection.
+    """Return ``True`` to ignore this path for collection.
+
+    Return ``None`` to let other plugins ignore the path for collection.
+
+    Returning ``False`` will forcefully *not* ignore this path for collection,
+    without giving a chance for other plugins to ignore this path.
 
     This hook is consulted for all files and directories prior to calling
     more specific hooks.
@@ -651,7 +656,7 @@ def pytest_runtest_protocol(
         - ``pytest_runtest_logreport(report)``
         - ``pytest_exception_interact(call, report)`` if an interactive exception occurred
 
-    - Call phase, if the the setup passed and the ``setuponly`` pytest option is not set:
+    - Call phase, if the setup passed and the ``setuponly`` pytest option is not set:
         - ``call = pytest_runtest_call(item)`` (wrapped in ``CallInfo(when="call")``)
         - ``report = pytest_runtest_makereport(item, call)``
         - ``pytest_runtest_logreport(report)``
@@ -861,7 +866,7 @@ def pytest_fixture_setup(
 ) -> Optional[object]:
     """Perform fixture setup execution.
 
-    :param fixturdef:
+    :param fixturedef:
         The fixture definition object.
     :param request:
         The fixture request object.
@@ -891,7 +896,7 @@ def pytest_fixture_post_finalizer(
     the fixture result ``fixturedef.cached_result`` is still available (not
     ``None``).
 
-    :param fixturdef:
+    :param fixturedef:
         The fixture definition object.
     :param request:
         The fixture request object.

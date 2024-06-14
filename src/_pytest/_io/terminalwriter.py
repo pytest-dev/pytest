@@ -8,11 +8,15 @@ from typing import Literal
 from typing import Optional
 from typing import Sequence
 from typing import TextIO
-
-from pygments.style import Style
+from typing import TYPE_CHECKING
 
 from ..compat import assert_never
 from .wcwidth import wcswidth
+
+
+if TYPE_CHECKING:
+    from pygments.formatter import Formatter
+    from pygments.lexer import Lexer
 
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
@@ -196,205 +200,76 @@ class TerminalWriter:
         for indent, new_line in zip(indents, new_lines):
             self.line(indent + new_line)
 
-    def _highlight(
-        self, source: str, lexer: Literal["diff", "python"] = "python"
-    ) -> str:
-        """Highlight the given source if we have markup support."""
+    def _get_pygments_lexer(
+        self, lexer: Literal["python", "diff"]
+    ) -> Optional["Lexer"]:
+        try:
+            if lexer == "python":
+                from pygments.lexers.python import PythonLexer
+
+                return PythonLexer()
+            elif lexer == "diff":
+                from pygments.lexers.diff import DiffLexer
+
+                return DiffLexer()
+            else:
+                assert_never(lexer)
+        except ModuleNotFoundError:
+            return None
+
+    def _get_pygments_formatter(self) -> Optional["Formatter"]:
+        try:
+            import pygments.util
+        except ModuleNotFoundError:
+            return None
+
         from _pytest.config.exceptions import UsageError
 
-        if not source or not self.hasmarkup or not self.code_highlight:
-            return source
+        theme = os.getenv("PYTEST_THEME")
+        theme_mode = os.getenv("PYTEST_THEME_MODE", "dark")
 
         try:
             from pygments.formatters.terminal import TerminalFormatter
 
-            if lexer == "python":
-                from pygments.lexers.python import PythonLexer as Lexer
-            elif lexer == "diff":
-                from pygments.lexers.diff import DiffLexer as Lexer
-            else:
-                assert_never(lexer)
-            from pygments import highlight
-            import pygments.util
-        except ImportError:
+            return TerminalFormatter(bg=theme_mode, style=theme)
+
+        except pygments.util.ClassNotFound as e:
+            raise UsageError(
+                f"PYTEST_THEME environment variable has an invalid value: '{theme}'. "
+                "Hint: See available pygments styles with `pygmentize -L styles`."
+            ) from e
+        except pygments.util.OptionError as e:
+            raise UsageError(
+                f"PYTEST_THEME_MODE environment variable has an invalid value: '{theme_mode}'. "
+                "The allowed values are 'dark' (default) and 'light'."
+            ) from e
+
+    def _highlight(
+        self, source: str, lexer: Literal["diff", "python"] = "python"
+    ) -> str:
+        """Highlight the given source if we have markup support."""
+        if not source or not self.hasmarkup or not self.code_highlight:
             return source
-        else:
-            try:
-                # Establishes the style to be used.
-                if os.environ.get("COLORTERM", "") not in (
-                    "truecolor",
-                    "24bit",
-                ) and "256" not in os.environ.get("TERM", ""):
-                    # The default case
 
-                    PytestTerminalFormat = TerminalFormatter(
-                        bg=os.getenv("PYTEST_THEME_MODE", "dark"),
-                        style=os.getenv("PYTEST_THEME"),
-                    )
+        pygments_lexer = self._get_pygments_lexer(lexer)
+        if pygments_lexer is None:
+            return source
 
-                else:
-                    if os.getenv("PYTEST_THEME") is None:
-                        if os.getenv("PYTEST_THEME_MODE") is None:
-                            # Neither PYTEST_THEME nor PYTEST_THEME_MODE have been set so using dark mode
-                            SelectedStyle = DarkModeStyle
+        pygments_formatter = self._get_pygments_formatter()
+        if pygments_formatter is None:
+            return source
 
-                        elif os.getenv("PYTEST_THEME_MODE") == "light":
-                            # PYTEST_THEME has not been set but PYTEST_THEME_MODE has been set to light mode
-                            SelectedStyle = LightModeStyle
+        from pygments import highlight
 
-                        else:
-                            # PYTEST_THEME has not been set and PYTEST_THEME_MODE is not light so use dark
-                            SelectedStyle = DarkModeStyle
+        highlighted: str = highlight(source, pygments_lexer, pygments_formatter)
+        # pygments terminal formatter may add a newline when there wasn't one.
+        # We don't want this, remove.
+        if highlighted[-1] == "\n" and source[-1] != "\n":
+            highlighted = highlighted[:-1]
 
-                    else:
-                        # PYTEST_THEME has been set so use it
-                        SelectedStyle = None
+        # Some lexers will not set the initial color explicitly
+        # which may lead to the previous color being propagated to the
+        # start of the expression, so reset first.
+        highlighted = "\x1b[0m" + highlighted
 
-                    # The style has now been selected the right formatter needs to be used
-                    if os.environ.get("COLORTERM", "") in ("truecolor", "24bit"):
-                        # The true color formatter
-                        from pygments.formatters.terminal256 import (
-                            TerminalTrueColorFormatter,
-                        )
-
-                        # If the style is user input
-                        if SelectedStyle is None:
-                            PytestTerminalFormat = TerminalTrueColorFormatter(
-                                style=os.getenv("PYTEST_THEME")
-                            )
-                        else:
-                            PytestTerminalFormat = TerminalTrueColorFormatter(
-                                style=SelectedStyle
-                            )
-
-                    elif "256" in os.environ.get("TERM", ""):
-                        # The 256 color formater
-                        from pygments.formatters.terminal256 import Terminal256Formatter
-
-                        # If the style is user input
-                        if SelectedStyle is None:
-                            PytestTerminalFormat = Terminal256Formatter(
-                                style=os.getenv("PYTEST_THEME")
-                            )
-                        else:
-                            PytestTerminalFormat = Terminal256Formatter(
-                                style=SelectedStyle
-                            )
-
-                    else:
-                        # The default case (Although this code should not be reached)
-                        PytestTerminalFormat = TerminalFormatter(
-                            bg=os.getenv("PYTEST_THEME_MODE", "dark"),
-                            style=os.getenv("PYTEST_THEME"),
-                        )
-
-                highlighted: str = highlight(source, Lexer(), PytestTerminalFormat)
-                # pygments terminal formatter may add a newline when there wasn't one.
-                # We don't want this, remove.
-                if highlighted[-1] == "\n" and source[-1] != "\n":
-                    highlighted = highlighted[:-1]
-
-                # Some lexers will not set the initial color explicitly
-                # which may lead to the previous color being propagated to the
-                # start of the expression, so reset first.
-                return "\x1b[0m" + highlighted
-            except pygments.util.ClassNotFound as e:
-                raise UsageError(
-                    "PYTEST_THEME environment variable had an invalid value: '{}'. "
-                    "Only valid pygment styles are allowed.".format(
-                        os.getenv("PYTEST_THEME")
-                    )
-                ) from e
-            except pygments.util.OptionError as e:
-                raise UsageError(
-                    "PYTEST_THEME_MODE environment variable had an invalid value: '{}'. "
-                    "The only allowed values are 'dark' and 'light'.".format(
-                        os.getenv("PYTEST_THEME_MODE")
-                    )
-                ) from e
-
-
-class DarkModeStyle(Style):
-    # The default dark mode style class from TerminalFormatter recreated to work with
-    # both TerminalTrueColorFormatter and Terminal256Formatter
-
-    from pygments.token import Comment
-    from pygments.token import Error
-    from pygments.token import Generic
-    from pygments.token import Keyword
-    from pygments.token import Name
-    from pygments.token import Number
-    from pygments.token import Operator
-    from pygments.token import String
-    from pygments.token import Token
-    from pygments.token import Whitespace
-
-    styles = {
-        Token: "",
-        Whitespace: "ansibrightblack",
-        Comment: "ansibrightblack",
-        Comment.Preproc: "ansibrightcyan",
-        Keyword: "ansibrightblue",
-        Keyword.Type: "ansibrightcyan",
-        Operator.Word: "ansibrightmagenta",
-        Name.Builtin: "ansibrightcyan",
-        Name.Function: "ansibrightgreen",
-        Name.Namespace: "ansibrightcyan",
-        Name.Class: "ansibrightgreen",
-        Name.Exception: "ansibrightcyan",
-        Name.Decorator: "ansigray",
-        Name.Variable: "ansibrightred",
-        Name.Constant: "ansibrightred",
-        Name.Attribute: "ansibrightcyan",
-        Name.Tag: "ansibrightblue",
-        String: "ansiyellow",
-        Number: "ansibrightblue",
-        Generic.Deleted: "ansibrightred",
-        Generic.Inserted: "ansigreen",
-        Generic.Subheading: "ansimagenta",
-        Generic.Error: "ansibrightred",
-        Error: "ansibrightred",
-    }
-
-
-class LightModeStyle(Style):
-    # The default light mode style class from TerminalFormatter recreated to work with
-    # both TerminalTrueColorFormatter and Terminal256Formatter
-
-    from pygments.token import Comment
-    from pygments.token import Error
-    from pygments.token import Generic
-    from pygments.token import Keyword
-    from pygments.token import Name
-    from pygments.token import Number
-    from pygments.token import Operator
-    from pygments.token import String
-    from pygments.token import Token
-    from pygments.token import Whitespace
-
-    styles = {
-        Token: "",
-        Whitespace: "ansigray",
-        Comment: "ansigray",
-        Comment.Preproc: "ansicyan",
-        Keyword: "ansiblue",
-        Keyword.Type: "ansicyan",
-        Operator.Word: "ansimagenta",
-        Name.Builtin: "ansicyan",
-        Name.Function: "ansigreen",
-        Name.Namespace: "ansicyan",
-        Name.Class: "ansigreen",
-        Name.Exception: "ansicyan",
-        Name.Decorator: "ansibrightblack",
-        Name.Variable: "ansired",
-        Name.Constant: "ansired",
-        Name.Attribute: "ansicyan",
-        Name.Tag: "ansibrightblue",
-        String: "ansiyellow",
-        Number: "ansiblue",
-        Generic.Deleted: "ansibrightred",
-        Generic.Inserted: "ansigreen",
-        Generic.Subheading: "ansimagenta",
-        Generic.Error: "ansibrightred",
-        Error: "ansibrightred",
-    }
+        return highlighted

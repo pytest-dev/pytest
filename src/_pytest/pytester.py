@@ -289,7 +289,8 @@ class HookRecorder:
         __tracebackhide__ = True
         i = 0
         entries = list(entries)
-        backlocals = sys._getframe(1).f_locals
+        # Since Python 3.13, f_locals is not a dict, but eval requires a dict.
+        backlocals = dict(sys._getframe(1).f_locals)
         while entries:
             name, check = entries.pop(0)
             for ind, call in enumerate(self.calls[i:]):
@@ -760,6 +761,9 @@ class Pytester:
     ) -> Path:
         items = list(files.items())
 
+        if ext is None:
+            raise TypeError("ext must not be None")
+
         if ext and not ext.startswith("."):
             raise ValueError(
                 f"pytester.makefile expects a file extension, try .{ext} instead of {ext}"
@@ -801,6 +805,7 @@ class Pytester:
             The first created file.
 
         Examples:
+
         .. code-block:: python
 
             pytester.makefile(".txt", "line1", "line2")
@@ -854,6 +859,7 @@ class Pytester:
         existing files.
 
         Examples:
+
         .. code-block:: python
 
             def test_something(pytester):
@@ -873,6 +879,7 @@ class Pytester:
         existing files.
 
         Examples:
+
         .. code-block:: python
 
             def test_something(pytester):

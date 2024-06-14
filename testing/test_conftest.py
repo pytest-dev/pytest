@@ -70,7 +70,7 @@ class TestConftestValueAccessGlobal:
         )
         assert conftest._rget_with_confmod("a", p)[1] == 1
 
-    def test_immediate_initialiation_and_incremental_are_the_same(
+    def test_immediate_initialization_and_incremental_are_the_same(
         self, basedir: Path
     ) -> None:
         conftest = PytestPluginManager()
@@ -396,7 +396,7 @@ def test_conftest_symlink_files(pytester: Pytester) -> None:
 
 @pytest.mark.skipif(
     os.path.normcase("x") != os.path.normcase("X"),
-    reason="only relevant for case insensitive file systems",
+    reason="only relevant for case-insensitive file systems",
 )
 def test_conftest_badcase(pytester: Pytester) -> None:
     """Check conftest.py loading when directory casing is wrong (#5792)."""

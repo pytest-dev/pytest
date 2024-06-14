@@ -926,7 +926,7 @@ class TestTerminalFunctional:
     def test_header_absolute_testpath(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
-        """Regresstion test for #7814."""
+        """Regression test for #7814."""
         tests = pytester.path.joinpath("tests")
         tests.mkdir()
         pytester.makepyprojecttoml(
@@ -2609,8 +2609,8 @@ class TestCodeHighlight:
         monkeypatch.setenv("PYTEST_THEME", "invalid")
         result = pytester.runpytest_subprocess("--color=yes")
         result.stderr.fnmatch_lines(
-            "ERROR: PYTEST_THEME environment variable had an invalid value: 'invalid'. "
-            "Only valid pygment styles are allowed."
+            "ERROR: PYTEST_THEME environment variable has an invalid value: 'invalid'. "
+            "Hint: See available pygments styles with `pygmentize -L styles`."
         )
 
     def test_code_highlight_invalid_theme_mode(
@@ -2625,8 +2625,8 @@ class TestCodeHighlight:
         monkeypatch.setenv("PYTEST_THEME_MODE", "invalid")
         result = pytester.runpytest_subprocess("--color=yes")
         result.stderr.fnmatch_lines(
-            "ERROR: PYTEST_THEME_MODE environment variable had an invalid value: 'invalid'. "
-            "The only allowed values are 'dark' and 'light'."
+            "ERROR: PYTEST_THEME_MODE environment variable has an invalid value: 'invalid'. "
+            "The allowed values are 'dark' (default) and 'light'."
         )
 
 

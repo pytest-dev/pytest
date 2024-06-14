@@ -162,7 +162,7 @@ objects, they are still using the default pytest representation:
     rootdir: /home/sweet/project
     collected 8 items
 
-    <Dir parametrize.rst-198>
+    <Dir parametrize.rst-200>
       <Module test_time.py>
         <Function test_timedistance_v0[a0-b0-expected0]>
         <Function test_timedistance_v0[a1-b1-expected1]>
@@ -239,7 +239,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     rootdir: /home/sweet/project
     collected 4 items
 
-    <Dir parametrize.rst-198>
+    <Dir parametrize.rst-200>
       <Module test_scenarios.py>
         <Class TestSampleWithScenarios>
           <Function test_demo1[basic]>
@@ -318,7 +318,7 @@ Let's first see how it looks like at collection time:
     rootdir: /home/sweet/project
     collected 2 items
 
-    <Dir parametrize.rst-198>
+    <Dir parametrize.rst-200>
       <Module test_backends.py>
         <Function test_db_initialized[d1]>
         <Function test_db_initialized[d2]>

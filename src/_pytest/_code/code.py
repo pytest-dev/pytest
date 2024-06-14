@@ -55,7 +55,7 @@ from _pytest.pathlib import bestrelpath
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
-_TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
+TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 
 class Code:
@@ -199,8 +199,8 @@ class TracebackEntry:
         rawentry: TracebackType,
         repr_style: Optional['Literal["short", "long"]'] = None,
     ) -> None:
-        self._rawentry: "Final" = rawentry
-        self._repr_style: "Final" = repr_style
+        self._rawentry: Final = rawentry
+        self._repr_style: Final = repr_style
 
     def with_repr_style(
         self, repr_style: Optional['Literal["short", "long"]']
@@ -424,15 +424,14 @@ class Traceback(List[TracebackEntry]):
             # which generates code objects that have hash/value equality
             # XXX needs a test
             key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
-            # print "checking for recursion at", key
             values = cache.setdefault(key, [])
+            # Since Python 3.13 f_locals is a proxy, freeze it.
+            loc = dict(entry.frame.f_locals)
             if values:
-                f = entry.frame
-                loc = f.f_locals
                 for otherloc in values:
                     if otherloc == loc:
                         return i
-            values.append(entry.frame.f_locals)
+            values.append(loc)
         return None
 
 
@@ -629,13 +628,14 @@ class ExceptionInfo(Generic[E]):
     def getrepr(
         self,
         showlocals: bool = False,
-        style: _TracebackStyle = "long",
+        style: TracebackStyle = "long",
         abspath: bool = False,
         tbfilter: Union[
             bool, Callable[["ExceptionInfo[BaseException]"], Traceback]
         ] = True,
         funcargs: bool = False,
         truncate_locals: bool = True,
+        truncate_args: bool = True,
         chain: bool = True,
     ) -> Union["ReprExceptionInfo", "ExceptionChainRepr"]:
         """Return str()able representation of this exception info.
@@ -666,6 +666,9 @@ class ExceptionInfo(Generic[E]):
         :param bool truncate_locals:
             With ``showlocals==True``, make sure locals can be safely represented as strings.
 
+        :param bool truncate_args:
+            With ``showargs==True``, make sure args can be safely represented as strings.
+
         :param bool chain:
             If chained exceptions in Python 3 should be shown.
 
@@ -692,6 +695,7 @@ class ExceptionInfo(Generic[E]):
             tbfilter=tbfilter,
             funcargs=funcargs,
             truncate_locals=truncate_locals,
+            truncate_args=truncate_args,
             chain=chain,
         )
         return fmt.repr_excinfo(self)
@@ -805,11 +809,12 @@ class FormattedExcinfo:
     fail_marker: ClassVar = "E"
 
     showlocals: bool = False
-    style: _TracebackStyle = "long"
+    style: TracebackStyle = "long"
     abspath: bool = True
     tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]] = True
     funcargs: bool = False
     truncate_locals: bool = True
+    truncate_args: bool = True
     chain: bool = True
     astcache: Dict[Union[str, Path], ast.AST] = dataclasses.field(
         default_factory=dict, init=False, repr=False
@@ -840,7 +845,11 @@ class FormattedExcinfo:
         if self.funcargs:
             args = []
             for argname, argvalue in entry.frame.getargs(var=True):
-                args.append((argname, saferepr(argvalue)))
+                if self.truncate_args:
+                    str_repr = saferepr(argvalue)
+                else:
+                    str_repr = saferepr(argvalue, maxsize=None)
+                args.append((argname, str_repr))
             return ReprFuncArgs(args)
         return None
 
@@ -1165,7 +1174,7 @@ class ReprExceptionInfo(ExceptionRepr):
 class ReprTraceback(TerminalRepr):
     reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]]
     extraline: Optional[str]
-    style: _TracebackStyle
+    style: TracebackStyle
 
     entrysep: ClassVar = "_ "
 
@@ -1199,7 +1208,7 @@ class ReprTracebackNative(ReprTraceback):
 class ReprEntryNative(TerminalRepr):
     lines: Sequence[str]
 
-    style: ClassVar[_TracebackStyle] = "native"
+    style: ClassVar[TracebackStyle] = "native"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         tw.write("".join(self.lines))
@@ -1211,7 +1220,7 @@ class ReprEntry(TerminalRepr):
     reprfuncargs: Optional["ReprFuncArgs"]
     reprlocals: Optional["ReprLocals"]
     reprfileloc: Optional["ReprFileLocation"]
-    style: _TracebackStyle
+    style: TracebackStyle
 
     def _write_entry_lines(self, tw: TerminalWriter) -> None:
         """Write the source code portions of a list of traceback entries with syntax highlighting.

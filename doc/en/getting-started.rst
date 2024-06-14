@@ -22,7 +22,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 8.2.0
+    pytest 8.2.2
 
 .. _`simpletest`:
 
@@ -274,7 +274,7 @@ Continue reading
 Check out additional pytest resources to help you customize tests for your unique workflow:
 
 * ":ref:`usage`" for command line invocation examples
-* ":ref:`existingtestsuite`" for working with pre-existing tests
+* ":ref:`existingtestsuite`" for working with preexisting tests
 * ":ref:`mark`" for information on the ``pytest.mark`` mechanism
 * ":ref:`fixtures`" for providing a functional baseline to your tests
 * ":ref:`plugins`" for managing and writing plugins

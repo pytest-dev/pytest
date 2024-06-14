@@ -22,7 +22,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collected 0 items
-    cache -- .../_pytest/cacheprovider.py:542
+    cache -- .../_pytest/cacheprovider.py:560
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
@@ -115,7 +115,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         For more details: :ref:`doctest_namespace`.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1335
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1338
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 

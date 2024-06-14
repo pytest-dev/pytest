@@ -31,6 +31,7 @@ from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
+from _pytest.scope import _ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 
@@ -430,7 +431,6 @@ def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
 # Typing for builtin pytest marks. This is cheating; it gives builtin marks
 # special privilege, and breaks modularity. But practicality beats purity...
 if TYPE_CHECKING:
-    from _pytest.scope import _ScopeName
 
     class _SkipMarkDecorator(MarkDecorator):
         @overload  # type: ignore[override,no-overload-impl]

@@ -94,7 +94,7 @@ def test_get_real_func_partial() -> None:
     assert get_real_func(partial(foo)) is foo
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason="couroutine removed")
+@pytest.mark.skipif(sys.version_info >= (3, 11), reason="coroutine removed")
 def test_is_generator_asyncio(pytester: Pytester) -> None:
     pytester.makepyfile(
         """

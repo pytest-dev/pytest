@@ -255,7 +255,7 @@ def test_getfuncsource_dynamic() -> None:
     assert str(g_source).strip() == "def g():\n    pass  # pragma: no cover"
 
 
-def test_getfuncsource_with_multine_string() -> None:
+def test_getfuncsource_with_multiline_string() -> None:
     def f():
         c = """while True:
     pass
@@ -370,7 +370,11 @@ def test_getfslineno() -> None:
         pass
 
     B.__name__ = B.__qualname__ = "B2"
-    assert getfslineno(B)[1] == -1
+    # Since Python 3.13 this started working.
+    if sys.version_info >= (3, 13):
+        assert getfslineno(B)[1] != -1
+    else:
+        assert getfslineno(B)[1] == -1
 
 
 def test_code_of_object_instance_with_call() -> None:

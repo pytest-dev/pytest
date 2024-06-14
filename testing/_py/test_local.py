@@ -207,7 +207,7 @@ class CommonFSTests:
 
     @pytest.mark.parametrize(
         "fil",
-        ["*dir", "*dir", pytest.mark.skip("sys.version_info <" " (3,6)")(b"*dir")],
+        ["*dir", "*dir", pytest.mark.skip("sys.version_info < (3,6)")(b"*dir")],
     )
     def test_visit_filterfunc_is_string(self, path1, fil):
         lst = []
@@ -667,7 +667,7 @@ class TestLocalPath(CommonFSTests):
         assert p == os.path.expanduser("~")
 
     @pytest.mark.skipif(
-        not sys.platform.startswith("win32"), reason="case insensitive only on windows"
+        not sys.platform.startswith("win32"), reason="case-insensitive only on windows"
     )
     def test_eq_hash_are_case_insensitive_on_windows(self):
         a = local("/some/path")
@@ -898,7 +898,7 @@ class TestExecutionOnWindows:
 class TestExecution:
     pytestmark = skiponwin32
 
-    def test_sysfind_no_permisson_ignored(self, monkeypatch, tmpdir):
+    def test_sysfind_no_permission_ignored(self, monkeypatch, tmpdir):
         noperm = tmpdir.ensure("noperm", dir=True)
         monkeypatch.setenv("PATH", str(noperm), prepend=":")
         noperm.chmod(0)

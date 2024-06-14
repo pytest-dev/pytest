@@ -446,7 +446,7 @@ class BaseFunctionalTests:
         # assert rep.outcome.when == "setup"
         # assert rep.outcome.where.lineno == 3
         # assert rep.outcome.where.path.basename == "test_func.py"
-        # assert instanace(rep.failed.failurerepr, PythonFailureRepr)
+        # assert isinstance(rep.failed.failurerepr, PythonFailureRepr)
 
     def test_systemexit_does_not_bail_out(self, pytester: Pytester) -> None:
         try:

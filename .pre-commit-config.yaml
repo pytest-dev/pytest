@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.4.3"
+  rev: "v0.4.8"
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -38,11 +38,16 @@ repos:
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "1.8.0"
+  rev: "2.1.3"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.16.0
+    hooks:
+    -   id: pyupgrade
+        stages: [manual]
 -   repo: local
     hooks:
     -   id: pylint
