@@ -30,7 +30,10 @@ from typing import overload
 from typing import Pattern
 from typing import Sequence
 from typing import SupportsIndex
+from typing import Tuple
+from typing import Type
 from typing import TypeVar
+from typing import Union
 
 import pluggy
 
@@ -53,9 +56,7 @@ if sys.version_info < (3, 11):
 
 _TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-EXCEPTION_OR_MORE = type[Exception] | tuple[type[Exception], ...]
-
-type_alias = type  #  to sidestep shadowing
+EXCEPTION_OR_MORE = Union[Type[Exception], Tuple[Type[Exception], ...]]
 
 
 class Code:
