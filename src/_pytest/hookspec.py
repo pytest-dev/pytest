@@ -321,6 +321,7 @@ def pytest_ignore_collect(
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param collection_path: The path to analyze.
+    :type collection_path: pathlib.Path
     :param path: The path to analyze (deprecated).
     :param config: The pytest config object.
 
@@ -354,6 +355,7 @@ def pytest_collect_directory(path: Path, parent: Collector) -> Collector | None:
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param path: The path to analyze.
+    :type path: pathlib.Path
 
     See :ref:`custom directory collectors` for a simple example of use of this
     hook.
@@ -386,6 +388,7 @@ def pytest_collect_file(
     The new node needs to have the specified ``parent`` as a parent.
 
     :param file_path: The path to analyze.
+    :type file_path: pathlib.Path
     :param path: The path to collect (deprecated).
 
     .. versionchanged:: 7.0.0
@@ -507,6 +510,7 @@ def pytest_pycollect_makemodule(
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param module_path: The path of the module to collect.
+    :type module_path: pathlib.Path
     :param path: The path of the module to collect (deprecated).
 
     .. versionchanged:: 7.0.0
@@ -1026,6 +1030,7 @@ def pytest_report_header(  # type:ignore[empty-body]
 
     :param config: The pytest config object.
     :param start_path: The starting dir.
+    :type start_path: pathlib.Path
     :param startdir: The starting dir (deprecated).
 
     .. note::
@@ -1069,6 +1074,7 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 
     :param config: The pytest config object.
     :param start_path: The starting dir.
+    :type start_path: pathlib.Path
     :param startdir: The starting dir (deprecated).
     :param items: List of pytest items that are going to be executed; this list should not be modified.
 

@@ -620,7 +620,8 @@ class ExceptionInfo(Generic[E]):
         showlocals: bool = False,
         style: TracebackStyle = "long",
         abspath: bool = False,
-        tbfilter: bool | Callable[[ExceptionInfo[BaseException]], Traceback] = True,
+        tbfilter: bool
+        | Callable[[ExceptionInfo[BaseException]], _pytest._code.code.Traceback] = True,
         funcargs: bool = False,
         truncate_locals: bool = True,
         truncate_args: bool = True,

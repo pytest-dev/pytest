@@ -909,6 +909,7 @@ class Pytester:
             The name of the directory, relative to the pytester path.
         :returns:
             The created directory.
+        :rtype: pathlib.Path
         """
         p = self.path / name
         p.mkdir()
@@ -932,6 +933,7 @@ class Pytester:
             The name of the file to copy.
         :return:
             Path to the copied directory (inside ``self.path``).
+        :rtype: pathlib.Path
         """
         example_dir_ = self._request.config.getini("pytester_example_dir")
         if example_dir_ is None:
@@ -1390,8 +1392,10 @@ class Pytester:
             - Otherwise, it is passed through to :py:class:`subprocess.Popen`.
               For further information in this case, consult the document of the
               ``stdin`` parameter in :py:class:`subprocess.Popen`.
+        :type stdin: _pytest.compat.NotSetType | bytes | IO[Any] | int
         :returns:
             The result.
+
         """
         __tracebackhide__ = True
 
