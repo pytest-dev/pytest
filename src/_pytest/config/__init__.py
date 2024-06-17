@@ -1290,7 +1290,8 @@ class Config:
         self.pluginmanager.rewrite_hook = hook
 
         if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
-            # We don't autoload from setuptools entry points, no need to continue.
+            # We don't autoload from distribution package entry points,
+            # no need to continue.
             return
 
         package_files = (
@@ -1381,8 +1382,8 @@ class Config:
         self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args, exclude_only=False)
         if not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
-            # Don't autoload from setuptools entry point. Only explicitly specified
-            # plugins are going to be loaded.
+            # Don't autoload from distribution package entry point. Only
+            # explicitly specified plugins are going to be loaded.
             self.pluginmanager.load_setuptools_entrypoints("pytest11")
         self.pluginmanager.consider_env()
 
