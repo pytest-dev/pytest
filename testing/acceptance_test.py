@@ -1471,7 +1471,11 @@ def test_issue_9765(pytester: Pytester) -> None:
         # the bug. We also use pytest rather than python -m pytest for the same
         # PYTHONPATH reason.
         subprocess.run(
-            ["pytest", "my_package"], capture_output=True, check=True, text=True
+            ["pytest", "my_package"],
+            capture_output=True,
+            check=True,
+            encoding="utf-8",
+            text=True,
         )
     except subprocess.CalledProcessError as exc:
         raise AssertionError(
