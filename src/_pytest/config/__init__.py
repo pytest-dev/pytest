@@ -13,7 +13,7 @@ import glob
 import importlib.metadata
 import inspect
 import os
-from pathlib import Path
+import pathlib
 import re
 import shlex
 import sys
@@ -113,7 +113,7 @@ class ExitCode(enum.IntEnum):
 class ConftestImportFailure(Exception):
     def __init__(
         self,
-        path: Path,
+        path: pathlib.Path,
         *,
         cause: Exception,
     ) -> None:
@@ -289,7 +289,7 @@ def get_config(
         invocation_params=Config.InvocationParams(
             args=args or (),
             plugins=plugins,
-            dir=Path.cwd(),
+            dir=pathlib.Path.cwd(),
         ),
     )
 
@@ -346,7 +346,7 @@ def _prepareconfig(
         raise
 
 
-def _get_directory(path: Path) -> Path:
+def _get_directory(path: pathlib.Path) -> pathlib.Path:
     """Get the directory of a path - itself if already a directory."""
     if path.is_file():
         return path.parent
@@ -407,9 +407,9 @@ class PytestPluginManager(PluginManager):
         # All conftest modules applicable for a directory.
         # This includes the directory's own conftest modules as well
         # as those of its parent directories.
-        self._dirpath2confmods: dict[Path, list[types.ModuleType]] = {}
+        self._dirpath2confmods: dict[pathlib.Path, list[types.ModuleType]] = {}
         # Cutoff directory above which conftests are no longer discovered.
-        self._confcutdir: Path | None = None
+        self._confcutdir: pathlib.Path | None = None
         # If set, conftest loading is skipped.
         self._noconftest = False
 
@@ -543,12 +543,12 @@ class PytestPluginManager(PluginManager):
     #
     def _set_initial_conftests(
         self,
-        args: Sequence[str | Path],
+        args: Sequence[str | pathlib.Path],
         pyargs: bool,
         noconftest: bool,
-        rootpath: Path,
-        confcutdir: Path | None,
-        invocation_dir: Path,
+        rootpath: pathlib.Path,
+        confcutdir: pathlib.Path | None,
+        invocation_dir: pathlib.Path,
         importmode: ImportMode | str,
         *,
         consider_namespace_packages: bool,
@@ -592,7 +592,7 @@ class PytestPluginManager(PluginManager):
                 consider_namespace_packages=consider_namespace_packages,
             )
 
-    def _is_in_confcutdir(self, path: Path) -> bool:
+    def _is_in_confcutdir(self, path: pathlib.Path) -> bool:
         """Whether to consider the given path to load conftests from."""
         if self._confcutdir is None:
             return True
@@ -609,9 +609,9 @@ class PytestPluginManager(PluginManager):
 
     def _try_load_conftest(
         self,
-        anchor: Path,
+        anchor: pathlib.Path,
         importmode: str | ImportMode,
-        rootpath: Path,
+        rootpath: pathlib.Path,
         *,
         consider_namespace_packages: bool,
     ) -> None:
@@ -634,9 +634,9 @@ class PytestPluginManager(PluginManager):
 
     def _loadconftestmodules(
         self,
-        path: Path,
+        path: pathlib.Path,
         importmode: str | ImportMode,
-        rootpath: Path,
+        rootpath: pathlib.Path,
         *,
         consider_namespace_packages: bool,
     ) -> None:
@@ -664,14 +664,14 @@ class PytestPluginManager(PluginManager):
                     clist.append(mod)
         self._dirpath2confmods[directory] = clist
 
-    def _getconftestmodules(self, path: Path) -> Sequence[types.ModuleType]:
+    def _getconftestmodules(self, path: pathlib.Path) -> Sequence[types.ModuleType]:
         directory = self._get_directory(path)
         return self._dirpath2confmods.get(directory, ())
 
     def _rget_with_confmod(
         self,
         name: str,
-        path: Path,
+        path: pathlib.Path,
     ) -> tuple[types.ModuleType, Any]:
         modules = self._getconftestmodules(path)
         for mod in reversed(modules):
@@ -683,9 +683,9 @@ class PytestPluginManager(PluginManager):
 
     def _importconftest(
         self,
-        conftestpath: Path,
+        conftestpath: pathlib.Path,
         importmode: str | ImportMode,
-        rootpath: Path,
+        rootpath: pathlib.Path,
         *,
         consider_namespace_packages: bool,
     ) -> types.ModuleType:
@@ -737,7 +737,7 @@ class PytestPluginManager(PluginManager):
     def _check_non_top_pytest_plugins(
         self,
         mod: types.ModuleType,
-        conftestpath: Path,
+        conftestpath: pathlib.Path,
     ) -> None:
         if (
             hasattr(mod, "pytest_plugins")
@@ -995,15 +995,15 @@ class Config:
         """The command-line arguments as passed to :func:`pytest.main`."""
         plugins: Sequence[str | _PluggyPlugin] | None
         """Extra plugins, might be `None`."""
-        dir: Path
-        """The directory from which :func:`pytest.main` was invoked."""
+        dir: pathlib.Path
+        """The directory from which :func:`pytest.main` was invoked. :type: pathlib.Path"""
 
         def __init__(
             self,
             *,
             args: Iterable[str],
             plugins: Sequence[str | _PluggyPlugin] | None,
-            dir: Path,
+            dir: pathlib.Path,
         ) -> None:
             object.__setattr__(self, "args", tuple(args))
             object.__setattr__(self, "plugins", plugins)
@@ -1034,7 +1034,7 @@ class Config:
 
         if invocation_params is None:
             invocation_params = self.InvocationParams(
-                args=(), plugins=None, dir=Path.cwd()
+                args=(), plugins=None, dir=pathlib.Path.cwd()
             )
 
         self.option = argparse.Namespace()
@@ -1090,7 +1090,7 @@ class Config:
             self.cache: Optional[Cache] = None
 
     @property
-    def rootpath(self) -> Path:
+    def rootpath(self) -> pathlib.Path:
         """The path to the :ref:`rootdir <rootdir>`.
 
         :type: pathlib.Path
@@ -1100,10 +1100,8 @@ class Config:
         return self._rootpath
 
     @property
-    def inipath(self) -> Path | None:
+    def inipath(self) -> pathlib.Path | None:
         """The path to the :ref:`configfile <configfiles>`.
-
-        :type: Optional[pathlib.Path]
 
         .. versionadded:: 6.1
         """
@@ -1315,8 +1313,8 @@ class Config:
         args: list[str],
         pyargs: bool,
         testpaths: list[str],
-        invocation_dir: Path,
-        rootpath: Path,
+        invocation_dir: pathlib.Path,
+        rootpath: pathlib.Path,
         warn: bool,
     ) -> tuple[list[str], ArgsSource]:
         """Decide the args (initial paths/nodeids) to use given the relevant inputs.
@@ -1642,17 +1640,19 @@ class Config:
         else:
             return self._getini_unknown_type(name, type, value)
 
-    def _getconftest_pathlist(self, name: str, path: Path) -> list[Path] | None:
+    def _getconftest_pathlist(
+        self, name: str, path: pathlib.Path
+    ) -> list[pathlib.Path] | None:
         try:
             mod, relroots = self.pluginmanager._rget_with_confmod(name, path)
         except KeyError:
             return None
         assert mod.__file__ is not None
-        modpath = Path(mod.__file__).parent
-        values: list[Path] = []
+        modpath = pathlib.Path(mod.__file__).parent
+        values: list[pathlib.Path] = []
         for relroot in relroots:
             if isinstance(relroot, os.PathLike):
-                relroot = Path(relroot)
+                relroot = pathlib.Path(relroot)
             else:
                 relroot = relroot.replace("/", os.sep)
                 relroot = absolutepath(modpath / relroot)

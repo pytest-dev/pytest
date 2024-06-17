@@ -1164,7 +1164,7 @@ class Metafunc:
             If N argnames were specified, argvalues must be a list of
             N-tuples, where each tuple-element specifies a value for its
             respective argname.
-
+        :type argvalues: Iterable[_pytest.mark.structures.ParameterSet | Sequence[object] | object]
         :param indirect:
             A list of arguments' names (subset of argnames) or a boolean.
             If True the list contains all names from the argnames. Each

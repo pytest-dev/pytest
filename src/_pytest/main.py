@@ -509,6 +509,7 @@ class Dir(nodes.Directory):
 
         :param parent: The parent collector of this Dir.
         :param path: The directory's path.
+        :type path: pathlib.Path
         """
         return super().from_parent(parent=parent, path=path)
 

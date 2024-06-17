@@ -322,6 +322,7 @@ class CallInfo(Generic[TResult]):
 
         :param func:
             The function to call. Called without arguments.
+        :type func: Callable[[], _pytest.runner.TResult]
         :param when:
             The phase in which the function is called.
         :param reraise:
