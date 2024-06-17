@@ -60,7 +60,6 @@ optional-dependencies.dev = [
     "mock",
     "pygments>=2.7.2",
     "requests",
-    "setuptools",
     "xmlschema",
 ]
 urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"

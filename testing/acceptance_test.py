@@ -1464,7 +1464,7 @@ def test_issue_9765(pytester: Pytester) -> None:
         }
     )
 
-    subprocess.run([sys.executable, "setup.py", "develop"], check=True)
+    subprocess.run([sys.executable, "-Im", "pip", "install", "-e", "."], check=True)
     try:
         # We are using subprocess.run rather than pytester.run on purpose.
         # pytester.run is adding the current directory to PYTHONPATH which avoids
