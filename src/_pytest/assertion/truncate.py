@@ -4,8 +4,7 @@ Current default behaviour is to truncate assertion explanations at
 terminal lines, unless running with an assertions verbosity level of at least 2 or running on CI.
 """
 
-from typing import List
-from typing import Optional
+from __future__ import annotations
 
 from _pytest.assertion import util
 from _pytest.config import Config
@@ -18,8 +17,8 @@ USAGE_MSG = "use '-vv' to show"
 
 
 def truncate_if_required(
-    explanation: List[str], item: Item, max_length: Optional[int] = None
-) -> List[str]:
+    explanation: list[str], item: Item, max_length: int | None = None
+) -> list[str]:
     """Truncate this assertion explanation if the given test item is eligible."""
     if _should_truncate_item(item):
         return _truncate_explanation(explanation)
@@ -33,10 +32,10 @@ def _should_truncate_item(item: Item) -> bool:
 
 
 def _truncate_explanation(
-    input_lines: List[str],
-    max_lines: Optional[int] = None,
-    max_chars: Optional[int] = None,
-) -> List[str]:
+    input_lines: list[str],
+    max_lines: int | None = None,
+    max_chars: int | None = None,
+) -> list[str]:
     """Truncate given list of strings that makes up the assertion explanation.
 
     Truncates to either 8 lines, or 640 characters - whichever the input reaches
@@ -100,7 +99,7 @@ def _truncate_explanation(
     ]
 
 
-def _truncate_by_char_count(input_lines: List[str], max_chars: int) -> List[str]:
+def _truncate_by_char_count(input_lines: list[str], max_chars: int) -> list[str]:
     # Find point at which input length exceeds total allowed length
     iterated_char_count = 0
     for iterated_index, input_line in enumerate(input_lines):

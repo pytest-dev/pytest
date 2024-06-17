@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import errno
 import importlib.abc
 import importlib.machinery
@@ -12,9 +14,7 @@ from types import ModuleType
 from typing import Any
 from typing import Generator
 from typing import Iterator
-from typing import Optional
 from typing import Sequence
-from typing import Tuple
 import unittest.mock
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -865,7 +865,7 @@ class TestImportLibMode:
 
     def create_installed_doctests_and_tests_dir(
         self, path: Path, monkeypatch: MonkeyPatch
-    ) -> Tuple[Path, Path, Path]:
+    ) -> tuple[Path, Path, Path]:
         """
         Create a directory structure where the application code is installed in a virtual environment,
         and the tests are in an outside ".tests" directory.
@@ -1267,8 +1267,8 @@ class TestNamespacePackages:
         monkeypatch.setattr(sys, "pytest_namespace_packages_test", [], raising=False)
 
     def setup_directories(
-        self, tmp_path: Path, monkeypatch: Optional[MonkeyPatch], pytester: Pytester
-    ) -> Tuple[Path, Path]:
+        self, tmp_path: Path, monkeypatch: MonkeyPatch | None, pytester: Pytester
+    ) -> tuple[Path, Path]:
         # Use a code to guard against modules being imported more than once.
         # This is a safeguard in case future changes break this invariant.
         code = dedent(
@@ -1438,7 +1438,7 @@ class TestNamespacePackages:
 
             def find_spec(
                 self, name: str, path: Any = None, target: Any = None
-            ) -> Optional[importlib.machinery.ModuleSpec]:
+            ) -> importlib.machinery.ModuleSpec | None:
                 if name == "com":
                     spec = importlib.machinery.ModuleSpec("com", loader=None)
                     spec.submodule_search_locations = [str(com_root_2), str(com_root_1)]
