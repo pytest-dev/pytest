@@ -46,15 +46,16 @@ from pluggy import HookspecMarker
 from pluggy import HookspecOpts
 from pluggy import PluginManager
 
-from .compat import PathAwareHookProxy
-from .exceptions import PrintHelp as PrintHelp
-from .exceptions import UsageError as UsageError
-from .findpaths import determine_setup
+# from .compat import PathAwareHookProxy
+# from .exceptions import PrintHelp as PrintHelp
+# from .exceptions import UsageError as UsageError
+# from .findpaths import determine_setup
 from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
-from _pytest._code.code import TracebackStyle
+
+# from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import Parser
@@ -91,6 +92,9 @@ Ideally this type would be provided by pluggy itself.
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
+@final # I added
+class UsageError(Exception):
+    """Error in pytest usage or invocation."""
 
 @final
 class ExitCode(enum.IntEnum):
@@ -796,10 +800,10 @@ class PytestPluginManager(PluginManager):
 
     def consider_pluginarg(self, arg: str) -> None:
         """:meta private:"""
-        if arg.startswith("no:"):
+        if arg.startswith("no:"): 
             name = arg[3:]
             if name in essential_plugins:
-                raise UsageError(f"plugin {name} cannot be disabled")
+                print(f"UsageError: plugin {name} cannot be disabled")
 
             # PR #4304: remove stepwise if cacheprovider is blocked.
             if name == "cacheprovider":
@@ -809,10 +813,12 @@ class PytestPluginManager(PluginManager):
             self.set_blocked(name)
             if not name.startswith("pytest_"):
                 self.set_blocked("pytest_" + name)
+     
         else:
             name = arg
             # Unblock the plugin.
             self.unblock(name)
+
             if not name.startswith("pytest_"):
                 self.unblock("pytest_" + name)
             self.import_plugin(arg, consider_entry_points=True)
