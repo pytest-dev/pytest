@@ -19,6 +19,7 @@ from typing import TypeVar
 import warnings
 
 import pluggy
+from typing_extensions import Self
 
 import _pytest._code
 from _pytest._code import getfslineno
@@ -51,8 +52,6 @@ if TYPE_CHECKING:
 SEP = "/"
 
 tracebackcutdir = Path(_pytest.__file__).parent
-
-
 
 
 def _imply_path(
@@ -102,26 +101,6 @@ class NodeMeta(abc.ABCMeta):
             " for more details."
         ).format(name=f"{cls.__module__}.{cls.__name__}")
         fail(msg, pytrace=False)
-
-    def _create(cls: type[_T], *k: Any, **kw: Any) -> _T:
-        try:
-            return super().__call__(*k, **kw)  # type: ignore[no-any-return,misc]
-        except TypeError as e:
-            sig = signature(getattr(cls, "__init__"))
-            known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
-            from .warning_types import PytestDeprecationWarning
-
-            warnings.warn(
-                PytestDeprecationWarning(
-                    f"{cls} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
-                    f"Exception: {e}\n"
-                    "See https://docs.pytest.org/en/stable/deprecations.html"
-                    "#constructors-of-custom-pytest-node-subclasses-should-take-kwargs "
-                    "for more details."
-                )
-            )
-
-            return super().__call__(*k, **known_kw)  # type: ignore[no-any-return,misc]
 
 
 class Node(abc.ABC, metaclass=NodeMeta):
@@ -222,6 +201,28 @@ class Node(abc.ABC, metaclass=NodeMeta):
         else:
             assert parent is not None
             return f"{parent.nodeid}::{name}"
+
+    @classmethod
+    def _create(cls, *k: object, **kw: object) -> Self:
+        callit = super(type(cls), NodeMeta).__call__  # type: ignore[misc]
+        try:
+            return cast(Self, callit(cls, *k, **kw))
+        except TypeError as e:
+            sig = signature(getattr(cls, "__init__"))
+            known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
+            from .warning_types import PytestDeprecationWarning
+
+            warnings.warn(
+                PytestDeprecationWarning(
+                    f"{cls} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
+                    f"Exception: {e}\n"
+                    "See https://docs.pytest.org/en/stable/deprecations.html"
+                    "#constructors-of-custom-pytest-node-subclasses-should-take-kwargs "
+                    "for more details."
+                )
+            )
+
+            return cast(Self, callit(cls, *k, **known_kw))
 
     @classmethod
     def from_parent(cls, parent: Node, **kw: Any) -> Self:
