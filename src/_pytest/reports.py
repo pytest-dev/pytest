@@ -13,6 +13,7 @@ from typing import Iterator
 from typing import Literal
 from typing import Mapping
 from typing import NoReturn
+from typing import Sequence
 from typing import TYPE_CHECKING
 
 from _pytest._code.code import ExceptionChainRepr
@@ -30,6 +31,7 @@ from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
+from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 
 
@@ -190,11 +192,26 @@ class BaseReport:
             return domain
         return None
 
-    def _get_verbose_word(self, config: Config):
+    def _get_verbose_word_with_markup(
+        self, config: Config, default_markup: Mapping[str, bool]
+    ) -> tuple[str, Mapping[str, bool]]:
         _category, _short, verbose = config.hook.pytest_report_teststatus(
             report=self, config=config
         )
-        return verbose
+
+        if isinstance(verbose, str):
+            return verbose, default_markup
+
+        if isinstance(verbose, Sequence) and len(verbose) == 2:
+            word, markup = verbose
+            if isinstance(word, str) and isinstance(markup, Mapping):
+                return word, markup
+
+        fail(
+            "pytest_report_teststatus() hook (from a plugin) returned "
+            "an invalid verbose value: {verbose!r}.\nExpected either a string "
+            "or a tuple of (word, markup)."
+        )
 
     def _to_json(self) -> dict[str, Any]:
         """Return the contents of this report as a dict of builtin entries,

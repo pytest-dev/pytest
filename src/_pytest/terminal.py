@@ -1206,10 +1206,10 @@ class TerminalReporter:
         def show_xfailed(lines: list[str]) -> None:
             xfailed = self.stats.get("xfailed", [])
             for rep in xfailed:
-                verbose_word = rep._get_verbose_word(self.config)
-                markup_word = self._tw.markup(
-                    verbose_word, **{_color_for_type["warnings"]: True}
+                verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
+                    self.config, {_color_for_type["warnings"]: True}
                 )
+                markup_word = self._tw.markup(verbose_word, **verbose_markup)
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
                 line = f"{markup_word} {nodeid}"
                 reason = rep.wasxfail
@@ -1221,10 +1221,10 @@ class TerminalReporter:
         def show_xpassed(lines: list[str]) -> None:
             xpassed = self.stats.get("xpassed", [])
             for rep in xpassed:
-                verbose_word = rep._get_verbose_word(self.config)
-                markup_word = self._tw.markup(
-                    verbose_word, **{_color_for_type["warnings"]: True}
+                verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
+                    self.config, {_color_for_type["warnings"]: True}
                 )
+                markup_word = self._tw.markup(verbose_word, **verbose_markup)
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
                 line = f"{markup_word} {nodeid}"
                 reason = rep.wasxfail
@@ -1237,10 +1237,10 @@ class TerminalReporter:
             fskips = _folded_skips(self.startpath, skipped) if skipped else []
             if not fskips:
                 return
-            verbose_word = skipped[0]._get_verbose_word(self.config)
-            markup_word = self._tw.markup(
-                verbose_word, **{_color_for_type["warnings"]: True}
+            verbose_word, verbose_markup = skipped[0]._get_verbose_word_with_markup(
+                self.config, {_color_for_type["warnings"]: True}
             )
+            markup_word = self._tw.markup(verbose_word, **verbose_markup)
             prefix = "Skipped: "
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith(prefix):
@@ -1421,8 +1421,10 @@ def _get_line_with_reprcrash_message(
     config: Config, rep: BaseReport, tw: TerminalWriter, word_markup: dict[str, bool]
 ) -> str:
     """Get summary line for a report, trying to add reprcrash message."""
-    verbose_word = rep._get_verbose_word(config)
-    word = tw.markup(verbose_word, **word_markup)
+    verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
+        config, word_markup
+    )
+    word = tw.markup(verbose_word, **verbose_markup)
     node = _get_node_id_with_markup(tw, config, rep)
 
     line = f"{word} {node}"
