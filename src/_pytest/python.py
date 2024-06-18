@@ -1634,8 +1634,8 @@ class Function(PyobjMixin, nodes.Item):
         try:
             return self._instance
         except AttributeError:
+            # Each Function gets a fresh class instance.
             self._instance = self._getinstance()
-
         return self._instance
 
     def _getinstance(self) -> Any | None:
