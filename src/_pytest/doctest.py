@@ -505,7 +505,13 @@ class DoctestModule(Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
-            if sys.version_info < (3, 11):
+            py_ver_info_minor = sys.version_info[:2]
+            is_find_lineno_broken = (
+                py_ver_info_minor < (3, 11)
+                or (py_ver_info_minor == (3, 11) and sys.version_info.micro < 9)
+                or (py_ver_info_minor == (3, 12) and sys.version_info.micro < 3)
+            )
+            if is_find_lineno_broken:
 
                 def _find_lineno(self, obj, source_lines):
                     """On older Pythons, doctest code does not take into account
