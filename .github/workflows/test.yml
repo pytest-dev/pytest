@@ -227,3 +227,17 @@ jobs:
         fail_ci_if_error: true
         files: ./coverage.xml
         verbose: true
+
+  check:  # This job does nothing and is only used for the branch protection
+    if: always()
+
+    needs:
+    - build
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@198badcb65a1a44528f27d5da555c4be9f12eac6
+      with:
+        jobs: ${{ toJSON(needs) }}
