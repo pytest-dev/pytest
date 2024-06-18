@@ -655,6 +655,11 @@ class Directory(FSCollector, abc.ABC):
     """
 
 
+class Definition(Collector, abc.ABC):
+    @abc.abstractmethod
+    def collect(self) -> Iterable[Item]: ...
+
+
 class Item(Node, abc.ABC):
     """Base class of all test invocation items.
 

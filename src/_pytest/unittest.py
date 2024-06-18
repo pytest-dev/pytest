@@ -81,7 +81,7 @@ class UnitTestCase(Class):
         # it.
         return self.obj("runTest")
 
-    def collect(self) -> Iterable[Item | Collector]:
+    def collect(self) -> Iterable[Item | Collector]:  # type: ignore[override]
         from unittest import TestLoader
 
         cls = self.obj

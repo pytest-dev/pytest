@@ -402,7 +402,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
                 return True
         return False
 
-    def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+    def collect(self) -> Iterable[nodes.Definition | nodes.Collector]:
         if not getattr(self.obj, "__test__", True):
             return []
 
@@ -415,10 +415,10 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         # In each class, nodes should be definition ordered.
         # __dict__ is definition ordered.
         seen: set[str] = set()
-        dict_values: list[list[nodes.Item | nodes.Collector]] = []
+        dict_values: list[list[nodes.Definition | nodes.Collector]] = []
         ihook = self.ihook
         for dic in dicts:
-            values: list[nodes.Item | nodes.Collector] = []
+            values: list[nodes.Definition | nodes.Collector] = []
             # Note: seems like the dict can change during iteration -
             # be careful not to remove the list() without consideration.
             for name, obj in list(dic.items()):
@@ -564,7 +564,7 @@ class Module(nodes.File, PyCollector):
     def _getobj(self) -> types.ModuleType:
         return importtestmodule(self.path, self.config)
 
-    def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+    def collect(self) -> Iterable[nodes.Collector]:
         self._register_setup_module_fixture()
         self._register_setup_function_fixture()
         self.session._fixturemanager.parsefactories(self)
@@ -771,7 +771,7 @@ class Class(PyCollector):
     def newinstance(self) -> Any:
         return self.obj()
 
-    def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+    def collect(self) -> Iterable[nodes.Collector]:
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):
@@ -1131,6 +1131,8 @@ class Metafunc:
     test configuration or values specified in the class or module where a
     test function is defined.
     """
+
+    definition: FunctionDefinition
 
     def __init__(
         self,
@@ -1707,6 +1709,8 @@ class Function(PyobjMixin, nodes.Item):
 class FunctionDefinition(Function):
     """This class is a stop gap solution until we evolve to have actual function
     definition nodes and manage to get rid of ``metafunc``."""
+
+    parent: Module | Class
 
     def runtest(self) -> None:
         raise RuntimeError("function definitions are not supposed to be run as tests")
