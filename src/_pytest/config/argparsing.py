@@ -180,7 +180,7 @@ class Parser:
         name: str,
         help: str,
         type: Optional[
-            Literal["string", "paths", "pathlist", "args", "linelist", "bool"]
+            Literal["string", "paths", "pathlist", "args", "linelist", "bool", "int"]
         ] = None,
         default: Any = NOT_SET,
     ) -> None:
@@ -190,7 +190,7 @@ class Parser:
             Name of the ini-variable.
         :param type:
             Type of the variable. Can be:
-
+                * ``int``: an integer
                 * ``string``: a string
                 * ``bool``: a boolean
                 * ``args``: a list of strings, separated as in a shell
@@ -215,7 +215,16 @@ class Parser:
         The value of ini-variables can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
-        assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool")
+        assert type in (
+            None,
+            "string",
+            "paths",
+            "pathlist",
+            "args",
+            "linelist",
+            "bool",
+            "int",
+        )
         if default is NOT_SET:
             default = get_ini_default_for_type(type)
 
@@ -224,7 +233,9 @@ class Parser:
 
 
 def get_ini_default_for_type(
-    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]],
+    type: Optional[
+        Literal["string", "paths", "pathlist", "args", "linelist", "bool", "int"]
+    ],
 ) -> Any:
     """
     Used by addini to get the default value for a given ini-option type, when
@@ -236,6 +247,8 @@ def get_ini_default_for_type(
         return []
     elif type == "bool":
         return False
+    elif type == "int":
+        return 0
     else:
         return ""
 

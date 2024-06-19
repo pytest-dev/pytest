@@ -1380,8 +1380,15 @@ class Metafunc:
 
         # num_ids == 0 is a special case: https://github.com/pytest-dev/pytest/issues/1849
         if num_ids != len(parametersets) and num_ids != 0:
-            msg = "In {}: {} parameter sets specified, with different number of ids: {}"
-            fail(msg.format(func_name, len(parametersets), num_ids), pytrace=False)
+            # Construct a string representation of the expected parameter sets
+            expected_paramsets = len(parametersets)
+
+            msg = (
+                f"In {func_name}: \n\n"
+                f" Specified {expected_paramsets} parameter sets with {num_ids} different ids. \n"
+                f" Ensure all subparameters are correctly grouped within a single set of quotation marks."
+            )
+            fail(msg, pytrace=False)
 
         return list(itertools.islice(ids, num_ids))
 
@@ -1411,8 +1418,24 @@ class Metafunc:
             arg_directness = dict.fromkeys(argnames, "direct")
             for arg in indirect:
                 if arg not in argnames:
+                    # Construct a list of valid parameter names
+                    valid_params = ", ".join([f'"{name}"' for name in argnames])
+
+                    # Construct a string representing the expected number of parameters
+                    expected_param_count = len(indirect[0])
+
+                    # Construct a string representing the actual number of parameters provided
+                    actual_param_count = len(argnames)
+
                     fail(
-                        f"In {self.function.__name__}: indirect fixture '{arg}' doesn't exist",
+                        f"In function {self.function.__name__}: {argnames} is not a valid parameter. \n"
+                        f"Expected {expected_param_count} sub parameters, "
+                        f"but only {actual_param_count} were provided. \n\n"
+                        f"Make sure to pass parameter names as strings without quotes, separated by commas, \n "
+                        f"e.g., '@pytest.mark.parametrize({valid_params}, <Input Values>)'"
+                        f"\n\n"
+                        f"Or if multiple parameters are used, separate them by commas. \n "
+                        f"e.g., '@pytest.mark.parametrize(\"arg1, arg2\", <Input Tuples>)'",
                         pytrace=False,
                     )
                 arg_directness[arg] = "indirect"

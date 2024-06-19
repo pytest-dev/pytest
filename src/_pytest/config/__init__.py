@@ -1574,6 +1574,7 @@ class Config:
         ``paths``, ``pathlist``, ``args`` and ``linelist`` : empty list ``[]``
         ``bool`` : ``False``
         ``string`` : empty string ``""``
+        ``int`` : ``0``
 
         If neither the ``default`` nor the ``type`` parameter is passed
         while registering the configuration through
@@ -1641,6 +1642,8 @@ class Config:
                 return value
         elif type == "bool":
             return _strtobool(str(value).strip())
+        elif type == "int":
+            return int(str(value).strip())
         elif type == "string":
             return value
         elif type is None:
