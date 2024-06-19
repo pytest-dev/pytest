@@ -45,7 +45,8 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
-from _pytest.compat import get_real_method
+
+# from _pytest.compat import get_real_method
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
@@ -1223,7 +1224,7 @@ class FixtureFunctionMarker:
     def __post_init__(self, _ispytest: bool) -> None:
         check_ispytest(_ispytest)
 
-    def __call__(self, function: FixtureFunction) -> FixtureFunction:
+    def __call__(self, function: FixtureFunction) -> "FixtureFunctionDefinition":
         if inspect.isclass(function):
             raise ValueError("class fixtures not supported (maybe in the future)")
 
@@ -1235,7 +1236,9 @@ class FixtureFunctionMarker:
         if hasattr(function, "pytestmark"):
             warnings.warn(MARKED_FIXTURE, stacklevel=2)
 
-        function = wrap_function_to_error_out_if_called_directly(function, self)
+        fixture_definition = FixtureFunctionDefinition(function, self)
+
+        # function = wrap_function_to_error_out_if_called_directly(function, self)
 
         name = self.name or function.__name__
         if name == "request":
@@ -1246,20 +1249,62 @@ class FixtureFunctionMarker:
             )
 
         # Type ignored because https://github.com/python/mypy/issues/2087.
-        function._pytestfixturefunction = self  # type: ignore[attr-defined]
-        return function
+        # function._pytestfixturefunction = self  # type: ignore[attr-defined]
+        # return function
+        return fixture_definition
+
+    def __repr__(self):
+        return "fixture"
+
+
+class FixtureFunctionDefinition:
+    def __init__(
+        self,
+        function: Callable[..., object],
+        fixture_function_marker: FixtureFunctionMarker,
+        instance: Optional[type] = None,
+    ):
+        self.name = fixture_function_marker.name or function.__name__
+        self._pytestfixturefunction = fixture_function_marker
+        self.__pytest_wrapped__ = _PytestWrapper(function)
+        self.fixture_function = function
+        self.fixture_function_marker = fixture_function_marker
+        self.scope = fixture_function_marker.scope
+        self.params = fixture_function_marker.params
+        self.autouse = fixture_function_marker.autouse
+        self.ids = fixture_function_marker.ids
+        self.fixture_function = function
+        self.instance = instance
+
+    def __repr__(self) -> str:
+        return f"fixture {self.fixture_function}"
+
+    def __get__(self, instance, owner=None):
+        return FixtureFunctionDefinition(
+            self.fixture_function, self.fixture_function_marker, instance
+        )
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        return self.get_real_func(*args, **kwds)
+
+    def get_real_func(self):
+        if self.instance is not None:
+            return self.fixture_function.__get__(self.instance)
+        return self.fixture_function
 
 
 @overload
 def fixture(
-    fixture_function: FixtureFunction,
+    fixture_function: Callable[..., object],
     *,
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
-    ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
-    name: str | None = ...,
-) -> FixtureFunction: ...
+    ids: Optional[
+        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
+    ] = ...,
+    name: Optional[str] = ...,
+) -> FixtureFunctionDefinition: ...
 
 
 @overload
@@ -1269,9 +1314,11 @@ def fixture(
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
-    ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
-    name: str | None = None,
-) -> FixtureFunctionMarker: ...
+    ids: Optional[
+        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
+    ] = ...,
+    name: Optional[str] = None,
+) -> FixtureFunctionDefinition: ...
 
 
 def fixture(
@@ -1280,9 +1327,11 @@ def fixture(
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = "function",
     params: Iterable[object] | None = None,
     autouse: bool = False,
-    ids: Sequence[object | None] | Callable[[Any], object | None] | None = None,
-    name: str | None = None,
-) -> FixtureFunctionMarker | FixtureFunction:
+    ids: Optional[
+        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
+    ] = None,
+    name: Optional[str] = None,
+) -> Union[FixtureFunctionMarker, FixtureFunctionDefinition]:
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
@@ -1352,7 +1401,7 @@ def fixture(
 def yield_fixture(
     fixture_function=None,
     *args,
-    scope="function",
+    scope: _ScopeName = "function",
     params=None,
     autouse=False,
     ids=None,
@@ -1671,6 +1720,13 @@ class FixtureManager:
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         autouse: bool = False,
     ) -> None:
+        if name == "fixt2":
+            print(name)
+            print(func)
+            print(nodeid)
+            print(scope)
+            print(ids)
+            print(autouse)
         """Register a fixture
 
         :param name:
@@ -1787,7 +1843,8 @@ class FixtureManager:
             # to issue a warning if called directly, so here we unwrap it in
             # order to not emit the warning when pytest itself calls the
             # fixture function.
-            func = get_real_method(obj, holderobj)
+            # func = get_real_method(obj, holderobj)
+            func = obj.get_real_func()
 
             self._register_fixture(
                 name=name,
