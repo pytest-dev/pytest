@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pprint
 import reprlib
+from types import MethodType
 
 
 def _try_repr_or_str(obj: object) -> str:
@@ -59,7 +60,17 @@ class SafeRepr(reprlib.Repr):
             if self.use_ascii:
                 s = ascii(x)
             else:
-                s = super().repr(x)
+                if isinstance(x, MethodType):
+                    # for bound methods, skip redundant <bound method ...> information
+                    s = x.__name__
+                else:
+                    # if none of the mro classes have implemented __repr__
+                    # show class name
+                    mro_classes = x.__class__.mro()[:-1]
+                    if not any("__repr__" in cls.__dict__ for cls in mro_classes):
+                        s = x.__class__.__name__
+                    else:
+                        s = super().repr(x)
 
         except (KeyboardInterrupt, SystemExit):
             raise
