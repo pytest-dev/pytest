@@ -70,7 +70,7 @@ def test_get_real_func() -> None:
         pass
 
     wrapped_func4 = decorator(wrapped_func3)
-    assert get_real_func(wrapped_func4) is wrapped_func3.get_real_func()
+    assert get_real_func(wrapped_func4) is wrapped_func3._get_wrapped_function()
 
 
 def test_get_real_func_partial() -> None:

@@ -212,7 +212,7 @@ def get_real_func(obj):
     start_obj = obj
     for _ in range(100):
         if isinstance(obj, FixtureFunctionDefinition):
-            obj = obj.get_real_func()
+            obj = obj._get_wrapped_function()
             break
         new_obj = getattr(obj, "__wrapped__", None)
         if new_obj is None:
