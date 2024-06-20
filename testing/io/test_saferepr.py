@@ -6,6 +6,7 @@ from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 import pytest
+import re
 
 
 def test_simple_repr():
@@ -197,7 +198,7 @@ def test_saferepr_unlimited_exc():
 
 class TestSafereprUnbounded:
     class Help:
-        def bound_method(self):
+        def bound_method(self):  # pragma: no cover
             pass
 
     def test_saferepr_bound_method(self):
