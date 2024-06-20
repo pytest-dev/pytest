@@ -1,5 +1,3 @@
 The fixtures are now represented as fixture in test output.
 
-Fixtures are now a class object of type `FixtureFunctionDefinition`.
-
 -- by :user:`the-compiler` and :user:`glyphack`.
