@@ -223,7 +223,7 @@ class TestImportHookInstallation:
     ) -> None:
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         # Make sure the hook is installed early enough so that plugins
-        # installed via setuptools are rewritten.
+        # installed via distribution package are rewritten.
         pytester.mkdir("hampkg")
         contents = {
             "hampkg/__init__.py": """\
