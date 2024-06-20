@@ -64,13 +64,7 @@ class SafeRepr(reprlib.Repr):
                     # for bound methods, skip redundant <bound method ...> information
                     s = x.__name__
                 else:
-                    # if none of the mro classes have implemented __repr__
-                    # show class name
-                    mro_classes = x.__class__.mro()[:-1]
-                    if not any("__repr__" in cls.__dict__ for cls in mro_classes):
-                        s = x.__class__.__name__
-                    else:
-                        s = super().repr(x)
+                    s = super().repr(x)
 
         except (KeyboardInterrupt, SystemExit):
             raise

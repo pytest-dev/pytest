@@ -192,3 +192,28 @@ def test_saferepr_unlimited_exc():
     assert saferepr_unlimited(A()).startswith(
         "<[ValueError(42) raised in repr()] A object at 0x"
     )
+
+
+class TestSafereprUnbounded:
+    class Help:
+        def __init__(self, i):
+            self.i = i
+
+        def bound_method(self):
+            return self.i
+
+    def test_saferepr_bound_method(self):
+        """saferepr() of a bound method should show only the method name"""
+        assert saferepr(self.Help(10).bound_method) == "bound_method"
+
+    def test_saferepr_unbounded(self):
+        """saferepr() of an unbound method should still show the full information"""
+        obj = self.Help(10)
+        assert (
+            saferepr(obj)
+            == f"<test_saferepr.{self.__class__.__name__}.Help object at 0x{id(obj):x}>"
+        )
+        assert (
+            saferepr(self.Help)
+            == f"<class 'test_saferepr.{self.__class__.__name__}.Help'>"
+        )
