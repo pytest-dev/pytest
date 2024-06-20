@@ -1220,9 +1220,6 @@ class FixtureFunctionMarker:
 
         return fixture_definition
 
-    def __repr__(self):
-        return "fixture"
-
 
 # TODO: write docstring
 class FixtureFunctionDefinition:
@@ -1693,13 +1690,6 @@ class FixtureManager:
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         autouse: bool = False,
     ) -> None:
-        if name == "fixt2":
-            print(name)
-            print(func)
-            print(nodeid)
-            print(scope)
-            print(ids)
-            print(autouse)
         """Register a fixture
 
         :param name:
