@@ -494,7 +494,7 @@ Fixtures are created when first requested by a test, and are destroyed based on 
 * ``function``: the default scope, the fixture is destroyed at the end of the test.
 * ``class``: the fixture is destroyed during teardown of the last test in the class.
 * ``module``: the fixture is destroyed during teardown of the last test in the module.
-* ``package``: the fixture is destroyed during teardown of the last test in the package.
+* ``package``: the fixture is destroyed during teardown of the last test in the package where the fixture is defined, including sub-packages and sub-directories within it.
 * ``session``: the fixture is destroyed at the end of the test session.
 
 .. note::
@@ -1418,7 +1418,7 @@ Running the above tests results in the following test IDs being used:
    rootdir: /home/sweet/project
    collected 12 items
 
-   <Dir fixtures.rst-208>
+   <Dir fixtures.rst-219>
      <Module test_anothersmtp.py>
        <Function test_showhelo[smtp.gmail.com]>
        <Function test_showhelo[mail.python.org]>
@@ -1721,8 +1721,7 @@ You can specify multiple fixtures like this:
 .. code-block:: python
 
     @pytest.mark.usefixtures("cleandir", "anotherfixture")
-    def test():
-        ...
+    def test(): ...
 
 and you may specify fixture usage at the test module level using :globalvar:`pytestmark`:
 
@@ -1750,8 +1749,7 @@ into an ini-file:
 
         @pytest.mark.usefixtures("my_other_fixture")
         @pytest.fixture
-        def my_fixture_that_sadly_wont_use_my_other_fixture():
-            ...
+        def my_fixture_that_sadly_wont_use_my_other_fixture(): ...
 
     This generates a deprecation warning, and will become an error in Pytest 8.
 
@@ -1933,7 +1931,7 @@ The same applies for the test folder level obviously.
 Using fixtures from other projects
 ----------------------------------
 
-Usually projects that provide pytest support will use :ref:`entry points <setuptools entry points>`,
+Usually projects that provide pytest support will use :ref:`entry points <pip-installable plugins>`,
 so just installing those projects into an environment will make those fixtures available for use.
 
 In case you want to use fixtures from a project that does not use entry points, you can

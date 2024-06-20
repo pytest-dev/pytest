@@ -1,12 +1,13 @@
+# mypy: allow-untyped-defs
 import sys
 import textwrap
 
-import pytest
 from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
 from _pytest.skipping import evaluate_xfail_marks
 from _pytest.skipping import pytest_runtest_setup
+import pytest
 
 
 class TestEvaluation:
@@ -73,16 +74,15 @@ class TestEvaluation:
             """@pytest.mark.skipif("not hasattr(os, 'murks')")""",
             """@pytest.mark.skipif(condition="hasattr(os, 'murks')")""",
         ]
-        for i in range(0, 2):
+        for i in range(2):
             item = pytester.getitem(
-                """
+                f"""
                 import pytest
-                %s
-                %s
+                {lines[i]}
+                {lines[(i + 1) % 2]}
                 def test_func():
                     pass
             """
-                % (lines[i], lines[(i + 1) % 2])
             )
             skipped = evaluate_skip_marks(item)
             assert skipped
@@ -297,13 +297,12 @@ class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_xfail_simple(self, pytester: Pytester, strict: bool) -> None:
         item = pytester.getitem(
-            """
+            f"""
             import pytest
-            @pytest.mark.xfail(strict=%s)
+            @pytest.mark.xfail(strict={strict})
             def test_func():
                 assert 0
         """
-            % strict
         )
         reports = runtestprotocol(item, log=False)
         assert len(reports) == 3
@@ -606,7 +605,7 @@ class TestXFail:
             @pytest.mark.xfail(raises=%s)
             def test_raises():
                 raise %s()
-        """
+        """  # noqa: UP031 (python syntax issues)
             % (expected, actual)
         )
         result = pytester.runpytest(p)
@@ -630,15 +629,14 @@ class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_strict_xfail(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
-            """
+            f"""
             import pytest
 
-            @pytest.mark.xfail(reason='unsupported feature', strict=%s)
+            @pytest.mark.xfail(reason='unsupported feature', strict={strict})
             def test_foo():
                 with open('foo_executed', 'w', encoding='utf-8'):
                     pass  # make sure test executes
         """
-            % strict
         )
         result = pytester.runpytest(p, "-rxX")
         if strict:
@@ -658,14 +656,13 @@ class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_strict_xfail_condition(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
-            """
+            f"""
             import pytest
 
-            @pytest.mark.xfail(False, reason='unsupported feature', strict=%s)
+            @pytest.mark.xfail(False, reason='unsupported feature', strict={strict})
             def test_foo():
                 pass
         """
-            % strict
         )
         result = pytester.runpytest(p, "-rxX")
         result.stdout.fnmatch_lines(["*1 passed*"])
@@ -674,14 +671,13 @@ class TestXFail:
     @pytest.mark.parametrize("strict", [True, False])
     def test_xfail_condition_keyword(self, pytester: Pytester, strict: bool) -> None:
         p = pytester.makepyfile(
-            """
+            f"""
             import pytest
 
-            @pytest.mark.xfail(condition=False, reason='unsupported feature', strict=%s)
+            @pytest.mark.xfail(condition=False, reason='unsupported feature', strict={strict})
             def test_foo():
                 pass
         """
-            % strict
         )
         result = pytester.runpytest(p, "-rxX")
         result.stdout.fnmatch_lines(["*1 passed*"])
@@ -692,11 +688,10 @@ class TestXFail:
         self, pytester: Pytester, strict_val
     ) -> None:
         pytester.makeini(
-            """
+            f"""
             [pytest]
-            xfail_strict = %s
+            xfail_strict = {strict_val}
         """
-            % strict_val
         )
         p = pytester.makepyfile(
             """
@@ -908,7 +903,7 @@ class TestSkipif:
             @pytest.mark.skipif(%(params)s)
             def test_that():
                 assert 0
-        """
+        """  # noqa: UP031 (python syntax issues)
             % dict(params=params)
         )
         result = pytester.runpytest(p, "-s", "-rs")
@@ -934,15 +929,13 @@ class TestSkipif:
         self, pytester: Pytester, marker, msg1, msg2
     ) -> None:
         pytester.makepyfile(
-            test_foo="""
+            test_foo=f"""
             import pytest
             @pytest.mark.{marker}(False, reason='first_condition')
             @pytest.mark.{marker}(True, reason='second_condition')
             def test_foobar():
                 assert 1
-        """.format(
-                marker=marker
-            )
+        """
         )
         result = pytester.runpytest("-s", "-rsxX")
         result.stdout.fnmatch_lines(
@@ -1148,7 +1141,7 @@ def test_errors_in_xfail_skip_expressions(pytester: Pytester) -> None:
     if pypy_version_info is not None and pypy_version_info < (6,):
         markline = markline[1:]
 
-    if sys.version_info[:2] >= (3, 10):
+    if sys.version_info >= (3, 10):
         expected = [
             "*ERROR*test_nameerror*",
             "*asd*",

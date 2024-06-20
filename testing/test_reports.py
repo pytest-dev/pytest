@@ -1,7 +1,7 @@
+# mypy: allow-untyped-defs
 from typing import Sequence
 from typing import Union
 
-import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
 from _pytest.config import Config
@@ -9,6 +9,7 @@ from _pytest.pytester import Pytester
 from _pytest.python_api import approx
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+import pytest
 
 
 class TestReportSerialization:
@@ -99,14 +100,13 @@ class TestReportSerialization:
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
-        for i in range(len(a_entries)):
-            rep_entry = rep_entries[i]
+        assert len(rep_entries) == len(a_entries)  # python < 3.10 zip(strict=True)
+        for a_entry, rep_entry in zip(a_entries, rep_entries):
             assert isinstance(rep_entry, ReprEntry)
             assert rep_entry.reprfileloc is not None
             assert rep_entry.reprfuncargs is not None
             assert rep_entry.reprlocals is not None
 
-            a_entry = a_entries[i]
             assert isinstance(a_entry, ReprEntry)
             assert a_entry.reprfileloc is not None
             assert a_entry.reprfuncargs is not None
@@ -145,9 +145,10 @@ class TestReportSerialization:
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
-        for i in range(len(a_entries)):
-            assert isinstance(rep_entries[i], ReprEntryNative)
-            assert rep_entries[i].lines == a_entries[i].lines
+        assert len(rep_entries) == len(a_entries)  # python < 3.10 zip(strict=True)
+        for rep_entry, a_entry in zip(rep_entries, a_entries):
+            assert isinstance(rep_entry, ReprEntryNative)
+            assert rep_entry.lines == a_entry.lines
 
     def test_itemreport_outcomes(self, pytester: Pytester) -> None:
         # This test came originally from test_remote.py in xdist (ca03269).
@@ -278,7 +279,7 @@ class TestReportSerialization:
     ) -> None:
         """Check serialization/deserialization of report objects containing chained exceptions (#5786)"""
         pytester.makepyfile(
-            """
+            f"""
             def foo():
                 raise ValueError('value error')
             def test_a():
@@ -286,18 +287,16 @@ class TestReportSerialization:
                     foo()
                 except ValueError as e:
                     raise RuntimeError('runtime error') from e
-            if {error_during_import}:
+            if {report_class is CollectReport}:
                 test_a()
-        """.format(
-                error_during_import=report_class is CollectReport
-            )
+        """
         )
 
         reprec = pytester.inline_run()
         if report_class is TestReport:
-            reports: Union[
-                Sequence[TestReport], Sequence[CollectReport]
-            ] = reprec.getreports("pytest_runtest_logreport")
+            reports: Union[Sequence[TestReport], Sequence[CollectReport]] = (
+                reprec.getreports("pytest_runtest_logreport")
+            )
             # we have 3 reports: setup/call/teardown
             assert len(reports) == 3
             # get the call report

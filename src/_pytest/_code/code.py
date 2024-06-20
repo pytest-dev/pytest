@@ -1,14 +1,15 @@
+# mypy: allow-untyped-defs
 import ast
 import dataclasses
 import inspect
-import os
-import re
-import sys
-import traceback
 from inspect import CO_VARARGS
 from inspect import CO_VARKEYWORDS
 from io import StringIO
+import os
 from pathlib import Path
+import re
+import sys
+import traceback
 from traceback import format_exception_only
 from types import CodeType
 from types import FrameType
@@ -50,10 +51,11 @@ from _pytest.deprecated import check_ispytest
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 
-if sys.version_info[:2] < (3, 11):
+
+if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
-_TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
+TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
 
 class Code:
@@ -197,8 +199,8 @@ class TracebackEntry:
         rawentry: TracebackType,
         repr_style: Optional['Literal["short", "long"]'] = None,
     ) -> None:
-        self._rawentry: "Final" = rawentry
-        self._repr_style: "Final" = repr_style
+        self._rawentry: Final = rawentry
+        self._repr_style: Final = repr_style
 
     def with_repr_style(
         self, repr_style: Optional['Literal["short", "long"]']
@@ -277,9 +279,9 @@ class TracebackEntry:
 
         Mostly for internal use.
         """
-        tbh: Union[
-            bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]
-        ] = False
+        tbh: Union[bool, Callable[[Optional[ExceptionInfo[BaseException]]], bool]] = (
+            False
+        )
         for maybe_ns_dct in (self.frame.f_locals, self.frame.f_globals):
             # in normal cases, f_locals and f_globals are dictionaries
             # however via `exec(...)` / `eval(...)` they can be other types
@@ -376,12 +378,10 @@ class Traceback(List[TracebackEntry]):
         return self
 
     @overload
-    def __getitem__(self, key: "SupportsIndex") -> TracebackEntry:
-        ...
+    def __getitem__(self, key: "SupportsIndex") -> TracebackEntry: ...
 
     @overload
-    def __getitem__(self, key: slice) -> "Traceback":
-        ...
+    def __getitem__(self, key: slice) -> "Traceback": ...
 
     def __getitem__(
         self, key: Union["SupportsIndex", slice]
@@ -424,15 +424,14 @@ class Traceback(List[TracebackEntry]):
             # which generates code objects that have hash/value equality
             # XXX needs a test
             key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
-            # print "checking for recursion at", key
             values = cache.setdefault(key, [])
+            # Since Python 3.13 f_locals is a proxy, freeze it.
+            loc = dict(entry.frame.f_locals)
             if values:
-                f = entry.frame
-                loc = f.f_locals
                 for otherloc in values:
                     if otherloc == loc:
                         return i
-            values.append(entry.frame.f_locals)
+            values.append(loc)
         return None
 
 
@@ -486,9 +485,10 @@ class ExceptionInfo(Generic[E]):
 
         .. versionadded:: 7.4
         """
-        assert (
-            exception.__traceback__
-        ), "Exceptions passed to ExcInfo.from_exception(...) must have a non-None __traceback__."
+        assert exception.__traceback__, (
+            "Exceptions passed to ExcInfo.from_exception(...)"
+            " must have a non-None __traceback__."
+        )
         exc_info = (type(exception), exception, exception.__traceback__)
         return cls.from_exc_info(exc_info, exprinfo)
 
@@ -587,9 +587,7 @@ class ExceptionInfo(Generic[E]):
     def __repr__(self) -> str:
         if self._excinfo is None:
             return "<ExceptionInfo for raises contextmanager>"
-        return "<{} {} tblen={}>".format(
-            self.__class__.__name__, saferepr(self._excinfo[1]), len(self.traceback)
-        )
+        return f"<{self.__class__.__name__} {saferepr(self._excinfo[1])} tblen={len(self.traceback)}>"
 
     def exconly(self, tryshort: bool = False) -> str:
         """Return the exception as a string.
@@ -630,13 +628,14 @@ class ExceptionInfo(Generic[E]):
     def getrepr(
         self,
         showlocals: bool = False,
-        style: _TracebackStyle = "long",
+        style: TracebackStyle = "long",
         abspath: bool = False,
         tbfilter: Union[
             bool, Callable[["ExceptionInfo[BaseException]"], Traceback]
         ] = True,
         funcargs: bool = False,
         truncate_locals: bool = True,
+        truncate_args: bool = True,
         chain: bool = True,
     ) -> Union["ReprExceptionInfo", "ExceptionChainRepr"]:
         """Return str()able representation of this exception info.
@@ -667,6 +666,9 @@ class ExceptionInfo(Generic[E]):
         :param bool truncate_locals:
             With ``showlocals==True``, make sure locals can be safely represented as strings.
 
+        :param bool truncate_args:
+            With ``showargs==True``, make sure args can be safely represented as strings.
+
         :param bool chain:
             If chained exceptions in Python 3 should be shown.
 
@@ -693,15 +695,27 @@ class ExceptionInfo(Generic[E]):
             tbfilter=tbfilter,
             funcargs=funcargs,
             truncate_locals=truncate_locals,
+            truncate_args=truncate_args,
             chain=chain,
         )
         return fmt.repr_excinfo(self)
 
     def _stringify_exception(self, exc: BaseException) -> str:
+        try:
+            notes = getattr(exc, "__notes__", [])
+        except KeyError:
+            # Workaround for https://github.com/python/cpython/issues/98778 on
+            # Python <= 3.9, and some 3.10 and 3.11 patch versions.
+            HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
+            if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
+                notes = []
+            else:
+                raise
+
         return "\n".join(
             [
                 str(exc),
-                *getattr(exc, "__notes__", []),
+                *notes,
             ]
         )
 
@@ -776,6 +790,8 @@ class ExceptionInfo(Generic[E]):
             If `None`, will search for a matching exception at any nesting depth.
             If >= 1, will only match an exception if it's at the specified depth (depth = 1 being
             the exceptions contained within the topmost exception group).
+
+        .. versionadded:: 8.0
         """
         msg = "Captured exception is not an instance of `BaseExceptionGroup`"
         assert isinstance(self.value, BaseExceptionGroup), msg
@@ -793,11 +809,12 @@ class FormattedExcinfo:
     fail_marker: ClassVar = "E"
 
     showlocals: bool = False
-    style: _TracebackStyle = "long"
+    style: TracebackStyle = "long"
     abspath: bool = True
     tbfilter: Union[bool, Callable[[ExceptionInfo[BaseException]], Traceback]] = True
     funcargs: bool = False
     truncate_locals: bool = True
+    truncate_args: bool = True
     chain: bool = True
     astcache: Dict[Union[str, Path], ast.AST] = dataclasses.field(
         default_factory=dict, init=False, repr=False
@@ -828,7 +845,11 @@ class FormattedExcinfo:
         if self.funcargs:
             args = []
             for argname, argvalue in entry.frame.getargs(var=True):
-                args.append((argname, saferepr(argvalue)))
+                if self.truncate_args:
+                    str_repr = saferepr(argvalue)
+                else:
+                    str_repr = saferepr(argvalue, maxsize=None)
+                args.append((argname, str_repr))
             return ReprFuncArgs(args)
         return None
 
@@ -928,7 +949,7 @@ class FormattedExcinfo:
             s = self.get_source(source, line_index, excinfo, short=short)
             lines.extend(s)
             if short:
-                message = "in %s" % (entry.name)
+                message = f"in {entry.name}"
             else:
                 message = excinfo and excinfo.typename or ""
             entry_path = entry.path
@@ -1006,13 +1027,8 @@ class FormattedExcinfo:
             extraline: Optional[str] = (
                 "!!! Recursion error detected, but an error occurred locating the origin of recursion.\n"
                 "  The following exception happened when comparing locals in the stack frame:\n"
-                "    {exc_type}: {exc_msg}\n"
-                "  Displaying first and last {max_frames} stack frames out of {total}."
-            ).format(
-                exc_type=type(e).__name__,
-                exc_msg=str(e),
-                max_frames=max_frames,
-                total=len(traceback),
+                f"    {type(e).__name__}: {e!s}\n"
+                f"  Displaying first and last {max_frames} stack frames out of {len(traceback)}."
             )
             # Type ignored because adding two instances of a List subtype
             # currently incorrectly has type List instead of the subtype.
@@ -1044,13 +1060,13 @@ class FormattedExcinfo:
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 if isinstance(e, BaseExceptionGroup):
-                    reprtraceback: Union[
-                        ReprTracebackNative, ReprTraceback
-                    ] = ReprTracebackNative(
-                        traceback.format_exception(
-                            type(excinfo_.value),
-                            excinfo_.value,
-                            excinfo_.traceback[0]._rawentry,
+                    reprtraceback: Union[ReprTracebackNative, ReprTraceback] = (
+                        ReprTracebackNative(
+                            traceback.format_exception(
+                                type(excinfo_.value),
+                                excinfo_.value,
+                                excinfo_.traceback[0]._rawentry,
+                            )
                         )
                     )
                 else:
@@ -1158,7 +1174,7 @@ class ReprExceptionInfo(ExceptionRepr):
 class ReprTraceback(TerminalRepr):
     reprentries: Sequence[Union["ReprEntry", "ReprEntryNative"]]
     extraline: Optional[str]
-    style: _TracebackStyle
+    style: TracebackStyle
 
     entrysep: ClassVar = "_ "
 
@@ -1192,7 +1208,7 @@ class ReprTracebackNative(ReprTraceback):
 class ReprEntryNative(TerminalRepr):
     lines: Sequence[str]
 
-    style: ClassVar[_TracebackStyle] = "native"
+    style: ClassVar[TracebackStyle] = "native"
 
     def toterminal(self, tw: TerminalWriter) -> None:
         tw.write("".join(self.lines))
@@ -1204,7 +1220,7 @@ class ReprEntry(TerminalRepr):
     reprfuncargs: Optional["ReprFuncArgs"]
     reprlocals: Optional["ReprLocals"]
     reprfileloc: Optional["ReprFileLocation"]
-    style: _TracebackStyle
+    style: TracebackStyle
 
     def _write_entry_lines(self, tw: TerminalWriter) -> None:
         """Write the source code portions of a list of traceback entries with syntax highlighting.
@@ -1219,7 +1235,6 @@ class ReprEntry(TerminalRepr):
         the "E" prefix) using syntax highlighting, taking care to not highlighting the ">"
         character, as doing so might break line continuations.
         """
-
         if not self.lines:
             return
 
@@ -1342,7 +1357,7 @@ def getfslineno(obj: object) -> Tuple[Union[str, Path], int]:
     #       in 6ec13a2b9.  It ("place_as") appears to be something very custom.
     obj = get_real_func(obj)
     if hasattr(obj, "place_as"):
-        obj = obj.place_as  # type: ignore[attr-defined]
+        obj = obj.place_as
 
     try:
         code = Code.from_function(obj)

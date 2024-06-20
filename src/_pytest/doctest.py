@@ -1,15 +1,16 @@
+# mypy: allow-untyped-defs
 """Discover and run doctests in modules and test files."""
+
 import bdb
+from contextlib import contextmanager
 import functools
 import inspect
 import os
+from pathlib import Path
 import platform
 import sys
 import traceback
 import types
-import warnings
-from contextlib import contextmanager
-from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -23,6 +24,7 @@ from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 from _pytest import outcomes
 from _pytest._code.code import ExceptionInfo
@@ -39,13 +41,14 @@ from _pytest.nodes import Item
 from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
-from _pytest.pathlib import import_path
 from _pytest.python import Module
 from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
+
 if TYPE_CHECKING:
     import doctest
+    from typing import Self
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -105,7 +108,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--doctest-ignore-import-errors",
         action="store_true",
         default=False,
-        help="Ignore doctest ImportErrors",
+        help="Ignore doctest collection errors",
         dest="doctest_ignore_import_errors",
     )
     group.addoption(
@@ -132,11 +135,9 @@ def pytest_collect_file(
         if config.option.doctestmodules and not any(
             (_is_setup_py(file_path), _is_main_py(file_path))
         ):
-            mod: DoctestModule = DoctestModule.from_parent(parent, path=file_path)
-            return mod
+            return DoctestModule.from_parent(parent, path=file_path)
     elif _is_doctest(config, file_path, parent):
-        txt: DoctestTextfile = DoctestTextfile.from_parent(parent, path=file_path)
-        return txt
+        return DoctestTextfile.from_parent(parent, path=file_path)
     return None
 
 
@@ -271,14 +272,14 @@ class DoctestItem(Item):
         self._initrequest()
 
     @classmethod
-    def from_parent(  # type: ignore
+    def from_parent(  # type: ignore[override]
         cls,
         parent: "Union[DoctestTextfile, DoctestModule]",
         *,
         name: str,
         runner: "doctest.DocTestRunner",
         dtest: "doctest.DocTest",
-    ):
+    ) -> "Self":
         # incompatible signature due to imposed limits on subclass
         """The public named constructor."""
         return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
@@ -297,7 +298,7 @@ class DoctestItem(Item):
     def runtest(self) -> None:
         _check_all_skipped(self.dtest)
         self._disable_output_capturing_for_darwin()
-        failures: List["doctest.DocTestFailure"] = []
+        failures: List[doctest.DocTestFailure] = []
         # Type ignored because we change the type of `out` from what
         # doctest expects.
         self.runner.run(self.dtest, out=failures)  # type: ignore[arg-type]
@@ -373,7 +374,7 @@ class DoctestItem(Item):
                 ).split("\n")
             else:
                 inner_excinfo = ExceptionInfo.from_exc_info(failure.exc_info)
-                lines += ["UNEXPECTED EXCEPTION: %s" % repr(inner_excinfo.value)]
+                lines += [f"UNEXPECTED EXCEPTION: {inner_excinfo.value!r}"]
                 lines += [
                     x.strip("\n") for x in traceback.format_exception(*failure.exc_info)
                 ]
@@ -381,7 +382,7 @@ class DoctestItem(Item):
         return ReprFailDoctest(reprlocation_lines)
 
     def reportinfo(self) -> Tuple[Union["os.PathLike[str]", str], Optional[int], str]:
-        return self.path, self.dtest.lineno, "[doctest] %s" % self.name
+        return self.path, self.dtest.lineno, f"[doctest] {self.name}"
 
 
 def _get_flag_lookup() -> Dict[str, int]:
@@ -485,9 +486,9 @@ def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
             return real_unwrap(func, stop=lambda obj: _is_mocked(obj) or _stop(func))
         except Exception as e:
             warnings.warn(
-                "Got %r when unwrapping %r.  This is usually caused "
+                f"Got {e!r} when unwrapping {func!r}.  This is usually caused "
                 "by a violation of Python's object protocol; see e.g. "
-                "https://github.com/pytest-dev/pytest/issues/5080" % (e, func),
+                "https://github.com/pytest-dev/pytest/issues/5080",
                 PytestWarning,
             )
             raise
@@ -504,42 +505,51 @@ class DoctestModule(Module):
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):
-            """A hackish doctest finder that overrides stdlib internals to fix a stdlib bug.
+            py_ver_info_minor = sys.version_info[:2]
+            is_find_lineno_broken = (
+                py_ver_info_minor < (3, 11)
+                or (py_ver_info_minor == (3, 11) and sys.version_info.micro < 9)
+                or (py_ver_info_minor == (3, 12) and sys.version_info.micro < 3)
+            )
+            if is_find_lineno_broken:
 
-            https://github.com/pytest-dev/pytest/issues/3456
-            https://bugs.python.org/issue25532
-            """
+                def _find_lineno(self, obj, source_lines):
+                    """On older Pythons, doctest code does not take into account
+                    `@property`. https://github.com/python/cpython/issues/61648
 
-            def _find_lineno(self, obj, source_lines):
-                """Doctest code does not take into account `@property`, this
-                is a hackish way to fix it. https://bugs.python.org/issue17446
+                    Moreover, wrapped Doctests need to be unwrapped so the correct
+                    line number is returned. #8796
+                    """
+                    if isinstance(obj, property):
+                        obj = getattr(obj, "fget", obj)
 
-                Wrapped Doctests will need to be unwrapped so the correct
-                line number is returned. This will be reported upstream. #8796
-                """
-                if isinstance(obj, property):
-                    obj = getattr(obj, "fget", obj)
+                    if hasattr(obj, "__wrapped__"):
+                        # Get the main obj in case of it being wrapped
+                        obj = inspect.unwrap(obj)
 
-                if hasattr(obj, "__wrapped__"):
-                    # Get the main obj in case of it being wrapped
-                    obj = inspect.unwrap(obj)
-
-                # Type ignored because this is a private function.
-                return super()._find_lineno(  # type:ignore[misc]
-                    obj,
-                    source_lines,
-                )
-
-            def _find(
-                self, tests, obj, name, module, source_lines, globs, seen
-            ) -> None:
-                if _is_mocked(obj):
-                    return
-                with _patch_unwrap_mock_aware():
                     # Type ignored because this is a private function.
-                    super()._find(  # type:ignore[misc]
-                        tests, obj, name, module, source_lines, globs, seen
+                    return super()._find_lineno(  # type:ignore[misc]
+                        obj,
+                        source_lines,
                     )
+
+            if sys.version_info < (3, 10):
+
+                def _find(
+                    self, tests, obj, name, module, source_lines, globs, seen
+                ) -> None:
+                    """Override _find to work around issue in stdlib.
+
+                    https://github.com/pytest-dev/pytest/issues/3456
+                    https://github.com/python/cpython/issues/69718
+                    """
+                    if _is_mocked(obj):
+                        return  # pragma: no cover
+                    with _patch_unwrap_mock_aware():
+                        # Type ignored because this is a private function.
+                        super()._find(  # type:ignore[misc]
+                            tests, obj, name, module, source_lines, globs, seen
+                        )
 
             if sys.version_info < (3, 13):
 
@@ -555,27 +565,18 @@ class DoctestModule(Module):
                     # Type ignored because this is a private function.
                     return super()._from_module(module, object)  # type: ignore[misc]
 
-            else:  # pragma: no cover
-                pass
+        try:
+            module = self.obj
+        except Collector.CollectError:
+            if self.config.getvalue("doctest_ignore_import_errors"):
+                skip(f"unable to import module {self.path!r}")
+            else:
+                raise
 
-        if self.path.name == "conftest.py":
-            module = self.config.pluginmanager._importconftest(
-                self.path,
-                self.config.getoption("importmode"),
-                rootpath=self.config.rootpath,
-            )
-        else:
-            try:
-                module = import_path(
-                    self.path,
-                    root=self.config.rootpath,
-                    mode=self.config.getoption("importmode"),
-                )
-            except ImportError:
-                if self.config.getvalue("doctest_ignore_import_errors"):
-                    skip("unable to import module %r" % self.path)
-                else:
-                    raise
+        # While doctests currently don't support fixtures directly, we still
+        # need to pick up autouse fixtures.
+        self.session._fixturemanager.parsefactories(self)
+
         # Uses internal doctest module parsing mechanism.
         finder = MockAwareDocTestFinder()
         optionflags = get_optionflags(self.config)

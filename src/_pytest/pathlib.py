@@ -1,20 +1,16 @@
 import atexit
 import contextlib
-import fnmatch
-import importlib.util
-import itertools
-import os
-import shutil
-import sys
-import types
-import uuid
-import warnings
 from enum import Enum
 from errno import EBADF
 from errno import ELOOP
 from errno import ENOENT
 from errno import ENOTDIR
+import fnmatch
 from functools import partial
+from importlib.machinery import ModuleSpec
+import importlib.util
+import itertools
+import os
 from os.path import expanduser
 from os.path import expandvars
 from os.path import isabs
@@ -22,7 +18,11 @@ from os.path import sep
 from pathlib import Path
 from pathlib import PurePath
 from posixpath import sep as posix_sep
+import shutil
+import sys
+import types
 from types import ModuleType
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterable
@@ -34,10 +34,13 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
+import uuid
+import warnings
 
 from _pytest.compat import assert_never
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
+
 
 LOCK_TIMEOUT = 60 * 60 * 24 * 3
 
@@ -56,7 +59,7 @@ _IGNORED_WINERRORS = (
 )
 
 
-def _ignore_error(exception):
+def _ignore_error(exception: Exception) -> bool:
     return (
         getattr(exception, "errno", None) in _IGNORED_ERRORS
         or getattr(exception, "winerror", None) in _IGNORED_WINERRORS
@@ -68,7 +71,7 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
 
 
 def on_rm_rf_error(
-    func,
+    func: Optional[Callable[..., Any]],
     path: str,
     excinfo: Union[
         BaseException,
@@ -101,9 +104,7 @@ def on_rm_rf_error(
         if func not in (os.open,):
             warnings.warn(
                 PytestWarning(
-                    "(rm_rf) unknown function {} when removing {}:\n{}: {}".format(
-                        func, path, type(exc), exc
-                    )
+                    f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
                 )
             )
         return False
@@ -171,23 +172,23 @@ def rm_rf(path: Path) -> None:
         shutil.rmtree(str(path), onerror=onerror)
 
 
-def find_prefixed(root: Path, prefix: str) -> Iterator[Path]:
-    """Find all elements in root that begin with the prefix, case insensitive."""
+def find_prefixed(root: Path, prefix: str) -> Iterator["os.DirEntry[str]"]:
+    """Find all elements in root that begin with the prefix, case-insensitive."""
     l_prefix = prefix.lower()
-    for x in root.iterdir():
+    for x in os.scandir(root):
         if x.name.lower().startswith(l_prefix):
             yield x
 
 
-def extract_suffixes(iter: Iterable[PurePath], prefix: str) -> Iterator[str]:
+def extract_suffixes(iter: Iterable["os.DirEntry[str]"], prefix: str) -> Iterator[str]:
     """Return the parts of the paths following the prefix.
 
     :param iter: Iterator over path names.
     :param prefix: Expected prefix of the path names.
     """
     p_len = len(prefix)
-    for p in iter:
-        yield p.name[p_len:]
+    for entry in iter:
+        yield entry.name[p_len:]
 
 
 def find_suffixes(root: Path, prefix: str) -> Iterator[str]:
@@ -195,7 +196,7 @@ def find_suffixes(root: Path, prefix: str) -> Iterator[str]:
     return extract_suffixes(find_prefixed(root, prefix), prefix)
 
 
-def parse_num(maybe_num) -> int:
+def parse_num(maybe_num: str) -> int:
     """Parse number path suffixes, returns -1 on error."""
     try:
         return int(maybe_num)
@@ -242,7 +243,7 @@ def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
     else:
         raise OSError(
             "could not create numbered dir with prefix "
-            "{prefix} in {root} after 10 tries".format(prefix=prefix, root=root)
+            f"{prefix} in {root} after 10 tries"
         )
 
 
@@ -263,7 +264,9 @@ def create_cleanup_lock(p: Path) -> Path:
         return lock_path
 
 
-def register_cleanup_lock_removal(lock_path: Path, register=atexit.register):
+def register_cleanup_lock_removal(
+    lock_path: Path, register: Any = atexit.register
+) -> Any:
     """Register a cleanup function for removing a lock, by default on atexit."""
     pid = os.getpid()
 
@@ -346,15 +349,15 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
     """List candidates for numbered directories to be removed - follows py.path."""
     max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
     max_delete = max_existing - keep
-    paths = find_prefixed(root, prefix)
-    paths, paths2 = itertools.tee(paths)
-    numbers = map(parse_num, extract_suffixes(paths2, prefix))
-    for path, number in zip(paths, numbers):
+    entries = find_prefixed(root, prefix)
+    entries, entries2 = itertools.tee(entries)
+    numbers = map(parse_num, extract_suffixes(entries2, prefix))
+    for entry, number in zip(entries, numbers):
         if number <= max_delete:
-            yield path
+            yield Path(entry)
 
 
-def cleanup_dead_symlinks(root: Path):
+def cleanup_dead_symlinks(root: Path) -> None:
     for left_dir in root.iterdir():
         if left_dir.is_symlink():
             if not left_dir.resolve().exists():
@@ -458,10 +461,14 @@ def parts(s: str) -> Set[str]:
     return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
 
 
-def symlink_or_skip(src, dst, **kwargs):
+def symlink_or_skip(
+    src: Union["os.PathLike[str]", str],
+    dst: Union["os.PathLike[str]", str],
+    **kwargs: Any,
+) -> None:
     """Make a symlink, or skip the test in case symlinks are not supported."""
     try:
-        os.symlink(str(src), str(dst), **kwargs)
+        os.symlink(src, dst, **kwargs)
     except OSError as e:
         skip(f"symlinks not supported: {e}")
 
@@ -484,73 +491,90 @@ class ImportPathMismatchError(ImportError):
 
 
 def import_path(
-    p: Union[str, "os.PathLike[str]"],
+    path: Union[str, "os.PathLike[str]"],
     *,
     mode: Union[str, ImportMode] = ImportMode.prepend,
     root: Path,
+    consider_namespace_packages: bool,
 ) -> ModuleType:
-    """Import and return a module from the given path, which can be a file (a module) or
+    """
+    Import and return a module from the given path, which can be a file (a module) or
     a directory (a package).
 
-    The import mechanism used is controlled by the `mode` parameter:
+    :param path:
+        Path to the file to import.
 
-    * `mode == ImportMode.prepend`: the directory containing the module (or package, taking
-      `__init__.py` files into account) will be put at the *start* of `sys.path` before
-      being imported with `importlib.import_module`.
+    :param mode:
+        Controls the underlying import mechanism that will be used:
 
-    * `mode == ImportMode.append`: same as `prepend`, but the directory will be appended
-      to the end of `sys.path`, if not already in `sys.path`.
+        * ImportMode.prepend: the directory containing the module (or package, taking
+          `__init__.py` files into account) will be put at the *start* of `sys.path` before
+          being imported with `importlib.import_module`.
 
-    * `mode == ImportMode.importlib`: uses more fine control mechanisms provided by `importlib`
-      to import the module, which avoids having to muck with `sys.path` at all. It effectively
-      allows having same-named test modules in different places.
+        * ImportMode.append: same as `prepend`, but the directory will be appended
+          to the end of `sys.path`, if not already in `sys.path`.
+
+        * ImportMode.importlib: uses more fine control mechanisms provided by `importlib`
+          to import the module, which avoids having to muck with `sys.path` at all. It effectively
+          allows having same-named test modules in different places.
 
     :param root:
         Used as an anchor when mode == ImportMode.importlib to obtain
         a unique name for the module being imported so it can safely be stored
         into ``sys.modules``.
 
+    :param consider_namespace_packages:
+        If True, consider namespace packages when resolving module names.
+
     :raises ImportPathMismatchError:
         If after importing the given `path` and the module `__file__`
         are different. Only raised in `prepend` and `append` modes.
     """
+    path = Path(path)
     mode = ImportMode(mode)
-
-    path = Path(p)
 
     if not path.exists():
         raise ImportError(path)
 
     if mode is ImportMode.importlib:
+        # Try to import this module using the standard import mechanisms, but
+        # without touching sys.path.
+        try:
+            pkg_root, module_name = resolve_pkg_root_and_module_name(
+                path, consider_namespace_packages=consider_namespace_packages
+            )
+        except CouldNotResolvePathError:
+            pass
+        else:
+            # If the given module name is already in sys.modules, do not import it again.
+            with contextlib.suppress(KeyError):
+                return sys.modules[module_name]
+
+            mod = _import_module_using_spec(
+                module_name, path, pkg_root, insert_modules=False
+            )
+            if mod is not None:
+                return mod
+
+        # Could not import the module with the current sys.path, so we fall back
+        # to importing the file as a single module, not being a part of a package.
         module_name = module_name_from_path(path, root)
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
 
-        for meta_importer in sys.meta_path:
-            spec = meta_importer.find_spec(module_name, [str(path.parent)])
-            if spec is not None:
-                break
-        else:
-            spec = importlib.util.spec_from_file_location(module_name, str(path))
-
-        if spec is None:
+        mod = _import_module_using_spec(
+            module_name, path, path.parent, insert_modules=True
+        )
+        if mod is None:
             raise ImportError(f"Can't find module {module_name} at location {path}")
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = mod
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
-        insert_missing_modules(sys.modules, module_name)
         return mod
 
-    pkg_path = resolve_package_path(path)
-    if pkg_path is not None:
-        pkg_root = pkg_path.parent
-        names = list(path.with_suffix("").relative_to(pkg_root).parts)
-        if names[-1] == "__init__":
-            names.pop()
-        module_name = ".".join(names)
-    else:
-        pkg_root = path.parent
-        module_name = path.stem
+    try:
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            path, consider_namespace_packages=consider_namespace_packages
+        )
+    except CouldNotResolvePathError:
+        pkg_root, module_name = path.parent, path.stem
 
     # Change sys.path permanently: restoring it at the end of this function would cause surprising
     # problems because of delayed imports: for example, a conftest.py file imported by this function
@@ -592,6 +616,80 @@ def import_path(
     return mod
 
 
+def _import_module_using_spec(
+    module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
+) -> Optional[ModuleType]:
+    """
+    Tries to import a module by its canonical name, path to the .py file, and its
+    parent location.
+
+    :param insert_modules:
+        If True, will call insert_missing_modules to create empty intermediate modules
+        for made-up module names (when importing test files not reachable from sys.path).
+    """
+    # Checking with sys.meta_path first in case one of its hooks can import this module,
+    # such as our own assertion-rewrite hook.
+    for meta_importer in sys.meta_path:
+        spec = meta_importer.find_spec(module_name, [str(module_location)])
+        if spec_matches_module_path(spec, module_path):
+            break
+    else:
+        spec = importlib.util.spec_from_file_location(module_name, str(module_path))
+
+    if spec_matches_module_path(spec, module_path):
+        assert spec is not None
+        # Attempt to import the parent module, seems is our responsibility:
+        # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
+        parent_module_name, _, name = module_name.rpartition(".")
+        parent_module: Optional[ModuleType] = None
+        if parent_module_name:
+            parent_module = sys.modules.get(parent_module_name)
+            if parent_module is None:
+                # Find the directory of this module's parent.
+                parent_dir = (
+                    module_path.parent.parent
+                    if module_path.name == "__init__.py"
+                    else module_path.parent
+                )
+                # Consider the parent module path as its __init__.py file, if it has one.
+                parent_module_path = (
+                    parent_dir / "__init__.py"
+                    if (parent_dir / "__init__.py").is_file()
+                    else parent_dir
+                )
+                parent_module = _import_module_using_spec(
+                    parent_module_name,
+                    parent_module_path,
+                    parent_dir,
+                    insert_modules=insert_modules,
+                )
+
+        # Find spec and import this module.
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = mod
+        spec.loader.exec_module(mod)  # type: ignore[union-attr]
+
+        # Set this module as an attribute of the parent module (#12194).
+        if parent_module is not None:
+            setattr(parent_module, name, mod)
+
+        if insert_modules:
+            insert_missing_modules(sys.modules, module_name)
+        return mod
+
+    return None
+
+
+def spec_matches_module_path(
+    module_spec: Optional[ModuleSpec], module_path: Path
+) -> bool:
+    """Return true if the given ModuleSpec can be used to import the given module path."""
+    if module_spec is None or module_spec.origin is None:
+        return False
+
+    return Path(module_spec.origin) == module_path
+
+
 # Implement a special _is_same function on Windows which returns True if the two filenames
 # compare equal, to circumvent os.path.samefile returning False for mounts in UNC (#7678).
 if sys.platform.startswith("win"):
@@ -628,6 +726,11 @@ def module_name_from_path(path: Path, root: Path) -> str:
     if len(path_parts) >= 2 and path_parts[-1] == "__init__":
         path_parts = path_parts[:-1]
 
+    # Module names cannot contain ".", normalize them to "_". This prevents
+    # a directory having a "." in the name (".env.310" for example) causing extra intermediate modules.
+    # Also, important to replace "." at the start of paths, as those are considered relative imports.
+    path_parts = tuple(x.replace(".", "_") for x in path_parts)
+
     return ".".join(path_parts)
 
 
@@ -640,34 +743,31 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
     otherwise "src.tests.test_foo" is not importable by ``__import__``.
     """
     module_parts = module_name.split(".")
-    child_module: Union[ModuleType, None] = None
-    module: Union[ModuleType, None] = None
-    child_name: str = ""
     while module_name:
-        if module_name not in modules:
-            try:
-                # If sys.meta_path is empty, calling import_module will issue
-                # a warning and raise ModuleNotFoundError. To avoid the
-                # warning, we check sys.meta_path explicitly and raise the error
-                # ourselves to fall back to creating a dummy module.
-                if not sys.meta_path:
-                    raise ModuleNotFoundError
-                module = importlib.import_module(module_name)
-            except ModuleNotFoundError:
-                module = ModuleType(
-                    module_name,
-                    doc="Empty module created by pytest's importmode=importlib.",
-                )
-        else:
-            module = modules[module_name]
-        if child_module:
+        parent_module_name, _, child_name = module_name.rpartition(".")
+        if parent_module_name:
+            parent_module = modules.get(parent_module_name)
+            if parent_module is None:
+                try:
+                    # If sys.meta_path is empty, calling import_module will issue
+                    # a warning and raise ModuleNotFoundError. To avoid the
+                    # warning, we check sys.meta_path explicitly and raise the error
+                    # ourselves to fall back to creating a dummy module.
+                    if not sys.meta_path:
+                        raise ModuleNotFoundError
+                    parent_module = importlib.import_module(parent_module_name)
+                except ModuleNotFoundError:
+                    parent_module = ModuleType(
+                        module_name,
+                        doc="Empty module created by pytest's importmode=importlib.",
+                    )
+                modules[parent_module_name] = parent_module
+
             # Add child attribute to the parent that can reference the child
             # modules.
-            if not hasattr(module, child_name):
-                setattr(module, child_name, child_module)
-                modules[module_name] = module
-        # Keep track of the child module while moving up the tree.
-        child_module, child_name = module, module_name.rpartition(".")[-1]
+            if not hasattr(parent_module, child_name):
+                setattr(parent_module, child_name, modules[module_name])
+
         module_parts.pop(-1)
         module_name = ".".join(module_parts)
 
@@ -676,7 +776,7 @@ def resolve_package_path(path: Path) -> Optional[Path]:
     """Return the Python package path by looking for the last
     directory upwards which still contains an __init__.py.
 
-    Returns None if it can not be determined.
+    Returns None if it cannot be determined.
     """
     result = None
     for parent in itertools.chain((path,), path.parents):
@@ -687,6 +787,100 @@ def resolve_package_path(path: Path) -> Optional[Path]:
                 break
             result = parent
     return result
+
+
+def resolve_pkg_root_and_module_name(
+    path: Path, *, consider_namespace_packages: bool = False
+) -> Tuple[Path, str]:
+    """
+    Return the path to the directory of the root package that contains the
+    given Python file, and its module name:
+
+        src/
+            app/
+                __init__.py
+                core/
+                    __init__.py
+                    models.py
+
+    Passing the full path to `models.py` will yield Path("src") and "app.core.models".
+
+    If consider_namespace_packages is True, then we additionally check upwards in the hierarchy
+    for namespace packages:
+
+    https://packaging.python.org/en/latest/guides/packaging-namespace-packages
+
+    Raises CouldNotResolvePathError if the given path does not belong to a package (missing any __init__.py files).
+    """
+    pkg_root: Optional[Path] = None
+    pkg_path = resolve_package_path(path)
+    if pkg_path is not None:
+        pkg_root = pkg_path.parent
+    if consider_namespace_packages:
+        start = pkg_root if pkg_root is not None else path.parent
+        for candidate in (start, *start.parents):
+            module_name = compute_module_name(candidate, path)
+            if module_name and is_importable(module_name, path):
+                # Point the pkg_root to the root of the namespace package.
+                pkg_root = candidate
+                break
+
+    if pkg_root is not None:
+        module_name = compute_module_name(pkg_root, path)
+        if module_name:
+            return pkg_root, module_name
+
+    raise CouldNotResolvePathError(f"Could not resolve for {path}")
+
+
+def is_importable(module_name: str, module_path: Path) -> bool:
+    """
+    Return if the given module path could be imported normally by Python, akin to the user
+    entering the REPL and importing the corresponding module name directly, and corresponds
+    to the module_path specified.
+
+    :param module_name:
+        Full module name that we want to check if is importable.
+        For example, "app.models".
+
+    :param module_path:
+        Full path to the python module/package we want to check if is importable.
+        For example, "/projects/src/app/models.py".
+    """
+    try:
+        # Note this is different from what we do in ``_import_module_using_spec``, where we explicitly search through
+        # sys.meta_path to be able to pass the path of the module that we want to import (``meta_importer.find_spec``).
+        # Using importlib.util.find_spec() is different, it gives the same results as trying to import
+        # the module normally in the REPL.
+        spec = importlib.util.find_spec(module_name)
+    except (ImportError, ValueError, ImportWarning):
+        return False
+    else:
+        return spec_matches_module_path(spec, module_path)
+
+
+def compute_module_name(root: Path, module_path: Path) -> Optional[str]:
+    """Compute a module name based on a path and a root anchor."""
+    try:
+        path_without_suffix = module_path.with_suffix("")
+    except ValueError:
+        # Empty paths (such as Path.cwd()) might break meta_path hooks (like our own assertion rewriter).
+        return None
+
+    try:
+        relative = path_without_suffix.relative_to(root)
+    except ValueError:  # pragma: no cover
+        return None
+    names = list(relative.parts)
+    if not names:
+        return None
+    if names[-1] == "__init__":
+        names.pop()
+    return ".".join(names)
+
+
+class CouldNotResolvePathError(Exception):
+    """Custom exception raised by resolve_pkg_root_and_module_name."""
 
 
 def scandir(
@@ -730,13 +924,13 @@ def visit(
             yield from visit(entry.path, recurse)
 
 
-def absolutepath(path: Union[Path, str]) -> Path:
+def absolutepath(path: "Union[str, os.PathLike[str]]") -> Path:
     """Convert a path to an absolute path using os.path.abspath.
 
     Prefer this over Path.resolve() (see #6523).
     Prefer this over Path.absolute() (not public, doesn't normalize).
     """
-    return Path(os.path.abspath(str(path)))
+    return Path(os.path.abspath(path))
 
 
 def commonpath(path1: Path, path2: Path) -> Optional[Path]:

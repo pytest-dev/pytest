@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 # This module was imported from the cpython standard library
 # (https://github.com/python/cpython/) at commit
 # c5140945c723ae6c4b7ee81ff720ac8ea4b52cfd (python3.12).
@@ -14,9 +15,9 @@
 #  useful, thank small children who sleep at night.
 import collections as _collections
 import dataclasses as _dataclasses
+from io import StringIO as _StringIO
 import re
 import types as _types
-from io import StringIO as _StringIO
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -615,7 +616,7 @@ class PrettyPrinter:
                 vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
             context.remove(objid)
-            return "{%s}" % ", ".join(components)
+            return "{{{}}}".format(", ".join(components))
 
         if (issubclass(typ, list) and r is list.__repr__) or (
             issubclass(typ, tuple) and r is tuple.__repr__

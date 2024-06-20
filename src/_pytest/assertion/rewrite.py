@@ -1,5 +1,7 @@
 """Rewrite assertion AST to produce nice error messages."""
+
 import ast
+from collections import defaultdict
 import errno
 import functools
 import importlib.abc
@@ -9,13 +11,12 @@ import io
 import itertools
 import marshal
 import os
+from pathlib import Path
+from pathlib import PurePath
 import struct
 import sys
 import tokenize
 import types
-from collections import defaultdict
-from pathlib import Path
-from pathlib import PurePath
 from typing import Callable
 from typing import DefaultDict
 from typing import Dict
@@ -34,14 +35,16 @@ from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
 from _pytest._version import version
 from _pytest.assertion import util
-from _pytest.assertion.util import (  # noqa: F401
-    format_explanation as _format_explanation,
-)
 from _pytest.config import Config
 from _pytest.main import Session
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.stash import StashKey
+
+
+# fmt: off
+from _pytest.assertion.util import format_explanation as _format_explanation  # noqa:F401, isort:skip
+# fmt:on
 
 if TYPE_CHECKING:
     from _pytest.assertion import AssertionState
@@ -99,7 +102,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         state = self.config.stash[assertstate_key]
         if self._early_rewrite_bailout(name, state):
             return None
-        state.trace("find_module called for: %s" % name)
+        state.trace(f"find_module called for: {name}")
 
         # Type ignored because mypy is confused about the `self` binding here.
         spec = self._find_spec(name, path)  # type: ignore
@@ -271,7 +274,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
         self.config.issue_config_time_warning(
             PytestAssertRewriteWarning(
-                "Module already imported so cannot be rewritten: %s" % name
+                f"Module already imported so cannot be rewritten: {name}"
             ),
             stacklevel=5,
         )
@@ -287,15 +290,13 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         else:
             from importlib.abc import TraversableResources
 
-        def get_resource_reader(self, name: str) -> TraversableResources:  # type: ignore
+        def get_resource_reader(self, name: str) -> TraversableResources:
             if sys.version_info < (3, 11):
                 from importlib.readers import FileReader
             else:
                 from importlib.resources.readers import FileReader
 
-            return FileReader(  # type:ignore[no-any-return]
-                types.SimpleNamespace(path=self._rewritten_names[name])
-            )
+            return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))
 
 
 def _write_pyc_fp(
@@ -374,21 +375,21 @@ def _read_pyc(
             return None
         # Check for invalid or out of date pyc file.
         if len(data) != (16):
-            trace("_read_pyc(%s): invalid pyc (too short)" % source)
+            trace(f"_read_pyc({source}): invalid pyc (too short)")
             return None
         if data[:4] != importlib.util.MAGIC_NUMBER:
-            trace("_read_pyc(%s): invalid pyc (bad magic number)" % source)
+            trace(f"_read_pyc({source}): invalid pyc (bad magic number)")
             return None
         if data[4:8] != b"\x00\x00\x00\x00":
-            trace("_read_pyc(%s): invalid pyc (unsupported flags)" % source)
+            trace(f"_read_pyc({source}): invalid pyc (unsupported flags)")
             return None
         mtime_data = data[8:12]
         if int.from_bytes(mtime_data, "little") != mtime & 0xFFFFFFFF:
-            trace("_read_pyc(%s): out of date" % source)
+            trace(f"_read_pyc({source}): out of date")
             return None
         size_data = data[12:16]
         if int.from_bytes(size_data, "little") != size & 0xFFFFFFFF:
-            trace("_read_pyc(%s): invalid pyc (incorrect size)" % source)
+            trace(f"_read_pyc({source}): invalid pyc (incorrect size)")
             return None
         try:
             co = marshal.load(fp)
@@ -396,7 +397,7 @@ def _read_pyc(
             trace(f"_read_pyc({source}): marshal.load error {e}")
             return None
         if not isinstance(co, types.CodeType):
-            trace("_read_pyc(%s): not a code object" % source)
+            trace(f"_read_pyc({source}): not a code object")
             return None
         return co
 
@@ -584,7 +585,7 @@ def _get_assertion_exprs(src: bytes) -> Dict[int, str]:
                 # multi-line assert with message
                 elif lineno in seen_lines:
                     lines[-1] = lines[-1][:offset]
-                # multi line assert with escapd newline before message
+                # multi line assert with escaped newline before message
                 else:
                     lines.append(line[:offset])
                 _write_and_reset()
@@ -669,10 +670,10 @@ class AssertionRewriter(ast.NodeVisitor):
         else:
             self.enable_assertion_pass_hook = False
         self.source = source
-        self.scope: Tuple[ast.AST, ...] = ()
-        self.variables_overwrite: DefaultDict[
-            Tuple[ast.AST, ...], Dict[str, str]
-        ] = defaultdict(dict)
+        self.scope: tuple[ast.AST, ...] = ()
+        self.variables_overwrite: defaultdict[tuple[ast.AST, ...], Dict[str, str]] = (
+            defaultdict(dict)
+        )
 
     def run(self, mod: ast.Module) -> None:
         """Find all assert statements in *mod* and rewrite them."""
@@ -835,7 +836,7 @@ class AssertionRewriter(ast.NodeVisitor):
         current = self.stack.pop()
         if self.stack:
             self.explanation_specifiers = self.stack[-1]
-        keys = [ast.Constant(key) for key in current.keys()]
+        keys: List[Optional[ast.expr]] = [ast.Constant(key) for key in current.keys()]
         format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))
@@ -859,8 +860,9 @@ class AssertionRewriter(ast.NodeVisitor):
         the expression is false.
         """
         if isinstance(assert_.test, ast.Tuple) and len(assert_.test.elts) >= 1:
-            from _pytest.warning_types import PytestAssertRewriteWarning
             import warnings
+
+            from _pytest.warning_types import PytestAssertRewriteWarning
 
             # TODO: This assert should not be needed.
             assert self.module_path is not None
@@ -922,16 +924,16 @@ class AssertionRewriter(ast.NodeVisitor):
             # If any hooks implement assert_pass hook
             hook_impl_test = ast.If(
                 self.helper("_check_if_assertion_pass_impl"),
-                self.expl_stmts + [hook_call_pass],
+                [*self.expl_stmts, hook_call_pass],
                 [],
             )
-            statements_pass = [hook_impl_test]
+            statements_pass: List[ast.stmt] = [hook_impl_test]
 
             # Test for assertion condition
             main_test = ast.If(negation, statements_fail, statements_pass)
             self.statements.append(main_test)
             if self.format_variables:
-                variables = [
+                variables: List[ast.expr] = [
                     ast.Name(name, ast.Store()) for name in self.format_variables
                 ]
                 clear_format = ast.Assign(variables, ast.Constant(None))
@@ -972,7 +974,7 @@ class AssertionRewriter(ast.NodeVisitor):
         # name if it's a local variable or _should_repr_global_name()
         # thinks it's acceptable.
         locs = ast.Call(self.builtin("locals"), [], [])
-        target_id = name.target.id  # type: ignore[attr-defined]
+        target_id = name.target.id
         inlocs = ast.Compare(ast.Constant(target_id), [ast.In()], [locs])
         dorepr = self.helper("_should_repr_global_name", name)
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
@@ -1003,7 +1005,7 @@ class AssertionRewriter(ast.NodeVisitor):
             if i:
                 fail_inner: List[ast.stmt] = []
                 # cond is set in a prior loop iteration below
-                self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa
+                self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa: F821
                 self.expl_stmts = fail_inner
                 # Check if the left operand is a ast.NamedExpr and the value has already been visited
                 if (
@@ -1017,9 +1019,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     ]
                 ):
                     pytest_temp = self.variable()
-                    self.variables_overwrite[self.scope][
-                        v.left.target.id
-                    ] = v.left  # type:ignore[assignment]
+                    self.variables_overwrite[self.scope][v.left.target.id] = v.left  # type:ignore[assignment]
                     v.left.target.id = pytest_temp
             self.push_format_context()
             res, expl = self.visit(v)
@@ -1063,9 +1063,7 @@ class AssertionRewriter(ast.NodeVisitor):
             if isinstance(arg, ast.Name) and arg.id in self.variables_overwrite.get(
                 self.scope, {}
             ):
-                arg = self.variables_overwrite[self.scope][
-                    arg.id
-                ]  # type:ignore[assignment]
+                arg = self.variables_overwrite[self.scope][arg.id]  # type:ignore[assignment]
             res, expl = self.visit(arg)
             arg_expls.append(expl)
             new_args.append(res)
@@ -1073,9 +1071,7 @@ class AssertionRewriter(ast.NodeVisitor):
             if isinstance(
                 keyword.value, ast.Name
             ) and keyword.value.id in self.variables_overwrite.get(self.scope, {}):
-                keyword.value = self.variables_overwrite[self.scope][
-                    keyword.value.id
-                ]  # type:ignore[assignment]
+                keyword.value = self.variables_overwrite[self.scope][keyword.value.id]  # type:ignore[assignment]
             res, expl = self.visit(keyword.value)
             new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
@@ -1112,22 +1108,18 @@ class AssertionRewriter(ast.NodeVisitor):
         if isinstance(
             comp.left, ast.Name
         ) and comp.left.id in self.variables_overwrite.get(self.scope, {}):
-            comp.left = self.variables_overwrite[self.scope][
-                comp.left.id
-            ]  # type:ignore[assignment]
+            comp.left = self.variables_overwrite[self.scope][comp.left.id]  # type:ignore[assignment]
         if isinstance(comp.left, ast.NamedExpr):
-            self.variables_overwrite[self.scope][
-                comp.left.target.id
-            ] = comp.left  # type:ignore[assignment]
+            self.variables_overwrite[self.scope][comp.left.target.id] = comp.left  # type:ignore[assignment]
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
             left_expl = f"({left_expl})"
         res_variables = [self.variable() for i in range(len(comp.ops))]
-        load_names = [ast.Name(v, ast.Load()) for v in res_variables]
+        load_names: List[ast.expr] = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
         it = zip(range(len(comp.ops)), comp.ops, comp.comparators)
-        expls = []
-        syms = []
+        expls: List[ast.expr] = []
+        syms: List[ast.expr] = []
         results = [left_res]
         for i, op, next_operand in it:
             if (
@@ -1136,9 +1128,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 and next_operand.target.id == left_res.id
             ):
                 next_operand.target.id = self.variable()
-                self.variables_overwrite[self.scope][
-                    left_res.id
-                ] = next_operand  # type:ignore[assignment]
+                self.variables_overwrite[self.scope][left_res.id] = next_operand  # type:ignore[assignment]
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
                 next_expl = f"({next_expl})"
@@ -1182,7 +1172,10 @@ def try_makedirs(cache_dir: Path) -> bool:
         return False
     except OSError as e:
         # as of now, EROFS doesn't have an equivalent OSError-subclass
-        if e.errno == errno.EROFS:
+        #
+        # squashfuse_ll returns ENOSYS "OSError: [Errno 38] Function not
+        # implemented" for a read-only error
+        if e.errno in {errno.EROFS, errno.ENOSYS}:
             return False
         raise
     return True

@@ -7,9 +7,6 @@ API Reference
 
 This page contains the full reference to pytest's API.
 
-.. contents::
-    :depth: 3
-    :local:
 
 Constants
 ---------
@@ -59,10 +56,18 @@ pytest.fail
 
 .. autofunction:: pytest.fail(reason, [pytrace=True, msg=None])
 
+.. class:: pytest.fail.Exception
+
+    The exception raised by :func:`pytest.fail`.
+
 pytest.skip
 ~~~~~~~~~~~
 
 .. autofunction:: pytest.skip(reason, [allow_module_level=False, msg=None])
+
+.. class:: pytest.skip.Exception
+
+    The exception raised by :func:`pytest.skip`.
 
 .. _`pytest.importorskip ref`:
 
@@ -76,10 +81,18 @@ pytest.xfail
 
 .. autofunction:: pytest.xfail
 
+.. class:: pytest.xfail.Exception
+
+    The exception raised by :func:`pytest.xfail`.
+
 pytest.exit
 ~~~~~~~~~~~
 
 .. autofunction:: pytest.exit(reason, [returncode=None, msg=None])
+
+.. class:: pytest.exit.Exception
+
+    The exception raised by :func:`pytest.exit`.
 
 pytest.main
 ~~~~~~~~~~~
@@ -136,7 +149,7 @@ pytest.freeze_includes
 Marks
 -----
 
-Marks can be used apply meta data to *test functions* (but not fixtures), which can then be accessed by
+Marks can be used to apply metadata to *test functions* (but not fixtures), which can then be accessed by
 fixtures or plugins.
 
 
@@ -164,8 +177,7 @@ Add warning filters to marked test items.
         .. code-block:: python
 
             @pytest.mark.filterwarnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
-            def test_foo():
-                ...
+            def test_foo(): ...
 
 
 .. _`pytest.mark.parametrize ref`:
@@ -247,9 +259,10 @@ Marks a test function as *expected to fail*.
         to specify ``reason`` (see :ref:`condition string <string conditions>`).
     :keyword str reason:
         Reason why the test function is marked as xfail.
-    :keyword Type[Exception] raises:
+    :keyword raises:
         Exception class (or tuple of classes) expected to be raised by the test function; other exceptions will fail the test.
         Note that subclasses of the classes passed will also result in a match (similar to how the ``except`` statement works).
+    :type raises: Type[:py:exc:`Exception`]
 
     :keyword bool run:
         Whether the test function should actually be executed. If ``False``, the function will always xfail and will
@@ -276,8 +289,7 @@ For example:
 .. code-block:: python
 
     @pytest.mark.timeout(10, "slow", method="thread")
-    def test_function():
-        ...
+    def test_function(): ...
 
 Will create and attach a :class:`Mark <pytest.Mark>` object to the collected
 :class:`Item <pytest.Item>`, which can then be accessed by fixtures or hooks with
@@ -294,8 +306,7 @@ Example for using multiple custom markers:
 
     @pytest.mark.timeout(10, "slow", method="thread")
     @pytest.mark.slow
-    def test_function():
-        ...
+    def test_function(): ...
 
 When :meth:`Node.iter_markers <_pytest.nodes.Node.iter_markers>` or :meth:`Node.iter_markers_with_node <_pytest.nodes.Node.iter_markers_with_node>` is used with multiple markers, the marker closest to the function will be iterated over first. The above example will result in ``@pytest.mark.slow`` followed by ``@pytest.mark.timeout(...)``.
 
@@ -639,7 +650,7 @@ Reference to all hooks which can be implemented by :ref:`conftest.py files <loca
 Bootstrapping hooks
 ~~~~~~~~~~~~~~~~~~~
 
-Bootstrapping hooks called for plugins registered early enough (internal and setuptools plugins).
+Bootstrapping hooks called for plugins registered early enough (internal and third-party plugins).
 
 .. hook:: pytest_load_initial_conftests
 .. autofunction:: pytest_load_initial_conftests
@@ -1120,6 +1131,11 @@ When set (regardless of value), pytest acknowledges that is running in a CI proc
 This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
 by the user, see :ref:`adding default options` for more information.
 
+.. envvar:: PYTEST_VERSION
+
+This environment variable is defined at the start of the pytest session and is undefined afterwards.
+It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
+
 .. envvar:: PYTEST_CURRENT_TEST
 
 This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
@@ -1131,8 +1147,9 @@ When set, pytest will print tracing and debug information.
 
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
-When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
-loaded.
+When set, disables plugin auto-loading through :std:doc:`entry point packaging
+metadata <packaging:guides/creating-and-discovering-plugins>`. Only explicitly
+specified plugins will be loaded.
 
 .. envvar:: PYTEST_PLUGINS
 
@@ -1276,6 +1293,18 @@ passed multiple times. The expected format is ``name=value``. For example::
    relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
+
+.. confval:: consider_namespace_packages
+
+   Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
+   when collecting Python modules. Default is ``False``.
+
+   Set to ``True`` if the package you are testing is part of a namespace package.
+
+   Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
+   are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
+
+   .. versionadded:: 8.1
 
 .. confval:: console_output_style
 
@@ -1868,6 +1897,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     "auto" can be used to explicitly use the global verbosity level.
 
 
+.. confval:: verbosity_test_cases
+
+    Set a verbosity level specifically for test case execution related output, overriding the application wide level.
+
+    .. code-block:: ini
+
+        [pytest]
+        verbosity_test_cases = 2
+
+    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    "auto" can be used to explicitly use the global verbosity level.
+
+
 .. confval:: xfail_strict
 
     If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
@@ -1896,7 +1938,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
 
     general:
       -k EXPRESSION         Only run tests which match the given substring
-                            expression. An expression is a Python evaluatable
+                            expression. An expression is a Python evaluable
                             expression where all names are substring-matched
                             against test names and their parent classes.
                             Example: -k 'test_method or test_other' matches all
@@ -2031,7 +2073,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             failure
       --doctest-glob=pat    Doctests file matching pattern, default: test*.txt
       --doctest-ignore-import-errors
-                            Ignore doctest ImportErrors
+                            Ignore doctest collection errors
       --doctest-continue-on-failure
                             For a given doctest, continue to run after the first
                             failure
@@ -2080,6 +2122,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --log-cli-date-format=LOG_CLI_DATE_FORMAT
                             Log date format used by the logging module
       --log-file=LOG_FILE   Path to a file when logging will be written to
+      --log-file-mode={w,a}
+                            Log file open mode
       --log-file-level=LOG_FILE_LEVEL
                             Log file logging level
       --log-file-format=LOG_FILE_FORMAT
@@ -2105,6 +2149,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
+      consider_namespace_packages (bool):
+                            Consider namespace packages when resolving module
+                            names during import
       usefixtures (args):   List of default fixtures to be used with this
                             project
       python_files (args):  Glob-style file patterns for Python test module
@@ -2123,6 +2170,11 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             progress information ("progress" (percentage) |
                             "count" | "progress-even-when-capture-no" (forces
                             progress even when capture=no)
+      verbosity_test_cases (string):
+                            Specify a verbosity level for test case execution,
+                            overriding the main level. Higher levels will
+                            provide more detailed information about each test
+                            case executed.
       xfail_strict (bool):  Default for the strict parameter of xfail markers
                             when not given explicitly (default: False)
       tmp_path_retention_count (string):
@@ -2170,6 +2222,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       log_cli_date_format (string):
                             Default value for --log-cli-date-format
       log_file (string):    Default value for --log-file
+      log_file_mode (string):
+                            Default value for --log-file-mode
       log_file_level (string):
                             Default value for --log-file-level
       log_file_format (string):

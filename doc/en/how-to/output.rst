@@ -294,9 +294,47 @@ Now if we increase verbosity even more:
 
     test_verbosity_example.py:19: AssertionError
     ========================= short test summary info ==========================
-    FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
-    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
-    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
+    FAILED test_verbosity_example.py::test_words_fail - AssertionError: assert ['banana', 'apple', 'grapes', 'melon', 'kiwi'] == ['banana', 'apple', 'orange', 'melon', 'kiwi']
+
+      At index 2 diff: 'grapes' != 'orange'
+
+      Full diff:
+        [
+            'banana',
+            'apple',
+      -     'orange',
+      ?      ^  ^^
+      +     'grapes',
+      ?      ^  ^ +
+            'melon',
+            'kiwi',
+        ]
+    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: assert {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4} == {'0': 0, '10': 10, '20': 20, '30': 30, '40': 40}
+
+      Common items:
+      {'0': 0}
+      Left contains 4 more items:
+      {'1': 1, '2': 2, '3': 3, '4': 4}
+      Right contains 4 more items:
+      {'10': 10, '20': 20, '30': 30, '40': 40}
+
+      Full diff:
+        {
+            '0': 0,
+      -     '10': 10,
+      ?       -    -
+      +     '1': 1,
+      -     '20': 20,
+      ?       -    -
+      +     '2': 2,
+      -     '30': 30,
+      ?       -    -
+      +     '3': 3,
+      -     '40': 40,
+      ?       -    -
+      +     '4': 4,
+        }
+    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
     ======================= 3 failed, 1 passed in 0.12s ========================
 
 Notice now that:
@@ -325,7 +363,9 @@ This is done by setting a verbosity level in the configuration file for the spec
 ``pytest --no-header`` with a value of ``2`` would have the same output as the previous example, but each test inside
 the file is shown by a single character in the output.
 
-(Note: currently this is the only option available, but more might be added in the future).
+:confval:`verbosity_test_cases`: Controls how verbose the test execution output should be when pytest is executed.
+Running ``pytest --no-header`` with a value of ``2`` would have the same output as the first verbosity example, but each
+test inside the file gets its own line in the output.
 
 .. _`pytest.detailed_failed_tests_usage`:
 
@@ -404,10 +444,19 @@ Example:
     E       assert 0
 
     test_example.py:14: AssertionError
+    ================================ XFAILURES =================================
+    ________________________________ test_xfail ________________________________
+
+        def test_xfail():
+    >       pytest.xfail("xfailing this test")
+    E       _pytest.outcomes.XFailed: xfailing this test
+
+    test_example.py:26: XFailed
+    ================================= XPASSES ==================================
     ========================= short test summary info ==========================
     SKIPPED [1] test_example.py:22: skipping this test
     XFAIL test_example.py::test_xfail - reason: xfailing this test
-    XPASS test_example.py::test_xpass always xfail
+    XPASS test_example.py::test_xpass - always xfail
     ERROR test_example.py::test_error - assert 0
     FAILED test_example.py::test_fail - assert 0
     == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===

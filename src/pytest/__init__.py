@@ -1,5 +1,6 @@
 # PYTHON_ARGCOMPLETE_OK
 """pytest: unit and functional testing with Python."""
+
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
@@ -80,6 +81,7 @@ from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestUnraisableExceptionWarning
 from _pytest.warning_types import PytestWarning
+
 
 set_trace = __pytestPDB.set_trace
 

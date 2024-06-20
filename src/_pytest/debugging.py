@@ -1,9 +1,11 @@
+# mypy: allow-untyped-defs
+# ruff: noqa: T100
 """Interactive debugging with PDB, the Python Debugger."""
+
 import argparse
 import functools
 import sys
 import types
-import unittest
 from typing import Any
 from typing import Callable
 from typing import Generator
@@ -11,11 +13,12 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
-from typing import TYPE_CHECKING
 from typing import Union
+import unittest
 
 from _pytest import outcomes
 from _pytest._code import ExceptionInfo
+from _pytest.capture import CaptureManager
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config import hookimpl
@@ -24,10 +27,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
 from _pytest.nodes import Node
 from _pytest.reports import BaseReport
-
-if TYPE_CHECKING:
-    from _pytest.capture import CaptureManager
-    from _pytest.runner import CallInfo
+from _pytest.runner import CallInfo
 
 
 def _validate_usepdb_cls(value: str) -> Tuple[str, str]:
@@ -152,9 +152,7 @@ class pytestPDB:
     def _get_pdb_wrapper_class(cls, pdb_cls, capman: Optional["CaptureManager"]):
         import _pytest.config
 
-        # Type ignored because mypy doesn't support "dynamic"
-        # inheritance like this.
-        class PytestPdbWrapper(pdb_cls):  # type: ignore[valid-type,misc]
+        class PytestPdbWrapper(pdb_cls):
             _pytest_capman = capman
             _continued = False
 
@@ -179,8 +177,7 @@ class pytestPDB:
                         else:
                             tw.sep(
                                 ">",
-                                "PDB continue (IO-capturing resumed for %s)"
-                                % capturing,
+                                f"PDB continue (IO-capturing resumed for {capturing})",
                             )
                         assert capman is not None
                         capman.resume()
@@ -263,8 +260,7 @@ class pytestPDB:
                     elif capturing:
                         tw.sep(
                             ">",
-                            "PDB %s (IO-capturing turned off for %s)"
-                            % (method, capturing),
+                            f"PDB {method} (IO-capturing turned off for {capturing})",
                         )
                     else:
                         tw.sep(">", f"PDB {method}")
@@ -310,7 +306,7 @@ class PdbTrace:
         return (yield)
 
 
-def wrap_pytest_function_for_tracing(pyfuncitem):
+def wrap_pytest_function_for_tracing(pyfuncitem) -> None:
     """Change the Python function object of the given Function item by a
     wrapper which actually enters pdb before calling the python function
     itself, effectively leaving the user in the pdb prompt in the first
@@ -322,14 +318,14 @@ def wrap_pytest_function_for_tracing(pyfuncitem):
     # python < 3.7.4) runcall's first param is `func`, which means we'd get
     # an exception if one of the kwargs to testfunction was called `func`.
     @functools.wraps(testfunction)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs) -> None:
         func = functools.partial(testfunction, *args, **kwargs)
         _pdb.runcall(func)
 
     pyfuncitem.obj = wrapper
 
 
-def maybe_wrap_pytest_function_for_tracing(pyfuncitem):
+def maybe_wrap_pytest_function_for_tracing(pyfuncitem) -> None:
     """Wrap the given pytestfunct item for tracing support if --trace was given in
     the command line."""
     if pyfuncitem.config.getvalue("trace"):
@@ -377,7 +373,8 @@ def _postmortem_traceback(excinfo: ExceptionInfo[BaseException]) -> types.Traceb
     elif isinstance(excinfo.value, ConftestImportFailure):
         # A config.ConftestImportFailure is not useful for post_mortem.
         # Use the underlying exception instead:
-        return excinfo.value.excinfo[2]
+        assert excinfo.value.cause.__traceback__ is not None
+        return excinfo.value.cause.__traceback__
     else:
         assert excinfo._excinfo is not None
         return excinfo._excinfo[2]

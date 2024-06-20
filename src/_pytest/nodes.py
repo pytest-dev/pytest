@@ -1,8 +1,9 @@
+# mypy: allow-untyped-defs
 import abc
-import os
-import warnings
 from functools import cached_property
 from inspect import signature
+import os
+import pathlib
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -11,6 +12,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import MutableMapping
+from typing import NoReturn
 from typing import Optional
 from typing import overload
 from typing import Set
@@ -19,6 +21,7 @@ from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
+import warnings
 
 import pluggy
 
@@ -27,8 +30,12 @@ from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
+from _pytest._code.code import TracebackStyle
+from _pytest.compat import LEGACY_PATH
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
+from _pytest.config.compat import _check_path
+from _pytest.deprecated import NODE_CTOR_FSPATH_ARG
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -38,10 +45,12 @@ from _pytest.pathlib import commonpath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
+
 if TYPE_CHECKING:
+    from typing import Self
+
     # Imported here due to circular import.
     from _pytest.main import Session
-    from _pytest._code.code import _TracebackStyle
 
 
 SEP = "/"
@@ -49,13 +58,28 @@ SEP = "/"
 tracebackcutdir = Path(_pytest.__file__).parent
 
 
-def iterparentnodes(node: "Node") -> Iterator["Node"]:
-    """Return the parent nodes, including the node itself, from the node
-    upwards."""
-    parent: Optional[Node] = node
-    while parent is not None:
-        yield parent
-        parent = parent.parent
+_T = TypeVar("_T")
+
+
+def _imply_path(
+    node_type: Type["Node"],
+    path: Optional[Path],
+    fspath: Optional[LEGACY_PATH],
+) -> Path:
+    if fspath is not None:
+        warnings.warn(
+            NODE_CTOR_FSPATH_ARG.format(
+                node_type_name=node_type.__name__,
+            ),
+            stacklevel=6,
+        )
+    if path is not None:
+        if fspath is not None:
+            _check_path(path, fspath)
+        return path
+    else:
+        assert fspath is not None
+        return Path(fspath)
 
 
 _NodeType = TypeVar("_NodeType", bound="Node")
@@ -76,33 +100,33 @@ class NodeMeta(abc.ABCMeta):
     progress on detangling the :class:`Node` classes.
     """
 
-    def __call__(self, *k, **kw):
+    def __call__(cls, *k, **kw) -> NoReturn:
         msg = (
             "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
             "See "
             "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
             " for more details."
-        ).format(name=f"{self.__module__}.{self.__name__}")
+        ).format(name=f"{cls.__module__}.{cls.__name__}")
         fail(msg, pytrace=False)
 
-    def _create(self, *k, **kw):
+    def _create(cls: Type[_T], *k, **kw) -> _T:
         try:
-            return super().__call__(*k, **kw)
+            return super().__call__(*k, **kw)  # type: ignore[no-any-return,misc]
         except TypeError:
-            sig = signature(getattr(self, "__init__"))
+            sig = signature(getattr(cls, "__init__"))
             known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
             from .warning_types import PytestDeprecationWarning
 
             warnings.warn(
                 PytestDeprecationWarning(
-                    f"{self} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
+                    f"{cls} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
                     "See https://docs.pytest.org/en/stable/deprecations.html"
                     "#constructors-of-custom-pytest-node-subclasses-should-take-kwargs "
                     "for more details."
                 )
             )
 
-            return super().__call__(*k, **known_kw)
+            return super().__call__(*k, **known_kw)  # type: ignore[no-any-return,misc]
 
 
 class Node(abc.ABC, metaclass=NodeMeta):
@@ -112,6 +136,14 @@ class Node(abc.ABC, metaclass=NodeMeta):
     ``Collector``\'s are the internal nodes of the tree, and ``Item``\'s are the
     leaf nodes.
     """
+
+    # Implemented in the legacypath plugin.
+    #: A ``LEGACY_PATH`` copy of the :attr:`path` attribute. Intended for usage
+    #: for methods not migrated to ``pathlib.Path`` yet, such as
+    #: :meth:`Item.reportinfo <pytest.Item.reportinfo>`. Will be deprecated in
+    #: a future release, prefer using :attr:`path` instead.
+    fspath: LEGACY_PATH
+
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
     __slots__ = (
@@ -131,6 +163,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         parent: "Optional[Node]" = None,
         config: Optional[Config] = None,
         session: "Optional[Session]" = None,
+        fspath: Optional[LEGACY_PATH] = None,
         path: Optional[Path] = None,
         nodeid: Optional[str] = None,
     ) -> None:
@@ -156,11 +189,10 @@ class Node(abc.ABC, metaclass=NodeMeta):
                 raise TypeError("session or parent must be provided")
             self.session = parent.session
 
-        if path is None:
+        if path is None and fspath is None:
             path = getattr(parent, "path", None)
-        assert path is not None
         #: Filesystem path where this node was collected from (can be None).
-        self.path = path
+        self.path: pathlib.Path = _imply_path(type(self), path, fspath=fspath)
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -187,7 +219,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self._store = self.stash
 
     @classmethod
-    def from_parent(cls, parent: "Node", **kw):
+    def from_parent(cls, parent: "Node", **kw) -> "Self":
         """Public constructor for Nodes.
 
         This indirection got introduced in order to enable removing
@@ -236,9 +268,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         # enforce type checks here to avoid getting a generic type error later otherwise.
         if not isinstance(warning, Warning):
             raise ValueError(
-                "warning must be an instance of Warning or subclass, got {!r}".format(
-                    warning
-                )
+                f"warning must be an instance of Warning or subclass, got {warning!r}"
             )
         path, lineno = get_fslocation_from_item(self)
         assert lineno is not None
@@ -265,12 +295,20 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def teardown(self) -> None:
         pass
 
-    def listchain(self) -> List["Node"]:
-        """Return list of all parent collectors up to self, starting from
-        the root of collection tree.
+    def iter_parents(self) -> Iterator["Node"]:
+        """Iterate over all parent collectors starting from and including self
+        up to the root of the collection tree.
 
-        :returns: The nodes.
+        .. versionadded:: 8.1
         """
+        parent: Optional[Node] = self
+        while parent is not None:
+            yield parent
+            parent = parent.parent
+
+    def listchain(self) -> List["Node"]:
+        """Return a list of all parent collectors starting from the root of the
+        collection tree down to and including self."""
         chain = []
         item: Optional[Node] = self
         while item is not None:
@@ -319,18 +357,16 @@ class Node(abc.ABC, metaclass=NodeMeta):
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
-        for node in reversed(self.listchain()):
+        for node in self.iter_parents():
             for mark in node.own_markers:
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
 
     @overload
-    def get_closest_marker(self, name: str) -> Optional[Mark]:
-        ...
+    def get_closest_marker(self, name: str) -> Optional[Mark]: ...
 
     @overload
-    def get_closest_marker(self, name: str, default: Mark) -> Mark:
-        ...
+    def get_closest_marker(self, name: str, default: Mark) -> Mark: ...
 
     def get_closest_marker(
         self, name: str, default: Optional[Mark] = None
@@ -363,17 +399,16 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.session._setupstate.addfinalizer(fin, self)
 
     def getparent(self, cls: Type[_NodeType]) -> Optional[_NodeType]:
-        """Get the next parent node (including self) which is an instance of
+        """Get the closest parent node (including self) which is an instance of
         the given class.
 
         :param cls: The node class to search for.
         :returns: The node, if found.
         """
-        current: Optional[Node] = self
-        while current and not isinstance(current, cls):
-            current = current.parent
-        assert current is None or isinstance(current, cls)
-        return current
+        for node in self.iter_parents():
+            if isinstance(node, cls):
+                return node
+        return None
 
     def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         return excinfo.traceback
@@ -381,12 +416,12 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def _repr_failure_py(
         self,
         excinfo: ExceptionInfo[BaseException],
-        style: "Optional[_TracebackStyle]" = None,
+        style: "Optional[TracebackStyle]" = None,
     ) -> TerminalRepr:
         from _pytest.fixtures import FixtureLookupError
 
         if isinstance(excinfo.value, ConftestImportFailure):
-            excinfo = ExceptionInfo.from_exc_info(excinfo.value.excinfo)
+            excinfo = ExceptionInfo.from_exception(excinfo.value.cause)
         if isinstance(excinfo.value, fail.Exception):
             if not excinfo.value.pytrace:
                 style = "value"
@@ -413,6 +448,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
         else:
             truncate_locals = True
 
+        truncate_args = False if self.config.getoption("verbose", 0) > 2 else True
+
         # excinfo.getrepr() formats paths relative to the CWD if `abspath` is False.
         # It is possible for a fixture/test to change the CWD while this code runs, which
         # would then result in the user seeing confusing paths in the failure message.
@@ -431,12 +468,13 @@ class Node(abc.ABC, metaclass=NodeMeta):
             style=style,
             tbfilter=tbfilter,
             truncate_locals=truncate_locals,
+            truncate_args=truncate_args,
         )
 
     def repr_failure(
         self,
         excinfo: ExceptionInfo[BaseException],
-        style: "Optional[_TracebackStyle]" = None,
+        style: "Optional[TracebackStyle]" = None,
     ) -> Union[str, TerminalRepr]:
         """Return a representation of a collection or test failure.
 
@@ -526,6 +564,7 @@ class FSCollector(Collector, abc.ABC):
 
     def __init__(
         self,
+        fspath: Optional[LEGACY_PATH] = None,
         path_or_parent: Optional[Union[Path, Node]] = None,
         path: Optional[Path] = None,
         name: Optional[str] = None,
@@ -541,8 +580,8 @@ class FSCollector(Collector, abc.ABC):
             elif isinstance(path_or_parent, Path):
                 assert path is None
                 path = path_or_parent
-        assert path is not None
 
+        path = _imply_path(type(self), path, fspath=fspath)
         if name is None:
             name = path.name
             if parent is not None and parent.path != path:
@@ -582,11 +621,12 @@ class FSCollector(Collector, abc.ABC):
         cls,
         parent,
         *,
+        fspath: Optional[LEGACY_PATH] = None,
         path: Optional[Path] = None,
         **kw,
-    ):
+    ) -> "Self":
         """The public constructor."""
-        return super().from_parent(parent=parent, path=path, **kw)
+        return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
 
 
 class File(FSCollector, abc.ABC):
@@ -728,7 +768,7 @@ class Item(Node, abc.ABC):
         and lineno is a 0-based line number.
         """
         location = self.reportinfo()
-        path = absolutepath(os.fspath(location[0]))
+        path = absolutepath(location[0])
         relfspath = self.session._node_location_to_relpath(path)
         assert type(location[2]) is str
         return (relfspath, location[1], location[2])

@@ -1,8 +1,9 @@
-import pytest
+# mypy: allow-untyped-defs
 from _pytest._code import getfslineno
 from _pytest.fixtures import getfixturemarker
 from _pytest.pytester import Pytester
 from _pytest.python import Function
+import pytest
 
 
 def test_wrapped_getfslineno() -> None:
@@ -42,8 +43,9 @@ class TestMockDecoration:
         assert values == ("x",)
 
     def test_getfuncargnames_patching(self):
-        from _pytest.compat import getfuncargnames
         from unittest.mock import patch
+
+        from _pytest.compat import getfuncargnames
 
         class T:
             def original(self, x, y, z):
@@ -161,7 +163,7 @@ class TestMockDecoration:
             @mock.patch("os.path.abspath")
             @mock.patch("os.path.normpath")
             @mock.patch("os.path.basename", new=mock_basename)
-            def test_someting(normpath, abspath, tmp_path):
+            def test_something(normpath, abspath, tmp_path):
                 abspath.return_value = "this"
                 os.path.normpath(os.path.abspath("hello"))
                 normpath.assert_any_call("this")
@@ -174,7 +176,7 @@ class TestMockDecoration:
         funcnames = [
             call.report.location[2] for call in calls if call.report.when == "call"
         ]
-        assert funcnames == ["T.test_hello", "test_someting"]
+        assert funcnames == ["T.test_hello", "test_something"]
 
     def test_mock_sorting(self, pytester: Pytester) -> None:
         pytest.importorskip("mock", "1.0.1")
@@ -408,22 +410,37 @@ def test_function_instance(pytester: Pytester) -> None:
     items = pytester.getitems(
         """
         def test_func(): pass
+
         class TestIt:
             def test_method(self): pass
+
             @classmethod
             def test_class(cls): pass
+
             @staticmethod
             def test_static(): pass
         """
     )
     assert len(items) == 4
+
     assert isinstance(items[0], Function)
     assert items[0].name == "test_func"
     assert items[0].instance is None
+
     assert isinstance(items[1], Function)
     assert items[1].name == "test_method"
     assert items[1].instance is not None
     assert items[1].instance.__class__.__name__ == "TestIt"
+
+    # Even class and static methods get an instance!
+    # This is the instance used for bound fixture methods, which
+    # class/staticmethod tests are perfectly able to request.
+    assert isinstance(items[2], Function)
+    assert items[2].name == "test_class"
+    assert items[2].instance is not None
+
     assert isinstance(items[3], Function)
     assert items[3].name == "test_static"
-    assert items[3].instance is None
+    assert items[3].instance is not None
+
+    assert items[1].instance is not items[2].instance is not items[3].instance

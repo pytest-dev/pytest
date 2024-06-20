@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Report test results in JUnit-XML format, for use with Jenkins and build
 integration servers.
 
@@ -6,12 +7,12 @@ Based on initial code from Ross Lawley.
 Output conforms to
 https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
+
+from datetime import datetime
 import functools
 import os
 import platform
 import re
-import xml.etree.ElementTree as ET
-from datetime import datetime
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -19,8 +20,8 @@ from typing import Match
 from typing import Optional
 from typing import Tuple
 from typing import Union
+import xml.etree.ElementTree as ET
 
-import pytest
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
@@ -32,6 +33,7 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
+import pytest
 
 
 xml_key = StashKey["LogXML"]()
@@ -51,15 +53,15 @@ def bin_xml_escape(arg: object) -> str:
     def repl(matchobj: Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
-            return "#x%02X" % i
+            return f"#x{i:02X}"
         else:
-            return "#x%04X" % i
+            return f"#x{i:04X}"
 
     # The spec range of valid chars is:
     # Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
     # For an unknown(?) reason, we disallow #x7F (DEL) as well.
     illegal_xml_re = (
-        "[^\u0009\u000A\u000D\u0020-\u007E\u0080-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]"
+        "[^\u0009\u000a\u000d\u0020-\u007e\u0080-\ud7ff\ue000-\ufffd\u10000-\u10ffff]"
     )
     return re.sub(illegal_xml_re, repl, str(arg))
 
@@ -141,13 +143,13 @@ class _NodeReporter:
         # Filter out attributes not permitted by this test family.
         # Including custom attributes because they are not valid here.
         temp_attrs = {}
-        for key in self.attrs.keys():
+        for key in self.attrs:
             if key in families[self.family]["testcase"]:
                 temp_attrs[key] = self.attrs[key]
         self.attrs = temp_attrs
 
     def to_xml(self) -> ET.Element:
-        testcase = ET.Element("testcase", self.attrs, time="%.3f" % self.duration)
+        testcase = ET.Element("testcase", self.attrs, time=f"{self.duration:.3f}")
         properties = self.make_properties_node()
         if properties is not None:
             testcase.append(properties)
@@ -248,7 +250,9 @@ class _NodeReporter:
                 skipreason = skipreason[9:]
             details = f"{filename}:{lineno}: {skipreason}"
 
-            skipped = ET.Element("skipped", type="pytest.skip", message=skipreason)
+            skipped = ET.Element(
+                "skipped", type="pytest.skip", message=bin_xml_escape(skipreason)
+            )
             skipped.text = bin_xml_escape(details)
             self.append(skipped)
             self.write_captured_output(report)
@@ -258,7 +262,7 @@ class _NodeReporter:
         self.__dict__.clear()
         # Type ignored because mypy doesn't like overriding a method.
         # Also the return value doesn't match...
-        self.to_xml = lambda: data  # type: ignore[assignment]
+        self.to_xml = lambda: data  # type: ignore[method-assign]
 
 
 def _warn_incompatibility_with_xunit2(
@@ -271,9 +275,7 @@ def _warn_incompatibility_with_xunit2(
     if xml is not None and xml.family not in ("xunit1", "legacy"):
         request.node.warn(
             PytestWarning(
-                "{fixture_name} is incompatible with junit_family '{family}' (use 'legacy' or 'xunit1')".format(
-                    fixture_name=fixture_name, family=xml.family
-                )
+                f"{fixture_name} is incompatible with junit_family '{xml.family}' (use 'legacy' or 'xunit1')"
             )
         )
 
@@ -365,7 +367,6 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
         `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See
         :issue:`7767` for details.
     """
-
     __tracebackhide__ = True
 
     def record_func(name: str, value: object) -> None:
@@ -375,7 +376,7 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
 
     xml = request.config.stash.get(xml_key, None)
     if xml is not None:
-        record_func = xml.add_global_property  # noqa
+        record_func = xml.add_global_property
     return record_func
 
 
@@ -624,7 +625,7 @@ class LogXML:
     def update_testcase_duration(self, report: TestReport) -> None:
         """Accumulate total duration for nodeid from given report and update
         the Junit.testcase with the new total if already created."""
-        if self.report_duration == "total" or report.when == self.report_duration:
+        if self.report_duration in {"total", report.when}:
             reporter = self.node_reporter(report)
             reporter.duration += getattr(report, "duration", 0.0)
 
@@ -669,7 +670,7 @@ class LogXML:
                 failures=str(self.stats["failure"]),
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
-                time="%.3f" % suite_time_delta,
+                time=f"{suite_time_delta:.3f}",
                 timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
                 hostname=platform.node(),
             )

@@ -16,8 +16,8 @@ reporting by calling :ref:`well specified hooks <hook-reference>` of the followi
 
 * builtin plugins: loaded from pytest's internal ``_pytest`` directory.
 
-* :ref:`external plugins <extplugins>`: modules discovered through
-  `setuptools entry points`_
+* :ref:`external plugins <extplugins>`: installed third-party modules discovered
+  through :ref:`entry points <pip-installable plugins>` in their packaging metadata
 
 * `conftest.py plugins`_: modules auto-discovered in test directories
 
@@ -42,28 +42,23 @@ Plugin discovery order at tool startup
 3. by scanning the command line for the ``-p name`` option
    and loading the specified plugin. This happens before normal command-line parsing.
 
-4. by loading all plugins registered through `setuptools entry points`_.
+4. by loading all plugins registered through installed third-party package
+   :ref:`entry points <pip-installable plugins>`.
 
 5. by loading all plugins specified through the :envvar:`PYTEST_PLUGINS` environment variable.
 
-6. by loading all :file:`conftest.py` files as inferred by the command line
-   invocation:
+6. by loading all "initial ":file:`conftest.py` files:
 
-   - if no test paths are specified, use the current dir as a test path
-   - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative
-     to the directory part of the first test path. After the ``conftest.py``
-     file is loaded, load all plugins specified in its
-     :globalvar:`pytest_plugins` variable if present.
-
-   Note that pytest does not find ``conftest.py`` files in deeper nested
-   sub directories at tool startup.  It is usually a good idea to keep
-   your ``conftest.py`` file in the top level test or project root directory.
-
-7. by recursively loading all plugins specified by the
-   :globalvar:`pytest_plugins` variable in ``conftest.py`` files.
+   - determine the test paths: specified on the command line, otherwise in
+     :confval:`testpaths` if defined and running from the rootdir, otherwise the
+     current dir
+   - for each test path, load ``conftest.py`` and ``test*/conftest.py`` relative
+     to the directory part of the test path, if exist. Before a ``conftest.py``
+     file is loaded, load ``conftest.py`` files in all of its parent directories.
+     After a ``conftest.py`` file is loaded, recursively load all plugins specified
+     in its :globalvar:`pytest_plugins` variable if present.
 
 
-.. _`pytest/plugin`: http://bitbucket.org/pytest-dev/pytest/src/tip/pytest/plugin/
 .. _`conftest.py plugins`:
 .. _`localplugin`:
 .. _`local conftest plugins`:
@@ -108,9 +103,9 @@ Here is how you might run it::
     See also: :ref:`pythonpath`.
 
 .. note::
-    Some hooks should be implemented only in plugins or conftest.py files situated at the
-    tests root directory due to how pytest discovers plugins during startup,
-    see the documentation of each hook for details.
+    Some hooks cannot be implemented in conftest.py files which are not
+    :ref:`initial <pluginorder>` due to how pytest discovers plugins during
+    startup. See the documentation of each hook for details.
 
 Writing your own plugin
 -----------------------
@@ -148,7 +143,8 @@ Making your plugin installable by others
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
 that ``pytest`` finds your plugin module. Entry points are
-a feature that is provided by :std:doc:`setuptools <setuptools:index>`.
+a feature that is provided by :std:doc:`packaging tools
+<packaging:specifications/entry-points>`.
 
 pytest looks up the ``pytest11`` entrypoint to discover its
 plugins, thus you can make your plugin available by defining
@@ -271,8 +267,9 @@ of the variable will also be loaded as plugins, and so on.
     tests root directory is deprecated, and will raise a warning.
 
 This mechanism makes it easy to share fixtures within applications or even
-external applications without the need to create external plugins using
-the ``setuptools``'s entry point technique.
+external applications without the need to create external plugins using the
+:std:doc:`entry point packaging metadata
+<packaging:guides/creating-and-discovering-plugins>` technique.
 
 Plugins imported by :globalvar:`pytest_plugins` will also automatically be marked
 for assertion rewriting (see :func:`pytest.register_assert_rewrite`).

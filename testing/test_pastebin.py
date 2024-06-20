@@ -1,11 +1,12 @@
+# mypy: allow-untyped-defs
 import email.message
 import io
 from typing import List
 from typing import Union
 
-import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestPasteCapture:
@@ -170,7 +171,7 @@ class TestPaste:
         assert type(data) is bytes
         lexer = "text"
         assert url == "https://bpa.st"
-        assert "lexer=%s" % lexer in data.decode()
+        assert f"lexer={lexer}" in data.decode()
         assert "code=full-paste-contents" in data.decode()
         assert "expiry=1week" in data.decode()
 

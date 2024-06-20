@@ -30,7 +30,7 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: requests-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pytest-plugin-list/
           key: plugins-http-cache-${{ github.run_id }} # Can use time based key as well
@@ -46,7 +46,7 @@ jobs:
         run: python scripts/update-plugin-list.py
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38
+        uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e
         with:
           commit-message: '[automated] Update plugin list'
           author: 'pytest bot <pytestbot@users.noreply.github.com>'

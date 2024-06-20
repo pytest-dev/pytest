@@ -1,21 +1,22 @@
-import collections
+# mypy: allow-untyped-defs
 import sys
 import textwrap
 from typing import Any
 from typing import List
 from typing import MutableSequence
+from typing import NamedTuple
 from typing import Optional
 
 import attr
 
-import _pytest.assertion as plugin
-import pytest
 from _pytest import outcomes
+import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
@@ -100,7 +101,7 @@ class TestImportHookInstallation:
             """,
         }
         pytester.makepyfile(**contents)
-        result = pytester.runpytest_subprocess("--assert=%s" % mode)
+        result = pytester.runpytest_subprocess(f"--assert={mode}")
         if mode == "plain":
             expected = "E       AssertionError"
         elif mode == "rewrite":
@@ -162,7 +163,7 @@ class TestImportHookInstallation:
             """,
         }
         pytester.makepyfile(**contents)
-        result = pytester.runpytest_subprocess("--assert=%s" % mode)
+        result = pytester.runpytest_subprocess(f"--assert={mode}")
         if mode == "plain":
             expected = "E       AssertionError"
         elif mode == "rewrite":
@@ -181,11 +182,9 @@ class TestImportHookInstallation:
         """
         plugins = '"ham"' if mode == "str" else '["ham"]'
         contents = {
-            "conftest.py": """
+            "conftest.py": f"""
                 pytest_plugins = {plugins}
-            """.format(
-                plugins=plugins
-            ),
+            """,
             "ham.py": """
                 import pytest
             """,
@@ -224,7 +223,7 @@ class TestImportHookInstallation:
     ) -> None:
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         # Make sure the hook is installed early enough so that plugins
-        # installed via setuptools are rewritten.
+        # installed via distribution package are rewritten.
         pytester.mkdir("hampkg")
         contents = {
             "hampkg/__init__.py": """\
@@ -281,7 +280,7 @@ class TestImportHookInstallation:
         }
         pytester.makepyfile(**contents)
         result = pytester.run(
-            sys.executable, "mainwrapper.py", "-s", "--assert=%s" % mode
+            sys.executable, "mainwrapper.py", "-s", f"--assert={mode}"
         )
         if mode == "plain":
             expected = "E       AssertionError"
@@ -602,7 +601,7 @@ class TestAssert_reprcompare:
 
     def test_list_dont_wrap_strings(self) -> None:
         long_a = "a" * 10
-        l1 = ["a"] + [long_a for _ in range(0, 7)]
+        l1 = ["a"] + [long_a for _ in range(7)]
         l2 = ["should not get wrapped"]
         diff = callequal(l1, l2, verbose=True)
         assert diff == [
@@ -853,9 +852,7 @@ class TestAssert_reprcompare:
         assert "raised in repr" in expl[0]
         assert expl[2:] == [
             "(pytest_assertion plugin: representation of details failed:"
-            " {}:{}: ValueError: 42.".format(
-                __file__, A.__repr__.__code__.co_firstlineno + 1
-            ),
+            f" {__file__}:{A.__repr__.__code__.co_firstlineno + 1}: ValueError: 42.",
             " Probably an object has a faulty __repr__.)",
         ]
 
@@ -917,16 +914,16 @@ class TestAssert_reprcompare:
         assert expl == [
             r"'hyv\xe4' == 'hyva\u0308'",
             "",
-            f"- {str(right)}",
-            f"+ {str(left)}",
+            f"- {right!s}",
+            f"+ {left!s}",
         ]
 
         expl = callequal(left, right, verbose=2)
         assert expl == [
             r"'hyv\xe4' == 'hyva\u0308'",
             "",
-            f"- {str(right)}",
-            f"+ {str(left)}",
+            f"- {right!s}",
+            f"+ {left!s}",
         ]
 
 
@@ -1152,7 +1149,7 @@ class TestAssert_reprcompare_attrsclass:
     def test_attrs_with_auto_detect_and_custom_eq(self) -> None:
         @attr.s(
             auto_detect=True
-        )  # attr.s doesn’t ignore a custom eq if auto_detect=True
+        )  # attr.s doesn't ignore a custom eq if auto_detect=True
         class SimpleDataObject:
             field_a = attr.ib()
 
@@ -1182,7 +1179,9 @@ class TestAssert_reprcompare_attrsclass:
 
 class TestAssert_reprcompare_namedtuple:
     def test_namedtuple(self) -> None:
-        NT = collections.namedtuple("NT", ["a", "b"])
+        class NT(NamedTuple):
+            a: Any
+            b: Any
 
         left = NT(1, "b")
         right = NT(1, "c")
@@ -1203,8 +1202,13 @@ class TestAssert_reprcompare_namedtuple:
         ]
 
     def test_comparing_two_different_namedtuple(self) -> None:
-        NT1 = collections.namedtuple("NT1", ["a", "b"])
-        NT2 = collections.namedtuple("NT2", ["a", "b"])
+        class NT1(NamedTuple):
+            a: Any
+            b: Any
+
+        class NT2(NamedTuple):
+            a: Any
+            b: Any
 
         left = NT1(1, "b")
         right = NT2(2, "b")
@@ -1398,7 +1402,6 @@ class TestTruncateExplanation:
 
     def test_full_output_truncated(self, monkeypatch, pytester: Pytester) -> None:
         """Test against full runpytest() output."""
-
         line_count = 7
         line_len = 100
         expected_truncated_lines = 2
@@ -2042,3 +2045,36 @@ def test_fine_grained_assertion_verbosity(pytester: Pytester):
             f"E       AssertionError: assert 'hello world' in '{long_text}'",
         ]
     )
+
+
+def test_full_output_vvv(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        r"""
+        def crash_helper(m):
+            assert 1 == 2
+        def test_vvv():
+            crash_helper(500 * "a")
+    """
+    )
+    result = pytester.runpytest("")
+    # without -vvv, the passed args are truncated
+    expected_non_vvv_arg_line = "m = 'aaaaaaaaaaaaaaa*..aaaaaaaaaaaa*"
+    result.stdout.fnmatch_lines(
+        [
+            expected_non_vvv_arg_line,
+            "test_full_output_vvv.py:2: AssertionError",
+        ],
+    )
+    # double check that the untruncated part is not in the output
+    expected_vvv_arg_line = "m = '{}'".format(500 * "a")
+    result.stdout.no_fnmatch_line(expected_vvv_arg_line)
+
+    # but with "-vvv" the args are not truncated
+    result = pytester.runpytest("-vvv")
+    result.stdout.fnmatch_lines(
+        [
+            expected_vvv_arg_line,
+            "test_full_output_vvv.py:2: AssertionError",
+        ]
+    )
+    result.stdout.no_fnmatch_line(expected_non_vvv_arg_line)

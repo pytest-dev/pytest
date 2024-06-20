@@ -1,23 +1,24 @@
+# mypy: allow-untyped-defs
 import os
 import sys
 from typing import List
 from typing import Optional
 from unittest import mock
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.mark import MarkGenerator
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
     def test_pytest_exists_in_namespace_all(self, attr: str) -> None:
         module = sys.modules["pytest"]
-        assert attr in module.__all__  # type: ignore
+        assert attr in module.__all__
 
     def test_pytest_mark_notcallable(self) -> None:
         mark = MarkGenerator(_ispytest=True)
@@ -33,7 +34,7 @@ class TestMark:
 
         assert pytest.mark.foo(some_function) is some_function
         marked_with_args = pytest.mark.foo.with_args(some_function)
-        assert marked_with_args is not some_function  # type: ignore[comparison-overlap]
+        assert marked_with_args is not some_function
 
         assert pytest.mark.foo(SomeClass) is SomeClass
         assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap]
@@ -41,7 +42,7 @@ class TestMark:
     def test_pytest_mark_name_starts_with_underscore(self) -> None:
         mark = MarkGenerator(_ispytest=True)
         with pytest.raises(AttributeError):
-            mark._some_name
+            _ = mark._some_name
 
 
 def test_marked_class_run_twice(pytester: Pytester) -> None:
@@ -933,16 +934,15 @@ def test_parameterset_for_parametrize_marks(
 ) -> None:
     if mark is not None:
         pytester.makeini(
-            """
+            f"""
         [pytest]
-        {}={}
-        """.format(
-                EMPTY_PARAMETERSET_OPTION, mark
-            )
+        {EMPTY_PARAMETERSET_OPTION}={mark}
+        """
         )
 
     config = pytester.parseconfig()
-    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+    from _pytest.mark import get_empty_parameterset_mark
+    from _pytest.mark import pytest_configure
 
     pytest_configure(config)
     result_mark = get_empty_parameterset_mark(config, ["a"], all)
@@ -957,16 +957,15 @@ def test_parameterset_for_parametrize_marks(
 
 def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
     pytester.makeini(
-        """
+        f"""
     [pytest]
-    {}=fail_at_collect
-    """.format(
-            EMPTY_PARAMETERSET_OPTION
-        )
+    {EMPTY_PARAMETERSET_OPTION}=fail_at_collect
+    """
     )
 
     config = pytester.parseconfig()
-    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+    from _pytest.mark import get_empty_parameterset_mark
+    from _pytest.mark import pytest_configure
 
     pytest_configure(config)
 

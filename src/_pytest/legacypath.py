@@ -1,9 +1,10 @@
+# mypy: allow-untyped-defs
 """Add backward compatibility support for the legacy py path type."""
+
 import dataclasses
-import os
+from pathlib import Path
 import shlex
 import subprocess
-from pathlib import Path
 from typing import Final
 from typing import final
 from typing import List
@@ -13,8 +14,9 @@ from typing import Union
 
 from iniconfig import SectionWrapper
 
-import py
 from _pytest.cacheprovider import Cache
+from _pytest.compat import LEGACY_PATH
+from _pytest.compat import legacy_path
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
@@ -32,22 +34,9 @@ from _pytest.pytester import RunResult
 from _pytest.terminal import TerminalReporter
 from _pytest.tmpdir import TempPathFactory
 
+
 if TYPE_CHECKING:
     import pexpect
-
-
-#: constant to prepare valuing pylib path replacements/lazy proxies later on
-#  intended for removal in pytest 8.0 or 9.0
-
-# fmt: off
-# intentional space to create a fake difference for the verification
-LEGACY_PATH = py.path. local
-# fmt: on
-
-
-def legacy_path(path: Union[str, "os.PathLike[str]"]) -> LEGACY_PATH:
-    """Internal wrapper to prepare lazy proxies for legacy_path instances"""
-    return LEGACY_PATH(path)
 
 
 @final
@@ -326,8 +315,8 @@ class LegacyTmpdirPlugin:
 
         By default, a new base temporary directory is created each test session,
         and old bases are removed after 3 sessions, to aid in debugging. If
-        ``--basetemp`` is used then it is cleared each session. See :ref:`base
-        temporary directory`.
+        ``--basetemp`` is used then it is cleared each session. See
+        :ref:`temporary directory location and retention`.
 
         The returned object is a `legacy_path`_ object.
 
@@ -395,7 +384,7 @@ def Config_inifile(self: Config) -> Optional[LEGACY_PATH]:
     return legacy_path(str(self.inipath)) if self.inipath else None
 
 
-def Session_stardir(self: Session) -> LEGACY_PATH:
+def Session_startdir(self: Session) -> LEGACY_PATH:
     """The path from which pytest was invoked.
 
     Prefer to use ``startpath`` which is a :class:`pathlib.Path`.
@@ -450,7 +439,7 @@ def pytest_load_initial_conftests(early_config: Config) -> None:
     mp.setattr(Config, "inifile", property(Config_inifile), raising=False)
 
     # Add Session.startdir property.
-    mp.setattr(Session, "startdir", property(Session_stardir), raising=False)
+    mp.setattr(Session, "startdir", property(Session_startdir), raising=False)
 
     # Add pathlist configuration type.
     mp.setattr(Config, "_getini_unknown_type", Config__getini_unknown_type)

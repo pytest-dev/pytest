@@ -1,4 +1,6 @@
+# mypy: allow-untyped-defs
 """Utilities for assertion debugging."""
+
 import collections.abc
 import os
 import pprint
@@ -14,12 +16,13 @@ from typing import Protocol
 from typing import Sequence
 from unicodedata import normalize
 
-import _pytest._code
 from _pytest import outcomes
+import _pytest._code
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.config import Config
+
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -220,10 +223,9 @@ def assertrepr_compare(
     except outcomes.Exit:
         raise
     except Exception:
+        repr_crash = _pytest._code.ExceptionInfo.from_current()._getreprcrash()
         explanation = [
-            "(pytest_assertion plugin: representation of details failed: {}.".format(
-                _pytest._code.ExceptionInfo.from_current()._getreprcrash()
-            ),
+            f"(pytest_assertion plugin: representation of details failed: {repr_crash}.",
             " Probably an object has a faulty __repr__.)",
         ]
 
@@ -231,8 +233,8 @@ def assertrepr_compare(
         return None
 
     if explanation[0] != "":
-        explanation = [""] + explanation
-    return [summary] + explanation
+        explanation = ["", *explanation]
+    return [summary, *explanation]
 
 
 def _compare_eq_any(
@@ -290,7 +292,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
         if i > 42:
             i -= 10  # Provide some context
             explanation = [
-                "Skipping %s identical leading characters in diff, use -v to show" % i
+                f"Skipping {i} identical leading characters in diff, use -v to show"
             ]
             left = left[i:]
             right = right[i:]
@@ -301,8 +303,8 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
             if i > 42:
                 i -= 10  # Provide some context
                 explanation += [
-                    "Skipping {} identical trailing "
-                    "characters in diff, use -v to show".format(i)
+                    f"Skipping {i} identical trailing "
+                    "characters in diff, use -v to show"
                 ]
                 left = left[:-i]
                 right = right[:-i]
@@ -323,7 +325,7 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> List[str]:
 def _compare_eq_iterable(
     left: Iterable[Any],
     right: Iterable[Any],
-    highligher: _HighlightFunc,
+    highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> List[str]:
     if verbose <= 0 and not running_on_ci():
@@ -338,7 +340,7 @@ def _compare_eq_iterable(
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     explanation.extend(
-        highligher(
+        highlighter(
             "\n".join(
                 line.rstrip()
                 for line in difflib.ndiff(right_formatting, left_formatting)
@@ -491,7 +493,7 @@ def _compare_eq_dict(
     common = set_left.intersection(set_right)
     same = {k: left[k] for k in common if left[k] == right[k]}
     if same and verbose < 2:
-        explanation += ["Omitting %s identical items, use -vv to show" % len(same)]
+        explanation += [f"Omitting {len(same)} identical items, use -vv to show"]
     elif same:
         explanation += ["Common items:"]
         explanation += highlighter(pprint.pformat(same)).splitlines()
@@ -558,7 +560,7 @@ def _compare_eq_cls(
     if same or diff:
         explanation += [""]
     if same and verbose < 2:
-        explanation.append("Omitting %s identical items, use -vv to show" % len(same))
+        explanation.append(f"Omitting {len(same)} identical items, use -vv to show")
     elif same:
         explanation += ["Matching attributes:"]
         explanation += highlighter(pprint.pformat(same)).splitlines()
@@ -588,7 +590,7 @@ def _notin_text(term: str, text: str, verbose: int = 0) -> List[str]:
     tail = text[index + len(term) :]
     correct_text = head + tail
     diff = _diff_text(text, correct_text, verbose)
-    newdiff = ["%s is contained here:" % saferepr(term, maxsize=42)]
+    newdiff = [f"{saferepr(term, maxsize=42)} is contained here:"]
     for line in diff:
         if line.startswith("Skipping"):
             continue

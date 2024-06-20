@@ -1,12 +1,12 @@
 import sys
 import traceback
-import warnings
 from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import Generator
 from typing import Optional
 from typing import Type
+import warnings
 
 import pytest
 
@@ -34,8 +34,8 @@ class catch_unraisable_exception:
     """
 
     def __init__(self) -> None:
-        self.unraisable: Optional["sys.UnraisableHookArgs"] = None
-        self._old_hook: Optional[Callable[["sys.UnraisableHookArgs"], Any]] = None
+        self.unraisable: Optional[sys.UnraisableHookArgs] = None
+        self._old_hook: Optional[Callable[[sys.UnraisableHookArgs], Any]] = None
 
     def _hook(self, unraisable: "sys.UnraisableHookArgs") -> None:
         # Storing unraisable.object can resurrect an object which is being

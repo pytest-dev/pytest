@@ -1,7 +1,8 @@
+# mypy: allow-untyped-defs
 import argparse
+from gettext import gettext
 import os
 import sys
-from gettext import gettext
 from typing import Any
 from typing import Callable
 from typing import cast
@@ -19,6 +20,7 @@ from typing import Union
 import _pytest._io
 from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
+
 
 FILE_OR_DIR = "file_or_dir"
 
@@ -120,7 +122,7 @@ class Parser:
         from _pytest._argcomplete import filescompleter
 
         optparser = MyOptionParser(self, self.extra_info, prog=self.prog)
-        groups = self._groups + [self._anonymous]
+        groups = [*self._groups, self._anonymous]
         for group in groups:
             if group.options:
                 desc = group.description or group.name
@@ -196,8 +198,15 @@ class Parser:
                 * ``paths``: a list of :class:`pathlib.Path`, separated as in a shell
                 * ``pathlist``: a list of ``py.path``, separated as in a shell
 
+            For ``paths`` and ``pathlist`` types, they are considered relative to the ini-file.
+            In case the execution is happening without an ini-file defined,
+            they will be considered relative to the current working directory (for example with ``--override-ini``).
+
             .. versionadded:: 7.0
                 The ``paths`` variable type.
+
+            .. versionadded:: 8.1
+                Use the current working directory to resolve ``paths`` and ``pathlist`` in the absence of an ini-file.
 
             Defaults to ``string`` if ``None`` or not passed.
         :param default:
@@ -215,7 +224,7 @@ class Parser:
 
 
 def get_ini_default_for_type(
-    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]]
+    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]],
 ) -> Any:
     """
     Used by addini to get the default value for a given ini-option type, when
@@ -304,23 +313,23 @@ class Argument:
         for opt in opts:
             if len(opt) < 2:
                 raise ArgumentError(
-                    "invalid option string %r: "
-                    "must be at least two characters long" % opt,
+                    f"invalid option string {opt!r}: "
+                    "must be at least two characters long",
                     self,
                 )
             elif len(opt) == 2:
                 if not (opt[0] == "-" and opt[1] != "-"):
                     raise ArgumentError(
-                        "invalid short option string %r: "
-                        "must be of the form -x, (x any non-dash char)" % opt,
+                        f"invalid short option string {opt!r}: "
+                        "must be of the form -x, (x any non-dash char)",
                         self,
                     )
                 self._short_opts.append(opt)
             else:
                 if not (opt[0:2] == "--" and opt[2] != "-"):
                     raise ArgumentError(
-                        "invalid long option string %r: "
-                        "must start with --, followed by non-dash" % opt,
+                        f"invalid long option string {opt!r}: "
+                        "must start with --, followed by non-dash",
                         self,
                     )
                 self._long_opts.append(opt)
@@ -374,7 +383,7 @@ class OptionGroup:
             name for opt in self.options for name in opt.names()
         )
         if conflict:
-            raise ValueError("option names %s already added" % conflict)
+            raise ValueError(f"option names {conflict} already added")
         option = Argument(*opts, **attrs)
         self._addoption_instance(option, shortupper=False)
 
@@ -406,6 +415,7 @@ class MyOptionParser(argparse.ArgumentParser):
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,
             allow_abbrev=False,
+            fromfile_prefix_chars="@",
         )
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user.
@@ -416,8 +426,7 @@ class MyOptionParser(argparse.ArgumentParser):
         msg = f"{self.prog}: error: {message}"
 
         if hasattr(self._parser, "_config_source_hint"):
-            # Type ignored because the attribute is set dynamically.
-            msg = f"{msg} ({self._parser._config_source_hint})"  # type: ignore
+            msg = f"{msg} ({self._parser._config_source_hint})"
 
         raise UsageError(self.format_usage() + msg)
 
@@ -432,14 +441,16 @@ class MyOptionParser(argparse.ArgumentParser):
         if unrecognized:
             for arg in unrecognized:
                 if arg and arg[0] == "-":
-                    lines = ["unrecognized arguments: %s" % (" ".join(unrecognized))]
+                    lines = [
+                        "unrecognized arguments: {}".format(" ".join(unrecognized))
+                    ]
                     for k, v in sorted(self.extra_info.items()):
                         lines.append(f"  {k}: {v}")
                     self.error("\n".join(lines))
             getattr(parsed, FILE_OR_DIR).extend(unrecognized)
         return parsed
 
-    if sys.version_info[:2] < (3, 9):  # pragma: no cover
+    if sys.version_info < (3, 9):  # pragma: no cover
         # Backport of https://github.com/python/cpython/pull/14316 so we can
         # disable long --argument abbreviations without breaking short flags.
         def _parse_optional(
@@ -447,7 +458,7 @@ class MyOptionParser(argparse.ArgumentParser):
         ) -> Optional[Tuple[Optional[argparse.Action], str, Optional[str]]]:
             if not arg_string:
                 return None
-            if not arg_string[0] in self.prefix_chars:
+            if arg_string[0] not in self.prefix_chars:
                 return None
             if arg_string in self._option_string_actions:
                 action = self._option_string_actions[arg_string]
@@ -511,7 +522,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
                 continue
             if not option.startswith("--"):
                 raise ArgumentError(
-                    'long optional argument without "--": [%s]' % (option), option
+                    f'long optional argument without "--": [{option}]', option
                 )
             xxoption = option[2:]
             shortened = xxoption.replace("-", "")

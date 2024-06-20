@@ -1,15 +1,16 @@
+# mypy: allow-untyped-defs
 import os
+from pathlib import Path
 import re
 import sys
 import textwrap
-from pathlib import Path
 from typing import Dict
 from typing import Generator
 from typing import Type
 
-import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.fixture
@@ -441,7 +442,7 @@ def test_syspath_prepend_with_namespace_packages(
         lib = ns.joinpath(dirname)
         lib.mkdir()
         lib.joinpath("__init__.py").write_text(
-            "def check(): return %r" % dirname, encoding="utf-8"
+            f"def check(): return {dirname!r}", encoding="utf-8"
         )
 
     monkeypatch.syspath_prepend("hello")

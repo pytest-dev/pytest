@@ -1,22 +1,24 @@
+# mypy: allow-untyped-defs
 """(Disabled by default) support for testing pytest and pytest plugins.
 
 PYTEST_DONT_REWRITE
 """
+
 import collections.abc
 import contextlib
+from fnmatch import fnmatch
 import gc
 import importlib
+from io import StringIO
 import locale
 import os
+from pathlib import Path
 import platform
 import re
 import shutil
 import subprocess
 import sys
 import traceback
-from fnmatch import fnmatch
-from io import StringIO
-from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -68,6 +70,7 @@ from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
 from _pytest.warning_types import PytestWarning
+
 
 if TYPE_CHECKING:
     import pexpect
@@ -179,14 +182,14 @@ class LsofFdLeakChecker:
             leaked_files = [t for t in lines2 if t[0] in new_fds]
             if leaked_files:
                 error = [
-                    "***** %s FD leakage detected" % len(leaked_files),
+                    f"***** {len(leaked_files)} FD leakage detected",
                     *(str(f) for f in leaked_files),
                     "*** Before:",
                     *(str(f) for f in lines1),
                     "*** After:",
                     *(str(f) for f in lines2),
-                    "***** %s FD leakage detected" % len(leaked_files),
-                    "*** function %s:%s: %s " % item.location,
+                    f"***** {len(leaked_files)} FD leakage detected",
+                    "*** function {}:{}: {} ".format(*item.location),
                     "See issue #2366",
                 ]
                 item.warn(PytestWarning("\n".join(error)))
@@ -243,8 +246,7 @@ class RecordedHookCall:
 
     if TYPE_CHECKING:
         # The class has undetermined attributes, this tells mypy about it.
-        def __getattr__(self, key: str):
-            ...
+        def __getattr__(self, key: str): ...
 
 
 @final
@@ -287,7 +289,8 @@ class HookRecorder:
         __tracebackhide__ = True
         i = 0
         entries = list(entries)
-        backlocals = sys._getframe(1).f_locals
+        # Since Python 3.13, f_locals is not a dict, but eval requires a dict.
+        backlocals = dict(sys._getframe(1).f_locals)
         while entries:
             name, check = entries.pop(0)
             for ind, call in enumerate(self.calls[i:]):
@@ -311,7 +314,7 @@ class HookRecorder:
                 del self.calls[i]
                 return call
         lines = [f"could not find call {name!r}, in:"]
-        lines.extend(["  %s" % x for x in self.calls])
+        lines.extend([f"  {x}" for x in self.calls])
         fail("\n".join(lines))
 
     def getcall(self, name: str) -> RecordedHookCall:
@@ -325,15 +328,13 @@ class HookRecorder:
     def getreports(
         self,
         names: "Literal['pytest_collectreport']",
-    ) -> Sequence[CollectReport]:
-        ...
+    ) -> Sequence[CollectReport]: ...
 
     @overload
     def getreports(
         self,
         names: "Literal['pytest_runtest_logreport']",
-    ) -> Sequence[TestReport]:
-        ...
+    ) -> Sequence[TestReport]: ...
 
     @overload
     def getreports(
@@ -342,8 +343,7 @@ class HookRecorder:
             "pytest_collectreport",
             "pytest_runtest_logreport",
         ),
-    ) -> Sequence[Union[CollectReport, TestReport]]:
-        ...
+    ) -> Sequence[Union[CollectReport, TestReport]]: ...
 
     def getreports(
         self,
@@ -375,14 +375,12 @@ class HookRecorder:
                 values.append(rep)
         if not values:
             raise ValueError(
-                "could not find test report matching %r: "
-                "no test reports at all!" % (inamepart,)
+                f"could not find test report matching {inamepart!r}: "
+                "no test reports at all!"
             )
         if len(values) > 1:
             raise ValueError(
-                "found 2 or more testreports matching {!r}: {}".format(
-                    inamepart, values
-                )
+                f"found 2 or more testreports matching {inamepart!r}: {values}"
             )
         return values[0]
 
@@ -390,15 +388,13 @@ class HookRecorder:
     def getfailures(
         self,
         names: "Literal['pytest_collectreport']",
-    ) -> Sequence[CollectReport]:
-        ...
+    ) -> Sequence[CollectReport]: ...
 
     @overload
     def getfailures(
         self,
         names: "Literal['pytest_runtest_logreport']",
-    ) -> Sequence[TestReport]:
-        ...
+    ) -> Sequence[TestReport]: ...
 
     @overload
     def getfailures(
@@ -407,8 +403,7 @@ class HookRecorder:
             "pytest_collectreport",
             "pytest_runtest_logreport",
         ),
-    ) -> Sequence[Union[CollectReport, TestReport]]:
-        ...
+    ) -> Sequence[Union[CollectReport, TestReport]]: ...
 
     def getfailures(
         self,
@@ -766,6 +761,9 @@ class Pytester:
     ) -> Path:
         items = list(files.items())
 
+        if ext is None:
+            raise TypeError("ext must not be None")
+
         if ext and not ext.startswith("."):
             raise ValueError(
                 f"pytester.makefile expects a file extension, try .{ext} instead of {ext}"
@@ -1064,7 +1062,7 @@ class Pytester:
         :param cmdlineargs: Any extra command line arguments to use.
         """
         p = self.makepyfile(source)
-        values = list(cmdlineargs) + [p]
+        values = [*list(cmdlineargs), p]
         return self.inline_run(*values)
 
     def inline_genitems(self, *args) -> Tuple[List[Item], HookRecorder]:
@@ -1213,7 +1211,9 @@ class Pytester:
             if str(x).startswith("--basetemp"):
                 break
         else:
-            new_args.append("--basetemp=%s" % self.path.parent.joinpath("basetemp"))
+            new_args.append(
+                "--basetemp={}".format(self.path.parent.joinpath("basetemp"))
+            )
         return new_args
 
     def parseconfig(self, *args: Union[str, "os.PathLike[str]"]) -> Config:
@@ -1271,9 +1271,7 @@ class Pytester:
         for item in items:
             if item.name == funcname:
                 return item
-        assert 0, "{!r} item not found in module:\n{}\nitems: {}".format(
-            funcname, source, items
-        )
+        assert 0, f"{funcname!r} item not found in module:\n{source}\nitems: {items}"
 
     def getitems(self, source: Union[str, "os.PathLike[str]"]) -> List[Item]:
         """Return all test items collected from the module.
@@ -1432,10 +1430,7 @@ class Pytester:
             def handle_timeout() -> None:
                 __tracebackhide__ = True
 
-                timeout_message = (
-                    "{seconds} second timeout expired running:"
-                    " {command}".format(seconds=timeout, command=cmdargs)
-                )
+                timeout_message = f"{timeout} second timeout expired running: {cmdargs}"
 
                 popen.kill()
                 popen.wait()
@@ -1499,10 +1494,10 @@ class Pytester:
         """
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
-        args = ("--basetemp=%s" % p,) + args
+        args = (f"--basetemp={p}", *args)
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
-            args = ("-p", plugins[0]) + args
+            args = ("-p", plugins[0], *args)
         args = self._getpytestargs() + args
         return self.run(*args, timeout=timeout)
 
@@ -1607,7 +1602,7 @@ class LineMatcher:
                     self._log("matched: ", repr(line))
                     break
             else:
-                msg = "line %r not found in output" % line
+                msg = f"line {line!r} not found in output"
                 self._log(msg)
                 self._fail(msg)
 
@@ -1619,7 +1614,7 @@ class LineMatcher:
         for i, line in enumerate(self.lines):
             if fnline == line or fnmatch(line, fnline):
                 return self.lines[i + 1 :]
-        raise ValueError("line %r not found in output" % fnline)
+        raise ValueError(f"line {fnline!r} not found in output")
 
     def _log(self, *args) -> None:
         self._log_output.append(" ".join(str(x) for x in args))
@@ -1704,7 +1699,7 @@ class LineMatcher:
                     started = True
                     break
                 elif match_func(nextline, line):
-                    self._log("%s:" % match_nickname, repr(line))
+                    self._log(f"{match_nickname}:", repr(line))
                     self._log(
                         "{:>{width}}".format("with:", width=wnick), repr(nextline)
                     )

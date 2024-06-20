@@ -35,7 +35,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v1.5.4
+      uses: hynek/build-and-inspect-python-package@v2.6.0
 
   build:
     needs: [package]
@@ -55,6 +55,7 @@ jobs:
           "windows-py310",
           "windows-py311",
           "windows-py312",
+          "windows-py313",
 
           "ubuntu-py38",
           "ubuntu-py38-pluggy",
@@ -63,12 +64,14 @@ jobs:
           "ubuntu-py310",
           "ubuntu-py311",
           "ubuntu-py312",
+          "ubuntu-py313",
           "ubuntu-pypy3",
 
           "macos-py38",
           "macos-py39",
           "macos-py310",
           "macos-py312",
+          "macos-py313",
 
           "doctesting",
           "plugins",
@@ -97,9 +100,13 @@ jobs:
             os: windows-latest
             tox_env: "py311"
           - name: "windows-py312"
-            python: "3.12-dev"
+            python: "3.12"
             os: windows-latest
             tox_env: "py312"
+          - name: "windows-py313"
+            python: "3.13-dev"
+            os: windows-latest
+            tox_env: "py313"
 
           - name: "ubuntu-py38"
             python: "3.8"
@@ -128,9 +135,14 @@ jobs:
             tox_env: "py311"
             use_coverage: true
           - name: "ubuntu-py312"
-            python: "3.12-dev"
+            python: "3.12"
             os: ubuntu-latest
             tox_env: "py312"
+            use_coverage: true
+          - name: "ubuntu-py313"
+            python: "3.13-dev"
+            os: ubuntu-latest
+            tox_env: "py313"
             use_coverage: true
           - name: "ubuntu-pypy3"
             python: "pypy-3.8"
@@ -151,9 +163,13 @@ jobs:
             os: macos-latest
             tox_env: "py310-xdist"
           - name: "macos-py312"
-            python: "3.12-dev"
+            python: "3.12"
             os: macos-latest
             tox_env: "py312-xdist"
+          - name: "macos-py313"
+            python: "3.13-dev"
+            os: macos-latest
+            tox_env: "py313-xdist"
 
           - name: "plugins"
             python: "3.12"
@@ -166,6 +182,26 @@ jobs:
             tox_env: "doctesting"
             use_coverage: true
 
+    continue-on-error: >-
+      ${{
+        contains(
+          fromJSON(
+            '[
+              "windows-py38-pluggy",
+              "windows-py313",
+              "ubuntu-py38-pluggy",
+              "ubuntu-py38-freeze",
+              "ubuntu-py313",
+              "macos-py38",
+              "macos-py313"
+            ]'
+          ),
+          matrix.name
+        )
+        && true
+        || false
+      }}
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -173,7 +209,7 @@ jobs:
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: Packages
         path: dist
@@ -205,9 +241,23 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       continue-on-error: true
       with:
         fail_ci_if_error: true
         files: ./coverage.xml
         verbose: true
+
+  check:  # This job does nothing and is only used for the branch protection
+    if: always()
+
+    needs:
+    - build
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@198badcb65a1a44528f27d5da555c4be9f12eac6
+      with:
+        jobs: ${{ toJSON(needs) }}

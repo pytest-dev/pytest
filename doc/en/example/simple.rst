@@ -212,7 +212,7 @@ the command line arguments before they get processed:
 
 .. code-block:: python
 
-    # setuptools plugin
+    # installable external plugin
     import sys
 
 
@@ -405,35 +405,20 @@ Detect if running from within a pytest run
 Usually it is a bad idea to make application code
 behave differently if called from a test.  But if you
 absolutely must find out if your application code is
-running from a test you can do something like this:
+running from a test you can do this:
 
 .. code-block:: python
 
-    # content of your_module.py
+    import os
 
 
-    _called_from_test = False
-
-.. code-block:: python
-
-    # content of conftest.py
-
-
-    def pytest_configure(config):
-        your_module._called_from_test = True
-
-and then check for the ``your_module._called_from_test`` flag:
-
-.. code-block:: python
-
-    if your_module._called_from_test:
-        # called from within a test run
+    if os.environ.get("PYTEST_VERSION") is not None:
+        # Things you want to to do if your code is called by pytest.
         ...
     else:
-        # called "normally"
+        # Things you want to to do if your code is not called by pytest.
         ...
 
-accordingly in your application.
 
 Adding info to test report header
 --------------------------------------------------------------
@@ -660,6 +645,31 @@ If we run this:
     E       assert 0
 
     test_step.py:11: AssertionError
+    ================================ XFAILURES =================================
+    ______________________ TestUserHandling.test_deletion ______________________
+
+    item = <Function test_deletion>
+
+        def pytest_runtest_setup(item):
+            if "incremental" in item.keywords:
+                # retrieve the class name of the test
+                cls_name = str(item.cls)
+                # check if a previous test has failed for this class
+                if cls_name in _test_failed_incremental:
+                    # retrieve the index of the test (if parametrize is used in combination with incremental)
+                    parametrize_index = (
+                        tuple(item.callspec.indices.values())
+                        if hasattr(item, "callspec")
+                        else ()
+                    )
+                    # retrieve the name of the first test function to fail for this class name and index
+                    test_name = _test_failed_incremental[cls_name].get(parametrize_index, None)
+                    # if name found, test has failed for the combination of class name & test name
+                    if test_name is not None:
+    >                   pytest.xfail(f"previous test failed ({test_name})")
+    E                   _pytest.outcomes.XFailed: previous test failed (test_modification)
+
+    conftest.py:47: XFailed
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::test_deletion - reason: previous test failed (test_modification)
     ================== 1 failed, 2 passed, 1 xfailed in 0.12s ==================
@@ -1063,8 +1073,8 @@ Instead of freezing the pytest runner as a separate executable, you can make
 your frozen program work as the pytest runner by some clever
 argument handling during program startup. This allows you to
 have a single executable, which is usually more convenient.
-Please note that the mechanism for plugin discovery used by pytest
-(setuptools entry points) doesn't work with frozen executables so pytest
+Please note that the mechanism for plugin discovery used by pytest (:ref:`entry
+points <pip-installable plugins>`) doesn't work with frozen executables so pytest
 can't find any third party plugins automatically. To include third party plugins
 like ``pytest-timeout`` they must be imported explicitly and passed on to pytest.main.
 

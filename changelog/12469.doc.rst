@@ -1,0 +1,6 @@
+The external plugin mentions in the documentation now avoid mentioning
+:std:doc:`setuptools entry-points <setuptools:index>` as the concept is
+much more generic nowadays. Instead, the terminology of "external",
+"installed", or "third-party" plugins (or packages) replaces that.
+
+-- by :user:`webknjaz`

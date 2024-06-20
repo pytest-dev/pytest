@@ -1,10 +1,12 @@
+# mypy: allow-untyped-defs
 """Support for skip/xfail functions and markers."""
+
+from collections.abc import Mapping
 import dataclasses
 import os
 import platform
 import sys
 import traceback
-from collections.abc import Mapping
 from typing import Generator
 from typing import Optional
 from typing import Tuple
@@ -104,20 +106,18 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
         ):
             if not isinstance(dictionary, Mapping):
                 raise ValueError(
-                    "pytest_markeval_namespace() needs to return a dict, got {!r}".format(
-                        dictionary
-                    )
+                    f"pytest_markeval_namespace() needs to return a dict, got {dictionary!r}"
                 )
             globals_.update(dictionary)
         if hasattr(item, "obj"):
-            globals_.update(item.obj.__globals__)  # type: ignore[attr-defined]
+            globals_.update(item.obj.__globals__)
         try:
             filename = f"<{mark.name} condition>"
             condition_code = compile(condition, filename, "eval")
             result = eval(condition_code, globals_)
         except SyntaxError as exc:
             msglines = [
-                "Error evaluating %r condition" % mark.name,
+                f"Error evaluating {mark.name!r} condition",
                 "    " + condition,
                 "    " + " " * (exc.offset or 0) + "^",
                 "SyntaxError: invalid syntax",
@@ -125,7 +125,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
             fail("\n".join(msglines), pytrace=False)
         except Exception as exc:
             msglines = [
-                "Error evaluating %r condition" % mark.name,
+                f"Error evaluating {mark.name!r} condition",
                 "    " + condition,
                 *traceback.format_exception_only(type(exc), exc),
             ]
@@ -137,7 +137,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
             result = bool(condition)
         except Exception as exc:
             msglines = [
-                "Error evaluating %r condition as a boolean" % mark.name,
+                f"Error evaluating {mark.name!r} condition as a boolean",
                 *traceback.format_exception_only(type(exc), exc),
             ]
             fail("\n".join(msglines), pytrace=False)
@@ -149,7 +149,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
         else:
             # XXX better be checked at collection time
             msg = (
-                "Error evaluating %r: " % mark.name
+                f"Error evaluating {mark.name!r}: "
                 + "you need to specify reason=STRING when using booleans as conditions."
             )
             fail(msg, pytrace=False)

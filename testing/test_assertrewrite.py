@@ -1,16 +1,16 @@
+# mypy: allow-untyped-defs
 import ast
 import errno
+from functools import partial
 import glob
 import importlib
 import marshal
 import os
+from pathlib import Path
 import py_compile
 import stat
 import sys
 import textwrap
-import zipfile
-from functools import partial
-from pathlib import Path
 from typing import cast
 from typing import Dict
 from typing import Generator
@@ -19,9 +19,9 @@ from typing import Mapping
 from typing import Optional
 from typing import Set
 from unittest import mock
+import zipfile
 
 import _pytest._code
-import pytest
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import _get_assertion_exprs
@@ -35,6 +35,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
+import pytest
 
 
 def rewrite(src: str) -> ast.Module:
@@ -129,6 +130,7 @@ class TestAssertionRewrite:
             if isinstance(node, ast.Import):
                 continue
             for n in [node, *ast.iter_child_nodes(node)]:
+                assert isinstance(n, (ast.stmt, ast.expr))
                 assert n.lineno == 3
                 assert n.col_offset == 0
                 assert n.end_lineno == 6
@@ -199,7 +201,7 @@ class TestAssertionRewrite:
         assert getmsg(f2) == "assert False"
 
         def f3() -> None:
-            assert a_global  # type: ignore[name-defined] # noqa
+            assert a_global  # type: ignore[name-defined] # noqa: F821
 
         assert getmsg(f3, {"a_global": False}) == "assert False"
 
@@ -307,9 +309,7 @@ class TestAssertionRewrite:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(
-            ["*AssertionError*%s*" % repr((1, 2)), "*assert 1 == 2*"]
-        )
+        result.stdout.fnmatch_lines([f"*AssertionError*{(1, 2)!r}*", "*assert 1 == 2*"])
 
     def test_assertion_message_expr(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -428,7 +428,7 @@ class TestAssertionRewrite:
 
         def f2() -> None:
             x = 1
-            assert x == 1 or x == 2
+            assert x == 1 or x == 2  # noqa: PLR1714
 
         getmsg(f2, must_pass=True)
 
@@ -780,11 +780,10 @@ class TestRewriteOnImport:
             f.close()
         z.chmod(256)
         pytester.makepyfile(
-            """
+            f"""
             import sys
-            sys.path.append(%r)
+            sys.path.append({z_fn!r})
             import test_gum.test_lizard"""
-            % (z_fn,)
         )
         assert pytester.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
 
@@ -908,7 +907,7 @@ def test_rewritten():
                 assert test_optimized.__doc__ is None"""
         )
         p = make_numbered_dir(root=Path(pytester.path), prefix="runpytest-")
-        tmp = "--basetemp=%s" % p
+        tmp = f"--basetemp={p}"
         with monkeypatch.context() as mp:
             mp.setenv("PYTHONOPTIMIZE", "2")
             mp.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
@@ -1036,8 +1035,8 @@ class TestAssertionRewriteHookDetails:
         assert pytester.runpytest().ret == 0
 
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
-        from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
+        from _pytest.assertion.rewrite import _write_pyc
 
         config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
@@ -1087,6 +1086,7 @@ class TestAssertionRewriteHookDetails:
         an exception that is propagated to the caller.
         """
         import py_compile
+
         from _pytest.assertion.rewrite import _read_pyc
 
         source = tmp_path / "source.py"
@@ -1730,8 +1730,8 @@ class TestEarlyRewriteBailout:
                     import os
                     import tempfile
 
-                    with tempfile.TemporaryDirectory() as d:
-                        os.chdir(d)
+                    with tempfile.TemporaryDirectory() as newpath:
+                        os.chdir(newpath)
                 """,
                 "test_test.py": """\
                     def test():
@@ -1855,10 +1855,10 @@ class TestAssertionPass:
         result.assert_outcomes(passed=1)
 
 
+# fmt: off
 @pytest.mark.parametrize(
     ("src", "expected"),
     (
-        # fmt: off
         pytest.param(b"", {}, id="trivial"),
         pytest.param(
             b"def x(): assert 1\n",
@@ -1935,9 +1935,9 @@ class TestAssertionPass:
             {1: "5"},
             id="no newline at end of file",
         ),
-        # fmt: on
     ),
 )
+# fmt: on
 def test_get_assertion_exprs(src, expected) -> None:
     assert _get_assertion_exprs(src) == expected
 
@@ -1970,6 +1970,11 @@ def test_try_makedirs(monkeypatch, tmp_path: Path) -> None:
 
     err = OSError()
     err.errno = errno.EROFS
+    monkeypatch.setattr(os, "makedirs", partial(fake_mkdir, exc=err))
+    assert not try_makedirs(p)
+
+    err = OSError()
+    err.errno = errno.ENOSYS
     monkeypatch.setattr(os, "makedirs", partial(fake_mkdir, exc=err))
     assert not try_makedirs(p)
 
@@ -2033,9 +2038,7 @@ class TestPyCacheDir:
         assert test_foo_pyc.is_file()
 
         # normal file: not touched by pytest, normal cache tag
-        bar_init_pyc = get_cache_dir(bar_init) / "__init__.{cache_tag}.pyc".format(
-            cache_tag=sys.implementation.cache_tag
-        )
+        bar_init_pyc = get_cache_dir(bar_init) / f"__init__.{sys.implementation.cache_tag}.pyc"
         assert bar_init_pyc.is_file()
 
 

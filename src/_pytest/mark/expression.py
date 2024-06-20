@@ -14,6 +14,7 @@ The semantics are:
 - ident evaluates to True of False according to a provided matcher function.
 - or/and/not evaluate according to the usual boolean semantics.
 """
+
 import ast
 import dataclasses
 import enum
@@ -25,6 +26,7 @@ from typing import Mapping
 from typing import NoReturn
 from typing import Optional
 from typing import Sequence
+
 
 __all__ = [
     "Expression",

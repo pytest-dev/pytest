@@ -18,7 +18,7 @@ System state
 
 Broadly speaking, a flaky test indicates that the test relies on some system state that is not being appropriately controlled - the test environment is not sufficiently isolated. Higher level tests are more likely to be flaky as they rely on more state.
 
-Flaky tests sometimes appear when a test suite is run in parallel (such as use of pytest-xdist). This can indicate a test is reliant on test ordering.
+Flaky tests sometimes appear when a test suite is run in parallel (such as use of `pytest-xdist`_). This can indicate a test is reliant on test ordering.
 
 -  Perhaps a different test is failing to clean up after itself and leaving behind data which causes the flaky test to fail.
 - The flaky test is reliant on data from a previous test that doesn't clean up after itself, and in parallel runs that previous test is not always present
@@ -30,9 +30,22 @@ Overly strict assertion
 
 Overly strict assertions can cause problems with floating point comparison as well as timing issues. :func:`pytest.approx` is useful here.
 
+Thread safety
+~~~~~~~~~~~~~
 
-Pytest features
-^^^^^^^^^^^^^^^
+pytest is single-threaded, executing its tests always in the same thread, sequentially, never spawning any threads itself.
+
+Even in case of plugins which run tests in parallel, for example `pytest-xdist`_, usually work by spawning multiple *processes* and running tests in batches, without using multiple threads.
+
+It is of course possible (and common) for tests and fixtures to spawn threads themselves as part of their testing workflow (for example, a fixture that starts a server thread in the background, or a test which executes production code that spawns threads), but some care must be taken:
+
+* Make sure to eventually wait on any spawned threads -- for example at the end of a test, or during the teardown of a fixture.
+* Avoid using primitives provided by pytest (:func:`pytest.warns`, :func:`pytest.raises`, etc) from multiple threads, as they are not thread-safe.
+
+If your test suite uses threads and your are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself.
+
+Related features
+^^^^^^^^^^^^^^^^
 
 Xfail strict
 ~~~~~~~~~~~~
@@ -52,10 +65,9 @@ Plugins
 
 Rerunning any failed tests can mitigate the negative effects of flaky tests by giving them additional chances to pass, so that the overall build does not fail. Several pytest plugins support this:
 
-* `flaky <https://github.com/box/flaky>`_
-* `pytest-flakefinder <https://github.com/dropbox/pytest-flakefinder>`_ - `blog post <https://blogs.dropbox.com/tech/2016/03/open-sourcing-pytest-tools/>`_
 * `pytest-rerunfailures <https://github.com/pytest-dev/pytest-rerunfailures>`_
 * `pytest-replay <https://github.com/ESSS/pytest-replay>`_: This plugin helps to reproduce locally crashes or flaky tests observed during CI runs.
+* `pytest-flakefinder <https://github.com/dropbox/pytest-flakefinder>`_ - `blog post <https://blogs.dropbox.com/tech/2016/03/open-sourcing-pytest-tools/>`_
 
 Plugins to deliberately randomize tests can help expose tests with state problems:
 
@@ -106,7 +118,7 @@ This is a limited list, please submit an issue or pull request to expand it!
 * Gao, Zebao, Yalan Liang, Myra B. Cohen, Atif M. Memon, and Zhen Wang. "Making system user interactive tests repeatable: When and what should we control?." In *Software Engineering (ICSE), 2015 IEEE/ACM 37th IEEE International Conference on*, vol. 1, pp. 55-65. IEEE, 2015.  `PDF <http://www.cs.umd.edu/~atif/pubs/gao-icse15.pdf>`__
 * Palomba, Fabio, and Andy Zaidman. "Does refactoring of test smells induce fixing flaky tests?." In *Software Maintenance and Evolution (ICSME), 2017 IEEE International Conference on*, pp. 1-12. IEEE, 2017. `PDF in Google Drive <https://drive.google.com/file/d/10HdcCQiuQVgW3yYUJD-TSTq1NbYEprl0/view>`__
 *  Bell, Jonathan, Owolabi Legunsen, Michael Hilton, Lamyaa Eloussi, Tifany Yung, and Darko Marinov. "DeFlaker: Automatically detecting flaky tests." In *Proceedings of the 2018 International Conference on Software Engineering*. 2018. `PDF <https://www.jonbell.net/icse18-deflaker.pdf>`__
-
+*  Dutta, Saikat and Shi, August and Choudhary, Rutvik and Zhang, Zhekun and Jain, Aryaman and Misailovic, Sasa. "Detecting flaky tests in probabilistic and machine learning applications." In *Proceedings of the 29th ACM SIGSOFT International Symposium on Software Testing and Analysis (ISSTA)*, pp. 211-224. ACM, 2020. `PDF <https://www.cs.cornell.edu/~saikatd/papers/flash-issta20.pdf>`__
 
 Resources
 ^^^^^^^^^
@@ -124,3 +136,6 @@ Resources
 
   * `Flaky Tests at Google and How We Mitigate Them <https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html>`_ by John Micco, 2016
   * `Where do Google's flaky tests come from? <https://testing.googleblog.com/2017/04/where-do-our-flaky-tests-come-from.html>`_  by Jeff Listfield, 2017
+
+
+.. _pytest-xdist: https://github.com/pytest-dev/pytest-xdist

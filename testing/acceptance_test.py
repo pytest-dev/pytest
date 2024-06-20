@@ -1,13 +1,16 @@
+# mypy: allow-untyped-defs
 import dataclasses
 import importlib.metadata
 import os
+from pathlib import Path
+import subprocess
 import sys
 import types
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
+import pytest
 
 
 def prepend_pythonpath(*dirs) -> str:
@@ -239,7 +242,7 @@ class TestGeneralUsage:
         pytester.copy_example("issue88_initial_file_multinodes")
         p = pytester.makepyfile("def test_hello(): pass")
         result = pytester.runpytest(p, "--collect-only")
-        result.stdout.fnmatch_lines(["*Module*test_issue88*", "*MyFile*test_issue88*"])
+        result.stdout.fnmatch_lines(["*MyFile*test_issue88*", "*Module*test_issue88*"])
 
     def test_issue93_initialnode_importing_capturing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -397,7 +400,7 @@ class TestGeneralUsage:
 
         for name, value in vars(hookspec).items():
             if name.startswith("pytest_"):
-                assert value.__doc__, "no docstring for %s" % name
+                assert value.__doc__, f"no docstring for {name}"
 
     def test_initialization_error_issue49(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -538,6 +541,32 @@ class TestGeneralUsage:
         )
         res = pytester.runpytest(p)
         res.assert_outcomes(passed=3)
+
+    # Warning ignore because of:
+    # https://github.com/python/cpython/issues/85308
+    # Can be removed once Python<3.12 support is dropped.
+    @pytest.mark.filterwarnings("ignore:'encoding' argument not specified")
+    def test_command_line_args_from_file(
+        self, pytester: Pytester, tmp_path: Path
+    ) -> None:
+        pytester.makepyfile(
+            test_file="""
+            import pytest
+
+            class TestClass:
+                @pytest.mark.parametrize("a", ["x","y"])
+                def test_func(self, a):
+                    pass
+            """
+        )
+        tests = [
+            "test_file.py::TestClass::test_func[x]",
+            "test_file.py::TestClass::test_func[y]",
+            "-q",
+        ]
+        args_file = pytester.maketxtfile(tests="\n".join(tests))
+        result = pytester.runpytest(f"@{args_file}")
+        result.assert_outcomes(failed=0, passed=2)
 
 
 class TestInvocationVariants:
@@ -944,7 +973,7 @@ class TestDurations:
         for x in tested:
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
-                    if ("test_%s" % x) in line and y in line:
+                    if (f"test_{x}") in line and y in line:
                         break
                 else:
                     raise AssertionError(f"not found {x} {y}")
@@ -957,7 +986,7 @@ class TestDurations:
         for x in "123":
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
-                    if ("test_%s" % x) in line and y in line:
+                    if (f"test_{x}") in line and y in line:
                         break
                 else:
                     raise AssertionError(f"not found {x} {y}")
@@ -1390,3 +1419,68 @@ def test_doctest_and_normal_imports_with_importlib(pytester: Pytester) -> None:
     )
     result = pytester.runpytest_subprocess()
     result.stdout.fnmatch_lines("*1 passed*")
+
+
+@pytest.mark.skip(reason="Test is not isolated")
+def test_issue_9765(pytester: Pytester) -> None:
+    """Reproducer for issue #9765 on Windows
+
+    https://github.com/pytest-dev/pytest/issues/9765
+    """
+    pytester.makepyprojecttoml(
+        """
+        [tool.pytest.ini_options]
+        addopts = "-p my_package.plugin.my_plugin"
+        """
+    )
+    pytester.makepyfile(
+        **{
+            "setup.py": (
+                """
+                from setuptools import setup
+
+                if __name__ == '__main__':
+                    setup(name='my_package', packages=['my_package', 'my_package.plugin'])
+                """
+            ),
+            "my_package/__init__.py": "",
+            "my_package/conftest.py": "",
+            "my_package/test_foo.py": "def test(): pass",
+            "my_package/plugin/__init__.py": "",
+            "my_package/plugin/my_plugin.py": (
+                """
+                import pytest
+
+                def pytest_configure(config):
+
+                    class SimplePlugin:
+                        @pytest.fixture(params=[1, 2, 3])
+                        def my_fixture(self, request):
+                            yield request.param
+
+                    config.pluginmanager.register(SimplePlugin())
+                """
+            ),
+        }
+    )
+
+    subprocess.run(
+        [sys.executable, "-Im", "pip", "install", "-e", "."],
+        check=True,
+    )
+    try:
+        # We are using subprocess.run rather than pytester.run on purpose.
+        # pytester.run is adding the current directory to PYTHONPATH which avoids
+        # the bug. We also use pytest rather than python -m pytest for the same
+        # PYTHONPATH reason.
+        subprocess.run(
+            ["pytest", "my_package"],
+            capture_output=True,
+            check=True,
+            encoding="utf-8",
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise AssertionError(
+            f"pytest command failed:\n{exc.stdout=!s}\n{exc.stderr=!s}"
+        ) from exc

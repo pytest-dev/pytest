@@ -1,12 +1,15 @@
 :orphan:
 
-.. sidebar:: Next Open Trainings
-
-   - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_, **March 5th to 7th 2024** (3 day in-depth training), **Leipzig, Germany / Remote**
-
-   Also see :doc:`previous talks and blogposts <talks>`.
-
 .. _features:
+
+.. sidebar:: **Next Open Trainings and Events**
+
+    - `pytest development sprint <https://github.com/pytest-dev/sprint>`_, **June 17th -- 22nd 2024**, Klaus (AT) / Remote
+    - `pytest tips and tricks for a better testsuite <https://ep2024.europython.eu/session/pytest-tips-and-tricks-for-a-better-testsuite>`_, at `Europython 2024 <https://ep2024.europython.eu/>`_, **July 8th -- 14th 2024** (3h), Prague (CZ)
+    - `pytest: Professionelles Testen (nicht nur) für Python <https://pretalx.com/workshoptage-2024/talk/9VUHYB/>`_, at `CH Open Workshoptage <https://workshoptage.ch/>`_, **September 2nd 2024**, HSLU Rotkreuz (CH)
+    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 4th -- 6th 2025**, Leipzig (DE) / Remote
+
+    Also see :doc:`previous talks and blogposts <talks>`
 
 pytest: helps you write better programs
 =======================================
@@ -20,7 +23,6 @@ scale to support complex functional testing for applications and libraries.
 ``pytest`` requires: Python 3.8+ or PyPy3.
 
 **PyPI package name**: :pypi:`pytest`
-
 
 A quick example
 ---------------
@@ -78,13 +80,13 @@ Features
 
 - Python 3.8+ or PyPy 3
 
-- Rich plugin architecture, with over 800+ :ref:`external plugins <plugin-list>` and thriving community
+- Rich plugin architecture, with over 1300+ :ref:`external plugins <plugin-list>` and thriving community
 
 
 Documentation
 -------------
 
-* :ref:`Get started <get-started>` - install pytest and grasp its basics just twenty minutes
+* :ref:`Get started <get-started>` - install pytest and grasp its basics in just twenty minutes
 * :ref:`How-to guides <how-to>` - step-by-step guides, covering a vast range of use-cases and needs
 * :ref:`Reference guides <reference>` - includes the complete pytest API reference, lists of plugins and more
 * :ref:`Explanation <explanation>` - background, discussion of key topics, answers to higher-level questions

@@ -1,13 +1,14 @@
 """Core implementation of the testing process: init, session, runtest loop."""
+
 import argparse
 import dataclasses
 import fnmatch
 import functools
 import importlib
+import importlib.util
 import os
-import sys
-import warnings
 from pathlib import Path
+import sys
 from typing import AbstractSet
 from typing import Callable
 from typing import Dict
@@ -21,12 +22,14 @@ from typing import Optional
 from typing import overload
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
+import warnings
 
 import pluggy
 
-import _pytest._code
 from _pytest import nodes
+import _pytest._code
 from _pytest.config import Config
 from _pytest.config import directory_arg
 from _pytest.config import ExitCode
@@ -34,7 +37,7 @@ from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
-from _pytest.fixtures import FixtureManager
+from _pytest.config.compat import PathAwareHookProxy
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -46,6 +49,12 @@ from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
 from _pytest.runner import SetupState
 from _pytest.warning_types import PytestWarning
+
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from _pytest.fixtures import FixtureManager
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -215,6 +224,12 @@ def pytest_addoption(parser: Parser) -> None:
         help="Prepend/append to sys.path when importing test modules and conftest "
         "files. Default: prepend.",
     )
+    parser.addini(
+        "consider_namespace_packages",
+        type="bool",
+        default=False,
+        help="Consider namespace packages when resolving module names during import",
+    )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
     group.addoption(
@@ -376,6 +391,9 @@ def _in_venv(path: Path) -> bool:
 
 
 def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[bool]:
+    if collection_path.name == "__pycache__":
+        return True
+
     ignore_paths = config._getconftest_pathlist(
         "collect_ignore", path=collection_path.parent
     )
@@ -487,16 +505,16 @@ class Dir(nodes.Directory):
     @classmethod
     def from_parent(  # type: ignore[override]
         cls,
-        parent: nodes.Collector,  # type: ignore[override]
+        parent: nodes.Collector,
         *,
         path: Path,
-    ) -> "Dir":
+    ) -> "Self":
         """The public constructor.
 
         :param parent: The parent collector of this Dir.
         :param path: The directory's path.
         """
-        return super().from_parent(parent=parent, path=path)  # type: ignore[no-any-return]
+        return super().from_parent(parent=parent, path=path)
 
     def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
         config = self.config
@@ -505,8 +523,6 @@ class Dir(nodes.Directory):
         ihook = self.ihook
         for direntry in scandir(self.path):
             if direntry.is_dir():
-                if direntry.name == "__pycache__":
-                    continue
                 path = Path(direntry.path)
                 if not self.session.isinitpath(path, with_parents=True):
                     if ihook.pytest_ignore_collect(collection_path=path, config=config):
@@ -536,13 +552,14 @@ class Session(nodes.Collector):
     # Set on the session by runner.pytest_sessionstart.
     _setupstate: SetupState
     # Set on the session by fixtures.pytest_sessionstart.
-    _fixturemanager: FixtureManager
+    _fixturemanager: "FixtureManager"
     exitstatus: Union[int, ExitCode]
 
     def __init__(self, config: Config) -> None:
         super().__init__(
             name="",
             path=config.rootpath,
+            fspath=None,
             parent=None,
             config=config,
             session=self,
@@ -556,7 +573,7 @@ class Session(nodes.Collector):
         self._initialpaths: FrozenSet[Path] = frozenset()
         self._initialpaths_with_parents: FrozenSet[Path] = frozenset()
         self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
-        self._initial_parts: List[Tuple[Path, List[str]]] = []
+        self._initial_parts: List[CollectionArgument] = []
         self._collection_cache: Dict[nodes.Collector, CollectReport] = {}
         self.items: List[nodes.Item] = []
 
@@ -680,7 +697,7 @@ class Session(nodes.Collector):
         proxy: pluggy.HookRelay
         if remove_mods:
             # One or more conftests are not in use at this path.
-            proxy = FSHookProxy(pm, remove_mods)  # type: ignore[arg-type,assignment]
+            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))  # type: ignore[arg-type,assignment]
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook
@@ -720,16 +737,14 @@ class Session(nodes.Collector):
     @overload
     def perform_collect(
         self, args: Optional[Sequence[str]] = ..., genitems: "Literal[True]" = ...
-    ) -> Sequence[nodes.Item]:
-        ...
+    ) -> Sequence[nodes.Item]: ...
 
     @overload
-    def perform_collect(  # noqa: F811
+    def perform_collect(
         self, args: Optional[Sequence[str]] = ..., genitems: bool = ...
-    ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
-        ...
+    ) -> Sequence[Union[nodes.Item, nodes.Collector]]: ...
 
-    def perform_collect(  # noqa: F811
+    def perform_collect(
         self, args: Optional[Sequence[str]] = None, genitems: bool = True
     ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
         """Perform the collection phase for this session.
@@ -762,15 +777,15 @@ class Session(nodes.Collector):
             initialpaths: List[Path] = []
             initialpaths_with_parents: List[Path] = []
             for arg in args:
-                fspath, parts = resolve_collection_argument(
+                collection_argument = resolve_collection_argument(
                     self.config.invocation_params.dir,
                     arg,
                     as_pypath=self.config.option.pyargs,
                 )
-                self._initial_parts.append((fspath, parts))
-                initialpaths.append(fspath)
-                initialpaths_with_parents.append(fspath)
-                initialpaths_with_parents.extend(fspath.parents)
+                self._initial_parts.append(collection_argument)
+                initialpaths.append(collection_argument.path)
+                initialpaths_with_parents.append(collection_argument.path)
+                initialpaths_with_parents.extend(collection_argument.path.parents)
             self._initialpaths = frozenset(initialpaths)
             self._initialpaths_with_parents = frozenset(initialpaths_with_parents)
 
@@ -832,21 +847,35 @@ class Session(nodes.Collector):
 
         pm = self.config.pluginmanager
 
-        for argpath, names in self._initial_parts:
-            self.trace("processing argument", (argpath, names))
+        for collection_argument in self._initial_parts:
+            self.trace("processing argument", collection_argument)
             self.trace.root.indent += 1
+
+            argpath = collection_argument.path
+            names = collection_argument.parts
+            module_name = collection_argument.module_name
 
             # resolve_collection_argument() ensures this.
             if argpath.is_dir():
                 assert not names, f"invalid arg {(argpath, names)!r}"
 
-            # Match the argpath from the root, e.g.
+            paths = [argpath]
+            # Add relevant parents of the path, from the root, e.g.
             #   /a/b/c.py -> [/, /a, /a/b, /a/b/c.py]
-            paths = [*reversed(argpath.parents), argpath]
-            # Paths outside of the confcutdir should not be considered, unless
-            # it's the argpath itself.
-            while len(paths) > 1 and not pm._is_in_confcutdir(paths[0]):
-                paths = paths[1:]
+            if module_name is None:
+                # Paths outside of the confcutdir should not be considered.
+                for path in argpath.parents:
+                    if not pm._is_in_confcutdir(path):
+                        break
+                    paths.insert(0, path)
+            else:
+                # For --pyargs arguments, only consider paths matching the module
+                # name. Paths beyond the package hierarchy are not included.
+                module_name_parts = module_name.split(".")
+                for i, path in enumerate(argpath.parents, 2):
+                    if i > len(module_name_parts) or path.stem != module_name_parts[-i]:
+                        break
+                    paths.insert(0, path)
 
             # Start going over the parts from the root, collecting each level
             # and discarding all nodes which don't match the level's part.
@@ -854,7 +883,7 @@ class Session(nodes.Collector):
             notfound_collectors = []
             work: List[
                 Tuple[Union[nodes.Collector, nodes.Item], List[Union[Path, str]]]
-            ] = [(self, paths + names)]
+            ] = [(self, [*paths, *names])]
             while work:
                 matchnode, matchparts = work.pop()
 
@@ -895,10 +924,21 @@ class Session(nodes.Collector):
 
                 # Prune this level.
                 any_matched_in_collector = False
-                for node in subnodes:
+                for node in reversed(subnodes):
                     # Path part e.g. `/a/b/` in `/a/b/test_file.py::TestIt::test_it`.
                     if isinstance(matchparts[0], Path):
                         is_match = node.path == matchparts[0]
+                        if sys.platform == "win32" and not is_match:
+                            # In case the file paths do not match, fallback to samefile() to
+                            # account for short-paths on Windows (#11895).
+                            same_file = os.path.samefile(node.path, matchparts[0])
+                            # We don't want to match links to the current node,
+                            # otherwise we would match the same file more than once (#12039).
+                            is_match = same_file and (
+                                os.path.islink(node.path)
+                                == os.path.islink(matchparts[0])
+                            )
+
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
                         # TODO: Remove parametrized workaround once collection structure contains
@@ -942,26 +982,36 @@ class Session(nodes.Collector):
                 node.ihook.pytest_collectreport(report=rep)
 
 
-def search_pypath(module_name: str) -> str:
-    """Search sys.path for the given a dotted module name, and return its file system path."""
+def search_pypath(module_name: str) -> Optional[str]:
+    """Search sys.path for the given a dotted module name, and return its file
+    system path if found."""
     try:
         spec = importlib.util.find_spec(module_name)
     # AttributeError: looks like package module, but actually filename
     # ImportError: module does not exist
     # ValueError: not a module name
     except (AttributeError, ImportError, ValueError):
-        return module_name
+        return None
     if spec is None or spec.origin is None or spec.origin == "namespace":
-        return module_name
+        return None
     elif spec.submodule_search_locations:
         return os.path.dirname(spec.origin)
     else:
         return spec.origin
 
 
+@dataclasses.dataclass(frozen=True)
+class CollectionArgument:
+    """A resolved collection argument."""
+
+    path: Path
+    parts: Sequence[str]
+    module_name: Optional[str]
+
+
 def resolve_collection_argument(
     invocation_path: Path, arg: str, *, as_pypath: bool = False
-) -> Tuple[Path, List[str]]:
+) -> CollectionArgument:
     """Parse path arguments optionally containing selection parts and return (fspath, names).
 
     Command-line arguments can point to files and/or directories, and optionally contain
@@ -969,9 +1019,13 @@ def resolve_collection_argument(
 
         "pkg/tests/test_foo.py::TestClass::test_foo"
 
-    This function ensures the path exists, and returns a tuple:
+    This function ensures the path exists, and returns a resolved `CollectionArgument`:
 
-        (Path("/full/path/to/pkg/tests/test_foo.py"), ["TestClass", "test_foo"])
+        CollectionArgument(
+            path=Path("/full/path/to/pkg/tests/test_foo.py"),
+            parts=["TestClass", "test_foo"],
+            module_name=None,
+        )
 
     When as_pypath is True, expects that the command-line argument actually contains
     module paths instead of file-system paths:
@@ -979,7 +1033,13 @@ def resolve_collection_argument(
         "pkg.tests.test_foo::TestClass::test_foo"
 
     In which case we search sys.path for a matching module, and then return the *path* to the
-    found module.
+    found module, which may look like this:
+
+        CollectionArgument(
+            path=Path("/home/u/myvenv/lib/site-packages/pkg/tests/test_foo.py"),
+            parts=["TestClass", "test_foo"],
+            module_name="pkg.tests.test_foo",
+        )
 
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
@@ -988,8 +1048,12 @@ def resolve_collection_argument(
     strpath, *parts = base.split("::")
     if parts:
         parts[-1] = f"{parts[-1]}{squacket}{rest}"
+    module_name = None
     if as_pypath:
-        strpath = search_pypath(strpath)
+        pyarg_strpath = search_pypath(strpath)
+        if pyarg_strpath is not None:
+            module_name = strpath
+            strpath = pyarg_strpath
     fspath = invocation_path / strpath
     fspath = absolutepath(fspath)
     if not safe_exists(fspath):
@@ -1006,4 +1070,8 @@ def resolve_collection_argument(
             else "directory argument cannot contain :: selection parts: {arg}"
         )
         raise UsageError(msg.format(arg=arg))
-    return fspath, parts
+    return CollectionArgument(
+        path=fspath,
+        parts=parts,
+        module_name=module_name,
+    )

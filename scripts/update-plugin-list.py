@@ -11,13 +11,13 @@ from typing import TypedDict
 
 import packaging.version
 import platformdirs
-import tabulate
-import wcwidth
 from requests_cache import CachedResponse
 from requests_cache import CachedSession
 from requests_cache import OriginalResponse
 from requests_cache import SQLiteCache
+import tabulate
 from tqdm import tqdm
+import wcwidth
 
 
 FILE_HEAD = r"""
@@ -29,7 +29,7 @@ Pytest Plugin List
 ==================
 
 Below is an automated compilation of ``pytest``` plugins available on `PyPI <https://pypi.org>`_.
-It includes PyPI projects whose names begin with "pytest-" and a handful of manually selected projects.
+It includes PyPI projects whose names begin with ``pytest-`` or ``pytest_`` and a handful of manually selected projects.
 Packages classified as inactive are excluded.
 
 For detailed insights into how this list is generated,
@@ -61,6 +61,7 @@ DEVELOPMENT_STATUS_CLASSIFIERS = (
 )
 ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
     "logassert",
+    "logot",
     "nuts",
     "flask_fixture",
 }
@@ -86,7 +87,6 @@ def project_response_with_refresh(
 
     force refresh in case of last serial mismatch
     """
-
     response = session.get(f"https://pypi.org/pypi/{name}/json")
     if int(response.headers.get("X-PyPI-Last-Serial", -1)) != last_serial:
         response = session.get(f"https://pypi.org/pypi/{name}/json", refresh=True)
@@ -110,7 +110,10 @@ def pytest_plugin_projects_from_pypi(session: CachedSession) -> dict[str, int]:
     return {
         name: p["_last-serial"]
         for p in response.json()["projects"]
-        if (name := p["name"]).startswith("pytest-") or name in ADDITIONAL_PROJECTS
+        if (
+            (name := p["name"]).startswith(("pytest-", "pytest_"))
+            or name in ADDITIONAL_PROJECTS
+        )
     }
 
 
@@ -185,7 +188,6 @@ def iter_plugins() -> Iterator[PluginInfo]:
 
 def plugin_definitions(plugins: Iterable[PluginInfo]) -> Iterator[str]:
     """Return RST for the plugin list that fits better on a vertical page."""
-
     for plugin in plugins:
         yield dedent(
             f"""
@@ -210,7 +212,7 @@ def main() -> None:
         f.write(f"This list contains {len(plugins)} plugins.\n\n")
         f.write(".. only:: not latex\n\n")
 
-        wcwidth  # reference library that must exist for tabulate to work
+        _ = wcwidth  # reference library that must exist for tabulate to work
         plugin_table = tabulate.tabulate(plugins, headers="keys", tablefmt="rst")
         f.write(indent(plugin_table, "   "))
         f.write("\n\n")

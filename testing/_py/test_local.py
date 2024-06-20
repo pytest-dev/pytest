@@ -1,21 +1,23 @@
+# mypy: allow-untyped-defs
 import contextlib
 import multiprocessing
 import os
 import sys
 import time
-import warnings
 from unittest import mock
+import warnings
 
-import pytest
 from py import error
 from py.path import local
+
+import pytest
 
 
 @contextlib.contextmanager
 def ignore_encoding_warning():
     with warnings.catch_warnings():
-        with contextlib.suppress(NameError):  # new in 3.10
-            warnings.simplefilter("ignore", EncodingWarning)  # type: ignore [name-defined]  # noqa: F821
+        if sys.version_info > (3, 10):
+            warnings.simplefilter("ignore", EncodingWarning)
         yield
 
 
@@ -181,7 +183,7 @@ class CommonFSTests:
     def test_listdir_filter(self, path1):
         p = path1.listdir(lambda x: x.check(dir=1))
         assert path1.join("sampledir") in p
-        assert not path1.join("samplefile") in p
+        assert path1.join("samplefile") not in p
 
     def test_listdir_sorted(self, path1):
         p = path1.listdir(lambda x: x.check(basestarts="sample"), sort=True)
@@ -201,11 +203,11 @@ class CommonFSTests:
         for i in path1.visit(None, lambda x: x.basename != "sampledir"):
             lst.append(i.relto(path1))
         assert "sampledir" in lst
-        assert not path1.sep.join(["sampledir", "otherfile"]) in lst
+        assert path1.sep.join(["sampledir", "otherfile"]) not in lst
 
     @pytest.mark.parametrize(
         "fil",
-        ["*dir", "*dir", pytest.mark.skip("sys.version_info <" " (3,6)")(b"*dir")],
+        ["*dir", "*dir", pytest.mark.skip("sys.version_info < (3,6)")(b"*dir")],
     )
     def test_visit_filterfunc_is_string(self, path1, fil):
         lst = []
@@ -549,7 +551,7 @@ def batch_make_numbered_dirs(rootdir, repeats):
     for i in range(repeats):
         dir_ = local.make_numbered_dir(prefix="repro-", rootdir=rootdir)
         file_ = dir_.join("foo")
-        file_.write_text("%s" % i, encoding="utf-8")
+        file_.write_text(f"{i}", encoding="utf-8")
         actual = int(file_.read_text(encoding="utf-8"))
         assert (
             actual == i
@@ -561,9 +563,9 @@ def batch_make_numbered_dirs(rootdir, repeats):
 class TestLocalPath(CommonFSTests):
     def test_join_normpath(self, tmpdir):
         assert tmpdir.join(".") == tmpdir
-        p = tmpdir.join("../%s" % tmpdir.basename)
+        p = tmpdir.join(f"../{tmpdir.basename}")
         assert p == tmpdir
-        p = tmpdir.join("..//%s/" % tmpdir.basename)
+        p = tmpdir.join(f"..//{tmpdir.basename}/")
         assert p == tmpdir
 
     @skiponwin32
@@ -665,7 +667,7 @@ class TestLocalPath(CommonFSTests):
         assert p == os.path.expanduser("~")
 
     @pytest.mark.skipif(
-        not sys.platform.startswith("win32"), reason="case insensitive only on windows"
+        not sys.platform.startswith("win32"), reason="case-insensitive only on windows"
     )
     def test_eq_hash_are_case_insensitive_on_windows(self):
         a = local("/some/path")
@@ -720,7 +722,7 @@ class TestLocalPath(CommonFSTests):
 
     @pytest.mark.parametrize("bin", (False, True))
     def test_dump(self, tmpdir, bin):
-        path = tmpdir.join("dumpfile%s" % int(bin))
+        path = tmpdir.join(f"dumpfile{int(bin)}")
         try:
             d = {"answer": 42}
             path.dump(d, bin=bin)
@@ -820,7 +822,7 @@ class TestLocalPath(CommonFSTests):
         # depending on how the paths are used), but > 4096 (which is the
         # Linux' limitation) - the behaviour of paths with names > 4096 chars
         # is undetermined
-        newfilename = "/test" * 60  # type:ignore[unreachable]
+        newfilename = "/test" * 60  # type:ignore[unreachable,unused-ignore]
         l1 = tmpdir.join(newfilename)
         l1.ensure(file=True)
         l1.write_text("foo", encoding="utf-8")
@@ -896,7 +898,7 @@ class TestExecutionOnWindows:
 class TestExecution:
     pytestmark = skiponwin32
 
-    def test_sysfind_no_permisson_ignored(self, monkeypatch, tmpdir):
+    def test_sysfind_no_permission_ignored(self, monkeypatch, tmpdir):
         noperm = tmpdir.ensure("noperm", dir=True)
         monkeypatch.setenv("PATH", str(noperm), prepend=":")
         noperm.chmod(0)
@@ -1239,9 +1241,9 @@ class TestWINLocalPath:
 
     def test_owner_group_not_implemented(self, path1):
         with pytest.raises(NotImplementedError):
-            path1.stat().owner
+            _ = path1.stat().owner
         with pytest.raises(NotImplementedError):
-            path1.stat().group
+            _ = path1.stat().group
 
     def test_chmod_simple_int(self, path1):
         mode = path1.stat().mode
@@ -1366,8 +1368,8 @@ class TestPOSIXLocalPath:
         assert realpath.basename == "file"
 
     def test_owner(self, path1, tmpdir):
-        from pwd import getpwuid  # type:ignore[attr-defined]
-        from grp import getgrgid  # type:ignore[attr-defined]
+        from grp import getgrgid  # type:ignore[attr-defined,unused-ignore]
+        from pwd import getpwuid  # type:ignore[attr-defined,unused-ignore]
 
         stat = path1.stat()
         assert stat.path == path1

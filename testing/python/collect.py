@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 import os
 import sys
 import textwrap
@@ -5,7 +6,6 @@ from typing import Any
 from typing import Dict
 
 import _pytest._code
-import pytest
 from _pytest.config import ExitCode
 from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
@@ -13,6 +13,7 @@ from _pytest.nodes import Collector
 from _pytest.pytester import Pytester
 from _pytest.python import Class
 from _pytest.python import Function
+import pytest
 
 
 class TestModule:
@@ -35,9 +36,9 @@ class TestModule:
             [
                 "*import*mismatch*",
                 "*imported*test_whatever*",
-                "*%s*" % p1,
+                f"*{p1}*",
                 "*not the same*",
-                "*%s*" % p2,
+                f"*{p2}*",
                 "*HINT*",
             ]
         )
@@ -53,13 +54,11 @@ class TestModule:
         monkeypatch.syspath_prepend(str(root1))
         p.write_text(
             textwrap.dedent(
-                """\
+                f"""\
                 import x456
                 def test():
-                    assert x456.__file__.startswith({!r})
-                """.format(
-                    str(root2)
-                )
+                    assert x456.__file__.startswith({str(root2)!r})
+                """
             ),
             encoding="utf-8",
         )
@@ -262,6 +261,32 @@ class TestClass:
         )
         result = pytester.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+    def test_abstract_class_is_not_collected(self, pytester: Pytester) -> None:
+        """Regression test for #12275 (non-unittest version)."""
+        pytester.makepyfile(
+            """
+            import abc
+
+            class TestBase(abc.ABC):
+                @abc.abstractmethod
+                def abstract1(self): pass
+
+                @abc.abstractmethod
+                def abstract2(self): pass
+
+                def test_it(self): pass
+
+            class TestPartial(TestBase):
+                def abstract1(self): pass
+
+            class TestConcrete(TestPartial):
+                def abstract2(self): pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=1)
 
 
 class TestFunction:
@@ -1210,7 +1235,7 @@ class TestReportInfo:
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
         path, lineno, msg = classcol.reportinfo()
-        func = list(classcol.collect())[0]
+        func = next(iter(classcol.collect()))
         assert isinstance(func, Function)
         path, lineno, msg = func.reportinfo()
 

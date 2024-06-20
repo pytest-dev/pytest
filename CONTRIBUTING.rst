@@ -1,13 +1,9 @@
 ============================
-Contribution getting started
+Contributing
 ============================
 
 Contributions are highly welcomed and appreciated.  Every little bit of help counts,
 so do not hesitate!
-
-.. contents::
-   :depth: 2
-   :backlinks: none
 
 
 .. _submitfeedback:
@@ -128,7 +124,7 @@ For example:
 Submitting Plugins to pytest-dev
 --------------------------------
 
-Pytest development of the core, some plugins and support code happens
+Development of the pytest core, support code, and some plugins happens
 in repositories living under the ``pytest-dev`` organisations:
 
 - `pytest-dev on GitHub <https://github.com/pytest-dev>`_
@@ -297,12 +293,12 @@ Here is a simple overview, with pytest-specific bits:
    When committing, ``pre-commit`` will re-format the files if necessary.
 
 #. If instead of using ``tox`` you prefer to run the tests directly, then we suggest to create a virtual environment and use
-   an editable install with the ``testing`` extra::
+   an editable install with the ``dev`` extra::
 
        $ python3 -m venv .venv
        $ source .venv/bin/activate  # Linux
        $ .venv/Scripts/activate.bat  # Windows
-       $ pip install -e ".[testing]"
+       $ pip install -e ".[dev]"
 
    Afterwards, you can edit the files and run pytest normally::
 

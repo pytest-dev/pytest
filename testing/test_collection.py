@@ -1,12 +1,15 @@
+# mypy: allow-untyped-defs
 import os
+from pathlib import Path
 import pprint
 import shutil
 import sys
+import tempfile
 import textwrap
-from pathlib import Path
 from typing import List
+from typing import Type
 
-import pytest
+from _pytest.assertion.util import running_on_ci
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
@@ -16,6 +19,7 @@ from _pytest.nodes import Item
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import HookRecorder
 from _pytest.pytester import Pytester
+import pytest
 
 
 def ensure_file(file_path: Path) -> Path:
@@ -272,14 +276,31 @@ class TestCollectFS:
         # collects the tests
         for dirname in ("a", "b", "c"):
             items, reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
-            assert [x.name for x in items] == ["test_%s" % dirname]
+            assert [x.name for x in items] == [f"test_{dirname}"]
 
         # changing cwd to each subdirectory and running pytest without
         # arguments collects the tests in that directory normally
         for dirname in ("a", "b", "c"):
             monkeypatch.chdir(pytester.path.joinpath(dirname))
             items, reprec = pytester.inline_genitems()
-            assert [x.name for x in items] == ["test_%s" % dirname]
+            assert [x.name for x in items] == [f"test_{dirname}"]
+
+    def test_missing_permissions_on_unselected_directory_doesnt_crash(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #12120."""
+        test = pytester.makepyfile(test="def test(): pass")
+        bad = pytester.mkdir("bad")
+        try:
+            bad.chmod(0)
+
+            result = pytester.runpytest(test)
+        finally:
+            bad.chmod(750)
+            bad.rmdir()
+
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=1)
 
 
 class TestCollectPluginHookRelay:
@@ -534,7 +555,7 @@ class TestSession:
         newid = item.nodeid
         assert newid == id
         pprint.pprint(hookrec.calls)
-        topdir = pytester.path  # noqa
+        topdir = pytester.path  # noqa: F841
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == topdir"),
@@ -569,7 +590,7 @@ class TestSession:
     def test_collect_custom_nodes_multi_id(self, pytester: Pytester) -> None:
         p = pytester.makepyfile("def test_func(): pass")
         pytester.makeconftest(
-            """
+            f"""
             import pytest
             class SpecialItem(pytest.Item):
                 def runtest(self):
@@ -578,10 +599,9 @@ class TestSession:
                 def collect(self):
                     return [SpecialItem.from_parent(name="check", parent=self)]
             def pytest_collect_file(file_path, parent):
-                if file_path.name == %r:
+                if file_path.name == {p.name!r}:
                     return SpecialFile.from_parent(path=file_path, parent=parent)
         """
-            % p.name
         )
         id = p.name
 
@@ -591,12 +611,12 @@ class TestSession:
         hookrec.assert_contains(
             [
                 ("pytest_collectstart", "collector.path == collector.session.path"),
-                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
-                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 (
                     "pytest_collectstart",
                     "collector.__class__.__name__ == 'SpecialFile'",
                 ),
+                ("pytest_collectstart", "collector.__class__.__name__ == 'Module'"),
+                ("pytest_pycollect_makeitem", "name == 'test_func'"),
                 ("pytest_collectreport", "report.nodeid.startswith(p.name)"),
             ]
         )
@@ -669,6 +689,23 @@ class TestSession:
         assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
+
+    def test_collect_parametrized_order(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize('i', [0, 1, 2])
+            def test_param(i): ...
+            """
+        )
+        items, hookrec = pytester.inline_genitems(f"{p}::test_param")
+        assert len(items) == 3
+        assert [item.nodeid for item in items] == [
+            "test_collect_parametrized_order.py::test_param[0]",
+            "test_collect_parametrized_order.py::test_param[1]",
+            "test_collect_parametrized_order.py::test_param[2]",
+        ]
 
 
 class Test_getinitialnodes:
@@ -842,7 +879,7 @@ def test_matchnodes_two_collections_same_file(pytester: Pytester) -> None:
     result = pytester.runpytest()
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*2 passed*"])
-    res = pytester.runpytest("%s::item2" % p.name)
+    res = pytester.runpytest(f"{p.name}::item2")
     res.stdout.fnmatch_lines(["*1 passed*"])
 
 
@@ -1281,21 +1318,19 @@ def test_collect_with_chdir_during_import(pytester: Pytester) -> None:
     subdir = pytester.mkdir("sub")
     pytester.path.joinpath("conftest.py").write_text(
         textwrap.dedent(
-            """
+            f"""
             import os
-            os.chdir(%r)
+            os.chdir({str(subdir)!r})
             """
-            % (str(subdir),)
         ),
         encoding="utf-8",
     )
     pytester.makepyfile(
-        """
+        f"""
         def test_1():
             import os
-            assert os.getcwd() == %r
+            assert os.getcwd() == {str(subdir)!r}
         """
-        % (str(subdir),)
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*1 passed in*"])
@@ -1426,7 +1461,7 @@ def test_collect_symlink_out_of_tree(pytester: Pytester) -> None:
     symlink_to_sub = out_of_tree.joinpath("symlink_to_sub")
     symlink_or_skip(sub, symlink_to_sub)
     os.chdir(sub)
-    result = pytester.runpytest("-vs", "--rootdir=%s" % sub, symlink_to_sub)
+    result = pytester.runpytest("-vs", f"--rootdir={sub}", symlink_to_sub)
     result.stdout.fnmatch_lines(
         [
             # Should not contain "sub/"!
@@ -1597,7 +1632,7 @@ def test_fscollector_from_parent(pytester: Pytester, request: FixtureRequest) ->
     assert collector.x == 10
 
 
-def test_class_from_parent(pytester: Pytester, request: FixtureRequest) -> None:
+def test_class_from_parent(request: FixtureRequest) -> None:
     """Ensure Class.from_parent can forward custom arguments to the constructor."""
 
     class MyCollector(pytest.Class):
@@ -1638,13 +1673,11 @@ class TestImportModeImportlib:
         pytester.makepyfile(
             **{
                 "tests/conftest.py": "",
-                "tests/test_foo.py": """
+                "tests/test_foo.py": f"""
                 import sys
                 def test_check():
                     assert r"{tests_dir}" not in sys.path
-                """.format(
-                    tests_dir=tests_dir
-                ),
+                """,
             }
         )
         result = pytester.runpytest("-v", "--import-mode=importlib")
@@ -1745,3 +1778,129 @@ def test_does_not_crash_on_recursive_symlink(pytester: Pytester) -> None:
 
     assert result.ret == ExitCode.OK
     assert result.parseoutcomes() == {"passed": 1}
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+def test_collect_short_file_windows(pytester: Pytester) -> None:
+    """Reproducer for #11895: short paths not collected on Windows."""
+    short_path = tempfile.mkdtemp()
+    if "~" not in short_path:  # pragma: no cover
+        if running_on_ci():
+            # On CI, we are expecting that under the current GitHub actions configuration,
+            # tempfile.mkdtemp() is producing short paths, so we want to fail to prevent
+            # this from silently changing without us noticing.
+            pytest.fail(
+                f"tempfile.mkdtemp() failed to produce a short path on CI: {short_path}"
+            )
+        else:
+            # We want to skip failing this test locally in this situation because
+            # depending on the local configuration tempfile.mkdtemp() might not produce a short path:
+            # For example, user might have configured %TEMP% exactly to avoid generating short paths.
+            pytest.skip(
+                f"tempfile.mkdtemp() failed to produce a short path: {short_path}, skipping"
+            )
+
+    test_file = Path(short_path).joinpath("test_collect_short_file_windows.py")
+    test_file.write_text("def test(): pass", encoding="UTF-8")
+    result = pytester.runpytest(short_path)
+    assert result.parseoutcomes() == {"passed": 1}
+
+
+def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    """When using `--pyargs`, the collection tree of a pyargs collection
+    argument should only include parents in the import path, not up to confcutdir.
+
+    Regression test for #11904.
+    """
+    site_packages = pytester.path / "venv/lib/site-packages"
+    site_packages.mkdir(parents=True)
+    monkeypatch.syspath_prepend(site_packages)
+    pytester.makepyfile(
+        **{
+            "venv/lib/site-packages/pkg/__init__.py": "",
+            "venv/lib/site-packages/pkg/sub/__init__.py": "",
+            "venv/lib/site-packages/pkg/sub/test_it.py": "def test(): pass",
+        }
+    )
+
+    result = pytester.runpytest("--pyargs", "--collect-only", "pkg.sub.test_it")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "<Package venv/lib/site-packages/pkg>",
+            "  <Package sub>",
+            "    <Module test_it.py>",
+            "      <Function test>",
+        ],
+        consecutive=True,
+    )
+
+    # Now with an unrelated rootdir with unrelated files.
+    monkeypatch.chdir(tempfile.gettempdir())
+
+    result = pytester.runpytest("--pyargs", "--collect-only", "pkg.sub.test_it")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "<Package *pkg>",
+            "  <Package sub>",
+            "    <Module test_it.py>",
+            "      <Function test>",
+        ],
+        consecutive=True,
+    )
+
+
+def test_do_not_collect_symlink_siblings(
+    pytester: Pytester, tmp_path: Path, request: pytest.FixtureRequest
+) -> None:
+    """
+    Regression test for #12039: Do not collect from directories that are symlinks to other directories in the same path.
+
+    The check for short paths under Windows via os.path.samefile, introduced in #11936, also finds the symlinked
+    directory created by tmp_path/tmpdir.
+    """
+    # Use tmp_path because it creates a symlink with the name "current" next to the directory it creates.
+    symlink_path = tmp_path.parent / (tmp_path.name[:-1] + "current")
+    assert symlink_path.is_symlink() is True
+
+    # Create test file.
+    tmp_path.joinpath("test_foo.py").write_text("def test(): pass", encoding="UTF-8")
+
+    # Ensure we collect it only once if we pass the tmp_path.
+    result = pytester.runpytest(tmp_path, "-sv")
+    result.assert_outcomes(passed=1)
+
+    # Ensure we collect it only once if we pass the symlinked directory.
+    result = pytester.runpytest(symlink_path, "-sv")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.parametrize(
+    "exception_class, msg",
+    [
+        (KeyboardInterrupt, "*!!! KeyboardInterrupt !!!*"),
+        (SystemExit, "INTERNALERROR> SystemExit"),
+    ],
+)
+def test_respect_system_exceptions(
+    pytester: Pytester,
+    exception_class: Type[BaseException],
+    msg: str,
+):
+    head = "Before exception"
+    tail = "After exception"
+    ensure_file(pytester.path / "test_eggs.py").write_text(
+        f"print('{head}')", encoding="UTF-8"
+    )
+    ensure_file(pytester.path / "test_ham.py").write_text(
+        f"raise {exception_class.__name__}()", encoding="UTF-8"
+    )
+    ensure_file(pytester.path / "test_spam.py").write_text(
+        f"print('{tail}')", encoding="UTF-8"
+    )
+
+    result = pytester.runpytest_subprocess("-s")
+    result.stdout.fnmatch_lines([f"*{head}*"])
+    result.stdout.fnmatch_lines([msg])
+    result.stdout.no_fnmatch_line(f"*{tail}*")

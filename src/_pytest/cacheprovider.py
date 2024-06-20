@@ -1,10 +1,14 @@
+# mypy: allow-untyped-defs
 """Implementation of the cache provider."""
+
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
 import dataclasses
+import errno
 import json
 import os
 from pathlib import Path
+import tempfile
 from typing import Dict
 from typing import final
 from typing import Generator
@@ -30,6 +34,7 @@ from _pytest.main import Session
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
+
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -111,6 +116,7 @@ class Cache:
         """
         check_ispytest(_ispytest)
         import warnings
+
         from _pytest.warning_types import PytestCacheWarning
 
         warnings.warn(
@@ -118,6 +124,10 @@ class Cache:
             self._config.hook,
             stacklevel=3,
         )
+
+    def _mkdir(self, path: Path) -> None:
+        self._ensure_cache_dir_and_supporting_files()
+        path.mkdir(exist_ok=True, parents=True)
 
     def mkdir(self, name: str) -> Path:
         """Return a directory path object with the given name.
@@ -137,7 +147,7 @@ class Cache:
         if len(path.parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
         res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
-        res.mkdir(exist_ok=True, parents=True)
+        self._mkdir(res)
         return res
 
     def _getvaluepath(self, key: str) -> Path:
@@ -174,19 +184,13 @@ class Cache:
         """
         path = self._getvaluepath(key)
         try:
-            if path.parent.is_dir():
-                cache_dir_exists_already = True
-            else:
-                cache_dir_exists_already = self._cachedir.exists()
-                path.parent.mkdir(exist_ok=True, parents=True)
+            self._mkdir(path.parent)
         except OSError as exc:
             self.warn(
                 f"could not create cache path {path}: {exc}",
                 _ispytest=True,
             )
             return
-        if not cache_dir_exists_already:
-            self._ensure_supporting_files()
         data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
             f = path.open("w", encoding="UTF-8")
@@ -199,17 +203,49 @@ class Cache:
             with f:
                 f.write(data)
 
-    def _ensure_supporting_files(self) -> None:
-        """Create supporting files in the cache dir that are not really part of the cache."""
-        readme_path = self._cachedir / "README.md"
-        readme_path.write_text(README_CONTENT, encoding="UTF-8")
+    def _ensure_cache_dir_and_supporting_files(self) -> None:
+        """Create the cache dir and its supporting files."""
+        if self._cachedir.is_dir():
+            return
 
-        gitignore_path = self._cachedir.joinpath(".gitignore")
-        msg = "# Created by pytest automatically.\n*\n"
-        gitignore_path.write_text(msg, encoding="UTF-8")
+        self._cachedir.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            prefix="pytest-cache-files-",
+            dir=self._cachedir.parent,
+        ) as newpath:
+            path = Path(newpath)
 
-        cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
-        cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
+            # Reset permissions to the default, see #12308.
+            # Note: there's no way to get the current umask atomically, eek.
+            umask = os.umask(0o022)
+            os.umask(umask)
+            path.chmod(0o777 - umask)
+
+            with open(path.joinpath("README.md"), "x", encoding="UTF-8") as f:
+                f.write(README_CONTENT)
+            with open(path.joinpath(".gitignore"), "x", encoding="UTF-8") as f:
+                f.write("# Created by pytest automatically.\n*\n")
+            with open(path.joinpath("CACHEDIR.TAG"), "xb") as f:
+                f.write(CACHEDIR_TAG_CONTENT)
+
+            try:
+                path.rename(self._cachedir)
+            except OSError as e:
+                # If 2 concurrent pytests both race to the rename, the loser
+                # gets "Directory not empty" from the rename. In this case,
+                # everything is handled so just continue (while letting the
+                # temporary directory be cleaned up).
+                if e.errno != errno.ENOTEMPTY:
+                    raise
+            else:
+                # Create a directory in place of the one we just moved so that
+                # `TemporaryDirectory`'s cleanup doesn't complain.
+                #
+                # TODO: pass ignore_cleanup_errors=True when we no longer support python < 3.10.
+                # See https://github.com/python/cpython/issues/74168. Note that passing
+                # delete=False would do the wrong thing in case of errors and isn't supported
+                # until python 3.12.
+                path.mkdir()
 
 
 class LFPluginCollWrapper:
@@ -226,7 +262,7 @@ class LFPluginCollWrapper:
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 
-            # Use stable sort to priorize last failed.
+            # Use stable sort to prioritize last failed.
             def sort_key(node: Union[nodes.Item, nodes.Collector]) -> bool:
                 return node.path in lf_paths
 
@@ -314,7 +350,7 @@ class LFPlugin:
 
     def pytest_report_collectionfinish(self) -> Optional[str]:
         if self.active and self.config.getoption("verbose") >= 0:
-            return "run-last-failure: %s" % self._report_status
+            return f"run-last-failure: {self._report_status}"
         return None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
@@ -366,15 +402,13 @@ class LFPlugin:
 
                 noun = "failure" if self._previously_failed_count == 1 else "failures"
                 suffix = " first" if self.config.getoption("failedfirst") else ""
-                self._report_status = "rerun previous {count} {noun}{suffix}".format(
-                    count=self._previously_failed_count, suffix=suffix, noun=noun
+                self._report_status = (
+                    f"rerun previous {self._previously_failed_count} {noun}{suffix}"
                 )
 
             if self._skipped_files > 0:
                 files_noun = "file" if self._skipped_files == 1 else "files"
-                self._report_status += " (skipped {files} {files_noun})".format(
-                    files=self._skipped_files, files_noun=files_noun
-                )
+                self._report_status += f" (skipped {self._skipped_files} {files_noun})"
         else:
             self._report_status = "no previously failed tests, "
             if self.config.getoption("last_failed_no_failures") == "none":
@@ -431,7 +465,7 @@ class NFPlugin:
         return res
 
     def _get_increasing_order(self, items: Iterable[nodes.Item]) -> List[nodes.Item]:
-        return sorted(items, key=lambda item: item.path.stat().st_mtime, reverse=True)  # type: ignore[no-any-return]
+        return sorted(items, key=lambda item: item.path.stat().st_mtime, reverse=True)
 
     def pytest_sessionfinish(self) -> None:
         config = self.config
@@ -572,21 +606,21 @@ def cacheshow(config: Config, session: Session) -> int:
     dummy = object()
     basedir = config.cache._cachedir
     vdir = basedir / Cache._CACHE_PREFIX_VALUES
-    tw.sep("-", "cache values for %r" % glob)
+    tw.sep("-", f"cache values for {glob!r}")
     for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
         key = str(valpath.relative_to(vdir))
         val = config.cache.get(key, dummy)
         if val is dummy:
-            tw.line("%s contains unreadable content, will be ignored" % key)
+            tw.line(f"{key} contains unreadable content, will be ignored")
         else:
-            tw.line("%s contains:" % key)
+            tw.line(f"{key} contains:")
             for line in pformat(val).splitlines():
                 tw.line("  " + line)
 
     ddir = basedir / Cache._CACHE_PREFIX_DIRS
     if ddir.is_dir():
         contents = sorted(ddir.rglob(glob))
-        tw.sep("-", "cache directories for %r" % glob)
+        tw.sep("-", f"cache directories for {glob!r}")
         for p in contents:
             # if p.is_dir():
             #    print("%s/" % p.relative_to(basedir))

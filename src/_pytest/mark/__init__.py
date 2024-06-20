@@ -1,4 +1,5 @@
 """Generic mechanism for marking and selecting python functions."""
+
 import dataclasses
 from typing import AbstractSet
 from typing import Collection
@@ -22,6 +23,7 @@ from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
+
 
 if TYPE_CHECKING:
     from _pytest.nodes import Item
@@ -76,7 +78,7 @@ def pytest_addoption(parser: Parser) -> None:
         default="",
         metavar="EXPRESSION",
         help="Only run tests which match the given substring expression. "
-        "An expression is a Python evaluatable expression "
+        "An expression is a Python evaluable expression "
         "where all names are substring-matched against test names "
         "and their parent classes. Example: -k 'test_method or test_"
         "other' matches all test functions and classes whose name "
@@ -120,7 +122,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
             parts = line.split(":", 1)
             name = parts[0]
             rest = parts[1] if len(parts) == 2 else ""
-            tw.write("@pytest.mark.%s:" % name, bold=True)
+            tw.write(f"@pytest.mark.{name}:", bold=True)
             tw.line(rest)
             tw.line()
         config._ensure_unconfigure()
@@ -267,8 +269,8 @@ def pytest_configure(config: Config) -> None:
 
     if empty_parameterset not in ("skip", "xfail", "fail_at_collect", None, ""):
         raise UsageError(
-            "{!s} must be one of skip, xfail or fail_at_collect"
-            " but it is {!r}".format(EMPTY_PARAMETERSET_OPTION, empty_parameterset)
+            f"{EMPTY_PARAMETERSET_OPTION!s} must be one of skip, xfail or fail_at_collect"
+            f" but it is {empty_parameterset!r}"
         )
 
 

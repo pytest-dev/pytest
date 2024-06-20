@@ -1,10 +1,11 @@
+# mypy: allow-untyped-defs
+from contextlib import contextmanager
 import os.path
+from pathlib import Path
+from string import ascii_lowercase
 import subprocess
 import sys
 import textwrap
-from contextlib import contextmanager
-from pathlib import Path
-from string import ascii_lowercase
 
 from _pytest.pytester import Pytester
 
