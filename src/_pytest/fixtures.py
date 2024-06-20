@@ -42,7 +42,6 @@ from _pytest._code import Source
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
 from _pytest.compat import getfuncargnames
@@ -1241,7 +1240,6 @@ class FixtureFunctionDefinition:
         # Using isinstance on every object in code might execute code that is not intended to be executed.
         # Like lazy loaded classes.
         self._pytestfixturefunction = fixture_function_marker
-        self.__pytest_wrapped__ = _PytestWrapper(function)
         self.fixture_function_marker = fixture_function_marker
         self.fixture_function = function
         self.instance = instance

@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 import enum
 import functools
 import inspect
@@ -205,30 +204,15 @@ def ascii_escaped(val: bytes | str) -> str:
     return ret.translate(_non_printable_ascii_translate_table)
 
 
-# TODO: remove and replace with FixtureFunctionDefinition
-@dataclasses.dataclass
-class _PytestWrapper:
-    """Dummy wrapper around a function object for internal use only.
-
-    Used to correctly unwrap the underlying function object when we are
-    creating fixtures, because we wrap the function object ourselves with a
-    decorator to issue warnings when the fixture function is called directly.
-    """
-
-    obj: Any
-
-
 def get_real_func(obj):
     """Get the real function object of the (possibly) wrapped object by
-    functools.wraps or functools.partial."""
+    functools.wraps or functools.partial or pytest.fixture"""
+    from _pytest.fixtures import FixtureFunctionDefinition
+
     start_obj = obj
-    for i in range(100):
-        # __pytest_wrapped__ is set by @pytest.fixture when wrapping the fixture function
-        # to trigger a warning if it gets called directly instead of by pytest: we don't
-        # want to unwrap further than this otherwise we lose useful wrappings like @mock.patch (#3774)
-        new_obj = getattr(obj, "__pytest_wrapped__", None)
-        if isinstance(new_obj, _PytestWrapper):
-            obj = new_obj.obj
+    for _ in range(100):
+        if isinstance(obj, FixtureFunctionDefinition):
+            obj = obj.get_real_func()
             break
         new_obj = getattr(obj, "__wrapped__", None)
         if new_obj is None:
