@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import collections
 import dataclasses
 from typing import AbstractSet
 from typing import Collection
@@ -181,7 +182,9 @@ class KeywordMatcher:
 
         return cls(mapped_names)
 
-    def __call__(self, subname: str) -> bool:
+    def __call__(self, subname: str, /, **kwargs: object) -> bool:
+        if kwargs:
+            raise UsageError("Keyword expressions do not support call parameters.")
         subname = subname.lower()
         names = (name.lower() for name in self._names)
 
@@ -211,6 +214,9 @@ def deselect_by_keyword(items: list[Item], config: Config) -> None:
         items[:] = remaining
 
 
+NOT_NONE_SENTINEL = object()
+
+
 @dataclasses.dataclass
 class MarkMatcher:
     """A matcher for markers which are present.
@@ -218,17 +224,31 @@ class MarkMatcher:
     Tries to match on any marker names, attached to the given colitem.
     """
 
-    __slots__ = ("own_mark_names",)
+    __slots__ = ("own_mark_name_mapping",)
 
-    own_mark_names: AbstractSet[str]
+    own_mark_name_mapping: dict[str, list[Mark]]
 
     @classmethod
     def from_item(cls, item: Item) -> MarkMatcher:
-        mark_names = {mark.name for mark in item.iter_markers()}
-        return cls(mark_names)
+        mark_name_mapping = collections.defaultdict(list)
+        for mark in item.iter_markers():
+            mark_name_mapping[mark.name].append(mark)
+        return cls(mark_name_mapping)
 
-    def __call__(self, name: str) -> bool:
-        return name in self.own_mark_names
+    def __call__(self, name: str, /, **kwargs: object) -> bool:
+        if not (matches := self.own_mark_name_mapping.get(name, [])):
+            return False
+
+        if not kwargs:
+            return True
+
+        for mark in matches:
+            if all(
+                mark.kwargs.get(k, NOT_NONE_SENTINEL) == v for k, v in kwargs.items()
+            ):
+                return True
+
+        return False
 
 
 def deselect_by_mark(items: list[Item], config: Config) -> None:

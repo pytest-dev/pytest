@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import collections
 from typing import Callable
+from typing import cast
 
+from _pytest.mark import MarkMatcher
+from _pytest.mark import structures
 from _pytest.mark.expression import Expression
+from _pytest.mark.expression import MatcherCall
 from _pytest.mark.expression import ParseError
 import pytest
 
 
 def evaluate(input: str, matcher: Callable[[str], bool]) -> bool:
-    return Expression.compile(input).evaluate(matcher)
+    return Expression.compile(input).evaluate(cast(MatcherCall, matcher))
 
 
 def test_empty_is_false() -> None:
@@ -153,6 +158,8 @@ def test_syntax_errors(expr: str, column: int, message: str) -> None:
         "1234",
         "1234abcd",
         "1234and",
+        "1234or",
+        "1234not",
         "notandor",
         "not_and_or",
         "not[and]or",
@@ -195,3 +202,123 @@ def test_valid_idents(ident: str) -> None:
 def test_invalid_idents(ident: str) -> None:
     with pytest.raises(ParseError):
         evaluate(ident, lambda ident: True)
+
+
+@pytest.mark.parametrize(
+    "expr, expected_error_msg",
+    (
+        ("mark(1=2)", 'unexpected character/s "1"'),
+        ("mark(/=2)", 'unexpected character/s "/"'),
+        ("mark(True=False)", 'unexpected character/s "True"'),
+        ("mark(def=False)", 'unexpected character/s "def"'),
+        ("mark(class=False)", 'unexpected character/s "class"'),
+        ("mark(if=False)", 'unexpected character/s "if"'),
+        ("mark(else=False)", 'unexpected character/s "else"'),
+        ("mark(1)", 'unexpected character/s "1"'),
+        ("mark(var:=False", 'unexpected character/s "var:"'),
+        ("mark(valid=False, def=1)", 'unexpected character/s "def"'),
+        ("mark(var==", "expected identifier; got ="),
+        ("mark(var=none)", 'unexpected character/s "none"'),
+        ("mark(var=1.1)", 'unexpected character/s "1.1"'),
+        ("mark(var)", "expected =; got right parenthesis"),
+        ("mark(var=')", """closing quote "'" is missing"""),
+        ('mark(var=")', 'closing quote """ is missing'),
+        ("""mark(var="')""", 'closing quote """ is missing'),
+        ("""mark(var='")""", """closing quote "'" is missing"""),
+        (r"mark(var='\hugo')", "escaping not supported in marker expression"),
+    ),
+)
+def test_invalid_kwarg_name_or_value(  # TODO: move to `test_syntax_errors` ?
+    expr: str, expected_error_msg: str, mark_matcher: MarkMatcher
+) -> None:
+    with pytest.raises(ParseError, match=expected_error_msg):
+        assert evaluate(expr, mark_matcher)
+
+
+@pytest.fixture(scope="session")
+def mark_matcher() -> MarkMatcher:
+    markers = []
+    mark_name_mapping = collections.defaultdict(list)
+
+    def create_marker(name: str, kwargs: dict[str, object]) -> structures.Mark:
+        return structures.Mark(name=name, args=tuple(), kwargs=kwargs, _ispytest=True)
+
+    markers.append(create_marker("number_mark", {"a": 1, "b": 2, "c": 3, "d": 999_999}))
+    markers.append(
+        create_marker("builtin_matchers_mark", {"x": True, "y": False, "z": None})
+    )
+    markers.append(
+        create_marker(
+            "str_mark",
+            {"m": "M", "space": "with space", "aaאבגדcc": "aaאבגדcc", "אבגד": "אבגד"},
+        )
+    )
+
+    for marker in markers:
+        mark_name_mapping[marker.name].append(marker)
+
+    return MarkMatcher(mark_name_mapping)
+
+
+@pytest.mark.parametrize(
+    "expr, expected",
+    (
+        # happy cases
+        ("number_mark(a=1)", True),
+        ("number_mark(b=2)", True),
+        ("number_mark(a=1,b=2)", True),
+        ("number_mark(a=1,     b=2)", True),
+        ("number_mark(d=999999)", True),
+        ("number_mark(a   =   1,b= 2,     c = 3)", True),
+        # sad cases
+        ("number_mark(a=6)", False),
+        ("number_mark(b=6)", False),
+        ("number_mark(a=1,b=6)", False),
+        ("number_mark(a=6,b=2)", False),
+        ("number_mark(a   =   1,b= 2,     c = 6)", False),
+        ("number_mark(a='1')", False),
+    ),
+)
+def test_keyword_expressions_with_numbers(
+    expr: str, expected: bool, mark_matcher: MarkMatcher
+) -> None:
+    assert evaluate(expr, mark_matcher) is expected
+
+
+@pytest.mark.parametrize(
+    "expr, expected",
+    (
+        ("builtin_matchers_mark(x=True)", True),
+        ("builtin_matchers_mark(x=False)", False),
+        ("builtin_matchers_mark(y=True)", False),
+        ("builtin_matchers_mark(y=False)", True),
+        ("builtin_matchers_mark(z=None)", True),
+        ("builtin_matchers_mark(z=False)", False),
+        ("builtin_matchers_mark(z=True)", False),
+        ("builtin_matchers_mark(z=0)", False),
+        ("builtin_matchers_mark(z=1)", False),
+    ),
+)
+def test_builtin_matchers_keyword_expressions(  # TODO: naming when decided
+    expr: str, expected: bool, mark_matcher: MarkMatcher
+) -> None:
+    assert evaluate(expr, mark_matcher) is expected
+
+
+@pytest.mark.parametrize(
+    "expr, expected",
+    (
+        ("str_mark(m='M')", True),
+        ('str_mark(m="M")', True),
+        ("str_mark(aaאבגדcc='aaאבגדcc')", True),
+        ("str_mark(אבגד='אבגד')", True),
+        ("str_mark(space='with space')", True),
+        ("str_mark(m='wrong')", False),
+        ("str_mark(aaאבגדcc='wrong')", False),
+        ("str_mark(אבגד='wrong')", False),
+    ),
+)
+def test_str_keyword_expressions(
+    expr: str, expected: bool, mark_matcher: MarkMatcher
+) -> None:
+    assert evaluate(expr, mark_matcher) is expected
