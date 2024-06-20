@@ -45,8 +45,6 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
-
-# from _pytest.compat import get_real_method
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
@@ -1150,31 +1148,6 @@ def pytest_fixture_setup(
     return result
 
 
-def wrap_function_to_error_out_if_called_directly(
-    function: FixtureFunction,
-    fixture_marker: FixtureFunctionMarker,
-) -> FixtureFunction:
-    """Wrap the given fixture function so we can raise an error about it being called directly,
-    instead of used as an argument in a test function."""
-    name = fixture_marker.name or function.__name__
-    message = (
-        f'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
-        "but are created automatically when test functions request them as parameters.\n"
-        "See https://docs.pytest.org/en/stable/explanation/fixtures.html for more information about fixtures, and\n"
-        "https://docs.pytest.org/en/stable/deprecations.html#calling-fixtures-directly about how to update your code."
-    )
-
-    @functools.wraps(function)
-    def result(*args, **kwargs):
-        fail(message, pytrace=False)
-
-    # Keep reference to the original function in our own custom attribute so we don't unwrap
-    # further than this point and lose useful wrappings like @mock.patch (#3774).
-    result.__pytest_wrapped__ = _PytestWrapper(function)  # type: ignore[attr-defined]
-
-    return cast(FixtureFunction, result)
-
-
 @final
 @dataclasses.dataclass(frozen=True)
 class FixtureFunctionMarker:
@@ -1193,7 +1166,7 @@ class FixtureFunctionMarker:
         if inspect.isclass(function):
             raise ValueError("class fixtures not supported (maybe in the future)")
 
-        if getattr(function, "_pytestfixturefunction", False):
+        if isinstance(function, FixtureFunctionDefinition):
             raise ValueError(
                 f"@pytest.fixture is being applied more than once to the same function {function.__name__!r}"
             )
@@ -1203,8 +1176,6 @@ class FixtureFunctionMarker:
 
         fixture_definition = FixtureFunctionDefinition(function, self)
 
-        # function = wrap_function_to_error_out_if_called_directly(function, self)
-
         name = self.name or function.__name__
         if name == "request":
             location = getlocation(function)
@@ -1213,16 +1184,16 @@ class FixtureFunctionMarker:
                 pytrace=False,
             )
 
-        # Type ignored because https://github.com/python/mypy/issues/2087.
-        # function._pytestfixturefunction = self  # type: ignore[attr-defined]
-        # return function
         return fixture_definition
 
     def __repr__(self):
         return "fixture"
 
 
+# TODO: write docstring
 class FixtureFunctionDefinition:
+    """Since deco_fixture is now an instance of FixtureFunctionDef the getsource function will not work on it."""
+
     def __init__(
         self,
         function: Callable[..., object],
@@ -1230,19 +1201,15 @@ class FixtureFunctionDefinition:
         instance: Optional[type] = None,
     ):
         self.name = fixture_function_marker.name or function.__name__
+        self.__name__ = self.name
         self._pytestfixturefunction = fixture_function_marker
         self.__pytest_wrapped__ = _PytestWrapper(function)
-        self.fixture_function = function
         self.fixture_function_marker = fixture_function_marker
-        self.scope = fixture_function_marker.scope
-        self.params = fixture_function_marker.params
-        self.autouse = fixture_function_marker.autouse
-        self.ids = fixture_function_marker.ids
         self.fixture_function = function
         self.instance = instance
 
     def __repr__(self) -> str:
-        return f"fixture {self.fixture_function}"
+        return f"pytest_fixture({self.fixture_function})"
 
     def __get__(self, instance, owner=None):
         return FixtureFunctionDefinition(
@@ -1250,7 +1217,13 @@ class FixtureFunctionDefinition:
         )
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-        return self.get_real_func(*args, **kwds)
+        message = (
+            f'Fixture "{self.name}" called directly. Fixtures are not meant to be called directly,\n'
+            "but are created automatically when test functions request them as parameters.\n"
+            "See https://docs.pytest.org/en/stable/explanation/fixtures.html for more information about fixtures, and\n"
+            "https://docs.pytest.org/en/stable/deprecations.html#calling-fixtures-directly"
+        )
+        fail(message, pytrace=False)
 
     def get_real_func(self):
         if self.instance is not None:
@@ -1790,26 +1763,19 @@ class FixtureManager:
                 # Magic globals  with __getattr__ might have got us a wrong
                 # fixture attribute.
                 continue
-
-            if marker.name:
-                name = marker.name
-
-            # During fixture definition we wrap the original fixture function
-            # to issue a warning if called directly, so here we unwrap it in
-            # order to not emit the warning when pytest itself calls the
-            # fixture function.
-            # func = get_real_method(obj, holderobj)
-            func = obj.get_real_func()
-
-            self._register_fixture(
-                name=name,
-                nodeid=nodeid,
-                func=func,
-                scope=marker.scope,
-                params=marker.params,
-                ids=marker.ids,
-                autouse=marker.autouse,
-            )
+            if isinstance(obj, FixtureFunctionDefinition):
+                if marker.name:
+                    name = marker.name
+                func = obj.get_real_func()
+                self._register_fixture(
+                    name=name,
+                    nodeid=nodeid,
+                    func=func,
+                    scope=marker.scope,
+                    params=marker.params,
+                    ids=marker.ids,
+                    autouse=marker.autouse,
+                )
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node

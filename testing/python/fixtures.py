@@ -4509,6 +4509,21 @@ def test_fixture_double_decorator(pytester: Pytester) -> None:
     )
 
 
+def test_fixture_class(pytester: Pytester) -> None:
+    """Check if an error is raised when using @pytest.fixture on a class."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        class A:
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
+
+
 def test_fixture_param_shadowing(pytester: Pytester) -> None:
     """Parametrized arguments would be shadowed if a fixture with the same name also exists (#5036)"""
     pytester.makepyfile(
