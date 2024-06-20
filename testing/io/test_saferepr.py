@@ -6,6 +6,7 @@ from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 import pytest
+import re
 
 
 def test_simple_repr():
@@ -207,13 +208,11 @@ class TestSafereprUnbounded:
     def test_saferepr_unbounded(self):
         """saferepr() of an unbound method should still show the full information"""
         obj = self.Help()
-        # On windows, id adds leading zeros
-        obj_id = re.sub(r"^0+", "", f"{id(obj):x}").lower()
-
-        assert (
-            saferepr(obj)
-            == f"<test_saferepr.{self.__class__.__name__}.Help object at 0x{obj_id !s}>"
+        # using id() to fetch memory address fails on different platforms
+        pattern = re.compile(
+            r"<test_saferepr.TestSafereprUnbounded.Help object at 0x[0-9a-fA-F]*>",
         )
+        assert pattern.match(saferepr(obj))
         assert (
             saferepr(self.Help)
             == f"<class 'test_saferepr.{self.__class__.__name__}.Help'>"
