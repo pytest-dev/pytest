@@ -1,0 +1,1 @@
+:func:`pytest.approx` now correctly handles :class:`Sequence <collections.abc.Sequence>`-like objects.

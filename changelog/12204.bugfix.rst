@@ -1,0 +1,7 @@
+Fix a regression in pytest 8.0 where tracebacks get longer and longer when multiple tests fail due to a shared higher-scope fixture which raised.
+
+Also fix a similar regression in pytest 5.4 for collectors which raise during setup.
+
+The fix necessitated internal changes which may affect some plugins:
+- ``FixtureDef.cached_result[2]`` is now a tuple ``(exc, tb)`` instead of ``exc``.
+- ``SetupState.stack`` failures are now a tuple ``(exc, tb)`` instead of ``exc``.

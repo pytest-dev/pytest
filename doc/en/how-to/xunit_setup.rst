@@ -63,6 +63,8 @@ and after all test methods of the class are called:
         setup_class.
         """
 
+.. _xunit-method-setup:
+
 Method and function level setup/teardown
 -----------------------------------------------
 

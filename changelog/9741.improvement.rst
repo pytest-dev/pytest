@@ -1,3 +1,0 @@
-On Python 3.11, use the standard library's :mod:`tomllib` to parse TOML.
-
-:mod:`tomli`` is no longer a dependency on Python 3.11.

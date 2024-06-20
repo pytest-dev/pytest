@@ -18,11 +18,28 @@ on:
 env:
   PYTEST_ADDOPTS: "--color=yes"
 
+# Cancel running jobs for the same workflow and branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Set permissions at the job level.
 permissions: {}
 
 jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Build and Check Package
+      uses: hynek/build-and-inspect-python-package@v2.6.0
+
   build:
+    needs: [package]
+
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     permissions:
@@ -32,46 +49,44 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py37",
-          "windows-py37-pluggy",
           "windows-py38",
+          "windows-py38-pluggy",
           "windows-py39",
           "windows-py310",
           "windows-py311",
+          "windows-py312",
+          "windows-py313",
 
-          "ubuntu-py37",
-          "ubuntu-py37-pluggy",
-          "ubuntu-py37-freeze",
           "ubuntu-py38",
+          "ubuntu-py38-pluggy",
+          "ubuntu-py38-freeze",
           "ubuntu-py39",
           "ubuntu-py310",
           "ubuntu-py311",
+          "ubuntu-py312",
+          "ubuntu-py313",
           "ubuntu-pypy3",
 
-          "macos-py37",
           "macos-py38",
           "macos-py39",
           "macos-py310",
+          "macos-py312",
+          "macos-py313",
 
-          "docs",
           "doctesting",
           "plugins",
         ]
 
         include:
-          - name: "windows-py37"
-            python: "3.7"
-            os: windows-latest
-            tox_env: "py37-numpy"
-          - name: "windows-py37-pluggy"
-            python: "3.7"
-            os: windows-latest
-            tox_env: "py37-pluggymain-xdist"
           - name: "windows-py38"
             python: "3.8"
             os: windows-latest
             tox_env: "py38-unittestextras"
             use_coverage: true
+          - name: "windows-py38-pluggy"
+            python: "3.8"
+            os: windows-latest
+            tox_env: "py38-pluggymain-pylib-xdist"
           - name: "windows-py39"
             python: "3.9"
             os: windows-latest
@@ -81,27 +96,31 @@ jobs:
             os: windows-latest
             tox_env: "py310-xdist"
           - name: "windows-py311"
-            python: "3.11-dev"
+            python: "3.11"
             os: windows-latest
             tox_env: "py311"
+          - name: "windows-py312"
+            python: "3.12"
+            os: windows-latest
+            tox_env: "py312"
+          - name: "windows-py313"
+            python: "3.13-dev"
+            os: windows-latest
+            tox_env: "py313"
 
-          - name: "ubuntu-py37"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-lsof-numpy-pexpect"
-            use_coverage: true
-          - name: "ubuntu-py37-pluggy"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-pluggymain-xdist"
-          - name: "ubuntu-py37-freeze"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "py37-freeze"
           - name: "ubuntu-py38"
             python: "3.8"
             os: ubuntu-latest
-            tox_env: "py38-xdist"
+            tox_env: "py38-lsof-numpy-pexpect"
+            use_coverage: true
+          - name: "ubuntu-py38-pluggy"
+            python: "3.8"
+            os: ubuntu-latest
+            tox_env: "py38-pluggymain-pylib-xdist"
+          - name: "ubuntu-py38-freeze"
+            python: "3.8"
+            os: ubuntu-latest
+            tox_env: "py38-freeze"
           - name: "ubuntu-py39"
             python: "3.9"
             os: ubuntu-latest
@@ -111,57 +130,95 @@ jobs:
             os: ubuntu-latest
             tox_env: "py310-xdist"
           - name: "ubuntu-py311"
-            python: "3.11-dev"
+            python: "3.11"
             os: ubuntu-latest
             tox_env: "py311"
+            use_coverage: true
+          - name: "ubuntu-py312"
+            python: "3.12"
+            os: ubuntu-latest
+            tox_env: "py312"
+            use_coverage: true
+          - name: "ubuntu-py313"
+            python: "3.13-dev"
+            os: ubuntu-latest
+            tox_env: "py313"
+            use_coverage: true
           - name: "ubuntu-pypy3"
-            python: "pypy-3.7"
+            python: "pypy-3.8"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
-          - name: "macos-py37"
-            python: "3.7"
-            os: macos-latest
-            tox_env: "py37-xdist"
           - name: "macos-py38"
             python: "3.8"
             os: macos-latest
             tox_env: "py38-xdist"
-            use_coverage: true
           - name: "macos-py39"
             python: "3.9"
             os: macos-latest
             tox_env: "py39-xdist"
+            use_coverage: true
           - name: "macos-py310"
             python: "3.10"
             os: macos-latest
             tox_env: "py310-xdist"
+          - name: "macos-py312"
+            python: "3.12"
+            os: macos-latest
+            tox_env: "py312-xdist"
+          - name: "macos-py313"
+            python: "3.13-dev"
+            os: macos-latest
+            tox_env: "py313-xdist"
 
           - name: "plugins"
-            python: "3.9"
+            python: "3.12"
             os: ubuntu-latest
             tox_env: "plugins"
 
-          - name: "docs"
-            python: "3.7"
-            os: ubuntu-latest
-            tox_env: "docs"
           - name: "doctesting"
-            python: "3.7"
+            python: "3.8"
             os: ubuntu-latest
             tox_env: "doctesting"
             use_coverage: true
 
+    continue-on-error: >-
+      ${{
+        contains(
+          fromJSON(
+            '[
+              "windows-py38-pluggy",
+              "windows-py313",
+              "ubuntu-py38-pluggy",
+              "ubuntu-py38-freeze",
+              "ubuntu-py313",
+              "macos-py38",
+              "macos-py313"
+            ]'
+          ),
+          matrix.name
+        )
+        && true
+        || false
+      }}
+
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         persist-credentials: false
 
+    - name: Download Package
+      uses: actions/download-artifact@v4
+      with:
+        name: Packages
+        path: dist
+
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
+        check-latest: ${{ endsWith(matrix.python, '-dev') }}
 
     - name: Install dependencies
       run: |
@@ -170,11 +227,13 @@ jobs:
 
     - name: Test without coverage
       if: "! matrix.use_coverage"
-      run: "tox -e ${{ matrix.tox_env }}"
+      shell: bash
+      run: tox run -e ${{ matrix.tox_env }} --installpkg `find dist/*.tar.gz`
 
     - name: Test with coverage
       if: "matrix.use_coverage"
-      run: "tox -e ${{ matrix.tox_env }}-coverage"
+      shell: bash
+      run: tox run -e ${{ matrix.tox_env }}-coverage --installpkg `find dist/*.tar.gz`
 
     - name: Generate coverage report
       if: "matrix.use_coverage"
@@ -182,8 +241,23 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v4
+      continue-on-error: true
       with:
         fail_ci_if_error: true
         files: ./coverage.xml
         verbose: true
+
+  check:  # This job does nothing and is only used for the branch protection
+    if: always()
+
+    needs:
+    - build
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@198badcb65a1a44528f27d5da555c4be9f12eac6
+      with:
+        jobs: ${{ toJSON(needs) }}

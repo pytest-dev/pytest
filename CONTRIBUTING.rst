@@ -1,13 +1,9 @@
 ============================
-Contribution getting started
+Contributing
 ============================
 
 Contributions are highly welcomed and appreciated.  Every little bit of help counts,
 so do not hesitate!
-
-.. contents::
-   :depth: 2
-   :backlinks: none
 
 
 .. _submitfeedback:
@@ -50,7 +46,7 @@ Fix bugs
 --------
 
 Look through the `GitHub issues for bugs <https://github.com/pytest-dev/pytest/labels/type:%20bug>`_.
-See also the `"status: easy" issues <https://github.com/pytest-dev/pytest/labels/status%3A%20easy>`_
+See also the `"good first issue" issues <https://github.com/pytest-dev/pytest/labels/good%20first%20issue>`_
 that are friendly to new contributors.
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs. To indicate that you are going
@@ -128,7 +124,7 @@ For example:
 Submitting Plugins to pytest-dev
 --------------------------------
 
-Pytest development of the core, some plugins and support code happens
+Development of the pytest core, support code, and some plugins happens
 in repositories living under the ``pytest-dev`` organisations:
 
 - `pytest-dev on GitHub <https://github.com/pytest-dev>`_
@@ -197,11 +193,12 @@ Short version
 ~~~~~~~~~~~~~
 
 #. Fork the repository.
+#. Fetch tags from upstream if necessary (if you cloned only main `git fetch --tags https://github.com/pytest-dev/pytest`).
 #. Enable and install `pre-commit <https://pre-commit.com>`_ to ensure style-guides and code checks are followed.
-#. Follow **PEP-8** for naming and `black <https://github.com/psf/black>`_ for formatting.
+#. Follow `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ for naming.
 #. Tests are run using ``tox``::
 
-    tox -e linting,py37
+    tox -e linting,py39
 
    The test environments above are usually enough to cover most cases locally.
 
@@ -223,7 +220,7 @@ changes you want to review and merge.  Pull requests are stored on
 Once you send a pull request, we can discuss its potential modifications and
 even add more commits to it later on. There's an excellent tutorial on how Pull
 Requests work in the
-`GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_.
+`GitHub Help Center <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests>`_.
 
 Here is a simple overview, with pytest-specific bits:
 
@@ -236,6 +233,7 @@ Here is a simple overview, with pytest-specific bits:
 
     $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
+    $ git fetch --tags https://github.com/pytest-dev/pytest
     # now, create your own branch off "main":
 
         $ git checkout -b your-bugfix-branch-name main
@@ -243,6 +241,11 @@ Here is a simple overview, with pytest-specific bits:
    Given we have "major.minor.micro" version numbers, bug fixes will usually
    be released in micro releases whereas features will be released in
    minor releases and incompatible changes in major releases.
+
+   You will need the tags to test locally, so be sure you have the tags from the main repository. If you suspect you don't, set the main repository as upstream and fetch the tags::
+
+     $ git remote add upstream https://github.com/pytest-dev/pytest
+     $ git fetch upstream --tags
 
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
@@ -267,35 +270,35 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Run all the tests
 
-   You need to have Python 3.7 available in your system.  Now
+   You need to have Python 3.8 or later available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ tox -e linting,py37
+    $ tox -e linting,py39
 
-   This command will run tests via the "tox" tool against Python 3.7
+   This command will run tests via the "tox" tool against Python 3.9
    and also perform "lint" coding-style checks.
 
-#. You can now edit your local working copy and run the tests again as necessary. Please follow PEP-8 for naming.
+#. You can now edit your local working copy and run the tests again as necessary. Please follow `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ for naming.
 
-   You can pass different options to ``tox``. For example, to run tests on Python 3.7 and pass options to pytest
+   You can pass different options to ``tox``. For example, to run tests on Python 3.9 and pass options to pytest
    (e.g. enter pdb on failure) to pytest you can do::
 
-    $ tox -e py37 -- --pdb
+    $ tox -e py39 -- --pdb
 
-   Or to only run tests in a particular test module on Python 3.7::
+   Or to only run tests in a particular test module on Python 3.9::
 
-    $ tox -e py37 -- testing/test_config.py
+    $ tox -e py39 -- testing/test_config.py
 
 
    When committing, ``pre-commit`` will re-format the files if necessary.
 
 #. If instead of using ``tox`` you prefer to run the tests directly, then we suggest to create a virtual environment and use
-   an editable install with the ``testing`` extra::
+   an editable install with the ``dev`` extra::
 
        $ python3 -m venv .venv
        $ source .venv/bin/activate  # Linux
        $ .venv/Scripts/activate.bat  # Windows
-       $ pip install -e ".[testing]"
+       $ pip install -e ".[dev]"
 
    Afterwards, you can edit the files and run pytest normally::
 
@@ -380,7 +383,7 @@ them.
 Backporting bug fixes for the next patch release
 ------------------------------------------------
 
-Pytest makes feature release every few weeks or months. In between, patch releases
+Pytest makes a feature release every few weeks or months. In between, patch releases
 are made to the previous feature release, containing bug fixes only. The bug fixes
 usually fix regressions, but may be any change that should reach users before the
 next feature release.
@@ -389,7 +392,7 @@ Suppose for example that the latest release was 1.2.3, and you want to include
 a bug fix in 1.2.4 (check https://github.com/pytest-dev/pytest/releases for the
 actual latest release). The procedure for this is:
 
-#. First, make sure the bug is fixed the ``main`` branch, with a regular pull
+#. First, make sure the bug is fixed in the ``main`` branch, with a regular pull
    request, as described above. An exception to this is if the bug fix is not
    applicable to ``main`` anymore.
 

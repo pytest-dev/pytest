@@ -1,8 +1,9 @@
+# mypy: allow-untyped-defs
 import io
 import sys
 
-import pytest
 from _pytest.pytester import Pytester
+import pytest
 
 
 def test_enabled(pytester: Pytester) -> None:
@@ -100,7 +101,7 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
     result = pytester.runpytest_subprocess(*args)
     tb_output = "most recent call first"
     if enabled:
-        result.stderr.fnmatch_lines(["*%s*" % tb_output])
+        result.stderr.fnmatch_lines([f"*{tb_output}*"])
     else:
         assert tb_output not in result.stderr.str()
     result.stdout.fnmatch_lines(["*1 passed*"])
@@ -113,6 +114,7 @@ def test_cancel_timeout_on_hook(monkeypatch, hook_name) -> None:
     to timeout before entering pdb (pytest-dev/pytest-faulthandler#12) or any
     other interactive exception (pytest-dev/pytest-faulthandler#14)."""
     import faulthandler
+
     from _pytest import faulthandler as faulthandler_plugin
 
     called = []

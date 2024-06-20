@@ -90,7 +90,7 @@ and can also be used to hold pytest configuration if they have a ``[pytest]`` se
 setup.cfg
 ~~~~~~~~~
 
-``setup.cfg`` files are general purpose configuration files, used originally by :doc:`distutils <python:distutils/configfile>`, and can also be used to hold pytest configuration
+``setup.cfg`` files are general purpose configuration files, used originally by ``distutils`` (now deprecated) and :std:doc:`setuptools <setuptools:userguide/declarative_config>`, and can also be used to hold pytest configuration
 if they have a ``[tool:pytest]`` section.
 
 .. code-block:: ini
@@ -177,13 +177,20 @@ Files will only be matched for configuration if:
 * ``tox.ini``: contains a ``[pytest]`` section.
 * ``setup.cfg``: contains a ``[tool:pytest]`` section.
 
+Finally, a ``pyproject.toml`` file will be considered the ``configfile`` if no other match was found, in this case
+even if it does not contain a ``[tool.pytest.ini_options]`` table (this was added in ``8.1``).
+
 The files are considered in the order above. Options from multiple ``configfiles`` candidates
 are never merged - the first match wins.
+
+The configuration file also determines the value of the ``rootpath``.
 
 The :class:`Config <pytest.Config>` object (accessible via hooks or through the :fixture:`pytestconfig` fixture)
 will subsequently carry these attributes:
 
-- :attr:`config.rootpath <pytest.Config.rootpath>`: the determined root directory, guaranteed to exist.
+- :attr:`config.rootpath <pytest.Config.rootpath>`: the determined root directory, guaranteed to exist. It is used as
+  a reference directory for constructing test addresses ("nodeids") and can be used also by plugins for storing
+  per-testrun information.
 
 - :attr:`config.inipath <pytest.Config.inipath>`: the determined ``configfile``, may be ``None``
   (it is named ``inipath`` for historical reasons).
@@ -193,9 +200,7 @@ will subsequently carry these attributes:
     versions of the older ``config.rootdir`` and ``config.inifile``, which have type
     ``py.path.local``, and still exist for backward compatibility.
 
-The ``rootdir`` is used as a reference directory for constructing test
-addresses ("nodeids") and can be used also by plugins for storing
-per-testrun information.
+
 
 Example:
 

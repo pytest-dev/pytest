@@ -1,16 +1,18 @@
-import operator
+# mypy: allow-untyped-defs
 from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
 from math import sqrt
+import operator
 from operator import eq
 from operator import ne
 from typing import Optional
 
-import pytest
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
+import pytest
 from pytest import approx
+
 
 inf, nan = float("inf"), float("nan")
 
@@ -37,9 +39,7 @@ def mocked_doctest_runner(monkeypatch):
     class MyDocTestRunner(doctest.DocTestRunner):
         def report_failure(self, out, test, example, got):
             raise AssertionError(
-                "'{}' evaluates to '{}', not '{}'".format(
-                    example.source.strip(), got.strip(), example.want.strip()
-                )
+                f"'{example.source.strip()}' evaluates to '{got.strip()}', not '{example.want.strip()}'"
             )
 
     return MyDocTestRunner()
@@ -99,6 +99,7 @@ class TestApprox:
             2.0,
             1.0,
             [
+                "",
                 "  comparison failed",
                 f"  Obtained: {SOME_FLOAT}",
                 f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}",
@@ -113,6 +114,7 @@ class TestApprox:
                 "c": 3000000.0,
             },
             [
+                r"",
                 r"  comparison failed. Mismatched elements: 2 / 3:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
@@ -123,9 +125,28 @@ class TestApprox:
         )
 
         assert_approx_raises_regex(
+            {"a": 1.0, "b": None, "c": None},
+            {
+                "a": None,
+                "b": 1000.0,
+                "c": None,
+            },
+            [
+                r"",
+                r"  comparison failed. Mismatched elements: 2 / 3:",
+                r"  Max absolute difference: -inf",
+                r"  Max relative difference: -inf",
+                r"  Index \| Obtained\s+\| Expected\s+",
+                rf"  a     \| {SOME_FLOAT} \| None",
+                rf"  b     \| None\s+\| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
+        assert_approx_raises_regex(
             [1.0, 2.0, 3.0, 4.0],
             [1.0, 3.0, 3.0, 5.0],
             [
+                r"",
                 r"  comparison failed. Mismatched elements: 2 / 4:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
@@ -139,6 +160,7 @@ class TestApprox:
             (1, 2.2, 4),
             (1, 3.2, 4),
             [
+                r"",
                 r"  comparison failed. Mismatched elements: 1 / 3:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
@@ -152,6 +174,7 @@ class TestApprox:
             [0.0],
             [1.0],
             [
+                r"",
                 r"  comparison failed. Mismatched elements: 1 / 1:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 r"  Max relative difference: inf",
@@ -170,6 +193,7 @@ class TestApprox:
             a,
             b,
             [
+                r"",
                 r"  comparison failed. Mismatched elements: 1 / 20:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
@@ -192,6 +216,7 @@ class TestApprox:
                 ]
             ),
             [
+                r"",
                 r"  comparison failed. Mismatched elements: 3 / 8:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
@@ -207,6 +232,7 @@ class TestApprox:
             np.array([0.0]),
             np.array([1.0]),
             [
+                r"",
                 r"  comparison failed. Mismatched elements: 1 / 1:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 r"  Max relative difference: inf",
@@ -224,6 +250,7 @@ class TestApprox:
         message = "\n".join(str(e.value).split("\n")[1:])
         assert message == "\n".join(
             [
+                "  ",
                 "  Impossible to compare arrays with different shapes.",
                 "  Shapes: (2, 1) and (2, 2)",
             ]
@@ -234,6 +261,7 @@ class TestApprox:
         message = "\n".join(str(e.value).split("\n")[1:])
         assert message == "\n".join(
             [
+                "  ",
                 "  Impossible to compare lists with different sizes.",
                 "  Lengths: 2 and 3",
             ]
@@ -247,6 +275,7 @@ class TestApprox:
                 2.0,
                 1.0,
                 [
+                    "",
                     "  comparison failed",
                     f"  Obtained: {SOME_FLOAT}",
                     f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}",
@@ -260,15 +289,15 @@ class TestApprox:
             a,
             b,
             [
-                r"  comparison failed. Mismatched elements: 20 / 20:",
-                rf"  Max absolute difference: {SOME_FLOAT}",
-                rf"  Max relative difference: {SOME_FLOAT}",
-                r"  Index \| Obtained\s+\| Expected",
-                rf"  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  \(2,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}...",
-                "",
-                rf"\s*...Full output truncated \({SOME_INT} lines hidden\), use '-vv' to show",
+                r"^  $",
+                r"^  comparison failed. Mismatched elements: 20 / 20:$",
+                rf"^  Max absolute difference: {SOME_FLOAT}$",
+                rf"^  Max relative difference: {SOME_FLOAT}$",
+                r"^  Index \| Obtained\s+\| Expected\s+$",
+                rf"^  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}e-{SOME_INT}$",
+                rf"^  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}e-{SOME_INT}\.\.\.$",
+                "^  $",
+                rf"^  ...Full output truncated \({SOME_INT} lines hidden\), use '-vv' to show$",
             ],
             verbosity_level=0,
         )
@@ -277,6 +306,7 @@ class TestApprox:
             a,
             b,
             [
+                r"  ",
                 r"  comparison failed. Mismatched elements: 20 / 20:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
@@ -630,6 +660,20 @@ class TestApprox:
     def test_dict_vs_other(self):
         assert 1 != approx({"a": 0})
 
+    def test_dict_for_div_by_zero(self, assert_approx_raises_regex):
+        assert_approx_raises_regex(
+            {"foo": 42.0},
+            {"foo": 0.0},
+            [
+                r"",
+                r"  comparison failed. Mismatched elements: 1 / 1:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                r"  Max relative difference: inf",
+                r"  Index \| Obtained\s+\| Expected   ",
+                rf"  foo   | {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
     def test_numpy_array(self):
         np = pytest.importorskip("numpy")
 
@@ -718,6 +762,23 @@ class TestApprox:
 
         assert a12 != approx(a21)
         assert a21 != approx(a12)
+
+    def test_numpy_array_implicit_conversion(self):
+        np = pytest.importorskip("numpy")
+
+        class ImplicitArray:
+            """Type which is implicitly convertible to a numpy array."""
+
+            def __init__(self, vals):
+                self.vals = vals
+
+            def __array__(self, dtype=None, copy=None):
+                return np.array(self.vals)
+
+        vec1 = ImplicitArray([1.0, 2.0, 3.0])
+        vec2 = ImplicitArray([1.0, 2.0, 4.0])
+        # see issue #12114 for test case
+        assert vec1 != approx(vec2)
 
     def test_numpy_array_protocol(self):
         """
@@ -896,6 +957,43 @@ class TestApprox:
         with pytest.raises(TypeError, match="only supports ordered sequences"):
             assert {1, 2, 3} == approx({1, 2, 3})
 
+    def test_strange_sequence(self):
+        """https://github.com/pytest-dev/pytest/issues/11797"""
+        a = MyVec3(1, 2, 3)
+        b = MyVec3(0, 1, 2)
+
+        # this would trigger the error inside the test
+        pytest.approx(a, abs=0.5)._repr_compare(b)
+
+        assert b == pytest.approx(a, abs=2)
+        assert b != pytest.approx(a, abs=0.5)
+
+
+class MyVec3:  # incomplete
+    """sequence like"""
+
+    _x: int
+    _y: int
+    _z: int
+
+    def __init__(self, x: int, y: int, z: int):
+        self._x, self._y, self._z = x, y, z
+
+    def __repr__(self) -> str:
+        return f"<MyVec3 {self._x} {self._y} {self._z}>"
+
+    def __len__(self) -> int:
+        return 3
+
+    def __getitem__(self, key: int) -> int:
+        if key == 0:
+            return self._x
+        if key == 1:
+            return self._y
+        if key == 2:
+            return self._z
+        raise IndexError(key)
+
 
 class TestRecursiveSequenceMap:
     def test_map_over_scalar(self):
@@ -923,3 +1021,6 @@ class TestRecursiveSequenceMap:
             (5, 8),
             [(7)],
         ]
+
+    def test_map_over_sequence_like(self):
+        assert _recursive_sequence_map(int, MyVec3(1, 2, 3)) == [1, 2, 3]

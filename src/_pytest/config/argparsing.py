@@ -1,33 +1,36 @@
+# mypy: allow-untyped-defs
 import argparse
+from gettext import gettext
 import os
 import sys
-import warnings
-from gettext import gettext
 from typing import Any
 from typing import Callable
 from typing import cast
 from typing import Dict
+from typing import final
 from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
-from typing import TYPE_CHECKING
 from typing import Union
 
 import _pytest._io
-from _pytest.compat import final
 from _pytest.config.exceptions import UsageError
-from _pytest.deprecated import ARGUMENT_PERCENT_DEFAULT
-from _pytest.deprecated import ARGUMENT_TYPE_STR
-from _pytest.deprecated import ARGUMENT_TYPE_STR_CHOICE
 from _pytest.deprecated import check_ispytest
 
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 FILE_OR_DIR = "file_or_dir"
+
+
+class NotSet:
+    def __repr__(self) -> str:
+        return "<notset>"
+
+
+NOT_SET = NotSet()
 
 
 @final
@@ -93,7 +96,7 @@ class Parser:
         :param opts:
             Option names, can be short or long options.
         :param attrs:
-            Same attributes as the argparse library's :py:func:`add_argument()
+            Same attributes as the argparse library's :meth:`add_argument()
             <argparse.ArgumentParser.add_argument>` function accepts.
 
         After command line parsing, options are available on the pytest config
@@ -119,7 +122,7 @@ class Parser:
         from _pytest._argcomplete import filescompleter
 
         optparser = MyOptionParser(self, self.extra_info, prog=self.prog)
-        groups = self._groups + [self._anonymous]
+        groups = [*self._groups, self._anonymous]
         for group in groups:
             if group.options:
                 desc = group.description or group.name
@@ -177,9 +180,9 @@ class Parser:
         name: str,
         help: str,
         type: Optional[
-            "Literal['string', 'paths', 'pathlist', 'args', 'linelist', 'bool']"
+            Literal["string", "paths", "pathlist", "args", "linelist", "bool"]
         ] = None,
-        default: Any = None,
+        default: Any = NOT_SET,
     ) -> None:
         """Register an ini-file option.
 
@@ -195,8 +198,15 @@ class Parser:
                 * ``paths``: a list of :class:`pathlib.Path`, separated as in a shell
                 * ``pathlist``: a list of ``py.path``, separated as in a shell
 
+            For ``paths`` and ``pathlist`` types, they are considered relative to the ini-file.
+            In case the execution is happening without an ini-file defined,
+            they will be considered relative to the current working directory (for example with ``--override-ini``).
+
             .. versionadded:: 7.0
                 The ``paths`` variable type.
+
+            .. versionadded:: 8.1
+                Use the current working directory to resolve ``paths`` and ``pathlist`` in the absence of an ini-file.
 
             Defaults to ``string`` if ``None`` or not passed.
         :param default:
@@ -206,8 +216,28 @@ class Parser:
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
         assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool")
+        if default is NOT_SET:
+            default = get_ini_default_for_type(type)
+
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
+
+
+def get_ini_default_for_type(
+    type: Optional[Literal["string", "paths", "pathlist", "args", "linelist", "bool"]],
+) -> Any:
+    """
+    Used by addini to get the default value for a given ini-option type, when
+    default is not supplied.
+    """
+    if type is None:
+        return ""
+    elif type in ("paths", "pathlist", "args", "linelist"):
+        return []
+    elif type == "bool":
+        return False
+    else:
+        return ""
 
 
 class ArgumentError(Exception):
@@ -234,39 +264,15 @@ class Argument:
     https://docs.python.org/3/library/optparse.html#optparse-standard-option-types
     """
 
-    _typ_map = {"int": int, "string": str, "float": float, "complex": complex}
-
     def __init__(self, *names: str, **attrs: Any) -> None:
         """Store params in private vars for use in add_argument."""
         self._attrs = attrs
         self._short_opts: List[str] = []
         self._long_opts: List[str] = []
-        if "%default" in (attrs.get("help") or ""):
-            warnings.warn(ARGUMENT_PERCENT_DEFAULT, stacklevel=3)
         try:
-            typ = attrs["type"]
+            self.type = attrs["type"]
         except KeyError:
             pass
-        else:
-            # This might raise a keyerror as well, don't want to catch that.
-            if isinstance(typ, str):
-                if typ == "choice":
-                    warnings.warn(
-                        ARGUMENT_TYPE_STR_CHOICE.format(typ=typ, names=names),
-                        stacklevel=4,
-                    )
-                    # argparse expects a type here take it from
-                    # the type of the first element
-                    attrs["type"] = type(attrs["choices"][0])
-                else:
-                    warnings.warn(
-                        ARGUMENT_TYPE_STR.format(typ=typ, names=names), stacklevel=4
-                    )
-                    attrs["type"] = Argument._typ_map[typ]
-                # Used in test_parseopt -> test_parse_defaultgetter.
-                self.type = attrs["type"]
-            else:
-                self.type = typ
         try:
             # Attribute existence is tested in Config._processopt.
             self.default = attrs["default"]
@@ -297,11 +303,6 @@ class Argument:
                 self._attrs[attr] = getattr(self, attr)
             except AttributeError:
                 pass
-        if self._attrs.get("help"):
-            a = self._attrs["help"]
-            a = a.replace("%default", "%(default)s")
-            # a = a.replace('%prog', '%(prog)s')
-            self._attrs["help"] = a
         return self._attrs
 
     def _set_opt_strings(self, opts: Sequence[str]) -> None:
@@ -312,23 +313,23 @@ class Argument:
         for opt in opts:
             if len(opt) < 2:
                 raise ArgumentError(
-                    "invalid option string %r: "
-                    "must be at least two characters long" % opt,
+                    f"invalid option string {opt!r}: "
+                    "must be at least two characters long",
                     self,
                 )
             elif len(opt) == 2:
                 if not (opt[0] == "-" and opt[1] != "-"):
                     raise ArgumentError(
-                        "invalid short option string %r: "
-                        "must be of the form -x, (x any non-dash char)" % opt,
+                        f"invalid short option string {opt!r}: "
+                        "must be of the form -x, (x any non-dash char)",
                         self,
                     )
                 self._short_opts.append(opt)
             else:
                 if not (opt[0:2] == "--" and opt[2] != "-"):
                     raise ArgumentError(
-                        "invalid long option string %r: "
-                        "must start with --, followed by non-dash" % opt,
+                        f"invalid long option string {opt!r}: "
+                        "must start with --, followed by non-dash",
                         self,
                     )
                 self._long_opts.append(opt)
@@ -375,14 +376,14 @@ class OptionGroup:
         :param opts:
             Option names, can be short or long options.
         :param attrs:
-            Same attributes as the argparse library's :py:func:`add_argument()
+            Same attributes as the argparse library's :meth:`add_argument()
             <argparse.ArgumentParser.add_argument>` function accepts.
         """
         conflict = set(opts).intersection(
             name for opt in self.options for name in opt.names()
         )
         if conflict:
-            raise ValueError("option names %s already added" % conflict)
+            raise ValueError(f"option names {conflict} already added")
         option = Argument(*opts, **attrs)
         self._addoption_instance(option, shortupper=False)
 
@@ -414,6 +415,7 @@ class MyOptionParser(argparse.ArgumentParser):
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,
             allow_abbrev=False,
+            fromfile_prefix_chars="@",
         )
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user.
@@ -424,8 +426,7 @@ class MyOptionParser(argparse.ArgumentParser):
         msg = f"{self.prog}: error: {message}"
 
         if hasattr(self._parser, "_config_source_hint"):
-            # Type ignored because the attribute is set dynamically.
-            msg = f"{msg} ({self._parser._config_source_hint})"  # type: ignore
+            msg = f"{msg} ({self._parser._config_source_hint})"
 
         raise UsageError(self.format_usage() + msg)
 
@@ -440,14 +441,16 @@ class MyOptionParser(argparse.ArgumentParser):
         if unrecognized:
             for arg in unrecognized:
                 if arg and arg[0] == "-":
-                    lines = ["unrecognized arguments: %s" % (" ".join(unrecognized))]
+                    lines = [
+                        "unrecognized arguments: {}".format(" ".join(unrecognized))
+                    ]
                     for k, v in sorted(self.extra_info.items()):
                         lines.append(f"  {k}: {v}")
                     self.error("\n".join(lines))
             getattr(parsed, FILE_OR_DIR).extend(unrecognized)
         return parsed
 
-    if sys.version_info[:2] < (3, 9):  # pragma: no cover
+    if sys.version_info < (3, 9):  # pragma: no cover
         # Backport of https://github.com/python/cpython/pull/14316 so we can
         # disable long --argument abbreviations without breaking short flags.
         def _parse_optional(
@@ -455,7 +458,7 @@ class MyOptionParser(argparse.ArgumentParser):
         ) -> Optional[Tuple[Optional[argparse.Action], str, Optional[str]]]:
             if not arg_string:
                 return None
-            if not arg_string[0] in self.prefix_chars:
+            if arg_string[0] not in self.prefix_chars:
                 return None
             if arg_string in self._option_string_actions:
                 action = self._option_string_actions[arg_string]
@@ -519,7 +522,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
                 continue
             if not option.startswith("--"):
                 raise ArgumentError(
-                    'long optional argument without "--": [%s]' % (option), option
+                    f'long optional argument without "--": [{option}]', option
                 )
             xxoption = option[2:]
             shortened = xxoption.replace("-", "")

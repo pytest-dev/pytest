@@ -1,1 +1,0 @@
-Replace `atomicwrites <https://github.com/untitaker/python-atomicwrites>`__ dependency on windows with `os.replace`.

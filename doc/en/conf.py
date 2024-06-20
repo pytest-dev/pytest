@@ -15,19 +15,28 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-import ast
 import os
+from pathlib import Path
 import shutil
-import sys
 from textwrap import dedent
-from typing import List
 from typing import TYPE_CHECKING
 
 from _pytest import __version__ as version
 
+
 if TYPE_CHECKING:
     import sphinx.application
 
+
+PROJECT_ROOT_DIR = Path(__file__).parents[2].resolve()
+IS_RELEASE_ON_RTD = (
+    os.getenv("READTHEDOCS", "False") == "True"
+    and os.environ["READTHEDOCS_VERSION_TYPE"] == "tag"
+)
+if IS_RELEASE_ON_RTD:
+    tags: set[str]
+    # pylint: disable-next=used-before-assignment
+    tags.add("is_release")  # noqa: F821
 
 release = ".".join(version.split(".")[:2])
 
@@ -66,7 +75,6 @@ latex_elements = {
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "pallets_sphinx_themes",
     "pygments_pytest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -76,6 +84,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_removed_in",
     "sphinxcontrib_trio",
+    "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
 ]
 
 # Building PDF docs on readthedocs requires inkscape for svg to pdf
@@ -141,10 +150,6 @@ add_module_names = False
 # output. They are ignored by default.
 # show_authors = False
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
-
-
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
 
@@ -171,14 +176,55 @@ extlinks = {
 }
 
 
-# -- Options for HTML output ---------------------------------------------------
+nitpicky = True
+nitpick_ignore = [
+    # TODO (fix in pluggy?)
+    ("py:class", "HookCaller"),
+    ("py:class", "HookspecMarker"),
+    ("py:exc", "PluginValidationError"),
+    # Might want to expose/TODO (https://github.com/pytest-dev/pytest/issues/7469)
+    ("py:class", "ExceptionRepr"),
+    ("py:class", "Exit"),
+    ("py:class", "SubRequest"),
+    ("py:class", "SubRequest"),
+    ("py:class", "TerminalReporter"),
+    ("py:class", "_pytest._code.code.TerminalRepr"),
+    ("py:class", "_pytest.fixtures.FixtureFunctionMarker"),
+    ("py:class", "_pytest.logging.LogCaptureHandler"),
+    ("py:class", "_pytest.mark.structures.ParameterSet"),
+    # Intentionally undocumented/private
+    ("py:class", "_pytest._code.code.Traceback"),
+    ("py:class", "_pytest._py.path.LocalPath"),
+    ("py:class", "_pytest.capture.CaptureResult"),
+    ("py:class", "_pytest.compat.NotSetType"),
+    ("py:class", "_pytest.python.PyCollector"),
+    ("py:class", "_pytest.python.PyobjMixin"),
+    ("py:class", "_pytest.python_api.RaisesContext"),
+    ("py:class", "_pytest.recwarn.WarningsChecker"),
+    ("py:class", "_pytest.reports.BaseReport"),
+    # Undocumented third parties
+    ("py:class", "_tracing.TagTracerSub"),
+    ("py:class", "warnings.WarningMessage"),
+    # Undocumented type aliases
+    ("py:class", "LEGACY_PATH"),
+    ("py:class", "_PluggyPlugin"),
+    # TypeVars
+    ("py:class", "_pytest._code.code.E"),
+    ("py:class", "_pytest.fixtures.FixtureFunction"),
+    ("py:class", "_pytest.nodes._NodeType"),
+    ("py:class", "_pytest.python_api.E"),
+    ("py:class", "_pytest.recwarn.T"),
+    ("py:class", "_pytest.runner.TResult"),
+    ("py:obj", "_pytest.fixtures.FixtureValue"),
+    ("py:obj", "_pytest.stash.T"),
+]
 
-sys.path.append(os.path.abspath("_themes"))
-html_theme_path = ["_themes"]
+
+# -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "flask"
+html_theme = "furo"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -193,7 +239,7 @@ html_theme = "flask"
 html_title = "pytest documentation"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "pytest-%s" % release
+html_short_title = f"pytest-{release}"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -223,18 +269,24 @@ html_favicon = "img/favicon.png"
 
 html_sidebars = {
     "index": [
-        "slim_searchbox.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
         "sidebarintro.html",
         "globaltoc.html",
         "links.html",
-        "sourcelink.html",
+        "sidebar/scroll-end.html",
+        "style.html",
     ],
     "**": [
-        "slim_searchbox.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/scroll-start.html",
         "globaltoc.html",
         "relations.html",
         "links.html",
-        "sourcelink.html",
+        "sidebar/scroll-end.html",
+        "style.html",
     ],
 }
 
@@ -273,6 +325,9 @@ html_show_sourcelink = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = "pytestdoc"
 
+# The base URL which points to the root of the HTML documentation. It is used
+# to indicate the location of document using the canonical link relation (#12363).
+html_baseurl = "https://docs.pytest.org/en/stable/"
 
 # -- Options for LaTeX output --------------------------------------------------
 
@@ -293,10 +348,6 @@ latex_documents = [
         "manual",
     )
 ]
-
-# The name of an image file (relative to this directory) to place at the top of
-# the title page.
-latex_logo = "img/pytest1.png"
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
@@ -341,7 +392,7 @@ epub_copyright = "2013, holger krekel et alii"
 # The scheme of the identifier. Typical schemes are ISBN or URL.
 # epub_scheme = ''
 
-# The unique identifier of the text. This can be a ISBN number
+# The unique identifier of the text. This can be an ISBN number
 # or the project homepage.
 # epub_identifier = ''
 
@@ -352,7 +403,7 @@ epub_copyright = "2013, holger krekel et alii"
 # The format is a list of tuples containing the path and title.
 # epub_pre_files = []
 
-# HTML files shat should be inserted after the pages created by sphinx.
+# HTML files that should be inserted after the pages created by sphinx.
 # The format is a list of tuples containing the path and title.
 # epub_post_files = []
 
@@ -384,6 +435,13 @@ texinfo_documents = [
     )
 ]
 
+# -- Options for towncrier_draft extension -----------------------------------
+
+towncrier_draft_autoversion_mode = "draft"  # or: 'sphinx-version', 'sphinx-release'
+towncrier_draft_include_empty = True
+towncrier_draft_working_directory = PROJECT_ROOT_DIR
+towncrier_draft_config_path = "pyproject.toml"  # relative to cwd
+
 
 intersphinx_mapping = {
     "pluggy": ("https://pluggy.readthedocs.io/en/stable", None),
@@ -393,30 +451,8 @@ intersphinx_mapping = {
     "tox": ("https://tox.wiki/en/stable", None),
     "virtualenv": ("https://virtualenv.pypa.io/en/stable", None),
     "setuptools": ("https://setuptools.pypa.io/en/stable", None),
+    "packaging": ("https://packaging.python.org/en/latest", None),
 }
-
-
-def configure_logging(app: "sphinx.application.Sphinx") -> None:
-    """Configure Sphinx's WarningHandler to handle (expected) missing include."""
-    import sphinx.util.logging
-    import logging
-
-    class WarnLogFilter(logging.Filter):
-        def filter(self, record: logging.LogRecord) -> bool:
-            """Ignore warnings about missing include with "only" directive.
-
-            Ref: https://github.com/sphinx-doc/sphinx/issues/2150."""
-            if (
-                record.msg.startswith('Problems with "include" directive path:')
-                and "_changelog_towncrier_draft.rst" in record.msg
-            ):
-                return False
-            return True
-
-    logger = logging.getLogger(sphinx.util.logging.NAMESPACE)
-    warn_handler = [x for x in logger.handlers if x.level == logging.WARNING]
-    assert len(warn_handler) == 1, warn_handler
-    warn_handler[0].filters.insert(0, WarnLogFilter())
 
 
 def setup(app: "sphinx.application.Sphinx") -> None:
@@ -447,27 +483,6 @@ def setup(app: "sphinx.application.Sphinx") -> None:
         objname="pytest hook",
         indextemplate="pair: %s; hook",
     )
-
-    configure_logging(app)
-
-    # Make Sphinx mark classes with "final" when decorated with @final.
-    # We need this because we import final from pytest._compat, not from
-    # typing (for Python < 3.8 compat), so Sphinx doesn't detect it.
-    # To keep things simple we accept any `@final` decorator.
-    # Ref: https://github.com/pytest-dev/pytest/pull/7780
-    import sphinx.pycode.ast
-    import sphinx.pycode.parser
-
-    original_is_final = sphinx.pycode.parser.VariableCommentPicker.is_final
-
-    def patched_is_final(self, decorators: List[ast.expr]) -> bool:
-        if original_is_final(self, decorators):
-            return True
-        return any(
-            sphinx.pycode.ast.unparse(decorator) == "final" for decorator in decorators
-        )
-
-    sphinx.pycode.parser.VariableCommentPicker.is_final = patched_is_final
 
     # legacypath.py monkey-patches pytest.Testdir in. Import the file so
     # that autodoc can discover references to it.

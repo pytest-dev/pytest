@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 # flake8: noqa
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
@@ -254,7 +255,7 @@ def test_getfuncsource_dynamic() -> None:
     assert str(g_source).strip() == "def g():\n    pass  # pragma: no cover"
 
 
-def test_getfuncsource_with_multine_string() -> None:
+def test_getfuncsource_with_multiline_string() -> None:
     def f():
         c = """while True:
     pass
@@ -294,8 +295,8 @@ def test_source_of_class_at_eof_without_newline(_sys_snapshot, tmp_path: Path) -
     """
     )
     path = tmp_path.joinpath("a.py")
-    path.write_text(str(source))
-    mod: Any = import_path(path, root=tmp_path)
+    path.write_text(str(source), encoding="utf-8")
+    mod: Any = import_path(path, root=tmp_path, consider_namespace_packages=False)
     s2 = Source(mod.A)
     assert str(source).strip() == str(s2).strip()
 
@@ -369,7 +370,11 @@ def test_getfslineno() -> None:
         pass
 
     B.__name__ = B.__qualname__ = "B2"
-    assert getfslineno(B)[1] == -1
+    # Since Python 3.13 this started working.
+    if sys.version_info >= (3, 13):
+        assert getfslineno(B)[1] != -1
+    else:
+        assert getfslineno(B)[1] == -1
 
 
 def test_code_of_object_instance_with_call() -> None:
@@ -439,14 +444,9 @@ comment 4
 '''
     for line in range(2, 6):
         assert str(getstatement(line, source)) == "    x = 1"
-    if sys.version_info >= (3, 8) or hasattr(sys, "pypy_version_info"):
-        tqs_start = 8
-    else:
-        tqs_start = 10
-        assert str(getstatement(10, source)) == '"""'
-    for line in range(6, tqs_start):
+    for line in range(6, 8):
         assert str(getstatement(line, source)) == "    assert False"
-    for line in range(tqs_start, 10):
+    for line in range(8, 10):
         assert str(getstatement(line, source)) == '"""\ncomment 4\n"""'
 
 

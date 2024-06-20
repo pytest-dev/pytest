@@ -1,22 +1,26 @@
+# mypy: allow-untyped-defs
 """Monkeypatching and mocking functionality."""
+
+from contextlib import contextmanager
 import os
 import re
 import sys
-import warnings
-from contextlib import contextmanager
 from typing import Any
+from typing import final
 from typing import Generator
 from typing import List
+from typing import Mapping
 from typing import MutableMapping
 from typing import Optional
 from typing import overload
 from typing import Tuple
 from typing import TypeVar
 from typing import Union
+import warnings
 
-from _pytest.compat import final
 from _pytest.fixtures import fixture
 from _pytest.warning_types import PytestWarning
+
 
 RE_IMPORT_ERROR_NAME = re.compile(r"^No module named (.*)$")
 
@@ -40,6 +44,7 @@ def monkeypatch() -> Generator["MonkeyPatch", None, None]:
     * :meth:`monkeypatch.delenv(name, raising=True) <pytest.MonkeyPatch.delenv>`
     * :meth:`monkeypatch.syspath_prepend(path) <pytest.MonkeyPatch.syspath_prepend>`
     * :meth:`monkeypatch.chdir(path) <pytest.MonkeyPatch.chdir>`
+    * :meth:`monkeypatch.context() <pytest.MonkeyPatch.context>`
 
     All modifications will be undone after the requesting test function or
     fixture has finished. The ``raising`` parameter determines if a :class:`KeyError`
@@ -87,9 +92,7 @@ def annotated_getattr(obj: object, name: str, ann: str) -> object:
         obj = getattr(obj, name)
     except AttributeError as e:
         raise AttributeError(
-            "{!r} object at {} has no attribute {!r}".format(
-                type(obj).__name__, ann, name
-            )
+            f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
         ) from e
     return obj
 
@@ -128,7 +131,7 @@ class MonkeyPatch:
 
     def __init__(self) -> None:
         self._setattr: List[Tuple[object, str, object]] = []
-        self._setitem: List[Tuple[MutableMapping[Any, Any], object, object]] = []
+        self._setitem: List[Tuple[Mapping[Any, Any], object, object]] = []
         self._cwd: Optional[str] = None
         self._savesyspath: Optional[List[str]] = None
 
@@ -166,8 +169,7 @@ class MonkeyPatch:
         name: object,
         value: Notset = ...,
         raising: bool = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def setattr(
@@ -176,8 +178,7 @@ class MonkeyPatch:
         name: str,
         value: object,
         raising: bool = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def setattr(
         self,
@@ -186,16 +187,40 @@ class MonkeyPatch:
         value: object = notset,
         raising: bool = True,
     ) -> None:
-        """Set attribute value on target, memorizing the old value.
+        """
+        Set attribute value on target, memorizing the old value.
 
-        For convenience you can specify a string as ``target`` which
+        For example:
+
+        .. code-block:: python
+
+            import os
+
+            monkeypatch.setattr(os, "getcwd", lambda: "/")
+
+        The code above replaces the :func:`os.getcwd` function by a ``lambda`` which
+        always returns ``"/"``.
+
+        For convenience, you can specify a string as ``target`` which
         will be interpreted as a dotted import path, with the last part
-        being the attribute name. For example,
-        ``monkeypatch.setattr("os.getcwd", lambda: "/")``
-        would set the ``getcwd`` function of the ``os`` module.
+        being the attribute name:
 
-        Raises AttributeError if the attribute does not exist, unless
+        .. code-block:: python
+
+            monkeypatch.setattr("os.getcwd", lambda: "/")
+
+        Raises :class:`AttributeError` if the attribute does not exist, unless
         ``raising`` is set to False.
+
+        **Where to patch**
+
+        ``monkeypatch.setattr`` works by (temporarily) changing the object that a name points to with another one.
+        There can be many names pointing to any individual object, so for patching to work you must ensure
+        that you patch the name used by the system under test.
+
+        See the section :ref:`Where to patch <python:where-to-patch>` in the :mod:`unittest.mock`
+        docs for a complete explanation, which is meant for :func:`unittest.mock.patch` but
+        applies to ``monkeypatch.setattr`` as well.
         """
         __tracebackhide__ = True
         import inspect
@@ -265,12 +290,13 @@ class MonkeyPatch:
             self._setattr.append((target, name, oldval))
             delattr(target, name)
 
-    def setitem(self, dic: MutableMapping[K, V], name: K, value: V) -> None:
+    def setitem(self, dic: Mapping[K, V], name: K, value: V) -> None:
         """Set dictionary entry ``name`` to value."""
         self._setitem.append((dic, name, dic.get(name, notset)))
-        dic[name] = value
+        # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+        dic[name] = value  # type: ignore[index]
 
-    def delitem(self, dic: MutableMapping[K, V], name: K, raising: bool = True) -> None:
+    def delitem(self, dic: Mapping[K, V], name: K, raising: bool = True) -> None:
         """Delete ``name`` from dict.
 
         Raises ``KeyError`` if it doesn't exist, unless ``raising`` is set to
@@ -281,7 +307,8 @@ class MonkeyPatch:
                 raise KeyError(name)
         else:
             self._setitem.append((dic, name, dic.get(name, notset)))
-            del dic[name]
+            # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+            del dic[name]  # type: ignore[attr-defined]
 
     def setenv(self, name: str, value: str, prepend: Optional[str] = None) -> None:
         """Set environment variable ``name`` to ``value``.
@@ -293,10 +320,8 @@ class MonkeyPatch:
         if not isinstance(value, str):
             warnings.warn(  # type: ignore[unreachable]
                 PytestWarning(
-                    "Value of environment variable {name} type should be str, but got "
-                    "{value!r} (type: {type}); converted to str implicitly".format(
-                        name=name, value=value, type=type(value).__name__
-                    )
+                    f"Value of environment variable {name} type should be str, but got "
+                    f"{value!r} (type: {type(value).__name__}); converted to str implicitly"
                 ),
                 stacklevel=2,
             )
@@ -316,7 +341,6 @@ class MonkeyPatch:
 
     def syspath_prepend(self, path) -> None:
         """Prepend ``path`` to ``sys.path`` list of import locations."""
-
         if self._savesyspath is None:
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))
@@ -376,11 +400,13 @@ class MonkeyPatch:
         for dictionary, key, value in reversed(self._setitem):
             if value is notset:
                 try:
-                    del dictionary[key]
+                    # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+                    del dictionary[key]  # type: ignore[attr-defined]
                 except KeyError:
                     pass  # Was already deleted, so we have the desired state.
             else:
-                dictionary[key] = value
+                # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
+                dictionary[key] = value  # type: ignore[index]
         self._setitem[:] = []
         if self._savesyspath is not None:
             sys.path[:] = self._savesyspath

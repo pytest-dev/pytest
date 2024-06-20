@@ -1,28 +1,34 @@
+# mypy: allow-untyped-defs
 """(Disabled by default) support for testing pytest and pytest plugins.
 
 PYTEST_DONT_REWRITE
 """
+
 import collections.abc
 import contextlib
+from fnmatch import fnmatch
 import gc
 import importlib
+from io import StringIO
+import locale
 import os
+from pathlib import Path
 import platform
 import re
 import shutil
 import subprocess
 import sys
 import traceback
-from fnmatch import fnmatch
-from io import StringIO
-from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Final
+from typing import final
 from typing import Generator
 from typing import IO
 from typing import Iterable
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import overload
 from typing import Sequence
@@ -39,7 +45,6 @@ from iniconfig import SectionWrapper
 from _pytest import timing
 from _pytest._code import Source
 from _pytest.capture import _get_multicapture
-from _pytest.compat import final
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
 from _pytest.config import _PluggyPlugin
@@ -60,7 +65,6 @@ from _pytest.outcomes import fail
 from _pytest.outcomes import importorskip
 from _pytest.outcomes import skip
 from _pytest.pathlib import bestrelpath
-from _pytest.pathlib import copytree
 from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -69,9 +73,6 @@ from _pytest.warning_types import PytestWarning
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Final
-    from typing_extensions import Literal
-
     import pexpect
 
 
@@ -123,12 +124,18 @@ def pytest_configure(config: Config) -> None:
 
 class LsofFdLeakChecker:
     def get_open_files(self) -> List[Tuple[str, str]]:
+        if sys.version_info >= (3, 11):
+            # New in Python 3.11, ignores utf-8 mode
+            encoding = locale.getencoding()
+        else:
+            encoding = locale.getpreferredencoding(False)
         out = subprocess.run(
             ("lsof", "-Ffn0", "-p", str(os.getpid())),
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             check=True,
             text=True,
+            encoding=encoding,
         ).stdout
 
         def isopen(line: str) -> bool:
@@ -161,29 +168,31 @@ class LsofFdLeakChecker:
         else:
             return True
 
-    @hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_protocol(self, item: Item) -> Generator[None, None, None]:
+    @hookimpl(wrapper=True, tryfirst=True)
+    def pytest_runtest_protocol(self, item: Item) -> Generator[None, object, object]:
         lines1 = self.get_open_files()
-        yield
-        if hasattr(sys, "pypy_version_info"):
-            gc.collect()
-        lines2 = self.get_open_files()
+        try:
+            return (yield)
+        finally:
+            if hasattr(sys, "pypy_version_info"):
+                gc.collect()
+            lines2 = self.get_open_files()
 
-        new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
-        leaked_files = [t for t in lines2 if t[0] in new_fds]
-        if leaked_files:
-            error = [
-                "***** %s FD leakage detected" % len(leaked_files),
-                *(str(f) for f in leaked_files),
-                "*** Before:",
-                *(str(f) for f in lines1),
-                "*** After:",
-                *(str(f) for f in lines2),
-                "***** %s FD leakage detected" % len(leaked_files),
-                "*** function %s:%s: %s " % item.location,
-                "See issue #2366",
-            ]
-            item.warn(PytestWarning("\n".join(error)))
+            new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
+            leaked_files = [t for t in lines2 if t[0] in new_fds]
+            if leaked_files:
+                error = [
+                    f"***** {len(leaked_files)} FD leakage detected",
+                    *(str(f) for f in leaked_files),
+                    "*** Before:",
+                    *(str(f) for f in lines1),
+                    "*** After:",
+                    *(str(f) for f in lines2),
+                    f"***** {len(leaked_files)} FD leakage detected",
+                    "*** function {}:{}: {} ".format(*item.location),
+                    "See issue #2366",
+                ]
+                item.warn(PytestWarning("\n".join(error)))
 
 
 # used at least by pytest-xdist plugin
@@ -237,8 +246,7 @@ class RecordedHookCall:
 
     if TYPE_CHECKING:
         # The class has undetermined attributes, this tells mypy about it.
-        def __getattr__(self, key: str):
-            ...
+        def __getattr__(self, key: str): ...
 
 
 @final
@@ -281,7 +289,8 @@ class HookRecorder:
         __tracebackhide__ = True
         i = 0
         entries = list(entries)
-        backlocals = sys._getframe(1).f_locals
+        # Since Python 3.13, f_locals is not a dict, but eval requires a dict.
+        backlocals = dict(sys._getframe(1).f_locals)
         while entries:
             name, check = entries.pop(0)
             for ind, call in enumerate(self.calls[i:]):
@@ -305,7 +314,7 @@ class HookRecorder:
                 del self.calls[i]
                 return call
         lines = [f"could not find call {name!r}, in:"]
-        lines.extend(["  %s" % x for x in self.calls])
+        lines.extend([f"  {x}" for x in self.calls])
         fail("\n".join(lines))
 
     def getcall(self, name: str) -> RecordedHookCall:
@@ -319,15 +328,13 @@ class HookRecorder:
     def getreports(
         self,
         names: "Literal['pytest_collectreport']",
-    ) -> Sequence[CollectReport]:
-        ...
+    ) -> Sequence[CollectReport]: ...
 
     @overload
     def getreports(
         self,
         names: "Literal['pytest_runtest_logreport']",
-    ) -> Sequence[TestReport]:
-        ...
+    ) -> Sequence[TestReport]: ...
 
     @overload
     def getreports(
@@ -336,8 +343,7 @@ class HookRecorder:
             "pytest_collectreport",
             "pytest_runtest_logreport",
         ),
-    ) -> Sequence[Union[CollectReport, TestReport]]:
-        ...
+    ) -> Sequence[Union[CollectReport, TestReport]]: ...
 
     def getreports(
         self,
@@ -369,14 +375,12 @@ class HookRecorder:
                 values.append(rep)
         if not values:
             raise ValueError(
-                "could not find test report matching %r: "
-                "no test reports at all!" % (inamepart,)
+                f"could not find test report matching {inamepart!r}: "
+                "no test reports at all!"
             )
         if len(values) > 1:
             raise ValueError(
-                "found 2 or more testreports matching {!r}: {}".format(
-                    inamepart, values
-                )
+                f"found 2 or more testreports matching {inamepart!r}: {values}"
             )
         return values[0]
 
@@ -384,15 +388,13 @@ class HookRecorder:
     def getfailures(
         self,
         names: "Literal['pytest_collectreport']",
-    ) -> Sequence[CollectReport]:
-        ...
+    ) -> Sequence[CollectReport]: ...
 
     @overload
     def getfailures(
         self,
         names: "Literal['pytest_runtest_logreport']",
-    ) -> Sequence[TestReport]:
-        ...
+    ) -> Sequence[TestReport]: ...
 
     @overload
     def getfailures(
@@ -401,8 +403,7 @@ class HookRecorder:
             "pytest_collectreport",
             "pytest_runtest_logreport",
         ),
-    ) -> Sequence[Union[CollectReport, TestReport]]:
-        ...
+    ) -> Sequence[Union[CollectReport, TestReport]]: ...
 
     def getfailures(
         self,
@@ -624,14 +625,6 @@ class RunResult:
         )
 
 
-class CwdSnapshot:
-    def __init__(self) -> None:
-        self.__saved = os.getcwd()
-
-    def restore(self) -> None:
-        os.chdir(self.__saved)
-
-
 class SysModulesSnapshot:
     def __init__(self, preserve: Optional[Callable[[str], bool]] = None) -> None:
         self.__preserve = preserve
@@ -695,15 +688,14 @@ class Pytester:
         #: be added to the list.  The type of items to add to the list depends on
         #: the method using them so refer to them for details.
         self.plugins: List[Union[str, _PluggyPlugin]] = []
-        self._cwd_snapshot = CwdSnapshot()
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
-        self.chdir()
         self._request.addfinalizer(self._finalize)
         self._method = self._request.config.getoption("--runpytest")
         self._test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
 
         self._monkeypatch = mp = monkeypatch
+        self.chdir()
         mp.setenv("PYTEST_DEBUG_TEMPROOT", str(self._test_tmproot))
         # Ensure no unexpected caching via tox.
         mp.delenv("TOX_ENV_DIR", raising=False)
@@ -734,7 +726,6 @@ class Pytester:
         """
         self._sys_modules_snapshot.restore()
         self._sys_path_snapshot.restore()
-        self._cwd_snapshot.restore()
 
     def __take_sys_modules_snapshot(self) -> SysModulesSnapshot:
         # Some zope modules used by twisted-related tests keep internal state
@@ -750,7 +741,7 @@ class Pytester:
 
     def make_hook_recorder(self, pluginmanager: PytestPluginManager) -> HookRecorder:
         """Create a new :class:`HookRecorder` for a :class:`PytestPluginManager`."""
-        pluginmanager.reprec = reprec = HookRecorder(pluginmanager, _ispytest=True)
+        pluginmanager.reprec = reprec = HookRecorder(pluginmanager, _ispytest=True)  # type: ignore[attr-defined]
         self._request.addfinalizer(reprec.finish_recording)
         return reprec
 
@@ -759,7 +750,7 @@ class Pytester:
 
         This is done automatically upon instantiation.
         """
-        os.chdir(self.path)
+        self._monkeypatch.chdir(self.path)
 
     def _makefile(
         self,
@@ -769,6 +760,9 @@ class Pytester:
         encoding: str = "utf-8",
     ) -> Path:
         items = list(files.items())
+
+        if ext is None:
+            raise TypeError("ext must not be None")
 
         if ext and not ext.startswith("."):
             raise ValueError(
@@ -828,7 +822,7 @@ class Pytester:
         return self._makefile(ext, args, kwargs)
 
     def makeconftest(self, source: str) -> Path:
-        """Write a contest.py file.
+        """Write a conftest.py file.
 
         :param source: The contents.
         :returns: The conftest.py file.
@@ -971,7 +965,7 @@ class Pytester:
             example_path = example_dir.joinpath(name)
 
         if example_path.is_dir() and not example_path.joinpath("__init__.py").is_file():
-            copytree(example_path, self.path)
+            shutil.copytree(example_path, self.path, symlinks=True, dirs_exist_ok=True)
             return self.path
         elif example_path.is_file():
             result = self.path.joinpath(example_path.name)
@@ -1048,7 +1042,7 @@ class Pytester:
         The calling test instance (class containing the test method) must
         provide a ``.getrunner()`` method which should return a runner which
         can run the test protocol for a single item, e.g.
-        :py:func:`_pytest.runner.runtestprotocol`.
+        ``_pytest.runner.runtestprotocol``.
         """
         # used from runner functional tests
         item = self.getitem(source)
@@ -1068,11 +1062,11 @@ class Pytester:
         :param cmdlineargs: Any extra command line arguments to use.
         """
         p = self.makepyfile(source)
-        values = list(cmdlineargs) + [p]
+        values = [*list(cmdlineargs), p]
         return self.inline_run(*values)
 
     def inline_genitems(self, *args) -> Tuple[List[Item], HookRecorder]:
-        """Run ``pytest.main(['--collectonly'])`` in-process.
+        """Run ``pytest.main(['--collect-only'])`` in-process.
 
         Runs the :py:func:`pytest.main` function to run all of pytest inside
         the test process itself like :py:meth:`inline_run`, but returns a
@@ -1217,7 +1211,9 @@ class Pytester:
             if str(x).startswith("--basetemp"):
                 break
         else:
-            new_args.append("--basetemp=%s" % self.path.parent.joinpath("basetemp"))
+            new_args.append(
+                "--basetemp={}".format(self.path.parent.joinpath("basetemp"))
+            )
         return new_args
 
     def parseconfig(self, *args: Union[str, "os.PathLike[str]"]) -> Config:
@@ -1275,9 +1271,7 @@ class Pytester:
         for item in items:
             if item.name == funcname:
                 return item
-        assert 0, "{!r} item not found in module:\n{}\nitems: {}".format(
-            funcname, source, items
-        )
+        assert 0, f"{funcname!r} item not found in module:\n{source}\nitems: {items}"
 
     def getitems(self, source: Union[str, "os.PathLike[str]"]) -> List[Item]:
         """Return all test items collected from the module.
@@ -1399,7 +1393,7 @@ class Pytester:
         :param stdin:
             Optional standard input.
 
-            - If it is :py:attr:`CLOSE_STDIN` (Default), then this method calls
+            - If it is ``CLOSE_STDIN`` (Default), then this method calls
               :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``, and
               the standard input is closed immediately after the new command is
               started.
@@ -1436,10 +1430,7 @@ class Pytester:
             def handle_timeout() -> None:
                 __tracebackhide__ = True
 
-                timeout_message = (
-                    "{seconds} second timeout expired running:"
-                    " {command}".format(seconds=timeout, command=cmdargs)
-                )
+                timeout_message = f"{timeout} second timeout expired running: {cmdargs}"
 
                 popen.kill()
                 popen.wait()
@@ -1503,10 +1494,10 @@ class Pytester:
         """
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
-        args = ("--basetemp=%s" % p,) + args
+        args = (f"--basetemp={p}", *args)
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
-            args = ("-p", plugins[0]) + args
+            args = ("-p", plugins[0], *args)
         args = self._getpytestargs() + args
         return self.run(*args, timeout=timeout)
 
@@ -1611,7 +1602,7 @@ class LineMatcher:
                     self._log("matched: ", repr(line))
                     break
             else:
-                msg = "line %r not found in output" % line
+                msg = f"line {line!r} not found in output"
                 self._log(msg)
                 self._fail(msg)
 
@@ -1623,7 +1614,7 @@ class LineMatcher:
         for i, line in enumerate(self.lines):
             if fnline == line or fnmatch(line, fnline):
                 return self.lines[i + 1 :]
-        raise ValueError("line %r not found in output" % fnline)
+        raise ValueError(f"line {fnline!r} not found in output")
 
     def _log(self, *args) -> None:
         self._log_output.append(" ".join(str(x) for x in args))
@@ -1708,7 +1699,7 @@ class LineMatcher:
                     started = True
                     break
                 elif match_func(nextline, line):
-                    self._log("%s:" % match_nickname, repr(line))
+                    self._log(f"{match_nickname}:", repr(line))
                     self._log(
                         "{:>{width}}".format("with:", width=wnick), repr(nextline)
                     )

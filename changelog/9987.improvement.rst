@@ -1,1 +1,0 @@
-Added support for hidden configuration file by allowing ``.pytest.ini`` as an alternative to ``pytest.ini``.

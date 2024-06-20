@@ -1,1 +1,0 @@
-:data:`sys.stdin` now contains all expected methods of a file-like object when capture is enabled.

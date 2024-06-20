@@ -1,16 +1,13 @@
 from typing import List
 from typing import Optional
-from typing import TYPE_CHECKING
 
-import pytest
 from _pytest import nodes
+from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
 from _pytest.reports import TestReport
 
-if TYPE_CHECKING:
-    from _pytest.cacheprovider import Cache
 
 STEPWISE_CACHE_DIR = "cache/stepwise"
 
@@ -36,10 +33,9 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-@pytest.hookimpl
 def pytest_configure(config: Config) -> None:
     if config.option.stepwise_skip:
-        # allow --stepwise-skip to work on it's own merits.
+        # allow --stepwise-skip to work on its own merits.
         config.option.stepwise = True
     if config.getoption("stepwise"):
         config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
@@ -48,6 +44,10 @@ def pytest_configure(config: Config) -> None:
 def pytest_sessionfinish(session: Session) -> None:
     if not session.config.getoption("stepwise"):
         assert session.config.cache is not None
+        if hasattr(session.config, "workerinput"):
+            # Do not update cache if this process is a xdist worker to prevent
+            # race conditions (#10641).
+            return
         # Clear the list of failing tests if the plugin is not active.
         session.config.cache.set(STEPWISE_CACHE_DIR, [])
 
@@ -119,4 +119,8 @@ class StepwisePlugin:
         return None
 
     def pytest_sessionfinish(self) -> None:
+        if hasattr(self.config, "workerinput"):
+            # Do not update cache if this process is a xdist worker to prevent
+            # race conditions (#10641).
+            return
         self.cache.set(STEPWISE_CACHE_DIR, self.lastfailed)

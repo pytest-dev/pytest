@@ -1,16 +1,20 @@
+# mypy: allow-untyped-defs
 """Version info, help messages, tracing configuration."""
+
+from argparse import Action
 import os
 import sys
-from argparse import Action
+from typing import Generator
 from typing import List
 from typing import Optional
 from typing import Union
 
-import pytest
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import Parser
+from _pytest.terminal import TerminalReporter
+import pytest
 
 
 class HelpAction(Action):
@@ -97,44 +101,43 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_cmdline_parse():
-    outcome = yield
-    config: Config = outcome.get_result()
+@pytest.hookimpl(wrapper=True)
+def pytest_cmdline_parse() -> Generator[None, Config, Config]:
+    config = yield
 
     if config.option.debug:
         # --debug | --debug <file.log> was provided.
         path = config.option.debug
-        debugfile = open(path, "w")
+        debugfile = open(path, "w", encoding="utf-8")
         debugfile.write(
-            "versions pytest-%s, "
-            "python-%s\ncwd=%s\nargs=%s\n\n"
-            % (
+            "versions pytest-{}, "
+            "python-{}\ninvocation_dir={}\ncwd={}\nargs={}\n\n".format(
                 pytest.__version__,
                 ".".join(map(str, sys.version_info)),
+                config.invocation_params.dir,
                 os.getcwd(),
                 config.invocation_params.args,
             )
         )
         config.trace.root.setwriter(debugfile.write)
         undo_tracing = config.pluginmanager.enable_tracing()
-        sys.stderr.write("writing pytest debug information to %s\n" % path)
+        sys.stderr.write(f"writing pytest debug information to {path}\n")
 
         def unset_tracing() -> None:
             debugfile.close()
-            sys.stderr.write("wrote pytest debug information to %s\n" % debugfile.name)
+            sys.stderr.write(f"wrote pytest debug information to {debugfile.name}\n")
             config.trace.root.setwriter(None)
             undo_tracing()
 
         config.add_cleanup(unset_tracing)
 
+    return config
+
 
 def showversion(config: Config) -> None:
     if config.option.version > 1:
         sys.stdout.write(
-            "This is pytest version {}, imported from {}\n".format(
-                pytest.__version__, pytest.__file__
-            )
+            f"This is pytest version {pytest.__version__}, imported from {pytest.__file__}\n"
         )
         plugininfo = getpluginversioninfo(config)
         if plugininfo:
@@ -159,12 +162,16 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
 def showhelp(config: Config) -> None:
     import textwrap
 
-    reporter = config.pluginmanager.get_plugin("terminalreporter")
+    reporter: Optional[TerminalReporter] = config.pluginmanager.get_plugin(
+        "terminalreporter"
+    )
+    assert reporter is not None
     tw = reporter._tw
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:"
+        "[pytest] ini-options in the first "
+        "pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
     )
     tw.line()
 
@@ -178,7 +185,7 @@ def showhelp(config: Config) -> None:
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         spec = f"{name} ({type}):"
-        tw.write("  %s" % spec)
+        tw.write(f"  {spec}")
         spec_len = len(spec)
         if spec_len > (indent_len - 3):
             # Display help starting at a new line.
@@ -236,7 +243,7 @@ def getpluginversioninfo(config: Config) -> List[str]:
     lines = []
     plugininfo = config.pluginmanager.list_plugin_distinfo()
     if plugininfo:
-        lines.append("setuptools registered plugins:")
+        lines.append("registered third-party plugins:")
         for plugin, dist in plugininfo:
             loc = getattr(plugin, "__file__", repr(plugin))
             content = f"{dist.project_name}-{dist.version} at {loc}"

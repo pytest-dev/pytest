@@ -30,7 +30,7 @@ then you can just invoke ``pytest`` directly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -58,7 +58,7 @@ and functions, including from test modules:
 
     $ pytest --doctest-modules
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-7.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -224,6 +224,7 @@ place the objects you want to appear in the doctest namespace:
 .. code-block:: python
 
     # content of conftest.py
+    import pytest
     import numpy
 
 
