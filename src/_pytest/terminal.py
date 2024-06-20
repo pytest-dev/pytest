@@ -1070,7 +1070,7 @@ class TerminalReporter:
         self.summary_failures_combined("failed", "FAILURES")
 
     def summary_xfailures(self) -> None:
-        self.summary_failures_combined("xfailed", "XFAILURES", "x")
+        self.summary_failures_combined("xfailed", "XFAILURES", needed_opt="x")
 
     def summary_failures_combined(
         self,
