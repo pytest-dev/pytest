@@ -1,4 +1,5 @@
 # mypy: allow-untyped-defs
+import inspect
 import os
 from pathlib import Path
 import sys
@@ -3295,6 +3296,33 @@ class TestFixtureMarker:
         assert output1 == output2
 
 
+class FixtureFunctionDefTestClass:
+    def __init__(self) -> None:
+        self.i = 10
+
+    @pytest.fixture
+    def fixture_function_def_test_method(self):
+        return self.i
+
+
+@pytest.fixture
+def fixture_function_def_test_func():
+    return 9
+
+
+def test_get_wrapped_func_returns_method():
+    obj = FixtureFunctionDefTestClass()
+    wrapped_function_result = (
+        obj.fixture_function_def_test_method._get_wrapped_function()
+    )
+    assert inspect.ismethod(wrapped_function_result)
+    assert wrapped_function_result() == 10
+
+
+def test_get_wrapped_func_returns_function():
+    assert fixture_function_def_test_func._get_wrapped_function()() == 9
+
+
 class TestRequestScopeAccess:
     pytestmark = pytest.mark.parametrize(
         ("scope", "ok", "error"),
@@ -4463,6 +4491,21 @@ def test_fixture_double_decorator(pytester: Pytester) -> None:
             "E * ValueError: @pytest.fixture is being applied more than once to the same function 'fixt'"
         ]
     )
+
+
+def test_fixture_class(pytester: Pytester) -> None:
+    """Check if an error is raised when using @pytest.fixture on a class."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        class A:
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
 
 
 def test_fixture_param_shadowing(pytester: Pytester) -> None:

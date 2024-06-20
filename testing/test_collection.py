@@ -1310,7 +1310,7 @@ def test_collect_handles_raising_on_dunder_class(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed in*"])
+    result.assert_outcomes(passed=1)
     assert result.ret == 0
 
 
@@ -1374,7 +1374,7 @@ def test_collect_pyargs_with_testpaths(
     with monkeypatch.context() as mp:
         mp.chdir(root)
         result = pytester.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*1 passed in*"])
+    result.assert_outcomes(passed=1)
 
 
 def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
