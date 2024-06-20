@@ -1221,10 +1221,7 @@ class FixtureFunctionMarker:
         return fixture_definition
 
 
-# TODO: write docstring
 class FixtureFunctionDefinition:
-    """Since deco_fixture is now an instance of FixtureFunctionDef the getsource function will not work on it."""
-
     def __init__(
         self,
         function: Callable[..., Any],
