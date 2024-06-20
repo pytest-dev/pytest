@@ -205,6 +205,7 @@ def ascii_escaped(val: bytes | str) -> str:
     return ret.translate(_non_printable_ascii_translate_table)
 
 
+# TODO: remove and replace with FixtureFunctionDefinition
 @dataclasses.dataclass
 class _PytestWrapper:
     """Dummy wrapper around a function object for internal use only.
@@ -241,20 +242,6 @@ def get_real_func(obj):
         )
     if isinstance(obj, functools.partial):
         obj = obj.func
-    return obj
-
-
-def get_real_method(obj, holder):
-    """Attempt to obtain the real function object that might be wrapping
-    ``obj``, while at the same time returning a bound method to ``holder`` if
-    the original object was a bound method."""
-    try:
-        is_method = hasattr(obj, "__func__")
-        obj = get_real_func(obj)
-    except Exception:  # pragma: no cover
-        return obj
-    if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
-        obj = obj.__get__(holder)
     return obj
 
 
