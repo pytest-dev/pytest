@@ -153,10 +153,9 @@ def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
 def getfixturemarker(obj: object) -> FixtureFunctionMarker | None:
     """Return fixturemarker or None if it doesn't exist or raised
     exceptions."""
-    return cast(
-        Optional[FixtureFunctionMarker],
-        safe_getattr(obj, "_fixture_function_marker", None),
-    )
+    if type(obj) is FixtureFunctionDefinition:
+        return obj._fixture_function_marker
+    return None
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
@@ -1195,7 +1194,7 @@ class FixtureFunctionDefinition:
     ):
         self.name = fixture_function_marker.name or function.__name__
         self.__name__ = self.name
-        # This attribute is only used to check if an arbitrary python object is a fixture.
+        # This attribute is used to check if an arbitrary python object is a fixture.
         # Using isinstance on every object in code might execute code that is not intended to be executed.
         # Like lazy loaded classes.
         self._fixture_function_marker = fixture_function_marker
@@ -1742,15 +1741,9 @@ class FixtureManager:
 
         self._holderobjseen.add(holderobj)
         for name in dir(holderobj):
-            # The attribute can be an arbitrary descriptor, so the attribute
-            # access below can raise. safe_getattr() ignores such exceptions.
             obj = safe_getattr(holderobj, name, None)
-            marker = getfixturemarker(obj)
-            if not isinstance(marker, FixtureFunctionMarker):
-                # Magic globals  with __getattr__ might have got us a wrong
-                # fixture attribute.
-                continue
-            if isinstance(obj, FixtureFunctionDefinition):
+            if type(obj) is FixtureFunctionDefinition:
+                marker = obj._fixture_function_marker
                 if marker.name:
                     name = marker.name
                 func = obj._get_wrapped_function()
