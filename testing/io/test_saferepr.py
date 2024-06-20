@@ -196,22 +196,20 @@ def test_saferepr_unlimited_exc():
 
 class TestSafereprUnbounded:
     class Help:
-        def __init__(self, i):
-            self.i = i
-
         def bound_method(self):
-            return self.i
+            pass
 
     def test_saferepr_bound_method(self):
         """saferepr() of a bound method should show only the method name"""
-        assert saferepr(self.Help(10).bound_method) == "bound_method"
+        assert saferepr(self.Help().bound_method) == "bound_method"
 
     def test_saferepr_unbounded(self):
         """saferepr() of an unbound method should still show the full information"""
-        obj = self.Help(10)
+        obj = self.Help()
+        obj_id = f"{id(obj) :x}".lstrip("0").lower()
         assert (
             saferepr(obj)
-            == f"<test_saferepr.{self.__class__.__name__}.Help object at 0x{id(obj):x}>"
+            == f"<test_saferepr.{self.__class__.__name__}.Help object at 0x{obj_id !s}>"
         )
         assert (
             saferepr(self.Help)
