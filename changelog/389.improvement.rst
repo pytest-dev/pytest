@@ -2,7 +2,7 @@ The readability of assertion introspection of bound methods has been enhanced
 -- by :user:`farbodahm`, :user:`webknjaz`, :user:`obestwalter`, :user:`flub`
 and :user:`glyphack`.
 
-Previously it was something like this:
+Earlier, it was like:
 
 .. code-block:: console
 
