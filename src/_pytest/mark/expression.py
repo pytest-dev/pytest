@@ -25,8 +25,10 @@ import keyword
 import re
 import types
 from typing import Iterator
+from typing import Literal
 from typing import Mapping
 from typing import NoReturn
+from typing import overload
 from typing import Protocol
 from typing import Sequence
 
@@ -132,6 +134,14 @@ class Scanner:
                     )
         yield Token(TokenType.EOF, "", pos)
 
+    @overload
+    def accept(self, type: TokenType, *, reject: Literal[True]) -> Token: ...
+
+    @overload
+    def accept(
+        self, type: TokenType, *, reject: Literal[False] = False
+    ) -> Token | None: ...
+
     def accept(self, type: TokenType, *, reject: bool = False) -> Token | None:
         if self.current.type is type:
             token = self.current
@@ -208,7 +218,6 @@ BUILTIN_MATCHERS = {"True": True, "False": False, "None": None}
 
 def single_kwarg(s: Scanner) -> ast.keyword:
     keyword_name = s.accept(TokenType.IDENT, reject=True)
-    assert keyword_name is not None  # for mypy
     if not keyword_name.value.isidentifier() or keyword.iskeyword(keyword_name.value):
         raise ParseError(
             keyword_name.pos + 1,
@@ -220,7 +229,6 @@ def single_kwarg(s: Scanner) -> ast.keyword:
         value: str | int | bool | None = value_token.value[1:-1]  # strip quotes
     else:
         value_token = s.accept(TokenType.IDENT, reject=True)
-        assert value_token is not None  # for mypy
         if (
             (number := value_token.value).isdigit()
             or number.startswith("-")
