@@ -1237,6 +1237,9 @@ class FixtureFunctionDefinition:
     ):
         self.name = fixture_function_marker.name or function.__name__
         self.__name__ = self.name
+        # This attribute is only used to check if an arbitrary python object is a fixture.
+        # Using isinstance on every object in code might execute code that is not intended to be executed.
+        # Like lazy loaded classes.
         self._pytestfixturefunction = fixture_function_marker
         self.__pytest_wrapped__ = _PytestWrapper(function)
         self.fixture_function_marker = fixture_function_marker

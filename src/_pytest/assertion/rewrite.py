@@ -472,7 +472,7 @@ def _format_assertmsg(obj: object) -> str:
 
 def _should_repr_global_name(obj: object) -> bool:
     if callable(obj):
-        return hasattr(obj, "__pytest_wrapped__")
+        return hasattr(obj, "_pytestfixturefunction")
 
     try:
         return not hasattr(obj, "__name__")
