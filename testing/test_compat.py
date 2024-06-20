@@ -67,7 +67,7 @@ def test_get_real_func() -> None:
     # obtain the function up until the point a function was wrapped by pytest itself
     @pytest.fixture
     def wrapped_func3():
-        pass
+        pass  # pragma: no cover
 
     wrapped_func4 = decorator(wrapped_func3)
     assert get_real_func(wrapped_func4) is wrapped_func3._get_wrapped_function()
