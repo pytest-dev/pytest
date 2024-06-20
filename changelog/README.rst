@@ -20,9 +20,21 @@ Each file should be named like ``<ISSUE>.<TYPE>.rst``, where
 * ``deprecation``: feature deprecation.
 * ``breaking``: a change which may break existing suites, such as feature removal or behavior change.
 * ``vendor``: changes in packages vendored in pytest.
-* ``trivial``: fixing a small typo or internal change that might be noteworthy.
+* ``packaging``: notes for downstreams about unobvious side effects
+  and tooling. changes in the test invocation considerations and
+  runtime assumptions.
+* ``contrib``: stuff that affects the contributor experience. e.g.
+  Running tests, building the docs, setting up the development
+  environment.
+* ``misc``: changes that are hard to assign to any of the above
+  categories.
 
 So for example: ``123.feature.rst``, ``456.bugfix.rst``.
+
+.. tip::
+
+   See :file:`pyproject.toml` for all available categories
+   (``tool.towncrier.type``).
 
 If your PR fixes an issue, use that number here. If there is no issue,
 then after you submit the PR and get the PR number you can add a

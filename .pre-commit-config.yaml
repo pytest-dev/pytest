@@ -66,8 +66,41 @@ repos:
     -   id: changelogs-rst
         name: changelog filenames
         language: fail
-        entry: 'changelog files must be named ####.(breaking|bugfix|deprecation|doc|feature|improvement|trivial|vendor).rst'
-        exclude: changelog/(\d+\.(breaking|bugfix|deprecation|doc|feature|improvement|trivial|vendor).rst|README.rst|_template.rst)
+        entry: >-
+          changelog files must be named
+          ####.(
+          breaking
+          | deprecation
+          | feature
+          | improvement
+          | bugfix
+          | vendor
+          | doc
+          | packaging
+          | contrib
+          | misc
+          )(.#)?(.rst)?
+        exclude: >-
+          (?x)
+          ^
+            changelog/(
+              \.gitignore
+              |\d+\.(
+                breaking
+                |deprecation
+                |feature
+                |improvement
+                |bugfix
+                |vendor
+                |doc
+                |packaging
+                |contrib
+                |misc
+              )(\.\d+)?(\.rst)?
+              |README\.rst
+              |_template\.rst
+            )
+          $
         files: ^changelog/
     -   id: py-deprecated
         name: py library is deprecated

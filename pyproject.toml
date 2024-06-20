@@ -423,9 +423,23 @@ name = "Improved documentation"
 showcontent = true
 
 [[tool.towncrier.type]]
-# Changes that might not even be worth exposing to the end users.
-directory = "trivial"
-name = "Trivial/internal changes"
+# Notes for downstreams about unobvious side effects and tooling. Changes
+# in the test invocation considerations and runtime assumptions.
+directory = "packaging"
+name = "Packaging updates and notes for downstreams"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Stuff that affects the contributor experience. e.g. Running tests,
+# building the docs, setting up the development environment.
+directory = "contrib"
+name = "Contributor-facing changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Changes that are hard to assign to any of the above categories.
+directory = "misc"
+name = "Miscellaneous internal changes"
 showcontent = true
 
 [tool.mypy]
