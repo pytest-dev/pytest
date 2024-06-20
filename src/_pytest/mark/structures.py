@@ -520,11 +520,7 @@ class MarkGenerator:
         self._config: Optional[Config] = None
         self._markers: Set[str] = set()
 
-    def __getattr__(self, name: str) -> MarkDecorator:
-        """Generate a new :class:`MarkDecorator` with the given name."""
-        if name[0] == "_":
-            raise AttributeError("Marker name must NOT start with underscore")
-
+    def verify_mark(self, name: str) -> None:
         if self._config is not None:
             # We store a set of markers as a performance optimisation - if a mark
             # name is in the set we definitely know it, but a mark may be known and
@@ -556,8 +552,15 @@ class MarkGenerator:
                     "custom marks to avoid this warning - for details, see "
                     "https://docs.pytest.org/en/stable/how-to/mark.html",
                     PytestUnknownMarkWarning,
-                    2,
+                    3,
                 )
+
+    def __getattr__(self, name: str) -> MarkDecorator:
+        """Generate a new :class:`MarkDecorator` with the given name."""
+        if name[0] == "_":
+            raise AttributeError("Marker name must NOT start with underscore")
+
+        self.verify_mark(name)
 
         return MarkDecorator(Mark(name, (), {}, _ispytest=True), _ispytest=True)
 

@@ -236,7 +236,7 @@ def deselect_by_mark(items: "List[Item]", config: Config) -> None:
     if not matchexpr:
         return
 
-    expr = _parse_expression(matchexpr, "Wrong expression passed to '-m'")
+    expr = _parse_expression(matchexpr, "Wrong expression passed to '-m'", True)
     remaining: List[Item] = []
     deselected: List[Item] = []
     for item in items:
@@ -249,9 +249,9 @@ def deselect_by_mark(items: "List[Item]", config: Config) -> None:
         items[:] = remaining
 
 
-def _parse_expression(expr: str, exc_message: str) -> Expression:
+def _parse_expression(expr: str, exc_message: str, mark: bool = False) -> Expression:
     try:
-        return Expression.compile(expr)
+        return Expression.compile(expr, mark)
     except ParseError as e:
         raise UsageError(f"{exc_message}: {expr}: {e}") from None
 

@@ -27,6 +27,8 @@ from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 
+from .structures import MARK_GEN
+
 
 __all__ = [
     "Expression",
@@ -197,12 +199,19 @@ class Expression:
         self.code = code
 
     @classmethod
-    def compile(self, input: str) -> "Expression":
+    def compile(self, input: str, mark: bool = False) -> "Expression":
         """Compile a match expression.
 
         :param input: The input expression - one line.
         """
         astexpr = expression(Scanner(input))
+
+        if mark:
+            for node in ast.walk(astexpr):
+                # if the node is an identifier, i.e. a mark name
+                if isinstance(node, ast.Name):
+                    MARK_GEN.verify_mark(node.id[len(IDENT_PREFIX) :])
+
         code: types.CodeType = compile(
             astexpr,
             filename="<pytest match expression>",
