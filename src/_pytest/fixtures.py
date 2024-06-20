@@ -155,7 +155,7 @@ def getfixturemarker(obj: object) -> FixtureFunctionMarker | None:
     exceptions."""
     return cast(
         Optional[FixtureFunctionMarker],
-        safe_getattr(obj, "_pytestfixturefunction", None),
+        safe_getattr(obj, "_fixture_function_marker", None),
     )
 
 
@@ -1195,7 +1195,7 @@ class FixtureFunctionDefinition:
 
     def __init__(
         self,
-        function: Callable[..., object],
+        function: Callable[..., Any],
         fixture_function_marker: FixtureFunctionMarker,
         instance: Optional[type] = None,
     ):
@@ -1204,17 +1204,16 @@ class FixtureFunctionDefinition:
         # This attribute is only used to check if an arbitrary python object is a fixture.
         # Using isinstance on every object in code might execute code that is not intended to be executed.
         # Like lazy loaded classes.
-        self._pytestfixturefunction = fixture_function_marker
-        self.fixture_function_marker = fixture_function_marker
-        self.fixture_function = function
-        self.instance = instance
+        self._fixture_function_marker = fixture_function_marker
+        self._fixture_function = function
+        self._instance = instance
 
     def __repr__(self) -> str:
-        return f"pytest_fixture({self.fixture_function})"
+        return f"pytest_fixture({self._fixture_function})"
 
     def __get__(self, instance, owner=None):
         return FixtureFunctionDefinition(
-            self.fixture_function, self.fixture_function_marker, instance
+            self._fixture_function, self._fixture_function_marker, instance
         )
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
@@ -1226,10 +1225,10 @@ class FixtureFunctionDefinition:
         )
         fail(message, pytrace=False)
 
-    def get_real_func(self):
-        if self.instance is not None:
-            return self.fixture_function.__get__(self.instance)
-        return self.fixture_function
+    def _get_wrapped_function(self):
+        if self._instance is not None:
+            return self._fixture_function.__get__(self._instance)
+        return self._fixture_function
 
 
 @overload
@@ -1767,7 +1766,7 @@ class FixtureManager:
             if isinstance(obj, FixtureFunctionDefinition):
                 if marker.name:
                     name = marker.name
-                func = obj.get_real_func()
+                func = obj._get_wrapped_function()
                 self._register_fixture(
                     name=name,
                     nodeid=nodeid,
