@@ -151,9 +151,8 @@ def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
         assert_never(scope)
 
 
-def getfixturemarker(obj: object) -> FixtureFunctionMarker | None:
-    """Return fixturemarker or None if it doesn't exist or raised
-    exceptions."""
+def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
+    """Return fixturemarker or None if it doesn't exist"""
     if isinstance(obj, FixtureFunctionDefinition):
         return obj._fixture_function_marker
     return None
