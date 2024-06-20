@@ -250,7 +250,13 @@ def mark_matcher() -> MarkMatcher:
     markers.append(
         create_marker(
             "str_mark",
-            {"m": "M", "space": "with space", "aaאבגדcc": "aaאבגדcc", "אבגד": "אבגד"},
+            {
+                "m": "M",
+                "space": "with space",
+                "aaאבגדcc": "aaאבגדcc",
+                "אבגד": "אבגד",
+                "empty": "",
+            },
         )
     )
 
@@ -313,9 +319,13 @@ def test_builtin_matchers_keyword_expressions(  # TODO: naming when decided
         ("str_mark(aaאבגדcc='aaאבגדcc')", True),
         ("str_mark(אבגד='אבגד')", True),
         ("str_mark(space='with space')", True),
+        ("str_mark(empty='')", True),
+        ('str_mark(empty="")', True),
         ("str_mark(m='wrong')", False),
         ("str_mark(aaאבגדcc='wrong')", False),
         ("str_mark(אבגד='wrong')", False),
+        ("str_mark(m='')", False),
+        ('str_mark(m="")', False),
     ),
 )
 def test_str_keyword_expressions(
