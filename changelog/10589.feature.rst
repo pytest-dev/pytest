@@ -1,0 +1,2 @@
+Allow users to override repr maxsize value (240) by defining
+:envvar:`PYTEST_DEFAULT_REPR_MAX_SIZE` environment variable.

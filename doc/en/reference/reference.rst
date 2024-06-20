@@ -1145,6 +1145,11 @@ processes can inspect it, see :ref:`pytest current test env` for more informatio
 
 When set, pytest will print tracing and debug information.
 
+.. envvar:: PYTEST_DEFAULT_REPR_MAX_SIZE
+
+Setting this would override the implicit 240 chars limit used for truncating
+longer error messages.
+
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
 When set, disables plugin auto-loading through :std:doc:`entry point packaging
