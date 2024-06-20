@@ -1233,7 +1233,7 @@ def test_usage_error_code(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_warn_on_async_function(pytester: Pytester) -> None:
+def test_error_on_async_function(pytester: Pytester) -> None:  # TODO: Change this
     # In the below we .close() the coroutine only to avoid
     # "RuntimeWarning: coroutine 'test_2' was never awaited"
     # which messes with other tests.
@@ -1249,23 +1249,19 @@ def test_warn_on_async_function(pytester: Pytester) -> None:
             return coro
     """
     )
-    result = pytester.runpytest("-Wdefault")
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "test_async.py::test_1",
-            "test_async.py::test_2",
-            "test_async.py::test_3",
+            "*test_async.py::test_1*",
+            "*test_async.py::test_2*",
+            "*test_async.py::test_3*",
             "*async def functions are not natively supported*",
-            "*3 skipped, 3 warnings in*",
         ]
     )
-    # ensure our warning message appears only once
-    assert (
-        result.stdout.str().count("async def functions are not natively supported") == 1
-    )
+    result.assert_outcomes(failed=3)
 
 
-def test_warn_on_async_gen_function(pytester: Pytester) -> None:
+def test_error_on_async_gen_function(pytester: Pytester) -> None:  # TODO: Change this
     pytester.makepyfile(
         test_async="""
         async def test_1():
@@ -1276,19 +1272,14 @@ def test_warn_on_async_gen_function(pytester: Pytester) -> None:
             return test_2()
     """
     )
-    result = pytester.runpytest("-Wdefault")
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "test_async.py::test_1",
-            "test_async.py::test_2",
-            "test_async.py::test_3",
+            "*test_async.py::test_1*",
+            "*test_async.py::test_2*",
+            "*test_async.py::test_3*",
             "*async def functions are not natively supported*",
-            "*3 skipped, 3 warnings in*",
         ]
-    )
-    # ensure our warning message appears only once
-    assert (
-        result.stdout.str().count("async def functions are not natively supported") == 1
     )
 
 
