@@ -889,8 +889,28 @@ def pytest_fixture_setup(
     """
 
 
-def pytest_fixture_post_finalizer(
+def pytest_fixture_teardown(
     fixturedef: "FixtureDef[Any]", request: "SubRequest"
+) -> None:
+    """Perform fixture teardown execution.
+
+    :param fixturdef:
+        The fixture definition object.
+    :param request:
+        The fixture request object.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given fixture, only
+    conftest files in the fixture scope's directory and its parent directories
+    are consulted.
+    """
+
+
+def pytest_fixture_post_finalizer(
+    fixturedef: "FixtureDef[Any]",
+    request: "SubRequest",
 ) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not
