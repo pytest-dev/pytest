@@ -14,7 +14,6 @@ from typing import AbstractSet
 from typing import Any
 from typing import Callable
 from typing import cast
-from typing import Dict
 from typing import Final
 from typing import final
 from typing import Generator
@@ -205,7 +204,7 @@ def get_parametrized_fixture_keys(
 
 
 def reorder_items(items: Sequence[nodes.Item]) -> list[nodes.Item]:
-    argkeys_cache: dict[Scope, dict[nodes.Item, Dict[FixtureArgKey, None]]] = {}
+    argkeys_cache: dict[Scope, dict[nodes.Item, dict[FixtureArgKey, None]]] = {}
     items_by_argkey: dict[
         Scope, dict[FixtureArgKey, OrderedDict[nodes.Item, None]]
     ] = {}
@@ -226,8 +225,8 @@ def reorder_items(items: Sequence[nodes.Item]) -> list[nodes.Item]:
 
 def fix_cache_order(
     item: nodes.Item,
-    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
-    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, OrderedDict[nodes.Item, None]]],
+    argkeys_cache: dict[Scope, dict[nodes.Item, dict[FixtureArgKey, None]]],
+    items_by_argkey: dict[Scope, dict[FixtureArgKey, OrderedDict[nodes.Item, None]]],
 ) -> None:
     for scope in HIGH_SCOPES:
         scoped_items_by_argkey = items_by_argkey[scope]
@@ -237,20 +236,20 @@ def fix_cache_order(
 
 
 def reorder_items_atscope(
-    items: Dict[nodes.Item, None],
-    argkeys_cache: Dict[Scope, Dict[nodes.Item, Dict[FixtureArgKey, None]]],
-    items_by_argkey: Dict[Scope, Dict[FixtureArgKey, OrderedDict[nodes.Item, None]]],
+    items: dict[nodes.Item, None],
+    argkeys_cache: dict[Scope, dict[nodes.Item, dict[FixtureArgKey, None]]],
+    items_by_argkey: dict[Scope, dict[FixtureArgKey, OrderedDict[nodes.Item, None]]],
     scope: Scope,
-) -> Dict[nodes.Item, None]:
+) -> dict[nodes.Item, None]:
     if scope is Scope.Function or len(items) < 3:
         return items
-    ignore: Set[Optional[FixtureArgKey]] = set()
+    ignore: set[FixtureArgKey | None] = set()
     items_deque = deque(items)
-    items_done: Dict[nodes.Item, None] = {}
+    items_done: dict[nodes.Item, None] = {}
     scoped_items_by_argkey = items_by_argkey[scope]
     scoped_argkeys_cache = argkeys_cache[scope]
     while items_deque:
-        no_argkey_group: Dict[nodes.Item, None] = {}
+        no_argkey_group: dict[nodes.Item, None] = {}
         slicing_argkey = None
         while items_deque:
             item = items_deque.popleft()
@@ -1615,7 +1614,10 @@ class FixtureManager:
         name: str,
         func: _FixtureFunc[object],
         nodeid: str | None,
-        scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] | None = "function",
+        scope: Scope
+        | _ScopeName
+        | Callable[[str, Config], _ScopeName]
+        | None = "function",
         params: Sequence[object] | None = None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         autouse: bool = False,

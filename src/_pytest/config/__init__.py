@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from .argparsing import Argument
     from .argparsing import Parser
     from _pytest._code.code import _TracebackStyle
+    from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
 
 
@@ -1009,6 +1010,8 @@ class Config:
             object.__setattr__(self, "plugins", plugins)
             object.__setattr__(self, "dir", dir)
 
+    cache: Cache
+
     class ArgsSource(enum.Enum):
         """Indicates the source of the test arguments.
 
@@ -1083,11 +1086,6 @@ class Config:
         )
         self.args_source = Config.ArgsSource.ARGS
         self.args: list[str] = []
-
-        if TYPE_CHECKING:
-            from _pytest.cacheprovider import Cache
-
-            self.cache: Optional[Cache] = None
 
     @property
     def rootpath(self) -> pathlib.Path:
@@ -1906,7 +1904,7 @@ def parse_warning_filter(
         parts.append("")
     action_, message, category_, module, lineno_ = (s.strip() for s in parts)
     try:
-        action: "warnings._ActionKind" = warnings._getaction(action_)  # type: ignore[attr-defined]
+        action: warnings._ActionKind = warnings._getaction(action_)  # type: ignore[attr-defined]
     except warnings._OptionError as e:
         raise UsageError(error_template.format(error=str(e))) from None
     try:

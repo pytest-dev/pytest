@@ -486,7 +486,7 @@ class SetupState:
                 # Node's finalizers.
                 list[Callable[[], object]],
                 # Node's exception and original traceback, if its setup raised.
-                tuple[OutcomeException | Exception | None] | None,
+                OutcomeException | Exception | None,
             ],
         ] = {}
 
