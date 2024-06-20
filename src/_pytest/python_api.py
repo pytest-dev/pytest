@@ -376,7 +376,9 @@ class ApproxSequenceLike(ApproxBase):
     def _check_type(self) -> None:
         __tracebackhide__ = True
         for index, x in enumerate(self.expected):
-            if (isinstance(x, Collection) or isinstance(x, Mapping)) and not isinstance(x, str):
+            if (isinstance(x, Collection) or isinstance(x, Mapping)) and not isinstance(
+                x, str
+            ):
                 msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
                 raise TypeError(msg.format(x, index, pprint.pformat(self.expected)))
 
