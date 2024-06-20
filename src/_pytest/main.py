@@ -1,5 +1,7 @@
 """Core implementation of the testing process: init, session, runtest loop."""
 
+from __future__ import annotations
+
 import argparse
 import dataclasses
 import fnmatch
@@ -13,17 +15,12 @@ from typing import AbstractSet
 from typing import Callable
 from typing import Dict
 from typing import final
-from typing import FrozenSet
 from typing import Iterable
 from typing import Iterator
-from typing import List
 from typing import Literal
-from typing import Optional
 from typing import overload
 from typing import Sequence
-from typing import Tuple
 from typing import TYPE_CHECKING
-from typing import Union
 import warnings
 
 import pluggy
@@ -270,8 +267,8 @@ def validate_basetemp(path: str) -> str:
 
 
 def wrap_session(
-    config: Config, doit: Callable[[Config, "Session"], Optional[Union[int, ExitCode]]]
-) -> Union[int, ExitCode]:
+    config: Config, doit: Callable[[Config, Session], int | ExitCode | None]
+) -> int | ExitCode:
     """Skeleton command line program."""
     session = Session.from_config(config)
     session.exitstatus = ExitCode.OK
@@ -290,7 +287,7 @@ def wrap_session(
             session.exitstatus = ExitCode.TESTS_FAILED
         except (KeyboardInterrupt, exit.Exception):
             excinfo = _pytest._code.ExceptionInfo.from_current()
-            exitstatus: Union[int, ExitCode] = ExitCode.INTERRUPTED
+            exitstatus: int | ExitCode = ExitCode.INTERRUPTED
             if isinstance(excinfo.value, exit.Exception):
                 if excinfo.value.returncode is not None:
                     exitstatus = excinfo.value.returncode
@@ -328,11 +325,11 @@ def wrap_session(
     return session.exitstatus
 
 
-def pytest_cmdline_main(config: Config) -> Union[int, ExitCode]:
+def pytest_cmdline_main(config: Config) -> int | ExitCode:
     return wrap_session(config, _main)
 
 
-def _main(config: Config, session: "Session") -> Optional[Union[int, ExitCode]]:
+def _main(config: Config, session: Session) -> int | ExitCode | None:
     """Default command line protocol for initialization, session,
     running tests and reporting."""
     config.hook.pytest_collection(session=session)
@@ -345,11 +342,11 @@ def _main(config: Config, session: "Session") -> Optional[Union[int, ExitCode]]:
     return None
 
 
-def pytest_collection(session: "Session") -> None:
+def pytest_collection(session: Session) -> None:
     session.perform_collect()
 
 
-def pytest_runtestloop(session: "Session") -> bool:
+def pytest_runtestloop(session: Session) -> bool:
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
         raise session.Interrupted(
             "%d error%s during collection"
@@ -389,7 +386,7 @@ def _in_venv(path: Path) -> bool:
     return any(fname.name in activates for fname in bindir.iterdir())
 
 
-def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[bool]:
+def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
     if collection_path.name == "__pycache__":
         return True
 
@@ -429,11 +426,11 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> Optional[boo
 
 def pytest_collect_directory(
     path: Path, parent: nodes.Collector
-) -> Optional[nodes.Collector]:
+) -> nodes.Collector | None:
     return Dir.from_parent(parent, path=path)
 
 
-def pytest_collection_modifyitems(items: List[nodes.Item], config: Config) -> None:
+def pytest_collection_modifyitems(items: list[nodes.Item], config: Config) -> None:
     deselect_prefixes = tuple(config.getoption("deselect") or [])
     if not deselect_prefixes:
         return
@@ -507,7 +504,7 @@ class Dir(nodes.Directory):
         parent: nodes.Collector,
         *,
         path: Path,
-    ) -> "Self":
+    ) -> Self:
         """The public constructor.
 
         :param parent: The parent collector of this Dir.
@@ -515,9 +512,9 @@ class Dir(nodes.Directory):
         """
         return super().from_parent(parent=parent, path=path)
 
-    def collect(self) -> Iterable[Union[nodes.Item, nodes.Collector]]:
+    def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
         config = self.config
-        col: Optional[nodes.Collector]
+        col: nodes.Collector | None
         cols: Sequence[nodes.Collector]
         ihook = self.ihook
         for direntry in scandir(self.path):
@@ -552,7 +549,7 @@ class Session(nodes.Collector):
     _setupstate: SetupState
     # Set on the session by fixtures.pytest_sessionstart.
     _fixturemanager: FixtureManager
-    exitstatus: Union[int, ExitCode]
+    exitstatus: int | ExitCode
 
     def __init__(self, config: Config) -> None:
         super().__init__(
@@ -566,22 +563,22 @@ class Session(nodes.Collector):
         )
         self.testsfailed = 0
         self.testscollected = 0
-        self._shouldstop: Union[bool, str] = False
-        self._shouldfail: Union[bool, str] = False
+        self._shouldstop: bool | str = False
+        self._shouldfail: bool | str = False
         self.trace = config.trace.root.get("collection")
-        self._initialpaths: FrozenSet[Path] = frozenset()
-        self._initialpaths_with_parents: FrozenSet[Path] = frozenset()
-        self._notfound: List[Tuple[str, Sequence[nodes.Collector]]] = []
-        self._initial_parts: List[CollectionArgument] = []
-        self._collection_cache: Dict[nodes.Collector, CollectReport] = {}
-        self.items: List[nodes.Item] = []
+        self._initialpaths: frozenset[Path] = frozenset()
+        self._initialpaths_with_parents: frozenset[Path] = frozenset()
+        self._notfound: list[tuple[str, Sequence[nodes.Collector]]] = []
+        self._initial_parts: list[CollectionArgument] = []
+        self._collection_cache: dict[nodes.Collector, CollectReport] = {}
+        self.items: list[nodes.Item] = []
 
-        self._bestrelpathcache: Dict[Path, str] = _bestrelpath_cache(config.rootpath)
+        self._bestrelpathcache: dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
         self.config.pluginmanager.register(self, name="session")
 
     @classmethod
-    def from_config(cls, config: Config) -> "Session":
+    def from_config(cls, config: Config) -> Session:
         session: Session = cls._create(config=config)
         return session
 
@@ -595,11 +592,11 @@ class Session(nodes.Collector):
         )
 
     @property
-    def shouldstop(self) -> Union[bool, str]:
+    def shouldstop(self) -> bool | str:
         return self._shouldstop
 
     @shouldstop.setter
-    def shouldstop(self, value: Union[bool, str]) -> None:
+    def shouldstop(self, value: bool | str) -> None:
         # The runner checks shouldfail and assumes that if it is set we are
         # definitely stopping, so prevent unsetting it.
         if value is False and self._shouldstop:
@@ -613,11 +610,11 @@ class Session(nodes.Collector):
         self._shouldstop = value
 
     @property
-    def shouldfail(self) -> Union[bool, str]:
+    def shouldfail(self) -> bool | str:
         return self._shouldfail
 
     @shouldfail.setter
-    def shouldfail(self, value: Union[bool, str]) -> None:
+    def shouldfail(self, value: bool | str) -> None:
         # The runner checks shouldfail and assumes that if it is set we are
         # definitely stopping, so prevent unsetting it.
         if value is False and self._shouldfail:
@@ -650,9 +647,7 @@ class Session(nodes.Collector):
             raise self.Interrupted(self.shouldstop)
 
     @hookimpl(tryfirst=True)
-    def pytest_runtest_logreport(
-        self, report: Union[TestReport, CollectReport]
-    ) -> None:
+    def pytest_runtest_logreport(self, report: TestReport | CollectReport) -> None:
         if report.failed and not hasattr(report, "wasxfail"):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
@@ -663,7 +658,7 @@ class Session(nodes.Collector):
 
     def isinitpath(
         self,
-        path: Union[str, "os.PathLike[str]"],
+        path: str | os.PathLike[str],
         *,
         with_parents: bool = False,
     ) -> bool:
@@ -685,7 +680,7 @@ class Session(nodes.Collector):
         else:
             return path_ in self._initialpaths
 
-    def gethookproxy(self, fspath: "os.PathLike[str]") -> pluggy.HookRelay:
+    def gethookproxy(self, fspath: os.PathLike[str]) -> pluggy.HookRelay:
         # Optimization: Path(Path(...)) is much slower than isinstance.
         path = fspath if isinstance(fspath, Path) else Path(fspath)
         pm = self.config.pluginmanager
@@ -705,7 +700,7 @@ class Session(nodes.Collector):
     def _collect_path(
         self,
         path: Path,
-        path_cache: Dict[Path, Sequence[nodes.Collector]],
+        path_cache: dict[Path, Sequence[nodes.Collector]],
     ) -> Sequence[nodes.Collector]:
         """Create a Collector for the given path.
 
@@ -717,7 +712,7 @@ class Session(nodes.Collector):
 
         if path.is_dir():
             ihook = self.gethookproxy(path.parent)
-            col: Optional[nodes.Collector] = ihook.pytest_collect_directory(
+            col: nodes.Collector | None = ihook.pytest_collect_directory(
                 path=path, parent=self
             )
             cols: Sequence[nodes.Collector] = (col,) if col is not None else ()
@@ -735,17 +730,17 @@ class Session(nodes.Collector):
 
     @overload
     def perform_collect(
-        self, args: Optional[Sequence[str]] = ..., genitems: "Literal[True]" = ...
+        self, args: Sequence[str] | None = ..., genitems: Literal[True] = ...
     ) -> Sequence[nodes.Item]: ...
 
     @overload
     def perform_collect(
-        self, args: Optional[Sequence[str]] = ..., genitems: bool = ...
-    ) -> Sequence[Union[nodes.Item, nodes.Collector]]: ...
+        self, args: Sequence[str] | None = ..., genitems: bool = ...
+    ) -> Sequence[nodes.Item | nodes.Collector]: ...
 
     def perform_collect(
-        self, args: Optional[Sequence[str]] = None, genitems: bool = True
-    ) -> Sequence[Union[nodes.Item, nodes.Collector]]:
+        self, args: Sequence[str] | None = None, genitems: bool = True
+    ) -> Sequence[nodes.Item | nodes.Collector]:
         """Perform the collection phase for this session.
 
         This is called by the default :hook:`pytest_collection` hook
@@ -771,10 +766,10 @@ class Session(nodes.Collector):
         self._initial_parts = []
         self._collection_cache = {}
         self.items = []
-        items: Sequence[Union[nodes.Item, nodes.Collector]] = self.items
+        items: Sequence[nodes.Item | nodes.Collector] = self.items
         try:
-            initialpaths: List[Path] = []
-            initialpaths_with_parents: List[Path] = []
+            initialpaths: list[Path] = []
+            initialpaths_with_parents: list[Path] = []
             for arg in args:
                 collection_argument = resolve_collection_argument(
                     self.config.invocation_params.dir,
@@ -829,7 +824,7 @@ class Session(nodes.Collector):
         self,
         node: nodes.Collector,
         handle_dupes: bool = True,
-    ) -> Tuple[CollectReport, bool]:
+    ) -> tuple[CollectReport, bool]:
         if node in self._collection_cache and handle_dupes:
             rep = self._collection_cache[node]
             return rep, True
@@ -838,11 +833,11 @@ class Session(nodes.Collector):
             self._collection_cache[node] = rep
             return rep, False
 
-    def collect(self) -> Iterator[Union[nodes.Item, nodes.Collector]]:
+    def collect(self) -> Iterator[nodes.Item | nodes.Collector]:
         # This is a cache for the root directories of the initial paths.
         # We can't use collection_cache for Session because of its special
         # role as the bootstrapping collector.
-        path_cache: Dict[Path, Sequence[nodes.Collector]] = {}
+        path_cache: dict[Path, Sequence[nodes.Collector]] = {}
 
         pm = self.config.pluginmanager
 
@@ -880,9 +875,9 @@ class Session(nodes.Collector):
             # and discarding all nodes which don't match the level's part.
             any_matched_in_initial_part = False
             notfound_collectors = []
-            work: List[
-                Tuple[Union[nodes.Collector, nodes.Item], List[Union[Path, str]]]
-            ] = [(self, [*paths, *names])]
+            work: list[tuple[nodes.Collector | nodes.Item, list[Path | str]]] = [
+                (self, [*paths, *names])
+            ]
             while work:
                 matchnode, matchparts = work.pop()
 
@@ -899,7 +894,7 @@ class Session(nodes.Collector):
                 # Collect this level of matching.
                 # Collecting Session (self) is done directly to avoid endless
                 # recursion to this function.
-                subnodes: Sequence[Union[nodes.Collector, nodes.Item]]
+                subnodes: Sequence[nodes.Collector | nodes.Item]
                 if isinstance(matchnode, Session):
                     assert isinstance(matchparts[0], Path)
                     subnodes = matchnode._collect_path(matchparts[0], path_cache)
@@ -959,9 +954,7 @@ class Session(nodes.Collector):
 
             self.trace.root.indent -= 1
 
-    def genitems(
-        self, node: Union[nodes.Item, nodes.Collector]
-    ) -> Iterator[nodes.Item]:
+    def genitems(self, node: nodes.Item | nodes.Collector) -> Iterator[nodes.Item]:
         self.trace("genitems", node)
         if isinstance(node, nodes.Item):
             node.ihook.pytest_itemcollected(item=node)
@@ -981,7 +974,7 @@ class Session(nodes.Collector):
                 node.ihook.pytest_collectreport(report=rep)
 
 
-def search_pypath(module_name: str) -> Optional[str]:
+def search_pypath(module_name: str) -> str | None:
     """Search sys.path for the given a dotted module name, and return its file
     system path if found."""
     try:
@@ -1005,7 +998,7 @@ class CollectionArgument:
 
     path: Path
     parts: Sequence[str]
-    module_name: Optional[str]
+    module_name: str | None
 
 
 def resolve_collection_argument(

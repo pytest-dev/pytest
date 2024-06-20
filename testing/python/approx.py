@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
@@ -6,7 +8,6 @@ from math import sqrt
 import operator
 from operator import eq
 from operator import ne
-from typing import Optional
 
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
@@ -415,9 +416,7 @@ class TestApprox:
             (-1e100, -1e100),
         ],
     )
-    def test_negative_tolerance(
-        self, rel: Optional[float], abs: Optional[float]
-    ) -> None:
+    def test_negative_tolerance(self, rel: float | None, abs: float | None) -> None:
         # Negative tolerances are not allowed.
         with pytest.raises(ValueError):
             1.1 == approx(1, rel, abs)

@@ -15,6 +15,8 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import shutil
@@ -455,7 +457,7 @@ intersphinx_mapping = {
 }
 
 
-def setup(app: "sphinx.application.Sphinx") -> None:
+def setup(app: sphinx.application.Sphinx) -> None:
     app.add_crossref_type(
         "fixture",
         "fixture",

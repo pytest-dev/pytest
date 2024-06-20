@@ -15,6 +15,8 @@ The semantics are:
 - or/and/not evaluate according to the usual boolean semantics.
 """
 
+from __future__ import annotations
+
 import ast
 import dataclasses
 import enum
@@ -24,7 +26,6 @@ from typing import Callable
 from typing import Iterator
 from typing import Mapping
 from typing import NoReturn
-from typing import Optional
 from typing import Sequence
 
 
@@ -105,7 +106,7 @@ class Scanner:
                     )
         yield Token(TokenType.EOF, "", pos)
 
-    def accept(self, type: TokenType, *, reject: bool = False) -> Optional[Token]:
+    def accept(self, type: TokenType, *, reject: bool = False) -> Token | None:
         if self.current.type is type:
             token = self.current
             if token.type is not TokenType.EOF:
@@ -197,7 +198,7 @@ class Expression:
         self.code = code
 
     @classmethod
-    def compile(self, input: str) -> "Expression":
+    def compile(self, input: str) -> Expression:
         """Compile a match expression.
 
         :param input: The input expression - one line.

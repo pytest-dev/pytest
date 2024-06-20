@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 """Interactive debugging with PDB, the Python Debugger."""
 
+from __future__ import annotations
+
 import argparse
 import functools
 import sys
@@ -8,12 +10,7 @@ import types
 from typing import Any
 from typing import Callable
 from typing import Generator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
-from typing import Union
 import unittest
 
 from _pytest import outcomes
@@ -33,7 +30,7 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
 
 
-def _validate_usepdb_cls(value: str) -> Tuple[str, str]:
+def _validate_usepdb_cls(value: str) -> tuple[str, str]:
     """Validate syntax of --pdbcls option."""
     try:
         modname, classname = value.split(":")
@@ -98,22 +95,22 @@ def pytest_configure(config: Config) -> None:
 class pytestPDB:
     """Pseudo PDB that defers to the real pdb."""
 
-    _pluginmanager: Optional[PytestPluginManager] = None
-    _config: Optional[Config] = None
-    _saved: List[
-        Tuple[Callable[..., None], Optional[PytestPluginManager], Optional[Config]]
+    _pluginmanager: PytestPluginManager | None = None
+    _config: Config | None = None
+    _saved: list[
+        tuple[Callable[..., None], PytestPluginManager | None, Config | None]
     ] = []
     _recursive_debug = 0
-    _wrapped_pdb_cls: Optional[Tuple[Type[Any], Type[Any]]] = None
+    _wrapped_pdb_cls: tuple[type[Any], type[Any]] | None = None
 
     @classmethod
-    def _is_capturing(cls, capman: Optional["CaptureManager"]) -> Union[str, bool]:
+    def _is_capturing(cls, capman: CaptureManager | None) -> str | bool:
         if capman:
             return capman.is_capturing()
         return False
 
     @classmethod
-    def _import_pdb_cls(cls, capman: Optional["CaptureManager"]):
+    def _import_pdb_cls(cls, capman: CaptureManager | None):
         if not cls._config:
             import pdb
 
@@ -152,7 +149,7 @@ class pytestPDB:
         return wrapped_cls
 
     @classmethod
-    def _get_pdb_wrapper_class(cls, pdb_cls, capman: Optional["CaptureManager"]):
+    def _get_pdb_wrapper_class(cls, pdb_cls, capman: CaptureManager | None):
         import _pytest.config
 
         class PytestPdbWrapper(pdb_cls):
@@ -242,7 +239,7 @@ class pytestPDB:
         import _pytest.config
 
         if cls._pluginmanager is None:
-            capman: Optional[CaptureManager] = None
+            capman: CaptureManager | None = None
         else:
             capman = cls._pluginmanager.getplugin("capturemanager")
         if capman:
@@ -285,7 +282,7 @@ class pytestPDB:
 
 class PdbInvoke:
     def pytest_exception_interact(
-        self, node: Node, call: "CallInfo[Any]", report: BaseReport
+        self, node: Node, call: CallInfo[Any], report: BaseReport
     ) -> None:
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:

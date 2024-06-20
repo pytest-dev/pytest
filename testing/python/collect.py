@@ -1,9 +1,10 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 import sys
 import textwrap
 from typing import Any
-from typing import Dict
 
 import _pytest._code
 from _pytest.config import ExitCode
@@ -1103,7 +1104,7 @@ class TestTracebackCutting:
 
         tb = None
         try:
-            ns: Dict[str, Any] = {}
+            ns: dict[str, Any] = {}
             exec("def foo(): raise ValueError", ns)
             ns["foo"]()
         except ValueError:
