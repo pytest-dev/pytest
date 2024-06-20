@@ -20,6 +20,10 @@ build:
       3.12
   apt_packages:
     - inkscape
+  jobs:
+    post_checkout:
+      - git fetch --unshallow || true
+      - git fetch --tags || true
 
 formats:
   - epub

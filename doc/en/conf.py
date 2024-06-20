@@ -15,6 +15,8 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
+import os
+from pathlib import Path
 import shutil
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -25,6 +27,16 @@ from _pytest import __version__ as version
 if TYPE_CHECKING:
     import sphinx.application
 
+
+PROJECT_ROOT_DIR = Path(__file__).parents[2].resolve()
+IS_RELEASE_ON_RTD = (
+    os.getenv("READTHEDOCS", "False") == "True"
+    and os.environ["READTHEDOCS_VERSION_TYPE"] == "tag"
+)
+if IS_RELEASE_ON_RTD:
+    tags: set[str]
+    # pylint: disable-next=used-before-assignment
+    tags.add("is_release")  # noqa: F821
 
 release = ".".join(version.split(".")[:2])
 
@@ -72,6 +84,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_removed_in",
     "sphinxcontrib_trio",
+    "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
 ]
 
 # Building PDF docs on readthedocs requires inkscape for svg to pdf
@@ -422,6 +435,13 @@ texinfo_documents = [
     )
 ]
 
+# -- Options for towncrier_draft extension -----------------------------------
+
+towncrier_draft_autoversion_mode = "draft"  # or: 'sphinx-version', 'sphinx-release'
+towncrier_draft_include_empty = True
+towncrier_draft_working_directory = PROJECT_ROOT_DIR
+towncrier_draft_config_path = "pyproject.toml"  # relative to cwd
+
 
 intersphinx_mapping = {
     "pluggy": ("https://pluggy.readthedocs.io/en/stable", None),
@@ -433,30 +453,6 @@ intersphinx_mapping = {
     "setuptools": ("https://setuptools.pypa.io/en/stable", None),
     "packaging": ("https://packaging.python.org/en/latest", None),
 }
-
-
-def configure_logging(app: "sphinx.application.Sphinx") -> None:
-    """Configure Sphinx's WarningHandler to handle (expected) missing include."""
-    import logging
-
-    import sphinx.util.logging
-
-    class WarnLogFilter(logging.Filter):
-        def filter(self, record: logging.LogRecord) -> bool:
-            """Ignore warnings about missing include with "only" directive.
-
-            Ref: https://github.com/sphinx-doc/sphinx/issues/2150."""
-            if (
-                record.msg.startswith('Problems with "include" directive path:')
-                and "_changelog_towncrier_draft.rst" in record.msg
-            ):
-                return False
-            return True
-
-    logger = logging.getLogger(sphinx.util.logging.NAMESPACE)
-    warn_handler = [x for x in logger.handlers if x.level == logging.WARNING]
-    assert len(warn_handler) == 1, warn_handler
-    warn_handler[0].filters.insert(0, WarnLogFilter())
 
 
 def setup(app: "sphinx.application.Sphinx") -> None:
@@ -487,8 +483,6 @@ def setup(app: "sphinx.application.Sphinx") -> None:
         objname="pytest hook",
         indextemplate="pair: %s; hook",
     )
-
-    configure_logging(app)
 
     # legacypath.py monkey-patches pytest.Testdir in. Import the file so
     # that autodoc can discover references to it.

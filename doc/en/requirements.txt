@@ -9,3 +9,4 @@ sphinxcontrib-svg2pdfconverter
 # See https://github.com/pytest-dev/pytest/pull/10578#issuecomment-1348249045.
 packaging
 furo
+sphinxcontrib-towncrier

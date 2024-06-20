@@ -19,12 +19,15 @@ with advance notice in the **Deprecations** section of releases.
     we named the news folder changelog
 
 
-.. only:: changelog_towncrier_draft
+.. only:: not is_release
 
-    .. The 'changelog_towncrier_draft' tag is included by our 'tox -e docs',
-       but not on readthedocs.
+   To be included in v\ |release| (if present)
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    .. include:: _changelog_towncrier_draft.rst
+   .. towncrier-draft-entries:: |release| [UNRELEASED DRAFT]
+
+   Released versions
+   ^^^^^^^^^^^^^^^^^
 
 .. towncrier release notes start
 
