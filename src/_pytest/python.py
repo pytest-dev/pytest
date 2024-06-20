@@ -1126,9 +1126,9 @@ def resolve_values_indices_in_parametersets(
                     argname_value_indices_for_hashable_ones[argname][value]
                 )
             except KeyError:  # New unique value
-                argname_value_indices_for_hashable_ones[argname][
-                    value
-                ] = argvalues_count[argname]
+                argname_value_indices_for_hashable_ones[argname][value] = (
+                    argvalues_count[argname]
+                )
                 argname_indices.append(argvalues_count[argname])
                 argvalues_count[argname] += 1
             except TypeError:  # `value` is not hashable

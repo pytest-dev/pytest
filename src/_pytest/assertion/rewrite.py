@@ -18,7 +18,6 @@ import sys
 import tokenize
 import types
 from typing import Callable
-from typing import DefaultDict
 from typing import Dict
 from typing import IO
 from typing import Iterable
