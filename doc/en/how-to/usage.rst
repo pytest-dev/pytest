@@ -76,11 +76,19 @@ Specifying a specific parametrization of a test:
 
 **Run tests by marker expressions**
 
+To run all tests which are decorated with the ``@pytest.mark.slow`` decorator:
+
 .. code-block:: bash
 
     pytest -m slow
 
-Will run all tests which are decorated with the ``@pytest.mark.slow`` decorator.
+
+To run all tests which are decorated with the annotated ``@pytest.mark.slow(phase=1)`` decorator,
+with the ``phase`` keyword argument set to ``1``:
+
+.. code-block:: bash
+
+    pytest -m slow(phase=1)
 
 For more information see :ref:`marks <mark>`.
 
