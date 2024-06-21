@@ -5,4 +5,4 @@ Supported values are :class:`int`, (unescaped) :class:`str`, :class:`bool` & :da
 
 See :ref:`marker examples <marker_keyword_expression_example>` for more information.
 
--- by :user:`lovetheguitar`.
+-- by :user:`lovetheguitar`
