@@ -1010,6 +1010,7 @@ class Config:
             object.__setattr__(self, "plugins", plugins)
             object.__setattr__(self, "dir", dir)
 
+    # Set by cacheprovider plugin.
     cache: Cache
 
     class ArgsSource(enum.Enum):
