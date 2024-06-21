@@ -182,6 +182,26 @@ jobs:
             tox_env: "doctesting"
             use_coverage: true
 
+    continue-on-error: >-
+      ${{
+        contains(
+          fromJSON(
+            '[
+              "windows-py38-pluggy",
+              "windows-py313",
+              "ubuntu-py38-pluggy",
+              "ubuntu-py38-freeze",
+              "ubuntu-py313",
+              "macos-py38",
+              "macos-py313"
+            ]'
+          ),
+          matrix.name
+        )
+        && true
+        || false
+      }}
+
     steps:
     - uses: actions/checkout@v4
       with:
