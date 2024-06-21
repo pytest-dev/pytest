@@ -6,6 +6,7 @@ import collections
 import dataclasses
 from typing import AbstractSet
 from typing import Collection
+from typing import Iterable
 from typing import Optional
 from typing import TYPE_CHECKING
 
@@ -227,9 +228,9 @@ class MarkMatcher:
     own_mark_name_mapping: dict[str, list[Mark]]
 
     @classmethod
-    def from_item(cls, item: Item) -> MarkMatcher:
+    def from_markers(cls, markers: Iterable[Mark]) -> MarkMatcher:
         mark_name_mapping = collections.defaultdict(list)
-        for mark in item.iter_markers():
+        for mark in markers:
             mark_name_mapping[mark.name].append(mark)
         return cls(mark_name_mapping)
 
@@ -256,7 +257,7 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
     remaining: list[Item] = []
     deselected: list[Item] = []
     for item in items:
-        if expr.evaluate(MarkMatcher.from_item(item)):
+        if expr.evaluate(MarkMatcher.from_markers(item.iter_markers())):
             remaining.append(item)
         else:
             deselected.append(item)
