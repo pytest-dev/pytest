@@ -260,7 +260,7 @@ def all_kwargs(s: Scanner) -> list[ast.keyword]:
 
 
 class MatcherCall(Protocol):
-    def __call__(self, name: str, /, **kwargs: object) -> bool: ...
+    def __call__(self, name: str, /, **kwargs: str | int | bool | None) -> bool: ...
 
 
 @dataclasses.dataclass
@@ -271,7 +271,7 @@ class MatcherNameAdapter:
     def __bool__(self) -> bool:
         return self.matcher(self.name)
 
-    def __call__(self, **kwargs: object) -> bool:
+    def __call__(self, **kwargs: str | int | bool | None) -> bool:
         return self.matcher(self.name, **kwargs)
 
 

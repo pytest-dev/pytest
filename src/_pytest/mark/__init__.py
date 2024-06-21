@@ -184,7 +184,7 @@ class KeywordMatcher:
 
         return cls(mapped_names)
 
-    def __call__(self, subname: str, /, **kwargs: object) -> bool:
+    def __call__(self, subname: str, /, **kwargs: str | int | bool | None) -> bool:
         if kwargs:
             raise UsageError("Keyword expressions do not support call parameters.")
         subname = subname.lower()
@@ -234,7 +234,7 @@ class MarkMatcher:
             mark_name_mapping[mark.name].append(mark)
         return cls(mark_name_mapping)
 
-    def __call__(self, name: str, /, **kwargs: object) -> bool:
+    def __call__(self, name: str, /, **kwargs: str | int | bool | None) -> bool:
         if not (matches := self.own_mark_name_mapping.get(name, [])):
             return False
 
