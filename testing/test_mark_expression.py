@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import collections
 from typing import Callable
 from typing import cast
 
 from _pytest.mark import MarkMatcher
-from _pytest.mark import structures
 from _pytest.mark.expression import Expression
 from _pytest.mark.expression import MatcherCall
 from _pytest.mark.expression import ParseError
@@ -241,33 +239,15 @@ def test_invalid_kwarg_name_or_value(  # TODO: move to `test_syntax_errors` ?
 
 @pytest.fixture(scope="session")
 def mark_matcher() -> MarkMatcher:
-    markers = []
-    mark_name_mapping = collections.defaultdict(list)
+    markers = [
+        pytest.mark.number_mark(a=1, b=2, c=3, d=999_999).mark,
+        pytest.mark.builtin_matchers_mark(x=True, y=False, z=None).mark,
+        pytest.mark.str_mark(
+            m="M", space="with space", empty="", aaאבגדcc="aaאבגדcc", אבגד="אבגד"
+        ).mark,
+    ]
 
-    def create_marker(name: str, kwargs: dict[str, object]) -> structures.Mark:
-        return structures.Mark(name=name, args=tuple(), kwargs=kwargs, _ispytest=True)
-
-    markers.append(create_marker("number_mark", {"a": 1, "b": 2, "c": 3, "d": 999_999}))
-    markers.append(
-        create_marker("builtin_matchers_mark", {"x": True, "y": False, "z": None})
-    )
-    markers.append(
-        create_marker(
-            "str_mark",
-            {
-                "m": "M",
-                "space": "with space",
-                "aaאבגדcc": "aaאבגדcc",
-                "אבגד": "אבגד",
-                "empty": "",
-            },
-        )
-    )
-
-    for marker in markers:
-        mark_name_mapping[marker.name].append(marker)
-
-    return MarkMatcher(mark_name_mapping)
+    return MarkMatcher.from_markers(markers)
 
 
 @pytest.mark.parametrize(

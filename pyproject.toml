@@ -358,6 +358,9 @@ markers = [
     "foo",
     "bar",
     "baz",
+    "number_mark",
+    "builtin_matchers_mark",
+    "str_mark",
     # conftest.py reorders tests moving slow ones to the end of the list
     "slow",
     # experimental mark for all tests using pexpect
