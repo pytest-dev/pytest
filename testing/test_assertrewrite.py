@@ -19,6 +19,7 @@ from typing import Generator
 from typing import Mapping
 from unittest import mock
 import zipfile
+import re
 
 import _pytest._code
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
@@ -35,6 +36,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
+from _pytest.assertion.rewrite import _saferepr
 import pytest
 
 

@@ -1018,7 +1018,9 @@ class AssertionRewriter(ast.NodeVisitor):
                     ]
                 ):
                     pytest_temp = self.variable()
-                    self.variables_overwrite[self.scope][v.left.target.id] = v.left  # type:ignore[assignment]
+                    self.variables_overwrite[self.scope][
+                        v.left.target.id
+                    ] = v.left  # type:ignore[assignment]
                     v.left.target.id = pytest_temp
             self.push_format_context()
             res, expl = self.visit(v)
@@ -1062,7 +1064,9 @@ class AssertionRewriter(ast.NodeVisitor):
             if isinstance(arg, ast.Name) and arg.id in self.variables_overwrite.get(
                 self.scope, {}
             ):
-                arg = self.variables_overwrite[self.scope][arg.id]  # type:ignore[assignment]
+                arg = self.variables_overwrite[self.scope][
+                    arg.id
+                ]  # type:ignore[assignment]
             res, expl = self.visit(arg)
             arg_expls.append(expl)
             new_args.append(res)
@@ -1070,7 +1074,9 @@ class AssertionRewriter(ast.NodeVisitor):
             if isinstance(
                 keyword.value, ast.Name
             ) and keyword.value.id in self.variables_overwrite.get(self.scope, {}):
-                keyword.value = self.variables_overwrite[self.scope][keyword.value.id]  # type:ignore[assignment]
+                keyword.value = self.variables_overwrite[self.scope][
+                    keyword.value.id
+                ]  # type:ignore[assignment]
             res, expl = self.visit(keyword.value)
             new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
@@ -1107,9 +1113,13 @@ class AssertionRewriter(ast.NodeVisitor):
         if isinstance(
             comp.left, ast.Name
         ) and comp.left.id in self.variables_overwrite.get(self.scope, {}):
-            comp.left = self.variables_overwrite[self.scope][comp.left.id]  # type:ignore[assignment]
+            comp.left = self.variables_overwrite[self.scope][
+                comp.left.id
+            ]  # type:ignore[assignment]
         if isinstance(comp.left, ast.NamedExpr):
-            self.variables_overwrite[self.scope][comp.left.target.id] = comp.left  # type:ignore[assignment]
+            self.variables_overwrite[self.scope][
+                comp.left.target.id
+            ] = comp.left  # type:ignore[assignment]
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
             left_expl = f"({left_expl})"
@@ -1127,7 +1137,9 @@ class AssertionRewriter(ast.NodeVisitor):
                 and next_operand.target.id == left_res.id
             ):
                 next_operand.target.id = self.variable()
-                self.variables_overwrite[self.scope][left_res.id] = next_operand  # type:ignore[assignment]
+                self.variables_overwrite[self.scope][
+                    left_res.id
+                ] = next_operand  # type:ignore[assignment]
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
                 next_expl = f"({next_expl})"
