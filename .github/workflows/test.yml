@@ -14,6 +14,11 @@ on:
     branches:
       - main
       - "[0-9]+.[0-9]+.x"
+    types:
+    - opened  # default
+    - synchronize  # default
+    - reopened  # default
+    - ready_for_review  # used in PRs created from the release workflow
 
 env:
   PYTEST_ADDOPTS: "--color=yes"
