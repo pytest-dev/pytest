@@ -238,9 +238,6 @@ class MarkMatcher:
         if not (matches := self.own_mark_name_mapping.get(name, [])):
             return False
 
-        if not kwargs:
-            return True
-
         for mark in matches:
             if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
                 return True
