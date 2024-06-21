@@ -355,45 +355,75 @@ directory = "changelog/"
 title_format = "pytest {version} ({project_date})"
 template = "changelog/_template.rst"
 
-  [[tool.towncrier.type]]
-  directory = "breaking"
-  name = "Breaking Changes"
-  showcontent = true
+# NOTE: The types are declared because:
+# NOTE: - there is no mechanism to override just the value of
+# NOTE:   `tool.towncrier.type.misc.showcontent`;
+# NOTE: - and, we want to declare extra non-default types for
+# NOTE:   clarity and flexibility.
 
-  [[tool.towncrier.type]]
-  directory = "deprecation"
-  name = "Deprecations"
-  showcontent = true
+[[tool.towncrier.type]]
+# When something public gets removed in a breaking way. Could be
+# deprecated in an earlier release.
+directory = "breaking"
+name = "Removals and backward incompatible breaking changes"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "feature"
-  name = "Features"
-  showcontent = true
+[[tool.towncrier.type]]
+# Declarations of future API removals and breaking changes in behavior.
+directory = "deprecation"
+name = "Deprecations (removal in next major release)"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "improvement"
-  name = "Improvements"
-  showcontent = true
+[[tool.towncrier.type]]
+# New behaviors, public APIs. That sort of stuff.
+directory = "feature"
+name = "New features"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "bugfix"
-  name = "Bug Fixes"
-  showcontent = true
+[[tool.towncrier.type]]
+# New behaviors in existing features.
+directory = "improvement"
+name = "Improvements in existing functionality"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "vendor"
-  name = "Vendored Libraries"
-  showcontent = true
+[[tool.towncrier.type]]
+# Something we deemed an improper undesired behavior that got corrected
+# in the release to match pre-agreed expectations.
+directory = "bugfix"
+name = "Bug fixes"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "doc"
-  name = "Improved Documentation"
-  showcontent = true
+[[tool.towncrier.type]]
+# Updates regarding bundling dependencies.
+directory = "vendor"
+name = "Vendored libraries"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "trivial"
-  name = "Trivial/Internal Changes"
-  showcontent = true
+[[tool.towncrier.type]]
+# Notable updates to the documentation structure or build process.
+directory = "doc"
+name = "Improved documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Notes for downstreams about unobvious side effects and tooling. Changes
+# in the test invocation considerations and runtime assumptions.
+directory = "packaging"
+name = "Packaging updates and notes for downstreams"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Stuff that affects the contributor experience. e.g. Running tests,
+# building the docs, setting up the development environment.
+directory = "contrib"
+name = "Contributor-facing changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Changes that are hard to assign to any of the above categories.
+directory = "misc"
+name = "Miscellaneous internal changes"
+showcontent = true
 
 [tool.mypy]
 files = ["src", "testing", "scripts"]
