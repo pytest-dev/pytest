@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import collections
 import dataclasses
 from typing import AbstractSet
 from typing import Collection
+from typing import Iterable
 from typing import Optional
 from typing import TYPE_CHECKING
 
@@ -21,6 +23,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
 
@@ -181,7 +184,9 @@ class KeywordMatcher:
 
         return cls(mapped_names)
 
-    def __call__(self, subname: str) -> bool:
+    def __call__(self, subname: str, /, **kwargs: str | int | bool | None) -> bool:
+        if kwargs:
+            raise UsageError("Keyword expressions do not support call parameters.")
         subname = subname.lower()
         names = (name.lower() for name in self._names)
 
@@ -218,17 +223,26 @@ class MarkMatcher:
     Tries to match on any marker names, attached to the given colitem.
     """
 
-    __slots__ = ("own_mark_names",)
+    __slots__ = ("own_mark_name_mapping",)
 
-    own_mark_names: AbstractSet[str]
+    own_mark_name_mapping: dict[str, list[Mark]]
 
     @classmethod
-    def from_item(cls, item: Item) -> MarkMatcher:
-        mark_names = {mark.name for mark in item.iter_markers()}
-        return cls(mark_names)
+    def from_markers(cls, markers: Iterable[Mark]) -> MarkMatcher:
+        mark_name_mapping = collections.defaultdict(list)
+        for mark in markers:
+            mark_name_mapping[mark.name].append(mark)
+        return cls(mark_name_mapping)
 
-    def __call__(self, name: str) -> bool:
-        return name in self.own_mark_names
+    def __call__(self, name: str, /, **kwargs: str | int | bool | None) -> bool:
+        if not (matches := self.own_mark_name_mapping.get(name, [])):
+            return False
+
+        for mark in matches:
+            if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
+                return True
+
+        return False
 
 
 def deselect_by_mark(items: list[Item], config: Config) -> None:
@@ -240,7 +254,7 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
     remaining: list[Item] = []
     deselected: list[Item] = []
     for item in items:
-        if expr.evaluate(MarkMatcher.from_item(item)):
+        if expr.evaluate(MarkMatcher.from_markers(item.iter_markers())):
             remaining.append(item)
         else:
             deselected.append(item)
