@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
+
 import re
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
