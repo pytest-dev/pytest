@@ -1024,7 +1024,7 @@ class Config:
         TESTPATHS = enum.auto()
 
     # Set by cacheprovider plugin.
-    cache: Cache | None
+    cache: Cache
 
     def __init__(
         self,
