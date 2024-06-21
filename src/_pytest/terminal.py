@@ -1076,7 +1076,6 @@ class TerminalReporter:
         self,
         which_reports: str,
         sep_title: str,
-        *,
         needed_opt: str | None = None,
     ) -> None:
         if self.config.option.tbstyle != "no":
