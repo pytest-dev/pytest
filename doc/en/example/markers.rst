@@ -93,7 +93,7 @@ keyword arguments, e.g. to run only tests marked with ``device`` and the specifi
 
 .. note:: Only keyword argument matching is supported in marker expressions.
 
-.. note:: Only ``int``, (unescaped) ``str``, ``bool`` & ``None`` values are supported in marker expressions.
+.. note:: Only :class:`int`, (unescaped) :class:`str`, :class:`bool` & :data:`None` values are supported in marker expressions.
 
 Selecting tests based on their node ID
 --------------------------------------
