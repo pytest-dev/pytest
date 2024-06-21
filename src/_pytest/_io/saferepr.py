@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pprint
 import reprlib
-from types import MethodType
 
 
 def _try_repr_or_str(obj: object) -> str:

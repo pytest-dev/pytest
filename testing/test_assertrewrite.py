@@ -10,6 +10,7 @@ import marshal
 import os
 from pathlib import Path
 import py_compile
+import re
 import stat
 import sys
 import textwrap
@@ -18,13 +19,13 @@ from typing import Generator
 from typing import Mapping
 from unittest import mock
 import zipfile
-import re
 
 import _pytest._code
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import _get_assertion_exprs
 from _pytest.assertion.rewrite import _get_maxsize_for_saferepr
+from _pytest.assertion.rewrite import _saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.assertion.rewrite import get_cache_dir
 from _pytest.assertion.rewrite import PYC_TAIL
@@ -34,7 +35,6 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
-from _pytest.assertion.rewrite import _saferepr
 import pytest
 
 
