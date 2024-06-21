@@ -99,18 +99,18 @@ class Scanner:
             elif input[pos] == ",":
                 yield Token(TokenType.COMMA, ",", pos)
                 pos += 1
-            elif (quote_char := input[pos]) == "'" or input[pos] == '"':
-                quote_position = input[pos + 1 :].find(quote_char)
-                if quote_position == -1:
+            elif (quote_char := input[pos]) in ("'", '"'):
+                end_quote_pos = input.find(quote_char, pos + 1)
+                if end_quote_pos == -1:
                     raise ParseError(
                         pos + 1,
                         f'closing quote "{quote_char}" is missing',
                     )
-                value = input[pos : pos + 2 + quote_position]
-                if "\\" in value:
+                value = input[pos : end_quote_pos + 1]
+                if (backslash_pos := input.find("\\")) != -1:
                     raise ParseError(
-                        pos + 1,
-                        "escaping not supported in marker expression",
+                        backslash_pos + 1,
+                        r'escaping with "\" not supported in marker expression',
                     )
                 yield Token(TokenType.STRING, value, pos)
                 pos += len(value)
@@ -218,10 +218,15 @@ BUILTIN_MATCHERS = {"True": True, "False": False, "None": None}
 
 def single_kwarg(s: Scanner) -> ast.keyword:
     keyword_name = s.accept(TokenType.IDENT, reject=True)
-    if not keyword_name.value.isidentifier() or keyword.iskeyword(keyword_name.value):
+    if not keyword_name.value.isidentifier():
         raise ParseError(
             keyword_name.pos + 1,
-            f'unexpected character/s "{keyword_name.value}"',
+            f"not a valid python identifier {keyword_name.value}",
+        )
+    if keyword.iskeyword(keyword_name.value):
+        raise ParseError(
+            keyword_name.pos + 1,
+            f"unexpected reserved python keyword `{keyword_name.value}`",
         )
     s.accept(TokenType.EQUAL, reject=True)
 
