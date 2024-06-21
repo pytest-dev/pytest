@@ -1,8 +1,9 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 from pathlib import Path
 import re
 from typing import cast
-from typing import Type
 import warnings
 
 from _pytest import nodes
@@ -73,7 +74,7 @@ def test_subclassing_both_item_and_collector_deprecated(
     "warn_type, msg", [(DeprecationWarning, "deprecated"), (PytestWarning, "pytest")]
 )
 def test_node_warn_is_no_longer_only_pytest_warnings(
-    pytester: Pytester, warn_type: Type[Warning], msg: str
+    pytester: Pytester, warn_type: type[Warning], msg: str
 ) -> None:
     items = pytester.getitems(
         """

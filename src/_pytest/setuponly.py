@@ -1,6 +1,6 @@
+from __future__ import annotations
+
 from typing import Generator
-from typing import Optional
-from typing import Union
 
 from _pytest._io.saferepr import saferepr
 from _pytest.config import Config
@@ -96,7 +96,7 @@ def _show_fixture_action(
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
+def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.setuponly:
         config.option.setupshow = True
     return None

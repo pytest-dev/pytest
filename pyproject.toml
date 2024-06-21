@@ -98,6 +98,7 @@ lint.select = [
     "D",       # pydocstyle
     "E",       # pycodestyle
     "F",       # pyflakes
+    "FA100",   # add future annotations
     "I",       # isort
     "PGH004",  # pygrep-hooks - Use specific rule codes when using noqa
     "PIE",     # flake8-pie
@@ -155,6 +156,10 @@ lint.per-file-ignores."src/_pytest/_version.py" = [
 lint.per-file-ignores."testing/python/approx.py" = [
     "B015",
 ]
+lint.extend-safe-fixes = [
+    "UP006",
+    "UP007",
+]
 lint.isort.combine-as-imports = true
 lint.isort.force-single-line = true
 lint.isort.force-sort-within-sections = true
@@ -164,9 +169,13 @@ lint.isort.known-local-folder = [
 ]
 lint.isort.lines-after-imports = 2
 lint.isort.order-by-type = false
+lint.isort.required-imports = [
+    "from __future__ import annotations",
+]
 # In order to be able to format for 88 char in ruff format
 lint.pycodestyle.max-line-length = 120
 lint.pydocstyle.convention = "pep257"
+lint.pyupgrade.keep-runtime-typing = false
 
 [tool.pylint.main]
 # Maximum number of characters on a single line.

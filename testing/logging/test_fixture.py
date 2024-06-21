@@ -1,5 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 # mypy: disallow-untyped-defs
+from __future__ import annotations
+
 import logging
 from typing import Iterator
 

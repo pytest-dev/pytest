@@ -1,4 +1,7 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
+
 def pytest_configure(config):
     import pytest
 
