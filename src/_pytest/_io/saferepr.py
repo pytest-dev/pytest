@@ -59,7 +59,6 @@ class SafeRepr(reprlib.Repr):
             if self.use_ascii:
                 s = ascii(x)
             else:
-
                 s = super().repr(x)
         except (KeyboardInterrupt, SystemExit):
             raise
