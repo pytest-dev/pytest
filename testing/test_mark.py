@@ -420,6 +420,10 @@ def test_parametrize_with_module(pytester: Pytester) -> None:
             "not or",
             "at column 5: expected not OR left parenthesis OR identifier; got or",
         ),
+        (
+            "nonexistent_mark(non_supported='kwarg')",
+            "Keyword expressions do not support call parameters",
+        ),
     ],
 )
 def test_keyword_option_wrong_arguments(
