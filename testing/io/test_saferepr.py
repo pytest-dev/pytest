@@ -194,26 +194,3 @@ def test_saferepr_unlimited_exc():
     assert saferepr_unlimited(A()).startswith(
         "<[ValueError(42) raised in repr()] A object at 0x"
     )
-
-
-class TestSafereprUnbounded:
-    class Help:
-        def bound_method(self):  # pragma: no cover
-            pass
-
-    def test_saferepr_bound_method(self):
-        """saferepr() of a bound method should show only the method name"""
-        assert saferepr(self.Help().bound_method) == "bound_method"
-
-    def test_saferepr_unbounded(self):
-        """saferepr() of an unbound method should still show the full information"""
-        obj = self.Help()
-        # using id() to fetch memory address fails on different platforms
-        pattern = re.compile(
-            r"<test_saferepr.TestSafereprUnbounded.Help object at 0x[0-9a-fA-F]*>",
-        )
-        assert pattern.match(saferepr(obj))
-        assert (
-            saferepr(self.Help)
-            == f"<class 'test_saferepr.{self.__class__.__name__}.Help'>"
-        )

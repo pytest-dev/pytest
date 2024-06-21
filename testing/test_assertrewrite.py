@@ -18,6 +18,7 @@ from typing import Generator
 from typing import Mapping
 from unittest import mock
 import zipfile
+import re
 
 import _pytest._code
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
@@ -33,6 +34,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
+from _pytest.assertion.rewrite import _saferepr
 import pytest
 
 
@@ -2036,7 +2038,9 @@ class TestPyCacheDir:
         assert test_foo_pyc.is_file()
 
         # normal file: not touched by pytest, normal cache tag
-        bar_init_pyc = get_cache_dir(bar_init) / f"__init__.{sys.implementation.cache_tag}.pyc"
+        bar_init_pyc = (
+            get_cache_dir(bar_init) / f"__init__.{sys.implementation.cache_tag}.pyc"
+        )
         assert bar_init_pyc.is_file()
 
 
@@ -2103,3 +2107,26 @@ class TestIssue11140:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+
+class TestSafereprUnbounded:
+    class Help:
+        def bound_method(self):  # pragma: no cover
+            pass
+
+    def test_saferepr_bound_method(self):
+        """saferepr() of a bound method should show only the method name"""
+        assert _saferepr(self.Help().bound_method) == "bound_method"
+
+    def test_saferepr_unbounded(self):
+        """saferepr() of an unbound method should still show the full information"""
+        obj = self.Help()
+        # using id() to fetch memory address fails on different platforms
+        pattern = re.compile(
+            rf"<{Path(__file__).stem}.{self.__class__.__name__}.Help object at 0x[0-9a-fA-F]*>",
+        )
+        assert pattern.match(_saferepr(obj))
+        assert (
+            _saferepr(self.Help)
+            == f"<class '{Path(__file__).stem}.{self.__class__.__name__}.Help'>"
+        )

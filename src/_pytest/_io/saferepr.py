@@ -60,12 +60,7 @@ class SafeRepr(reprlib.Repr):
             if self.use_ascii:
                 s = ascii(x)
             else:
-                if isinstance(x, MethodType):
-                    # for bound methods, skip redundant <bound method ...> information
-                    s = x.__name__
-                else:
-                    s = super().repr(x)
-
+                s = super().repr(x)
         except (KeyboardInterrupt, SystemExit):
             raise
         except BaseException as exc:
