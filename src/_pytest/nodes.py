@@ -1,4 +1,3 @@
-# mypy: allow-untyped-defs
 from __future__ import annotations
 
 import abc
@@ -96,7 +95,7 @@ class NodeMeta(abc.ABCMeta):
     progress on detangling the :class:`Node` classes.
     """
 
-    def __call__(cls, *k, **kw) -> NoReturn:
+    def __call__(cls, *k: object, **kw: object) -> NoReturn:
         msg = (
             "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
             "See "
@@ -105,7 +104,7 @@ class NodeMeta(abc.ABCMeta):
         ).format(name=f"{cls.__module__}.{cls.__name__}")
         fail(msg, pytrace=False)
 
-    def _create(cls: type[_T], *k, **kw) -> _T:
+    def _create(cls: type[_T], *k: Any, **kw: Any) -> _T:
         try:
             return super().__call__(*k, **kw)  # type: ignore[no-any-return,misc]
         except TypeError:
@@ -225,7 +224,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
             return f"{parent.nodeid}::{name}"
 
     @classmethod
-    def from_parent(cls, parent: Node, **kw) -> Self:
+    def from_parent(cls, parent: Node, **kw: Any) -> Self:
         """Public constructor for Nodes.
 
         This indirection got introduced in order to enable removing
@@ -620,11 +619,11 @@ class FSCollector(Collector, abc.ABC):
     @classmethod
     def from_parent(
         cls,
-        parent,
+        parent: Node,
         *,
         fspath: LEGACY_PATH | None = None,
         path: Path | None = None,
-        **kw,
+        **kw: Any,
     ) -> Self:
         """The public constructor."""
         return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
@@ -661,16 +660,14 @@ class Item(Node, abc.ABC):
     Note that for a single function there might be multiple test invocation items.
     """
 
-    nextitem = None
-
     def __init__(
         self,
-        name,
-        parent=None,
+        name: str,
+        parent: Node | None = None,
         config: Config | None = None,
         session: Session | None = None,
         nodeid: str | None = None,
-        **kw,
+        **kw: Any,
     ) -> None:
         # The first two arguments are intentionally passed positionally,
         # to keep plugins who define a node type which inherits from
