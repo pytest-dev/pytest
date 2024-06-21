@@ -1,4 +1,9 @@
 # reference: https://docs.codecov.io/docs/codecovyml-reference
+---
+
+codecov:
+  token: 1eca3b1f-31a2-4fb8-a8c3-138b441b50a7 #repo token
+
 coverage:
   status:
     patch: true
