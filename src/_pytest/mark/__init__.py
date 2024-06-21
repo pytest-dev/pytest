@@ -22,6 +22,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
 
@@ -214,9 +215,6 @@ def deselect_by_keyword(items: list[Item], config: Config) -> None:
         items[:] = remaining
 
 
-NOT_NONE_SENTINEL = object()
-
-
 @dataclasses.dataclass
 class MarkMatcher:
     """A matcher for markers which are present.
@@ -243,9 +241,7 @@ class MarkMatcher:
             return True
 
         for mark in matches:
-            if all(
-                mark.kwargs.get(k, NOT_NONE_SENTINEL) == v for k, v in kwargs.items()
-            ):
+            if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
                 return True
 
         return False
