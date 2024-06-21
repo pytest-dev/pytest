@@ -1,9 +1,8 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 import sys
-from typing import List
-from typing import Optional
-from typing import Tuple
 import warnings
 
 from _pytest.fixtures import FixtureRequest
@@ -620,11 +619,11 @@ def test_group_warnings_by_message_summary(pytester: Pytester) -> None:
             "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
             "test_1.py: 21 warnings",
             "test_2.py: 1 warning",
-            "  */test_1.py:8: UserWarning: foo",
+            "  */test_1.py:10: UserWarning: foo",
             "    warnings.warn(UserWarning(msg))",
             "",
             "test_1.py: 20 warnings",
-            "  */test_1.py:8: UserWarning: bar",
+            "  */test_1.py:10: UserWarning: bar",
             "    warnings.warn(UserWarning(msg))",
             "",
             "-- Docs: *",
@@ -656,8 +655,8 @@ class TestStackLevel:
     @pytest.fixture
     def capwarn(self, pytester: Pytester):
         class CapturedWarnings:
-            captured: List[
-                Tuple[warnings.WarningMessage, Optional[Tuple[str, int, str]]]
+            captured: list[
+                tuple[warnings.WarningMessage, tuple[str, int, str] | None]
             ] = []
 
             @classmethod

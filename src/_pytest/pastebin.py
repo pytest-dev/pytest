@@ -1,10 +1,11 @@
 # mypy: allow-untyped-defs
 """Submit failure or test session information to a pastebin service."""
 
+from __future__ import annotations
+
 from io import StringIO
 import tempfile
 from typing import IO
-from typing import Union
 
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
@@ -68,7 +69,7 @@ def pytest_unconfigure(config: Config) -> None:
         tr.write_line("pastebin session-log: %s\n" % pastebinurl)
 
 
-def create_new_paste(contents: Union[str, bytes]) -> str:
+def create_new_paste(contents: str | bytes) -> str:
     """Create a new paste using the bpaste.net service.
 
     :contents: Paste contents string.

@@ -1,5 +1,7 @@
 # mypy: allow-untyped-defs
 # content of conftest.py
+from __future__ import annotations
+
 import json
 
 import pytest

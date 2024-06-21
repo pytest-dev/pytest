@@ -1,5 +1,7 @@
 """Python inspection/code generation API."""
 
+from __future__ import annotations
+
 from .code import Code
 from .code import ExceptionInfo
 from .code import filter_traceback

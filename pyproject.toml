@@ -6,15 +6,15 @@ keywords = [
     "test",
     "unittest",
 ]
-license = {text = "MIT"}
+license = { text = "MIT" }
 authors = [
-    {name = "Holger Krekel"},
-    {name = "Bruno Oliveira"},
-    {name = "Ronny Pfannschmidt"},
-    {name = "Floris Bruynooghe"},
-    {name = "Brianna Laugher"},
-    {name = "Florian Bruhin"},
-    {name = "Others (See AUTHORS)"},
+    { name = "Holger Krekel" },
+    { name = "Bruno Oliveira" },
+    { name = "Ronny Pfannschmidt" },
+    { name = "Floris Bruynooghe" },
+    { name = "Brianna Laugher" },
+    { name = "Florian Bruhin" },
+    { name = "Others (See AUTHORS)" },
 ]
 requires-python = ">=3.8"
 classifiers = [
@@ -99,6 +99,7 @@ select = [
     "E",  # pycodestyle
     "F",  # pyflakes
     "I",  # isort
+    "FA100",   # add future annotations
     "PYI", # flake8-pyi
     "UP", # pyupgrade
     "RUF", # ruff
@@ -169,7 +170,7 @@ lines-after-imports = 2
 [tool.pylint.main]
 # Maximum number of characters on a single line.
 max-line-length = 120
-disable= [
+disable = [
     "abstract-method",
     "arguments-differ",
     "arguments-renamed",

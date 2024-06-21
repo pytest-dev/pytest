@@ -15,14 +15,18 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import shutil
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
-from _pytest import __version__ as version
+from _pytest import __version__ as full_version
 
+
+version = full_version.split("+")[0]
 
 if TYPE_CHECKING:
     import sphinx.application
@@ -189,6 +193,7 @@ nitpick_ignore = [
     ("py:class", "SubRequest"),
     ("py:class", "TerminalReporter"),
     ("py:class", "_pytest._code.code.TerminalRepr"),
+    ("py:class", "TerminalRepr"),
     ("py:class", "_pytest.fixtures.FixtureFunctionMarker"),
     ("py:class", "_pytest.logging.LogCaptureHandler"),
     ("py:class", "_pytest.mark.structures.ParameterSet"),
@@ -210,13 +215,16 @@ nitpick_ignore = [
     ("py:class", "_PluggyPlugin"),
     # TypeVars
     ("py:class", "_pytest._code.code.E"),
+    ("py:class", "E"),  # due to delayed annotation
     ("py:class", "_pytest.fixtures.FixtureFunction"),
     ("py:class", "_pytest.nodes._NodeType"),
+    ("py:class", "_NodeType"),  # due to delayed annotation
     ("py:class", "_pytest.python_api.E"),
     ("py:class", "_pytest.recwarn.T"),
     ("py:class", "_pytest.runner.TResult"),
     ("py:obj", "_pytest.fixtures.FixtureValue"),
     ("py:obj", "_pytest.stash.T"),
+    ("py:class", "_ScopeName"),
 ]
 
 
@@ -455,7 +463,7 @@ intersphinx_mapping = {
 }
 
 
-def setup(app: "sphinx.application.Sphinx") -> None:
+def setup(app: sphinx.application.Sphinx) -> None:
     app.add_crossref_type(
         "fixture",
         "fixture",
