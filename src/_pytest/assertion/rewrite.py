@@ -417,6 +417,10 @@ def _saferepr(obj: object) -> str:
     sequences, especially '\n{' and '\n}' are likely to be present in
     JSON reprs.
     """
+    if isinstance(obj, types.MethodType):
+        # for bound methods, skip redundant <bound method ...> information
+        return obj.__name__
+
     maxsize = _get_maxsize_for_saferepr(util._config)
     return saferepr(obj, maxsize=maxsize).replace("\n", "\\n")
 
