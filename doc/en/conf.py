@@ -450,8 +450,6 @@ towncrier_draft_config_path = "pyproject.toml"  # relative to cwd
 # -- Options for sphinx_issues extension -----------------------------------
 
 issues_github_path = "pytest-dev/pytest"
-issues_prefix = "issue #"
-issues_pr_prefix = "pull request #"
 
 
 intersphinx_mapping = {
