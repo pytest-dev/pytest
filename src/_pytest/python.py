@@ -255,6 +255,10 @@ class PyobjMixin(nodes.Node):
     as its intended to always mix in before a node
     its position in the mro is unaffected"""
 
+    def __init__(self, *k: Any, obj: Any | None = None, **kw: Any) -> None:
+        super().__init__(*k, **kw)
+        self._assign_obj_with_markers(obj)
+
     _ALLOW_MARKERS = True
 
     @property
@@ -279,19 +283,23 @@ class PyobjMixin(nodes.Node):
         # Overridden by Function.
         return None
 
+    def _assign_obj_with_markers(self, obj: Any | None) -> None:
+        self._obj = obj
+        # XXX evil hack
+        # used to avoid Function marker duplication
+        if self._ALLOW_MARKERS and obj is not None:
+            self.own_markers.extend(get_unpacked_marks(self.obj))
+            # This assumes that `obj` is called before there is a chance
+            # to add custom keys to `self.keywords`, so no fear of overriding.
+            self.keywords.update((mark.name, mark) for mark in self.own_markers)
+
     @property
     def obj(self) -> Any:
         """Underlying Python object."""
         obj = getattr(self, "_obj", None)
         if obj is None:
-            self._obj = obj = self._getobj()
-            # XXX evil hack
-            # used to avoid Function marker duplication
-            if self._ALLOW_MARKERS:
-                self.own_markers.extend(get_unpacked_marks(self.obj))
-                # This assumes that `obj` is called before there is a chance
-                # to add custom keys to `self.keywords`, so no fear of overriding.
-                self.keywords.update((mark.name, mark) for mark in self.own_markers)
+            obj = self._getobj()
+            self._assign_obj_with_markers(obj)
         return obj
 
     @obj.setter

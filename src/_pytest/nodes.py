@@ -107,7 +107,7 @@ class NodeMeta(abc.ABCMeta):
     def _create(cls: type[_T], *k: Any, **kw: Any) -> _T:
         try:
             return super().__call__(*k, **kw)  # type: ignore[no-any-return,misc]
-        except TypeError:
+        except TypeError as e:
             sig = signature(getattr(cls, "__init__"))
             known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
             from .warning_types import PytestDeprecationWarning
@@ -115,6 +115,7 @@ class NodeMeta(abc.ABCMeta):
             warnings.warn(
                 PytestDeprecationWarning(
                     f"{cls} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
+                    f"Exception: {e}\n"
                     "See https://docs.pytest.org/en/stable/deprecations.html"
                     "#constructors-of-custom-pytest-node-subclasses-should-take-kwargs "
                     "for more details."
