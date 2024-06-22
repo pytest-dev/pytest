@@ -10,3 +10,4 @@ sphinxcontrib-svg2pdfconverter
 packaging
 furo
 sphinxcontrib-towncrier
+sphinx-issues
