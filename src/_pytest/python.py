@@ -1,4 +1,3 @@
-# mypy: allow-untyped-defs
 """Python test discovery, setup and run of test functions."""
 
 from __future__ import annotations
@@ -17,6 +16,7 @@ from pathlib import Path
 import types
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import final
 from typing import Generator
@@ -27,6 +27,8 @@ from typing import Mapping
 from typing import Pattern
 from typing import Sequence
 from typing import TYPE_CHECKING
+from typing import TypeVar
+from typing import Union
 import warnings
 
 import _pytest
@@ -203,7 +205,7 @@ def path_matches_patterns(path: Path, patterns: Iterable[str]) -> bool:
     return any(fnmatch_ex(pattern, path) for pattern in patterns)
 
 
-def pytest_pycollect_makemodule(module_path: Path, parent) -> Module:
+def pytest_pycollect_makemodule(module_path: Path, parent: nodes.FSCollector) -> Module:
     return Module.from_parent(parent, path=module_path)
 
 
@@ -242,6 +244,7 @@ def pytest_pycollect_makeitem(
                 res.warn(PytestCollectionWarning(reason))
                 return res
             else:
+                assert isinstance(obj, (types.FunctionType))
                 return list(collector._genfunctions(name, obj))
     return None
 
@@ -255,19 +258,19 @@ class PyobjMixin(nodes.Node):
     _ALLOW_MARKERS = True
 
     @property
-    def module(self):
+    def module(self) -> types.ModuleType | None:
         """Python module object this node was collected from (can be None)."""
         node = self.getparent(Module)
         return node.obj if node is not None else None
 
     @property
-    def cls(self):
+    def cls(self) -> type | None:
         """Python class object this node was collected from (can be None)."""
         node = self.getparent(Class)
         return node.obj if node is not None else None
 
     @property
-    def instance(self):
+    def instance(self) -> object | None:
         """Python instance object the function is bound to.
 
         Returns None if not a test method, e.g. for a standalone test function,
@@ -277,7 +280,7 @@ class PyobjMixin(nodes.Node):
         return None
 
     @property
-    def obj(self):
+    def obj(self) -> Any:
         """Underlying Python object."""
         obj = getattr(self, "_obj", None)
         if obj is None:
@@ -292,10 +295,10 @@ class PyobjMixin(nodes.Node):
         return obj
 
     @obj.setter
-    def obj(self, value):
+    def obj(self, value: Any) -> None:
         self._obj = value
 
-    def _getobj(self):
+    def _getobj(self) -> Any:
         """Get the underlying Python object. May be overwritten by subclasses."""
         # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
         assert self.parent is not None
@@ -434,14 +437,20 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
             result.extend(values)
         return result
 
-    def _genfunctions(self, name: str, funcobj) -> Iterator[Function]:
+    def _genfunctions(
+        self, name: str, funcobj: types.FunctionType
+    ) -> Iterator[Function]:
         modulecol = self.getparent(Module)
         assert modulecol is not None
         module = modulecol.obj
         clscol = self.getparent(Class)
-        cls = clscol and clscol.obj or None
+        cls: type | None = getattr(clscol, "obj", None)
 
-        definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
+        definition = FunctionDefinition.from_parent(
+            self,  # type: ignore[arg-type]
+            name=name,
+            callobj=funcobj,
+        )
         fixtureinfo = definition._fixtureinfo
 
         # pytest_generate_tests impls call metafunc.parametrize() which fills
@@ -462,7 +471,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
 
         if not metafunc._calls:
-            yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
+            yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)  # type: ignore[arg-type]
         else:
             # Direct parametrizations taking place in module/class-specific
             # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
@@ -474,7 +483,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
             for callspec in metafunc._calls:
                 subname = f"{name}[{callspec.id}]"
                 yield Function.from_parent(
-                    self,
+                    self,  # type: ignore[arg-type]
                     name=subname,
                     callspec=callspec,
                     fixtureinfo=fixtureinfo,
@@ -486,7 +495,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
 def importtestmodule(
     path: Path,
     config: Config,
-):
+) -> types.ModuleType:
     # We assume we are only called once per module.
     importmode = config.getoption("--import-mode")
     try:
@@ -542,7 +551,9 @@ def importtestmodule(
 class Module(nodes.File, PyCollector):
     """Collector for test classes and functions in a Python module."""
 
-    def _getobj(self):
+    obj: types.ModuleType
+
+    def _getobj(self) -> types.ModuleType:
         return importtestmodule(self.path, self.config)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
@@ -568,7 +579,9 @@ class Module(nodes.File, PyCollector):
         if setup_module is None and teardown_module is None:
             return
 
-        def xunit_setup_module_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_module_fixture(
+            request: FixtureRequest,
+        ) -> Generator[None, None, None]:
             module = request.module
             if setup_module is not None:
                 _call_with_optional_argument(setup_module, module)
@@ -599,7 +612,9 @@ class Module(nodes.File, PyCollector):
         if setup_function is None and teardown_function is None:
             return
 
-        def xunit_setup_function_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_function_fixture(
+            request: FixtureRequest,
+        ) -> Generator[None, None, None]:
             if request.instance is not None:
                 # in this case we are bound to an instance, so we need to let
                 # setup_method handle this
@@ -642,9 +657,9 @@ class Package(nodes.Directory):
         fspath: LEGACY_PATH | None,
         parent: nodes.Collector,
         # NOTE: following args are unused:
-        config=None,
-        session=None,
-        nodeid=None,
+        config: Config | None = None,
+        session: Session | None = None,
+        nodeid: str | None = None,
         path: Path | None = None,
     ) -> None:
         # NOTE: Could be just the following, but kept as-is for compat.
@@ -705,38 +720,47 @@ class Package(nodes.Directory):
                 yield from cols
 
 
-def _call_with_optional_argument(func, arg) -> None:
+T = TypeVar("T")
+
+
+def _call_with_optional_argument(
+    func: Callable[[T], None] | Callable[[], None], arg: T
+) -> None:
     """Call the given function with the given argument if func accepts one argument, otherwise
     calls func without arguments."""
     arg_count = func.__code__.co_argcount
     if inspect.ismethod(func):
         arg_count -= 1
     if arg_count:
-        func(arg)
+        func(arg)  # type: ignore[call-arg]
     else:
-        func()
+        func()  # type: ignore[call-arg]
 
 
-def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | None:
+def _get_first_non_fixture_func(
+    obj: object, names: Iterable[str]
+) -> types.FunctionType | types.MethodType | None:
     """Return the attribute from the given object to be used as a setup/teardown
     xunit-style function, but only if not marked as a fixture to avoid calling it twice.
     """
     for name in names:
         meth: object | None = getattr(obj, name, None)
         if meth is not None and fixtures.getfixturemarker(meth) is None:
-            return meth
+            return cast(Union[types.FunctionType, types.MethodType], meth)
     return None
 
 
 class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
 
+    obj: type
+
     @classmethod
-    def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
+    def from_parent(cls, parent: nodes.Node, *, name: str, **kw: Any) -> Self:  # type: ignore[override]
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
 
-    def newinstance(self):
+    def newinstance(self) -> Any:
         return self.obj()
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
@@ -780,7 +804,9 @@ class Class(PyCollector):
         if setup_class is None and teardown_class is None:
             return
 
-        def xunit_setup_class_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_class_fixture(
+            request: FixtureRequest,
+        ) -> Generator[None, None, None]:
             cls = request.cls
             if setup_class is not None:
                 func = getimfunc(setup_class)
@@ -813,7 +839,9 @@ class Class(PyCollector):
         if setup_method is None and teardown_method is None:
             return
 
-        def xunit_setup_method_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_method_fixture(
+            request: FixtureRequest,
+        ) -> Generator[None, None, None]:
             instance = request.instance
             method = request.function
             if setup_method is not None:
@@ -1101,8 +1129,8 @@ class Metafunc:
         definition: FunctionDefinition,
         fixtureinfo: fixtures.FuncFixtureInfo,
         config: Config,
-        cls=None,
-        module=None,
+        cls: type | None = None,
+        module: types.ModuleType | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -1523,13 +1551,15 @@ class Function(PyobjMixin, nodes.Item):
     # Disable since functions handle it themselves.
     _ALLOW_MARKERS = False
 
+    obj: Callable[..., object]
+
     def __init__(
         self,
         name: str,
-        parent,
+        parent: PyCollector | Module | Class,
         config: Config | None = None,
         callspec: CallSpec2 | None = None,
-        callobj=NOTSET,
+        callobj: Any = NOTSET,
         keywords: Mapping[str, Any] | None = None,
         session: Session | None = None,
         fixtureinfo: FuncFixtureInfo | None = None,
@@ -1576,7 +1606,7 @@ class Function(PyobjMixin, nodes.Item):
 
     # todo: determine sound type limitations
     @classmethod
-    def from_parent(cls, parent, **kw) -> Self:
+    def from_parent(cls, parent: Module | Class, **kw: Any) -> Self:  # type: ignore[override]
         """The public constructor."""
         return super().from_parent(parent=parent, **kw)
 
@@ -1585,30 +1615,27 @@ class Function(PyobjMixin, nodes.Item):
         self._request = fixtures.TopRequest(self, _ispytest=True)
 
     @property
-    def function(self):
+    def function(self) -> types.FunctionType:
         """Underlying python 'function' object."""
         return getimfunc(self.obj)
 
     @property
-    def instance(self):
+    def instance(self) -> Any | None:
         try:
             return self._instance
         except AttributeError:
-            if isinstance(self.parent, Class):
-                # Each Function gets a fresh class instance.
-                self._instance = self._getinstance()
-            else:
-                self._instance = None
+            self._instance = self._getinstance()
+
         return self._instance
 
-    def _getinstance(self):
+    def _getinstance(self) -> Any | None:
         if isinstance(self.parent, Class):
             # Each Function gets a fresh class instance.
             return self.parent.newinstance()
         else:
             return None
 
-    def _getobj(self):
+    def _getobj(self) -> object:
         instance = self.instance
         if instance is not None:
             parent_obj = instance
@@ -1618,7 +1645,7 @@ class Function(PyobjMixin, nodes.Item):
         return getattr(parent_obj, self.originalname)
 
     @property
-    def _pyfuncitem(self):
+    def _pyfuncitem(self) -> Self:
         """(compatonly) for code expecting pytest-2.2 style request objects."""
         return self
 

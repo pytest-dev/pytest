@@ -1,4 +1,3 @@
-# mypy: allow-untyped-defs
 """Python version compatibility code."""
 
 from __future__ import annotations
@@ -12,8 +11,11 @@ from inspect import signature
 import os
 from pathlib import Path
 import sys
+from types import FunctionType
+from types import MethodType
 from typing import Any
 from typing import Callable
+from typing import cast
 from typing import Final
 from typing import NoReturn
 
@@ -66,7 +68,8 @@ def is_async_function(func: object) -> bool:
     return iscoroutinefunction(func) or inspect.isasyncgenfunction(func)
 
 
-def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
+def getlocation(function: Any, curdir: str | os.PathLike[str] | None = None) -> str:
+    # todo: declare a type alias for function, fixturefunction and callables/generators
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
     lineno = function.__code__.co_firstlineno
@@ -80,7 +83,7 @@ def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
     return "%s:%d" % (fn, lineno + 1)
 
 
-def num_mock_patch_args(function) -> int:
+def num_mock_patch_args(function: Callable[..., object]) -> int:
     """Return number of arguments used up by mock arguments (if any)."""
     patchings = getattr(function, "patchings", None)
     if not patchings:
@@ -222,7 +225,7 @@ class _PytestWrapper:
     obj: Any
 
 
-def get_real_func(obj):
+def get_real_func(obj: Any) -> Any:
     """Get the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial."""
     start_obj = obj
@@ -249,7 +252,7 @@ def get_real_func(obj):
     return obj
 
 
-def get_real_method(obj, holder):
+def get_real_method(obj: Any, holder: object) -> Any:
     """Attempt to obtain the real function object that might be wrapping
     ``obj``, while at the same time returning a bound method to ``holder`` if
     the original object was a bound method."""
@@ -263,11 +266,8 @@ def get_real_method(obj, holder):
     return obj
 
 
-def getimfunc(func):
-    try:
-        return func.__func__
-    except AttributeError:
-        return func
+def getimfunc(func: FunctionType | MethodType | Callable[..., Any]) -> FunctionType:
+    return cast(FunctionType, getattr(func, "__func__", func))
 
 
 def safe_getattr(object: Any, name: str, default: Any) -> Any:
