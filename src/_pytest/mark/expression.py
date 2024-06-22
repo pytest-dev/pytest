@@ -5,7 +5,7 @@ The grammar is:
 expression: expr? EOF
 expr:       and_expr ('or' and_expr)*
 and_expr:   not_expr ('and' not_expr)*
-not_expr:   'not' not_expr | '(' expr ')' | ident ( '(' name '=' value ( ', ' name '=' value )*  ')')*
+not_expr:   'not' not_expr | '(' expr ')' | ident ('(' name '=' value ( ', ' name '=' value )*  ')')?
 
 ident:      (\w|:|\+|-|\.|\[|\]|\\|/)+
 
