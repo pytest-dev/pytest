@@ -12,7 +12,7 @@ ident:      (\w|:|\+|-|\.|\[|\]|\\|/)+
 The semantics are:
 
 - Empty expression evaluates to False.
-- ident evaluates to True of False according to a provided matcher function.
+- ident evaluates to True or False according to a provided matcher function.
 - or/and/not evaluate according to the usual boolean semantics.
 """
 
