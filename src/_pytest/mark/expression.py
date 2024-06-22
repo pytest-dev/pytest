@@ -51,7 +51,7 @@ class TokenType(enum.Enum):
     IDENT = "identifier"
     EOF = "end of input"
     EQUAL = "="
-    STRING = "str"
+    STRING = "string literal"
     COMMA = ","
 
 

@@ -228,6 +228,7 @@ def test_invalid_idents(ident: str) -> None:
             r'escaping with "\\" not supported in marker expression',
         ),
         ("mark(empty_list=[])", r'unexpected character/s "\[\]"'),
+        ("'str'", "expected not OR left parenthesis OR identifier; got string literal"),
     ),
 )
 def test_invalid_kwarg_name_or_value(  # TODO: move to `test_syntax_errors` ?
