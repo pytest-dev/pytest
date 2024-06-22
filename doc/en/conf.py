@@ -175,7 +175,7 @@ extlinks = {
     "bpo": ("https://bugs.python.org/issue%s", "bpo-%s"),
     "pypi": ("https://pypi.org/project/%s/", "%s"),
     "issue": (f"{_repo}/issues/%s", "issue #%s"),
-    "pull": (f"{_repo}/pull/%s", "pull request #%s"),
+    "pr": (f"{_repo}/pull/%s", "pull request #%s"),
     "user": ("https://github.com/%s", "@%s"),
 }
 
