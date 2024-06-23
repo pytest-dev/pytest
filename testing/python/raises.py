@@ -6,6 +6,7 @@ import sys
 
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
+
 import pytest
 
 
@@ -131,6 +132,26 @@ class TestRaises:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*2 failed*"])
+
+    def test_raises_with_invalid_regex(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+            
+            def test_invalid_regex():
+                with pytest.raises(ValueError, match="invalid regex character ["):
+                    raise ValueError()
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*Invalid regex pattern provided to 'match': unterminated character set at position 24*",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*Traceback*")
+        result.stdout.no_fnmatch_line("*File*")
+        result.stdout.no_fnmatch_line("*line*")
 
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
