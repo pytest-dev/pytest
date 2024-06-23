@@ -1,0 +1,1 @@
+Handle invalid regex patterns in `pytest.raises` by providing a clear error message, improving user experience.
