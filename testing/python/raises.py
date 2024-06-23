@@ -6,7 +6,6 @@ import sys
 
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
-
 import pytest
 
 
@@ -137,7 +136,7 @@ class TestRaises:
         pytester.makepyfile(
             """
             import pytest
-            
+
             def test_invalid_regex():
                 with pytest.raises(ValueError, match="invalid regex character ["):
                     raise ValueError()
