@@ -27,7 +27,7 @@ please refer to `the update script <https://github.com/pytest-dev/pytest/blob/ma
    creating a PDF, because otherwise the table gets far too wide for the
    page.
 
-This list contains 1478 plugins.
+This list contains 1479 plugins.
 
 .. only:: not latex
 
@@ -86,6 +86,7 @@ This list contains 1478 plugins.
    :pypi:`pytest-api`                               An ASGI middleware to populate OpenAPI Specification examples from pytest functions                                                                                                                                                                                                                                                                                                     May 12, 2022    N/A                    pytest (>=7.1.1,<8.0.0)
    :pypi:`pytest-api-soup`                          Validate multiple endpoints with unit testing using a single source of truth.                                                                                                                                                                                                                                                                                                           Aug 27, 2022    N/A                    N/A
    :pypi:`pytest-apistellar`                        apistellar plugin for pytest.                                                                                                                                                                                                                                                                                                                                                           Jun 18, 2019    N/A                    N/A
+   :pypi:`pytest-apiver`                                                                                                                                                                                                                                                                                                                                                                                                                    Jun 21, 2024    N/A                    pytest
    :pypi:`pytest-appengine`                         AppEngine integration that works well with pytest-django                                                                                                                                                                                                                                                                                                                                Feb 27, 2017    N/A                    N/A
    :pypi:`pytest-appium`                            Pytest plugin for appium                                                                                                                                                                                                                                                                                                                                                                Dec 05, 2019    N/A                    N/A
    :pypi:`pytest-approvaltests`                     A plugin to use approvaltests with pytest                                                                                                                                                                                                                                                                                                                                               May 08, 2022    4 - Beta               pytest (>=7.0.1)
@@ -100,7 +101,7 @@ This list contains 1478 plugins.
    :pypi:`pytest-assertions`                        Pytest Assertions                                                                                                                                                                                                                                                                                                                                                                       Apr 27, 2022    N/A                    N/A
    :pypi:`pytest-assertutil`                        pytest-assertutil                                                                                                                                                                                                                                                                                                                                                                       May 10, 2019    N/A                    N/A
    :pypi:`pytest-assert-utils`                      Useful assertion utilities for use with pytest                                                                                                                                                                                                                                                                                                                                          Apr 14, 2022    3 - Alpha              N/A
-   :pypi:`pytest-assist`                            load testing library                                                                                                                                                                                                                                                                                                                                                                    Jun 21, 2024    N/A                    pytest
+   :pypi:`pytest-assist`                            load testing library                                                                                                                                                                                                                                                                                                                                                                    Jun 22, 2024    N/A                    pytest
    :pypi:`pytest-assume`                            A pytest plugin that allows multiple failures per test                                                                                                                                                                                                                                                                                                                                  Jun 24, 2021    N/A                    pytest (>=2.7)
    :pypi:`pytest-assurka`                           A pytest plugin for Assurka Studio                                                                                                                                                                                                                                                                                                                                                      Aug 04, 2022    N/A                    N/A
    :pypi:`pytest-ast-back-to-python`                A plugin for pytest devs to view how assertion rewriting recodes the AST                                                                                                                                                                                                                                                                                                                Sep 29, 2019    4 - Beta               N/A
@@ -637,7 +638,7 @@ This list contains 1478 plugins.
    :pypi:`pytest-history`                           Pytest plugin to keep a history of your pytest runs                                                                                                                                                                                                                                                                                                                                     Jan 14, 2024    N/A                    pytest (>=7.4.3,<8.0.0)
    :pypi:`pytest-home`                              Home directory fixtures                                                                                                                                                                                                                                                                                                                                                                 Oct 09, 2023    5 - Production/Stable  pytest
    :pypi:`pytest-homeassistant`                     A pytest plugin for use with homeassistant custom components.                                                                                                                                                                                                                                                                                                                           Aug 12, 2020    4 - Beta               N/A
-   :pypi:`pytest-homeassistant-custom-component`    Experimental package to automatically extract test plugins for Home Assistant custom components                                                                                                                                                                                                                                                                                         Jun 16, 2024    3 - Alpha              pytest==8.2.0
+   :pypi:`pytest-homeassistant-custom-component`    Experimental package to automatically extract test plugins for Home Assistant custom components                                                                                                                                                                                                                                                                                         Jun 22, 2024    3 - Alpha              pytest==8.2.0
    :pypi:`pytest-honey`                             A simple plugin to use with pytest                                                                                                                                                                                                                                                                                                                                                      Jan 07, 2022    4 - Beta               pytest (>=3.5.0)
    :pypi:`pytest-honors`                            Report on tests that honor constraints, and guard against regressions                                                                                                                                                                                                                                                                                                                   Mar 06, 2020    4 - Beta               N/A
    :pypi:`pytest-hot-reloading`                                                                                                                                                                                                                                                                                                                                                                                                             Apr 18, 2024    N/A                    N/A
@@ -1881,6 +1882,13 @@ This list contains 1478 plugins.
 
      apistellar plugin for pytest.
 
+  :pypi:`pytest-apiver`
+     *last release*: Jun 21, 2024,
+     *status*: N/A,
+     *requires*: pytest
+
+
+
   :pypi:`pytest-appengine`
      *last release*: Feb 27, 2017,
      *status*: N/A,
@@ -1980,7 +1988,7 @@ This list contains 1478 plugins.
      Useful assertion utilities for use with pytest
 
   :pypi:`pytest-assist`
-     *last release*: Jun 21, 2024,
+     *last release*: Jun 22, 2024,
      *status*: N/A,
      *requires*: pytest
 
@@ -5739,7 +5747,7 @@ This list contains 1478 plugins.
      A pytest plugin for use with homeassistant custom components.
 
   :pypi:`pytest-homeassistant-custom-component`
-     *last release*: Jun 16, 2024,
+     *last release*: Jun 22, 2024,
      *status*: 3 - Alpha,
      *requires*: pytest==8.2.0
 
