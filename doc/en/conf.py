@@ -89,6 +89,7 @@ extensions = [
     "sphinx_removed_in",
     "sphinxcontrib_trio",
     "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
+    "sphinx_issues",  # implements `:issue:`, `:pr:` and other GH-related roles
 ]
 
 # Building PDF docs on readthedocs requires inkscape for svg to pdf
@@ -170,13 +171,8 @@ linkcheck_ignore = [
 linkcheck_workers = 5
 
 
-_repo = "https://github.com/pytest-dev/pytest"
 extlinks = {
     "bpo": ("https://bugs.python.org/issue%s", "bpo-%s"),
-    "pypi": ("https://pypi.org/project/%s/", "%s"),
-    "issue": (f"{_repo}/issues/%s", "issue #%s"),
-    "pull": (f"{_repo}/pull/%s", "pull request #%s"),
-    "user": ("https://github.com/%s", "@%s"),
 }
 
 
@@ -449,6 +445,11 @@ towncrier_draft_autoversion_mode = "draft"  # or: 'sphinx-version', 'sphinx-rele
 towncrier_draft_include_empty = True
 towncrier_draft_working_directory = PROJECT_ROOT_DIR
 towncrier_draft_config_path = "pyproject.toml"  # relative to cwd
+
+
+# -- Options for sphinx_issues extension -----------------------------------
+
+issues_github_path = "pytest-dev/pytest"
 
 
 intersphinx_mapping = {
