@@ -45,7 +45,7 @@ The py.test Development Team
 **New Features**
 
 * New ``pytest.mark.skip`` mark, which unconditionally skips marked tests.
-  Thanks :user:`MichaelAquilina` for the complete PR (:pull:`1040`).
+  Thanks :user:`MichaelAquilina` for the complete PR (:pr:`1040`).
 
 * ``--doctest-glob`` may now be passed multiple times in the command-line.
   Thanks :user:`jab` and :user:`nicoddemus` for the PR.
