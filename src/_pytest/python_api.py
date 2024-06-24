@@ -1,31 +1,31 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-from collections.abc import Collection
-from collections.abc import Sized
-from decimal import Decimal
 import math
-from numbers import Complex
 import pprint
 import re
+from collections.abc import Collection, Sized
+from decimal import Decimal
+from numbers import Complex
 from types import TracebackType
-from typing import Any
-from typing import Callable
-from typing import cast
-from typing import ContextManager
-from typing import final
-from typing import Mapping
-from typing import overload
-from typing import Pattern
-from typing import Sequence
-from typing import Tuple
-from typing import Type
-from typing import TYPE_CHECKING
-from typing import TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ContextManager,
+    Mapping,
+    Pattern,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    cast,
+    final,
+    overload,
+)
 
 import _pytest._code
 from _pytest.outcomes import fail
-
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -1008,7 +1008,7 @@ class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
         exc_info = cast(Tuple[Type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
         self.excinfo.fill_unfilled(exc_info)
         try:
-            if self.match_expr:
+            if self.match_expr is not None:
                 self.excinfo.match(self.match_expr)
         except re.error as e:
             fail(f"Invalid regex pattern provided to 'match': {e}")
