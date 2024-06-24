@@ -1,15 +1,13 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 from datetime import datetime
 from datetime import timezone
 import os
 from pathlib import Path
 import platform
 from typing import cast
-from typing import List
-from typing import Optional
-from typing import Tuple
 from typing import TYPE_CHECKING
-from typing import Union
 from xml.dom import minidom
 
 import xmlschema
@@ -40,8 +38,8 @@ class RunAndParse:
         self.schema = schema
 
     def __call__(
-        self, *args: Union[str, "os.PathLike[str]"], family: Optional[str] = "xunit1"
-    ) -> Tuple[RunResult, "DomNode"]:
+        self, *args: str | os.PathLike[str], family: str | None = "xunit1"
+    ) -> tuple[RunResult, DomNode]:
         if family:
             args = ("-o", "junit_family=" + family, *args)
         xml_path = self.pytester.path.joinpath("junit.xml")
@@ -941,7 +939,7 @@ def test_mangle_test_address() -> None:
 
 
 def test_dont_configure_on_workers(tmp_path: Path) -> None:
-    gotten: List[object] = []
+    gotten: list[object] = []
 
     class FakeConfig:
         if TYPE_CHECKING:
@@ -1184,7 +1182,7 @@ def test_unicode_issue368(pytester: Pytester) -> None:
 
     class Report(BaseReport):
         longrepr = ustr
-        sections: List[Tuple[str, str]] = []
+        sections: list[tuple[str, str]] = []
         nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
         when = "teardown"
@@ -1496,7 +1494,7 @@ def test_global_properties(pytester: Pytester, xunit_family: str) -> None:
     log = LogXML(str(path), None, family=xunit_family)
 
     class Report(BaseReport):
-        sections: List[Tuple[str, str]] = []
+        sections: list[tuple[str, str]] = []
         nodeid = "test_node_id"
 
     log.pytest_sessionstart()
@@ -1532,7 +1530,7 @@ def test_url_property(pytester: Pytester) -> None:
 
     class Report(BaseReport):
         longrepr = "FooBarBaz"
-        sections: List[Tuple[str, str]] = []
+        sections: list[tuple[str, str]] = []
         nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
         url = test_url

@@ -1931,7 +1931,7 @@ The same applies for the test folder level obviously.
 Using fixtures from other projects
 ----------------------------------
 
-Usually projects that provide pytest support will use :ref:`entry points <setuptools entry points>`,
+Usually projects that provide pytest support will use :ref:`entry points <pip-installable plugins>`,
 so just installing those projects into an environment will make those fixtures available for use.
 
 In case you want to use fixtures from a project that does not use entry points, you can

@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 from _pytest._code import getfslineno
 from _pytest.fixtures import getfixturemarker
 from _pytest.pytester import Pytester

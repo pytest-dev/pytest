@@ -14,6 +14,11 @@ on:
     branches:
       - main
       - "[0-9]+.[0-9]+.x"
+    types:
+    - opened  # default
+    - synchronize  # default
+    - reopened  # default
+    - ready_for_review  # used in PRs created from the release workflow
 
 env:
   PYTEST_ADDOPTS: "--color=yes"
@@ -182,6 +187,26 @@ jobs:
             tox_env: "doctesting"
             use_coverage: true
 
+    continue-on-error: >-
+      ${{
+        contains(
+          fromJSON(
+            '[
+              "windows-py38-pluggy",
+              "windows-py313",
+              "ubuntu-py38-pluggy",
+              "ubuntu-py38-freeze",
+              "ubuntu-py313",
+              "macos-py38",
+              "macos-py313"
+            ]'
+          ),
+          matrix.name
+        )
+        && true
+        || false
+      }}
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -222,8 +247,22 @@ jobs:
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
       uses: codecov/codecov-action@v4
-      continue-on-error: true
       with:
-        fail_ci_if_error: true
+        fail_ci_if_error: false
         files: ./coverage.xml
+        token: 1eca3b1f-31a2-4fb8-a8c3-138b441b50a7 #repo token; cfg read fails
         verbose: true
+
+  check:  # This job does nothing and is only used for the branch protection
+    if: always()
+
+    needs:
+    - build
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@223e4bb7a751b91f43eda76992bcfbf23b8b0302
+      with:
+        jobs: ${{ toJSON(needs) }}

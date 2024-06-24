@@ -98,6 +98,7 @@ lint.select = [
     "D",       # pydocstyle
     "E",       # pycodestyle
     "F",       # pyflakes
+    "FA100",   # add future annotations
     "I",       # isort
     "PGH004",  # pygrep-hooks - Use specific rule codes when using noqa
     "PIE",     # flake8-pie
@@ -155,6 +156,10 @@ lint.per-file-ignores."src/_pytest/_version.py" = [
 lint.per-file-ignores."testing/python/approx.py" = [
     "B015",
 ]
+lint.extend-safe-fixes = [
+    "UP006",
+    "UP007",
+]
 lint.isort.combine-as-imports = true
 lint.isort.force-single-line = true
 lint.isort.force-sort-within-sections = true
@@ -164,9 +169,13 @@ lint.isort.known-local-folder = [
 ]
 lint.isort.lines-after-imports = 2
 lint.isort.order-by-type = false
+lint.isort.required-imports = [
+    "from __future__ import annotations",
+]
 # In order to be able to format for 88 char in ruff format
 lint.pycodestyle.max-line-length = 120
 lint.pydocstyle.convention = "pep257"
+lint.pyupgrade.keep-runtime-typing = false
 
 [tool.pylint.main]
 # Maximum number of characters on a single line.
@@ -349,6 +358,9 @@ markers = [
     "foo",
     "bar",
     "baz",
+    "number_mark",
+    "builtin_matchers_mark",
+    "str_mark",
     # conftest.py reorders tests moving slow ones to the end of the list
     "slow",
     # experimental mark for all tests using pexpect
@@ -363,44 +375,74 @@ directory = "changelog/"
 title_format = "pytest {version} ({project_date})"
 template = "changelog/_template.rst"
 
+# NOTE: The types are declared because:
+# NOTE: - there is no mechanism to override just the value of
+# NOTE:   `tool.towncrier.type.misc.showcontent`;
+# NOTE: - and, we want to declare extra non-default types for
+# NOTE:   clarity and flexibility.
+
 [[tool.towncrier.type]]
+# When something public gets removed in a breaking way. Could be
+# deprecated in an earlier release.
 directory = "breaking"
-name = "Breaking Changes"
+name = "Removals and backward incompatible breaking changes"
 showcontent = true
 
 [[tool.towncrier.type]]
+# Declarations of future API removals and breaking changes in behavior.
 directory = "deprecation"
-name = "Deprecations"
+name = "Deprecations (removal in next major release)"
 showcontent = true
 
 [[tool.towncrier.type]]
+# New behaviors, public APIs. That sort of stuff.
 directory = "feature"
-name = "Features"
+name = "New features"
 showcontent = true
 
 [[tool.towncrier.type]]
+# New behaviors in existing features.
 directory = "improvement"
-name = "Improvements"
+name = "Improvements in existing functionality"
 showcontent = true
 
 [[tool.towncrier.type]]
+# Something we deemed an improper undesired behavior that got corrected
+# in the release to match pre-agreed expectations.
 directory = "bugfix"
-name = "Bug Fixes"
+name = "Bug fixes"
 showcontent = true
 
 [[tool.towncrier.type]]
+# Updates regarding bundling dependencies.
 directory = "vendor"
-name = "Vendored Libraries"
+name = "Vendored libraries"
 showcontent = true
 
 [[tool.towncrier.type]]
+# Notable updates to the documentation structure or build process.
 directory = "doc"
-name = "Improved Documentation"
+name = "Improved documentation"
 showcontent = true
 
 [[tool.towncrier.type]]
-directory = "trivial"
-name = "Trivial/Internal Changes"
+# Notes for downstreams about unobvious side effects and tooling. Changes
+# in the test invocation considerations and runtime assumptions.
+directory = "packaging"
+name = "Packaging updates and notes for downstreams"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Stuff that affects the contributor experience. e.g. Running tests,
+# building the docs, setting up the development environment.
+directory = "contrib"
+name = "Contributor-facing changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Changes that are hard to assign to any of the above categories.
+directory = "misc"
+name = "Miscellaneous internal changes"
 showcontent = true
 
 [tool.mypy]

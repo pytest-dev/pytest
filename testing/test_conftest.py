@@ -1,14 +1,13 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import textwrap
 from typing import cast
-from typing import Dict
 from typing import Generator
 from typing import List
-from typing import Optional
 from typing import Sequence
-from typing import Union
 
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
@@ -27,8 +26,8 @@ def ConftestWithSetinitial(path) -> PytestPluginManager:
 
 def conftest_setinitial(
     conftest: PytestPluginManager,
-    args: Sequence[Union[str, Path]],
-    confcutdir: Optional[Path] = None,
+    args: Sequence[str | Path],
+    confcutdir: Path | None = None,
 ) -> None:
     conftest._set_initial_conftests(
         args=args,
@@ -536,7 +535,7 @@ def test_conftest_found_with_double_dash(pytester: Pytester) -> None:
 
 
 class TestConftestVisibility:
-    def _setup_tree(self, pytester: Pytester) -> Dict[str, Path]:  # for issue616
+    def _setup_tree(self, pytester: Pytester) -> dict[str, Path]:  # for issue616
         # example mostly taken from:
         # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html
         runner = pytester.mkdir("empty")

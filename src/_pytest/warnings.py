@@ -1,9 +1,10 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 from contextlib import contextmanager
 import sys
 from typing import Generator
 from typing import Literal
-from typing import Optional
 import warnings
 
 from _pytest.config import apply_warning_filters
@@ -28,7 +29,7 @@ def catch_warnings_for_item(
     config: Config,
     ihook,
     when: Literal["config", "collect", "runtest"],
-    item: Optional[Item],
+    item: Item | None,
 ) -> Generator[None, None, None]:
     """Context manager that catches warnings generated in the contained execution block.
 
@@ -142,7 +143,7 @@ def pytest_sessionfinish(session: Session) -> Generator[None, None, None]:
 
 @pytest.hookimpl(wrapper=True)
 def pytest_load_initial_conftests(
-    early_config: "Config",
+    early_config: Config,
 ) -> Generator[None, None, None]:
     with catch_warnings_for_item(
         config=early_config, ihook=early_config.hook, when="config", item=None

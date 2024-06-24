@@ -1,0 +1,4 @@
+The console output now uses the "third-party plugins" terminology,
+replacing the previously established but confusing and outdated
+reference to :std:doc:`setuptools <setuptools:index>`
+-- by :user:`webknjaz`.

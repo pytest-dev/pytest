@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import pprint
@@ -6,8 +8,6 @@ import shutil
 import sys
 import tempfile
 import textwrap
-from typing import List
-from typing import Type
 
 from _pytest.assertion.util import running_on_ci
 from _pytest.config import ExitCode
@@ -536,7 +536,7 @@ class TestSession:
         assert len(colitems) == 1
         assert colitems[0].path == topdir
 
-    def get_reported_items(self, hookrec: HookRecorder) -> List[Item]:
+    def get_reported_items(self, hookrec: HookRecorder) -> list[Item]:
         """Return pytest.Item instances reported by the pytest_collectreport hook"""
         calls = hookrec.getcalls("pytest_collectreport")
         return [
@@ -1885,7 +1885,7 @@ def test_do_not_collect_symlink_siblings(
 )
 def test_respect_system_exceptions(
     pytester: Pytester,
-    exception_class: Type[BaseException],
+    exception_class: type[BaseException],
     msg: str,
 ):
     head = "Before exception"

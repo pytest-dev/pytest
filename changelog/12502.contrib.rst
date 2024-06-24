@@ -1,0 +1,7 @@
+The UX of the GitHub automation making pull requests to update the
+plugin list has been updated. Previously, the maintainers had to close
+the automatically created pull requests and re-open them to trigger the
+CI runs. From now on, they only need to click the `Ready for review`
+button instead.
+
+-- by :user:`webknjaz`.
