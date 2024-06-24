@@ -1,31 +1,31 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Collection
+from collections.abc import Sized
+from decimal import Decimal
 import math
+from numbers import Complex
 import pprint
 import re
-from collections.abc import Collection, Sized
-from decimal import Decimal
-from numbers import Complex
 from types import TracebackType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ContextManager,
-    Mapping,
-    Pattern,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    cast,
-    final,
-    overload,
-)
+from typing import Any
+from typing import Callable
+from typing import cast
+from typing import ContextManager
+from typing import final
+from typing import Mapping
+from typing import overload
+from typing import Pattern
+from typing import Sequence
+from typing import Tuple
+from typing import Type
+from typing import TYPE_CHECKING
+from typing import TypeVar
 
 import _pytest._code
 from _pytest.outcomes import fail
+
 
 if TYPE_CHECKING:
     from numpy import ndarray
