@@ -88,7 +88,7 @@ with the ``phase`` keyword argument set to ``1``:
 
 .. code-block:: bash
 
-    pytest -m slow(phase=1)
+    pytest -m "slow(phase=1)"
 
 For more information see :ref:`marks <mark>`.
 

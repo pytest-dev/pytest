@@ -5,15 +5,19 @@ The grammar is:
 expression: expr? EOF
 expr:       and_expr ('or' and_expr)*
 and_expr:   not_expr ('and' not_expr)*
-not_expr:   'not' not_expr | '(' expr ')' | ident ( '(' name '=' value ( ', ' name '=' value )*  ')')*
+not_expr:   'not' not_expr | '(' expr ')' | ident kwargs?
 
 ident:      (\w|:|\+|-|\.|\[|\]|\\|/)+
+kwargs:     ('(' name '=' value ( ', ' name '=' value )*  ')')
+name:       a valid ident, but not a reserved keyword
+value:      (unescaped) string literal | (-)?[0-9]+ | 'False' | 'True' | 'None'
 
 The semantics are:
 
 - Empty expression evaluates to False.
-- ident evaluates to True of False according to a provided matcher function.
+- ident evaluates to True or False according to a provided matcher function.
 - or/and/not evaluate according to the usual boolean semantics.
+- ident with parentheses and keyword arguments evaluates to True or False according to a provided matcher function.
 """
 
 from __future__ import annotations
@@ -48,7 +52,7 @@ class TokenType(enum.Enum):
     IDENT = "identifier"
     EOF = "end of input"
     EQUAL = "="
-    STRING = "str"
+    STRING = "string literal"
     COMMA = ","
 
 

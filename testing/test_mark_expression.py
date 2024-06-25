@@ -228,9 +228,10 @@ def test_invalid_idents(ident: str) -> None:
             r'escaping with "\\" not supported in marker expression',
         ),
         ("mark(empty_list=[])", r'unexpected character/s "\[\]"'),
+        ("'str'", "expected not OR left parenthesis OR identifier; got string literal"),
     ),
 )
-def test_invalid_kwarg_name_or_value(  # TODO: move to `test_syntax_errors` ?
+def test_invalid_kwarg_name_or_value(
     expr: str, expected_error_msg: str, mark_matcher: MarkMatcher
 ) -> None:
     with pytest.raises(ParseError, match=expected_error_msg):
@@ -289,7 +290,7 @@ def test_keyword_expressions_with_numbers(
         ("builtin_matchers_mark(z=1)", False),
     ),
 )
-def test_builtin_matchers_keyword_expressions(  # TODO: naming when decided
+def test_builtin_matchers_keyword_expressions(
     expr: str, expected: bool, mark_matcher: MarkMatcher
 ) -> None:
     assert evaluate(expr, mark_matcher) is expected
