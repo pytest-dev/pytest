@@ -5,9 +5,10 @@ The grammar is:
 expression: expr? EOF
 expr:       and_expr ('or' and_expr)*
 and_expr:   not_expr ('and' not_expr)*
-not_expr:   'not' not_expr | '(' expr ')' | ident ('(' name '=' value ( ', ' name '=' value )*  ')')?
+not_expr:   'not' not_expr | '(' expr ')' | ident kwargs?
 
 ident:      (\w|:|\+|-|\.|\[|\]|\\|/)+
+kwargs:     ('(' name '=' value ( ', ' name '=' value )*  ')')
 name:       a valid ident, but not a reserved keyword
 value:      (unescaped) string literal | (-)?[0-9]+ | 'False' | 'True' | 'None'
 
