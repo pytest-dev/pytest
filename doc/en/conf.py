@@ -82,7 +82,6 @@ extensions = [
     "pygments_pytest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
@@ -169,11 +168,6 @@ linkcheck_ignore = [
 
 # The number of worker threads to use when checking links (default=5).
 linkcheck_workers = 5
-
-
-extlinks = {
-    "bpo": ("https://bugs.python.org/issue%s", "bpo-%s"),
-}
 
 
 nitpicky = True
