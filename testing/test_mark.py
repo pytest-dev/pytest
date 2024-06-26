@@ -235,7 +235,7 @@ def test_mark_option(
 
 @pytest.mark.parametrize(
     ("expr", "expected_passed"),
-    [  # TODO: improve/sort out
+    [
         ("car(color='red')", ["test_one"]),
         ("car(color='red') or car(color='blue')", ["test_one", "test_two"]),
         ("car and not car(temp=5)", ["test_one", "test_three"]),
