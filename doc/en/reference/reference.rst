@@ -1796,11 +1796,6 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         pythonpath = src1 src2
 
-   .. note::
-
-        ``pythonpath`` does not affect some imports that happen very early,
-        most notably plugins loaded using the ``-p`` command line option.
-
 
 .. confval:: required_plugins
 
