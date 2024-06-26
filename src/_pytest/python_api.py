@@ -1007,9 +1007,12 @@ class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
         # Cast to narrow the exception type now that it's verified.
         exc_info = cast(Tuple[Type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
         self.excinfo.fill_unfilled(exc_info)
-        try:
-            if self.match_expr is not None:
+        if self.match_expr is not None:
+            re_error = None
+            try:
                 self.excinfo.match(self.match_expr)
-        except re.error as e:
-            fail(f"Invalid regex pattern provided to 'match': {e}")
+            except re.error as e:
+                re_error = e
+            if re_error is not None:
+                fail(f"Invalid regex pattern provided to 'match': {re_error}")
         return True
