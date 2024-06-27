@@ -4878,3 +4878,37 @@ def test_subfixture_teardown_order(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_reordering_in_multiple_parametrization(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.parametrize("arg2", [3, 4])
+        @pytest.mark.parametrize("arg1", [0, 1, 2], scope='module')
+        def test1(arg1, arg2):
+            pass
+
+        def test2():
+            pass
+
+        @pytest.mark.parametrize("arg1", [0, 1, 2], scope='module')
+        def test3(arg1):
+            pass
+        """
+    )
+    result = pytester.runpytest("--collect-only")
+    result.stdout.re_match_lines(
+        [
+            r"    <Function test1\[0-3\]>",
+            r"    <Function test3\[0\]>",
+            r"    <Function test1\[0-4\]>",
+            r"    <Function test3\[1\]>",
+            r"    <Function test1\[1-3\]>",
+            r"    <Function test3\[2\]>",
+            r"    <Function test1\[1-4\]>",
+            r"    <Function test1\[2-3\]>",
+            r"    <Function test1\[2-4\]>",
+            r"    <Function test2>",
+        ]
+    )
