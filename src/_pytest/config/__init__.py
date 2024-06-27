@@ -802,36 +802,36 @@ class PytestPluginManager(PluginManager):
         """:meta private:"""
         # Branch ID 1
         if arg.startswith("no:"): 
-            branchCoverage[0] = 1
+            # branchCoverage[0] = 1
             name = arg[3:]
             # Branch ID 2
             if name in essential_plugins:
-                branchCoverage[1] = 1
+                # branchCoverage[1] = 1
                 print(f"UsageError: plugin {name} cannot be disabled")
 
             # PR #4304: remove stepwise if cacheprovider is blocked.
             # Branch ID 3
             if name == "cacheprovider":
-                branchCoverage[2] = 1
+                # branchCoverage[2] = 1
                 self.set_blocked("stepwise")
                 self.set_blocked("pytest_stepwise")
 
             self.set_blocked(name)
             # Branch ID 4
             if not name.startswith("pytest_"):
-                branchCoverage[3] = 1
+                # branchCoverage[3] = 1
                 self.set_blocked("pytest_" + name)
      
         # Branch ID 5
         else:
-            branchCoverage[4] = 1
+            # branchCoverage[4] = 1
             name = arg
             # Unblock the plugin.
             self.unblock(name)
 
             # Branch ID 6
             if not name.startswith("pytest_"):
-                branchCoverage[5] = 1
+                # branchCoverage[5] = 1
                 self.unblock("pytest_" + name)
             self.import_plugin(arg, consider_entry_points=True)
 
@@ -1058,13 +1058,13 @@ class Config:
         *,
         invocation_params: Optional[InvocationParams] = None,
     ) -> None:
-        from .argparsing import FILE_OR_DIR
-        from .argparsing import Parser
+#        from .argparsing import FILE_OR_DIR
+#        from .argparsing import Parser
 
-        if invocation_params is None:
-            invocation_params = self.InvocationParams(
-                args=(), plugins=None, dir=Path.cwd()
-            )
+#        if invocation_params is None:
+#            invocation_params = self.InvocationParams(
+#                args=(), plugins=None, dir=Path.cwd()
+#            )
 
         self.option = argparse.Namespace()
         """Access to command line option as attributes.
@@ -1078,12 +1078,12 @@ class Config:
         :type: InvocationParams
         """
 
-        _a = FILE_OR_DIR
-        self._parser = Parser(
-            usage=f"%(prog)s [options] [{_a}] [{_a}] [...]",
-            processopt=self._processopt,
-            _ispytest=True,
-        )
+#        _a = FILE_OR_DIR
+#        self._parser = Parser(
+#            usage=f"%(prog)s [options] [{_a}] [{_a}] [...]",
+#            processopt=self._processopt,
+#            _ispytest=True,
+#        )
         self.pluginmanager = pluginmanager
         """The plugin manager handles plugin registration and hook invocation.
 
@@ -1100,16 +1100,16 @@ class Config:
         self._store = self.stash
 
         self.trace = self.pluginmanager.trace.root.get("config")
-        self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
+#        self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
         self._inicache: Dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: Dict[str, str] = {}
         self._cleanup: List[Callable[[], None]] = []
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
-        self.hook.pytest_addoption.call_historic(
-            kwargs=dict(parser=self._parser, pluginmanager=self.pluginmanager)
-        )
+#        self.hook.pytest_addoption.call_historic(
+#            kwargs=dict(parser=self._parser, pluginmanager=self.pluginmanager)
+#        )
         self.args_source = Config.ArgsSource.ARGS
         self.args: List[str] = []
 
@@ -1855,14 +1855,22 @@ def create_terminal_writer(
     """
     tw = TerminalWriter(file=file)
 
+    # Branch ID 1
     if config.option.color == "yes":
+        branchCoverage[0] = 1
         tw.hasmarkup = True
+    # Branch ID 2    
     elif config.option.color == "no":
+        branchCoverage[1] = 1
         tw.hasmarkup = False
 
+    # Branch ID 3
     if config.option.code_highlight == "yes":
+        branchCoverage[2] = 1
         tw.code_highlight = True
+    # Branch ID 4
     elif config.option.code_highlight == "no":
+        branchCoverage[3] = 1
         tw.code_highlight = False
 
     return tw
@@ -1878,11 +1886,17 @@ def _strtobool(val: str) -> bool:
     .. note:: Copied from distutils.util.
     """
     val = val.lower()
+    # Branch ID 1
     if val in ("y", "yes", "t", "true", "on", "1"):
+        branchCoverage[0] = 1
         return True
+    # Branch ID 2
     elif val in ("n", "no", "f", "false", "off", "0"):
+        branchCoverage[1] = 1
         return False
+    # Branch ID 3
     else:
+        branchCoverage[2] = 1
         raise ValueError(f"invalid truth value {val!r}")
 
 
@@ -1992,41 +2006,107 @@ def apply_warning_filters(
     for arg in cmdline_filters:
         warnings.filterwarnings(*parse_warning_filter(arg, escape=True))
 
-branchCoverage = [0,0,0,0,0,0]
-i = 1
-for x in branchCoverage:
-    print("Branch " + str(i) + " was reached: "+ str(x))
-    i = i + 1
 
-# Cover branches 1,2,4
-print("Given input: no:mark")
-branchCoverage = [0,0,0,0,0,0]
-something = PytestPluginManager()
-something.consider_pluginarg("no:mark")
 
-i = 1
-for x in branchCoverage:
-    print("Branch " + str(i) + " was reached: "+ str(x))
-    i = i + 1
 
-print()
 
-# Cover branches 1,3,4
-print("Given input: no:cacheprovider")
-branchCoverage = [0,0,0,0,0,0]    
-something.consider_pluginarg("no:cacheprovider")
+branchCoverage = [0,0,0,0]
+
+# Cover branches 1,3
+print("Given input: config.option.color = yes , config.option.code_highlight = yes")
+pluginmanager = PytestPluginManager()
+config = Config(pluginmanager=pluginmanager)
+config.option.color = "yes"
+config.option.code_highlight = "yes"
+
+tw = create_terminal_writer(config)
+
 i = 1
 for x in branchCoverage:
     print("Branch " + str(i) + " was reached: "+ str(x))
     i = i + 1
 
 print()
+branchCoverage = [0,0,0,0]
 
-# Cover branches 5,6
-print("Given input: mark")
-branchCoverage = [0,0,0,0,0,0]    
-something.consider_pluginarg("mark")
+# Cover branches 2,4
+print("Given input: config.option.color = no , config.option.code_highlight = no")
+pluginmanager = PytestPluginManager()
+config = Config(pluginmanager=pluginmanager)
+config.option.color = "no"
+config.option.code_highlight = "no"
+
+tw = create_terminal_writer(config)
+    
 i = 1
 for x in branchCoverage:
     print("Branch " + str(i) + " was reached: "+ str(x))
-    i = i + 1    
+    i = i + 1
+
+
+# branchCoverage = [0,0,0]
+# # Cover branche 1
+# print("Given input: y")
+# x = _strtobool("y")
+
+# i = 1
+# for x in branchCoverage:
+#     print("Branch " + str(i) + " was reached: "+ str(x))
+#     i = i + 1
+
+# print()
+
+# branchCoverage = [0,0,0]
+# # Cover branche 2
+# print("Given input: n")
+# x = _strtobool("n")
+
+# i = 1
+# for x in branchCoverage:
+#     print("Branch " + str(i) + " was reached: "+ str(x))
+#     i = i + 1    
+
+# print()
+
+# branchCoverage = [0,0,0]
+# # Cover branche 2
+# print("Given input: a")
+# x = _strtobool("a")
+
+# i = 1
+# for x in branchCoverage:
+#     print("Branch " + str(i) + " was reached: "+ str(x))
+#     i = i + 1  
+
+# # Cover branches 1,2,4
+# print("Given input: no:mark")
+# branchCoverage = [0,0,0,0,0,0]
+# something = PytestPluginManager()
+# something.consider_pluginarg("no:mark")
+
+# i = 1
+# for x in branchCoverage:
+#     print("Branch " + str(i) + " was reached: "+ str(x))
+#     i = i + 1
+
+# print()
+
+# # Cover branches 1,3,4
+# print("Given input: no:cacheprovider")
+# branchCoverage = [0,0,0,0,0,0]    
+# something.consider_pluginarg("no:cacheprovider")
+# i = 1
+# for x in branchCoverage:
+#     print("Branch " + str(i) + " was reached: "+ str(x))
+#     i = i + 1
+
+# print()
+
+# # Cover branches 5,6
+# print("Given input: mark")
+# branchCoverage = [0,0,0,0,0,0]    
+# something.consider_pluginarg("mark")
+# i = 1
+# for x in branchCoverage:
+#     print("Branch " + str(i) + " was reached: "+ str(x))
+#     i = i + 1    
