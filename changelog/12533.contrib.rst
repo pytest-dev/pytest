@@ -1,0 +1,7 @@
+The ``extlinks`` Sphinx extension is no longer enabled. The ``:bpo:``
+role it used to declare has been removed with that. BPO itself has
+migrated to GitHub some years ago and it is possible to link the
+respective issues by using their GitHub issue numbers and the
+``:issue:`` role that the ``sphinx-issues`` extension implements.
+
+-- by :user:`webknjaz`

@@ -80,7 +80,7 @@ keyword arguments, e.g. to run only tests marked with ``device`` and the specifi
 
 .. code-block:: pytest
 
-    $ pytest -v -m 'device(serial="123")'
+    $ pytest -v -m "device(serial='123')"
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
