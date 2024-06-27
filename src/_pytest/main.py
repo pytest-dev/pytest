@@ -38,12 +38,12 @@ from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.config.compat import PathAwareHookProxy
+from _pytest.my_pathlib import absolutepath
+from _pytest.my_pathlib import bestrelpath
+from _pytest.my_pathlib import fnmatch_ex
+from _pytest.my_pathlib import safe_exists
+from _pytest.my_pathlib import scandir
 from _pytest.outcomes import exit
-from _pytest.pathlib import absolutepath
-from _pytest.pathlib import bestrelpath
-from _pytest.pathlib import fnmatch_ex
-from _pytest.pathlib import safe_exists
-from _pytest.pathlib import scandir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import collect_one_node
