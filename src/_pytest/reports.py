@@ -207,7 +207,7 @@ class BaseReport:
             if isinstance(word, str) and isinstance(markup, Mapping):
                 return word, markup
 
-        fail(
+        fail(  # pragma: no cover
             "pytest_report_teststatus() hook (from a plugin) returned "
             f"an invalid verbose value: {verbose!r}.\nExpected either a string "
             "or a tuple of (word, markup)."
