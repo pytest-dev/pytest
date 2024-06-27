@@ -209,7 +209,7 @@ class BaseReport:
 
         fail(
             "pytest_report_teststatus() hook (from a plugin) returned "
-            "an invalid verbose value: {verbose!r}.\nExpected either a string "
+            f"an invalid verbose value: {verbose!r}.\nExpected either a string "
             "or a tuple of (word, markup)."
         )
 
