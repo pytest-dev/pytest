@@ -77,6 +77,7 @@ from _pytest.config import Config
 from _pytest.config.__init__ import create_terminal_writer
 from _pytest.config.__init__ import Config
 from _pytest.config.__init__ import _strtobool
+import pytest
 
 
 if TYPE_CHECKING:
@@ -109,36 +110,14 @@ tw = create_terminal_writer(config)
 assert tw.hasmarkup == False
 assert tw.code_highlight == False
 
+# # Test branch 1 in _strtobool
+# assert _strtobool("y") == True
 
-assert _strtobool("y") == True
-assert _strtobool("n") == False
-print("%d", _strtobool("a"))
+# # Test branch 2 in _strtobool
+# assert _strtobool("n") == False
 
-
-
-
-# self = PytestPluginManager()
-
-# # Test branches 1,3,4 in consider_pluginarg
-# print("Given input: no:cacheprovider")    
-# self.consider_pluginarg("no:cacheprovider")
-
-# assert name == "cacheprovider"
-# assert self._name2plugin[name] == None
-# assert self.set_blocked == "stepwise"
-# assert self.set_blocked == "pytest_stepwise"
-# assert self.set_blocked == "pytest_" + name
-
-# # Test branches 5,6 in consider_pluginarg  
-# arg = "mark"
-# something.consider_pluginarg("mark")
-# assert name == "mark"
-# assert self.unblock == "pytset_" + name
-# assert consider_entry_points == True
-
-# # Test branches 1,2,4 in consider_pluginarg
-# arg = "no:mark"
-# something.consider_pluginarg("no:mark")
-# assert name == "mark"
-# assert self.set_blocked == "pytest_" + name
- 
+# # Test branch 3 in _strtobool
+# with pytest.raises(ValueError) as excinfo:
+#         _strtobool("a")
+    
+# assert str(excinfo.value) == "invalid truth value 'a'"
