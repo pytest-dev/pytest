@@ -92,9 +92,11 @@ Ideally this type would be provided by pluggy itself.
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
-@final # I added
+
+@final  # I added
 class UsageError(Exception):
     """Error in pytest usage or invocation."""
+
 
 @final
 class ExitCode(enum.IntEnum):
@@ -801,7 +803,7 @@ class PytestPluginManager(PluginManager):
     def consider_pluginarg(self, arg: str) -> None:
         """:meta private:"""
         # Branch ID 1
-        if arg.startswith("no:"): 
+        if arg.startswith("no:"):
             # branchCoverage[0] = 1
             name = arg[3:]
             # Branch ID 2
@@ -821,7 +823,7 @@ class PytestPluginManager(PluginManager):
             if not name.startswith("pytest_"):
                 # branchCoverage[3] = 1
                 self.set_blocked("pytest_" + name)
-     
+
         # Branch ID 5
         else:
             # branchCoverage[4] = 1
@@ -1058,13 +1060,13 @@ class Config:
         *,
         invocation_params: Optional[InvocationParams] = None,
     ) -> None:
-#        from .argparsing import FILE_OR_DIR
-#        from .argparsing import Parser
+        #        from .argparsing import FILE_OR_DIR
+        #        from .argparsing import Parser
 
-#        if invocation_params is None:
-#            invocation_params = self.InvocationParams(
-#                args=(), plugins=None, dir=Path.cwd()
-#            )
+        #        if invocation_params is None:
+        #            invocation_params = self.InvocationParams(
+        #                args=(), plugins=None, dir=Path.cwd()
+        #            )
 
         self.option = argparse.Namespace()
         """Access to command line option as attributes.
@@ -1078,12 +1080,12 @@ class Config:
         :type: InvocationParams
         """
 
-#        _a = FILE_OR_DIR
-#        self._parser = Parser(
-#            usage=f"%(prog)s [options] [{_a}] [{_a}] [...]",
-#            processopt=self._processopt,
-#            _ispytest=True,
-#        )
+        #        _a = FILE_OR_DIR
+        #        self._parser = Parser(
+        #            usage=f"%(prog)s [options] [{_a}] [{_a}] [...]",
+        #            processopt=self._processopt,
+        #            _ispytest=True,
+        #        )
         self.pluginmanager = pluginmanager
         """The plugin manager handles plugin registration and hook invocation.
 
@@ -1100,16 +1102,16 @@ class Config:
         self._store = self.stash
 
         self.trace = self.pluginmanager.trace.root.get("config")
-#        self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
+        #        self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
         self._inicache: Dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: Dict[str, str] = {}
         self._cleanup: List[Callable[[], None]] = []
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
-#        self.hook.pytest_addoption.call_historic(
-#            kwargs=dict(parser=self._parser, pluginmanager=self.pluginmanager)
-#        )
+        #        self.hook.pytest_addoption.call_historic(
+        #            kwargs=dict(parser=self._parser, pluginmanager=self.pluginmanager)
+        #        )
         self.args_source = Config.ArgsSource.ARGS
         self.args: List[str] = []
 
@@ -1859,7 +1861,7 @@ def create_terminal_writer(
     if config.option.color == "yes":
         branchCoverage[0] = 1
         tw.hasmarkup = True
-    # Branch ID 2    
+    # Branch ID 2
     elif config.option.color == "no":
         branchCoverage[1] = 1
         tw.hasmarkup = False
@@ -2007,10 +2009,7 @@ def apply_warning_filters(
         warnings.filterwarnings(*parse_warning_filter(arg, escape=True))
 
 
-
-
-
-branchCoverage = [0,0,0,0]
+branchCoverage = [0, 0, 0, 0]
 
 # Cover branches 1,3
 print("Given input: config.option.color = yes , config.option.code_highlight = yes")
@@ -2023,11 +2022,11 @@ tw = create_terminal_writer(config)
 
 i = 1
 for x in branchCoverage:
-    print("Branch " + str(i) + " was reached: "+ str(x))
+    print("Branch " + str(i) + " was reached: " + str(x))
     i = i + 1
 
 print()
-branchCoverage = [0,0,0,0]
+branchCoverage = [0, 0, 0, 0]
 
 # Cover branches 2,4
 print("Given input: config.option.color = no , config.option.code_highlight = no")
@@ -2037,10 +2036,10 @@ config.option.color = "no"
 config.option.code_highlight = "no"
 
 tw = create_terminal_writer(config)
-    
+
 i = 1
 for x in branchCoverage:
-    print("Branch " + str(i) + " was reached: "+ str(x))
+    print("Branch " + str(i) + " was reached: " + str(x))
     i = i + 1
 
 
@@ -2064,7 +2063,7 @@ for x in branchCoverage:
 # i = 1
 # for x in branchCoverage:
 #     print("Branch " + str(i) + " was reached: "+ str(x))
-#     i = i + 1    
+#     i = i + 1
 
 # print()
 
@@ -2076,7 +2075,7 @@ for x in branchCoverage:
 # i = 1
 # for x in branchCoverage:
 #     print("Branch " + str(i) + " was reached: "+ str(x))
-#     i = i + 1  
+#     i = i + 1
 
 # # Cover branches 1,2,4
 # print("Given input: no:mark")
@@ -2093,7 +2092,7 @@ for x in branchCoverage:
 
 # # Cover branches 1,3,4
 # print("Given input: no:cacheprovider")
-# branchCoverage = [0,0,0,0,0,0]    
+# branchCoverage = [0,0,0,0,0,0]
 # something.consider_pluginarg("no:cacheprovider")
 # i = 1
 # for x in branchCoverage:
@@ -2104,9 +2103,9 @@ for x in branchCoverage:
 
 # # Cover branches 5,6
 # print("Given input: mark")
-# branchCoverage = [0,0,0,0,0,0]    
+# branchCoverage = [0,0,0,0,0,0]
 # something.consider_pluginarg("mark")
 # i = 1
 # for x in branchCoverage:
 #     print("Branch " + str(i) + " was reached: "+ str(x))
-#     i = i + 1    
+#     i = i + 1
