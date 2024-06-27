@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from datetime import timezone
 import os
 from pathlib import Path
 import platform
@@ -218,11 +219,11 @@ class TestPython:
                 pass
         """
         )
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
         result, dom = run_and_parse(family=xunit_family)
         node = dom.find_first_by_tag("testsuite")
-        timestamp = datetime.strptime(node["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
-        assert start_time <= timestamp < datetime.now()
+        timestamp = datetime.strptime(node["timestamp"], "%Y-%m-%dT%H:%M:%S.%f%z")
+        assert start_time <= timestamp < datetime.now(timezone.utc)
 
     def test_timing_function(
         self, pytester: Pytester, run_and_parse: RunAndParse, mock_timing
