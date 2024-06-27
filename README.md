@@ -28,7 +28,8 @@ This allowed us to run all tests in the repository and summarised the coverage o
 The results indicate that the tests have a branch coverage of 38% on the program.
 
 <Show the coverage results provided by the existing tool with a screenshot>
-![Screenshot 2024-06-27 at 22 18 22](https://github.com/apanayotova03/pytest/assets/122705116/74aedda1-54a4-4a50-bd9b-8af833493ef8)
+
+ ![Screenshot 2024-06-27 at 22 18 22](https://github.com/apanayotova03/pytest/assets/122705116/74aedda1-54a4-4a50-bd9b-8af833493ef8)
 
 ### Your own coverage tool
 
@@ -36,10 +37,12 @@ The results indicate that the tests have a branch coverage of 38% on the program
 <Group member name> Anastasia
 <Function 1 name> create_terminal_writer()
 <Show a patch (diff) or a link to a commit made in your forked repository that shows the instrumented code to gather coverage measurements>
-![Screenshot 2024-06-27 at 22 19 26](https://github.com/apanayotova03/pytest/assets/122705116/b4933dba-97e4-4337-acc1-1d77c9afb250)
+
+ ![Screenshot 2024-06-27 at 22 19 26](https://github.com/apanayotova03/pytest/assets/122705116/b4933dba-97e4-4337-acc1-1d77c9afb250)
 
 <Provide a screenshot of the coverage results output by the instrumentation>
 New branch coverage: 100%
+ 
 ![Screenshot 2024-06-27 at 22 20 47](https://github.com/apanayotova03/pytest/assets/122705116/e2c5a548-2373-4c05-9710-31666b811296)
 
 
@@ -63,6 +66,7 @@ New branch coverage: 100%
 <Test 1>
 
 <Show a patch (diff) or a link to a commit made in your forked repository that shows the new/enhanced test>
+
 ![Screenshot 2024-06-27 at 22 21 40](https://github.com/apanayotova03/pytest/assets/122705116/9ef88a09-957d-4a18-90cc-b7ae1c855155)
 
 
@@ -205,8 +209,12 @@ The branch coverage has improved from 0% to 100%. In the original test, neither 
 
 <Show a patch (diff) or a link to a commit made in your forked repository that shows the instrumented code to gather coverage measurements>
 
+![Screenshot 2024-06-27 at 20 52 00](https://github.com/apanayotova03/pytest/assets/122705116/fe595ff5-05be-4073-93ab-8ca5931819bb)
 
 <Provide a screenshot of the coverage results output by the instrumentation>
+
+![Screenshot 2024-06-27 at 20 28 22](https://github.com/apanayotova03/pytest/assets/122705116/0772f32e-0cd3-4a15-b8a6-bae57a8975b7)
+
 
 
 <Function 2 name> _highlight
@@ -224,16 +232,21 @@ The branch coverage has improved from 0% to 100%. In the original test, neither 
 <Test 1>
 
 <Show a patch (diff) or a link to a commit made in your forked repository that shows the new/enhanced test>
+![Screenshot 2024-06-27 at 20 52 23](https://github.com/apanayotova03/pytest/assets/122705116/6ebb1d82-c839-45f0-b08a-757a8f23eac3)
 
 
 <Provide a screenshot of the old coverage results (the same as you already showed above)>
+![Screenshot 2024-06-27 at 21 12 50](https://github.com/apanayotova03/pytest/assets/122705116/81685565-bb75-4bce-98a8-2d641dfb2421)
+
 
 <Provide a screenshot of the new coverage results>
+
+ ![WhatsApp Image 2024-06-27 at 20 23 12](https://github.com/apanayotova03/pytest/assets/122705116/8505be7d-320e-40fb-bea9-103b47b781d1)
 
 
 <State the coverage improvement with a number and elaborate on why the coverage is improved>
 
-New branch coverage is 100%
+New branch coverage is 100%, DEVELOP
 
 <Test 2>
 
