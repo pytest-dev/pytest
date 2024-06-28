@@ -369,7 +369,8 @@ def pytest_runtestloop(session: Session) -> bool:
 
 def _in_venv(path: Path) -> bool:
     """Attempt to detect if ``path`` is the root of a Virtual Environment by
-    checking for the existence of the pyvenv.cfg file."""
+    checking for the existence of the pyvenv.cfg file.
+    [https://peps.python.org/pep-0405/]"""
     try:
         return path.joinpath("pyvenv.cfg").is_file()
     except OSError:
