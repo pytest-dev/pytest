@@ -369,22 +369,11 @@ def pytest_runtestloop(session: Session) -> bool:
 
 def _in_venv(path: Path) -> bool:
     """Attempt to detect if ``path`` is the root of a Virtual Environment by
-    checking for the existence of the appropriate activate script."""
-    bindir = path.joinpath("Scripts" if sys.platform.startswith("win") else "bin")
+    checking for the existence of the pyvenv.cfg file."""
     try:
-        if not bindir.is_dir():
-            return False
+        return path.joinpath("pyvenv.cfg").exists()
     except OSError:
         return False
-    activates = (
-        "activate",
-        "activate.csh",
-        "activate.fish",
-        "Activate",
-        "Activate.bat",
-        "Activate.ps1",
-    )
-    return any(fname.name in activates for fname in bindir.iterdir())
 
 
 def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
