@@ -371,7 +371,7 @@ def _in_venv(path: Path) -> bool:
     """Attempt to detect if ``path`` is the root of a Virtual Environment by
     checking for the existence of the pyvenv.cfg file."""
     try:
-        return path.joinpath("pyvenv.cfg").exists()
+        return path.joinpath("pyvenv.cfg").is_file()
     except OSError:
         return False
 
