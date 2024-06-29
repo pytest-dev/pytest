@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import dataclasses
 import importlib.metadata
 import os
@@ -7,12 +9,7 @@ import re
 import sys
 import textwrap
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Sequence
-from typing import Tuple
-from typing import Type
-from typing import Union
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list
@@ -633,7 +630,7 @@ class TestConfigCmdlineParsing:
 class TestConfigAPI:
     def test_config_trace(self, pytester: Pytester) -> None:
         config = pytester.parseconfig()
-        values: List[str] = []
+        values: list[str] = []
         config.trace.root.setwriter(values.append)
         config.trace("hello")
         assert len(values) == 1
@@ -996,7 +993,7 @@ class TestConfigFromdictargs:
 
     def test_invocation_params_args(self, _sys_snapshot) -> None:
         """Show that fromdictargs can handle args in their "orig" format"""
-        option_dict: Dict[str, object] = {}
+        option_dict: dict[str, object] = {}
         args = ["-vvvv", "-s", "a", "b"]
 
         config = Config.fromdictargs(option_dict, args)
@@ -1210,7 +1207,7 @@ def test_plugin_preparse_prevents_setuptools_loading(
 def test_disable_plugin_autoload(
     pytester: Pytester,
     monkeypatch: MonkeyPatch,
-    parse_args: Union[Tuple[str, str], Tuple[()]],
+    parse_args: tuple[str, str] | tuple[()],
     should_load: bool,
 ) -> None:
     class DummyEntryPoint:
@@ -1304,7 +1301,7 @@ def test_invalid_options_show_extra_information(pytester: Pytester) -> None:
     ],
 )
 def test_consider_args_after_options_for_rootdir(
-    pytester: Pytester, args: List[str]
+    pytester: Pytester, args: list[str]
 ) -> None:
     """
     Consider all arguments in the command-line for rootdir
@@ -2241,7 +2238,7 @@ def test_strtobool() -> None:
     ],
 )
 def test_parse_warning_filter(
-    arg: str, escape: bool, expected: Tuple[str, str, Type[Warning], str, int]
+    arg: str, escape: bool, expected: tuple[str, str, type[Warning], str, int]
 ) -> None:
     assert parse_warning_filter(arg, escape=escape) == expected
 

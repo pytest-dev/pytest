@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import sys
-from typing import List
 
 import _pytest._code
 from _pytest.debugging import _validate_usepdb_cls
@@ -35,7 +36,7 @@ def runpdb_and_get_report(pytester: Pytester, source: str):
 
 
 @pytest.fixture
-def custom_pdb_calls() -> List[str]:
+def custom_pdb_calls() -> list[str]:
     called = []
 
     # install dummy debugger class and track which methods were called on it
@@ -854,7 +855,7 @@ class TestPDB:
         self.flush(child)
 
     def test_pdb_custom_cls(
-        self, pytester: Pytester, custom_pdb_calls: List[str]
+        self, pytester: Pytester, custom_pdb_calls: list[str]
     ) -> None:
         p1 = pytester.makepyfile("""xxx """)
         result = pytester.runpytest_inprocess(
@@ -880,7 +881,7 @@ class TestPDB:
         assert _validate_usepdb_cls("pdb:DoesNotExist") == ("pdb", "DoesNotExist")
 
     def test_pdb_custom_cls_without_pdb(
-        self, pytester: Pytester, custom_pdb_calls: List[str]
+        self, pytester: Pytester, custom_pdb_calls: list[str]
     ) -> None:
         p1 = pytester.makepyfile("""xxx """)
         result = pytester.runpytest_inprocess("--pdbcls=_pytest:_CustomPdb", p1)

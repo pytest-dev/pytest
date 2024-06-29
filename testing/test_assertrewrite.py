@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import ast
 import errno
 from functools import partial
@@ -8,16 +10,13 @@ import marshal
 import os
 from pathlib import Path
 import py_compile
+import re
 import stat
 import sys
 import textwrap
 from typing import cast
-from typing import Dict
 from typing import Generator
-from typing import List
 from typing import Mapping
-from typing import Optional
-from typing import Set
 from unittest import mock
 import zipfile
 
@@ -26,6 +25,7 @@ from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import _get_assertion_exprs
 from _pytest.assertion.rewrite import _get_maxsize_for_saferepr
+from _pytest.assertion.rewrite import _saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.assertion.rewrite import get_cache_dir
 from _pytest.assertion.rewrite import PYC_TAIL
@@ -45,13 +45,13 @@ def rewrite(src: str) -> ast.Module:
 
 
 def getmsg(
-    f, extra_ns: Optional[Mapping[str, object]] = None, *, must_pass: bool = False
-) -> Optional[str]:
+    f, extra_ns: Mapping[str, object] | None = None, *, must_pass: bool = False
+) -> str | None:
     """Rewrite the assertions in f, run it, and get the failure message."""
     src = "\n".join(_pytest._code.Code.from_function(f).source().lines)
     mod = rewrite(src)
     code = compile(mod, "<test>", "exec")
-    ns: Dict[str, object] = {}
+    ns: dict[str, object] = {}
     if extra_ns is not None:
         ns.update(extra_ns)
     exec(code, ns)
@@ -1638,8 +1638,8 @@ class TestEarlyRewriteBailout:
         """
         import importlib.machinery
 
-        self.find_spec_calls: List[str] = []
-        self.initial_paths: Set[Path] = set()
+        self.find_spec_calls: list[str] = []
+        self.initial_paths: set[Path] = set()
 
         class StubSession:
             _initialpaths = self.initial_paths
@@ -2038,7 +2038,9 @@ class TestPyCacheDir:
         assert test_foo_pyc.is_file()
 
         # normal file: not touched by pytest, normal cache tag
-        bar_init_pyc = get_cache_dir(bar_init) / f"__init__.{sys.implementation.cache_tag}.pyc"
+        bar_init_pyc = (
+            get_cache_dir(bar_init) / f"__init__.{sys.implementation.cache_tag}.pyc"
+        )
         assert bar_init_pyc.is_file()
 
 
@@ -2059,7 +2061,7 @@ class TestReprSizeVerbosity:
     )
     def test_get_maxsize_for_saferepr(self, verbose: int, expected_size) -> None:
         class FakeConfig:
-            def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
+            def get_verbosity(self, verbosity_type: str | None = None) -> int:
                 return verbose
 
         config = FakeConfig()
@@ -2105,3 +2107,26 @@ class TestIssue11140:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+
+class TestSafereprUnbounded:
+    class Help:
+        def bound_method(self):  # pragma: no cover
+            pass
+
+    def test_saferepr_bound_method(self):
+        """saferepr() of a bound method should show only the method name"""
+        assert _saferepr(self.Help().bound_method) == "bound_method"
+
+    def test_saferepr_unbounded(self):
+        """saferepr() of an unbound method should still show the full information"""
+        obj = self.Help()
+        # using id() to fetch memory address fails on different platforms
+        pattern = re.compile(
+            rf"<{Path(__file__).stem}.{self.__class__.__name__}.Help object at 0x[0-9a-fA-F]*>",
+        )
+        assert pattern.match(_saferepr(obj))
+        assert (
+            _saferepr(self.Help)
+            == f"<class '{Path(__file__).stem}.{self.__class__.__name__}.Help'>"
+        )

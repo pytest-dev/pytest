@@ -46,7 +46,8 @@ jobs:
         run: python scripts/update-plugin-list.py
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e
+        id: pr
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c
         with:
           commit-message: '[automated] Update plugin list'
           author: 'pytest bot <pytestbot@users.noreply.github.com>'
@@ -55,3 +56,13 @@ jobs:
           branch-suffix: short-commit-hash
           title: '[automated] Update plugin list'
           body: '[automated] Update plugin list'
+          draft: true
+
+      - name: Instruct the maintainers to trigger CI by undrafting the PR
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          gh pr comment
+          --body 'Please mark the PR as ready for review to trigger PR checks.'
+          --repo '${{ github.repository }}'
+          '${{ steps.pr.outputs.pull-request-number }}'

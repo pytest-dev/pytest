@@ -1,0 +1,1 @@
+Added timezone information to the testsuite timestamp in the JUnit XML report.

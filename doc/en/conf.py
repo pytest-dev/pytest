@@ -15,16 +15,32 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
+from __future__ import annotations
+
+import os
+from pathlib import Path
 import shutil
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
-from _pytest import __version__ as version
+from _pytest import __version__ as full_version
 
+
+version = full_version.split("+")[0]
 
 if TYPE_CHECKING:
     import sphinx.application
 
+
+PROJECT_ROOT_DIR = Path(__file__).parents[2].resolve()
+IS_RELEASE_ON_RTD = (
+    os.getenv("READTHEDOCS", "False") == "True"
+    and os.environ["READTHEDOCS_VERSION_TYPE"] == "tag"
+)
+if IS_RELEASE_ON_RTD:
+    tags: set[str]
+    # pylint: disable-next=used-before-assignment
+    tags.add("is_release")  # noqa: F821
 
 release = ".".join(version.split(".")[:2])
 
@@ -66,12 +82,13 @@ extensions = [
     "pygments_pytest",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinx_removed_in",
     "sphinxcontrib_trio",
+    "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
+    "sphinx_issues",  # implements `:issue:`, `:pr:` and other GH-related roles
 ]
 
 # Building PDF docs on readthedocs requires inkscape for svg to pdf
@@ -153,16 +170,6 @@ linkcheck_ignore = [
 linkcheck_workers = 5
 
 
-_repo = "https://github.com/pytest-dev/pytest"
-extlinks = {
-    "bpo": ("https://bugs.python.org/issue%s", "bpo-%s"),
-    "pypi": ("https://pypi.org/project/%s/", "%s"),
-    "issue": (f"{_repo}/issues/%s", "issue #%s"),
-    "pull": (f"{_repo}/pull/%s", "pull request #%s"),
-    "user": ("https://github.com/%s", "@%s"),
-}
-
-
 nitpicky = True
 nitpick_ignore = [
     # TODO (fix in pluggy?)
@@ -176,6 +183,7 @@ nitpick_ignore = [
     ("py:class", "SubRequest"),
     ("py:class", "TerminalReporter"),
     ("py:class", "_pytest._code.code.TerminalRepr"),
+    ("py:class", "TerminalRepr"),
     ("py:class", "_pytest.fixtures.FixtureFunctionMarker"),
     ("py:class", "_pytest.logging.LogCaptureHandler"),
     ("py:class", "_pytest.mark.structures.ParameterSet"),
@@ -197,13 +205,16 @@ nitpick_ignore = [
     ("py:class", "_PluggyPlugin"),
     # TypeVars
     ("py:class", "_pytest._code.code.E"),
+    ("py:class", "E"),  # due to delayed annotation
     ("py:class", "_pytest.fixtures.FixtureFunction"),
     ("py:class", "_pytest.nodes._NodeType"),
+    ("py:class", "_NodeType"),  # due to delayed annotation
     ("py:class", "_pytest.python_api.E"),
     ("py:class", "_pytest.recwarn.T"),
     ("py:class", "_pytest.runner.TResult"),
     ("py:obj", "_pytest.fixtures.FixtureValue"),
     ("py:obj", "_pytest.stash.T"),
+    ("py:class", "_ScopeName"),
 ]
 
 
@@ -422,6 +433,18 @@ texinfo_documents = [
     )
 ]
 
+# -- Options for towncrier_draft extension -----------------------------------
+
+towncrier_draft_autoversion_mode = "draft"  # or: 'sphinx-version', 'sphinx-release'
+towncrier_draft_include_empty = True
+towncrier_draft_working_directory = PROJECT_ROOT_DIR
+towncrier_draft_config_path = "pyproject.toml"  # relative to cwd
+
+
+# -- Options for sphinx_issues extension -----------------------------------
+
+issues_github_path = "pytest-dev/pytest"
+
 
 intersphinx_mapping = {
     "pluggy": ("https://pluggy.readthedocs.io/en/stable", None),
@@ -435,31 +458,7 @@ intersphinx_mapping = {
 }
 
 
-def configure_logging(app: "sphinx.application.Sphinx") -> None:
-    """Configure Sphinx's WarningHandler to handle (expected) missing include."""
-    import logging
-
-    import sphinx.util.logging
-
-    class WarnLogFilter(logging.Filter):
-        def filter(self, record: logging.LogRecord) -> bool:
-            """Ignore warnings about missing include with "only" directive.
-
-            Ref: https://github.com/sphinx-doc/sphinx/issues/2150."""
-            if (
-                record.msg.startswith('Problems with "include" directive path:')
-                and "_changelog_towncrier_draft.rst" in record.msg
-            ):
-                return False
-            return True
-
-    logger = logging.getLogger(sphinx.util.logging.NAMESPACE)
-    warn_handler = [x for x in logger.handlers if x.level == logging.WARNING]
-    assert len(warn_handler) == 1, warn_handler
-    warn_handler[0].filters.insert(0, WarnLogFilter())
-
-
-def setup(app: "sphinx.application.Sphinx") -> None:
+def setup(app: sphinx.application.Sphinx) -> None:
     app.add_crossref_type(
         "fixture",
         "fixture",
@@ -487,8 +486,6 @@ def setup(app: "sphinx.application.Sphinx") -> None:
         objname="pytest hook",
         indextemplate="pair: %s; hook",
     )
-
-    configure_logging(app)
 
     # legacypath.py monkey-patches pytest.Testdir in. Import the file so
     # that autodoc can discover references to it.

@@ -5,6 +5,8 @@ See https://github.com/pytest-dev/pytest/issues/3333 for details.
 
 """
 
+from __future__ import annotations
+
 from _pytest.pytester import Pytester
 import pytest
 

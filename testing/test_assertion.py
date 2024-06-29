@@ -1,11 +1,11 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import sys
 import textwrap
 from typing import Any
-from typing import List
 from typing import MutableSequence
 from typing import NamedTuple
-from typing import Optional
 
 import attr
 
@@ -19,7 +19,7 @@ from _pytest.pytester import Pytester
 import pytest
 
 
-def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
+def mock_config(verbose: int = 0, assertion_override: int | None = None):
     class TerminalWriter:
         def _highlight(self, source, lexer="python"):
             return source
@@ -28,7 +28,7 @@ def mock_config(verbose: int = 0, assertion_override: Optional[int] = None):
         def get_terminal_writer(self):
             return TerminalWriter()
 
-        def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
+        def get_verbosity(self, verbosity_type: str | None = None) -> int:
             if verbosity_type is None:
                 return verbose
             if verbosity_type == _Config.VERBOSITY_ASSERTIONS:
@@ -223,7 +223,7 @@ class TestImportHookInstallation:
     ) -> None:
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
         # Make sure the hook is installed early enough so that plugins
-        # installed via setuptools are rewritten.
+        # installed via distribution package are rewritten.
         pytester.mkdir("hampkg")
         contents = {
             "hampkg/__init__.py": """\
@@ -369,12 +369,12 @@ class TestBinReprIntegration:
         result.stdout.fnmatch_lines(["*test_hello*FAIL*", "*test_check*PASS*"])
 
 
-def callop(op: str, left: Any, right: Any, verbose: int = 0) -> Optional[List[str]]:
+def callop(op: str, left: Any, right: Any, verbose: int = 0) -> list[str] | None:
     config = mock_config(verbose=verbose)
     return plugin.pytest_assertrepr_compare(config, op, left, right)
 
 
-def callequal(left: Any, right: Any, verbose: int = 0) -> Optional[List[str]]:
+def callequal(left: Any, right: Any, verbose: int = 0) -> list[str] | None:
     return callop("==", left, right, verbose)
 
 
@@ -1316,7 +1316,7 @@ class TestTruncateExplanation:
     LINES_IN_TRUNCATION_MSG = 2
 
     def test_doesnt_truncate_when_input_is_empty_list(self) -> None:
-        expl: List[str] = []
+        expl: list[str] = []
         result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
         assert result == expl
 

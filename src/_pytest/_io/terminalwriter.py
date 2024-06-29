@@ -1,11 +1,12 @@
 """Helper functions for writing to terminals and files."""
 
+from __future__ import annotations
+
 import os
 import shutil
 import sys
 from typing import final
 from typing import Literal
-from typing import Optional
 from typing import Sequence
 from typing import TextIO
 from typing import TYPE_CHECKING
@@ -71,7 +72,7 @@ class TerminalWriter:
         invert=7,
     )
 
-    def __init__(self, file: Optional[TextIO] = None) -> None:
+    def __init__(self, file: TextIO | None = None) -> None:
         if file is None:
             file = sys.stdout
         if hasattr(file, "isatty") and file.isatty() and sys.platform == "win32":
@@ -85,7 +86,7 @@ class TerminalWriter:
         self._file = file
         self.hasmarkup = should_do_markup(file)
         self._current_line = ""
-        self._terminal_width: Optional[int] = None
+        self._terminal_width: int | None = None
         self.code_highlight = True
 
     @property
@@ -116,8 +117,8 @@ class TerminalWriter:
     def sep(
         self,
         sepchar: str,
-        title: Optional[str] = None,
-        fullwidth: Optional[int] = None,
+        title: str | None = None,
+        fullwidth: int | None = None,
         **markup: bool,
     ) -> None:
         if fullwidth is None:
@@ -200,9 +201,7 @@ class TerminalWriter:
         for indent, new_line in zip(indents, new_lines):
             self.line(indent + new_line)
 
-    def _get_pygments_lexer(
-        self, lexer: Literal["python", "diff"]
-    ) -> Optional["Lexer"]:
+    def _get_pygments_lexer(self, lexer: Literal["python", "diff"]) -> Lexer | None:
         try:
             if lexer == "python":
                 from pygments.lexers.python import PythonLexer
@@ -217,7 +216,7 @@ class TerminalWriter:
         except ModuleNotFoundError:
             return None
 
-    def _get_pygments_formatter(self) -> Optional["Formatter"]:
+    def _get_pygments_formatter(self) -> Formatter | None:
         try:
             import pygments.util
         except ModuleNotFoundError:

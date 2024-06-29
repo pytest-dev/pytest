@@ -650,7 +650,7 @@ Reference to all hooks which can be implemented by :ref:`conftest.py files <loca
 Bootstrapping hooks
 ~~~~~~~~~~~~~~~~~~~
 
-Bootstrapping hooks called for plugins registered early enough (internal and setuptools plugins).
+Bootstrapping hooks called for plugins registered early enough (internal and third-party plugins).
 
 .. hook:: pytest_load_initial_conftests
 .. autofunction:: pytest_load_initial_conftests
@@ -1147,8 +1147,9 @@ When set, pytest will print tracing and debug information.
 
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
-When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
-loaded.
+When set, disables plugin auto-loading through :std:doc:`entry point packaging
+metadata <packaging:guides/creating-and-discovering-plugins>`. Only explicitly
+specified plugins will be loaded.
 
 .. envvar:: PYTEST_PLUGINS
 
@@ -1701,13 +1702,13 @@ passed multiple times. The expected format is ``name=value``. For example::
    This would tell ``pytest`` to not look into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
 
-   Additionally, ``pytest`` will attempt to intelligently identify and ignore a
-   virtualenv by the presence of an activation script.  Any directory deemed to
-   be the root of a virtual environment will not be considered during test
-   collection unless ``--collect-in-virtualenv`` is given.  Note also that
-   ``norecursedirs`` takes precedence over ``--collect-in-virtualenv``; e.g. if
-   you intend to run tests in a virtualenv with a base directory that matches
-   ``'.*'`` you *must* override ``norecursedirs`` in addition to using the
+   Additionally, ``pytest`` will attempt to intelligently identify and ignore
+   a virtualenv.  Any directory deemed to be the root of a virtual environment
+   will not be considered during test collection unless
+   ``--collect-in-virtualenv`` is given.  Note also that ``norecursedirs``
+   takes precedence over ``--collect-in-virtualenv``; e.g. if you intend to
+   run tests in a virtualenv with a base directory that matches ``'.*'`` you
+   *must* override ``norecursedirs`` in addition to using the
    ``--collect-in-virtualenv`` flag.
 
 
