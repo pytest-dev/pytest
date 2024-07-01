@@ -31,7 +31,7 @@ def test_node_direct_construction_deprecated() -> None:
             " for more details."
         ),
     ):
-        nodes.Node(None, session=None)  # type: ignore[arg-type]
+        nodes.Node(None, parent=None, session=None)  # type: ignore[arg-type]
 
 
 def test_subclassing_both_item_and_collector_deprecated(

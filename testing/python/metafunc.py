@@ -7,6 +7,7 @@ import re
 import sys
 import textwrap
 from typing import Any
+from typing import Callable
 from typing import cast
 from typing import Dict
 from typing import Iterator
@@ -49,7 +50,7 @@ class TestMetafunc:
         @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
             _nodeid: str
-            obj: object
+            obj: Callable[..., Any]
 
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
