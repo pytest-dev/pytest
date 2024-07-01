@@ -7,6 +7,7 @@ from decimal import Decimal
 import math
 from numbers import Complex
 import pprint
+import re
 from types import TracebackType
 from typing import Any
 from typing import Callable
@@ -986,6 +987,14 @@ class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
         self.message = message
         self.match_expr = match_expr
         self.excinfo: _pytest._code.ExceptionInfo[E] | None = None
+        if self.match_expr is not None:
+            re_error = None
+            try:
+                re.compile(self.match_expr)
+            except re.error as e:
+                re_error = e
+            if re_error is not None:
+                fail(f"Invalid regex pattern provided to 'match': {re_error}")
 
     def __enter__(self) -> _pytest._code.ExceptionInfo[E]:
         self.excinfo = _pytest._code.ExceptionInfo.for_later()
