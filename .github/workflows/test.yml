@@ -245,7 +245,6 @@ jobs:
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
-        token: 1eca3b1f-31a2-4fb8-a8c3-138b441b50a7 #repo token; cfg read fails
         verbose: true
 
   check:  # This job does nothing and is only used for the branch protection
