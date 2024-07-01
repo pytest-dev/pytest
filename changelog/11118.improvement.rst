@@ -1,0 +1,3 @@
+Allow plugins to be loaded with `-p` from paths specified in `pythonpath`.
+
+-- by :user:`millerdev`
