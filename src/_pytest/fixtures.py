@@ -1100,7 +1100,8 @@ def resolve_fixture_function(
 ) -> _FixtureFunc[FixtureValue]:
     """Get the actual callable that can be called to obtain the fixture
     value."""
-    fixturefunc = fixturedef.func
+    # absuing any for the differences between FunctionTpye and Callable
+    fixturefunc: Any = fixturedef.func
     # The fixture function needs to be bound to the actual
     # request.instance so that code working with "fixturedef" behaves
     # as expected.
@@ -1112,11 +1113,11 @@ def resolve_fixture_function(
             instance,
             fixturefunc.__self__.__class__,
         ):
-            return fixturefunc
+            return cast(_FixtureFunc[FixtureValue], fixturefunc)
         fixturefunc = getimfunc(fixturedef.func)
         if fixturefunc != fixturedef.func:
             fixturefunc = fixturefunc.__get__(instance)
-    return fixturefunc
+    return cast(_FixtureFunc[FixtureValue], fixturefunc)
 
 
 def pytest_fixture_setup(
