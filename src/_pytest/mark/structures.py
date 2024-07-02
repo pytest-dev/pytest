@@ -18,7 +18,6 @@ from typing import Sequence
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-import warnings
 
 from .._code import getfslineno
 from ..compat import ascii_escaped
@@ -27,6 +26,7 @@ from ..compat import NotSetType
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
+from _pytest.deprecated import _warn_auto_stacklevel
 from _pytest.outcomes import fail
 from _pytest.scope import _ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
@@ -353,7 +353,7 @@ class MarkDecorator:
             func = args[0]
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
-                store_mark(func, self.mark, stacklevel=3)
+                store_mark(func, self.mark)
                 return func
         return self.with_args(*args, **kwargs)
 
@@ -408,7 +408,7 @@ def normalize_mark_list(
         yield mark_obj
 
 
-def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
+def store_mark(obj, mark: Mark) -> None:
     """Store a Mark on an object.
 
     This is used to implement the Mark declarations/decorators correctly.
@@ -418,7 +418,7 @@ def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
     from ..fixtures import getfixturemarker
 
     if getfixturemarker(obj) is not None:
-        warnings.warn(MARKED_FIXTURE, stacklevel=stacklevel)
+        _warn_auto_stacklevel(MARKED_FIXTURE)
 
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.
@@ -543,12 +543,11 @@ class MarkGenerator:
                     __tracebackhide__ = True
                     fail(f"Unknown '{name}' mark, did you mean 'parametrize'?")
 
-                warnings.warn(
+                _warn_auto_stacklevel(
                     f"Unknown pytest.mark.{name} - is this a typo?  You can register "
                     "custom marks to avoid this warning - for details, see "
                     "https://docs.pytest.org/en/stable/how-to/mark.html",
                     PytestUnknownMarkWarning,
-                    2,
                 )
 
         return MarkDecorator(Mark(name, (), {}, _ispytest=True), _ispytest=True)

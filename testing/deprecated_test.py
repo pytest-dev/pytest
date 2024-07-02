@@ -59,7 +59,7 @@ def test_hookimpl_via_function_attributes_are_deprecated():
 
     with pytest.warns(
         PytestDeprecationWarning,
-        match=r"Please use the pytest.hookimpl\(tryfirst=True\)",
+        match=r"Please use the pytest\.hookimpl\(tryfirst=True\)",
     ) as recorder:
         pm.register(DeprecatedMarkImplPlugin())
     (record,) = recorder
@@ -186,6 +186,18 @@ def test_fixture_disallow_on_marked_functions():
     # ValueError("fixture is being applied more than once to the same function")
     assert len(record) == 1
     # should point to this file
+    assert record[0].filename == __file__
+
+    # Same with a different order
+    with pytest.warns(
+        pytest.PytestRemovedIn9Warning,
+        match=r"Marks applied to fixtures have no effect",
+    ) as record:
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.fixture
+        def foo():
+            raise NotImplementedError()
+    assert len(record) == 1
     assert record[0].filename == __file__
 
 

@@ -60,6 +60,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import YIELD_FIXTURE
+from _pytest.deprecated import _warn_auto_stacklevel
 from _pytest.main import Session
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
@@ -1192,7 +1193,7 @@ class FixtureFunctionMarker:
             )
 
         if hasattr(function, "pytestmark"):
-            warnings.warn(MARKED_FIXTURE, stacklevel=4)
+            _warn_auto_stacklevel(MARKED_FIXTURE)
 
         function = wrap_function_to_error_out_if_called_directly(function, self)
 
@@ -1322,7 +1323,7 @@ def yield_fixture(
     .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
-    warnings.warn(YIELD_FIXTURE, stacklevel=2)
+    _warn_auto_stacklevel(YIELD_FIXTURE)
     return fixture(
         fixture_function,
         *args,

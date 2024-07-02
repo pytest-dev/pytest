@@ -11,7 +11,10 @@ in case of warnings which need to format their messages.
 
 from __future__ import annotations
 
+import inspect
+from pathlib import Path
 from warnings import warn
+from warnings import warn_explicit
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn9Warning
@@ -89,3 +92,25 @@ MARKED_FIXTURE = PytestRemovedIn9Warning(
 def check_ispytest(ispytest: bool) -> None:
     if not ispytest:
         warn(PRIVATE, stacklevel=3)
+
+
+def _warn_auto_stacklevel(message, category=UserWarning):
+    """Emit a warning with trace outside the pytest namespace."""
+    root_dir = Path(__file__).parents[1]
+    frame = inspect.currentframe()
+    fname, lineno = "unknown", 0
+    while frame:
+        fname = frame.f_code.co_filename
+        lineno = frame.f_lineno
+        if fname and root_dir not in Path(fname).parents:
+            break
+        frame = frame.f_back
+    del frame
+    warn_explicit(
+        message,
+        category,
+        filename=fname,
+        lineno=lineno,
+        module="pytest",
+        registry=globals().get("__warningregistry__", {}),
+    )
