@@ -33,7 +33,6 @@ from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
-import warnings
 
 import _pytest
 from _pytest import nodes
@@ -57,10 +56,10 @@ from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import _warn_auto_stacklevel
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import YIELD_FIXTURE
-from _pytest.deprecated import _warn_auto_stacklevel
 from _pytest.main import Session
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet

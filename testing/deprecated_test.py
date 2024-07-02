@@ -193,10 +193,12 @@ def test_fixture_disallow_on_marked_functions():
         pytest.PytestRemovedIn9Warning,
         match=r"Marks applied to fixtures have no effect",
     ) as record:
+
         @pytest.mark.parametrize("example", ["hello"])
         @pytest.fixture
         def foo():
             raise NotImplementedError()
+
     assert len(record) == 1
     assert record[0].filename == __file__
 

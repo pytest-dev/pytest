@@ -24,9 +24,9 @@ from ..compat import ascii_escaped
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
+from _pytest.deprecated import _warn_auto_stacklevel
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
-from _pytest.deprecated import _warn_auto_stacklevel
 from _pytest.outcomes import fail
 from _pytest.scope import _ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
