@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
+from typing import Any
 from warnings import warn
 from warnings import warn_explicit
 
@@ -94,7 +95,7 @@ def check_ispytest(ispytest: bool) -> None:
         warn(PRIVATE, stacklevel=3)
 
 
-def _warn_auto_stacklevel(message, category=UserWarning):
+def _warn_auto_stacklevel(message: Warning | str, category: Any = UserWarning) -> None:
     """Emit a warning with trace outside the pytest namespace."""
     root_dir = Path(__file__).parents[1]
     frame = inspect.currentframe()

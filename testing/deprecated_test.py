@@ -196,7 +196,7 @@ def test_fixture_disallow_on_marked_functions():
 
         @pytest.mark.parametrize("example", ["hello"])
         @pytest.fixture
-        def foo():
+        def bar():
             raise NotImplementedError()
 
     assert len(record) == 1
