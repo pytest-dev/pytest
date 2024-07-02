@@ -1,0 +1,2 @@
+Possible typos in using the ``:user:`` RST role is now being linted
+through the pre-commit tool integration -- by :user:`webknjaz`.
