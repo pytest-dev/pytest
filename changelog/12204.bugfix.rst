@@ -1,5 +1,5 @@
 Fixed a regression in pytest 8.0 where tracebacks get longer and longer when multiple
-tests fail due to a shared higher-scope fixture which raised.
+tests fail due to a shared higher-scope fixture which raised -- by :user:`bluetech`.
 
 Also fixed a similar regression in pytest 5.4 for collectors which raise during setup.
 
