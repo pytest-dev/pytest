@@ -4,4 +4,4 @@ the automatically created pull requests and re-open them to trigger the
 CI runs. From now on, they only need to click the `Ready for review`
 button instead.
 
--- by :user:`webknjaz`.
+-- by :user:`webknjaz`
