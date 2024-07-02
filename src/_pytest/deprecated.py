@@ -97,7 +97,7 @@ def check_ispytest(ispytest: bool) -> None:
 
 def _warn_auto_stacklevel(message: Warning | str, category: Any = UserWarning) -> None:
     """Emit a warning with trace outside the pytest namespace."""
-    root_dir = Path(__file__).parents[1]
+    root_dir = Path(__file__).parent
     frame = inspect.currentframe()
     fname, lineno = "unknown", 0
     while frame:
