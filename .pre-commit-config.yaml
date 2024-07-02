@@ -102,6 +102,14 @@ repos:
             )
           $
         files: ^changelog/
+    -   id: changelogs-user-role
+        name: Changelog files should use a non-broken :user:`name` role
+        language: pygrep
+        entry: :user:([^`]+`?|`[^`]+[\s,])
+        pass_filenames: true
+        types:
+          - file
+          - rst
     -   id: py-deprecated
         name: py library is deprecated
         language: pygrep
