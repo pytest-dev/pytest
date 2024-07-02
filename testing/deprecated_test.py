@@ -185,6 +185,8 @@ def test_fixture_disallow_on_marked_functions():
     # from applying @fixture twice
     # ValueError("fixture is being applied more than once to the same function")
     assert len(record) == 1
+    # should point to this file
+    assert record[0].filename == __file__
 
 
 def test_fixture_disallow_marks_on_fixtures():

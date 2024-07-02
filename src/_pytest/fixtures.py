@@ -1192,7 +1192,7 @@ class FixtureFunctionMarker:
             )
 
         if hasattr(function, "pytestmark"):
-            warnings.warn(MARKED_FIXTURE, stacklevel=2)
+            warnings.warn(MARKED_FIXTURE, stacklevel=4)
 
         function = wrap_function_to_error_out_if_called_directly(function, self)
 
