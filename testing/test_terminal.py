@@ -1150,6 +1150,44 @@ class TestTerminalFunctional:
         result.stdout.fnmatch_lines([expected])
         assert result.stdout.lines.count(expected) == 1
 
+    def test_summary_s_folded(self, pytester: Pytester) -> None:
+        """Test that skipped tests are correctly folded"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("param", [True, False])
+            @pytest.mark.skip("Some reason")
+            def test(param):
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs")
+        expected = "SKIPPED [2] test_summary_s_folded.py:3: Some reason"
+        result.stdout.fnmatch_lines([expected])
+        assert result.stdout.lines.count(expected) == 1
+
+    def test_summary_s_unfolded(self, pytester: Pytester) -> None:
+        """Test that skipped tests are not folded if --no-fold-skipped is set"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("param", [True, False])
+            @pytest.mark.skip("Some reason")
+            def test(param):
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs", "--no-fold-skipped")
+        expected = [
+            "SKIPPED test_summary_s_unfolded.py::test[True] - Skipped: Some reason",
+            "SKIPPED test_summary_s_unfolded.py::test[False] - Skipped: Some reason",
+        ]
+        result.stdout.fnmatch_lines(expected)
+        assert result.stdout.lines.count(expected[0]) == 1
+        assert result.stdout.lines.count(expected[1]) == 1
+
 
 @pytest.mark.parametrize(
     ("use_ci", "expected_message"),
