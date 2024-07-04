@@ -1253,9 +1253,7 @@ class FixtureFunctionDefinition:
         if self._instance is None:
             return self._fixture_function
 
-        return cast(
-            Callable[..., Any], self._fixture_function.__get__(self._instance)
-        )
+        return cast(Callable[..., Any], self._fixture_function.__get__(self._instance))
 
 
 @overload
