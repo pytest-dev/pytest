@@ -221,6 +221,7 @@ disable = [
     "method-hidden",
     "missing-docstring",
     "missing-timeout",
+    "misplaced-bare-raise",                   # PLE0704 from ruff
     "multiple-statements",                    # multiple-statements-on-one-line-colon (E701) from ruff
     "no-else-break",
     "no-else-continue",
