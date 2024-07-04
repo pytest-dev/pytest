@@ -206,7 +206,7 @@ def ascii_escaped(val: bytes | str) -> str:
 
 def get_real_func(obj):
     """Get the real function object of the (possibly) wrapped object by
-    functools.wraps or functools.partial or pytest.fixture"""
+    :func:`functools.wraps`, or :func:`functools.partial`, or :func:`pytest.fixture`."""
     from _pytest.fixtures import FixtureFunctionDefinition
 
     start_obj = obj
