@@ -151,7 +151,7 @@ def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
         assert_never(scope)
 
 
-def getfixturemarker(obj: object) -> Optional["FixtureFunctionMarker"]:
+def getfixturemarker(obj: object) -> FixtureFunctionMarker | None:
     """Return fixturemarker or None if it doesn't exist"""
     if isinstance(obj, FixtureFunctionDefinition):
         return obj._fixture_function_marker
@@ -1194,7 +1194,7 @@ class FixtureFunctionMarker:
     def __post_init__(self, _ispytest: bool) -> None:
         check_ispytest(_ispytest)
 
-    def __call__(self, function: FixtureFunction) -> "FixtureFunctionDefinition":
+    def __call__(self, function: FixtureFunction) -> FixtureFunctionDefinition:
         if inspect.isclass(function):
             raise ValueError("class fixtures not supported (maybe in the future)")
 
@@ -1224,7 +1224,7 @@ class FixtureFunctionDefinition:
         self,
         function: Callable[..., Any],
         fixture_function_marker: FixtureFunctionMarker,
-        instance: Optional[type] = None,
+        instance: type | None = None,
     ):
         self.name = fixture_function_marker.name or function.__name__
         self.__name__ = self.name
@@ -1264,10 +1264,8 @@ def fixture(
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
-    ids: Optional[
-        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
-    ] = ...,
-    name: Optional[str] = ...,
+    ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
+    name: str | None = ...,
 ) -> FixtureFunctionDefinition: ...
 
 
@@ -1278,10 +1276,8 @@ def fixture(
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
-    ids: Optional[
-        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
-    ] = ...,
-    name: Optional[str] = None,
+    ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
+    name: str | None = None,
 ) -> FixtureFunctionDefinition: ...
 
 
@@ -1291,11 +1287,9 @@ def fixture(
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = "function",
     params: Iterable[object] | None = None,
     autouse: bool = False,
-    ids: Optional[
-        Union[Sequence[Optional[object]], Callable[[Any], Optional[object]]]
-    ] = None,
-    name: Optional[str] = None,
-) -> Union[FixtureFunctionMarker, FixtureFunctionDefinition]:
+    ids: Sequence[object | None] | Callable[[Any], object | None] | None = None,
+    name: str | None = None,
+) -> FixtureFunctionMarker | FixtureFunctionDefinition:
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
