@@ -533,7 +533,7 @@ reporttypes: list[type[reports.BaseReport]] = [
 )
 def test_report_extra_parameters(reporttype: type[reports.BaseReport]) -> None:
     args = list(inspect.signature(reporttype.__init__).parameters.keys())[1:]
-    basekw: dict[str, list[object]] = dict.fromkeys(args, [])
+    basekw: dict[str, list[object]] = {arg: [] for arg in args}
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1
 
