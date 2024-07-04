@@ -1233,7 +1233,7 @@ class FixtureFunctionDefinition:
         self._instance = instance
 
     def __repr__(self) -> str:
-        return f"pytest_fixture({self._fixture_function})"
+        return f"<pytest_fixture({self._fixture_function})>"
 
     def __get__(self, instance, owner=None):
         return FixtureFunctionDefinition(
