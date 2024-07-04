@@ -1250,11 +1250,12 @@ class FixtureFunctionDefinition:
         fail(message, pytrace=False)
 
     def _get_wrapped_function(self) -> Callable[..., Any]:
-        if self._instance is not None:
-            return cast(
-                Callable[..., Any], self._fixture_function.__get__(self._instance)
-            )
-        return self._fixture_function
+        if self._instance is None:
+            return self._fixture_function
+
+        return cast(
+            Callable[..., Any], self._fixture_function.__get__(self._instance)
+        )
 
 
 @overload
