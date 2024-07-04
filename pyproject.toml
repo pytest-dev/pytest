@@ -284,7 +284,8 @@ disable = [
     "useless-import-alias",
     "useless-return",
     "using-constant-test",
-    "wrong-import-order",
+    "wrong-import-order",                     # handled by isort / ruff
+    "wrong-import-position",                  # handled by isort / ruff
 ]
 
 [tool.check-wheel-contents]

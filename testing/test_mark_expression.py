@@ -243,7 +243,7 @@ def mark_matcher() -> MarkMatcher:
     markers = [
         pytest.mark.number_mark(a=1, b=2, c=3, d=999_999).mark,
         pytest.mark.builtin_matchers_mark(x=True, y=False, z=None).mark,
-        pytest.mark.str_mark(
+        pytest.mark.str_mark(  # pylint: disable-next=non-ascii-name
             m="M", space="with space", empty="", aaאבגדcc="aaאבגדcc", אבגד="אבגד"
         ).mark,
     ]
