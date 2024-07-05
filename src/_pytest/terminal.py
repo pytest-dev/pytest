@@ -155,6 +155,13 @@ def pytest_addoption(parser: Parser) -> None:
         help="Disable summary",
     )
     group._addoption(
+        "--no-fold-skipped",
+        action="store_false",
+        dest="fold_skipped",
+        default=True,
+        help="Do not fold skipped tests in short summary.",
+    )
+    group._addoption(
         "-q",
         "--quiet",
         action=MoreQuietAction,
@@ -371,6 +378,7 @@ class TerminalReporter:
         self._screen_width = self._tw.fullwidth
         self.currentfspath: None | Path | str | int = None
         self.reportchars = getreportopt(config)
+        self.foldskipped = config.option.fold_skipped
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
         self._progress_nodeids_reported: set[str] = set()
@@ -1232,7 +1240,7 @@ class TerminalReporter:
                     line += " - " + str(reason)
                 lines.append(line)
 
-        def show_skipped(lines: list[str]) -> None:
+        def show_skipped_folded(lines: list[str]) -> None:
             skipped: list[CollectReport] = self.stats.get("skipped", [])
             fskips = _folded_skips(self.startpath, skipped) if skipped else []
             if not fskips:
@@ -1251,6 +1259,31 @@ class TerminalReporter:
                     )
                 else:
                     lines.append("%s [%d] %s: %s" % (markup_word, num, fspath, reason))
+
+        def show_skipped_unfolded(lines: list[str]) -> None:
+            skipped: list[CollectReport] = self.stats.get("skipped", [])
+
+            for rep in skipped:
+                assert rep.longrepr is not None
+                assert isinstance(rep.longrepr, tuple), (rep, rep.longrepr)
+                assert len(rep.longrepr) == 3, (rep, rep.longrepr)
+
+                verbose_word, verbose_markup = rep._get_verbose_word_with_markup(
+                    self.config, {_color_for_type["warnings"]: True}
+                )
+                markup_word = self._tw.markup(verbose_word, **verbose_markup)
+                nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
+                line = f"{markup_word} {nodeid}"
+                reason = rep.longrepr[2]
+                if reason:
+                    line += " - " + str(reason)
+                lines.append(line)
+
+        def show_skipped(lines: list[str]) -> None:
+            if self.foldskipped:
+                show_skipped_folded(lines)
+            else:
+                show_skipped_unfolded(lines)
 
         REPORTCHAR_ACTIONS: Mapping[str, Callable[[list[str]], None]] = {
             "x": show_xfailed,

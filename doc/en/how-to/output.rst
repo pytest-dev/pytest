@@ -552,6 +552,11 @@ captured output:
     PASSED test_example.py::test_ok
     == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
 
+.. note::
+
+    By default, parametrized variants of skipped tests are grouped together if
+    they share the same skip reason. You can use ``--no-fold-skipped`` to print each skipped test separately.
+
 Creating resultlog format files
 --------------------------------------------------
 
