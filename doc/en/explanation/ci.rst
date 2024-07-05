@@ -1,7 +1,7 @@
-.. _`Pytest in CI pipelines`:
+.. _`ci-pipelines`:
 
-Pytest in CI pipelines
-=================================================
+CI Pipelines
+============
 
 Rationale
 ---------
@@ -17,46 +17,54 @@ adapt some of its behaviours.
 How CI is detected
 ------------------
 
-Pytest knows it is in a CI environment when one of the two environment variables
-`CI` or `BUILD_NUMBER` is set, regardless of their value.
+Pytest knows it is in a CI environment when either one of these environment variables are set,
+regardless of their value:
+
+* `CI`: used by many CI systems.
+* `BUILD_NUMBER`: used by Jenkins.
 
 Effects on CI
 -------------
 
-For now, the effects on pytest of being in a CI environment are limited. When a
-CI environment is detected:
+For now, the effects on pytest of being in a CI environment are limited.
 
-- the output of the short test summary info is no longer truncated to the terminal
-  size i.e. the entire message will be shown.
+When a CI environment is detected, the output of the short test summary info is no longer truncated to the terminal size i.e. the entire message will be shown.
 
-.. code-block:: python
+  .. code-block:: python
 
-    # content of test_ci.py
-
-    import pytest
+        # content of test_ci.py
+        import pytest
 
 
-    def test_db_initialized():
-        pytest.fail(
-            "deliberately failing for demo purpose, Lorem ipsum dolor sit amet, "
-            "consectetur adipiscing elit. Cras facilisis, massa in suscipit "
-            "dignissim, mauris lacus molestie nisi, quis varius metus nulla ut ipsum."
-        )
+        def test_db_initialized():
+            pytest.fail(
+                "deliberately failing for demo purpose, Lorem ipsum dolor sit amet, "
+                "consectetur adipiscing elit. Cras facilisis, massa in suscipit "
+                "dignissim, mauris lacus molestie nisi, quis varius metus nulla ut ipsum."
+            )
 
 
-.. code-block:: pytest
-    // in a local environment (based on your terminal width)
-    $ pytest test_ci.py
-    ...
-    ========================= short test summary info ==========================
-    FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately f...
+Running this locally, without any extra options, will output:
 
-    // in a CI environment
-    $ export CI=true
-    $ pytest test_ci.py
-    ...
-    ========================= short test summary info ==========================
-    FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately failing
-    for demo purpose, Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras
-    facilisis, massa in suscipit dignissim, mauris lacus molestie nisi, quis varius
-    metus nulla ut ipsum.
+  .. code-block:: pytest
+
+     $ pytest test_ci.py
+     ...
+     ========================= short test summary info ==========================
+     FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately f...
+
+*(Note the truncated text)*
+
+
+While running this on CI will output:
+
+  .. code-block:: pytest
+
+     $ export CI=true
+     $ pytest test_ci.py
+     ...
+     ========================= short test summary info ==========================
+     FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately failing
+     for demo purpose, Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras
+     facilisis, massa in suscipit dignissim, mauris lacus molestie nisi, quis varius
+     metus nulla ut ipsum.
