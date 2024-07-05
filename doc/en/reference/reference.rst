@@ -2245,7 +2245,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Directory to take the pytester example files from
 
     Environment variables:
-      CI                       When truthy, pytest knows it is running in a CI process and does not truncate summary info
+      CI                       When set (regardless of value), pytest knows it is running in a CI process and does not truncate summary info
       BUILD_NUMBER             equivalent to CI
       PYTEST_ADDOPTS           Extra command line options
       PYTEST_PLUGINS           Comma-separated plugins to load during startup
