@@ -212,6 +212,11 @@ def showhelp(config: Config) -> None:
     tw.line()
     tw.line("Environment variables:")
     vars = [
+        (
+            "CI",
+            "When truthy, pytest knows it is running in a CI process and does not truncate summary info",
+        ),
+        ("BUILD_NUMBER", "equivalent to CI"),
         ("PYTEST_ADDOPTS", "Extra command line options"),
         ("PYTEST_PLUGINS", "Comma-separated plugins to load during startup"),
         ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "Set to disable plugin auto-loading"),
