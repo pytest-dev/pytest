@@ -399,7 +399,7 @@ class LogCaptureHandler(logging_StreamHandler):
             # The default behavior of logging is to print "Logging error"
             # to stderr with the call stack and some extra details.
             # pytest wants to make such mistakes visible during testing.
-            raise  # pylint: disable=misplaced-bare-raise
+            raise  # noqa: PLE0704
 
 
 @final

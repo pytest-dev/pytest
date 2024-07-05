@@ -221,6 +221,7 @@ disable = [
     "method-hidden",
     "missing-docstring",
     "missing-timeout",
+    "misplaced-bare-raise",                   # PLE0704 from ruff
     "multiple-statements",                    # multiple-statements-on-one-line-colon (E701) from ruff
     "no-else-break",
     "no-else-continue",
@@ -283,7 +284,8 @@ disable = [
     "useless-import-alias",
     "useless-return",
     "using-constant-test",
-    "wrong-import-order",
+    "wrong-import-order",                     # handled by isort / ruff
+    "wrong-import-position",                  # handled by isort / ruff
 ]
 
 [tool.check-wheel-contents]
