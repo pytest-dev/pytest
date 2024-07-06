@@ -1,0 +1,8 @@
+/* Hide list bullets and top-level indent in TOC sidebar */
+.sidebar-scroll ul {list-style: none;}
+.sidebar-scroll > ul {padding-left: 0;}
+.sidebar-scroll li {margin: 0.4em 0;}
+/* Widen the events sidebar on the front page */
+@media (min-width: 46em) {
+    #features {width: 50%;}
+}
