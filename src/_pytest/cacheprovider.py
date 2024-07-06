@@ -232,7 +232,8 @@ class Cache:
                 # gets "Directory not empty" from the rename. In this case,
                 # everything is handled so just continue (while letting the
                 # temporary directory be cleaned up).
-                if e.errno != errno.ENOTEMPTY:
+                # On Windows, the error is a FileExistsError which translates to EEXIST.
+                if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
                     raise
             else:
                 # Create a directory in place of the one we just moved so that
