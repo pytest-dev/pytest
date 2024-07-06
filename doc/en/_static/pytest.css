@@ -4,5 +4,8 @@
 .sidebar-scroll li {margin: 0.4em 0;}
 /* Widen the events sidebar on the front page */
 @media (min-width: 46em) {
-    #features {width: 50%;}
+    #features {
+        width: 50%;
+        margin-bottom: 1em;
+    }
 }
