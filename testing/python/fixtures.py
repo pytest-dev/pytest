@@ -76,6 +76,16 @@ def test_getfuncargnames_staticmethod_inherited() -> None:
     assert getfuncargnames(B.static, cls=B) == ("arg1", "arg2")
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 13),
+    reason="""\
+In python 3.13, this will raise FutureWarning:
+functools.partial will be a method descriptor in future Python versions;
+wrap it in staticmethod() if you want to preserve the old behavior
+
+But the wrapped 'functools.partial' is tested by 'test_getfuncargnames_staticmethod_partial' below.
+""",
+)
 def test_getfuncargnames_partial():
     """Check getfuncargnames for methods defined with functools.partial (#5701)"""
     import functools

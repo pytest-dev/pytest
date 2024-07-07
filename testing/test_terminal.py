@@ -326,16 +326,17 @@ class TestTerminal:
         tr.rewrite("hey", erase=True)
         assert f.getvalue() == "hello" + "\r" + "hey" + (6 * " ")
 
+    @pytest.mark.parametrize("category", ["foo", "failed", "error", "passed"])
     def test_report_teststatus_explicit_markup(
-        self, monkeypatch: MonkeyPatch, pytester: Pytester, color_mapping
+        self, monkeypatch: MonkeyPatch, pytester: Pytester, color_mapping, category: str
     ) -> None:
         """Test that TerminalReporter handles markup explicitly provided by
         a pytest_report_teststatus hook."""
         monkeypatch.setenv("PY_COLORS", "1")
         pytester.makeconftest(
-            """
+            f"""
             def pytest_report_teststatus(report):
-                return 'foo', 'F', ('FOO', {'red': True})
+                return {category !r}, 'F', ('FOO', {{'red': True}})
         """
         )
         pytester.makepyfile(
@@ -344,7 +345,9 @@ class TestTerminal:
                 pass
         """
         )
+
         result = pytester.runpytest("-v")
+        assert not result.stderr.lines
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(["*{red}FOO{reset}*"])
         )
@@ -1146,6 +1149,44 @@ class TestTerminalFunctional:
         expected = "SKIPPED [1] test_summary_s_alias.py:3: unconditional skip"
         result.stdout.fnmatch_lines([expected])
         assert result.stdout.lines.count(expected) == 1
+
+    def test_summary_s_folded(self, pytester: Pytester) -> None:
+        """Test that skipped tests are correctly folded"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("param", [True, False])
+            @pytest.mark.skip("Some reason")
+            def test(param):
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs")
+        expected = "SKIPPED [2] test_summary_s_folded.py:3: Some reason"
+        result.stdout.fnmatch_lines([expected])
+        assert result.stdout.lines.count(expected) == 1
+
+    def test_summary_s_unfolded(self, pytester: Pytester) -> None:
+        """Test that skipped tests are not folded if --no-fold-skipped is set"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("param", [True, False])
+            @pytest.mark.skip("Some reason")
+            def test(param):
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs", "--no-fold-skipped")
+        expected = [
+            "SKIPPED test_summary_s_unfolded.py::test[True] - Skipped: Some reason",
+            "SKIPPED test_summary_s_unfolded.py::test[False] - Skipped: Some reason",
+        ]
+        result.stdout.fnmatch_lines(expected)
+        assert result.stdout.lines.count(expected[0]) == 1
+        assert result.stdout.lines.count(expected[1]) == 1
 
 
 @pytest.mark.parametrize(
@@ -2385,8 +2426,8 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
             self.option = Namespace(verbose=0)
 
     class rep:
-        def _get_verbose_word(self, *args):
-            return mocked_verbose_word
+        def _get_verbose_word_with_markup(self, *args):
+            return mocked_verbose_word, {}
 
         class longrepr:
             class reprcrash:
