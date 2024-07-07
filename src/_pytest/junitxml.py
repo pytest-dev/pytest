@@ -11,6 +11,7 @@ https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jen
 from __future__ import annotations
 
 from datetime import datetime
+from datetime import timezone
 import functools
 import os
 import platform
@@ -664,7 +665,9 @@ class LogXML:
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
                 time=f"{suite_time_delta:.3f}",
-                timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
+                timestamp=datetime.fromtimestamp(self.suite_start_time, timezone.utc)
+                .astimezone()
+                .isoformat(),
                 hostname=platform.node(),
             )
             global_properties = self._get_global_properties_node()
