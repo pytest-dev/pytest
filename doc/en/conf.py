@@ -25,7 +25,7 @@ release = ".".join(version.split(".")[:2])
 # -- General configuration -------------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-root_doc = "contents"
+root_doc = "index"
 extensions = [
     "pygments_pytest",
     "sphinx.ext.autodoc",
@@ -150,34 +150,18 @@ linkcheck_workers = 5
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
+html_theme_options = {"sidebar_hide_name": True}
+
+html_static_path = ["_static"]
+html_css_files = [
+    "pytest-custom.css",
+]
+
 html_title = "pytest documentation"
 html_short_title = f"pytest-{release}"
 
-html_logo = "img/pytest_logo_curves.svg"
+html_logo = "_static/pytest1.png"
 html_favicon = "img/favicon.png"
-
-html_sidebars = {
-    "index": [
-        "sidebar/brand.html",
-        "sidebar/search.html",
-        "sidebar/scroll-start.html",
-        "sidebarintro.html",
-        "globaltoc.html",
-        "links.html",
-        "sidebar/scroll-end.html",
-        "style.html",
-    ],
-    "**": [
-        "sidebar/brand.html",
-        "sidebar/search.html",
-        "sidebar/scroll-start.html",
-        "globaltoc.html",
-        "relations.html",
-        "links.html",
-        "sidebar/scroll-end.html",
-        "style.html",
-    ],
-}
 
 html_use_index = False
 html_show_sourcelink = False
