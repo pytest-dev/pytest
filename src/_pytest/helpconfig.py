@@ -214,7 +214,8 @@ def showhelp(config: Config) -> None:
     vars = [
         (
             "CI",
-            "When set (regardless of value), pytest knows it is running in a CI process and does not truncate summary info",
+            "When set (regardless of value), pytest knows it is running in a "
+            "CI process and does not truncate summary info",
         ),
         ("BUILD_NUMBER", "Equivalent to CI"),
         ("PYTEST_ADDOPTS", "Extra command line options"),
