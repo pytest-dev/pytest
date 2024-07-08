@@ -124,7 +124,7 @@ Save time, reduce risk, and improve code health, while paying the maintainers of
 `Learn more. <https://tidelift.com/subscription/pkg/pypi-pytest?utm_source=pypi-pytest&utm_medium=referral&utm_campaign=enterprise&utm_term=repo>`_
 
 Security
-~~~~~~~~
+--------
 
 pytest has never been associated with a security vulnerability, but in any case, to report a
 security vulnerability please use the `Tidelift security contact <https://tidelift.com/security>`_.
