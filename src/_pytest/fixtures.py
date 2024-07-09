@@ -136,7 +136,7 @@ def get_scope_package(
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
     import _pytest.python
 
-    if scope is Scope.Function:
+    if scope <= Scope.Item:
         # Type ignored because this is actually safe, see:
         # https://github.com/python/mypy/issues/4717
         return node.getparent(nodes.Item)  # type: ignore[type-abstract]
@@ -184,7 +184,7 @@ def get_parametrized_fixture_argkeys(
 ) -> Iterator[FixtureArgKey]:
     """Return list of keys for all parametrized arguments which match
     the specified scope."""
-    assert scope is not Scope.Function
+    assert scope > Scope.Item
 
     try:
         callspec: CallSpec2 = item.callspec  # type: ignore[attr-defined]
@@ -243,7 +243,7 @@ def reorder_items_atscope(
     ],
     scope: Scope,
 ) -> OrderedSet[nodes.Item]:
-    if scope is Scope.Function or len(items) < 3:
+    if scope <= Scope.Item or len(items) < 3:
         return items
 
     scoped_items_by_argkey = items_by_argkey[scope]
@@ -400,7 +400,7 @@ class FixtureRequest(abc.ABC):
 
     @property
     def scope(self) -> _ScopeName:
-        """Scope string, one of "function", "class", "module", "package", "session"."""
+        """Scope string, one of "function", "item", "class", "module", "package", "session"."""
         return self._scope.value
 
     @abc.abstractmethod
@@ -550,7 +550,7 @@ class FixtureRequest(abc.ABC):
     ) -> FixtureDef[object] | PseudoFixtureDef[object]:
         if argname == "request":
             cached_result = (self, [0], None)
-            return PseudoFixtureDef(cached_result, Scope.Function)
+            return PseudoFixtureDef(cached_result, Scope.Item)
 
         # If we already finished computing a fixture by this name in this item,
         # return it.
@@ -738,8 +738,8 @@ class SubRequest(FixtureRequest):
     @property
     def node(self):
         scope = self._scope
-        if scope is Scope.Function:
-            # This might also be a non-function Item despite its attribute name.
+        if scope <= Scope.Item:
+            # This might also be a non-function Item
             node: nodes.Node | None = self._pyfuncitem
         elif scope is Scope.Package:
             node = get_scope_package(self._pyfuncitem, self._fixturedef)
@@ -1006,7 +1006,7 @@ class FixtureDef(Generic[FixtureValue]):
 
     @property
     def scope(self) -> _ScopeName:
-        """Scope string, one of "function", "class", "module", "package", "session"."""
+        """Scope string, one of "function", "item", "class", "module", "package", "session"."""
         return self._scope.value
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
