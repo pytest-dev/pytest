@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import functools
 
 import pytest
 
+
 NUM_EXECUTIONS = 5
 cur_request = None
 executions = None
+
 
 # Should logically be scope="item", but we want the stored request to be
 # function-scoped. Avoids signature-rewriting ugliness in inner_runner
@@ -34,7 +38,6 @@ def run_many_times():
         executions += 1
 
     def wrapper(fn):
-
         @functools.wraps(fn)
         def wrapped(**kwargs):
             for i in range(NUM_EXECUTIONS):
@@ -49,9 +52,10 @@ def run_many_times():
 num_func = num_item = num_param = num_ex = num_test = 0
 params_seen = set()
 
+
 @pytest.fixture(scope="function")
 def fixture_func():
-    """once per example"""
+    """Once per example"""
     global num_func
     num_func += 1
     print("->func")
@@ -60,7 +64,7 @@ def fixture_func():
 
 @pytest.fixture(scope="item")
 def fixture_item():
-    """once per test item"""
+    """Once per test item"""
     global num_item
     num_item += 1
     print("->item")
@@ -75,7 +79,7 @@ def fixture_func_item(fixture_func, fixture_item):
 
 @pytest.fixture(scope="function")
 def fixture_test(fixture_test):
-    """overrides conftest fixture of same name"""
+    """Overrides conftest fixture of same name"""
     global num_test
     num_test += 1
     print("->test")
@@ -92,12 +96,16 @@ def fixture_param(request):
 
 
 @run_many_times()
-def test_resetting_function_scoped_fixtures(fixture_func_item, fixture_test, fixture_param, fixture_test_2):
+def test_resetting_function_scoped_fixtures(
+    fixture_func_item, fixture_test, fixture_param, fixture_test_2
+):
     global num_ex
     num_ex += 1
 
     # All these should be used only by this test, to avoid counter headaches
-    print(f"{num_ex=} {fixture_func_item=} {fixture_test=} {fixture_param=} {fixture_test_2=}")
+    print(
+        f"{num_ex=} {fixture_func_item=} {fixture_test=} {fixture_param=} {fixture_test_2=}"
+    )
 
     # 1. fixture_test is a tuple (num_conftest_calls, num_module_calls), and
     #    both are function-scoped so should be called per-example
@@ -139,27 +147,31 @@ def test_complex_fixture_dependency(fixt_1, fixt_2, fixt_3):
     # after fixture reset, not why it is what it is in the first place.
     assert fixt_1 == "f1_m(f1_c, f2_m(f1_c, f2_c(f1_c)))"
     assert fixt_2 == "f2_m(f1_c, f2_c(f1_c))"
-    assert fixt_3 == "f3_m(f1_m(f1_c, f2_m(f1_c, f2_c(f1_c))), f3_c(f1_m(f1_c, f2_m(f1_c, f2_c(f1_c)))))"
+    assert (
+        fixt_3
+        == "f3_m(f1_m(f1_c, f2_m(f1_c, f2_c(f1_c))), f3_c(f1_m(f1_c, f2_m(f1_c, f2_c(f1_c)))))"
+    )
+
 
 @run_many_times()
 def test_try_all_known_fixtures(
-        cache,
-        capsys,
-        doctest_namespace,
-        pytestconfig,
-        record_property,
-        record_xml_attribute,
-        record_testsuite_property,
-        testdir,
-        tmpdir_factory,
-        tmpdir,
-        caplog,
-        monkeypatch,
-        linecomp,
-        LineMatcher,
-        pytester,
-        recwarn,
-        tmp_path_factory,
-        tmp_path,
+    cache,
+    capsys,
+    doctest_namespace,
+    pytestconfig,
+    record_property,
+    record_xml_attribute,
+    record_testsuite_property,
+    testdir,
+    tmpdir_factory,
+    tmpdir,
+    caplog,
+    monkeypatch,
+    linecomp,
+    LineMatcher,
+    pytester,
+    recwarn,
+    tmp_path_factory,
+    tmp_path,
 ):
     pass

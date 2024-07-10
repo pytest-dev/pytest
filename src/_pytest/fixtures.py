@@ -117,10 +117,12 @@ _FixtureCachedResult = Union[
 # Global fixture sequence counter
 _fixture_seq_counter: int = 0
 
+
 def _fixture_seq():
     global _fixture_seq_counter
     _fixture_seq_counter += 1
     return _fixture_seq_counter - 1
+
 
 @dataclasses.dataclass(frozen=True)
 class PseudoFixtureDef(Generic[FixtureValue]):
@@ -715,7 +717,6 @@ class FixtureRequest(abc.ABC):
             kwargs[fixture_name] = self._pyfuncitem.funcargs[fixture_name] = fixture_val
 
         return kwargs
-
 
 
 @final
