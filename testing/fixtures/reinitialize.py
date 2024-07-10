@@ -29,24 +29,32 @@ def reset_executions():
     assert executions == NUM_EXECUTIONS
 
 
-def run_many_times():
-    def update(kwargs):
-        global executions
-        if executions > 0:
-            updated = cur_request._reset_function_scoped_fixtures()
-            kwargs |= {k: v for k, v in updated.items() if k in kwargs}
-        executions += 1
+def update(kwargs):
+    global executions
+    if executions > 0:
+        updated = cur_request._reset_function_scoped_fixtures()
+        kwargs |= {k: v for k, v in updated.items() if k in kwargs}
+    executions += 1
 
-    def wrapper(fn):
-        @functools.wraps(fn)
-        def wrapped(**kwargs):
-            for i in range(NUM_EXECUTIONS):
-                update(kwargs)
-                fn(**kwargs)
 
-        return wrapped
+def reset_between_executions(fn):
 
-    return wrapper
+    @functools.wraps(fn)
+    def wrapped(**kwargs):
+        update(kwargs)
+        fn(**kwargs)
+
+    return wrapped
+
+
+def run_many_times(fn):
+
+    @functools.wraps(fn)
+    def wrapped(**kwargs):
+        for i in range(NUM_EXECUTIONS):
+            fn(**kwargs)
+
+    return wrapped
 
 
 num_func = num_item = num_param = num_ex = num_test = 0
@@ -95,7 +103,8 @@ def fixture_param(request):
     return (num_param, request.param)
 
 
-@run_many_times()
+@run_many_times
+@reset_between_executions
 def test_resetting_function_scoped_fixtures(
     fixture_func_item, fixture_test, fixture_param, fixture_test_2
 ):
@@ -138,7 +147,8 @@ def fixt_3(fixt_1, fixt_3):
     return f"f3_m({fixt_1}, {fixt_3})"
 
 
-@run_many_times()
+@run_many_times
+@reset_between_executions
 def test_complex_fixture_dependency(fixt_1, fixt_2, fixt_3):
     # Notice how fixt_2 and fixt_3 resolve different values for fixt_1
     # - module.fixt_2 receives conftest.fixt_1
@@ -153,7 +163,8 @@ def test_complex_fixture_dependency(fixt_1, fixt_2, fixt_3):
     )
 
 
-@run_many_times()
+@run_many_times
+@reset_between_executions
 def test_try_all_known_fixtures(
     cache,
     capsys,
