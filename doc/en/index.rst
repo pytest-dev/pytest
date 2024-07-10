@@ -4,7 +4,6 @@
 
 .. sidebar:: **Next Open Trainings and Events**
 
-    - `pytest tips and tricks for a better testsuite <https://ep2024.europython.eu/session/pytest-tips-and-tricks-for-a-better-testsuite>`_, at `Europython 2024 <https://ep2024.europython.eu/>`_, **July 9th 2024** (3h), Prague (CZ)
     - `pytest: Professionelles Testen (nicht nur) für Python <https://pretalx.com/workshoptage-2024/talk/9VUHYB/>`_, at `CH Open Workshoptage <https://workshoptage.ch/>`_, **September 2nd 2024**, HSLU Rotkreuz (CH)
     - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 4th -- 6th 2025**, Leipzig (DE) / Remote
 
