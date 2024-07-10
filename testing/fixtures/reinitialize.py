@@ -2,10 +2,13 @@ import functools
 
 import pytest
 
+NUM_EXECUTIONS = 5
 cur_request = None
+executions = None
 
-# Should logically be scope="item", but we want to store a function-scoped
-# request. Ugly hack to avoid signature-rewriting ugliness in inner_runner.
+# Should logically be scope="item", but we want the stored request to be
+# function-scoped. Avoids signature-rewriting ugliness in inner_runner
+# in order to access the request.
 @pytest.fixture(scope="function", autouse=True)
 def fetch_request(request):
     global cur_request
@@ -14,11 +17,17 @@ def fetch_request(request):
     cur_request = None
 
 
-def run_many_times(n=5):
+@pytest.fixture(scope="item", autouse=True)
+def reset_executions():
+    global executions
     executions = 0
+    yield
+    assert executions == NUM_EXECUTIONS
 
+
+def run_many_times():
     def update(kwargs):
-        nonlocal executions
+        global executions
         if executions > 0:
             updated = cur_request._reset_function_scoped_fixtures()
             kwargs |= {k: v for k, v in updated.items() if k in kwargs}
@@ -28,7 +37,7 @@ def run_many_times(n=5):
 
         @functools.wraps(fn)
         def wrapped(**kwargs):
-            for i in range(n):
+            for i in range(NUM_EXECUTIONS):
                 update(kwargs)
                 fn(**kwargs)
 
@@ -83,12 +92,12 @@ def fixture_param(request):
 
 
 @run_many_times()
-def test_function_scoped_fixtures(fixture_func_item, fixture_test, fixture_param, fixture_test_2):
+def test_resetting_function_scoped_fixtures(fixture_func_item, fixture_test, fixture_param, fixture_test_2):
     global num_ex
     num_ex += 1
 
     # All these should be used only by this test, to avoid counter headaches
-    print(f"{fixture_func_item=} {fixture_test=} {fixture_param=} {fixture_test_2=}")
+    print(f"{num_ex=} {fixture_func_item=} {fixture_test=} {fixture_param=} {fixture_test_2=}")
 
     # 1. fixture_test is a tuple (num_conftest_calls, num_module_calls), and
     #    both are function-scoped so should be called per-example
@@ -122,10 +131,10 @@ def fixt_3(fixt_1, fixt_3):
 
 
 @run_many_times()
-def test_cyclic_fixture_dependency(fixt_1, fixt_2, fixt_3):
+def test_complex_fixture_dependency(fixt_1, fixt_2, fixt_3):
     # Notice how fixt_2 and fixt_3 resolve different values for fixt_1
-    # (module.fixt_2 receives conftest.fixt_1, while
-    #  module.fixt_3 receives module.fixt_1).
+    # - module.fixt_2 receives conftest.fixt_1
+    # - module.fixt_3 receives module.fixt_1
     # However, what we want to ensure here is that the result stays the same
     # after fixture reset, not why it is what it is in the first place.
     assert fixt_1 == "f1_m(f1_c, f2_m(f1_c, f2_c(f1_c)))"

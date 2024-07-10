@@ -100,6 +100,8 @@ _FixtureCachedResult = Union[
         # Cache key.
         object,
         None,
+        # Sequence counter
+        int,
     ],
     Tuple[
         None,
@@ -107,9 +109,18 @@ _FixtureCachedResult = Union[
         object,
         # The exception and the original traceback.
         Tuple[BaseException, Optional[types.TracebackType]],
+        # Sequence counter
+        int,
     ],
 ]
 
+# Global fixture sequence counter
+_fixture_seq_counter: int = 0
+
+def _fixture_seq():
+    global _fixture_seq_counter
+    _fixture_seq_counter += 1
+    return _fixture_seq_counter - 1
 
 @dataclasses.dataclass(frozen=True)
 class PseudoFixtureDef(Generic[FixtureValue]):
@@ -663,42 +674,18 @@ class FixtureRequest(abc.ABC):
             node=self._pyfuncitem, func=self._pyfuncitem.function, cls=None
         )
 
+        fixture_defs = []
+        for v in info.name2fixturedefs.values():
+            fixture_defs.extend(v)
         # Build a safe traversal order where dependencies are always processed
         # before any dependents. (info.names_closure is not sufficient)
-        # TODO: cache this traversal order, and name2fixturedefs?
-        deps_per_name = {}
-        for fixture_name, fixture_defs in info.name2fixturedefs.items():
-            deps = deps_per_name[fixture_name] = set()
-            for fixturedef in fixture_defs:
-                deps |= set(fixturedef.argnames) & info.name2fixturedefs.keys()
-            deps -= {fixture_name}
-        traversal_order = []
-        while deps_per_name:
-            to_remove = set(name for name, deps in deps_per_name.items() if not deps)
-            traversal_order += to_remove
-            if not to_remove:
-                # We're stuck in a cyclic dependency. This can actually happen in
-                # practice, due to incomplete dependency graph for fixtures with same
-                # name at different levels. Plain pytest seems to resolve this somewhat
-                # arbitrarily (ref tests/pytest/test_cyclic_fixture_dependency), but
-                # that resolution is unavailable to us?
-                # Maybe we should just return here without any action, and make it
-                # a healthcheck error.
-                assert to_remove, "can't resolve cyclic fixture dependency"
-            deps_per_name = {
-                k: v - to_remove for k, v in deps_per_name.items() if k not in to_remove
-            }
-
+        fixture_defs.sort(key=lambda fixturedef: fixturedef._exec_seq)
 
         context = self._fixture_defs.copy()
         kwargs = {}
-        for k in traversal_order:
-            # this isn't strictly necessary, but safeguards against leaking stale
-            # state into the new fixture values if the traversal order is bad
-            del context[k]
 
-        for fixture_name in traversal_order:
-            fixture_defs = info.name2fixturedefs[fixture_name]
+        for fixturedef in fixture_defs:
+            fixture_name = fixturedef.argname
 
             # cargo-culted from _pytest.fixtures
             callspec = getattr(self._pyfuncitem, "callspec", None)
@@ -712,24 +699,23 @@ class FixtureRequest(abc.ABC):
                 param_index = 0
                 scope = None
 
-            for fixturedef in fixture_defs:
-                if param is NOTSET:
-                    scope = fixturedef._scope
-                if scope is Scope.Function:
-                    subrequest = SubRequest(
-                        self, scope, param, param_index, fixturedef, _ispytest=True
-                    )
-                    subrequest._fixture_defs = context
+            if param is NOTSET:
+                scope = fixturedef._scope
+            if scope is Scope.Function:
+                subrequest = SubRequest(
+                    self, scope, param, param_index, fixturedef, _ispytest=True
+                )
+                subrequest._fixture_defs = context
 
-                    # ...and reset! Note that finish(...) will invalidate also
-                    # dependent fixtures, so many of the later ones are no-ops.
-                    fixturedef.finish(subrequest)
-                    fixturedef.execute(subrequest)
-                    kwargs[fixture_name] = None
+                # ...and reset! Note that finish(...) will invalidate also
+                # dependent fixtures, so many of the later ones are no-ops.
+                fixturedef.finish(subrequest)
+                fixturedef.execute(subrequest)
+                kwargs[fixture_name] = None
 
-                # this ensures all dependencies of the fixture are available to
-                # the next subrequest (as a consequence of the safe traversal order)
-                context[fixture_name] = fixturedef
+            # this ensures all dependencies of the fixture are available to
+            # the next subrequest (as a consequence of the safe traversal order)
+            context[fixture_name] = fixturedef
 
         for fixture_name in kwargs.keys():
             fixture_val = self.getfixturevalue(fixture_name)
@@ -1085,6 +1071,9 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
+        # The sequence number of the last execution. Used to reconstruct
+        # initialization order.
+        self._exec_seq = None
 
     @property
     def scope(self) -> _ScopeName:
@@ -1151,6 +1140,9 @@ class FixtureDef(Generic[FixtureValue]):
             # so we need to tear it down before creating a new one.
             self.finish(request)
             assert self.cached_result is None
+
+        # We have decided to execute the fixture, so update the sequence counter.
+        self._exec_seq = _fixture_seq()
 
         # Add finalizer to requested fixtures we saved previously.
         # We make sure to do this after checking for cached value to avoid
