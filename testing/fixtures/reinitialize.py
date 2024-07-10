@@ -38,7 +38,6 @@ def update(kwargs):
 
 
 def reset_between_executions(fn):
-
     @functools.wraps(fn)
     def wrapped(**kwargs):
         update(kwargs)
@@ -48,7 +47,6 @@ def reset_between_executions(fn):
 
 
 def run_many_times(fn):
-
     @functools.wraps(fn)
     def wrapped(**kwargs):
         for i in range(NUM_EXECUTIONS):
