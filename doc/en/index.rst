@@ -1,5 +1,3 @@
-:orphan:
-
 .. _features:
 
 .. sidebar:: **Next Open Trainings and Events**
@@ -11,6 +9,36 @@
 
 pytest: helps you write better programs
 =======================================
+
+.. toctree::
+    :hidden:
+
+    getting-started
+    how-to/index
+    reference/index
+    explanation/index
+    example/index
+
+.. toctree::
+    :caption: About the project
+    :hidden:
+
+    changelog
+    contributing
+    backwards-compatibility
+    sponsor
+    tidelift
+    license
+    contact
+
+.. toctree::
+    :caption: Useful links
+    :hidden:
+
+    pytest @ PyPI <https://pypi.org/project/pytest/>
+    pytest @ GitHub <https://github.com/pytest-dev/pytest/>
+    Issue Tracker <https://github.com/pytest-dev/pytest/issues>
+    PDF Documentation <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>
 
 .. module:: pytest
 
