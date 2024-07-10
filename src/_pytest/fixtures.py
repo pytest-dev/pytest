@@ -656,6 +656,88 @@ class FixtureRequest(abc.ABC):
         values.reverse()
         return values
 
+    def _reset_function_scoped_fixtures(self):
+        """Can be called by an external subtest runner to reset function scoped
+        fixtures in-between function calls within a single test item."""
+        info = self._fixturemanager.getfixtureinfo(
+            node=self._pyfuncitem, func=self._pyfuncitem.function, cls=None
+        )
+
+        # Build a safe traversal order where dependencies are always processed
+        # before any dependents. (info.names_closure is not sufficient)
+        # TODO: cache this traversal order, and name2fixturedefs?
+        deps_per_name = {}
+        for fixture_name, fixture_defs in info.name2fixturedefs.items():
+            deps = deps_per_name[fixture_name] = set()
+            for fixturedef in fixture_defs:
+                deps |= set(fixturedef.argnames) & info.name2fixturedefs.keys()
+            deps -= {fixture_name}
+        traversal_order = []
+        while deps_per_name:
+            to_remove = set(name for name, deps in deps_per_name.items() if not deps)
+            traversal_order += to_remove
+            if not to_remove:
+                # We're stuck in a cyclic dependency. This can actually happen in
+                # practice, due to incomplete dependency graph for fixtures with same
+                # name at different levels. Plain pytest seems to resolve this somewhat
+                # arbitrarily (ref tests/pytest/test_cyclic_fixture_dependency), but
+                # that resolution is unavailable to us?
+                # Maybe we should just return here without any action, and make it
+                # a healthcheck error.
+                assert to_remove, "can't resolve cyclic fixture dependency"
+            deps_per_name = {
+                k: v - to_remove for k, v in deps_per_name.items() if k not in to_remove
+            }
+
+
+        context = self._fixture_defs.copy()
+        kwargs = {}
+        for k in traversal_order:
+            # this isn't strictly necessary, but safeguards against leaking stale
+            # state into the new fixture values if the traversal order is bad
+            del context[k]
+
+        for fixture_name in traversal_order:
+            fixture_defs = info.name2fixturedefs[fixture_name]
+
+            # cargo-culted from _pytest.fixtures
+            callspec = getattr(self._pyfuncitem, "callspec", None)
+            if callspec is not None and fixture_name in callspec.params:
+                param = callspec.params[fixture_name]
+                param_index = callspec.indices[fixture_name]
+                # The parametrize invocation scope overrides the fixture's scope.
+                scope = callspec._arg2scope[fixture_name]
+            else:
+                param = NOTSET
+                param_index = 0
+                scope = None
+
+            for fixturedef in fixture_defs:
+                if param is NOTSET:
+                    scope = fixturedef._scope
+                if scope is Scope.Function:
+                    subrequest = SubRequest(
+                        self, scope, param, param_index, fixturedef, _ispytest=True
+                    )
+                    subrequest._fixture_defs = context
+
+                    # ...and reset! Note that finish(...) will invalidate also
+                    # dependent fixtures, so many of the later ones are no-ops.
+                    fixturedef.finish(subrequest)
+                    fixturedef.execute(subrequest)
+                    kwargs[fixture_name] = None
+
+                # this ensures all dependencies of the fixture are available to
+                # the next subrequest (as a consequence of the safe traversal order)
+                context[fixture_name] = fixturedef
+
+        for fixture_name in kwargs.keys():
+            fixture_val = self.getfixturevalue(fixture_name)
+            kwargs[fixture_name] = self._pyfuncitem.funcargs[fixture_name] = fixture_val
+
+        return kwargs
+
+
 
 @final
 class TopRequest(FixtureRequest):
