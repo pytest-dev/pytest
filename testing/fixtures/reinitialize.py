@@ -49,7 +49,7 @@ def run_many_times():
 num_func = num_item = num_param = num_ex = num_test = 0
 params_seen = set()
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def fixture_func():
     """once per example"""
     global num_func
@@ -67,13 +67,13 @@ def fixture_item():
     return num_item
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def fixture_func_item(fixture_func, fixture_item):
     """mixed-scope transitivity"""
     return (fixture_func, fixture_item)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function")
 def fixture_test(fixture_test):
     """overrides conftest fixture of same name"""
     global num_test
@@ -82,7 +82,7 @@ def fixture_test(fixture_test):
     return (fixture_test, num_test)
 
 
-@pytest.fixture(params=range(4))
+@pytest.fixture(scope="function", params=range(4))
 def fixture_param(request):
     """parameterized, per-example"""
     global num_param
@@ -115,17 +115,17 @@ def test_resetting_function_scoped_fixtures(fixture_func_item, fixture_test, fix
     print("---------")
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def fixt_1(fixt_1, fixt_2):
     return f"f1_m({fixt_1}, {fixt_2})"
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def fixt_2(fixt_1, fixt_2):
     return f"f2_m({fixt_1}, {fixt_2})"
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def fixt_3(fixt_1, fixt_3):
     return f"f3_m({fixt_1}, {fixt_3})"
 
@@ -140,3 +140,26 @@ def test_complex_fixture_dependency(fixt_1, fixt_2, fixt_3):
     assert fixt_1 == "f1_m(f1_c, f2_m(f1_c, f2_c(f1_c)))"
     assert fixt_2 == "f2_m(f1_c, f2_c(f1_c))"
     assert fixt_3 == "f3_m(f1_m(f1_c, f2_m(f1_c, f2_c(f1_c))), f3_c(f1_m(f1_c, f2_m(f1_c, f2_c(f1_c)))))"
+
+@run_many_times()
+def test_try_all_known_fixtures(
+        cache,
+        capsys,
+        doctest_namespace,
+        pytestconfig,
+        record_property,
+        record_xml_attribute,
+        record_testsuite_property,
+        testdir,
+        tmpdir_factory,
+        tmpdir,
+        caplog,
+        monkeypatch,
+        linecomp,
+        LineMatcher,
+        pytester,
+        recwarn,
+        tmp_path_factory,
+        tmp_path,
+):
+    pass

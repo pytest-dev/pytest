@@ -556,6 +556,29 @@ class FixtureRequest(abc.ABC):
             yield current
             current = current._parent_request
 
+    def _create_subrequest(self, fixturedef) -> SubRequest:
+        """Create a SubRequest suitable for calling the given fixture"""
+        argname = fixturedef.argname
+        try:
+            callspec = self._pyfuncitem.callspec
+        except AttributeError:
+            callspec = None
+        if callspec is not None and argname in callspec.params:
+            param = callspec.params[argname]
+            param_index = callspec.indices[argname]
+            # The parametrize invocation scope overrides the fixture's scope.
+            scope = callspec._arg2scope[argname]
+        else:
+            param = NOTSET
+            param_index = 0
+            scope = fixturedef._scope
+            self._check_fixturedef_without_param(fixturedef)
+        self._check_scope(fixturedef, scope)
+        subrequest = SubRequest(
+            self, scope, param, param_index, fixturedef, _ispytest=True
+        )
+        return subrequest
+
     def _get_active_fixturedef(
         self, argname: str
     ) -> FixtureDef[object] | PseudoFixtureDef[object]:
@@ -604,24 +627,7 @@ class FixtureRequest(abc.ABC):
         fixturedef = fixturedefs[index]
 
         # Prepare a SubRequest object for calling the fixture.
-        try:
-            callspec = self._pyfuncitem.callspec
-        except AttributeError:
-            callspec = None
-        if callspec is not None and argname in callspec.params:
-            param = callspec.params[argname]
-            param_index = callspec.indices[argname]
-            # The parametrize invocation scope overrides the fixture's scope.
-            scope = callspec._arg2scope[argname]
-        else:
-            param = NOTSET
-            param_index = 0
-            scope = fixturedef._scope
-            self._check_fixturedef_without_param(fixturedef)
-        self._check_scope(fixturedef, scope)
-        subrequest = SubRequest(
-            self, scope, param, param_index, fixturedef, _ispytest=True
-        )
+        subrequest = self._create_subrequest(fixturedef)
 
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
@@ -643,7 +649,7 @@ class FixtureRequest(abc.ABC):
             )
             fail(msg, pytrace=False)
         if has_params:
-            frame = inspect.stack()[3]
+            frame = inspect.stack()[4]
             frameinfo = inspect.getframeinfo(frame[0])
             source_path = absolutepath(frameinfo.filename)
             source_lineno = frameinfo.lineno
@@ -674,50 +680,37 @@ class FixtureRequest(abc.ABC):
             node=self._pyfuncitem, func=self._pyfuncitem.function, cls=None
         )
 
+        # Build a safe traversal order where dependencies are always processed
+        # before any dependents, by virtue of ordering them exactly as in the
+        # initial fixture setup. After reset, their relative ordering remains
+        # the same.
         fixture_defs = []
         for v in info.name2fixturedefs.values():
             fixture_defs.extend(v)
-        # Build a safe traversal order where dependencies are always processed
-        # before any dependents. (info.names_closure is not sufficient)
         fixture_defs.sort(key=lambda fixturedef: fixturedef._exec_seq)
 
-        context = self._fixture_defs.copy()
-        kwargs = {}
+        current_closure = {}
+        updated_names = set()
 
         for fixturedef in fixture_defs:
             fixture_name = fixturedef.argname
 
-            # cargo-culted from _pytest.fixtures
-            callspec = getattr(self._pyfuncitem, "callspec", None)
-            if callspec is not None and fixture_name in callspec.params:
-                param = callspec.params[fixture_name]
-                param_index = callspec.indices[fixture_name]
-                # The parametrize invocation scope overrides the fixture's scope.
-                scope = callspec._arg2scope[fixture_name]
-            else:
-                param = NOTSET
-                param_index = 0
-                scope = None
+            subrequest = self._create_subrequest(fixturedef)
+            if subrequest._scope is Scope.Function:
+                subrequest._fixture_defs = current_closure
 
-            if param is NOTSET:
-                scope = fixturedef._scope
-            if scope is Scope.Function:
-                subrequest = SubRequest(
-                    self, scope, param, param_index, fixturedef, _ispytest=True
-                )
-                subrequest._fixture_defs = context
-
-                # ...and reset! Note that finish(...) will invalidate also
-                # dependent fixtures, so many of the later ones are no-ops.
+                # Teardown and execute the fixture again! Note that finish(...) will
+                # invalidate dependent fixtures, so many of the later calls are no-ops.
                 fixturedef.finish(subrequest)
                 fixturedef.execute(subrequest)
-                kwargs[fixture_name] = None
+                updated_names.add(fixture_name)
 
-            # this ensures all dependencies of the fixture are available to
-            # the next subrequest (as a consequence of the safe traversal order)
-            context[fixture_name] = fixturedef
+            # This ensures all fixtures in current_closure are in the correct state
+            # for the next subrequest (as a consequence of the safe traversal order)
+            current_closure[fixture_name] = fixturedef
 
-        for fixture_name in kwargs.keys():
+        kwargs = {}
+        for fixture_name in updated_names:
             fixture_val = self.getfixturevalue(fixture_name)
             kwargs[fixture_name] = self._pyfuncitem.funcargs[fixture_name] = fixture_val
 

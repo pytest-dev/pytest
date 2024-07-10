@@ -2,7 +2,7 @@ import pytest
 
 num_test = 0
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def fixture_test():
     """to be extended by same-name fixture in module"""
     global num_test
@@ -11,26 +11,26 @@ def fixture_test():
     return num_test
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def fixture_test_2(fixture_test):
     """should pick up extended fixture_test, even if it's not defined yet"""
     print("->test_2 [conftest]")
     return fixture_test
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def fixt_1():
     """part of complex dependency chain"""
     return "f1_c"
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def fixt_2(fixt_1):
     """part of complex dependency chain"""
     return f"f2_c({fixt_1})"
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def fixt_3(fixt_1):
     """part of complex dependency chain"""
     return f"f3_c({fixt_1})"
