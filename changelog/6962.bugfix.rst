@@ -1,0 +1,1 @@
+Fixed bug where parametrized fixtures were not being cached correctly, being recreated every time.

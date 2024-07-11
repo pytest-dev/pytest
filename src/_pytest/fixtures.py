@@ -1056,9 +1056,16 @@ class FixtureDef(Generic[FixtureValue]):
         my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
             cache_key = self.cached_result[1]
-            # note: comparison with `==` can fail (or be expensive) for e.g.
-            # numpy arrays (#6497).
-            if my_cache_key is cache_key:
+
+            # note: `__eq__` is not required to return a bool, and sometimes
+            # doesn't, e.g., numpy arrays (#6497).  Coerce the comparison
+            # into a bool, and if that fails, fall back to an identity check.
+            try:
+                cache_hit = bool(my_cache_key == cache_key)
+            except (ValueError, RuntimeError):
+                cache_hit = my_cache_key is cache_key
+
+            if cache_hit:
                 if self.cached_result[2] is not None:
                     exc, exc_tb = self.cached_result[2]
                     raise exc.with_traceback(exc_tb)
