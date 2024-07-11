@@ -1,1 +1,1 @@
-A warning in now issued when @pytest.mark.usefixtures() is used without specifying any fixtures. Previously, empty usefixtures markers were silently ignored.
+A warning is now issued when @pytest.mark.usefixtures() is used without specifying any fixtures. Previously, empty usefixtures markers were silently ignored.
