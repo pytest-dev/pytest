@@ -1558,6 +1558,7 @@ class TestFixtureUsages:
         result.stdout.fnmatch_lines(["* 2 passed in *"])
 
     def test_parameterized_fixture_caching(self, pytester: Pytester) -> None:
+        """Regression test for #12600."""
         pytester.makepyfile(
             """
             import pytest
