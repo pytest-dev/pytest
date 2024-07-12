@@ -1568,9 +1568,9 @@ class TestFixtureUsages:
 
             def pytest_generate_tests(metafunc):
                 if "my_fixture" in metafunc.fixturenames:
-                    param = "d%s" % "1"
-                    print("param id=%d" % id(param), flush=True)
-                    metafunc.parametrize("my_fixture", [param, "d2"], indirect=True)
+                    # Use unique objects for parametrization (as opposed to small strings
+                    # and small integers which are singletons).
+                    metafunc.parametrize("my_fixture", [[1], [2]], indirect=True)
 
             @pytest.fixture(scope='session')
             def my_fixture(request):
