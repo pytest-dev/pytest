@@ -238,7 +238,6 @@ def showhelp(config: Config) -> None:
 
     for warningreport in reporter.stats.get("warnings", []):
         tw.line("warning : " + warningreport.message, red=True)
-    return
 
 
 conftest_options = [("pytest_plugins", "list of plugin names to load")]
