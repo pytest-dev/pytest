@@ -151,8 +151,8 @@ class TestReportSerialization:
             assert isinstance(rep_entry, ReprEntryNative)
             assert rep_entry.lines == a_entry.lines
 
-    def test_itemreport_outcomes(self, pytester: Pytester) -> None:
-        # This test came originally from test_remote.py in xdist (ca03269).
+    def tst_itemreport_outcomes(self, pytester: Pytester) -> None:
+        # This came original from test_remote.py in xdist (ca03269).
         reprec = pytester.inline_runsource(
             """
             import pytest
