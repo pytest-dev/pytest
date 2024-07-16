@@ -503,6 +503,7 @@ class TestParseIni:
 
         monkeypatch.setattr(importlib.metadata, "distributions", my_dists)
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
 
         pytester.makeini(ini_file_text)
 
@@ -1143,6 +1144,7 @@ def test_importlib_metadata_broken_distribution(
 ) -> None:
     """Integration test for broken distributions with 'files' metadata being None (#5389)"""
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+    monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
 
     class DummyEntryPoint:
         name = "mytestplugin"
@@ -1169,6 +1171,7 @@ def test_plugin_preparse_prevents_setuptools_loading(
     pytester: Pytester, monkeypatch: MonkeyPatch, block_it: bool
 ) -> None:
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+    monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
 
     plugin_module_placeholder = object()
 
@@ -1237,6 +1240,7 @@ def test_disable_plugin_autoload(
         return (Distribution(),)
 
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
     monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())
     config = pytester.parseconfig(*parse_args)
