@@ -1557,6 +1557,38 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 2 passed in *"])
 
+    def test_parameterized_fixture_caching(self, pytester: Pytester) -> None:
+        """Regression test for #12600."""
+        pytester.makepyfile(
+            """
+            import pytest
+            from itertools import count
+
+            CACHE_MISSES = count(0)
+
+            def pytest_generate_tests(metafunc):
+                if "my_fixture" in metafunc.fixturenames:
+                    # Use unique objects for parametrization (as opposed to small strings
+                    # and small integers which are singletons).
+                    metafunc.parametrize("my_fixture", [[1], [2]], indirect=True)
+
+            @pytest.fixture(scope='session')
+            def my_fixture(request):
+                next(CACHE_MISSES)
+
+            def test1(my_fixture):
+                pass
+
+            def test2(my_fixture):
+                pass
+
+            def teardown_module():
+                assert next(CACHE_MISSES) == 2
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.no_fnmatch_line("* ERROR at teardown *")
+
 
 class TestFixtureManagerParseFactories:
     @pytest.fixture
