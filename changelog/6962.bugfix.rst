@@ -1,1 +1,2 @@
-Fixed bug where parametrized fixtures were not being cached correctly, being recreated every time.
+Parametrization parameters are now compared using `==` instead of `is` (`is` is still used as a fallback if the parameter does not support `==`).
+This fixes use of parameters such as lists, which have a different `id` but compare equal, causing fixtures to be re-computed instead of being cached.
