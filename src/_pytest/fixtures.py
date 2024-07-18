@@ -955,7 +955,7 @@ class FixtureDef(Generic[FixtureValue]):
         func: _FixtureFunc[FixtureValue],
         scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] | None,
         params: Sequence[object] | None,
-        ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
+        ids: tuple[object | None, ...] | Callable[[Any, str, int], object | None] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
