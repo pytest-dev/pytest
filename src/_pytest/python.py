@@ -939,7 +939,7 @@ class IdMaker:
         idval = self._idval_from_function(val, argname, idx)
         if idval is not None:
             return idval
-        idval = self._idval_from_hook(val, argname)
+        idval = self._idval_from_hook(val, argname, idx)
         if idval is not None:
             return idval
         idval = self._idval_from_value(val)
@@ -963,12 +963,12 @@ class IdMaker:
             return None
         return self._idval_from_value(id)
 
-    def _idval_from_hook(self, val: object, argname: str) -> str | None:
+    def _idval_from_hook(self, val: object, argname: str, idx: int) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet by calling the
         :hook:`pytest_make_parametrize_id` hook."""
         if self.config:
             id: str | None = self.config.hook.pytest_make_parametrize_id(
-                config=self.config, val=val, argname=argname
+                config=self.config, val=val, argname=argname, idx=idx
             )
             return id
         return None
