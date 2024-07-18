@@ -585,7 +585,7 @@ class TestMetafunc:
             result = IdMaker(
                 ("a",),
                 [pytest.param("string")],
-                lambda _, __, ___ : "ação",
+                lambda _, __, ___: "ação",
                 None,
                 config,
                 None,
