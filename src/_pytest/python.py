@@ -953,7 +953,7 @@ class IdMaker:
         if self.idfn is None:
             return None
         try:
-            id = self.idfn(val)
+            id = self.idfn(val, argname, idx)
         except Exception as e:
             prefix = f"{self.nodeid}: " if self.nodeid is not None else ""
             msg = "error raised while trying to determine id of parameter '{}' at position {}"
