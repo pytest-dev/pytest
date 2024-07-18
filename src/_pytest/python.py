@@ -1136,7 +1136,7 @@ class Metafunc:
         argnames: str | Sequence[str],
         argvalues: Iterable[ParameterSet | Sequence[object] | object],
         indirect: bool | Sequence[str] = False,
-        ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
+        ids: Iterable[object | None] | Callable[[Any, str, int], object | None] | None = None,
         scope: _ScopeName | None = None,
         *,
         _param_mark: Mark | None = None,
