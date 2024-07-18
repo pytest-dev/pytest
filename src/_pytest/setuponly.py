@@ -41,7 +41,9 @@ def pytest_fixture_setup(
                 # display it now and during the teardown (in .finish()).
                 if fixturedef.ids:
                     if callable(fixturedef.ids):
-                        param = fixturedef.ids(request.param, request.fixturename, request.param_index)
+                        param = fixturedef.ids(
+                            request.param, request.fixturename, request.param_index
+                        )
                     else:
                         param = fixturedef.ids[request.param_index]
                 else:
