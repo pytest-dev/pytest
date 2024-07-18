@@ -869,7 +869,7 @@ class IdMaker:
     parametersets: Sequence[ParameterSet]
     # Optionally, a user-provided callable to make IDs for parameters in a
     # ParameterSet.
-    idfn: Callable[[Any], object | None] | None
+    idfn: Callable[[Any, str, int], object | None] | None
     # Optionally, explicit IDs for ParameterSets by index.
     ids: Sequence[object | None] | None
     # Optionally, the pytest config.
