@@ -588,7 +588,9 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_make_parametrize_id(config: Config, val: object, argname: str, idx: int) -> str | None:
+def pytest_make_parametrize_id(
+    config: Config, val: object, argname: str, idx: int
+) -> str | None:
     """Return a user-friendly string representation of the given ``val``
     that will be used by @pytest.mark.parametrize calls, or None if the hook
     doesn't know about ``val``.
