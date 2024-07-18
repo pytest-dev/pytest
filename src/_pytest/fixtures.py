@@ -1633,7 +1633,7 @@ class FixtureManager:
         nodeid: str | None,
         scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] = "function",
         params: Sequence[object] | None = None,
-        ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
+        ids: tuple[object | None, ...] | Callable[[Any, str, int], object | None] | None = None,
         autouse: bool = False,
     ) -> None:
         """Register a fixture
