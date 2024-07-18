@@ -1315,7 +1315,7 @@ class Metafunc:
     def _resolve_parameter_set_ids(
         self,
         argnames: Sequence[str],
-        ids: Iterable[object | None] | Callable[[Any], object | None] | None,
+        ids: Iterable[object | None] | Callable[[Any, str, int], object | None] | None,
         parametersets: Sequence[ParameterSet],
         nodeid: str,
     ) -> list[str]:
