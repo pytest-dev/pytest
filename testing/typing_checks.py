@@ -8,7 +8,7 @@ none of the code triggers any mypy errors.
 from __future__ import annotations
 
 import contextlib
-from typing import Optional
+from typing import Optional, cast, Callable, Any
 
 from typing_extensions import assert_type
 
@@ -23,7 +23,7 @@ def check_mark_xfail_raises() -> None:
 
 
 # Issue #7494.
-@pytest.fixture(params=[(0, 0), (1, 1)], ids=lambda x: str(x[0]))
+@pytest.fixture(params=[(0, 0), (1, 1)], ids=cast(Callable[[Any, str, int], object | None] | None, lambda x, _, __: str(x[0])))
 def check_fixture_ids_callable() -> None:
     pass
 

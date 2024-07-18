@@ -42,7 +42,7 @@ def pytest_fixture_setup(
                 if fixturedef.ids:
                     if callable(fixturedef.ids):
                         param = fixturedef.ids(
-                            request.param, request.fixturename, request.param_index
+                            request.param, request.fixturename or "", request.param_index
                         )
                     else:
                         param = fixturedef.ids[request.param_index]
