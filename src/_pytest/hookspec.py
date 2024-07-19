@@ -882,9 +882,7 @@ def pytest_fixture_setup(
     """
 
 
-def pytest_fixture_teardown(
-    fixturedef: FixtureDef[Any], request: SubRequest
-) -> None:
+def pytest_fixture_teardown(fixturedef: FixtureDef[Any], request: SubRequest) -> None:
     """Perform fixture teardown execution.
 
     :param fixturdef:
@@ -902,8 +900,8 @@ def pytest_fixture_teardown(
 
 
 def pytest_fixture_post_finalizer(
-    fixturedef: "FixtureDef[Any]",
-    request: "SubRequest",
+    fixturedef: FixtureDef[Any],
+    request: SubRequest,
 ) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not
