@@ -145,7 +145,7 @@ jobs:
             tox_env: "py313"
             use_coverage: true
           - name: "ubuntu-pypy3"
-            python: "pypy-3.8"
+            python: "pypy-3.9"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
