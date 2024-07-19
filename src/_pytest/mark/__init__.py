@@ -1,12 +1,14 @@
 """Generic mechanism for marking and selecting python functions."""
 
+from __future__ import annotations
+
+import collections
 import dataclasses
 from typing import AbstractSet
 from typing import Collection
-from typing import List
+from typing import Iterable
 from typing import Optional
 from typing import TYPE_CHECKING
-from typing import Union
 
 from .expression import Expression
 from .expression import ParseError
@@ -21,6 +23,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
+from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
 
@@ -44,8 +47,8 @@ old_mark_config_key = StashKey[Optional[Config]]()
 
 def param(
     *values: object,
-    marks: Union[MarkDecorator, Collection[Union[MarkDecorator, Mark]]] = (),
-    id: Optional[str] = None,
+    marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
+    id: str | None = None,
 ) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.
@@ -78,7 +81,7 @@ def pytest_addoption(parser: Parser) -> None:
         default="",
         metavar="EXPRESSION",
         help="Only run tests which match the given substring expression. "
-        "An expression is a Python evaluatable expression "
+        "An expression is a Python evaluable expression "
         "where all names are substring-matched against test names "
         "and their parent classes. Example: -k 'test_method or test_"
         "other' matches all test functions and classes whose name "
@@ -112,7 +115,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 @hookimpl(tryfirst=True)
-def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
+def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     import _pytest.config
 
     if config.option.markers:
@@ -122,7 +125,7 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
             parts = line.split(":", 1)
             name = parts[0]
             rest = parts[1] if len(parts) == 2 else ""
-            tw.write("@pytest.mark.%s:" % name, bold=True)
+            tw.write(f"@pytest.mark.{name}:", bold=True)
             tw.line(rest)
             tw.line()
         config._ensure_unconfigure()
@@ -151,7 +154,7 @@ class KeywordMatcher:
     _names: AbstractSet[str]
 
     @classmethod
-    def from_item(cls, item: "Item") -> "KeywordMatcher":
+    def from_item(cls, item: Item) -> KeywordMatcher:
         mapped_names = set()
 
         # Add the names of the current item and any parent items,
@@ -181,7 +184,9 @@ class KeywordMatcher:
 
         return cls(mapped_names)
 
-    def __call__(self, subname: str) -> bool:
+    def __call__(self, subname: str, /, **kwargs: str | int | bool | None) -> bool:
+        if kwargs:
+            raise UsageError("Keyword expressions do not support call parameters.")
         subname = subname.lower()
         names = (name.lower() for name in self._names)
 
@@ -191,7 +196,7 @@ class KeywordMatcher:
         return False
 
 
-def deselect_by_keyword(items: "List[Item]", config: Config) -> None:
+def deselect_by_keyword(items: list[Item], config: Config) -> None:
     keywordexpr = config.option.keyword.lstrip()
     if not keywordexpr:
         return
@@ -218,29 +223,38 @@ class MarkMatcher:
     Tries to match on any marker names, attached to the given colitem.
     """
 
-    __slots__ = ("own_mark_names",)
+    __slots__ = ("own_mark_name_mapping",)
 
-    own_mark_names: AbstractSet[str]
+    own_mark_name_mapping: dict[str, list[Mark]]
 
     @classmethod
-    def from_item(cls, item: "Item") -> "MarkMatcher":
-        mark_names = {mark.name for mark in item.iter_markers()}
-        return cls(mark_names)
+    def from_markers(cls, markers: Iterable[Mark]) -> MarkMatcher:
+        mark_name_mapping = collections.defaultdict(list)
+        for mark in markers:
+            mark_name_mapping[mark.name].append(mark)
+        return cls(mark_name_mapping)
 
-    def __call__(self, name: str) -> bool:
-        return name in self.own_mark_names
+    def __call__(self, name: str, /, **kwargs: str | int | bool | None) -> bool:
+        if not (matches := self.own_mark_name_mapping.get(name, [])):
+            return False
+
+        for mark in matches:
+            if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
+                return True
+
+        return False
 
 
-def deselect_by_mark(items: "List[Item]", config: Config) -> None:
+def deselect_by_mark(items: list[Item], config: Config) -> None:
     matchexpr = config.option.markexpr
     if not matchexpr:
         return
 
     expr = _parse_expression(matchexpr, "Wrong expression passed to '-m'")
-    remaining: List[Item] = []
-    deselected: List[Item] = []
+    remaining: list[Item] = []
+    deselected: list[Item] = []
     for item in items:
-        if expr.evaluate(MarkMatcher.from_item(item)):
+        if expr.evaluate(MarkMatcher.from_markers(item.iter_markers())):
             remaining.append(item)
         else:
             deselected.append(item)
@@ -256,7 +270,7 @@ def _parse_expression(expr: str, exc_message: str) -> Expression:
         raise UsageError(f"{exc_message}: {expr}: {e}") from None
 
 
-def pytest_collection_modifyitems(items: "List[Item]", config: Config) -> None:
+def pytest_collection_modifyitems(items: list[Item], config: Config) -> None:
     deselect_by_keyword(items, config)
     deselect_by_mark(items, config)
 

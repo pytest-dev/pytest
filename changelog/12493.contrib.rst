@@ -1,0 +1,13 @@
+The change log draft preview integration has been refactored to use a
+third party extension ``sphinxcontib-towncrier``. The previous in-repo
+script was putting the change log preview file at
+:file:`doc/en/_changelog_towncrier_draft.rst`. Said file is no longer
+ignored in Git and might show up among untracked files in the
+development environments of the contributors. To address that, the
+contributors can run the following command that will clean it up:
+
+.. code-block:: console
+
+   $ git clean -x -i -- doc/en/_changelog_towncrier_draft.rst
+
+-- by :user:`webknjaz`

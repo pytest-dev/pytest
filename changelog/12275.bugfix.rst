@@ -1,0 +1,1 @@
+Fix collection error upon encountering an :mod:`abstract <abc>` class, including abstract `unittest.TestCase` subclasses.

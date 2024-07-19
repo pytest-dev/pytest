@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import io
 import sys
 
@@ -101,7 +103,7 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
     result = pytester.runpytest_subprocess(*args)
     tb_output = "most recent call first"
     if enabled:
-        result.stderr.fnmatch_lines(["*%s*" % tb_output])
+        result.stderr.fnmatch_lines([f"*{tb_output}*"])
     else:
         assert tb_output not in result.stderr.str()
     result.stdout.fnmatch_lines(["*1 passed*"])

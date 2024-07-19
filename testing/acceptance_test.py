@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import dataclasses
 import importlib.metadata
 import os
@@ -400,7 +402,7 @@ class TestGeneralUsage:
 
         for name, value in vars(hookspec).items():
             if name.startswith("pytest_"):
-                assert value.__doc__, "no docstring for %s" % name
+                assert value.__doc__, f"no docstring for {name}"
 
     def test_initialization_error_issue49(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -973,7 +975,7 @@ class TestDurations:
         for x in tested:
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
-                    if ("test_%s" % x) in line and y in line:
+                    if (f"test_{x}") in line and y in line:
                         break
                 else:
                     raise AssertionError(f"not found {x} {y}")
@@ -986,7 +988,7 @@ class TestDurations:
         for x in "123":
             for y in ("call",):  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
-                    if ("test_%s" % x) in line and y in line:
+                    if (f"test_{x}") in line and y in line:
                         break
                 else:
                     raise AssertionError(f"not found {x} {y}")
@@ -1464,14 +1466,21 @@ def test_issue_9765(pytester: Pytester) -> None:
         }
     )
 
-    subprocess.run([sys.executable, "setup.py", "develop"], check=True)
+    subprocess.run(
+        [sys.executable, "-Im", "pip", "install", "-e", "."],
+        check=True,
+    )
     try:
         # We are using subprocess.run rather than pytester.run on purpose.
         # pytester.run is adding the current directory to PYTHONPATH which avoids
         # the bug. We also use pytest rather than python -m pytest for the same
         # PYTHONPATH reason.
         subprocess.run(
-            ["pytest", "my_package"], capture_output=True, check=True, text=True
+            ["pytest", "my_package"],
+            capture_output=True,
+            check=True,
+            encoding="utf-8",
+            text=True,
         )
     except subprocess.CalledProcessError as exc:
         raise AssertionError(

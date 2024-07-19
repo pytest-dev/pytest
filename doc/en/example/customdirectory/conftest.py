@@ -1,4 +1,6 @@
 # content of conftest.py
+from __future__ import annotations
+
 import json
 
 import pytest
@@ -21,7 +23,7 @@ class ManifestDirectory(pytest.Directory):
 
 @pytest.hookimpl
 def pytest_collect_directory(path, parent):
-    # Use our custom collector for directories containing a `mainfest.json` file.
+    # Use our custom collector for directories containing a `manifest.json` file.
     if path.joinpath("manifest.json").is_file():
         return ManifestDirectory.from_parent(parent=parent, path=path)
     # Otherwise fallback to the standard behavior.

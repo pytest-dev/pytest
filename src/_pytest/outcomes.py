@@ -1,22 +1,25 @@
 """Exception classes and constants handling test outcomes as well as
 functions creating them."""
 
+from __future__ import annotations
+
 import sys
 from typing import Any
 from typing import Callable
 from typing import cast
 from typing import NoReturn
-from typing import Optional
 from typing import Protocol
 from typing import Type
 from typing import TypeVar
+
+from .warning_types import PytestDeprecationWarning
 
 
 class OutcomeException(BaseException):
     """OutcomeException and its subclass instances indicate and contain info
     about test and collection outcomes."""
 
-    def __init__(self, msg: Optional[str] = None, pytrace: bool = True) -> None:
+    def __init__(self, msg: str | None = None, pytrace: bool = True) -> None:
         if msg is not None and not isinstance(msg, str):
             error_msg = (  # type: ignore[unreachable]
                 "{} expected string as 'msg' parameter, got '{}' instead.\n"
@@ -45,7 +48,7 @@ class Skipped(OutcomeException):
 
     def __init__(
         self,
-        msg: Optional[str] = None,
+        msg: str | None = None,
         pytrace: bool = True,
         allow_module_level: bool = False,
         *,
@@ -68,7 +71,7 @@ class Exit(Exception):
     """Raised for immediate program exits (no tracebacks/summaries)."""
 
     def __init__(
-        self, msg: str = "unknown reason", returncode: Optional[int] = None
+        self, msg: str = "unknown reason", returncode: int | None = None
     ) -> None:
         self.msg = msg
         self.returncode = returncode
@@ -102,7 +105,7 @@ def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _E
 @_with_exception(Exit)
 def exit(
     reason: str = "",
-    returncode: Optional[int] = None,
+    returncode: int | None = None,
 ) -> NoReturn:
     """Exit testing process.
 
@@ -112,6 +115,9 @@ def exit(
 
     :param returncode:
         Return code to be used when exiting pytest. None means the same as ``0`` (no error), same as :func:`sys.exit`.
+
+    :raises pytest.exit.Exception:
+        The exception that is raised.
     """
     __tracebackhide__ = True
     raise Exit(reason, returncode)
@@ -140,6 +146,9 @@ def skip(
 
         Defaults to False.
 
+    :raises pytest.skip.Exception:
+        The exception that is raised.
+
     .. note::
         It is better to use the :ref:`pytest.mark.skipif ref` marker when
         possible to declare a test to be skipped under certain conditions
@@ -161,6 +170,9 @@ def fail(reason: str = "", pytrace: bool = True) -> NoReturn:
     :param pytrace:
         If False, msg represents the full failure information and no
         python traceback will be reported.
+
+    :raises pytest.fail.Exception:
+        The exception that is raised.
     """
     __tracebackhide__ = True
     raise Failed(msg=reason, pytrace=pytrace)
@@ -186,13 +198,20 @@ def xfail(reason: str = "") -> NoReturn:
         It is better to use the :ref:`pytest.mark.xfail ref` marker when
         possible to declare a test to be xfailed under certain conditions
         like known bugs or missing features.
+
+    :raises pytest.xfail.Exception:
+        The exception that is raised.
     """
     __tracebackhide__ = True
     raise XFailed(reason)
 
 
 def importorskip(
-    modname: str, minversion: Optional[str] = None, reason: Optional[str] = None
+    modname: str,
+    minversion: str | None = None,
+    reason: str | None = None,
+    *,
+    exc_type: type[ImportError] | None = None,
 ) -> Any:
     """Import and return the requested module ``modname``, or skip the
     current test if the module cannot be imported.
@@ -205,30 +224,84 @@ def importorskip(
     :param reason:
         If given, this reason is shown as the message when the module cannot
         be imported.
+    :param exc_type:
+        The exception that should be captured in order to skip modules.
+        Must be :py:class:`ImportError` or a subclass.
+
+        If the module can be imported but raises :class:`ImportError`, pytest will
+        issue a warning to the user, as often users expect the module not to be
+        found (which would raise :class:`ModuleNotFoundError` instead).
+
+        This warning can be suppressed by passing ``exc_type=ImportError`` explicitly.
+
+        See :ref:`import-or-skip-import-error` for details.
+
 
     :returns:
         The imported module. This should be assigned to its canonical name.
 
+    :raises pytest.skip.Exception:
+        If the module cannot be imported.
+
     Example::
 
         docutils = pytest.importorskip("docutils")
+
+    .. versionadded:: 8.2
+
+        The ``exc_type`` parameter.
     """
     import warnings
 
     __tracebackhide__ = True
     compile(modname, "", "eval")  # to catch syntaxerrors
 
+    # Until pytest 9.1, we will warn the user if we catch ImportError (instead of ModuleNotFoundError),
+    # as this might be hiding an installation/environment problem, which is not usually what is intended
+    # when using importorskip() (#11523).
+    # In 9.1, to keep the function signature compatible, we just change the code below to:
+    # 1. Use `exc_type = ModuleNotFoundError` if `exc_type` is not given.
+    # 2. Remove `warn_on_import` and the warning handling.
+    if exc_type is None:
+        exc_type = ImportError
+        warn_on_import_error = True
+    else:
+        warn_on_import_error = False
+
+    skipped: Skipped | None = None
+    warning: Warning | None = None
+
     with warnings.catch_warnings():
         # Make sure to ignore ImportWarnings that might happen because
         # of existing directories with the same name we're trying to
         # import but without a __init__.py file.
         warnings.simplefilter("ignore")
+
         try:
             __import__(modname)
-        except ImportError as exc:
+        except exc_type as exc:
+            # Do not raise or issue warnings inside the catch_warnings() block.
             if reason is None:
                 reason = f"could not import {modname!r}: {exc}"
-            raise Skipped(reason, allow_module_level=True) from None
+            skipped = Skipped(reason, allow_module_level=True)
+
+            if warn_on_import_error and not isinstance(exc, ModuleNotFoundError):
+                lines = [
+                    "",
+                    f"Module '{modname}' was found, but when imported by pytest it raised:",
+                    f"    {exc!r}",
+                    "In pytest 9.1 this warning will become an error by default.",
+                    "You can fix the underlying problem, or alternatively overwrite this behavior and silence this "
+                    "warning by passing exc_type=ImportError explicitly.",
+                    "See https://docs.pytest.org/en/stable/deprecations.html#pytest-importorskip-default-behavior-regarding-importerror",
+                ]
+                warning = PytestDeprecationWarning("\n".join(lines))
+
+    if warning:
+        warnings.warn(warning, stacklevel=2)
+    if skipped:
+        raise skipped
+
     mod = sys.modules[modname]
     if minversion is None:
         return mod

@@ -1,0 +1,8 @@
+Added support for keyword matching in marker expressions.
+
+Now tests can be selected by marker keyword arguments.
+Supported values are :class:`int`, (unescaped) :class:`str`, :class:`bool` & :data:`None`.
+
+See :ref:`marker examples <marker_keyword_expression_example>` for more information.
+
+-- by :user:`lovetheguitar`

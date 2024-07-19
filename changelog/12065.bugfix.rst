@@ -1,4 +1,0 @@
-Fixed a regression in pytest 8.0.0 where test classes containing ``setup_method`` and tests using ``@staticmethod`` or ``@classmethod`` would crash with ``AttributeError: 'NoneType' object has no attribute 'setup_method'``.
-
-Now the :attr:`request.instance <pytest.FixtureRequest.instance>` attribute of tests using ``@staticmethod`` and ``@classmethod`` is no longer ``None``, but a fresh instance of the class, like in non-static methods.
-Previously it was ``None``, and all fixtures of such tests would share a single ``self``.

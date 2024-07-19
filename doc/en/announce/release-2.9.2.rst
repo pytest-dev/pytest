@@ -44,14 +44,14 @@ The py.test Development Team
 
 * Fix Xfail does not work with condition keyword argument.
   Thanks :user:`astraw38` for reporting the issue (:issue:`1496`) and :user:`tomviner`
-  for PR the (:pull:`1524`).
+  for PR the (:pr:`1524`).
 
 * Fix win32 path issue when putting custom config file with absolute path
   in ``pytest.main("-c your_absolute_path")``.
 
 * Fix maximum recursion depth detection when raised error class is not aware
   of unicode/encoded bytes.
-  Thanks :user:`prusse-martin` for the PR (:pull:`1506`).
+  Thanks :user:`prusse-martin` for the PR (:pr:`1506`).
 
 * Fix ``pytest.mark.skip`` mark when used in strict mode.
   Thanks :user:`pquentin` for the PR and :user:`RonnyPfannschmidt` for

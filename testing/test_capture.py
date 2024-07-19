@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import contextlib
 import io
 from io import UnsupportedOperation
@@ -103,16 +105,15 @@ class TestCaptureManager:
 def test_capturing_unicode(pytester: Pytester, method: str) -> None:
     obj = "'b\u00f6y'"
     pytester.makepyfile(
-        """\
+        f"""\
         # taken from issue 227 from nosetests
         def test_unicode():
             import sys
             print(sys.stdout)
-            print(%s)
+            print({obj})
         """
-        % obj
     )
-    result = pytester.runpytest("--capture=%s" % method)
+    result = pytester.runpytest(f"--capture={method}")
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
@@ -124,7 +125,7 @@ def test_capturing_bytes_in_utf8_encoding(pytester: Pytester, method: str) -> No
             print('b\\u00f6y')
         """
     )
-    result = pytester.runpytest("--capture=%s" % method)
+    result = pytester.runpytest(f"--capture={method}")
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 

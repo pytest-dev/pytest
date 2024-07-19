@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import ChainMap
 from collections import Counter
 from collections import defaultdict

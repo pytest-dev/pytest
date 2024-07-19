@@ -1,0 +1,5 @@
+All the undocumented ``tox`` environments now have descriptions.
+They can be listed in one's development environment by invoking
+``tox -av`` in a terminal.
+
+-- by :user:`webknjaz`

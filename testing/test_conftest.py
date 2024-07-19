@@ -1,14 +1,13 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import textwrap
 from typing import cast
-from typing import Dict
 from typing import Generator
 from typing import List
-from typing import Optional
 from typing import Sequence
-from typing import Union
 
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
@@ -27,8 +26,8 @@ def ConftestWithSetinitial(path) -> PytestPluginManager:
 
 def conftest_setinitial(
     conftest: PytestPluginManager,
-    args: Sequence[Union[str, Path]],
-    confcutdir: Optional[Path] = None,
+    args: Sequence[str | Path],
+    confcutdir: Path | None = None,
 ) -> None:
     conftest._set_initial_conftests(
         args=args,
@@ -70,7 +69,7 @@ class TestConftestValueAccessGlobal:
         )
         assert conftest._rget_with_confmod("a", p)[1] == 1
 
-    def test_immediate_initialiation_and_incremental_are_the_same(
+    def test_immediate_initialization_and_incremental_are_the_same(
         self, basedir: Path
     ) -> None:
         conftest = PytestPluginManager()
@@ -280,7 +279,7 @@ def test_conftest_confcutdir(pytester: Pytester) -> None:
         ),
         encoding="utf-8",
     )
-    result = pytester.runpytest("-h", "--confcutdir=%s" % x, x)
+    result = pytester.runpytest("-h", f"--confcutdir={x}", x)
     result.stdout.fnmatch_lines(["*--xyz*"])
     result.stdout.no_fnmatch_line("*warning: could not load initial*")
 
@@ -380,7 +379,7 @@ def test_conftest_symlink_files(pytester: Pytester) -> None:
             """
         ),
     }
-    pytester.makepyfile(**{"real/%s" % k: v for k, v in source.items()})
+    pytester.makepyfile(**{f"real/{k}": v for k, v in source.items()})
 
     # Create a build directory that contains symlinks to actual files
     # but doesn't symlink actual directories.
@@ -396,13 +395,13 @@ def test_conftest_symlink_files(pytester: Pytester) -> None:
 
 @pytest.mark.skipif(
     os.path.normcase("x") != os.path.normcase("X"),
-    reason="only relevant for case insensitive file systems",
+    reason="only relevant for case-insensitive file systems",
 )
 def test_conftest_badcase(pytester: Pytester) -> None:
     """Check conftest.py loading when directory casing is wrong (#5792)."""
     pytester.path.joinpath("JenkinsRoot/test").mkdir(parents=True)
     source = {"setup.py": "", "test/__init__.py": "", "test/conftest.py": ""}
-    pytester.makepyfile(**{"JenkinsRoot/%s" % k: v for k, v in source.items()})
+    pytester.makepyfile(**{f"JenkinsRoot/{k}": v for k, v in source.items()})
 
     os.chdir(pytester.path.joinpath("jenkinsroot/test"))
     result = pytester.runpytest()
@@ -536,7 +535,7 @@ def test_conftest_found_with_double_dash(pytester: Pytester) -> None:
 
 
 class TestConftestVisibility:
-    def _setup_tree(self, pytester: Pytester) -> Dict[str, Path]:  # for issue616
+    def _setup_tree(self, pytester: Pytester) -> dict[str, Path]:  # for issue616
         # example mostly taken from:
         # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html
         runner = pytester.mkdir("empty")
@@ -638,9 +637,9 @@ class TestConftestVisibility:
     ) -> None:
         """#616"""
         dirs = self._setup_tree(pytester)
-        print("pytest run in cwd: %s" % (dirs[chdir].relative_to(pytester.path)))
-        print("pytestarg        : %s" % testarg)
-        print("expected pass    : %s" % expect_ntests_passed)
+        print(f"pytest run in cwd: {dirs[chdir].relative_to(pytester.path)}")
+        print(f"pytestarg        : {testarg}")
+        print(f"expected pass    : {expect_ntests_passed}")
         os.chdir(dirs[chdir])
         reprec = pytester.inline_run(
             testarg,
@@ -699,7 +698,7 @@ def test_search_conftest_up_to_inifile(
 
     args = [str(src)]
     if confcutdir:
-        args = ["--confcutdir=%s" % root.joinpath(confcutdir)]
+        args = [f"--confcutdir={root.joinpath(confcutdir)}"]
     result = pytester.runpytest(*args)
     match = ""
     if passed:

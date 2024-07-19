@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import dataclasses
 import os
 from pathlib import Path
@@ -6,8 +8,6 @@ import stat
 import sys
 from typing import Callable
 from typing import cast
-from typing import List
-from typing import Union
 import warnings
 
 from _pytest import pathlib
@@ -34,7 +34,7 @@ def test_tmp_path_fixture(pytester: Pytester) -> None:
 
 @dataclasses.dataclass
 class FakeConfig:
-    basetemp: Union[str, Path]
+    basetemp: str | Path
 
     @property
     def trace(self):
@@ -87,11 +87,11 @@ class TestConfigTmpPath:
                 pass
         """
         )
-        pytester.runpytest(p, "--basetemp=%s" % mytemp)
+        pytester.runpytest(p, f"--basetemp={mytemp}")
         assert mytemp.exists()
         mytemp.joinpath("hello").touch()
 
-        pytester.runpytest(p, "--basetemp=%s" % mytemp)
+        pytester.runpytest(p, f"--basetemp={mytemp}")
         assert mytemp.exists()
         assert not mytemp.joinpath("hello").exists()
 
@@ -248,7 +248,7 @@ def test_mktemp(pytester: Pytester, basename: str, is_ok: bool) -> None:
         """
     )
 
-    result = pytester.runpytest(p, "--basetemp=%s" % mytemp)
+    result = pytester.runpytest(p, f"--basetemp={mytemp}")
     if is_ok:
         assert result.ret == 0
         assert mytemp.joinpath(basename).exists()
@@ -394,7 +394,7 @@ class TestNumberedDir:
     def test_lock_register_cleanup_removal(self, tmp_path: Path) -> None:
         lock = create_cleanup_lock(tmp_path)
 
-        registry: List[Callable[..., None]] = []
+        registry: list[Callable[..., None]] = []
         register_cleanup_lock_removal(lock, register=registry.append)
 
         (cleanup_func,) = registry

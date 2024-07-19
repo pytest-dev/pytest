@@ -1,0 +1,1 @@
+Fix crash with `assert testcase is not None` assertion failure when re-running unittest tests using plugins like pytest-rerunfailures. Regressed in 8.2.2.

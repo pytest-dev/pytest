@@ -1,10 +1,10 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import argparse
 import os
 from pathlib import Path
 import re
-import sys
-from typing import Optional
 
 from _pytest.config import ExitCode
 from _pytest.config import UsageError
@@ -45,32 +45,18 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
         assert result.ret == ExitCode.INTERNAL_ERROR
     assert result.stdout.lines[0] == "INTERNALERROR> Traceback (most recent call last):"
 
-    end_lines = (
-        result.stdout.lines[-4:]
-        if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
-        else result.stdout.lines[-3:]
-    )
+    end_lines = result.stdout.lines[-3:]
 
     if exc == SystemExit:
         assert end_lines == [
             f'INTERNALERROR>   File "{c1}", line 4, in pytest_sessionstart',
             'INTERNALERROR>     raise SystemExit("boom")',
-            *(
-                ("INTERNALERROR>     ^^^^^^^^^^^^^^^^^^^^^^^^",)
-                if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
-                else ()
-            ),
             "INTERNALERROR> SystemExit: boom",
         ]
     else:
         assert end_lines == [
             f'INTERNALERROR>   File "{c1}", line 4, in pytest_sessionstart',
             'INTERNALERROR>     raise ValueError("boom")',
-            *(
-                ("INTERNALERROR>     ^^^^^^^^^^^^^^^^^^^^^^^^",)
-                if (3, 11, 0, "beta", 4) > sys.version_info >= (3, 11)
-                else ()
-            ),
             "INTERNALERROR> ValueError: boom",
         ]
     if returncode is False:
@@ -81,7 +67,7 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
 
 @pytest.mark.parametrize("returncode", (None, 42))
 def test_wrap_session_exit_sessionfinish(
-    returncode: Optional[int], pytester: Pytester
+    returncode: int | None, pytester: Pytester
 ) -> None:
     pytester.makeconftest(
         f"""

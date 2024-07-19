@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 """Support for skip/xfail functions and markers."""
 
+from __future__ import annotations
+
 from collections.abc import Mapping
 import dataclasses
 import os
@@ -9,8 +11,6 @@ import sys
 import traceback
 from typing import Generator
 from typing import Optional
-from typing import Tuple
-from typing import Type
 
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -84,7 +84,7 @@ def pytest_configure(config: Config) -> None:
     )
 
 
-def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool, str]:
+def evaluate_condition(item: Item, mark: Mark, condition: object) -> tuple[bool, str]:
     """Evaluate a single skipif/xfail condition.
 
     If an old-style string condition is given, it is eval()'d, otherwise the
@@ -117,7 +117,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
             result = eval(condition_code, globals_)
         except SyntaxError as exc:
             msglines = [
-                "Error evaluating %r condition" % mark.name,
+                f"Error evaluating {mark.name!r} condition",
                 "    " + condition,
                 "    " + " " * (exc.offset or 0) + "^",
                 "SyntaxError: invalid syntax",
@@ -125,7 +125,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
             fail("\n".join(msglines), pytrace=False)
         except Exception as exc:
             msglines = [
-                "Error evaluating %r condition" % mark.name,
+                f"Error evaluating {mark.name!r} condition",
                 "    " + condition,
                 *traceback.format_exception_only(type(exc), exc),
             ]
@@ -137,7 +137,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
             result = bool(condition)
         except Exception as exc:
             msglines = [
-                "Error evaluating %r condition as a boolean" % mark.name,
+                f"Error evaluating {mark.name!r} condition as a boolean",
                 *traceback.format_exception_only(type(exc), exc),
             ]
             fail("\n".join(msglines), pytrace=False)
@@ -149,7 +149,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool,
         else:
             # XXX better be checked at collection time
             msg = (
-                "Error evaluating %r: " % mark.name
+                f"Error evaluating {mark.name!r}: "
                 + "you need to specify reason=STRING when using booleans as conditions."
             )
             fail(msg, pytrace=False)
@@ -164,7 +164,7 @@ class Skip:
     reason: str = "unconditional skip"
 
 
-def evaluate_skip_marks(item: Item) -> Optional[Skip]:
+def evaluate_skip_marks(item: Item) -> Skip | None:
     """Evaluate skip and skipif marks on item, returning Skip if triggered."""
     for mark in item.iter_markers(name="skipif"):
         if "condition" not in mark.kwargs:
@@ -201,10 +201,10 @@ class Xfail:
     reason: str
     run: bool
     strict: bool
-    raises: Optional[Tuple[Type[BaseException], ...]]
+    raises: tuple[type[BaseException], ...] | None
 
 
-def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:
+def evaluate_xfail_marks(item: Item) -> Xfail | None:
     """Evaluate xfail marks on item, returning Xfail if triggered."""
     for mark in item.iter_markers(name="xfail"):
         run = mark.kwargs.get("run", True)
@@ -292,7 +292,7 @@ def pytest_runtest_makereport(
     return rep
 
 
-def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str]]:
+def pytest_report_teststatus(report: BaseReport) -> tuple[str, str, str] | None:
     if hasattr(report, "wasxfail"):
         if report.skipped:
             return "xfailed", "x", "XFAIL"

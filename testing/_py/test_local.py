@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import contextlib
 import multiprocessing
 import os
@@ -207,7 +209,7 @@ class CommonFSTests:
 
     @pytest.mark.parametrize(
         "fil",
-        ["*dir", "*dir", pytest.mark.skip("sys.version_info <" " (3,6)")(b"*dir")],
+        ["*dir", "*dir", pytest.mark.skip("sys.version_info < (3,6)")(b"*dir")],
     )
     def test_visit_filterfunc_is_string(self, path1, fil):
         lst = []
@@ -551,7 +553,7 @@ def batch_make_numbered_dirs(rootdir, repeats):
     for i in range(repeats):
         dir_ = local.make_numbered_dir(prefix="repro-", rootdir=rootdir)
         file_ = dir_.join("foo")
-        file_.write_text("%s" % i, encoding="utf-8")
+        file_.write_text(f"{i}", encoding="utf-8")
         actual = int(file_.read_text(encoding="utf-8"))
         assert (
             actual == i
@@ -563,9 +565,9 @@ def batch_make_numbered_dirs(rootdir, repeats):
 class TestLocalPath(CommonFSTests):
     def test_join_normpath(self, tmpdir):
         assert tmpdir.join(".") == tmpdir
-        p = tmpdir.join("../%s" % tmpdir.basename)
+        p = tmpdir.join(f"../{tmpdir.basename}")
         assert p == tmpdir
-        p = tmpdir.join("..//%s/" % tmpdir.basename)
+        p = tmpdir.join(f"..//{tmpdir.basename}/")
         assert p == tmpdir
 
     @skiponwin32
@@ -667,7 +669,7 @@ class TestLocalPath(CommonFSTests):
         assert p == os.path.expanduser("~")
 
     @pytest.mark.skipif(
-        not sys.platform.startswith("win32"), reason="case insensitive only on windows"
+        not sys.platform.startswith("win32"), reason="case-insensitive only on windows"
     )
     def test_eq_hash_are_case_insensitive_on_windows(self):
         a = local("/some/path")
@@ -722,7 +724,7 @@ class TestLocalPath(CommonFSTests):
 
     @pytest.mark.parametrize("bin", (False, True))
     def test_dump(self, tmpdir, bin):
-        path = tmpdir.join("dumpfile%s" % int(bin))
+        path = tmpdir.join(f"dumpfile{int(bin)}")
         try:
             d = {"answer": 42}
             path.dump(d, bin=bin)
@@ -898,7 +900,7 @@ class TestExecutionOnWindows:
 class TestExecution:
     pytestmark = skiponwin32
 
-    def test_sysfind_no_permisson_ignored(self, monkeypatch, tmpdir):
+    def test_sysfind_no_permission_ignored(self, monkeypatch, tmpdir):
         noperm = tmpdir.ensure("noperm", dir=True)
         monkeypatch.setenv("PATH", str(noperm), prepend=":")
         noperm.chmod(0)

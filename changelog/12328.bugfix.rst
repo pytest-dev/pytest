@@ -1,0 +1,1 @@
+Fix a regression in pytest 8.0.0 where package-scoped parameterized items were not correctly reordered to minimize setups/teardowns in some cases.

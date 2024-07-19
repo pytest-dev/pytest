@@ -1,0 +1,6 @@
+The coverage reporting configuration has been updated to exclude
+pytest's own tests marked as expected to fail from the coverage
+report. This has an effect of reducing the influence of flaky
+tests on the resulting number.
+
+-- by :user:`webknjaz`

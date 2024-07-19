@@ -7,9 +7,6 @@ API Reference
 
 This page contains the full reference to pytest's API.
 
-.. contents::
-    :depth: 3
-    :local:
 
 Constants
 ---------
@@ -59,10 +56,18 @@ pytest.fail
 
 .. autofunction:: pytest.fail(reason, [pytrace=True, msg=None])
 
+.. class:: pytest.fail.Exception
+
+    The exception raised by :func:`pytest.fail`.
+
 pytest.skip
 ~~~~~~~~~~~
 
 .. autofunction:: pytest.skip(reason, [allow_module_level=False, msg=None])
+
+.. class:: pytest.skip.Exception
+
+    The exception raised by :func:`pytest.skip`.
 
 .. _`pytest.importorskip ref`:
 
@@ -76,10 +81,18 @@ pytest.xfail
 
 .. autofunction:: pytest.xfail
 
+.. class:: pytest.xfail.Exception
+
+    The exception raised by :func:`pytest.xfail`.
+
 pytest.exit
 ~~~~~~~~~~~
 
 .. autofunction:: pytest.exit(reason, [returncode=None, msg=None])
+
+.. class:: pytest.exit.Exception
+
+    The exception raised by :func:`pytest.exit`.
 
 pytest.main
 ~~~~~~~~~~~
@@ -246,9 +259,10 @@ Marks a test function as *expected to fail*.
         to specify ``reason`` (see :ref:`condition string <string conditions>`).
     :keyword str reason:
         Reason why the test function is marked as xfail.
-    :keyword Type[Exception] raises:
+    :keyword raises:
         Exception class (or tuple of classes) expected to be raised by the test function; other exceptions will fail the test.
         Note that subclasses of the classes passed will also result in a match (similar to how the ``except`` statement works).
+    :type raises: Type[:py:exc:`Exception`]
 
     :keyword bool run:
         Whether the test function should actually be executed. If ``False``, the function will always xfail and will
@@ -636,7 +650,7 @@ Reference to all hooks which can be implemented by :ref:`conftest.py files <loca
 Bootstrapping hooks
 ~~~~~~~~~~~~~~~~~~~
 
-Bootstrapping hooks called for plugins registered early enough (internal and setuptools plugins).
+Bootstrapping hooks called for plugins registered early enough (internal and third-party plugins).
 
 .. hook:: pytest_load_initial_conftests
 .. autofunction:: pytest_load_initial_conftests
@@ -1108,16 +1122,21 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to ``BUILD_NUMBER`` variable.
+When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to ``BUILD_NUMBER`` variable. See also :ref:`ci-pipelines`.
 
 .. envvar:: BUILD_NUMBER
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to CI variable.
+When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to CI variable. See also :ref:`ci-pipelines`.
 
 .. envvar:: PYTEST_ADDOPTS
 
 This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
 by the user, see :ref:`adding default options` for more information.
+
+.. envvar:: PYTEST_VERSION
+
+This environment variable is defined at the start of the pytest session and is undefined afterwards.
+It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
 
 .. envvar:: PYTEST_CURRENT_TEST
 
@@ -1130,8 +1149,9 @@ When set, pytest will print tracing and debug information.
 
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
-When set, disables plugin auto-loading through setuptools entrypoints. Only explicitly specified plugins will be
-loaded.
+When set, disables plugin auto-loading through :std:doc:`entry point packaging
+metadata <packaging:guides/creating-and-discovering-plugins>`. Only explicitly
+specified plugins will be loaded.
 
 .. envvar:: PYTEST_PLUGINS
 
@@ -1684,13 +1704,13 @@ passed multiple times. The expected format is ``name=value``. For example::
    This would tell ``pytest`` to not look into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
 
-   Additionally, ``pytest`` will attempt to intelligently identify and ignore a
-   virtualenv by the presence of an activation script.  Any directory deemed to
-   be the root of a virtual environment will not be considered during test
-   collection unless ``--collect-in-virtualenv`` is given.  Note also that
-   ``norecursedirs`` takes precedence over ``--collect-in-virtualenv``; e.g. if
-   you intend to run tests in a virtualenv with a base directory that matches
-   ``'.*'`` you *must* override ``norecursedirs`` in addition to using the
+   Additionally, ``pytest`` will attempt to intelligently identify and ignore
+   a virtualenv.  Any directory deemed to be the root of a virtual environment
+   will not be considered during test collection unless
+   ``--collect-in-virtualenv`` is given.  Note also that ``norecursedirs``
+   takes precedence over ``--collect-in-virtualenv``; e.g. if you intend to
+   run tests in a virtualenv with a base directory that matches ``'.*'`` you
+   *must* override ``norecursedirs`` in addition to using the
    ``--collect-in-virtualenv`` flag.
 
 
@@ -1920,20 +1940,19 @@ All the command-line flags can be obtained by running ``pytest --help``::
 
     general:
       -k EXPRESSION         Only run tests which match the given substring
-                            expression. An expression is a Python evaluatable
-                            expression where all names are substring-matched
-                            against test names and their parent classes.
-                            Example: -k 'test_method or test_other' matches all
-                            test functions and classes whose name contains
-                            'test_method' or 'test_other', while -k 'not
-                            test_method' matches those that don't contain
-                            'test_method' in their names. -k 'not test_method
-                            and not test_other' will eliminate the matches.
-                            Additionally keywords are matched to classes and
-                            functions containing extra names in their
-                            'extra_keyword_matches' set, as well as functions
-                            which have names assigned directly to them. The
-                            matching is case-insensitive.
+                            expression. An expression is a Python evaluable
+                            expression where all names are substring-matched against
+                            test names and their parent classes. Example: -k
+                            'test_method or test_other' matches all test functions
+                            and classes whose name contains 'test_method' or
+                            'test_other', while -k 'not test_method' matches those
+                            that don't contain 'test_method' in their names. -k 'not
+                            test_method and not test_other' will eliminate the
+                            matches. Additionally keywords are matched to classes
+                            and functions containing extra names in their
+                            'extra_keyword_matches' set, as well as functions which
+                            have names assigned directly to them. The matching is
+                            case-insensitive.
       -m MARKEXPR           Only run tests matching given mark expression. For
                             example: -m 'mark1 and not mark2'.
       --markers             show markers (builtin, plugin and per-project ones).
@@ -1951,28 +1970,28 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --trace               Immediately break when running each test
       --capture=method      Per-test capturing method: one of fd|sys|no|tee-sys
       -s                    Shortcut for --capture=no
-      --runxfail            Report the results of xfail tests as if they were
-                            not marked
-      --lf, --last-failed   Rerun only the tests that failed at the last run (or
-                            all if none failed)
-      --ff, --failed-first  Run all tests, but run the last failures first. This
-                            may re-order tests and thus lead to repeated fixture
+      --runxfail            Report the results of xfail tests as if they were not
+                            marked
+      --lf, --last-failed   Rerun only the tests that failed at the last run (or all
+                            if none failed)
+      --ff, --failed-first  Run all tests, but run the last failures first. This may
+                            re-order tests and thus lead to repeated fixture
                             setup/teardown.
       --nf, --new-first     Run tests from new files first, then the rest of the
                             tests sorted by file mtime
       --cache-show=[CACHESHOW]
-                            Show cache contents, don't perform collection or
-                            tests. Optional argument: glob (default: '*').
+                            Show cache contents, don't perform collection or tests.
+                            Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
       --lfnf={all,none}, --last-failed-no-failures={all,none}
-                            With ``--lf``, determines whether to execute tests
-                            when there are no previously (known) failures or
-                            when no cached ``lastfailed`` data was found.
-                            ``all`` (the default) runs the full test suite
-                            again. ``none`` just emits a message about no known
-                            failures and exits successfully.
-      --sw, --stepwise      Exit on test failure and continue from last failing
-                            test next time
+                            With ``--lf``, determines whether to execute tests when
+                            there are no previously (known) failures or when no
+                            cached ``lastfailed`` data was found. ``all`` (the
+                            default) runs the full test suite again. ``none`` just
+                            emits a message about no known failures and exits
+                            successfully.
+      --sw, --stepwise      Exit on test failure and continue from last failing test
+                            next time
       --sw-skip, --stepwise-skip
                             Ignore the first failing test but stop on the next
                             failing test. Implicitly enables --stepwise.
@@ -1989,55 +2008,53 @@ All the command-line flags can be obtained by running ``pytest --help``::
       -r chars              Show extra test summary info as specified by chars:
                             (f)ailed, (E)rror, (s)kipped, (x)failed, (X)passed,
                             (p)assed, (P)assed with output, (a)ll except passed
-                            (p/P), or (A)ll. (w)arnings are enabled by default
-                            (see --disable-warnings), 'N' can be used to reset
-                            the list. (default: 'fE').
+                            (p/P), or (A)ll. (w)arnings are enabled by default (see
+                            --disable-warnings), 'N' can be used to reset the list.
+                            (default: 'fE').
       --disable-warnings, --disable-pytest-warnings
                             Disable warnings summary
       -l, --showlocals      Show locals in tracebacks (disabled by default)
-      --no-showlocals       Hide locals in tracebacks (negate --showlocals
-                            passed through addopts)
-      --tb=style            Traceback print mode
-                            (auto/long/short/line/native/no)
+      --no-showlocals       Hide locals in tracebacks (negate --showlocals passed
+                            through addopts)
+      --tb=style            Traceback print mode (auto/long/short/line/native/no)
+      --xfail-tb            Show tracebacks for xfail (as long as --tb != no)
       --show-capture={no,stdout,stderr,log,all}
                             Controls how captured stdout/stderr/log is shown on
                             failed tests. Default: all.
       --full-trace          Don't cut any tracebacks (default is to cut)
       --color=color         Color terminal output (yes/no/auto)
       --code-highlight={yes,no}
-                            Whether code should be highlighted (only if --color
-                            is also enabled). Default: yes.
+                            Whether code should be highlighted (only if --color is
+                            also enabled). Default: yes.
       --pastebin=mode       Send failed|all info to bpaste.net pastebin service
       --junit-xml=path      Create junit-xml style report file at given path
       --junit-prefix=str    Prepend prefix to classnames in junit-xml output
 
     pytest-warnings:
       -W PYTHONWARNINGS, --pythonwarnings=PYTHONWARNINGS
-                            Set which warnings to report, see -W option of
-                            Python itself
+                            Set which warnings to report, see -W option of Python
+                            itself
       --maxfail=num         Exit after first num failures or errors
       --strict-config       Any warnings encountered while parsing the `pytest`
                             section of the configuration file raise errors
-      --strict-markers      Markers not registered in the `markers` section of
-                            the configuration file raise errors
+      --strict-markers      Markers not registered in the `markers` section of the
+                            configuration file raise errors
       --strict              (Deprecated) alias to --strict-markers
       -c FILE, --config-file=FILE
                             Load configuration from `FILE` instead of trying to
                             locate one of the implicit configuration files.
       --continue-on-collection-errors
                             Force test execution even if collection errors occur
-      --rootdir=ROOTDIR     Define root directory for tests. Can be relative
-                            path: 'root_dir', './root_dir',
-                            'root_dir/another_dir/'; absolute path:
-                            '/home/user/root_dir'; path with variables:
-                            '$HOME/root_dir'.
+      --rootdir=ROOTDIR     Define root directory for tests. Can be relative path:
+                            'root_dir', './root_dir', 'root_dir/another_dir/';
+                            absolute path: '/home/user/root_dir'; path with
+                            variables: '$HOME/root_dir'.
 
     collection:
       --collect-only, --co  Only collect tests, don't execute them
       --pyargs              Try to interpret all arguments as Python packages
       --ignore=path         Ignore path during collection (multi-allowed)
-      --ignore-glob=path    Ignore path pattern during collection (multi-
-                            allowed)
+      --ignore-glob=path    Ignore path pattern during collection (multi-allowed)
       --deselect=nodeid_prefix
                             Deselect item (via node id prefix) during collection
                             (multi-allowed)
@@ -2047,8 +2064,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --collect-in-virtualenv
                             Don't ignore tests in a local virtualenv directory
       --import-mode={prepend,append,importlib}
-                            Prepend/append to sys.path when importing test
-                            modules and conftest files. Default: prepend.
+                            Prepend/append to sys.path when importing test modules
+                            and conftest files. Default: prepend.
       --doctest-modules     Run doctests in all .py modules
       --doctest-report={none,cdiff,ndiff,udiff,only_first_failure}
                             Choose another output format for diffs on doctest
@@ -2061,38 +2078,37 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             failure
 
     test session debugging and configuration:
-      --basetemp=dir        Base temporary directory for this test run.
-                            (Warning: this directory is removed if it exists.)
-      -V, --version         Display pytest version and information about
-                            plugins. When given twice, also display information
-                            about plugins.
+      --basetemp=dir        Base temporary directory for this test run. (Warning:
+                            this directory is removed if it exists.)
+      -V, --version         Display pytest version and information about plugins.
+                            When given twice, also display information about
+                            plugins.
       -h, --help            Show help message and configuration info
       -p name               Early-load given plugin module name or entry point
-                            (multi-allowed). To avoid loading of plugins, use
-                            the `no:` prefix, e.g. `no:doctest`.
+                            (multi-allowed). To avoid loading of plugins, use the
+                            `no:` prefix, e.g. `no:doctest`.
       --trace-config        Trace considerations of conftest.py files
       --debug=[DEBUG_FILE_NAME]
                             Store internal tracing debug information in this log
-                            file. This file is opened with 'w' and truncated as
-                            a result, care advised. Default: pytestdebug.log.
+                            file. This file is opened with 'w' and truncated as a
+                            result, care advised. Default: pytestdebug.log.
       -o OVERRIDE_INI, --override-ini=OVERRIDE_INI
-                            Override ini option with "option=value" style, e.g.
-                            `-o xfail_strict=True -o cache_dir=cache`.
+                            Override ini option with "option=value" style, e.g. `-o
+                            xfail_strict=True -o cache_dir=cache`.
       --assert=MODE         Control assertion debugging tools.
                             'plain' performs no assertion debugging.
-                            'rewrite' (the default) rewrites assert statements
-                            in test modules on import to provide assert
-                            expression information.
+                            'rewrite' (the default) rewrites assert statements in
+                            test modules on import to provide assert expression
+                            information.
       --setup-only          Only setup fixtures, do not execute tests
       --setup-show          Show setup of fixtures while executing tests
-      --setup-plan          Show what fixtures and tests would be executed but
-                            don't execute anything
+      --setup-plan          Show what fixtures and tests would be executed but don't
+                            execute anything
 
     logging:
-      --log-level=LEVEL     Level of messages to catch/display. Not set by
-                            default, so it depends on the root/parent log
-                            handler's effective level, where it is "WARNING" by
-                            default.
+      --log-level=LEVEL     Level of messages to catch/display. Not set by default,
+                            so it depends on the root/parent log handler's effective
+                            level, where it is "WARNING" by default.
       --log-format=LOG_FORMAT
                             Log format used by the logging module
       --log-date-format=LOG_DATE_FORMAT
@@ -2116,8 +2132,13 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Auto-indent multiline messages passed to the logging
                             module. Accepts true|on, false|off or an integer.
       --log-disable=LOGGER_DISABLE
-                            Disable a logger by name. Can be passed multiple
-                            times.
+                            Disable a logger by name. Can be passed multiple times.
+
+    Custom options:
+      --lsof                Run FD checks if lsof is available
+      --runpytest={inprocess,subprocess}
+                            Run pytest sub runs in tests using an 'inprocess' or
+                            'subprocess' (python -m main) method
 
     [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
@@ -2132,37 +2153,33 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
       consider_namespace_packages (bool):
-                            Consider namespace packages when resolving module
-                            names during import
-      usefixtures (args):   List of default fixtures to be used with this
-                            project
+                            Consider namespace packages when resolving module names
+                            during import
+      usefixtures (args):   List of default fixtures to be used with this project
       python_files (args):  Glob-style file patterns for Python test module
                             discovery
       python_classes (args):
-                            Prefixes or glob names for Python test class
-                            discovery
+                            Prefixes or glob names for Python test class discovery
       python_functions (args):
                             Prefixes or glob names for Python test function and
                             method discovery
       disable_test_id_escaping_and_forfeit_all_rights_to_community_support (bool):
-                            Disable string escape non-ASCII characters, might
-                            cause unwanted side effects(use at your own risk)
+                            Disable string escape non-ASCII characters, might cause
+                            unwanted side effects(use at your own risk)
       console_output_style (string):
-                            Console output: "classic", or with additional
-                            progress information ("progress" (percentage) |
-                            "count" | "progress-even-when-capture-no" (forces
-                            progress even when capture=no)
+                            Console output: "classic", or with additional progress
+                            information ("progress" (percentage) | "count" |
+                            "progress-even-when-capture-no" (forces progress even
+                            when capture=no)
       verbosity_test_cases (string):
                             Specify a verbosity level for test case execution,
-                            overriding the main level. Higher levels will
-                            provide more detailed information about each test
-                            case executed.
-      xfail_strict (bool):  Default for the strict parameter of xfail markers
-                            when not given explicitly (default: False)
+                            overriding the main level. Higher levels will provide
+                            more detailed information about each test case executed.
+      xfail_strict (bool):  Default for the strict parameter of xfail markers when
+                            not given explicitly (default: False)
       tmp_path_retention_count (string):
                             How many sessions should we keep the `tmp_path`
-                            directories, according to
-                            `tmp_path_retention_policy`.
+                            directories, according to `tmp_path_retention_policy`.
       tmp_path_retention_policy (string):
                             Controls which directories created by the `tmp_path`
                             fixture are kept around, based on test outcome.
@@ -2171,9 +2188,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
       verbosity_assertions (string):
-                            Specify a verbosity level for assertions, overriding
-                            the main level. Higher levels will provide more
-                            detailed explanation when an assertion fails.
+                            Specify a verbosity level for assertions, overriding the
+                            main level. Higher levels will provide more detailed
+                            explanation when an assertion fails.
       junit_suite_name (string):
                             Test suite name for JUnit report
       junit_logging (string):
@@ -2195,8 +2212,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       log_format (string):  Default value for --log-format
       log_date_format (string):
                             Default value for --log-date-format
-      log_cli (bool):       Enable log display during test run (also known as
-                            "live logging")
+      log_cli (bool):       Enable log display during test run (also known as "live
+                            logging")
       log_cli_level (string):
                             Default value for --log-cli-level
       log_cli_format (string):
@@ -2216,14 +2233,18 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Default value for --log-auto-indent
       pythonpath (paths):   Add paths to sys.path
       faulthandler_timeout (string):
-                            Dump the traceback of all threads if a test takes
-                            more than TIMEOUT seconds to finish
+                            Dump the traceback of all threads if a test takes more
+                            than TIMEOUT seconds to finish
       addopts (args):       Extra command line options
       minversion (string):  Minimally required pytest version
       required_plugins (args):
                             Plugins that must be present for pytest to run
+      pytester_example_dir (string):
+                            Directory to take the pytester example files from
 
     Environment variables:
+      CI                       When set (regardless of value), pytest knows it is running in a CI process and does not truncate summary info
+      BUILD_NUMBER             equivalent to CI
       PYTEST_ADDOPTS           Extra command line options
       PYTEST_PLUGINS           Comma-separated plugins to load during startup
       PYTEST_DISABLE_PLUGIN_AUTOLOAD Set to disable plugin auto-loading

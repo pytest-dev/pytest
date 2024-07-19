@@ -1,0 +1,4 @@
+The ``:pull:`` RST role has been replaced with a shorter
+``:pr:`` due to starting to use the implementation from
+the third-party :pypi:`sphinx-issues` Sphinx extension
+-- by :user:`webknjaz`.

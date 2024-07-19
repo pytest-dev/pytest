@@ -1,13 +1,13 @@
 """Provides a function to report all internal modules for using freezing
 tools."""
 
+from __future__ import annotations
+
 import types
 from typing import Iterator
-from typing import List
-from typing import Union
 
 
-def freeze_includes() -> List[str]:
+def freeze_includes() -> list[str]:
     """Return a list of module names used by pytest that should be
     included by cx_freeze."""
     import _pytest
@@ -17,7 +17,7 @@ def freeze_includes() -> List[str]:
 
 
 def _iter_all_modules(
-    package: Union[str, types.ModuleType],
+    package: str | types.ModuleType,
     prefix: str = "",
 ) -> Iterator[str]:
     """Iterate over the names of all modules that can be found in the given

@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import sys
 import traceback
 from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import Generator
-from typing import Optional
-from typing import Type
+from typing import TYPE_CHECKING
 import warnings
 
 import pytest
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 # Copied from cpython/Lib/test/support/__init__.py, with modifications.
@@ -34,24 +39,24 @@ class catch_unraisable_exception:
     """
 
     def __init__(self) -> None:
-        self.unraisable: Optional["sys.UnraisableHookArgs"] = None
-        self._old_hook: Optional[Callable[["sys.UnraisableHookArgs"], Any]] = None
+        self.unraisable: sys.UnraisableHookArgs | None = None
+        self._old_hook: Callable[[sys.UnraisableHookArgs], Any] | None = None
 
-    def _hook(self, unraisable: "sys.UnraisableHookArgs") -> None:
+    def _hook(self, unraisable: sys.UnraisableHookArgs) -> None:
         # Storing unraisable.object can resurrect an object which is being
         # finalized. Storing unraisable.exc_value creates a reference cycle.
         self.unraisable = unraisable
 
-    def __enter__(self) -> "catch_unraisable_exception":
+    def __enter__(self) -> Self:
         self._old_hook = sys.unraisablehook
         sys.unraisablehook = self._hook
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         assert self._old_hook is not None
         sys.unraisablehook = self._old_hook

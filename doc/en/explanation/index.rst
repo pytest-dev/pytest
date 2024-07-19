@@ -11,5 +11,6 @@ Explanation
    anatomy
    fixtures
    goodpractices
-   flaky
    pythonpath
+   ci
+   flaky

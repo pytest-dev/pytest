@@ -1,0 +1,1 @@
+Do not truncate arguments to functions in output when running with `-vvv`.

@@ -1,0 +1,3 @@
+Migrated all internal type-annotations to the python3.10+ style by using the `annotations` future import.
+
+-- by :user:`RonnyPfannschmidt`

@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 from pathlib import Path
 
 from _pytest.compat import LEGACY_PATH
@@ -79,7 +81,7 @@ def test_tmpdir_always_is_realpath(pytester: pytest.Pytester) -> None:
             assert os.path.realpath(str(tmpdir)) == str(tmpdir)
     """
     )
-    result = pytester.runpytest("-s", p, "--basetemp=%s/bt" % linktemp)
+    result = pytester.runpytest("-s", p, f"--basetemp={linktemp}/bt")
     assert not result.ret
 
 
@@ -155,7 +157,7 @@ def test_override_ini_paths(pytester: pytest.Pytester) -> None:
     )
     pytester.makepyfile(
         r"""
-        def test_overriden(pytestconfig):
+        def test_overridden(pytestconfig):
             config_paths = pytestconfig.getini("paths")
             print(config_paths)
             for cpf in config_paths:

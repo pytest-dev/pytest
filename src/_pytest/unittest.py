@@ -1,6 +1,9 @@
 # mypy: allow-untyped-defs
 """Discover and run std-library "unittest" style tests."""
 
+from __future__ import annotations
+
+import inspect
 import sys
 import traceback
 import types
@@ -8,8 +11,6 @@ from typing import Any
 from typing import Callable
 from typing import Generator
 from typing import Iterable
-from typing import List
-from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import TYPE_CHECKING
@@ -32,27 +33,36 @@ from _pytest.runner import CallInfo
 import pytest
 
 
+if sys.version_info[:2] < (3, 11):
+    from exceptiongroup import ExceptionGroup
+
 if TYPE_CHECKING:
     import unittest
 
     import twisted.trial.unittest
 
-    _SysExcInfoType = Union[
-        Tuple[Type[BaseException], BaseException, types.TracebackType],
-        Tuple[None, None, None],
-    ]
+
+_SysExcInfoType = Union[
+    Tuple[Type[BaseException], BaseException, types.TracebackType],
+    Tuple[None, None, None],
+]
 
 
 def pytest_pycollect_makeitem(
-    collector: Union[Module, Class], name: str, obj: object
-) -> Optional["UnitTestCase"]:
-    # Has unittest been imported and is obj a subclass of its TestCase?
+    collector: Module | Class, name: str, obj: object
+) -> UnitTestCase | None:
     try:
+        # Has unittest been imported?
         ut = sys.modules["unittest"]
+        # Is obj a subclass of unittest.TestCase?
         # Type ignored because `ut` is an opaque module.
         if not issubclass(obj, ut.TestCase):  # type: ignore
             return None
     except Exception:
+        return None
+    # Is obj a concrete class?
+    # Abstract classes can't be instantiated so no point collecting them.
+    if inspect.isabstract(obj):
         return None
     # Yes, so let's collect it.
     return UnitTestCase.from_parent(collector, name=name, obj=obj)
@@ -71,7 +81,7 @@ class UnitTestCase(Class):
         # it.
         return self.obj("runTest")
 
-    def collect(self) -> Iterable[Union[Item, Collector]]:
+    def collect(self) -> Iterable[Item | Collector]:
         from unittest import TestLoader
 
         cls = self.obj
@@ -111,6 +121,20 @@ class UnitTestCase(Class):
             return None
         cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
+        def process_teardown_exceptions() -> None:
+            # tearDown_exceptions is a list set in the class containing exc_infos for errors during
+            # teardown for the class.
+            exc_infos = getattr(cls, "tearDown_exceptions", None)
+            if not exc_infos:
+                return
+            exceptions = [exc for (_, exc, _) in exc_infos]
+            # If a single exception, raise it directly as this provides a more readable
+            # error (hopefully this will improve in #12255).
+            if len(exceptions) == 1:
+                raise exceptions[0]
+            else:
+                raise ExceptionGroup("Unittest class cleanup errors", exceptions)
+
         def unittest_setup_class_fixture(
             request: FixtureRequest,
         ) -> Generator[None, None, None]:
@@ -125,6 +149,7 @@ class UnitTestCase(Class):
                 # follow this here.
                 except Exception:
                     cleanup()
+                    process_teardown_exceptions()
                     raise
             yield
             try:
@@ -132,6 +157,7 @@ class UnitTestCase(Class):
                     teardown()
             finally:
                 cleanup()
+                process_teardown_exceptions()
 
         self.session._fixturemanager._register_fixture(
             # Use a unique name to speed up lookup.
@@ -175,7 +201,7 @@ class UnitTestCase(Class):
 
 class TestCaseFunction(Function):
     nofuncargs = True
-    _excinfo: Optional[List[_pytest._code.ExceptionInfo[BaseException]]] = None
+    _excinfo: list[_pytest._code.ExceptionInfo[BaseException]] | None = None
 
     def _getinstance(self):
         assert isinstance(self.parent, UnitTestCase)
@@ -189,20 +215,21 @@ class TestCaseFunction(Function):
 
     def setup(self) -> None:
         # A bound method to be called during teardown() if set (see 'runtest()').
-        self._explicit_tearDown: Optional[Callable[[], None]] = None
+        self._explicit_tearDown: Callable[[], None] | None = None
         super().setup()
 
     def teardown(self) -> None:
-        super().teardown()
         if self._explicit_tearDown is not None:
             self._explicit_tearDown()
             self._explicit_tearDown = None
         self._obj = None
+        del self._instance
+        super().teardown()
 
-    def startTest(self, testcase: "unittest.TestCase") -> None:
+    def startTest(self, testcase: unittest.TestCase) -> None:
         pass
 
-    def _addexcinfo(self, rawexcinfo: "_SysExcInfoType") -> None:
+    def _addexcinfo(self, rawexcinfo: _SysExcInfoType) -> None:
         # Unwrap potential exception info (see twisted trial support below).
         rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
         try:
@@ -238,7 +265,7 @@ class TestCaseFunction(Function):
         self.__dict__.setdefault("_excinfo", []).append(excinfo)
 
     def addError(
-        self, testcase: "unittest.TestCase", rawexcinfo: "_SysExcInfoType"
+        self, testcase: unittest.TestCase, rawexcinfo: _SysExcInfoType
     ) -> None:
         try:
             if isinstance(rawexcinfo[1], exit.Exception):
@@ -248,11 +275,11 @@ class TestCaseFunction(Function):
         self._addexcinfo(rawexcinfo)
 
     def addFailure(
-        self, testcase: "unittest.TestCase", rawexcinfo: "_SysExcInfoType"
+        self, testcase: unittest.TestCase, rawexcinfo: _SysExcInfoType
     ) -> None:
         self._addexcinfo(rawexcinfo)
 
-    def addSkip(self, testcase: "unittest.TestCase", reason: str) -> None:
+    def addSkip(self, testcase: unittest.TestCase, reason: str) -> None:
         try:
             raise pytest.skip.Exception(reason, _use_item_location=True)
         except skip.Exception:
@@ -260,8 +287,8 @@ class TestCaseFunction(Function):
 
     def addExpectedFailure(
         self,
-        testcase: "unittest.TestCase",
-        rawexcinfo: "_SysExcInfoType",
+        testcase: unittest.TestCase,
+        rawexcinfo: _SysExcInfoType,
         reason: str = "",
     ) -> None:
         try:
@@ -271,8 +298,8 @@ class TestCaseFunction(Function):
 
     def addUnexpectedSuccess(
         self,
-        testcase: "unittest.TestCase",
-        reason: Optional["twisted.trial.unittest.Todo"] = None,
+        testcase: unittest.TestCase,
+        reason: twisted.trial.unittest.Todo | None = None,
     ) -> None:
         msg = "Unexpected success"
         if reason:
@@ -283,13 +310,13 @@ class TestCaseFunction(Function):
         except fail.Exception:
             self._addexcinfo(sys.exc_info())
 
-    def addSuccess(self, testcase: "unittest.TestCase") -> None:
+    def addSuccess(self, testcase: unittest.TestCase) -> None:
         pass
 
-    def stopTest(self, testcase: "unittest.TestCase") -> None:
+    def stopTest(self, testcase: unittest.TestCase) -> None:
         pass
 
-    def addDuration(self, testcase: "unittest.TestCase", elapsed: float) -> None:
+    def addDuration(self, testcase: unittest.TestCase, elapsed: float) -> None:
         pass
 
     def runtest(self) -> None:

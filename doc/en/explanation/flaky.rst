@@ -18,7 +18,7 @@ System state
 
 Broadly speaking, a flaky test indicates that the test relies on some system state that is not being appropriately controlled - the test environment is not sufficiently isolated. Higher level tests are more likely to be flaky as they rely on more state.
 
-Flaky tests sometimes appear when a test suite is run in parallel (such as use of pytest-xdist). This can indicate a test is reliant on test ordering.
+Flaky tests sometimes appear when a test suite is run in parallel (such as use of `pytest-xdist`_). This can indicate a test is reliant on test ordering.
 
 -  Perhaps a different test is failing to clean up after itself and leaving behind data which causes the flaky test to fail.
 - The flaky test is reliant on data from a previous test that doesn't clean up after itself, and in parallel runs that previous test is not always present
@@ -30,9 +30,22 @@ Overly strict assertion
 
 Overly strict assertions can cause problems with floating point comparison as well as timing issues. :func:`pytest.approx` is useful here.
 
+Thread safety
+~~~~~~~~~~~~~
 
-Pytest features
-^^^^^^^^^^^^^^^
+pytest is single-threaded, executing its tests always in the same thread, sequentially, never spawning any threads itself.
+
+Even in case of plugins which run tests in parallel, for example `pytest-xdist`_, usually work by spawning multiple *processes* and running tests in batches, without using multiple threads.
+
+It is of course possible (and common) for tests and fixtures to spawn threads themselves as part of their testing workflow (for example, a fixture that starts a server thread in the background, or a test which executes production code that spawns threads), but some care must be taken:
+
+* Make sure to eventually wait on any spawned threads -- for example at the end of a test, or during the teardown of a fixture.
+* Avoid using primitives provided by pytest (:func:`pytest.warns`, :func:`pytest.raises`, etc) from multiple threads, as they are not thread-safe.
+
+If your test suite uses threads and your are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself.
+
+Related features
+^^^^^^^^^^^^^^^^
 
 Xfail strict
 ~~~~~~~~~~~~
@@ -123,3 +136,6 @@ Resources
 
   * `Flaky Tests at Google and How We Mitigate Them <https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html>`_ by John Micco, 2016
   * `Where do Google's flaky tests come from? <https://testing.googleblog.com/2017/04/where-do-our-flaky-tests-come-from.html>`_  by Jeff Listfield, 2017
+
+
+.. _pytest-xdist: https://github.com/pytest-dev/pytest-xdist

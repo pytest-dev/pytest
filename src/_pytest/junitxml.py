@@ -8,18 +8,16 @@ Output conforms to
 https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
 
+from __future__ import annotations
+
 from datetime import datetime
+from datetime import timezone
 import functools
 import os
 import platform
 import re
 from typing import Callable
-from typing import Dict
-from typing import List
 from typing import Match
-from typing import Optional
-from typing import Tuple
-from typing import Union
 import xml.etree.ElementTree as ET
 
 from _pytest import nodes
@@ -53,9 +51,9 @@ def bin_xml_escape(arg: object) -> str:
     def repl(matchobj: Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
-            return "#x%02X" % i
+            return f"#x{i:02X}"
         else:
-            return "#x%04X" % i
+            return f"#x{i:04X}"
 
     # The spec range of valid chars is:
     # Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
@@ -89,15 +87,15 @@ families["xunit2"] = families["_base"]
 
 
 class _NodeReporter:
-    def __init__(self, nodeid: Union[str, TestReport], xml: "LogXML") -> None:
+    def __init__(self, nodeid: str | TestReport, xml: LogXML) -> None:
         self.id = nodeid
         self.xml = xml
         self.add_stats = self.xml.add_stats
         self.family = self.xml.family
         self.duration = 0.0
-        self.properties: List[Tuple[str, str]] = []
-        self.nodes: List[ET.Element] = []
-        self.attrs: Dict[str, str] = {}
+        self.properties: list[tuple[str, str]] = []
+        self.nodes: list[ET.Element] = []
+        self.attrs: dict[str, str] = {}
 
     def append(self, node: ET.Element) -> None:
         self.xml.add_stats(node.tag)
@@ -109,7 +107,7 @@ class _NodeReporter:
     def add_attribute(self, name: str, value: object) -> None:
         self.attrs[str(name)] = bin_xml_escape(value)
 
-    def make_properties_node(self) -> Optional[ET.Element]:
+    def make_properties_node(self) -> ET.Element | None:
         """Return a Junit node containing custom properties, if any."""
         if self.properties:
             properties = ET.Element("properties")
@@ -124,7 +122,7 @@ class _NodeReporter:
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
-        attrs: Dict[str, str] = {
+        attrs: dict[str, str] = {
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
             "file": testreport.location[0],
@@ -149,14 +147,14 @@ class _NodeReporter:
         self.attrs = temp_attrs
 
     def to_xml(self) -> ET.Element:
-        testcase = ET.Element("testcase", self.attrs, time="%.3f" % self.duration)
+        testcase = ET.Element("testcase", self.attrs, time=f"{self.duration:.3f}")
         properties = self.make_properties_node()
         if properties is not None:
             testcase.append(properties)
         testcase.extend(self.nodes)
         return testcase
 
-    def _add_simple(self, tag: str, message: str, data: Optional[str] = None) -> None:
+    def _add_simple(self, tag: str, message: str, data: str | None = None) -> None:
         node = ET.Element(tag, message=message)
         node.text = bin_xml_escape(data)
         self.append(node)
@@ -201,7 +199,7 @@ class _NodeReporter:
             self._add_simple("skipped", "xfail-marked test passes unexpectedly")
         else:
             assert report.longrepr is not None
-            reprcrash: Optional[ReprFileLocation] = getattr(
+            reprcrash: ReprFileLocation | None = getattr(
                 report.longrepr, "reprcrash", None
             )
             if reprcrash is not None:
@@ -221,9 +219,7 @@ class _NodeReporter:
 
     def append_error(self, report: TestReport) -> None:
         assert report.longrepr is not None
-        reprcrash: Optional[ReprFileLocation] = getattr(
-            report.longrepr, "reprcrash", None
-        )
+        reprcrash: ReprFileLocation | None = getattr(report.longrepr, "reprcrash", None)
         if reprcrash is not None:
             reason = reprcrash.message
         else:
@@ -451,7 +447,7 @@ def pytest_unconfigure(config: Config) -> None:
         config.pluginmanager.unregister(xml)
 
 
-def mangle_test_address(address: str) -> List[str]:
+def mangle_test_address(address: str) -> list[str]:
     path, possible_open_bracket, params = address.partition("[")
     names = path.split("::")
     # Convert file path to dotted path.
@@ -466,7 +462,7 @@ class LogXML:
     def __init__(
         self,
         logfile,
-        prefix: Optional[str],
+        prefix: str | None,
         suite_name: str = "pytest",
         logging: str = "no",
         report_duration: str = "total",
@@ -481,17 +477,15 @@ class LogXML:
         self.log_passing_tests = log_passing_tests
         self.report_duration = report_duration
         self.family = family
-        self.stats: Dict[str, int] = dict.fromkeys(
+        self.stats: dict[str, int] = dict.fromkeys(
             ["error", "passed", "failure", "skipped"], 0
         )
-        self.node_reporters: Dict[
-            Tuple[Union[str, TestReport], object], _NodeReporter
-        ] = {}
-        self.node_reporters_ordered: List[_NodeReporter] = []
-        self.global_properties: List[Tuple[str, str]] = []
+        self.node_reporters: dict[tuple[str | TestReport, object], _NodeReporter] = {}
+        self.node_reporters_ordered: list[_NodeReporter] = []
+        self.global_properties: list[tuple[str, str]] = []
 
         # List of reports that failed on call but teardown is pending.
-        self.open_reports: List[TestReport] = []
+        self.open_reports: list[TestReport] = []
         self.cnt_double_fail_tests = 0
 
         # Replaces convenience family with real family.
@@ -510,8 +504,8 @@ class LogXML:
         if reporter is not None:
             reporter.finalize()
 
-    def node_reporter(self, report: Union[TestReport, str]) -> _NodeReporter:
-        nodeid: Union[str, TestReport] = getattr(report, "nodeid", report)
+    def node_reporter(self, report: TestReport | str) -> _NodeReporter:
+        nodeid: str | TestReport = getattr(report, "nodeid", report)
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
 
@@ -670,8 +664,10 @@ class LogXML:
                 failures=str(self.stats["failure"]),
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
-                time="%.3f" % suite_time_delta,
-                timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
+                time=f"{suite_time_delta:.3f}",
+                timestamp=datetime.fromtimestamp(self.suite_start_time, timezone.utc)
+                .astimezone()
+                .isoformat(),
                 hostname=platform.node(),
             )
             global_properties = self._get_global_properties_node()
@@ -691,7 +687,7 @@ class LogXML:
         _check_record_param_type("name", name)
         self.global_properties.append((name, bin_xml_escape(value)))
 
-    def _get_global_properties_node(self) -> Optional[ET.Element]:
+    def _get_global_properties_node(self) -> ET.Element | None:
         """Return a Junit node containing custom properties, if any."""
         if self.global_properties:
             properties = ET.Element("properties")

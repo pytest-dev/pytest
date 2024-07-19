@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
+import sys
 
 import requests
 
@@ -17,7 +20,7 @@ def get_issues():
         if r.status_code == 403:
             # API request limit exceeded
             print(data["message"])
-            exit(1)
+            sys.exit(1)
         issues.extend(data)
 
         # Look for next page
@@ -60,7 +63,7 @@ def report(issues):
         kind = _get_kind(issue)
         status = issue["state"]
         number = issue["number"]
-        link = "https://github.com/pytest-dev/pytest/issues/%s/" % number
+        link = f"https://github.com/pytest-dev/pytest/issues/{number}/"
         print("----")
         print(status, kind, link)
         print(title)
@@ -69,7 +72,7 @@ def report(issues):
         # print("\n".join(lines[:3]))
         # if len(lines) > 3 or len(body) > 240:
         #    print("...")
-    print("\n\nFound %s open issues" % len(issues))
+    print(f"\n\nFound {len(issues)} open issues")
 
 
 if __name__ == "__main__":

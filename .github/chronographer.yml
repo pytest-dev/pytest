@@ -1,0 +1,20 @@
+---
+
+branch-protection-check-name: Changelog entry
+action-hints:
+  check-title-prefix: "Chronographer: "
+  external-docs-url: >-
+    https://docs.pytest.org/en/latest/contributing.html#preparing-pull-requests
+  inline-markdown: >-
+    See
+    https://docs.pytest.org/en/latest/contributing.html#preparing-pull-requests
+    for details.
+enforce-name:
+  suffix: .rst
+exclude:
+  humans:
+  - pyup-bot
+labels:
+  skip-changelog: skip news
+
+...

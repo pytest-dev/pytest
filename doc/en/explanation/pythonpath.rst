@@ -8,15 +8,15 @@ pytest import mechanisms and ``sys.path``/``PYTHONPATH``
 Import modes
 ------------
 
-pytest as a testing framework needs to import test modules and ``conftest.py`` files for execution.
+pytest as a testing framework that needs to import test modules and ``conftest.py`` files for execution.
 
-Importing files in Python is a non-trivial processes, so aspects of the
+Importing files in Python is a non-trivial process, so aspects of the
 import process can be controlled through the ``--import-mode`` command-line flag, which can assume
 these values:
 
 .. _`import-mode-prepend`:
 
-* ``prepend`` (default): the directory path containing each module will be inserted into the *beginning*
+* ``prepend`` (default): The directory path containing each module will be inserted into the *beginning*
   of :py:data:`sys.path` if not already there, and then imported with
   the :func:`importlib.import_module <importlib.import_module>` function.
 
@@ -34,7 +34,7 @@ these values:
 * ``append``: the directory containing each module is appended to the end of :py:data:`sys.path` if not already
   there, and imported with :func:`importlib.import_module <importlib.import_module>`.
 
-  This better allows to run test modules against installed versions of a package even if the
+  This better allows users to run test modules against installed versions of a package even if the
   package under test has the same import root. For example:
 
   ::
@@ -45,7 +45,7 @@ these values:
 
   the tests will run against the installed version
   of ``pkg_under_test`` when ``--import-mode=append`` is used whereas
-  with ``prepend`` they would pick up the local version. This kind of confusion is why
+  with ``prepend``, they would pick up the local version. This kind of confusion is why
   we advocate for using :ref:`src-layouts <src-layout>`.
 
   Same as ``prepend``, requires test module names to be unique when the test directory tree is
@@ -67,7 +67,7 @@ these values:
     are not importable. The recommendation in this case it to place testing utility modules together with the application/library
     code, for example ``app.testing.helpers``.
 
-    Important: by "test utility modules" we mean functions/classes which are imported by
+    Important: by "test utility modules", we mean functions/classes which are imported by
     other tests directly; this does not include fixtures, which should be placed in ``conftest.py`` files, along
     with the test modules, and are discovered automatically by pytest.
 
@@ -76,8 +76,8 @@ these values:
   1. Given a certain module path, for example ``tests/core/test_models.py``, derives a canonical name
      like ``tests.core.test_models`` and tries to import it.
 
-     For non-test modules this will work if they are accessible via :py:data:`sys.path`, so
-     for example ``.env/lib/site-packages/app/core.py`` will be importable as ``app.core``.
+     For non-test modules, this will work if they are accessible via :py:data:`sys.path`. So
+     for example, ``.env/lib/site-packages/app/core.py`` will be importable as ``app.core``.
      This is happens when plugins import non-test modules (for example doctesting).
 
      If this step succeeds, the module is returned.

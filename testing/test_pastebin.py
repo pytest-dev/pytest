@@ -1,8 +1,8 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import email.message
 import io
-from typing import List
-from typing import Union
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -11,8 +11,8 @@ import pytest
 
 class TestPasteCapture:
     @pytest.fixture
-    def pastebinlist(self, monkeypatch, request) -> List[Union[str, bytes]]:
-        pastebinlist: List[Union[str, bytes]] = []
+    def pastebinlist(self, monkeypatch, request) -> list[str | bytes]:
+        pastebinlist: list[str | bytes] = []
         plugin = request.config.pluginmanager.getplugin("pastebin")
         monkeypatch.setattr(plugin, "create_new_paste", pastebinlist.append)
         return pastebinlist
@@ -171,7 +171,7 @@ class TestPaste:
         assert type(data) is bytes
         lexer = "text"
         assert url == "https://bpa.st"
-        assert "lexer=%s" % lexer in data.decode()
+        assert f"lexer={lexer}" in data.decode()
         assert "code=full-paste-contents" in data.decode()
         assert "expiry=1week" in data.decode()
 

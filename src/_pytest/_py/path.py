@@ -161,15 +161,13 @@ class Visitor:
         )
         if not self.breadthfirst:
             for subdir in dirs:
-                for p in self.gen(subdir):
-                    yield p
+                yield from self.gen(subdir)
         for p in self.optsort(entries):
             if self.fil is None or self.fil(p):
                 yield p
         if self.breadthfirst:
             for subdir in dirs:
-                for p in self.gen(subdir):
-                    yield p
+                yield from self.gen(subdir)
 
 
 class FNMatcher:
@@ -659,7 +657,7 @@ class LocalPath:
         )
         if "basename" in kw:
             if "purebasename" in kw or "ext" in kw:
-                raise ValueError("invalid specification %r" % kw)
+                raise ValueError(f"invalid specification {kw!r}")
         else:
             pb = kw.setdefault("purebasename", purebasename)
             try:
@@ -705,7 +703,7 @@ class LocalPath:
                     elif name == "ext":
                         res.append(ext)
                     else:
-                        raise ValueError("invalid part specification %r" % name)
+                        raise ValueError(f"invalid part specification {name!r}")
         return res
 
     def dirpath(self, *args, **kwargs):
@@ -836,7 +834,7 @@ class LocalPath:
     def copy(self, target, mode=False, stat=False):
         """Copy path to target.
 
-        If mode is True, will copy copy permission from path to target.
+        If mode is True, will copy permission from path to target.
         If stat is True, copy permission, last modification
         time, last access time, and flags from path to target.
         """
@@ -1026,7 +1024,7 @@ class LocalPath:
         return self.stat().atime
 
     def __repr__(self):
-        return "local(%r)" % self.strpath
+        return f"local({self.strpath!r})"
 
     def __str__(self):
         """Return string representation of the Path."""
@@ -1047,7 +1045,7 @@ class LocalPath:
     def pypkgpath(self):
         """Return the Python package path by looking for the last
         directory upwards which still contains an __init__.py.
-        Return None if a pkgpath can not be determined.
+        Return None if a pkgpath cannot be determined.
         """
         pkgpath = None
         for parent in self.parts(reverse=True):

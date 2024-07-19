@@ -1,0 +1,38 @@
+The readability of assertion introspection of bound methods has been enhanced
+-- by :user:`farbodahm`, :user:`webknjaz`, :user:`obestwalter`, :user:`flub`
+and :user:`glyphack`.
+
+Earlier, it was like:
+
+.. code-block:: console
+
+    =================================== FAILURES ===================================
+    _____________________________________ test _____________________________________
+
+        def test():
+    >       assert Help().fun() == 2
+    E       assert 1 == 2
+    E        +  where 1 = <bound method Help.fun of <example.Help instance at 0x256a830>>()
+    E        +    where <bound method Help.fun of <example.Help instance at 0x256a830>> = <example.Help instance at 0x256a830>.fun
+    E        +      where <example.Help instance at 0x256a830> = Help()
+
+    example.py:7: AssertionError
+    =========================== 1 failed in 0.03 seconds ===========================
+
+
+And now it's like:
+
+.. code-block:: console
+
+    =================================== FAILURES ===================================
+    _____________________________________ test _____________________________________
+
+        def test():
+    >       assert Help().fun() == 2
+    E       assert 1 == 2
+    E        +  where 1 = fun()
+    E        +    where fun = <test_local.Help object at 0x1074be230>.fun
+    E        +      where <test_local.Help object at 0x1074be230> = Help()
+
+    test_local.py:13: AssertionError
+    =========================== 1 failed in 0.03 seconds ===========================

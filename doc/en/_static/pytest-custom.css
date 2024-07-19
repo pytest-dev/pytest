@@ -1,0 +1,21 @@
+/* Tweak how the sidebar logo is presented */
+.sidebar-logo {
+  width: 70%;
+}
+.sidebar-brand {
+  padding: 0;
+}
+
+/* The landing pages' sidebar-in-content highlights */
+#features ul {
+  padding-left: 1rem;
+  list-style: none;
+}
+#features ul li {
+  margin-bottom: 0;
+}
+@media (min-width: 46em) {
+  #features {
+    width: 50%;
+  }
+}

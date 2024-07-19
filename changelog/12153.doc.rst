@@ -1,0 +1,1 @@
+Documented using :envvar:`PYTEST_VERSION` to detect if code is running from within a pytest run.

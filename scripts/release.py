@@ -1,6 +1,8 @@
 # mypy: disallow-untyped-defs
 """Invoke development tasks."""
 
+from __future__ import annotations
+
 import argparse
 import os
 from pathlib import Path

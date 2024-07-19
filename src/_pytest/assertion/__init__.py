@@ -1,11 +1,11 @@
 # mypy: allow-untyped-defs
 """Support for presenting detailed information in failing assertions."""
 
+from __future__ import annotations
+
 import sys
 from typing import Any
 from typing import Generator
-from typing import List
-from typing import Optional
 from typing import TYPE_CHECKING
 
 from _pytest.assertion import rewrite
@@ -94,7 +94,7 @@ class AssertionState:
     def __init__(self, config: Config, mode) -> None:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
-        self.hook: Optional[rewrite.AssertionRewritingHook] = None
+        self.hook: rewrite.AssertionRewritingHook | None = None
 
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
@@ -113,7 +113,7 @@ def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
     return hook
 
 
-def pytest_collection(session: "Session") -> None:
+def pytest_collection(session: Session) -> None:
     # This hook is only called when test modules are collected
     # so for example not in the managing process of pytest-xdist
     # (which does not collect test modules).
@@ -133,7 +133,7 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     """
     ihook = item.ihook
 
-    def callbinrepr(op, left: object, right: object) -> Optional[str]:
+    def callbinrepr(op, left: object, right: object) -> str | None:
         """Call the pytest_assertrepr_compare hook and prepare the result.
 
         This uses the first result from the hook and then ensures the
@@ -179,7 +179,7 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
         util._config = None
 
 
-def pytest_sessionfinish(session: "Session") -> None:
+def pytest_sessionfinish(session: Session) -> None:
     assertstate = session.config.stash.get(assertstate_key, None)
     if assertstate:
         if assertstate.hook is not None:
@@ -188,5 +188,5 @@ def pytest_sessionfinish(session: "Session") -> None:
 
 def pytest_assertrepr_compare(
     config: Config, op: str, left: Any, right: Any
-) -> Optional[List[str]]:
+) -> list[str] | None:
     return util.assertrepr_compare(config=config, op=op, left=left, right=right)

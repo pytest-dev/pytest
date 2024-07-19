@@ -1,9 +1,10 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 import sys
 import textwrap
 from typing import Any
-from typing import Dict
 
 import _pytest._code
 from _pytest.config import ExitCode
@@ -36,9 +37,9 @@ class TestModule:
             [
                 "*import*mismatch*",
                 "*imported*test_whatever*",
-                "*%s*" % p1,
+                f"*{p1}*",
                 "*not the same*",
-                "*%s*" % p2,
+                f"*{p2}*",
                 "*HINT*",
             ]
         )
@@ -261,6 +262,32 @@ class TestClass:
         )
         result = pytester.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+    def test_abstract_class_is_not_collected(self, pytester: Pytester) -> None:
+        """Regression test for #12275 (non-unittest version)."""
+        pytester.makepyfile(
+            """
+            import abc
+
+            class TestBase(abc.ABC):
+                @abc.abstractmethod
+                def abstract1(self): pass
+
+                @abc.abstractmethod
+                def abstract2(self): pass
+
+                def test_it(self): pass
+
+            class TestPartial(TestBase):
+                def abstract1(self): pass
+
+            class TestConcrete(TestPartial):
+                def abstract2(self): pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=1)
 
 
 class TestFunction:
@@ -1103,7 +1130,7 @@ class TestTracebackCutting:
 
         tb = None
         try:
-            ns: Dict[str, Any] = {}
+            ns: dict[str, Any] = {}
             exec("def foo(): raise ValueError", ns)
             ns["foo"]()
         except ValueError:

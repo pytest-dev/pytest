@@ -31,3 +31,5 @@ c9df77cbd6a365dcb73c39618e4842711817e871
 4546d5445aaefe6a03957db028c263521dfb5c4b
 # Migration to ruff / ruff format
 4588653b2497ed25976b7aaff225b889fb476756
+# Use format specifiers instead of percent format
+4788165e69d08e10fc6b9c0124083fb358e2e9b0

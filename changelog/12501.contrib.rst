@@ -1,0 +1,11 @@
+The changelog configuration has been updated to introduce more accurate
+audience-tailored categories. Previously, there was a ``trivial``
+change log fragment type with an unclear and broad meaning. It was
+removed and we now have ``contrib``, ``misc`` and ``packaging`` in
+place of it.
+
+The new change note types target the readers who are downstream
+packagers and project contributors. Additionally, the miscellaneous
+section is kept for unspecified updates that do not fit anywhere else.
+
+-- by :user:`webknjaz`

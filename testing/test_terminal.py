@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 """Terminal reporting of the full testing process."""
 
+from __future__ import annotations
+
 from io import StringIO
 import os
 from pathlib import Path
@@ -8,10 +10,7 @@ import sys
 import textwrap
 from types import SimpleNamespace
 from typing import cast
-from typing import Dict
-from typing import List
 from typing import NamedTuple
-from typing import Tuple
 
 import pluggy
 
@@ -327,16 +326,17 @@ class TestTerminal:
         tr.rewrite("hey", erase=True)
         assert f.getvalue() == "hello" + "\r" + "hey" + (6 * " ")
 
+    @pytest.mark.parametrize("category", ["foo", "failed", "error", "passed"])
     def test_report_teststatus_explicit_markup(
-        self, monkeypatch: MonkeyPatch, pytester: Pytester, color_mapping
+        self, monkeypatch: MonkeyPatch, pytester: Pytester, color_mapping, category: str
     ) -> None:
         """Test that TerminalReporter handles markup explicitly provided by
         a pytest_report_teststatus hook."""
         monkeypatch.setenv("PY_COLORS", "1")
         pytester.makeconftest(
-            """
+            f"""
             def pytest_report_teststatus(report):
-                return 'foo', 'F', ('FOO', {'red': True})
+                return {category !r}, 'F', ('FOO', {{'red': True}})
         """
         )
         pytester.makepyfile(
@@ -345,7 +345,9 @@ class TestTerminal:
                 pass
         """
         )
+
         result = pytester.runpytest("-v")
+        assert not result.stderr.lines
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(["*{red}FOO{reset}*"])
         )
@@ -926,7 +928,7 @@ class TestTerminalFunctional:
     def test_header_absolute_testpath(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
-        """Regresstion test for #7814."""
+        """Regression test for #7814."""
         tests = pytester.path.joinpath("tests")
         tests.mkdir()
         pytester.makepyprojecttoml(
@@ -1147,6 +1149,44 @@ class TestTerminalFunctional:
         expected = "SKIPPED [1] test_summary_s_alias.py:3: unconditional skip"
         result.stdout.fnmatch_lines([expected])
         assert result.stdout.lines.count(expected) == 1
+
+    def test_summary_s_folded(self, pytester: Pytester) -> None:
+        """Test that skipped tests are correctly folded"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("param", [True, False])
+            @pytest.mark.skip("Some reason")
+            def test(param):
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs")
+        expected = "SKIPPED [2] test_summary_s_folded.py:3: Some reason"
+        result.stdout.fnmatch_lines([expected])
+        assert result.stdout.lines.count(expected) == 1
+
+    def test_summary_s_unfolded(self, pytester: Pytester) -> None:
+        """Test that skipped tests are not folded if --no-fold-skipped is set"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("param", [True, False])
+            @pytest.mark.skip("Some reason")
+            def test(param):
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs", "--no-fold-skipped")
+        expected = [
+            "SKIPPED test_summary_s_unfolded.py::test[True] - Skipped: Some reason",
+            "SKIPPED test_summary_s_unfolded.py::test[False] - Skipped: Some reason",
+        ]
+        result.stdout.fnmatch_lines(expected)
+        assert result.stdout.lines.count(expected[0]) == 1
+        assert result.stdout.lines.count(expected[1]) == 1
 
 
 @pytest.mark.parametrize(
@@ -1421,7 +1461,7 @@ def test_tbstyle_short(pytester: Pytester) -> None:
     s = result.stdout.str()
     assert "arg = 42" not in s
     assert "x = 0" not in s
-    result.stdout.fnmatch_lines(["*%s:8*" % p.name, "    assert x", "E   assert*"])
+    result.stdout.fnmatch_lines([f"*{p.name}:8*", "    assert x", "E   assert*"])
     result = pytester.runpytest()
     s = result.stdout.str()
     assert "x = 0" in s
@@ -1497,8 +1537,8 @@ class TestGenericReporting:
         """
         )
         for tbopt in ["long", "short", "no"]:
-            print("testing --tb=%s..." % tbopt)
-            result = pytester.runpytest("-rN", "--tb=%s" % tbopt)
+            print(f"testing --tb={tbopt}...")
+            result = pytester.runpytest("-rN", f"--tb={tbopt}")
             s = result.stdout.str()
             if tbopt == "long":
                 assert "print(6*7)" in s
@@ -1528,7 +1568,7 @@ class TestGenericReporting:
         result = pytester.runpytest("--tb=line")
         bn = p.name
         result.stdout.fnmatch_lines(
-            ["*%s:3: IndexError*" % bn, "*%s:8: AssertionError: hello*" % bn]
+            [f"*{bn}:3: IndexError*", f"*{bn}:8: AssertionError: hello*"]
         )
         s = result.stdout.str()
         assert "def test_func2" not in s
@@ -1544,7 +1584,7 @@ class TestGenericReporting:
         result = pytester.runpytest("--tb=line")
         result.stdout.str()
         bn = p.name
-        result.stdout.fnmatch_lines(["*%s:3: Failed: test_func1" % bn])
+        result.stdout.fnmatch_lines([f"*{bn}:3: Failed: test_func1"])
 
     def test_pytest_report_header(self, pytester: Pytester, option) -> None:
         pytester.makeconftest(
@@ -1929,9 +1969,9 @@ def tr() -> TerminalReporter:
 )
 def test_summary_stats(
     tr: TerminalReporter,
-    exp_line: List[Tuple[str, Dict[str, bool]]],
+    exp_line: list[tuple[str, dict[str, bool]]],
     exp_color: str,
-    stats_arg: Dict[str, List[object]],
+    stats_arg: dict[str, list[object]],
 ) -> None:
     tr.stats = stats_arg
 
@@ -1945,7 +1985,7 @@ def test_summary_stats(
     # Reset cache.
     tr._main_color = None
 
-    print("Based on stats: %s" % stats_arg)
+    print(f"Based on stats: {stats_arg}")
     print(f'Expect summary: "{exp_line}"; with color "{exp_color}"')
     (line, color) = tr.build_summary_stats_line()
     print(f'Actually got:   "{line}"; with color "{color}"')
@@ -2377,12 +2417,17 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
 
     monkeypatch.setattr(_pytest.terminal, "_get_node_id_with_markup", mock_get_pos)
 
+    class Namespace:
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+
     class config:
-        pass
+        def __init__(self):
+            self.option = Namespace(verbose=0)
 
     class rep:
-        def _get_verbose_word(self, *args):
-            return mocked_verbose_word
+        def _get_verbose_word_with_markup(self, *args):
+            return mocked_verbose_word, {}
 
         class longrepr:
             class reprcrash:
@@ -2399,7 +2444,7 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
         if msg:
             rep.longrepr.reprcrash.message = msg  # type: ignore
         actual = _get_line_with_reprcrash_message(
-            config,  # type: ignore[arg-type]
+            config(),  # type: ignore[arg-type]
             rep(),  # type: ignore[arg-type]
             DummyTerminalWriter(),  # type: ignore[arg-type]
             {},
@@ -2441,6 +2486,43 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
     check("🉐🉐🉐🉐🉐\n2nd line", 41, "FAILED nodeid::🉐::withunicode - 🉐🉐...")
     check("🉐🉐🉐🉐🉐\n2nd line", 42, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐...")
     check("🉐🉐🉐🉐🉐\n2nd line", 80, "FAILED nodeid::🉐::withunicode - 🉐🉐🉐🉐🉐")
+
+
+def test_short_summary_with_verbose(
+    monkeypatch: MonkeyPatch, pytester: Pytester
+) -> None:
+    """With -vv do not truncate the summary info (#11777)."""
+    # On CI we also do not truncate the summary info, monkeypatch it to ensure we
+    # are testing against the -vv flag on CI.
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+
+    string_length = 200
+    pytester.makepyfile(
+        f"""
+        def test():
+            s1 = "A" * {string_length}
+            s2 = "B" * {string_length}
+            assert s1 == s2
+        """
+    )
+
+    # No -vv, summary info should be truncated.
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            "* assert 'AAA...",
+        ],
+    )
+
+    # No truncation with -vv.
+    result = pytester.runpytest("-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            f"*{'A' * string_length}*{'B' * string_length}'",
+        ]
+    )
 
 
 @pytest.mark.parametrize(
@@ -2567,8 +2649,8 @@ class TestCodeHighlight:
         monkeypatch.setenv("PYTEST_THEME", "invalid")
         result = pytester.runpytest_subprocess("--color=yes")
         result.stderr.fnmatch_lines(
-            "ERROR: PYTEST_THEME environment variable had an invalid value: 'invalid'. "
-            "Only valid pygment styles are allowed."
+            "ERROR: PYTEST_THEME environment variable has an invalid value: 'invalid'. "
+            "Hint: See available pygments styles with `pygmentize -L styles`."
         )
 
     def test_code_highlight_invalid_theme_mode(
@@ -2583,8 +2665,8 @@ class TestCodeHighlight:
         monkeypatch.setenv("PYTEST_THEME_MODE", "invalid")
         result = pytester.runpytest_subprocess("--color=yes")
         result.stderr.fnmatch_lines(
-            "ERROR: PYTEST_THEME_MODE environment variable had an invalid value: 'invalid'. "
-            "The only allowed values are 'dark' and 'light'."
+            "ERROR: PYTEST_THEME_MODE environment variable has an invalid value: 'invalid'. "
+            "The allowed values are 'dark' (default) and 'light'."
         )
 
 
@@ -2867,54 +2949,77 @@ def test_summary_xfail_reason(pytester: Pytester) -> None:
     assert result.stdout.lines.count(expect2) == 1
 
 
-def test_summary_xfail_tb(pytester: Pytester) -> None:
-    pytester.makepyfile(
+@pytest.fixture()
+def xfail_testfile(pytester: Pytester) -> Path:
+    return pytester.makepyfile(
         """
         import pytest
 
-        @pytest.mark.xfail
-        def test_xfail():
+        def test_fail():
             a, b = 1, 2
             assert a == b
+
+        @pytest.mark.xfail
+        def test_xfail():
+            c, d = 3, 4
+            assert c == d
         """
     )
-    result = pytester.runpytest("-rx")
+
+
+def test_xfail_tb_default(xfail_testfile, pytester: Pytester) -> None:
+    result = pytester.runpytest(xfail_testfile)
+
+    # test_fail, show traceback
     result.stdout.fnmatch_lines(
         [
+            "*= FAILURES =*",
+            "*_ test_fail _*",
+            "*def test_fail():*",
+            "*        a, b = 1, 2*",
+            "*>       assert a == b*",
+            "*E       assert 1 == 2*",
+        ]
+    )
+
+    # test_xfail, don't show traceback
+    result.stdout.no_fnmatch_line("*= XFAILURES =*")
+
+
+def test_xfail_tb_true(xfail_testfile, pytester: Pytester) -> None:
+    result = pytester.runpytest(xfail_testfile, "--xfail-tb")
+
+    # both test_fail and test_xfail, show traceback
+    result.stdout.fnmatch_lines(
+        [
+            "*= FAILURES =*",
+            "*_ test_fail _*",
+            "*def test_fail():*",
+            "*        a, b = 1, 2*",
+            "*>       assert a == b*",
+            "*E       assert 1 == 2*",
             "*= XFAILURES =*",
             "*_ test_xfail _*",
-            "* @pytest.mark.xfail*",
-            "* def test_xfail():*",
-            "*    a, b = 1, 2*",
-            "> *assert a == b*",
-            "E *assert 1 == 2*",
-            "test_summary_xfail_tb.py:6: AssertionError*",
-            "*= short test summary info =*",
-            "XFAIL test_summary_xfail_tb.py::test_xfail",
-            "*= 1 xfailed in * =*",
+            "*def test_xfail():*",
+            "*        c, d = 3, 4*",
+            "*>       assert c == d*",
+            "*E       assert 3 == 4*",
+            "*short test summary info*",
         ]
     )
 
 
-def test_xfail_tb_line(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        import pytest
+def test_xfail_tb_line(xfail_testfile, pytester: Pytester) -> None:
+    result = pytester.runpytest(xfail_testfile, "--xfail-tb", "--tb=line")
 
-        @pytest.mark.xfail
-        def test_xfail():
-            a, b = 1, 2
-            assert a == b
-        """
-    )
-    result = pytester.runpytest("-rx", "--tb=line")
+    # both test_fail and test_xfail, show line
     result.stdout.fnmatch_lines(
         [
+            "*= FAILURES =*",
+            "*test_xfail_tb_line.py:5: assert 1 == 2",
             "*= XFAILURES =*",
-            "*test_xfail_tb_line.py:6: assert 1 == 2",
-            "*= short test summary info =*",
-            "XFAIL test_xfail_tb_line.py::test_xfail",
-            "*= 1 xfailed in * =*",
+            "*test_xfail_tb_line.py:10: assert 3 == 4",
+            "*short test summary info*",
         ]
     )
 
