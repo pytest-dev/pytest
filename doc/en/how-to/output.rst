@@ -444,14 +444,6 @@ Example:
     E       assert 0
 
     test_example.py:14: AssertionError
-    ================================ XFAILURES =================================
-    ________________________________ test_xfail ________________________________
-
-        def test_xfail():
-    >       pytest.xfail("xfailing this test")
-    E       _pytest.outcomes.XFailed: xfailing this test
-
-    test_example.py:26: XFailed
     ================================= XPASSES ==================================
     ========================= short test summary info ==========================
     SKIPPED [1] test_example.py:22: skipping this test

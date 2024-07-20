@@ -1,3 +1,0 @@
-The ``_in_venv()`` function now detects Python virtual environments by
-checking for a :file:`pyvenv.cfg` file, ensuring reliable detection on
-various platforms -- by :user:`zachsnickers`.

@@ -1,1 +1,0 @@
-Improve handling of invalid regex patterns in :func:`pytest.raises(match=r'...') <pytest.raises>` by providing a clear error message.
