@@ -31,6 +31,263 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.3.0 (2024-07-20)
+=========================
+
+New features
+------------
+
+- `#12231 <https://github.com/pytest-dev/pytest/issues/12231>`_: Added `--xfail-tb` flag, which turns on traceback output for XFAIL results.
+
+  * If the `--xfail-tb` flag is not sent, tracebacks for XFAIL results are NOT shown.
+  * The style of traceback for XFAIL is set with `--tb`, and can be `auto|long|short|line|native|no`.
+  * Note: Even if you have `--xfail-tb` set, you won't see them if `--tb=no`.
+
+  Some history:
+
+  With pytest 8.0, `-rx` or `-ra` would not only turn on summary reports for xfail, but also report the tracebacks for xfail results. This caused issues with some projects that utilize xfail, but don't want to see all of the xfail tracebacks.
+
+  This change detaches xfail tracebacks from `-rx`, and now we turn on xfail tracebacks with `--xfail-tb`. With this, the default `-rx`/ `-ra` behavior is identical to pre-8.0 with respect to xfail tracebacks. While this is a behavior change, it brings default behavior back to pre-8.0.0 behavior, which ultimately was considered the better course of action.
+
+
+- `#12281 <https://github.com/pytest-dev/pytest/issues/12281>`_: Added support for keyword matching in marker expressions.
+
+  Now tests can be selected by marker keyword arguments.
+  Supported values are :class:`int`, (unescaped) :class:`str`, :class:`bool` & :data:`None`.
+
+  See :ref:`marker examples <marker_keyword_expression_example>` for more information.
+
+  -- by :user:`lovetheguitar`
+
+
+- `#12567 <https://github.com/pytest-dev/pytest/issues/12567>`_: Added ``--no-fold-skipped`` command line option
+
+  If this option is set, then skipped tests in short summary are no longer grouped
+  by reason but all tests are printed individually with correct nodeid in the same
+  way as other statuses.
+
+  -- by :user:`pbrezina`
+
+
+
+Improvements in existing functionality
+--------------------------------------
+
+- `#12467 <https://github.com/pytest-dev/pytest/issues/12467>`_: Migrated all internal type-annotations to the python3.10+ style by using the `annotations` future import.
+
+  -- by :user:`RonnyPfannschmidt`
+
+
+- `#12469 <https://github.com/pytest-dev/pytest/issues/12469>`_: The console output now uses the "third-party plugins" terminology,
+  replacing the previously established but confusing and outdated
+  reference to :std:doc:`setuptools <setuptools:index>`
+  -- by :user:`webknjaz`.
+
+
+- `#12544 <https://github.com/pytest-dev/pytest/issues/12544>`_, `#12545 <https://github.com/pytest-dev/pytest/issues/12545>`_: The ``_in_venv()`` function now detects Python virtual environments by
+  checking for a :file:`pyvenv.cfg` file, ensuring reliable detection on
+  various platforms -- by :user:`zachsnickers`.
+
+
+- `#2871 <https://github.com/pytest-dev/pytest/issues/2871>`_: Do not truncate arguments to functions in output when running with `-vvv`.
+
+
+- `#389 <https://github.com/pytest-dev/pytest/issues/389>`_: The readability of assertion introspection of bound methods has been enhanced
+  -- by :user:`farbodahm`, :user:`webknjaz`, :user:`obestwalter`, :user:`flub`
+  and :user:`glyphack`.
+
+  Earlier, it was like:
+
+  .. code-block:: console
+
+      =================================== FAILURES ===================================
+      _____________________________________ test _____________________________________
+
+          def test():
+      >       assert Help().fun() == 2
+      E       assert 1 == 2
+      E        +  where 1 = <bound method Help.fun of <example.Help instance at 0x256a830>>()
+      E        +    where <bound method Help.fun of <example.Help instance at 0x256a830>> = <example.Help instance at 0x256a830>.fun
+      E        +      where <example.Help instance at 0x256a830> = Help()
+
+      example.py:7: AssertionError
+      =========================== 1 failed in 0.03 seconds ===========================
+
+
+  And now it's like:
+
+  .. code-block:: console
+
+      =================================== FAILURES ===================================
+      _____________________________________ test _____________________________________
+
+          def test():
+      >       assert Help().fun() == 2
+      E       assert 1 == 2
+      E        +  where 1 = fun()
+      E        +    where fun = <test_local.Help object at 0x1074be230>.fun
+      E        +      where <test_local.Help object at 0x1074be230> = Help()
+
+      test_local.py:13: AssertionError
+      =========================== 1 failed in 0.03 seconds ===========================
+
+
+- `#7662 <https://github.com/pytest-dev/pytest/issues/7662>`_: Added timezone information to the testsuite timestamp in the JUnit XML report.
+
+
+
+Bug fixes
+---------
+
+- `#11706 <https://github.com/pytest-dev/pytest/issues/11706>`_: Fix reporting of teardown errors in higher-scoped fixtures when using `--maxfail` or `--stepwise`.
+
+  Originally added in pytest 8.0.0, but reverted in 8.0.2 due to a regression in pytest-xdist.
+  This regression was fixed in pytest-xdist 3.6.1.
+
+
+- `#11797 <https://github.com/pytest-dev/pytest/issues/11797>`_: :func:`pytest.approx` now correctly handles :class:`Sequence <collections.abc.Sequence>`-like objects.
+
+
+- `#12204 <https://github.com/pytest-dev/pytest/issues/12204>`_, `#12264 <https://github.com/pytest-dev/pytest/issues/12264>`_: Fixed a regression in pytest 8.0 where tracebacks get longer and longer when multiple
+  tests fail due to a shared higher-scope fixture which raised -- by :user:`bluetech`.
+
+  Also fixed a similar regression in pytest 5.4 for collectors which raise during setup.
+
+  The fix necessitated internal changes which may affect some plugins:
+
+  * ``FixtureDef.cached_result[2]`` is now a tuple ``(exc, tb)``
+    instead of ``exc``.
+  * ``SetupState.stack`` failures are now a tuple ``(exc, tb)``
+    instead of ``exc``.
+
+
+- `#12275 <https://github.com/pytest-dev/pytest/issues/12275>`_: Fix collection error upon encountering an :mod:`abstract <abc>` class, including abstract `unittest.TestCase` subclasses.
+
+
+- `#12328 <https://github.com/pytest-dev/pytest/issues/12328>`_: Fix a regression in pytest 8.0.0 where package-scoped parameterized items were not correctly reordered to minimize setups/teardowns in some cases.
+
+
+- `#12424 <https://github.com/pytest-dev/pytest/issues/12424>`_: Fix crash with `assert testcase is not None` assertion failure when re-running unittest tests using plugins like pytest-rerunfailures. Regressed in 8.2.2.
+
+
+- `#12472 <https://github.com/pytest-dev/pytest/issues/12472>`_: Fixed a crash when returning category ``"error"`` or ``"failed"`` with a custom test status from :hook:`pytest_report_teststatus` hook -- :user:`pbrezina`.
+
+
+- `#12505 <https://github.com/pytest-dev/pytest/issues/12505>`_: Improve handling of invalid regex patterns in :func:`pytest.raises(match=r'...') <pytest.raises>` by providing a clear error message.
+
+
+- `#12580 <https://github.com/pytest-dev/pytest/issues/12580>`_: Fixed a crash when using the cache class on Windows and the cache directory was created concurrently.
+
+
+- `#6962 <https://github.com/pytest-dev/pytest/issues/6962>`_: Parametrization parameters are now compared using `==` instead of `is` (`is` is still used as a fallback if the parameter does not support `==`).
+  This fixes use of parameters such as lists, which have a different `id` but compare equal, causing fixtures to be re-computed instead of being cached.
+
+
+- `#7166 <https://github.com/pytest-dev/pytest/issues/7166>`_: Fixed progress percentages (the ``[ 87%]`` at the edge of the screen) sometimes not aligning correctly when running with pytest-xdist ``-n``.
+
+
+
+Improved documentation
+----------------------
+
+- `#12153 <https://github.com/pytest-dev/pytest/issues/12153>`_: Documented using :envvar:`PYTEST_VERSION` to detect if code is running from within a pytest run.
+
+
+- `#12469 <https://github.com/pytest-dev/pytest/issues/12469>`_: The external plugin mentions in the documentation now avoid mentioning
+  :std:doc:`setuptools entry-points <setuptools:index>` as the concept is
+  much more generic nowadays. Instead, the terminology of "external",
+  "installed", or "third-party" plugins (or packages) replaces that.
+
+  -- by :user:`webknjaz`
+
+
+- `#12577 <https://github.com/pytest-dev/pytest/issues/12577>`_: `CI` and `BUILD_NUMBER` environment variables role is discribed in
+  the reference doc. They now also appears when doing `pytest -h`
+  -- by :user:`MarcBresson`.
+
+
+
+Contributor-facing changes
+--------------------------
+
+- `#11771 <https://github.com/pytest-dev/pytest/issues/11771>`_, `#12557 <https://github.com/pytest-dev/pytest/issues/12557>`_: The PyPy runtime version has been updated to 3.9 from 3.8 that introduced
+  a flaky bug at the garbage collector which was not expected to fix there
+  as the V3.8 is EoL.
+
+  -- by :user:`x612skm`
+
+
+- `#12493 <https://github.com/pytest-dev/pytest/issues/12493>`_: The change log draft preview integration has been refactored to use a
+  third party extension ``sphinxcontib-towncrier``. The previous in-repo
+  script was putting the change log preview file at
+  :file:`doc/en/_changelog_towncrier_draft.rst`. Said file is no longer
+  ignored in Git and might show up among untracked files in the
+  development environments of the contributors. To address that, the
+  contributors can run the following command that will clean it up:
+
+  .. code-block:: console
+
+     $ git clean -x -i -- doc/en/_changelog_towncrier_draft.rst
+
+  -- by :user:`webknjaz`
+
+
+- `#12498 <https://github.com/pytest-dev/pytest/issues/12498>`_: All the undocumented ``tox`` environments now have descriptions.
+  They can be listed in one's development environment by invoking
+  ``tox -av`` in a terminal.
+
+  -- by :user:`webknjaz`
+
+
+- `#12501 <https://github.com/pytest-dev/pytest/issues/12501>`_: The changelog configuration has been updated to introduce more accurate
+  audience-tailored categories. Previously, there was a ``trivial``
+  change log fragment type with an unclear and broad meaning. It was
+  removed and we now have ``contrib``, ``misc`` and ``packaging`` in
+  place of it.
+
+  The new change note types target the readers who are downstream
+  packagers and project contributors. Additionally, the miscellaneous
+  section is kept for unspecified updates that do not fit anywhere else.
+
+  -- by :user:`webknjaz`
+
+
+- `#12502 <https://github.com/pytest-dev/pytest/issues/12502>`_: The UX of the GitHub automation making pull requests to update the
+  plugin list has been updated. Previously, the maintainers had to close
+  the automatically created pull requests and re-open them to trigger the
+  CI runs. From now on, they only need to click the `Ready for review`
+  button instead.
+
+  -- by :user:`webknjaz`
+
+
+- `#12522 <https://github.com/pytest-dev/pytest/issues/12522>`_: The ``:pull:`` RST role has been replaced with a shorter
+  ``:pr:`` due to starting to use the implementation from
+  the third-party :pypi:`sphinx-issues` Sphinx extension
+  -- by :user:`webknjaz`.
+
+
+- `#12531 <https://github.com/pytest-dev/pytest/issues/12531>`_: The coverage reporting configuration has been updated to exclude
+  pytest's own tests marked as expected to fail from the coverage
+  report. This has an effect of reducing the influence of flaky
+  tests on the resulting number.
+
+  -- by :user:`webknjaz`
+
+
+- `#12533 <https://github.com/pytest-dev/pytest/issues/12533>`_: The ``extlinks`` Sphinx extension is no longer enabled. The ``:bpo:``
+  role it used to declare has been removed with that. BPO itself has
+  migrated to GitHub some years ago and it is possible to link the
+  respective issues by using their GitHub issue numbers and the
+  ``:issue:`` role that the ``sphinx-issues`` extension implements.
+
+  -- by :user:`webknjaz`
+
+
+- `#12562 <https://github.com/pytest-dev/pytest/issues/12562>`_: Possible typos in using the ``:user:`` RST role is now being linted
+  through the pre-commit tool integration -- by :user:`webknjaz`.
+
+
 pytest 8.2.2 (2024-06-04)
 =========================
 

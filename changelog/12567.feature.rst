@@ -1,7 +1,0 @@
-Added ``--no-fold-skipped`` command line option
-
-If this option is set, then skipped tests in short summary are no longer grouped
-by reason but all tests are printed individually with correct nodeid in the same
-way as other statuses.
-
--- by :user:`pbrezina`
