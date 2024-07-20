@@ -322,8 +322,8 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
         # Not sure if this is right
         if i < 32:  # We didn't skip equal trailing characters
             j += i
-        left = left[:min(640, len(left), j)]
-        right = right[:min(640, len(right), j)]
+        left = left[: min(640, len(left), j)]
+        right = right[: min(640, len(right), j)]
     keepends = True
     if left.isspace() or right.isspace():
         left = repr(str(left))
