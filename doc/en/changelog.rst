@@ -39,7 +39,7 @@ New features
 
 - `#12231 <https://github.com/pytest-dev/pytest/issues/12231>`_: Added `--xfail-tb` flag, which turns on traceback output for XFAIL results.
 
-  * If the `--xfail-tb` flag is not sent, tracebacks for XFAIL results are NOT shown.
+  * If the `--xfail-tb` flag is not given, tracebacks for XFAIL results are NOT shown.
   * The style of traceback for XFAIL is set with `--tb`, and can be `auto|long|short|line|native|no`.
   * Note: Even if you have `--xfail-tb` set, you won't see them if `--tb=no`.
 
@@ -60,10 +60,10 @@ New features
   -- by :user:`lovetheguitar`
 
 
-- `#12567 <https://github.com/pytest-dev/pytest/issues/12567>`_: Added ``--no-fold-skipped`` command line option
+- `#12567 <https://github.com/pytest-dev/pytest/issues/12567>`_: Added ``--no-fold-skipped`` command line option.
 
   If this option is set, then skipped tests in short summary are no longer grouped
-  by reason but all tests are printed individually with correct nodeid in the same
+  by reason but all tests are printed individually with their nodeid in the same
   way as other statuses.
 
   -- by :user:`pbrezina`
@@ -73,18 +73,13 @@ New features
 Improvements in existing functionality
 --------------------------------------
 
-- `#12467 <https://github.com/pytest-dev/pytest/issues/12467>`_: Migrated all internal type-annotations to the python3.10+ style by using the `annotations` future import.
-
-  -- by :user:`RonnyPfannschmidt`
-
-
 - `#12469 <https://github.com/pytest-dev/pytest/issues/12469>`_: The console output now uses the "third-party plugins" terminology,
   replacing the previously established but confusing and outdated
   reference to :std:doc:`setuptools <setuptools:index>`
   -- by :user:`webknjaz`.
 
 
-- `#12544 <https://github.com/pytest-dev/pytest/issues/12544>`_, `#12545 <https://github.com/pytest-dev/pytest/issues/12545>`_: The ``_in_venv()`` function now detects Python virtual environments by
+- `#12544 <https://github.com/pytest-dev/pytest/issues/12544>`_, `#12545 <https://github.com/pytest-dev/pytest/issues/12545>`_: Python virtual environment detection was improved by
   checking for a :file:`pyvenv.cfg` file, ensuring reliable detection on
   various platforms -- by :user:`zachsnickers`.
 
@@ -139,7 +134,7 @@ Improvements in existing functionality
 Bug fixes
 ---------
 
-- `#11706 <https://github.com/pytest-dev/pytest/issues/11706>`_: Fix reporting of teardown errors in higher-scoped fixtures when using `--maxfail` or `--stepwise`.
+- `#11706 <https://github.com/pytest-dev/pytest/issues/11706>`_: Fixed reporting of teardown errors in higher-scoped fixtures when using `--maxfail` or `--stepwise`.
 
   Originally added in pytest 8.0.0, but reverted in 8.0.2 due to a regression in pytest-xdist.
   This regression was fixed in pytest-xdist 3.6.1.
@@ -161,19 +156,19 @@ Bug fixes
     instead of ``exc``.
 
 
-- `#12275 <https://github.com/pytest-dev/pytest/issues/12275>`_: Fix collection error upon encountering an :mod:`abstract <abc>` class, including abstract `unittest.TestCase` subclasses.
+- `#12275 <https://github.com/pytest-dev/pytest/issues/12275>`_: Fixed collection error upon encountering an :mod:`abstract <abc>` class, including abstract `unittest.TestCase` subclasses.
 
 
-- `#12328 <https://github.com/pytest-dev/pytest/issues/12328>`_: Fix a regression in pytest 8.0.0 where package-scoped parameterized items were not correctly reordered to minimize setups/teardowns in some cases.
+- `#12328 <https://github.com/pytest-dev/pytest/issues/12328>`_: Fixed a regression in pytest 8.0.0 where package-scoped parameterized items were not correctly reordered to minimize setups/teardowns in some cases.
 
 
-- `#12424 <https://github.com/pytest-dev/pytest/issues/12424>`_: Fix crash with `assert testcase is not None` assertion failure when re-running unittest tests using plugins like pytest-rerunfailures. Regressed in 8.2.2.
+- `#12424 <https://github.com/pytest-dev/pytest/issues/12424>`_: Fixed crash with `assert testcase is not None` assertion failure when re-running unittest tests using plugins like pytest-rerunfailures. Regressed in 8.2.2.
 
 
 - `#12472 <https://github.com/pytest-dev/pytest/issues/12472>`_: Fixed a crash when returning category ``"error"`` or ``"failed"`` with a custom test status from :hook:`pytest_report_teststatus` hook -- :user:`pbrezina`.
 
 
-- `#12505 <https://github.com/pytest-dev/pytest/issues/12505>`_: Improve handling of invalid regex patterns in :func:`pytest.raises(match=r'...') <pytest.raises>` by providing a clear error message.
+- `#12505 <https://github.com/pytest-dev/pytest/issues/12505>`_: Improved handling of invalid regex patterns in :func:`pytest.raises(match=r'...') <pytest.raises>` by providing a clear error message.
 
 
 - `#12580 <https://github.com/pytest-dev/pytest/issues/12580>`_: Fixed a crash when using the cache class on Windows and the cache directory was created concurrently.
@@ -202,7 +197,7 @@ Improved documentation
 
 
 - `#12577 <https://github.com/pytest-dev/pytest/issues/12577>`_: `CI` and `BUILD_NUMBER` environment variables role is discribed in
-  the reference doc. They now also appears when doing `pytest -h`
+  the reference doc. They now also appear when doing `pytest -h`
   -- by :user:`MarcBresson`.
 
 
@@ -210,9 +205,14 @@ Improved documentation
 Contributor-facing changes
 --------------------------
 
+- `#12467 <https://github.com/pytest-dev/pytest/issues/12467>`_: Migrated all internal type-annotations to the python3.10+ style by using the `annotations` future import.
+
+  -- by :user:`RonnyPfannschmidt`
+
+
 - `#11771 <https://github.com/pytest-dev/pytest/issues/11771>`_, `#12557 <https://github.com/pytest-dev/pytest/issues/12557>`_: The PyPy runtime version has been updated to 3.9 from 3.8 that introduced
   a flaky bug at the garbage collector which was not expected to fix there
-  as the V3.8 is EoL.
+  as the 3.8 is EoL.
 
   -- by :user:`x612skm`
 
