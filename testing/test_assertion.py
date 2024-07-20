@@ -417,6 +417,30 @@ class TestAssert_reprcompare:
         assert "- eggs" in diff
         assert "+ spam" in diff
 
+    def test_long_text_diff_same_trailing(self) -> None:
+        left = "foo\nbar\n" * 100 + "spam\n" * 100 + "spam\n" * 160
+        right = "foo\nbar\n" * 100 + "eggs\n" * 100 + "spam\n" * 160
+        diff = callequal(left, right, verbose=0)
+        assert diff is not None
+        assert "- eggs" in diff
+        assert len(diff) == 17
+
+    def test_long_text_diff_different_trailing(self) -> None:
+        left = "foo\nbar\n" * 100 + "spam\n" * 100 + "spam\n" * 160
+        right = "foo\nbar\n" * 100 + "eggs\n" * 100 + "eggs\n" * 160
+        diff = callequal(left, right, verbose=0)
+        assert diff is not None
+        assert "- eggs" in diff
+        assert len(diff) == 18
+
+    def test_long_text_diff_short_trailing(self) -> None:
+        left = "foo\nbar\n" * 5 + "spam\n" * 5 + "spam\n" * 5
+        right = "foo\nbar\n" * 5 + "eggs\n" * 5 + "spam\n" * 5
+        diff = callequal(left, right, verbose=0)
+        assert diff is not None
+        assert "- eggs" in diff
+        assert len(diff) == 20
+
     def test_bytes_diff_normal(self) -> None:
         """Check special handling for bytes diff (#5260)"""
         diff = callequal(b"spam", b"eggs")

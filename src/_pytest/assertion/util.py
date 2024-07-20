@@ -308,6 +308,22 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
                 ]
                 left = left[:-i]
                 right = right[:-i]
+        shortest = min(left, right, key=lambda x: len(x))
+        lines = j = 0
+        if shortest.count("\n") >= 8:
+            # Keep only 8 lines
+            for j, c in enumerate(shortest):
+                if c == "\n":
+                    lines += 1
+                if lines >= 8:
+                    break
+        else:
+            j = len(max(left, right, key=lambda x: len(x)))
+        # Not sure if this is right
+        if i < 32:  # We didn't skip equal trailing characters
+            j += i
+        left = left[:min(640, len(left), j)]
+        right = right[:min(640, len(right), j)]
     keepends = True
     if left.isspace() or right.isspace():
         left = repr(str(left))
