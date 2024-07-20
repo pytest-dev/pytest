@@ -21,8 +21,9 @@ import _pytest._code
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
+from _pytest.assertion.truncate import DEFAULT_MAX_CHARS
+from _pytest.assertion.truncate import DEFAULT_MAX_LINES
 from _pytest.config import Config
-from _pytest.assertion.truncate import DEFAULT_MAX_CHARS, DEFAULT_MAX_LINES
 
 
 # The _reprcompare attribute on the util module is used by the new assertion
