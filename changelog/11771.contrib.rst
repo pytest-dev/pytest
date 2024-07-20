@@ -1,5 +1,0 @@
-The PyPy runtime version has been updated to 3.9 from 3.8 that introduced
-a flaky bug at the garbage collector which was not expected to fix there
-as the V3.8 is EoL.
-
--- by :user:`x612skm`
