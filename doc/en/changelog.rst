@@ -31,6 +31,12 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.3.1 (2024-07-20)
+=========================
+
+The 8.3.0 release failed to include the change notes and docs for the release. This patch release remedies this. There are no other changes.
+
+
 pytest 8.3.0 (2024-07-20)
 =========================
 
