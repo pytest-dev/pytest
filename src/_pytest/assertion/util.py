@@ -22,6 +22,7 @@ from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.config import Config
+from _pytest.assertion.truncate import DEFAULT_MAX_CHARS, DEFAULT_MAX_LINES
 
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -310,20 +311,20 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
                 right = right[:-i]
         shortest = min(left, right, key=lambda x: len(x))
         lines = j = 0
-        if shortest.count("\n") >= 8:
-            # Keep only 8 lines
+        if shortest.count("\n") >= DEFAULT_MAX_LINES:
+            # Keep only DEFAULT_MAX_LINES, usually 8, lines
             for j, c in enumerate(shortest):
                 if c == "\n":
                     lines += 1
-                if lines >= 8:
+                if lines >= DEFAULT_MAX_LINES:
                     break
         else:
             j = len(max(left, right, key=lambda x: len(x)))
         # Not sure if this is right
         if i < 32:  # We didn't skip equal trailing characters
             j += i
-        left = left[:min(640, len(left), j)]
-        right = right[:min(640, len(right), j)]
+        left = left[:min(DEFAULT_MAX_CHARS, len(left), j)]
+        right = right[:min(DEFAULT_MAX_CHARS, len(right), j)]
     keepends = True
     if left.isspace() or right.isspace():
         left = repr(str(left))
