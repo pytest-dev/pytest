@@ -55,6 +55,8 @@ New features
 
   This change detaches xfail tracebacks from `-rx`, and now we turn on xfail tracebacks with `--xfail-tb`. With this, the default `-rx`/ `-ra` behavior is identical to pre-8.0 with respect to xfail tracebacks. While this is a behavior change, it brings default behavior back to pre-8.0.0 behavior, which ultimately was considered the better course of action.
 
+  -- by :user:`okken`
+
 
 - `#12281 <https://github.com/pytest-dev/pytest/issues/12281>`_: Added support for keyword matching in marker expressions.
 
