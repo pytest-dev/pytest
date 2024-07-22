@@ -1,1 +1,0 @@
-Fixed a crash when returning category ``"error"`` or ``"failed"`` with a custom test status from :hook:`pytest_report_teststatus` hook -- :user:`pbrezina`.
