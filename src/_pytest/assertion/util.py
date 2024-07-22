@@ -287,17 +287,18 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
     explanation: list[str] = []
 
     if verbose < 1:
-        i = 0  # just in case left or right has zero length
-        for i in range(min(len(left), len(right))):
-            if left[i] != right[i]:
+        leading_skipped = 0  # just in case left or right has zero length
+        for leading_skipped in range(min(len(left), len(right))):
+            if left[leading_skipped] != right[leading_skipped]:
                 break
-        if i > 42:
-            i -= 10  # Provide some context
+        if leading_skipped > 42:
+            leading_skipped -= 10  # Provide some context
             explanation = [
-                f"Skipping {i} identical leading characters in diff, use -v to show"
+                f"Skipping {leading_skipped} identical leading characters in diff, use -v to show"
             ]
-            left = left[i:]
-            right = right[i:]
+            left = left[leading_skipped:]
+            right = right[leading_skipped:]
+        i = 0
         if len(left) == len(right):
             for i in range(len(left)):
                 if left[-i] != right[-i]:
@@ -311,21 +312,20 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
                 left = left[:-i]
                 right = right[:-i]
         shortest = min(left, right, key=lambda x: len(x))
-        lines = j = 0
+        lines = j = start = 0
         if shortest.count("\n") >= DEFAULT_MAX_LINES:
             # Keep only DEFAULT_MAX_LINES, usually 8, lines
-            for j, c in enumerate(shortest):
+            if 10 < leading_skipped < 42:  # We didn't skip equal leading characters
+                start += leading_skipped - 10
+            for j, c in enumerate(shortest[start:], start=start - 1):
                 if c == "\n":
                     lines += 1
-                if lines >= DEFAULT_MAX_LINES:
+                if lines > DEFAULT_MAX_LINES:
                     break
         else:
             j = len(max(left, right, key=lambda x: len(x)))
-        # Not sure if this is right
-        if i < 32:  # We didn't skip equal trailing characters
-            j += i
-        left = left[: min(DEFAULT_MAX_CHARS, len(left), j)]
-        right = right[: min(DEFAULT_MAX_CHARS, len(right), j)]
+        left = left[start : min(DEFAULT_MAX_CHARS, len(left), j)]
+        right = right[start : min(DEFAULT_MAX_CHARS, len(right), j)]
     keepends = True
     if left.isspace() or right.isspace():
         left = repr(str(left))
