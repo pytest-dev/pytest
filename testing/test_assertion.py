@@ -445,7 +445,7 @@ class TestAssert_reprcompare:
         long_line1 = "foo" * 50 + "\n"
         long_line2 = "bar" * 50 + "\n"
         left = long_line1 * 3 + "spam\n" * 3 + long_line1 * 10
-        right = long_line1  * 3 + "eggs\n" * 3 + long_line2 * 10
+        right = long_line1 * 3 + "eggs\n" * 3 + long_line2 * 10
         diff = callequal(left, right, verbose=0)
         assert diff is not None
         assert "- eggs" in diff
