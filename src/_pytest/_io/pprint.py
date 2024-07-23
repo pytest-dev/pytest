@@ -111,7 +111,7 @@ class PrettyPrinter:
             p(self, object, stream, indent, allowance, context, level + 1)
             context.remove(objid)
         elif (
-            _dataclasses.is_dataclass(object)
+            _dataclasses.is_dataclass(object)  # type:ignore[unreachable]
             and not isinstance(object, type)
             and object.__dataclass_params__.repr
             and
@@ -119,7 +119,7 @@ class PrettyPrinter:
             hasattr(object.__repr__, "__wrapped__")
             and "__create_fn__" in object.__repr__.__wrapped__.__qualname__
         ):
-            context.add(objid)
+            context.add(objid)  # type:ignore[unreachable]
             self._pprint_dataclass(
                 object, stream, indent, allowance, context, level + 1
             )

@@ -415,7 +415,7 @@ def test_context() -> None:
     with monkeypatch.context() as m:
         m.setattr(functools, "partial", 3)
         assert not inspect.isclass(functools.partial)
-    assert inspect.isclass(functools.partial)
+    assert inspect.isclass(functools.partial)  # type:ignore[unreachable]
 
 
 def test_context_classmethod() -> None:
