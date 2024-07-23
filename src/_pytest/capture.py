@@ -202,6 +202,7 @@ class TeeCaptureIO(CaptureIO):
 class DontReadFromInput(TextIO):
     @property
     def encoding(self) -> str:
+        assert sys.__stdin__ is not None
         return sys.__stdin__.encoding
 
     def read(self, size: int = -1) -> str:

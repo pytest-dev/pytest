@@ -823,7 +823,7 @@ class TestAssert_reprcompare:
             def __delitem__(self, item):
                 pass
 
-            def insert(self, item, index):
+            def insert(self, index, value):
                 pass
 
         expl = callequal(TestSequence([0, 1]), list([0, 2]))
