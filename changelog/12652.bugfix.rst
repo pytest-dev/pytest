@@ -1,0 +1,4 @@
+Resolve the regression in conda environment detection by
+explicitly expanding virtualenv detection to conda environents
+
+-- by :user:`RonnyPfannschmidt`
