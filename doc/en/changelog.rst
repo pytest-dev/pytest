@@ -31,6 +31,17 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.3.2 (2024-07-24)
+=========================
+
+Bug fixes
+---------
+
+- `#12652 <https://github.com/pytest-dev/pytest/issues/12652>`_: Resolve regression `conda` environments where no longer being automatically detected.
+
+  -- by :user:`RonnyPfannschmidt`
+
+
 pytest 8.3.1 (2024-07-20)
 =========================
 
