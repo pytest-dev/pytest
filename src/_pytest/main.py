@@ -373,8 +373,10 @@ def _in_venv(path: Path) -> bool:
 
     [https://peps.python.org/pep-0405/]
 
-    for regression protection we also check for conda environments that do not include pyenv.cfg yet
-    https://github.com/conda/conda/issues/13337 is the conda issue tracking adding pyenv.cfg
+    For regression protection we also check for conda environments that do not include pyenv.cfg yet -- 
+    https://github.com/conda/conda/issues/13337 is the conda issue tracking adding pyenv.cfg.
+    
+    Checking for the `conda-meta/history` file per https://github.com/pytest-dev/pytest/issues/12652#issuecomment-2246336902.
 
     """
     try:
