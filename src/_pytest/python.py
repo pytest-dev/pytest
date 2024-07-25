@@ -1449,7 +1449,7 @@ class Metafunc:
                         pytrace=False,
                     )
 
-    def _recompute_direct_params_indices(self):
+    def _recompute_direct_params_indices(self) -> None:
         for argname, param_type in self._params_directness.items():
             if param_type == "direct":
                 for i, callspec in enumerate(self._calls):
