@@ -1053,12 +1053,18 @@ class FixtureDef(Generic[FixtureValue]):
                 requested_fixtures_that_should_finalize_us.append(fixturedef)
 
         # Check for (and return) cached value/exception.
-        my_cache_key = self.cache_key(request)
         if self.cached_result is not None:
+            request_cache_key = self.cache_key(request)
             cache_key = self.cached_result[1]
-            # note: comparison with `==` can fail (or be expensive) for e.g.
-            # numpy arrays (#6497).
-            if my_cache_key is cache_key:
+            try:
+                # Attempt to make a normal == check: this might fail for objects
+                # which do not implement the standard comparison (like numpy arrays -- #6497).
+                cache_hit = bool(request_cache_key == cache_key)
+            except (ValueError, RuntimeError):
+                # If the comparison raises, use 'is' as fallback.
+                cache_hit = request_cache_key is cache_key
+
+            if cache_hit:
                 if self.cached_result[2] is not None:
                     exc, exc_tb = self.cached_result[2]
                     raise exc.with_traceback(exc_tb)

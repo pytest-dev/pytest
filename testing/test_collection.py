@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from pathlib import PurePath
 import pprint
 import shutil
 import sys
@@ -152,8 +153,17 @@ class TestCollectFS:
         assert "test_notfound" not in s
         assert "test_found" in s
 
-    def test_ignored_virtualenvs(self, pytester: Pytester) -> None:
-        ensure_file(pytester.path / "virtual" / "pyvenv.cfg")
+    known_environment_types = pytest.mark.parametrize(
+        "env_path",
+        [
+            pytest.param(PurePath("pyvenv.cfg"), id="venv"),
+            pytest.param(PurePath("conda-meta", "history"), id="conda"),
+        ],
+    )
+
+    @known_environment_types
+    def test_ignored_virtualenvs(self, pytester: Pytester, env_path: PurePath) -> None:
+        ensure_file(pytester.path / "virtual" / env_path)
         testfile = ensure_file(pytester.path / "virtual" / "test_invenv.py")
         testfile.write_text("def test_hello(): pass", encoding="utf-8")
 
@@ -167,11 +177,12 @@ class TestCollectFS:
         result = pytester.runpytest("virtual")
         assert "test_invenv" in result.stdout.str()
 
+    @known_environment_types
     def test_ignored_virtualenvs_norecursedirs_precedence(
-        self, pytester: Pytester
+        self, pytester: Pytester, env_path
     ) -> None:
         # norecursedirs takes priority
-        ensure_file(pytester.path / ".virtual" / "pyvenv.cfg")
+        ensure_file(pytester.path / ".virtual" / env_path)
         testfile = ensure_file(pytester.path / ".virtual" / "test_invenv.py")
         testfile.write_text("def test_hello(): pass", encoding="utf-8")
         result = pytester.runpytest("--collect-in-virtualenv")
@@ -180,13 +191,14 @@ class TestCollectFS:
         result = pytester.runpytest("--collect-in-virtualenv", ".virtual")
         assert "test_invenv" in result.stdout.str()
 
-    def test__in_venv(self, pytester: Pytester) -> None:
+    @known_environment_types
+    def test__in_venv(self, pytester: Pytester, env_path: PurePath) -> None:
         """Directly test the virtual env detection function"""
-        # no pyvenv.cfg, not a virtualenv
+        # no env path, not a env
         base_path = pytester.mkdir("venv")
         assert _in_venv(base_path) is False
-        # with pyvenv.cfg, totally a virtualenv
-        base_path.joinpath("pyvenv.cfg").touch()
+        # with env path, totally a env
+        ensure_file(base_path.joinpath(env_path))
         assert _in_venv(base_path) is True
 
     def test_custom_norecursedirs(self, pytester: Pytester) -> None:

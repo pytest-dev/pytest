@@ -40,7 +40,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.6.0
+      uses: hynek/build-and-inspect-python-package@v2.7.0
 
   build:
     needs: [package]
@@ -150,7 +150,7 @@ jobs:
             tox_env: "py313"
             use_coverage: true
           - name: "ubuntu-pypy3"
-            python: "pypy-3.8"
+            python: "pypy-3.9"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 

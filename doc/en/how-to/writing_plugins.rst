@@ -43,7 +43,8 @@ Plugin discovery order at tool startup
    and loading the specified plugin. This happens before normal command-line parsing.
 
 4. by loading all plugins registered through installed third-party package
-   :ref:`entry points <pip-installable plugins>`.
+   :ref:`entry points <pip-installable plugins>`, unless the
+   :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD` environment variable is set.
 
 5. by loading all plugins specified through the :envvar:`PYTEST_PLUGINS` environment variable.
 

@@ -1,3 +1,0 @@
-`CI` and `BUILD_NUMBER` environment variables role is discribed in
-the reference doc. They now also appears when doing `pytest -h`
--- by :user:`MarcBresson`.
