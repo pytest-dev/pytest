@@ -1,1 +1,1 @@
-Added `TerminalReporter` to `pytest` root namespace and to API reference documentation page.
+Added :class:`pytest.TerminalReporter` to the :ref:`api-reference` documentation page.
