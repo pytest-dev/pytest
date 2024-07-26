@@ -1016,7 +1016,7 @@ PytestPluginManager
 TerminalReporter
 ~~~~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.terminal.TerminalReporter
+.. autoclass:: pytest.TerminalReporter
     :members:
     :inherited-members:
 
