@@ -1,1 +1,1 @@
-Added `TerminalReporter` to API reference documentation page.
+Added `TerminalReporter` to `pytest` root namespace and to API reference documentation page.
