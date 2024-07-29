@@ -1013,6 +1013,13 @@ PytestPluginManager
     :inherited-members:
     :show-inheritance:
 
+TerminalReporter
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.TerminalReporter
+    :members:
+    :inherited-members:
+
 TestReport
 ~~~~~~~~~~
 
