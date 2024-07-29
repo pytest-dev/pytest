@@ -31,7 +31,7 @@ jobs:
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.7.0
+      uses: hynek/build-and-inspect-python-package@v2.8.0
       with:
         attest-build-provenance-github: 'true'
 
