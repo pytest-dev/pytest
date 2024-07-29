@@ -334,6 +334,11 @@ class TestApprox:
             "approx({'b': 2.0 ± 2.0e-06, 'a': 1.0 ± 1.0e-06})",
         )
 
+        assert repr(approx(42, abs=1)) == "42 ± 1"
+        assert repr(approx(5, rel=0.01)) == "5 ± 0.05"
+        assert repr(approx(24000, abs=500)) == "24000 ± 500"
+        assert repr(approx(1500, abs=555)) == "1500 ± 555"
+
     def test_repr_complex_numbers(self):
         assert repr(approx(inf + 1j)) == "(inf+1j)"
         assert repr(approx(1.0j, rel=inf)) == "1j ± inf"
