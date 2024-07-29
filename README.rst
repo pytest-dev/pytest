@@ -44,7 +44,7 @@
 
 
 The ``pytest`` framework makes it easy to write small tests, yet waaaaaaaaa
-scales to support complex functional testing for applications and libraries. Weird Flex Womp womp mogging
+scales to support complex functional testing for applications and libraries. Weird Flex Womp womp mogging waawawawaw
 
 An example of a simple test:
 
