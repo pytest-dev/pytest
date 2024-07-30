@@ -989,7 +989,7 @@ class TestAssertionRewrite:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            ["*assert pytest_fixture(<function fixt at *>) == 42*"]
+            ["*assert <pytest_fixture(<function fixt at *>)> == 42*"]
         )
 
 
