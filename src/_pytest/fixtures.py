@@ -43,10 +43,7 @@ from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
-from _pytest.compat import get_real_func
-from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
-from _pytest.compat import getlocation
 from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
@@ -58,6 +55,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import YIELD_FIXTURE
+from _pytest.fixtures import getfuncargnames
 from _pytest.main import Session
 from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
@@ -1914,3 +1912,40 @@ def _showfixtures_main(config: Config, session: Session) -> None:
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
     for line in doc.split("\n"):
         tw.line(indent + line)
+
+
+def get_real_func(obj):
+    """Get the real function object of the (possibly) wrapped object by
+    :func:`functools.wraps`, or :func:`functools.partial`, or :func:`pytest.fixture`."""
+    start_obj = obj
+    for _ in range(100):
+        if isinstance(obj, FixtureFunctionDefinition):
+            obj = obj._get_wrapped_function()
+            break
+        new_obj = getattr(obj, "__wrapped__", None)
+        if new_obj is None:
+            break
+        obj = new_obj
+    else:
+        from _pytest._io.saferepr import saferepr
+
+        raise ValueError(
+            f"could not find real function of {saferepr(start_obj)}\nstopped at {saferepr(obj)}"
+        )
+    if isinstance(obj, functools.partial):
+        obj = obj.func
+    return obj
+
+
+def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
+    function = get_real_func(function)
+    fn = Path(inspect.getfile(function))
+    lineno = function.__code__.co_firstlineno
+    if curdir is not None:
+        try:
+            relfn = fn.relative_to(curdir)
+        except ValueError:
+            pass
+        else:
+            return "%s:%d" % (relfn, lineno + 1)
+    return "%s:%d" % (fn, lineno + 1)

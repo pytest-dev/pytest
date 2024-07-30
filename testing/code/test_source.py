@@ -464,7 +464,7 @@ def test_comment_in_statement() -> None:
 
 def test_source_with_decorator() -> None:
     """Test behavior with Source / Code().source with regard to decorators."""
-    from _pytest.compat import get_real_func
+    from _pytest.fixtures import get_real_func
 
     @pytest.mark.foo
     def deco_mark():

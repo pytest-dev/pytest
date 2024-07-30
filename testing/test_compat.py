@@ -9,10 +9,10 @@ import sys
 from typing import TYPE_CHECKING
 
 from _pytest.compat import assert_never
-from _pytest.compat import get_real_func
 from _pytest.compat import is_generator
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
+from _pytest.fixtures import get_real_func
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
 import pytest

@@ -4,12 +4,10 @@
 from __future__ import annotations
 
 import enum
-import functools
 import inspect
 from inspect import Parameter
 from inspect import signature
 import os
-from pathlib import Path
 import sys
 from typing import Any
 from typing import Callable
@@ -63,20 +61,6 @@ def is_async_function(func: object) -> bool:
     """Return True if the given function seems to be an async function or
     an async generator."""
     return iscoroutinefunction(func) or inspect.isasyncgenfunction(func)
-
-
-def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
-    function = get_real_func(function)
-    fn = Path(inspect.getfile(function))
-    lineno = function.__code__.co_firstlineno
-    if curdir is not None:
-        try:
-            relfn = fn.relative_to(curdir)
-        except ValueError:
-            pass
-        else:
-            return "%s:%d" % (relfn, lineno + 1)
-    return "%s:%d" % (fn, lineno + 1)
 
 
 def num_mock_patch_args(function) -> int:
@@ -207,31 +191,6 @@ def ascii_escaped(val: bytes | str) -> str:
     else:
         ret = val.encode("unicode_escape").decode("ascii")
     return ret.translate(_non_printable_ascii_translate_table)
-
-
-def get_real_func(obj):
-    """Get the real function object of the (possibly) wrapped object by
-    :func:`functools.wraps`, or :func:`functools.partial`, or :func:`pytest.fixture`."""
-    from _pytest.fixtures import FixtureFunctionDefinition
-
-    start_obj = obj
-    for _ in range(100):
-        if isinstance(obj, FixtureFunctionDefinition):
-            obj = obj._get_wrapped_function()
-            break
-        new_obj = getattr(obj, "__wrapped__", None)
-        if new_obj is None:
-            break
-        obj = new_obj
-    else:
-        from _pytest._io.saferepr import saferepr
-
-        raise ValueError(
-            f"could not find real function of {saferepr(start_obj)}\nstopped at {saferepr(obj)}"
-        )
-    if isinstance(obj, functools.partial):
-        obj = obj.func
-    return obj
 
 
 def getimfunc(func):
