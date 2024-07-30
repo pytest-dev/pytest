@@ -92,6 +92,7 @@ def assert_approx_raises_regex(pytestconfig):
 
 SOME_FLOAT = r"[+-]?([0-9]*[.])?[0-9]+\s*"
 SOME_INT = r"[0-9]+\s*"
+SOME_TOLERANCE = rf"({SOME_FLOAT}|[+-]?[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+\s*)"
 
 
 class TestApprox:
@@ -103,7 +104,7 @@ class TestApprox:
                 "",
                 "  comparison failed",
                 f"  Obtained: {SOME_FLOAT}",
-                f"  Expected: {SOME_FLOAT} ± {SOME_FLOAT}",
+                f"  Expected: {SOME_FLOAT} ± {SOME_TOLERANCE}",
             ],
         )
 
@@ -119,9 +120,9 @@ class TestApprox:
                 r"  comparison failed. Mismatched elements: 2 / 3:",
                 rf"  Max absolute difference: {SOME_FLOAT}",
                 rf"  Max relative difference: {SOME_FLOAT}",
-                r"  Index \| Obtained\s+\| Expected           ",
-                rf"  a     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
-                rf"  c     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected\s+",
+                rf"  a     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_TOLERANCE}",
+                rf"  c     \| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_TOLERANCE}",
             ],
         )
 
@@ -352,7 +353,7 @@ class TestApprox:
         assert repr(approx(3 + 4 * 1j)) == "(3+4j) ± 5.0e-06 ∠ ±180°"
 
         # absolute tolerance is not scaled
-        assert repr(approx(3.3 + 4.4 * 1j, abs=0.02)) == "(3.3+4.4j) ± 2.0e-02 ∠ ±180°"
+        assert repr(approx(3.3 + 4.4 * 1j, abs=0.02)) == "(3.3+4.4j) ± 0.02 ∠ ±180°"
 
     @pytest.mark.parametrize(
         "value, expected_repr_string",
