@@ -406,7 +406,7 @@ class ApproxScalar(ApproxBase):
         # If a sensible tolerance can't be calculated, self.tolerance will
         # raise a ValueError.  In this case, display '???'.
         try:
-            if self.tolerance >= 1e-3 and self.tolerance < 1e3:
+            if 1e-3 <= self.tolerance < 1e3:
                 vetted_tolerance = f"{self.tolerance:n}"
             else:
                 vetted_tolerance = f"{self.tolerance:.1e}"
