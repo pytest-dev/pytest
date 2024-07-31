@@ -31,6 +31,28 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.3.2 (2024-07-31)
+=========================
+Improvements in existing functionality
+--------------------------------------
+
+- `#6985 <https://github.com/pytest-dev/pytest/issues/6985>`_: Improved the `ApproxScalar` class to enhance the readability of the `repr` method for intermediate ranges of values and tolerances.
+  * The `repr` method now provides clearer output for values within intermediate ranges, making it easier to interpret the results.
+  * Previously, the output for intermediate ranges of values and tolerances was displayed in scientific notation (e.g., `42 ± 1.0e+00`). The updated method now presents the tolerance as a decimal for better readability (e.g., `42 ± 1`).
+  Example:
+  **Previous Output:**
+  .. code-block:: console
+      >>> pytest.approx(42, abs=1)
+      42 ± 1.0e+00
+
+  **Current Output:**
+  .. code-block:: console
+      >>> pytest.approx(42, abs=1)
+      42 ± 1
+
+  -- by :user:`fazeelghafoor`
+
+
 pytest 8.3.1 (2024-07-20)
 =========================
 
