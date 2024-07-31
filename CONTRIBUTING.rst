@@ -427,7 +427,7 @@ Here is some guidelines on how to proceeed, based on the state of the PR commit 
 As mentioned, those are overall guidelines, not rules cast in stone. This topic was discussed in [#12633](https://github.com/pytest-dev/pytest/discussions/12633).
 
 
-*Backports* should always be **squashed**, as they preserve the original PR author.
+*Backports* (as those created automatically from a `backport` label) should always be **squashed**, as they preserve the original PR author.
 
 
 Backporting bug fixes for the next patch release
