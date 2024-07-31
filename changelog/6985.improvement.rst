@@ -1,4 +1,4 @@
-Improved the `ApproxScalar` class to enhance the readability of the `repr` method for intermediate ranges of values and tolerances.
+Improved :func:`pytest.approx` to enhance the readability of intermediate value ranges and tolerances.
   * The `repr` method now provides clearer output for values within intermediate ranges, making it easier to interpret the results.
   * Previously, the output for intermediate ranges of values and tolerances was displayed in scientific notation (e.g., `42 ± 1.0e+00`). The updated method now presents the tolerance as a decimal for better readability (e.g., `42 ± 1`).
   Example:
