@@ -1,3 +1,4 @@
+-c broken-dep-constraints.txt
 pluggy>=1.5.0
 pygments-pytest>=2.3.0
 sphinx-removed-in>=0.2.0
