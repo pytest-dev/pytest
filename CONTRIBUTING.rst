@@ -383,51 +383,52 @@ them.
 Merge/squash guidelines
 -----------------------
 
-When a PR is approved and ready to be integrated to the `main` branch, one has the option to *merge* the commits unchanged, or *squash* all the commits into a single commit.
+When a PR is approved and ready to be integrated to the ``main`` branch, one has the option to *merge* the commits unchanged, or *squash* all the commits into a single commit.
 
-Here is some guidelines on how to proceeed, based on the state of the PR commit history:
+Here are some guidelines on how to proceed, based on examples of a single PR commit history:
 
 1. Miscellaneous commits:
 
-   * `Implement X`
-   * `Fix test_a`
-   * `Add myself to AUTHORS`
-   * `!fixup Fix test_a`
-   * `Update tests/test_integration.py`
-   * `Update tests/test_integration.py`
+   * ``Implement X``
+   * ``Fix test_a``
+   * ``Add myself to AUTHORS``
+   * ``!fixup Fix test_a``
+   * ``Update tests/test_integration.py``
+   * ``Merge origin/main into PR branch``
+   * ``Update tests/test_integration.py``
 
-   In this case, prefer to use the **Squash** merge strategy: the commit history is a bit messy (not in a derrogatory way, often one just commits changes because they know the changes will eventually be squashed together), so squashing everything into a single commit is best. Prefer to also edit the default GitHub message to add more details and improve on it.
+   In this case, prefer to use the **Squash** merge strategy: the commit history is a bit messy (not in a derogatory way, often one just commits changes because they know the changes will eventually be squashed together), so squashing everything into a single commit is best. You must clean up the commit message, making sure it contains useful details.
 
 2. Separate commits related to the same topic:
 
-   * `Implement X`
-   * `Add myself to AUTHORS`
-   * `Update CHANGELOG for X`
+   * ``Implement X``
+   * ``Add myself to AUTHORS``
+   * ``Update CHANGELOG for X``
 
    In this case, prefer to use the **Squash** merge strategy: while the commit history is not "messy" as in the example above, the individual commits do not bring much value overall, specially when looking at the changes a few months/years down the line.
 
 3. Separate commits, each with their own topic (refactorings, renames, etc), but still have a larger topic/purpose.
 
-   * `Refactor class X in preparation for feature Y`
-   * `Remove unused method`
-   * `Implement feature Y`
+   * ``Refactor class X in preparation for feature Y``
+   * ``Remove unused method``
+   * ``Implement feature Y``
 
    In this case, prefer to use the **Merge** strategy: each commit is valuable on its own, even if they serve a common topic overall. Looking at the history later, it is useful to have the removal of the unused method separately on its own commit, along with more information (such as how it became unused in the first place).
 
 4. Separate commits, each with their own topic, but without a larger topic/purpose other than improve the code base (using more modern techniques, improve typing, removing clutter, etc).
 
-   * `Improve internal names in X`
-   * `Add type annotations to Y`
-   * `Remove unnecessary dict access`
-   * `Remove unreachable code due to EOL Python`
+   * ``Improve internal names in X``
+   * ``Add type annotations to Y``
+   * ``Remove unnecessary dict access``
+   * ``Remove unreachable code due to EOL Python``
 
    In this case, prefer to use the **Merge** strategy: each commit is valuable on its own, and the information on each is valuable in the long term.
 
 
-As mentioned, those are overall guidelines, not rules cast in stone. This topic was discussed in [#12633](https://github.com/pytest-dev/pytest/discussions/12633).
+As mentioned, those are overall guidelines, not rules cast in stone. This topic was discussed in `#12633 <https://github.com/pytest-dev/pytest/discussions/12633>`_.
 
 
-*Backports* (as those created automatically from a `backport` label) should always be **squashed**, as they preserve the original PR author.
+*Backport PRs* (as those created automatically from a ``backport`` label) should always be **squashed**, as they preserve the original PR author.
 
 
 Backporting bug fixes for the next patch release
