@@ -392,7 +392,7 @@ Here are some guidelines on how to proceed, based on examples of a single PR com
    * ``Implement X``
    * ``Fix test_a``
    * ``Add myself to AUTHORS``
-   * ``!fixup Fix test_a``
+   * ``fixup! Fix test_a``
    * ``Update tests/test_integration.py``
    * ``Merge origin/main into PR branch``
    * ``Update tests/test_integration.py``
