@@ -1,3 +1,0 @@
-Resolve regression `conda` environments where no longer being automatically detected.
-
--- by :user:`RonnyPfannschmidt`
