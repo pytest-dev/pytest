@@ -1873,7 +1873,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    .. code-block:: ini
 
         [pytest]
-        tmp_path_retention_policy = "all"
+        tmp_path_retention_policy = all
 
    Default: ``all``
 
