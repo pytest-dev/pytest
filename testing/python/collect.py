@@ -325,7 +325,8 @@ class TestFunction:
         session = Session.from_config(config)
         session._fixturemanager = FixtureManager(session)
 
-        return pytest.Function.from_parent(parent=session, **kwargs)
+        # todo: implement intermediate node for testing
+        return pytest.Function.from_parent(parent=session, **kwargs)  # type: ignore[arg-type]
 
     def test_function_equality(self, pytester: Pytester) -> None:
         def func1():
