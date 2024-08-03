@@ -62,6 +62,9 @@ def test_two_dirs(pytester: Pytester, file_structure) -> None:
 
 
 def test_local_plugin(pytester: Pytester, file_structure) -> None:
+    """
+    `pythonpath` kicks early enough to load plugins via -p (#11118).
+    """
     localplugin_py = pytester.path / "sub" / "localplugin.py"
     content = dedent(
         """
@@ -74,7 +77,7 @@ def test_local_plugin(pytester: Pytester, file_structure) -> None:
     )
     localplugin_py.write_text(content, encoding="utf-8")
 
-    pytester.makefile(".ini", pytest="[pytest]\npythonpath=sub\n")
+    pytester.makeini("[pytest]\npythonpath=sub\n")
     result = pytester.runpytest("-plocalplugin", "-s", "test_foo.py")
     result.stdout.fnmatch_lines(["local plugin load", "local plugin unconfig"])
     assert result.ret == 0
