@@ -451,7 +451,7 @@ def _format_assertmsg(obj: object) -> str:
     # However in either case we want to preserve the newline.
     replaces = [("\n", "\n~"), ("%", "%%")]
     if not isinstance(obj, str):
-        obj = saferepr(obj)
+        obj = saferepr(obj, _get_maxsize_for_saferepr(util._config))
         replaces.append(("\\n", "\n~"))
 
     for r1, r2 in replaces:

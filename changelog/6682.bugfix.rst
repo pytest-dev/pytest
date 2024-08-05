@@ -1,0 +1,1 @@
+Fixed bug where the verbosity levels where not being respected when printing the "msg" part of failed assertion (as in ``assert condition, msg``).
