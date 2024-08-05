@@ -62,9 +62,7 @@ def test_two_dirs(pytester: Pytester, file_structure) -> None:
 
 
 def test_local_plugin(pytester: Pytester, file_structure) -> None:
-    """
-    `pythonpath` kicks early enough to load plugins via -p (#11118).
-    """
+    """`pythonpath` kicks early enough to load plugins via -p (#11118)."""
     localplugin_py = pytester.path / "sub" / "localplugin.py"
     content = dedent(
         """
