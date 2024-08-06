@@ -33,12 +33,12 @@ Mail
   discussed in public. Mails sent there will be distributed among the members
   in the pytest core team, who can also be contacted individually:
 
-  * Ronny Pfannschmidt (:user:`RonnyPfannschmidt`, `ronny@pytest.org <mailto:ronny@pytest.org>`_)
-  * Florian Bruhin (:user:`The-Compiler`, `florian@pytest.org <mailto:florian@pytest.org>`_)
   * Bruno Oliveira (:user:`nicoddemus`, `bruno@pytest.org <mailto:bruno@pytest.org>`_)
-  * Ran Benita (:user:`bluetech`, `ran@pytest.org <mailto:ran@pytest.org>`_)
-  * Zac Hatfield-Dodds (:user:`Zac-HD`, `zac@pytest.org <mailto:zac@pytest.org>`_)
+  * Florian Bruhin (:user:`The-Compiler`, `florian@pytest.org <mailto:florian@pytest.org>`_)
   * Pierre Sassoulas (:user:`Pierre-Sassoulas`, `pierre@pytest.org <mailto:pierre@pytest.org>`_)
+  * Ran Benita (:user:`bluetech`, `ran@pytest.org <mailto:ran@pytest.org>`_)
+  * Ronny Pfannschmidt (:user:`RonnyPfannschmidt`, `ronny@pytest.org <mailto:ronny@pytest.org>`_)
+  * Zac Hatfield-Dodds (:user:`Zac-HD`, `zac@pytest.org <mailto:zac@pytest.org>`_)
 
 Other
 -----
