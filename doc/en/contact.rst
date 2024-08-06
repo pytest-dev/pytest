@@ -38,6 +38,7 @@ Mail
   * Bruno Oliveira (:user:`nicoddemus`, `bruno@pytest.org <mailto:bruno@pytest.org>`_)
   * Ran Benita (:user:`bluetech`, `ran@pytest.org <mailto:ran@pytest.org>`_)
   * Zac Hatfield-Dodds (:user:`Zac-HD`, `zac@pytest.org <mailto:zac@pytest.org>`_)
+  * Pierre Sassoulas (:user:`Pierre-Sassoulas`, `pierre@pytest.org <mailto:pierre@pytest.org>`_)
 
 Other
 -----
