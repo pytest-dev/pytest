@@ -1005,14 +1005,14 @@ class TestMetafunc:
         result.stdout.re_match_lines(
             [
                 r"    <Function test1\[0-3\]>",
-                r"    <Function test1\[0-4\]>",
                 r"    <Function test3\[0\]>",
-                r"    <Function test1\[1-3\]>",
-                r"    <Function test1\[1-4\]>",
+                r"    <Function test1\[0-4\]>",
                 r"    <Function test3\[1\]>",
+                r"    <Function test1\[1-3\]>",
+                r"    <Function test3\[2\]>",
+                r"    <Function test1\[1-4\]>",
                 r"    <Function test1\[2-3\]>",
                 r"    <Function test1\[2-4\]>",
-                r"    <Function test3\[2\]>",
                 r"    <Function test2>",
             ]
         )

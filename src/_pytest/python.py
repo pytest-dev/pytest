@@ -464,6 +464,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
+            metafunc._recompute_direct_params_indices()
             # Direct parametrizations taking place in module/class-specific
             # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
             # we update what the function really needs a.k.a its fixture closure. Note that
@@ -1131,6 +1132,8 @@ class Metafunc:
         # Result of parametrize().
         self._calls: list[CallSpec2] = []
 
+        self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
+
     def parametrize(
         self,
         argnames: str | Sequence[str],
@@ -1273,6 +1276,7 @@ class Metafunc:
                 name2pseudofixturedef_key, default
             )
         arg_directness = self._resolve_args_directness(argnames, indirect)
+        self._params_directness.update(arg_directness)
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
@@ -1444,6 +1448,12 @@ class Metafunc:
                         f"In {func_name}: function uses no {name} '{arg}'",
                         pytrace=False,
                     )
+
+    def _recompute_direct_params_indices(self) -> None:
+        for argname, param_type in self._params_directness.items():
+            if param_type == "direct":
+                for i, callspec in enumerate(self._calls):
+                    callspec.indices[argname] = i
 
 
 def _find_parametrized_scope(
