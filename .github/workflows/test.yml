@@ -252,6 +252,10 @@ jobs:
         files: ./coverage.xml
         verbose: true
 
+    - name: Upload test results to Codecov
+      if: "matrix.use_coverage"
+      uses: codecov/codecov-action@v4
+
   check:  # This job does nothing and is only used for the branch protection
     if: always()
 
