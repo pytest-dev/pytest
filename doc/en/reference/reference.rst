@@ -1287,10 +1287,10 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: cache_dir
 
-   Sets a directory where stores content of cache plugin. Default directory is
+   Sets the directory where the cache plugin's content is stored. Default directory is
    ``.pytest_cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
    relative or absolute path. If setting relative path, then directory is created
-   relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
+   relative to :ref:`rootdir <rootdir>`. Additionally, a path may contain environment
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
