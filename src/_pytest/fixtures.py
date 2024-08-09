@@ -1531,7 +1531,9 @@ class FixtureManager:
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures applicable to node."""
-        for mark in node.iter_markers(name="usefixtures"):
+        for marker_node, mark in node.iter_markers_with_node(name="usefixtures"):
+            if not mark.args:
+                marker_node.warn(Warning("usefixtures() is empty, so it has no effect"))
             yield from mark.args
 
     def getfixtureclosure(
