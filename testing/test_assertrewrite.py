@@ -231,7 +231,7 @@ class TestAssertionRewrite:
         msg = getmsg(f)
         assert msg is not None
         line = msg.splitlines()[0]
-        if request.config.getoption("verbose") > 1:
+        if request.config.getoption("verbose",0) > 1:
             assert line == (
                 "assert '12345678901234567890123456789012345678901234567890A' "
                 "== '12345678901234567890123456789012345678901234567890B'"
