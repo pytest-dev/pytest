@@ -460,7 +460,7 @@ display more information if applicable:
 
 
     def pytest_report_header(config):
-        if config.getoption("verbose",0) > 0:
+        if config.getoption("verbose", 0) > 0:
             return ["info1: did you know that ...", "did you?"]
 
 which will add info only when run with "--v":

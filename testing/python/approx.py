@@ -48,7 +48,7 @@ def mocked_doctest_runner(monkeypatch):
 
 @contextmanager
 def temporary_verbosity(config, verbosity=0):
-    original_verbosity = config.getoption("verbose",0)
+    original_verbosity = config.getoption("verbose", 0)
     config.option.verbose = verbosity
     try:
         yield

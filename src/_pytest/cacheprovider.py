@@ -347,7 +347,7 @@ class LFPlugin:
         return {x for x in result if x.exists()}
 
     def pytest_report_collectionfinish(self) -> str | None:
-        if self.active and self.config.getoption("verbose",0) >= 0:
+        if self.active and self.config.getoption("verbose", 0) >= 0:
             return f"run-last-failure: {self._report_status}"
         return None
 

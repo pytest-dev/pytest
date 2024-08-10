@@ -796,7 +796,7 @@ class LoggingPlugin:
         if session.config.option.collectonly:
             return (yield)
 
-        if self._log_cli_enabled() and self._config.getoption("verbose",0) < 1:
+        if self._log_cli_enabled() and self._config.getoption("verbose", 0) < 1:
             # The verbose flag is needed to avoid messy test progress output.
             self._config.option.verbose = 1
 
