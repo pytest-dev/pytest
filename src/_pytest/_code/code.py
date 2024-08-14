@@ -210,7 +210,11 @@ class TracebackEntry:
 
     @property
     def lineno(self) -> int:
-        return self._rawentry.tb_lineno - 1
+        if self._rawentry.tb_lineno is None:
+            # how did i trigger this 😱
+            return -1  # type: ignore[unreachable]
+        else:
+            return self._rawentry.tb_lineno - 1
 
     @property
     def frame(self) -> Frame:

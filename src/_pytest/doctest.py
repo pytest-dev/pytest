@@ -417,9 +417,10 @@ def _get_continue_on_failure(config: Config) -> bool:
 
 
 class DoctestTextfile(Module):
-    obj = None
+    # todo: this shouldnt be a module
+    obj: None = None  # type: ignore[assignment]
 
-    def collect(self) -> Iterable[DoctestItem]:
+    def collect(self) -> Iterable[DoctestItem]:  # type: ignore[override]
         import doctest
 
         # Inspired by doctest.testfile; ideally we would use it directly,
@@ -497,7 +498,7 @@ def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
 
 
 class DoctestModule(Module):
-    def collect(self) -> Iterable[DoctestItem]:
+    def collect(self) -> Iterable[DoctestItem]:  # type: ignore[override]
         import doctest
 
         class MockAwareDocTestFinder(doctest.DocTestFinder):

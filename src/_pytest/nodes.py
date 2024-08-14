@@ -1,4 +1,3 @@
-# mypy: allow-untyped-defs
 from __future__ import annotations
 
 import abc
@@ -20,6 +19,7 @@ from typing import TypeVar
 import warnings
 
 import pluggy
+from typing_extensions import Self
 
 import _pytest._code
 from _pytest._code import getfslineno
@@ -52,9 +52,6 @@ if TYPE_CHECKING:
 SEP = "/"
 
 tracebackcutdir = Path(_pytest.__file__).parent
-
-
-_T = TypeVar("_T")
 
 
 def _imply_path(
@@ -96,7 +93,7 @@ class NodeMeta(abc.ABCMeta):
     progress on detangling the :class:`Node` classes.
     """
 
-    def __call__(cls, *k, **kw) -> NoReturn:
+    def __call__(cls, *k: object, **kw: object) -> NoReturn:
         msg = (
             "Direct construction of {name} has been deprecated, please use {name}.from_parent.\n"
             "See "
@@ -104,25 +101,6 @@ class NodeMeta(abc.ABCMeta):
             " for more details."
         ).format(name=f"{cls.__module__}.{cls.__name__}")
         fail(msg, pytrace=False)
-
-    def _create(cls: type[_T], *k, **kw) -> _T:
-        try:
-            return super().__call__(*k, **kw)  # type: ignore[no-any-return,misc]
-        except TypeError:
-            sig = signature(getattr(cls, "__init__"))
-            known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
-            from .warning_types import PytestDeprecationWarning
-
-            warnings.warn(
-                PytestDeprecationWarning(
-                    f"{cls} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
-                    "See https://docs.pytest.org/en/stable/deprecations.html"
-                    "#constructors-of-custom-pytest-node-subclasses-should-take-kwargs "
-                    "for more details."
-                )
-            )
-
-            return super().__call__(*k, **known_kw)  # type: ignore[no-any-return,misc]
 
 
 class Node(abc.ABC, metaclass=NodeMeta):
@@ -138,8 +116,13 @@ class Node(abc.ABC, metaclass=NodeMeta):
     #: for methods not migrated to ``pathlib.Path`` yet, such as
     #: :meth:`Item.reportinfo <pytest.Item.reportinfo>`. Will be deprecated in
     #: a future release, prefer using :attr:`path` instead.
+    name: str
+    parent: Node | None
+    config: Config
+    session: Session
     fspath: LEGACY_PATH
 
+    _nodeid: str
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
     __slots__ = (
@@ -156,7 +139,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def __init__(
         self,
         name: str,
-        parent: Node | None = None,
+        parent: Node | None,
         config: Config | None = None,
         session: Session | None = None,
         fspath: LEGACY_PATH | None = None,
@@ -200,13 +183,9 @@ class Node(abc.ABC, metaclass=NodeMeta):
         #: Allow adding of extra keywords to use for matching.
         self.extra_keyword_matches: set[str] = set()
 
-        if nodeid is not None:
-            assert "::()" not in nodeid
-            self._nodeid = nodeid
-        else:
-            if not self.parent:
-                raise TypeError("nodeid or parent must be provided")
-            self._nodeid = self.parent.nodeid + "::" + self.name
+        self._nodeid = self._make_nodeid(
+            name=self.name, parent=self.parent, given=nodeid
+        )
 
         #: A place where plugins can store information on the node for their
         #: own use.
@@ -215,7 +194,38 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self._store = self.stash
 
     @classmethod
-    def from_parent(cls, parent: Node, **kw) -> Self:
+    def _make_nodeid(cls, name: str, parent: Node | None, given: str | None) -> str:
+        if given is not None:
+            assert "::()" not in given
+            return given
+        else:
+            assert parent is not None
+            return f"{parent.nodeid}::{name}"
+
+    @classmethod
+    def _create(cls, *k: object, **kw: object) -> Self:
+        callit = super(type(cls), NodeMeta).__call__  # type: ignore[misc]
+        try:
+            return cast(Self, callit(cls, *k, **kw))
+        except TypeError as e:
+            sig = signature(getattr(cls, "__init__"))
+            known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
+            from .warning_types import PytestDeprecationWarning
+
+            warnings.warn(
+                PytestDeprecationWarning(
+                    f"{cls} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
+                    f"Exception: {e}\n"
+                    "See https://docs.pytest.org/en/stable/deprecations.html"
+                    "#constructors-of-custom-pytest-node-subclasses-should-take-kwargs "
+                    "for more details."
+                )
+            )
+
+            return cast(Self, callit(cls, *k, **known_kw))
+
+    @classmethod
+    def from_parent(cls, parent: Node, **kw: Any) -> Self:
         """Public constructor for Nodes.
 
         This indirection got introduced in order to enable removing
@@ -238,7 +248,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         return self.session.gethookproxy(self.path)
 
     def __repr__(self) -> str:
-        return "<{} {}>".format(self.__class__.__name__, getattr(self, "name", None))
+        return f'<{self.__class__.__name__} { getattr(self, "name", None)}>'
 
     def warn(self, warning: Warning) -> None:
         """Issue a warning for this Node.
@@ -598,7 +608,6 @@ class FSCollector(Collector, abc.ABC):
 
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
-
         super().__init__(
             name=name,
             parent=parent,
@@ -611,11 +620,11 @@ class FSCollector(Collector, abc.ABC):
     @classmethod
     def from_parent(
         cls,
-        parent,
+        parent: Node,
         *,
         fspath: LEGACY_PATH | None = None,
         path: Path | None = None,
-        **kw,
+        **kw: Any,
     ) -> Self:
         """The public constructor."""
         return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
@@ -646,22 +655,25 @@ class Directory(FSCollector, abc.ABC):
     """
 
 
+class Definition(Collector, abc.ABC):
+    @abc.abstractmethod
+    def collect(self) -> Iterable[Item]: ...
+
+
 class Item(Node, abc.ABC):
     """Base class of all test invocation items.
 
     Note that for a single function there might be multiple test invocation items.
     """
 
-    nextitem = None
-
     def __init__(
         self,
-        name,
-        parent=None,
+        name: str,
+        parent: Node | None = None,
         config: Config | None = None,
         session: Session | None = None,
         nodeid: str | None = None,
-        **kw,
+        **kw: Any,
     ) -> None:
         # The first two arguments are intentionally passed positionally,
         # to keep plugins who define a node type which inherits from
