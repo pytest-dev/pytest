@@ -569,7 +569,7 @@ class Module(nodes.File, PyCollector):
         if setup_module is None and teardown_module is None:
             return
 
-        def xunit_setup_module_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_module_fixture(request) -> Generator[None]:
             module = request.module
             if setup_module is not None:
                 _call_with_optional_argument(setup_module, module)
@@ -600,7 +600,7 @@ class Module(nodes.File, PyCollector):
         if setup_function is None and teardown_function is None:
             return
 
-        def xunit_setup_function_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_function_fixture(request) -> Generator[None]:
             if request.instance is not None:
                 # in this case we are bound to an instance, so we need to let
                 # setup_method handle this
@@ -781,7 +781,7 @@ class Class(PyCollector):
         if setup_class is None and teardown_class is None:
             return
 
-        def xunit_setup_class_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_class_fixture(request) -> Generator[None]:
             cls = request.cls
             if setup_class is not None:
                 func = getimfunc(setup_class)
@@ -814,7 +814,7 @@ class Class(PyCollector):
         if setup_method is None and teardown_method is None:
             return
 
-        def xunit_setup_method_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_method_fixture(request) -> Generator[None]:
             instance = request.instance
             method = request.function
             if setup_method is not None:

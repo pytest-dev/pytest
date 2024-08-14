@@ -69,7 +69,7 @@ class TestNewAPI:
         cache.set("test/broken", [])
 
     @pytest.fixture
-    def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path, None, None]:
+    def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path]:
         cache_dir = pytester.path.joinpath(".pytest_cache")
         cache_dir.mkdir()
         mode = cache_dir.stat().st_mode
