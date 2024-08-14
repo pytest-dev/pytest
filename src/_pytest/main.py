@@ -546,6 +546,7 @@ class Session(nodes.Collector):
     ``Session`` collects the initial paths given as arguments to pytest.
     """
 
+    parent: None
     Interrupted = Interrupted
     Failed = Failed
     # Set on the session by runner.pytest_sessionstart.

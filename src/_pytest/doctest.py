@@ -417,7 +417,8 @@ def _get_continue_on_failure(config: Config) -> bool:
 
 
 class DoctestTextfile(Module):
-    obj = None
+    # todo: this shouldnt be a module
+    obj: None = None  # type: ignore[assignment]
 
     def collect(self) -> Iterable[DoctestItem]:
         import doctest

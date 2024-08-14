@@ -634,6 +634,14 @@ class TestFunctional:
         has_own, has_inherited = items
         has_own_marker = has_own.get_closest_marker("c")
         has_inherited_marker = has_inherited.get_closest_marker("c")
+
+        for item in items:
+            print(item)
+            for node in item.iter_parents():
+                print("  ", node)
+                for marker in node.own_markers:
+                    print("    ", marker)
+
         assert has_own_marker is not None
         assert has_inherited_marker is not None
         assert has_own_marker.kwargs == {"location": "function"}
