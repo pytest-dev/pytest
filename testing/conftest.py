@@ -46,7 +46,7 @@ def reset_colors(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_collection_modifyitems(items) -> Generator[None, None, None]:
+def pytest_collection_modifyitems(items) -> Generator[None]:
     """Prefer faster tests.
 
     Use a hook wrapper to do this in the beginning, so e.g. --ff still works
