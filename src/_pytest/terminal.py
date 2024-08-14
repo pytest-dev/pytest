@@ -889,7 +889,7 @@ class TerminalReporter:
     @hookimpl(wrapper=True)
     def pytest_sessionfinish(
         self, session: Session, exitstatus: int | ExitCode
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         result = yield
         self._tw.line("")
         summary_exit_codes = (
@@ -914,7 +914,7 @@ class TerminalReporter:
         return result
 
     @hookimpl(wrapper=True)
-    def pytest_terminal_summary(self) -> Generator[None, None, None]:
+    def pytest_terminal_summary(self) -> Generator[None]:
         self.summary_errors()
         self.summary_failures()
         self.summary_xfailures()

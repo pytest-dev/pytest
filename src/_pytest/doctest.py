@@ -468,7 +468,7 @@ def _is_mocked(obj: object) -> bool:
 
 
 @contextmanager
-def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
+def _patch_unwrap_mock_aware() -> Generator[None]:
     """Context manager which replaces ``inspect.unwrap`` with a version
     that's aware of mock objects and doesn't recurse into them."""
     real_unwrap = inspect.unwrap

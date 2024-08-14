@@ -14,7 +14,7 @@ import pytest
 
 
 @pytest.fixture
-def mp() -> Generator[MonkeyPatch, None, None]:
+def mp() -> Generator[MonkeyPatch]:
     cwd = os.getcwd()
     sys_path = list(sys.path)
     yield MonkeyPatch()

@@ -30,7 +30,7 @@ def catch_warnings_for_item(
     ihook,
     when: Literal["config", "collect", "runtest"],
     item: Item | None,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     """Context manager that catches warnings generated in the contained execution block.
 
     ``item`` can be None if we are not in the context of an item execution.
@@ -124,7 +124,7 @@ def pytest_collection(session: Session) -> Generator[None, object, object]:
 @pytest.hookimpl(wrapper=True)
 def pytest_terminal_summary(
     terminalreporter: TerminalReporter,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     config = terminalreporter.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="config", item=None
@@ -133,7 +133,7 @@ def pytest_terminal_summary(
 
 
 @pytest.hookimpl(wrapper=True)
-def pytest_sessionfinish(session: Session) -> Generator[None, None, None]:
+def pytest_sessionfinish(session: Session) -> Generator[None]:
     config = session.config
     with catch_warnings_for_item(
         config=config, ihook=config.hook, when="config", item=None
@@ -144,7 +144,7 @@ def pytest_sessionfinish(session: Session) -> Generator[None, None, None]:
 @pytest.hookimpl(wrapper=True)
 def pytest_load_initial_conftests(
     early_config: Config,
-) -> Generator[None, None, None]:
+) -> Generator[None]:
     with catch_warnings_for_item(
         config=early_config, ihook=early_config.hook, when="config", item=None
     ):
