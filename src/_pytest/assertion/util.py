@@ -504,12 +504,10 @@ def _compare_eq_dict(
             left_val = left[k]
             right_val = right[k]
             if issequence(left_val) and issequence(right_val):
-                # explanation.append(saferepr("BLAHBLAH: string"))
                 expl = _compare_eq_sequence(
                     left_val, right_val, lambda item: item, verbose
                 )
-                expl = "".join(expl)
-                explanation += [highlighter(saferepr({k: expl}))]
+                explanation += [highlighter(saferepr({k: "".join(expl)}))]
                 continue
 
             explanation += [
