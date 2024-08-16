@@ -745,7 +745,7 @@ class TestAssert_reprcompare:
         value1 = {"asdf": [1, 1, 1, 1, 1, 1, 1, 1]}
         value2 = {"asdf": [1, 1, 1, 1, 1, 1, 1, 2]}
         lines = callequal(value1, value2, verbose=0)
-        assert "{'asdf': 'At index 7 diff: 1 != 2'}" in "".join(lines)
+        assert "{'asdf': 'At index 7 diff: 1 != 2'}" in lines
 
     def test_sequence_different_items(self) -> None:
         lines = callequal((1, 2), (3, 4, 5), verbose=2)
