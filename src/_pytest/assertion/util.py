@@ -501,10 +501,21 @@ def _compare_eq_dict(
     if diff:
         explanation += ["Differing items:"]
         for k in diff:
+            left_val = left[k]
+            right_val = right[k]
+            if issequence(left_val) and issequence(right_val):
+                # explanation.append(saferepr("BLAHBLAH: string"))
+                expl = _compare_eq_sequence(
+                    left_val, right_val, lambda item: item, verbose
+                )
+                expl = str("".join(expl))
+                explanation += [highlighter(saferepr({k: expl}))]
+                continue
+
             explanation += [
-                highlighter(saferepr({k: left[k]}))
+                highlighter(saferepr({k: left_val}))
                 + " != "
-                + highlighter(saferepr({k: right[k]}))
+                + highlighter(saferepr({k: right_val}))
             ]
     extra_left = set_left - set_right
     len_extra_left = len(extra_left)
