@@ -14,7 +14,6 @@ from typing import Literal
 from typing import Mapping
 from typing import Protocol
 from typing import Sequence
-from typing import Union
 from unicodedata import normalize
 
 from _pytest import outcomes
@@ -355,7 +354,7 @@ def _compare_eq_iterable(
 def _compare_eq_sequence(
     left: Sequence[Any],
     right: Sequence[Any],
-    highlighter: Union[_HighlightFunc, Callable[[str], str]],
+    highlighter: _HighlightFunc | Callable[[str], str],
     verbose: int = 0,
 ) -> list[str]:
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
