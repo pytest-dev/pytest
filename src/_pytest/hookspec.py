@@ -274,6 +274,12 @@ def pytest_collection_modifyitems(
     """Called after collection has been performed. May filter or re-order
     the items in-place.
 
+    When items are deselected (filtered out from ``items``),
+    the hook :hook:`pytest_deselected` must be called explicitly
+    providing the deselected items
+    (e.g. with ``config.hook.pytest_deselected(deselected_items)``)
+    to properly notify other plugins.
+
     :param session: The pytest session object.
     :param config: The pytest config object.
     :param items: List of item objects.
@@ -453,6 +459,11 @@ def pytest_collectreport(report: CollectReport) -> None:
 
 def pytest_deselected(items: Sequence[Item]) -> None:
     """Called for deselected test items, e.g. by keyword.
+
+    Note that this hook exposes two integration aspects to plugins:
+    - it can be *implemented* to be notified of deselected items
+    - it must to be *called* from :hook:`pytest_collection_modifyitems`
+      implementations when items are deselected (to properly notify other plugins).
 
     May be called multiple times.
 

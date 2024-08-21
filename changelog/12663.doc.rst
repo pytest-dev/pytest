@@ -1,0 +1,1 @@
+Clarify that the `pytest_deselected` hook should be called from `pytest_collection_modifyitems` hook implementations when items are deselected.
