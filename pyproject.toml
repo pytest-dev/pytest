@@ -314,6 +314,7 @@ ignore = "W009"
 
 [tool.pyproject-fmt]
 indent = 4
+max_supported_python = "3.13"
 
 [tool.pytest.ini_options]
 minversion = "2.0"
