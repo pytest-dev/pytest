@@ -112,7 +112,7 @@ If you want to check if a block of code is raising an exact exception type, you 
             foo()
         assert excinfo.type is RuntimeError
 
-The :func:`pytest.raises` call will succeed, even though the function raises :class:`NotImplementedError`, because
+The :func:`pytest.raises` call will fail, even though the function raises :class:`NotImplementedError`, eventhough
 :class:`NotImplementedError` is a subclass of :class:`RuntimeError`; however the following `assert` statement will
 catch the problem.
 
