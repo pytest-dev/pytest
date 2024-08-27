@@ -1,0 +1,1 @@
+Replaced `typing.Self` with `typing_extensions.Self` -- by :user:`Avasam`

@@ -44,7 +44,8 @@ from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     import doctest
-    from typing import Self
+
+    from typing_extensions import Self
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
