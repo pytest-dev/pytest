@@ -3,4 +3,4 @@
 
 # Pin towncrier temporarily due to incompatibility with sphinxcontrib-towncrier:
 # https://github.com/sphinx-contrib/sphinxcontrib-towncrier/issues/92
-towncrier!=24.7.0,!=24.7.1
+towncrier<24.7
