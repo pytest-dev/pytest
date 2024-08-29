@@ -78,7 +78,7 @@ from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing_extensions import Self
 
 
 def pytest_addoption(parser: Parser) -> None:
