@@ -28,7 +28,7 @@ V = TypeVar("V")
 
 
 @fixture
-def monkeypatch() -> Generator[MonkeyPatch, None, None]:
+def monkeypatch() -> Generator[MonkeyPatch]:
     """A convenient fixture for monkey-patching.
 
     The fixture provides these methods to modify objects, dictionaries, or
@@ -135,7 +135,7 @@ class MonkeyPatch:
 
     @classmethod
     @contextmanager
-    def context(cls) -> Generator[MonkeyPatch, None, None]:
+    def context(cls) -> Generator[MonkeyPatch]:
         """Context manager that returns a new :class:`MonkeyPatch` object
         which undoes any patching done inside the ``with`` block upon exit.
 

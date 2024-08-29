@@ -125,7 +125,7 @@ class TestImportPath:
     """
 
     @pytest.fixture(scope="session")
-    def path1(self, tmp_path_factory: TempPathFactory) -> Generator[Path, None, None]:
+    def path1(self, tmp_path_factory: TempPathFactory) -> Generator[Path]:
         path = tmp_path_factory.mktemp("path")
         self.setuptestfs(path)
         yield path

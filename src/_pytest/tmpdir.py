@@ -256,7 +256,7 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 @fixture
 def tmp_path(
     request: FixtureRequest, tmp_path_factory: TempPathFactory
-) -> Generator[Path, None, None]:
+) -> Generator[Path]:
     """Return a temporary directory path object which is unique to each test
     function invocation, created as a sub directory of the base temporary
     directory.

@@ -1,0 +1,1 @@
+Fixed typing compatibility with Python 3.9 or less -- replaced `typing.Self` with `typing_extensions.Self` -- by :user:`Avasam`
