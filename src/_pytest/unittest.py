@@ -137,7 +137,7 @@ class UnitTestCase(Class):
 
         def unittest_setup_class_fixture(
             request: FixtureRequest,
-        ) -> Generator[None, None, None]:
+        ) -> Generator[None]:
             cls = request.cls
             if _is_skipped(cls):
                 reason = cls.__unittest_skip_why__
@@ -178,7 +178,7 @@ class UnitTestCase(Class):
 
         def unittest_setup_method_fixture(
             request: FixtureRequest,
-        ) -> Generator[None, None, None]:
+        ) -> Generator[None]:
             self = request.instance
             if _is_skipped(self):
                 reason = self.__unittest_skip_why__

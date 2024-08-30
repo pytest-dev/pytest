@@ -125,7 +125,7 @@ class TestImportPath:
     """
 
     @pytest.fixture(scope="session")
-    def path1(self, tmp_path_factory: TempPathFactory) -> Generator[Path, None, None]:
+    def path1(self, tmp_path_factory: TempPathFactory) -> Generator[Path]:
         path = tmp_path_factory.mktemp("path")
         self.setuptestfs(path)
         yield path
@@ -1371,6 +1371,42 @@ class TestNamespacePackages:
             consider_namespace_packages=True,
         )
         assert mod is mod2
+
+    def test_ns_multiple_levels_import_rewrite_assertions(
+        self,
+        tmp_path: Path,
+        monkeypatch: MonkeyPatch,
+        pytester: Pytester,
+    ) -> None:
+        """Check assert rewriting with `--import-mode=importlib` (#12659)."""
+        self.setup_directories(tmp_path, monkeypatch, pytester)
+        code = dedent("""
+        def test():
+            assert "four lights" == "five lights"
+        """)
+
+        # A case is in a subdirectory with an `__init__.py` file.
+        test_py = tmp_path / "src/dist2/com/company/calc/algo/test_demo.py"
+        test_py.write_text(code, encoding="UTF-8")
+
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            test_py, consider_namespace_packages=True
+        )
+        assert (pkg_root, module_name) == (
+            tmp_path / "src/dist2",
+            "com.company.calc.algo.test_demo",
+        )
+
+        result = pytester.runpytest("--import-mode=importlib", test_py)
+
+        result.stdout.fnmatch_lines(
+            [
+                "E       AssertionError: assert 'four lights' == 'five lights'",
+                "E         *",
+                "E         - five lights*",
+                "E         + four lights",
+            ]
+        )
 
     @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
     def test_incorrect_namespace_package(

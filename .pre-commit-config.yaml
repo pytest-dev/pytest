@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.5.6"
+  rev: "v0.6.2"
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -21,11 +21,12 @@ repos:
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.1
+    rev: v1.11.2
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
         args: []
+        language_version: "3.8"
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0

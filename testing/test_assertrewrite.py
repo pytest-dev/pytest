@@ -1660,7 +1660,7 @@ class TestEarlyRewriteBailout:
     @pytest.fixture
     def hook(
         self, pytestconfig, monkeypatch, pytester: Pytester
-    ) -> Generator[AssertionRewritingHook, None, None]:
+    ) -> Generator[AssertionRewritingHook]:
         """Returns a patched AssertionRewritingHook instance so we can configure its initial paths and track
         if PathFinder.find_spec has been called.
         """

@@ -64,7 +64,7 @@ class catch_unraisable_exception:
         del self.unraisable
 
 
-def unraisable_exception_runtest_hook() -> Generator[None, None, None]:
+def unraisable_exception_runtest_hook() -> Generator[None]:
     with catch_unraisable_exception() as cm:
         try:
             yield
@@ -86,15 +86,15 @@ def unraisable_exception_runtest_hook() -> Generator[None, None, None]:
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_setup() -> Generator[None, None, None]:
+def pytest_runtest_setup() -> Generator[None]:
     yield from unraisable_exception_runtest_hook()
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_call() -> Generator[None, None, None]:
+def pytest_runtest_call() -> Generator[None]:
     yield from unraisable_exception_runtest_hook()
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_teardown() -> Generator[None, None, None]:
+def pytest_runtest_teardown() -> Generator[None]:
     yield from unraisable_exception_runtest_hook()

@@ -62,7 +62,7 @@ class catch_threading_exception:
         del self.args
 
 
-def thread_exception_runtest_hook() -> Generator[None, None, None]:
+def thread_exception_runtest_hook() -> Generator[None]:
     with catch_threading_exception() as cm:
         try:
             yield
@@ -83,15 +83,15 @@ def thread_exception_runtest_hook() -> Generator[None, None, None]:
 
 
 @pytest.hookimpl(wrapper=True, trylast=True)
-def pytest_runtest_setup() -> Generator[None, None, None]:
+def pytest_runtest_setup() -> Generator[None]:
     yield from thread_exception_runtest_hook()
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_call() -> Generator[None, None, None]:
+def pytest_runtest_call() -> Generator[None]:
     yield from thread_exception_runtest_hook()
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_teardown() -> Generator[None, None, None]:
+def pytest_runtest_teardown() -> Generator[None]:
     yield from thread_exception_runtest_hook()
