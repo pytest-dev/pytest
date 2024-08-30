@@ -1759,7 +1759,7 @@ class Config:
             print(config.get_verbosity())  # 1
             print(config.get_verbosity(Config.VERBOSITY_ASSERTIONS))  # 2
         """
-        global_level = self.option.verbose
+        global_level = self.getoption("verbose", default=0)
         assert isinstance(global_level, int)
         if verbosity_type is None:
             return global_level
