@@ -416,7 +416,7 @@ class TestImportPath:
         del sys.modules[module.__name__]
 
         monkeypatch.setattr(
-            importlib.util, "spec_from_file_location", lambda *args: None
+            importlib.util, "spec_from_file_location", lambda *args, **kwargs: None
         )
         with pytest.raises(ImportError):
             import_path(
@@ -1540,6 +1540,44 @@ class TestNamespacePackages:
         assert resolve_pkg_root_and_module_name(
             tmp_path / "src/dist2/ns/a/core/foo/m.py", consider_namespace_packages=True
         ) == (tmp_path / "src/dist2", "ns.a.core.foo.m")
+
+    def test_ns_multiple_levels_import_same_name_directory(
+        self,
+        tmp_path: Path,
+        monkeypatch: MonkeyPatch,
+        pytester: Pytester,
+    ) -> None:
+        """Check KeyError with `--import-mode=importlib` (#12592)."""
+        self.setup_directories(tmp_path, monkeypatch, pytester)
+        code = dedent("""
+        def test():
+            assert "four lights" == "five lights"
+        """)
+
+        # a subdirectories with the same name in the namespace package,
+        # along with a tests file
+        test_base_path = tmp_path / "src/dist2/com/company"
+        test_py = test_base_path / "a/b/c/test_demo.py"
+        test_dir = test_base_path / "a/b/c/c"
+
+        test_dir.mkdir(parents=True)
+        test_py.write_text(code, encoding="UTF-8")
+
+        pkg_root, module_name = resolve_pkg_root_and_module_name(
+            test_py, consider_namespace_packages=True
+        )
+        assert (pkg_root, module_name) == (
+            tmp_path / "src/dist2",
+            "com.company.a.b.c.test_demo",
+        )
+
+        result = pytester.runpytest("--import-mode=importlib", test_py)
+
+        result.stdout.no_fnmatch_line(
+            "E   KeyError: 'test_ns_multiple_levels_import1.src.dist2.com.company.a.b'"
+        )
+
+        assert "KeyError" not in result.stdout.str()
 
 
 def test_is_importable(pytester: Pytester) -> None:

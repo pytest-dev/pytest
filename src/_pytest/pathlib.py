@@ -10,6 +10,7 @@ from errno import ENOTDIR
 import fnmatch
 from functools import partial
 from importlib.machinery import ModuleSpec
+from importlib.machinery import PathFinder
 import importlib.util
 import itertools
 import os
@@ -37,8 +38,12 @@ from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
 
-LOCK_TIMEOUT = 60 * 60 * 24 * 3
+if sys.version_info < (3, 11):
+    from importlib._bootstrap_external import _NamespaceLoader as NamespaceLoader
+else:
+    from importlib.machinery import NamespaceLoader
 
+LOCK_TIMEOUT = 60 * 60 * 24 * 3
 
 _AnyPurePath = TypeVar("_AnyPurePath", bound=PurePath)
 
@@ -618,6 +623,34 @@ def _import_module_using_spec(
         If True, will call insert_missing_modules to create empty intermediate modules
         for made-up module names (when importing test files not reachable from sys.path).
     """
+    # Attempt to import the parent module, seems is our responsibility:
+    # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
+    parent_module_name, _, name = module_name.rpartition(".")
+    parent_module: ModuleType | None = None
+    if parent_module_name:
+        parent_module = sys.modules.get(parent_module_name)
+        if parent_module is None:
+            if (module_path.parent / "__init__.py").is_file():
+                parent_module_location = module_location
+            else:
+                parent_module_location = module_location.parent
+
+            if module_path.name == "__init__.py":
+                parent_module_path = module_path.parent.parent
+            else:
+                parent_module_path = module_path.parent
+
+            # Consider the parent module path as its __init__.py file, if it has one.
+            if (parent_module_path / "__init__.py").is_file():
+                parent_module_path = parent_module_path / "__init__.py"
+
+            parent_module = _import_module_using_spec(
+                parent_module_name,
+                parent_module_path,
+                parent_module_location,
+                insert_modules=insert_modules,
+            )
+
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
     for meta_importer in sys.meta_path:
@@ -627,36 +660,18 @@ def _import_module_using_spec(
         if spec_matches_module_path(spec, module_path):
             break
     else:
-        spec = importlib.util.spec_from_file_location(module_name, str(module_path))
+        loader = None
+        if "." in module_path.name and module_path.is_dir():
+            # The `spec_from_file_location` matches a loader based on the file extension by default.
+            # For a namespace package, you need to manually specify a loader.
+            loader = NamespaceLoader(name, module_path, PathFinder())
+
+        spec = importlib.util.spec_from_file_location(
+            module_name, str(module_path), loader=loader
+        )
 
     if spec_matches_module_path(spec, module_path):
         assert spec is not None
-        # Attempt to import the parent module, seems is our responsibility:
-        # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
-        parent_module_name, _, name = module_name.rpartition(".")
-        parent_module: ModuleType | None = None
-        if parent_module_name:
-            parent_module = sys.modules.get(parent_module_name)
-            if parent_module is None:
-                # Find the directory of this module's parent.
-                parent_dir = (
-                    module_path.parent.parent
-                    if module_path.name == "__init__.py"
-                    else module_path.parent
-                )
-                # Consider the parent module path as its __init__.py file, if it has one.
-                parent_module_path = (
-                    parent_dir / "__init__.py"
-                    if (parent_dir / "__init__.py").is_file()
-                    else parent_dir
-                )
-                parent_module = _import_module_using_spec(
-                    parent_module_name,
-                    parent_module_path,
-                    parent_dir,
-                    insert_modules=insert_modules,
-                )
-
         # Find spec and import this module.
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
@@ -669,16 +684,25 @@ def _import_module_using_spec(
         if insert_modules:
             insert_missing_modules(sys.modules, module_name)
         return mod
-
     return None
 
 
 def spec_matches_module_path(module_spec: ModuleSpec | None, module_path: Path) -> bool:
     """Return true if the given ModuleSpec can be used to import the given module path."""
-    if module_spec is None or module_spec.origin is None:
+    if module_spec is None:
         return False
 
-    return Path(module_spec.origin) == module_path
+    if module_spec.origin:
+        return Path(module_spec.origin) == module_path
+
+    # If this is a namespace package, compare the path with the `module_spec.submodule_Search_Locations`
+    # https://docs.python.org/zh-cn/3/library/importlib.html#importlib.machinery.ModuleSpec.submodule_search_locations
+    if module_spec.submodule_search_locations:
+        for _path in module_spec.submodule_search_locations:
+            if Path(_path) == module_path:
+                return True
+
+    return False
 
 
 # Implement a special _is_same function on Windows which returns True if the two filenames
