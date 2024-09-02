@@ -1438,8 +1438,8 @@ class TestTruncateExplanation:
     def test_truncation_with_cli(self, monkeypatch, pytester: Pytester) -> None:
         pytester.makepyfile(
             """\
-            string_a = "123456789\n23456789\n3"
-            string_b = "123456789\n23456789\n4"
+            string_a = "123456789\\n23456789\\n3"
+            string_b = "123456789\\n23456789\\n4"
 
             def test():
                 assert string_a == string_b
