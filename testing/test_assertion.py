@@ -1435,6 +1435,47 @@ class TestTruncateExplanation:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 6*"])
 
+    def test_truncation_with_cli(self, monkeypatch, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """\
+            string_a = "123456789\n23456789\n3"
+            string_b = "123456789\n23456789\n4"
+
+            def test():
+                assert string_a == string_b
+            """
+        )
+
+        # This test produces 6 lines of diff output or 79 characters
+        # So the effect should be when threshold is < 4 lines (considering 2 additional lines for explanation)
+        # Or < 9 characters (considering 70 additional characters for explanation)
+
+        monkeypatch.delenv("CI", raising=False)
+
+        result = pytester.runpytest("--truncation-limit-lines=3")
+        result.stdout.fnmatch_lines(["*truncated (3 lines hidden)*"])
+
+        result = pytester.runpytest("--truncation-limit-lines=4")
+        result.stdout.no_fnmatch_line(["*truncated*"])
+        result.stdout.fnmatch_lines(
+            [
+                "*+ 3*",
+                "*- 4*",
+            ]
+        )
+
+        result = pytester.runpytest("--truncation-limit-chars=8")
+        result.stdout.fnmatch_lines(["*truncated (6 lines hidden)*"])
+
+        result = pytester.runpytest("--truncation-limit-chars=9")
+        result.stdout.no_fnmatch_line(["*truncated*"])
+        result.stdout.fnmatch_lines(
+            [
+                "*+ 3*",
+                "*- 4*",
+            ]
+        )
+
 
 def test_python25_compile_issue257(pytester: Pytester) -> None:
     pytester.makepyfile(
