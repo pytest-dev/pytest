@@ -60,9 +60,7 @@ def pytest_addoption(parser: Parser) -> None:
         type=int,
         dest="truncation_limit_chars",
         metavar="CHARS",
-        help=(
-            "Set threshold of CHARS after which truncation will take effect"
-        )
+        help=("Set threshold of CHARS after which truncation will take effect"),
     )
 
     Config._add_verbosity_ini(
