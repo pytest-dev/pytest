@@ -1459,8 +1459,8 @@ class TestTruncateExplanation:
         result.stdout.no_fnmatch_line("*truncated*")
         result.stdout.fnmatch_lines(
             [
-                "*+ 3*",
                 "*- 4*",
+                "*+ 3*",
             ]
         )
 
@@ -1471,8 +1471,8 @@ class TestTruncateExplanation:
         result.stdout.no_fnmatch_line("*truncated*")
         result.stdout.fnmatch_lines(
             [
-                "*+ 3*",
                 "*- 4*",
+                "*+ 3*",
             ]
         )
 
