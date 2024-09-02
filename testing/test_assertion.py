@@ -1456,7 +1456,7 @@ class TestTruncateExplanation:
         result.stdout.fnmatch_lines(["*truncated (3 lines hidden)*"])
 
         result = pytester.runpytest("--truncation-limit-lines=4")
-        result.stdout.no_fnmatch_line(["*truncated*"])
+        result.stdout.no_fnmatch_line("*truncated*")
         result.stdout.fnmatch_lines(
             [
                 "*+ 3*",
@@ -1468,7 +1468,7 @@ class TestTruncateExplanation:
         result.stdout.fnmatch_lines(["*truncated (6 lines hidden)*"])
 
         result = pytester.runpytest("--truncation-limit-chars=9")
-        result.stdout.no_fnmatch_line(["*truncated*"])
+        result.stdout.no_fnmatch_line("*truncated*")
         result.stdout.fnmatch_lines(
             [
                 "*+ 3*",
