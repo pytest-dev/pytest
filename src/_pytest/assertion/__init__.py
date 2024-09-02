@@ -45,6 +45,26 @@ def pytest_addoption(parser: Parser) -> None:
         help="Enables the pytest_assertion_pass hook. "
         "Make sure to delete any previously generated pyc cache files.",
     )
+
+    group.addoption(
+        "--truncation-limit-lines",
+        action="store",
+        type=int,
+        dest="truncation_limit_lines",
+        metavar="LINES",
+        help="Set threshold of LINES after which truncation will take effect",
+    )
+    group.addoption(
+        "--truncation-limit-chars",
+        action="store",
+        type=int,
+        dest="truncation_limit_chars",
+        metavar="CHARS",
+        help=(
+            "Set threshold of CHARS after which truncation will take effect"
+        )
+    )
+
     Config._add_verbosity_ini(
         parser,
         Config.VERBOSITY_ASSERTIONS,

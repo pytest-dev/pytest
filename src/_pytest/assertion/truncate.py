@@ -12,16 +12,20 @@ from _pytest.nodes import Item
 
 
 DEFAULT_MAX_LINES = 8
-DEFAULT_MAX_CHARS = 8 * 80
+DEFAULT_MAX_CHARS = DEFAULT_MAX_LINES * 80
 USAGE_MSG = "use '-vv' to show"
 
 
-def truncate_if_required(
-    explanation: list[str], item: Item, max_length: int | None = None
-) -> list[str]:
+def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
     """Truncate this assertion explanation if the given test item is eligible."""
     if _should_truncate_item(item):
-        return _truncate_explanation(explanation)
+        max_lines = item.config.getoption("truncation_limit_lines", default=None)
+        max_chars = item.config.getoption("truncation_limit_chars", default=None)
+        return _truncate_explanation(
+            explanation,
+            max_lines=max_lines,
+            max_chars=max_chars,
+        )
     return explanation
 
 
