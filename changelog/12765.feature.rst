@@ -1,0 +1,1 @@
+Thresholds to trigger snippet truncation can now be set via command line options.
