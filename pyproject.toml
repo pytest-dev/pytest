@@ -306,6 +306,11 @@ disable = [
     "wrong-import-position",                  # handled by isort / ruff
 ]
 
+[tool.codespell]
+ignore-words-list = "afile,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,socio-economic,tesults,varius,wil"
+skip = "*/plugin_list.rst"
+write-changes = true
+
 [tool.check-wheel-contents]
 # check-wheel-contents is executed by the build-and-inspect-python-package action.
 # W009: Wheel contains multiple toplevel library entries

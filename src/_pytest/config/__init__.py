@@ -361,7 +361,7 @@ def _get_legacy_hook_marks(
     opt_names: tuple[str, ...],
 ) -> dict[str, bool]:
     if TYPE_CHECKING:
-        # abuse typeguard from importlib to avoid massive method type union thats lacking a alias
+        # abuse typeguard from importlib to avoid massive method type union that's lacking an alias
         assert inspect.isroutine(method)
     known_marks: set[str] = {m.name for m in getattr(method, "pytestmark", [])}
     must_warn: list[str] = []
