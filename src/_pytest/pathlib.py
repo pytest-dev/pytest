@@ -616,12 +616,49 @@ def _import_module_using_spec(
     module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
 ) -> ModuleType | None:
     """
-    Tries to import a module by its canonical name, path to the .py file, and its
-    parent location.
+    Tries to import a module by its canonical name, path, and its  parent location.
+
+    :param module_name:
+        The expected module name, will become the key of `sys.modules`.
+
+    :param module_path:
+        The file path of the module, for example `test_demo.py`,
+        if module is a package, use the path of  `__init__.py` in the package,
+        if module is a namespace package, use the path of  directory.
+
+    :param module_location:
+        The parent location of the module
+        if module is a package, usually the parent directory of the `__init__.py` path's parent directory.
 
     :param insert_modules:
         If True, will call insert_missing_modules to create empty intermediate modules
         for made-up module names (when importing test files not reachable from sys.path).
+
+    Example 1 of parent_module_*:
+        module_name:   a.b.c.demo
+        module_path:   a/b/c/demo.py
+        module_location:  a/b/c/
+        if  a.b.c is package (The file exists: a/b/c/__init__.py), then
+            parent_module_name:   a.b.c
+            parent_module_path:   a/b/c/__init__.py
+            parent_module_location:  a/b/c/
+        else:
+            parent_module_name:   a.b.c
+            parent_module_path:   a/b/c
+            parent_module_location:  a/b/
+
+    Example 2 of parent_module_*:
+        module_name:   a.b.c
+        module_path:   a/b/c/__init__.py
+        module_location:  a/b/c/
+        if  a.b is package (The file exists: a/b/__init__.py), then
+            parent_module_name:   a.b
+            parent_module_path:   a/b/__init__.py
+            parent_module_location:  a/b/
+        else:
+            parent_module_name:   a.b
+            parent_module_path:   a/b/
+            parent_module_location:  a/
     """
     # Attempt to import the parent module, seems is our responsibility:
     # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
@@ -630,19 +667,21 @@ def _import_module_using_spec(
     if parent_module_name:
         parent_module = sys.modules.get(parent_module_name)
         if parent_module is None:
-            if (module_path.parent / "__init__.py").is_file():
-                parent_module_location = module_location
-            else:
-                parent_module_location = module_location.parent
-
+            # Get parent_location based on location, get parent_path based on path.
             if module_path.name == "__init__.py":
+                # If the current module is in a package,
+                # need to leave the package first and then enter the parent module.
                 parent_module_path = module_path.parent.parent
             else:
                 parent_module_path = module_path.parent
 
-            # Consider the parent module path as its __init__.py file, if it has one.
-            if (parent_module_path / "__init__.py").is_file():
+            if (module_path.parent / "__init__.py").is_file():
+                # If the parent module is a package, there is no need to change the location.
+                # because the __init__.py file can be found in the same directory.
+                parent_module_location = module_location
                 parent_module_path = parent_module_path / "__init__.py"
+            else:
+                parent_module_location = module_location.parent
 
             parent_module = _import_module_using_spec(
                 parent_module_name,
@@ -661,9 +700,9 @@ def _import_module_using_spec(
             break
     else:
         loader = None
-        if "." in module_path.name and module_path.is_dir():
+        if module_path.is_dir():
             # The `spec_from_file_location` matches a loader based on the file extension by default.
-            # For a namespace package, you need to manually specify a loader.
+            # For a namespace package, need to manually specify a loader.
             loader = NamespaceLoader(name, module_path, PathFinder())
 
         spec = importlib.util.spec_from_file_location(
