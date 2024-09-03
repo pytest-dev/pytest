@@ -215,7 +215,7 @@ Improved documentation
   -- by :user:`webknjaz`
 
 
-- `#12577 <https://github.com/pytest-dev/pytest/issues/12577>`_: `CI` and `BUILD_NUMBER` environment variables role is discribed in
+- `#12577 <https://github.com/pytest-dev/pytest/issues/12577>`_: `CI` and `BUILD_NUMBER` environment variables role is described in
   the reference doc. They now also appear when doing `pytest -h`
   -- by :user:`MarcBresson`.
 
@@ -319,7 +319,7 @@ Bug Fixes
 - `#12367 <https://github.com/pytest-dev/pytest/issues/12367>`_: Fix a regression in pytest 8.2.0 where unittest class instances (a fresh one is created for each test) were not released promptly on test teardown but only on session teardown.
 
 
-- `#12381 <https://github.com/pytest-dev/pytest/issues/12381>`_: Fix possible "Directory not empty" crashes arising from concurent cache dir (``.pytest_cache``) creation. Regressed in pytest 8.2.0.
+- `#12381 <https://github.com/pytest-dev/pytest/issues/12381>`_: Fix possible "Directory not empty" crashes arising from concurrent cache dir (``.pytest_cache``) creation. Regressed in pytest 8.2.0.
 
 
 
@@ -330,7 +330,7 @@ Improved Documentation
 
 
 - `#12356 <https://github.com/pytest-dev/pytest/issues/12356>`_: Added a subsection to the documentation for debugging flaky tests to mention
-  lack of thread safety in pytest as a possible source of flakyness.
+  lack of thread safety in pytest as a possible source of flakiness.
 
 
 - `#12363 <https://github.com/pytest-dev/pytest/issues/12363>`_: The documentation webpages now links to a canonical version to reduce outdated documentation in search engine results.
@@ -676,7 +676,7 @@ Bug Fixes
   This bug was introduced in pytest 8.0.0rc1.
 
 
-- `#9765 <https://github.com/pytest-dev/pytest/issues/9765>`_, `#11816 <https://github.com/pytest-dev/pytest/issues/11816>`_: Fixed a frustrating bug that afflicted some users with the only error being ``assert mod not in mods``. The issue was caused by the fact that ``str(Path(mod))`` and ``mod.__file__`` don't necessarily produce the same string, and was being erroneously used interchangably in some places in the code.
+- `#9765 <https://github.com/pytest-dev/pytest/issues/9765>`_, `#11816 <https://github.com/pytest-dev/pytest/issues/11816>`_: Fixed a frustrating bug that afflicted some users with the only error being ``assert mod not in mods``. The issue was caused by the fact that ``str(Path(mod))`` and ``mod.__file__`` don't necessarily produce the same string, and was being erroneously used interchangeably in some places in the code.
 
   This fix also broke the internal API of ``PytestPluginManager.consider_conftest`` by introducing a new parameter -- we mention this in case it is being used by external code, even if marked as *private*.
 
