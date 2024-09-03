@@ -3068,6 +3068,7 @@ def test_xpass_output(pytester: Pytester) -> None:
         ]
     )
 
+
 class TestNodeIDHandling:
     def test_nodeid_handling_windows_paths(self, pytester: Pytester) -> None:
         """Test the correct handling of Windows-style paths with backslashes."""
@@ -3082,10 +3083,12 @@ class TestNodeIDHandling:
         )
         result = pytester.runpytest("-v")
 
-        result.stdout.re_match_lines([
-            r".*test_nodeid_handling_windows_paths.py::test_x\[x/y\] .*FAILED.*",
-            r".*test_nodeid_handling_windows_paths.py::test_x\[C:/path\] .*FAILED.*",
-            r".*test_nodeid_handling_windows_paths.py::test_x\[\\\\\] .*FAILED.*",
-            r".*test_nodeid_handling_windows_paths.py::test_x\[C:\\\\path\] .*FAILED.*",
-            r".*test_nodeid_handling_windows_paths.py::test_x\[a::b/\] .*FAILED.*",
-        ])
+        result.stdout.re_match_lines(
+            [
+                r".*test_nodeid_handling_windows_paths.py::test_x\[x/y\] .*FAILED.*",
+                r".*test_nodeid_handling_windows_paths.py::test_x\[C:/path\] .*FAILED.*",
+                r".*test_nodeid_handling_windows_paths.py::test_x\[\\\\\] .*FAILED.*",
+                r".*test_nodeid_handling_windows_paths.py::test_x\[C:\\\\path\] .*FAILED.*",
+                r".*test_nodeid_handling_windows_paths.py::test_x\[a::b/\] .*FAILED.*",
+            ]
+        )
