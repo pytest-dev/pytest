@@ -1348,7 +1348,7 @@ def pytestconfig(request: FixtureRequest) -> Config:
     Example::
 
         def test_foo(pytestconfig):
-            if pytestconfig.getoption("verbose") > 0:
+            if pytestconfig.get_verbosity() > 0:
                 ...
 
     """
@@ -1807,7 +1807,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     session.perform_collect()
     invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
-    verbose = config.getvalue("verbose")
+    verbose = config.get_verbosity()
 
     def get_best_relpath(func) -> str:
         loc = getlocation(func, invocation_dir)
@@ -1866,7 +1866,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     session.perform_collect()
     invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
-    verbose = config.getvalue("verbose")
+    verbose = config.get_verbosity()
 
     fm = session._fixturemanager
 

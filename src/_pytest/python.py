@@ -512,7 +512,7 @@ def importtestmodule(
         ) from e
     except ImportError as e:
         exc_info = ExceptionInfo.from_current()
-        if config.getoption("verbose") < 2:
+        if config.get_verbosity() < 2:
             exc_info.traceback = exc_info.traceback.filter(filter_traceback)
         exc_repr = (
             exc_info.getrepr(style="short")
