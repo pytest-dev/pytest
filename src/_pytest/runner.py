@@ -71,7 +71,7 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
     durations = terminalreporter.config.option.durations
     durations_min = terminalreporter.config.option.durations_min
-    verbose = terminalreporter.config.getvalue("verbose")
+    verbose = terminalreporter.config.get_verbosity()
     if durations is None:
         return
     tr = terminalreporter
