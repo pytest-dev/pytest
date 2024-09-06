@@ -332,7 +332,7 @@ def maybe_wrap_pytest_function_for_tracing(pyfuncitem) -> None:
 def _enter_pdb(
     node: Node, excinfo: ExceptionInfo[BaseException], rep: BaseReport
 ) -> BaseReport:
-    # XXX we re-use the TerminalReporter's terminalwriter
+    # XXX we reuse the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
     # for not completely clear reasons.
     tw = node.config.pluginmanager.getplugin("terminalreporter")._tw

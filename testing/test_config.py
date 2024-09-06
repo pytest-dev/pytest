@@ -917,7 +917,7 @@ class TestConfigAPI:
         # default for string is ""
         value = config.getini("string1")
         assert value == ""
-        # should return None if None is explicity set as default value
+        # should return None if None is explicitly set as default value
         # irrespective of the type argument
         value = config.getini("none_1")
         assert value is None

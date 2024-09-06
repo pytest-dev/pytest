@@ -2,7 +2,6 @@
 
 .. sidebar:: **Next Open Trainings and Events**
 
-    - `pytest: Professionelles Testen (nicht nur) für Python <https://pretalx.com/workshoptage-2024/talk/9VUHYB/>`_, at `CH Open Workshoptage <https://workshoptage.ch/>`_, **September 2nd 2024**, HSLU Rotkreuz (CH)
     - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 4th -- 6th 2025**, Leipzig (DE) / Remote
 
     Also see :doc:`previous talks and blogposts <talks>`
