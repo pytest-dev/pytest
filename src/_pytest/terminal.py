@@ -649,6 +649,7 @@ class TerminalReporter:
                         self.wrap_write(formatted_reason)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
+                self.currentfspath = None
             else:
                 self.ensure_newline()
                 self._tw.write(f"[{rep.node.gateway.id}]")
