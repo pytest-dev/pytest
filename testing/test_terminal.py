@@ -3070,25 +3070,34 @@ def test_xpass_output(pytester: Pytester) -> None:
 
 
 class TestNodeIDHandling:
-    def test_nodeid_handling_windows_paths(self, pytester: Pytester) -> None:
+    def test_nodeid_handling_windows_paths(self, pytester: Pytester, tmp_path) -> None:
         """Test the correct handling of Windows-style paths with backslashes."""
-        pytester.makepyfile(
-            """
-            import pytest
+        pytester.makeini("[pytest]")  # Change `config.rootpath`
 
-            @pytest.mark.parametrize("a", ["x/y", "C:/path", "\\\\", "C:\\\\path", "a::b/"])
-            def test_x(a):
-                assert False
-            """
+        test_path = pytester.path / "tests" / "test_foo.py"
+        test_path.parent.mkdir()
+        os.chdir(test_path.parent)  # Change `config.invocation_params.dir`
+
+        test_path.write_text(
+            textwrap.dedent(
+                """
+                import pytest
+
+                @pytest.mark.parametrize("a", ["x/y", "C:/path", "\\\\", "C:\\\\path", "a::b/"])
+                def test_x(a):
+                    assert False
+                """
+            )
         )
+
         result = pytester.runpytest("-v")
 
         result.stdout.re_match_lines(
             [
-                r".*test_nodeid_handling_windows_paths.py::test_x\[x/y\] .*FAILED.*",
-                r".*test_nodeid_handling_windows_paths.py::test_x\[C:/path\] .*FAILED.*",
-                r".*test_nodeid_handling_windows_paths.py::test_x\[\\\\\] .*FAILED.*",
-                r".*test_nodeid_handling_windows_paths.py::test_x\[C:\\\\path\] .*FAILED.*",
-                r".*test_nodeid_handling_windows_paths.py::test_x\[a::b/\] .*FAILED.*",
+                r".*test_foo.py::test_x\[x/y\] .*FAILED.*",
+                r".*test_foo.py::test_x\[C:/path\] .*FAILED.*",
+                r".*test_foo.py::test_x\[\\\\\] .*FAILED.*",
+                r".*test_foo.py::test_x\[C:\\\\path\] .*FAILED.*",
+                r".*test_foo.py::test_x\[a::b/\] .*FAILED.*",
             ]
         )
