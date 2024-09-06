@@ -3087,7 +3087,7 @@ class TestNodeIDHandling:
                 def test_x(a):
                     assert False
                 """
-            )
+            ), encoding="utf-8"
         )
 
         result = pytester.runpytest("-v")
