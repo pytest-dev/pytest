@@ -686,5 +686,5 @@ For example:
             assert (6 / example_input) == e
 
 In the example above, the first three test cases should run without any
-exceptions, while the fourth should raise a``ZeroDivisionError`` exception,
+exceptions, while the fourth should raise a ``ZeroDivisionError`` exception,
 which is expected by pytest.
