@@ -360,7 +360,7 @@ def _get_legacy_hook_marks(
     opt_names: tuple[str, ...],
 ) -> dict[str, bool]:
     if TYPE_CHECKING:
-        # abuse typeguard from importlib to avoid massive method type union thats lacking a alias
+        # abuse typeguard from importlib to avoid massive method type union that's lacking an alias
         assert inspect.isroutine(method)
     known_marks: set[str] = {m.name for m in getattr(method, "pytestmark", [])}
     must_warn: list[str] = []
@@ -1178,8 +1178,12 @@ class Config:
     def cwd_relative_nodeid(self, nodeid: str) -> str:
         # nodeid's are relative to the rootpath, compute relative to cwd.
         if self.invocation_params.dir != self.rootpath:
-            fullpath = self.rootpath / nodeid
-            nodeid = bestrelpath(self.invocation_params.dir, fullpath)
+            base_path_part, *nodeid_part = nodeid.split("::")
+            # Only process path part
+            fullpath = self.rootpath / base_path_part
+            relative_path = bestrelpath(self.invocation_params.dir, fullpath)
+
+            nodeid = "::".join([relative_path, *nodeid_part])
         return nodeid
 
     @classmethod
@@ -1759,7 +1763,7 @@ class Config:
             print(config.get_verbosity())  # 1
             print(config.get_verbosity(Config.VERBOSITY_ASSERTIONS))  # 2
         """
-        global_level = self.option.verbose
+        global_level = self.getoption("verbose", default=0)
         assert isinstance(global_level, int)
         if verbosity_type is None:
             return global_level
