@@ -264,6 +264,7 @@ class TestClass:
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
     def test_does_not_discover_properties(self, pytester: Pytester) -> None:
+        """Regression test for #12446."""
         pytester.makepyfile(
             """\
             class TestCase:
@@ -276,6 +277,7 @@ class TestClass:
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
     def test_does_not_discover_instance_descriptors(self, pytester: Pytester) -> None:
+        """Regression test for #12446."""    
         pytester.makepyfile(
             """\
             # not `@property`, but it acts like one

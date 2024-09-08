@@ -1725,7 +1725,7 @@ class FixtureManager:
         if holderobj in self._holderobjseen:
             return
 
-        # avoid accessing `@property` (and other descriptors) when iterating fixtures
+        # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
         if not safe_isclass(holderobj) and not isinstance(holderobj, types.ModuleType):
             holderobj_tp: object = type(holderobj)
         else:
@@ -1742,7 +1742,7 @@ class FixtureManager:
                 # fixture attribute.
                 continue
 
-            # ok we know it is a fixture -- now safe to look up on the _instance_
+            # OK we know it is a fixture -- now safe to look up on the _instance_.
             obj = getattr(holderobj, name)
 
             if marker.name:
