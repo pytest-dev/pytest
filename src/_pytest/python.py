@@ -40,7 +40,6 @@ from _pytest._code.code import Traceback
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
-from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.compat import is_generator
@@ -55,6 +54,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
+from _pytest.fixtures import get_real_func
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import MARK_GEN
