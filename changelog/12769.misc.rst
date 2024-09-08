@@ -1,1 +1,0 @@
-Fix typos discovered by codespell and add codespell to pre-commit hooks.
