@@ -55,7 +55,7 @@ Bug fixes
 - `#6682 <https://github.com/pytest-dev/pytest/issues/6682>`_: Fixed bug where the verbosity levels where not being respected when printing the "msg" part of failed assertion (as in ``assert condition, msg``).
 
 
-- `#9422 <https://github.com/pytest-dev/pytest/issues/9422>`_: Fix bug where disabling the terminal plugin via ``-p no:terminal`` would cause crashes related to missing the ``verbose`` option.
+- `#9422 <https://github.com/pytest-dev/pytest/issues/9422>`_: Fixed bug where disabling the terminal plugin via ``-p no:terminal`` would cause crashes related to missing the ``verbose`` option.
 
   -- by :user:`GTowers1`
 
@@ -64,17 +64,17 @@ Bug fixes
 Improved documentation
 ----------------------
 
-- `#12663 <https://github.com/pytest-dev/pytest/issues/12663>`_: Clarify that the `pytest_deselected` hook should be called from `pytest_collection_modifyitems` hook implementations when items are deselected.
+- `#12663 <https://github.com/pytest-dev/pytest/issues/12663>`_: Clarified that the `pytest_deselected` hook should be called from `pytest_collection_modifyitems` hook implementations when items are deselected.
 
 
-- `#12678 <https://github.com/pytest-dev/pytest/issues/12678>`_: Remove erroneous quotes from `tmp_path_retention_policy` example in docs.
+- `#12678 <https://github.com/pytest-dev/pytest/issues/12678>`_: Removed erroneous quotes from `tmp_path_retention_policy` example in docs.
 
 
 
 Miscellaneous internal changes
 ------------------------------
 
-- `#12769 <https://github.com/pytest-dev/pytest/issues/12769>`_: Fix typos discovered by codespell and add codespell to pre-commit hooks.
+- `#12769 <https://github.com/pytest-dev/pytest/issues/12769>`_: Fixed typos discovered by codespell and add codespell to pre-commit hooks.
 
 
 pytest 8.3.2 (2024-07-24)
