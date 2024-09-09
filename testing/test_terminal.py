@@ -130,24 +130,25 @@ class TestTerminal:
         assert lines[1].endswith(modcol.name + " .")
         assert lines[2] == "hello world"
 
-    def test_writeline_after_report_issue12777(self, pytester: Pytester, linecomp) -> None:
+    def test_writeline_after_report_issue12777(
+        self, pytester: Pytester, linecomp
+    ) -> None:
         """
-            This test is checking issue 12777 - where writeline is writing a new line at the first usage, due to
-                pytest_runtest_logreport is running with certain variable
+        This test is checking issue 12777 - where writeline is writing a new line at the first usage, due to
+            pytest_runtest_logreport is running with certain variable
 
-            Setup:
-                * Make pytester pyfile
-                * Call pytester.getmodulecol to have pytester.config initialized
-                * Set config verbose to 1 (above 0)
-                * Create Report
-            Trigger:
-                * Call pytest_runtest_logreport (with the above config and report)
-                * Call write_line with 1 Line.
-            Verify:
-                * Verify currentfspath is None after pytest_runtest_logreport was running with the certain variables
-                * Verify write_line has no extra \n - length of write_line is 3 ['', Text, '')
+        Setup:
+            * Make pytester pyfile
+            * Call pytester.getmodulecol to have pytester.config initialized
+            * Set config verbose to 1 (above 0)
+            * Create Report
+        Trigger:
+            * Call pytest_runtest_logreport (with the above config and report)
+            * Call write_line with 1 Line.
+        Verify:
+            * Verify currentfspath is None after pytest_runtest_logreport was running with the certain variables
+            * Verify write_line has no extra \n - length of write_line is 3 ['', Text, '')
         """
-
         # Setup
         pytester.makepyfile(
             """
@@ -167,10 +168,13 @@ class TestTerminal:
         rep.write_line("Test")
 
         # Verify
-        assert rep.currentfspath is None, f"Expected currentfspath None, but got {rep.currentfspath}"
-        amount_of_lines = len(linecomp.stringio.getvalue().split('\n'))
-        assert amount_of_lines == 3, f"Expected amount_of_lines 3, but got {amount_of_lines}"
-
+        assert (
+            rep.currentfspath is None
+        ), f"Expected currentfspath None, but got {rep.currentfspath}"
+        amount_of_lines = len(linecomp.stringio.getvalue().split("\n"))
+        assert (
+            amount_of_lines == 3
+        ), f"Expected amount_of_lines 3, but got {amount_of_lines}"
 
     def test_show_runtest_logstart(self, pytester: Pytester, linecomp) -> None:
         item = pytester.getitem("def test_func(): pass")
