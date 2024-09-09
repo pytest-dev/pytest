@@ -793,10 +793,10 @@ class TestImportLibMode:
         """
         file_path = tmp_path / "a/b/c/demo.py"
         file_path.parent.mkdir(parents=True)
-        file_path.touch()
+        file_path.write_text("my_name='demo'")
 
         if b_is_package:
-            (tmp_path / "a/b/__init__.py").touch()
+            (tmp_path / "a/b/__init__.py").write_text("my_name='b.__init__'")
 
         mod = _import_module_using_spec(
             "a.b.c.demo",
@@ -808,8 +808,10 @@ class TestImportLibMode:
         # target module is imported
         assert mod is not None
         assert spec_matches_module_path(mod.__spec__, file_path) is True
+
         mod_demo = sys.modules["a.b.c.demo"]
         assert "demo.py" in str(mod_demo)
+        assert mod_demo.my_name == "demo"  # Imported and available for use
 
         # parent modules are recursively imported.
         mod_a = sys.modules["a"]
@@ -822,10 +824,17 @@ class TestImportLibMode:
 
         assert "namespace" in str(mod_a).lower()
         assert "namespace" in str(mod_c).lower()
+
+        # Compatibility package and namespace package
         if b_is_package:
             assert "namespace" not in str(mod_b).lower()
+            assert "__init__.py" in str(mod_b).lower()  # Imported __init__.py
+            assert mod_b.my_name == "b.__init__"  # Imported and available for use
+
         else:
             assert "namespace" in str(mod_b).lower()
+            with pytest.raises(AttributeError):  # Not imported __init__.py
+                assert mod_b.my_name
 
     def test_parent_contains_child_module_attribute(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
