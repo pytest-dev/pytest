@@ -133,7 +133,7 @@ class TestTerminal:
     def test_writeline_after_report_issue12777(
         self, pytester: Pytester, linecomp
     ) -> None:
-        """
+        r"""
         This test is checking issue 12777 - where writeline is writing a new line at the first usage, due to
             pytest_runtest_logreport is running with certain variable
 
