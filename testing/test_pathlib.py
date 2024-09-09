@@ -18,6 +18,7 @@ from typing import Sequence
 import unittest.mock
 
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pathlib import _import_module_using_spec
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import compute_module_name
@@ -36,6 +37,7 @@ from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
+from _pytest.pathlib import spec_matches_module_path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
 from _pytest.pytester import Pytester
@@ -779,6 +781,51 @@ class TestImportLibMode:
         modules = {}
         insert_missing_modules(modules, "")
         assert modules == {}
+
+    @pytest.mark.parametrize("b_is_package", [True, False])
+    @pytest.mark.parametrize("insert_modules", [True, False])
+    def test_import_module_using_spec(
+        self, b_is_package, insert_modules, tmp_path: Path
+    ):
+        """
+        Verify that `_import_module_using_spec` can obtain a spec based on the path,thereby enabling the import.
+        When importing, not only the target module is imported, but also the parent modules are recursively imported.
+        """
+        file_path = tmp_path / "a/b/c/demo.py"
+        file_path.parent.mkdir(parents=True)
+        file_path.touch()
+
+        if b_is_package:
+            (tmp_path / "a/b/__init__.py").touch()
+
+        mod = _import_module_using_spec(
+            "a.b.c.demo",
+            file_path,
+            file_path.parent,
+            insert_modules=insert_modules,
+        )
+
+        # target module is imported
+        assert mod is not None
+        assert spec_matches_module_path(mod.__spec__, file_path) is True
+        mod_demo = sys.modules["a.b.c.demo"]
+        assert "demo.py" in str(mod_demo)
+
+        # parent modules are recursively imported.
+        mod_a = sys.modules["a"]
+        mod_b = sys.modules["a.b"]
+        mod_c = sys.modules["a.b.c"]
+
+        assert mod_a.b is mod_b
+        assert mod_a.b.c is mod_c
+        assert mod_a.b.c.demo is mod_demo
+
+        assert "namespace" in str(mod_a)
+        assert "namespace" in str(mod_c)
+        if b_is_package:
+            assert "namespace" not in str(mod_b)
+        else:
+            assert "namespace" in str(mod_b)
 
     def test_parent_contains_child_module_attribute(
         self, monkeypatch: MonkeyPatch, tmp_path: Path

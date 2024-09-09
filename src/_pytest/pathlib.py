@@ -675,18 +675,14 @@ def _import_module_using_spec(
             else:
                 parent_module_path = module_path.parent
 
-            if (module_path.parent / "__init__.py").is_file():
-                # If the parent module is a package, there is no need to change the location.
-                # because the __init__.py file can be found in the same directory.
-                parent_module_location = module_location
+            if (parent_module_path / "__init__.py").is_file():
+                # If the parent module is a package, loading by  __init__.py file.
                 parent_module_path = parent_module_path / "__init__.py"
-            else:
-                parent_module_location = module_location.parent
 
             parent_module = _import_module_using_spec(
                 parent_module_name,
                 parent_module_path,
-                parent_module_location,
+                parent_module_path.parent,
                 insert_modules=insert_modules,
             )
 
