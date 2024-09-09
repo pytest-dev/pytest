@@ -820,12 +820,12 @@ class TestImportLibMode:
         assert mod_a.b.c is mod_c
         assert mod_a.b.c.demo is mod_demo
 
-        assert "namespace" in str(mod_a)
-        assert "namespace" in str(mod_c)
+        assert "namespace" in str(mod_a).lower()
+        assert "namespace" in str(mod_c).lower()
         if b_is_package:
-            assert "namespace" not in str(mod_b)
+            assert "namespace" not in str(mod_b).lower()
         else:
-            assert "namespace" in str(mod_b)
+            assert "namespace" in str(mod_b).lower()
 
     def test_parent_contains_child_module_attribute(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
