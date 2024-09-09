@@ -161,7 +161,7 @@ class TestTerminal:
         rep.config.option.verbose = 1
         reprec = pytester.inline_run()
         reports = reprec.getreports("pytest_runtest_logreport")
-        rep._show_progress_info = None
+        rep._show_progress_info = False
 
         # Trigger
         rep.pytest_runtest_logreport(reports[1])
