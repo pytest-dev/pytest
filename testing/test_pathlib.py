@@ -793,10 +793,12 @@ class TestImportLibMode:
         """
         file_path = tmp_path / "a/b/c/demo.py"
         file_path.parent.mkdir(parents=True)
-        file_path.write_text("my_name='demo'")
+        file_path.write_text("my_name='demo'", encoding="utf-8")
 
         if b_is_package:
-            (tmp_path / "a/b/__init__.py").write_text("my_name='b.__init__'")
+            (tmp_path / "a/b/__init__.py").write_text(
+                "my_name='b.__init__'", encoding="utf-8"
+            )
 
         mod = _import_module_using_spec(
             "a.b.c.demo",
