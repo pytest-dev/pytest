@@ -1,3 +1,0 @@
-Fix bug where disabling the terminal plugin via ``-p no:terminal`` would cause crashes related to missing the ``verbose`` option.
-
--- by :user:`GTowers1`
