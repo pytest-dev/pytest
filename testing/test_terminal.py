@@ -186,9 +186,15 @@ class TestTerminal:
         # Split the output into lines
         lines = output.splitlines()
 
+<<<<<<< Updated upstream
         location_of_first_terminalwrite = [
             i for i, s in enumerate(lines) if summery_line_marker in s
         ][0]
+=======
+        location_of_first_terminalwrite = next(
+            i for i, s in enumerate(lines) if summery_line_marker in s
+        )
+>>>>>>> Stashed changes
 
         assert lines[location_of_first_terminalwrite - 1] != "", (
             f"Expected not empty line before "
