@@ -22,7 +22,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collected 0 items
-    cache -- .../_pytest/cacheprovider.py:558
+    cache -- .../_pytest/cacheprovider.py:556
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
@@ -33,7 +33,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         Values can be any object handled by the json stdlib module.
 
-    capsysbinary -- .../_pytest/capture.py:1005
+    capsysbinary -- .../_pytest/capture.py:1006
         Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
         The captured output is made available via ``capsysbinary.readouterr()``
@@ -51,7 +51,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capsysbinary.readouterr()
                 assert captured.out == b"hello\n"
 
-    capfd -- .../_pytest/capture.py:1033
+    capfd -- .../_pytest/capture.py:1034
         Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
@@ -69,7 +69,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capfd.readouterr()
                 assert captured.out == "hello\n"
 
-    capfdbinary -- .../_pytest/capture.py:1061
+    capfdbinary -- .../_pytest/capture.py:1062
         Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
         The captured output is made available via ``capfd.readouterr()`` method
@@ -87,7 +87,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capfdbinary.readouterr()
                 assert captured.out == b"hello\n"
 
-    capsys -- .../_pytest/capture.py:977
+    capsys -- .../_pytest/capture.py:978
         Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
         The captured output is made available via ``capsys.readouterr()`` method
@@ -105,7 +105,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capsys.readouterr()
                 assert captured.out == "hello\n"
 
-    doctest_namespace [session scope] -- .../_pytest/doctest.py:740
+    doctest_namespace [session scope] -- .../_pytest/doctest.py:741
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 
@@ -119,14 +119,14 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         For more details: :ref:`doctest_namespace`.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1344
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1345
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 
         Example::
 
             def test_foo(pytestconfig):
-                if pytestconfig.getoption("verbose") > 0:
+                if pytestconfig.get_verbosity() > 0:
                     ...
 
     record_property -- .../_pytest/junitxml.py:280
@@ -196,7 +196,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         .. _legacy_path: https://py.readthedocs.io/en/latest/path.html
 
-    caplog -- .../_pytest/logging.py:600
+    caplog -- .../_pytest/logging.py:598
         Access and control log capturing.
 
         Captured logs are available through the following properties/methods::
