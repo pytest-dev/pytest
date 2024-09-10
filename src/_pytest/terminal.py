@@ -501,11 +501,13 @@ class TerminalReporter:
     def write_line(self, line: str | bytes, **markup: bool) -> None:
         if not isinstance(line, str):
             line = str(line, errors="replace")
+
         if self._all_tests_finished and self._first_write_after_tests:
             self._first_write_after_tests = False
             self.currentfspath = None
         else:
             self.ensure_newline()
+
         self._tw.line(line, **markup)
 
     def rewrite(self, line: str, **markup: bool) -> None:
@@ -594,9 +596,8 @@ class TerminalReporter:
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
-        if report.when == "teardown":
+        if report.when == 'teardown':
             self._all_tests_finished = True
-        self._tests_ran = True
         rep = report
 
         res = TestShortLogReport(
@@ -625,7 +626,6 @@ class TerminalReporter:
                 markup = {}
         self._progress_nodeids_reported.add(rep.nodeid)
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
-            self.ensure_newline()
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
             # items are interspersed, e.g. `logreport`, `logreport`,
@@ -658,7 +658,6 @@ class TerminalReporter:
                         self.wrap_write(formatted_reason)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
-                self.currentfspath = None
             else:
                 self.ensure_newline()
                 self._tw.write(f"[{rep.node.gateway.id}]")
@@ -899,7 +898,7 @@ class TerminalReporter:
     @hookimpl(wrapper=True)
     def pytest_sessionfinish(
         self, session: Session, exitstatus: int | ExitCode
-    ) -> Generator[None]:
+    ) -> Generator[None, None, None]:
         result = yield
         self._tw.line("")
         summary_exit_codes = (
@@ -924,7 +923,7 @@ class TerminalReporter:
         return result
 
     @hookimpl(wrapper=True)
-    def pytest_terminal_summary(self) -> Generator[None]:
+    def pytest_terminal_summary(self) -> Generator[None, None, None]:
         self.summary_errors()
         self.summary_failures()
         self.summary_xfailures()
