@@ -626,6 +626,7 @@ class TerminalReporter:
             # should only be printed after all teardowns are finished.
             if self._show_progress_info and not self._is_last_item:
                 self._write_progress_information_if_past_edge()
+            self.currentfspath = None
         else:
             line = self._locationline(rep.nodeid, *rep.location)
             running_xdist = hasattr(rep, "node")

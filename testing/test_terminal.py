@@ -130,51 +130,65 @@ class TestTerminal:
         assert lines[1].endswith(modcol.name + " .")
         assert lines[2] == "hello world"
 
-    def test_writeline_after_report_issue12777(
-        self, pytester: Pytester, linecomp
-    ) -> None:
+    @pytest.mark.parametrize("verbose", [True, False])
+    def test_writeline_after_report_issue12777(self, pytester: Pytester, verbose) -> None:
         r"""
-        This test is checking issue 12777 - where writeline is writing a new line at the first usage, due to
-            pytest_runtest_logreport is running with certain variable
+            This test is checking issue 12777 - where writeline is writing a new line at the first usage, due to
+                pytest_runtest_logreport is running with certain variable
 
-        Setup:
-            * Make pytester pyfile
-            * Call pytester.getmodulecol to have pytester.config initialized
-            * Set config verbose to 1 (above 0)
-            * Create Report
-        Trigger:
-            * Call pytest_runtest_logreport (with the above config and report)
-            * Call write_line with 1 Line.
-        Verify:
-            * Verify currentfspath is None after pytest_runtest_logreport was running with the certain variables
-            * Verify write_line has no extra \n - length of write_line is 3 ['', Text, '')
+            Setup:
+                * Make pytester pyfile
+                * Make conftest file with writeline
+                * Set verbose to TRUE/FALSE
+            Trigger:
+                * run pytester with the above files
+            Verify:
+                * Verify that the line before the first writeline is not empty
         """
-        # Setup
-        pytester.makepyfile(
-            """
-            def test_a(): assert False
-            def test_b(): pass
-        """
-        )
-        pytester.getmodulecol("def test_b(): pass")
-        rep = TerminalReporter(pytester.config, file=linecomp.stringio)
-        rep.config.option.verbose = 1
-        reprec = pytester.inline_run()
-        reports = reprec.getreports("pytest_runtest_logreport")
-        rep._show_progress_info = False
 
-        # Trigger
-        rep.pytest_runtest_logreport(reports[1])
-        rep.write_line("Test")
+        summery_line_marker = "Custom summary line"
+        # Create a test file
+        pytester.makepyfile("""
+            def test_pass():
+                assert True
+            """)
 
-        # Verify
-        assert (
-            rep.currentfspath is None
-        ), f"Expected currentfspath None, but got {rep.currentfspath}"
-        amount_of_lines = len(linecomp.stringio.getvalue().split("\n"))
-        assert (
-            amount_of_lines == 3
-        ), f"Expected amount_of_lines 3, but got {amount_of_lines}"
+        # Create a custom plugin to hook into pytest_runtest_logreport and terminal_summary
+        pytester.makeconftest(fr"""
+            import pytest
+
+            class CustomPlugin:
+                def __init__(self):
+                    self.report_called = False
+
+                def pytest_runtest_logreport(self, report):
+                    if report.when == 'call':
+                        self.report_called = True
+
+                def pytest_terminal_summary(self, terminalreporter):
+                    assert self.report_called, "pytest_runtest_logreport was not called"
+                    terminalreporter.write_line("{summery_line_marker}")
+                    # The bug might occur here, just before write_line
+
+            @pytest.hookimpl(tryfirst=True)
+            def pytest_configure(config):
+                custom_plugin = CustomPlugin()
+                config.pluginmanager.register(custom_plugin, "custom_plugin")
+            """)
+
+        # Run pytest with -v for verbose output and -s to disable output capturing
+        result = pytester.runpytest("-v") if verbose else pytester.runpytest()
+
+        # Get the output as a string
+        output = result.stdout.str()
+
+        # Split the output into lines
+        lines = output.splitlines()
+
+        location_of_first_terminalwrite = [i for i, s in enumerate(lines) if summery_line_marker in s][0]
+
+        assert lines[location_of_first_terminalwrite-1] is not '', f"Expected not empty line before " \
+                                 f"first use of terminal writer but got {lines[location_of_first_terminalwrite+1]}"
 
     def test_show_runtest_logstart(self, pytester: Pytester, linecomp) -> None:
         item = pytester.getitem("def test_func(): pass")
