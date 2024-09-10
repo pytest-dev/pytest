@@ -131,7 +131,7 @@ class TestTerminal:
         assert lines[2] == "hello world"
 
     @pytest.mark.parametrize("verbose", [True, False])
-    def test_writeline_after_report_issue12777(
+    def test_writeline_with_verbose_issue12777(
         self, pytester: Pytester, verbose
     ) -> None:
         r"""

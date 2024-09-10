@@ -497,7 +497,6 @@ class TerminalReporter:
         self._tw.flush()
 
     def write_line(self, line: str | bytes, **markup: bool) -> None:
-        self.currentfspath = None
         if not isinstance(line, str):
             line = str(line, errors="replace")
         self.ensure_newline()
@@ -618,6 +617,7 @@ class TerminalReporter:
                 markup = {}
         self._progress_nodeids_reported.add(rep.nodeid)
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
+            self.ensure_newline()
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
             # items are interspersed, e.g. `logreport`, `logreport`,
@@ -650,6 +650,7 @@ class TerminalReporter:
                         self.wrap_write(formatted_reason)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
+                self.currentfspath = None
             else:
                 self.ensure_newline()
                 self._tw.write(f"[{rep.node.gateway.id}]")
