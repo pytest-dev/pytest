@@ -1352,7 +1352,7 @@ class TerminalReporter:
         The summary stats line is the line shown at the end, "=== 12 passed, 2 errors in Xs===".
 
         This function builds a list of the "parts" that make up for the text in that line, in
-        the example above it would be:
+        the example above it would be::
 
             [
                 ("12 passed", {"green": True}),
