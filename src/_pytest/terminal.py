@@ -497,6 +497,7 @@ class TerminalReporter:
         self._tw.flush()
 
     def write_line(self, line: str | bytes, **markup: bool) -> None:
+        self.currentfspath = None
         if not isinstance(line, str):
             line = str(line, errors="replace")
         self.ensure_newline()
@@ -626,7 +627,6 @@ class TerminalReporter:
             # should only be printed after all teardowns are finished.
             if self._show_progress_info and not self._is_last_item:
                 self._write_progress_information_if_past_edge()
-            self.currentfspath = None
         else:
             line = self._locationline(rep.nodeid, *rep.location)
             running_xdist = hasattr(rep, "node")
@@ -650,7 +650,6 @@ class TerminalReporter:
                         self.wrap_write(formatted_reason)
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
-                self.currentfspath = None
             else:
                 self.ensure_newline()
                 self._tw.write(f"[{rep.node.gateway.id}]")
