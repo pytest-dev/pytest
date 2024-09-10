@@ -596,7 +596,7 @@ class TerminalReporter:
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
-        if report.when == 'teardown':
+        if report.when == "teardown":
             self._all_tests_finished = True
         rep = report
 
