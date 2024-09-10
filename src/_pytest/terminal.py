@@ -386,6 +386,8 @@ class TerminalReporter:
         self._collect_report_last_write: float | None = None
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
+        self._all_tests_finished = False
+        self._first_write_after_tests = True
 
     def _determine_show_progress_info(self) -> Literal["progress", "count", False]:
         """Return whether we should display progress information based on the current config."""
@@ -499,7 +501,11 @@ class TerminalReporter:
     def write_line(self, line: str | bytes, **markup: bool) -> None:
         if not isinstance(line, str):
             line = str(line, errors="replace")
-        self.ensure_newline()
+        if self._all_tests_finished and self._first_write_after_tests:
+            self._first_write_after_tests = False
+            self.currentfspath = None
+        else:
+            self.ensure_newline()
         self._tw.line(line, **markup)
 
     def rewrite(self, line: str, **markup: bool) -> None:
@@ -588,7 +594,8 @@ class TerminalReporter:
             self.flush()
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
-        self._tests_ran = True
+        if report.when == 'teardown':
+            self._all_tests_finished = True
         rep = report
 
         res = TestShortLogReport(
@@ -1161,6 +1168,8 @@ class TerminalReporter:
             self._tw.line(content)
 
     def summary_stats(self) -> None:
+        self._all_tests_finished = True
+        self._first_write_after_tests = True
         if self.verbosity < -1:
             return
 
@@ -1342,7 +1351,7 @@ class TerminalReporter:
         The summary stats line is the line shown at the end, "=== 12 passed, 2 errors in Xs===".
 
         This function builds a list of the "parts" that make up for the text in that line, in
-        the example above it would be::
+        the example above it would be:
 
             [
                 ("12 passed", {"green": True}),
