@@ -147,7 +147,6 @@ class TestTerminal:
         Verify:
             * Verify that the line before the first writeline is not empty
         """
-
         # Setup
         summery_line_marker = "Custom summary line"
 
