@@ -131,21 +131,22 @@ class TestTerminal:
         assert lines[2] == "hello world"
 
     @pytest.mark.parametrize("verbose", [True, False])
-    def test_writeline_after_report_issue12777(self, pytester: Pytester, verbose) -> None:
+    def test_writeline_after_report_issue12777(
+        self, pytester: Pytester, verbose
+    ) -> None:
         r"""
-            This test is checking issue 12777 - where writeline is writing a new line at the first usage, due to
-                pytest_runtest_logreport is running with certain variable
+        This test is checking issue 12777 - where writeline is writing a new line at the first usage, due to
+            pytest_runtest_logreport is running with certain variable
 
-            Setup:
-                * Make pytester pyfile
-                * Make conftest file with writeline
-                * Set verbose to TRUE/FALSE
-            Trigger:
-                * run pytester with the above files
-            Verify:
-                * Verify that the line before the first writeline is not empty
+        Setup:
+            * Make pytester pyfile
+            * Make conftest file with writeline
+            * Set verbose to TRUE/FALSE
+        Trigger:
+            * run pytester with the above files
+        Verify:
+            * Verify that the line before the first writeline is not empty
         """
-
         summery_line_marker = "Custom summary line"
         # Create a test file
         pytester.makepyfile("""
@@ -154,7 +155,7 @@ class TestTerminal:
             """)
 
         # Create a custom plugin to hook into pytest_runtest_logreport and terminal_summary
-        pytester.makeconftest(fr"""
+        pytester.makeconftest(rf"""
             import pytest
 
             class CustomPlugin:
@@ -185,10 +186,14 @@ class TestTerminal:
         # Split the output into lines
         lines = output.splitlines()
 
-        location_of_first_terminalwrite = [i for i, s in enumerate(lines) if summery_line_marker in s][0]
+        location_of_first_terminalwrite = [
+            i for i, s in enumerate(lines) if summery_line_marker in s
+        ][0]
 
-        assert lines[location_of_first_terminalwrite-1] is not '', f"Expected not empty line before " \
-                                 f"first use of terminal writer but got {lines[location_of_first_terminalwrite+1]}"
+        assert lines[location_of_first_terminalwrite - 1] != "", (
+            f"Expected not empty line before "
+            f"first use of terminal writer but got {lines[location_of_first_terminalwrite+1]}"
+        )
 
     def test_show_runtest_logstart(self, pytester: Pytester, linecomp) -> None:
         item = pytester.getitem("def test_func(): pass")
