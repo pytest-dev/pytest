@@ -147,14 +147,15 @@ class TestTerminal:
         Verify:
             * Verify that the line before the first writeline is not empty
         """
+
+        # Setup
         summery_line_marker = "Custom summary line"
-        # Create a test file
+
         pytester.makepyfile("""
             def test_pass():
                 assert True
             """)
 
-        # Create a custom plugin to hook into pytest_runtest_logreport and terminal_summary
         pytester.makeconftest(rf"""
             import pytest
 
@@ -177,24 +178,15 @@ class TestTerminal:
                 config.pluginmanager.register(custom_plugin, "custom_plugin")
             """)
 
-        # Run pytest with -v for verbose output and -s to disable output capturing
+        # Trigger
         result = pytester.runpytest("-v") if verbose else pytester.runpytest()
 
-        # Get the output as a string
+        # Verify
         output = result.stdout.str()
-
-        # Split the output into lines
         lines = output.splitlines()
-
-<<<<<<< Updated upstream
-        location_of_first_terminalwrite = [
-            i for i, s in enumerate(lines) if summery_line_marker in s
-        ][0]
-=======
         location_of_first_terminalwrite = next(
             i for i, s in enumerate(lines) if summery_line_marker in s
         )
->>>>>>> Stashed changes
 
         assert lines[location_of_first_terminalwrite - 1] != "", (
             f"Expected not empty line before "
