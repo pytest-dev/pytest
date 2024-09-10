@@ -31,6 +31,52 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.3.3 (2024-09-09)
+=========================
+
+Bug fixes
+---------
+
+- `#12446 <https://github.com/pytest-dev/pytest/issues/12446>`_: Avoid calling ``@property`` (and other instance descriptors) during fixture discovery -- by :user:`asottile`
+
+
+- `#12659 <https://github.com/pytest-dev/pytest/issues/12659>`_: Fixed the issue of not displaying assertion failure differences when using the parameter ``--import-mode=importlib`` in pytest>=8.1.
+
+
+- `#12667 <https://github.com/pytest-dev/pytest/issues/12667>`_: Fixed a regression where type change in `ExceptionInfo.errisinstance` caused `mypy` to fail.
+
+
+- `#12744 <https://github.com/pytest-dev/pytest/issues/12744>`_: Fixed typing compatibility with Python 3.9 or less -- replaced `typing.Self` with `typing_extensions.Self` -- by :user:`Avasam`
+
+
+- `#12745 <https://github.com/pytest-dev/pytest/issues/12745>`_: Fixed an issue with backslashes being incorrectly converted in nodeid paths on Windows, ensuring consistent path handling across environments.
+
+
+- `#6682 <https://github.com/pytest-dev/pytest/issues/6682>`_: Fixed bug where the verbosity levels where not being respected when printing the "msg" part of failed assertion (as in ``assert condition, msg``).
+
+
+- `#9422 <https://github.com/pytest-dev/pytest/issues/9422>`_: Fix bug where disabling the terminal plugin via ``-p no:terminal`` would cause crashes related to missing the ``verbose`` option.
+
+  -- by :user:`GTowers1`
+
+
+
+Improved documentation
+----------------------
+
+- `#12663 <https://github.com/pytest-dev/pytest/issues/12663>`_: Clarify that the `pytest_deselected` hook should be called from `pytest_collection_modifyitems` hook implementations when items are deselected.
+
+
+- `#12678 <https://github.com/pytest-dev/pytest/issues/12678>`_: Remove erroneous quotes from `tmp_path_retention_policy` example in docs.
+
+
+
+Miscellaneous internal changes
+------------------------------
+
+- `#12769 <https://github.com/pytest-dev/pytest/issues/12769>`_: Fix typos discovered by codespell and add codespell to pre-commit hooks.
+
+
 pytest 8.3.2 (2024-07-24)
 =========================
 
