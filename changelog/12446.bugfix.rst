@@ -1,1 +1,0 @@
-Avoid calling ``@property`` (and other instance descriptors) during fixture discovery -- by :user:`asottile`
