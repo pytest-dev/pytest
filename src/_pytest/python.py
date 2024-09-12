@@ -741,6 +741,12 @@ class Class(PyCollector):
         return self.obj()
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        if self.config.getini("discover_imports") == ("false" or False):
+            paths = self.config.getini("testpaths")
+            class_file = inspect.getfile(self.obj)
+            if not any(string in class_file for string in paths):
+                return []
+
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):
