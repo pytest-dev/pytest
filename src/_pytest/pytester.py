@@ -1527,7 +1527,7 @@ class Pytester:
                 f"{prepend_command} import pytest; pytest.main({list(args)})",
             ]
         else:
-            pytest_command.extend(args)
+            pytest_command.extend(str(arg) for arg in args)  # Convert all args to strings
 
         return self.run(*pytest_command, timeout=timeout, env=env)
 
