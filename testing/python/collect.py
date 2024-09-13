@@ -263,6 +263,43 @@ class TestClass:
         result = pytester.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
+    def test_does_not_discover_properties(self, pytester: Pytester) -> None:
+        """Regression test for #12446."""
+        pytester.makepyfile(
+            """\
+            class TestCase:
+                @property
+                def oops(self):
+                    raise SystemExit('do not call me!')
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+    def test_does_not_discover_instance_descriptors(self, pytester: Pytester) -> None:
+        """Regression test for #12446."""
+        pytester.makepyfile(
+            """\
+            # not `@property`, but it acts like one
+            # this should cover the case of things like `@cached_property` / etc.
+            class MyProperty:
+                def __init__(self, func):
+                    self._func = func
+                def __get__(self, inst, owner):
+                    if inst is None:
+                        return self
+                    else:
+                        return self._func.__get__(inst, owner)()
+
+            class TestCase:
+                @MyProperty
+                def oops(self):
+                    raise SystemExit('do not call me!')
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
     def test_abstract_class_is_not_collected(self, pytester: Pytester) -> None:
         """Regression test for #12275 (non-unittest version)."""
         pytester.makepyfile(

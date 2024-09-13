@@ -1,1 +1,0 @@
-Fixed a regression where type change in `ExceptionInfo.errisinstance` caused `mypy` to fail.
