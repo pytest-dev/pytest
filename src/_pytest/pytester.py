@@ -1488,7 +1488,7 @@ class Pytester:
         any temporary files and directories in a numbered directory prefixed
         with "runpytest-" to not conflict with the normal numbered pytest
         location for temporary files and directories.
-        
+
         :param args:
             The sequence of arguments to pass to the pytest subprocess.
         :param timeout:
