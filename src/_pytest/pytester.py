@@ -1519,17 +1519,15 @@ class Pytester:
 
         if hasattr(self, "_syspath_prepended"):
             prepend_command = (
-                f"import sys; sys.path.insert(0, '{self._syspath_prepended}');"
+                f"import sys; sys.path.insert(0, {repr(self._syspath_prepended)});"
             )
             pytest_command = [
                 python_executable,
                 "-c",
-                f"{prepend_command} import pytest; pytest.main({list(args)})",
+                f"{prepend_command} import pytest; pytest.main({repr(list(args))})",
             ]
         else:
-            pytest_command.extend(
-                str(arg) for arg in args
-            )  # Convert all args to strings
+            pytest_command.extend(str(arg) for arg in args)
 
         return self.run(*pytest_command, timeout=timeout, env=env)
 
