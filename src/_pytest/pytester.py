@@ -1351,7 +1351,7 @@ class Pytester:
         if hasattr(self, "_syspath_prepended"):
             paths_to_add.insert(0, self._syspath_prepended)
 
-        pythonpath = os.pathsep.join(filter(None, paths_to_add + [pythonpath]))
+        pythonpath = os.pathsep.join(filter(None, [*paths_to_add, pythonpath]))
 
         env["PYTHONPATH"] = pythonpath
         kw["env"] = env
