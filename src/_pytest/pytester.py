@@ -889,18 +889,18 @@ class Pytester:
         return self._makefile(".txt", args, kwargs)
 
     def syspathinsert(self, path: str | os.PathLike[str] | None = None) -> None:
-        """Prepend a directory to sys.path, defaults to :attr:`path`.
-
-        This is undone automatically when this object dies at the end of each
-        test.
-
-        :param path:
-            The path.
-        """
+        """Prepend a directory to sys.path, defaults to :attr:`path`."""
         if path is None:
             path = self.path
 
-        self._monkeypatch.syspath_prepend(str(path))
+        path_str = str(path)
+        self._monkeypatch.syspath_prepend(path_str)
+        self._syspath_prepended = path_str
+
+        # Store the prepended path in an attribute that persists across method calls
+        if not hasattr(self, '_prepended_syspaths'):
+            self._prepended_syspaths = []
+        self._prepended_syspaths.append(path_str)
 
     def mkdir(self, name: str | os.PathLike[str]) -> Path:
         """Create a new (sub)directory.
@@ -1323,12 +1323,12 @@ class Pytester:
         return None
 
     def popen(
-        self,
-        cmdargs: Sequence[str | os.PathLike[str]],
-        stdout: int | TextIO = subprocess.PIPE,
-        stderr: int | TextIO = subprocess.PIPE,
-        stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
-        **kw,
+            self,
+            cmdargs: Sequence[str | os.PathLike[str]],
+            stdout: int | TextIO = subprocess.PIPE,
+            stderr: int | TextIO = subprocess.PIPE,
+            stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
+            **kw,
     ):
         """Invoke :py:class:`subprocess.Popen`.
 
@@ -1337,10 +1337,18 @@ class Pytester:
 
         You probably want to use :py:meth:`run` instead.
         """
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join(
-            filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
+        env = kw.pop('env', os.environ.copy())
+        pythonpath = env.get("PYTHONPATH", "")
+
+        paths_to_add = [os.getcwd()]
+        if hasattr(self, "_syspath_prepended"):
+            paths_to_add.insert(0, self._syspath_prepended)
+
+        pythonpath = os.pathsep.join(
+            filter(None, paths_to_add + [pythonpath])
         )
+
+        env["PYTHONPATH"] = pythonpath
         kw["env"] = env
 
         if stdin is self.CLOSE_STDIN:
@@ -1361,42 +1369,12 @@ class Pytester:
         return popen
 
     def run(
-        self,
-        *cmdargs: str | os.PathLike[str],
-        timeout: float | None = None,
-        stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
+            self,
+            *cmdargs: str | os.PathLike[str],
+            timeout: float | None = None,
+            stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
+            env: dict[str, str] | None = None,
     ) -> RunResult:
-        """Run a command with arguments.
-
-        Run a process using :py:class:`subprocess.Popen` saving the stdout and
-        stderr.
-
-        :param cmdargs:
-            The sequence of arguments to pass to :py:class:`subprocess.Popen`,
-            with path-like objects being converted to :py:class:`str`
-            automatically.
-        :param timeout:
-            The period in seconds after which to timeout and raise
-            :py:class:`Pytester.TimeoutExpired`.
-        :param stdin:
-            Optional standard input.
-
-            - If it is ``CLOSE_STDIN`` (Default), then this method calls
-              :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``, and
-              the standard input is closed immediately after the new command is
-              started.
-
-            - If it is of type :py:class:`bytes`, these bytes are sent to the
-              standard input of the command.
-
-            - Otherwise, it is passed through to :py:class:`subprocess.Popen`.
-              For further information in this case, consult the document of the
-              ``stdin`` parameter in :py:class:`subprocess.Popen`.
-        :type stdin: _pytest.compat.NotSetType | bytes | IO[Any] | int
-        :returns:
-            The result.
-
-        """
         __tracebackhide__ = True
 
         cmdargs = tuple(os.fspath(arg) for arg in cmdargs)
@@ -1413,6 +1391,7 @@ class Pytester:
                 stdout=f1,
                 stderr=f2,
                 close_fds=(sys.platform != "win32"),
+                env=env,
             )
             if popen.stdin is not None:
                 popen.stdin.close()
@@ -1441,8 +1420,10 @@ class Pytester:
         self._dump_lines(out, sys.stdout)
         self._dump_lines(err, sys.stderr)
 
-        with contextlib.suppress(ValueError):
+        try:
             ret = ExitCode(ret)
+        except ValueError:
+            pass
         return RunResult(ret, out, err, timing.time() - now)
 
     def _dump_lines(self, lines, fp):
@@ -1464,32 +1445,34 @@ class Pytester:
         return self.run(sys.executable, "-c", command)
 
     def runpytest_subprocess(
-        self, *args: str | os.PathLike[str], timeout: float | None = None
+            self, *args: str | os.PathLike[str], timeout: float | None = None
     ) -> RunResult:
-        """Run pytest as a subprocess with given arguments.
-
-        Any plugins added to the :py:attr:`plugins` list will be added using the
-        ``-p`` command line option.  Additionally ``--basetemp`` is used to put
-        any temporary files and directories in a numbered directory prefixed
-        with "runpytest-" to not conflict with the normal numbered pytest
-        location for temporary files and directories.
-
-        :param args:
-            The sequence of arguments to pass to the pytest subprocess.
-        :param timeout:
-            The period in seconds after which to timeout and raise
-            :py:class:`Pytester.TimeoutExpired`.
-        :returns:
-            The result.
-        """
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
         args = (f"--basetemp={p}", *args)
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
             args = ("-p", plugins[0], *args)
-        args = self._getpytestargs() + args
-        return self.run(*args, timeout=timeout)
+
+        env = os.environ.copy()
+        pythonpath = env.get("PYTHONPATH", "")
+
+        if hasattr(self, "_syspath_prepended"):
+            pythonpath = os.pathsep.join(filter(None, [self._syspath_prepended, pythonpath]))
+
+        env["PYTHONPATH"] = pythonpath
+
+        python_executable = sys.executable
+        pytest_command = [python_executable, "-m", "pytest"]
+
+        if hasattr(self, "_syspath_prepended"):
+            prepend_command = f"import sys; sys.path.insert(0, '{self._syspath_prepended}');"
+            pytest_command = [python_executable, "-c",
+                              f"{prepend_command} import pytest; pytest.main({list(args)})"]
+        else:
+            pytest_command.extend(args)
+
+        return self.run(*pytest_command, timeout=timeout, env=env)
 
     def spawn_pytest(self, string: str, expect_timeout: float = 10.0) -> pexpect.spawn:
         """Run pytest using pexpect.
