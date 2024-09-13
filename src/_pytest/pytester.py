@@ -7,6 +7,7 @@ PYTEST_DONT_REWRITE
 from __future__ import annotations
 
 import collections.abc
+import contextlib
 from fnmatch import fnmatch
 import gc
 import importlib
@@ -1455,10 +1456,8 @@ class Pytester:
         self._dump_lines(out, sys.stdout)
         self._dump_lines(err, sys.stderr)
 
-        try:
+        with contextlib.suppress(ValueError):
             ret = ExitCode(ret)
-        except ValueError:
-            pass
         return RunResult(ret, out, err, timing.time() - now)
 
     def _dump_lines(self, lines, fp):
