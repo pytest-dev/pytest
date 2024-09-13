@@ -1401,6 +1401,7 @@ class Pytester:
 
             - If it is of type :py:class:`bytes`, these bytes are sent to the
               standard input of the command.
+
             - Otherwise, it is passed through to :py:class:`subprocess.Popen`.
               For further information in this case, consult the document of the
               ``stdin`` parameter in :py:class:`subprocess.Popen`.
@@ -1488,7 +1489,7 @@ class Pytester:
         any temporary files and directories in a numbered directory prefixed
         with "runpytest-" to not conflict with the normal numbered pytest
         location for temporary files and directories.
-        
+
         :param args:
             The sequence of arguments to pass to the pytest subprocess.
         :param timeout:
