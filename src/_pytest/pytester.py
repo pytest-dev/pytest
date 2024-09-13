@@ -1427,7 +1427,7 @@ class Pytester:
                 stdout=f1,
                 stderr=f2,
                 close_fds=(sys.platform != "win32"),
-                env=env
+                env=env,
             )
             if popen.stdin is not None:
                 popen.stdin.close()
