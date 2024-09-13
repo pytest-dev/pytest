@@ -1344,7 +1344,7 @@ class Pytester:
 
         You probably want to use :py:meth:`run` instead.
         """
-        env = kw.pop("env", os.environ.copy())
+        env = kw.pop('env', None) or os.environ.copy()
         pythonpath = env.get("PYTHONPATH", "")
 
         paths_to_add = [os.getcwd()]
