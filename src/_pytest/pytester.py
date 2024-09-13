@@ -7,7 +7,6 @@ PYTEST_DONT_REWRITE
 from __future__ import annotations
 
 import collections.abc
-import contextlib
 from fnmatch import fnmatch
 import gc
 import importlib
@@ -898,7 +897,7 @@ class Pytester:
         self._syspath_prepended = path_str
 
         # Store the prepended path in an attribute that persists across method calls
-        if not hasattr(self, '_prepended_syspaths'):
+        if not hasattr(self, "_prepended_syspaths"):
             self._prepended_syspaths = []
         self._prepended_syspaths.append(path_str)
 
@@ -1323,12 +1322,12 @@ class Pytester:
         return None
 
     def popen(
-            self,
-            cmdargs: Sequence[str | os.PathLike[str]],
-            stdout: int | TextIO = subprocess.PIPE,
-            stderr: int | TextIO = subprocess.PIPE,
-            stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
-            **kw,
+        self,
+        cmdargs: Sequence[str | os.PathLike[str]],
+        stdout: int | TextIO = subprocess.PIPE,
+        stderr: int | TextIO = subprocess.PIPE,
+        stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
+        **kw,
     ):
         """Invoke :py:class:`subprocess.Popen`.
 
@@ -1337,16 +1336,14 @@ class Pytester:
 
         You probably want to use :py:meth:`run` instead.
         """
-        env = kw.pop('env', os.environ.copy())
+        env = kw.pop("env", os.environ.copy())
         pythonpath = env.get("PYTHONPATH", "")
 
         paths_to_add = [os.getcwd()]
         if hasattr(self, "_syspath_prepended"):
             paths_to_add.insert(0, self._syspath_prepended)
 
-        pythonpath = os.pathsep.join(
-            filter(None, paths_to_add + [pythonpath])
-        )
+        pythonpath = os.pathsep.join(filter(None, paths_to_add + [pythonpath]))
 
         env["PYTHONPATH"] = pythonpath
         kw["env"] = env
@@ -1369,11 +1366,11 @@ class Pytester:
         return popen
 
     def run(
-            self,
-            *cmdargs: str | os.PathLike[str],
-            timeout: float | None = None,
-            stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
-            env: dict[str, str] | None = None,
+        self,
+        *cmdargs: str | os.PathLike[str],
+        timeout: float | None = None,
+        stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         __tracebackhide__ = True
 
@@ -1445,7 +1442,7 @@ class Pytester:
         return self.run(sys.executable, "-c", command)
 
     def runpytest_subprocess(
-            self, *args: str | os.PathLike[str], timeout: float | None = None
+        self, *args: str | os.PathLike[str], timeout: float | None = None
     ) -> RunResult:
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
@@ -1458,7 +1455,9 @@ class Pytester:
         pythonpath = env.get("PYTHONPATH", "")
 
         if hasattr(self, "_syspath_prepended"):
-            pythonpath = os.pathsep.join(filter(None, [self._syspath_prepended, pythonpath]))
+            pythonpath = os.pathsep.join(
+                filter(None, [self._syspath_prepended, pythonpath])
+            )
 
         env["PYTHONPATH"] = pythonpath
 
@@ -1466,9 +1465,14 @@ class Pytester:
         pytest_command = [python_executable, "-m", "pytest"]
 
         if hasattr(self, "_syspath_prepended"):
-            prepend_command = f"import sys; sys.path.insert(0, '{self._syspath_prepended}');"
-            pytest_command = [python_executable, "-c",
-                              f"{prepend_command} import pytest; pytest.main({list(args)})"]
+            prepend_command = (
+                f"import sys; sys.path.insert(0, '{self._syspath_prepended}');"
+            )
+            pytest_command = [
+                python_executable,
+                "-c",
+                f"{prepend_command} import pytest; pytest.main({list(args)})",
+            ]
         else:
             pytest_command.extend(args)
 
