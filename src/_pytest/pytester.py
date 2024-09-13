@@ -889,8 +889,10 @@ class Pytester:
 
     def syspathinsert(self, path: str | os.PathLike[str] | None = None) -> None:
         """Prepend a directory to sys.path, defaults to :attr:`path`.
+
         This is undone automatically when this object dies at the end of each
         test.
+
         :param path:
             The path.
         """
@@ -1378,8 +1380,10 @@ class Pytester:
         env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run a command with arguments.
+
         Run a process using :py:class:`subprocess.Popen` saving the stdout and
         stderr.
+
         :param cmdargs:
             The sequence of arguments to pass to :py:class:`subprocess.Popen`,
             with path-like objects being converted to :py:class:`str`
@@ -1389,10 +1393,12 @@ class Pytester:
             :py:class:`Pytester.TimeoutExpired`.
         :param stdin:
             Optional standard input.
+
             - If it is ``CLOSE_STDIN`` (Default), then this method calls
               :py:class:`subprocess.Popen` with ``stdin=subprocess.PIPE``, and
               the standard input is closed immediately after the new command is
               started.
+
             - If it is of type :py:class:`bytes`, these bytes are sent to the
               standard input of the command.
             - Otherwise, it is passed through to :py:class:`subprocess.Popen`.
@@ -1401,6 +1407,7 @@ class Pytester:
         :type stdin: _pytest.compat.NotSetType | bytes | IO[Any] | int
         :returns:
             The result.
+
         """
         __tracebackhide__ = True
 
@@ -1475,11 +1482,13 @@ class Pytester:
         self, *args: str | os.PathLike[str], timeout: float | None = None
     ) -> RunResult:
         """Run pytest as a subprocess with given arguments.
+
         Any plugins added to the :py:attr:`plugins` list will be added using the
         ``-p`` command line option.  Additionally ``--basetemp`` is used to put
         any temporary files and directories in a numbered directory prefixed
         with "runpytest-" to not conflict with the normal numbered pytest
         location for temporary files and directories.
+        
         :param args:
             The sequence of arguments to pass to the pytest subprocess.
         :param timeout:
