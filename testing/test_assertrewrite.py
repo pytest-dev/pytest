@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import ast
+import dis
 import errno
 from functools import partial
 import glob
 import importlib
+import inspect
 import marshal
 import os
 from pathlib import Path
@@ -131,10 +133,211 @@ class TestAssertionRewrite:
                 continue
             for n in [node, *ast.iter_child_nodes(node)]:
                 assert isinstance(n, (ast.stmt, ast.expr))
-                assert n.lineno == 3
-                assert n.col_offset == 0
-                assert n.end_lineno == 6
-                assert n.end_col_offset == 3
+                for location in [
+                    (n.lineno, n.col_offset),
+                    (n.end_lineno, n.end_col_offset),
+                ]:
+                    assert (3, 0) <= location <= (6, 3)
+
+    def test_positions_are_preserved(self) -> None:
+        """Ensure AST positions are preserved during rewriting (#12818)."""
+
+        def preserved(code: str) -> None:
+            s = textwrap.dedent(code)
+            locations = []
+
+            def loc(msg: str | None = None) -> None:
+                frame = inspect.currentframe()
+                assert frame
+                frame = frame.f_back
+                assert frame
+                frame = frame.f_back
+                assert frame
+
+                offset = frame.f_lasti
+
+                instructions = {i.offset: i for i in dis.get_instructions(frame.f_code)}
+
+                # skip CACHE instructions
+                while offset not in instructions and offset >= 0:
+                    offset -= 1
+
+                instruction = instructions[offset]
+                if sys.version_info >= (3, 11):
+                    position = instruction.positions
+                else:
+                    position = instruction.starts_line
+
+                locations.append((msg, instruction.opname, position))
+
+            globals = {"loc": loc}
+
+            m = rewrite(s)
+            mod = compile(m, "<string>", "exec")
+            exec(mod, globals, globals)
+            transformed_locations = locations
+            locations = []
+
+            mod = compile(s, "<string>", "exec")
+            exec(mod, globals, globals)
+            original_locations = locations
+
+            assert len(original_locations) > 0
+            assert original_locations == transformed_locations
+
+        preserved("""
+            def f():
+                loc()
+                return 8
+
+            assert f() in [8]
+            assert (f()
+                    in
+                    [8])
+        """)
+
+        preserved("""
+            class T:
+                def __init__(self):
+                    loc("init")
+                def __getitem__(self,index):
+                    loc("getitem")
+                    return index
+
+            assert T()[5] == 5
+            assert (T
+                    ()
+                    [5]
+                    ==
+                    5)
+        """)
+
+        for name, op in [
+            ("pos", "+"),
+            ("neg", "-"),
+            ("invert", "~"),
+        ]:
+            preserved(f"""
+                class T:
+                    def __{name}__(self):
+                        loc("{name}")
+                        return "{name}"
+
+                assert {op}T() == "{name}"
+                assert ({op}
+                        T
+                        ()
+                        ==
+                        "{name}")
+            """)
+
+        for name, op in [
+            ("add", "+"),
+            ("sub", "-"),
+            ("mul", "*"),
+            ("truediv", "/"),
+            ("floordiv", "//"),
+            ("mod", "%"),
+            ("pow", "**"),
+            ("lshift", "<<"),
+            ("rshift", ">>"),
+            ("or", "|"),
+            ("xor", "^"),
+            ("and", "&"),
+            ("matmul", "@"),
+        ]:
+            preserved(f"""
+                class T:
+                    def __{name}__(self,other):
+                        loc("{name}")
+                        return other
+
+                    def __r{name}__(self,other):
+                        loc("r{name}")
+                        return other
+
+                assert T() {op} 2 == 2
+                assert 2 {op} T() == 2
+
+                assert (T
+                        ()
+                        {op}
+                        2
+                        ==
+                        2)
+
+                assert (2
+                        {op}
+                        T
+                        ()
+                        ==
+                        2)
+        """)
+
+        for name, op in [
+            ("eq", "=="),
+            ("ne", "!="),
+            ("lt", "<"),
+            ("le", "<="),
+            ("gt", ">"),
+            ("ge", ">="),
+        ]:
+            preserved(f"""
+                class T:
+                    def __{name}__(self,other):
+                        loc()
+                        return True
+
+                assert  T() {op} 5
+                assert  (T
+                        ()
+                        {op}
+                        5)
+        """)
+
+        for name, op in [
+            ("eq", "=="),
+            ("ne", "!="),
+            ("lt", ">"),
+            ("le", ">="),
+            ("gt", "<"),
+            ("ge", "<="),
+            ("contains", "in"),
+        ]:
+            preserved(f"""
+                class T:
+                    def __{name}__(self,other):
+                        loc()
+                        return True
+
+                assert  5 {op} T()
+                assert  (5
+                         {op}
+                         T
+                         ())
+        """)
+
+        preserved("""
+            def func(value):
+                loc("func")
+                return value
+
+            class T:
+                def __iter__(self):
+                    loc("iter")
+                    return iter([5])
+
+            assert  func(*T()) == 5
+        """)
+
+        preserved("""
+            class T:
+                def __getattr__(self,name):
+                    loc()
+                    return name
+
+            assert  T().attr == "attr"
+        """)
 
     def test_dont_rewrite(self) -> None:
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
