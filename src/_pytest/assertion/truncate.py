@@ -45,7 +45,9 @@ def _should_truncate_item(item: Item) -> bool:
     if max_chars is not None:
         max_chars = int(max_chars)
 
-    return verbose < 2 and not util.running_on_ci() and (max_lines != 0 or max_chars != 0)
+    return (
+        verbose < 2 and not util.running_on_ci() and (max_lines != 0 or max_chars != 0)
+    )
 
 
 def _truncate_explanation(
