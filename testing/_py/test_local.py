@@ -19,7 +19,7 @@ import pytest
 def ignore_encoding_warning():
     with warnings.catch_warnings():
         if sys.version_info > (3, 10):
-            warnings.simplefilter("ignore", EncodingWarning)
+            warnings.simplefilter("ignore", EncodingWarning)  # noqa: F821
         yield
 
 
