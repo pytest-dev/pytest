@@ -1442,7 +1442,7 @@ class TestTruncateExplanation:
             ("lines", 4, 0),
             ("chars", 8, 6),
             ("chars", 9, 0),
-        )
+        ),
     )
     def test_truncation_with_ini(
         self,
@@ -1478,7 +1478,9 @@ class TestTruncateExplanation:
         result = pytester.runpytest()
 
         if expected_lines_hidden != 0:
-            result.stdout.fnmatch_lines([f"*truncated ({expected_lines_hidden} lines hidden)*"])
+            result.stdout.fnmatch_lines(
+                [f"*truncated ({expected_lines_hidden} lines hidden)*"]
+            )
         else:
             result.stdout.no_fnmatch_line("*truncated*")
             result.stdout.fnmatch_lines(

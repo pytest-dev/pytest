@@ -553,7 +553,7 @@ captured output:
 Modifying truncation limits
 --------------------------------------------------
 
-Default truncation limits are 8 lines or 640 characters, whichever comes first. 
+Default truncation limits are 8 lines or 640 characters, whichever comes first.
 To set custom truncation limits you can use following ``pytest.ini`` file options:
 
 .. code-block:: ini

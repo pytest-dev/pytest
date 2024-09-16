@@ -19,8 +19,12 @@ USAGE_MSG = "use '-vv' to show"
 def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
     """Truncate this assertion explanation if the given test item is eligible."""
     if _should_truncate_item(item):
-        max_lines = int(item.config.getini("truncation_limit_lines") or DEFAULT_MAX_LINES)
-        max_chars = int(item.config.getini("truncation_limit_chars") or DEFAULT_MAX_CHARS)
+        max_lines = int(
+            item.config.getini("truncation_limit_lines") or DEFAULT_MAX_LINES
+        )
+        max_chars = int(
+            item.config.getini("truncation_limit_chars") or DEFAULT_MAX_CHARS
+        )
         return _truncate_explanation(
             explanation,
             max_lines=max_lines,
