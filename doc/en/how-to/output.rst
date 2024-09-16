@@ -549,6 +549,22 @@ captured output:
     By default, parametrized variants of skipped tests are grouped together if
     they share the same skip reason. You can use ``--no-fold-skipped`` to print each skipped test separately.
 
+
+Modifying truncation limits
+--------------------------------------------------
+
+Default truncation limits are 8 lines or 640 characters, whichever comes first. 
+To set custom truncation limits you can use following ``pytest.ini`` file options:
+
+.. code-block:: ini
+
+    [pytest]
+    truncation_limit_lines = 10
+    truncation_limit_chars = 90
+
+That will cause pytest to truncate the assertions to 10 lines or 90 characters.
+
+
 Creating resultlog format files
 --------------------------------------------------
 

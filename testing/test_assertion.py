@@ -1435,7 +1435,23 @@ class TestTruncateExplanation:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 6*"])
 
-    def test_truncation_with_cli(self, monkeypatch, pytester: Pytester) -> None:
+    @pytest.mark.parametrize(
+        ["truncation_mode", "truncation_limit", "expected_lines_hidden"],
+        (
+            ("lines", 3, 3),
+            ("lines", 4, 0),
+            ("chars", 8, 6),
+            ("chars", 9, 0),
+        )
+    )
+    def test_truncation_with_ini(
+        self,
+        monkeypatch,
+        pytester: Pytester,
+        truncation_mode: str,
+        truncation_limit: int,
+        expected_lines_hidden: int,
+    ) -> None:
         pytester.makepyfile(
             """\
             string_a = "123456789\\n23456789\\n3"
@@ -1452,29 +1468,25 @@ class TestTruncateExplanation:
 
         monkeypatch.delenv("CI", raising=False)
 
-        result = pytester.runpytest("--truncation-limit-lines=3")
-        result.stdout.fnmatch_lines(["*truncated (3 lines hidden)*"])
-
-        result = pytester.runpytest("--truncation-limit-lines=4")
-        result.stdout.no_fnmatch_line("*truncated*")
-        result.stdout.fnmatch_lines(
-            [
-                "*- 4*",
-                "*+ 3*",
-            ]
+        pytester.makeini(
+            f"""
+            [pytest]
+            truncation_limit_{truncation_mode} = {truncation_limit}
+            """
         )
 
-        result = pytester.runpytest("--truncation-limit-chars=8")
-        result.stdout.fnmatch_lines(["*truncated (6 lines hidden)*"])
+        result = pytester.runpytest()
 
-        result = pytester.runpytest("--truncation-limit-chars=9")
-        result.stdout.no_fnmatch_line("*truncated*")
-        result.stdout.fnmatch_lines(
-            [
-                "*- 4*",
-                "*+ 3*",
-            ]
-        )
+        if expected_lines_hidden != 0:
+            result.stdout.fnmatch_lines([f"*truncated ({expected_lines_hidden} lines hidden)*"])
+        else:
+            result.stdout.no_fnmatch_line("*truncated*")
+            result.stdout.fnmatch_lines(
+                [
+                    "*- 4*",
+                    "*+ 3*",
+                ]
+            )
 
 
 def test_python25_compile_issue257(pytester: Pytester) -> None:

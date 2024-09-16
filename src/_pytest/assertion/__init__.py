@@ -46,20 +46,14 @@ def pytest_addoption(parser: Parser) -> None:
         "Make sure to delete any previously generated pyc cache files.",
     )
 
-    group.addoption(
-        "--truncation-limit-lines",
-        action="store",
-        type=int,
-        dest="truncation_limit_lines",
-        metavar="LINES",
+    parser.addini(
+        "truncation_limit_lines",
+        default=0,
         help="Set threshold of LINES after which truncation will take effect",
     )
-    group.addoption(
-        "--truncation-limit-chars",
-        action="store",
-        type=int,
-        dest="truncation_limit_chars",
-        metavar="CHARS",
+    parser.addini(
+        "truncation_limit_chars",
+        default=0,
         help=("Set threshold of CHARS after which truncation will take effect"),
     )
 
