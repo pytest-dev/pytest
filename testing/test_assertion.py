@@ -1440,7 +1440,8 @@ class TestTruncateExplanation:
         (
             (3, None, 3),
             (4, None, 0),
-            (0, None, 0)(None, 8, 6),
+            (0, None, 0),
+            (None, 8, 6),
             (None, 9, 0),
             (None, 0, 0),
             (0, 0, 0),
