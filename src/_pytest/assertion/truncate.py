@@ -38,12 +38,10 @@ def _should_truncate_item(item: Item) -> bool:
     verbose = item.config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
 
     max_lines = item.config.getini("truncation_limit_lines")
-    if max_lines is not None:
-        max_lines = int(max_lines)
+    max_lines = int(max_lines if max_lines is not None else DEFAULT_MAX_LINES)
 
     max_chars = item.config.getini("truncation_limit_chars")
-    if max_chars is not None:
-        max_chars = int(max_chars)
+    max_chars = int(max_chars if max_chars is not None else DEFAULT_MAX_CHARS)
 
     return (
         verbose < 2 and not util.running_on_ci() and (max_lines != 0 or max_chars != 0)
