@@ -1436,20 +1436,23 @@ class TestTruncateExplanation:
         result.stdout.fnmatch_lines(["* 6*"])
 
     @pytest.mark.parametrize(
-        ["truncation_mode", "truncation_limit", "expected_lines_hidden"],
+        ["truncation_lines", "truncation_chars", "expected_lines_hidden"],
         (
-            ("lines", 3, 3),
-            ("lines", 4, 0),
-            ("chars", 8, 6),
-            ("chars", 9, 0),
+            (3, None, 3),
+            (4, None, 0),
+            (0, None, 0)
+            (None, 8, 6),
+            (None, 9, 0),
+            (None, 0, 0),
+            (0, 0, 0),
         ),
     )
     def test_truncation_with_ini(
         self,
         monkeypatch,
         pytester: Pytester,
-        truncation_mode: str,
-        truncation_limit: int,
+        truncation_lines: int | None,
+        truncation_chars: int | None,
         expected_lines_hidden: int,
     ) -> None:
         pytester.makepyfile(
@@ -1468,12 +1471,12 @@ class TestTruncateExplanation:
 
         monkeypatch.delenv("CI", raising=False)
 
-        pytester.makeini(
-            f"""
-            [pytest]
-            truncation_limit_{truncation_mode} = {truncation_limit}
-            """
-        )
+        ini = "[pytest]\n"
+        if truncation_lines is not None:
+            ini += f"truncation_limit_lines = {truncation_lines}\n"
+        if truncation_chars is not None:
+            ini += f"truncation_limit_chars = {truncation_chars}\n"
+        pytester.makeini(ini)
 
         result = pytester.runpytest()
 

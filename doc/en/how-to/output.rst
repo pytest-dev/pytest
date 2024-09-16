@@ -564,6 +564,8 @@ To set custom truncation limits you can use following ``pytest.ini`` file option
 
 That will cause pytest to truncate the assertions to 10 lines or 90 characters, whichever comes first.
 
+Setting both :confval:`truncation_limit_lines` and :confval:`truncation_limit_chars` to ``0`` will disable the truncation.
+However, setting only one of those values will disable one truncation mode, but will leave the other one intact.
 
 Creating resultlog format files
 --------------------------------------------------

@@ -36,7 +36,16 @@ def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
 def _should_truncate_item(item: Item) -> bool:
     """Whether or not this test item is eligible for truncation."""
     verbose = item.config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
-    return verbose < 2 and not util.running_on_ci()
+
+    max_lines = item.config.getini("truncation_limit_lines")
+    if max_lines is not None:
+        max_lines = int(max_lines)
+
+    max_chars = item.config.getini("truncation_limit_chars")
+    if max_chars is not None:
+        max_chars = int(max_chars)
+
+    return verbose < 2 and not util.running_on_ci() and (max_lines != 0 or max_chars != 0)
 
 
 def _truncate_explanation(
@@ -79,15 +88,22 @@ def _truncate_explanation(
     ):
         return input_lines
     # Truncate first to max_lines, and then truncate to max_chars if necessary
-    truncated_explanation = input_lines[:max_lines]
+    if max_lines > 0:
+        truncated_explanation = input_lines[:max_lines]
+    else:
+        truncated_explanation = input_lines
     truncated_char = True
     # We reevaluate the need to truncate chars following removal of some lines
-    if len("".join(truncated_explanation)) > tolerable_max_chars:
+    if len("".join(truncated_explanation)) > tolerable_max_chars and max_chars > 0:
         truncated_explanation = _truncate_by_char_count(
             truncated_explanation, max_chars
         )
     else:
         truncated_char = False
+
+    if truncated_explanation == input_lines:
+        # No truncation happened, so we do not need to add any explanations
+        return truncated_explanation
 
     truncated_line_count = len(input_lines) - len(truncated_explanation)
     if truncated_explanation[-1]:
