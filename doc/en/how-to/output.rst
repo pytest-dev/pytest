@@ -550,6 +550,7 @@ captured output:
     they share the same skip reason. You can use ``--no-fold-skipped`` to print each skipped test separately.
 
 
+.. _truncation-params:
 Modifying truncation limits
 --------------------------------------------------
 
