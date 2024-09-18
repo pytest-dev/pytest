@@ -1445,6 +1445,8 @@ class TestTruncateExplanation:
             (None, 9, 0),
             (None, 0, 0),
             (0, 0, 0),
+            (0, 1000, 0),
+            (1000, 0, 0),
         ),
     )
     def test_truncation_with_ini(
