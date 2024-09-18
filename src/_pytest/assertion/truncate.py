@@ -18,13 +18,8 @@ USAGE_MSG = "use '-vv' to show"
 
 def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
     """Truncate this assertion explanation if the given test item is eligible."""
-    if _should_truncate_item(item):
-        max_lines = int(
-            item.config.getini("truncation_limit_lines") or DEFAULT_MAX_LINES
-        )
-        max_chars = int(
-            item.config.getini("truncation_limit_chars") or DEFAULT_MAX_CHARS
-        )
+    should_truncate, max_lines, max_chars = _get_truncation_parameters(item)
+    if should_truncate:
         return _truncate_explanation(
             explanation,
             max_lines=max_lines,
@@ -33,25 +28,31 @@ def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
     return explanation
 
 
-def _should_truncate_item(item: Item) -> bool:
+def _get_truncation_parameters(item: Item) -> tuple[bool, int, int]:
     """Whether or not this test item is eligible for truncation."""
-    verbose = item.config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
-
+    # We do not need to truncate if one of conditions is met:
+    # 1. Verbosity level is 2 or more;
+    # 2. Test is being run in CI environment;
+    # 3. Both truncation_limit_lines and truncation_limit_chars
+    #    .ini parameters are set to 0 explicitly.
     max_lines = item.config.getini("truncation_limit_lines")
     max_lines = int(max_lines if max_lines is not None else DEFAULT_MAX_LINES)
 
     max_chars = item.config.getini("truncation_limit_chars")
     max_chars = int(max_chars if max_chars is not None else DEFAULT_MAX_CHARS)
 
-    return (
-        verbose < 2 and not util.running_on_ci() and (max_lines != 0 or max_chars != 0)
-    )
+    verbose = item.config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
+
+    should_truncate = verbose < 2 and not util.running_on_ci()
+    should_truncate = should_truncate and (max_lines > 0 or max_chars > 0)
+
+    return should_truncate, max_lines, max_chars
 
 
 def _truncate_explanation(
     input_lines: list[str],
-    max_lines: int | None = None,
-    max_chars: int | None = None,
+    max_lines: int,
+    max_chars: int,
 ) -> list[str]:
     """Truncate given list of strings that makes up the assertion explanation.
 
@@ -59,10 +60,6 @@ def _truncate_explanation(
     first, taking the truncation explanation into account. The remaining lines
     will be replaced by a usage message.
     """
-    if max_lines is None:
-        max_lines = DEFAULT_MAX_LINES
-    if max_chars is None:
-        max_chars = DEFAULT_MAX_CHARS
 
     # Check if truncation required
     input_char_count = len("".join(input_lines))
