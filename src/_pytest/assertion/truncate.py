@@ -60,7 +60,6 @@ def _truncate_explanation(
     first, taking the truncation explanation into account. The remaining lines
     will be replaced by a usage message.
     """
-
     # Check if truncation required
     input_char_count = len("".join(input_lines))
     # The length of the truncation explanation depends on the number of lines
