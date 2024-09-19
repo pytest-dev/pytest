@@ -551,6 +551,7 @@ captured output:
 
 
 .. _truncation-params:
+
 Modifying truncation limits
 --------------------------------------------------
 
