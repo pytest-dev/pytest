@@ -29,7 +29,7 @@ def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
 
 
 def _get_truncation_parameters(item: Item) -> tuple[bool, int, int]:
-    """Whether or not this test item is eligible for truncation."""
+    """Return the truncation parameters related to the given item, as (should truncate, max lines, max chars)."""
     # We do not need to truncate if one of conditions is met:
     # 1. Verbosity level is 2 or more;
     # 2. Test is being run in CI environment;
