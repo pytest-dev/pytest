@@ -1873,6 +1873,32 @@ passed multiple times. The expected format is ``name=value``. For example::
    Default: ``all``
 
 
+.. confval:: truncation_limit_chars
+
+    Controls the characters limit to truncate to.
+    Setting value to ``0`` disables the character limit for truncation.
+
+    .. code-block:: ini
+
+        [pytest]
+        truncation_limit_chars = 640
+
+   Default: ``640``
+
+
+.. confval:: truncation_limit_lines
+
+    Controls the lines limit to truncate to.
+    Setting value to ``0`` disables the lines limit for truncation.
+
+    .. code-block:: ini
+
+        [pytest]
+        truncation_limit_lines = 8
+
+   Default: ``8``
+
+
 .. confval:: usefixtures
 
     List of fixtures that will be applied to all test functions; this is semantically the same to apply
