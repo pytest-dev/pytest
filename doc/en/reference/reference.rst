@@ -1888,7 +1888,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    Default: ``640``
 
-   ..note::
+   .. note::
 
         If pytest detects it is :ref:`running on CI <ci-pipelines>`, truncation is disabled automatically.
 
@@ -1908,7 +1908,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    Default: ``8``
 
-   ..note::
+   .. note::
 
         If pytest detects it is :ref:`running on CI <ci-pipelines>`, truncation is disabled automatically.
 
