@@ -689,6 +689,7 @@ class Pytester:
         self._request.addfinalizer(self._finalize)
         self._method = self._request.config.getoption("--runpytest")
         self._test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
+        self._prepended_syspaths: list[Path] = []
 
         self._monkeypatch = mp = monkeypatch
         self.chdir()
@@ -900,14 +901,9 @@ class Pytester:
         if path is None:
             path = self.path
 
-        path_str = str(path)
-        self._monkeypatch.syspath_prepend(path_str)
-        self._syspath_prepended = path_str
-
-        # Store the prepended path in an attribute that persists across method calls
-        if not hasattr(self, "_prepended_syspaths"):
-            self._prepended_syspaths = []
-        self._prepended_syspaths.append(path_str)
+        path_obj = Path(path)
+        self._monkeypatch.syspath_prepend(str(path_obj))
+        self._prepended_syspaths.append(path_obj)
 
     def mkdir(self, name: str | os.PathLike[str]) -> Path:
         """Create a new (sub)directory.
@@ -1347,11 +1343,9 @@ class Pytester:
         env = kw.pop("env", None) or os.environ.copy()
         pythonpath = env.get("PYTHONPATH", "")
 
-        paths_to_add = [os.getcwd()]
-        if hasattr(self, "_syspath_prepended"):
-            paths_to_add.insert(0, self._syspath_prepended)
+        paths_to_add = [os.getcwd(), *self._prepended_syspaths]
 
-        pythonpath = os.pathsep.join(filter(None, [*paths_to_add, pythonpath]))
+        pythonpath = os.pathsep.join(filter(None, [*map(str, paths_to_add), pythonpath]))
 
         env["PYTHONPATH"] = pythonpath
         kw["env"] = env
@@ -1479,7 +1473,7 @@ class Pytester:
         return self.run(sys.executable, "-c", command)
 
     def runpytest_subprocess(
-        self, *args: str | os.PathLike[str], timeout: float | None = None
+            self, *args: str | os.PathLike[str], timeout: float | None = None
     ) -> RunResult:
         """Run pytest as a subprocess with given arguments.
 
@@ -1507,29 +1501,13 @@ class Pytester:
         env = os.environ.copy()
         pythonpath = env.get("PYTHONPATH", "")
 
-        if hasattr(self, "_syspath_prepended"):
-            pythonpath = os.pathsep.join(
-                filter(None, [self._syspath_prepended, pythonpath])
-            )
+        # Add all prepended syspaths to PYTHONPATH
+        prepended_paths = [str(path) for path in self._prepended_syspaths]
+        pythonpath = os.pathsep.join(filter(None, [*prepended_paths, pythonpath]))
 
         env["PYTHONPATH"] = pythonpath
 
-        python_executable = sys.executable
-        pytest_command = [python_executable, "-m", "pytest"]
-
-        if hasattr(self, "_syspath_prepended"):
-            prepend_command = (
-                f"import sys; sys.path.insert(0, {self._syspath_prepended!r});"
-            )
-            pytest_command = [
-                python_executable,
-                "-c",
-                f"{prepend_command} import pytest; pytest.main({list(args)!r})",
-            ]
-        else:
-            pytest_command.extend(str(arg) for arg in args)
-
-        return self.run(*pytest_command, timeout=timeout, env=env)
+        return self.run(*[sys.executable, "-m", "pytest", *args], timeout=timeout, env=env)
 
     def spawn_pytest(self, string: str, expect_timeout: float = 10.0) -> pexpect.spawn:
         """Run pytest using pexpect.
