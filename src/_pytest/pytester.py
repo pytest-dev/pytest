@@ -1345,7 +1345,9 @@ class Pytester:
 
         paths_to_add = [os.getcwd(), *self._prepended_syspaths]
 
-        pythonpath = os.pathsep.join(filter(None, [*map(str, paths_to_add), pythonpath]))
+        pythonpath = os.pathsep.join(
+            filter(None, [*map(str, paths_to_add), pythonpath])
+        )
 
         env["PYTHONPATH"] = pythonpath
         kw["env"] = env
@@ -1473,7 +1475,7 @@ class Pytester:
         return self.run(sys.executable, "-c", command)
 
     def runpytest_subprocess(
-            self, *args: str | os.PathLike[str], timeout: float | None = None
+        self, *args: str | os.PathLike[str], timeout: float | None = None
     ) -> RunResult:
         """Run pytest as a subprocess with given arguments.
 
@@ -1507,7 +1509,9 @@ class Pytester:
 
         env["PYTHONPATH"] = pythonpath
 
-        return self.run(*[sys.executable, "-m", "pytest", *args], timeout=timeout, env=env)
+        return self.run(
+            *[sys.executable, "-m", "pytest", *args], timeout=timeout, env=env
+        )
 
     def spawn_pytest(self, string: str, expect_timeout: float = 10.0) -> pexpect.spawn:
         """Run pytest using pexpect.
