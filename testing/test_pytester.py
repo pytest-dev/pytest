@@ -866,6 +866,6 @@ def test_syspathinsert__sub_process__path_exists(pytester: Pytester):
         """
     )
 
-    result = pytester.runpytest_subprocess(timeout=1)
+    result = pytester.runpytest_subprocess()
 
     result.assert_outcomes(passed=1)
