@@ -1,1 +1,1 @@
-Fixed the issue of  causes ``KeyError`` when using the parameter ``--import-mode=importlib`` in pytest>=8.2 .
+Fixed :class:`KeyError` crash when using ``--import-mode=importlib`` in a directory layout where a directory contains a child directory with the same name.
