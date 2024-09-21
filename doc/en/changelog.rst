@@ -31,6 +31,52 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.3.3 (2024-09-09)
+=========================
+
+Bug fixes
+---------
+
+- `#12446 <https://github.com/pytest-dev/pytest/issues/12446>`_: Avoid calling ``@property`` (and other instance descriptors) during fixture discovery -- by :user:`asottile`
+
+
+- `#12659 <https://github.com/pytest-dev/pytest/issues/12659>`_: Fixed the issue of not displaying assertion failure differences when using the parameter ``--import-mode=importlib`` in pytest>=8.1.
+
+
+- `#12667 <https://github.com/pytest-dev/pytest/issues/12667>`_: Fixed a regression where type change in `ExceptionInfo.errisinstance` caused `mypy` to fail.
+
+
+- `#12744 <https://github.com/pytest-dev/pytest/issues/12744>`_: Fixed typing compatibility with Python 3.9 or less -- replaced `typing.Self` with `typing_extensions.Self` -- by :user:`Avasam`
+
+
+- `#12745 <https://github.com/pytest-dev/pytest/issues/12745>`_: Fixed an issue with backslashes being incorrectly converted in nodeid paths on Windows, ensuring consistent path handling across environments.
+
+
+- `#6682 <https://github.com/pytest-dev/pytest/issues/6682>`_: Fixed bug where the verbosity levels where not being respected when printing the "msg" part of failed assertion (as in ``assert condition, msg``).
+
+
+- `#9422 <https://github.com/pytest-dev/pytest/issues/9422>`_: Fix bug where disabling the terminal plugin via ``-p no:terminal`` would cause crashes related to missing the ``verbose`` option.
+
+  -- by :user:`GTowers1`
+
+
+
+Improved documentation
+----------------------
+
+- `#12663 <https://github.com/pytest-dev/pytest/issues/12663>`_: Clarify that the `pytest_deselected` hook should be called from `pytest_collection_modifyitems` hook implementations when items are deselected.
+
+
+- `#12678 <https://github.com/pytest-dev/pytest/issues/12678>`_: Remove erroneous quotes from `tmp_path_retention_policy` example in docs.
+
+
+
+Miscellaneous internal changes
+------------------------------
+
+- `#12769 <https://github.com/pytest-dev/pytest/issues/12769>`_: Fix typos discovered by codespell and add codespell to pre-commit hooks.
+
+
 pytest 8.3.2 (2024-07-24)
 =========================
 
@@ -215,7 +261,7 @@ Improved documentation
   -- by :user:`webknjaz`
 
 
-- `#12577 <https://github.com/pytest-dev/pytest/issues/12577>`_: `CI` and `BUILD_NUMBER` environment variables role is discribed in
+- `#12577 <https://github.com/pytest-dev/pytest/issues/12577>`_: `CI` and `BUILD_NUMBER` environment variables role is described in
   the reference doc. They now also appear when doing `pytest -h`
   -- by :user:`MarcBresson`.
 
@@ -319,7 +365,7 @@ Bug Fixes
 - `#12367 <https://github.com/pytest-dev/pytest/issues/12367>`_: Fix a regression in pytest 8.2.0 where unittest class instances (a fresh one is created for each test) were not released promptly on test teardown but only on session teardown.
 
 
-- `#12381 <https://github.com/pytest-dev/pytest/issues/12381>`_: Fix possible "Directory not empty" crashes arising from concurent cache dir (``.pytest_cache``) creation. Regressed in pytest 8.2.0.
+- `#12381 <https://github.com/pytest-dev/pytest/issues/12381>`_: Fix possible "Directory not empty" crashes arising from concurrent cache dir (``.pytest_cache``) creation. Regressed in pytest 8.2.0.
 
 
 
@@ -330,7 +376,7 @@ Improved Documentation
 
 
 - `#12356 <https://github.com/pytest-dev/pytest/issues/12356>`_: Added a subsection to the documentation for debugging flaky tests to mention
-  lack of thread safety in pytest as a possible source of flakyness.
+  lack of thread safety in pytest as a possible source of flakiness.
 
 
 - `#12363 <https://github.com/pytest-dev/pytest/issues/12363>`_: The documentation webpages now links to a canonical version to reduce outdated documentation in search engine results.
@@ -676,7 +722,7 @@ Bug Fixes
   This bug was introduced in pytest 8.0.0rc1.
 
 
-- `#9765 <https://github.com/pytest-dev/pytest/issues/9765>`_, `#11816 <https://github.com/pytest-dev/pytest/issues/11816>`_: Fixed a frustrating bug that afflicted some users with the only error being ``assert mod not in mods``. The issue was caused by the fact that ``str(Path(mod))`` and ``mod.__file__`` don't necessarily produce the same string, and was being erroneously used interchangably in some places in the code.
+- `#9765 <https://github.com/pytest-dev/pytest/issues/9765>`_, `#11816 <https://github.com/pytest-dev/pytest/issues/11816>`_: Fixed a frustrating bug that afflicted some users with the only error being ``assert mod not in mods``. The issue was caused by the fact that ``str(Path(mod))`` and ``mod.__file__`` don't necessarily produce the same string, and was being erroneously used interchangeably in some places in the code.
 
   This fix also broke the internal API of ``PytestPluginManager.consider_conftest`` by introducing a new parameter -- we mention this in case it is being used by external code, even if marked as *private*.
 

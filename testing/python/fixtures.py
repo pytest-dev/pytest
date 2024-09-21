@@ -4338,7 +4338,7 @@ class TestScopeOrdering:
         assert request.fixturenames == "s1 p1 m1 m2 c1 f2 f1".split()
 
     def test_parametrized_package_scope_reordering(self, pytester: Pytester) -> None:
-        """A paramaterized package-scoped fixture correctly reorders items to
+        """A parameterized package-scoped fixture correctly reorders items to
         minimize setups & teardowns.
 
         Regression test for #12328.

@@ -1418,7 +1418,7 @@ Running the above tests results in the following test IDs being used:
    rootdir: /home/sweet/project
    collected 12 items
 
-   <Dir fixtures.rst-223>
+   <Dir fixtures.rst-224>
      <Module test_anothersmtp.py>
        <Function test_showhelo[smtp.gmail.com]>
        <Function test_showhelo[mail.python.org]>
@@ -1487,7 +1487,7 @@ Modularity: using fixtures from a fixture function
 
 In addition to using fixtures in test functions, fixture functions
 can use other fixtures themselves.  This contributes to a modular design
-of your fixtures and allows re-use of framework-specific fixtures across
+of your fixtures and allows reuse of framework-specific fixtures across
 many projects.  As a simple example, we can extend the previous example
 and instantiate an object ``app`` where we stick the already defined
 ``smtp_connection`` resource into it:
