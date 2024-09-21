@@ -1873,6 +1873,46 @@ passed multiple times. The expected format is ``name=value``. For example::
    Default: ``all``
 
 
+.. confval:: truncation_limit_chars
+
+   Controls maximum number of characters to truncate assertion message contents.
+
+   Setting value to ``0`` disables the character limit for truncation.
+
+   .. code-block:: ini
+
+       [pytest]
+       truncation_limit_chars = 640
+
+   pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
+
+   Default: ``640``
+
+   .. note::
+
+        If pytest detects it is :ref:`running on CI <ci-pipelines>`, truncation is disabled automatically.
+
+
+.. confval:: truncation_limit_lines
+
+   Controls maximum number of linesto truncate assertion message contents.
+
+   Setting value to ``0`` disables the lines limit for truncation.
+
+   .. code-block:: ini
+
+       [pytest]
+       truncation_limit_lines = 8
+
+   pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
+
+   Default: ``8``
+
+   .. note::
+
+        If pytest detects it is :ref:`running on CI <ci-pipelines>`, truncation is disabled automatically.
+
+
 .. confval:: usefixtures
 
     List of fixtures that will be applied to all test functions; this is semantically the same to apply
