@@ -54,7 +54,7 @@ pytest.fail
 
 **Tutorial**: :ref:`skipping`
 
-.. autofunction:: pytest.fail(reason, [pytrace=True, msg=None])
+.. autofunction:: pytest.fail(reason, [pytrace=True])
 
 .. class:: pytest.fail.Exception
 
@@ -63,7 +63,7 @@ pytest.fail
 pytest.skip
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.skip(reason, [allow_module_level=False, msg=None])
+.. autofunction:: pytest.skip(reason, [allow_module_level=False])
 
 .. class:: pytest.skip.Exception
 
@@ -88,7 +88,7 @@ pytest.xfail
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.exit(reason, [returncode=None, msg=None])
+.. autofunction:: pytest.exit(reason, [returncode=None])
 
 .. class:: pytest.exit.Exception
 
