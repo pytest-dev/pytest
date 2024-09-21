@@ -17,6 +17,7 @@ from typing import Iterator
 from typing import Sequence
 import unittest.mock
 
+from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import _import_module_using_spec
 from _pytest.pathlib import bestrelpath
@@ -788,7 +789,7 @@ class TestImportLibMode:
         self, b_is_package, insert_modules, tmp_path: Path
     ):
         """
-        Verify that `_import_module_using_spec` can obtain a spec based on the path,thereby enabling the import.
+        Verify that `_import_module_using_spec` can obtain a spec based on the path, thereby enabling the import.
         When importing, not only the target module is imported, but also the parent modules are recursively imported.
         """
         file_path = tmp_path / "a/b/c/demo.py"
@@ -827,7 +828,7 @@ class TestImportLibMode:
         assert "namespace" in str(mod_a).lower()
         assert "namespace" in str(mod_c).lower()
 
-        # Compatibility package and namespace package
+        # Compatibility package and namespace package.
         if b_is_package:
             assert "namespace" not in str(mod_b).lower()
             assert "__init__.py" in str(mod_b).lower()  # Imported __init__.py
@@ -1616,9 +1617,7 @@ class TestNamespacePackages:
         # along with a tests file
         test_base_path = tmp_path / "src/dist2/com/company"
         test_py = test_base_path / "a/b/c/test_demo.py"
-        test_dir = test_base_path / "a/b/c/c"
-
-        test_dir.mkdir(parents=True)
+        test_py.parent.mkdir(parents=True)
         test_py.write_text(code, encoding="UTF-8")
 
         pkg_root, module_name = resolve_pkg_root_and_module_name(
@@ -1630,7 +1629,7 @@ class TestNamespacePackages:
         )
 
         result = pytester.runpytest("--import-mode=importlib", test_py)
-
+        assert result.ret == ExitCode.TESTS_FAILED
         result.stdout.no_fnmatch_line(
             "E   KeyError: 'test_ns_multiple_levels_import1.src.dist2.com.company.a.b'"
         )
