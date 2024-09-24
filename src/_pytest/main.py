@@ -79,8 +79,9 @@ def pytest_addoption(parser: Parser) -> None:
         default=[],
     )
     parser.addini(
-        "discover_imports",
-        "Whether to discover tests in imported modules outside `testpaths`",
+        "collect_imported_tests",
+        "Whether to collect tests in imported modules outside `testpaths`",
+        type="bool",
         default=False,
     )
     group = parser.getgroup("general", "Running and selection options")
@@ -963,9 +964,22 @@ class Session(nodes.Collector):
             self.trace.root.indent -= 1
 
     def genitems(self, node: nodes.Item | nodes.Collector) -> Iterator[nodes.Item]:
+        import inspect
+
+        from _pytest.python import Class
+        from _pytest.python import Function
+        from _pytest.python import Module
+
         self.trace("genitems", node)
         if isinstance(node, nodes.Item):
             node.ihook.pytest_itemcollected(item=node)
+            if self.config.getini("collect_imported_tests"):
+                if isinstance(node.parent, Module) and isinstance(node, Function):
+                    if inspect.isfunction(node._getobj()):
+                        fn_defined_at = node._getobj().__module__
+                        in_module = node.parent._getobj().__name__
+                        if fn_defined_at != in_module:
+                            return
             yield node
         else:
             assert isinstance(node, nodes.Collector)
@@ -973,6 +987,18 @@ class Session(nodes.Collector):
             # For backward compat, dedup only applies to files.
             handle_dupes = not (keepduplicates and isinstance(node, nodes.File))
             rep, duplicate = self._collect_one_node(node, handle_dupes)
+
+            if self.config.getini("collect_imported_tests"):
+                for subnode in rep.result:
+                    if isinstance(subnode, Class) and isinstance(
+                        subnode.parent, Module
+                    ):
+                        if inspect.isclass(subnode._getobj()):
+                            class_defined_at = subnode._getobj().__module__
+                            in_module = subnode.parent._getobj().__name__
+                            if class_defined_at != in_module:
+                                rep.result.remove(subnode)
+
             if duplicate and not keepduplicates:
                 return
             if rep.passed:
