@@ -2114,3 +2114,10 @@ class TestMarkersWithParametrization:
                 "*= 6 passed in *",
             ]
         )
+
+    def test_param_usefixtures_rejected(self, pytester: Pytester) -> None:
+        """Verify that passing usefixtures to pytest.param fails loudly rather than silently."""
+        pytest.raises(
+            ValueError,
+            lambda: pytest.param("x", [1], marks=pytest.mark.usefixtures("foo")),
+        )
