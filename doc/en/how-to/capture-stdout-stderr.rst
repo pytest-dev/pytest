@@ -145,8 +145,8 @@ system level output streams (FD1 and FD2). Similarly to :fixture:`capsysbinary`,
 used to capture ``bytes`` at the file descriptor level.
 
 
-To temporarily disable capture within a test, both :fixture:`capsys`
-and :fixture:`capfd` have a ``disabled()`` method that can be used
+To temporarily disable capture within a test, the capture fixtures
+have a ``disabled()`` method that can be used
 as a context manager, disabling capture inside the ``with`` block:
 
 .. code-block:: python
