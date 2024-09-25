@@ -149,10 +149,9 @@ the ``readouterr`` method.
 
 
 
-If the code under test writes non-textual data, you can capture this using
-the ``capfdbinary`` fixture which instead returns ``bytes`` from
-the ``readouterr`` method.  The ``capfdbinary`` fixture operates on the
-filedescriptor level.
+If the code under test writes non-textual data on a filedescriptor level, you
+can capture this using the ``capfdbinary`` fixture which instead returns
+``bytes`` from the ``readouterr`` method.
 
 
 
