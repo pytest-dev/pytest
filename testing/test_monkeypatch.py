@@ -14,7 +14,7 @@ import pytest
 
 
 @pytest.fixture
-def mp() -> Generator[MonkeyPatch, None, None]:
+def mp() -> Generator[MonkeyPatch]:
     cwd = os.getcwd()
     sys_path = list(sys.path)
     yield MonkeyPatch()
@@ -415,7 +415,7 @@ def test_context() -> None:
     with monkeypatch.context() as m:
         m.setattr(functools, "partial", 3)
         assert not inspect.isclass(functools.partial)
-    assert inspect.isclass(functools.partial)
+    assert inspect.isclass(functools.partial)  # type:ignore[unreachable]
 
 
 def test_context_classmethod() -> None:

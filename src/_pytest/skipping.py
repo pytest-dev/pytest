@@ -245,7 +245,7 @@ def pytest_runtest_setup(item: Item) -> None:
 
 
 @hookimpl(wrapper=True)
-def pytest_runtest_call(item: Item) -> Generator[None, None, None]:
+def pytest_runtest_call(item: Item) -> Generator[None]:
     xfailed = item.stash.get(xfailed_key, None)
     if xfailed is None:
         item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)

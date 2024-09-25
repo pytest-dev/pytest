@@ -113,7 +113,7 @@ class StepwisePlugin:
                     self.lastfailed = None
 
     def pytest_report_collectionfinish(self) -> str | None:
-        if self.config.getoption("verbose") >= 0 and self.report_status:
+        if self.config.get_verbosity() >= 0 and self.report_status:
             return f"stepwise: {self.report_status}"
         return None
 

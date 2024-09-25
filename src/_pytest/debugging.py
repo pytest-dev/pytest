@@ -292,8 +292,8 @@ class PdbInvoke:
             _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
-        tb = _postmortem_traceback(excinfo)
-        post_mortem(tb)
+        exc_or_tb = _postmortem_exc_or_tb(excinfo)
+        post_mortem(exc_or_tb)
 
 
 class PdbTrace:
@@ -332,7 +332,7 @@ def maybe_wrap_pytest_function_for_tracing(pyfuncitem) -> None:
 def _enter_pdb(
     node: Node, excinfo: ExceptionInfo[BaseException], rep: BaseReport
 ) -> BaseReport:
-    # XXX we re-use the TerminalReporter's terminalwriter
+    # XXX we reuse the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
     # for not completely clear reasons.
     tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
@@ -354,32 +354,46 @@ def _enter_pdb(
     tw.sep(">", "traceback")
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
-    tb = _postmortem_traceback(excinfo)
+    tb_or_exc = _postmortem_exc_or_tb(excinfo)
     rep._pdbshown = True  # type: ignore[attr-defined]
-    post_mortem(tb)
+    post_mortem(tb_or_exc)
     return rep
 
 
-def _postmortem_traceback(excinfo: ExceptionInfo[BaseException]) -> types.TracebackType:
+def _postmortem_exc_or_tb(
+    excinfo: ExceptionInfo[BaseException],
+) -> types.TracebackType | BaseException:
     from doctest import UnexpectedException
 
+    get_exc = sys.version_info >= (3, 13)
     if isinstance(excinfo.value, UnexpectedException):
         # A doctest.UnexpectedException is not useful for post_mortem.
         # Use the underlying exception instead:
-        return excinfo.value.exc_info[2]
+        underlying_exc = excinfo.value
+        if get_exc:
+            return underlying_exc.exc_info[1]
+
+        return underlying_exc.exc_info[2]
     elif isinstance(excinfo.value, ConftestImportFailure):
         # A config.ConftestImportFailure is not useful for post_mortem.
         # Use the underlying exception instead:
-        assert excinfo.value.cause.__traceback__ is not None
-        return excinfo.value.cause.__traceback__
+        cause = excinfo.value.cause
+        if get_exc:
+            return cause
+
+        assert cause.__traceback__ is not None
+        return cause.__traceback__
     else:
         assert excinfo._excinfo is not None
+        if get_exc:
+            return excinfo._excinfo[1]
+
         return excinfo._excinfo[2]
 
 
-def post_mortem(t: types.TracebackType) -> None:
+def post_mortem(tb_or_exc: types.TracebackType | BaseException) -> None:
     p = pytestPDB._init_pdb("post_mortem")
     p.reset()
-    p.interaction(None, t)
+    p.interaction(None, tb_or_exc)
     if p.quitting:
         outcomes.exit("Quitting debugger")

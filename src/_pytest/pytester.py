@@ -491,7 +491,7 @@ def pytester(
 
 
 @fixture
-def _sys_snapshot() -> Generator[None, None, None]:
+def _sys_snapshot() -> Generator[None]:
     snappaths = SysPathsSnapshot()
     snapmods = SysModulesSnapshot()
     yield
@@ -500,7 +500,7 @@ def _sys_snapshot() -> Generator[None, None, None]:
 
 
 @fixture
-def _config_for_test() -> Generator[Config, None, None]:
+def _config_for_test() -> Generator[Config]:
     from _pytest.config import get_config
 
     config = get_config()

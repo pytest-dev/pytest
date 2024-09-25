@@ -71,7 +71,7 @@ def pytest_addoption(parser: Parser) -> None:
 def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
     durations = terminalreporter.config.option.durations
     durations_min = terminalreporter.config.option.durations_min
-    verbose = terminalreporter.config.getvalue("verbose")
+    verbose = terminalreporter.config.get_verbosity()
     if durations is None:
         return
     tr = terminalreporter
@@ -167,7 +167,7 @@ def pytest_runtest_call(item: Item) -> None:
         del sys.last_value
         del sys.last_traceback
         if sys.version_info >= (3, 12, 0):
-            del sys.last_exc
+            del sys.last_exc  # type:ignore[attr-defined]
     except AttributeError:
         pass
     try:
@@ -177,7 +177,7 @@ def pytest_runtest_call(item: Item) -> None:
         sys.last_type = type(e)
         sys.last_value = e
         if sys.version_info >= (3, 12, 0):
-            sys.last_exc = e
+            sys.last_exc = e  # type:ignore[attr-defined]
         assert e.__traceback__ is not None
         # Skip *this* frame
         sys.last_traceback = e.__traceback__.tb_next

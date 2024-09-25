@@ -67,9 +67,7 @@ win32 = int(sys.platform == "win32")
 
 class TestTerminalWriter:
     @pytest.fixture(params=["path", "stringio"])
-    def tw(
-        self, request, tmp_path: Path
-    ) -> Generator[terminalwriter.TerminalWriter, None, None]:
+    def tw(self, request, tmp_path: Path) -> Generator[terminalwriter.TerminalWriter]:
         if request.param == "path":
             p = tmp_path.joinpath("tmpfile")
             f = open(str(p), "w+", encoding="utf8")

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import re
 from subprocess import call
 from subprocess import check_call
 from subprocess import check_output
@@ -16,17 +17,27 @@ from colorama import init
 
 def announce(version: str, template_name: str, doc_version: str) -> None:
     """Generates a new release announcement entry in the docs."""
-    # Get our list of authors
+    # Get our list of authors and co-authors.
     stdout = check_output(["git", "describe", "--abbrev=0", "--tags"], encoding="UTF-8")
     last_version = stdout.strip()
+    rev_range = f"{last_version}..HEAD"
 
-    stdout = check_output(
-        ["git", "log", f"{last_version}..HEAD", "--format=%aN"], encoding="UTF-8"
+    authors = check_output(
+        ["git", "log", rev_range, "--format=%aN"], encoding="UTF-8"
+    ).splitlines()
+
+    co_authors_output = check_output(
+        ["git", "log", rev_range, "--format=%(trailers:key=Co-authored-by) "],
+        encoding="UTF-8",
     )
+    co_authors: list[str] = []
+    for co_author_line in co_authors_output.splitlines():
+        if m := re.search(r"Co-authored-by: (.+?)<", co_author_line):
+            co_authors.append(m.group(1).strip())
 
     contributors = {
         name
-        for name in stdout.splitlines()
+        for name in authors + co_authors
         if not name.endswith("[bot]") and name != "pytest bot"
     }
 

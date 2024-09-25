@@ -54,7 +54,7 @@ pytest.fail
 
 **Tutorial**: :ref:`skipping`
 
-.. autofunction:: pytest.fail(reason, [pytrace=True, msg=None])
+.. autofunction:: pytest.fail(reason, [pytrace=True])
 
 .. class:: pytest.fail.Exception
 
@@ -63,7 +63,7 @@ pytest.fail
 pytest.skip
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.skip(reason, [allow_module_level=False, msg=None])
+.. autofunction:: pytest.skip(reason, [allow_module_level=False])
 
 .. class:: pytest.skip.Exception
 
@@ -88,7 +88,7 @@ pytest.xfail
 pytest.exit
 ~~~~~~~~~~~
 
-.. autofunction:: pytest.exit(reason, [returncode=None, msg=None])
+.. autofunction:: pytest.exit(reason, [returncode=None])
 
 .. class:: pytest.exit.Exception
 
@@ -1013,6 +1013,13 @@ PytestPluginManager
     :inherited-members:
     :show-inheritance:
 
+TerminalReporter
+~~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.TerminalReporter
+    :members:
+    :inherited-members:
+
 TestReport
 ~~~~~~~~~~
 
@@ -1287,10 +1294,10 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: cache_dir
 
-   Sets a directory where stores content of cache plugin. Default directory is
+   Sets the directory where the cache plugin's content is stored. Default directory is
    ``.pytest_cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
    relative or absolute path. If setting relative path, then directory is created
-   relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
+   relative to :ref:`rootdir <rootdir>`. Additionally, a path may contain environment
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
@@ -1789,11 +1796,6 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         pythonpath = src1 src2
 
-   .. note::
-
-        ``pythonpath`` does not affect some imports that happen very early,
-        most notably plugins loaded using the ``-p`` command line option.
-
 
 .. confval:: required_plugins
 
@@ -1866,9 +1868,49 @@ passed multiple times. The expected format is ``name=value``. For example::
    .. code-block:: ini
 
         [pytest]
-        tmp_path_retention_policy = "all"
+        tmp_path_retention_policy = all
 
    Default: ``all``
+
+
+.. confval:: truncation_limit_chars
+
+   Controls maximum number of characters to truncate assertion message contents.
+
+   Setting value to ``0`` disables the character limit for truncation.
+
+   .. code-block:: ini
+
+       [pytest]
+       truncation_limit_chars = 640
+
+   pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
+
+   Default: ``640``
+
+   .. note::
+
+        If pytest detects it is :ref:`running on CI <ci-pipelines>`, truncation is disabled automatically.
+
+
+.. confval:: truncation_limit_lines
+
+   Controls maximum number of linesto truncate assertion message contents.
+
+   Setting value to ``0`` disables the lines limit for truncation.
+
+   .. code-block:: ini
+
+       [pytest]
+       truncation_limit_lines = 8
+
+   pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
+
+   Default: ``8``
+
+   .. note::
+
+        If pytest detects it is :ref:`running on CI <ci-pipelines>`, truncation is disabled automatically.
 
 
 .. confval:: usefixtures

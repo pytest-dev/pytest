@@ -56,7 +56,7 @@ if sys.version_info < (3, 11):
 
 TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-EXCEPTION_OR_MORE = Union[Type[Exception], Tuple[Type[Exception], ...]]
+EXCEPTION_OR_MORE = Union[Type[BaseException], Tuple[Type[BaseException], ...]]
 
 
 class Code:

@@ -78,7 +78,7 @@ from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing_extensions import Self
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -464,6 +464,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
+            metafunc._recompute_direct_params_indices()
             # Direct parametrizations taking place in module/class-specific
             # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
             # we update what the function really needs a.k.a its fixture closure. Note that
@@ -512,7 +513,7 @@ def importtestmodule(
         ) from e
     except ImportError as e:
         exc_info = ExceptionInfo.from_current()
-        if config.getoption("verbose") < 2:
+        if config.get_verbosity() < 2:
             exc_info.traceback = exc_info.traceback.filter(filter_traceback)
         exc_repr = (
             exc_info.getrepr(style="short")
@@ -568,7 +569,7 @@ class Module(nodes.File, PyCollector):
         if setup_module is None and teardown_module is None:
             return
 
-        def xunit_setup_module_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_module_fixture(request) -> Generator[None]:
             module = request.module
             if setup_module is not None:
                 _call_with_optional_argument(setup_module, module)
@@ -599,7 +600,7 @@ class Module(nodes.File, PyCollector):
         if setup_function is None and teardown_function is None:
             return
 
-        def xunit_setup_function_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_function_fixture(request) -> Generator[None]:
             if request.instance is not None:
                 # in this case we are bound to an instance, so we need to let
                 # setup_method handle this
@@ -780,7 +781,7 @@ class Class(PyCollector):
         if setup_class is None and teardown_class is None:
             return
 
-        def xunit_setup_class_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_class_fixture(request) -> Generator[None]:
             cls = request.cls
             if setup_class is not None:
                 func = getimfunc(setup_class)
@@ -813,7 +814,7 @@ class Class(PyCollector):
         if setup_method is None and teardown_method is None:
             return
 
-        def xunit_setup_method_fixture(request) -> Generator[None, None, None]:
+        def xunit_setup_method_fixture(request) -> Generator[None]:
             instance = request.instance
             method = request.function
             if setup_method is not None:
@@ -1131,6 +1132,8 @@ class Metafunc:
         # Result of parametrize().
         self._calls: list[CallSpec2] = []
 
+        self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
+
     def parametrize(
         self,
         argnames: str | Sequence[str],
@@ -1273,6 +1276,7 @@ class Metafunc:
                 name2pseudofixturedef_key, default
             )
         arg_directness = self._resolve_args_directness(argnames, indirect)
+        self._params_directness.update(arg_directness)
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
@@ -1444,6 +1448,12 @@ class Metafunc:
                         f"In {func_name}: function uses no {name} '{arg}'",
                         pytrace=False,
                     )
+
+    def _recompute_direct_params_indices(self) -> None:
+        for argname, param_type in self._params_directness.items():
+            if param_type == "direct":
+                for i, callspec in enumerate(self._calls):
+                    callspec.indices[argname] = i
 
 
 def _find_parametrized_scope(

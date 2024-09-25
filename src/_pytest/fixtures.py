@@ -53,6 +53,7 @@ from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
 from _pytest.compat import safe_getattr
+from _pytest.compat import safe_isclass
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -1348,7 +1349,7 @@ def pytestconfig(request: FixtureRequest) -> Config:
     Example::
 
         def test_foo(pytestconfig):
-            if pytestconfig.getoption("verbose") > 0:
+            if pytestconfig.get_verbosity() > 0:
                 ...
 
     """
@@ -1724,16 +1725,25 @@ class FixtureManager:
         if holderobj in self._holderobjseen:
             return
 
+        # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
+        if not safe_isclass(holderobj) and not isinstance(holderobj, types.ModuleType):
+            holderobj_tp: object = type(holderobj)
+        else:
+            holderobj_tp = holderobj
+
         self._holderobjseen.add(holderobj)
         for name in dir(holderobj):
             # The attribute can be an arbitrary descriptor, so the attribute
-            # access below can raise. safe_getatt() ignores such exceptions.
-            obj = safe_getattr(holderobj, name, None)
-            marker = getfixturemarker(obj)
+            # access below can raise. safe_getattr() ignores such exceptions.
+            obj_ub = safe_getattr(holderobj_tp, name, None)
+            marker = getfixturemarker(obj_ub)
             if not isinstance(marker, FixtureFunctionMarker):
                 # Magic globals  with __getattr__ might have got us a wrong
                 # fixture attribute.
                 continue
+
+            # OK we know it is a fixture -- now safe to look up on the _instance_.
+            obj = getattr(holderobj, name)
 
             if marker.name:
                 name = marker.name
@@ -1807,7 +1817,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
     session.perform_collect()
     invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
-    verbose = config.getvalue("verbose")
+    verbose = config.get_verbosity()
 
     def get_best_relpath(func) -> str:
         loc = getlocation(func, invocation_dir)
@@ -1866,7 +1876,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
     session.perform_collect()
     invocation_dir = config.invocation_params.dir
     tw = _pytest.config.create_terminal_writer(config)
-    verbose = config.getvalue("verbose")
+    verbose = config.get_verbosity()
 
     fm = session._fixturemanager
 

@@ -859,7 +859,7 @@ class TestAssert_reprcompare:
             def __delitem__(self, item):
                 pass
 
-            def insert(self, item, index):
+            def insert(self, index, value):
                 pass
 
         expl = callequal(TestSequence([0, 1]), list([0, 2]))
@@ -1470,6 +1470,66 @@ class TestTruncateExplanation:
         monkeypatch.setenv("CI", "1")
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 6*"])
+
+    @pytest.mark.parametrize(
+        ["truncation_lines", "truncation_chars", "expected_lines_hidden"],
+        (
+            (3, None, 3),
+            (4, None, 0),
+            (0, None, 0),
+            (None, 8, 6),
+            (None, 9, 0),
+            (None, 0, 0),
+            (0, 0, 0),
+            (0, 1000, 0),
+            (1000, 0, 0),
+        ),
+    )
+    def test_truncation_with_ini(
+        self,
+        monkeypatch,
+        pytester: Pytester,
+        truncation_lines: int | None,
+        truncation_chars: int | None,
+        expected_lines_hidden: int,
+    ) -> None:
+        pytester.makepyfile(
+            """\
+            string_a = "123456789\\n23456789\\n3"
+            string_b = "123456789\\n23456789\\n4"
+
+            def test():
+                assert string_a == string_b
+            """
+        )
+
+        # This test produces 6 lines of diff output or 79 characters
+        # So the effect should be when threshold is < 4 lines (considering 2 additional lines for explanation)
+        # Or < 9 characters (considering 70 additional characters for explanation)
+
+        monkeypatch.delenv("CI", raising=False)
+
+        ini = "[pytest]\n"
+        if truncation_lines is not None:
+            ini += f"truncation_limit_lines = {truncation_lines}\n"
+        if truncation_chars is not None:
+            ini += f"truncation_limit_chars = {truncation_chars}\n"
+        pytester.makeini(ini)
+
+        result = pytester.runpytest()
+
+        if expected_lines_hidden != 0:
+            result.stdout.fnmatch_lines(
+                [f"*truncated ({expected_lines_hidden} lines hidden)*"]
+            )
+        else:
+            result.stdout.no_fnmatch_line("*truncated*")
+            result.stdout.fnmatch_lines(
+                [
+                    "*- 4*",
+                    "*+ 3*",
+                ]
+            )
 
 
 def test_python25_compile_issue257(pytester: Pytester) -> None:

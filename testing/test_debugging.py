@@ -103,7 +103,10 @@ class TestPDB:
         )
         assert rep.failed
         assert len(pdblist) == 1
-        tb = _pytest._code.Traceback(pdblist[0][0])
+        if sys.version_info < (3, 13):
+            tb = _pytest._code.Traceback(pdblist[0][0])
+        else:
+            tb = _pytest._code.Traceback(pdblist[0][0].__traceback__)
         assert tb[-1].name == "test_func"
 
     def test_pdb_on_xfail(self, pytester: Pytester, pdblist) -> None:
@@ -919,6 +922,39 @@ class TestPDB:
 
         child.expect("__init__")
         child.expect("custom set_trace>")
+        self.flush(child)
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 13),
+        reason="Navigating exception chains was introduced in 3.13",
+    )
+    def test_pdb_exception_chain_navigation(self, pytester: Pytester) -> None:
+        p1 = pytester.makepyfile(
+            """
+            def inner_raise():
+                is_inner = True
+                raise RuntimeError("Woops")
+
+            def outer_raise():
+                is_inner = False
+                try:
+                    inner_raise()
+                except RuntimeError:
+                    raise RuntimeError("Woopsie")
+
+            def test_1():
+                outer_raise()
+                assert True
+        """
+        )
+        child = pytester.spawn_pytest(f"--pdb {p1}")
+        child.expect("Pdb")
+        child.sendline("is_inner")
+        child.expect_exact("False")
+        child.sendline("exceptions 0")
+        child.sendline("is_inner")
+        child.expect_exact("True")
+        child.sendeof()
         self.flush(child)
 
 

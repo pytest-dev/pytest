@@ -917,7 +917,7 @@ class TestConfigAPI:
         # default for string is ""
         value = config.getini("string1")
         assert value == ""
-        # should return None if None is explicity set as default value
+        # should return None if None is explicitly set as default value
         # irrespective of the type argument
         value = config.getini("none_1")
         assert value is None
@@ -1409,7 +1409,6 @@ def test_load_initial_conftest_last_ordering(_config_for_test):
         ("_pytest.config", "nonwrapper"),
         (m.__module__, "nonwrapper"),
         ("_pytest.legacypath", "nonwrapper"),
-        ("_pytest.python_path", "nonwrapper"),
         ("_pytest.capture", "wrapper"),
         ("_pytest.warnings", "wrapper"),
     ]

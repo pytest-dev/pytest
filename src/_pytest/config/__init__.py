@@ -268,7 +268,6 @@ default_plugins = (
     "warnings",
     "logging",
     "reports",
-    "python_path",
     "unraisableexception",
     "threadexception",
     "faulthandler",
@@ -361,7 +360,7 @@ def _get_legacy_hook_marks(
     opt_names: tuple[str, ...],
 ) -> dict[str, bool]:
     if TYPE_CHECKING:
-        # abuse typeguard from importlib to avoid massive method type union thats lacking a alias
+        # abuse typeguard from importlib to avoid massive method type union that's lacking an alias
         assert inspect.isroutine(method)
     known_marks: set[str] = {m.name for m in getattr(method, "pytestmark", [])}
     must_warn: list[str] = []
@@ -1179,8 +1178,12 @@ class Config:
     def cwd_relative_nodeid(self, nodeid: str) -> str:
         # nodeid's are relative to the rootpath, compute relative to cwd.
         if self.invocation_params.dir != self.rootpath:
-            fullpath = self.rootpath / nodeid
-            nodeid = bestrelpath(self.invocation_params.dir, fullpath)
+            base_path_part, *nodeid_part = nodeid.split("::")
+            # Only process path part
+            fullpath = self.rootpath / base_path_part
+            relative_path = bestrelpath(self.invocation_params.dir, fullpath)
+
+            nodeid = "::".join([relative_path, *nodeid_part])
         return nodeid
 
     @classmethod
@@ -1246,6 +1249,9 @@ class Config:
         self._parser.addini("addopts", "Extra command line options", "args")
         self._parser.addini("minversion", "Minimally required pytest version")
         self._parser.addini(
+            "pythonpath", type="paths", help="Add paths to sys.path", default=[]
+        )
+        self._parser.addini(
             "required_plugins",
             "Plugins that must be present for pytest to run",
             type="args",
@@ -1293,6 +1299,18 @@ class Config:
 
         for name in _iter_rewritable_modules(package_files):
             hook.mark_rewrite(name)
+
+    def _configure_python_path(self) -> None:
+        # `pythonpath = a b` will set `sys.path` to `[a, b, x, y, z, ...]`
+        for path in reversed(self.getini("pythonpath")):
+            sys.path.insert(0, str(path))
+        self.add_cleanup(self._unconfigure_python_path)
+
+    def _unconfigure_python_path(self) -> None:
+        for path in self.getini("pythonpath"):
+            path_str = str(path)
+            if path_str in sys.path:
+                sys.path.remove(path_str)
 
     def _validate_args(self, args: list[str], via: str) -> list[str]:
         """Validate known args."""
@@ -1370,6 +1388,7 @@ class Config:
         )
         self._checkversion()
         self._consider_importhook(args)
+        self._configure_python_path()
         self.pluginmanager.consider_preparse(args, exclude_only=False)
         if not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
             # Don't autoload from distribution package entry point. Only
@@ -1744,7 +1763,7 @@ class Config:
             print(config.get_verbosity())  # 1
             print(config.get_verbosity(Config.VERBOSITY_ASSERTIONS))  # 2
         """
-        global_level = self.option.verbose
+        global_level = self.getoption("verbose", default=0)
         assert isinstance(global_level, int)
         if verbosity_type is None:
             return global_level

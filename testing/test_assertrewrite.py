@@ -341,6 +341,34 @@ class TestAssertionRewrite:
         assert result.ret == 1
         result.stdout.fnmatch_lines(["*AssertionError: b'ohai!'", "*assert False"])
 
+    def test_assertion_message_verbosity(self, pytester: Pytester) -> None:
+        """
+        Obey verbosity levels when printing the "message" part of assertions, when they are
+        non-strings (#6682).
+        """
+        pytester.makepyfile(
+            """
+            class LongRepr:
+
+                def __repr__(self):
+                    return "A" * 500
+
+            def test_assertion_verbosity():
+                assert False, LongRepr()
+            """
+        )
+        # Normal verbosity: assertion message gets abbreviated.
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.re_match_lines(
+            [r".*AssertionError: A+\.\.\.A+$", ".*assert False"]
+        )
+
+        # High-verbosity: do not abbreviate the assertion message.
+        result = pytester.runpytest("-vv")
+        assert result.ret == 1
+        result.stdout.re_match_lines([r".*AssertionError: A+$", ".*assert False"])
+
     def test_boolop(self) -> None:
         def f1() -> None:
             f = g = False
@@ -1632,7 +1660,7 @@ class TestEarlyRewriteBailout:
     @pytest.fixture
     def hook(
         self, pytestconfig, monkeypatch, pytester: Pytester
-    ) -> Generator[AssertionRewritingHook, None, None]:
+    ) -> Generator[AssertionRewritingHook]:
         """Returns a patched AssertionRewritingHook instance so we can configure its initial paths and track
         if PathFinder.find_spec has been called.
         """

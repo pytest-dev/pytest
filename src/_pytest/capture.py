@@ -135,7 +135,7 @@ def _windowsconsoleio_workaround(stream: TextIO) -> None:
 
 
 @hookimpl(wrapper=True)
-def pytest_load_initial_conftests(early_config: Config) -> Generator[None, None, None]:
+def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
         _windowsconsoleio_workaround(sys.stdout)
@@ -202,6 +202,7 @@ class TeeCaptureIO(CaptureIO):
 class DontReadFromInput(TextIO):
     @property
     def encoding(self) -> str:
+        assert sys.__stdin__ is not None
         return sys.__stdin__.encoding
 
     def read(self, size: int = -1) -> str:
@@ -817,7 +818,7 @@ class CaptureManager:
     # Helper context managers
 
     @contextlib.contextmanager
-    def global_and_fixture_disabled(self) -> Generator[None, None, None]:
+    def global_and_fixture_disabled(self) -> Generator[None]:
         """Context manager to temporarily disable global and current fixture capturing."""
         do_fixture = self._capture_fixture and self._capture_fixture._is_started()
         if do_fixture:
@@ -834,7 +835,7 @@ class CaptureManager:
                 self.resume_fixture()
 
     @contextlib.contextmanager
-    def item_capture(self, when: str, item: Item) -> Generator[None, None, None]:
+    def item_capture(self, when: str, item: Item) -> Generator[None]:
         self.resume_global_capture()
         self.activate_fixture()
         try:
@@ -869,17 +870,17 @@ class CaptureManager:
         return rep
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_setup(self, item: Item) -> Generator[None, None, None]:
+    def pytest_runtest_setup(self, item: Item) -> Generator[None]:
         with self.item_capture("setup", item):
             return (yield)
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_call(self, item: Item) -> Generator[None, None, None]:
+    def pytest_runtest_call(self, item: Item) -> Generator[None]:
         with self.item_capture("call", item):
             return (yield)
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_teardown(self, item: Item) -> Generator[None, None, None]:
+    def pytest_runtest_teardown(self, item: Item) -> Generator[None]:
         with self.item_capture("teardown", item):
             return (yield)
 
@@ -961,7 +962,7 @@ class CaptureFixture(Generic[AnyStr]):
         return False
 
     @contextlib.contextmanager
-    def disabled(self) -> Generator[None, None, None]:
+    def disabled(self) -> Generator[None]:
         """Temporarily disable capturing while inside the ``with`` block."""
         capmanager: CaptureManager = self.request.config.pluginmanager.getplugin(
             "capturemanager"
@@ -974,7 +975,7 @@ class CaptureFixture(Generic[AnyStr]):
 
 
 @fixture
-def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
+def capsys(request: SubRequest) -> Generator[CaptureFixture[str]]:
     r"""Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
     The captured output is made available via ``capsys.readouterr()`` method
@@ -1002,7 +1003,7 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
 
 
 @fixture
-def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, None]:
+def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes]]:
     r"""Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
     The captured output is made available via ``capsysbinary.readouterr()``
@@ -1030,7 +1031,7 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, 
 
 
 @fixture
-def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
+def capfd(request: SubRequest) -> Generator[CaptureFixture[str]]:
     r"""Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
     The captured output is made available via ``capfd.readouterr()`` method
@@ -1058,7 +1059,7 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
 
 
 @fixture
-def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, None]:
+def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes]]:
     r"""Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
     The captured output is made available via ``capfd.readouterr()`` method

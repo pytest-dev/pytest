@@ -347,7 +347,7 @@ class LFPlugin:
         return {x for x in result if x.exists()}
 
     def pytest_report_collectionfinish(self) -> str | None:
-        if self.active and self.config.getoption("verbose") >= 0:
+        if self.active and self.config.get_verbosity() >= 0:
             return f"run-last-failure: {self._report_status}"
         return None
 
@@ -369,7 +369,7 @@ class LFPlugin:
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
         self, config: Config, items: list[nodes.Item]
-    ) -> Generator[None, None, None]:
+    ) -> Generator[None]:
         res = yield
 
         if not self.active:
@@ -439,9 +439,7 @@ class NFPlugin:
         self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
 
     @hookimpl(wrapper=True, tryfirst=True)
-    def pytest_collection_modifyitems(
-        self, items: list[nodes.Item]
-    ) -> Generator[None, None, None]:
+    def pytest_collection_modifyitems(self, items: list[nodes.Item]) -> Generator[None]:
         res = yield
 
         if self.active:

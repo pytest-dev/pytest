@@ -101,6 +101,16 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
         # Type ignored because mypy is confused about the `self` binding here.
         spec = self._find_spec(name, path)  # type: ignore
+
+        if spec is None and path is not None:
+            # With --import-mode=importlib, PathFinder cannot find spec without modifying `sys.path`,
+            # causing inability to assert rewriting (#12659).
+            # At this point, try using the file path to find the module spec.
+            for _path_str in path:
+                spec = importlib.util.spec_from_file_location(name, _path_str)
+                if spec is not None:
+                    break
+
         if (
             # the import machinery could not find a file to import
             spec is None
@@ -451,7 +461,7 @@ def _format_assertmsg(obj: object) -> str:
     # However in either case we want to preserve the newline.
     replaces = [("\n", "\n~"), ("%", "%%")]
     if not isinstance(obj, str):
-        obj = saferepr(obj)
+        obj = saferepr(obj, _get_maxsize_for_saferepr(util._config))
         replaces.append(("\\n", "\n~"))
 
     for r1, r2 in replaces:

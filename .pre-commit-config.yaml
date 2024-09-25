@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.5.2"
+  rev: "v0.6.7"
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -16,35 +16,43 @@ repos:
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==24.1.1]
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+    -   id: codespell
+        args: ["--toml=pyproject.toml"]
+        additional_dependencies:
+          - tomli
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.1
+    rev: v1.11.2
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
         args: []
+        language_version: "3.8"
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0
           - pluggy>=1.5.0
           - packaging
           - tomli
-          - types-pkg_resources
+          - types-setuptools
           - types-tabulate
             # for mypy running on python>=3.11 since exceptiongroup is only a dependency
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "2.1.4"
+  rev: "2.2.4"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.16.0
+    rev: v3.17.0
     hooks:
     -   id: pyupgrade
         stages: [manual]

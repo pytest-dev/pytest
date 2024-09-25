@@ -44,7 +44,8 @@ from _pytest.warning_types import PytestWarning
 
 if TYPE_CHECKING:
     import doctest
-    from typing import Self
+
+    from typing_extensions import Self
 
 DOCTEST_REPORT_CHOICE_NONE = "none"
 DOCTEST_REPORT_CHOICE_CDIFF = "cdiff"
@@ -467,7 +468,7 @@ def _is_mocked(obj: object) -> bool:
 
 
 @contextmanager
-def _patch_unwrap_mock_aware() -> Generator[None, None, None]:
+def _patch_unwrap_mock_aware() -> Generator[None]:
     """Context manager which replaces ``inspect.unwrap`` with a version
     that's aware of mock objects and doesn't recurse into them."""
     real_unwrap = inspect.unwrap

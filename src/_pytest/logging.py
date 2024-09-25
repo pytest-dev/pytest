@@ -554,9 +554,7 @@ class LogCaptureFixture:
             self._initial_disabled_logging_level = initial_disabled_logging_level
 
     @contextmanager
-    def at_level(
-        self, level: int | str, logger: str | None = None
-    ) -> Generator[None, None, None]:
+    def at_level(self, level: int | str, logger: str | None = None) -> Generator[None]:
         """Context manager that sets the level for capturing of logs. After
         the end of the 'with' statement the level is restored to its original
         value.
@@ -580,7 +578,7 @@ class LogCaptureFixture:
             logging.disable(original_disable_level)
 
     @contextmanager
-    def filtering(self, filter_: logging.Filter) -> Generator[None, None, None]:
+    def filtering(self, filter_: logging.Filter) -> Generator[None]:
         """Context manager that temporarily adds the given filter to the caplog's
         :meth:`handler` for the 'with' statement block, and removes that filter at the
         end of the block.
@@ -597,7 +595,7 @@ class LogCaptureFixture:
 
 
 @fixture
-def caplog(request: FixtureRequest) -> Generator[LogCaptureFixture, None, None]:
+def caplog(request: FixtureRequest) -> Generator[LogCaptureFixture]:
     """Access and control log capturing.
 
     Captured logs are available through the following properties/methods::
@@ -776,7 +774,7 @@ class LoggingPlugin:
         return True
 
     @hookimpl(wrapper=True, tryfirst=True)
-    def pytest_sessionstart(self) -> Generator[None, None, None]:
+    def pytest_sessionstart(self) -> Generator[None]:
         self.log_cli_handler.set_when("sessionstart")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
@@ -784,7 +782,7 @@ class LoggingPlugin:
                 return (yield)
 
     @hookimpl(wrapper=True, tryfirst=True)
-    def pytest_collection(self) -> Generator[None, None, None]:
+    def pytest_collection(self) -> Generator[None]:
         self.log_cli_handler.set_when("collection")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
@@ -796,7 +794,7 @@ class LoggingPlugin:
         if session.config.option.collectonly:
             return (yield)
 
-        if self._log_cli_enabled() and self._config.getoption("verbose") < 1:
+        if self._log_cli_enabled() and self._config.get_verbosity() < 1:
             # The verbose flag is needed to avoid messy test progress output.
             self._config.option.verbose = 1
 
@@ -813,7 +811,7 @@ class LoggingPlugin:
     def pytest_runtest_logreport(self) -> None:
         self.log_cli_handler.set_when("logreport")
 
-    def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None, None, None]:
+    def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None]:
         """Implement the internals of the pytest_runtest_xxx() hooks."""
         with catching_logs(
             self.caplog_handler,
@@ -834,7 +832,7 @@ class LoggingPlugin:
                 item.add_report_section(when, "log", log)
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None, None, None]:
+    def pytest_runtest_setup(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("setup")
 
         empty: dict[str, list[logging.LogRecord]] = {}
@@ -842,13 +840,13 @@ class LoggingPlugin:
         yield from self._runtest_for(item, "setup")
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_call(self, item: nodes.Item) -> Generator[None, None, None]:
+    def pytest_runtest_call(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("call")
 
         yield from self._runtest_for(item, "call")
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None, None, None]:
+    def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("teardown")
 
         try:
@@ -862,7 +860,7 @@ class LoggingPlugin:
         self.log_cli_handler.set_when("finish")
 
     @hookimpl(wrapper=True, tryfirst=True)
-    def pytest_sessionfinish(self) -> Generator[None, None, None]:
+    def pytest_sessionfinish(self) -> Generator[None]:
         self.log_cli_handler.set_when("sessionfinish")
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
