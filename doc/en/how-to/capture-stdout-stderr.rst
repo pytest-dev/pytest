@@ -107,7 +107,7 @@ Accessing captured output from a test function
 ---------------------------------------------------
 
 The :fixture:`capsys`, :fixture:`capsysbinary`, :fixture:`capfd`, and :fixture:`capfdbinary` fixtures
-allow access to ``stdout``/``stderr`` output created during test execution. 
+allow access to ``stdout``/``stderr`` output created during test execution.
 
 Here is an example test function that performs some output related checks:
 
@@ -141,7 +141,7 @@ If you want to capture at the file descriptor level you can use
 the :fixture:`capfd` fixture which offers the exact
 same interface but allows to also capture output from
 libraries or subprocesses that directly write to operating
-system level output streams (FD1 and FD2). Similarly to :fixture:`capsysbinary`, :fixture:`capfdbinary` can be 
+system level output streams (FD1 and FD2). Similarly to :fixture:`capsysbinary`, :fixture:`capfdbinary` can be
 used to capture ``bytes`` at the file descriptor level.
 
 
