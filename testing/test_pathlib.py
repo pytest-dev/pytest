@@ -17,7 +17,9 @@ from typing import Iterator
 from typing import Sequence
 import unittest.mock
 
+from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pathlib import _import_module_using_spec
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import compute_module_name
@@ -36,6 +38,7 @@ from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
+from _pytest.pathlib import spec_matches_module_path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
 from _pytest.pytester import Pytester
@@ -416,7 +419,7 @@ class TestImportPath:
         del sys.modules[module.__name__]
 
         monkeypatch.setattr(
-            importlib.util, "spec_from_file_location", lambda *args: None
+            importlib.util, "spec_from_file_location", lambda *args, **kwargs: None
         )
         with pytest.raises(ImportError):
             import_path(
@@ -779,6 +782,62 @@ class TestImportLibMode:
         modules = {}
         insert_missing_modules(modules, "")
         assert modules == {}
+
+    @pytest.mark.parametrize("b_is_package", [True, False])
+    @pytest.mark.parametrize("insert_modules", [True, False])
+    def test_import_module_using_spec(
+        self, b_is_package, insert_modules, tmp_path: Path
+    ):
+        """
+        Verify that `_import_module_using_spec` can obtain a spec based on the path, thereby enabling the import.
+        When importing, not only the target module is imported, but also the parent modules are recursively imported.
+        """
+        file_path = tmp_path / "a/b/c/demo.py"
+        file_path.parent.mkdir(parents=True)
+        file_path.write_text("my_name='demo'", encoding="utf-8")
+
+        if b_is_package:
+            (tmp_path / "a/b/__init__.py").write_text(
+                "my_name='b.__init__'", encoding="utf-8"
+            )
+
+        mod = _import_module_using_spec(
+            "a.b.c.demo",
+            file_path,
+            file_path.parent,
+            insert_modules=insert_modules,
+        )
+
+        # target module is imported
+        assert mod is not None
+        assert spec_matches_module_path(mod.__spec__, file_path) is True
+
+        mod_demo = sys.modules["a.b.c.demo"]
+        assert "demo.py" in str(mod_demo)
+        assert mod_demo.my_name == "demo"  # Imported and available for use
+
+        # parent modules are recursively imported.
+        mod_a = sys.modules["a"]
+        mod_b = sys.modules["a.b"]
+        mod_c = sys.modules["a.b.c"]
+
+        assert mod_a.b is mod_b
+        assert mod_a.b.c is mod_c
+        assert mod_a.b.c.demo is mod_demo
+
+        assert "namespace" in str(mod_a).lower()
+        assert "namespace" in str(mod_c).lower()
+
+        # Compatibility package and namespace package.
+        if b_is_package:
+            assert "namespace" not in str(mod_b).lower()
+            assert "__init__.py" in str(mod_b).lower()  # Imported __init__.py
+            assert mod_b.my_name == "b.__init__"  # Imported and available for use
+
+        else:
+            assert "namespace" in str(mod_b).lower()
+            with pytest.raises(AttributeError):  # Not imported __init__.py
+                assert mod_b.my_name
 
     def test_parent_contains_child_module_attribute(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
@@ -1540,6 +1599,19 @@ class TestNamespacePackages:
         assert resolve_pkg_root_and_module_name(
             tmp_path / "src/dist2/ns/a/core/foo/m.py", consider_namespace_packages=True
         ) == (tmp_path / "src/dist2", "ns.a.core.foo.m")
+
+
+def test_ns_import_same_name_directory_12592(
+    tmp_path: Path, pytester: Pytester
+) -> None:
+    """Regression for `--import-mode=importlib` with directory parent and child with same name (#12592)."""
+    y_dir = tmp_path / "x/y/y"
+    y_dir.mkdir(parents=True)
+    test_y = tmp_path / "x/y/test_y.py"
+    test_y.write_text("def test(): pass", encoding="UTF-8")
+
+    result = pytester.runpytest("--import-mode=importlib", test_y)
+    assert result.ret == ExitCode.OK
 
 
 def test_is_importable(pytester: Pytester) -> None:
