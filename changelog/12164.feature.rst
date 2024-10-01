@@ -1,0 +1,1 @@
+Added new hook :hook:`pytest_fixture_teardown` to fully track the completion of fixtures by analogy with :hook:`pytest_fixture_setup`.
