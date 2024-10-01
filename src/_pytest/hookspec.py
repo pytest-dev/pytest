@@ -893,9 +893,7 @@ def pytest_fixture_setup(
     """
 
 
-def pytest_fixture_teardown(
-    fixturedef: FixtureDef[Any], request: SubRequest
-) -> None:
+def pytest_fixture_teardown(fixturedef: FixtureDef[Any], request: SubRequest) -> None:
     """Perform fixture teardown execution.
 
     :param fixturdef:
