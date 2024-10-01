@@ -82,7 +82,7 @@ def pytest_addoption(parser: Parser) -> None:
         "collect_imported_tests",
         "Whether to collect tests in imported modules outside `testpaths`",
         type="bool",
-        default=False,
+        default=True,
     )
     group = parser.getgroup("general", "Running and selection options")
     group._addoption(
@@ -973,7 +973,7 @@ class Session(nodes.Collector):
         self.trace("genitems", node)
         if isinstance(node, nodes.Item):
             node.ihook.pytest_itemcollected(item=node)
-            if self.config.getini("collect_imported_tests"):
+            if not self.config.getini("collect_imported_tests"):
                 if isinstance(node.parent, Module) and isinstance(node, Function):
                     if inspect.isfunction(node._getobj()):
                         fn_defined_at = node._getobj().__module__
@@ -988,7 +988,7 @@ class Session(nodes.Collector):
             handle_dupes = not (keepduplicates and isinstance(node, nodes.File))
             rep, duplicate = self._collect_one_node(node, handle_dupes)
 
-            if self.config.getini("collect_imported_tests"):
+            if not self.config.getini("collect_imported_tests"):
                 for subnode in rep.result:
                     if isinstance(subnode, Class) and isinstance(
                         subnode.parent, Module

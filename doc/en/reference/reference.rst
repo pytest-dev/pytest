@@ -1839,9 +1839,17 @@ passed multiple times. The expected format is ``name=value``. For example::
        pytest testing doc
 
 
+.. confval:: collect_imported_tests
+
+   Setting this to `false` will make pytest collect classes/functions from test
+   files only if they are defined in that file (as opposed to imported there).
+
+    .. code-block:: ini
+
+        [pytest]
+        collect_imported_tests = false
+
 .. confval:: tmp_path_retention_count
-
-
 
    How many sessions should we keep the `tmp_path` directories,
    according to `tmp_path_retention_policy`.

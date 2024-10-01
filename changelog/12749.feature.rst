@@ -1,3 +1,5 @@
-Add :confval:`collect_imported_tests`, when enabled (default is disabled) will make sure to not consider classes/functions which are imported by a test file and contains Test/test_*/*_test.
+New :confval:`collect_imported_tests`: when enabled (the default) pytest will collect classes/functions in test modules even if they are imported from another file.
+
+Setting this to False will make pytest collect classes/functions from test files only if they are defined in that file (as opposed to imported there).
 
 -- by :user:`FreerGit`

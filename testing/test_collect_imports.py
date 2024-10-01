@@ -55,7 +55,7 @@ def test_collect_imports_disabled(pytester: Pytester) -> None:
         collect_imported_tests = false
     """)
 
-    run_import_class_test(pytester, errors=1)
+    run_import_class_test(pytester, passed=1)
 
 
 def test_collect_imports_default(pytester: Pytester) -> None:
@@ -74,7 +74,7 @@ def test_collect_imports_enabled(pytester: Pytester) -> None:
         collect_imported_tests = true
     """)
 
-    run_import_class_test(pytester, passed=1)
+    run_import_class_test(pytester, errors=1)
 
 
 def run_import_functions_test(
@@ -137,14 +137,32 @@ def test_collect_function_imports_enabled(pytester: Pytester) -> None:
         collect_imported_tests = true
     """)
 
-    run_import_functions_test(pytester, passed=1, errors=0, failed=0)
+    run_import_functions_test(pytester, passed=2, errors=0, failed=1)
 
 
 def test_collect_function_imports_disabled(pytester: Pytester) -> None:
     pytester.makeini("""
         [pytest]
-        testpaths = "tests"
+        # testpaths = "tests"
         collect_imported_tests = false
+    """)
+
+    run_import_functions_test(pytester, passed=1, errors=0, failed=0)
+
+
+def test_behaviour_without_testpaths_set_and_false(pytester: Pytester) -> None:
+    pytester.makeini("""
+        [pytest]
+        collect_imported_tests = false
+    """)
+
+    run_import_functions_test(pytester, passed=1, errors=0, failed=0)
+
+
+def test_behaviour_without_testpaths_set_and_true(pytester: Pytester) -> None:
+    pytester.makeini("""
+        [pytest]
+        collect_imported_tests = true
     """)
 
     run_import_functions_test(pytester, passed=2, errors=0, failed=1)
