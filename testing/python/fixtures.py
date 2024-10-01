@@ -4120,23 +4120,23 @@ def test_exceptions_in_pytest_fixture_setup_and_pytest_fixture_teardown(
             import pytest
 
             @pytest.fixture(scope='module')
-            def module_teardown_exeption():
+            def module_teardown_exception():
                 yield
-                raise ValueError('exeption in module_teardown_exeption')
+                raise ValueError('exception in module_teardown_exception')
 
             @pytest.fixture()
-            def func_teardown_exeption():
+            def func_teardown_exception():
                 yield
-                raise ValueError('exeption in func_teardown_exeption')
+                raise ValueError('exception in func_teardown_exception')
 
             @pytest.fixture()
-            def func_setup_exeption():
-                raise ValueError('exeption in func_setup_exeption')
+            def func_setup_exception():
+                raise ValueError('exception in func_setup_exception')
 
             @pytest.mark.usefixtures(
-                'module_teardown_exeption',
-                'func_teardown_exeption',
-                'func_setup_exeption',
+                'module_teardown_exception',
+                'func_teardown_exception',
+                'func_setup_exception',
             )
             def test_func():
                 pass
@@ -4147,12 +4147,12 @@ def test_exceptions_in_pytest_fixture_setup_and_pytest_fixture_teardown(
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         [
-            "*SETUP EXCEPTION in module_teardown_exeption: None*",
-            "*SETUP EXCEPTION in func_teardown_exeption: None*",
-            "*SETUP EXCEPTION in func_setup_exeption: exeption in func_setup_exeption*",
-            "*TEARDOWN EXCEPTION in func_setup_exeption: None*",
-            "*TEARDOWN EXCEPTION in func_teardown_exeption: exeption in func_teardown_exeption*",
-            "*TEARDOWN EXCEPTION in module_teardown_exeption: exeption in module_teardown_exeption*",
+            "*SETUP EXCEPTION in module_teardown_exception: None*",
+            "*SETUP EXCEPTION in func_teardown_exception: None*",
+            "*SETUP EXCEPTION in func_setup_exception: exception in func_setup_exception*",
+            "*TEARDOWN EXCEPTION in func_setup_exception: None*",
+            "*TEARDOWN EXCEPTION in func_teardown_exception: exception in func_teardown_exception*",
+            "*TEARDOWN EXCEPTION in module_teardown_exception: exception in module_teardown_exception*",
         ]
     )
 
