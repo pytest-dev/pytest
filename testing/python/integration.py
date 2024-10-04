@@ -420,7 +420,7 @@ class TestParameterize:
         """
         )
         res = pytester.runpytest("--collect-only")
-        res.stderr.fnmatch_lines(
+        res.stdout.fnmatch_lines(
             ["test_param_rejects_usefixtures.py:4", "pytest.param("]
         )
 
