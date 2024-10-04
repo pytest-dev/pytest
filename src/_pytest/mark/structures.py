@@ -91,7 +91,7 @@ class ParameterSet(NamedTuple):
         if any(i.name == "usefixtures" for i in marks):
             raise ValueError(
                 "pytest.param cannot add pytest.mark.usefixtures; see "
-                "https://github.com/pytest-dev/pytest/issues/4112"
+                "https://docs.pytest.org/en/stable/reference/reference.html#pytest-param"
             )
 
         if id is not None:
