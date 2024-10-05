@@ -902,11 +902,13 @@ class CaptureFixture(Generic[AnyStr]):
         captureclass: type[CaptureBase[AnyStr]],
         request: SubRequest,
         *,
+        config: dict[str,any] | None = None,
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
         self.captureclass: type[CaptureBase[AnyStr]] = captureclass
         self.request = request
+        self._config = config if config else {}
         self._capture: MultiCapture[AnyStr] | None = None
         self._captured_out: AnyStr = self.captureclass.EMPTY_BUFFER
         self._captured_err: AnyStr = self.captureclass.EMPTY_BUFFER
@@ -915,8 +917,8 @@ class CaptureFixture(Generic[AnyStr]):
         if self._capture is None:
             self._capture = MultiCapture(
                 in_=None,
-                out=self.captureclass(1),
-                err=self.captureclass(2),
+                out=self.captureclass(1, **self._config),
+                err=self.captureclass(2, **self._config),
             )
             self._capture.start_capturing()
 
