@@ -70,7 +70,7 @@ def param(
     :param marks:
         A single mark or a list of marks to be applied to this parameter set.
 
-        :ref:`pytest.mark.usefixtures` cannot be added via this parameter.
+        :ref:`pytest.mark.usefixtures <pytest.mark.usefixtures ref>` cannot be added via this parameter.
 
     :param id: The id to attribute to this parameter set.
     """
