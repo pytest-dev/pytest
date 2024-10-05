@@ -7,7 +7,7 @@ def test_setup_teardown_executed_for_every_fixture_usage_without_caching(pyteste
         import pytest
         import logging
 
-        @pytest.fixture(cache_result=False)
+        @pytest.fixture(scope="invocation")
         def fixt():
             logging.info("&&Setting up fixt&&")
             yield
@@ -42,7 +42,7 @@ def test_setup_teardown_executed_for_every_getfixturevalue_usage_without_caching
         import pytest
         import logging
 
-        @pytest.fixture(cache_result=False)
+        @pytest.fixture(scope="invocation")
         def fixt():
             logging.info("&&Setting up fixt&&")
             yield
@@ -67,7 +67,7 @@ def test_non_cached_fixture_generates_unique_values_per_usage(pytester: Pytester
         """
         import pytest
 
-        @pytest.fixture(cache_result=False)
+        @pytest.fixture(scope="invocation")
         def random_num():
             import random
             return random.randint(-100_000_000_000, 100_000_000_000)
@@ -94,7 +94,7 @@ def test_non_cached_fixture_generates_unique_values_per_getfixturevalue_usage(py
         """
         import pytest
 
-        @pytest.fixture(cache_result=False)
+        @pytest.fixture(scope="invocation")
         def random_num():
             import random
             yield random.randint(-100_000_000_000, 100_000_000_000)

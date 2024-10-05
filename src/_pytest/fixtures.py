@@ -137,7 +137,7 @@ def get_scope_package(
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
     import _pytest.python
 
-    if scope is Scope.Function:
+    if scope is Scope.Function or scope is Scope.Invocation:
         # Type ignored because this is actually safe, see:
         # https://github.com/python/mypy/issues/4717
         return node.getparent(nodes.Item)  # type: ignore[type-abstract]
@@ -185,7 +185,7 @@ def get_parametrized_fixture_argkeys(
 ) -> Iterator[FixtureArgKey]:
     """Return list of keys for all parametrized arguments which match
     the specified scope."""
-    assert scope is not Scope.Function
+    assert scope in HIGH_SCOPES
 
     try:
         callspec: CallSpec2 = item.callspec  # type: ignore[attr-defined]
@@ -537,7 +537,7 @@ class FixtureRequest(abc.ABC):
 
         if (isinstance(fixturedef, FixtureDef)
                 and fixturedef is not None
-                and fixturedef.use_cache is False):
+                and fixturedef.scope == Scope.Invocation.value):
             self._fixture_defs.pop(argname)
 
         return fixturedef.cached_result[0]
@@ -626,7 +626,7 @@ class FixtureRequest(abc.ABC):
         finally:
             for arg_name in fixturedef.argnames:
                 arg_fixture = self._fixture_defs.get(arg_name)
-                if arg_fixture is not None and arg_fixture.use_cache is not True:
+                if arg_fixture is not None and arg_fixture.scope == Scope.Invocation.value:
                     self._fixture_defs.pop(arg_name)
 
         return fixturedef
@@ -769,7 +769,7 @@ class SubRequest(FixtureRequest):
         requested_fixturedef: FixtureDef[object] | PseudoFixtureDef[object],
         requested_scope: Scope,
     ) -> None:
-        if isinstance(requested_fixturedef, PseudoFixtureDef):
+        if isinstance(requested_fixturedef, PseudoFixtureDef) or requested_scope == Scope.Invocation:
             return
         if self._scope > requested_scope:
             # Try to report something helpful.
@@ -969,7 +969,6 @@ class FixtureDef(Generic[FixtureValue]):
         scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] | None,
         params: Sequence[object] | None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
-        use_cache: bool = True,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -1017,7 +1016,6 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
-        self.use_cache = use_cache
 
     @property
     def scope(self) -> _ScopeName:
@@ -1068,7 +1066,7 @@ class FixtureDef(Generic[FixtureValue]):
                 requested_fixtures_that_should_finalize_us.append(fixturedef)
 
         # Check for (and return) cached value/exception.
-        if self.cached_result is not None and self.use_cache:
+        if self.cached_result is not None and self.scope != Scope.Invocation.value:
             request_cache_key = self.cache_key(request)
             cache_key = self.cached_result[1]
             try:
@@ -1197,7 +1195,6 @@ class FixtureFunctionMarker:
     autouse: bool = False
     ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None
     name: str | None = None
-    cache_result: bool = True
 
     _ispytest: dataclasses.InitVar[bool] = False
 
@@ -1240,7 +1237,6 @@ def fixture(
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
     name: str | None = ...,
-    cache_result: bool = True,
 ) -> FixtureFunction: ...
 
 
@@ -1253,7 +1249,6 @@ def fixture(
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
     name: str | None = None,
-    cache_result: bool = True,
 ) -> FixtureFunctionMarker: ...
 
 
@@ -1265,7 +1260,6 @@ def fixture(
     autouse: bool = False,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = None,
     name: str | None = None,
-    cache_result: bool = True,
 ) -> FixtureFunctionMarker | FixtureFunction:
     """Decorator to mark a fixture factory function.
 
@@ -1316,11 +1310,6 @@ def fixture(
         function arg that requests the fixture; one way to resolve this is to
         name the decorated function ``fixture_<fixturename>`` and then use
         ``@pytest.fixture(name='<fixturename>')``.
-
-    :param cache_result:
-        If True (the default), the fixture result is cached and the fixture
-        only runs once per scope.
-        If False, the fixture will run each time it is requested
     """
     fixture_marker = FixtureFunctionMarker(
         scope=scope,
@@ -1329,7 +1318,6 @@ def fixture(
         ids=None if ids is None else ids if callable(ids) else tuple(ids),
         name=name,
         _ispytest=True,
-        cache_result=cache_result
     )
 
     # Direct decoration.
@@ -1660,7 +1648,6 @@ class FixtureManager:
         params: Sequence[object] | None = None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         autouse: bool = False,
-        cache_result: bool = True,
     ) -> None:
         """Register a fixture
 
@@ -1691,7 +1678,6 @@ class FixtureManager:
             params=params,
             ids=ids,
             _ispytest=True,
-            use_cache=cache_result,
         )
 
         faclist = self._arg2fixturedefs.setdefault(name, [])
@@ -1788,7 +1774,6 @@ class FixtureManager:
                 params=marker.params,
                 ids=marker.ids,
                 autouse=marker.autouse,
-                cache_result=marker.cache_result
             )
 
     def getfixturedefs(
