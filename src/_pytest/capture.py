@@ -1007,14 +1007,15 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str]]:
 @fixture
 def capteesys(request: SubRequest) -> Generator[CaptureFixture[str]]:
     r"""Enable simultaneous text capturing and pass-through of writes
-    to ``sys.stdout`` and ``sys.stderr``.
+    to ``sys.stdout`` and ``sys.stderr`` as defined by ``--capture=``.
 
 
     The captured output is made available via ``capteesys.readouterr()`` method
     calls, which return a ``(out, err)`` namedtuple.
     ``out`` and ``err`` will be ``text`` objects.
 
-    The output is also passed-through, allowing it to be "live-printed".
+    The output is also passed-through, allowing it to be "live-printed",
+    reported, or both as defined by ``--capture=``.
 
     Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
