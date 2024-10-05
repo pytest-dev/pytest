@@ -4,6 +4,15 @@
 How to capture stdout/stderr output
 =========================================================
 
+Pytest can intercept stdout and stderr. Using the `--capture=` command-line
+argument (described below) allows pytest to add captured output to reports
+generated after tests. The reports can customized by `-r` (described below).
+
+Built-in fixtures (also described below) can be passed to tests as arguments
+to capture stdout and stderr and make it accessible to the developer during
+the test for inspection. It will not be available for reports if it is captured,
+unless it is re-printed with capturing turned off (see below).
+
 Default stdout/stderr/stdin capturing behaviour
 ---------------------------------------------------------
 
@@ -106,8 +115,8 @@ of the failing function and hide the other one:
 Accessing captured output from a test function
 ---------------------------------------------------
 
-The :fixture:`capsys`, :fixture:`capsysbinary`, :fixture:`capfd`, and :fixture:`capfdbinary` fixtures
-allow access to ``stdout``/``stderr`` output created during test execution.
+The :fixture:`capsys`, :fixture:`capteesys`, :fixture:`capsysbinary`, :fixture:`capfd`, and :fixture:`capfdbinary`
+fixtures allow access to ``stdout``/``stderr`` output created during test execution.
 
 Here is an example test function that performs some output related checks:
 
