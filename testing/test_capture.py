@@ -464,6 +464,12 @@ class TestCaptureFixture:
         result.stdout.fnmatch_lines(["sTdoUt"])
         result.stderr.fnmatch_lines(["sTdeRr"])
 
+        # -rA and --capture=sys means we'll read them on stdout.
+        result = pytester.runpytest(p, "--quiet", "--quiet", "-rA", "--capture=sys")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["*sTdoUt*", "*sTdeRr*"])
+        assert not result.stderr.lines
+
     def test_capsyscapfd(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """\
