@@ -445,6 +445,25 @@ class TestCaptureFixture:
         )
         reprec.assertoutcome(passed=1)
 
+    def test_capteesys(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """\
+            import sys
+            def test_one(capteesys):
+                print("sTdoUt")
+                print("sTdeRr", file=sys.stderr)
+                out, err = capteesys.readouterr()
+                assert out == "sTdoUt\\n"
+                assert err == "sTdeRr\\n"
+            """
+        )
+        # -rN and --capture=tee-sys means we'll read them on stdout/stderr,
+        # as opposed to both being reported on stdout
+        result = pytester.runpytest(p, "--quiet", "--quiet", "-rN", "--capture=tee-sys")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["sTdoUt"])
+        result.stderr.fnmatch_lines(["sTdeRr"])
+
     def test_capsyscapfd(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """\
