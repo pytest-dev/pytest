@@ -1,1 +1,1 @@
-Fixed an issue that ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option doesn't work with ``pytest.param(..., id="...")`` in parametrized tests.
+apply test id escaping opt out as configured by the ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option to ids from  ``pytest.param(..., id="...")`` in parametrized tests.
