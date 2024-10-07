@@ -461,13 +461,20 @@ class TestCaptureFixture:
         # as opposed to both being reported on stdout
         result = pytester.runpytest(p, "--quiet", "--quiet", "-rN", "--capture=tee-sys")
         assert result.ret == ExitCode.OK
-        result.stdout.fnmatch_lines(["sTdoUt"])
-        result.stderr.fnmatch_lines(["sTdeRr"])
+        result.stdout.fnmatch_lines(["sTdoUt"])  # tee'd out
+        result.stderr.fnmatch_lines(["sTdeRr"])  # tee'd out
+
+        result = pytester.runpytest(p, "--quiet", "--quiet", "-rA", "--capture=tee-sys")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(
+            ["sTdoUt", "sTdoUt", "sTdeRr"]
+        )  # tee'd out, the next two reported
+        result.stderr.fnmatch_lines(["sTdeRr"])  # tee'd out
 
         # -rA and --capture=sys means we'll read them on stdout.
         result = pytester.runpytest(p, "--quiet", "--quiet", "-rA", "--capture=sys")
         assert result.ret == ExitCode.OK
-        result.stdout.fnmatch_lines(["*sTdoUt*", "*sTdeRr*"])
+        result.stdout.fnmatch_lines(["sTdoUt", "sTdeRr"])  # no tee, just reported
         assert not result.stderr.lines
 
     def test_capsyscapfd(self, pytester: Pytester) -> None:
