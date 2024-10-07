@@ -1,1 +1,1 @@
-apply test id escaping opt out as configured by the ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option to ids from  ``pytest.param(..., id="...")`` in parametrized tests.
+Honor :confval:`disable_test_id_escaping_and_forfeit_all_rights_to_community_support` when escaping ids in parametrized tests.
