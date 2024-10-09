@@ -1,0 +1,1 @@
+Improved cross-references concerning the :func:`recwarn <_pytest.recwarn.recwarn>` fixture.
