@@ -1,11 +1,12 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import enum
 from functools import cached_property
 from functools import partial
 from functools import wraps
 import sys
 from typing import TYPE_CHECKING
-from typing import Union
 
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
@@ -216,7 +217,7 @@ def test_cached_property() -> None:
 
 
 def test_assert_never_union() -> None:
-    x: Union[int, str] = 10
+    x: int | str = 10
 
     if isinstance(x, int):
         pass

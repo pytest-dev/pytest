@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import pprint
-from typing import List
-from typing import Tuple
 
 import pytest
 
@@ -16,20 +16,20 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="session")
 def checked_order():
-    order: List[Tuple[str, str, str]] = []
+    order: list[tuple[str, str, str]] = []
 
     yield order
     pprint.pprint(order)
     assert order == [
         ("issue_519.py", "fix1", "arg1v1"),
         ("test_one[arg1v1-arg2v1]", "fix2", "arg2v1"),
-        ("test_one[arg1v1-arg2v2]", "fix2", "arg2v2"),
         ("test_two[arg1v1-arg2v1]", "fix2", "arg2v1"),
+        ("test_one[arg1v1-arg2v2]", "fix2", "arg2v2"),
         ("test_two[arg1v1-arg2v2]", "fix2", "arg2v2"),
         ("issue_519.py", "fix1", "arg1v2"),
         ("test_one[arg1v2-arg2v1]", "fix2", "arg2v1"),
-        ("test_one[arg1v2-arg2v2]", "fix2", "arg2v2"),
         ("test_two[arg1v2-arg2v1]", "fix2", "arg2v1"),
+        ("test_one[arg1v2-arg2v2]", "fix2", "arg2v2"),
         ("test_two[arg1v2-arg2v2]", "fix2", "arg2v2"),
     ]
 

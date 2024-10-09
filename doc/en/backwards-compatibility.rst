@@ -5,30 +5,26 @@ Backwards Compatibility Policy
 
 .. versionadded: 6.0
 
-pytest is actively evolving and is a project that has been decades in the making,
-we keep learning about new and better structures to express different details about testing.
+Pytest is an actively evolving project that has been decades in the making.
+We keep learning about new and better structures to express different details about testing.
 
-While we implement those modifications we try to ensure an easy transition and don't want to impose unnecessary churn on our users and community/plugin authors.
+While we implement those modifications, we try to ensure an easy transition and don't want to impose unnecessary churn on our users and community/plugin authors.
 
 As of now, pytest considers multiple types of backward compatibility transitions:
 
-a) trivial: APIs which trivially translate to the new mechanism,
-   and do not cause problematic changes.
+a) trivial: APIs that trivially translate to the new mechanism and do not cause problematic changes.
 
-   We try to support those indefinitely while encouraging users to switch to newer/better mechanisms through documentation.
+   We try to support those indefinitely while encouraging users to switch to newer or better mechanisms through documentation.
 
-b) transitional: the old and new API don't conflict
-   and we can help users transition by using warnings, while supporting both for a prolonged time.
+b) transitional: the old and new APIs don't conflict, and we can help users transition by using warnings while supporting both for a prolonged period of time.
 
-   We will only start the removal of deprecated functionality in major releases (e.g. if we deprecate something in 3.0 we will start to remove it in 4.0), and keep it around for at least two minor releases (e.g. if we deprecate something in 3.9 and 4.0 is the next release, we start to remove it in 5.0, not in 4.0).
+   We will only start the removal of deprecated functionality in major releases (e.g., if we deprecate something in 3.0, we will start to remove it in 4.0), and keep it around for at least two minor releases (e.g., if we deprecate something in 3.9 and 4.0 is the next release, we start to remove it in 5.0, not in 4.0).
 
    A deprecated feature scheduled to be removed in major version X will use the warning class `PytestRemovedInXWarning` (a subclass of :class:`~pytest.PytestDeprecationWarning`).
 
-   When the deprecation expires (e.g. 4.0 is released), we won't remove the deprecated functionality immediately, but will use the standard warning filters to turn `PytestRemovedInXWarning` (e.g. `PytestRemovedIn4Warning`) into **errors** by default. This approach makes it explicit that removal is imminent, and still gives you time to turn the deprecated feature into a warning instead of an error so it can be dealt with in your own time. In the next minor release (e.g. 4.1), the feature will be effectively removed.
+   When the deprecation expires (e.g., 4.0 is released), we won't remove the deprecated functionality immediately but will use the standard warning filters to turn `PytestRemovedInXWarning` (e.g., `PytestRemovedIn4Warning`) into **errors** by default. This approach makes it explicit that removal is imminent and still gives you time to turn the deprecated feature into a warning instead of an error so it can be dealt with in your own time. In the next minor release (e.g., 4.1), the feature will be effectively removed.
 
-
-c) true breakage: should only be considered when normal transition is unreasonably unsustainable and would offset important development/features by years.
-   In addition, they should be limited to APIs where the number of actual users is very small (for example only impacting some plugins), and can be coordinated with the community in advance.
+c) True breakage should only be considered when a normal transition is unreasonably unsustainable and would offset important developments or features by years. In addition, they should be limited to APIs where the number of actual users is very small (for example, only impacting some plugins) and can be coordinated with the community in advance.
 
    Examples for such upcoming changes:
 
@@ -62,11 +58,11 @@ Focus primary on smooth transition - stance (pre 6.0)
 
 Keeping backwards compatibility has a very high priority in the pytest project. Although we have deprecated functionality over the years, most of it is still supported. All deprecations in pytest were done because simpler or more efficient ways of accomplishing the same tasks have emerged, making the old way of doing things unnecessary.
 
-With the pytest 3.0 release we introduced a clear communication scheme for when we will actually remove the old busted joint and politely ask you to use the new hotness instead, while giving you enough time to adjust your tests or raise concerns if there are valid reasons to keep deprecated functionality around.
+With the pytest 3.0 release, we introduced a clear communication scheme for when we will actually remove the old busted joint and politely ask you to use the new hotness instead, while giving you enough time to adjust your tests or raise concerns if there are valid reasons to keep deprecated functionality around.
 
-To communicate changes we issue deprecation warnings using a custom warning hierarchy (see :ref:`internal-warnings`). These warnings may be suppressed using the standard means: ``-W`` command-line flag or ``filterwarnings`` ini options (see :ref:`warnings`), but we suggest to use these sparingly and temporarily, and heed the warnings when possible.
+To communicate changes, we issue deprecation warnings using a custom warning hierarchy (see :ref:`internal-warnings`). These warnings may be suppressed using the standard means: ``-W`` command-line flag or ``filterwarnings`` ini options (see :ref:`warnings`), but we suggest to use these sparingly and temporarily, and heed the warnings when possible.
 
-We will only start the removal of deprecated functionality in major releases (e.g. if we deprecate something in 3.0 we will start to remove it in 4.0), and keep it around for at least two minor releases (e.g. if we deprecate something in 3.9 and 4.0 is the next release, we start to remove it in 5.0, not in 4.0).
+We will only start the removal of deprecated functionality in major releases (e.g. if we deprecate something in 3.0, we will start to remove it in 4.0), and keep it around for at least two minor releases (e.g. if we deprecate something in 3.9 and 4.0 is the next release, we start to remove it in 5.0, not in 4.0).
 
 When the deprecation expires (e.g. 4.0 is released), we won't remove the deprecated functionality immediately, but will use the standard warning filters to turn them into **errors** by default. This approach makes it explicit that removal is imminent, and still gives you time to turn the deprecated feature into a warning instead of an error so it can be dealt with in your own time. In the next minor release (e.g. 4.1), the feature will be effectively removed.
 

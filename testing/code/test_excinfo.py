@@ -11,6 +11,7 @@ import re
 import sys
 import textwrap
 from typing import Any
+from typing import cast
 from typing import TYPE_CHECKING
 
 import _pytest._code
@@ -27,7 +28,7 @@ import pytest
 
 
 if TYPE_CHECKING:
-    from _pytest._code.code import _TracebackStyle
+    from _pytest._code.code import TracebackStyle
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -712,6 +713,29 @@ raise ValueError()
         assert full_reprlocals.lines
         assert full_reprlocals.lines[0] == "l          = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
 
+    def test_repr_args_not_truncated(self, importasmod) -> None:
+        mod = importasmod(
+            """
+            def func1(m):
+                raise ValueError("hello\\nworld")
+        """
+        )
+        excinfo = pytest.raises(ValueError, mod.func1, "m" * 500)
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
+        entry = excinfo.traceback[-1]
+        p = FormattedExcinfo(funcargs=True, truncate_args=True)
+        reprfuncargs = p.repr_args(entry)
+        assert reprfuncargs is not None
+        arg1 = cast(str, reprfuncargs.args[0][1])
+        assert len(arg1) < 500
+        assert "..." in arg1
+        # again without truncate
+        p = FormattedExcinfo(funcargs=True, truncate_args=False)
+        reprfuncargs = p.repr_args(entry)
+        assert reprfuncargs is not None
+        assert reprfuncargs.args[0] == ("m", repr("m" * 500))
+        assert "..." not in cast(str, reprfuncargs.args[0][1])
+
     def test_repr_tracebackentry_lines(self, importasmod) -> None:
         mod = importasmod(
             """
@@ -901,7 +925,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: tuple[_TracebackStyle, ...] = ("long", "short")
+        styles: tuple[TracebackStyle, ...] = ("long", "short")
         for style in styles:
             p = FormattedExcinfo(style=style)
             reprtb = p.repr_traceback(excinfo)
@@ -1028,7 +1052,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: tuple[_TracebackStyle, ...] = ("short", "long", "no")
+        styles: tuple[TracebackStyle, ...] = ("short", "long", "no")
         for style in styles:
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)

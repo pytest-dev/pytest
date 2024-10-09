@@ -1,13 +1,14 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 from pathlib import Path
+from pathlib import PurePath
 import pprint
 import shutil
 import sys
 import tempfile
 import textwrap
-from typing import List
-from typing import Type
 
 from _pytest.assertion.util import running_on_ci
 from _pytest.config import ExitCode
@@ -152,20 +153,17 @@ class TestCollectFS:
         assert "test_notfound" not in s
         assert "test_found" in s
 
-    @pytest.mark.parametrize(
-        "fname",
-        (
-            "activate",
-            "activate.csh",
-            "activate.fish",
-            "Activate",
-            "Activate.bat",
-            "Activate.ps1",
-        ),
+    known_environment_types = pytest.mark.parametrize(
+        "env_path",
+        [
+            pytest.param(PurePath("pyvenv.cfg"), id="venv"),
+            pytest.param(PurePath("conda-meta", "history"), id="conda"),
+        ],
     )
-    def test_ignored_virtualenvs(self, pytester: Pytester, fname: str) -> None:
-        bindir = "Scripts" if sys.platform.startswith("win") else "bin"
-        ensure_file(pytester.path / "virtual" / bindir / fname)
+
+    @known_environment_types
+    def test_ignored_virtualenvs(self, pytester: Pytester, env_path: PurePath) -> None:
+        ensure_file(pytester.path / "virtual" / env_path)
         testfile = ensure_file(pytester.path / "virtual" / "test_invenv.py")
         testfile.write_text("def test_hello(): pass", encoding="utf-8")
 
@@ -179,23 +177,12 @@ class TestCollectFS:
         result = pytester.runpytest("virtual")
         assert "test_invenv" in result.stdout.str()
 
-    @pytest.mark.parametrize(
-        "fname",
-        (
-            "activate",
-            "activate.csh",
-            "activate.fish",
-            "Activate",
-            "Activate.bat",
-            "Activate.ps1",
-        ),
-    )
+    @known_environment_types
     def test_ignored_virtualenvs_norecursedirs_precedence(
-        self, pytester: Pytester, fname: str
+        self, pytester: Pytester, env_path
     ) -> None:
-        bindir = "Scripts" if sys.platform.startswith("win") else "bin"
         # norecursedirs takes priority
-        ensure_file(pytester.path / ".virtual" / bindir / fname)
+        ensure_file(pytester.path / ".virtual" / env_path)
         testfile = ensure_file(pytester.path / ".virtual" / "test_invenv.py")
         testfile.write_text("def test_hello(): pass", encoding="utf-8")
         result = pytester.runpytest("--collect-in-virtualenv")
@@ -204,27 +191,14 @@ class TestCollectFS:
         result = pytester.runpytest("--collect-in-virtualenv", ".virtual")
         assert "test_invenv" in result.stdout.str()
 
-    @pytest.mark.parametrize(
-        "fname",
-        (
-            "activate",
-            "activate.csh",
-            "activate.fish",
-            "Activate",
-            "Activate.bat",
-            "Activate.ps1",
-        ),
-    )
-    def test__in_venv(self, pytester: Pytester, fname: str) -> None:
+    @known_environment_types
+    def test__in_venv(self, pytester: Pytester, env_path: PurePath) -> None:
         """Directly test the virtual env detection function"""
-        bindir = "Scripts" if sys.platform.startswith("win") else "bin"
-        # no bin/activate, not a virtualenv
+        # no env path, not a env
         base_path = pytester.mkdir("venv")
         assert _in_venv(base_path) is False
-        # with bin/activate, totally a virtualenv
-        bin_path = base_path.joinpath(bindir)
-        bin_path.mkdir()
-        bin_path.joinpath(fname).touch()
+        # with env path, totally a env
+        ensure_file(base_path.joinpath(env_path))
         assert _in_venv(base_path) is True
 
     def test_custom_norecursedirs(self, pytester: Pytester) -> None:
@@ -536,7 +510,7 @@ class TestSession:
         assert len(colitems) == 1
         assert colitems[0].path == topdir
 
-    def get_reported_items(self, hookrec: HookRecorder) -> List[Item]:
+    def get_reported_items(self, hookrec: HookRecorder) -> list[Item]:
         """Return pytest.Item instances reported by the pytest_collectreport hook"""
         calls = hookrec.getcalls("pytest_collectreport")
         return [
@@ -1885,7 +1859,7 @@ def test_do_not_collect_symlink_siblings(
 )
 def test_respect_system_exceptions(
     pytester: Pytester,
-    exception_class: Type[BaseException],
+    exception_class: type[BaseException],
     msg: str,
 ):
     head = "Before exception"

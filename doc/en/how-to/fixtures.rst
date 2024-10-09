@@ -1418,7 +1418,7 @@ Running the above tests results in the following test IDs being used:
    rootdir: /home/sweet/project
    collected 12 items
 
-   <Dir fixtures.rst-218>
+   <Dir fixtures.rst-224>
      <Module test_anothersmtp.py>
        <Function test_showhelo[smtp.gmail.com]>
        <Function test_showhelo[mail.python.org]>
@@ -1487,7 +1487,7 @@ Modularity: using fixtures from a fixture function
 
 In addition to using fixtures in test functions, fixture functions
 can use other fixtures themselves.  This contributes to a modular design
-of your fixtures and allows re-use of framework-specific fixtures across
+of your fixtures and allows reuse of framework-specific fixtures across
 many projects.  As a simple example, we can extend the previous example
 and instantiate an object ``app`` where we stick the already defined
 ``smtp_connection`` resource into it:
@@ -1931,7 +1931,7 @@ The same applies for the test folder level obviously.
 Using fixtures from other projects
 ----------------------------------
 
-Usually projects that provide pytest support will use :ref:`entry points <setuptools entry points>`,
+Usually projects that provide pytest support will use :ref:`entry points <pip-installable plugins>`,
 so just installing those projects into an environment will make those fixtures available for use.
 
 In case you want to use fixtures from a project that does not use entry points, you can

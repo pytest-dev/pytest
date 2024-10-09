@@ -43,7 +43,7 @@ If the import attempt raises :class:`ModuleNotFoundError` (the usual case), then
 warning is emitted.
 
 This way, the usual cases will keep working the same way, while unexpected errors will now issue a warning, with
-users being able to supress the warning by passing ``exc_type=ImportError`` explicitly.
+users being able to suppress the warning by passing ``exc_type=ImportError`` explicitly.
 
 In ``9.0``, the warning will turn into an error, and in ``9.1`` :func:`pytest.importorskip` will only capture
 :class:`ModuleNotFoundError` by default and no warnings will be issued anymore -- but users can still capture

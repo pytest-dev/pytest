@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 """Support for providing temporary directories to test functions."""
 
+from __future__ import annotations
+
 import dataclasses
 import os
 from pathlib import Path
@@ -12,8 +14,6 @@ from typing import Dict
 from typing import final
 from typing import Generator
 from typing import Literal
-from typing import Optional
-from typing import Union
 
 from .pathlib import cleanup_dead_symlinks
 from .pathlib import LOCK_TIMEOUT
@@ -46,20 +46,20 @@ class TempPathFactory:
     The base directory can be configured using the ``--basetemp`` option.
     """
 
-    _given_basetemp: Optional[Path]
+    _given_basetemp: Path | None
     # pluggy TagTracerSub, not currently exposed, so Any.
     _trace: Any
-    _basetemp: Optional[Path]
+    _basetemp: Path | None
     _retention_count: int
     _retention_policy: RetentionType
 
     def __init__(
         self,
-        given_basetemp: Optional[Path],
+        given_basetemp: Path | None,
         retention_count: int,
         retention_policy: RetentionType,
         trace,
-        basetemp: Optional[Path] = None,
+        basetemp: Path | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -82,7 +82,7 @@ class TempPathFactory:
         config: Config,
         *,
         _ispytest: bool = False,
-    ) -> "TempPathFactory":
+    ) -> TempPathFactory:
         """Create a factory according to pytest configuration.
 
         :meta private:
@@ -198,7 +198,7 @@ class TempPathFactory:
         return basetemp
 
 
-def get_user() -> Optional[str]:
+def get_user() -> str | None:
     """Return the current user name, or None if getuser() does not work
     in the current environment (see #1010)."""
     try:
@@ -256,7 +256,7 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 @fixture
 def tmp_path(
     request: FixtureRequest, tmp_path_factory: TempPathFactory
-) -> Generator[Path, None, None]:
+) -> Generator[Path]:
     """Return a temporary directory path object which is unique to each test
     function invocation, created as a sub directory of the base temporary
     directory.
@@ -286,7 +286,7 @@ def tmp_path(
     del request.node.stash[tmppath_result_key]
 
 
-def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
+def pytest_sessionfinish(session, exitstatus: int | ExitCode):
     """After each session, remove base directory if all the tests passed,
     the policy is "failed", and the basetemp is not specified by a user.
     """
@@ -317,6 +317,6 @@ def pytest_runtest_makereport(
 ) -> Generator[None, TestReport, TestReport]:
     rep = yield
     assert rep.when is not None
-    empty: Dict[str, bool] = {}
+    empty: dict[str, bool] = {}
     item.stash.setdefault(tmppath_result_key, empty)[rep.when] = rep.passed
     return rep

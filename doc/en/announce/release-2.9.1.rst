@@ -44,7 +44,7 @@ The py.test Development Team
   Thanks :user:`nicoddemus` for the PR.
 
 * Fix (:issue:`469`): junit parses report.nodeid incorrectly, when params IDs
-  contain ``::``. Thanks :user:`tomviner` for the PR (:pull:`1431`).
+  contain ``::``. Thanks :user:`tomviner` for the PR (:pr:`1431`).
 
 * Fix (:issue:`578`): SyntaxErrors
   containing non-ascii lines at the point of failure generated an internal

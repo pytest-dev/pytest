@@ -1,0 +1,1 @@
+Added :class:`~pytest.TerminalReporter` to the :ref:`api-reference` documentation page.

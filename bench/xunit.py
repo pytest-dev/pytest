@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 for i in range(5000):
     exec(
         f"""

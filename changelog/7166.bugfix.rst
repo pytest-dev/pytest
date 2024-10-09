@@ -1,1 +1,0 @@
-Fixed progress percentages (the ``[ 87%]`` at the edge of the screen) sometimes not aligning correctly when running with pytest-xdist ``-n``.

@@ -1,0 +1,7 @@
+---
+
+backport_branch_prefix: patchback/backports/
+backport_label_prefix: 'backport '  # IMPORTANT: the labels are space-delimited
+# target_branch_prefix: ''  # The project's backport branches are non-prefixed
+
+...

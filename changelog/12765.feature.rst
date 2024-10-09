@@ -1,0 +1,3 @@
+Thresholds to trigger snippet truncation can now be set with :confval:`truncation_limit_lines` and :confval:`truncation_limit_chars`.
+
+See :ref:`truncation-params` for more information.

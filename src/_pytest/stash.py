@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 from typing import Any
 from typing import cast
-from typing import Dict
 from typing import Generic
 from typing import TypeVar
-from typing import Union
 
 
 __all__ = ["Stash", "StashKey"]
@@ -70,7 +70,7 @@ class Stash:
     __slots__ = ("_storage",)
 
     def __init__(self) -> None:
-        self._storage: Dict[StashKey[Any], object] = {}
+        self._storage: dict[StashKey[Any], object] = {}
 
     def __setitem__(self, key: StashKey[T], value: T) -> None:
         """Set a value for key."""
@@ -83,7 +83,7 @@ class Stash:
         """
         return cast(T, self._storage[key])
 
-    def get(self, key: StashKey[T], default: D) -> Union[T, D]:
+    def get(self, key: StashKey[T], default: D) -> T | D:
         """Get the value for key, or return default if the key wasn't set
         before."""
         try:

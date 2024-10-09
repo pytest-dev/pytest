@@ -75,7 +75,7 @@ style of setup/teardown functions:
 
 * fixture management scales from simple unit to complex
   functional testing, allowing to parametrize fixtures and tests according
-  to configuration and component options, or to re-use fixtures
+  to configuration and component options, or to reuse fixtures
   across function, class, module or whole test session scopes.
 
 * teardown logic can be easily, and safely managed, no matter how many fixtures

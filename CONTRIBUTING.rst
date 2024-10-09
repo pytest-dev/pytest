@@ -1,5 +1,5 @@
 ============================
-Contribution getting started
+Contributing
 ============================
 
 Contributions are highly welcomed and appreciated.  Every little bit of help counts,
@@ -124,7 +124,7 @@ For example:
 Submitting Plugins to pytest-dev
 --------------------------------
 
-Pytest development of the core, some plugins and support code happens
+Development of the pytest core, support code, and some plugins happens
 in repositories living under the ``pytest-dev`` organisations:
 
 - `pytest-dev on GitHub <https://github.com/pytest-dev>`_
@@ -380,6 +380,57 @@ pull requests from other contributors yourself after having reviewed
 them.
 
 
+Merge/squash guidelines
+-----------------------
+
+When a PR is approved and ready to be integrated to the ``main`` branch, one has the option to *merge* the commits unchanged, or *squash* all the commits into a single commit.
+
+Here are some guidelines on how to proceed, based on examples of a single PR commit history:
+
+1. Miscellaneous commits:
+
+   * ``Implement X``
+   * ``Fix test_a``
+   * ``Add myself to AUTHORS``
+   * ``fixup! Fix test_a``
+   * ``Update tests/test_integration.py``
+   * ``Merge origin/main into PR branch``
+   * ``Update tests/test_integration.py``
+
+   In this case, prefer to use the **Squash** merge strategy: the commit history is a bit messy (not in a derogatory way, often one just commits changes because they know the changes will eventually be squashed together), so squashing everything into a single commit is best. You must clean up the commit message, making sure it contains useful details.
+
+2. Separate commits related to the same topic:
+
+   * ``Implement X``
+   * ``Add myself to AUTHORS``
+   * ``Update CHANGELOG for X``
+
+   In this case, prefer to use the **Squash** merge strategy: while the commit history is not "messy" as in the example above, the individual commits do not bring much value overall, specially when looking at the changes a few months/years down the line.
+
+3. Separate commits, each with their own topic (refactorings, renames, etc), but still have a larger topic/purpose.
+
+   * ``Refactor class X in preparation for feature Y``
+   * ``Remove unused method``
+   * ``Implement feature Y``
+
+   In this case, prefer to use the **Merge** strategy: each commit is valuable on its own, even if they serve a common topic overall. Looking at the history later, it is useful to have the removal of the unused method separately on its own commit, along with more information (such as how it became unused in the first place).
+
+4. Separate commits, each with their own topic, but without a larger topic/purpose other than improve the code base (using more modern techniques, improve typing, removing clutter, etc).
+
+   * ``Improve internal names in X``
+   * ``Add type annotations to Y``
+   * ``Remove unnecessary dict access``
+   * ``Remove unreachable code due to EOL Python``
+
+   In this case, prefer to use the **Merge** strategy: each commit is valuable on its own, and the information on each is valuable in the long term.
+
+
+As mentioned, those are overall guidelines, not rules cast in stone. This topic was discussed in `#12633 <https://github.com/pytest-dev/pytest/discussions/12633>`_.
+
+
+*Backport PRs* (as those created automatically from a ``backport`` label) should always be **squashed**, as they preserve the original PR author.
+
+
 Backporting bug fixes for the next patch release
 ------------------------------------------------
 
@@ -438,6 +489,8 @@ above?
 All the above are not rules, but merely some guidelines/suggestions on what we should expect
 about backports.
 
+Backports should be **squashed** (rather than **merged**), as doing so preserves the original PR author correctly.
+
 Handling stale issues/PRs
 -------------------------
 
@@ -485,9 +538,9 @@ When closing a Pull Request, it needs to be acknowledging the time, effort, and 
 
     <bye>
 
-Closing Issues
+Closing issues
 --------------
 
 When a pull request is submitted to fix an issue, add text like ``closes #XYZW`` to the PR description and/or commits (where ``XYZW`` is the issue number). See the `GitHub docs <https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword>`_ for more information.
 
-When an issue is due to user error (e.g. misunderstanding of a functionality), please politely explain to the user why the issue raised is really a non-issue and ask them to close the issue if they have no further questions. If the original requestor is unresponsive, the issue will be handled as described in the section `Handling stale issues/PRs`_ above.
+When an issue is due to user error (e.g. misunderstanding of a functionality), please politely explain to the user why the issue raised is really a non-issue and ask them to close the issue if they have no further questions. If the original requester is unresponsive, the issue will be handled as described in the section `Handling stale issues/PRs`_ above.

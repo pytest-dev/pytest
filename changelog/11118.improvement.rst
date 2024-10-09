@@ -1,0 +1,3 @@
+Now :confval:`pythonpath` configures `$PYTHONPATH` earlier than before during the initialization process, which now also affects plugins loaded via the `-p` command-line option.
+
+-- by :user:`millerdev`

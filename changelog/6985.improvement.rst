@@ -1,0 +1,21 @@
+Improved :func:`pytest.approx` to enhance the readability of value ranges and tolerances between 0.001 and 1000.
+  * The `repr` method now provides clearer output for values within those ranges, making it easier to interpret the results.
+  * Previously, the output for those ranges of values and tolerances was displayed in scientific notation (e.g., `42 ± 1.0e+00`). The updated method now presents the tolerance as a decimal for better readability (e.g., `42 ± 1`).
+
+    Example:
+
+    **Previous Output:**
+
+    .. code-block:: console
+
+        >>> pytest.approx(42, abs=1)
+        42 ± 1.0e+00
+
+    **Current Output:**
+
+    .. code-block:: console
+
+        >>> pytest.approx(42, abs=1)
+        42 ± 1
+
+  -- by :user:`fazeelghafoor`

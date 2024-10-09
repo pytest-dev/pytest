@@ -1,10 +1,11 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import inspect
 from pathlib import Path
 import sys
 import textwrap
 from typing import Callable
-from typing import Optional
 
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
@@ -1595,7 +1596,7 @@ class Broken:
     "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
 )
 def test_warning_on_unwrap_of_broken_object(
-    stop: Optional[Callable[[object], object]],
+    stop: Callable[[object], object] | None,
 ) -> None:
     bad_instance = Broken()
     assert inspect.unwrap.__module__ == "inspect"

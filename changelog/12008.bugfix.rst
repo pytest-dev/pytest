@@ -1,0 +1,1 @@
+In :pr:`11220`, an unintended change in reordering was introduced by changing the way indices were assigned to direct params. More specifically, before that change, the indices of direct params to metafunc's callspecs were assigned after all parametrizations took place. Now, that change is reverted.

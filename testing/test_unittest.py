@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import sys
-from typing import List
 
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
@@ -384,7 +385,7 @@ def test_testcase_adderrorandfailure_defers(pytester: Pytester, type: str) -> No
 @pytest.mark.parametrize("type", ["Error", "Failure"])
 def test_testcase_custom_exception_info(pytester: Pytester, type: str) -> None:
     pytester.makepyfile(
-        """
+        f"""
         from typing import Generic, TypeVar
         from unittest import TestCase
         import pytest, _pytest._code
@@ -413,7 +414,7 @@ def test_testcase_custom_exception_info(pytester: Pytester, type: str) -> None:
 
             def test_hello(self):
                 pass
-    """.format(**locals())
+    """
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
@@ -1214,7 +1215,7 @@ def test_pdb_teardown_called(pytester: Pytester, monkeypatch: MonkeyPatch) -> No
     We delay the normal tearDown() calls when --pdb is given, so this ensures we are calling
     tearDown() eventually to avoid memory leaks when using --pdb.
     """
-    teardowns: List[str] = []
+    teardowns: list[str] = []
     monkeypatch.setattr(
         pytest, "test_pdb_teardown_called_teardowns", teardowns, raising=False
     )
@@ -1251,7 +1252,7 @@ def test_pdb_teardown_skipped_for_functions(
     With --pdb, setUp and tearDown should not be called for tests skipped
     via a decorator (#7215).
     """
-    tracked: List[str] = []
+    tracked: list[str] = []
     monkeypatch.setattr(pytest, "track_pdb_teardown_skipped", tracked, raising=False)
 
     pytester.makepyfile(
@@ -1286,7 +1287,7 @@ def test_pdb_teardown_skipped_for_classes(
     With --pdb, setUp and tearDown should not be called for tests skipped
     via a decorator on the class (#10060).
     """
-    tracked: List[str] = []
+    tracked: list[str] = []
     monkeypatch.setattr(pytest, "track_pdb_teardown_skipped", tracked, raising=False)
 
     pytester.makepyfile(

@@ -1,0 +1,1 @@
+Assertion rewriting now preserves the source ranges of the original instructions, making it play well with tools that deal with the ``AST``, like `executing <https://github.com/alexmojaki/executing>`__.

@@ -1,0 +1,1 @@
+Added :class:`~pytest.TerminalReporter` to the public pytest API, as it is part of the signature of the :hook:`pytest_terminal_summary` hook.

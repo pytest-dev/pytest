@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 from typing import Generator
@@ -62,6 +64,7 @@ def get_stderr_fileno() -> int:
         # pytest-xdist monkeypatches sys.stderr with an object that is not an actual file.
         # https://docs.python.org/3/library/faulthandler.html#issue-with-file-descriptors
         # This is potentially dangerous, but the best we can do.
+        assert sys.__stderr__ is not None
         return sys.__stderr__.fileno()
 
 

@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 """Terminal reporting of the full testing process."""
 
+from __future__ import annotations
+
 from io import StringIO
 import os
 from pathlib import Path
@@ -8,10 +10,7 @@ import sys
 import textwrap
 from types import SimpleNamespace
 from typing import cast
-from typing import Dict
-from typing import List
 from typing import NamedTuple
-from typing import Tuple
 
 import pluggy
 
@@ -327,16 +326,17 @@ class TestTerminal:
         tr.rewrite("hey", erase=True)
         assert f.getvalue() == "hello" + "\r" + "hey" + (6 * " ")
 
+    @pytest.mark.parametrize("category", ["foo", "failed", "error", "passed"])
     def test_report_teststatus_explicit_markup(
-        self, monkeypatch: MonkeyPatch, pytester: Pytester, color_mapping
+        self, monkeypatch: MonkeyPatch, pytester: Pytester, color_mapping, category: str
     ) -> None:
         """Test that TerminalReporter handles markup explicitly provided by
         a pytest_report_teststatus hook."""
         monkeypatch.setenv("PY_COLORS", "1")
         pytester.makeconftest(
-            """
+            f"""
             def pytest_report_teststatus(report):
-                return 'foo', 'F', ('FOO', {'red': True})
+                return {category !r}, 'F', ('FOO', {{'red': True}})
         """
         )
         pytester.makepyfile(
@@ -345,7 +345,9 @@ class TestTerminal:
                 pass
         """
         )
+
         result = pytester.runpytest("-v")
+        assert not result.stderr.lines
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(["*{red}FOO{reset}*"])
         )
@@ -1148,6 +1150,44 @@ class TestTerminalFunctional:
         result.stdout.fnmatch_lines([expected])
         assert result.stdout.lines.count(expected) == 1
 
+    def test_summary_s_folded(self, pytester: Pytester) -> None:
+        """Test that skipped tests are correctly folded"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("param", [True, False])
+            @pytest.mark.skip("Some reason")
+            def test(param):
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs")
+        expected = "SKIPPED [2] test_summary_s_folded.py:3: Some reason"
+        result.stdout.fnmatch_lines([expected])
+        assert result.stdout.lines.count(expected) == 1
+
+    def test_summary_s_unfolded(self, pytester: Pytester) -> None:
+        """Test that skipped tests are not folded if --no-fold-skipped is set"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("param", [True, False])
+            @pytest.mark.skip("Some reason")
+            def test(param):
+                pass
+            """
+        )
+        result = pytester.runpytest("-rs", "--no-fold-skipped")
+        expected = [
+            "SKIPPED test_summary_s_unfolded.py::test[True] - Skipped: Some reason",
+            "SKIPPED test_summary_s_unfolded.py::test[False] - Skipped: Some reason",
+        ]
+        result.stdout.fnmatch_lines(expected)
+        assert result.stdout.lines.count(expected[0]) == 1
+        assert result.stdout.lines.count(expected[1]) == 1
+
 
 @pytest.mark.parametrize(
     ("use_ci", "expected_message"),
@@ -1929,9 +1969,9 @@ def tr() -> TerminalReporter:
 )
 def test_summary_stats(
     tr: TerminalReporter,
-    exp_line: List[Tuple[str, Dict[str, bool]]],
+    exp_line: list[tuple[str, dict[str, bool]]],
     exp_color: str,
-    stats_arg: Dict[str, List[object]],
+    stats_arg: dict[str, list[object]],
 ) -> None:
     tr.stats = stats_arg
 
@@ -2386,8 +2426,8 @@ def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
             self.option = Namespace(verbose=0)
 
     class rep:
-        def _get_verbose_word(self, *args):
-            return mocked_verbose_word
+        def _get_verbose_word_with_markup(self, *args):
+            return mocked_verbose_word, {}
 
         class longrepr:
             class reprcrash:
@@ -2609,8 +2649,8 @@ class TestCodeHighlight:
         monkeypatch.setenv("PYTEST_THEME", "invalid")
         result = pytester.runpytest_subprocess("--color=yes")
         result.stderr.fnmatch_lines(
-            "ERROR: PYTEST_THEME environment variable had an invalid value: 'invalid'. "
-            "Only valid pygment styles are allowed."
+            "ERROR: PYTEST_THEME environment variable has an invalid value: 'invalid'. "
+            "Hint: See available pygments styles with `pygmentize -L styles`."
         )
 
     def test_code_highlight_invalid_theme_mode(
@@ -2625,8 +2665,8 @@ class TestCodeHighlight:
         monkeypatch.setenv("PYTEST_THEME_MODE", "invalid")
         result = pytester.runpytest_subprocess("--color=yes")
         result.stderr.fnmatch_lines(
-            "ERROR: PYTEST_THEME_MODE environment variable had an invalid value: 'invalid'. "
-            "The only allowed values are 'dark' and 'light'."
+            "ERROR: PYTEST_THEME_MODE environment variable has an invalid value: 'invalid'. "
+            "The allowed values are 'dark' (default) and 'light'."
         )
 
 
@@ -3027,3 +3067,38 @@ def test_xpass_output(pytester: Pytester) -> None:
             "*= 1 xpassed in * =*",
         ]
     )
+
+
+class TestNodeIDHandling:
+    def test_nodeid_handling_windows_paths(self, pytester: Pytester, tmp_path) -> None:
+        """Test the correct handling of Windows-style paths with backslashes."""
+        pytester.makeini("[pytest]")  # Change `config.rootpath`
+
+        test_path = pytester.path / "tests" / "test_foo.py"
+        test_path.parent.mkdir()
+        os.chdir(test_path.parent)  # Change `config.invocation_params.dir`
+
+        test_path.write_text(
+            textwrap.dedent(
+                """
+                import pytest
+
+                @pytest.mark.parametrize("a", ["x/y", "C:/path", "\\\\", "C:\\\\path", "a::b/"])
+                def test_x(a):
+                    assert False
+                """
+            ),
+            encoding="utf-8",
+        )
+
+        result = pytester.runpytest("-v")
+
+        result.stdout.re_match_lines(
+            [
+                r".*test_foo.py::test_x\[x/y\] .*FAILED.*",
+                r".*test_foo.py::test_x\[C:/path\] .*FAILED.*",
+                r".*test_foo.py::test_x\[\\\\\] .*FAILED.*",
+                r".*test_foo.py::test_x\[C:\\\\path\] .*FAILED.*",
+                r".*test_foo.py::test_x\[a::b/\] .*FAILED.*",
+            ]
+        )

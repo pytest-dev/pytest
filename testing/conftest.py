@@ -1,9 +1,10 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import dataclasses
 import re
 import sys
 from typing import Generator
-from typing import List
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -45,7 +46,7 @@ def reset_colors(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_collection_modifyitems(items) -> Generator[None, None, None]:
+def pytest_collection_modifyitems(items) -> Generator[None]:
     """Prefer faster tests.
 
     Use a hook wrapper to do this in the beginning, so e.g. --ff still works
@@ -190,22 +191,22 @@ def color_mapping():
         NO_COLORS = {k: "" for k in COLORS.keys()}
 
         @classmethod
-        def format(cls, lines: List[str]) -> List[str]:
+        def format(cls, lines: list[str]) -> list[str]:
             """Straightforward replacement of color names to their ASCII codes."""
             return [line.format(**cls.COLORS) for line in lines]
 
         @classmethod
-        def format_for_fnmatch(cls, lines: List[str]) -> List[str]:
+        def format_for_fnmatch(cls, lines: list[str]) -> list[str]:
             """Replace color names for use with LineMatcher.fnmatch_lines"""
             return [line.format(**cls.COLORS).replace("[", "[[]") for line in lines]
 
         @classmethod
-        def format_for_rematch(cls, lines: List[str]) -> List[str]:
+        def format_for_rematch(cls, lines: list[str]) -> list[str]:
             """Replace color names for use with LineMatcher.re_match_lines"""
             return [line.format(**cls.RE_COLORS) for line in lines]
 
         @classmethod
-        def strip_colors(cls, lines: List[str]) -> List[str]:
+        def strip_colors(cls, lines: list[str]) -> list[str]:
             """Entirely remove every color code"""
             return [line.format(**cls.NO_COLORS) for line in lines]
 

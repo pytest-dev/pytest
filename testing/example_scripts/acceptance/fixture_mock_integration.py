@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 """Reproduces issue #3774"""
 
+from __future__ import annotations
+
 from unittest import mock
 
 import pytest

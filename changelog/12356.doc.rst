@@ -1,2 +1,0 @@
-Added a subsection to the documentation for debugging flaky tests to mention
-lack of thread safety in pytest as a possible source of flakyness.

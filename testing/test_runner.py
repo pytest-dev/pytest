@@ -1,14 +1,12 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 from functools import partial
 import inspect
 import os
 from pathlib import Path
 import sys
 import types
-from typing import Dict
-from typing import List
-from typing import Tuple
-from typing import Type
 import warnings
 
 from _pytest import outcomes
@@ -523,7 +521,7 @@ class TestSessionReports:
         assert res[1].name == "TestClass"
 
 
-reporttypes: List[Type[reports.BaseReport]] = [
+reporttypes: list[type[reports.BaseReport]] = [
     reports.BaseReport,
     reports.TestReport,
     reports.CollectReport,
@@ -533,9 +531,9 @@ reporttypes: List[Type[reports.BaseReport]] = [
 @pytest.mark.parametrize(
     "reporttype", reporttypes, ids=[x.__name__ for x in reporttypes]
 )
-def test_report_extra_parameters(reporttype: Type[reports.BaseReport]) -> None:
+def test_report_extra_parameters(reporttype: type[reports.BaseReport]) -> None:
     args = list(inspect.signature(reporttype.__init__).parameters.keys())[1:]
-    basekw: Dict[str, List[object]] = dict.fromkeys(args, [])
+    basekw: dict[str, list[object]] = {arg: [] for arg in args}
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1
 
@@ -1032,7 +1030,7 @@ def test_store_except_info_on_error() -> None:
     assert sys.last_type is IndexError
     assert isinstance(sys.last_value, IndexError)
     if sys.version_info >= (3, 12, 0):
-        assert isinstance(sys.last_exc, IndexError)
+        assert isinstance(sys.last_exc, IndexError)  # type:ignore[attr-defined]
 
     assert sys.last_value.args[0] == "TEST"
     assert sys.last_traceback
@@ -1048,7 +1046,7 @@ def test_store_except_info_on_error() -> None:
 
 
 def test_current_test_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
-    pytest_current_test_vars: List[Tuple[str, str]] = []
+    pytest_current_test_vars: list[tuple[str, str]] = []
     monkeypatch.setattr(
         sys, "pytest_current_test_vars", pytest_current_test_vars, raising=False
     )
