@@ -792,7 +792,7 @@ class AssertionRewriter(ast.NodeVisitor):
         """Give *expr* a name."""
         name = self.variable()
         self.statements.append(ast.Assign([ast.Name(name, ast.Store())], expr))
-        return ast.Name(name, ast.Load())
+        return ast.copy_location(ast.Name(name, ast.Load()), expr)
 
     def display(self, expr: ast.expr) -> ast.expr:
         """Call saferepr on the expression."""
@@ -975,7 +975,10 @@ class AssertionRewriter(ast.NodeVisitor):
         # Fix locations (line numbers/column offsets).
         for stmt in self.statements:
             for node in traverse_node(stmt):
-                ast.copy_location(node, assert_)
+                if getattr(node, "lineno", None) is None:
+                    # apply the assertion location to all generated ast nodes without source location
+                    # and preserve the location of existing nodes or generated nodes with an correct location.
+                    ast.copy_location(node, assert_)
         return self.statements
 
     def visit_NamedExpr(self, name: ast.NamedExpr) -> tuple[ast.NamedExpr, str]:
@@ -1052,7 +1055,7 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_UnaryOp(self, unary: ast.UnaryOp) -> tuple[ast.Name, str]:
         pattern = UNARY_MAP[unary.op.__class__]
         operand_res, operand_expl = self.visit(unary.operand)
-        res = self.assign(ast.UnaryOp(unary.op, operand_res))
+        res = self.assign(ast.copy_location(ast.UnaryOp(unary.op, operand_res), unary))
         return res, pattern % (operand_expl,)
 
     def visit_BinOp(self, binop: ast.BinOp) -> tuple[ast.Name, str]:
@@ -1060,7 +1063,9 @@ class AssertionRewriter(ast.NodeVisitor):
         left_expr, left_expl = self.visit(binop.left)
         right_expr, right_expl = self.visit(binop.right)
         explanation = f"({left_expl} {symbol} {right_expl})"
-        res = self.assign(ast.BinOp(left_expr, binop.op, right_expr))
+        res = self.assign(
+            ast.copy_location(ast.BinOp(left_expr, binop.op, right_expr), binop)
+        )
         return res, explanation
 
     def visit_Call(self, call: ast.Call) -> tuple[ast.Name, str]:
@@ -1089,7 +1094,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 arg_expls.append("**" + expl)
 
         expl = "{}({})".format(func_expl, ", ".join(arg_expls))
-        new_call = ast.Call(new_func, new_args, new_kwargs)
+        new_call = ast.copy_location(ast.Call(new_func, new_args, new_kwargs), call)
         res = self.assign(new_call)
         res_expl = self.explanation_param(self.display(res))
         outer_expl = f"{res_expl}\n{{{res_expl} = {expl}\n}}"
@@ -1105,7 +1110,9 @@ class AssertionRewriter(ast.NodeVisitor):
         if not isinstance(attr.ctx, ast.Load):
             return self.generic_visit(attr)
         value, value_expl = self.visit(attr.value)
-        res = self.assign(ast.Attribute(value, attr.attr, ast.Load()))
+        res = self.assign(
+            ast.copy_location(ast.Attribute(value, attr.attr, ast.Load()), attr)
+        )
         res_expl = self.explanation_param(self.display(res))
         pat = "%s\n{%s = %s.%s\n}"
         expl = pat % (res_expl, res_expl, value_expl, attr.attr)
@@ -1146,7 +1153,7 @@ class AssertionRewriter(ast.NodeVisitor):
             syms.append(ast.Constant(sym))
             expl = f"{left_expl} {sym} {next_expl}"
             expls.append(ast.Constant(expl))
-            res_expr = ast.Compare(left_res, [op], [next_res])
+            res_expr = ast.copy_location(ast.Compare(left_res, [op], [next_res]), comp)
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
         # Use pytest.assertion.util._reprcompare if that's available.
