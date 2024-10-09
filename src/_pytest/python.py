@@ -924,7 +924,7 @@ class IdMaker:
         for idx, parameterset in enumerate(self.parametersets):
             if parameterset.id is not None:
                 # ID provided directly - pytest.param(..., id="...")
-                yield parameterset.id
+                yield _ascii_escaped_by_config(parameterset.id, self.config)
             elif self.ids and idx < len(self.ids) and self.ids[idx] is not None:
                 # ID provided in the IDs list - parametrize(..., ids=[...]).
                 yield self._idval_from_value_required(self.ids[idx], idx)
