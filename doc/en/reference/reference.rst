@@ -1332,6 +1332,29 @@ passed multiple times. The expected format is ``name=value``. For example::
         console_output_style = classic
 
 
+.. confval:: disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+
+   .. versionadded:: 4.4
+
+   pytest by default escapes any non-ascii characters used in unicode strings
+   for the parametrization because it has several downsides.
+   If however you would like to use unicode strings in parametrization
+   and see them in the terminal as is (non-escaped), use this option
+   in your ``pytest.ini``:
+
+   .. code-block:: ini
+
+       [pytest]
+       disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+
+   Keep in mind however that this might cause unwanted side effects and
+   even bugs depending on the OS used and plugins currently installed,
+   so use it at your own risk.
+
+   Default: ``False``.
+
+   See :ref:`parametrizemark`.
+
 .. confval:: doctest_encoding
 
 
