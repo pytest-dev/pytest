@@ -529,13 +529,14 @@ record_testsuite_property
 recwarn
 ~~~~~~~
 
-**Tutorial**: :ref:`assertwarnings`
+**Tutorial**: :ref:`recwarn`
 
 .. autofunction:: _pytest.recwarn.recwarn()
     :no-auto-options:
 
 .. autoclass:: pytest.WarningsRecorder()
     :members:
+    :special-members: __getitem__, __iter__, __len__
 
 
 .. fixture:: request

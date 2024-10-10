@@ -195,7 +195,7 @@ user code and third-party libraries, as recommended by :pep:`565`.
 This helps users keep their code modern and avoid breakages when deprecated warnings are effectively removed.
 
 However, in the specific case where users capture any type of warnings in their test, either with
-:func:`pytest.warns`, :func:`pytest.deprecated_call` or using the :ref:`recwarn <recwarn>` fixture,
+:func:`pytest.warns`, :func:`pytest.deprecated_call` or using the :fixture:`recwarn` fixture,
 no warning will be displayed at all.
 
 Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over
@@ -332,10 +332,10 @@ additional information:
     assert record[0].message.args[0] == "another warning"
 
 Alternatively, you can examine raised warnings in detail using the
-:ref:`recwarn <recwarn>` fixture (see below).
+:fixture:`recwarn` fixture (see :ref:`below <recwarn>`).
 
 
-The :ref:`recwarn <recwarn>` fixture automatically ensures to reset the warnings
+The :fixture:`recwarn` fixture automatically ensures to reset the warnings
 filter at the end of the test, so no global state is leaked.
 
 .. _`recording warnings`:
@@ -345,8 +345,8 @@ filter at the end of the test, so no global state is leaked.
 Recording warnings
 ------------------
 
-You can record raised warnings either using :func:`pytest.warns` or with
-the ``recwarn`` fixture.
+You can record raised warnings either using the :func:`pytest.warns` context manager or with
+the :fixture:`recwarn` fixture.
 
 To record with :func:`pytest.warns` without asserting anything about the warnings,
 pass no arguments as the expected warning type and it will default to a generic Warning:
@@ -361,7 +361,7 @@ pass no arguments as the expected warning type and it will default to a generic 
     assert str(record[0].message) == "user"
     assert str(record[1].message) == "runtime"
 
-The ``recwarn`` fixture will record warnings for the whole function:
+The :fixture:`recwarn` fixture will record warnings for the whole function:
 
 .. code-block:: python
 
@@ -377,12 +377,11 @@ The ``recwarn`` fixture will record warnings for the whole function:
         assert w.filename
         assert w.lineno
 
-Both ``recwarn`` and :func:`pytest.warns` return the same interface for recorded
-warnings: a WarningsRecorder instance. To view the recorded warnings, you can
+Both the :fixture:`recwarn` fixture and the :func:`pytest.warns` context manager return the same interface for recorded
+warnings: a :class:`~_pytest.recwarn.WarningsRecorder` instance. To view the recorded warnings, you can
 iterate over this instance, call ``len`` on it to get the number of recorded
 warnings, or index into it to get a particular recorded warning.
 
-Full API: :class:`~_pytest.recwarn.WarningsRecorder`.
 
 .. _`warns use cases`:
 
