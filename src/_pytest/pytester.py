@@ -689,6 +689,7 @@ class Pytester:
         self._request.addfinalizer(self._finalize)
         self._method = self._request.config.getoption("--runpytest")
         self._test_tmproot = tmp_path_factory.mktemp(f"tmp-{name}", numbered=True)
+        self._prepended_syspaths: list[Path] = []
 
         self._monkeypatch = mp = monkeypatch
         self.chdir()
@@ -900,7 +901,9 @@ class Pytester:
         if path is None:
             path = self.path
 
-        self._monkeypatch.syspath_prepend(str(path))
+        path_obj = Path(path)
+        self._monkeypatch.syspath_prepend(str(path_obj))
+        self._prepended_syspaths.append(path_obj)
 
     def mkdir(self, name: str | os.PathLike[str]) -> Path:
         """Create a new (sub)directory.
@@ -1337,10 +1340,16 @@ class Pytester:
 
         You probably want to use :py:meth:`run` instead.
         """
-        env = os.environ.copy()
-        env["PYTHONPATH"] = os.pathsep.join(
-            filter(None, [os.getcwd(), env.get("PYTHONPATH", "")])
+        env = kw.pop("env", None) or os.environ.copy()
+        pythonpath = env.get("PYTHONPATH", "")
+
+        paths_to_add = [os.getcwd(), *self._prepended_syspaths]
+
+        pythonpath = os.pathsep.join(
+            filter(None, [*map(str, paths_to_add), pythonpath])
         )
+
+        env["PYTHONPATH"] = pythonpath
         kw["env"] = env
 
         if stdin is self.CLOSE_STDIN:
@@ -1365,6 +1374,7 @@ class Pytester:
         *cmdargs: str | os.PathLike[str],
         timeout: float | None = None,
         stdin: NotSetType | bytes | IO[Any] | int = CLOSE_STDIN,
+        env: dict[str, str] | None = None,
     ) -> RunResult:
         """Run a command with arguments.
 
@@ -1413,6 +1423,7 @@ class Pytester:
                 stdout=f1,
                 stderr=f2,
                 close_fds=(sys.platform != "win32"),
+                env=env,
             )
             if popen.stdin is not None:
                 popen.stdin.close()
@@ -1488,8 +1499,19 @@ class Pytester:
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
             args = ("-p", plugins[0], *args)
-        args = self._getpytestargs() + args
-        return self.run(*args, timeout=timeout)
+
+        env = os.environ.copy()
+        pythonpath = env.get("PYTHONPATH", "")
+
+        # Add all prepended syspaths to PYTHONPATH
+        prepended_paths = [str(path) for path in self._prepended_syspaths]
+        pythonpath = os.pathsep.join(filter(None, [*prepended_paths, pythonpath]))
+
+        env["PYTHONPATH"] = pythonpath
+
+        return self.run(
+            *[sys.executable, "-m", "pytest", *args], timeout=timeout, env=env
+        )
 
     def spawn_pytest(self, string: str, expect_timeout: float = 10.0) -> pexpect.spawn:
         """Run pytest using pexpect.
