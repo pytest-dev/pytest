@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
+from collections.abc import Sequence
 import dataclasses
 import itertools
 import re
@@ -8,9 +10,6 @@ import sys
 import textwrap
 from typing import Any
 from typing import cast
-from typing import Dict
-from typing import Iterator
-from typing import Sequence
 
 import hypothesis
 from hypothesis import strategies
@@ -154,7 +153,7 @@ class TestMetafunc:
             _scope: Scope
 
         fixtures_defs = cast(
-            Dict[str, Sequence[fixtures.FixtureDef[object]]],
+            dict[str, Sequence[fixtures.FixtureDef[object]]],
             dict(
                 session_fix=[DummyFixtureDef(Scope.Session)],
                 package_fix=[DummyFixtureDef(Scope.Package)],

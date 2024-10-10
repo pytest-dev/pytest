@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import atexit
+from collections.abc import Iterable
+from collections.abc import Iterator
 import contextlib
 from enum import Enum
 from errno import EBADF
@@ -27,8 +29,6 @@ import types
 from types import ModuleType
 from typing import Any
 from typing import Callable
-from typing import Iterable
-from typing import Iterator
 from typing import TypeVar
 import uuid
 import warnings
