@@ -6,6 +6,7 @@ import argparse
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import dataclasses
 import fnmatch
 import functools
@@ -14,7 +15,6 @@ import importlib.util
 import os
 from pathlib import Path
 import sys
-from typing import AbstractSet
 from typing import Callable
 from typing import final
 from typing import Literal

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 from contextlib import contextmanager
 from contextlib import nullcontext
 from datetime import datetime
@@ -18,7 +19,6 @@ import os
 from pathlib import Path
 import re
 from types import TracebackType
-from typing import AbstractSet
 from typing import final
 from typing import Generic
 from typing import Literal

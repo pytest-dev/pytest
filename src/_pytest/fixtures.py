@@ -11,6 +11,7 @@ from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import MutableMapping
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import dataclasses
 import functools
 import inspect
@@ -18,7 +19,6 @@ import os
 from pathlib import Path
 import sys
 import types
-from typing import AbstractSet
 from typing import Any
 from typing import Callable
 from typing import cast
