@@ -62,7 +62,7 @@ def test_none_help_param_raises_exception(pytester: Pytester) -> None:
     )
 
 
-def test_empty_help_param(pytester: Pytester) -> None:
+def test_empty_help_param(pytester: Pytester, monkeypatch) -> None:
     """Test that an empty help param is displayed correctly."""
     pytester.makeconftest(
         """
@@ -70,6 +70,7 @@ def test_empty_help_param(pytester: Pytester) -> None:
             parser.addini("test_ini", "", default=True, type="bool")
     """
     )
+    monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
     result = pytester.runpytest("--help")
     assert result.ret == 0
     lines = [
