@@ -407,6 +407,23 @@ class TestParameterize:
         res = pytester.runpytest("--collect-only")
         res.stdout.fnmatch_lines(["*spam-2*", "*ham-2*"])
 
+    def test_param_rejects_usefixtures(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("x", [
+                pytest.param(1, marks=[pytest.mark.usefixtures("foo")]),
+            ])
+            def test_foo(x):
+                pass
+        """
+        )
+        res = pytester.runpytest("--collect-only")
+        res.stdout.fnmatch_lines(
+            ["*test_param_rejects_usefixtures.py:4*", "*pytest.param(*"]
+        )
+
 
 def test_function_instance(pytester: Pytester) -> None:
     items = pytester.getitems(

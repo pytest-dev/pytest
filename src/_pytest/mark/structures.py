@@ -21,7 +21,6 @@ from typing import Union
 import warnings
 
 from .._code import getfslineno
-from ..compat import ascii_escaped
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
@@ -88,11 +87,15 @@ class ParameterSet(NamedTuple):
             marks = (marks,)
         else:
             assert isinstance(marks, collections.abc.Collection)
+        if any(i.name == "usefixtures" for i in marks):
+            raise ValueError(
+                "pytest.param cannot add pytest.mark.usefixtures; see "
+                "https://docs.pytest.org/en/stable/reference/reference.html#pytest-param"
+            )
 
         if id is not None:
             if not isinstance(id, str):
                 raise TypeError(f"Expected id to be a string, got {type(id)}: {id!r}")
-            id = ascii_escaped(id)
         return cls(values, marks, id)
 
     @classmethod
