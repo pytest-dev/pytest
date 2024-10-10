@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import ast
 from bisect import bisect_right
+from collections.abc import Iterable
+from collections.abc import Iterator
 import inspect
 import textwrap
 import tokenize
 import types
-from typing import Iterable
-from typing import Iterator
 from typing import overload
 import warnings
 

@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from collections.abc import Mapping
 import dataclasses
 import os
 import platform
 import sys
 import traceback
-from typing import Generator
 from typing import Optional
 
 from _pytest.config import Config

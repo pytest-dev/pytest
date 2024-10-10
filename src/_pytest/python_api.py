@@ -2,24 +2,22 @@
 from __future__ import annotations
 
 from collections.abc import Collection
+from collections.abc import Mapping
+from collections.abc import Sequence
 from collections.abc import Sized
 from decimal import Decimal
 import math
 from numbers import Complex
 import pprint
 import re
+from re import Pattern
 from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import cast
 from typing import ContextManager
 from typing import final
-from typing import Mapping
 from typing import overload
-from typing import Pattern
-from typing import Sequence
-from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -1017,7 +1015,7 @@ class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
         if not issubclass(exc_type, self.expected_exception):
             return False
         # Cast to narrow the exception type now that it's verified.
-        exc_info = cast(Tuple[Type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
+        exc_info = cast(tuple[type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
         self.excinfo.fill_unfilled(exc_info)
         if self.match_expr is not None:
             self.excinfo.match(self.match_expr)

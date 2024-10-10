@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Sequence
 import os
 from pathlib import Path
 import sys
-from typing import Iterable
-from typing import Sequence
 
 import iniconfig
 

@@ -1,10 +1,10 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 import sys
 import textwrap
 from typing import Any
-from typing import MutableSequence
 from typing import NamedTuple
 
 import attr

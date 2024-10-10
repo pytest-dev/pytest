@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Sequence
 from enum import auto
 from enum import Enum
 import os
 from pathlib import Path
 import shutil
 from typing import Any
-from typing import Generator
-from typing import Sequence
 
 from _pytest.compat import assert_never
 from _pytest.config import ExitCode

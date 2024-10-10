@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Mapping
+from collections.abc import Sequence
 from gettext import gettext
 import os
 import sys
@@ -9,11 +11,8 @@ from typing import Any
 from typing import Callable
 from typing import cast
 from typing import final
-from typing import List
 from typing import Literal
-from typing import Mapping
 from typing import NoReturn
-from typing import Sequence
 
 import _pytest._io
 from _pytest.config.exceptions import UsageError
@@ -144,7 +143,7 @@ class Parser:
         parsedoption = self.parse(args, namespace=namespace)
         for name, value in parsedoption.__dict__.items():
             setattr(option, name, value)
-        return cast(List[str], getattr(parsedoption, FILE_OR_DIR))
+        return cast(list[str], getattr(parsedoption, FILE_OR_DIR))
 
     def parse_known_args(
         self,
