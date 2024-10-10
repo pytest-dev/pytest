@@ -53,6 +53,8 @@ repos:
     rev: v3.17.0
     hooks:
     -   id: pyupgrade
+        args:
+          - "--py39-plus"
         stages: [manual]
 -   repo: local
     hooks:
