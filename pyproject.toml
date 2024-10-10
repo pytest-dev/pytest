@@ -479,6 +479,7 @@ files = [
 mypy_path = [
     "src",
 ]
+python_version = "3.8"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true
