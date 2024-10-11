@@ -158,8 +158,6 @@ Both automatic and manual processes described above follow the same steps from t
        git tag MAJOR.{MINOR+1}.0.dev0
        git push upstream MAJOR.{MINOR+1}.0.dev0
 
-#. For major and minor releases, change the default version in the `Read the Docs Settings <https://readthedocs.org/dashboard/pytest/advanced/>`_ to the new branch.
-
 #. Send an email announcement with the contents from::
 
      doc/en/announce/release-<VERSION>.rst

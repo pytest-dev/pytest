@@ -16,7 +16,7 @@ Shortcomings of the previous ``pytest_funcarg__`` mechanism
 
 The pre pytest-2.3 funcarg mechanism calls a factory each time a
 funcarg for a test function is required.  If a factory wants to
-re-use a resource across different scopes, it often used
+reuse a resource across different scopes, it often used
 the ``request.cached_setup()`` helper to manage caching of
 resources.  Here is a basic example how we could implement
 a per-session Database object:
@@ -107,7 +107,7 @@ the tests requiring "db" will run twice as well.  The "mysql" and
 "pg" values will also be used for reporting the test-invocation variants.
 
 This new way of parametrizing funcarg factories should in many cases
-allow to re-use already written factories because effectively
+allow to reuse already written factories because effectively
 ``request.param`` was already used when test functions/classes were
 parametrized via
 :py:func:`metafunc.parametrize(indirect=True) <pytest.Metafunc.parametrize>` calls.
@@ -164,7 +164,7 @@ hook which are often used to setup global resources.  This suffers from
 several problems:
 
 1. in distributed testing the managing process would setup test resources
-   that are never needed because it only co-ordinates the test run
+   that are never needed because it only coordinates the test run
    activities of the worker processes.
 
 2. if you only perform a collection (with "--collect-only")

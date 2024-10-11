@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import dataclasses
 import itertools
 import re
@@ -8,11 +10,7 @@ from typing import Any
 from typing import cast
 from typing import Dict
 from typing import Iterator
-from typing import List
-from typing import Optional
 from typing import Sequence
-from typing import Tuple
-from typing import Union
 
 import hypothesis
 from hypothesis import strategies
@@ -37,7 +35,7 @@ class TestMetafunc:
         # on the funcarg level, so we don't need a full blown
         # initialization.
         class FuncFixtureInfoMock:
-            name2fixturedefs: Dict[str, List[fixtures.FixtureDef[object]]] = {}
+            name2fixturedefs: dict[str, list[fixtures.FixtureDef[object]]] = {}
 
             def __init__(self, names):
                 self.names_closure = names
@@ -103,7 +101,7 @@ class TestMetafunc:
             def __repr__(self):
                 return "Exc(from_gen)"
 
-        def gen() -> Iterator[Union[int, None, Exc]]:
+        def gen() -> Iterator[int | None | Exc]:
             yield 0
             yield None
             yield Exc()
@@ -348,7 +346,7 @@ class TestMetafunc:
 
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
-        values: List[Tuple[str, Any, str]] = [
+        values: list[tuple[str, Any, str]] = [
             ("ação", MockConfig({option: True}), "ação"),
             ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
@@ -518,7 +516,7 @@ class TestMetafunc:
     def test_idmaker_idfn(self) -> None:
         """#351"""
 
-        def ids(val: object) -> Optional[str]:
+        def ids(val: object) -> str | None:
             if isinstance(val, Exception):
                 return repr(val)
             return None
@@ -581,7 +579,7 @@ class TestMetafunc:
 
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
-        values: List[Tuple[Any, str]] = [
+        values: list[tuple[Any, str]] = [
             (MockConfig({option: True}), "ação"),
             (MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
@@ -619,13 +617,44 @@ class TestMetafunc:
 
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
-        values: List[Tuple[Any, str]] = [
+        values: list[tuple[Any, str]] = [
             (MockConfig({option: True}), "ação"),
             (MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = IdMaker(
                 ("a",), [pytest.param("string")], None, ["ação"], config, None, None
+            ).make_unique_parameterset_ids()
+            assert result == [expected]
+
+    def test_idmaker_with_param_id_and_config(self) -> None:
+        """Unit test for expected behavior to create ids with pytest.param(id=...) and
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+        option (#9037).
+        """
+
+        class MockConfig:
+            def __init__(self, config):
+                self.config = config
+
+            def getini(self, name):
+                return self.config[name]
+
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+
+        values: list[tuple[Any, str]] = [
+            (MockConfig({option: True}), "ação"),
+            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+        ]
+        for config, expected in values:
+            result = IdMaker(
+                ("a",),
+                [pytest.param("string", id="ação")],
+                None,
+                None,
+                config,
+                None,
+                None,
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
@@ -1018,23 +1047,24 @@ class TestMetafunc:
         result.stdout.re_match_lines(
             [
                 r"    <Function test1\[0-3\]>",
-                r"    <Function test1\[0-4\]>",
                 r"    <Function test3\[0\]>",
-                r"    <Function test1\[1-3\]>",
-                r"    <Function test1\[1-4\]>",
+                r"    <Function test1\[0-4\]>",
                 r"    <Function test3\[1\]>",
+                r"    <Function test1\[1-3\]>",
+                r"    <Function test3\[2\]>",
+                r"    <Function test1\[1-4\]>",
                 r"    <Function test1\[2-3\]>",
                 r"    <Function test1\[2-4\]>",
-                r"    <Function test3\[2\]>",
                 r"    <Function test2>",
             ]
         )
 
+    @pytest.mark.parametrize("indirect", [False, True])
     def test_high_scoped_parametrize_with_duplicate_values_reordering(
-        self, pytester: Pytester
+        self, indirect: bool, pytester: Pytester
     ) -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest
 
             @pytest.fixture(scope='module')
@@ -1045,7 +1075,7 @@ class TestMetafunc:
             def fixture2(request):
                 pass
 
-            @pytest.mark.parametrize("fixture1, fixture2", [("a", 0), ("b", 1), ("a", 2)], indirect=True)
+            @pytest.mark.parametrize("fixture1, fixture2", [("a", 0), ("b", 1), ("a", 2)], indirect={indirect})
             def test(fixture1, fixture2):
                 pass
         """
@@ -1798,9 +1828,9 @@ class TestMetafuncFunctionalAuto:
         self, pytester: Pytester, monkeypatch
     ) -> None:
         """Integration test for (#3941)"""
-        class_fix_setup: List[object] = []
+        class_fix_setup: list[object] = []
         monkeypatch.setattr(sys, "class_fix_setup", class_fix_setup, raising=False)
-        func_fix_setup: List[object] = []
+        func_fix_setup: list[object] = []
         monkeypatch.setattr(sys, "func_fix_setup", func_fix_setup, raising=False)
 
         pytester.makepyfile(

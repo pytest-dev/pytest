@@ -1,5 +1,4 @@
-from typing import List
-from typing import Optional
+from __future__ import annotations
 
 from _pytest import nodes
 from _pytest.cacheprovider import Cache
@@ -55,18 +54,18 @@ def pytest_sessionfinish(session: Session) -> None:
 class StepwisePlugin:
     def __init__(self, config: Config) -> None:
         self.config = config
-        self.session: Optional[Session] = None
+        self.session: Session | None = None
         self.report_status = ""
         assert config.cache is not None
         self.cache: Cache = config.cache
-        self.lastfailed: Optional[str] = self.cache.get(STEPWISE_CACHE_DIR, None)
+        self.lastfailed: str | None = self.cache.get(STEPWISE_CACHE_DIR, None)
         self.skip: bool = config.getoption("stepwise_skip")
 
     def pytest_sessionstart(self, session: Session) -> None:
         self.session = session
 
     def pytest_collection_modifyitems(
-        self, config: Config, items: List[nodes.Item]
+        self, config: Config, items: list[nodes.Item]
     ) -> None:
         if not self.lastfailed:
             self.report_status = "no previously failed tests, not skipping."
@@ -113,8 +112,8 @@ class StepwisePlugin:
                 if report.nodeid == self.lastfailed:
                     self.lastfailed = None
 
-    def pytest_report_collectionfinish(self) -> Optional[str]:
-        if self.config.getoption("verbose") >= 0 and self.report_status:
+    def pytest_report_collectionfinish(self) -> str | None:
+        if self.config.get_verbosity() >= 0 and self.report_status:
             return f"stepwise: {self.report_status}"
         return None
 

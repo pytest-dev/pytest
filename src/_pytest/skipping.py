@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 """Support for skip/xfail functions and markers."""
 
+from __future__ import annotations
+
 from collections.abc import Mapping
 import dataclasses
 import os
@@ -9,8 +11,6 @@ import sys
 import traceback
 from typing import Generator
 from typing import Optional
-from typing import Tuple
-from typing import Type
 
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -84,7 +84,7 @@ def pytest_configure(config: Config) -> None:
     )
 
 
-def evaluate_condition(item: Item, mark: Mark, condition: object) -> Tuple[bool, str]:
+def evaluate_condition(item: Item, mark: Mark, condition: object) -> tuple[bool, str]:
     """Evaluate a single skipif/xfail condition.
 
     If an old-style string condition is given, it is eval()'d, otherwise the
@@ -164,7 +164,7 @@ class Skip:
     reason: str = "unconditional skip"
 
 
-def evaluate_skip_marks(item: Item) -> Optional[Skip]:
+def evaluate_skip_marks(item: Item) -> Skip | None:
     """Evaluate skip and skipif marks on item, returning Skip if triggered."""
     for mark in item.iter_markers(name="skipif"):
         if "condition" not in mark.kwargs:
@@ -201,10 +201,10 @@ class Xfail:
     reason: str
     run: bool
     strict: bool
-    raises: Optional[Tuple[Type[BaseException], ...]]
+    raises: tuple[type[BaseException], ...] | None
 
 
-def evaluate_xfail_marks(item: Item) -> Optional[Xfail]:
+def evaluate_xfail_marks(item: Item) -> Xfail | None:
     """Evaluate xfail marks on item, returning Xfail if triggered."""
     for mark in item.iter_markers(name="xfail"):
         run = mark.kwargs.get("run", True)
@@ -245,7 +245,7 @@ def pytest_runtest_setup(item: Item) -> None:
 
 
 @hookimpl(wrapper=True)
-def pytest_runtest_call(item: Item) -> Generator[None, None, None]:
+def pytest_runtest_call(item: Item) -> Generator[None]:
     xfailed = item.stash.get(xfailed_key, None)
     if xfailed is None:
         item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
@@ -292,7 +292,7 @@ def pytest_runtest_makereport(
     return rep
 
 
-def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str]]:
+def pytest_report_teststatus(report: BaseReport) -> tuple[str, str, str] | None:
     if hasattr(report, "wasxfail"):
         if report.skipped:
             return "xfailed", "x", "XFAIL"

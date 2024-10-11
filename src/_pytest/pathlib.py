@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 import contextlib
 from enum import Enum
@@ -8,6 +10,7 @@ from errno import ENOTDIR
 import fnmatch
 from functools import partial
 from importlib.machinery import ModuleSpec
+from importlib.machinery import PathFinder
 import importlib.util
 import itertools
 import os
@@ -24,16 +27,9 @@ import types
 from types import ModuleType
 from typing import Any
 from typing import Callable
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
-from typing import Union
 import uuid
 import warnings
 
@@ -42,8 +38,12 @@ from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
 
-LOCK_TIMEOUT = 60 * 60 * 24 * 3
+if sys.version_info < (3, 11):
+    from importlib._bootstrap_external import _NamespaceLoader as NamespaceLoader
+else:
+    from importlib.machinery import NamespaceLoader
 
+LOCK_TIMEOUT = 60 * 60 * 24 * 3
 
 _AnyPurePath = TypeVar("_AnyPurePath", bound=PurePath)
 
@@ -71,12 +71,10 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
 
 
 def on_rm_rf_error(
-    func: Optional[Callable[..., Any]],
+    func: Callable[..., Any] | None,
     path: str,
-    excinfo: Union[
-        BaseException,
-        Tuple[Type[BaseException], BaseException, Optional[types.TracebackType]],
-    ],
+    excinfo: BaseException
+    | tuple[type[BaseException], BaseException, types.TracebackType | None],
     *,
     start_path: Path,
 ) -> bool:
@@ -172,7 +170,7 @@ def rm_rf(path: Path) -> None:
         shutil.rmtree(str(path), onerror=onerror)
 
 
-def find_prefixed(root: Path, prefix: str) -> Iterator["os.DirEntry[str]"]:
+def find_prefixed(root: Path, prefix: str) -> Iterator[os.DirEntry[str]]:
     """Find all elements in root that begin with the prefix, case-insensitive."""
     l_prefix = prefix.lower()
     for x in os.scandir(root):
@@ -180,7 +178,7 @@ def find_prefixed(root: Path, prefix: str) -> Iterator["os.DirEntry[str]"]:
             yield x
 
 
-def extract_suffixes(iter: Iterable["os.DirEntry[str]"], prefix: str) -> Iterator[str]:
+def extract_suffixes(iter: Iterable[os.DirEntry[str]], prefix: str) -> Iterator[str]:
     """Return the parts of the paths following the prefix.
 
     :param iter: Iterator over path names.
@@ -204,9 +202,7 @@ def parse_num(maybe_num: str) -> int:
         return -1
 
 
-def _force_symlink(
-    root: Path, target: Union[str, PurePath], link_to: Union[str, Path]
-) -> None:
+def _force_symlink(root: Path, target: str | PurePath, link_to: str | Path) -> None:
     """Helper to create the current symlink.
 
     It's full of race conditions that are reasonably OK to ignore
@@ -420,7 +416,7 @@ def resolve_from_str(input: str, rootpath: Path) -> Path:
         return rootpath.joinpath(input)
 
 
-def fnmatch_ex(pattern: str, path: Union[str, "os.PathLike[str]"]) -> bool:
+def fnmatch_ex(pattern: str, path: str | os.PathLike[str]) -> bool:
     """A port of FNMatcher from py.path.common which works with PurePath() instances.
 
     The difference between this algorithm and PurePath.match() is that the
@@ -456,14 +452,14 @@ def fnmatch_ex(pattern: str, path: Union[str, "os.PathLike[str]"]) -> bool:
     return fnmatch.fnmatch(name, pattern)
 
 
-def parts(s: str) -> Set[str]:
+def parts(s: str) -> set[str]:
     parts = s.split(sep)
     return {sep.join(parts[: i + 1]) or sep for i in range(len(parts))}
 
 
 def symlink_or_skip(
-    src: Union["os.PathLike[str]", str],
-    dst: Union["os.PathLike[str]", str],
+    src: os.PathLike[str] | str,
+    dst: os.PathLike[str] | str,
     **kwargs: Any,
 ) -> None:
     """Make a symlink, or skip the test in case symlinks are not supported."""
@@ -491,9 +487,9 @@ class ImportPathMismatchError(ImportError):
 
 
 def import_path(
-    path: Union[str, "os.PathLike[str]"],
+    path: str | os.PathLike[str],
     *,
-    mode: Union[str, ImportMode] = ImportMode.prepend,
+    mode: str | ImportMode = ImportMode.prepend,
     root: Path,
     consider_namespace_packages: bool,
 ) -> ModuleType:
@@ -618,52 +614,101 @@ def import_path(
 
 def _import_module_using_spec(
     module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
-) -> Optional[ModuleType]:
+) -> ModuleType | None:
     """
-    Tries to import a module by its canonical name, path to the .py file, and its
-    parent location.
+    Tries to import a module by its canonical name, path, and its parent location.
+
+    :param module_name:
+        The expected module name, will become the key of `sys.modules`.
+
+    :param module_path:
+        The file path of the module, for example `/foo/bar/test_demo.py`.
+        If module is a package, pass the path to the  `__init__.py` of the package.
+        If module is a namespace package, pass directory path.
+
+    :param module_location:
+        The parent location of the module.
+        If module is a package, pass the directory containing the `__init__.py` file.
 
     :param insert_modules:
-        If True, will call insert_missing_modules to create empty intermediate modules
-        for made-up module names (when importing test files not reachable from sys.path).
+        If True, will call `insert_missing_modules` to create empty intermediate modules
+        with made-up module names (when importing test files not reachable from `sys.path`).
+
+    Example 1 of parent_module_*:
+
+        module_name:        "a.b.c.demo"
+        module_path:        Path("a/b/c/demo.py")
+        module_location:    Path("a/b/c/")
+        if "a.b.c" is package ("a/b/c/__init__.py" exists), then
+            parent_module_name:         "a.b.c"
+            parent_module_path:         Path("a/b/c/__init__.py")
+            parent_module_location:     Path("a/b/c/")
+        else:
+            parent_module_name:         "a.b.c"
+            parent_module_path:         Path("a/b/c")
+            parent_module_location:     Path("a/b/")
+
+    Example 2 of parent_module_*:
+
+        module_name:        "a.b.c"
+        module_path:        Path("a/b/c/__init__.py")
+        module_location:    Path("a/b/c/")
+        if  "a.b" is package ("a/b/__init__.py" exists), then
+            parent_module_name:         "a.b"
+            parent_module_path:         Path("a/b/__init__.py")
+            parent_module_location:     Path("a/b/")
+        else:
+            parent_module_name:         "a.b"
+            parent_module_path:         Path("a/b/")
+            parent_module_location:     Path("a/")
     """
+    # Attempt to import the parent module, seems is our responsibility:
+    # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
+    parent_module_name, _, name = module_name.rpartition(".")
+    parent_module: ModuleType | None = None
+    if parent_module_name:
+        parent_module = sys.modules.get(parent_module_name)
+        if parent_module is None:
+            # Get parent_location based on location, get parent_path based on path.
+            if module_path.name == "__init__.py":
+                # If the current module is in a package,
+                # need to leave the package first and then enter the parent module.
+                parent_module_path = module_path.parent.parent
+            else:
+                parent_module_path = module_path.parent
+
+            if (parent_module_path / "__init__.py").is_file():
+                # If the parent module is a package, loading by  __init__.py file.
+                parent_module_path = parent_module_path / "__init__.py"
+
+            parent_module = _import_module_using_spec(
+                parent_module_name,
+                parent_module_path,
+                parent_module_path.parent,
+                insert_modules=insert_modules,
+            )
+
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
     for meta_importer in sys.meta_path:
-        spec = meta_importer.find_spec(module_name, [str(module_location)])
+        spec = meta_importer.find_spec(
+            module_name, [str(module_location), str(module_path)]
+        )
         if spec_matches_module_path(spec, module_path):
             break
     else:
-        spec = importlib.util.spec_from_file_location(module_name, str(module_path))
+        loader = None
+        if module_path.is_dir():
+            # The `spec_from_file_location` matches a loader based on the file extension by default.
+            # For a namespace package, need to manually specify a loader.
+            loader = NamespaceLoader(name, module_path, PathFinder())
+
+        spec = importlib.util.spec_from_file_location(
+            module_name, str(module_path), loader=loader
+        )
 
     if spec_matches_module_path(spec, module_path):
         assert spec is not None
-        # Attempt to import the parent module, seems is our responsibility:
-        # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
-        parent_module_name, _, name = module_name.rpartition(".")
-        parent_module: Optional[ModuleType] = None
-        if parent_module_name:
-            parent_module = sys.modules.get(parent_module_name)
-            if parent_module is None:
-                # Find the directory of this module's parent.
-                parent_dir = (
-                    module_path.parent.parent
-                    if module_path.name == "__init__.py"
-                    else module_path.parent
-                )
-                # Consider the parent module path as its __init__.py file, if it has one.
-                parent_module_path = (
-                    parent_dir / "__init__.py"
-                    if (parent_dir / "__init__.py").is_file()
-                    else parent_dir
-                )
-                parent_module = _import_module_using_spec(
-                    parent_module_name,
-                    parent_module_path,
-                    parent_dir,
-                    insert_modules=insert_modules,
-                )
-
         # Find spec and import this module.
         mod = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = mod
@@ -680,14 +725,23 @@ def _import_module_using_spec(
     return None
 
 
-def spec_matches_module_path(
-    module_spec: Optional[ModuleSpec], module_path: Path
-) -> bool:
+def spec_matches_module_path(module_spec: ModuleSpec | None, module_path: Path) -> bool:
     """Return true if the given ModuleSpec can be used to import the given module path."""
-    if module_spec is None or module_spec.origin is None:
+    if module_spec is None:
         return False
 
-    return Path(module_spec.origin) == module_path
+    if module_spec.origin:
+        return Path(module_spec.origin) == module_path
+
+    # Compare the path with the `module_spec.submodule_Search_Locations` in case
+    # the module is part of a namespace package.
+    # https://docs.python.org/3/library/importlib.html#importlib.machinery.ModuleSpec.submodule_search_locations
+    if module_spec.submodule_search_locations:  # can be None.
+        for path in module_spec.submodule_search_locations:
+            if Path(path) == module_path:
+                return True
+
+    return False
 
 
 # Implement a special _is_same function on Windows which returns True if the two filenames
@@ -734,7 +788,7 @@ def module_name_from_path(path: Path, root: Path) -> str:
     return ".".join(path_parts)
 
 
-def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> None:
+def insert_missing_modules(modules: dict[str, ModuleType], module_name: str) -> None:
     """
     Used by ``import_path`` to create intermediate modules when using mode=importlib.
 
@@ -772,7 +826,7 @@ def insert_missing_modules(modules: Dict[str, ModuleType], module_name: str) -> 
         module_name = ".".join(module_parts)
 
 
-def resolve_package_path(path: Path) -> Optional[Path]:
+def resolve_package_path(path: Path) -> Path | None:
     """Return the Python package path by looking for the last
     directory upwards which still contains an __init__.py.
 
@@ -791,7 +845,7 @@ def resolve_package_path(path: Path) -> Optional[Path]:
 
 def resolve_pkg_root_and_module_name(
     path: Path, *, consider_namespace_packages: bool = False
-) -> Tuple[Path, str]:
+) -> tuple[Path, str]:
     """
     Return the path to the directory of the root package that contains the
     given Python file, and its module name:
@@ -812,7 +866,7 @@ def resolve_pkg_root_and_module_name(
 
     Raises CouldNotResolvePathError if the given path does not belong to a package (missing any __init__.py files).
     """
-    pkg_root: Optional[Path] = None
+    pkg_root: Path | None = None
     pkg_path = resolve_package_path(path)
     if pkg_path is not None:
         pkg_root = pkg_path.parent
@@ -859,7 +913,7 @@ def is_importable(module_name: str, module_path: Path) -> bool:
         return spec_matches_module_path(spec, module_path)
 
 
-def compute_module_name(root: Path, module_path: Path) -> Optional[str]:
+def compute_module_name(root: Path, module_path: Path) -> str | None:
     """Compute a module name based on a path and a root anchor."""
     try:
         path_without_suffix = module_path.with_suffix("")
@@ -884,9 +938,9 @@ class CouldNotResolvePathError(Exception):
 
 
 def scandir(
-    path: Union[str, "os.PathLike[str]"],
-    sort_key: Callable[["os.DirEntry[str]"], object] = lambda entry: entry.name,
-) -> List["os.DirEntry[str]"]:
+    path: str | os.PathLike[str],
+    sort_key: Callable[[os.DirEntry[str]], object] = lambda entry: entry.name,
+) -> list[os.DirEntry[str]]:
     """Scan a directory recursively, in breadth-first order.
 
     The returned entries are sorted according to the given key.
@@ -909,8 +963,8 @@ def scandir(
 
 
 def visit(
-    path: Union[str, "os.PathLike[str]"], recurse: Callable[["os.DirEntry[str]"], bool]
-) -> Iterator["os.DirEntry[str]"]:
+    path: str | os.PathLike[str], recurse: Callable[[os.DirEntry[str]], bool]
+) -> Iterator[os.DirEntry[str]]:
     """Walk a directory recursively, in breadth-first order.
 
     The `recurse` predicate determines whether a directory is recursed.
@@ -924,7 +978,7 @@ def visit(
             yield from visit(entry.path, recurse)
 
 
-def absolutepath(path: "Union[str, os.PathLike[str]]") -> Path:
+def absolutepath(path: str | os.PathLike[str]) -> Path:
     """Convert a path to an absolute path using os.path.abspath.
 
     Prefer this over Path.resolve() (see #6523).
@@ -933,7 +987,7 @@ def absolutepath(path: "Union[str, os.PathLike[str]]") -> Path:
     return Path(os.path.abspath(path))
 
 
-def commonpath(path1: Path, path2: Path) -> Optional[Path]:
+def commonpath(path1: Path, path2: Path) -> Path | None:
     """Return the common part shared with the other path, or None if there is
     no common part.
 

@@ -38,6 +38,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Testing",
     "Topic :: Utilities",
@@ -98,10 +99,13 @@ lint.select = [
     "D",       # pydocstyle
     "E",       # pycodestyle
     "F",       # pyflakes
+    "FA100",   # add future annotations
     "I",       # isort
     "PGH004",  # pygrep-hooks - Use specific rule codes when using noqa
     "PIE",     # flake8-pie
+    "PLC",     # pylint convention
     "PLE",     # pylint error
+    "PLR",     # pylint refactor
     "PLR1714", # Consider merging multiple comparisons
     "PLW",     # pylint warning
     "PYI",     # flake8-pyi
@@ -138,6 +142,17 @@ lint.ignore = [
     # what we're doing when we use type(..) is ...
     "E721", # Do not compare types, use `isinstance()`
     # pylint ignore
+    "PLC0105", # `TypeVar` name "E" does not reflect its covariance;
+    "PLC0414", # Import alias does not rename original package
+    "PLR0124", # Name compared with itself
+    "PLR0133", # Two constants compared in a comparison (lots of those in tests)
+    "PLR0402", # Use `from x.y import z` in lieu of alias
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements
+    "PLR2004", # Magic value used in comparison
+    "PLR2044", # Line with empty comment
     "PLR5501", # Use `elif` instead of `else` then `if`
     "PLW0120", # remove the else and dedent its contents
     "PLW0603", # Using the global statement
@@ -155,6 +170,10 @@ lint.per-file-ignores."src/_pytest/_version.py" = [
 lint.per-file-ignores."testing/python/approx.py" = [
     "B015",
 ]
+lint.extend-safe-fixes = [
+    "UP006",
+    "UP007",
+]
 lint.isort.combine-as-imports = true
 lint.isort.force-single-line = true
 lint.isort.force-sort-within-sections = true
@@ -164,9 +183,13 @@ lint.isort.known-local-folder = [
 ]
 lint.isort.lines-after-imports = 2
 lint.isort.order-by-type = false
+lint.isort.required-imports = [
+    "from __future__ import annotations",
+]
 # In order to be able to format for 88 char in ruff format
 lint.pycodestyle.max-line-length = 120
 lint.pydocstyle.convention = "pep257"
+lint.pyupgrade.keep-runtime-typing = false
 
 [tool.pylint.main]
 # Maximum number of characters on a single line.
@@ -182,9 +205,9 @@ disable = [
     "broad-exception-caught",
     "broad-exception-raised",
     "cell-var-from-loop",                     # B023 from ruff / flake8-bugbear
-    "comparison-of-constants",
+    "comparison-of-constants",                # disabled in ruff (PLR0133)
     "comparison-with-callable",
-    "comparison-with-itself",
+    "comparison-with-itself",                 # PLR0124 from ruff
     "condition-evals-to-constant",
     "consider-using-dict-items",
     "consider-using-from-import",
@@ -192,14 +215,17 @@ disable = [
     "consider-using-in",
     "consider-using-ternary",
     "consider-using-with",
+    "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
     "cyclic-import",
     "disallowed-name",                        # foo / bar are used often in tests
     "duplicate-code",
+    "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
+    "empty-comment",                          # not activated by default, PLR2044 disabled in ruff
     "eval-used",
     "exec-used",
     "expression-not-assigned",
     "fixme",
-    "global-statement",
+    "global-statement",                       # PLW0603 disabled in ruff
     "import-error",
     "import-outside-toplevel",
     "inconsistent-return-statements",
@@ -209,9 +235,11 @@ disable = [
     "invalid-str-returned",
     "keyword-arg-before-vararg",
     "line-too-long",
+    "magic-value-comparison",                 # not activated by default, PLR2004 disabled in ruff
     "method-hidden",
     "missing-docstring",
     "missing-timeout",
+    "misplaced-bare-raise",                   # PLE0704 from ruff
     "multiple-statements",                    # multiple-statements-on-one-line-colon (E701) from ruff
     "no-else-break",
     "no-else-continue",
@@ -222,14 +250,15 @@ disable = [
     "no-self-argument",
     "not-an-iterable",
     "not-callable",
-    "pointless-exception-statement",
-    "pointless-statement",
-    "pointless-string-statement",
+    "pointless-exception-statement",          # https://github.com/pytest-dev/pytest/pull/12379
+    "pointless-statement",                    # https://github.com/pytest-dev/pytest/pull/12379
+    "pointless-string-statement",             # https://github.com/pytest-dev/pytest/pull/12379
     "possibly-used-before-assignment",
     "protected-access",
     "raise-missing-from",
     "redefined-argument-from-local",
     "redefined-builtin",
+    "redefined-loop-name",                    # PLW2901 disabled in ruff
     "redefined-outer-name",
     "reimported",
     "simplifiable-condition",
@@ -239,18 +268,18 @@ disable = [
     "super-init-not-called",
     "too-few-public-methods",
     "too-many-ancestors",
-    "too-many-arguments",
-    "too-many-branches",
+    "too-many-arguments",                     # disabled in ruff
+    "too-many-branches",                      # disabled in ruff
     "too-many-function-args",
     "too-many-instance-attributes",
     "too-many-lines",
     "too-many-locals",
     "too-many-nested-blocks",
     "too-many-public-methods",
-    "too-many-return-statements",
-    "too-many-statements",
+    "too-many-return-statements",             # disabled in ruff
+    "too-many-statements",                    # disabled in ruff
     "try-except-raise",
-    "typevar-name-incorrect-variance",
+    "typevar-name-incorrect-variance",        # PLC0105 disabled in ruff
     "unbalanced-tuple-unpacking",
     "undefined-loop-variable",
     "undefined-variable",
@@ -270,12 +299,18 @@ disable = [
     "use-dict-literal",
     "use-implicit-booleaness-not-comparison",
     "use-implicit-booleaness-not-len",
-    "useless-else-on-loop",
+    "useless-else-on-loop",                   # PLC0414 disabled in ruff
     "useless-import-alias",
     "useless-return",
     "using-constant-test",
-    "wrong-import-order",
+    "wrong-import-order",                     # handled by isort / ruff
+    "wrong-import-position",                  # handled by isort / ruff
 ]
+
+[tool.codespell]
+ignore-words-list = "afile,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,socio-economic,tesults,varius,wil"
+skip = "*/plugin_list.rst"
+write-changes = true
 
 [tool.check-wheel-contents]
 # check-wheel-contents is executed by the build-and-inspect-python-package action.
@@ -284,6 +319,7 @@ ignore = "W009"
 
 [tool.pyproject-fmt]
 indent = 4
+max_supported_python = "3.13"
 
 [tool.pytest.ini_options]
 minversion = "2.0"
@@ -349,6 +385,9 @@ markers = [
     "foo",
     "bar",
     "baz",
+    "number_mark",
+    "builtin_matchers_mark",
+    "str_mark",
     # conftest.py reorders tests moving slow ones to the end of the list
     "slow",
     # experimental mark for all tests using pexpect
@@ -363,44 +402,74 @@ directory = "changelog/"
 title_format = "pytest {version} ({project_date})"
 template = "changelog/_template.rst"
 
+# NOTE: The types are declared because:
+# NOTE: - there is no mechanism to override just the value of
+# NOTE:   `tool.towncrier.type.misc.showcontent`;
+# NOTE: - and, we want to declare extra non-default types for
+# NOTE:   clarity and flexibility.
+
 [[tool.towncrier.type]]
+# When something public gets removed in a breaking way. Could be
+# deprecated in an earlier release.
 directory = "breaking"
-name = "Breaking Changes"
+name = "Removals and backward incompatible breaking changes"
 showcontent = true
 
 [[tool.towncrier.type]]
+# Declarations of future API removals and breaking changes in behavior.
 directory = "deprecation"
-name = "Deprecations"
+name = "Deprecations (removal in next major release)"
 showcontent = true
 
 [[tool.towncrier.type]]
+# New behaviors, public APIs. That sort of stuff.
 directory = "feature"
-name = "Features"
+name = "New features"
 showcontent = true
 
 [[tool.towncrier.type]]
+# New behaviors in existing features.
 directory = "improvement"
-name = "Improvements"
+name = "Improvements in existing functionality"
 showcontent = true
 
 [[tool.towncrier.type]]
+# Something we deemed an improper undesired behavior that got corrected
+# in the release to match pre-agreed expectations.
 directory = "bugfix"
-name = "Bug Fixes"
+name = "Bug fixes"
 showcontent = true
 
 [[tool.towncrier.type]]
+# Updates regarding bundling dependencies.
 directory = "vendor"
-name = "Vendored Libraries"
+name = "Vendored libraries"
 showcontent = true
 
 [[tool.towncrier.type]]
+# Notable updates to the documentation structure or build process.
 directory = "doc"
-name = "Improved Documentation"
+name = "Improved documentation"
 showcontent = true
 
 [[tool.towncrier.type]]
-directory = "trivial"
-name = "Trivial/Internal Changes"
+# Notes for downstreams about unobvious side effects and tooling. Changes
+# in the test invocation considerations and runtime assumptions.
+directory = "packaging"
+name = "Packaging updates and notes for downstreams"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Stuff that affects the contributor experience. e.g. Running tests,
+# building the docs, setting up the development environment.
+directory = "contrib"
+name = "Contributor-facing changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Changes that are hard to assign to any of the above categories.
+directory = "misc"
+name = "Miscellaneous internal changes"
 showcontent = true
 
 [tool.mypy]
@@ -412,6 +481,7 @@ files = [
 mypy_path = [
     "src",
 ]
+python_version = "3.8"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true

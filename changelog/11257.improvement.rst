@@ -1,0 +1,1 @@
+When user gives parametersets to :ref:`pytest.mark.parametrize`, try to give the same param index to the same occurrences of a parameter in the sets.

@@ -31,7 +31,7 @@ jobs:
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.6.0
+      uses: hynek/build-and-inspect-python-package@v2.9.0
       with:
         attest-build-provenance-github: 'true'
 
@@ -54,7 +54,9 @@ jobs:
         path: dist
 
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.9.0
+      uses: pypa/gh-action-pypi-publish@v1.10.3
+      with:
+        attestations: true
 
     - name: Push tag
       run: |

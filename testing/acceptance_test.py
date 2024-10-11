@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import dataclasses
 import importlib.metadata
 import os
@@ -1484,3 +1486,10 @@ def test_issue_9765(pytester: Pytester) -> None:
         raise AssertionError(
             f"pytest command failed:\n{exc.stdout=!s}\n{exc.stderr=!s}"
         ) from exc
+
+
+def test_no_terminal_plugin(pytester: Pytester) -> None:
+    """Smoke test to ensure pytest can execute without the terminal plugin (#9422)."""
+    pytester.makepyfile("def test(): assert 1 == 2")
+    result = pytester.runpytest("-pno:terminal", "-s")
+    assert result.ret == ExitCode.TESTS_FAILED

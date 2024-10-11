@@ -14,6 +14,11 @@ on:
     branches:
       - main
       - "[0-9]+.[0-9]+.x"
+    types:
+    - opened  # default
+    - synchronize  # default
+    - reopened  # default
+    - ready_for_review  # used in PRs created from the release workflow
 
 env:
   PYTEST_ADDOPTS: "--color=yes"
@@ -35,7 +40,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.6.0
+      uses: hynek/build-and-inspect-python-package@v2.9.0
 
   build:
     needs: [package]
@@ -145,7 +150,7 @@ jobs:
             tox_env: "py313"
             use_coverage: true
           - name: "ubuntu-pypy3"
-            python: "pypy-3.8"
+            python: "pypy-3.9"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
@@ -242,9 +247,8 @@ jobs:
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
       uses: codecov/codecov-action@v4
-      continue-on-error: true
       with:
-        fail_ci_if_error: true
+        fail_ci_if_error: false
         files: ./coverage.xml
         verbose: true
 
@@ -258,6 +262,6 @@ jobs:
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@198badcb65a1a44528f27d5da555c4be9f12eac6
+      uses: re-actors/alls-green@223e4bb7a751b91f43eda76992bcfbf23b8b0302
       with:
         jobs: ${{ toJSON(needs) }}

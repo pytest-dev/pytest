@@ -2,6 +2,8 @@
 # ruff: noqa: T100
 """Interactive debugging with PDB, the Python Debugger."""
 
+from __future__ import annotations
+
 import argparse
 import functools
 import sys
@@ -9,11 +11,6 @@ import types
 from typing import Any
 from typing import Callable
 from typing import Generator
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
-from typing import Union
 import unittest
 
 from _pytest import outcomes
@@ -30,7 +27,7 @@ from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
 
 
-def _validate_usepdb_cls(value: str) -> Tuple[str, str]:
+def _validate_usepdb_cls(value: str) -> tuple[str, str]:
     """Validate syntax of --pdbcls option."""
     try:
         modname, classname = value.split(":")
@@ -95,22 +92,22 @@ def pytest_configure(config: Config) -> None:
 class pytestPDB:
     """Pseudo PDB that defers to the real pdb."""
 
-    _pluginmanager: Optional[PytestPluginManager] = None
-    _config: Optional[Config] = None
-    _saved: List[
-        Tuple[Callable[..., None], Optional[PytestPluginManager], Optional[Config]]
+    _pluginmanager: PytestPluginManager | None = None
+    _config: Config | None = None
+    _saved: list[
+        tuple[Callable[..., None], PytestPluginManager | None, Config | None]
     ] = []
     _recursive_debug = 0
-    _wrapped_pdb_cls: Optional[Tuple[Type[Any], Type[Any]]] = None
+    _wrapped_pdb_cls: tuple[type[Any], type[Any]] | None = None
 
     @classmethod
-    def _is_capturing(cls, capman: Optional["CaptureManager"]) -> Union[str, bool]:
+    def _is_capturing(cls, capman: CaptureManager | None) -> str | bool:
         if capman:
             return capman.is_capturing()
         return False
 
     @classmethod
-    def _import_pdb_cls(cls, capman: Optional["CaptureManager"]):
+    def _import_pdb_cls(cls, capman: CaptureManager | None):
         if not cls._config:
             import pdb
 
@@ -149,7 +146,7 @@ class pytestPDB:
         return wrapped_cls
 
     @classmethod
-    def _get_pdb_wrapper_class(cls, pdb_cls, capman: Optional["CaptureManager"]):
+    def _get_pdb_wrapper_class(cls, pdb_cls, capman: CaptureManager | None):
         import _pytest.config
 
         class PytestPdbWrapper(pdb_cls):
@@ -238,7 +235,7 @@ class pytestPDB:
         import _pytest.config
 
         if cls._pluginmanager is None:
-            capman: Optional[CaptureManager] = None
+            capman: CaptureManager | None = None
         else:
             capman = cls._pluginmanager.getplugin("capturemanager")
         if capman:
@@ -281,7 +278,7 @@ class pytestPDB:
 
 class PdbInvoke:
     def pytest_exception_interact(
-        self, node: Node, call: "CallInfo[Any]", report: BaseReport
+        self, node: Node, call: CallInfo[Any], report: BaseReport
     ) -> None:
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
@@ -295,8 +292,8 @@ class PdbInvoke:
             _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
-        tb = _postmortem_traceback(excinfo)
-        post_mortem(tb)
+        exc_or_tb = _postmortem_exc_or_tb(excinfo)
+        post_mortem(exc_or_tb)
 
 
 class PdbTrace:
@@ -335,7 +332,7 @@ def maybe_wrap_pytest_function_for_tracing(pyfuncitem) -> None:
 def _enter_pdb(
     node: Node, excinfo: ExceptionInfo[BaseException], rep: BaseReport
 ) -> BaseReport:
-    # XXX we re-use the TerminalReporter's terminalwriter
+    # XXX we reuse the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
     # for not completely clear reasons.
     tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
@@ -357,32 +354,46 @@ def _enter_pdb(
     tw.sep(">", "traceback")
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
-    tb = _postmortem_traceback(excinfo)
+    tb_or_exc = _postmortem_exc_or_tb(excinfo)
     rep._pdbshown = True  # type: ignore[attr-defined]
-    post_mortem(tb)
+    post_mortem(tb_or_exc)
     return rep
 
 
-def _postmortem_traceback(excinfo: ExceptionInfo[BaseException]) -> types.TracebackType:
+def _postmortem_exc_or_tb(
+    excinfo: ExceptionInfo[BaseException],
+) -> types.TracebackType | BaseException:
     from doctest import UnexpectedException
 
+    get_exc = sys.version_info >= (3, 13)
     if isinstance(excinfo.value, UnexpectedException):
         # A doctest.UnexpectedException is not useful for post_mortem.
         # Use the underlying exception instead:
-        return excinfo.value.exc_info[2]
+        underlying_exc = excinfo.value
+        if get_exc:
+            return underlying_exc.exc_info[1]
+
+        return underlying_exc.exc_info[2]
     elif isinstance(excinfo.value, ConftestImportFailure):
         # A config.ConftestImportFailure is not useful for post_mortem.
         # Use the underlying exception instead:
-        assert excinfo.value.cause.__traceback__ is not None
-        return excinfo.value.cause.__traceback__
+        cause = excinfo.value.cause
+        if get_exc:
+            return cause
+
+        assert cause.__traceback__ is not None
+        return cause.__traceback__
     else:
         assert excinfo._excinfo is not None
+        if get_exc:
+            return excinfo._excinfo[1]
+
         return excinfo._excinfo[2]
 
 
-def post_mortem(t: types.TracebackType) -> None:
+def post_mortem(tb_or_exc: types.TracebackType | BaseException) -> None:
     p = pytestPDB._init_pdb("post_mortem")
     p.reset()
-    p.interaction(None, t)
+    p.interaction(None, tb_or_exc)
     if p.quitting:
         outcomes.exit("Quitting debugger")

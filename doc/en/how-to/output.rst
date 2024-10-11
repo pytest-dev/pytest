@@ -444,14 +444,6 @@ Example:
     E       assert 0
 
     test_example.py:14: AssertionError
-    ================================ XFAILURES =================================
-    ________________________________ test_xfail ________________________________
-
-        def test_xfail():
-    >       pytest.xfail("xfailing this test")
-    E       _pytest.outcomes.XFailed: xfailing this test
-
-    test_example.py:26: XFailed
     ================================= XPASSES ==================================
     ========================= short test summary info ==========================
     SKIPPED [1] test_example.py:22: skipping this test
@@ -551,6 +543,33 @@ captured output:
     ========================= short test summary info ==========================
     PASSED test_example.py::test_ok
     == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
+
+.. note::
+
+    By default, parametrized variants of skipped tests are grouped together if
+    they share the same skip reason. You can use ``--no-fold-skipped`` to print each skipped test separately.
+
+
+.. _truncation-params:
+
+Modifying truncation limits
+--------------------------------------------------
+
+.. versionadded: 8.4
+
+Default truncation limits are 8 lines or 640 characters, whichever comes first.
+To set custom truncation limits you can use following ``pytest.ini`` file options:
+
+.. code-block:: ini
+
+    [pytest]
+    truncation_limit_lines = 10
+    truncation_limit_chars = 90
+
+That will cause pytest to truncate the assertions to 10 lines or 90 characters, whichever comes first.
+
+Setting both :confval:`truncation_limit_lines` and :confval:`truncation_limit_chars` to ``0`` will disable the truncation.
+However, setting only one of those values will disable one truncation mode, but will leave the other one intact.
 
 Creating resultlog format files
 --------------------------------------------------

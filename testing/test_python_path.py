@@ -1,9 +1,8 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import sys
 from textwrap import dedent
-from typing import Generator
-from typing import List
-from typing import Optional
 
 from _pytest.pytester import Pytester
 import pytest
@@ -62,6 +61,27 @@ def test_two_dirs(pytester: Pytester, file_structure) -> None:
     result.assert_outcomes(passed=2)
 
 
+def test_local_plugin(pytester: Pytester, file_structure) -> None:
+    """`pythonpath` kicks early enough to load plugins via -p (#11118)."""
+    localplugin_py = pytester.path / "sub" / "localplugin.py"
+    content = dedent(
+        """
+        def pytest_load_initial_conftests():
+            print("local plugin load")
+
+        def pytest_unconfigure():
+            print("local plugin unconfig")
+        """
+    )
+    localplugin_py.write_text(content, encoding="utf-8")
+
+    pytester.makeini("[pytest]\npythonpath=sub\n")
+    result = pytester.runpytest("-plocalplugin", "-s", "test_foo.py")
+    result.stdout.fnmatch_lines(["local plugin load", "local plugin unconfig"])
+    assert result.ret == 0
+    result.assert_outcomes(passed=1)
+
+
 def test_module_not_found(pytester: Pytester, file_structure) -> None:
     """Without the pythonpath setting, the module should not be found."""
     pytester.makefile(".ini", pytest="[pytest]\n")
@@ -91,20 +111,17 @@ def test_clean_up(pytester: Pytester) -> None:
     pytester.makefile(".ini", pytest="[pytest]\npythonpath=I_SHALL_BE_REMOVED\n")
     pytester.makepyfile(test_foo="""def test_foo(): pass""")
 
-    before: Optional[List[str]] = None
-    after: Optional[List[str]] = None
+    before: list[str] | None = None
+    after: list[str] | None = None
 
     class Plugin:
-        @pytest.hookimpl(wrapper=True, tryfirst=True)
-        def pytest_unconfigure(self) -> Generator[None, None, None]:
-            nonlocal before, after
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_unconfigure(self) -> None:
+            nonlocal before
             before = sys.path.copy()
-            try:
-                return (yield)
-            finally:
-                after = sys.path.copy()
 
     result = pytester.runpytest_inprocess(plugins=[Plugin()])
+    after = sys.path.copy()
     assert result.ret == 0
 
     assert before is not None
