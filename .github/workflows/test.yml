@@ -80,6 +80,11 @@ jobs:
         ]
 
         include:
+          - name: "windows-py39-unittestextras"
+            python: "3.9"
+            os: windows-latest
+            tox_env: "py39-unittestextras"
+            use_coverage: true
           - name: "windows-py39-pluggy"
             python: "3.9"
             os: windows-latest
