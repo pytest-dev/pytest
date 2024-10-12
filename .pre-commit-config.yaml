@@ -55,7 +55,7 @@ repos:
     -   id: pyupgrade
         args:
           - "--py39-plus"
-        # Manual because ruff does what pyupgrade does and the two are not out of sync 
+        # Manual because ruff does what pyupgrade does and the two are not out of sync
         # often enough to make launching pyupgrade everytime worth it
         stages: [manual]
 -   repo: local
