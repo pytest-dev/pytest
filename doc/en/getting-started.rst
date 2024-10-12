@@ -100,6 +100,15 @@ Use the :ref:`raises <assertraises>` helper to assert that some code raises an e
 You can also use the context provided by :ref:`raises <assertraises>` to
 assert that an expected exception is part of a raised :class:`ExceptionGroup`:
 
+.. note::
+
+    The ExceptionGroup class is only available in Python 3.11 and later versions. If you're using an older version of Python, that's why you're seeing this NameError. You can resolve this in one of two ways:
+Option 1: Upgrade Python to version 3.11 or later;
+
+Option 2: Use a backport or handle exceptions differently: `pip install exceptiongroup` and `from exceptiongroup import ExceptionGroup` in source code.
+
+`.
+
 .. code-block:: python
 
     # content of test_exceptiongroup.py
