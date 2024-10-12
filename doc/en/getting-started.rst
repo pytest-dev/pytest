@@ -105,9 +105,15 @@ assert that an expected exception is part of a raised :class:`ExceptionGroup`:
     The ExceptionGroup class is only available in Python 3.11 and later versions. If you're using an older version of Python, that's why you're seeing this NameError. You can resolve this in one of two ways:
 Option 1: Upgrade Python to version 3.11 or later;
 
-Option 2: Use a backport or handle exceptions differently: `pip install exceptiongroup` and `from exceptiongroup import ExceptionGroup` in source code.
+Option 2: Use a backport or handle exceptions differently: 
 
-`.
+.. code-block:: bash
+
+    pip install exceptiongroup
+
+.. code-block:: bash
+
+    from exceptiongroup import ExceptionGroup
 
 .. code-block:: python
 
