@@ -771,9 +771,13 @@ class TestPDB:
             x = 5
         """
         )
+        if sys.version_info[:2] >= (3, 13):
+            break_line = "pytest.set_trace()"
+        else:
+            break_line = "x = 5"
         child = pytester.spawn(f"{sys.executable} {p1}")
-        child.expect("x = 5")
-        child.expect("Pdb")
+        child.expect_exact(break_line)
+        child.expect_exact("Pdb")
         child.sendeof()
         self.flush(child)
 
@@ -788,9 +792,13 @@ class TestPDB:
                 pass
         """
         )
+        if sys.version_info[:2] >= (3, 13):
+            break_line = "pytest.set_trace()"
+        else:
+            break_line = "x = 5"
         child = pytester.spawn_pytest(str(p1))
-        child.expect("x = 5")
-        child.expect("Pdb")
+        child.expect_exact(break_line)
+        child.expect_exact("Pdb")
         child.sendeof()
         self.flush(child)
 
