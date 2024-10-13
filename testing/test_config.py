@@ -636,7 +636,7 @@ class TestConfigAPI:
         assert len(values) == 1
         assert values[0] == "hello [config]\n"
 
-    def test_config_getoption(self, pytester: Pytester) -> None:
+    def test_config_getoption_declared_option_name(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             def pytest_addoption(parser):
@@ -647,6 +647,18 @@ class TestConfigAPI:
         for x in ("hello", "--hello", "-X"):
             assert config.getoption(x) == "this"
         pytest.raises(ValueError, config.getoption, "qweqwe")
+
+        config_novalue = pytester.parseconfig()
+        assert config_novalue.getoption("hello") is None
+        assert config_novalue.getoption("hello", default=1) is None
+        assert config_novalue.getoption("hello", default=1, skip=True) == 1
+
+    def test_config_getoption_undeclared_option_name(self, pytester: Pytester) -> None:
+        config = pytester.parseconfig()
+        with pytest.raises(ValueError):
+            config.getoption("x")
+        assert config.getoption("x", default=1) == 1
+        assert config.getoption("x", default=1, skip=True) == 1
 
     def test_config_getoption_unicode(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -674,12 +686,6 @@ class TestConfigAPI:
         config = pytester.parseconfig()
         with pytest.raises(pytest.skip.Exception):
             config.getvalueorskip("hello")
-
-    def test_getoption(self, pytester: Pytester) -> None:
-        config = pytester.parseconfig()
-        with pytest.raises(ValueError):
-            config.getvalue("x")
-        assert config.getoption("x", 1) == 1
 
     def test_getconftest_pathlist(self, pytester: Pytester, tmp_path: Path) -> None:
         somepath = tmp_path.joinpath("x", "y", "z")
