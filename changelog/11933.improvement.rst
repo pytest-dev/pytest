@@ -1,0 +1,1 @@
+Now :func:`pytest.warns` can take an optional boolean keyword argument ``keep_ignores`` to keep existing ignore filters active when used as a context manager.

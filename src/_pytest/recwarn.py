@@ -90,6 +90,7 @@ def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...] = ...,
     *,
     match: str | Pattern[str] | None = ...,
+    keep_ignores: bool = ...,
 ) -> WarningsChecker: ...
 
 
@@ -106,6 +107,7 @@ def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
     *args: Any,
     match: str | Pattern[str] | None = None,
+    keep_ignores: bool = False,
     **kwargs: Any,
 ) -> WarningsChecker | Any:
     r"""Assert that code raises a particular class of warning.
@@ -140,6 +142,22 @@ def warns(
           ...
         Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
 
+    You may also set the keyword argument ``keep_ignores`` to avoid catching warnings
+    which were filtered out, in pytest configuration or otherwise::
+
+        >>> warnings.simplefilter("ignore", category=FutureWarning)
+        >>> with pytest.warns(UserWarning, keep_ignores=True):
+        ...     warnings.warn("ignore this warning", UserWarning)
+        Traceback (most recent call last):
+          ...
+        Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+
+        >>> with pytest.warns(RuntimeWarning):
+        >>>     warnings.simplefilter("ignore", category=FutureWarning)
+        >>>     with pytest.warns(UserWarning, keep_ignores=True):
+        ...         warnings.warn("ignore this warning", UserWarning)
+                    warnings.warn("keep this warning", RuntimeWarning)
+
     **Using with** ``pytest.mark.parametrize``
 
     When using :ref:`pytest.mark.parametrize ref` it is possible to parametrize tests
@@ -157,7 +175,12 @@ def warns(
                 f"Unexpected keyword arguments passed to pytest.warns: {argnames}"
                 "\nUse context-manager form instead?"
             )
-        return WarningsChecker(expected_warning, match_expr=match, _ispytest=True)
+        return WarningsChecker(
+            expected_warning,
+            match_expr=match,
+            keep_ignores=keep_ignores,
+            _ispytest=True,
+        )
     else:
         func = args[0]
         if not callable(func):
@@ -179,11 +202,12 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 
     """
 
-    def __init__(self, *, _ispytest: bool = False) -> None:
+    def __init__(self, *, keep_ignores: bool = False, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
         super().__init__(record=True)
         self._entered = False
         self._list: list[warnings.WarningMessage] = []
+        self._keep_ignores = keep_ignores
 
     @property
     def list(self) -> list[warnings.WarningMessage]:
@@ -233,7 +257,20 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         # record=True means it's None.
         assert _list is not None
         self._list = _list
-        warnings.simplefilter("always")
+
+        if self._keep_ignores:
+            for action, message, category, module, lineno in reversed(warnings.filters):
+                if isinstance(module, re.Pattern):
+                    module = getattr(module, "pattern", None)  # type: ignore[unreachable]
+                warnings.filterwarnings(
+                    action="always" if action != "ignore" else "ignore",
+                    message=message if isinstance(message, str) else "",
+                    category=category,
+                    module=module if isinstance(module, str) else "",
+                    lineno=lineno,
+                )
+        else:
+            warnings.simplefilter("always")
         return self
 
     def __exit__(
@@ -259,11 +296,12 @@ class WarningsChecker(WarningsRecorder):
         self,
         expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
         match_expr: str | Pattern[str] | None = None,
+        keep_ignores: bool = False,
         *,
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
-        super().__init__(_ispytest=True)
+        super().__init__(keep_ignores=keep_ignores, _ispytest=True)
 
         msg = "exceptions must be derived from Warning, not %s"
         if isinstance(expected_warning, tuple):
