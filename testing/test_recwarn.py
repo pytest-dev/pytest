@@ -416,6 +416,12 @@ class TestWarns:
                 with pytest.warns(UserWarning, keep_ignores=True):
                     warnings.warn("ignore this warning", FutureWarning)
 
+        with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="ignore this")
+                with pytest.warns(UserWarning, keep_ignores=True):
+                    warnings.warn("ignore this warning", UserWarning)
+
     def test_one_from_multiple_warns(self) -> None:
         with pytest.warns():
             with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):

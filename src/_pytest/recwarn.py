@@ -145,7 +145,7 @@ def warns(
     You may also set the keyword argument ``keep_ignores`` to avoid catching warnings
     which were filtered out, in pytest configuration or otherwise::
 
-        >>> warnings.simplefilter("ignore", category=FutureWarning)
+        >>> warnings.simplefilter("ignore", category=UserWarning)
         >>> with pytest.warns(UserWarning, keep_ignores=True):
         ...     warnings.warn("ignore this warning", UserWarning)
         Traceback (most recent call last):
@@ -153,7 +153,7 @@ def warns(
         Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
 
         >>> with pytest.warns(RuntimeWarning):
-        >>>     warnings.simplefilter("ignore", category=FutureWarning)
+        >>>     warnings.simplefilter("ignore", category=UserWarning)
         >>>     with pytest.warns(UserWarning, keep_ignores=True):
         ...         warnings.warn("ignore this warning", UserWarning)
                     warnings.warn("keep this warning", RuntimeWarning)
@@ -260,13 +260,15 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 
         if self._keep_ignores:
             for action, message, category, module, lineno in reversed(warnings.filters):
+                if isinstance(message, re.Pattern):
+                    module = getattr(module, "pattern", None)  # type: ignore[unreachable]
                 if isinstance(module, re.Pattern):
                     module = getattr(module, "pattern", None)  # type: ignore[unreachable]
                 warnings.filterwarnings(
                     action="always" if action != "ignore" else "ignore",
-                    message=message if isinstance(message, str) else "",
+                    message=message or "",
                     category=category,
-                    module=module if isinstance(module, str) else "",
+                    module=module or "",
                     lineno=lineno,
                 )
         else:
