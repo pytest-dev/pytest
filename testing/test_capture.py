@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
 import contextlib
 import io
 from io import UnsupportedOperation
@@ -10,7 +11,6 @@ import sys
 import textwrap
 from typing import BinaryIO
 from typing import cast
-from typing import Generator
 from typing import TextIO
 
 from _pytest import capture

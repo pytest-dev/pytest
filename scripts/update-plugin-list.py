@@ -1,14 +1,14 @@
 # mypy: disallow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Iterator
 import datetime
 import pathlib
 import re
 from textwrap import dedent
 from textwrap import indent
 from typing import Any
-from typing import Iterable
-from typing import Iterator
 from typing import TypedDict
 
 import packaging.version

@@ -5,6 +5,8 @@
 # pytest-cache version.
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Iterable
 import dataclasses
 import errno
 import json
@@ -12,8 +14,6 @@ import os
 from pathlib import Path
 import tempfile
 from typing import final
-from typing import Generator
-from typing import Iterable
 
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
