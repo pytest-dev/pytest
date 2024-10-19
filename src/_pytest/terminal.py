@@ -230,9 +230,9 @@ def pytest_addoption(parser: Parser) -> None:
         "--show-capture",
         action="store",
         dest="showcapture",
-        choices=["no", "stdout", "stderr", "log", "all"],
+        choices=["no", "stdout", "stderr", "log", "stdio", "all"],
         default="all",
-        help="Controls how captured stdout/stderr/log is shown on failed tests. "
+        help="Controls how captured stdout/stderr/log is shown on failed tests. stdio displays both stdout and stderr. "
         "Default: all.",
     )
     group._addoption(
@@ -1088,7 +1088,14 @@ class TerminalReporter:
         if showcapture == "no":
             return
         for secname, content in rep.sections:
-            if showcapture != "all" and showcapture not in secname:
+            if (
+                showcapture != "all"
+                and showcapture not in secname
+                and (
+                    showcapture != "stdio"
+                    or ("stderr" not in secname and "stdout" not in secname)
+                )
+            ):
                 continue
             if "teardown" in secname:
                 self._tw.sep("-", secname)
@@ -1151,7 +1158,14 @@ class TerminalReporter:
         if showcapture == "no":
             return
         for secname, content in rep.sections:
-            if showcapture != "all" and showcapture not in secname:
+            if (
+                showcapture != "all"
+                and showcapture not in secname
+                and (
+                    showcapture != "stdio"
+                    or ("stderr" not in secname and "stdout" not in secname)
+                )
+            ):
                 continue
             self._tw.sep("-", secname)
             if content[-1:] == "\n":
