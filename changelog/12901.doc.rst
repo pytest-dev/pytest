@@ -1,0 +1,1 @@
+Improved ``update-plugin-list.py`` program by adding ``EXCLUDE_PROJECTS`` mechanism
