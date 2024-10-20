@@ -68,7 +68,9 @@ ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
     "flask_fixture",
     "databricks-labs-pytester",
 }
-EXCLUDE_PROJECTS: set[str] = set()
+EXCLUDE_PROJECTS = {
+    "pytest-crate",
+}
 
 
 def escape_rst(text: str) -> str:
