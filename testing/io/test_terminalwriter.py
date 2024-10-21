@@ -1,13 +1,13 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
 import io
 import os
 from pathlib import Path
 import re
 import shutil
 import sys
-from typing import Generator
 from unittest import mock
 
 from _pytest._io import terminalwriter

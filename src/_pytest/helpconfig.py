@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 from argparse import Action
+from collections.abc import Generator
 import os
 import sys
-from typing import Generator
 
 from _pytest.config import Config
 from _pytest.config import ExitCode

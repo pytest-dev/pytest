@@ -54,17 +54,16 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py38",
-          "windows-py38-pluggy",
+          "windows-py39-pluggy",
           "windows-py39",
           "windows-py310",
           "windows-py311",
           "windows-py312",
           "windows-py313",
 
-          "ubuntu-py38",
-          "ubuntu-py38-pluggy",
-          "ubuntu-py38-freeze",
+          "ubuntu-py39-lsof-numpy-pexpect",
+          "ubuntu-py39-pluggy",
+          "ubuntu-py39-freeze",
           "ubuntu-py39",
           "ubuntu-py310",
           "ubuntu-py311",
@@ -72,7 +71,6 @@ jobs:
           "ubuntu-py313",
           "ubuntu-pypy3",
 
-          "macos-py38",
           "macos-py39",
           "macos-py310",
           "macos-py312",
@@ -83,15 +81,15 @@ jobs:
         ]
 
         include:
-          - name: "windows-py38"
-            python: "3.8"
+          - name: "windows-py39-unittestextras"
+            python: "3.9"
             os: windows-latest
-            tox_env: "py38-unittestextras"
+            tox_env: "py39-unittestextras"
             use_coverage: true
-          - name: "windows-py38-pluggy"
-            python: "3.8"
+          - name: "windows-py39-pluggy"
+            python: "3.9"
             os: windows-latest
-            tox_env: "py38-pluggymain-pylib-xdist"
+            tox_env: "py39-pluggymain-pylib-xdist"
           - name: "windows-py39"
             python: "3.9"
             os: windows-latest
@@ -109,28 +107,27 @@ jobs:
             os: windows-latest
             tox_env: "py312"
           - name: "windows-py313"
-            python: "3.13-dev"
+            python: "3.13"
             os: windows-latest
             tox_env: "py313"
 
-          - name: "ubuntu-py38"
-            python: "3.8"
+          - name: "ubuntu-py39-lsof-numpy-pexpect"
+            python: "3.9"
             os: ubuntu-latest
-            tox_env: "py38-lsof-numpy-pexpect"
-            use_coverage: true
-          - name: "ubuntu-py38-pluggy"
-            python: "3.8"
+            tox_env: "py39-lsof-numpy-pexpect"
+          - name: "ubuntu-py39-pluggy"
+            python: "3.9"
             os: ubuntu-latest
-            tox_env: "py38-pluggymain-pylib-xdist"
-          - name: "ubuntu-py38-freeze"
-            python: "3.8"
+            tox_env: "py39-pluggymain-pylib-xdist"
+          - name: "ubuntu-py39-freeze"
+            python: "3.9"
             os: ubuntu-latest
-            tox_env: "py38-freeze"
-          - name: "ubuntu-py39"
+            tox_env: "py39-freeze"
+          - name: "ubuntu-py39-xdist"
             python: "3.9"
             os: ubuntu-latest
             tox_env: "py39-xdist"
-          - name: "ubuntu-py310"
+          - name: "ubuntu-py310-xdist"
             python: "3.10"
             os: ubuntu-latest
             tox_env: "py310-xdist"
@@ -145,7 +142,7 @@ jobs:
             tox_env: "py312"
             use_coverage: true
           - name: "ubuntu-py313"
-            python: "3.13-dev"
+            python: "3.13"
             os: ubuntu-latest
             tox_env: "py313-pexpect"
             use_coverage: true
@@ -154,10 +151,6 @@ jobs:
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
-          - name: "macos-py38"
-            python: "3.8"
-            os: macos-latest
-            tox_env: "py38-xdist"
           - name: "macos-py39"
             python: "3.9"
             os: macos-latest
@@ -172,7 +165,7 @@ jobs:
             os: macos-latest
             tox_env: "py312-xdist"
           - name: "macos-py313"
-            python: "3.13-dev"
+            python: "3.13"
             os: macos-latest
             tox_env: "py313-xdist"
 
@@ -182,7 +175,7 @@ jobs:
             tox_env: "plugins"
 
           - name: "doctesting"
-            python: "3.8"
+            python: "3.9"
             os: ubuntu-latest
             tox_env: "doctesting"
             use_coverage: true
@@ -192,12 +185,12 @@ jobs:
         contains(
           fromJSON(
             '[
-              "windows-py38-pluggy",
+              "windows-py39-pluggy",
               "windows-py313",
-              "ubuntu-py38-pluggy",
-              "ubuntu-py38-freeze",
+              "ubuntu-py39-pluggy",
+              "ubuntu-py39-freeze",
               "ubuntu-py313",
-              "macos-py38",
+              "macos-py39",
               "macos-py313"
             ]'
           ),

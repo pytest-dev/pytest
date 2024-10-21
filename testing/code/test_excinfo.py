@@ -964,8 +964,8 @@ raise ValueError()
             upframe = sys._getframe().f_back
             assert upframe is not None
             if upframe.f_code.co_name == "_makepath":
-                # Only raise with expected calls, but not via e.g. inspect for
-                # py38-windows.
+                # Only raise with expected calls, and not accidentally via 'inspect'
+                # See 79ae86cc3f76d69460e1c7beca4ce95e68ab80a6
                 raised += 1
                 raise OSError(2, "custom_oserror")
             return orig_path_cwd()

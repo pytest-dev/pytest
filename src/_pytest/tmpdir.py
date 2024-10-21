@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 import dataclasses
 import os
 from pathlib import Path
@@ -10,9 +11,7 @@ import re
 from shutil import rmtree
 import tempfile
 from typing import Any
-from typing import Dict
 from typing import final
-from typing import Generator
 from typing import Literal
 
 from .pathlib import cleanup_dead_symlinks
@@ -34,7 +33,7 @@ from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 
 
-tmppath_result_key = StashKey[Dict[str, bool]]()
+tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
 
 
