@@ -404,6 +404,24 @@ class TestWarns:
                 with pytest.warns(FutureWarning, match=r"must be \d+$"):
                     warnings.warn("value must be 42", UserWarning)
 
+    def test_keep_ignores(self) -> None:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=UserWarning)
+            with pytest.warns(UserWarning, keep_ignores=True):
+                warnings.warn("keep this warning", UserWarning)
+
+        with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="ignore this")
+                with pytest.warns(UserWarning, keep_ignores=True):
+                    warnings.warn("ignore this warning", FutureWarning)
+
+        with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="ignore this")
+                with pytest.warns(UserWarning, keep_ignores=True):
+                    warnings.warn("ignore this warning", UserWarning)
+
     def test_one_from_multiple_warns(self) -> None:
         with pytest.warns():
             with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
