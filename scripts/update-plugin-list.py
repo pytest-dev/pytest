@@ -68,6 +68,9 @@ ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
     "flask_fixture",
     "databricks-labs-pytester",
 }
+EXCLUDE_PROJECTS = {
+    "pytest-crate",
+}
 
 
 def escape_rst(text: str) -> str:
@@ -116,6 +119,7 @@ def pytest_plugin_projects_from_pypi(session: CachedSession) -> dict[str, int]:
         if (
             (name := p["name"]).startswith(("pytest-", "pytest_"))
             or name in ADDITIONAL_PROJECTS
+            and name not in EXCLUDE_PROJECTS
         )
     }
 
