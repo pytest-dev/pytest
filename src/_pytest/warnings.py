@@ -1,9 +1,9 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
 from contextlib import contextmanager
 import sys
-from typing import Generator
 from typing import Literal
 import warnings
 

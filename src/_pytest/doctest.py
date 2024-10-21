@@ -4,21 +4,21 @@
 from __future__ import annotations
 
 import bdb
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Sequence
 from contextlib import contextmanager
 import functools
 import inspect
 import os
 from pathlib import Path
 import platform
+from re import Pattern
 import sys
 import traceback
 import types
 from typing import Any
 from typing import Callable
-from typing import Generator
-from typing import Iterable
-from typing import Pattern
-from typing import Sequence
 from typing import TYPE_CHECKING
 import warnings
 
