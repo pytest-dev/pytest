@@ -904,7 +904,9 @@ here is a little example implemented via a local plugin:
         # "function" scope
         report = request.node.stash[phase_report_key]
         if report["setup"].failed:
-            print("setting up a test failed or skipped", request.node.nodeid)
+            print("setting up a test failed", request.node.nodeid)
+        elif report["setup"].skipped:
+            print("setting up a test skipped", request.node.nodeid)
         elif ("call" not in report) or report["call"].failed:
             print("executing test failed or skipped", request.node.nodeid)
 
