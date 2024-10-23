@@ -329,9 +329,12 @@ class WarningsChecker(WarningsRecorder):
             for w in self:
                 if not self.matches(w):
                     module = next(
-                        k
-                        for k, v in sys.modules.items()
-                        if getattr(v, "__file__", None) == w.filename
+                        (
+                            k
+                            for k, v in sys.modules.items()
+                            if getattr(v, "__file__", None) == w.filename
+                        ),
+                        None,
                     )
                     warnings.warn_explicit(
                         message=w.message,
