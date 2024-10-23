@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import sys
@@ -74,6 +76,16 @@ def test_getfuncargnames_staticmethod_inherited() -> None:
     assert getfuncargnames(B.static, cls=B) == ("arg1", "arg2")
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 13),
+    reason="""\
+In python 3.13, this will raise FutureWarning:
+functools.partial will be a method descriptor in future Python versions;
+wrap it in staticmethod() if you want to preserve the old behavior
+
+But the wrapped 'functools.partial' is tested by 'test_getfuncargnames_staticmethod_partial' below.
+""",
+)
 def test_getfuncargnames_partial():
     """Check getfuncargnames for methods defined with functools.partial (#5701)"""
     import functools
@@ -1545,6 +1557,38 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 2 passed in *"])
 
+    def test_parameterized_fixture_caching(self, pytester: Pytester) -> None:
+        """Regression test for #12600."""
+        pytester.makepyfile(
+            """
+            import pytest
+            from itertools import count
+
+            CACHE_MISSES = count(0)
+
+            def pytest_generate_tests(metafunc):
+                if "my_fixture" in metafunc.fixturenames:
+                    # Use unique objects for parametrization (as opposed to small strings
+                    # and small integers which are singletons).
+                    metafunc.parametrize("my_fixture", [[1], [2]], indirect=True)
+
+            @pytest.fixture(scope='session')
+            def my_fixture(request):
+                next(CACHE_MISSES)
+
+            def test1(my_fixture):
+                pass
+
+            def test2(my_fixture):
+                pass
+
+            def teardown_module():
+                assert next(CACHE_MISSES) == 2
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.no_fnmatch_line("* ERROR at teardown *")
+
 
 class TestFixtureManagerParseFactories:
     @pytest.fixture
@@ -2218,6 +2262,25 @@ class TestAutouseManagement:
         )
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(passed=2)
+
+    def test_reordering_catastrophic_performance(self, pytester: Pytester) -> None:
+        """Check that a certain high-scope parametrization pattern doesn't cause
+        a catasrophic slowdown.
+
+        Regression test for #12355.
+        """
+        pytester.makepyfile("""
+            import pytest
+
+            params = tuple("abcdefghijklmnopqrstuvwxyz")
+            @pytest.mark.parametrize(params, [range(len(params))] * 3, scope="module")
+            def test_parametrize(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z):
+                pass
+        """)
+
+        result = pytester.runpytest()
+
+        result.assert_outcomes(passed=3)
 
 
 class TestFixtureMarker:
@@ -4275,7 +4338,7 @@ class TestScopeOrdering:
         assert request.fixturenames == "s1 p1 m1 m2 c1 f2 f1".split()
 
     def test_parametrized_package_scope_reordering(self, pytester: Pytester) -> None:
-        """A paramaterized package-scoped fixture correctly reorders items to
+        """A parameterized package-scoped fixture correctly reorders items to
         minimize setups & teardowns.
 
         Regression test for #12328.
@@ -4495,7 +4558,7 @@ def test_fixture_named_request(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*'request' is a reserved word for fixtures, use another name:",
-            "  *test_fixture_named_request.py:6",
+            "  *test_fixture_named_request.py:8",
         ]
     )
 

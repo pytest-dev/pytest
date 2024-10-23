@@ -76,11 +76,19 @@ Specifying a specific parametrization of a test:
 
 **Run tests by marker expressions**
 
+To run all tests which are decorated with the ``@pytest.mark.slow`` decorator:
+
 .. code-block:: bash
 
     pytest -m slow
 
-Will run all tests which are decorated with the ``@pytest.mark.slow`` decorator.
+
+To run all tests which are decorated with the annotated ``@pytest.mark.slow(phase=1)`` decorator,
+with the ``phase`` keyword argument set to ``1``:
+
+.. code-block:: bash
+
+    pytest -m "slow(phase=1)"
 
 For more information see :ref:`marks <mark>`.
 
@@ -154,7 +162,7 @@ You can early-load plugins (internal and external) explicitly in the command-lin
 The option receives a ``name`` parameter, which can be:
 
 * A full module dotted name, for example ``myproject.plugins``. This dotted name must be importable.
-* The entry-point name of a plugin. This is the name passed to ``setuptools`` when the plugin is
+* The entry-point name of a plugin. This is the name passed to ``importlib`` when the plugin is
   registered. For example to early-load the :pypi:`pytest-cov` plugin you can use::
 
     pytest -p pytest_cov

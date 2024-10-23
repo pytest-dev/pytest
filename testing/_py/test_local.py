@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import contextlib
 import multiprocessing
 import os
@@ -17,7 +19,7 @@ import pytest
 def ignore_encoding_warning():
     with warnings.catch_warnings():
         if sys.version_info > (3, 10):
-            warnings.simplefilter("ignore", EncodingWarning)
+            warnings.simplefilter("ignore", EncodingWarning)  # noqa: F821
         yield
 
 
@@ -207,7 +209,7 @@ class CommonFSTests:
 
     @pytest.mark.parametrize(
         "fil",
-        ["*dir", "*dir", pytest.mark.skip("sys.version_info <" " (3,6)")(b"*dir")],
+        ["*dir", "*dir", pytest.mark.skip("sys.version_info < (3,6)")(b"*dir")],
     )
     def test_visit_filterfunc_is_string(self, path1, fil):
         lst = []

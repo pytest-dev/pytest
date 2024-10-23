@@ -4,16 +4,17 @@ This ensures all internal packages can be imported without needing the pytest
 namespace being set, which is critical for the initialization of xdist.
 """
 
+from __future__ import annotations
+
 import pkgutil
 import subprocess
 import sys
-from typing import List
 
 import _pytest
 import pytest
 
 
-def _modules() -> List[str]:
+def _modules() -> list[str]:
     pytest_pkg: str = _pytest.__path__  # type: ignore
     return sorted(
         n

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import auto
 from enum import Enum
 import os
@@ -5,9 +7,7 @@ from pathlib import Path
 import shutil
 from typing import Any
 from typing import Generator
-from typing import List
 from typing import Sequence
-from typing import Tuple
 
 from _pytest.compat import assert_never
 from _pytest.config import ExitCode
@@ -69,7 +69,7 @@ class TestNewAPI:
         cache.set("test/broken", [])
 
     @pytest.fixture
-    def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path, None, None]:
+    def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path]:
         cache_dir = pytester.path.joinpath(".pytest_cache")
         cache_dir.mkdir()
         mode = cache_dir.stat().st_mode
@@ -579,7 +579,7 @@ class TestLastFailed:
 
         def rlf(
             fail_import: int, fail_run: int, args: Sequence[str] = ()
-        ) -> Tuple[Any, Any]:
+        ) -> tuple[Any, Any]:
             monkeypatch.setenv("FAILIMPORT", str(fail_import))
             monkeypatch.setenv("FAILTEST", str(fail_run))
 
@@ -693,7 +693,7 @@ class TestLastFailed:
         else:
             assert "rerun previous" in result.stdout.str()
 
-    def get_cached_last_failed(self, pytester: Pytester) -> List[str]:
+    def get_cached_last_failed(self, pytester: Pytester) -> list[str]:
         config = pytester.parseconfigure()
         assert config.cache is not None
         return sorted(config.cache.get("cache/lastfailed", {}))
@@ -1163,7 +1163,7 @@ class TestNewFirst:
         )
 
         p1.write_text(
-            "def test_1(): assert 1\n" "def test_2(): assert 1\n", encoding="utf-8"
+            "def test_1(): assert 1\ndef test_2(): assert 1\n", encoding="utf-8"
         )
         os.utime(p1, ns=(p1.stat().st_atime_ns, int(1e9)))
 

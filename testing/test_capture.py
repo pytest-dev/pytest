@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import contextlib
 import io
 from io import UnsupportedOperation
@@ -937,7 +939,7 @@ def test_captureresult() -> None:
 
 
 @pytest.fixture
-def tmpfile(pytester: Pytester) -> Generator[BinaryIO, None, None]:
+def tmpfile(pytester: Pytester) -> Generator[BinaryIO]:
     f = pytester.makepyfile("").open("wb+")
     yield f
     if not f.closed:

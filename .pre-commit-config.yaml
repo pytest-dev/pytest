@@ -1,48 +1,59 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.4.3"
+  rev: "v0.6.9"
   hooks:
     - id: ruff
       args: ["--fix"]
     - id: ruff-format
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-yaml
 -   repo: https://github.com/adamchainz/blacken-docs
-    rev: 1.16.0
+    rev: 1.19.0
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==24.1.1]
+-   repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+    -   id: codespell
+        args: ["--toml=pyproject.toml"]
+        additional_dependencies:
+          - tomli
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+    rev: v1.11.2
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
-        args: []
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0
           - pluggy>=1.5.0
           - packaging
           - tomli
-          - types-pkg_resources
+          - types-setuptools
           - types-tabulate
             # for mypy running on python>=3.11 since exceptiongroup is only a dependency
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "1.8.0"
+  rev: "2.3.1"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.18.0
+    hooks:
+    -   id: pyupgrade
+        stages: [manual]
 -   repo: local
     hooks:
     -   id: pylint
@@ -61,9 +72,50 @@ repos:
     -   id: changelogs-rst
         name: changelog filenames
         language: fail
-        entry: 'changelog files must be named ####.(breaking|bugfix|deprecation|doc|feature|improvement|trivial|vendor).rst'
-        exclude: changelog/(\d+\.(breaking|bugfix|deprecation|doc|feature|improvement|trivial|vendor).rst|README.rst|_template.rst)
+        entry: >-
+          changelog files must be named
+          ####.(
+          breaking
+          | deprecation
+          | feature
+          | improvement
+          | bugfix
+          | vendor
+          | doc
+          | packaging
+          | contrib
+          | misc
+          )(.#)?(.rst)?
+        exclude: >-
+          (?x)
+          ^
+            changelog/(
+              \.gitignore
+              |\d+\.(
+                breaking
+                |deprecation
+                |feature
+                |improvement
+                |bugfix
+                |vendor
+                |doc
+                |packaging
+                |contrib
+                |misc
+              )(\.\d+)?(\.rst)?
+              |README\.rst
+              |_template\.rst
+            )
+          $
         files: ^changelog/
+    -   id: changelogs-user-role
+        name: Changelog files should use a non-broken :user:`name` role
+        language: pygrep
+        entry: :user:([^`]+`?|`[^`]+[\s,])
+        pass_filenames: true
+        types:
+          - file
+          - rst
     -   id: py-deprecated
         name: py library is deprecated
         language: pygrep

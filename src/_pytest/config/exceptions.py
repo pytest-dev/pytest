@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class UsageError(Exception):
     """Error in pytest usage or invocation."""
 

@@ -1,4 +1,6 @@
 # mypy: disallow-untyped-defs
+from __future__ import annotations
+
 import datetime
 import pathlib
 import re
@@ -64,6 +66,7 @@ ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
     "logot",
     "nuts",
     "flask_fixture",
+    "databricks-labs-pytester",
 }
 
 

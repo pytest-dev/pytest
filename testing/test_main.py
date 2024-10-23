@@ -1,9 +1,10 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import argparse
 import os
 from pathlib import Path
 import re
-from typing import Optional
 
 from _pytest.config import ExitCode
 from _pytest.config import UsageError
@@ -66,7 +67,7 @@ def test_wrap_session_notify_exception(ret_exc, pytester: Pytester) -> None:
 
 @pytest.mark.parametrize("returncode", (None, 42))
 def test_wrap_session_exit_sessionfinish(
-    returncode: Optional[int], pytester: Pytester
+    returncode: int | None, pytester: Pytester
 ) -> None:
     pytester.makeconftest(
         f"""

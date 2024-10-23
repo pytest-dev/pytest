@@ -3,16 +3,13 @@
 """Hook specifications for pytest plugins which are invoked by pytest itself
 and by builtin plugins."""
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Mapping
-from typing import Optional
 from typing import Sequence
-from typing import Tuple
 from typing import TYPE_CHECKING
-from typing import Union
 
 from pluggy import HookspecMarker
 
@@ -57,7 +54,7 @@ hookspec = HookspecMarker("pytest")
 
 
 @hookspec(historic=True)
-def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
+def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
     """Called at plugin registration time to allow adding new hooks via a call to
     :func:`pluginmanager.add_hookspecs(module_or_class, prefix) <pytest.PytestPluginManager.add_hookspecs>`.
 
@@ -76,9 +73,9 @@ def pytest_addhooks(pluginmanager: "PytestPluginManager") -> None:
 
 @hookspec(historic=True)
 def pytest_plugin_registered(
-    plugin: "_PluggyPlugin",
+    plugin: _PluggyPlugin,
     plugin_name: str,
-    manager: "PytestPluginManager",
+    manager: PytestPluginManager,
 ) -> None:
     """A new pytest plugin got registered.
 
@@ -100,7 +97,7 @@ def pytest_plugin_registered(
 
 
 @hookspec(historic=True)
-def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> None:
+def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None:
     """Register argparse-style options and ini-style config values,
     called once at the beginning of a test run.
 
@@ -141,7 +138,7 @@ def pytest_addoption(parser: "Parser", pluginmanager: "PytestPluginManager") -> 
 
 
 @hookspec(historic=True)
-def pytest_configure(config: "Config") -> None:
+def pytest_configure(config: Config) -> None:
     """Allow plugins and conftest files to perform initial configuration.
 
     .. note::
@@ -166,8 +163,8 @@ def pytest_configure(config: "Config") -> None:
 
 @hookspec(firstresult=True)
 def pytest_cmdline_parse(
-    pluginmanager: "PytestPluginManager", args: List[str]
-) -> Optional["Config"]:
+    pluginmanager: PytestPluginManager, args: list[str]
+) -> Config | None:
     """Return an initialized :class:`~pytest.Config`, parsing the specified args.
 
     Stops at first non-None result, see :ref:`firstresult`.
@@ -189,7 +186,7 @@ def pytest_cmdline_parse(
 
 
 def pytest_load_initial_conftests(
-    early_config: "Config", parser: "Parser", args: List[str]
+    early_config: Config, parser: Parser, args: list[str]
 ) -> None:
     """Called to implement the loading of :ref:`initial conftest files
     <pluginorder>` ahead of command line option parsing.
@@ -206,7 +203,7 @@ def pytest_load_initial_conftests(
 
 
 @hookspec(firstresult=True)
-def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
+def pytest_cmdline_main(config: Config) -> ExitCode | int | None:
     """Called for performing the main command line action.
 
     The default implementation will invoke the configure hooks and
@@ -230,7 +227,7 @@ def pytest_cmdline_main(config: "Config") -> Optional[Union["ExitCode", int]]:
 
 
 @hookspec(firstresult=True)
-def pytest_collection(session: "Session") -> Optional[object]:
+def pytest_collection(session: Session) -> object | None:
     """Perform the collection phase for the given session.
 
     Stops at first non-None result, see :ref:`firstresult`.
@@ -272,10 +269,15 @@ def pytest_collection(session: "Session") -> Optional[object]:
 
 
 def pytest_collection_modifyitems(
-    session: "Session", config: "Config", items: List["Item"]
+    session: Session, config: Config, items: list[Item]
 ) -> None:
     """Called after collection has been performed. May filter or re-order
     the items in-place.
+
+    When items are deselected (filtered out from ``items``),
+    the hook :hook:`pytest_deselected` must be called explicitly
+    with the deselected items to properly notify other plugins,
+    e.g. with ``config.hook.pytest_deselected(deselected_items)``.
 
     :param session: The pytest session object.
     :param config: The pytest config object.
@@ -288,7 +290,7 @@ def pytest_collection_modifyitems(
     """
 
 
-def pytest_collection_finish(session: "Session") -> None:
+def pytest_collection_finish(session: Session) -> None:
     """Called after collection has been performed and modified.
 
     :param session: The pytest session object.
@@ -309,9 +311,14 @@ def pytest_collection_finish(session: "Session") -> None:
     },
 )
 def pytest_ignore_collect(
-    collection_path: Path, path: "LEGACY_PATH", config: "Config"
-) -> Optional[bool]:
-    """Return True to prevent considering this path for collection.
+    collection_path: Path, path: LEGACY_PATH, config: Config
+) -> bool | None:
+    """Return ``True`` to ignore this path for collection.
+
+    Return ``None`` to let other plugins ignore the path for collection.
+
+    Returning ``False`` will forcefully *not* ignore this path for collection,
+    without giving a chance for other plugins to ignore this path.
 
     This hook is consulted for all files and directories prior to calling
     more specific hooks.
@@ -319,6 +326,7 @@ def pytest_ignore_collect(
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param collection_path: The path to analyze.
+    :type collection_path: pathlib.Path
     :param path: The path to analyze (deprecated).
     :param config: The pytest config object.
 
@@ -338,7 +346,7 @@ def pytest_ignore_collect(
 
 
 @hookspec(firstresult=True)
-def pytest_collect_directory(path: Path, parent: "Collector") -> "Optional[Collector]":
+def pytest_collect_directory(path: Path, parent: Collector) -> Collector | None:
     """Create a :class:`~pytest.Collector` for the given directory, or None if
     not relevant.
 
@@ -352,6 +360,7 @@ def pytest_collect_directory(path: Path, parent: "Collector") -> "Optional[Colle
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param path: The path to analyze.
+    :type path: pathlib.Path
 
     See :ref:`custom directory collectors` for a simple example of use of this
     hook.
@@ -374,8 +383,8 @@ def pytest_collect_directory(path: Path, parent: "Collector") -> "Optional[Colle
     },
 )
 def pytest_collect_file(
-    file_path: Path, path: "LEGACY_PATH", parent: "Collector"
-) -> "Optional[Collector]":
+    file_path: Path, path: LEGACY_PATH, parent: Collector
+) -> Collector | None:
     """Create a :class:`~pytest.Collector` for the given path, or None if not relevant.
 
     For best results, the returned collector should be a subclass of
@@ -384,6 +393,7 @@ def pytest_collect_file(
     The new node needs to have the specified ``parent`` as a parent.
 
     :param file_path: The path to analyze.
+    :type file_path: pathlib.Path
     :param path: The path to collect (deprecated).
 
     .. versionchanged:: 7.0.0
@@ -402,7 +412,7 @@ def pytest_collect_file(
 # logging hooks for collection
 
 
-def pytest_collectstart(collector: "Collector") -> None:
+def pytest_collectstart(collector: Collector) -> None:
     """Collector starts collecting.
 
     :param collector:
@@ -417,7 +427,7 @@ def pytest_collectstart(collector: "Collector") -> None:
     """
 
 
-def pytest_itemcollected(item: "Item") -> None:
+def pytest_itemcollected(item: Item) -> None:
     """We just collected a test item.
 
     :param item:
@@ -431,7 +441,7 @@ def pytest_itemcollected(item: "Item") -> None:
     """
 
 
-def pytest_collectreport(report: "CollectReport") -> None:
+def pytest_collectreport(report: CollectReport) -> None:
     """Collector finished collecting.
 
     :param report:
@@ -446,8 +456,14 @@ def pytest_collectreport(report: "CollectReport") -> None:
     """
 
 
-def pytest_deselected(items: Sequence["Item"]) -> None:
+def pytest_deselected(items: Sequence[Item]) -> None:
     """Called for deselected test items, e.g. by keyword.
+
+    Note that this hook has two integration aspects for plugins:
+
+    - it can be *implemented* to be notified of deselected items
+    - it must be *called* from :hook:`pytest_collection_modifyitems`
+      implementations when items are deselected (to properly notify other plugins).
 
     May be called multiple times.
 
@@ -462,7 +478,7 @@ def pytest_deselected(items: Sequence["Item"]) -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectReport]":
+def pytest_make_collect_report(collector: Collector) -> CollectReport | None:
     """Perform :func:`collector.collect() <pytest.Collector.collect>` and return
     a :class:`~pytest.CollectReport`.
 
@@ -494,8 +510,8 @@ def pytest_make_collect_report(collector: "Collector") -> "Optional[CollectRepor
     },
 )
 def pytest_pycollect_makemodule(
-    module_path: Path, path: "LEGACY_PATH", parent
-) -> Optional["Module"]:
+    module_path: Path, path: LEGACY_PATH, parent
+) -> Module | None:
     """Return a :class:`pytest.Module` collector or None for the given path.
 
     This hook will be called for each matching test module path.
@@ -505,6 +521,7 @@ def pytest_pycollect_makemodule(
     Stops at first non-None result, see :ref:`firstresult`.
 
     :param module_path: The path of the module to collect.
+    :type module_path: pathlib.Path
     :param path: The path of the module to collect (deprecated).
 
     .. versionchanged:: 7.0.0
@@ -524,8 +541,8 @@ def pytest_pycollect_makemodule(
 
 @hookspec(firstresult=True)
 def pytest_pycollect_makeitem(
-    collector: Union["Module", "Class"], name: str, obj: object
-) -> Union[None, "Item", "Collector", List[Union["Item", "Collector"]]]:
+    collector: Module | Class, name: str, obj: object
+) -> None | Item | Collector | list[Item | Collector]:
     """Return a custom item/collector for a Python object in a module, or None.
 
     Stops at first non-None result, see :ref:`firstresult`.
@@ -549,7 +566,7 @@ def pytest_pycollect_makeitem(
 
 
 @hookspec(firstresult=True)
-def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
+def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     """Call underlying test function.
 
     Stops at first non-None result, see :ref:`firstresult`.
@@ -566,7 +583,7 @@ def pytest_pyfunc_call(pyfuncitem: "Function") -> Optional[object]:
     """
 
 
-def pytest_generate_tests(metafunc: "Metafunc") -> None:
+def pytest_generate_tests(metafunc: Metafunc) -> None:
     """Generate (multiple) parametrized calls to a test function.
 
     :param metafunc:
@@ -582,9 +599,7 @@ def pytest_generate_tests(metafunc: "Metafunc") -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_make_parametrize_id(
-    config: "Config", val: object, argname: str
-) -> Optional[str]:
+def pytest_make_parametrize_id(config: Config, val: object, argname: str) -> str | None:
     """Return a user-friendly string representation of the given ``val``
     that will be used by @pytest.mark.parametrize calls, or None if the hook
     doesn't know about ``val``.
@@ -610,7 +625,7 @@ def pytest_make_parametrize_id(
 
 
 @hookspec(firstresult=True)
-def pytest_runtestloop(session: "Session") -> Optional[object]:
+def pytest_runtestloop(session: Session) -> object | None:
     """Perform the main runtest loop (after collection finished).
 
     The default hook implementation performs the runtest protocol for all items
@@ -636,9 +651,7 @@ def pytest_runtestloop(session: "Session") -> Optional[object]:
 
 
 @hookspec(firstresult=True)
-def pytest_runtest_protocol(
-    item: "Item", nextitem: "Optional[Item]"
-) -> Optional[object]:
+def pytest_runtest_protocol(item: Item, nextitem: Item | None) -> object | None:
     """Perform the runtest protocol for a single test item.
 
     The default runtest protocol is this (see individual hooks for full details):
@@ -678,9 +691,7 @@ def pytest_runtest_protocol(
     """
 
 
-def pytest_runtest_logstart(
-    nodeid: str, location: Tuple[str, Optional[int], str]
-) -> None:
+def pytest_runtest_logstart(nodeid: str, location: tuple[str, int | None, str]) -> None:
     """Called at the start of running the runtest protocol for a single item.
 
     See :hook:`pytest_runtest_protocol` for a description of the runtest protocol.
@@ -699,7 +710,7 @@ def pytest_runtest_logstart(
 
 
 def pytest_runtest_logfinish(
-    nodeid: str, location: Tuple[str, Optional[int], str]
+    nodeid: str, location: tuple[str, int | None, str]
 ) -> None:
     """Called at the end of running the runtest protocol for a single item.
 
@@ -718,7 +729,7 @@ def pytest_runtest_logfinish(
     """
 
 
-def pytest_runtest_setup(item: "Item") -> None:
+def pytest_runtest_setup(item: Item) -> None:
     """Called to perform the setup phase for a test item.
 
     The default implementation runs ``setup()`` on ``item`` and all of its
@@ -737,7 +748,7 @@ def pytest_runtest_setup(item: "Item") -> None:
     """
 
 
-def pytest_runtest_call(item: "Item") -> None:
+def pytest_runtest_call(item: Item) -> None:
     """Called to run the test for test item (the call phase).
 
     The default implementation calls ``item.runtest()``.
@@ -753,7 +764,7 @@ def pytest_runtest_call(item: "Item") -> None:
     """
 
 
-def pytest_runtest_teardown(item: "Item", nextitem: Optional["Item"]) -> None:
+def pytest_runtest_teardown(item: Item, nextitem: Item | None) -> None:
     """Called to perform the teardown phase for a test item.
 
     The default implementation runs the finalizers and calls ``teardown()``
@@ -778,9 +789,7 @@ def pytest_runtest_teardown(item: "Item", nextitem: Optional["Item"]) -> None:
 
 
 @hookspec(firstresult=True)
-def pytest_runtest_makereport(
-    item: "Item", call: "CallInfo[None]"
-) -> Optional["TestReport"]:
+def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport | None:
     """Called to create a :class:`~pytest.TestReport` for each of
     the setup, call and teardown runtest phases of a test item.
 
@@ -799,7 +808,7 @@ def pytest_runtest_makereport(
     """
 
 
-def pytest_runtest_logreport(report: "TestReport") -> None:
+def pytest_runtest_logreport(report: TestReport) -> None:
     """Process the :class:`~pytest.TestReport` produced for each
     of the setup, call and teardown runtest phases of an item.
 
@@ -815,9 +824,9 @@ def pytest_runtest_logreport(report: "TestReport") -> None:
 
 @hookspec(firstresult=True)
 def pytest_report_to_serializable(
-    config: "Config",
-    report: Union["CollectReport", "TestReport"],
-) -> Optional[Dict[str, Any]]:
+    config: Config,
+    report: CollectReport | TestReport,
+) -> dict[str, Any] | None:
     """Serialize the given report object into a data structure suitable for
     sending over the wire, e.g. converted to JSON.
 
@@ -834,9 +843,9 @@ def pytest_report_to_serializable(
 
 @hookspec(firstresult=True)
 def pytest_report_from_serializable(
-    config: "Config",
-    data: Dict[str, Any],
-) -> Optional[Union["CollectReport", "TestReport"]]:
+    config: Config,
+    data: dict[str, Any],
+) -> CollectReport | TestReport | None:
     """Restore a report object previously serialized with
     :hook:`pytest_report_to_serializable`.
 
@@ -857,8 +866,8 @@ def pytest_report_from_serializable(
 
 @hookspec(firstresult=True)
 def pytest_fixture_setup(
-    fixturedef: "FixtureDef[Any]", request: "SubRequest"
-) -> Optional[object]:
+    fixturedef: FixtureDef[Any], request: SubRequest
+) -> object | None:
     """Perform fixture setup execution.
 
     :param fixturedef:
@@ -885,7 +894,7 @@ def pytest_fixture_setup(
 
 
 def pytest_fixture_post_finalizer(
-    fixturedef: "FixtureDef[Any]", request: "SubRequest"
+    fixturedef: FixtureDef[Any], request: SubRequest
 ) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not
@@ -910,7 +919,7 @@ def pytest_fixture_post_finalizer(
 # -------------------------------------------------------------------------
 
 
-def pytest_sessionstart(session: "Session") -> None:
+def pytest_sessionstart(session: Session) -> None:
     """Called after the ``Session`` object has been created and before performing collection
     and entering the run test loop.
 
@@ -924,8 +933,8 @@ def pytest_sessionstart(session: "Session") -> None:
 
 
 def pytest_sessionfinish(
-    session: "Session",
-    exitstatus: Union[int, "ExitCode"],
+    session: Session,
+    exitstatus: int | ExitCode,
 ) -> None:
     """Called after whole test run finished, right before returning the exit status to the system.
 
@@ -939,7 +948,7 @@ def pytest_sessionfinish(
     """
 
 
-def pytest_unconfigure(config: "Config") -> None:
+def pytest_unconfigure(config: Config) -> None:
     """Called before test process is exited.
 
     :param config: The pytest config object.
@@ -957,8 +966,8 @@ def pytest_unconfigure(config: "Config") -> None:
 
 
 def pytest_assertrepr_compare(
-    config: "Config", op: str, left: object, right: object
-) -> Optional[List[str]]:
+    config: Config, op: str, left: object, right: object
+) -> list[str] | None:
     """Return explanation for comparisons in failing assert expressions.
 
     Return None for no custom explanation, otherwise return a list
@@ -979,7 +988,7 @@ def pytest_assertrepr_compare(
     """
 
 
-def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> None:
+def pytest_assertion_pass(item: Item, lineno: int, orig: str, expl: str) -> None:
     """Called whenever an assertion passes.
 
     .. versionadded:: 5.0
@@ -1026,12 +1035,13 @@ def pytest_assertion_pass(item: "Item", lineno: int, orig: str, expl: str) -> No
     },
 )
 def pytest_report_header(  # type:ignore[empty-body]
-    config: "Config", start_path: Path, startdir: "LEGACY_PATH"
-) -> Union[str, List[str]]:
+    config: Config, start_path: Path, startdir: LEGACY_PATH
+) -> str | list[str]:
     """Return a string or list of strings to be displayed as header info for terminal reporting.
 
     :param config: The pytest config object.
     :param start_path: The starting dir.
+    :type start_path: pathlib.Path
     :param startdir: The starting dir (deprecated).
 
     .. note::
@@ -1061,11 +1071,11 @@ def pytest_report_header(  # type:ignore[empty-body]
     },
 )
 def pytest_report_collectionfinish(  # type:ignore[empty-body]
-    config: "Config",
+    config: Config,
     start_path: Path,
-    startdir: "LEGACY_PATH",
-    items: Sequence["Item"],
-) -> Union[str, List[str]]:
+    startdir: LEGACY_PATH,
+    items: Sequence[Item],
+) -> str | list[str]:
     """Return a string or list of strings to be displayed after collection
     has finished successfully.
 
@@ -1075,6 +1085,7 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 
     :param config: The pytest config object.
     :param start_path: The starting dir.
+    :type start_path: pathlib.Path
     :param startdir: The starting dir (deprecated).
     :param items: List of pytest items that are going to be executed; this list should not be modified.
 
@@ -1099,8 +1110,8 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
 
 @hookspec(firstresult=True)
 def pytest_report_teststatus(  # type:ignore[empty-body]
-    report: Union["CollectReport", "TestReport"], config: "Config"
-) -> "TestShortLogReport | Tuple[str, str, Union[str, Tuple[str, Mapping[str, bool]]]]":
+    report: CollectReport | TestReport, config: Config
+) -> TestShortLogReport | tuple[str, str, str | tuple[str, Mapping[str, bool]]]:
     """Return result-category, shortletter and verbose word for status
     reporting.
 
@@ -1131,9 +1142,9 @@ def pytest_report_teststatus(  # type:ignore[empty-body]
 
 
 def pytest_terminal_summary(
-    terminalreporter: "TerminalReporter",
-    exitstatus: "ExitCode",
-    config: "Config",
+    terminalreporter: TerminalReporter,
+    exitstatus: ExitCode,
+    config: Config,
 ) -> None:
     """Add a section to terminal summary reporting.
 
@@ -1153,10 +1164,10 @@ def pytest_terminal_summary(
 
 @hookspec(historic=True)
 def pytest_warning_recorded(
-    warning_message: "warnings.WarningMessage",
-    when: "Literal['config', 'collect', 'runtest']",
+    warning_message: warnings.WarningMessage,
+    when: Literal["config", "collect", "runtest"],
     nodeid: str,
-    location: Optional[Tuple[str, int, str]],
+    location: tuple[str, int, str] | None,
 ) -> None:
     """Process a warning captured by the internal pytest warnings plugin.
 
@@ -1197,8 +1208,8 @@ def pytest_warning_recorded(
 
 
 def pytest_markeval_namespace(  # type:ignore[empty-body]
-    config: "Config",
-) -> Dict[str, Any]:
+    config: Config,
+) -> dict[str, Any]:
     """Called when constructing the globals dictionary used for
     evaluating string conditions in xfail/skipif markers.
 
@@ -1226,9 +1237,9 @@ def pytest_markeval_namespace(  # type:ignore[empty-body]
 
 
 def pytest_internalerror(
-    excrepr: "ExceptionRepr",
-    excinfo: "ExceptionInfo[BaseException]",
-) -> Optional[bool]:
+    excrepr: ExceptionRepr,
+    excinfo: ExceptionInfo[BaseException],
+) -> bool | None:
     """Called for internal errors.
 
     Return True to suppress the fallback handling of printing an
@@ -1245,7 +1256,7 @@ def pytest_internalerror(
 
 
 def pytest_keyboard_interrupt(
-    excinfo: "ExceptionInfo[Union[KeyboardInterrupt, Exit]]",
+    excinfo: ExceptionInfo[KeyboardInterrupt | Exit],
 ) -> None:
     """Called for keyboard interrupt.
 
@@ -1259,9 +1270,9 @@ def pytest_keyboard_interrupt(
 
 
 def pytest_exception_interact(
-    node: Union["Item", "Collector"],
-    call: "CallInfo[Any]",
-    report: Union["CollectReport", "TestReport"],
+    node: Item | Collector,
+    call: CallInfo[Any],
+    report: CollectReport | TestReport,
 ) -> None:
     """Called when an exception was raised which can potentially be
     interactively handled.
@@ -1290,7 +1301,7 @@ def pytest_exception_interact(
     """
 
 
-def pytest_enter_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
+def pytest_enter_pdb(config: Config, pdb: pdb.Pdb) -> None:
     """Called upon pdb.set_trace().
 
     Can be used by plugins to take special action just before the python
@@ -1306,7 +1317,7 @@ def pytest_enter_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
     """
 
 
-def pytest_leave_pdb(config: "Config", pdb: "pdb.Pdb") -> None:
+def pytest_leave_pdb(config: Config, pdb: pdb.Pdb) -> None:
     """Called when leaving pdb (e.g. with continue after pdb.set_trace()).
 
     Can be used by plugins to take special action just after the python

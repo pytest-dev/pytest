@@ -1,4 +1,6 @@
 # mypy: allow-untyped-defs
+from __future__ import annotations
+
 import dataclasses
 import importlib.metadata
 import os
@@ -1455,16 +1457,30 @@ def test_issue_9765(pytester: Pytester) -> None:
         }
     )
 
-    subprocess.run([sys.executable, "setup.py", "develop"], check=True)
+    subprocess.run(
+        [sys.executable, "-Im", "pip", "install", "-e", "."],
+        check=True,
+    )
     try:
         # We are using subprocess.run rather than pytester.run on purpose.
         # pytester.run is adding the current directory to PYTHONPATH which avoids
         # the bug. We also use pytest rather than python -m pytest for the same
         # PYTHONPATH reason.
         subprocess.run(
-            ["pytest", "my_package"], capture_output=True, check=True, text=True
+            ["pytest", "my_package"],
+            capture_output=True,
+            check=True,
+            encoding="utf-8",
+            text=True,
         )
     except subprocess.CalledProcessError as exc:
         raise AssertionError(
             f"pytest command failed:\n{exc.stdout=!s}\n{exc.stderr=!s}"
         ) from exc
+
+
+def test_no_terminal_plugin(pytester: Pytester) -> None:
+    """Smoke test to ensure pytest can execute without the terminal plugin (#9422)."""
+    pytester.makepyfile("def test(): assert 1 == 2")
+    result = pytester.runpytest("-pno:terminal", "-s")
+    assert result.ret == ExitCode.TESTS_FAILED

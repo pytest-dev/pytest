@@ -109,7 +109,7 @@ achieves this by receiving a special ``request`` object which gives
 access to :ref:`the requesting test context <request-context>` such
 as the ``cls`` attribute, denoting the class from which the fixture
 is used.  This architecture de-couples fixture writing from actual test
-code and allows re-use of the fixture by a minimal reference, the fixture
+code and allows reuse of the fixture by a minimal reference, the fixture
 name.  So let's write an actual ``unittest.TestCase`` class using our
 fixture definition:
 

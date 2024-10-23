@@ -1,13 +1,10 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import sys
-from typing import Dict
 from typing import Iterable
-from typing import List
-from typing import Optional
 from typing import Sequence
-from typing import Tuple
-from typing import Union
 
 import iniconfig
 
@@ -32,7 +29,7 @@ def _parse_ini_config(path: Path) -> iniconfig.IniConfig:
 
 def load_config_dict_from_file(
     filepath: Path,
-) -> Optional[Dict[str, Union[str, List[str]]]]:
+) -> dict[str, str | list[str]] | None:
     """Load pytest configuration from the given file path, if supported.
 
     Return None if the file does not contain valid pytest configuration.
@@ -77,7 +74,7 @@ def load_config_dict_from_file(
             # TOML supports richer data types than ini files (strings, arrays, floats, ints, etc),
             # however we need to convert all scalar values to str for compatibility with the rest
             # of the configuration system, which expects strings only.
-            def make_scalar(v: object) -> Union[str, List[str]]:
+            def make_scalar(v: object) -> str | list[str]:
                 return v if isinstance(v, list) else str(v)
 
             return {k: make_scalar(v) for k, v in result.items()}
@@ -88,7 +85,7 @@ def load_config_dict_from_file(
 def locate_config(
     invocation_dir: Path,
     args: Iterable[Path],
-) -> Tuple[Optional[Path], Optional[Path], Dict[str, Union[str, List[str]]]]:
+) -> tuple[Path | None, Path | None, dict[str, str | list[str]]]:
     """Search in the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict)."""
     config_names = [
@@ -101,7 +98,7 @@ def locate_config(
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
         args = [invocation_dir]
-    found_pyproject_toml: Optional[Path] = None
+    found_pyproject_toml: Path | None = None
     for arg in args:
         argpath = absolutepath(arg)
         for base in (argpath, *argpath.parents):
@@ -122,7 +119,7 @@ def get_common_ancestor(
     invocation_dir: Path,
     paths: Iterable[Path],
 ) -> Path:
-    common_ancestor: Optional[Path] = None
+    common_ancestor: Path | None = None
     for path in paths:
         if not path.exists():
             continue
@@ -144,7 +141,7 @@ def get_common_ancestor(
     return common_ancestor
 
 
-def get_dirs_from_args(args: Iterable[str]) -> List[Path]:
+def get_dirs_from_args(args: Iterable[str]) -> list[Path]:
     def is_option(x: str) -> bool:
         return x.startswith("-")
 
@@ -171,11 +168,11 @@ CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supporte
 
 def determine_setup(
     *,
-    inifile: Optional[str],
+    inifile: str | None,
     args: Sequence[str],
-    rootdir_cmd_arg: Optional[str],
+    rootdir_cmd_arg: str | None,
     invocation_dir: Path,
-) -> Tuple[Path, Optional[Path], Dict[str, Union[str, List[str]]]]:
+) -> tuple[Path, Path | None, dict[str, str | list[str]]]:
     """Determine the rootdir, inifile and ini configuration values from the
     command line arguments.
 
@@ -192,7 +189,7 @@ def determine_setup(
     dirs = get_dirs_from_args(args)
     if inifile:
         inipath_ = absolutepath(inifile)
-        inipath: Optional[Path] = inipath_
+        inipath: Path | None = inipath_
         inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
             rootdir = inipath_.parent
