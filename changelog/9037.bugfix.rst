@@ -1,0 +1,1 @@
+Honor :confval:`disable_test_id_escaping_and_forfeit_all_rights_to_community_support` when escaping ids in parametrized tests.

@@ -21,7 +21,6 @@ from typing import Union
 import warnings
 
 from .._code import getfslineno
-from ..compat import ascii_escaped
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
@@ -97,7 +96,6 @@ class ParameterSet(NamedTuple):
         if id is not None:
             if not isinstance(id, str):
                 raise TypeError(f"Expected id to be a string, got {type(id)}: {id!r}")
-            id = ascii_escaped(id)
         return cls(values, marks, id)
 
     @classmethod

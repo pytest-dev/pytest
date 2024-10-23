@@ -234,8 +234,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     recwarn -- .../_pytest/recwarn.py:35
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
-        See https://docs.pytest.org/en/latest/how-to/capture-warnings.html for information
-        on warning categories.
+        See :ref:`warnings` for information on warning categories.
 
     tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:242
         Return a :class:`pytest.TempPathFactory` instance for the test session.
