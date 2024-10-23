@@ -42,7 +42,6 @@ from _pytest._code import Source
 from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
@@ -154,12 +153,10 @@ def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
 
 
 def getfixturemarker(obj: object) -> FixtureFunctionMarker | None:
-    """Return fixturemarker or None if it doesn't exist or raised
-    exceptions."""
-    return cast(
-        Optional[FixtureFunctionMarker],
-        safe_getattr(obj, "_pytestfixturefunction", None),
-    )
+    """Return fixturemarker or None if it doesn't exist"""
+    if isinstance(obj, FixtureFunctionDefinition):
+        return obj._fixture_function_marker
+    return None
 
 
 # Algorithm for sorting on a per-parametrized resource setup basis.
@@ -1150,31 +1147,6 @@ def pytest_fixture_setup(
     return result
 
 
-def wrap_function_to_error_out_if_called_directly(
-    function: FixtureFunction,
-    fixture_marker: FixtureFunctionMarker,
-) -> FixtureFunction:
-    """Wrap the given fixture function so we can raise an error about it being called directly,
-    instead of used as an argument in a test function."""
-    name = fixture_marker.name or function.__name__
-    message = (
-        f'Fixture "{name}" called directly. Fixtures are not meant to be called directly,\n'
-        "but are created automatically when test functions request them as parameters.\n"
-        "See https://docs.pytest.org/en/stable/explanation/fixtures.html for more information about fixtures, and\n"
-        "https://docs.pytest.org/en/stable/deprecations.html#calling-fixtures-directly about how to update your code."
-    )
-
-    @functools.wraps(function)
-    def result(*args, **kwargs):
-        fail(message, pytrace=False)
-
-    # Keep reference to the original function in our own custom attribute so we don't unwrap
-    # further than this point and lose useful wrappings like @mock.patch (#3774).
-    result.__pytest_wrapped__ = _PytestWrapper(function)  # type: ignore[attr-defined]
-
-    return cast(FixtureFunction, result)
-
-
 @final
 @dataclasses.dataclass(frozen=True)
 class FixtureFunctionMarker:
@@ -1189,11 +1161,11 @@ class FixtureFunctionMarker:
     def __post_init__(self, _ispytest: bool) -> None:
         check_ispytest(_ispytest)
 
-    def __call__(self, function: FixtureFunction) -> FixtureFunction:
+    def __call__(self, function: FixtureFunction) -> FixtureFunctionDefinition:
         if inspect.isclass(function):
             raise ValueError("class fixtures not supported (maybe in the future)")
 
-        if getattr(function, "_pytestfixturefunction", False):
+        if isinstance(function, FixtureFunctionDefinition):
             raise ValueError(
                 f"@pytest.fixture is being applied more than once to the same function {function.__name__!r}"
             )
@@ -1201,7 +1173,7 @@ class FixtureFunctionMarker:
         if hasattr(function, "pytestmark"):
             warnings.warn(MARKED_FIXTURE, stacklevel=2)
 
-        function = wrap_function_to_error_out_if_called_directly(function, self)
+        fixture_definition = FixtureFunctionDefinition(function, self)
 
         name = self.name or function.__name__
         if name == "request":
@@ -1211,21 +1183,56 @@ class FixtureFunctionMarker:
                 pytrace=False,
             )
 
-        # Type ignored because https://github.com/python/mypy/issues/2087.
-        function._pytestfixturefunction = self  # type: ignore[attr-defined]
-        return function
+        return fixture_definition
+
+
+class FixtureFunctionDefinition:
+    def __init__(
+        self,
+        function: Callable[..., Any],
+        fixture_function_marker: FixtureFunctionMarker,
+        instance: type | None = None,
+    ):
+        self.name = fixture_function_marker.name or function.__name__
+        self.__name__ = self.name
+        self._fixture_function_marker = fixture_function_marker
+        self._fixture_function = function
+        self._instance = instance
+
+    def __repr__(self) -> str:
+        return f"<pytest_fixture({self._fixture_function})>"
+
+    def __get__(self, instance, owner=None):
+        return FixtureFunctionDefinition(
+            self._fixture_function, self._fixture_function_marker, instance
+        )
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        message = (
+            f'Fixture "{self.name}" called directly. Fixtures are not meant to be called directly,\n'
+            "but are created automatically when test functions request them as parameters.\n"
+            "See https://docs.pytest.org/en/stable/explanation/fixtures.html for more information about fixtures, and\n"
+            "https://docs.pytest.org/en/stable/deprecations.html#calling-fixtures-directly"
+        )
+        fail(message, pytrace=False)
+
+    def _get_wrapped_function(self) -> Callable[..., Any]:
+        if self._instance is None:
+            return self._fixture_function
+
+        return cast(Callable[..., Any], self._fixture_function.__get__(self._instance))
 
 
 @overload
 def fixture(
-    fixture_function: FixtureFunction,
+    fixture_function: Callable[..., object],
     *,
     scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
     name: str | None = ...,
-) -> FixtureFunction: ...
+) -> FixtureFunctionDefinition: ...
 
 
 @overload
@@ -1237,7 +1244,7 @@ def fixture(
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
     name: str | None = None,
-) -> FixtureFunctionMarker: ...
+) -> FixtureFunctionDefinition: ...
 
 
 def fixture(
@@ -1248,7 +1255,7 @@ def fixture(
     autouse: bool = False,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = None,
     name: str | None = None,
-) -> FixtureFunctionMarker | FixtureFunction:
+) -> FixtureFunctionMarker | FixtureFunctionDefinition:
     """Decorator to mark a fixture factory function.
 
     This decorator can be used, with or without parameters, to define a
@@ -1318,7 +1325,7 @@ def fixture(
 def yield_fixture(
     fixture_function=None,
     *args,
-    scope="function",
+    scope: _ScopeName = "function",
     params=None,
     autouse=False,
     ids=None,
@@ -1736,33 +1743,29 @@ class FixtureManager:
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getattr() ignores such exceptions.
             obj_ub = safe_getattr(holderobj_tp, name, None)
-            marker = getfixturemarker(obj_ub)
-            if not isinstance(marker, FixtureFunctionMarker):
-                # Magic globals  with __getattr__ might have got us a wrong
-                # fixture attribute.
-                continue
+            if type(obj_ub) is FixtureFunctionDefinition:
+                marker = obj_ub._fixture_function_marker
+                if marker.name:
+                    name = marker.name
 
-            # OK we know it is a fixture -- now safe to look up on the _instance_.
-            obj = getattr(holderobj, name)
+                # OK we know it is a fixture -- now safe to look up on the _instance_.
+                try:
+                    obj = getattr(holderobj, name)
+                # if the fixture is named in the decorator we cannot find it in the module
+                except AttributeError:
+                    obj = obj_ub
 
-            if marker.name:
-                name = marker.name
+                func = get_real_method(obj, holderobj)
 
-            # During fixture definition we wrap the original fixture function
-            # to issue a warning if called directly, so here we unwrap it in
-            # order to not emit the warning when pytest itself calls the
-            # fixture function.
-            func = get_real_method(obj, holderobj)
-
-            self._register_fixture(
-                name=name,
-                nodeid=nodeid,
-                func=func,
-                scope=marker.scope,
-                params=marker.params,
-                ids=marker.ids,
-                autouse=marker.autouse,
-            )
+                self._register_fixture(
+                    name=name,
+                    nodeid=nodeid,
+                    func=func,
+                    scope=marker.scope,
+                    params=marker.params,
+                    ids=marker.ids,
+                    autouse=marker.autouse,
+                )
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node
