@@ -112,6 +112,10 @@ def getfuncargnames(
 
     The name parameter should be the original name in which the function was collected.
     """
+    # if name == "session_request":
+    #     import pdb
+    #     breakpoint()
+
     # TODO(RonnyPfannschmidt): This function should be refactored when we
     # revisit fixtures. The fixture mechanism should ask the node for
     # the fixture names, and not try to obtain directly from the
@@ -226,6 +230,20 @@ def get_real_func(obj):
         )
     if isinstance(obj, functools.partial):
         obj = obj.func
+    return obj
+
+
+def get_real_method(obj, holder):
+    """Attempt to obtain the real function object that might be wrapping
+    ``obj``, while at the same time returning a bound method to ``holder`` if
+    the original object was a bound method."""
+    try:
+        is_method = hasattr(obj, "__func__")
+        obj = get_real_func(obj)
+    except Exception:  # pragma: no cover
+        return obj
+    if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
+        obj = obj.__get__(holder)
     return obj
 
 

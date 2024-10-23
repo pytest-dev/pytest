@@ -44,6 +44,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
+from _pytest.compat import get_real_method
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
@@ -1778,12 +1779,15 @@ class FixtureManager:
             # access below can raise. safe_getattr() ignores such exceptions.
             obj_ub = safe_getattr(holderobj_tp, name, None)
             if isinstance(obj_ub, FixtureFunctionDefinition):
-                marker = getfixturemarker(obj_ub)
-                if marker is None:
-                    raise Exception("marker was none")
+                marker = obj_ub._fixture_function_marker
                 if marker.name:
                     name = marker.name
-                func = get_real_func(obj_ub)
+
+                # OK we know it is a fixture -- now safe to look up on the _instance_.
+                obj = getattr(holderobj_tp, name)
+
+                func = get_real_method(obj, holderobj)
+
                 self._register_fixture(
                     name=name,
                     nodeid=nodeid,
