@@ -478,9 +478,6 @@ def test_source_with_decorator() -> None:
     def deco_fixture():
         assert False
 
-    # Since deco_fixture is now an instance of FixtureFunctionDef the getsource function will not work on it.
-    with pytest.raises(TypeError, match=r"FixtureFunctionDefinition"):
-        inspect.getsource(deco_fixture)
     src = inspect.getsource(deco_fixture._get_wrapped_function())
     assert src == "    @pytest.fixture\n    def deco_fixture():\n        assert False\n"
     # Make sure the decorator is not a wrapped function

@@ -1777,15 +1777,13 @@ class FixtureManager:
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getattr() ignores such exceptions.
             obj_ub = safe_getattr(holderobj_tp, name, None)
-            marker = getfixturemarker(obj_ub)
-            if not isinstance(marker, FixtureFunctionMarker):
-                # Magic globals  with __getattr__ might have got us a wrong
-                # fixture attribute.
-                continue
-            if isinstance(obj, FixtureFunctionDefinition):
+            if isinstance(obj_ub, FixtureFunctionDefinition):
+                marker = getfixturemarker(obj_ub)
+                if marker is None:
+                    raise Exception("marker was none")
                 if marker.name:
                     name = marker.name
-                func = obj_ub.get_real_func()
+                func = get_real_func(obj_ub)
                 self._register_fixture(
                     name=name,
                     nodeid=nodeid,
