@@ -1778,13 +1778,17 @@ class FixtureManager:
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getattr() ignores such exceptions.
             obj_ub = safe_getattr(holderobj_tp, name, None)
-            if isinstance(obj_ub, FixtureFunctionDefinition):
+            if type(obj_ub) is FixtureFunctionDefinition:
                 marker = obj_ub._fixture_function_marker
                 if marker.name:
                     name = marker.name
 
                 # OK we know it is a fixture -- now safe to look up on the _instance_.
-                obj = getattr(holderobj_tp, name)
+                try:
+                    obj = getattr(holderobj, name)
+                # if the fixture is named in the decorator we cannot find it in the module
+                except AttributeError:
+                    obj = obj_ub
 
                 func = get_real_method(obj, holderobj)
 
