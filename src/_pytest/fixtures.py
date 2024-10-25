@@ -135,22 +135,35 @@ def get_scope_package(
 
 
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
+    """
+    Returns the parent node of the specified scope for a given node.
+
+    Based on the provided scope (Function, Class, Module, Package, or Session),
+    this function retrieves the appropriate parent node using the `getparent()` method.
+    A mapping of scope types to their corresponding pytest classes is used to determine
+    which parent node to return.
+
+    Parameters:
+    - node (nodes.Node): The node for which the parent node is being retrieved.
+    - scope (Scope): The scope level (e.g., Function, Class, Module) for which the parent node is sought.
+
+    Returns:
+    - nodes.Node | None: The parent node corresponding to the specified scope, or None if not found.
+    """
     import _pytest.python
 
-    if scope is Scope.Function:
-        # Type ignored because this is actually safe, see:
-        # https://github.com/python/mypy/issues/4717
-        return node.getparent(nodes.Item)  # type: ignore[type-abstract]
-    elif scope is Scope.Class:
-        return node.getparent(_pytest.python.Class)
-    elif scope is Scope.Module:
-        return node.getparent(_pytest.python.Module)
-    elif scope is Scope.Package:
-        return node.getparent(_pytest.python.Package)
-    elif scope is Scope.Session:
-        return node.getparent(_pytest.main.Session)
-    else:
-        assert_never(scope)
+    scope_map = {
+        "function": nodes.Item,
+        "class": _pytest.python.Class,
+        "module": _pytest.python.Module,
+        "package": _pytest.python.Package,
+        "session": _pytest.main.Session,
+    }
+
+    parent_class = scope_map.get(scope.value)
+    # Type ignored because this is actually safe, see:
+    # https://github.com/python/mypy/issues/4717
+    return node.getparent(parent_class)  # type: ignore[arg-type]
 
 
 def getfixturemarker(obj: object) -> FixtureFunctionMarker | None:
