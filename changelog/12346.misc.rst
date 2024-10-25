@@ -1,0 +1,1 @@
+Tests will now fail, instead of raising a warning, if they return any value other than None.

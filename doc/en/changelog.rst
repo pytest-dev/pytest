@@ -1462,7 +1462,7 @@ pytest 7.2.0 (2022-10-23)
 Deprecations
 ------------
 
-- `#10012 <https://github.com/pytest-dev/pytest/issues/10012>`_: Update :class:`pytest.PytestUnhandledCoroutineWarning` to a deprecation; it will raise an error in pytest 8.
+- `#10012 <https://github.com/pytest-dev/pytest/issues/10012>`_: Update ``pytest.PytestUnhandledCoroutineWarning`` to a deprecation; it will raise an error in pytest 8.
 
 
 - `#10396 <https://github.com/pytest-dev/pytest/issues/10396>`_: pytest no longer depends on the ``py`` library.  ``pytest`` provides a vendored copy of ``py.error`` and ``py.path`` modules but will use the ``py`` library if it is installed.  If you need other ``py.*`` modules, continue to install the deprecated ``py`` library separately, otherwise it can usually be removed as a dependency.
