@@ -137,8 +137,6 @@ class TestCollector:
 class TestCollectFS:
     def test_ignored_certain_directories(self, pytester: Pytester) -> None:
         tmp_path = pytester.path
-        ensure_file(tmp_path / "build" / "test_notfound.py")
-        ensure_file(tmp_path / "dist" / "test_notfound.py")
         ensure_file(tmp_path / "_darcs" / "test_notfound.py")
         ensure_file(tmp_path / "CVS" / "test_notfound.py")
         ensure_file(tmp_path / "{arch}" / "test_notfound.py")
@@ -275,6 +273,29 @@ class TestCollectFS:
 
         assert result.ret == ExitCode.OK
         result.assert_outcomes(passed=1)
+
+    known_build_dirs = pytest.mark.parametrize("build_dir", ["build", "dist"])
+    known_buildsystem_env = pytest.mark.parametrize(
+        "buildsystem_indicator_file", ["setup.py", "setup.cfg", "pyproject.toml"]
+    )
+
+    @known_build_dirs
+    @known_buildsystem_env
+    def test_build_dirs_collected(
+        self, pytester: Pytester, build_dir: str, buildsystem_indicator_file: str
+    ) -> None:
+        tmp_path = pytester.path
+        ensure_file(tmp_path / build_dir / "test_module.py").write_text(
+            "def test_hello(): pass", encoding="utf-8"
+        )
+
+        result = pytester.runpytest("--collect-only").stdout.str()
+        assert "test_module" in result
+
+        ensure_file(tmp_path / buildsystem_indicator_file)
+
+        result = pytester.runpytest("--collect-only").stdout.str()
+        assert "test_module" not in result
 
 
 class TestCollectPluginHookRelay:
