@@ -1235,7 +1235,7 @@ def test_usage_error_code(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_error_on_async_function(pytester: Pytester) -> None:  # TODO: Change this
+def test_error_on_async_function(pytester: Pytester) -> None:
     # In the below we .close() the coroutine only to avoid
     # "RuntimeWarning: coroutine 'test_2' was never awaited"
     # which messes with other tests.
@@ -1254,16 +1254,16 @@ def test_error_on_async_function(pytester: Pytester) -> None:  # TODO: Change th
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
+            "*async def functions are not natively supported*",
             "*test_async.py::test_1*",
             "*test_async.py::test_2*",
             "*test_async.py::test_3*",
-            "*async def functions are not natively supported*",
         ]
     )
     result.assert_outcomes(failed=3)
 
 
-def test_error_on_async_gen_function(pytester: Pytester) -> None:  # TODO: Change this
+def test_error_on_async_gen_function(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_async="""
         async def test_1():
@@ -1277,12 +1277,13 @@ def test_error_on_async_gen_function(pytester: Pytester) -> None:  # TODO: Chang
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
+            "*async def functions are not natively supported*",
             "*test_async.py::test_1*",
             "*test_async.py::test_2*",
             "*test_async.py::test_3*",
-            "*async def functions are not natively supported*",
         ]
     )
+    result.assert_outcomes(failed=3)
 
 
 def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
@@ -1368,7 +1369,7 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
     popen.stderr.close()
 
 
-def test_function_return_non_none_warning(pytester: Pytester) -> None:
+def test_function_return_non_none_error(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         def test_stuff():
@@ -1376,6 +1377,7 @@ def test_function_return_non_none_warning(pytester: Pytester) -> None:
     """
     )
     res = pytester.runpytest()
+    res.assert_outcomes(failed=1)
     res.stdout.fnmatch_lines(["*Did you mean to use `assert` instead of `return`?*"])
 
 

@@ -51,7 +51,6 @@ from _pytest.compat import safe_isclass
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
-from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
@@ -74,7 +73,6 @@ from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
-from _pytest.warning_types import PytestReturnNotNoneWarning
 
 
 if TYPE_CHECKING:
@@ -135,48 +133,36 @@ def pytest_configure(config: Config) -> None:
     )
 
 
-@final
-class PytestUnhandledCoroutineError(UsageError):
-    """An unraisable exception resulted in an error.
-
-    Unraisable exceptions are exceptions raised in :meth:`__del__ <object.__del__>`
-    implementations and similar situations when the exception cannot be raised
-    as normal.
-    """
-
-
-def async_warn_and_skip(nodeid: str) -> None:
-    msg = "async def functions are not natively supported and have been skipped.\n"
-    msg += (
+def async_fail(nodeid: str) -> None:
+    msg = (
+        "async def functions are not natively supported.\n"
         "You need to install a suitable plugin for your async framework, for example:\n"
+        "  - anyio\n"
+        "  - pytest-asyncio\n"
+        "  - pytest-tornasync\n"
+        "  - pytest-trio\n"
+        "  - pytest-twisted"
     )
-    msg += "  - anyio\n"
-    msg += "  - pytest-asyncio\n"
-    msg += "  - pytest-tornasync\n"
-    msg += "  - pytest-trio\n"
-    msg += "  - pytest-twisted"
-    raise PytestUnhandledCoroutineError(
-        msg.format(nodeid)
-    )  # TODO: This is the warning to look at
-    skip(reason="async def function and no async plugin installed (see warnings)")
+    fail(msg, pytrace=False)
 
 
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     testfunction = pyfuncitem.obj
     if is_async_function(testfunction):
-        async_warn_and_skip(pyfuncitem.nodeid)
+        async_fail(pyfuncitem.nodeid)
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
-        async_warn_and_skip(pyfuncitem.nodeid)
+        async_fail(pyfuncitem.nodeid)
     elif result is not None:
-        warnings.warn(
-            PytestReturnNotNoneWarning(
-                f"Expected None, but {pyfuncitem.nodeid} returned {result!r}, which will be an error in a "
-                "future version of pytest.  Did you mean to use `assert` instead of `return`?"
-            )
+        fail(
+            (
+                f"Expected None, but test returned {result!r}. "
+                "Did you mean to use `assert` instead of `return`?"
+            ),
+            pytrace=False,
         )
     return True
 
