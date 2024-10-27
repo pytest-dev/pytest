@@ -37,10 +37,7 @@ def test_real_func_loop_limit() -> None:
 
     with pytest.raises(
         ValueError,
-        match=(
-            "could not find real function of <Evil left=900>\n"
-            "stopped at <Evil left=900>"
-        ),
+        match=("wrapper loop when unwrapping <Evil left=998>"),
     ):
         get_real_func(evil)
 

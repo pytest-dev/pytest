@@ -209,21 +209,11 @@ def get_real_func(obj):
     :func:`functools.wraps`, or :func:`functools.partial`, or :func:`pytest.fixture`."""
     from _pytest.fixtures import FixtureFunctionDefinition
 
-    start_obj = obj
-    for _ in range(100):
-        if isinstance(obj, FixtureFunctionDefinition):
-            obj = obj._get_wrapped_function()
-            break
-        new_obj = getattr(obj, "__wrapped__", None)
-        if new_obj is None:
-            break
-        obj = new_obj
-    else:
-        from _pytest._io.saferepr import saferepr
+    obj = inspect.unwrap(obj, stop=lambda x: type(x) is FixtureFunctionDefinition)
 
-        raise ValueError(
-            f"could not find real function of {saferepr(start_obj)}\nstopped at {saferepr(obj)}"
-        )
+    if type(obj) == FixtureFunctionDefinition:
+        obj = obj._get_wrapped_function()
+
     if isinstance(obj, functools.partial):
         obj = obj.func
     return obj
