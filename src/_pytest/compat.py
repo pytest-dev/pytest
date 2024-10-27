@@ -112,10 +112,6 @@ def getfuncargnames(
 
     The name parameter should be the original name in which the function was collected.
     """
-    # if name == "session_request":
-    #     import pdb
-    #     breakpoint()
-
     # TODO(RonnyPfannschmidt): This function should be refactored when we
     # revisit fixtures. The fixture mechanism should ask the node for
     # the fixture names, and not try to obtain directly from the

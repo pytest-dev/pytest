@@ -152,6 +152,7 @@ def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
         assert_never(scope)
 
 
+# TODO: Try to use FixtureFunctionDefinition instead of the marker
 def getfixturemarker(obj: object) -> FixtureFunctionMarker | None:
     """Return fixturemarker or None if it doesn't exist"""
     if isinstance(obj, FixtureFunctionDefinition):
@@ -1220,6 +1221,7 @@ class FixtureFunctionMarker:
         return fixture_definition
 
 
+# TODO: paramspec/return type annotation tracking and storing
 class FixtureFunctionDefinition:
     def __init__(
         self,
