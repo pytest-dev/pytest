@@ -2996,7 +2996,7 @@ class TestFixtureMarker:
             *3 passed*
         """
         )
-        result.stdout.no_fnmatch_line("*error*")
+        assert result.ret == 0
 
     def test_fixture_finalizer(self, pytester: Pytester) -> None:
         pytester.makeconftest(
