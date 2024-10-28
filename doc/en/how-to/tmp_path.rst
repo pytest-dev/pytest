@@ -139,7 +139,7 @@ are automatically created under a base temporary directory,
 in a structure that depends on the ``--basetemp`` option:
 
 - By default (when the ``--basetemp`` option is not set),
-  the temporary directories will follow this this template:
+  the temporary directories will follow this template:
 
   .. code-block:: text
 
