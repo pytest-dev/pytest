@@ -149,7 +149,7 @@ in a structure that depends on the ``--basetemp`` option:
 
   - ``{temproot}`` is the system temporary directory
     as determined by :py:func:`tempfile.gettempdir`.
-    It can be overridden by the ``PYTEST_DEBUG_TEMPROOT`` environment variable.
+    It can be overridden by the :envvar:`PYTEST_DEBUG_TEMPROOT` environment variable.
   - ``{user}`` is the user name running the tests,
   - ``{num}`` is a number that is incremented with each test suite run
   - ``{testname}`` is a sanitized version of :py:attr:`the name of the current test <_pytest.nodes.Node.name>`.
