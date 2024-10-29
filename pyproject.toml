@@ -232,7 +232,6 @@ disable = [
     "deprecated-attribute",
     "deprecated-class",
     "deprecated-typing-alias",
-    "dict-init-mutate",
     "disallowed-name",                        # foo / bar are used often in tests
     "duplicate-code",
     "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
