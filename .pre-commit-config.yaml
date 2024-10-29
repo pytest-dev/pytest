@@ -61,7 +61,7 @@ repos:
         entry: pylint
         language: system
         types: [python]
-        args: ["-rn", "-sn", "--fail-on=I"]
+        args: ["-rn", "-sn", "--fail-on=I", "--enable-all-extentions"]
         require_serial: true
         stages: [manual]
     -   id: rst
