@@ -811,6 +811,8 @@ class FixtureLookupError(LookupError):
             stack = stack[:-1]
         for function in stack:
             fspath, lineno = getfslineno(function)
+            fspath = self.request.config.cwd_relative_path(fspath)
+
             try:
                 lines, _ = inspect.getsourcelines(get_real_func(function))
             except (OSError, IndexError, TypeError):

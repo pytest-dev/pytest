@@ -64,6 +64,9 @@ def catch_warnings_for_item(
             yield
         finally:
             for warning_message in log:
+                warning_message.filename = config.cwd_relative_path(
+                    warning_message.filename
+                )
                 ihook.pytest_warning_recorded.call_historic(
                     kwargs=dict(
                         warning_message=warning_message,

@@ -1175,13 +1175,17 @@ class Config:
                 sys.stderr.write(f"INTERNALERROR> {line}\n")
                 sys.stderr.flush()
 
+    def cwd_relative_path(self, fullpath: pathlib.Path | os.PathLike[str] | str) -> str:
+        path = pathlib.Path(str(fullpath))
+        return bestrelpath(self.invocation_params.dir, path)
+
     def cwd_relative_nodeid(self, nodeid: str) -> str:
         # nodeid's are relative to the rootpath, compute relative to cwd.
         if self.invocation_params.dir != self.rootpath:
             base_path_part, *nodeid_part = nodeid.split("::")
             # Only process path part
             fullpath = self.rootpath / base_path_part
-            relative_path = bestrelpath(self.invocation_params.dir, fullpath)
+            relative_path = self.cwd_relative_path(fullpath)
 
             nodeid = "::".join([relative_path, *nodeid_part])
         return nodeid

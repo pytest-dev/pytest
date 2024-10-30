@@ -6,6 +6,7 @@ import sys
 import warnings
 
 from _pytest.fixtures import FixtureRequest
+from _pytest.pathlib import bestrelpath
 from _pytest.pytester import Pytester
 import pytest
 
@@ -589,7 +590,7 @@ def test_group_warnings_by_message(pytester: Pytester) -> None:
             "test_group_warnings_by_message.py::test_foo[[]3[]]",
             "test_group_warnings_by_message.py::test_foo[[]4[]]",
             "test_group_warnings_by_message.py::test_foo_1",
-            "  */test_group_warnings_by_message.py:*: UserWarning: foo",
+            "  test_group_warnings_by_message.py:*: UserWarning: foo",
             "    warnings.warn(UserWarning(msg))",
             "",
             "test_group_warnings_by_message.py::test_bar[[]0[]]",
@@ -597,7 +598,7 @@ def test_group_warnings_by_message(pytester: Pytester) -> None:
             "test_group_warnings_by_message.py::test_bar[[]2[]]",
             "test_group_warnings_by_message.py::test_bar[[]3[]]",
             "test_group_warnings_by_message.py::test_bar[[]4[]]",
-            "  */test_group_warnings_by_message.py:*: UserWarning: bar",
+            "  test_group_warnings_by_message.py:*: UserWarning: bar",
             "    warnings.warn(UserWarning(msg))",
             "",
             "-- Docs: *",
@@ -617,11 +618,11 @@ def test_group_warnings_by_message_summary(pytester: Pytester) -> None:
             f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "test_1.py: 21 warnings",
             "test_2.py: 1 warning",
-            "  */test_1.py:10: UserWarning: foo",
+            "  test_1.py:10: UserWarning: foo",
             "    warnings.warn(UserWarning(msg))",
             "",
             "test_1.py: 20 warnings",
-            "  */test_1.py:10: UserWarning: bar",
+            "  test_1.py:10: UserWarning: bar",
             "    warnings.warn(UserWarning(msg))",
             "",
             "-- Docs: *",
@@ -762,10 +763,11 @@ class TestStackLevel:
             """
         )
         result = pytester.runpytest_subprocess()
+        relative_path = bestrelpath(pytester.path, testfile)
         # with stacklevel=2 the warning should originate from the above created test file
         result.stdout.fnmatch_lines_random(
             [
-                f"*{testfile}:3*",
+                f"*{relative_path}:3*",
                 "*Unknown pytest.mark.unknown*",
             ]
         )
@@ -837,3 +839,29 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
         else []
     )
     result.stdout.fnmatch_lines([*expected_extra, "*1 passed*"])
+
+
+@pytest.mark.filterwarnings("always::UserWarning")
+def test_output_relative_path_when_warnings(pytester: Pytester) -> None:
+    pytester.makeini("[pytest]")
+    pytester.makepyfile(
+        **{
+            "tests/test_p1": """
+        import pytest
+
+        @pytest.mark.unknown_mark
+        def test_pass():
+            pass
+        """
+        }
+    )
+    result = pytester.runpytest()
+
+    relative_path = os.path.join("tests", "test_p1.py")
+    result.stdout.fnmatch_lines(
+        [
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
+            f"{relative_path}:3",
+            f"* {relative_path}:3: PytestUnknownMarkWarning: Unknown pytest.mark.unknown_mark - is this a typo?*",
+        ]
+    )

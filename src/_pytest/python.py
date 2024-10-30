@@ -519,8 +519,9 @@ def importtestmodule(
             else exc_info.exconly()
         )
         formatted_tb = str(exc_repr)
+        relative_path = config.cwd_relative_path(path)
         raise nodes.Collector.CollectError(
-            f"ImportError while importing test module '{path}'.\n"
+            f"ImportError while importing test module '{relative_path}'.\n"
             "Hint: make sure your test modules/packages have valid Python names.\n"
             "Traceback:\n"
             f"{formatted_tb}"

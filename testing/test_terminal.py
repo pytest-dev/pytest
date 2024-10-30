@@ -3069,6 +3069,21 @@ def test_xpass_output(pytester: Pytester) -> None:
     )
 
 
+def test_output_relative_path_by_fixture(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        **{
+            "tests/test_p1": """
+        def test_pass(miss_setup):
+            print('hi there')
+        """
+        }
+    )
+    result = pytester.runpytest("-rX")
+
+    relative_path = os.path.join("tests", "test_p1.py")
+    result.stdout.fnmatch_lines([f"file {relative_path}, line 1"])
+
+
 class TestNodeIDHandling:
     def test_nodeid_handling_windows_paths(self, pytester: Pytester, tmp_path) -> None:
         """Test the correct handling of Windows-style paths with backslashes."""
