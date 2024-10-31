@@ -73,6 +73,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
+from _pytest.warning_types import PytestRemovedIn9Warning
 
 
 if sys.version_info < (3, 11):
@@ -575,6 +576,7 @@ class FixtureRequest(abc.ABC):
         # The are no fixtures with this name applicable for the function.
         if not fixturedefs:
             raise FixtureLookupError(argname, self)
+
         # A fixture may override another fixture with the same name, e.g. a
         # fixture in a module can override a fixture in a conftest, a fixture in
         # a class can override a fixture in the module, and so on.
@@ -592,6 +594,32 @@ class FixtureRequest(abc.ABC):
         if -index > len(fixturedefs):
             raise FixtureLookupError(argname, self)
         fixturedef = fixturedefs[index]
+
+        if not inspect.iscoroutinefunction(self.function) and (
+            inspect.iscoroutinefunction(fixturedef.func)
+            or inspect.isasyncgenfunction(fixturedef.func)
+        ):
+            if fixturedef._autouse:
+                warnings.warn(
+                    PytestRemovedIn9Warning(
+                        "Sync test requested an async fixture with autouse=True. "
+                        "If you intended to use the fixture you may want to make the "
+                        "test asynchronous. If you did not intend to use it you should "
+                        "restructure your test setup. "
+                        "This will turn into an error in pytest 9."
+                    ),
+                    stacklevel=3,
+                )
+            else:
+                raise FixtureLookupError(
+                    argname,
+                    self,
+                    (
+                        "ERROR: Sync test requested async fixture. "
+                        "You may want to make the test asynchronous and run it with "
+                        "a suitable async framework test plugin."
+                    ),
+                )
 
         # Prepare a SubRequest object for calling the fixture.
         try:
@@ -805,7 +833,7 @@ class FixtureLookupError(LookupError):
         stack = [self.request._pyfuncitem.obj]
         stack.extend(map(lambda x: x.func, self.fixturestack))
         msg = self.msg
-        if msg is not None:
+        if msg is not None and len(stack) > 1:
             # The last fixture raise an error, let's present
             # it at the requesting side.
             stack = stack[:-1]
@@ -959,6 +987,8 @@ class FixtureDef(Generic[FixtureValue]):
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         *,
         _ispytest: bool = False,
+        # only used to emit a deprecationwarning, can be removed in pytest9
+        _autouse: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
         # The "base" node ID for the fixture.
@@ -1004,6 +1034,9 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
+
+        # only used to emit a deprecationwarning, can be removed in pytest9
+        self._autouse = _autouse
 
     @property
     def scope(self) -> _ScopeName:
@@ -1666,6 +1699,7 @@ class FixtureManager:
             params=params,
             ids=ids,
             _ispytest=True,
+            _autouse=autouse,
         )
 
         faclist = self._arg2fixturedefs.setdefault(name, [])

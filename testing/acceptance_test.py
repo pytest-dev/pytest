@@ -1286,6 +1286,93 @@ def test_error_on_async_gen_function(pytester: Pytester) -> None:
     result.assert_outcomes(failed=3)
 
 
+def test_error_on_sync_test_async_fixture(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture
+            async def async_fixture():
+                ...
+
+            def test_foo(async_fixture):
+                ...
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            (
+                "*ERROR: Sync test requested async fixture. "
+                "You may want to make the test asynchronous and run it with "
+                "a suitable async framework test plugin.*"
+            ),
+            "*ERROR test_sync.py::test_foo*",
+        ]
+    )
+    result.assert_outcomes(errors=1)
+
+
+def test_error_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture
+            async def async_fixture():
+                yield
+
+            def test_foo(async_fixture):
+                ...
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            (
+                "*ERROR: Sync test requested async fixture. "
+                "You may want to make the test asynchronous and run it with "
+                "a suitable async framework test plugin.*"
+            ),
+            "*ERROR test_sync.py::test_foo*",
+        ]
+    )
+    result.assert_outcomes(errors=1)
+
+
+def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            async def async_fixture():
+                ...
+
+            # We explicitly request the fixture to be able to
+            # suppress the RuntimeWarning for unawaited coroutine.
+            def test_foo(async_fixture):
+                try:
+                    async_fixture.send(None)
+                except StopIteration:
+                    pass
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            (
+                "*Sync test requested an async fixture with autouse=True. "
+                "If you intended to use the fixture you may want to make the "
+                "test asynchronous. If you did not intend to use it you should "
+                "restructure your test setup. "
+                "This will turn into an error in pytest 9.*"
+            ),
+        ]
+    )
+    result.assert_outcomes(passed=1)
+
+
 def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
     pytester.makepyfile(
         **{
