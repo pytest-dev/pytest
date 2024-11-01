@@ -297,6 +297,26 @@ class TestCollectFS:
         result = pytester.runpytest("--collect-only").stdout.str()
         assert "test_module" not in result
 
+    @known_build_dirs
+    def test_build_dirs_collected_when_setuptools_configuration_present(
+        self, pytester: Pytester, build_dir: str
+    ) -> None:
+        tmp_path = pytester.path
+        ensure_file(tmp_path / build_dir / "test_module.py").write_text(
+            "def test_hello(): pass", encoding="utf-8"
+        )
+
+        result = pytester.runpytest("--collect-only").stdout.str()
+        assert "test_module" in result
+
+        ensure_file(tmp_path / "setup.cfg")
+
+        result = pytester.runpytest("--collect-only").stdout.str()
+        assert "test_module" in result
+
+        ensure_file(tmp_path / "setup.py")
+        assert "test_module" not in result
+
 
 class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, pytester: Pytester) -> None:
