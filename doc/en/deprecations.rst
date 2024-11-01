@@ -251,7 +251,7 @@ Returning non-None value in test functions
 
 .. deprecated:: 7.2
 
-A :class:`pytest.PytestReturnNotNoneWarning` is now emitted if a test function returns something other than `None`.
+A ``pytest.PytestReturnNotNoneWarning`` is now emitted if a test function returns something other than `None`.
 
 This prevents a common mistake among beginners that expect that returning a `bool` would cause a test to pass or fail, for example:
 

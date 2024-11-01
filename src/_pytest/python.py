@@ -73,8 +73,6 @@ from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
-from _pytest.warning_types import PytestReturnNotNoneWarning
-from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 
 if TYPE_CHECKING:
@@ -135,36 +133,36 @@ def pytest_configure(config: Config) -> None:
     )
 
 
-def async_warn_and_skip(nodeid: str) -> None:
-    msg = "async def functions are not natively supported and have been skipped.\n"
-    msg += (
+def async_fail(nodeid: str) -> None:
+    msg = (
+        "async def functions are not natively supported.\n"
         "You need to install a suitable plugin for your async framework, for example:\n"
+        "  - anyio\n"
+        "  - pytest-asyncio\n"
+        "  - pytest-tornasync\n"
+        "  - pytest-trio\n"
+        "  - pytest-twisted"
     )
-    msg += "  - anyio\n"
-    msg += "  - pytest-asyncio\n"
-    msg += "  - pytest-tornasync\n"
-    msg += "  - pytest-trio\n"
-    msg += "  - pytest-twisted"
-    warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
-    skip(reason="async def function and no async plugin installed (see warnings)")
+    fail(msg, pytrace=False)
 
 
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     testfunction = pyfuncitem.obj
     if is_async_function(testfunction):
-        async_warn_and_skip(pyfuncitem.nodeid)
+        async_fail(pyfuncitem.nodeid)
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
-        async_warn_and_skip(pyfuncitem.nodeid)
+        async_fail(pyfuncitem.nodeid)
     elif result is not None:
-        warnings.warn(
-            PytestReturnNotNoneWarning(
-                f"Expected None, but {pyfuncitem.nodeid} returned {result!r}, which will be an error in a "
-                "future version of pytest.  Did you mean to use `assert` instead of `return`?"
-            )
+        fail(
+            (
+                f"Expected None, but test returned {result!r}. "
+                "Did you mean to use `assert` instead of `return`?"
+            ),
+            pytrace=False,
         )
     return True
 
@@ -924,7 +922,7 @@ class IdMaker:
         for idx, parameterset in enumerate(self.parametersets):
             if parameterset.id is not None:
                 # ID provided directly - pytest.param(..., id="...")
-                yield parameterset.id
+                yield _ascii_escaped_by_config(parameterset.id, self.config)
             elif self.ids and idx < len(self.ids) and self.ids[idx] is not None:
                 # ID provided in the IDs list - parametrize(..., ids=[...]).
                 yield self._idval_from_value_required(self.ids[idx], idx)

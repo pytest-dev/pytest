@@ -625,6 +625,37 @@ class TestMetafunc:
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
+    def test_idmaker_with_param_id_and_config(self) -> None:
+        """Unit test for expected behavior to create ids with pytest.param(id=...) and
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+        option (#9037).
+        """
+
+        class MockConfig:
+            def __init__(self, config):
+                self.config = config
+
+            def getini(self, name):
+                return self.config[name]
+
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+
+        values: list[tuple[Any, str]] = [
+            (MockConfig({option: True}), "ação"),
+            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+        ]
+        for config, expected in values:
+            result = IdMaker(
+                ("a",),
+                [pytest.param("string", id="ação")],
+                None,
+                None,
+                config,
+                None,
+                None,
+            ).make_unique_parameterset_ids()
+            assert result == [expected]
+
     def test_idmaker_duplicated_empty_str(self) -> None:
         """Regression test for empty strings parametrized more than once (#11563)."""
         result = IdMaker(

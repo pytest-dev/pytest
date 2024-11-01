@@ -529,13 +529,14 @@ record_testsuite_property
 recwarn
 ~~~~~~~
 
-**Tutorial**: :ref:`assertwarnings`
+**Tutorial**: :ref:`recwarn`
 
 .. autofunction:: _pytest.recwarn.recwarn()
     :no-auto-options:
 
 .. autoclass:: pytest.WarningsRecorder()
     :members:
+    :special-members: __getitem__, __iter__, __len__
 
 
 .. fixture:: request
@@ -1152,6 +1153,11 @@ processes can inspect it, see :ref:`pytest current test env` for more informatio
 
 When set, pytest will print tracing and debug information.
 
+.. envvar:: PYTEST_DEBUG_TEMPROOT
+
+Root for temporary directories produced by fixtures like :fixture:`tmp_path`
+as discussed in :ref:`temporary directory location and retention`.
+
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
 When set, disables plugin auto-loading through :std:doc:`entry point packaging
@@ -1228,14 +1234,8 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestExperimentalApiWarning
    :show-inheritance:
 
-.. autoclass:: pytest.PytestReturnNotNoneWarning
-  :show-inheritance:
-
 .. autoclass:: pytest.PytestRemovedIn9Warning
   :show-inheritance:
-
-.. autoclass:: pytest.PytestUnhandledCoroutineWarning
-   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnknownMarkWarning
    :show-inheritance:
@@ -1331,6 +1331,29 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         console_output_style = classic
 
+
+.. confval:: disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+
+   .. versionadded:: 4.4
+
+   pytest by default escapes any non-ascii characters used in unicode strings
+   for the parametrization because it has several downsides.
+   If however you would like to use unicode strings in parametrization
+   and see them in the terminal as is (non-escaped), use this option
+   in your ``pytest.ini``:
+
+   .. code-block:: ini
+
+       [pytest]
+       disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+
+   Keep in mind however that this might cause unwanted side effects and
+   even bugs depending on the OS used and plugins currently installed,
+   so use it at your own risk.
+
+   Default: ``False``.
+
+   See :ref:`parametrizemark`.
 
 .. confval:: doctest_encoding
 
