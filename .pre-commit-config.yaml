@@ -33,7 +33,7 @@ repos:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
         args: []
-        language_version: "3.8"
+        language_version: "3.12"
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0
