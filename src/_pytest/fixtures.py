@@ -595,9 +595,16 @@ class FixtureRequest(abc.ABC):
             raise FixtureLookupError(argname, self)
         fixturedef = fixturedefs[index]
 
-        if not inspect.iscoroutinefunction(self.function) and (
-            inspect.iscoroutinefunction(fixturedef.func)
-            or inspect.isasyncgenfunction(fixturedef.func)
+        # Check for attempted use of an async fixture by a sync test
+        # `self.scope` here is not the scope of the requested fixture, but the scope of
+        # the requester.
+        if (
+            self.scope == "function"
+            and not inspect.iscoroutinefunction(self._pyfuncitem.obj)
+            and (
+                inspect.iscoroutinefunction(fixturedef.func)
+                or inspect.isasyncgenfunction(fixturedef.func)
+            )
         ):
             if fixturedef._autouse:
                 warnings.warn(
