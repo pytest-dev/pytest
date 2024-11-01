@@ -143,8 +143,23 @@ linkcheck_ignore = [
     "http://pythontesting.net/framework/pytest-introduction/",
     r"https://github.com/pytest-dev/pytest/issues/\d+",
     r"https://github.com/pytest-dev/pytest/pull/\d+",
+    r"https://github\.com/sponsors/.*",
+    r"https://pypi\.org/project/pytest.*",
+    r"https://github\.com/pytest-dev/pytest/issues/.*",
 ]
-linkcheck_workers = 5
+
+# # Exclude documents that are known to cause issues
+# linkcheck_exclude_documents = [
+#     'old_versions/*',
+#     'deprecated_features/*',
+# ]
+
+linkcheck_workers = 20
+linkcheck_timeout = 30
+linkcheck_retries = 2
+linkcheck_anchors = False
+linkcheck_rate_limit_timeout = 2.0
+linkcheck_delay = 2.0
 
 # -- Options for HTML output ----------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
