@@ -1,0 +1,1 @@
+Synchronous tests that request asynchronous fixtures will now error, instead of silently accepting an unawaited coroutine object as the fixture value.

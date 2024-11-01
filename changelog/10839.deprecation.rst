@@ -1,0 +1,1 @@
+Synchronous tests that request an asynchronous fixture with ``autouse=True`` will now give a DeprecationWarning.
