@@ -141,11 +141,10 @@ todo_include_todos = True
 linkcheck_ignore = [
     "https://blogs.msdn.microsoft.com/bharry/2017/06/28/testing-in-a-cloud-delivery-cadence/",
     "http://pythontesting.net/framework/pytest-introduction/",
-    r"https://github.com/pytest-dev/pytest/issues/\d+",
-    r"https://github.com/pytest-dev/pytest/pull/\d+",
-    r"https://github\.com/sponsors/.*",
     r"https://pypi\.org/project/pytest.*",
+    r"https://github\.com/sponsors/.*",
     r"https://github\.com/pytest-dev/pytest/issues/.*",
+    r"https://github\.com/pytest-dev/pytest/pull/.*",
 ]
 
 linkcheck_workers = 20
