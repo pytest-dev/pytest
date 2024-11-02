@@ -148,12 +148,6 @@ linkcheck_ignore = [
     r"https://github\.com/pytest-dev/pytest/issues/.*",
 ]
 
-# # Exclude documents that are known to cause issues
-# linkcheck_exclude_documents = [
-#     'old_versions/*',
-#     'deprecated_features/*',
-# ]
-
 linkcheck_workers = 20
 linkcheck_timeout = 30
 linkcheck_retries = 2
