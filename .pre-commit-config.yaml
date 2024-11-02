@@ -32,8 +32,6 @@ repos:
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
-        args: []
-        language_version: "3.12"
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0
@@ -46,13 +44,13 @@ repos:
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "2.2.4"
+  rev: "2.3.1"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
+    rev: v3.18.0
     hooks:
     -   id: pyupgrade
         stages: [manual]

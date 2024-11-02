@@ -147,7 +147,7 @@ jobs:
           - name: "ubuntu-py313"
             python: "3.13-dev"
             os: ubuntu-latest
-            tox_env: "py313"
+            tox_env: "py313-pexpect"
             use_coverage: true
           - name: "ubuntu-pypy3"
             python: "pypy-3.9"
