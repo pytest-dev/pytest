@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 import threading
 import traceback
 from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import Generator
+from typing import Iterator
 from typing import TYPE_CHECKING
 import warnings
 
@@ -62,6 +64,7 @@ class catch_threading_exception:
         del self.args
 
 
+@contextmanager
 def thread_exception_runtest_hook() -> Generator[None]:
     with catch_threading_exception() as cm:
         try:
@@ -83,15 +86,18 @@ def thread_exception_runtest_hook() -> Generator[None]:
 
 
 @pytest.hookimpl(wrapper=True, trylast=True)
-def pytest_runtest_setup() -> Generator[None]:
-    yield from thread_exception_runtest_hook()
+def pytest_runtest_setup() -> Iterator[None]:
+    with thread_exception_runtest_hook():
+        return (yield)
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_call() -> Generator[None]:
-    yield from thread_exception_runtest_hook()
+def pytest_runtest_call() -> Iterator[None]:
+    with thread_exception_runtest_hook():
+        return (yield)
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_teardown() -> Generator[None]:
-    yield from thread_exception_runtest_hook()
+def pytest_runtest_teardown() -> Iterator[None]:
+    with thread_exception_runtest_hook():
+        return (yield)
