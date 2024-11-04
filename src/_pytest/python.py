@@ -416,6 +416,15 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
                 if name in seen:
                     continue
                 seen.add(name)
+
+                if not self.session.config.getini("collect_imported_tests"):
+                    # Do not collect imported functions
+                    if inspect.isfunction(obj) and isinstance(self, Module):
+                        fn_defined_at = obj.__module__
+                        in_module = self._getobj().__name__
+                        if fn_defined_at != in_module:
+                            continue
+
                 res = ihook.pytest_pycollect_makeitem(
                     collector=self, name=name, obj=obj
                 )
@@ -741,6 +750,16 @@ class Class(PyCollector):
         return self.obj()
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        if not self.config.getini("collect_imported_tests"):
+            # This entire branch will discard (not collect) a class
+            # if it is imported (defined in a different module)
+            if isinstance(self, Class) and isinstance(self.parent, Module):
+                if inspect.isclass(self._getobj()):
+                    class_defined_at = self._getobj().__module__
+                    in_module = self.parent._getobj().__name__
+                    if class_defined_at != in_module:
+                        return []
+
         if not safe_getattr(self.obj, "__test__", True):
             return []
         if hasinit(self.obj):

@@ -1301,6 +1301,20 @@ passed multiple times. The expected format is ``name=value``. For example::
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
+.. confval:: collect_imported_tests
+
+   .. versionadded:: 8.4
+
+   Setting this to ``false`` will make pytest collect classes/functions from test
+   files only if they are defined in that file (as opposed to imported there).
+
+   .. code-block:: ini
+
+        [pytest]
+        collect_imported_tests = false
+
+   Default: ``true``
+
 .. confval:: consider_namespace_packages
 
    Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
@@ -1837,17 +1851,6 @@ passed multiple times. The expected format is ``name=value``. For example::
    .. code-block:: console
 
        pytest testing doc
-
-
-.. confval:: collect_imported_tests
-
-   Setting this to `false` will make pytest collect classes/functions from test
-   files only if they are defined in that file (as opposed to imported there).
-
-    .. code-block:: ini
-
-        [pytest]
-        collect_imported_tests = false
 
 .. confval:: tmp_path_retention_count
 
