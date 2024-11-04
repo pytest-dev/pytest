@@ -2,7 +2,7 @@ anyio[curio,trio]==4.6.2.post1
 django==5.1.2
 pytest-asyncio==0.24.0
 pytest-bdd==7.3.0
-pytest-cov==5.0.0
+pytest-cov==6.0.0
 pytest-django==4.9.0
 pytest-flakes==4.0.5
 pytest-html==4.1.1
