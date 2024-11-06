@@ -1,1 +1,1 @@
-Synchronous tests that request an asynchronous fixture with ``autouse=True`` will now give a DeprecationWarning.
+Synchronous tests that request an asynchronous fixture will now give a DeprecationWarning. This will introduce warnings in several pytest plugins that handle async tests/fixtures and for some users with custom setups. For guidance on how to manage this see :ref:`sync-test-async-fixture`.

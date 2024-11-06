@@ -609,23 +609,26 @@ class FixtureRequest(abc.ABC):
             if fixturedef._autouse:
                 warnings.warn(
                     PytestRemovedIn9Warning(
-                        "Sync test requested an async fixture with autouse=True. "
+                        f"Sync test {self._pyfuncitem.name!r} requested async fixture "
+                        f"{argname!r} with autouse=True. "
                         "If you intended to use the fixture you may want to make the "
-                        "test asynchronous. If you did not intend to use it you should "
+                        "test asynchronous or the fixture synchronous. "
+                        "If you did not intend to use it you should "
                         "restructure your test setup. "
                         "This will turn into an error in pytest 9."
                     ),
                     stacklevel=3,
                 )
             else:
-                raise FixtureLookupError(
-                    argname,
-                    self,
-                    (
-                        "ERROR: Sync test requested async fixture. "
+                warnings.warn(
+                    PytestRemovedIn9Warning(
+                        f"Sync test {self._pyfuncitem.name!r} requested async fixture "
+                        f"{argname!r}. "
                         "You may want to make the test asynchronous and run it with "
-                        "a suitable async framework test plugin."
+                        "a suitable async framework test plugin, or make the fixture synchronous. "
+                        "This will turn into an error in pytest 9."
                     ),
+                    stacklevel=3,
                 )
 
         # Prepare a SubRequest object for calling the fixture.

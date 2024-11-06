@@ -15,6 +15,61 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _sync-test-async-fixture:
+
+sync test depending on async fixture
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.4
+
+Pytest has for a long time given an error when encountering an asynchronous test function, prompting the user to install
+a plugin that can handle it. It has not given any errors if you have an asynchronous fixture that's depended on by a
+synchronous test. This is a problem even if you do have a plugin installed for handling async tests, as they may require
+special decorators for async fixtures to be handled, and some may not robustly handle if a user accidentally requests an
+async fixture from their sync tests. Fixture values being cached can make this even more unintuitive, where everything will
+"work" if the fixture is first requested by an async test, and then requested by a synchronous test.
+
+Unfortunately there is no 100% reliable method of identifying when a user has made a mistake, versus when they expect an
+unawaited object from their fixture that they will handle - either on their own, or by a plugin. To suppress this warning
+when you in fact did intend to handle this you can wrap your async fixture in a synchronous fixture:
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+
+    @pytest.fixture
+    async def unawaited_fixture():
+        return 1
+
+
+    def test_foo(unawaited_fixture):
+        assert 1 == asyncio.run(unawaited_fixture)
+
+should be changed to
+
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+
+    @pytest.fixture
+    def unawaited_fixture():
+        async def inner_fixture():
+            return 1
+
+        return inner_fixture()
+
+
+    def test_foo(unawaited_fixture):
+        assert 1 == asyncio.run(unawaited_fixture)
+
+If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file where they also have synchronous tests, they will also get this warning. We strongly recommend against this practice, and they should restructure their testing infrastructure so the fixture is synchronous or to separate the fixture from their synchronous tests. Plugins that handle async may want to introduce helpers to make that easier in scenarios where that might be wanted, e.g. if setting up a database in an asynchronous way, or the user may opt to make their test async even though it might not strictly need to be.
+
+
 .. _import-or-skip-import-error:
 
 ``pytest.importorskip`` default behavior regarding :class:`ImportError`
