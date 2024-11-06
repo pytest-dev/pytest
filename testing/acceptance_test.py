@@ -1286,7 +1286,7 @@ def test_error_on_async_gen_function(pytester: Pytester) -> None:
     result.assert_outcomes(failed=3)
 
 
-def test_error_on_sync_test_async_fixture(pytester: Pytester) -> None:
+def test_warning_on_sync_test_async_fixture(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_sync="""
             import pytest
@@ -1318,7 +1318,7 @@ def test_error_on_sync_test_async_fixture(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1, warnings=1)
 
 
-def test_error_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
+def test_warning_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_sync="""
             import pytest
@@ -1374,13 +1374,15 @@ def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
             (
                 "*Sync test 'test_foo' requested async fixture "
                 "'async_fixture' with autouse=True. "
-                "You may want to make the test asynchronous and run it with "
-                "a suitable async framework test plugin, or make the fixture synchronous. "
+                "If you intended to use the fixture you may want to make the "
+                "test asynchronous or the fixture synchronous. "
+                "If you did not intend to use it you should "
+                "restructure your test setup. "
                 "This will turn into an error in pytest 9."
             ),
         ]
     )
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=1, warnings=1)
 
 
 def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
