@@ -965,6 +965,34 @@ class TestPDB:
         child.sendeof()
         self.flush(child)
 
+    def test_pdb_wrapped_commands_docstrings(self, pytester: Pytester) -> None:
+        p1 = pytester.makepyfile(
+            """
+            def test_1():
+                assert False
+            """
+        )
+
+        child = pytester.spawn_pytest(f"--pdb {p1}")
+        child.expect("Pdb")
+
+        # Verify no undocumented commands
+        child.sendline("help")
+        child.expect("Documented commands")
+        assert "Undocumented commands" not in child.before.decode()
+
+        child.sendline("help continue")
+        child.expect("Continue execution")
+        child.expect("Pdb")
+
+        child.sendline("help debug")
+        child.expect("Enter a recursive debugger")
+        child.expect("Pdb")
+
+        child.sendline("c")
+        child.sendeof()
+        self.flush(child)
+
 
 class TestDebuggingBreakpoints:
     @pytest.mark.parametrize("arg", ["--pdb", ""])
