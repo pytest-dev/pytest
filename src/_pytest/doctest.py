@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import bdb
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Sequence
@@ -18,7 +19,6 @@ import sys
 import traceback
 import types
 from typing import Any
-from typing import Callable
 from typing import TYPE_CHECKING
 import warnings
 

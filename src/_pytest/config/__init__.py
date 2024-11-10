@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import collections.abc
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -26,7 +27,6 @@ from textwrap import dedent
 import types
 from types import FunctionType
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import Final
 from typing import final

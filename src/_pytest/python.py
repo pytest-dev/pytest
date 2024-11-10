@@ -6,6 +6,7 @@ from __future__ import annotations
 import abc
 from collections import Counter
 from collections import defaultdict
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -22,7 +23,6 @@ from pathlib import Path
 from re import Pattern
 import types
 from typing import Any
-from typing import Callable
 from typing import final
 from typing import Literal
 from typing import TYPE_CHECKING

@@ -7,6 +7,7 @@ PYTEST_DONT_REWRITE
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Sequence
@@ -25,7 +26,6 @@ import subprocess
 import sys
 import traceback
 from typing import Any
-from typing import Callable
 from typing import Final
 from typing import final
 from typing import IO

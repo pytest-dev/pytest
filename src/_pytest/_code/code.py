@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sequence
@@ -21,7 +22,6 @@ from types import CodeType
 from types import FrameType
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import ClassVar
 from typing import Final
 from typing import final

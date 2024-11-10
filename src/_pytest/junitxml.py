@@ -10,6 +10,7 @@ https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jen
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 from datetime import timezone
 import functools
@@ -17,7 +18,6 @@ import os
 import platform
 import re
 from re import Match
-from typing import Callable
 import xml.etree.ElementTree as ET
 
 from _pytest import nodes

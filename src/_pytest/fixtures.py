@@ -5,6 +5,7 @@ import abc
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -20,7 +21,6 @@ import sys
 import types
 from typing import AbstractSet
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import Final
 from typing import final
@@ -89,7 +89,7 @@ FixtureValue = TypeVar("FixtureValue")
 FixtureFunction = TypeVar("FixtureFunction", bound=Callable[..., object])
 # The type of a fixture function (type alias generic in fixture value).
 _FixtureFunc = Union[
-    Callable[..., FixtureValue], Callable[..., Generator[FixtureValue, None, None]]
+    Callable[..., FixtureValue], Callable[..., Generator[FixtureValue]]
 ]
 # The type of FixtureDef.cached_result (type alias generic in fixture value).
 _FixtureCachedResult = Union[
@@ -891,9 +891,7 @@ def call_fixture_func(
     fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
 ) -> FixtureValue:
     if inspect.isgeneratorfunction(fixturefunc):
-        fixturefunc = cast(
-            Callable[..., Generator[FixtureValue, None, None]], fixturefunc
-        )
+        fixturefunc = cast(Callable[..., Generator[FixtureValue]], fixturefunc)
         generator = fixturefunc(**kwargs)
         try:
             fixture_result = next(generator)

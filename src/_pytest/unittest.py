@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 import inspect
@@ -10,7 +11,6 @@ import sys
 import traceback
 import types
 from typing import Any
-from typing import Callable
 from typing import TYPE_CHECKING
 from typing import Union
 

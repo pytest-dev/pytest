@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Collection
 from collections.abc import Mapping
 from collections.abc import Sequence
@@ -13,7 +14,6 @@ import re
 from re import Pattern
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import ContextManager
 from typing import final

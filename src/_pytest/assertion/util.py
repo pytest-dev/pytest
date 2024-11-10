@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sequence
@@ -11,7 +12,6 @@ import os
 import pprint
 from typing import AbstractSet
 from typing import Any
-from typing import Callable
 from typing import Literal
 from typing import Protocol
 from unicodedata import normalize

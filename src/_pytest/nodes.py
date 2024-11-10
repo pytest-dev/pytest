@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import abc
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import MutableMapping
@@ -11,7 +12,6 @@ import os
 import pathlib
 from pathlib import Path
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import NoReturn
 from typing import overload

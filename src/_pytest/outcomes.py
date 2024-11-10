@@ -3,9 +3,9 @@ functions creating them."""
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import sys
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import NoReturn
 from typing import Protocol

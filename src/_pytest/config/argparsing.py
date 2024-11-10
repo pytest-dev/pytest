@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
 from gettext import gettext
 import os
 import sys
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import final
 from typing import Literal

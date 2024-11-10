@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import dataclasses
 import enum
 import functools
@@ -13,7 +14,6 @@ import os
 from pathlib import Path
 import sys
 from typing import Any
-from typing import Callable
 from typing import Final
 from typing import NoReturn
 

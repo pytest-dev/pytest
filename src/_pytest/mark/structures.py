@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
 from collections.abc import Collection
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -11,7 +12,6 @@ from collections.abc import Sequence
 import dataclasses
 import inspect
 from typing import Any
-from typing import Callable
 from typing import final
 from typing import NamedTuple
 from typing import overload

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 from collections import defaultdict
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -22,7 +23,6 @@ import struct
 import sys
 import tokenize
 import types
-from typing import Callable
 from typing import IO
 from typing import TYPE_CHECKING
 
