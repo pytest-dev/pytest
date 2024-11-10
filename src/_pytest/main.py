@@ -16,6 +16,9 @@ import importlib.util
 import os
 from pathlib import Path
 import sys
+from typing import AbstractSet
+from typing import Any
+from typing import Callable
 from typing import final
 from typing import Literal
 from typing import overload
@@ -369,6 +372,20 @@ def pytest_runtestloop(session: Session) -> bool:
     return True
 
 
+def _decode_toml_file(toml: Path) -> dict[str, Any] | None:
+    """Attempt to decode a toml file into a dict, returning None if fails."""
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:
+        import tomli as tomllib
+
+    try:
+        toml_text = toml.read_text(encoding="utf-8")
+        return tomllib.loads(toml_text)
+    except tomllib.TOMLDecodeError:
+        return None
+
+
 def _in_build(path: Path) -> bool:
     """Attempt to detect if ``path`` is the root of a buildsystem's artifacts
     by checking known dirnames patterns, and the presence of configuration in
@@ -378,9 +395,21 @@ def _in_build(path: Path) -> bool:
         return False
 
     if any(fnmatch_ex(pat, path) for pat in ("build", "dist")):
-        indicators = ("setup.py", "setup.cfg", "pyproject.toml")
-        if any((path.parent / f).is_file() for f in indicators):
-            return True
+        setup_cfg = path.parent / "setup.cfg"
+        if (setup_cfg).is_file():
+            setup_py = path.parent / "setup.py"
+            if setup_py.is_file():
+                return True
+
+            pyproject_toml = path.parent / "pyproject.toml"
+            if pyproject_toml.is_file():
+                config = _decode_toml_file(pyproject_toml)
+                if config:
+                    if any(
+                        "setuptools" in cfg
+                        for cfg in config.get("build-system", {}).get("requires", {})
+                    ):
+                        return True
 
     return False
 
