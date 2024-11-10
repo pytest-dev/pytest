@@ -2,19 +2,19 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Collection
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import MutableMapping
+from collections.abc import Sequence
 import dataclasses
 import inspect
 from typing import Any
 from typing import Callable
-from typing import Collection
 from typing import final
-from typing import Iterable
-from typing import Iterator
-from typing import Mapping
-from typing import MutableMapping
 from typing import NamedTuple
 from typing import overload
-from typing import Sequence
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union

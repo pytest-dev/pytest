@@ -11,10 +11,10 @@ Requires Python3.6+.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 import re
 import sys
-from typing import Sequence
 
 import pypandoc
 

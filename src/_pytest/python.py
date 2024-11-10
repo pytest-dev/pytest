@@ -6,6 +6,11 @@ from __future__ import annotations
 import abc
 from collections import Counter
 from collections import defaultdict
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import enum
 import fnmatch
@@ -14,18 +19,12 @@ import inspect
 import itertools
 import os
 from pathlib import Path
+from re import Pattern
 import types
 from typing import Any
 from typing import Callable
-from typing import Dict
 from typing import final
-from typing import Generator
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
-from typing import Mapping
-from typing import Pattern
-from typing import Sequence
 from typing import TYPE_CHECKING
 import warnings
 
@@ -1078,7 +1077,7 @@ def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
 
 
 # Used for storing pseudo fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[Dict[str, FixtureDef[Any]]]()
+name2pseudofixturedef_key = StashKey[dict[str, FixtureDef[Any]]]()
 
 
 @final

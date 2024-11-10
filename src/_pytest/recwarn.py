@@ -3,16 +3,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Iterator
 from pprint import pformat
 import re
+from re import Pattern
 from types import TracebackType
 from typing import Any
 from typing import Callable
 from typing import final
-from typing import Generator
-from typing import Iterator
 from typing import overload
-from typing import Pattern
 from typing import TYPE_CHECKING
 from typing import TypeVar
 

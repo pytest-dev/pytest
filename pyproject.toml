@@ -23,7 +23,7 @@ authors = [
     { name = "Florian Bruhin" },
     { name = "Others (See AUTHORS)" },
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
@@ -33,7 +33,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -85,7 +84,7 @@ write_to = "src/_pytest/_version.py"
 
 [tool.black]
 target-version = [
-    'py38',
+    'py39',
 ]
 
 [tool.ruff]
@@ -508,7 +507,7 @@ files = [
 mypy_path = [
     "src",
 ]
-python_version = "3.8"
+python_version = "3.9"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true

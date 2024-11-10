@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Generator
+from collections.abc import Mapping
 import dis
 import errno
 from functools import partial
@@ -17,8 +19,6 @@ import stat
 import sys
 import textwrap
 from typing import cast
-from typing import Generator
-from typing import Mapping
 from unittest import mock
 import zipfile
 

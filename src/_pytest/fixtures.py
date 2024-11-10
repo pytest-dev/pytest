@@ -4,6 +4,13 @@ from __future__ import annotations
 import abc
 from collections import defaultdict
 from collections import deque
+from collections import OrderedDict
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import MutableMapping
+from collections.abc import Sequence
 import dataclasses
 import functools
 import inspect
@@ -15,21 +22,12 @@ from typing import AbstractSet
 from typing import Any
 from typing import Callable
 from typing import cast
-from typing import Dict
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import Generic
-from typing import Iterable
-from typing import Iterator
-from typing import Mapping
-from typing import MutableMapping
 from typing import NoReturn
 from typing import Optional
-from typing import OrderedDict
 from typing import overload
-from typing import Sequence
-from typing import Tuple
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -95,19 +93,19 @@ _FixtureFunc = Union[
 ]
 # The type of FixtureDef.cached_result (type alias generic in fixture value).
 _FixtureCachedResult = Union[
-    Tuple[
+    tuple[
         # The result.
         FixtureValue,
         # Cache key.
         object,
         None,
     ],
-    Tuple[
+    tuple[
         None,
         # Cache key.
         object,
         # The exception and the original traceback.
-        Tuple[BaseException, Optional[types.TracebackType]],
+        tuple[BaseException, Optional[types.TracebackType]],
     ],
 ]
 
@@ -177,7 +175,7 @@ class FixtureArgKey:
 
 
 _V = TypeVar("_V")
-OrderedSet = Dict[_V, None]
+OrderedSet = dict[_V, None]
 
 
 def get_parametrized_fixture_argkeys(

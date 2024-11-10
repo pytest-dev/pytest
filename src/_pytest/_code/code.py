@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import inspect
 from inspect import CO_VARARGS
@@ -10,6 +13,7 @@ from io import StringIO
 import os
 from pathlib import Path
 import re
+from re import Pattern
 import sys
 import traceback
 from traceback import format_exception_only
@@ -22,16 +26,9 @@ from typing import ClassVar
 from typing import Final
 from typing import final
 from typing import Generic
-from typing import Iterable
-from typing import List
 from typing import Literal
-from typing import Mapping
 from typing import overload
-from typing import Pattern
-from typing import Sequence
 from typing import SupportsIndex
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -56,7 +53,7 @@ if sys.version_info < (3, 11):
 
 TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-EXCEPTION_OR_MORE = Union[Type[BaseException], Tuple[Type[BaseException], ...]]
+EXCEPTION_OR_MORE = Union[type[BaseException], tuple[type[BaseException], ...]]
 
 
 class Code:
@@ -320,7 +317,7 @@ class TracebackEntry:
         return self.frame.code.raw.co_name
 
 
-class Traceback(List[TracebackEntry]):
+class Traceback(list[TracebackEntry]):
     """Traceback objects encapsulate and offer higher level access to Traceback entries."""
 
     def __init__(

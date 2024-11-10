@@ -9,7 +9,6 @@ from typing import Callable
 from typing import cast
 from typing import NoReturn
 from typing import Protocol
-from typing import Type
 from typing import TypeVar
 
 from .warning_types import PytestDeprecationWarning
@@ -82,7 +81,7 @@ class Exit(Exception):
 # Ideally would just be `exit.Exception = Exit` etc.
 
 _F = TypeVar("_F", bound=Callable[..., object])
-_ET = TypeVar("_ET", bound=Type[BaseException])
+_ET = TypeVar("_ET", bound=type[BaseException])
 
 
 class _WithException(Protocol[_F, _ET]):

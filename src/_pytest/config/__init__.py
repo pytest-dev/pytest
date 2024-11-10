@@ -5,6 +5,10 @@ from __future__ import annotations
 
 import argparse
 import collections.abc
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Sequence
 import contextlib
 import copy
 import dataclasses
@@ -26,11 +30,7 @@ from typing import Callable
 from typing import cast
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import IO
-from typing import Iterable
-from typing import Iterator
-from typing import Sequence
 from typing import TextIO
 from typing import Type
 from typing import TYPE_CHECKING
@@ -1978,7 +1978,7 @@ def _resolve_warning_category(category: str) -> type[Warning]:
     cat = getattr(m, klass)
     if not issubclass(cat, Warning):
         raise UsageError(f"{cat} is not a Warning subclass")
-    return cast(Type[Warning], cat)
+    return cast(type[Warning], cat)
 
 
 def apply_warning_filters(

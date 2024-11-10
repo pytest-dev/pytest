@@ -16,8 +16,8 @@ import functools
 import os
 import platform
 import re
+from re import Match
 from typing import Callable
-from typing import Match
 import xml.etree.ElementTree as ET
 
 from _pytest import nodes

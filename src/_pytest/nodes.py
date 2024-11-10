@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import abc
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import MutableMapping
 from functools import cached_property
 from inspect import signature
 import os
@@ -10,9 +13,6 @@ from pathlib import Path
 from typing import Any
 from typing import Callable
 from typing import cast
-from typing import Iterable
-from typing import Iterator
-from typing import MutableMapping
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
