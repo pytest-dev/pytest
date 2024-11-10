@@ -8,9 +8,9 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import os
 import pprint
-from typing import AbstractSet
 from typing import Any
 from typing import Literal
 from typing import Protocol

@@ -5,8 +5,8 @@ from __future__ import annotations
 import collections
 from collections.abc import Collection
 from collections.abc import Iterable
+from collections.abc import Set as AbstractSet
 import dataclasses
-from typing import AbstractSet
 from typing import Optional
 from typing import TYPE_CHECKING
 
