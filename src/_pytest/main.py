@@ -17,7 +17,6 @@ import os
 from pathlib import Path
 import sys
 from typing import AbstractSet
-from typing import Any
 from typing import Callable
 from typing import final
 from typing import Literal
@@ -372,7 +371,7 @@ def pytest_runtestloop(session: Session) -> bool:
     return True
 
 
-def _decode_toml_file(toml: Path) -> dict[str, Any] | None:
+def _is_setuptools_in_pyproject_toml(toml: Path) -> bool:
     """Attempt to decode a toml file into a dict, returning None if fails."""
     if sys.version_info >= (3, 11):
         import tomllib
@@ -381,9 +380,14 @@ def _decode_toml_file(toml: Path) -> dict[str, Any] | None:
 
     try:
         toml_text = toml.read_text(encoding="utf-8")
-        return tomllib.loads(toml_text)
-    except tomllib.TOMLDecodeError:
-        return None
+        parsed_toml = tomllib.loads(toml_text)
+        build_system = parsed_toml.get("build-system", {}).get("requires")
+        if "setuptools" in build_system:
+            return True
+    except Exception:
+        pass
+
+    return False
 
 
 def _in_build(path: Path) -> bool:
@@ -401,15 +405,9 @@ def _in_build(path: Path) -> bool:
             if setup_py.is_file():
                 return True
 
-            pyproject_toml = path.parent / "pyproject.toml"
-            if pyproject_toml.is_file():
-                config = _decode_toml_file(pyproject_toml)
-                if config:
-                    if any(
-                        "setuptools" in cfg
-                        for cfg in config.get("build-system", {}).get("requires", {})
-                    ):
-                        return True
+            toml = path.parent / "pyproject.toml"
+            if toml.is_file() and _is_setuptools_in_pyproject_toml(toml):
+                return True
 
     return False
 
