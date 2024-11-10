@@ -32,7 +32,6 @@ from typing import Final
 from typing import final
 from typing import IO
 from typing import TextIO
-from typing import Type
 from typing import TYPE_CHECKING
 import warnings
 
