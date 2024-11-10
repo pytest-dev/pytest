@@ -6,6 +6,7 @@ from collections.abc import Collection
 from collections.abc import Mapping
 from collections.abc import Sequence
 from collections.abc import Sized
+from contextlib import AbstractContextManager
 from decimal import Decimal
 import math
 from numbers import Complex
@@ -15,7 +16,6 @@ from re import Pattern
 from types import TracebackType
 from typing import Any
 from typing import cast
-from typing import ContextManager
 from typing import final
 from typing import overload
 from typing import TYPE_CHECKING
@@ -978,7 +978,7 @@ raises.Exception = fail.Exception  # type: ignore
 
 
 @final
-class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
+class RaisesContext(AbstractContextManager[_pytest._code.ExceptionInfo[E]]):
     def __init__(
         self,
         expected_exception: type[E] | tuple[type[E], ...],
