@@ -24,13 +24,14 @@ sync test depending on async fixture
 
 Pytest has for a long time given an error when encountering an asynchronous test function, prompting the user to install
 a plugin that can handle it. It has not given any errors if you have an asynchronous fixture that's depended on by a
-synchronous test. This is a problem even if you do have a plugin installed for handling async tests, as they may require
+synchronous test. If the fixture was an async function you did get an "unawaited coroutine" warning, but for async yield fixtures you didn't even get that.
+This is a problem even if you do have a plugin installed for handling async tests, as they may require
 special decorators for async fixtures to be handled, and some may not robustly handle if a user accidentally requests an
 async fixture from their sync tests. Fixture values being cached can make this even more unintuitive, where everything will
 "work" if the fixture is first requested by an async test, and then requested by a synchronous test.
 
 Unfortunately there is no 100% reliable method of identifying when a user has made a mistake, versus when they expect an
-unawaited object from their fixture that they will handle - either on their own, or by a plugin. To suppress this warning
+unawaited object from their fixture that they will handle on their own. To suppress this warning
 when you in fact did intend to handle this you can wrap your async fixture in a synchronous fixture:
 
 .. code-block:: python
@@ -67,7 +68,10 @@ should be changed to
     def test_foo(unawaited_fixture):
         assert 1 == asyncio.run(unawaited_fixture)
 
-If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file where they also have synchronous tests, they will also get this warning. We strongly recommend against this practice, and they should restructure their testing infrastructure so the fixture is synchronous or to separate the fixture from their synchronous tests. Plugins that handle async may want to introduce helpers to make that easier in scenarios where that might be wanted, e.g. if setting up a database in an asynchronous way, or the user may opt to make their test async even though it might not strictly need to be.
+
+You can also make use of `pytest_fixture_setup` to handle the coroutine/asyncgen before pytest sees it - this is the way current async pytest plugins handle it.
+
+If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file where they also have synchronous tests, they will also get this warning. We strongly recommend against this practice, and they should restructure their testing infrastructure so the fixture is synchronous or to separate the fixture from their synchronous tests. Note that the anyio pytest plugin has some support for sync test + async fixtures currently.
 
 
 .. _import-or-skip-import-error:
