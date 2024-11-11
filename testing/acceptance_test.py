@@ -1375,7 +1375,7 @@ def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
         [
             "*== warnings summary ==*",
             (
-                "*PytestRemovedIn9Warning: Sync test 'test_foo' requested an async "
+                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
                 "fixture 'async_fixture' with autouse=True, with no plugin or hook "
                 "that handled it. This is usually an error, as pytest does not "
                 "natively support it. If this is intentional, consider making the "
