@@ -74,10 +74,10 @@ def merge_family(left, right) -> None:
     left.update(result)
 
 
-families = {}
-families["_base"] = {"testcase": ["classname", "name"]}
-families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
-
+families = {  # pylint: disable=dict-init-mutate
+    "_base": {"testcase": ["classname", "name"]},
+    "_base_legacy": {"testcase": ["file", "line", "url"]},
+}
 # xUnit 1.x inherits legacy attributes.
 families["xunit1"] = families["_base"].copy()
 merge_family(families["xunit1"], families["_base_legacy"])
