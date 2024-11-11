@@ -595,42 +595,6 @@ class FixtureRequest(abc.ABC):
             raise FixtureLookupError(argname, self)
         fixturedef = fixturedefs[index]
 
-        # Check for attempted use of an async fixture by a sync test
-        # `self.scope` here is not the scope of the requested fixture, but the scope of
-        # the requester.
-        if (
-            self.scope == "function"
-            and not inspect.iscoroutinefunction(self._pyfuncitem.obj)
-            and (
-                inspect.iscoroutinefunction(fixturedef.func)
-                or inspect.isasyncgenfunction(fixturedef.func)
-            )
-        ):
-            if fixturedef._autouse:
-                warnings.warn(
-                    PytestRemovedIn9Warning(
-                        f"Sync test {self._pyfuncitem.name!r} requested async fixture "
-                        f"{argname!r} with autouse=True. "
-                        "If you intended to use the fixture you may want to make the "
-                        "test asynchronous or the fixture synchronous. "
-                        "If you did not intend to use it you should "
-                        "restructure your test setup. "
-                        "This will turn into an error in pytest 9."
-                    ),
-                    stacklevel=3,
-                )
-            else:
-                warnings.warn(
-                    PytestRemovedIn9Warning(
-                        f"Sync test {self._pyfuncitem.name!r} requested async fixture "
-                        f"{argname!r}. "
-                        "You may want to make the test asynchronous and run it with "
-                        "a suitable async framework test plugin, or make the fixture synchronous. "
-                        "This will turn into an error in pytest 9."
-                    ),
-                    stacklevel=3,
-                )
-
         # Prepare a SubRequest object for calling the fixture.
         try:
             callspec = self._pyfuncitem.callspec
@@ -921,6 +885,8 @@ def call_fixture_func(
     fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
 ) -> FixtureValue:
     if is_generator(fixturefunc):
+        # note: this also triggers on async generators, suppressing 'unawaited coroutine'
+        # warning.
         fixturefunc = cast(
             Callable[..., Generator[FixtureValue, None, None]], fixturefunc
         )
@@ -1179,6 +1145,25 @@ def pytest_fixture_setup(
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
     my_cache_key = fixturedef.cache_key(request)
+
+    if inspect.isasyncgenfunction(fixturefunc) or inspect.iscoroutinefunction(
+        fixturefunc
+    ):
+        auto_str = " with autouse=True" if fixturedef._autouse else ""
+
+        warnings.warn(
+            PytestRemovedIn9Warning(
+                f"{request.node.name!r} requested an async fixture "
+                f"{request.fixturename!r}{auto_str}, with no plugin or hook that "
+                "handled it. This is usually an error, as pytest does not natively "
+                "support it. If this is intentional, consider making the fixture "
+                "sync and return a coroutine/asyncgen. "
+                "This will turn into an error in pytest 9."
+            ),
+            # no stacklevel will point at users code, so we just point here
+            stacklevel=1,
+        )
+
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
     except TEST_OUTCOME as e:
