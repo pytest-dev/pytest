@@ -54,7 +54,7 @@ jobs:
         path: dist
 
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.10.3
+      uses: pypa/gh-action-pypi-publish@v1.12.2
       with:
         attestations: true
 
