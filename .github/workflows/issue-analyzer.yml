@@ -1,0 +1,29 @@
+name: Issue Analyzer
+on:
+  issues:
+    types: [opened, labeled]
+
+jobs:
+  analyze-issue:
+    runs-on: ubuntu-latest
+    # FIXME - Add the actual condition to use in order to trigger this workflow
+    if: contains(github.event.issue.labels.*.name, 'needs-clarification')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/actions/issue-analyzer/requirements.txt
+          
+      - name: Analyze Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python .github/actions/issue-analyzer/main.py
