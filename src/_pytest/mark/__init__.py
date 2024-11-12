@@ -193,12 +193,7 @@ class KeywordMatcher:
         if kwargs:
             raise UsageError("Keyword expressions do not support call parameters.")
         subname = subname.lower()
-        names = (name.lower() for name in self._names)
-
-        for name in names:
-            if subname in name:
-                return True
-        return False
+        return any(subname in name.lower() for name in self._names)
 
 
 def deselect_by_keyword(items: list[Item], config: Config) -> None:
@@ -243,10 +238,9 @@ class MarkMatcher:
         if not (matches := self.own_mark_name_mapping.get(name, [])):
             return False
 
-        for mark in matches:
+        for mark in matches:  # pylint: disable=consider-using-any-or-all
             if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
                 return True
-
         return False
 
 
