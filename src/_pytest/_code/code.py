@@ -1221,6 +1221,11 @@ class ReprEntry(TerminalRepr):
         if not self.lines:
             return
 
+        if self.style == "value":
+            for line in self.lines:
+                tw.line(line)
+            return
+
         # separate indents and source lines that are not failures: we want to
         # highlight the code but not the indentation, which may contain markers
         # such as ">   assert 0"
@@ -1236,11 +1241,8 @@ class ReprEntry(TerminalRepr):
                 failure_lines.extend(self.lines[index:])
                 break
             else:
-                if self.style == "value":
-                    source_lines.append(line)
-                else:
-                    indents.append(line[:indent_size])
-                    source_lines.append(line[indent_size:])
+                indents.append(line[:indent_size])
+                source_lines.append(line[indent_size:])
 
         tw._write_source(source_lines, indents)
 
