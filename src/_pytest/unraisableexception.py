@@ -48,7 +48,7 @@ def collect_unraisable() -> None:
             else:
                 err_msg = "Exception ignored in"
             msg = f"{err_msg}: {object_repr}\n\n"
-            msg += "".join(
+            traceback_message = msg + "".join(
                 traceback.format_exception(
                     unraisable.exc_type,
                     unraisable.exc_value,
@@ -56,8 +56,14 @@ def collect_unraisable() -> None:
                 )
             )
             try:
-                warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+                warnings.warn(
+                    pytest.PytestUnraisableExceptionWarning(traceback_message)
+                )
             except pytest.PytestUnraisableExceptionWarning as e:
+                # exceptions have a better way to show the traceback, but
+                # warnings do not, so hide the traceback from the msg and
+                # set the cause so the traceback shows up in the right place
+                e.args = (msg,)
                 e.__cause__ = unraisable.exc_value
                 errors.append(e)
 
