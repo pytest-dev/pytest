@@ -36,7 +36,8 @@ def test_unraisable(pytester: Pytester) -> None:
             "  ",
             "  Traceback (most recent call last):",
             "  ValueError: del is broken",
-            "  ",
+            "  Enable tracemalloc to get traceback where the object was allocated.",
+            "  See https* for more info.",
             "    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))",
         ]
     )
@@ -73,7 +74,8 @@ def test_unraisable_in_setup(pytester: Pytester) -> None:
             "  ",
             "  Traceback (most recent call last):",
             "  ValueError: del is broken",
-            "  ",
+            "  Enable tracemalloc to get traceback where the object was allocated.",
+            "  See https* for more info.",
             "    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))",
         ]
     )
@@ -111,7 +113,8 @@ def test_unraisable_in_teardown(pytester: Pytester) -> None:
             "  ",
             "  Traceback (most recent call last):",
             "  ValueError: del is broken",
-            "  ",
+            "  Enable tracemalloc to get traceback where the object was allocated.",
+            "  See https* for more info.",
             "    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))",
         ]
     )

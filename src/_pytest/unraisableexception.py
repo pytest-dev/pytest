@@ -75,7 +75,7 @@ def collect_unraisable() -> None:
                 err_msg = meta.unraisable.err_msg
             else:
                 err_msg = "Exception ignored in"
-            msg = f"{err_msg}: {meta.object_repr}"
+            summary = f"{err_msg}: {meta.object_repr}"
             traceback_message = "\n\n" + "".join(
                 traceback.format_exception(
                     meta.unraisable.exc_type,
@@ -83,17 +83,14 @@ def collect_unraisable() -> None:
                     meta.unraisable.exc_traceback,
                 )
             )
+            msg = summary + traceback_message + meta.tracemalloc_tb
             try:
-                warnings.warn(
-                    pytest.PytestUnraisableExceptionWarning(
-                        msg + traceback_message + meta.tracemalloc_tb
-                    )
-                )
+                warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
             except pytest.PytestUnraisableExceptionWarning as e:
                 # exceptions have a better way to show the traceback, but
                 # warnings do not, so hide the traceback from the msg and
                 # set the cause so the traceback shows up in the right place
-                e.args = (msg + meta.tracemalloc_tb,)
+                e.args = (summary + meta.tracemalloc_tb,)
                 e.__cause__ = meta.unraisable.exc_value
                 errors.append(e)
 
