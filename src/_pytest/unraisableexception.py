@@ -75,11 +75,12 @@ def collect_unraisable() -> None:
             try:
                 warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
             except pytest.PytestUnraisableExceptionWarning as e:
-                # exceptions have a better way to show the traceback, but
-                # warnings do not, so hide the traceback from the msg and
-                # set the cause so the traceback shows up in the right place
-                e.args = (meta.cause_msg,)
-                e.__cause__ = meta.exc_value
+                if meta.exc_value is not None:
+                    # exceptions have a better way to show the traceback, but
+                    # warnings do not, so hide the traceback from the msg and
+                    # set the cause so the traceback shows up in the right place
+                    e.args = (meta.cause_msg,)
+                    e.__cause__ = meta.exc_value
                 errors.append(e)
 
         if len(errors) == 1:
