@@ -46,9 +46,9 @@ def _tracemalloc_msg(source: object) -> str:
 
 
 class UnraisableMeta(NamedTuple):
-    object_repr: str
-    tracemalloc_tb: str
-    unraisable: sys.UnraisableHookArgs
+    msg: str
+    cause_msg: str
+    exc_value: BaseException | None
 
 
 def unraisable_exception_runtest_hook() -> Generator[None]:
@@ -71,27 +71,15 @@ def collect_unraisable() -> None:
             except IndexError:
                 break
 
-            if meta.unraisable.err_msg is not None:
-                err_msg = meta.unraisable.err_msg
-            else:
-                err_msg = "Exception ignored in"
-            summary = f"{err_msg}: {meta.object_repr}"
-            traceback_message = "\n\n" + "".join(
-                traceback.format_exception(
-                    meta.unraisable.exc_type,
-                    meta.unraisable.exc_value,
-                    meta.unraisable.exc_traceback,
-                )
-            )
-            msg = summary + traceback_message + meta.tracemalloc_tb
+            msg = meta.msg
             try:
                 warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
             except pytest.PytestUnraisableExceptionWarning as e:
                 # exceptions have a better way to show the traceback, but
                 # warnings do not, so hide the traceback from the msg and
                 # set the cause so the traceback shows up in the right place
-                e.args = (summary + meta.tracemalloc_tb,)
-                e.__cause__ = meta.unraisable.exc_value
+                e.args = (meta.cause_msg,)
+                e.__cause__ = meta.exc_value
                 errors.append(e)
 
         if len(errors) == 1:
@@ -112,14 +100,30 @@ def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
 
 
 def unraisable_hook(unraisable: sys.UnraisableHookArgs) -> None:
+    if unraisable.err_msg is not None:
+        err_msg = unraisable.err_msg
+    else:
+        err_msg = "Exception ignored in"
+    summary = f"{err_msg}: {unraisable.object!r}"
+    traceback_message = "\n\n" + "".join(
+        traceback.format_exception(
+            unraisable.exc_type,
+            unraisable.exc_value,
+            unraisable.exc_traceback,
+        )
+    )
+    tracemalloc_tb = _tracemalloc_msg(unraisable.object)
+    msg = summary + traceback_message + tracemalloc_tb
+    cause_msg = summary + tracemalloc_tb
+
     _unraisable_exceptions.append(
         UnraisableMeta(
             # we need to compute these strings here as they might change after
             # the unraisablehook finishes and before the unraisable object is
             # collected by a hook
-            object_repr=repr(unraisable.object),
-            tracemalloc_tb=_tracemalloc_msg(unraisable.object),
-            unraisable=unraisable,
+            msg=msg,
+            cause_msg=cause_msg,
+            exc_value=unraisable.exc_value,
         )
     )
 
