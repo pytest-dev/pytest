@@ -7,6 +7,7 @@ import sys
 import traceback
 from typing import Callable
 from typing import Generator
+from typing import NamedTuple
 from typing import TYPE_CHECKING
 import warnings
 
@@ -21,6 +22,35 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
+def _tracemalloc_msg(source: object) -> str:
+    if source is None:
+        return ""
+
+    try:
+        import tracemalloc
+    except ImportError:
+        return ""
+
+    tb = tracemalloc.get_object_traceback(source)
+    if tb is not None:
+        formatted_tb = "\n".join(tb.format())
+        # Use a leading new line to better separate the (large) output
+        # from the traceback to the previous warning text.
+        return f"\nObject allocated at:\n{formatted_tb}"
+    # No need for a leading new line.
+    url = "https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings"
+    return (
+        "Enable tracemalloc to get traceback where the object was allocated.\n"
+        f"See {url} for more info."
+    )
+
+
+class UnraisableMeta(NamedTuple):
+    object_repr: str
+    tracemalloc_tb: str
+    unraisable: sys.UnraisableHookArgs
+
+
 def unraisable_exception_runtest_hook() -> Generator[None]:
     try:
         yield
@@ -28,43 +58,43 @@ def unraisable_exception_runtest_hook() -> Generator[None]:
         collect_unraisable()
 
 
-_unraisable_exceptions: collections.deque[tuple[str, sys.UnraisableHookArgs]] = (
-    collections.deque()
-)
+_unraisable_exceptions: collections.deque[UnraisableMeta] = collections.deque()
 
 
 def collect_unraisable() -> None:
     errors = []
-    unraisable = None
+    meta = None
     try:
         while True:
             try:
-                object_repr, unraisable = _unraisable_exceptions.pop()
+                meta = _unraisable_exceptions.pop()
             except IndexError:
                 break
 
-            if unraisable.err_msg is not None:
-                err_msg = unraisable.err_msg
+            if meta.unraisable.err_msg is not None:
+                err_msg = meta.unraisable.err_msg
             else:
                 err_msg = "Exception ignored in"
-            msg = f"{err_msg}: {object_repr}\n\n"
-            traceback_message = msg + "".join(
+            msg = f"{err_msg}: {meta.object_repr}"
+            traceback_message = "\n\n" + "".join(
                 traceback.format_exception(
-                    unraisable.exc_type,
-                    unraisable.exc_value,
-                    unraisable.exc_traceback,
+                    meta.unraisable.exc_type,
+                    meta.unraisable.exc_value,
+                    meta.unraisable.exc_traceback,
                 )
             )
             try:
                 warnings.warn(
-                    pytest.PytestUnraisableExceptionWarning(traceback_message)
+                    pytest.PytestUnraisableExceptionWarning(
+                        msg + traceback_message + meta.tracemalloc_tb
+                    )
                 )
             except pytest.PytestUnraisableExceptionWarning as e:
                 # exceptions have a better way to show the traceback, but
                 # warnings do not, so hide the traceback from the msg and
                 # set the cause so the traceback shows up in the right place
-                e.args = (msg,)
-                e.__cause__ = unraisable.exc_value
+                e.args = (msg + meta.tracemalloc_tb,)
+                e.__cause__ = meta.unraisable.exc_value
                 errors.append(e)
 
         if len(errors) == 1:
@@ -72,7 +102,7 @@ def collect_unraisable() -> None:
         if errors:
             raise ExceptionGroup("multiple unraisable exception warnings", errors)
     finally:
-        del errors, unraisable
+        del errors, meta
 
 
 def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
@@ -85,7 +115,16 @@ def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
 
 
 def unraisable_hook(unraisable: sys.UnraisableHookArgs) -> None:
-    _unraisable_exceptions.append((repr(unraisable.object), unraisable))
+    _unraisable_exceptions.append(
+        UnraisableMeta(
+            # we need to compute these strings here as they might change after
+            # the unraisablehook finishes and before the unraisable object is
+            # collected by a hook
+            object_repr=repr(unraisable.object),
+            tracemalloc_tb=_tracemalloc_msg(unraisable.object),
+            unraisable=unraisable,
+        )
+    )
 
 
 def pytest_configure(config: Config) -> None:
