@@ -63,7 +63,7 @@ def collect_unraisable() -> None:
 
         if len(errors) == 1:
             raise errors[0]
-        else:
+        if errors:
             raise ExceptionGroup("multiple unraisable exception warnings", errors)
     finally:
         del errors, unraisable
