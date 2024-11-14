@@ -961,7 +961,7 @@ class FixtureDef(Generic[FixtureValue]):
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         *,
         _ispytest: bool = False,
-        # only used to emit a deprecationwarning, can be removed in pytest9
+        # only used in a deprecationwarning msg, can be removed in pytest9
         _autouse: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
