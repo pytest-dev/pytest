@@ -1223,7 +1223,8 @@ class ReprEntry(TerminalRepr):
 
         if self.style == "value":
             for line in self.lines:
-                tw.line(line)
+                tw.write(line)
+                tw.write("\n")
             return
 
         # separate indents and source lines that are not failures: we want to
