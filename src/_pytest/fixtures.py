@@ -807,7 +807,7 @@ class FixtureLookupError(LookupError):
         stack = [self.request._pyfuncitem.obj]
         stack.extend(map(lambda x: x.func, self.fixturestack))
         msg = self.msg
-        if msg is not None and len(stack) > 1:
+        if msg is not None:
             # The last fixture raise an error, let's present
             # it at the requesting side.
             stack = stack[:-1]
