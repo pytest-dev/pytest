@@ -213,7 +213,6 @@ disable = [
     "condition-evals-to-constant",
     "consider-alternative-union-syntax",
     "confusing-consecutive-elif",
-    "consider-using-any-or-all",
     "consider-using-assignment-expr",
     "consider-using-dict-items",
     "consider-using-from-import",
