@@ -44,7 +44,6 @@ NOTSET: Final = NotSetType.token
 
 
 def is_generator(func: object) -> bool:
-    # note: this also returns true for async generator functions
     genfunc = inspect.isgeneratorfunction(func)
     return genfunc and not iscoroutinefunction(func)
 

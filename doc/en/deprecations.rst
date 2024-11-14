@@ -71,7 +71,7 @@ should be changed to
 
 You can also make use of `pytest_fixture_setup` to handle the coroutine/asyncgen before pytest sees it - this is the way current async pytest plugins handle it.
 
-If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file where they also have synchronous tests, they will also get this warning. We strongly recommend against this practice, and they should restructure their testing infrastructure so the fixture is synchronous or to separate the fixture from their synchronous tests. Note that the anyio pytest plugin has some support for sync test + async fixtures currently.
+If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file where they also have synchronous tests, they will also get this warning. We strongly recommend against this practice, and they should restructure their testing infrastructure so the fixture is synchronous or to separate the fixture from their synchronous tests. Note that the `anyio pytest plugin <https://anyio.readthedocs.io/en/stable/testing.html>`_ has some support for sync test + async fixtures currently.
 
 
 .. _import-or-skip-import-error:

@@ -885,8 +885,6 @@ def call_fixture_func(
     fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
 ) -> FixtureValue:
     if is_generator(fixturefunc):
-        # note: this also triggers on async generators, suppressing 'unawaited coroutine'
-        # warning.
         fixturefunc = cast(
             Callable[..., Generator[FixtureValue, None, None]], fixturefunc
         )

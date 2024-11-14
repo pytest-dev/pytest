@@ -1330,8 +1330,7 @@ def test_warning_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
                 yield
 
             def test_foo(async_fixture):
-                # we don't need to suppress RuntimeWarning for unawaited coroutine
-                # as pytest internals accidentally do so already for async gens
+                # async gens don't emit unawaited-coroutine
                 ...
         """
     )
