@@ -1103,6 +1103,23 @@ raise ValueError()
         assert line.endswith("mod.py")
         assert tw_mock.lines[12] == ":3: ValueError"
 
+    def test_toterminal_value(self, importasmod, tw_mock):
+        mod = importasmod(
+            """
+            def g(x):
+                raise ValueError(x)
+            def f():
+                g('some_value')
+        """
+        )
+        excinfo = pytest.raises(ValueError, mod.f)
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
+        repr = excinfo.getrepr(style="value")
+        repr.toterminal(tw_mock)
+
+        assert tw_mock.get_write_msg(0) == "some_value"
+        assert tw_mock.get_write_msg(1) == "\n"
+
     def test_toterminal_long_missing_source(
         self, importasmod, tmp_path: Path, tw_mock
     ) -> None:
@@ -1250,8 +1267,6 @@ raise ValueError()
         )
         r = excinfo.getrepr(style="long")
         r.toterminal(tw_mock)
-        for line in tw_mock.lines:
-            print(line)
         assert tw_mock.lines[0] == ""
         assert tw_mock.lines[1] == "    def f():"
         assert tw_mock.lines[2] == ">       g()"
