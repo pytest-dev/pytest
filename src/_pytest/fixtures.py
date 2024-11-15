@@ -805,6 +805,15 @@ class FixtureLookupError(LookupError):
         stack = [self.request._pyfuncitem.obj]
         stack.extend(map(lambda x: x.func, self.fixturestack))
         msg = self.msg
+        # This function currently makes an assumption that a non-None msg means we
+        # have a non-empty `self.fixturestack`. This is currently true, but if
+        # somebody at some point want to extend the use of FixtureLookupError to
+        # new cases it might break.
+        # Add the assert to make it clearer to developer that this will fail, otherwise
+        # it crashes because `fspath` does not get set due to `stack` being empty.
+        assert (
+            self.msg is None or self.fixturestack
+        ), "formatrepr assumptions broken, rewrite it to handle it"
         if msg is not None:
             # The last fixture raise an error, let's present
             # it at the requesting side.
