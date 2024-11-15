@@ -1734,8 +1734,11 @@ class FixtureManager:
         if holderobj in self._holderobjseen:
             return
 
+        module_types = (types.ModuleType,)
+        if (DummyMod := getattr(sys.modules.get("IPython.core.interactiveshell"), "DummyMod", None)) is not None:
+            module_types += (DummyMod,)
         # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
-        if not safe_isclass(holderobj) and not isinstance(holderobj, types.ModuleType):
+        if not safe_isclass(holderobj) and not isinstance(holderobj, module_types):
             holderobj_tp: object = type(holderobj)
         else:
             holderobj_tp = holderobj
