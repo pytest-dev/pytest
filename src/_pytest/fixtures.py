@@ -1736,7 +1736,11 @@ class FixtureManager:
 
         module_types = (types.ModuleType,)
         # support IPython's DummyMod if the module containing it has been imported
-        if (DummyMod := getattr(sys.modules.get("IPython.core.interactiveshell"), "DummyMod", None)) is not None:
+        if (
+            DummyMod := getattr(
+                sys.modules.get("IPython.core.interactiveshell"), "DummyMod", None
+            )
+        ) is not None:
             module_types += (DummyMod,)
         # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
         if not safe_isclass(holderobj) and not isinstance(holderobj, module_types):
