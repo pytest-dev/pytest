@@ -231,15 +231,13 @@ def pytest_pycollect_makeitem(
             )
         elif getattr(obj, "__test__", True):
             if inspect.isgeneratorfunction(obj):
-                res = Function.from_parent(collector, name=name)
                 reason = (
                     f"yield tests were removed in pytest 4.0 - {name} will be ignored"
                 )
-                res.add_marker(MARK_GEN.xfail(run=False, reason=reason))
-                res.warn(PytestCollectionWarning(reason))
-                return res
+                raise RuntimeError(reason)  # Raise a hard error instead of xfail
             else:
                 return list(collector._genfunctions(name, obj))
+        return None
     return None
 
 

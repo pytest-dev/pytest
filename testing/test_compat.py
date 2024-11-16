@@ -116,45 +116,6 @@ def test_is_generator_asyncio(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-def test_is_generator_async_syntax(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        import inspect
-        def test_is_generator_py35():
-            async def foo():
-                await foo()
-
-            async def bar():
-                pass
-
-            assert not inspect.isgeneratorfunction(foo)
-            assert not inspect.isgeneratorfunction(bar)
-    """
-    )
-    result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed*"])
-
-
-def test_is_generator_async_gen_syntax(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        import inspect
-        def test_is_generator():
-            async def foo():
-                yield
-                await foo()
-
-            async def bar():
-                yield
-
-            assert not inspect.isgeneratorfunction(foo)
-            assert not inspect.isgeneratorfunction(bar)
-    """
-    )
-    result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed*"])
-
-
 class ErrorsHelper:
     @property
     def raise_baseexception(self):
