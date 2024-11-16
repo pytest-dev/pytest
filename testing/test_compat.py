@@ -5,8 +5,8 @@ import enum
 from functools import cached_property
 from functools import partial
 from functools import wraps
-import sys
 import inspect
+import sys
 from typing import TYPE_CHECKING
 
 from _pytest.compat import _PytestWrapper
