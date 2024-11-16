@@ -43,7 +43,6 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
-from _pytest.compat import is_generator
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
@@ -231,7 +230,7 @@ def pytest_pycollect_makeitem(
                 lineno=lineno + 1,
             )
         elif getattr(obj, "__test__", True):
-            if is_generator(obj):
+            if inspect.isgeneratorfunction(obj):
                 res = Function.from_parent(collector, name=name)
                 reason = (
                     f"yield tests were removed in pytest 4.0 - {name} will be ignored"
