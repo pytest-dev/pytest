@@ -23,17 +23,6 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
 
-def test_is_generator() -> None:
-    def zap():
-        yield  # pragma: no cover
-
-    def foo():
-        pass  # pragma: no cover
-
-    assert inspect.isgeneratorfunction(zap)
-    assert not inspect.isgeneratorfunction(foo)
-
-
 def test_real_func_loop_limit() -> None:
     class Evil:
         def __init__(self):
@@ -93,27 +82,6 @@ def test_get_real_func_partial() -> None:
 
     assert get_real_func(foo) is foo
     assert get_real_func(partial(foo)) is foo
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason="coroutine removed")
-def test_is_generator_asyncio(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        import asyncio
-        import inspect
-
-        @asyncio.coroutine
-        def baz():
-            yield from [1,2,3]
-
-        def test_is_generator_asyncio():
-            assert not inspect.isgeneratorfunction(baz)
-    """
-    )
-    # avoid importing asyncio into pytest's own process,
-    # which in turn imports logging (#8)
-    result = pytester.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 class ErrorsHelper:
