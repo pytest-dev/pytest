@@ -6,12 +6,12 @@ from functools import cached_property
 from functools import partial
 from functools import wraps
 import sys
+import inspect
 from typing import TYPE_CHECKING
 
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
-from _pytest.compat import is_generator
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
@@ -30,8 +30,8 @@ def test_is_generator() -> None:
     def foo():
         pass  # pragma: no cover
 
-    assert is_generator(zap)
-    assert not is_generator(foo)
+    assert inspect.isgeneratorfunction(zap)
+    assert not inspect.isgeneratorfunction(foo)
 
 
 def test_real_func_loop_limit() -> None:
@@ -99,14 +99,15 @@ def test_get_real_func_partial() -> None:
 def test_is_generator_asyncio(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
-        from _pytest.compat import is_generator
         import asyncio
+        import inspect
+
         @asyncio.coroutine
         def baz():
             yield from [1,2,3]
 
         def test_is_generator_asyncio():
-            assert not is_generator(baz)
+            assert not inspect.isgeneratorfunction(baz)
     """
     )
     # avoid importing asyncio into pytest's own process,
@@ -118,7 +119,7 @@ def test_is_generator_asyncio(pytester: Pytester) -> None:
 def test_is_generator_async_syntax(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
-        from _pytest.compat import is_generator
+        import inspect
         def test_is_generator_py35():
             async def foo():
                 await foo()
@@ -126,8 +127,8 @@ def test_is_generator_async_syntax(pytester: Pytester) -> None:
             async def bar():
                 pass
 
-            assert not is_generator(foo)
-            assert not is_generator(bar)
+            assert not inspect.isgeneratorfunction(foo)
+            assert not inspect.isgeneratorfunction(bar)
     """
     )
     result = pytester.runpytest()
@@ -137,7 +138,7 @@ def test_is_generator_async_syntax(pytester: Pytester) -> None:
 def test_is_generator_async_gen_syntax(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
-        from _pytest.compat import is_generator
+        import inspect
         def test_is_generator():
             async def foo():
                 yield
@@ -146,8 +147,8 @@ def test_is_generator_async_gen_syntax(pytester: Pytester) -> None:
             async def bar():
                 yield
 
-            assert not is_generator(foo)
-            assert not is_generator(bar)
+            assert not inspect.isgeneratorfunction(foo)
+            assert not inspect.isgeneratorfunction(bar)
     """
     )
     result = pytester.runpytest()

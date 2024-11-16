@@ -1,0 +1,1 @@
+Removed _pytest.compat.is_generator() and just using inspect.isgeneratorfunction() directly

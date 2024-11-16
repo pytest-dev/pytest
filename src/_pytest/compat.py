@@ -43,11 +43,6 @@ NOTSET: Final = NotSetType.token
 # fmt: on
 
 
-def is_generator(func: object) -> bool:
-    genfunc = inspect.isgeneratorfunction(func)
-    return genfunc and not iscoroutinefunction(func)
-
-
 def iscoroutinefunction(func: object) -> bool:
     """Return True if func is a coroutine function (a function defined with async
     def syntax, and doesn't contain yield), or a function decorated with

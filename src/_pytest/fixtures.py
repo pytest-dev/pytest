@@ -49,7 +49,6 @@ from _pytest.compat import get_real_method
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
-from _pytest.compat import is_generator
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
 from _pytest.compat import safe_getattr
@@ -891,7 +890,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
 def call_fixture_func(
     fixturefunc: _FixtureFunc[FixtureValue], request: FixtureRequest, kwargs
 ) -> FixtureValue:
-    if is_generator(fixturefunc):
+    if inspect.isgeneratorfunction(fixturefunc):
         fixturefunc = cast(
             Callable[..., Generator[FixtureValue, None, None]], fixturefunc
         )
