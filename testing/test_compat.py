@@ -5,8 +5,6 @@ import enum
 from functools import cached_property
 from functools import partial
 from functools import wraps
-import inspect
-import sys
 from typing import TYPE_CHECKING
 
 from _pytest.compat import _PytestWrapper
@@ -15,7 +13,6 @@ from _pytest.compat import get_real_func
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
-from _pytest.pytester import Pytester
 import pytest
 
 
