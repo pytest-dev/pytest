@@ -1878,3 +1878,21 @@ def test_respect_system_exceptions(
     result.stdout.fnmatch_lines([f"*{head}*"])
     result.stdout.fnmatch_lines([msg])
     result.stdout.no_fnmatch_line(f"*{tail}*")
+
+
+def test_yield_disallowed_in_tests(pytester: Pytester):
+    """Ensure generator test functions with 'yield' raise a RuntimeError."""
+    pytester.makepyfile(
+        """
+        def test_with_yield():
+            yield 1
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 2
+    result.stdout.fnmatch_lines(
+        ["*RuntimeError: 'yield' keyword is allowed in fixtures, but not in tests (*)*"]
+    )
+    result.stdout.fnmatch_lines(
+        ["*collected 0 items*"]
+    )
