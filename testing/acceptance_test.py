@@ -1311,10 +1311,9 @@ def test_warning_on_sync_test_async_fixture(pytester: Pytester) -> None:
                 "*PytestRemovedIn9Warning: 'test_foo' requested an async "
                 "fixture 'async_fixture', with no plugin or hook that handled it. "
                 "This is usually an error, as pytest does not natively support it. "
-                "If this is intentional, consider making the fixture sync and return "
-                "a coroutine/asyncgen. "
                 "This will turn into an error in pytest 9."
             ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
         ]
     )
     result.assert_outcomes(passed=1, warnings=1)
@@ -1342,10 +1341,9 @@ def test_warning_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
                 "*PytestRemovedIn9Warning: 'test_foo' requested an async "
                 "fixture 'async_fixture', with no plugin or hook that handled it. "
                 "This is usually an error, as pytest does not natively support it. "
-                "If this is intentional, consider making the fixture sync and return "
-                "a coroutine/asyncgen. "
                 "This will turn into an error in pytest 9."
             ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
         ]
     )
     result.assert_outcomes(passed=1, warnings=1)
@@ -1376,11 +1374,11 @@ def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
             (
                 "*PytestRemovedIn9Warning: 'test_foo' requested an async "
                 "fixture 'async_fixture' with autouse=True, with no plugin or hook "
-                "that handled it. This is usually an error, as pytest does not "
-                "natively support it. If this is intentional, consider making the "
-                "fixture sync and return a coroutine/asyncgen. "
+                "that handled it. "
+                "This is usually an error, as pytest does not natively support it. "
                 "This will turn into an error in pytest 9."
             ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
         ]
     )
     result.assert_outcomes(passed=1, warnings=1)
