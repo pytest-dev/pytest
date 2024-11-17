@@ -1154,9 +1154,9 @@ def pytest_fixture_setup(
                 f"{request.node.name!r} requested an async fixture "
                 f"{request.fixturename!r}{auto_str}, with no plugin or hook that "
                 "handled it. This is usually an error, as pytest does not natively "
-                "support it. If this is intentional, consider making the fixture "
-                "sync and return a coroutine/asyncgen. "
-                "This will turn into an error in pytest 9."
+                "support it. "
+                "This will turn into an error in pytest 9.\n"
+                "See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture"
             ),
             # no stacklevel will point at users code, so we just point here
             stacklevel=1,
