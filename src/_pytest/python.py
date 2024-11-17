@@ -230,12 +230,8 @@ def pytest_pycollect_makeitem(
             )
         elif getattr(obj, "__test__", True):
             if inspect.isgeneratorfunction(obj):
-                reason = (
-                    f"yield tests were removed in pytest 4.0 - {name} will be ignored"
-                )
-                raise RuntimeError(reason)  # Raise a hard error instead of xfail
-            else:
-                return list(collector._genfunctions(name, obj))
+                raise RuntimeError("'yield' keyword is allowed in fixtures, but not in tests ({name})")
+            return list(collector._genfunctions(name, obj))
         return None
     return None
 
