@@ -1286,6 +1286,104 @@ def test_error_on_async_gen_function(pytester: Pytester) -> None:
     result.assert_outcomes(failed=3)
 
 
+def test_warning_on_sync_test_async_fixture(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture
+            async def async_fixture():
+                ...
+
+            def test_foo(async_fixture):
+                # suppress unawaited coroutine warning
+                try:
+                    async_fixture.send(None)
+                except StopIteration:
+                    pass
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== warnings summary ==*",
+            (
+                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
+                "fixture 'async_fixture', with no plugin or hook that handled it. "
+                "This is usually an error, as pytest does not natively support it. "
+                "This will turn into an error in pytest 9."
+            ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+        ]
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_warning_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture
+            async def async_fixture():
+                yield
+
+            def test_foo(async_fixture):
+                # async gens don't emit unawaited-coroutine
+                ...
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== warnings summary ==*",
+            (
+                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
+                "fixture 'async_fixture', with no plugin or hook that handled it. "
+                "This is usually an error, as pytest does not natively support it. "
+                "This will turn into an error in pytest 9."
+            ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+        ]
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            async def async_fixture():
+                ...
+
+            # We explicitly request the fixture to be able to
+            # suppress the RuntimeWarning for unawaited coroutine.
+            def test_foo(async_fixture):
+                try:
+                    async_fixture.send(None)
+                except StopIteration:
+                    pass
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== warnings summary ==*",
+            (
+                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
+                "fixture 'async_fixture' with autouse=True, with no plugin or hook "
+                "that handled it. "
+                "This is usually an error, as pytest does not natively support it. "
+                "This will turn into an error in pytest 9."
+            ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+        ]
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+
+
 def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
     pytester.makepyfile(
         **{

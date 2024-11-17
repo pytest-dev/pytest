@@ -72,6 +72,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
+from _pytest.warning_types import PytestRemovedIn9Warning
 
 
 if sys.version_info < (3, 11):
@@ -574,6 +575,7 @@ class FixtureRequest(abc.ABC):
         # The are no fixtures with this name applicable for the function.
         if not fixturedefs:
             raise FixtureLookupError(argname, self)
+
         # A fixture may override another fixture with the same name, e.g. a
         # fixture in a module can override a fixture in a conftest, a fixture in
         # a class can override a fixture in the module, and so on.
@@ -967,6 +969,8 @@ class FixtureDef(Generic[FixtureValue]):
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         *,
         _ispytest: bool = False,
+        # only used in a deprecationwarning msg, can be removed in pytest9
+        _autouse: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
         # The "base" node ID for the fixture.
@@ -1012,6 +1016,9 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
+
+        # only used to emit a deprecationwarning, can be removed in pytest9
+        self._autouse = _autouse
 
     @property
     def scope(self) -> _ScopeName:
@@ -1144,6 +1151,25 @@ def pytest_fixture_setup(
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
     my_cache_key = fixturedef.cache_key(request)
+
+    if inspect.isasyncgenfunction(fixturefunc) or inspect.iscoroutinefunction(
+        fixturefunc
+    ):
+        auto_str = " with autouse=True" if fixturedef._autouse else ""
+
+        warnings.warn(
+            PytestRemovedIn9Warning(
+                f"{request.node.name!r} requested an async fixture "
+                f"{request.fixturename!r}{auto_str}, with no plugin or hook that "
+                "handled it. This is usually an error, as pytest does not natively "
+                "support it. "
+                "This will turn into an error in pytest 9.\n"
+                "See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture"
+            ),
+            # no stacklevel will point at users code, so we just point here
+            stacklevel=1,
+        )
+
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
     except TEST_OUTCOME as e:
@@ -1674,6 +1700,7 @@ class FixtureManager:
             params=params,
             ids=ids,
             _ispytest=True,
+            _autouse=autouse,
         )
 
         faclist = self._arg2fixturedefs.setdefault(name, [])
