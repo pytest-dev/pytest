@@ -13,78 +13,82 @@ import pytest
 
 # Start of tests for classes
 
-# def run_import_class_test(pytester: Pytester, passed: int = 0, errors: int = 0) -> None:
-#     src_dir = pytester.mkdir("src")
-#     tests_dir = pytester.mkdir("tests")
-#     src_file = src_dir / "foo.py"
 
-#     src_file.write_text(
-#         textwrap.dedent("""\
-#     class Testament(object):
-#         def __init__(self):
-#             super().__init__()
-#             self.collections = ["stamp", "coin"]
+def run_import_class_test(
+    pytester: Pytester, passed: int = 0, errors: int = 0
+) -> RunResult:
+    src_dir = pytester.mkdir("src")
+    tests_dir = pytester.mkdir("tests")
+    src_file = src_dir / "foo.py"
 
-#         def personal_property(self):
-#             return [f"my {x} collection" for x in self.collections]
-#     """),
-#         encoding="utf-8",
-#     )
+    src_file.write_text(
+        textwrap.dedent("""\
+    class Testament(object):
+        def __init__(self):
+            super().__init__()
+            self.collections = ["stamp", "coin"]
 
-#     test_file = tests_dir / "foo_test.py"
-#     test_file.write_text(
-#         textwrap.dedent("""\
-#     import sys
-#     import os
+        def personal_property(self):
+            return [f"my {x} collection" for x in self.collections]
+    """),
+        encoding="utf-8",
+    )
 
-#     current_file = os.path.abspath(__file__)
-#     current_dir = os.path.dirname(current_file)
-#     parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
-#     sys.path.append(parent_dir)
+    test_file = tests_dir / "foo_test.py"
+    test_file.write_text(
+        textwrap.dedent("""\
+    import sys
+    import os
 
-#     from src.foo import Testament
+    current_file = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file)
+    parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
+    sys.path.append(parent_dir)
 
-#     class TestDomain:
-#         def test_testament(self):
-#             testament = Testament()
-#             assert testament.personal_property()
-#     """),
-#         encoding="utf-8",
-#     )
+    from src.foo import Testament
 
-#     result = pytester.runpytest()
-#     result.assert_outcomes(passed=passed, errors=errors)
+    class TestDomain:
+        def test_testament(self):
+            testament = Testament()
+            assert testament.personal_property()
+    """),
+        encoding="utf-8",
+    )
 
-# def test_collect_imports_disabled(pytester: Pytester) -> None:
-#     pytester.makeini("""
-#         [pytest]
-#         testpaths = "tests"
-#         collect_imported_tests = false
-#     """)
-
-#     run_import_class_test(pytester, passed=1)
-
-#     # Verify that the state of hooks
-#     reprec = pytester.inline_run()
-#     items_collected = reprec.getcalls("pytest_itemcollected")
-#     assert len(items_collected) == 1
-#     for x in items_collected:
-#         assert x.item._getobj().__name__ == "test_testament"
-
-# def test_collect_imports_default(pytester: Pytester) -> None:
-#     run_import_class_test(pytester, errors=1)
-
-#     # TODO, hooks
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=passed, errors=errors)
+    return result
 
 
-# def test_collect_imports_enabled(pytester: Pytester) -> None:
-#     pytester.makeini("""
-#         [pytest]
-#         collect_imported_tests = true
-#     """)
+def test_collect_imports_disabled(pytester: Pytester) -> None:
+    pytester.makeini("""
+        [pytest]
+        testpaths = "tests"
+        collect_imported_tests = false
+    """)
 
-#     run_import_class_test(pytester, errors=1)
-#     # TODO, hooks
+    run_import_class_test(pytester, passed=1)
+
+    # Verify that the state of hooks
+    reprec = pytester.inline_run()
+    items_collected = reprec.getcalls("pytest_itemcollected")
+    assert len(items_collected) == 1
+    for x in items_collected:
+        assert x.item._getobj().__name__ == "test_testament"
+
+
+def test_collect_imports_default(pytester: Pytester) -> None:
+    run_import_class_test(pytester, errors=1)
+    # TODO
+
+
+def test_collect_imports_enabled(pytester: Pytester) -> None:
+    pytester.makeini("""
+        [pytest]
+        collect_imported_tests = true
+    """)
+
+    run_import_class_test(pytester, errors=1)
 
 
 # End of tests for classes
@@ -144,54 +148,54 @@ def run_import_functions_test(
     return result
 
 
-# def test_collect_function_imports_enabled(pytester: Pytester) -> None:
-#     pytester.makeini("""
-#         [pytest]
-#         testpaths = "tests"
-#         collect_imported_tests = true
-#     """)
+def test_collect_function_imports_enabled(pytester: Pytester) -> None:
+    pytester.makeini("""
+        [pytest]
+        testpaths = "tests"
+        collect_imported_tests = true
+    """)
 
-#     run_import_functions_test(pytester, passed=2, errors=0, failed=1)
-#     reprec = pytester.inline_run()
-#     items_collected = reprec.getcalls("pytest_itemcollected")
-#     # Recall that the default is `collect_imported_tests = true`.
-#     # Which means that the normal functions are now interpreted as
-#     # valid tests and `test_function()` will fail.
-#     assert len(items_collected) == 3
-#     for x in items_collected:
-#         assert x.item._getobj().__name__ in [
-#             "test_important",
-#             "test_bar",
-#             "test_function",
-#         ]
-
-
-# def test_behaviour_without_testpaths_set_and_false(pytester: Pytester) -> None:
-#     # Make sure `collect_imported_tests` has no dependence on `testpaths`
-#     pytester.makeini("""
-#         [pytest]
-#         collect_imported_tests = false
-#     """)
-
-#     run_import_functions_test(pytester, passed=1, errors=0, failed=0)
-#     reprec = pytester.inline_run()
-#     items_collected = reprec.getcalls("pytest_itemcollected")
-#     assert len(items_collected) == 1
-#     for x in items_collected:
-#         assert x.item._getobj().__name__ == "test_important"
+    run_import_functions_test(pytester, passed=2, errors=0, failed=1)
+    reprec = pytester.inline_run()
+    items_collected = reprec.getcalls("pytest_itemcollected")
+    # Recall that the default is `collect_imported_tests = true`.
+    # Which means that the normal functions are now interpreted as
+    # valid tests and `test_function()` will fail.
+    assert len(items_collected) == 3
+    for x in items_collected:
+        assert x.item._getobj().__name__ in [
+            "test_important",
+            "test_bar",
+            "test_function",
+        ]
 
 
-# def test_behaviour_without_testpaths_set_and_true(pytester: Pytester) -> None:
-#     # Make sure `collect_imported_tests` has no dependence on `testpaths`
-#     pytester.makeini("""
-#         [pytest]
-#         collect_imported_tests = true
-#     """)
+def test_behaviour_without_testpaths_set_and_false(pytester: Pytester) -> None:
+    # Make sure `collect_imported_tests` has no dependence on `testpaths`
+    pytester.makeini("""
+        [pytest]
+        collect_imported_tests = false
+    """)
 
-#     run_import_functions_test(pytester, passed=2, errors=0, failed=1)
-#     reprec = pytester.inline_run()
-#     items_collected = reprec.getcalls("pytest_itemcollected")
-#     assert len(items_collected) == 3
+    run_import_functions_test(pytester, passed=1, errors=0, failed=0)
+    reprec = pytester.inline_run()
+    items_collected = reprec.getcalls("pytest_itemcollected")
+    assert len(items_collected) == 1
+    for x in items_collected:
+        assert x.item._getobj().__name__ == "test_important"
+
+
+def test_behaviour_without_testpaths_set_and_true(pytester: Pytester) -> None:
+    # Make sure `collect_imported_tests` has no dependence on `testpaths`
+    pytester.makeini("""
+        [pytest]
+        collect_imported_tests = true
+    """)
+
+    run_import_functions_test(pytester, passed=2, errors=0, failed=1)
+    reprec = pytester.inline_run()
+    items_collected = reprec.getcalls("pytest_itemcollected")
+    assert len(items_collected) == 3
 
 
 class TestHookBehaviour:
@@ -255,11 +259,12 @@ class TestHookBehaviour:
             "reports": reports,
         }
 
-    # Now check that the two tests above did indeed result in the same outcome.
     def _test_hook_behaviour(self) -> None:
         print("ABCD", self.collect_outcomes)
         default = self.collect_outcomes["default"]
         collect_off = self.collect_outcomes["collect_off"]
+
+        # Check that the two tests above did indeed result in the same outcome.
         assert default["result"] == collect_off["result"]
 
         assert len(default["modified"]) == len(collect_off["modified"]) == 1
@@ -282,13 +287,14 @@ class TestHookBehaviour:
             len(default["items_collected"]) == len(collect_off["items_collected"]) == 1
         )
 
+        # Check if the same tests got collected
         def_items_record: RecordedHookCall = default["items_collected"][0]
         off_items_record: RecordedHookCall = collect_off["items_collected"][0]
         def_items = def_items_record.__dict__["item"]
         off_items = off_items_record.__dict__["item"]
         assert def_items.name == off_items.name
 
-        # TODO: fix diff:
+        # TODO: fix diff: (This will get cleaned up)
         # [
         #   <CollectReport '' lenresult=1 outcome='passed'>,
         # - <CollectReport 'src' lenresult=0 outcome='passed'>,
@@ -301,12 +307,24 @@ class TestHookBehaviour:
         # ?                                  ^
         # ]
 
-        # assert len(default['reports']) == len(collect_off['reports'])
-        # for i in range(len(default['reports'])):
-        #     print("def",default['reports'][i].__dict__)
-        #     print("off",collect_off['reports'][i].__dict__)
+        for x in default["reports"]:
+            print("def", x.__dict__)
 
-        # from pprint import pprint
-        # pprint(default['reports'])
-        # pprint(collect_off['reports'])
-        # assert default['reports'] == collect_off['reports']
+        for x in collect_off["reports"]:
+            print("off", x.__dict__)
+
+        # The two above loops prints:
+
+        # def {'nodeid': '', 'outcome': 'passed', 'longrepr': None, 'result': [<Dir test_hook_behaviour0>], 'sections': []}  # noqa: E501
+        # def {'nodeid': 'tests/foo_test.py::TestDomain', 'outcome': 'passed', 'longrepr': None, 'result': [<Function test_important>], 'sections': []} # noqa: E501
+        # def {'nodeid': 'tests/foo_test.py', 'outcome': 'passed', 'longrepr': None, 'result': [<Class TestDomain>], 'sections': []} # noqa: E501
+        # def {'nodeid': 'tests', 'outcome': 'passed', 'longrepr': None, 'result': [<Module foo_test.py>], 'sections': []} # noqa: E501
+        # def {'nodeid': '.', 'outcome': 'passed', 'longrepr': None, 'result': [<Dir tests>], 'sections': []} # noqa: E501
+        # off {'nodeid': '', 'outcome': 'passed', 'longrepr': None, 'result': [<Dir test_hook_behaviour1>], 'sections': []} # noqa: E501
+        # off {'nodeid': 'src', 'outcome': 'passed', 'longrepr': None, 'result': [], 'sections': []}
+        # off {'nodeid': 'tests/foo_test.py::TestDomain', 'outcome': 'passed', 'longrepr': None, 'result': [<Function test_important>], 'sections': []} # noqa: E501
+        # off {'nodeid': 'tests/foo_test.py', 'outcome': 'passed', 'longrepr': None, 'result': [<Class TestDomain>], 'sections': []} # noqa: E501
+        # off {'nodeid': 'tests', 'outcome': 'passed', 'longrepr': None, 'result': [<Module foo_test.py>], 'sections': []} # noqa: E501
+        # off {'nodeid': '.', 'outcome': 'passed', 'longrepr': None, 'result': [<Dir src>, <Dir tests>], 'sections': []} # noqa: E501
+
+        assert len(default["reports"]) == len(collect_off["reports"])
