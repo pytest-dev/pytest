@@ -230,7 +230,9 @@ def pytest_pycollect_makeitem(
             )
         elif getattr(obj, "__test__", True):
             if inspect.isgeneratorfunction(obj):
-                raise RuntimeError("'yield' keyword is allowed in fixtures, but not in tests ({name})")
+                raise RuntimeError(
+                    "'yield' keyword is allowed in fixtures, but not in tests ({name})"
+                )
             return list(collector._genfunctions(name, obj))
         return None
     return None
