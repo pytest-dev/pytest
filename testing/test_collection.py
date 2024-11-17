@@ -1893,6 +1893,4 @@ def test_yield_disallowed_in_tests(pytester: Pytester):
     result.stdout.fnmatch_lines(
         ["*RuntimeError: 'yield' keyword is allowed in fixtures, but not in tests (*)*"]
     )
-    result.stdout.fnmatch_lines(
-        ["*collected 0 items*"]
-    )
+    result.stdout.fnmatch_lines(["*collected 0 items*"])
