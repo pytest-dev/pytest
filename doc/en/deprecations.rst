@@ -379,7 +379,13 @@ Some breaking changes which could not be deprecated are also listed.
 ``yield`` tests
 ~~~~~~~~~~~~~~~
 
+.. versionremoved:: 4.0
+
+    ``yield`` tests ``xfail``.
+
 .. versionremoved:: 8.4
+
+    ``yield`` tests raise a collection error.
 
 pytest no longer supports ``yield``-style tests, where a test function actually ``yield`` functions and values
 that are then turned into proper test methods. Example:
