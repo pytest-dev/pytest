@@ -1,0 +1,1 @@
+Clarify :ref:`filterwarnings` docs on filter precedence/order when using multiple :ref:`@pytest.mark.filterwarnings <pytest.mark.filterwarnings ref>` marks.

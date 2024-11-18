@@ -137,8 +137,8 @@ class TestSetupState:
             ss.teardown_exact(None)
         mod, func = e.value.exceptions
         assert isinstance(mod, KeyError)
-        assert isinstance(func.exceptions[0], TypeError)  # type: ignore
-        assert isinstance(func.exceptions[1], ValueError)  # type: ignore
+        assert isinstance(func.exceptions[0], TypeError)
+        assert isinstance(func.exceptions[1], ValueError)
 
     def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
         """Regression test for #12204 (the "BTW" case)."""
