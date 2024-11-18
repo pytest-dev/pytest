@@ -403,7 +403,7 @@ This form of test function doesn't support fixtures properly, and users should s
     @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
     def test_squared(x, y):
         assert x**x == y
-        
+
 .. _nose-deprecation:
 
 Support for tests written for nose
