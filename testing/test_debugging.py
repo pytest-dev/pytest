@@ -52,6 +52,16 @@ def custom_pdb_calls() -> list[str]:
         def interaction(self, *args):
             called.append("interaction")
 
+        # Methods which we copy the docstring over.
+        def do_debug(self, *args):
+            pass
+
+        def do_continue(self, *args):
+            pass
+
+        def do_quit(self, *args):
+            pass
+
     _pytest._CustomPdb = _CustomPdb  # type: ignore
     return called
 
@@ -74,6 +84,16 @@ def custom_debugger_hook():
         def set_trace(self, frame):
             print("**CustomDebugger**")
             called.append("set_trace")
+
+        # Methods which we copy the docstring over.
+        def do_debug(self, *args):
+            pass
+
+        def do_continue(self, *args):
+            pass
+
+        def do_quit(self, *args):
+            pass
 
     _pytest._CustomDebugger = _CustomDebugger  # type: ignore
     yield called
@@ -1316,6 +1336,16 @@ def test_pdbcls_via_local_module(pytester: Pytester) -> None:
 
                 def runcall(self, *args, **kwds):
                     print("runcall_called", args, kwds)
+
+                # Methods which we copy the docstring over.
+                def do_debug(self, *args):
+                    pass
+
+                def do_continue(self, *args):
+                    pass
+
+                def do_quit(self, *args):
+                    pass
         """,
     )
     result = pytester.runpytest(
@@ -1382,6 +1412,16 @@ def test_pdb_wrapper_class_is_reused(pytester: Pytester) -> None:
 
             def set_trace(self, *args):
                 print("set_trace_called", args)
+
+            # Methods which we copy the docstring over.
+            def do_debug(self, *args):
+                pass
+
+            def do_continue(self, *args):
+                pass
+
+            def do_quit(self, *args):
+                pass
         """,
     )
     result = pytester.runpytest(str(p1), "--pdbcls=mypdb:MyPdb", syspathinsert=True)
