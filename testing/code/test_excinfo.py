@@ -1703,6 +1703,63 @@ def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
 
 
+def test_exceptiongroup_short_summary_info(pytester: Pytester):
+    pytester.makepyfile(
+        """
+        import sys
+
+        if sys.version_info < (3, 11):
+            from exceptiongroup import BaseExceptionGroup, ExceptionGroup
+
+        def test_base() -> None:
+            raise BaseExceptionGroup("NOT IN SUMMARY", [SystemExit("a" * 10)])
+
+        def test_nonbase() -> None:
+            raise ExceptionGroup("NOT IN SUMMARY", [ValueError("a" * 10)])
+
+        def test_nested() -> None:
+            raise ExceptionGroup(
+                "NOT DISPLAYED", [
+                    ExceptionGroup("NOT IN SUMMARY", [ValueError("a" * 10)])
+                ]
+            )
+
+        def test_multiple() -> None:
+            raise ExceptionGroup(
+                "b" * 10,
+                [
+                    ValueError("NOT IN SUMMARY"),
+                    TypeError("NOT IN SUMMARY"),
+                ]
+            )
+        """
+    )
+    result = pytester.runpytest("-vv")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*= short test summary info =*",
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_base - "
+                "[in BaseExceptionGroup] SystemExit('aaaaaaaaaa')"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nonbase - "
+                "[in ExceptionGroup] ValueError('aaaaaaaaaa')"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nested - "
+                "[in ExceptionGroup] ValueError('aaaaaaaaaa')"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_multiple - "
+                "ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
+            ),
+            "*= 4 failed in *",
+        ]
+    )
+
+
 @pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
 def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
     """Regression test for #10903."""

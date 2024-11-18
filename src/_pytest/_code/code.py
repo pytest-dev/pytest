@@ -1033,6 +1033,24 @@ class FormattedExcinfo:
 
     def repr_excinfo(self, excinfo: ExceptionInfo[BaseException]) -> ExceptionChainRepr:
         repr_chain: list[tuple[ReprTraceback, ReprFileLocation | None, str | None]] = []
+
+        def _get_single_subexc(
+            eg: BaseExceptionGroup[BaseException],
+        ) -> BaseException | None:
+            res: BaseException | None = None
+            for subexc in eg.exceptions:
+                if res is not None:
+                    return None
+
+                if isinstance(subexc, BaseExceptionGroup):
+                    res = _get_single_subexc(subexc)
+                    if res is None:
+                        # there were multiple exceptions in the subgroup
+                        return None
+                else:
+                    res = subexc
+            return res
+
         e: BaseException | None = excinfo.value
         excinfo_: ExceptionInfo[BaseException] | None = excinfo
         descr = None
@@ -1041,6 +1059,7 @@ class FormattedExcinfo:
             seen.add(id(e))
 
             if excinfo_:
+                reprcrash = excinfo_._getreprcrash()
                 # Fall back to native traceback as a temporary workaround until
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
@@ -1054,9 +1073,13 @@ class FormattedExcinfo:
                             )
                         )
                     )
+                    if (
+                        reprcrash is not None
+                        and (subexc := _get_single_subexc(e)) is not None
+                    ):
+                        reprcrash.message = f"[in {type(e).__name__}] {subexc!r}"
                 else:
                     reprtraceback = self.repr_traceback(excinfo_)
-                reprcrash = excinfo_._getreprcrash()
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
