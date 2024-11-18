@@ -1881,7 +1881,7 @@ def test_respect_system_exceptions(
 
 
 def test_yield_disallowed_in_tests(pytester: Pytester):
-    """Ensure generator test functions with 'yield' raise a RuntimeError."""
+    """Ensure generator test functions with 'yield' fail collection (#12960)."""
     pytester.makepyfile(
         """
         def test_with_yield():
@@ -1891,6 +1891,7 @@ def test_yield_disallowed_in_tests(pytester: Pytester):
     result = pytester.runpytest()
     assert result.ret == 2
     result.stdout.fnmatch_lines(
-        ["*RuntimeError: 'yield' keyword is allowed in fixtures, but not in tests (*)*"]
+        ["*'yield' keyword is allowed in fixtures, but not in tests (test_with_yield)*"]
     )
+    # Assert that no tests were collected
     result.stdout.fnmatch_lines(["*collected 0 items*"])

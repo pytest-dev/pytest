@@ -1,1 +1,1 @@
-Test functions containing a yield now cause an explicit error. They have not been run since Pytest 4.0, and were previously marked as an expected failure and deprecation warning.
+Test functions containing a yield now cause an explicit error. They have not been run since pytest 4.0, and were previously marked as an expected failure and deprecation warning.
