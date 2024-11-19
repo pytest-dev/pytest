@@ -1736,6 +1736,7 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
     )
     result = pytester.runpytest("-vv")
     assert result.ret == 1
+    backport_str = "exceptiongroup." if sys.version_info < (3, 11) else ""
     result.stdout.fnmatch_lines(
         [
             "*= short test summary info =*",
@@ -1753,7 +1754,7 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
             ),
             (
                 "FAILED test_exceptiongroup_short_summary_info.py::test_multiple - "
-                "ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
+                f"{backport_str}ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
             ),
             "*= 4 failed in *",
         ]
