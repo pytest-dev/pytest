@@ -374,6 +374,42 @@ an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
 
+.. _yield tests deprecated:
+
+``yield`` tests
+~~~~~~~~~~~~~~~
+
+.. versionremoved:: 4.0
+
+    ``yield`` tests ``xfail``.
+
+.. versionremoved:: 8.4
+
+    ``yield`` tests raise a collection error.
+
+pytest no longer supports ``yield``-style tests, where a test function actually ``yield`` functions and values
+that are then turned into proper test methods. Example:
+
+.. code-block:: python
+
+    def check(x, y):
+        assert x**x == y
+
+
+    def test_squared():
+        yield check, 2, 4
+        yield check, 3, 9
+
+This would result in two actual test functions being generated.
+
+This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parametrize``:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
+    def test_squared(x, y):
+        assert x**x == y
+
 .. _nose-deprecation:
 
 Support for tests written for nose
@@ -1269,36 +1305,6 @@ with the ``name`` parameter:
     def cell_fixture():
         return cell()
 
-
-.. _yield tests deprecated:
-
-``yield`` tests
-~~~~~~~~~~~~~~~
-
-.. versionremoved:: 4.0
-
-pytest supported ``yield``-style tests, where a test function actually ``yield`` functions and values
-that are then turned into proper test methods. Example:
-
-.. code-block:: python
-
-    def check(x, y):
-        assert x**x == y
-
-
-    def test_squared():
-        yield check, 2, 4
-        yield check, 3, 9
-
-This would result into two actual test functions being generated.
-
-This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parametrize``:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
-    def test_squared(x, y):
-        assert x**x == y
 
 .. _internal classes accessed through node deprecated:
 

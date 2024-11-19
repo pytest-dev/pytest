@@ -43,7 +43,6 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
-from _pytest.compat import is_generator
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
@@ -57,7 +56,6 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
-from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import Mark
@@ -231,16 +229,13 @@ def pytest_pycollect_makeitem(
                 lineno=lineno + 1,
             )
         elif getattr(obj, "__test__", True):
-            if is_generator(obj):
-                res = Function.from_parent(collector, name=name)
-                reason = (
-                    f"yield tests were removed in pytest 4.0 - {name} will be ignored"
+            if inspect.isgeneratorfunction(obj):
+                fail(
+                    f"'yield' keyword is allowed in fixtures, but not in tests ({name})",
+                    pytrace=False,
                 )
-                res.add_marker(MARK_GEN.xfail(run=False, reason=reason))
-                res.warn(PytestCollectionWarning(reason))
-                return res
-            else:
-                return list(collector._genfunctions(name, obj))
+            return list(collector._genfunctions(name, obj))
+        return None
     return None
 
 
