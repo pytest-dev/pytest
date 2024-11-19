@@ -1732,8 +1732,23 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
                     TypeError("NOT IN SUMMARY"),
                 ]
             )
+
+        def test_nested_multiple() -> None:
+            raise ExceptionGroup(
+                "b" * 10,
+                [
+                    ExceptionGroup(
+                        "c" * 10,
+                        [
+                            ValueError("NOT IN SUMMARY"),
+                            TypeError("NOT IN SUMMARY"),
+                        ]
+                    )
+                ]
+            )
         """
     )
+    # run with -vv to not truncate summary info, default width in tests is very low
     result = pytester.runpytest("-vv")
     assert result.ret == 1
     backport_str = "exceptiongroup." if sys.version_info < (3, 11) else ""
@@ -1756,7 +1771,11 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
                 "FAILED test_exceptiongroup_short_summary_info.py::test_multiple - "
                 f"{backport_str}ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
             ),
-            "*= 4 failed in *",
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nested_multiple - "
+                f"{backport_str}ExceptionGroup: bbbbbbbbbb (1 sub-exception)"
+            ),
+            "*= 5 failed in *",
         ]
     )
 
