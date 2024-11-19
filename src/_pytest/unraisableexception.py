@@ -58,18 +58,27 @@ def unraisable_exception_runtest_hook() -> Generator[None]:
         collect_unraisable()
 
 
-_unraisable_exceptions: collections.deque[UnraisableMeta] = collections.deque()
+_unraisable_exceptions: collections.deque[UnraisableMeta | BaseException] = (
+    collections.deque()
+)
 
 
 def collect_unraisable() -> None:
-    errors = []
+    errors: list[pytest.PytestUnraisableExceptionWarning | RuntimeError] = []
     meta = None
+    hook_error = None
     try:
         while True:
             try:
                 meta = _unraisable_exceptions.pop()
             except IndexError:
                 break
+
+            if isinstance(meta, BaseException):
+                hook_error = RuntimeError("Failed to process unraisable exception")
+                hook_error.__cause__ = meta
+                errors.append(hook_error)
+                continue
 
             msg = meta.msg
             try:
@@ -88,7 +97,7 @@ def collect_unraisable() -> None:
         if errors:
             raise ExceptionGroup("multiple unraisable exception warnings", errors)
     finally:
-        del errors, meta
+        del errors, meta, hook_error
 
 
 def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
@@ -101,32 +110,35 @@ def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
 
 
 def unraisable_hook(unraisable: sys.UnraisableHookArgs) -> None:
-    if unraisable.err_msg is not None:
-        err_msg = unraisable.err_msg
-    else:
-        err_msg = "Exception ignored in"
-    summary = f"{err_msg}: {unraisable.object!r}"
-    traceback_message = "\n\n" + "".join(
-        traceback.format_exception(
-            unraisable.exc_type,
-            unraisable.exc_value,
-            unraisable.exc_traceback,
+    try:
+        if unraisable.err_msg is not None:
+            err_msg = unraisable.err_msg
+        else:
+            err_msg = "Exception ignored in"
+        summary = f"{err_msg}: {unraisable.object!r}"
+        traceback_message = "\n\n" + "".join(
+            traceback.format_exception(
+                unraisable.exc_type,
+                unraisable.exc_value,
+                unraisable.exc_traceback,
+            )
         )
-    )
-    tracemalloc_tb = _tracemalloc_msg(unraisable.object)
-    msg = summary + traceback_message + tracemalloc_tb
-    cause_msg = summary + tracemalloc_tb
+        tracemalloc_tb = _tracemalloc_msg(unraisable.object)
+        msg = summary + traceback_message + tracemalloc_tb
+        cause_msg = summary + tracemalloc_tb
 
-    _unraisable_exceptions.append(
-        UnraisableMeta(
-            # we need to compute these strings here as they might change after
-            # the unraisablehook finishes and before the unraisable object is
-            # collected by a hook
-            msg=msg,
-            cause_msg=cause_msg,
-            exc_value=unraisable.exc_value,
+        _unraisable_exceptions.append(
+            UnraisableMeta(
+                # we need to compute these strings here as they might change after
+                # the unraisablehook finishes and before the unraisable object is
+                # collected by a hook
+                msg=msg,
+                cause_msg=cause_msg,
+                exc_value=unraisable.exc_value,
+            )
         )
-    )
+    except BaseException as e:
+        _unraisable_exceptions.append(e)
 
 
 def pytest_configure(config: Config) -> None:
