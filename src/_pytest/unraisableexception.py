@@ -89,10 +89,9 @@ def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
 
 def unraisable_hook(unraisable: sys.UnraisableHookArgs) -> None:
     try:
-        if unraisable.err_msg is not None:
-            err_msg = unraisable.err_msg
-        else:
-            err_msg = "Exception ignored in"
+        err_msg = (
+            "Exception ignored in" if unraisable.err_msg is None else unraisable.err_msg
+        )
         summary = f"{err_msg}: {unraisable.object!r}"
         traceback_message = "\n\n" + "".join(
             traceback.format_exception(
