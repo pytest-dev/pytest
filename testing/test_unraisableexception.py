@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from unittest import mock
 
 from _pytest.pytester import Pytester
 import pytest
@@ -167,4 +168,32 @@ def test_unraisable_warning_multiple_errors(pytester: Pytester) -> None:
         [
             "  | ExceptionGroup: multiple unraisable exception warnings (2 sub-exceptions)"
         ]
+    )
+
+
+def test_unraisable_collection_failure(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_it=f"""
+        class BrokenDel:
+            def __del__(self):
+                raise ValueError("del is broken")
+
+        def test_it():
+            obj = BrokenDel()
+            del obj
+            {"import gc; gc.collect()" * PYPY}
+
+        def test_2(): pass
+        """
+    )
+
+    class MyError(BaseException):
+        pass
+
+    with mock.patch("traceback.format_exception", side_effect=MyError):
+        result = pytester.runpytest()
+    assert result.ret == 1
+    assert result.parseoutcomes() == {"passed": 1, "failed": 1}
+    result.stdout.fnmatch_lines(
+        ["E               RuntimeError: Failed to process unraisable exception"]
     )
