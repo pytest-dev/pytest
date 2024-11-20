@@ -6,7 +6,6 @@ import gc
 import sys
 import traceback
 from typing import Callable
-from typing import Generator
 from typing import NamedTuple
 from typing import TYPE_CHECKING
 import warnings
@@ -27,13 +26,6 @@ class UnraisableMeta(NamedTuple):
     msg: str
     cause_msg: str
     exc_value: BaseException | None
-
-
-def unraisable_exception_runtest_hook() -> Generator[None]:
-    try:
-        yield
-    finally:
-        collect_unraisable()
 
 
 _unraisable_exceptions: collections.deque[UnraisableMeta | BaseException] = (
@@ -124,16 +116,16 @@ def pytest_configure(config: Config) -> None:
     sys.unraisablehook = unraisable_hook
 
 
-@pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_setup() -> Generator[None]:
-    yield from unraisable_exception_runtest_hook()
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_setup() -> None:
+    collect_unraisable()
 
 
-@pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_call() -> Generator[None]:
-    yield from unraisable_exception_runtest_hook()
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_call() -> None:
+    collect_unraisable()
 
 
-@pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_teardown() -> Generator[None]:
-    yield from unraisable_exception_runtest_hook()
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_teardown() -> None:
+    collect_unraisable()
