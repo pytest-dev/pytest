@@ -201,6 +201,7 @@ def test_unraisable_collection_failure(pytester: Pytester) -> None:
 
 
 def test_create_task_unraisable(pytester: Pytester) -> None:
+    # see: https://github.com/pytest-dev/pytest/issues/10404
     pytester.makepyfile(
         test_it="""
         import pytest
