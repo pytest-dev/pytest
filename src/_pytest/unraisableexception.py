@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 import warnings
 
 from _pytest.config import Config
+from _pytest.tracemalloc import tracemalloc_message
 import pytest
 
 
@@ -20,29 +21,6 @@ if TYPE_CHECKING:
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
-
-
-def _tracemalloc_msg(source: object) -> str:
-    if source is None:
-        return ""
-
-    try:
-        import tracemalloc
-    except ImportError:
-        return ""
-
-    tb = tracemalloc.get_object_traceback(source)
-    if tb is not None:
-        formatted_tb = "\n".join(tb.format())
-        # Use a leading new line to better separate the (large) output
-        # from the traceback to the previous warning text.
-        return f"\nObject allocated at:\n{formatted_tb}"
-    # No need for a leading new line.
-    url = "https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings"
-    return (
-        "Enable tracemalloc to get traceback where the object was allocated.\n"
-        f"See {url} for more info."
-    )
 
 
 class UnraisableMeta(NamedTuple):
@@ -123,7 +101,7 @@ def unraisable_hook(unraisable: sys.UnraisableHookArgs) -> None:
                 unraisable.exc_traceback,
             )
         )
-        tracemalloc_tb = _tracemalloc_msg(unraisable.object)
+        tracemalloc_tb = tracemalloc_message(unraisable.object)
         msg = summary + traceback_message + tracemalloc_tb
         cause_msg = summary + tracemalloc_tb
 
