@@ -139,3 +139,32 @@ def test_unraisable_warning_error(pytester: Pytester) -> None:
     result = pytester.runpytest()
     assert result.ret == pytest.ExitCode.TESTS_FAILED
     assert result.parseoutcomes() == {"passed": 1, "failed": 1}
+
+
+@pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
+def test_unraisable_warning_multiple_errors(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_it=f"""
+        class BrokenDel:
+            def __init__(self, msg: str):
+                self.msg = msg
+
+            def __del__(self) -> None:
+                raise ValueError(self.msg)
+
+        def test_it() -> None:
+            BrokenDel("del is broken 1")
+            BrokenDel("del is broken 2")
+            {"import gc; gc.collect()" * PYPY}
+
+        def test_2(): pass
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    assert result.parseoutcomes() == {"passed": 1, "failed": 1}
+    result.stdout.fnmatch_lines(
+        [
+            "  | ExceptionGroup: multiple unraisable exception warnings (2 sub-exceptions)"
+        ]
+    )
