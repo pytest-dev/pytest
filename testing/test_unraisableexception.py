@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import sys
 from unittest import mock
 
@@ -197,3 +198,35 @@ def test_unraisable_collection_failure(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         ["E               RuntimeError: Failed to process unraisable exception"]
     )
+
+
+def test_create_task_unraisable(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_it="""
+        import pytest
+
+        class BrokenDel:
+            def __init__(self):
+                self.self = self  # make a reference cycle
+
+            def __del__(self):
+                raise ValueError("del is broken")
+
+        def test_it():
+            BrokenDel()
+        """
+    )
+
+    was_enabled = gc.isenabled()
+    gc.disable()
+    try:
+        result = pytester.runpytest()
+    finally:
+        if was_enabled:
+            gc.enable()
+
+    # TODO: should be a test failure or error
+    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
+
+    assert result.parseoutcomes() == {"passed": 1}
+    result.stderr.fnmatch_lines("ValueError: del is broken")
