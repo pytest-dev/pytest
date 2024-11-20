@@ -14,7 +14,6 @@ from io import StringIO
 import os
 from pathlib import Path
 import re
-from re import Pattern
 import sys
 import traceback
 from traceback import format_exception_only
@@ -722,7 +721,7 @@ class ExceptionInfo(Generic[E]):
             ]
         )
 
-    def match(self, regexp: str | Pattern[str]) -> Literal[True]:
+    def match(self, regexp: str | re.Pattern[str]) -> Literal[True]:
         """Check whether the regular expression `regexp` matches the string
         representation of the exception using :func:`python:re.search`.
 
@@ -741,7 +740,7 @@ class ExceptionInfo(Generic[E]):
         self,
         exc_group: BaseExceptionGroup[BaseException],
         expected_exception: EXCEPTION_OR_MORE,
-        match: str | Pattern[str] | None,
+        match: str | re.Pattern[str] | None,
         target_depth: int | None = None,
         current_depth: int = 1,
     ) -> bool:
@@ -771,7 +770,7 @@ class ExceptionInfo(Generic[E]):
         self,
         expected_exception: EXCEPTION_OR_MORE,
         *,
-        match: str | Pattern[str] | None = None,
+        match: str | re.Pattern[str] | None = None,
         depth: int | None = None,
     ) -> bool:
         """Check whether a captured exception group contains a matching exception.
@@ -780,7 +779,7 @@ class ExceptionInfo(Generic[E]):
             The expected exception type, or a tuple if one of multiple possible
             exception types are expected.
 
-        :param str | Pattern[str] | None match:
+        :param str | re.Pattern[str] | None match:
             If specified, a string containing a regular expression,
             or a regular expression object, that is tested against the string
             representation of the exception and its `PEP-678 <https://peps.python.org/pep-0678/>` `__notes__`

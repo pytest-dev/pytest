@@ -12,7 +12,6 @@ import math
 from numbers import Complex
 import pprint
 import re
-from re import Pattern
 from types import TracebackType
 from typing import Any
 from typing import cast
@@ -780,7 +779,7 @@ E = TypeVar("E", bound=BaseException)
 def raises(
     expected_exception: type[E] | tuple[type[E], ...],
     *,
-    match: str | Pattern[str] | None = ...,
+    match: str | re.Pattern[str] | None = ...,
 ) -> RaisesContext[E]: ...
 
 
@@ -955,7 +954,7 @@ def raises(
     message = f"DID NOT RAISE {expected_exception}"
 
     if not args:
-        match: str | Pattern[str] | None = kwargs.pop("match", None)
+        match: str | re.Pattern[str] | None = kwargs.pop("match", None)
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))
@@ -983,7 +982,7 @@ class RaisesContext(AbstractContextManager[_pytest._code.ExceptionInfo[E]]):
         self,
         expected_exception: type[E] | tuple[type[E], ...],
         message: str,
-        match_expr: str | Pattern[str] | None = None,
+        match_expr: str | re.Pattern[str] | None = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message

@@ -14,7 +14,7 @@ import inspect
 import os
 from pathlib import Path
 import platform
-from re import Pattern
+import re
 import sys
 import traceback
 import types
@@ -593,7 +593,6 @@ class DoctestModule(Module):
 
 def _init_checker_class() -> type[doctest.OutputChecker]:
     import doctest
-    import re
 
     class LiteralsOutputChecker(doctest.OutputChecker):
         # Based on doctest_nose_plugin.py from the nltk project
@@ -636,7 +635,7 @@ def _init_checker_class() -> type[doctest.OutputChecker]:
             if not allow_unicode and not allow_bytes and not allow_number:
                 return False
 
-            def remove_prefixes(regex: Pattern[str], txt: str) -> str:
+            def remove_prefixes(regex: re.Pattern[str], txt: str) -> str:
                 return re.sub(regex, r"\1\2", txt)
 
             if allow_unicode:

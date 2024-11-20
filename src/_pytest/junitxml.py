@@ -17,7 +17,6 @@ import functools
 import os
 import platform
 import re
-from re import Match
 import xml.etree.ElementTree as ET
 
 from _pytest import nodes
@@ -48,7 +47,7 @@ def bin_xml_escape(arg: object) -> str:
     The idea is to escape visually for the user rather than for XML itself.
     """
 
-    def repl(matchobj: Match[str]) -> str:
+    def repl(matchobj: re.Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
             return f"#x{i:02X}"

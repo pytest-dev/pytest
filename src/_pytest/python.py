@@ -20,7 +20,7 @@ import inspect
 import itertools
 import os
 from pathlib import Path
-from re import Pattern
+import re
 import types
 from typing import Any
 from typing import final
@@ -973,7 +973,7 @@ class IdMaker:
             return _ascii_escaped_by_config(val, self.config)
         elif val is None or isinstance(val, (float, int, bool, complex)):
             return str(val)
-        elif isinstance(val, Pattern):
+        elif isinstance(val, re.Pattern):
             return ascii_escaped(val.pattern)
         elif val is NOTSET:
             # Fallback to default. Note that NOTSET is an enum.Enum.
