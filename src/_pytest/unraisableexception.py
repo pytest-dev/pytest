@@ -54,6 +54,7 @@ def collect_unraisable() -> None:
             try:
                 warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
             except pytest.PytestUnraisableExceptionWarning as e:
+                # This except happens when the warning is treated as an error (e.g. `-Werror`).
                 if meta.exc_value is not None:
                     # exceptions have a better way to show the traceback, but
                     # warnings do not, so hide the traceback from the msg and
