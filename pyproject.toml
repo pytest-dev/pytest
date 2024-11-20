@@ -83,9 +83,8 @@ scripts.pytest = "pytest:console_main"
 write_to = "src/_pytest/_version.py"
 
 [tool.black]
-target-version = [
-    'py39',
-]
+# See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#t-target-version
+target-version = [ "py39", "py310", "py311", "py312", "py313" ]
 
 [tool.ruff]
 line-length = 88
