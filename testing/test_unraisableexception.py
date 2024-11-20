@@ -167,7 +167,7 @@ def test_unraisable_warning_multiple_errors(pytester: Pytester) -> None:
     assert result.parseoutcomes() == {"passed": 1, "failed": 1}
     result.stdout.fnmatch_lines(
         [
-            "  | ExceptionGroup: multiple unraisable exception warnings (2 sub-exceptions)"
+            "  | *ExceptionGroup: multiple unraisable exception warnings (2 sub-exceptions)"
         ]
     )
 
