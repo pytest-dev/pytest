@@ -128,7 +128,7 @@ is performed.
 
 
 
-You can use the ``@pytest.mark.filterwarnings`` to add warning filters to specific test items,
+You can use the :ref:`@pytest.mark.filterwarnings <pytest.mark.filterwarnings ref>` mark to add warning filters to specific test items,
 allowing you to have finer control of which warnings should be captured at test, class or
 even module level:
 
@@ -147,10 +147,30 @@ even module level:
         assert api_v1() == 1
 
 
-Filters applied using a mark take precedence over filters passed on the command line or configured
-by the ``filterwarnings`` ini option.
+You can specify multiple filters with separate decorators:
 
-You may apply a filter to all tests of a class by using the ``filterwarnings`` mark as a class
+.. code-block:: python
+
+    # Ignore "api v1" warnings, but fail on all other warnings
+    @pytest.mark.filterwarnings("ignore:api v1")
+    @pytest.mark.filterwarnings("error")
+    def test_one():
+        assert api_v1() == 1
+
+.. important::
+
+    Regarding decorator order and filter precedence:
+    it's important to remember that decorators are evaluated in reverse order,
+    so you have to list the warning filters in the reverse order
+    compared to traditional :py:func:`warnings.filterwarnings` and :option:`-W option <python:-W>` usage.
+    This means in practice that filters from earlier :ref:`@pytest.mark.filterwarnings <pytest.mark.filterwarnings ref>` decorators
+    take precedence over filters from later decorators, as illustrated in the example above.
+
+
+Filters applied using a mark take precedence over filters passed on the command line or configured
+by the :confval:`filterwarnings` ini option.
+
+You may apply a filter to all tests of a class by using the :ref:`filterwarnings <pytest.mark.filterwarnings ref>` mark as a class
 decorator or to all tests in a module by setting the :globalvar:`pytestmark` variable:
 
 .. code-block:: python
@@ -158,6 +178,13 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
     # turns all warnings into errors for this module
     pytestmark = pytest.mark.filterwarnings("error")
 
+
+.. note::
+
+    If you want to apply multiple filters
+    (by assigning a list of :ref:`filterwarnings <pytest.mark.filterwarnings ref>` mark to :globalvar:`pytestmark`),
+    you must use the traditional :py:func:`warnings.filterwarnings` ordering approach (later filters take precedence),
+    which is the reverse of the decorator approach mentioned above.
 
 
 *Credits go to Florian Schulze for the reference implementation in the* `pytest-warnings`_

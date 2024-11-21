@@ -5,33 +5,19 @@ import enum
 from functools import cached_property
 from functools import partial
 from functools import wraps
-import sys
 from typing import TYPE_CHECKING
 
 from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
-from _pytest.compat import is_generator
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
-from _pytest.pytester import Pytester
 import pytest
 
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
-
-
-def test_is_generator() -> None:
-    def zap():
-        yield  # pragma: no cover
-
-    def foo():
-        pass  # pragma: no cover
-
-    assert is_generator(zap)
-    assert not is_generator(foo)
 
 
 def test_real_func_loop_limit() -> None:
@@ -93,65 +79,6 @@ def test_get_real_func_partial() -> None:
 
     assert get_real_func(foo) is foo
     assert get_real_func(partial(foo)) is foo
-
-
-@pytest.mark.skipif(sys.version_info >= (3, 11), reason="coroutine removed")
-def test_is_generator_asyncio(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        from _pytest.compat import is_generator
-        import asyncio
-        @asyncio.coroutine
-        def baz():
-            yield from [1,2,3]
-
-        def test_is_generator_asyncio():
-            assert not is_generator(baz)
-    """
-    )
-    # avoid importing asyncio into pytest's own process,
-    # which in turn imports logging (#8)
-    result = pytester.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*1 passed*"])
-
-
-def test_is_generator_async_syntax(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        from _pytest.compat import is_generator
-        def test_is_generator_py35():
-            async def foo():
-                await foo()
-
-            async def bar():
-                pass
-
-            assert not is_generator(foo)
-            assert not is_generator(bar)
-    """
-    )
-    result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed*"])
-
-
-def test_is_generator_async_gen_syntax(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        from _pytest.compat import is_generator
-        def test_is_generator():
-            async def foo():
-                yield
-                await foo()
-
-            async def bar():
-                yield
-
-            assert not is_generator(foo)
-            assert not is_generator(bar)
-    """
-    )
-    result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 class ErrorsHelper:
