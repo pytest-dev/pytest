@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import collections.abc
+import contextlib
 import copy
 import dataclasses
 import enum
@@ -33,6 +34,7 @@ from typing import Sequence
 from typing import TextIO
 from typing import Type
 from typing import TYPE_CHECKING
+from typing import TypeVar
 import warnings
 
 import pluggy
@@ -72,6 +74,8 @@ from _pytest.warning_types import warn_explicit_for
 if TYPE_CHECKING:
     from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
+
+_T_callback = TypeVar("_T_callback", bound=Callable[[], None])
 
 
 _PluggyPlugin = object
@@ -1077,7 +1081,7 @@ class Config:
         self._inicache: dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: dict[str, str] = {}
-        self._cleanup: list[Callable[[], None]] = []
+        self._exit_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(
@@ -1104,10 +1108,11 @@ class Config:
         """
         return self._inipath
 
-    def add_cleanup(self, func: Callable[[], None]) -> None:
+    def add_cleanup(self, func: _T_callback) -> _T_callback:
         """Add a function to be called when the config object gets out of
         use (usually coinciding with pytest_unconfigure)."""
-        self._cleanup.append(func)
+        self._exit_stack.callback(func)
+        return func
 
     def _do_configure(self) -> None:
         assert not self._configured
@@ -1117,13 +1122,18 @@ class Config:
             self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
     def _ensure_unconfigure(self) -> None:
-        if self._configured:
-            self._configured = False
-            self.hook.pytest_unconfigure(config=self)
-            self.hook.pytest_configure._call_history = []
-        while self._cleanup:
-            fin = self._cleanup.pop()
-            fin()
+        try:
+            if self._configured:
+                self._configured = False
+                try:
+                    self.hook.pytest_unconfigure(config=self)
+                finally:
+                    self.hook.pytest_configure._call_history = []
+        finally:
+            try:
+                self._exit_stack.close()
+            finally:
+                self._exit_stack = contextlib.ExitStack()
 
     def get_terminal_writer(self) -> TerminalWriter:
         terminalreporter: TerminalReporter | None = self.pluginmanager.get_plugin(
