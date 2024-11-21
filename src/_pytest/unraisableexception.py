@@ -119,7 +119,7 @@ def unraisable_hook(
         )
     except BaseException as e:
         append(e)
-        # raising this will cause the exception to be logged twice, once in our
+        # Raising this will cause the exception to be logged twice, once in our
         # collect_unraisable and once by the unraisablehook calling machinery
         # which is fine - this should never happen anyway and if it does
         # it should probably be reported as a pytest bug.
