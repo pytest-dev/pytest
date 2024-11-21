@@ -1,0 +1,9 @@
+A number of unraisablehook plugin enhancements:
+
+* set the unraisablehook as early as possible and unset it as late as possible, to collect the most possible unraisable exceptions (please let me know if there's an earlier or later hook I can use)
+* call the garbage collector just before unsetting the unraisablehook, to collect any straggling exceptions
+* collect multiple unraisable exceptions per test phase
+* report the tracemalloc allocation traceback, if available!
+* avoid using a generator based hook to allow handling StopIteration in test failures
+* report the unraisable exception as the cause of the PytestUnraisableExceptionWarning exception if raised.
+* compute the repr of the unraisable.object in the unraisablehook so you get the latest information if available, and should help with resurrection of the object
