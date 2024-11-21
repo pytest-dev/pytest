@@ -22,6 +22,12 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
+def gc_collect_harder() -> None:
+    # constant determined experimentally by the Trio project
+    for _ in range(5):
+        gc.collect()
+
+
 class UnraisableMeta(NamedTuple):
     msg: str
     cause_msg: str
@@ -73,8 +79,7 @@ def collect_unraisable() -> None:
 
 def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
     try:
-        for i in range(5):
-            gc.collect()
+        gc_collect_harder()
         collect_unraisable()
     finally:
         sys.unraisablehook = prev_hook
