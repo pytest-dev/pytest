@@ -23,7 +23,7 @@ if sys.version_info < (3, 11):
 
 
 def gc_collect_harder() -> None:
-    # constant determined experimentally by the Trio project
+    # Constant determined experimentally by the Trio project.
     for _ in range(5):
         gc.collect()
 
