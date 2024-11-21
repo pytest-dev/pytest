@@ -77,7 +77,7 @@ def collect_unraisable() -> None:
         del errors, meta, hook_error
 
 
-def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
+def _cleanup(*, prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
     try:
         gc_collect_harder()
         collect_unraisable()
@@ -85,7 +85,7 @@ def _cleanup(prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
         sys.unraisablehook = prev_hook
 
 
-def unraisable_hook(unraisable: sys.UnraisableHookArgs) -> None:
+def unraisable_hook(unraisable: sys.UnraisableHookArgs, /) -> None:
     try:
         err_msg = (
             "Exception ignored in" if unraisable.err_msg is None else unraisable.err_msg
@@ -118,7 +118,7 @@ def unraisable_hook(unraisable: sys.UnraisableHookArgs) -> None:
 
 def pytest_configure(config: Config) -> None:
     prev_hook = sys.unraisablehook
-    config.add_cleanup(functools.partial(_cleanup, prev_hook))
+    config.add_cleanup(functools.partial(_cleanup, prev_hook=prev_hook))
     sys.unraisablehook = unraisable_hook
 
 
