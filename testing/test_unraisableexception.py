@@ -29,7 +29,7 @@ def test_unraisable(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
-    assert result.parseoutcomes() == {"passed": 2, "warnings": 1}
+    result.assert_outcomes(passed=2, warnings=1)
     result.stdout.fnmatch_lines(
         [
             "*= warnings summary =*",
@@ -67,7 +67,7 @@ def test_unraisable_in_setup(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
-    assert result.parseoutcomes() == {"passed": 2, "warnings": 1}
+    result.assert_outcomes(passed=2, warnings=1)
     result.stdout.fnmatch_lines(
         [
             "*= warnings summary =*",
@@ -106,7 +106,7 @@ def test_unraisable_in_teardown(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
-    assert result.parseoutcomes() == {"passed": 2, "warnings": 1}
+    result.assert_outcomes(passed=2, warnings=1)
     result.stdout.fnmatch_lines(
         [
             "*= warnings summary =*",
@@ -140,7 +140,7 @@ def test_unraisable_warning_error(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == pytest.ExitCode.TESTS_FAILED
-    assert result.parseoutcomes() == {"passed": 1, "failed": 1}
+    result.assert_outcomes(passed=1, failed=1)
 
 
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
@@ -164,7 +164,7 @@ def test_unraisable_warning_multiple_errors(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == pytest.ExitCode.TESTS_FAILED
-    assert result.parseoutcomes() == {"passed": 1, "failed": 1}
+    result.assert_outcomes(passed=1, failed=1)
     result.stdout.fnmatch_lines(
         [
             "  | *ExceptionGroup: multiple unraisable exception warnings (2 sub-exceptions)"
@@ -194,7 +194,7 @@ def test_unraisable_collection_failure(pytester: Pytester) -> None:
     with mock.patch("traceback.format_exception", side_effect=MyError):
         result = pytester.runpytest()
     assert result.ret == 1
-    assert result.parseoutcomes() == {"passed": 1, "failed": 1}
+    result.assert_outcomes(passed=1, failed=1)
     result.stdout.fnmatch_lines(
         ["E               RuntimeError: Failed to process unraisable exception"]
     )
@@ -229,5 +229,5 @@ def test_create_task_unraisable(pytester: Pytester) -> None:
     # TODO: should be a test failure or error
     assert result.ret == pytest.ExitCode.INTERNAL_ERROR
 
-    assert result.parseoutcomes() == {"passed": 1}
+    result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
