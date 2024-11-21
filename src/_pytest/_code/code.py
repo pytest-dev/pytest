@@ -1222,6 +1222,9 @@ class ReprEntry(TerminalRepr):
             return
 
         if self.style == "value":
+            # Using tw.write instead of tw.line for testing purposes due to TWMock implementation;
+            # lines written with TWMock.line and TWMock._write_source cannot be distinguished
+            # from each other, whereas lines written with TWMock.write are marked with TWMock.WRITE
             for line in self.lines:
                 tw.write(line)
                 tw.write("\n")
