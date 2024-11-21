@@ -1111,7 +1111,7 @@ class Config:
     def add_cleanup(self, func: _T_callback) -> _T_callback:
         """Add a function to be called when the config object gets out of
         use (usually coinciding with pytest_unconfigure).
-        
+
         Returns the passed function.
         """
         self._exit_stack.callback(func)
