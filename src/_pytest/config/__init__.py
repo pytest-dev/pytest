@@ -1081,7 +1081,7 @@ class Config:
         self._inicache: dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: dict[str, str] = {}
-        self._exit_stack = contextlib.ExitStack()
+        self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(
@@ -1114,7 +1114,7 @@ class Config:
 
         Returns the passed function.
         """
-        self._exit_stack.callback(func)
+        self._cleanup_stack.callback(func)
         return func
 
     def _do_configure(self) -> None:
@@ -1134,9 +1134,9 @@ class Config:
                     self.hook.pytest_configure._call_history = []
         finally:
             try:
-                self._exit_stack.close()
+                self._cleanup_stack.close()
             finally:
-                self._exit_stack = contextlib.ExitStack()
+                self._cleanup_stack = contextlib.ExitStack()
 
     def get_terminal_writer(self) -> TerminalWriter:
         terminalreporter: TerminalReporter | None = self.pluginmanager.get_plugin(
