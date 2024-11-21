@@ -1112,7 +1112,7 @@ class Config:
         """Add a function to be called when the config object gets out of
         use (usually coinciding with pytest_unconfigure).
 
-        Returns the passed function.
+        Returns the passed function, so you can use @config.add_cleanup as a decorator
         """
         self._cleanup_stack.callback(func)
         return func
