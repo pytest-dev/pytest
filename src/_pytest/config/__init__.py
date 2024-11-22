@@ -34,7 +34,6 @@ from typing import Sequence
 from typing import TextIO
 from typing import Type
 from typing import TYPE_CHECKING
-from typing import TypeVar
 import warnings
 
 import pluggy
@@ -74,9 +73,6 @@ from _pytest.warning_types import warn_explicit_for
 if TYPE_CHECKING:
     from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
-
-_T_callback = TypeVar("_T_callback", bound=Callable[[], None])
-
 
 _PluggyPlugin = object
 """A type to represent plugin objects.
@@ -1108,14 +1104,11 @@ class Config:
         """
         return self._inipath
 
-    def add_cleanup(self, func: _T_callback) -> _T_callback:
+    def add_cleanup(self, func: Callable[[], None]) -> None:
         """Add a function to be called when the config object gets out of
         use (usually coinciding with pytest_unconfigure).
-
-        Returns the passed function, so you can use @config.add_cleanup as a decorator
         """
         self._cleanup_stack.callback(func)
-        return func
 
     def _do_configure(self) -> None:
         assert not self._configured
