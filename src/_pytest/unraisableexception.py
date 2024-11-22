@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 import warnings
 
 from _pytest.config import Config
+from _pytest.nodes import Item
+from _pytest.stash import StashKey
 from _pytest.tracemalloc import tracemalloc_message
 import pytest
 
@@ -34,19 +36,20 @@ class UnraisableMeta(NamedTuple):
     exc_value: BaseException | None
 
 
-unraisable_exceptions: collections.deque[UnraisableMeta | BaseException] = (
-    collections.deque()
+unraisable_exceptions: StashKey[collections.deque[UnraisableMeta | BaseException]] = (
+    StashKey()
 )
 
 
-def collect_unraisable() -> None:
+def collect_unraisable(config: Config) -> None:
+    pop_unraisable = config.stash[unraisable_exceptions].pop
     errors: list[pytest.PytestUnraisableExceptionWarning | RuntimeError] = []
     meta = None
     hook_error = None
     try:
         while True:
             try:
-                meta = unraisable_exceptions.pop()
+                meta = pop_unraisable()
             except IndexError:
                 break
 
@@ -77,10 +80,12 @@ def collect_unraisable() -> None:
         del errors, meta, hook_error
 
 
-def cleanup(*, prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
+def cleanup(
+    *, config: Config, prev_hook: Callable[[sys.UnraisableHookArgs], object]
+) -> None:
     try:
         gc_collect_harder()
-        collect_unraisable()
+        collect_unraisable(config)
     finally:
         sys.unraisablehook = prev_hook
 
@@ -128,22 +133,22 @@ def unraisable_hook(
 
 def pytest_configure(config: Config) -> None:
     prev_hook = sys.unraisablehook
-    config.add_cleanup(functools.partial(cleanup, prev_hook=prev_hook))
-    sys.unraisablehook = functools.partial(
-        unraisable_hook, append=unraisable_exceptions.append
-    )
+    deque: collections.deque[UnraisableMeta | BaseException] = collections.deque()
+    config.stash[unraisable_exceptions] = deque
+    config.add_cleanup(functools.partial(cleanup, config=config, prev_hook=prev_hook))
+    sys.unraisablehook = functools.partial(unraisable_hook, append=deque.append)
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_runtest_setup() -> None:
-    collect_unraisable()
+def pytest_runtest_setup(item: Item) -> None:
+    collect_unraisable(item.config)
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_runtest_call() -> None:
-    collect_unraisable()
+def pytest_runtest_call(item: Item) -> None:
+    collect_unraisable(item.config)
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_runtest_teardown() -> None:
-    collect_unraisable()
+def pytest_runtest_teardown(item: Item) -> None:
+    collect_unraisable(item.config)
