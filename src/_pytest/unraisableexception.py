@@ -34,7 +34,7 @@ class UnraisableMeta(NamedTuple):
     exc_value: BaseException | None
 
 
-_unraisable_exceptions: collections.deque[UnraisableMeta | BaseException] = (
+unraisable_exceptions: collections.deque[UnraisableMeta | BaseException] = (
     collections.deque()
 )
 
@@ -46,7 +46,7 @@ def collect_unraisable() -> None:
     try:
         while True:
             try:
-                meta = _unraisable_exceptions.pop()
+                meta = unraisable_exceptions.pop()
             except IndexError:
                 break
 
@@ -77,7 +77,7 @@ def collect_unraisable() -> None:
         del errors, meta, hook_error
 
 
-def _cleanup(*, prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
+def cleanup(*, prev_hook: Callable[[sys.UnraisableHookArgs], object]) -> None:
     try:
         gc_collect_harder()
         collect_unraisable()
@@ -128,9 +128,9 @@ def unraisable_hook(
 
 def pytest_configure(config: Config) -> None:
     prev_hook = sys.unraisablehook
-    config.add_cleanup(functools.partial(_cleanup, prev_hook=prev_hook))
+    config.add_cleanup(functools.partial(cleanup, prev_hook=prev_hook))
     sys.unraisablehook = functools.partial(
-        unraisable_hook, append=_unraisable_exceptions.append
+        unraisable_hook, append=unraisable_exceptions.append
     )
 
 
