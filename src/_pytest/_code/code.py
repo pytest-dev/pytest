@@ -593,26 +593,18 @@ class ExceptionInfo(Generic[E]):
         def _get_single_subexc(
             eg: BaseExceptionGroup[BaseException],
         ) -> BaseException | None:
-            res: BaseException | None = None
-            for subexc in eg.exceptions:
-                if res is not None:
-                    return None
-
-                if isinstance(subexc, BaseExceptionGroup):
-                    res = _get_single_subexc(subexc)
-                    if res is None:
-                        # there were multiple exceptions in the subgroup
-                        return None
-                else:
-                    res = subexc
-            return res
+            if len(eg.exceptions) != 1:
+                return None
+            if isinstance(e := eg.exceptions[0], BaseExceptionGroup):
+                return _get_single_subexc(e)
+            return e
 
         if (
             tryshort
             and isinstance(self.value, BaseExceptionGroup)
             and (subexc := _get_single_subexc(self.value)) is not None
         ):
-            return f"[in {type(self.value).__name__}] {subexc!r}"
+            return f"{subexc!r} [single exception in {type(self.value).__name__}]"
 
         lines = format_exception_only(self.type, self.value)
         text = "".join(lines)

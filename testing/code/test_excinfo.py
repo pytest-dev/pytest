@@ -1757,15 +1757,15 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
             "*= short test summary info =*",
             (
                 "FAILED test_exceptiongroup_short_summary_info.py::test_base - "
-                "[in BaseExceptionGroup] SystemExit('aaaaaaaaaa')"
+                "SystemExit('aaaaaaaaaa') [single exception in BaseExceptionGroup]"
             ),
             (
                 "FAILED test_exceptiongroup_short_summary_info.py::test_nonbase - "
-                "[in ExceptionGroup] ValueError('aaaaaaaaaa')"
+                "ValueError('aaaaaaaaaa') [single exception in ExceptionGroup]"
             ),
             (
                 "FAILED test_exceptiongroup_short_summary_info.py::test_nested - "
-                "[in ExceptionGroup] ValueError('aaaaaaaaaa')"
+                "ValueError('aaaaaaaaaa') [single exception in ExceptionGroup]"
             ),
             (
                 "FAILED test_exceptiongroup_short_summary_info.py::test_multiple - "
