@@ -84,10 +84,13 @@ def cleanup(
     *, config: Config, prev_hook: Callable[[sys.UnraisableHookArgs], object]
 ) -> None:
     try:
-        gc_collect_harder()
-        collect_unraisable(config)
+        try:
+            gc_collect_harder()
+            collect_unraisable(config)
+        finally:
+            sys.unraisablehook = prev_hook
     finally:
-        sys.unraisablehook = prev_hook
+        del config.stash[unraisable_exceptions]
 
 
 def unraisable_hook(
