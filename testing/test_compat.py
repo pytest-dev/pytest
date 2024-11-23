@@ -67,7 +67,11 @@ def test_get_real_func() -> None:
         pass  # pragma: no cover
 
     wrapped_func4 = decorator(wrapped_func3)
-    assert get_real_func(wrapped_func4) is wrapped_func3._get_wrapped_function()
+    assert (
+        # get_real_func does not unwrap function that is wrapped by fixture hence we need to call _get_wrapped_function
+        get_real_func(wrapped_func4)._get_wrapped_function()
+        is wrapped_func3._get_wrapped_function()
+    )
 
 
 def test_get_real_func_partial() -> None:

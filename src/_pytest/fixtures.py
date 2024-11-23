@@ -44,7 +44,6 @@ from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
-from _pytest.compat import get_real_method
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
 from _pytest.compat import getlocation
@@ -1783,7 +1782,9 @@ class FixtureManager:
             if type(obj_ub) is FixtureFunctionDefinition:
                 marker = obj_ub._fixture_function_marker
                 if marker.name:
-                    name = marker.name
+                    fixture_name = marker.name
+                else:
+                    fixture_name = name
 
                 # OK we know it is a fixture -- now safe to look up on the _instance_.
                 try:
@@ -1792,10 +1793,10 @@ class FixtureManager:
                 except AttributeError:
                     obj = obj_ub
 
-                func = get_real_method(obj, holderobj)
+                func = obj._get_wrapped_function()
 
                 self._register_fixture(
-                    name=name,
+                    name=fixture_name,
                     nodeid=nodeid,
                     func=func,
                     scope=marker.scope,

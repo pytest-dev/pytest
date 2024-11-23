@@ -206,30 +206,11 @@ def ascii_escaped(val: bytes | str) -> str:
 
 def get_real_func(obj):
     """Get the real function object of the (possibly) wrapped object by
-    :func:`functools.wraps`, or :func:`functools.partial`, or :func:`pytest.fixture`."""
-    from _pytest.fixtures import FixtureFunctionDefinition
-
-    obj = inspect.unwrap(obj, stop=lambda x: type(x) is FixtureFunctionDefinition)
-
-    if type(obj) == FixtureFunctionDefinition:
-        obj = obj._get_wrapped_function()
+    :func:`functools.wraps`, or :func:`functools.partial`."""
+    obj = inspect.unwrap(obj)
 
     if isinstance(obj, functools.partial):
         obj = obj.func
-    return obj
-
-
-def get_real_method(obj, holder):
-    """Attempt to obtain the real function object that might be wrapping
-    ``obj``, while at the same time returning a bound method to ``holder`` if
-    the original object was a bound method."""
-    try:
-        is_method = hasattr(obj, "__func__")
-        obj = get_real_func(obj)
-    except Exception:  # pragma: no cover
-        return obj
-    if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
-        obj = obj.__get__(holder)
     return obj
 
 

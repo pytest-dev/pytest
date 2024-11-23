@@ -483,7 +483,9 @@ def test_source_with_decorator() -> None:
     # Make sure the decorator is not a wrapped function
     assert not str(Source(deco_fixture)).startswith("@functools.wraps(function)")
     assert (
-        textwrap.indent(str(Source(get_real_func(deco_fixture))), "    ") + "\n" == src
+        textwrap.indent(str(Source(deco_fixture._get_wrapped_function())), "    ")
+        + "\n"
+        == src
     )
 
 
