@@ -8,6 +8,7 @@ from _pytest.main import Session
 from _pytest.pytester import Pytester
 from _pytest.pytester import RecordedHookCall
 from _pytest.pytester import RunResult
+from _pytest.reports import CollectReport
 import pytest
 
 
@@ -71,7 +72,12 @@ def test_collect_imports_disabled(pytester: Pytester) -> None:
 
     # Verify that the state of hooks
     reprec = pytester.inline_run()
+    reports = reprec.getreports("pytest_collectreport")
+    modified = reprec.getcalls("pytest_collection_modifyitems")
     items_collected = reprec.getcalls("pytest_itemcollected")
+
+    assert len(reports) == 5
+    assert len(modified) == 1
     assert len(items_collected) == 1
     for x in items_collected:
         assert x.item._getobj().__name__ == "test_testament"
@@ -79,7 +85,6 @@ def test_collect_imports_disabled(pytester: Pytester) -> None:
 
 def test_collect_imports_default(pytester: Pytester) -> None:
     run_import_class_test(pytester, errors=1)
-    # TODO
 
 
 def test_collect_imports_enabled(pytester: Pytester) -> None:
@@ -260,7 +265,6 @@ class TestHookBehaviour:
         }
 
     def _test_hook_behaviour(self) -> None:
-        print("ABCD", self.collect_outcomes)
         default = self.collect_outcomes["default"]
         collect_off = self.collect_outcomes["collect_off"]
 
@@ -294,37 +298,20 @@ class TestHookBehaviour:
         off_items = off_items_record.__dict__["item"]
         assert def_items.name == off_items.name
 
-        # TODO: fix diff: (This will get cleaned up)
-        # [
-        #   <CollectReport '' lenresult=1 outcome='passed'>,
-        # - <CollectReport 'src' lenresult=0 outcome='passed'>,
-        #   <CollectReport 'tests/foo_test.py::TestDomain' lenresult=1 outcome='passed'>,
-        #   <CollectReport 'tests/foo_test.py' lenresult=1 outcome='passed'>,
-        #   <CollectReport 'tests' lenresult=1 outcome='passed'>,
-        # - <CollectReport '.' lenresult=2 outcome='passed'>,
-        # ?                                  ^
-        # + <CollectReport '.' lenresult=1 outcome='passed'>,
-        # ?                                  ^
-        # ]
+        def compare_report(r1: CollectReport, r2: CollectReport) -> None:
+            assert r1.result[0].name == r2.result[0].name
+            assert len(r1.result) == len(r2.result)
+            assert r1.outcome == r2.outcome
 
-        for x in default["reports"]:
-            print("def", x.__dict__)
+        # Function test_important
+        compare_report(default["reports"][1], collect_off["reports"][2])
+        # Class TestDomain
+        compare_report(default["reports"][2], collect_off["reports"][3])
+        # Module foo_test.py
+        compare_report(default["reports"][3], collect_off["reports"][4])
 
-        for x in collect_off["reports"]:
-            print("off", x.__dict__)
+        # + 1 since src dir is collected
+        assert len(default["reports"]) + 1 == len(collect_off["reports"])
 
-        # The two above loops prints:
-
-        # def {'nodeid': '', 'outcome': 'passed', 'longrepr': None, 'result': [<Dir test_hook_behaviour0>], 'sections': []}  # noqa: E501
-        # def {'nodeid': 'tests/foo_test.py::TestDomain', 'outcome': 'passed', 'longrepr': None, 'result': [<Function test_important>], 'sections': []} # noqa: E501
-        # def {'nodeid': 'tests/foo_test.py', 'outcome': 'passed', 'longrepr': None, 'result': [<Class TestDomain>], 'sections': []} # noqa: E501
-        # def {'nodeid': 'tests', 'outcome': 'passed', 'longrepr': None, 'result': [<Module foo_test.py>], 'sections': []} # noqa: E501
-        # def {'nodeid': '.', 'outcome': 'passed', 'longrepr': None, 'result': [<Dir tests>], 'sections': []} # noqa: E501
-        # off {'nodeid': '', 'outcome': 'passed', 'longrepr': None, 'result': [<Dir test_hook_behaviour1>], 'sections': []} # noqa: E501
-        # off {'nodeid': 'src', 'outcome': 'passed', 'longrepr': None, 'result': [], 'sections': []}
-        # off {'nodeid': 'tests/foo_test.py::TestDomain', 'outcome': 'passed', 'longrepr': None, 'result': [<Function test_important>], 'sections': []} # noqa: E501
-        # off {'nodeid': 'tests/foo_test.py', 'outcome': 'passed', 'longrepr': None, 'result': [<Class TestDomain>], 'sections': []} # noqa: E501
-        # off {'nodeid': 'tests', 'outcome': 'passed', 'longrepr': None, 'result': [<Module foo_test.py>], 'sections': []} # noqa: E501
-        # off {'nodeid': '.', 'outcome': 'passed', 'longrepr': None, 'result': [<Dir src>, <Dir tests>], 'sections': []} # noqa: E501
-
-        assert len(default["reports"]) == len(collect_off["reports"])
+        # Two Dirs will be collected, src and test.
+        assert len(collect_off["reports"][5].result) == 2
