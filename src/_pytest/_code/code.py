@@ -589,6 +589,23 @@ class ExceptionInfo(Generic[E]):
         representation is returned (so 'AssertionError: ' is removed from
         the beginning).
         """
+
+        def _get_single_subexc(
+            eg: BaseExceptionGroup[BaseException],
+        ) -> BaseException | None:
+            if len(eg.exceptions) != 1:
+                return None
+            if isinstance(e := eg.exceptions[0], BaseExceptionGroup):
+                return _get_single_subexc(e)
+            return e
+
+        if (
+            tryshort
+            and isinstance(self.value, BaseExceptionGroup)
+            and (subexc := _get_single_subexc(self.value)) is not None
+        ):
+            return f"{subexc!r} [single exception in {type(self.value).__name__}]"
+
         lines = format_exception_only(self.type, self.value)
         text = "".join(lines)
         text = text.rstrip()
@@ -1221,6 +1238,15 @@ class ReprEntry(TerminalRepr):
         if not self.lines:
             return
 
+        if self.style == "value":
+            # Using tw.write instead of tw.line for testing purposes due to TWMock implementation;
+            # lines written with TWMock.line and TWMock._write_source cannot be distinguished
+            # from each other, whereas lines written with TWMock.write are marked with TWMock.WRITE
+            for line in self.lines:
+                tw.write(line)
+                tw.write("\n")
+            return
+
         # separate indents and source lines that are not failures: we want to
         # highlight the code but not the indentation, which may contain markers
         # such as ">   assert 0"
@@ -1236,11 +1262,8 @@ class ReprEntry(TerminalRepr):
                 failure_lines.extend(self.lines[index:])
                 break
             else:
-                if self.style == "value":
-                    source_lines.append(line)
-                else:
-                    indents.append(line[:indent_size])
-                    source_lines.append(line[indent_size:])
+                indents.append(line[:indent_size])
+                source_lines.append(line[indent_size:])
 
         tw._write_source(source_lines, indents)
 
