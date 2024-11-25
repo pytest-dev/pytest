@@ -1194,6 +1194,23 @@ raise ValueError()
         line = tw_mock.lines[-1]
         assert line == ":3: ValueError"
 
+    def test_toterminal_value(self, importasmod, tw_mock):
+        mod = importasmod(
+            """
+            def g(x):
+                raise ValueError(x)
+            def f():
+                g('some_value')
+        """
+        )
+        excinfo = pytest.raises(ValueError, mod.f)
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
+        repr = excinfo.getrepr(style="value")
+        repr.toterminal(tw_mock)
+
+        assert tw_mock.get_write_msg(0) == "some_value"
+        assert tw_mock.get_write_msg(1) == "\n"
+
     @pytest.mark.parametrize(
         "reproptions",
         [
