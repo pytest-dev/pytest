@@ -119,8 +119,8 @@ def tw_mock():
             return text
 
         def get_write_msg(self, idx):
-            flag, msg = self.lines[idx]
-            assert flag == TWMock.WRITE
+            assert self.lines[idx][0] == TWMock.WRITE
+            msg = self.lines[idx][1]
             return msg
 
         fullwidth = 80
