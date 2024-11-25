@@ -589,6 +589,23 @@ class ExceptionInfo(Generic[E]):
         representation is returned (so 'AssertionError: ' is removed from
         the beginning).
         """
+
+        def _get_single_subexc(
+            eg: BaseExceptionGroup[BaseException],
+        ) -> BaseException | None:
+            if len(eg.exceptions) != 1:
+                return None
+            if isinstance(e := eg.exceptions[0], BaseExceptionGroup):
+                return _get_single_subexc(e)
+            return e
+
+        if (
+            tryshort
+            and isinstance(self.value, BaseExceptionGroup)
+            and (subexc := _get_single_subexc(self.value)) is not None
+        ):
+            return f"{subexc!r} [single exception in {type(self.value).__name__}]"
+
         lines = format_exception_only(self.type, self.value)
         text = "".join(lines)
         text = text.rstrip()

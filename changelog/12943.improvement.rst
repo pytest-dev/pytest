@@ -1,0 +1,1 @@
+If a test fails with an exceptiongroup with a single exception, the contained exception will now be displayed in the short test summary info.
