@@ -432,7 +432,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         assert modulecol is not None
         module = modulecol.obj
         clscol = self.getparent(Class)
-        cls = clscol and clscol.obj or None
+        cls = (clscol and clscol.obj) or None
 
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
         fixtureinfo = definition._fixtureinfo
@@ -849,12 +849,12 @@ class IdMaker:
 
     __slots__ = (
         "argnames",
-        "parametersets",
+        "config",
+        "func_name",
         "idfn",
         "ids",
-        "config",
         "nodeid",
-        "func_name",
+        "parametersets",
     )
 
     # The argnames of the parametrization.

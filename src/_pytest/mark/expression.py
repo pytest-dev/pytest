@@ -58,7 +58,7 @@ class TokenType(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class Token:
-    __slots__ = ("type", "value", "pos")
+    __slots__ = ("pos", "type", "value")
     type: TokenType
     value: str
     pos: int
@@ -80,7 +80,7 @@ class ParseError(Exception):
 
 
 class Scanner:
-    __slots__ = ("tokens", "current")
+    __slots__ = ("current", "tokens")
 
     def __init__(self, input: str) -> None:
         self.tokens = self.lex(input)
@@ -238,10 +238,8 @@ def single_kwarg(s: Scanner) -> ast.keyword:
         value: str | int | bool | None = value_token.value[1:-1]  # strip quotes
     else:
         value_token = s.accept(TokenType.IDENT, reject=True)
-        if (
-            (number := value_token.value).isdigit()
-            or number.startswith("-")
-            and number[1:].isdigit()
+        if (number := value_token.value).isdigit() or (
+            number.startswith("-") and number[1:].isdigit()
         ):
             value = int(number)
         elif value_token.value in BUILTIN_MATCHERS:
