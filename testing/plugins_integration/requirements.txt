@@ -7,7 +7,7 @@ pytest-django==4.9.0
 pytest-flakes==4.0.5
 pytest-html==4.1.1
 pytest-mock==3.14.0
-pytest-rerunfailures==14.0
+pytest-rerunfailures==15.0
 pytest-sugar==1.0.0
 pytest-trio==0.8.0
 pytest-twisted==1.14.3
