@@ -33,7 +33,7 @@ class TestMetafunc:
         # on the funcarg level, so we don't need a full blown
         # initialization.
         class FuncFixtureInfoMock:
-            name2fixturedefs: dict[str, list[fixtures.FixtureDef[object]]] = {}
+            name2fixturedefs: dict[str, list[fixtures.FixtureDef[Any, object]]] = {}
 
             def __init__(self, names):
                 self.names_closure = names
@@ -154,7 +154,7 @@ class TestMetafunc:
             _scope: Scope
 
         fixtures_defs = cast(
-            Dict[str, Sequence[fixtures.FixtureDef[object]]],
+            Dict[str, Sequence[fixtures.FixtureDef[Any, object]]],
             dict(
                 session_fix=[DummyFixtureDef(Scope.Session)],
                 package_fix=[DummyFixtureDef(Scope.Package)],

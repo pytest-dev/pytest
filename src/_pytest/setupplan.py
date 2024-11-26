@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
@@ -21,7 +23,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_fixture_setup(
-    fixturedef: FixtureDef[object], request: SubRequest
+    fixturedef: FixtureDef[Any, object], request: SubRequest
 ) -> object | None:
     # Will return a dummy fixture if the setuponly option is provided.
     if request.config.option.setupplan:
