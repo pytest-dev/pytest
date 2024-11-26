@@ -94,8 +94,6 @@ FixtureValue = TypeVar("FixtureValue")
 # The parameters that a fixture function receives.
 FixtureParams = ParamSpec("FixtureParams")
 
-# The type of the fixture function (type variable).
-# FixtureFunction = TypeVar("FixtureFunction", bound=Callable[..., object])
 # The type of a fixture function (type alias generic in fixture params and value).
 _FixtureFunc = Union[
     Callable[FixtureParams, FixtureValue],
