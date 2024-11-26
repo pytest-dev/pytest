@@ -19,10 +19,12 @@ from _pytest import fixtures
 from _pytest import python
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
+from _pytest.mark import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
+from _pytest.python import resolve_values_indices_in_parametersets
 from _pytest.scope import Scope
 import pytest
 
@@ -1014,6 +1016,15 @@ class TestMetafunc:
         assert metafunc._calls[1].params == dict(x=3, y=4)
         assert metafunc._calls[1].id == "3-4"
 
+    def test_parametrize_with_duplicate_values(self) -> None:
+        metafunc = self.Metafunc(lambda x, y: None)
+        metafunc.parametrize(("x", "y"), [(1, 2), (3, 4), (1, 5), (2, 2)])
+        assert len(metafunc._calls) == 4
+        assert metafunc._calls[0].indices == dict(x=0, y=0)
+        assert metafunc._calls[1].indices == dict(x=1, y=1)
+        assert metafunc._calls[2].indices == dict(x=0, y=2)
+        assert metafunc._calls[3].indices == dict(x=2, y=0)
+
     def test_high_scoped_parametrize_reordering(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -1045,6 +1056,36 @@ class TestMetafunc:
                 r"    <Function test1\[2-3\]>",
                 r"    <Function test1\[2-4\]>",
                 r"    <Function test2>",
+            ]
+        )
+
+    @pytest.mark.parametrize("indirect", [False, True])
+    def test_high_scoped_parametrize_with_duplicate_values_reordering(
+        self, indirect: bool, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            @pytest.fixture(scope='module')
+            def fixture1(request):
+                pass
+
+            @pytest.fixture(scope='module')
+            def fixture2(request):
+                pass
+
+            @pytest.mark.parametrize("fixture1, fixture2", [("a", 0), ("b", 1), ("a", 2)], indirect={indirect})
+            def test(fixture1, fixture2):
+                pass
+        """
+        )
+        result = pytester.runpytest("--collect-only")
+        result.stdout.re_match_lines(
+            [
+                r"    <Function test\[a-0\]>",
+                r"    <Function test\[a-2\]>",
+                r"    <Function test\[b-1\]>",
             ]
         )
 
@@ -1678,6 +1719,16 @@ class TestMetafuncFunctional:
                 "*test_3*",
             ]
         )
+
+    def test_resolve_values_indices_in_parametersets(self, pytester: Pytester) -> None:
+        indices = resolve_values_indices_in_parametersets(
+            ("a", "b"),
+            [
+                ParameterSet.extract_from((a, b))
+                for a, b in [(1, 1), (1, 2), (2, 3), ([2], 4), ([2], 1)]
+            ],
+        )
+        assert indices == [(0, 0), (0, 1), (1, 2), (2, 3), (3, 0)]
 
 
 class TestMetafuncFunctionalAuto:
