@@ -35,8 +35,6 @@ from typing import TypeVar
 from typing import Union
 import warnings
 
-from typing_extensions import ParamSpec
-
 import _pytest
 from _pytest import nodes
 from _pytest._code import getfslineno
@@ -77,6 +75,11 @@ from _pytest.warning_types import PytestRemovedIn9Warning
 
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
+
+if sys.version_info < (3, 10):
+    from typing_extensions import ParamSpec
+else:
+    from typing import ParamSpec
 
 
 if TYPE_CHECKING:
