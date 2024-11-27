@@ -5,7 +5,7 @@ import traceback
 from types import TracebackType
 from typing import Any
 from typing import Callable
-from typing import Generator
+from typing import Iterator
 from typing import TYPE_CHECKING
 import warnings
 
@@ -38,14 +38,29 @@ class catch_unraisable_exception:
         # (to break a reference cycle)
     """
 
-    def __init__(self) -> None:
-        self.unraisable: sys.UnraisableHookArgs | None = None
-        self._old_hook: Callable[[sys.UnraisableHookArgs], Any] | None = None
+    unraisable: sys.UnraisableHookArgs | None = None
+    _old_hook: Callable[[sys.UnraisableHookArgs], Any] | None = None
 
     def _hook(self, unraisable: sys.UnraisableHookArgs) -> None:
         # Storing unraisable.object can resurrect an object which is being
         # finalized. Storing unraisable.exc_value creates a reference cycle.
         self.unraisable = unraisable
+
+    def _warn_if_triggered(self) -> None:
+        if self.unraisable:
+            if self.unraisable.err_msg is not None:
+                err_msg = self.unraisable.err_msg
+            else:
+                err_msg = "Exception ignored in"
+            msg = f"{err_msg}: {self.unraisable.object!r}\n\n"
+            msg += "".join(
+                traceback.format_exception(
+                    self.unraisable.exc_type,
+                    self.unraisable.exc_value,
+                    self.unraisable.exc_traceback,
+                )
+            )
+            warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
 
     def __enter__(self) -> Self:
         self._old_hook = sys.unraisablehook
@@ -61,40 +76,24 @@ class catch_unraisable_exception:
         assert self._old_hook is not None
         sys.unraisablehook = self._old_hook
         self._old_hook = None
-        del self.unraisable
-
-
-def unraisable_exception_runtest_hook() -> Generator[None]:
-    with catch_unraisable_exception() as cm:
-        try:
-            yield
-        finally:
-            if cm.unraisable:
-                if cm.unraisable.err_msg is not None:
-                    err_msg = cm.unraisable.err_msg
-                else:
-                    err_msg = "Exception ignored in"
-                msg = f"{err_msg}: {cm.unraisable.object!r}\n\n"
-                msg += "".join(
-                    traceback.format_exception(
-                        cm.unraisable.exc_type,
-                        cm.unraisable.exc_value,
-                        cm.unraisable.exc_traceback,
-                    )
-                )
-                warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+        self._warn_if_triggered()
+        if "unraisable" in vars(self):
+            del self.unraisable
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_setup() -> Generator[None]:
-    yield from unraisable_exception_runtest_hook()
+def pytest_runtest_setup() -> Iterator[None]:
+    with catch_unraisable_exception():
+        yield
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_call() -> Generator[None]:
-    yield from unraisable_exception_runtest_hook()
+def pytest_runtest_call() -> Iterator[None]:
+    with catch_unraisable_exception():
+        yield
 
 
 @pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_teardown() -> Generator[None]:
-    yield from unraisable_exception_runtest_hook()
+def pytest_runtest_teardown() -> Iterator[None]:
+    with catch_unraisable_exception():
+        yield
