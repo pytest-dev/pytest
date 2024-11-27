@@ -214,6 +214,9 @@ class Node(abc.ABC, metaclass=NodeMeta):
         # Deprecated alias. Was never public. Can be removed in a few releases.
         self._store = self.stash
 
+        #: A list of exceptions that happened during teardown
+        self.teardown_exceptions: list[BaseException] = []
+
     @classmethod
     def from_parent(cls, parent: Node, **kw) -> Self:
         """Public constructor for Nodes.
