@@ -241,7 +241,15 @@ def pytest_addoption(parser: Parser) -> None:
         ),
     )
 
+    """Check basetemp dir
 
+    :param path:
+        Path to the basetemp [str]
+        Returns path if all the path is not empty and do not ancestor by symlink
+        raises argparse.ArgumentTypeError in in case of path is empty or is an ancestor of the basetemp 
+    """
+
+    # Disable since functions handle it themselves.
 def validate_basetemp(path: str) -> str:
     # GH 7119
     msg = "basetemp must not be empty, the current working directory or any parent directory of it"
