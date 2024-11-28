@@ -1435,6 +1435,19 @@ class TestFixtureUsages:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_empty_usefixtures_marker(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.usefixtures()
+            def test_one():
+                assert 1 == 1
+        """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(failed=1)
+
     def test_usefixtures_ini(self, pytester: Pytester) -> None:
         pytester.makeini(
             """
