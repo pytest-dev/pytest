@@ -44,14 +44,10 @@ In ``conftest.py``, create fixtures for your test database:
     # Use in-memory SQLite for tests
     SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
     engine = create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        connect_args={"check_same_thread": False}
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
     )
-    TestingSessionLocal = sessionmaker(
-        autocommit=False,
-        autoflush=False,
-        bind=engine
-    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
     @pytest.fixture(scope="function")
     def db():
@@ -62,6 +58,7 @@ In ``conftest.py``, create fixtures for your test database:
         finally:
             db.close()
             Base.metadata.drop_all(bind=engine)
+
 
     @pytest.fixture(scope="function")
     def client(db):
@@ -86,6 +83,7 @@ In ``test_api.py``, create your test cases:
     import pytest
     from app.auth import get_password_hash
 
+
     def test_register_user(client, db):
         response = client.post(
             "/register",
@@ -93,13 +91,14 @@ In ``test_api.py``, create your test cases:
                 "username": "testuser",
                 "password": "testpassword",
                 "email": "test@example.com",
-                "full_name": "Test User"
-            }
+                "full_name": "Test User",
+            },
         )
         assert response.status_code == 200
         data = response.json()
         assert data["username"] == "testuser"
         assert "id" in data
+
 
     def test_login_user(client, db):
         # First create a user
@@ -110,17 +109,13 @@ In ``test_api.py``, create your test cases:
                 "username": "testuser",
                 "password": "testpassword",
                 "email": "test@example.com",
-                "full_name": "Test User"
-            }
+                "full_name": "Test User",
+            },
         )
 
         # Then attempt login
         response = client.post(
-            "/token",
-            data={
-                "username": "testuser",
-                "password": "testpassword"
-            }
+            "/token", data={"username": "testuser", "password": "testpassword"}
         )
         assert response.status_code == 200
         assert "access_token" in response.json()
@@ -141,23 +136,18 @@ For endpoints that require authentication:
                 "username": "testuser",
                 "password": "testpassword",
                 "email": "test@example.com",
-                "full_name": "Test User"
-            }
+                "full_name": "Test User",
+            },
         )
 
         response = client.post(
-            "/token",
-            data={
-                "username": "testuser",
-                "password": "testpassword"
-            }
+            "/token", data={"username": "testuser", "password": "testpassword"}
         )
 
         access_token = response.json()["access_token"]
-        client.headers = {
-            "Authorization": f"Bearer {access_token}"
-        }
+        client.headers = {"Authorization": f"Bearer {access_token}"}
         return client
+
 
     def test_protected_route(authorized_client):
         response = authorized_client.get("/protected-resource")
@@ -178,11 +168,7 @@ Best Practices
 
     def test_login_invalid_credentials(client):
         response = client.post(
-            "/token",
-            data={
-                "username": "nonexistent",
-                "password": "wrong"
-            }
+            "/token", data={"username": "nonexistent", "password": "wrong"}
         )
         assert response.status_code == 401
 
@@ -204,9 +190,7 @@ Testing File Uploads
 .. code-block:: python
 
     def test_file_upload(client):
-        files = {
-            "file": ("test.txt", b"test content", "text/plain")
-        }
+        files = {"file": ("test.txt", b"test content", "text/plain")}
         response = client.post("/upload", files=files)
         assert response.status_code == 200
 
@@ -217,6 +201,7 @@ Testing WebSocket Endpoints
 
     from fastapi.testclient import TestClient
     from fastapi.websockets import WebSocket
+
 
     def test_websocket_endpoint(client):
         with client.websocket_connect("/ws") as websocket:
