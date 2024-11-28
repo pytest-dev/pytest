@@ -1584,3 +1584,28 @@ def test_no_terminal_plugin(pytester: Pytester) -> None:
     pytester.makepyfile("def test(): assert 1 == 2")
     result = pytester.runpytest("-pno:terminal", "-s")
     assert result.ret == ExitCode.TESTS_FAILED
+
+def test_get_exception_on_teardown_failure(pytester: Pytester) -> None:
+    """Smoke test to be sure teardown exceptions handled properly via node property"""
+    pytester.makepyfile(
+        conftest="""
+        import sys
+        import pytest
+        def pytest_exception_interact(node, call, report):
+            sys.stderr.write("{}".format(node.teardown_exceptions))
+
+        import pytest
+        @pytest.fixture
+        def mylist():
+            yield
+            raise AssertionError(111)
+        """,
+        test_file="""
+        def test_func(mylist):
+            assert True
+        """,
+    )
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.TESTS_FAILED
+    assert "AssertionError(111)" in result.stderr.str()
+    result.stdout.fnmatch_lines(["*1 error*"])
