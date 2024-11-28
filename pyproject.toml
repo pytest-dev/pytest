@@ -87,6 +87,7 @@ write_to = "src/_pytest/_version.py"
 target-version = [ "py39", "py310", "py311", "py312", "py313" ]
 
 [tool.ruff]
+target-version = "py39"
 line-length = 88
 src = [
     "src",
