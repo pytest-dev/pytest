@@ -1585,6 +1585,7 @@ def test_no_terminal_plugin(pytester: Pytester) -> None:
     result = pytester.runpytest("-pno:terminal", "-s")
     assert result.ret == ExitCode.TESTS_FAILED
 
+
 def test_get_exception_on_teardown_failure(pytester: Pytester) -> None:
     """Smoke test to be sure teardown exceptions handled properly via node property"""
     pytester.makepyfile(
