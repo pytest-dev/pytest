@@ -26,6 +26,7 @@ if sys.version_info < (3, 11):
 
 
 def gc_collect_harder() -> None:
+    # A single collection doesn't necessarily collect everything.
     # Constant determined experimentally by the Trio project.
     for _ in range(5):
         gc.collect()
@@ -114,7 +115,7 @@ def unraisable_hook(
         )
         tracemalloc_tb = tracemalloc_message(unraisable.object)
         msg = summary + traceback_message + tracemalloc_tb
-        cause_msg = summary + tracemalloc_tb
+        cause_msg = summary + "\n" + tracemalloc_tb
 
         append(
             UnraisableMeta(
