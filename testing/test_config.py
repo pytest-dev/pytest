@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Sequence
 import dataclasses
 import importlib.metadata
 import os
@@ -9,7 +10,6 @@ import re
 import sys
 import textwrap
 from typing import Any
-from typing import Sequence
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list

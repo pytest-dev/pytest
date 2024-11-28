@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import datetime
 from functools import partial
@@ -17,14 +21,10 @@ import platform
 import sys
 import textwrap
 from typing import Any
-from typing import Callable
 from typing import ClassVar
 from typing import final
-from typing import Generator
 from typing import Literal
-from typing import Mapping
 from typing import NamedTuple
-from typing import Sequence
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings

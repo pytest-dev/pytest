@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import atexit
+from collections.abc import Callable
 from contextlib import contextmanager
 import fnmatch
 import importlib.util
@@ -23,7 +24,6 @@ from stat import S_ISLNK
 from stat import S_ISREG
 import sys
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import Literal
 from typing import overload

@@ -7,6 +7,10 @@ PYTEST_DONT_REWRITE
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Sequence
 import contextlib
 from fnmatch import fnmatch
 import gc
@@ -22,15 +26,11 @@ import subprocess
 import sys
 import traceback
 from typing import Any
-from typing import Callable
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import IO
-from typing import Iterable
 from typing import Literal
 from typing import overload
-from typing import Sequence
 from typing import TextIO
 from typing import TYPE_CHECKING
 from weakref import WeakKeyDictionary

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 import shutil
 import sys
 from typing import final
 from typing import Literal
-from typing import Sequence
 from typing import TextIO
 from typing import TYPE_CHECKING
 

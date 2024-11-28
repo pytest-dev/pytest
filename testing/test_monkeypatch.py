@@ -1,12 +1,12 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
 import os
 from pathlib import Path
 import re
 import sys
 import textwrap
-from typing import Generator
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester

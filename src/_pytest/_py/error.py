@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import errno
 import os
 import sys
-from typing import Callable
 from typing import TYPE_CHECKING
 from typing import TypeVar
 

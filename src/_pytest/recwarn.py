@@ -3,16 +3,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterator
 from pprint import pformat
 import re
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import final
-from typing import Generator
-from typing import Iterator
 from typing import overload
-from typing import Pattern
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -44,7 +43,9 @@ def recwarn() -> Generator[WarningsRecorder]:
 
 
 @overload
-def deprecated_call(*, match: str | Pattern[str] | None = ...) -> WarningsRecorder: ...
+def deprecated_call(
+    *, match: str | re.Pattern[str] | None = ...
+) -> WarningsRecorder: ...
 
 
 @overload
@@ -89,7 +90,7 @@ def deprecated_call(
 def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...] = ...,
     *,
-    match: str | Pattern[str] | None = ...,
+    match: str | re.Pattern[str] | None = ...,
 ) -> WarningsChecker: ...
 
 
@@ -105,7 +106,7 @@ def warns(
 def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
     *args: Any,
-    match: str | Pattern[str] | None = None,
+    match: str | re.Pattern[str] | None = None,
     **kwargs: Any,
 ) -> WarningsChecker | Any:
     r"""Assert that code raises a particular class of warning.
@@ -258,7 +259,7 @@ class WarningsChecker(WarningsRecorder):
     def __init__(
         self,
         expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
-        match_expr: str | Pattern[str] | None = None,
+        match_expr: str | re.Pattern[str] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
