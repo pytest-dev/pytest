@@ -1,11 +1,11 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Callable
 import inspect
 from pathlib import Path
 import sys
 import textwrap
-from typing import Callable
 
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py

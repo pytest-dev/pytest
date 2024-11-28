@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 import bdb
+from collections.abc import Callable
 import dataclasses
 import os
 import sys
 import types
-from typing import Callable
 from typing import cast
 from typing import final
 from typing import Generic

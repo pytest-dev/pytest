@@ -23,18 +23,18 @@ The semantics are:
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import enum
 import keyword
 import re
 import types
-from typing import Iterator
 from typing import Literal
-from typing import Mapping
 from typing import NoReturn
 from typing import overload
 from typing import Protocol
-from typing import Sequence
 
 
 __all__ = [

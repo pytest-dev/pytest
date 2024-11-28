@@ -1,0 +1,1 @@
+We dropped support for Python 3.8 following its end of life (2024-10-07).

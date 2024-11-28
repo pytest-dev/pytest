@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from collections.abc import Generator
 import threading
 import traceback
 from types import TracebackType
 from typing import Any
-from typing import Callable
-from typing import Generator
 from typing import TYPE_CHECKING
 import warnings
 

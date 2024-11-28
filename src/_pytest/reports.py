@@ -1,6 +1,10 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 from io import StringIO
 import os
@@ -8,12 +12,8 @@ from pprint import pprint
 from typing import Any
 from typing import cast
 from typing import final
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
-from typing import Mapping
 from typing import NoReturn
-from typing import Sequence
 from typing import TYPE_CHECKING
 
 from _pytest._code.code import ExceptionChainRepr
