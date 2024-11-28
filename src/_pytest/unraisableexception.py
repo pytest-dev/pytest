@@ -6,7 +6,6 @@ import functools
 import gc
 import sys
 import traceback
-from typing import Callable
 from typing import NamedTuple
 from typing import TYPE_CHECKING
 import warnings
