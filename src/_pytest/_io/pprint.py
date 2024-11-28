@@ -16,14 +16,14 @@
 from __future__ import annotations
 
 import collections as _collections
+from collections.abc import Callable
+from collections.abc import Iterator
 import dataclasses as _dataclasses
 from io import StringIO as _StringIO
 import re
 import types as _types
 from typing import Any
-from typing import Callable
 from typing import IO
-from typing import Iterator
 
 
 class _safe_key:

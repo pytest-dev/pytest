@@ -2,8 +2,8 @@
 # mypy: disallow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
 import logging
-from typing import Iterator
 
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester

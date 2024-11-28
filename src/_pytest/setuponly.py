@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Generator
+from collections.abc import Generator
 
 from _pytest._io.saferepr import saferepr
 from _pytest.config import Config

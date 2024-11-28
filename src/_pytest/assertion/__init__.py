@@ -3,9 +3,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 import sys
 from typing import Any
-from typing import Generator
 from typing import TYPE_CHECKING
 
 from _pytest.assertion import rewrite
