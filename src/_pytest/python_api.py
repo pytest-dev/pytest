@@ -10,7 +10,6 @@ from contextlib import AbstractContextManager
 from decimal import Decimal
 import math
 from numbers import Complex
-from numbers import Number
 import pprint
 import re
 from types import TracebackType
@@ -341,7 +340,7 @@ class ApproxSequenceLike(ApproxBase):
             zip(approx_side_as_map, other_side)
         ):
             if approx_value != other_value:
-                if isinstance(approx_value.expected, Number):
+                if isinstance(approx_value.expected, (Complex, Decimal)):
                     abs_diff = abs(approx_value.expected - other_value)
                     max_abs_diff = max(max_abs_diff, abs_diff)
                     if other_value == 0.0:
