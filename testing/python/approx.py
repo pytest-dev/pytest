@@ -392,6 +392,7 @@ class TestApprox:
             ],
             verbosity_level=2,
         )
+        assert [1.1, 2, "word"] == pytest.approx([1.1, 2, "word"])
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
