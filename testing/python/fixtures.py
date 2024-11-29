@@ -1436,6 +1436,7 @@ class TestFixtureUsages:
         reprec.assertoutcome(passed=2)
 
     def test_empty_usefixtures_marker(self, pytester: Pytester) -> None:
+        """Empty usefixtures() marker issues a warning (#12439)."""
         pytester.makepyfile(
             """
             import pytest
@@ -1447,7 +1448,7 @@ class TestFixtureUsages:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            "*Warning: usefixtures() is empty, so it has no effect"
+            "*PytestWarning: usefixtures() without arguments has no effect"
         )
 
     def test_usefixtures_ini(self, pytester: Pytester) -> None:
