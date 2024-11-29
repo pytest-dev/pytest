@@ -1448,7 +1448,8 @@ class TestFixtureUsages:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            "*PytestWarning: usefixtures() without arguments has no effect"
+            "*PytestWarning: usefixtures() in test_empty_usefixtures_marker.py::test_one"
+            " without arguments has no effect"
         )
 
     def test_usefixtures_ini(self, pytester: Pytester) -> None:

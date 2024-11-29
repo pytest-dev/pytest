@@ -1566,7 +1566,9 @@ class FixtureManager:
         for marker_node, mark in node.iter_markers_with_node(name="usefixtures"):
             if not mark.args:
                 marker_node.warn(
-                    PytestWarning("usefixtures() without arguments has no effect")
+                    PytestWarning(
+                        f"usefixtures() in {node.nodeid} without arguments has no effect"
+                    )
                 )
             yield from mark.args
 
