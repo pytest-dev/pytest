@@ -378,7 +378,7 @@ class TestApprox:
         assert err.match(r"approx\(\) is not supported in a boolean context")
 
     def test_list_with_str(self, assert_approx_raises_regex) -> None:
-        """approx should work on sequences that also contain non-numbers (#13010)."""
+        """Approx should work on sequences that also contain non-numbers (#13010)."""
         assert_approx_raises_regex(
             [1.1, 2, "word"],
             [1.0, 2, "different"],
