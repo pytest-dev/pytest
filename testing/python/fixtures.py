@@ -1445,8 +1445,10 @@ class TestFixtureUsages:
                 assert 1 == 1
         """
         )
-        reprec = pytester.inline_run()
-        reprec.assertoutcome(failed=1)
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            "*Warning: usefixtures() is empty, so it has no effect"
+        )
 
     def test_usefixtures_ini(self, pytester: Pytester) -> None:
         pytester.makeini(
