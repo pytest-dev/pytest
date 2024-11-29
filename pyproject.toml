@@ -156,8 +156,10 @@ lint.ignore = [
     "PLW0120", # remove the else and dedent its contents
     "PLW0603", # Using the global statement
     "PLW2901", # for loop variable overwritten by assignment target
+    "PYI063",
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+    "UP031",
 ]
 lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
     "B",

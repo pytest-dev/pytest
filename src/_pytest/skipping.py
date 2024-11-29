@@ -196,7 +196,7 @@ def evaluate_skip_marks(item: Item) -> Skip | None:
 class Xfail:
     """The result of evaluate_xfail_marks()."""
 
-    __slots__ = ("reason", "run", "strict", "raises")
+    __slots__ = ("raises", "reason", "run", "strict")
 
     reason: str
     run: bool

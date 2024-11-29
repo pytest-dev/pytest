@@ -562,7 +562,7 @@ MARK_GEN = MarkGenerator(_ispytest=True)
 
 @final
 class NodeKeywords(MutableMapping[str, Any]):
-    __slots__ = ("node", "parent", "_markers")
+    __slots__ = ("_markers", "node", "parent")
 
     def __init__(self, node: Node) -> None:
         self.node = node
@@ -584,10 +584,8 @@ class NodeKeywords(MutableMapping[str, Any]):
     # below and use the collections.abc fallback, but that would be slow.
 
     def __contains__(self, key: object) -> bool:
-        return (
-            key in self._markers
-            or self.parent is not None
-            and key in self.parent.keywords
+        return key in self._markers or (
+            self.parent is not None and key in self.parent.keywords
         )
 
     def update(  # type: ignore[override]

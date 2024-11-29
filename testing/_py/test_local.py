@@ -855,7 +855,7 @@ class TestLocalPath(CommonFSTests):
         assert b.fnmatch(pattern)
 
     def test_sysfind(self):
-        name = sys.platform == "win32" and "cmd" or "test"
+        name = (sys.platform == "win32" and "cmd") or "test"
         x = local.sysfind(name)
         assert x.check(file=1)
         assert local.sysfind("jaksdkasldqwe") is None
@@ -1250,7 +1250,7 @@ class TestWINLocalPath:
     def test_chmod_simple_int(self, path1):
         mode = path1.stat().mode
         # Ensure that we actually change the mode to something different.
-        path1.chmod(mode == 0 and 1 or 0)
+        path1.chmod((mode == 0 and 1) or 0)
         try:
             print(path1.stat().mode)
             print(mode)

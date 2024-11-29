@@ -305,7 +305,7 @@ class FuncFixtureInfo:
     these are not reflected here.
     """
 
-    __slots__ = ("argnames", "initialnames", "names_closure", "name2fixturedefs")
+    __slots__ = ("argnames", "initialnames", "name2fixturedefs", "names_closure")
 
     # Fixture names that the item requests directly by function parameters.
     argnames: tuple[str, ...]

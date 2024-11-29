@@ -953,7 +953,7 @@ class FormattedExcinfo:
             if short:
                 message = f"in {entry.name}"
             else:
-                message = excinfo and excinfo.typename or ""
+                message = (excinfo and excinfo.typename) or ""
             entry_path = entry.path
             path = self._makepath(entry_path)
             reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
@@ -1182,10 +1182,8 @@ class ReprTraceback(TerminalRepr):
             entry.toterminal(tw)
             if i < len(self.reprentries) - 1:
                 next_entry = self.reprentries[i + 1]
-                if (
-                    entry.style == "long"
-                    or entry.style == "short"
-                    and next_entry.style == "long"
+                if entry.style == "long" or (
+                    entry.style == "short" and next_entry.style == "long"
                 ):
                     tw.sep(self.entrysep)
 
@@ -1369,7 +1367,7 @@ def getfslineno(obj: object) -> tuple[str | Path, int]:
         except TypeError:
             return "", -1
 
-        fspath = fn and absolutepath(fn) or ""
+        fspath = (fn and absolutepath(fn)) or ""
         lineno = -1
         if fspath:
             try:
