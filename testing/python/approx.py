@@ -8,6 +8,7 @@ from math import sqrt
 import operator
 from operator import eq
 from operator import ne
+from unittest.mock import DEFAULT
 
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
@@ -376,6 +377,22 @@ class TestApprox:
             assert approx(1)
 
         assert err.match(r"approx\(\) is not supported in a boolean context")
+
+    def test_list_with_str(self, assert_approx_raises_regex):
+        assert_approx_raises_regex(
+            [1.1, 2, "word"],
+            [1.0, 2, "different"],
+            [
+                "",
+                r"  comparison failed. Mismatched elements: 2 / 3:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected\s+",
+                r"\s*0\s*\|\s*1\.1\s*\|\s*1\.0\s*±\s*1\.0e\-06\s*",
+                r"\s*2\s*\|\s*word\s*\|\s*different\s*",
+            ],
+            verbosity_level=2,
+        )
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
