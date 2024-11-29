@@ -1,0 +1,1 @@
+:func:`pytest.approx` now uses strict equality when given booleans.
