@@ -9,7 +9,8 @@ from collections.abc import Sized
 from contextlib import AbstractContextManager
 from decimal import Decimal
 import math
-from numbers import Complex, Number
+from numbers import Complex
+from numbers import Number
 import pprint
 import re
 from types import TracebackType

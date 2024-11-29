@@ -8,7 +8,6 @@ from math import sqrt
 import operator
 from operator import eq
 from operator import ne
-from unittest.mock import DEFAULT
 
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
