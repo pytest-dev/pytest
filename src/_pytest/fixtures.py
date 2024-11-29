@@ -884,7 +884,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
                     red=True,
                 )
         tw.line()
-        tw.line("%s:%d" % (os.fspath(self.filename), self.firstlineno + 1))
+        tw.line(f"{os.fspath(self.filename)}:{self.firstlineno + 1}")
 
 
 def call_fixture_func(

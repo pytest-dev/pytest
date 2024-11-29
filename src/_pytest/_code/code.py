@@ -217,7 +217,7 @@ class TracebackEntry:
         return self.lineno - self.frame.code.firstlineno
 
     def __repr__(self) -> str:
-        return "<TracebackEntry %s:%d>" % (self.frame.code.path, self.lineno + 1)
+        return f"<TracebackEntry {self.frame.code.path}:{self.lineno+1}>"
 
     @property
     def statement(self) -> Source:
@@ -303,12 +303,7 @@ class TracebackEntry:
         # This output does not quite match Python's repr for traceback entries,
         # but changing it to do so would break certain plugins.  See
         # https://github.com/pytest-dev/pytest/pull/7535/ for details.
-        return "  File %r:%d in %s\n  %s\n" % (
-            str(self.path),
-            self.lineno + 1,
-            name,
-            line,
-        )
+        return f"  File '{self.path}':{self.lineno+1} in {name}\n  {line}\n"
 
     @property
     def name(self) -> str:

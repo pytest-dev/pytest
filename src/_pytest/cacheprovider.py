@@ -388,8 +388,8 @@ class LFPlugin:
             if not previously_failed:
                 # Running a subset of all tests with recorded failures
                 # only outside of it.
-                self._report_status = "%d known failures not in selected tests" % (
-                    len(self.lastfailed),
+                self._report_status = (
+                    f"{len(self.lastfailed)} known failures not in selected tests"
                 )
             else:
                 if self.config.getoption("lf"):
@@ -622,5 +622,5 @@ def cacheshow(config: Config, session: Session) -> int:
             #    print("%s/" % p.relative_to(basedir))
             if p.is_file():
                 key = str(p.relative_to(basedir))
-                tw.line(f"{key} is a file of length {p.stat().st_size:d}")
+                tw.line(f"{key} is a file of length {p.stat().st_size}")
     return 0

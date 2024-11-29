@@ -1438,13 +1438,13 @@ class TestMetafuncFunctional:
         self, pytester: Pytester, scope: str, length: int
     ) -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest
             values = []
             def pytest_generate_tests(metafunc):
                 if "arg" in metafunc.fixturenames:
                     metafunc.parametrize("arg", [1,2], indirect=True,
-                                         scope=%r)
+                                         scope={scope!r})
             @pytest.fixture
             def arg(request):
                 values.append(request.param)
@@ -1454,9 +1454,8 @@ class TestMetafuncFunctional:
             def test_world(arg):
                 assert arg in (1,2)
             def test_checklength():
-                assert len(values) == %d
+                assert len(values) == {length}
         """
-            % (scope, length)
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=5)

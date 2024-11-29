@@ -353,7 +353,7 @@ class DoctestItem(Item):
                 # add line numbers to the left of the error message
                 assert test.lineno is not None
                 lines = [
-                    "%03d %s" % (i + test.lineno + 1, x) for (i, x) in enumerate(lines)
+                    f"{i + test.lineno + 1:03d} {x}" for (i, x) in enumerate(lines)
                 ]
                 # trim docstring error lines to 10
                 lines = lines[max(example.lineno - 9, 0) : example.lineno + 1]

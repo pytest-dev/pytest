@@ -48,13 +48,7 @@ def get_empty_parameterset_mark(
     from ..nodes import Collector
 
     fs, lineno = getfslineno(func)
-    reason = "got empty parameter set %r, function %s at %s:%d" % (
-        argnames,
-        func.__name__,
-        fs,
-        lineno,
-    )
-
+    reason = f"got empty parameter set {argnames!r}, function {func.__name__} at {fs}:{lineno}"
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ("", None, "skip"):
         mark = MARK_GEN.skip(reason=reason)
@@ -64,7 +58,7 @@ def get_empty_parameterset_mark(
         f_name = func.__name__
         _, lineno = getfslineno(func)
         raise Collector.CollectError(
-            "Empty parameter set in '%s' at line %d" % (f_name, lineno + 1)
+            f"Empty parameter set in '{f_name}' at line {lineno + 1}"
         )
     else:
         raise LookupError(requested_mark)

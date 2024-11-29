@@ -699,9 +699,9 @@ def test_search_conftest_up_to_inifile(
     result = pytester.runpytest(*args)
     match = ""
     if passed:
-        match += "*%d passed*" % passed
+        match += f"*{passed} passed*"
     if error:
-        match += "*%d error*" % error
+        match += f"*{error} error*"
     result.stdout.fnmatch_lines(match)
 
 
