@@ -1,0 +1,1 @@
+Add a check to ensure that :func:`pytest.approx` calculations only process instances of ``Number``, preventing errors with incompatible types.
