@@ -1,9 +1,13 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 from pathlib import Path
 
-import pytest
 from _pytest.compat import LEGACY_PATH
+from _pytest.fixtures import TopRequest
 from _pytest.legacypath import TempdirFactory
 from _pytest.legacypath import Testdir
+import pytest
 
 
 def test_item_fspath(pytester: pytest.Pytester) -> None:
@@ -14,7 +18,7 @@ def test_item_fspath(pytester: pytest.Pytester) -> None:
     items2, hookrec = pytester.inline_genitems(item.nodeid)
     (item2,) = items2
     assert item2.name == item.name
-    assert item2.fspath == item.fspath  # type: ignore[attr-defined]
+    assert item2.fspath == item.fspath
     assert item2.path == item.path
 
 
@@ -77,7 +81,7 @@ def test_tmpdir_always_is_realpath(pytester: pytest.Pytester) -> None:
             assert os.path.realpath(str(tmpdir)) == str(tmpdir)
     """
     )
-    result = pytester.runpytest("-s", p, "--basetemp=%s/bt" % linktemp)
+    result = pytester.runpytest("-s", p, f"--basetemp={linktemp}/bt")
     assert not result.ret
 
 
@@ -90,7 +94,8 @@ def test_cache_makedir(cache: pytest.Cache) -> None:
 def test_fixturerequest_getmodulepath(pytester: pytest.Pytester) -> None:
     modcol = pytester.getmodulecol("def test_somefunc(): pass")
     (item,) = pytester.genitems([modcol])
-    req = pytest.FixtureRequest(item, _ispytest=True)
+    assert isinstance(item, pytest.Function)
+    req = TopRequest(item, _ispytest=True)
     assert req.path == modcol.path
     assert req.fspath == modcol.fspath  # type: ignore[attr-defined]
 
@@ -105,7 +110,7 @@ class TestFixtureRequestSessionScoped:
             AttributeError,
             match="path not available in session-scoped context",
         ):
-            session_request.fspath
+            _ = session_request.fspath
 
 
 @pytest.mark.parametrize("config_type", ["ini", "pyproject"])
@@ -152,7 +157,7 @@ def test_override_ini_paths(pytester: pytest.Pytester) -> None:
     )
     pytester.makepyfile(
         r"""
-        def test_overriden(pytestconfig):
+        def test_overridden(pytestconfig):
             config_paths = pytestconfig.getini("paths")
             print(config_paths)
             for cpf in config_paths:
@@ -161,3 +166,20 @@ def test_override_ini_paths(pytester: pytest.Pytester) -> None:
     )
     result = pytester.runpytest("--override-ini", "paths=foo/bar1.py foo/bar2.py", "-s")
     result.stdout.fnmatch_lines(["user_path:bar1.py", "user_path:bar2.py"])
+
+
+def test_inifile_from_cmdline_main_hook(pytester: pytest.Pytester) -> None:
+    """Ensure Config.inifile is available during pytest_cmdline_main (#9396)."""
+    p = pytester.makeini(
+        """
+        [pytest]
+        """
+    )
+    pytester.makeconftest(
+        """
+        def pytest_cmdline_main(config):
+            print("pytest_cmdline_main inifile =", config.inifile)
+        """
+    )
+    result = pytester.runpytest_subprocess("-s")
+    result.stdout.fnmatch_lines(f"*pytest_cmdline_main inifile = {p}")

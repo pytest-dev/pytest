@@ -1,9 +1,11 @@
+# mypy: allow-untyped-defs
 """Support for presenting detailed information in failing assertions."""
+
+from __future__ import annotations
+
+from collections.abc import Generator
 import sys
 from typing import Any
-from typing import Generator
-from typing import List
-from typing import Optional
 from typing import TYPE_CHECKING
 
 from _pytest.assertion import rewrite
@@ -14,6 +16,7 @@ from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
+
 
 if TYPE_CHECKING:
     from _pytest.main import Session
@@ -39,8 +42,28 @@ def pytest_addoption(parser: Parser) -> None:
         "enable_assertion_pass_hook",
         type="bool",
         default=False,
-        help="Enables the pytest_assertion_pass hook."
+        help="Enables the pytest_assertion_pass hook. "
         "Make sure to delete any previously generated pyc cache files.",
+    )
+
+    parser.addini(
+        "truncation_limit_lines",
+        default=None,
+        help="Set threshold of LINES after which truncation will take effect",
+    )
+    parser.addini(
+        "truncation_limit_chars",
+        default=None,
+        help=("Set threshold of CHARS after which truncation will take effect"),
+    )
+
+    Config._add_verbosity_ini(
+        parser,
+        Config.VERBOSITY_ASSERTIONS,
+        help=(
+            "Specify a verbosity level for assertions, overriding the main level. "
+            "Higher levels will provide more detailed explanation when an assertion fails."
+        ),
     )
 
 
@@ -53,7 +76,7 @@ def register_assert_rewrite(*names: str) -> None:
     actually imported, usually in your __init__.py if you are a plugin
     using a package.
 
-    :raises TypeError: If the given module names are not strings.
+    :param names: The module names to register.
     """
     for name in names:
         if not isinstance(name, str):
@@ -83,7 +106,7 @@ class AssertionState:
     def __init__(self, config: Config, mode) -> None:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
-        self.hook: Optional[rewrite.AssertionRewritingHook] = None
+        self.hook: rewrite.AssertionRewritingHook | None = None
 
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
@@ -102,7 +125,7 @@ def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
     return hook
 
 
-def pytest_collection(session: "Session") -> None:
+def pytest_collection(session: Session) -> None:
     # This hook is only called when test modules are collected
     # so for example not in the managing process of pytest-xdist
     # (which does not collect test modules).
@@ -112,18 +135,17 @@ def pytest_collection(session: "Session") -> None:
             assertstate.hook.set_session(session)
 
 
-@hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
+@hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     """Setup the pytest_assertrepr_compare and pytest_assertion_pass hooks.
 
     The rewrite module will use util._reprcompare if it exists to use custom
     reporting via the pytest_assertrepr_compare hook.  This sets up this custom
     comparison for the test.
     """
-
     ihook = item.ihook
 
-    def callbinrepr(op, left: object, right: object) -> Optional[str]:
+    def callbinrepr(op, left: object, right: object) -> str | None:
         """Call the pytest_assertrepr_compare hook and prepare the result.
 
         This uses the first result from the hook and then ensures the
@@ -162,13 +184,14 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, None, None]:
 
         util._assertion_pass = call_assertion_pass_hook
 
-    yield
+    try:
+        return (yield)
+    finally:
+        util._reprcompare, util._assertion_pass = saved_assert_hooks
+        util._config = None
 
-    util._reprcompare, util._assertion_pass = saved_assert_hooks
-    util._config = None
 
-
-def pytest_sessionfinish(session: "Session") -> None:
+def pytest_sessionfinish(session: Session) -> None:
     assertstate = session.config.stash.get(assertstate_key, None)
     if assertstate:
         if assertstate.hook is not None:
@@ -177,5 +200,5 @@ def pytest_sessionfinish(session: "Session") -> None:
 
 def pytest_assertrepr_compare(
     config: Config, op: str, left: Any, right: Any
-) -> Optional[List[str]]:
+) -> list[str] | None:
     return util.assertrepr_compare(config=config, op=op, left=left, right=right)

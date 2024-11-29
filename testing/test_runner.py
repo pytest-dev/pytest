@@ -1,14 +1,14 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
+from functools import partial
 import inspect
 import os
+from pathlib import Path
 import sys
 import types
-from pathlib import Path
-from typing import Dict
-from typing import List
-from typing import Tuple
-from typing import Type
+import warnings
 
-import pytest
 from _pytest import outcomes
 from _pytest import reports
 from _pytest import runner
@@ -18,6 +18,11 @@ from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
+import pytest
+
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 
 class TestSetupState:
@@ -77,8 +82,6 @@ class TestSetupState:
         assert r == ["fin3", "fin1"]
 
     def test_teardown_multiple_fail(self, pytester: Pytester) -> None:
-        # Ensure the first exception is the one which is re-raised.
-        # Ideally both would be reported however.
         def fin1():
             raise Exception("oops1")
 
@@ -90,9 +93,14 @@ class TestSetupState:
         ss.setup(item)
         ss.addfinalizer(fin1, item)
         ss.addfinalizer(fin2, item)
-        with pytest.raises(Exception) as err:
+        with pytest.raises(ExceptionGroup) as err:
             ss.teardown_exact(None)
-        assert err.value.args == ("oops2",)
+
+        # Note that finalizers are run LIFO, but because FIFO is more intuitive for
+        # users we reverse the order of messages, and see the error from fin1 first.
+        err1, err2 = err.value.exceptions
+        assert err1.args == ("oops1",)
+        assert err2.args == ("oops2",)
 
     def test_teardown_multiple_scopes_one_fails(self, pytester: Pytester) -> None:
         module_teardown = []
@@ -112,6 +120,62 @@ class TestSetupState:
         with pytest.raises(Exception, match="oops1"):
             ss.teardown_exact(None)
         assert module_teardown == ["fin_module"]
+
+    def test_teardown_multiple_scopes_several_fail(self, pytester) -> None:
+        def raiser(exc):
+            raise exc
+
+        item = pytester.getitem("def test_func(): pass")
+        mod = item.listchain()[-2]
+        ss = item.session._setupstate
+        ss.setup(item)
+        ss.addfinalizer(partial(raiser, KeyError("from module scope")), mod)
+        ss.addfinalizer(partial(raiser, TypeError("from function scope 1")), item)
+        ss.addfinalizer(partial(raiser, ValueError("from function scope 2")), item)
+
+        with pytest.raises(ExceptionGroup, match="errors during test teardown") as e:
+            ss.teardown_exact(None)
+        mod, func = e.value.exceptions
+        assert isinstance(mod, KeyError)
+        assert isinstance(func.exceptions[0], TypeError)
+        assert isinstance(func.exceptions[1], ValueError)
+
+    def test_cached_exception_doesnt_get_longer(self, pytester: Pytester) -> None:
+        """Regression test for #12204 (the "BTW" case)."""
+        pytester.makepyfile(test="")
+        # If the collector.setup() raises, all collected items error with this
+        # exception.
+        pytester.makeconftest(
+            """
+            import pytest
+
+            class MyItem(pytest.Item):
+                def runtest(self) -> None: pass
+
+            class MyBadCollector(pytest.Collector):
+                def collect(self):
+                    return [
+                        MyItem.from_parent(self, name="one"),
+                        MyItem.from_parent(self, name="two"),
+                        MyItem.from_parent(self, name="three"),
+                    ]
+
+                def setup(self):
+                    1 / 0
+
+            def pytest_collect_file(file_path, parent):
+                if file_path.name == "test.py":
+                    return MyBadCollector.from_parent(parent, name='bad')
+            """
+        )
+
+        result = pytester.runpytest_inprocess("--tb=native")
+        assert result.ret == ExitCode.TESTS_FAILED
+        failures = result.reprec.getfailures()  # type: ignore[attr-defined]
+        assert len(failures) == 3
+        lines1 = failures[1].longrepr.reprtraceback.reprentries[0].lines
+        lines2 = failures[2].longrepr.reprtraceback.reprentries[0].lines
+        assert len(lines1) == len(lines2)
 
 
 class BaseFunctionalTests:
@@ -287,7 +351,7 @@ class BaseFunctionalTests:
 
             def test_func():
                 import sys
-                # on python2 exc_info is keept till a function exits
+                # on python2 exc_info is kept till a function exits
                 # so we would end up calling test functions while
                 # sys.exc_info would return the indexerror
                 # from guessing the lastitem
@@ -380,7 +444,7 @@ class BaseFunctionalTests:
         # assert rep.outcome.when == "setup"
         # assert rep.outcome.where.lineno == 3
         # assert rep.outcome.where.path.basename == "test_func.py"
-        # assert instanace(rep.failed.failurerepr, PythonFailureRepr)
+        # assert isinstance(rep.failed.failurerepr, PythonFailureRepr)
 
     def test_systemexit_does_not_bail_out(self, pytester: Pytester) -> None:
         try:
@@ -447,6 +511,7 @@ class TestSessionReports:
         assert not rep.skipped
         assert rep.passed
         locinfo = rep.location
+        assert locinfo is not None
         assert locinfo[0] == col.path.name
         assert not locinfo[1]
         assert locinfo[2] == col.path.name
@@ -456,7 +521,7 @@ class TestSessionReports:
         assert res[1].name == "TestClass"
 
 
-reporttypes: List[Type[reports.BaseReport]] = [
+reporttypes: list[type[reports.BaseReport]] = [
     reports.BaseReport,
     reports.TestReport,
     reports.CollectReport,
@@ -466,9 +531,9 @@ reporttypes: List[Type[reports.BaseReport]] = [
 @pytest.mark.parametrize(
     "reporttype", reporttypes, ids=[x.__name__ for x in reporttypes]
 )
-def test_report_extra_parameters(reporttype: Type[reports.BaseReport]) -> None:
+def test_report_extra_parameters(reporttype: type[reports.BaseReport]) -> None:
     args = list(inspect.signature(reporttype.__init__).parameters.keys())[1:]
-    basekw: Dict[str, List[object]] = dict.fromkeys(args, [])
+    basekw: dict[str, list[object]] = {arg: [] for arg in args}
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1
 
@@ -515,10 +580,10 @@ def test_runtest_in_module_ordering(pytester: Pytester) -> None:
             @pytest.fixture
             def mylist(self, request):
                 return request.function.mylist
-            @pytest.hookimpl(hookwrapper=True)
+            @pytest.hookimpl(wrapper=True)
             def pytest_runtest_call(self, item):
                 try:
-                    (yield).get_result()
+                    yield
                 except ValueError:
                     pass
             def test_hello1(self, mylist):
@@ -733,6 +798,73 @@ def test_importorskip_imports_last_module_part() -> None:
     assert os.path == ospath
 
 
+class TestImportOrSkipExcType:
+    """Tests for #11523."""
+
+    def test_no_warning(self) -> None:
+        # An attempt on a module which does not exist will raise ModuleNotFoundError, so it will
+        # be skipped normally and no warning will be issued.
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("always")
+
+            with pytest.raises(pytest.skip.Exception):
+                pytest.importorskip("TestImportOrSkipExcType_test_no_warning")
+
+        assert captured == []
+
+    def test_import_error_with_warning(self, pytester: Pytester) -> None:
+        # Create a module which exists and can be imported, however it raises
+        # ImportError due to some other problem. In this case we will issue a warning
+        # about the future behavior change.
+        fn = pytester.makepyfile("raise ImportError('some specific problem')")
+        pytester.syspathinsert()
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("always")
+
+            with pytest.raises(pytest.skip.Exception):
+                pytest.importorskip(fn.stem)
+
+        [warning] = captured
+        assert warning.category is pytest.PytestDeprecationWarning
+
+    def test_import_error_suppress_warning(self, pytester: Pytester) -> None:
+        # Same as test_import_error_with_warning, but we can suppress the warning
+        # by passing ImportError as exc_type.
+        fn = pytester.makepyfile("raise ImportError('some specific problem')")
+        pytester.syspathinsert()
+
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("always")
+
+            with pytest.raises(pytest.skip.Exception):
+                pytest.importorskip(fn.stem, exc_type=ImportError)
+
+        assert captured == []
+
+    def test_warning_integration(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+            def test_foo():
+                pytest.importorskip("warning_integration_module")
+            """
+        )
+        pytester.makepyfile(
+            warning_integration_module="""
+                raise ImportError("required library foobar not compiled properly")
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*Module 'warning_integration_module' was found, but when imported by pytest it raised:",
+                "*      ImportError('required library foobar not compiled properly')",
+                "*1 skipped, 1 warning*",
+            ]
+        )
+
+
 def test_importorskip_dev_module(monkeypatch) -> None:
     try:
         mod = types.ModuleType("mockmodule")
@@ -799,12 +931,12 @@ def test_unicode_in_longrepr(pytester: Pytester) -> None:
     pytester.makeconftest(
         """\
         import pytest
-        @pytest.hookimpl(hookwrapper=True)
+        @pytest.hookimpl(wrapper=True)
         def pytest_runtest_makereport():
-            outcome = yield
-            rep = outcome.get_result()
+            rep = yield
             if rep.when == "call":
                 rep.longrepr = 'ä'
+            return rep
         """
     )
     pytester.makepyfile(
@@ -880,6 +1012,7 @@ def test_makereport_getsource_dynamic_code(
 def test_store_except_info_on_error() -> None:
     """Test that upon test failure, the exception info is stored on
     sys.last_traceback and friends."""
+
     # Simulate item that might raise a specific exception, depending on `raise_error` class var
     class ItemMightRaise:
         nodeid = "item_that_raises"
@@ -896,6 +1029,9 @@ def test_store_except_info_on_error() -> None:
     # Check that exception info is stored on sys
     assert sys.last_type is IndexError
     assert isinstance(sys.last_value, IndexError)
+    if sys.version_info >= (3, 12, 0):
+        assert isinstance(sys.last_exc, IndexError)  # type:ignore[attr-defined]
+
     assert sys.last_value.args[0] == "TEST"
     assert sys.last_traceback
 
@@ -904,11 +1040,13 @@ def test_store_except_info_on_error() -> None:
     runner.pytest_runtest_call(ItemMightRaise())  # type: ignore[arg-type]
     assert not hasattr(sys, "last_type")
     assert not hasattr(sys, "last_value")
+    if sys.version_info >= (3, 12, 0):
+        assert not hasattr(sys, "last_exc")
     assert not hasattr(sys, "last_traceback")
 
 
 def test_current_test_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
-    pytest_current_test_vars: List[Tuple[str, str]] = []
+    pytest_current_test_vars: list[tuple[str, str]] = []
     monkeypatch.setattr(
         sys, "pytest_current_test_vars", pytest_current_test_vars, raising=False
     )
@@ -978,7 +1116,7 @@ class TestReportContents:
         )
         rec = pytester.inline_run()
         calls = rec.getcalls("pytest_collectreport")
-        _, call = calls
+        _, call, _ = calls
         assert isinstance(call.report.longrepr, tuple)
         assert "Skipped" in call.report.longreprtext
 
@@ -1059,3 +1197,70 @@ def test_outcome_exception_bad_msg() -> None:
     with pytest.raises(TypeError) as excinfo:
         OutcomeException(func)  # type: ignore
     assert str(excinfo.value) == expected
+
+
+def test_pytest_version_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("PYTEST_VERSION", "old version")
+    pytester.makepyfile(
+        """
+        import pytest
+        import os
+
+
+        def test():
+            assert os.environ.get("PYTEST_VERSION") == pytest.__version__
+    """
+    )
+    result = pytester.runpytest_inprocess()
+    assert result.ret == ExitCode.OK
+    assert os.environ["PYTEST_VERSION"] == "old version"
+
+
+def test_teardown_session_failed(pytester: Pytester) -> None:
+    """Test that higher-scoped fixture teardowns run in the context of the last
+    item after the test session bails early due to --maxfail.
+
+    Regression test for #11706.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def baz():
+            yield
+            pytest.fail("This is a failing teardown")
+
+        def test_foo(baz):
+            pytest.fail("This is a failing test")
+
+        def test_bar(): pass
+        """
+    )
+    result = pytester.runpytest("--maxfail=1")
+    result.assert_outcomes(failed=1, errors=1)
+
+
+def test_teardown_session_stopped(pytester: Pytester) -> None:
+    """Test that higher-scoped fixture teardowns run in the context of the last
+    item after the test session bails early due to --stepwise.
+
+    Regression test for #11706.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="module")
+        def baz():
+            yield
+            pytest.fail("This is a failing teardown")
+
+        def test_foo(baz):
+            pytest.fail("This is a failing test")
+
+        def test_bar(): pass
+        """
+    )
+    result = pytester.runpytest("--stepwise")
+    result.assert_outcomes(failed=1, errors=1)

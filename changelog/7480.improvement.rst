@@ -1,5 +1,0 @@
-A deprecation scheduled to be removed in a major version X (e.g. pytest 7, 8, 9, ...) now uses warning category `PytestRemovedInXWarning`,
-a subclass of :class:`~pytest.PytestDeprecationWarning`,
-instead of :class:`PytestDeprecationWarning` directly.
-
-See :ref:`backwards-compatibility` for more details.

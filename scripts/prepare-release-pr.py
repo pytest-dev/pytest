@@ -1,3 +1,4 @@
+# mypy: disallow-untyped-defs
 """
 This script is part of the pytest release process which is triggered manually in the Actions
 tab of the repository.
@@ -12,9 +13,12 @@ After that, it will create a release using the `release` tox environment, and pu
 **Token**: currently the token from the GitHub Actions is used, pushed with
 `pytest bot <pytestbot@gmail.com>` commit author.
 """
+
+from __future__ import annotations
+
 import argparse
-import re
 from pathlib import Path
+import re
 from subprocess import check_call
 from subprocess import check_output
 from subprocess import run
@@ -31,10 +35,22 @@ class InvalidFeatureRelease(Exception):
 SLUG = "pytest-dev/pytest"
 
 PR_BODY = """\
-Created automatically from manual trigger.
+Created by the [prepare release pr]\
+(https://github.com/pytest-dev/pytest/actions/workflows/prepare-release-pr.yml) workflow.
 
-Once all builds pass and it has been **approved** by one or more maintainers, the build
-can be released by pushing a tag `{version}` to this repository.
+Once all builds pass and it has been **approved** by one or more maintainers, start the \
+[deploy](https://github.com/pytest-dev/pytest/actions/workflows/deploy.yml) workflow, using these parameters:
+
+* `Use workflow from`: `release-{version}`.
+* `Release version`: `{version}`.
+
+Or execute on the command line:
+
+```console
+gh workflow run deploy.yml -r release-{version} -f version={version}
+```
+
+After the workflow has been approved by a core maintainer, the package will be uploaded to PyPI automatically.
 """
 
 
@@ -66,7 +82,7 @@ def prepare_release_pr(
         )
     except InvalidFeatureRelease as e:
         print(f"{Fore.RED}{e}")
-        raise SystemExit(1)
+        raise SystemExit(1) from None
 
     print(f"Version: {Fore.CYAN}{version}")
 
@@ -88,7 +104,9 @@ def prepare_release_pr(
 
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} created.")
 
-    if prerelease:
+    if is_major:
+        template_name = "release.major.rst"
+    elif prerelease:
         template_name = "release.pre.rst"
     elif is_feature_release:
         template_name = "release.minor.rst"
@@ -104,6 +122,7 @@ def prepare_release_pr(
         "--",
         version,
         template_name,
+        release_branch,  # doc_version
         "--skip-check-links",
     ]
     print("Running", " ".join(cmdline))

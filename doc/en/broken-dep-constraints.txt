@@ -1,0 +1,6 @@
+# This file contains transitive dependencies that need to be pinned for some reason.
+# Eventually this file will be empty, but in this case keep it around for future use.
+
+# Pin towncrier temporarily due to incompatibility with sphinxcontrib-towncrier:
+# https://github.com/sphinx-contrib/sphinxcontrib-towncrier/issues/92
+towncrier<24.7

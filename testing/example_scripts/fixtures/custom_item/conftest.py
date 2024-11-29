@@ -1,3 +1,6 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 import pytest
 
 
@@ -11,5 +14,5 @@ class CustomFile(pytest.File):
         yield CustomItem.from_parent(name="foo", parent=self)
 
 
-def pytest_collect_file(fspath, parent):
-    return CustomFile.from_parent(path=fspath, parent=parent)
+def pytest_collect_file(file_path, parent):
+    return CustomFile.from_parent(path=file_path, parent=parent)

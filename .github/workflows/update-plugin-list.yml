@@ -11,7 +11,8 @@ on:
 permissions: {}
 
 jobs:
-  createPullRequest:
+  update-plugin-list:
+    if: github.repository_owner == 'pytest-dev'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,25 +20,34 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: "3.11"
+          cache: pip
+      - name: requests-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pytest-plugin-list/
+          key: plugins-http-cache-${{ github.run_id }} # Can use time based key as well
+          restore-keys: plugins-http-cache-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install packaging requests tabulate[widechars] tqdm
+          pip install packaging requests tabulate[widechars] tqdm requests-cache platformdirs
+
 
       - name: Update Plugin List
         run: python scripts/update-plugin-list.py
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@2455e1596942c2902952003bbb574afbbe2ab2e6
+        id: pr
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f
         with:
           commit-message: '[automated] Update plugin list'
           author: 'pytest bot <pytestbot@users.noreply.github.com>'
@@ -46,3 +56,13 @@ jobs:
           branch-suffix: short-commit-hash
           title: '[automated] Update plugin list'
           body: '[automated] Update plugin list'
+          draft: true
+
+      - name: Instruct the maintainers to trigger CI by undrafting the PR
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          gh pr comment
+          --body 'Please mark the PR as ready for review to trigger PR checks.'
+          --repo '${{ github.repository }}'
+          '${{ steps.pr.outputs.pull-request-number }}'

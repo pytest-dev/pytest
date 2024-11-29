@@ -1,5 +1,7 @@
-import unicodedata
+from __future__ import annotations
+
 from functools import lru_cache
+import unicodedata
 
 
 @lru_cache(100)

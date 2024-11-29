@@ -1,1 +1,0 @@
-:meth:`pytest.Cache.set` now preserves key order when saving dicts.

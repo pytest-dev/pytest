@@ -1,6 +1,8 @@
-import pytest
+from __future__ import annotations
+
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
+import pytest
 
 
 def test_stash() -> None:
@@ -56,7 +58,7 @@ def test_stash() -> None:
     with pytest.raises(AttributeError):
         stash.foo = "nope"  # type: ignore[attr-defined]
 
-    # No interaction with anoter stash.
+    # No interaction with another stash.
     stash2 = Stash()
     key3 = StashKey[int]()
     assert key2 not in stash2

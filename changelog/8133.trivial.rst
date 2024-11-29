@@ -1,1 +1,0 @@
-Migrate to ``setuptools_scm`` 6.x to use ``SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST`` for more robust release tooling.

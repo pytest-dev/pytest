@@ -1,5 +1,0 @@
-:func:`pytest.skip(msg=...) <pytest.skip>`, :func:`pytest.fail(msg=...) <pytest.fail>` and :func:`pytest.exit(msg=...) <pytest.exit>`
-signatures now accept a ``reason`` argument instead of ``msg``.  Using ``msg`` still works, but is deprecated and will be removed in a future release.
-
-This was changed for consistency with :func:`pytest.mark.skip <pytest.mark.skip>` and  :func:`pytest.mark.xfail <pytest.mark.xfail>` which both accept
-``reason`` as an argument.

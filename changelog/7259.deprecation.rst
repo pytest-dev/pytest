@@ -1,3 +1,0 @@
-``py.path.local`` arguments for hooks have been deprecated. See :ref:`the deprecation note <legacy-path-hooks-deprecated>` for full details.
-
-``py.path.local`` arguments to Node constructors have been deprecated. See :ref:`the deprecation note <node-ctor-fspath-deprecation>` for full details.

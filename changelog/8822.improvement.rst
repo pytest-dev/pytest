@@ -1,1 +1,0 @@
-When showing fixture paths in `--fixtures` or `--fixtures-by-test`, fixtures coming from pytest itself now display an elided path, rather than the full path to the file in the `site-packages` directory.

@@ -1,3 +1,6 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 import pytest
 
 
@@ -6,9 +9,10 @@ class MyFile(pytest.File):
         return [MyItem.from_parent(name="hello", parent=self)]
 
 
-def pytest_collect_file(fspath, parent):
-    return MyFile.from_parent(path=fspath, parent=parent)
+def pytest_collect_file(file_path, parent):
+    return MyFile.from_parent(path=file_path, parent=parent)
 
 
 class MyItem(pytest.Item):
-    pass
+    def runtest(self):
+        raise NotImplementedError()

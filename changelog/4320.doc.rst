@@ -1,1 +1,0 @@
-Improved docs for `pytester.copy_example`.

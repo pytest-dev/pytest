@@ -7,15 +7,15 @@ would cause circular references.
 
 Also this makes the module light to import, as it should.
 """
+
+from __future__ import annotations
+
 from enum import Enum
 from functools import total_ordering
-from typing import Optional
-from typing import TYPE_CHECKING
+from typing import Literal
 
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
-    _ScopeName = Literal["session", "package", "module", "class", "function"]
+_ScopeName = Literal["session", "package", "module", "class", "function"]
 
 
 @total_ordering
@@ -33,35 +33,35 @@ class Scope(Enum):
     """
 
     # Scopes need to be listed from lower to higher.
-    Function: "_ScopeName" = "function"
-    Class: "_ScopeName" = "class"
-    Module: "_ScopeName" = "module"
-    Package: "_ScopeName" = "package"
-    Session: "_ScopeName" = "session"
+    Function: _ScopeName = "function"
+    Class: _ScopeName = "class"
+    Module: _ScopeName = "module"
+    Package: _ScopeName = "package"
+    Session: _ScopeName = "session"
 
-    def next_lower(self) -> "Scope":
+    def next_lower(self) -> Scope:
         """Return the next lower scope."""
         index = _SCOPE_INDICES[self]
         if index == 0:
             raise ValueError(f"{self} is the lower-most scope")
         return _ALL_SCOPES[index - 1]
 
-    def next_higher(self) -> "Scope":
+    def next_higher(self) -> Scope:
         """Return the next higher scope."""
         index = _SCOPE_INDICES[self]
         if index == len(_SCOPE_INDICES) - 1:
             raise ValueError(f"{self} is the upper-most scope")
         return _ALL_SCOPES[index + 1]
 
-    def __lt__(self, other: "Scope") -> bool:
+    def __lt__(self, other: Scope) -> bool:
         self_index = _SCOPE_INDICES[self]
         other_index = _SCOPE_INDICES[other]
         return self_index < other_index
 
     @classmethod
     def from_user(
-        cls, scope_name: "_ScopeName", descr: str, where: Optional[str] = None
-    ) -> "Scope":
+        cls, scope_name: _ScopeName, descr: str, where: str | None = None
+    ) -> Scope:
         """
         Given a scope name from the user, return the equivalent Scope enum. Should be used
         whenever we want to convert a user provided scope name to its enum object.

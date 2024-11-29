@@ -1,6 +1,9 @@
-import pytest
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 from _pytest.config import ExitCode
 from _pytest.pytester import Pytester
+import pytest
 
 
 def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
@@ -9,7 +12,7 @@ def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
     assert result.ret == 0
     result.stdout.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
     if pytestconfig.pluginmanager.list_plugin_distinfo():
-        result.stdout.fnmatch_lines(["*setuptools registered plugins:", "*at*"])
+        result.stdout.fnmatch_lines(["*registered third-party plugins:", "*at*"])
 
 
 def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
@@ -30,11 +33,11 @@ def test_help(pytester: Pytester) -> None:
     assert result.ret == 0
     result.stdout.fnmatch_lines(
         """
-          -m MARKEXPR           only run tests matching given mark expression.
-                                For example: -m 'mark1 and not mark2'.
-        reporting:
+          -m MARKEXPR           Only run tests matching given mark expression. For
+                                example: -m 'mark1 and not mark2'.
+        Reporting:
           --durations=N *
-          -V, --version         display pytest version and information about plugins.
+          -V, --version         Display pytest version and information about plugins.
                                 When given twice, also display information about
                                 plugins.
         *setup.cfg*
@@ -71,9 +74,9 @@ def test_empty_help_param(pytester: Pytester) -> None:
     assert result.ret == 0
     lines = [
         "  required_plugins (args):",
-        "                        plugins that must be present for pytest to run*",
+        "                        Plugins that must be present for pytest to run*",
         "  test_ini (bool):*",
-        "environment variables:",
+        "Environment variables:",
     ]
     result.stdout.fnmatch_lines(lines, consecutive=True)
 

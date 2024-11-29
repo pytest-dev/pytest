@@ -1,1 +1,0 @@
-Added two environment variables :envvar:`PYTEST_THEME` and :envvar:`PYTEST_THEME_MODE` to let the users customize the pygments theme used.

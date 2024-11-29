@@ -1,21 +1,20 @@
+# mypy: allow-untyped-defs
 """Basic collect and runtest protocol implementations."""
+
+from __future__ import annotations
+
 import bdb
+from collections.abc import Callable
+import dataclasses
 import os
 import sys
-import warnings
-from typing import Callable
+import types
 from typing import cast
-from typing import Dict
+from typing import final
 from typing import Generic
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
+from typing import Literal
 from typing import TYPE_CHECKING
 from typing import TypeVar
-from typing import Union
-
-import attr
 
 from .reports import BaseReport
 from .reports import CollectErrorRepr
@@ -25,11 +24,10 @@ from _pytest import timing
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
-from _pytest.compat import final
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import UNITTEST_SKIP_DURING_COLLECTION
 from _pytest.nodes import Collector
+from _pytest.nodes import Directory
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.outcomes import Exit
@@ -37,9 +35,11 @@ from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import Skipped
 from _pytest.outcomes import TEST_OUTCOME
 
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
+
+if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.terminal import TerminalReporter
 
@@ -48,14 +48,14 @@ if TYPE_CHECKING:
 
 
 def pytest_addoption(parser: Parser) -> None:
-    group = parser.getgroup("terminal reporting", "reporting", after="general")
+    group = parser.getgroup("terminal reporting", "Reporting", after="general")
     group.addoption(
         "--durations",
         action="store",
         type=int,
         default=None,
         metavar="N",
-        help="show N slowest setup/test durations (N=0 for all).",
+        help="Show N slowest setup/test durations (N=0 for all)",
     )
     group.addoption(
         "--durations-min",
@@ -63,14 +63,15 @@ def pytest_addoption(parser: Parser) -> None:
         type=float,
         default=0.005,
         metavar="N",
-        help="Minimal duration in seconds for inclusion in slowest list. Default 0.005",
+        help="Minimal duration in seconds for inclusion in slowest list. "
+        "Default: 0.005.",
     )
 
 
-def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
+def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
     durations = terminalreporter.config.option.durations
     durations_min = terminalreporter.config.option.durations_min
-    verbose = terminalreporter.config.getvalue("verbose")
+    verbose = terminalreporter.config.get_verbosity()
     if durations is None:
         return
     tr = terminalreporter
@@ -81,33 +82,32 @@ def pytest_terminal_summary(terminalreporter: "TerminalReporter") -> None:
                 dlist.append(rep)
     if not dlist:
         return
-    dlist.sort(key=lambda x: x.duration, reverse=True)  # type: ignore[no-any-return]
+    dlist.sort(key=lambda x: x.duration, reverse=True)
     if not durations:
         tr.write_sep("=", "slowest durations")
     else:
-        tr.write_sep("=", "slowest %s durations" % durations)
+        tr.write_sep("=", f"slowest {durations} durations")
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):
         if verbose < 2 and rep.duration < durations_min:
             tr.write_line("")
             tr.write_line(
-                "(%s durations < %gs hidden.  Use -vv to show these durations.)"
-                % (len(dlist) - i, durations_min)
+                f"({len(dlist) - i} durations < {durations_min:g}s hidden.  Use -vv to show these durations.)"
             )
             break
         tr.write_line(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}")
 
 
-def pytest_sessionstart(session: "Session") -> None:
+def pytest_sessionstart(session: Session) -> None:
     session._setupstate = SetupState()
 
 
-def pytest_sessionfinish(session: "Session") -> None:
+def pytest_sessionfinish(session: Session) -> None:
     session._setupstate.teardown_exact(None)
 
 
-def pytest_runtest_protocol(item: Item, nextitem: Optional[Item]) -> bool:
+def pytest_runtest_protocol(item: Item, nextitem: Item | None) -> bool:
     ihook = item.ihook
     ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
     runtestprotocol(item, nextitem=nextitem)
@@ -116,8 +116,8 @@ def pytest_runtest_protocol(item: Item, nextitem: Optional[Item]) -> bool:
 
 
 def runtestprotocol(
-    item: Item, log: bool = True, nextitem: Optional[Item] = None
-) -> List[TestReport]:
+    item: Item, log: bool = True, nextitem: Item | None = None
+) -> list[TestReport]:
     hasrequest = hasattr(item, "_request")
     if hasrequest and not item._request:  # type: ignore[attr-defined]
         # This only happens if the item is re-run, as is done by
@@ -130,6 +130,10 @@ def runtestprotocol(
             show_test_item(item)
         if not item.config.getoption("setuponly", False):
             reports.append(call_and_report(item, "call", log))
+    # If the session is about to fail or stop, teardown everything - this is
+    # necessary to correctly report fixture teardown errors (see #11706)
+    if item.session.shouldfail or item.session.shouldstop:
+        nextitem = None
     reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
     # After all teardown hooks have been called
     # want funcargs and request info to go away.
@@ -162,6 +166,8 @@ def pytest_runtest_call(item: Item) -> None:
         del sys.last_type
         del sys.last_value
         del sys.last_traceback
+        if sys.version_info >= (3, 12, 0):
+            del sys.last_exc  # type:ignore[attr-defined]
     except AttributeError:
         pass
     try:
@@ -170,20 +176,22 @@ def pytest_runtest_call(item: Item) -> None:
         # Store trace info to allow postmortem debugging
         sys.last_type = type(e)
         sys.last_value = e
+        if sys.version_info >= (3, 12, 0):
+            sys.last_exc = e  # type:ignore[attr-defined]
         assert e.__traceback__ is not None
         # Skip *this* frame
         sys.last_traceback = e.__traceback__.tb_next
-        raise e
+        raise
 
 
-def pytest_runtest_teardown(item: Item, nextitem: Optional[Item]) -> None:
+def pytest_runtest_teardown(item: Item, nextitem: Item | None) -> None:
     _update_current_test_var(item, "teardown")
     item.session._setupstate.teardown_exact(nextitem)
     _update_current_test_var(item, None)
 
 
 def _update_current_test_var(
-    item: Item, when: Optional["Literal['setup', 'call', 'teardown']"]
+    item: Item, when: Literal["setup", "call", "teardown"] | None
 ) -> None:
     """Update :envvar:`PYTEST_CURRENT_TEST` to reflect the current item and stage.
 
@@ -199,7 +207,7 @@ def _update_current_test_var(
         os.environ.pop(var_name)
 
 
-def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str]]:
+def pytest_report_teststatus(report: BaseReport) -> tuple[str, str, str] | None:
     if report.when in ("setup", "teardown"):
         if report.failed:
             #      category, shortletter, verbose-word
@@ -216,19 +224,32 @@ def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str
 
 
 def call_and_report(
-    item: Item, when: "Literal['setup', 'call', 'teardown']", log: bool = True, **kwds
+    item: Item, when: Literal["setup", "call", "teardown"], log: bool = True, **kwds
 ) -> TestReport:
-    call = call_runtest_hook(item, when, **kwds)
-    hook = item.ihook
-    report: TestReport = hook.pytest_runtest_makereport(item=item, call=call)
+    ihook = item.ihook
+    if when == "setup":
+        runtest_hook: Callable[..., None] = ihook.pytest_runtest_setup
+    elif when == "call":
+        runtest_hook = ihook.pytest_runtest_call
+    elif when == "teardown":
+        runtest_hook = ihook.pytest_runtest_teardown
+    else:
+        assert False, f"Unhandled runtest hook case: {when}"
+    reraise: tuple[type[BaseException], ...] = (Exit,)
+    if not item.config.getoption("usepdb", False):
+        reraise += (KeyboardInterrupt,)
+    call = CallInfo.from_call(
+        lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+    )
+    report: TestReport = ihook.pytest_runtest_makereport(item=item, call=call)
     if log:
-        hook.pytest_runtest_logreport(report=report)
+        ihook.pytest_runtest_logreport(report=report)
     if check_interactive_exception(call, report):
-        hook.pytest_exception_interact(node=item, call=call, report=report)
+        ihook.pytest_exception_interact(node=item, call=call, report=report)
     return report
 
 
-def check_interactive_exception(call: "CallInfo[object]", report: BaseReport) -> bool:
+def check_interactive_exception(call: CallInfo[object], report: BaseReport) -> bool:
     """Check whether the call raised an exception that should be reported as
     interactive."""
     if call.excinfo is None:
@@ -243,36 +264,17 @@ def check_interactive_exception(call: "CallInfo[object]", report: BaseReport) ->
     return True
 
 
-def call_runtest_hook(
-    item: Item, when: "Literal['setup', 'call', 'teardown']", **kwds
-) -> "CallInfo[None]":
-    if when == "setup":
-        ihook: Callable[..., None] = item.ihook.pytest_runtest_setup
-    elif when == "call":
-        ihook = item.ihook.pytest_runtest_call
-    elif when == "teardown":
-        ihook = item.ihook.pytest_runtest_teardown
-    else:
-        assert False, f"Unhandled runtest hook case: {when}"
-    reraise: Tuple[Type[BaseException], ...] = (Exit,)
-    if not item.config.getoption("usepdb", False):
-        reraise += (KeyboardInterrupt,)
-    return CallInfo.from_call(
-        lambda: ihook(item=item, **kwds), when=when, reraise=reraise
-    )
-
-
 TResult = TypeVar("TResult", covariant=True)
 
 
 @final
-@attr.s(repr=False, init=False, auto_attribs=True)
+@dataclasses.dataclass
 class CallInfo(Generic[TResult]):
     """Result/Exception info of a function invocation."""
 
-    _result: Optional[TResult]
+    _result: TResult | None
     #: The captured exception of the call, if it raised.
-    excinfo: Optional[ExceptionInfo[BaseException]]
+    excinfo: ExceptionInfo[BaseException] | None
     #: The system time when the call started, in seconds since the epoch.
     start: float
     #: The system time when the call ended, in seconds since the epoch.
@@ -280,16 +282,16 @@ class CallInfo(Generic[TResult]):
     #: The call duration, in seconds.
     duration: float
     #: The context of invocation: "collect", "setup", "call" or "teardown".
-    when: "Literal['collect', 'setup', 'call', 'teardown']"
+    when: Literal["collect", "setup", "call", "teardown"]
 
     def __init__(
         self,
-        result: Optional[TResult],
-        excinfo: Optional[ExceptionInfo[BaseException]],
+        result: TResult | None,
+        excinfo: ExceptionInfo[BaseException] | None,
         start: float,
         stop: float,
         duration: float,
-        when: "Literal['collect', 'setup', 'call', 'teardown']",
+        when: Literal["collect", "setup", "call", "teardown"],
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -317,16 +319,15 @@ class CallInfo(Generic[TResult]):
     @classmethod
     def from_call(
         cls,
-        func: "Callable[[], TResult]",
-        when: "Literal['collect', 'setup', 'call', 'teardown']",
-        reraise: Optional[
-            Union[Type[BaseException], Tuple[Type[BaseException], ...]]
-        ] = None,
-    ) -> "CallInfo[TResult]":
+        func: Callable[[], TResult],
+        when: Literal["collect", "setup", "call", "teardown"],
+        reraise: type[BaseException] | tuple[type[BaseException], ...] | None = None,
+    ) -> CallInfo[TResult]:
         """Call func, wrapping the result in a CallInfo.
 
         :param func:
             The function to call. Called without arguments.
+        :type func: Callable[[], _pytest.runner.TResult]
         :param when:
             The phase in which the function is called.
         :param reraise:
@@ -337,7 +338,7 @@ class CallInfo(Generic[TResult]):
         start = timing.time()
         precise_start = timing.perf_counter()
         try:
-            result: Optional[TResult] = func()
+            result: TResult | None = func()
         except BaseException:
             excinfo = ExceptionInfo.from_current()
             if reraise is not None and isinstance(excinfo.value, reraise):
@@ -368,22 +369,37 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> TestReport:
 
 
 def pytest_make_collect_report(collector: Collector) -> CollectReport:
-    call = CallInfo.from_call(lambda: list(collector.collect()), "collect")
-    longrepr: Union[None, Tuple[str, int, str], str, TerminalRepr] = None
+    def collect() -> list[Item | Collector]:
+        # Before collecting, if this is a Directory, load the conftests.
+        # If a conftest import fails to load, it is considered a collection
+        # error of the Directory collector. This is why it's done inside of the
+        # CallInfo wrapper.
+        #
+        # Note: initial conftests are loaded early, not here.
+        if isinstance(collector, Directory):
+            collector.config.pluginmanager._loadconftestmodules(
+                collector.path,
+                collector.config.getoption("importmode"),
+                rootpath=collector.config.rootpath,
+                consider_namespace_packages=collector.config.getini(
+                    "consider_namespace_packages"
+                ),
+            )
+
+        return list(collector.collect())
+
+    call = CallInfo.from_call(
+        collect, "collect", reraise=(KeyboardInterrupt, SystemExit)
+    )
+    longrepr: None | tuple[str, int, str] | str | TerminalRepr = None
     if not call.excinfo:
         outcome: Literal["passed", "skipped", "failed"] = "passed"
     else:
         skip_exceptions = [Skipped]
         unittest = sys.modules.get("unittest")
         if unittest is not None:
-            # Type ignored because unittest is loaded dynamically.
-            skip_exceptions.append(unittest.SkipTest)  # type: ignore
+            skip_exceptions.append(unittest.SkipTest)
         if isinstance(call.excinfo.value, tuple(skip_exceptions)):
-            if unittest is not None and isinstance(
-                call.excinfo.value, unittest.SkipTest  # type: ignore[attr-defined]
-            ):
-                warnings.warn(UNITTEST_SKIP_DURING_COLLECTION, stacklevel=2)
-
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")
             assert isinstance(r_, ExceptionChainRepr), repr(r_)
@@ -469,13 +485,13 @@ class SetupState:
 
     def __init__(self) -> None:
         # The stack is in the dict insertion order.
-        self.stack: Dict[
+        self.stack: dict[
             Node,
-            Tuple[
+            tuple[
                 # Node's finalizers.
-                List[Callable[[], object]],
-                # Node's exception, if its setup raised.
-                Optional[Union[OutcomeException, Exception]],
+                list[Callable[[], object]],
+                # Node's exception and original traceback, if its setup raised.
+                tuple[OutcomeException | Exception, types.TracebackType | None] | None,
             ],
         ] = {}
 
@@ -488,7 +504,7 @@ class SetupState:
         for col, (finalizers, exc) in self.stack.items():
             assert col in needed_collectors, "previous item was not torn down properly"
             if exc:
-                raise exc
+                raise exc[0].with_traceback(exc[1])
 
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
@@ -497,8 +513,8 @@ class SetupState:
             try:
                 col.setup()
             except TEST_OUTCOME as exc:
-                self.stack[col] = (self.stack[col][0], exc)
-                raise exc
+                self.stack[col] = (self.stack[col][0], (exc, exc.__traceback__))
+                raise
 
     def addfinalizer(self, finalizer: Callable[[], object], node: Node) -> None:
         """Attach a finalizer to the given node.
@@ -510,7 +526,7 @@ class SetupState:
         assert node in self.stack, (node, self.stack)
         self.stack[node][0].append(finalizer)
 
-    def teardown_exact(self, nextitem: Optional[Item]) -> None:
+    def teardown_exact(self, nextitem: Item | None) -> None:
         """Teardown the current stack up until reaching nodes that nextitem
         also descends from.
 
@@ -518,22 +534,29 @@ class SetupState:
         stack is torn down.
         """
         needed_collectors = nextitem and nextitem.listchain() or []
-        exc = None
+        exceptions: list[BaseException] = []
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
             node, (finalizers, _) = self.stack.popitem()
+            these_exceptions = []
             while finalizers:
                 fin = finalizers.pop()
                 try:
                     fin()
                 except TEST_OUTCOME as e:
-                    # XXX Only first exception will be seen by user,
-                    #     ideally all should be reported.
-                    if exc is None:
-                        exc = e
-        if exc:
-            raise exc
+                    these_exceptions.append(e)
+
+            if len(these_exceptions) == 1:
+                exceptions.extend(these_exceptions)
+            elif these_exceptions:
+                msg = f"errors while tearing down {node!r}"
+                exceptions.append(BaseExceptionGroup(msg, these_exceptions[::-1]))
+
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        elif exceptions:
+            raise BaseExceptionGroup("errors during test teardown", exceptions[::-1])
         if nextitem is None:
             assert not self.stack
 

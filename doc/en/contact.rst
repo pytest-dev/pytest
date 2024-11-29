@@ -3,52 +3,52 @@
 .. _`contact`:
 
 Contact channels
-===================================
+================
 
-- `pytest issue tracker`_ to report bugs or suggest features (for version
-  2.0 and above).
-- `pytest discussions`_ at github for general questions.
-- `pytest discord server <https://discord.com/invite/pytest-dev>`_
-  for pytest development visibility and general assistance.
+Web
+---
+
+- `pytest issue tracker`_ to report bugs or suggest features.
+- `pytest discussions`_ at GitHub for general questions.
 - `pytest on stackoverflow.com <http://stackoverflow.com/search?q=pytest>`_
-  to post precise questions with the tag ``pytest``.  New Questions will usually
+  to post precise questions with the tag ``pytest``.  New questions will usually
   be seen by pytest users or developers and answered quickly.
 
-- `Testing In Python`_: a mailing list for Python testing tools and discussion.
+Chat
+----
 
-- `pytest-dev at python.org (mailing list)`_ pytest specific announcements and discussions.
-
-- :doc:`contribution guide <contributing>` for help on submitting pull
-  requests to GitHub.
-
+- `pytest discord server <https://discord.com/invite/pytest-dev>`_
+  for pytest development visibility and general assistance.
 - ``#pytest`` `on irc.libera.chat <ircs://irc.libera.chat:6697/#pytest>`_ IRC
-  channel for random questions (using an IRC client, `via webchat
-  <https://web.libera.chat/#pytest>`_, or `via Matrix
-  <https://matrix.to/#/%23pytest:libera.chat>`_).
+  channel for random questions (using an IRC client, or `via webchat
+  <https://web.libera.chat/#pytest>`_)
+- ``#pytest`` `on Matrix <https://matrix.to/#/#pytest:matrix.org>`_.
 
-- private mail to Holger.Krekel at gmail com if you want to communicate sensitive issues
+Mail
+----
 
+- `Testing In Python`_: a mailing list for Python testing tools and discussion.
+- `pytest-dev at python.org`_ a mailing list for pytest specific announcements and discussions.
+- Mail to `core@pytest.org <mailto:core@pytest.org>`_ for topics that cannot be
+  discussed in public. Mails sent there will be distributed among the members
+  in the pytest core team, who can also be contacted individually:
 
-- `merlinux.eu`_ offers pytest and tox-related professional teaching and
-  consulting.
+  * Bruno Oliveira (:user:`nicoddemus`, `bruno@pytest.org <mailto:bruno@pytest.org>`_)
+  * Florian Bruhin (:user:`The-Compiler`, `florian@pytest.org <mailto:florian@pytest.org>`_)
+  * Pierre Sassoulas (:user:`Pierre-Sassoulas`, `pierre@pytest.org <mailto:pierre@pytest.org>`_)
+  * Ran Benita (:user:`bluetech`, `ran@pytest.org <mailto:ran@pytest.org>`_)
+  * Ronny Pfannschmidt (:user:`RonnyPfannschmidt`, `ronny@pytest.org <mailto:ronny@pytest.org>`_)
+  * Zac Hatfield-Dodds (:user:`Zac-HD`, `zac@pytest.org <mailto:zac@pytest.org>`_)
+
+Other
+-----
+
+- The :doc:`contribution guide <contributing>` for help on submitting pull
+  requests to GitHub.
+- Florian Bruhin (:user:`The-Compiler`) offers pytest professional teaching and
+  consulting via `Bruhin Software <https://bruhin.software>`_.
 
 .. _`pytest issue tracker`: https://github.com/pytest-dev/pytest/issues
-.. _`old issue tracker`: https://bitbucket.org/hpk42/py-trunk/issues/
-
 .. _`pytest discussions`: https://github.com/pytest-dev/pytest/discussions
-
-.. _`merlinux.eu`: https://merlinux.eu/
-
-.. _`get an account`:
-
-.. _tetamap: https://tetamap.wordpress.com/
-
-.. _`@pylibcommit`: https://twitter.com/pylibcommit
-
-
 .. _`Testing in Python`: http://lists.idyll.org/listinfo/testing-in-python
-.. _FOAF: https://en.wikipedia.org/wiki/FOAF
-.. _`py-dev`:
-.. _`development mailing list`:
-.. _`pytest-dev at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-dev
-.. _`pytest-commit at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-commit
+.. _`pytest-dev at python.org`: http://mail.python.org/mailman/listinfo/pytest-dev

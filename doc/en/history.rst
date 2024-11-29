@@ -139,7 +139,7 @@ project:
    which adds ``pytest`` (rather than ``py.test``) as the recommended
    command-line entry point
 
-Due to this history, it's diffcult to answer the question when pytest was started.
+Due to this history, it's difficult to answer the question when pytest was started.
 It depends what point should really be seen as the start of it all. One
 possible interpretation is to  pick Europython 2004, i.e. around June/July
 2004.

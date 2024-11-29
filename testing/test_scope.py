@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import re
 
-import pytest
 from _pytest.scope import Scope
+import pytest
 
 
 def test_ordering() -> None:

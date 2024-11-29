@@ -1,1 +1,0 @@
-Add github action to upload coverage report to codecov instead of bash uploader.

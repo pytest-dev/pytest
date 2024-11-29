@@ -1,4 +1,6 @@
-from _pytest.compat import final
+from __future__ import annotations
+
+from typing import final
 
 
 @final

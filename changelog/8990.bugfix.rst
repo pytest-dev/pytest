@@ -1,1 +1,0 @@
-Fix `pytest -vv` crashing with an internal exception `AttributeError: 'str' object has no attribute 'relative_to'` in some cases.

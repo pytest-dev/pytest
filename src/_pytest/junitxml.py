@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 """Report test results in JUnit-XML format, for use with Jenkins and build
 integration servers.
 
@@ -6,21 +7,18 @@ Based on initial code from Ross Lawley.
 Output conforms to
 https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from datetime import datetime
+from datetime import timezone
 import functools
 import os
 import platform
 import re
 import xml.etree.ElementTree as ET
-from datetime import datetime
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Match
-from typing import Optional
-from typing import Tuple
-from typing import Union
 
-import pytest
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
@@ -32,6 +30,7 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
+import pytest
 
 
 xml_key = StashKey["LogXML"]()
@@ -48,18 +47,18 @@ def bin_xml_escape(arg: object) -> str:
     The idea is to escape visually for the user rather than for XML itself.
     """
 
-    def repl(matchobj: Match[str]) -> str:
+    def repl(matchobj: re.Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
-            return "#x%02X" % i
+            return f"#x{i:02X}"
         else:
-            return "#x%04X" % i
+            return f"#x{i:04X}"
 
     # The spec range of valid chars is:
     # Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
     # For an unknown(?) reason, we disallow #x7F (DEL) as well.
     illegal_xml_re = (
-        "[^\u0009\u000A\u000D\u0020-\u007E\u0080-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]"
+        "[^\u0009\u000a\u000d\u0020-\u007e\u0080-\ud7ff\ue000-\ufffd\u10000-\u10ffff]"
     )
     return re.sub(illegal_xml_re, repl, str(arg))
 
@@ -74,10 +73,10 @@ def merge_family(left, right) -> None:
     left.update(result)
 
 
-families = {}
-families["_base"] = {"testcase": ["classname", "name"]}
-families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
-
+families = {  # pylint: disable=dict-init-mutate
+    "_base": {"testcase": ["classname", "name"]},
+    "_base_legacy": {"testcase": ["file", "line", "url"]},
+}
 # xUnit 1.x inherits legacy attributes.
 families["xunit1"] = families["_base"].copy()
 merge_family(families["xunit1"], families["_base_legacy"])
@@ -87,15 +86,15 @@ families["xunit2"] = families["_base"]
 
 
 class _NodeReporter:
-    def __init__(self, nodeid: Union[str, TestReport], xml: "LogXML") -> None:
+    def __init__(self, nodeid: str | TestReport, xml: LogXML) -> None:
         self.id = nodeid
         self.xml = xml
         self.add_stats = self.xml.add_stats
         self.family = self.xml.family
-        self.duration = 0
-        self.properties: List[Tuple[str, str]] = []
-        self.nodes: List[ET.Element] = []
-        self.attrs: Dict[str, str] = {}
+        self.duration = 0.0
+        self.properties: list[tuple[str, str]] = []
+        self.nodes: list[ET.Element] = []
+        self.attrs: dict[str, str] = {}
 
     def append(self, node: ET.Element) -> None:
         self.xml.add_stats(node.tag)
@@ -107,7 +106,7 @@ class _NodeReporter:
     def add_attribute(self, name: str, value: object) -> None:
         self.attrs[str(name)] = bin_xml_escape(value)
 
-    def make_properties_node(self) -> Optional[ET.Element]:
+    def make_properties_node(self) -> ET.Element | None:
         """Return a Junit node containing custom properties, if any."""
         if self.properties:
             properties = ET.Element("properties")
@@ -122,7 +121,7 @@ class _NodeReporter:
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
-        attrs: Dict[str, str] = {
+        attrs: dict[str, str] = {
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
             "file": testreport.location[0],
@@ -141,20 +140,20 @@ class _NodeReporter:
         # Filter out attributes not permitted by this test family.
         # Including custom attributes because they are not valid here.
         temp_attrs = {}
-        for key in self.attrs.keys():
+        for key in self.attrs:
             if key in families[self.family]["testcase"]:
                 temp_attrs[key] = self.attrs[key]
         self.attrs = temp_attrs
 
     def to_xml(self) -> ET.Element:
-        testcase = ET.Element("testcase", self.attrs, time="%.3f" % self.duration)
+        testcase = ET.Element("testcase", self.attrs, time=f"{self.duration:.3f}")
         properties = self.make_properties_node()
         if properties is not None:
             testcase.append(properties)
         testcase.extend(self.nodes)
         return testcase
 
-    def _add_simple(self, tag: str, message: str, data: Optional[str] = None) -> None:
+    def _add_simple(self, tag: str, message: str, data: str | None = None) -> None:
         node = ET.Element(tag, message=message)
         node.text = bin_xml_escape(data)
         self.append(node)
@@ -199,7 +198,7 @@ class _NodeReporter:
             self._add_simple("skipped", "xfail-marked test passes unexpectedly")
         else:
             assert report.longrepr is not None
-            reprcrash: Optional[ReprFileLocation] = getattr(
+            reprcrash: ReprFileLocation | None = getattr(
                 report.longrepr, "reprcrash", None
             )
             if reprcrash is not None:
@@ -219,9 +218,7 @@ class _NodeReporter:
 
     def append_error(self, report: TestReport) -> None:
         assert report.longrepr is not None
-        reprcrash: Optional[ReprFileLocation] = getattr(
-            report.longrepr, "reprcrash", None
-        )
+        reprcrash: ReprFileLocation | None = getattr(report.longrepr, "reprcrash", None)
         if reprcrash is not None:
             reason = reprcrash.message
         else:
@@ -231,7 +228,7 @@ class _NodeReporter:
             msg = f'failed on teardown with "{reason}"'
         else:
             msg = f'failed on setup with "{reason}"'
-        self._add_simple("error", msg, str(report.longrepr))
+        self._add_simple("error", bin_xml_escape(msg), str(report.longrepr))
 
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):
@@ -248,7 +245,9 @@ class _NodeReporter:
                 skipreason = skipreason[9:]
             details = f"{filename}:{lineno}: {skipreason}"
 
-            skipped = ET.Element("skipped", type="pytest.skip", message=skipreason)
+            skipped = ET.Element(
+                "skipped", type="pytest.skip", message=bin_xml_escape(skipreason)
+            )
             skipped.text = bin_xml_escape(details)
             self.append(skipped)
             self.write_captured_output(report)
@@ -256,9 +255,9 @@ class _NodeReporter:
     def finalize(self) -> None:
         data = self.to_xml()
         self.__dict__.clear()
-        # Type ignored becuase mypy doesn't like overriding a method.
+        # Type ignored because mypy doesn't like overriding a method.
         # Also the return value doesn't match...
-        self.to_xml = lambda: data  # type: ignore[assignment]
+        self.to_xml = lambda: data  # type: ignore[method-assign]
 
 
 def _warn_incompatibility_with_xunit2(
@@ -271,9 +270,7 @@ def _warn_incompatibility_with_xunit2(
     if xml is not None and xml.family not in ("xunit1", "legacy"):
         request.node.warn(
             PytestWarning(
-                "{fixture_name} is incompatible with junit_family '{family}' (use 'legacy' or 'xunit1')".format(
-                    fixture_name=fixture_name, family=xml.family
-                )
+                f"{fixture_name} is incompatible with junit_family '{xml.family}' (use 'legacy' or 'xunit1')"
             )
         )
 
@@ -354,7 +351,10 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
             record_testsuite_property("ARCH", "PPC")
             record_testsuite_property("STORAGE_TYPE", "CEPH")
 
-    ``name`` must be a string, ``value`` will be converted to a string and properly xml-escaped.
+    :param name:
+        The property name.
+    :param value:
+        The property value. Will be converted to a string.
 
     .. warning::
 
@@ -362,17 +362,16 @@ def record_testsuite_property(request: FixtureRequest) -> Callable[[str, object]
         `pytest-xdist <https://github.com/pytest-dev/pytest-xdist>`__ plugin. See
         :issue:`7767` for details.
     """
-
     __tracebackhide__ = True
 
     def record_func(name: str, value: object) -> None:
-        """No-op function in case --junitxml was not passed in the command-line."""
+        """No-op function in case --junit-xml was not passed in the command-line."""
         __tracebackhide__ = True
         _check_record_param_type("name", name)
 
     xml = request.config.stash.get(xml_key, None)
     if xml is not None:
-        record_func = xml.add_global_property  # noqa
+        record_func = xml.add_global_property
     return record_func
 
 
@@ -386,7 +385,7 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="path",
         type=functools.partial(filename_arg, optname="--junitxml"),
         default=None,
-        help="create junit-xml style report file at given path.",
+        help="Create junit-xml style report file at given path",
     )
     group.addoption(
         "--junitprefix",
@@ -394,7 +393,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store",
         metavar="str",
         default=None,
-        help="prepend prefix to classnames in junit-xml output",
+        help="Prepend prefix to classnames in junit-xml output",
     )
     parser.addini(
         "junit_suite_name", "Test suite name for JUnit report", default="pytest"
@@ -447,7 +446,7 @@ def pytest_unconfigure(config: Config) -> None:
         config.pluginmanager.unregister(xml)
 
 
-def mangle_test_address(address: str) -> List[str]:
+def mangle_test_address(address: str) -> list[str]:
     path, possible_open_bracket, params = address.partition("[")
     names = path.split("::")
     # Convert file path to dotted path.
@@ -462,7 +461,7 @@ class LogXML:
     def __init__(
         self,
         logfile,
-        prefix: Optional[str],
+        prefix: str | None,
         suite_name: str = "pytest",
         logging: str = "no",
         report_duration: str = "total",
@@ -477,17 +476,15 @@ class LogXML:
         self.log_passing_tests = log_passing_tests
         self.report_duration = report_duration
         self.family = family
-        self.stats: Dict[str, int] = dict.fromkeys(
+        self.stats: dict[str, int] = dict.fromkeys(
             ["error", "passed", "failure", "skipped"], 0
         )
-        self.node_reporters: Dict[
-            Tuple[Union[str, TestReport], object], _NodeReporter
-        ] = {}
-        self.node_reporters_ordered: List[_NodeReporter] = []
-        self.global_properties: List[Tuple[str, str]] = []
+        self.node_reporters: dict[tuple[str | TestReport, object], _NodeReporter] = {}
+        self.node_reporters_ordered: list[_NodeReporter] = []
+        self.global_properties: list[tuple[str, str]] = []
 
         # List of reports that failed on call but teardown is pending.
-        self.open_reports: List[TestReport] = []
+        self.open_reports: list[TestReport] = []
         self.cnt_double_fail_tests = 0
 
         # Replaces convenience family with real family.
@@ -499,11 +496,15 @@ class LogXML:
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
         reporter = self.node_reporters.pop((nodeid, workernode))
+
+        for propname, propvalue in report.user_properties:
+            reporter.add_property(propname, str(propvalue))
+
         if reporter is not None:
             reporter.finalize()
 
-    def node_reporter(self, report: Union[TestReport, str]) -> _NodeReporter:
-        nodeid: Union[str, TestReport] = getattr(report, "nodeid", report)
+    def node_reporter(self, report: TestReport | str) -> _NodeReporter:
+        nodeid: str | TestReport = getattr(report, "nodeid", report)
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
 
@@ -596,9 +597,6 @@ class LogXML:
             reporter = self._opentestcase(report)
             reporter.write_captured_output(report)
 
-            for propname, propvalue in report.user_properties:
-                reporter.add_property(propname, str(propvalue))
-
             self.finalize(report)
             report_wid = getattr(report, "worker_id", None)
             report_ii = getattr(report, "item_index", None)
@@ -620,7 +618,7 @@ class LogXML:
     def update_testcase_duration(self, report: TestReport) -> None:
         """Accumulate total duration for nodeid from given report and update
         the Junit.testcase with the new total if already created."""
-        if self.report_duration == "total" or report.when == self.report_duration:
+        if self.report_duration in {"total", report.when}:
             reporter = self.node_reporter(report)
             reporter.duration += getattr(report, "duration", 0.0)
 
@@ -642,8 +640,8 @@ class LogXML:
 
     def pytest_sessionfinish(self) -> None:
         dirname = os.path.dirname(os.path.abspath(self.logfile))
-        if not os.path.isdir(dirname):
-            os.makedirs(dirname)
+        # exist_ok avoids filesystem race conditions between checking path existence and requesting creation
+        os.makedirs(dirname, exist_ok=True)
 
         with open(self.logfile, "w", encoding="utf-8") as logfile:
             suite_stop_time = timing.time()
@@ -665,8 +663,10 @@ class LogXML:
                 failures=str(self.stats["failure"]),
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
-                time="%.3f" % suite_time_delta,
-                timestamp=datetime.fromtimestamp(self.suite_start_time).isoformat(),
+                time=f"{suite_time_delta:.3f}",
+                timestamp=datetime.fromtimestamp(self.suite_start_time, timezone.utc)
+                .astimezone()
+                .isoformat(),
                 hostname=platform.node(),
             )
             global_properties = self._get_global_properties_node()
@@ -686,7 +686,7 @@ class LogXML:
         _check_record_param_type("name", name)
         self.global_properties.append((name, bin_xml_escape(value)))
 
-    def _get_global_properties_node(self) -> Optional[ET.Element]:
+    def _get_global_properties_node(self) -> ET.Element | None:
         """Return a Junit node containing custom properties, if any."""
         if self.global_properties:
             properties = ET.Element("properties")

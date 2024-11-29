@@ -1,16 +1,19 @@
+# mypy: allow-untyped-defs
 """Version info, help messages, tracing configuration."""
+
+from __future__ import annotations
+
+from argparse import Action
+from collections.abc import Generator
 import os
 import sys
-from argparse import Action
-from typing import List
-from typing import Optional
-from typing import Union
 
-import pytest
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import Parser
+from _pytest.terminal import TerminalReporter
+import pytest
 
 
 class HelpAction(Action):
@@ -49,7 +52,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="count",
         default=0,
         dest="version",
-        help="display pytest version and information about plugins. "
+        help="Display pytest version and information about plugins. "
         "When given twice, also display information about plugins.",
     )
     group._addoption(
@@ -57,7 +60,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--help",
         action=HelpAction,
         dest="help",
-        help="show help message and configuration info",
+        help="Show help message and configuration info",
     )
     group._addoption(
         "-p",
@@ -65,7 +68,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="plugins",
         default=[],
         metavar="name",
-        help="early-load given plugin module name or entry point (multi-allowed).\n"
+        help="Early-load given plugin module name or entry point (multi-allowed). "
         "To avoid loading of plugins, use the `no:` prefix, e.g. "
         "`no:doctest`.",
     )
@@ -74,7 +77,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--trace-config",
         action="store_true",
         default=False,
-        help="trace considerations of conftest.py files.",
+        help="Trace considerations of conftest.py files",
     )
     group.addoption(
         "--debug",
@@ -83,57 +86,57 @@ def pytest_addoption(parser: Parser) -> None:
         const="pytestdebug.log",
         dest="debug",
         metavar="DEBUG_FILE_NAME",
-        help="store internal tracing debug information in this log file.\n"
-        "This file is opened with 'w' and truncated as a result, care advised.\n"
-        "Defaults to 'pytestdebug.log'.",
+        help="Store internal tracing debug information in this log file. "
+        "This file is opened with 'w' and truncated as a result, care advised. "
+        "Default: pytestdebug.log.",
     )
     group._addoption(
         "-o",
         "--override-ini",
         dest="override_ini",
         action="append",
-        help='override ini option with "option=value" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.',
+        help='Override ini option with "option=value" style, '
+        "e.g. `-o xfail_strict=True -o cache_dir=cache`.",
     )
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_cmdline_parse():
-    outcome = yield
-    config: Config = outcome.get_result()
+@pytest.hookimpl(wrapper=True)
+def pytest_cmdline_parse() -> Generator[None, Config, Config]:
+    config = yield
 
     if config.option.debug:
         # --debug | --debug <file.log> was provided.
         path = config.option.debug
-        debugfile = open(path, "w")
+        debugfile = open(path, "w", encoding="utf-8")
         debugfile.write(
-            "versions pytest-%s, "
-            "python-%s\ncwd=%s\nargs=%s\n\n"
-            % (
+            "versions pytest-{}, "
+            "python-{}\ninvocation_dir={}\ncwd={}\nargs={}\n\n".format(
                 pytest.__version__,
                 ".".join(map(str, sys.version_info)),
+                config.invocation_params.dir,
                 os.getcwd(),
                 config.invocation_params.args,
             )
         )
         config.trace.root.setwriter(debugfile.write)
         undo_tracing = config.pluginmanager.enable_tracing()
-        sys.stderr.write("writing pytest debug information to %s\n" % path)
+        sys.stderr.write(f"writing pytest debug information to {path}\n")
 
         def unset_tracing() -> None:
             debugfile.close()
-            sys.stderr.write("wrote pytest debug information to %s\n" % debugfile.name)
+            sys.stderr.write(f"wrote pytest debug information to {debugfile.name}\n")
             config.trace.root.setwriter(None)
             undo_tracing()
 
         config.add_cleanup(unset_tracing)
 
+    return config
+
 
 def showversion(config: Config) -> None:
     if config.option.version > 1:
         sys.stdout.write(
-            "This is pytest version {}, imported from {}\n".format(
-                pytest.__version__, pytest.__file__
-            )
+            f"This is pytest version {pytest.__version__}, imported from {pytest.__file__}\n"
         )
         plugininfo = getpluginversioninfo(config)
         if plugininfo:
@@ -143,7 +146,7 @@ def showversion(config: Config) -> None:
         sys.stdout.write(f"pytest {pytest.__version__}\n")
 
 
-def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
+def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.version > 0:
         showversion(config)
         return 0
@@ -158,12 +161,16 @@ def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
 def showhelp(config: Config) -> None:
     import textwrap
 
-    reporter = config.pluginmanager.get_plugin("terminalreporter")
+    reporter: TerminalReporter | None = config.pluginmanager.get_plugin(
+        "terminalreporter"
+    )
+    assert reporter is not None
     tw = reporter._tw
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg file found:"
+        "[pytest] ini-options in the first "
+        "pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
     )
     tw.line()
 
@@ -177,7 +184,7 @@ def showhelp(config: Config) -> None:
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         spec = f"{name} ({type}):"
-        tw.write("  %s" % spec)
+        tw.write(f"  {spec}")
         spec_len = len(spec)
         if spec_len > (indent_len - 3):
             # Display help starting at a new line.
@@ -203,12 +210,18 @@ def showhelp(config: Config) -> None:
                     tw.line(indent + line)
 
     tw.line()
-    tw.line("environment variables:")
+    tw.line("Environment variables:")
     vars = [
-        ("PYTEST_ADDOPTS", "extra command line options"),
-        ("PYTEST_PLUGINS", "comma-separated plugins to load during startup"),
-        ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "set to disable plugin auto-loading"),
-        ("PYTEST_DEBUG", "set to enable debug tracing of pytest's internals"),
+        (
+            "CI",
+            "When set (regardless of value), pytest knows it is running in a "
+            "CI process and does not truncate summary info",
+        ),
+        ("BUILD_NUMBER", "Equivalent to CI"),
+        ("PYTEST_ADDOPTS", "Extra command line options"),
+        ("PYTEST_PLUGINS", "Comma-separated plugins to load during startup"),
+        ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "Set to disable plugin auto-loading"),
+        ("PYTEST_DEBUG", "Set to enable debug tracing of pytest's internals"),
     ]
     for name, help in vars:
         tw.line(f"  {name:<24} {help}")
@@ -225,17 +238,16 @@ def showhelp(config: Config) -> None:
 
     for warningreport in reporter.stats.get("warnings", []):
         tw.line("warning : " + warningreport.message, red=True)
-    return
 
 
 conftest_options = [("pytest_plugins", "list of plugin names to load")]
 
 
-def getpluginversioninfo(config: Config) -> List[str]:
+def getpluginversioninfo(config: Config) -> list[str]:
     lines = []
     plugininfo = config.pluginmanager.list_plugin_distinfo()
     if plugininfo:
-        lines.append("setuptools registered plugins:")
+        lines.append("registered third-party plugins:")
         for plugin, dist in plugininfo:
             loc = getattr(plugin, "__file__", repr(plugin))
             content = f"{dist.project_name}-{dist.version} at {loc}"
@@ -243,7 +255,7 @@ def getpluginversioninfo(config: Config) -> List[str]:
     return lines
 
 
-def pytest_report_header(config: Config) -> List[str]:
+def pytest_report_header(config: Config) -> list[str]:
     lines = []
     if config.option.debug or config.option.traceconfig:
         lines.append(f"using: pytest-{pytest.__version__}")

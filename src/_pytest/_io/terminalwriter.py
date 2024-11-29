@@ -1,13 +1,23 @@
 """Helper functions for writing to terminals and files."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
 import os
 import shutil
 import sys
-from typing import Optional
-from typing import Sequence
+from typing import final
+from typing import Literal
 from typing import TextIO
+from typing import TYPE_CHECKING
 
+from ..compat import assert_never
 from .wcwidth import wcswidth
-from _pytest.compat import final
+
+
+if TYPE_CHECKING:
+    from pygments.formatter import Formatter
+    from pygments.lexer import Lexer
 
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
@@ -28,9 +38,9 @@ def should_do_markup(file: TextIO) -> bool:
         return True
     if os.environ.get("PY_COLORS") == "0":
         return False
-    if "NO_COLOR" in os.environ:
+    if os.environ.get("NO_COLOR"):
         return False
-    if "FORCE_COLOR" in os.environ:
+    if os.environ.get("FORCE_COLOR"):
         return True
     return (
         hasattr(file, "isatty") and file.isatty() and os.environ.get("TERM") != "dumb"
@@ -62,7 +72,7 @@ class TerminalWriter:
         invert=7,
     )
 
-    def __init__(self, file: Optional[TextIO] = None) -> None:
+    def __init__(self, file: TextIO | None = None) -> None:
         if file is None:
             file = sys.stdout
         if hasattr(file, "isatty") and file.isatty() and sys.platform == "win32":
@@ -76,7 +86,7 @@ class TerminalWriter:
         self._file = file
         self.hasmarkup = should_do_markup(file)
         self._current_line = ""
-        self._terminal_width: Optional[int] = None
+        self._terminal_width: int | None = None
         self.code_highlight = True
 
     @property
@@ -101,14 +111,14 @@ class TerminalWriter:
         if self.hasmarkup:
             esc = [self._esctable[name] for name, on in markup.items() if on]
             if esc:
-                text = "".join("\x1b[%sm" % cod for cod in esc) + text + "\x1b[0m"
+                text = "".join(f"\x1b[{cod}m" for cod in esc) + text + "\x1b[0m"
         return text
 
     def sep(
         self,
         sepchar: str,
-        title: Optional[str] = None,
-        fullwidth: Optional[int] = None,
+        title: str | None = None,
+        fullwidth: int | None = None,
         **markup: bool,
     ) -> None:
         if fullwidth is None:
@@ -182,9 +192,7 @@ class TerminalWriter:
         """
         if indents and len(indents) != len(lines):
             raise ValueError(
-                "indents size ({}) should have same size as lines ({})".format(
-                    len(indents), len(lines)
-                )
+                f"indents size ({len(indents)}) should have same size as lines ({len(lines)})"
             )
         if not indents:
             indents = [""] * len(lines)
@@ -193,41 +201,74 @@ class TerminalWriter:
         for indent, new_line in zip(indents, new_lines):
             self.line(indent + new_line)
 
-    def _highlight(self, source: str) -> str:
-        """Highlight the given source code if we have markup support."""
+    def _get_pygments_lexer(self, lexer: Literal["python", "diff"]) -> Lexer | None:
+        try:
+            if lexer == "python":
+                from pygments.lexers.python import PythonLexer
+
+                return PythonLexer()
+            elif lexer == "diff":
+                from pygments.lexers.diff import DiffLexer
+
+                return DiffLexer()
+            else:
+                assert_never(lexer)
+        except ModuleNotFoundError:
+            return None
+
+    def _get_pygments_formatter(self) -> Formatter | None:
+        try:
+            import pygments.util
+        except ModuleNotFoundError:
+            return None
+
         from _pytest.config.exceptions import UsageError
 
-        if not self.hasmarkup or not self.code_highlight:
-            return source
+        theme = os.getenv("PYTEST_THEME")
+        theme_mode = os.getenv("PYTEST_THEME_MODE", "dark")
+
         try:
             from pygments.formatters.terminal import TerminalFormatter
-            from pygments.lexers.python import PythonLexer
-            from pygments import highlight
-            import pygments.util
-        except ImportError:
+
+            return TerminalFormatter(bg=theme_mode, style=theme)
+
+        except pygments.util.ClassNotFound as e:
+            raise UsageError(
+                f"PYTEST_THEME environment variable has an invalid value: '{theme}'. "
+                "Hint: See available pygments styles with `pygmentize -L styles`."
+            ) from e
+        except pygments.util.OptionError as e:
+            raise UsageError(
+                f"PYTEST_THEME_MODE environment variable has an invalid value: '{theme_mode}'. "
+                "The allowed values are 'dark' (default) and 'light'."
+            ) from e
+
+    def _highlight(
+        self, source: str, lexer: Literal["diff", "python"] = "python"
+    ) -> str:
+        """Highlight the given source if we have markup support."""
+        if not source or not self.hasmarkup or not self.code_highlight:
             return source
-        else:
-            try:
-                highlighted: str = highlight(
-                    source,
-                    PythonLexer(),
-                    TerminalFormatter(
-                        bg=os.getenv("PYTEST_THEME_MODE", "dark"),
-                        style=os.getenv("PYTEST_THEME"),
-                    ),
-                )
-                return highlighted
-            except pygments.util.ClassNotFound:
-                raise UsageError(
-                    "PYTEST_THEME environment variable had an invalid value: '{}'. "
-                    "Only valid pygment styles are allowed.".format(
-                        os.getenv("PYTEST_THEME")
-                    )
-                )
-            except pygments.util.OptionError:
-                raise UsageError(
-                    "PYTEST_THEME_MODE environment variable had an invalid value: '{}'. "
-                    "The only allowed values are 'dark' and 'light'.".format(
-                        os.getenv("PYTEST_THEME_MODE")
-                    )
-                )
+
+        pygments_lexer = self._get_pygments_lexer(lexer)
+        if pygments_lexer is None:
+            return source
+
+        pygments_formatter = self._get_pygments_formatter()
+        if pygments_formatter is None:
+            return source
+
+        from pygments import highlight
+
+        highlighted: str = highlight(source, pygments_lexer, pygments_formatter)
+        # pygments terminal formatter may add a newline when there wasn't one.
+        # We don't want this, remove.
+        if highlighted[-1] == "\n" and source[-1] != "\n":
+            highlighted = highlighted[:-1]
+
+        # Some lexers will not set the initial color explicitly
+        # which may lead to the previous color being propagated to the
+        # start of the expression, so reset first.
+        highlighted = "\x1b[0m" + highlighted
+
+        return highlighted
