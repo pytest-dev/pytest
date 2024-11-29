@@ -112,9 +112,9 @@ def unraisable_hook(
                 unraisable.exc_traceback,
             )
         )
-        tracemalloc_tb = tracemalloc_message(unraisable.object)
+        tracemalloc_tb = "\n" + tracemalloc_message(unraisable.object)
         msg = summary + traceback_message + tracemalloc_tb
-        cause_msg = summary + "\n" + tracemalloc_tb
+        cause_msg = summary + tracemalloc_tb
 
         append(
             UnraisableMeta(
