@@ -305,7 +305,7 @@ class FuncFixtureInfo:
     these are not reflected here.
     """
 
-    __slots__ = ("argnames", "initialnames", "names_closure", "name2fixturedefs")
+    __slots__ = ("argnames", "initialnames", "name2fixturedefs", "names_closure")
 
     # Fixture names that the item requests directly by function parameters.
     argnames: tuple[str, ...]
@@ -884,7 +884,7 @@ class FixtureLookupErrorRepr(TerminalRepr):
                     red=True,
                 )
         tw.line()
-        tw.line("%s:%d" % (os.fspath(self.filename), self.firstlineno + 1))
+        tw.line(f"{os.fspath(self.filename)}:{self.firstlineno + 1}")
 
 
 def call_fixture_func(

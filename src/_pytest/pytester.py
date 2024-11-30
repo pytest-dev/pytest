@@ -547,8 +547,10 @@ class RunResult:
 
     def __repr__(self) -> str:
         return (
-            "<RunResult ret=%s len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
-            % (self.ret, len(self.stdout.lines), len(self.stderr.lines), self.duration)
+            f"<RunResult ret={self.ret!s} "
+            f"len(stdout.lines)={len(self.stdout.lines)} "
+            f"len(stderr.lines)={len(self.stderr.lines)} "
+            f"duration={self.duration:.2f}s>"
         )
 
     def parseoutcomes(self) -> dict[str, int]:

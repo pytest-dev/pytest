@@ -349,8 +349,7 @@ def pytest_collection(session: Session) -> None:
 def pytest_runtestloop(session: Session) -> bool:
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
         raise session.Interrupted(
-            "%d error%s during collection"
-            % (session.testsfailed, "s" if session.testsfailed != 1 else "")
+            f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
         )
 
     if session.config.option.collectonly:
@@ -585,13 +584,12 @@ class Session(nodes.Collector):
         return session
 
     def __repr__(self) -> str:
-        return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (
-            self.__class__.__name__,
-            self.name,
-            getattr(self, "exitstatus", "<UNSET>"),
-            self.testsfailed,
-            self.testscollected,
-        )
+        return (
+            f"<{self.__class__.__name__} {self.name} "
+            f"exitstatus=%r "
+            f"testsfailed={self.testsfailed} "
+            f"testscollected={self.testscollected}>"
+        ) % getattr(self, "exitstatus", "<UNSET>")
 
     @property
     def shouldstop(self) -> bool | str:
@@ -654,7 +652,7 @@ class Session(nodes.Collector):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self.testsfailed >= maxfail:
-                self.shouldfail = "stopping after %d failures" % (self.testsfailed)
+                self.shouldfail = f"stopping after {self.testsfailed} failures"
 
     pytest_collectreport = pytest_runtest_logreport
 

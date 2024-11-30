@@ -69,7 +69,7 @@ class ErrorMaker:
         try:
             return self._errno2class[eno]
         except KeyError:
-            clsname = errno.errorcode.get(eno, "UnknownErrno%d" % (eno,))
+            clsname = errno.errorcode.get(eno, f"UnknownErrno{eno}")
             errorcls = type(
                 clsname,
                 (Error,),

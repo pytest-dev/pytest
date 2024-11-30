@@ -540,7 +540,7 @@ class PrettyPrinter:
     ) -> None:
         stream.write(object.__class__.__name__ + "(")
         if object.maxlen is not None:
-            stream.write("maxlen=%d, " % object.maxlen)
+            stream.write(f"maxlen={object.maxlen}, ")
         stream.write("[")
 
         self._format_items(object, stream, indent, allowance + 1, context, level)
