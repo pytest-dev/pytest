@@ -390,7 +390,7 @@ class TestApprox:
 
         assert err.match(r"approx\(\) is not supported in a boolean context")
 
-    def test_list_with_str(self, assert_approx_raises_regex) -> None:
+    def test_mixed_sequence(self, assert_approx_raises_regex) -> None:
         """Approx should work on sequences that also contain non-numbers (#13010)."""
         assert_approx_raises_regex(
             [1.1, 2, "word"],
@@ -403,6 +403,19 @@ class TestApprox:
                 r"  Index \| Obtained\s+\| Expected\s+",
                 r"\s*0\s*\|\s*1\.1\s*\|\s*1\.0\s*±\s*1\.0e\-06\s*",
                 r"\s*2\s*\|\s*word\s*\|\s*different\s*",
+            ],
+            verbosity_level=2,
+        )
+        assert_approx_raises_regex(
+            [1.1, 2, "word"],
+            [1.0, 2, "word"],
+            [
+                "",
+                r"  comparison failed. Mismatched elements: 1 / 3:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected\s+",
+                r"\s*0\s*\|\s*1\.1\s*\|\s*1\.0\s*±\s*1\.0e\-06\s*",
             ],
             verbosity_level=2,
         )
