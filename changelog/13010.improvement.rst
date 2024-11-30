@@ -1,0 +1,1 @@
+:func:`pytest.approx` now can compare collections that contain numbers and non-numbers mixed.
