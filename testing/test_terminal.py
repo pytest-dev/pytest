@@ -49,7 +49,7 @@ class Option:
     @property
     def args(self):
         values = []
-        values.append("--verbosity=%d" % self.verbosity)
+        values.append(f"--verbosity={self.verbosity}")
         return values
 
 
