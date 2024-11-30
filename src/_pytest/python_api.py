@@ -340,9 +340,13 @@ class ApproxSequenceLike(ApproxBase):
             zip(approx_side_as_map, other_side)
         ):
             if approx_value != other_value:
-                if isinstance(approx_value.expected, (Complex, Decimal)):
+                try:
                     abs_diff = abs(approx_value.expected - other_value)
                     max_abs_diff = max(max_abs_diff, abs_diff)
+                # Ignore non-numbers for the diff calculations (#13012).
+                except TypeError:
+                    pass
+                else:
                     if other_value == 0.0:
                         max_rel_diff = math.inf
                     else:
