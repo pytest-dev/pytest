@@ -340,14 +340,18 @@ class ApproxSequenceLike(ApproxBase):
             zip(approx_side_as_map, other_side)
         ):
             if approx_value != other_value:
-                abs_diff = abs(approx_value.expected - other_value)
-                max_abs_diff = max(max_abs_diff, abs_diff)
-                if other_value == 0.0:
-                    max_rel_diff = math.inf
+                try:
+                    abs_diff = abs(approx_value.expected - other_value)
+                    max_abs_diff = max(max_abs_diff, abs_diff)
+                # Ignore non-numbers for the diff calculations (#13012).
+                except TypeError:
+                    pass
                 else:
-                    max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                    if other_value == 0.0:
+                        max_rel_diff = math.inf
+                    else:
+                        max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
                 different_ids.append(i)
-
         message_data = [
             (str(i), str(other_side[i]), str(approx_side_as_map[i]))
             for i in different_ids
