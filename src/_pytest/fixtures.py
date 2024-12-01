@@ -71,6 +71,7 @@ from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 from _pytest.warning_types import PytestRemovedIn9Warning
+from _pytest.warning_types import PytestWarning
 
 
 if sys.version_info < (3, 11):
@@ -1562,7 +1563,13 @@ class FixtureManager:
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures applicable to node."""
-        for mark in node.iter_markers(name="usefixtures"):
+        for marker_node, mark in node.iter_markers_with_node(name="usefixtures"):
+            if not mark.args:
+                marker_node.warn(
+                    PytestWarning(
+                        f"usefixtures() in {node.nodeid} without arguments has no effect"
+                    )
+                )
             yield from mark.args
 
     def getfixtureclosure(
