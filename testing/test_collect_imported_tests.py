@@ -8,7 +8,7 @@ from _pytest.pytester import Pytester
 import pytest
 
 
-def setup_import_class_test(pytester: Pytester) -> None:
+def setup_files(pytester: Pytester) -> None:
     src_dir = pytester.mkdir("src")
     tests_dir = pytester.mkdir("tests")
     src_file = src_dir / "foo.py"
@@ -53,7 +53,7 @@ def test_collect_imports_disabled(pytester: Pytester) -> None:
         """
     )
 
-    setup_import_class_test(pytester)
+    setup_files(pytester)
     result = pytester.runpytest("-v", "tests")
     result.stdout.fnmatch_lines(
         [
@@ -91,7 +91,7 @@ def test_collect_imports_enabled(pytester: Pytester, configure_ini: bool) -> Non
             """
         )
 
-    setup_import_class_test(pytester)
+    setup_files(pytester)
     result = pytester.runpytest("-v", "tests")
     result.stdout.fnmatch_lines(
         [
