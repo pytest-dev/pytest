@@ -49,13 +49,12 @@ def test_collect_imports_disabled(pytester: Pytester) -> None:
     pytester.makeini(
         """
         [pytest]
-        testpaths = "tests"
         collect_imported_tests = false
         """
     )
 
     setup_import_class_test(pytester)
-    result = pytester.runpytest("-v")
+    result = pytester.runpytest("-v", "tests")
     result.stdout.fnmatch_lines(
         [
             "tests/foo_test.py::TestDomain::test PASSED*",
@@ -93,7 +92,7 @@ def test_collect_imports_enabled(pytester: Pytester, configure_ini: bool) -> Non
         )
 
     setup_import_class_test(pytester)
-    result = pytester.runpytest("-v")
+    result = pytester.runpytest("-v", "tests")
     result.stdout.fnmatch_lines(
         [
             "tests/foo_test.py::Testament::test_collections PASSED*",
