@@ -1,4 +1,4 @@
-A number of :ref:`threadexception <threadexception>` enhancements:
+A number of :ref:`threadexception <unraisable>` enhancements:
 
 * Set the excepthook as early as possible and unset it as late as possible, to collect the most possible number of unraisable exceptions.
 * join threads for 1 second just before unsetting the excepthook, to collect any straggling exceptions
