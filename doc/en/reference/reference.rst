@@ -1306,7 +1306,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    .. versionadded:: 8.4
 
    Setting this to ``false`` will make pytest collect classes/functions from test
-   files only if they are defined in that file (as opposed to imported there).
+   files **only** if they are defined in that file (as opposed to imported there).
 
    .. code-block:: ini
 
@@ -1314,6 +1314,26 @@ passed multiple times. The expected format is ``name=value``. For example::
         collect_imported_tests = false
 
    Default: ``true``
+
+   pytest traditionally collects classes/functions in the test module namespace even if they are imported from another file.
+
+   For example:
+
+   .. code-block:: python
+
+       # contents of src/domain.py
+       class Testament: ...
+
+
+       # contents of tests/test_testament.py
+       from domain import Testament
+
+
+       def test_testament(): ...
+
+   In this scenario, with the default options, pytest will collect the class `Testament` from `tests/test_testament.py` because it starts with `Test`, even though in this case it is a production class being imported in the test module namespace.
+
+   Set ``collected_imported_tests`` to ``false`` in the configuration file prevents that.
 
 .. confval:: consider_namespace_packages
 
