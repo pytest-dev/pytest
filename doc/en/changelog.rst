@@ -31,6 +31,44 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.3.4 (2024-12-01)
+=========================
+
+Bug fixes
+---------
+
+- `#12592 <https://github.com/pytest-dev/pytest/issues/12592>`_: Fixed :class:`KeyError` crash when using ``--import-mode=importlib`` in a directory layout where a directory contains a child directory with the same name.
+
+
+- `#12818 <https://github.com/pytest-dev/pytest/issues/12818>`_: Assertion rewriting now preserves the source ranges of the original instructions, making it play well with tools that deal with the ``AST``, like `executing <https://github.com/alexmojaki/executing>`__.
+
+
+- `#12849 <https://github.com/pytest-dev/pytest/issues/12849>`_: ANSI escape codes for colored output now handled correctly in :func:`pytest.fail` with `pytrace=False`.
+
+
+
+Improved documentation
+----------------------
+
+- `#10558 <https://github.com/pytest-dev/pytest/issues/10558>`_: Fix ambiguous docstring of :func:`pytest.Config.getoption`.
+
+
+- `#10829 <https://github.com/pytest-dev/pytest/issues/10829>`_: Improve documentation on the current handling of the ``--basetemp`` option and its lack of retention functionality (:ref:`temporary directory location and retention`).
+
+
+- `#12866 <https://github.com/pytest-dev/pytest/issues/12866>`_: Improved cross-references concerning the :fixture:`recwarn` fixture.
+
+
+- `#12966 <https://github.com/pytest-dev/pytest/issues/12966>`_: Clarify :ref:`filterwarnings` docs on filter precedence/order when using multiple :ref:`@pytest.mark.filterwarnings <pytest.mark.filterwarnings ref>` marks.
+
+
+
+Contributor-facing changes
+--------------------------
+
+- `#12497 <https://github.com/pytest-dev/pytest/issues/12497>`_: Fixed two failing pdb-related tests on Python 3.13.
+
+
 pytest 8.3.3 (2024-09-09)
 =========================
 
