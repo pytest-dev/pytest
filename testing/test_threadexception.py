@@ -23,7 +23,7 @@ def test_unhandled_thread_exception(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
-    assert result.parseoutcomes() == {"passed": 2, "warnings": 1}
+    result.assert_outcomes(passed=2, warnings=1)
     result.stdout.fnmatch_lines(
         [
             "*= warnings summary =*",
@@ -59,7 +59,7 @@ def test_unhandled_thread_exception_in_setup(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
-    assert result.parseoutcomes() == {"passed": 2, "warnings": 1}
+    result.assert_outcomes(passed=2, warnings=1)
     result.stdout.fnmatch_lines(
         [
             "*= warnings summary =*",
@@ -96,7 +96,7 @@ def test_unhandled_thread_exception_in_teardown(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
-    assert result.parseoutcomes() == {"passed": 2, "warnings": 1}
+    result.assert_outcomes(passed=2, warnings=1)
     result.stdout.fnmatch_lines(
         [
             "*= warnings summary =*",
@@ -130,7 +130,7 @@ def test_unhandled_thread_exception_warning_error(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == pytest.ExitCode.TESTS_FAILED
-    assert result.parseoutcomes() == {"passed": 1, "failed": 1}
+    result.assert_outcomes(passed=1, failed=1)
 
 
 @pytest.mark.filterwarnings("error::pytest.PytestUnhandledThreadExceptionWarning")
