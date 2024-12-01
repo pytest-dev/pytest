@@ -397,6 +397,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         # __dict__ is definition ordered.
         seen: set[str] = set()
         dict_values: list[list[nodes.Item | nodes.Collector]] = []
+        collect_imported_tests = self.session.config.getini("collect_imported_tests")
         ihook = self.ihook
         for dic in dicts:
             values: list[nodes.Item | nodes.Collector] = []
@@ -408,6 +409,13 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
                 if name in seen:
                     continue
                 seen.add(name)
+
+                if not collect_imported_tests and isinstance(self, Module):
+                    # Do not collect functions and classes from other modules.
+                    if inspect.isfunction(obj) or inspect.isclass(obj):
+                        if obj.__module__ != self._getobj().__name__:
+                            continue
+
                 res = ihook.pytest_pycollect_makeitem(
                     collector=self, name=name, obj=obj
                 )
