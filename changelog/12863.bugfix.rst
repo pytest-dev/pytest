@@ -1,0 +1,1 @@
+Fix :func:`pytest.mark.parametrize` marker placed above `@staticmethod`

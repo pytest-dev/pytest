@@ -350,7 +350,11 @@ class MarkDecorator:
             func = args[0]
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
-                store_mark(func, self.mark, stacklevel=3)
+                if isinstance(func, staticmethod):
+                    # If the marker decorates a staticmethod, store on the test func
+                    store_mark(func.__func__, self.mark, stacklevel=3)
+                else:
+                    store_mark(func, self.mark, stacklevel=3)
                 return func
         return self.with_args(*args, **kwargs)
 
