@@ -1226,3 +1226,20 @@ def test_mark_fixture_order_mro(pytester: Pytester):
     )
     result = pytester.runpytest(foo)
     result.assert_outcomes(passed=1)
+
+
+# @pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/12863")
+def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
+    foo = pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.mark.parametrize("value", [1, 2])
+            @staticmethod
+            def test_foo(value: int):
+                assert value in [1, 2]
+        """
+    )
+    result = pytester.runpytest(foo)
+    result.assert_outcomes(passed=2)
