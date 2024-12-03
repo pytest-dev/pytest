@@ -349,12 +349,9 @@ class MarkDecorator:
         if args and not kwargs:
             func = args[0]
             is_class = inspect.isclass(func)
-            if len(args) == 1 and (istestfunc(func) or is_class):
-                if isinstance(func, staticmethod):
-                    # If the marker decorates a staticmethod, store on the test func
-                    store_mark(func.__func__, self.mark, stacklevel=3)
-                else:
-                    store_mark(func, self.mark, stacklevel=3)
+            marking_func = func.__func__ if isinstance(func, staticmethod) else func
+            if len(args) == 1 and (istestfunc(marking_func) or is_class):
+                store_mark(marking_func, self.mark, stacklevel=3)
                 return func
         return self.with_args(*args, **kwargs)
 
