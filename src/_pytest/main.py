@@ -77,6 +77,12 @@ def pytest_addoption(parser: Parser) -> None:
         type="args",
         default=[],
     )
+    parser.addini(
+        "collect_imported_tests",
+        "Whether to collect tests in imported modules outside `testpaths`",
+        type="bool",
+        default=True,
+    )
     group = parser.getgroup("general", "Running and selection options")
     group._addoption(
         "-x",
