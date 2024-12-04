@@ -219,3 +219,38 @@ def test_unhandled_thread_exception_after_teardown(pytester: Pytester) -> None:
 
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: Oops")
+
+
+@pytest.mark.filterwarnings("error::pytest.PytestUnhandledThreadExceptionWarning")
+def test_possibly_none_excinfo(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_it="""
+        import threading
+        import types
+
+        def test_it():
+            threading.excepthook(
+                types.SimpleNamespace(
+                    exc_type=RuntimeError,
+                    exc_value=None,
+                    exc_traceback=None,
+                    thread=None,
+                )
+            )
+        """
+    )
+
+    result = pytester.runpytest()
+
+    # TODO: should be a test failure or error
+    assert result.ret == pytest.ExitCode.TESTS_FAILED
+
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "E                   pytest.PytestUnhandledThreadExceptionWarning:"
+            " Exception in thread <unknown>",
+            "E                   ",
+            "E                   NoneType: None",
+        ]
+    )
