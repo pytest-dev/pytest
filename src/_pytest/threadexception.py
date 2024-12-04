@@ -74,9 +74,11 @@ def collect_thread_exception(config: Config) -> None:
             try:
                 warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
             except pytest.PytestUnhandledThreadExceptionWarning as e:
-                # This except happens when the warning is treated as an error
+                # This except happens when the warning is treated as an error (e.g. `-Werror`).
                 if meta.exc_value is not None:
-                    # Exceptions have a better way to show the traceback
+                    # Exceptions have a better way to show the traceback, but
+                    # warnings do not, so hide the traceback from the msg and
+                    # set the cause so the traceback shows up in the right place.
                     e.args = (meta.cause_msg,)
                     e.__cause__ = meta.exc_value
                 errors.append(e)
@@ -109,6 +111,9 @@ def thread_exception_hook(
     append: Callable[[ThreadExceptionMeta | BaseException], object],
 ) -> None:
     try:
+        # we need to compute these strings here as they might change after
+        # the excepthook finishes and before the metadata object is
+        # collected by a pytest hook
         thread_name = "<unknown>" if args.thread is None else args.thread.name
         summary = f"Exception in thread {thread_name}"
         traceback_message = "\n\n" + "".join(
@@ -132,6 +137,11 @@ def thread_exception_hook(
         )
     except BaseException as e:
         append(e)
+        # Raising this will cause the exception to be logged twice, once in our
+        # collect_thread_exception and once by the unraisablehook plugin
+        # (exceptions raised from this hook are 'unraisable')
+        # which is fine - this should never happen anyway and if it does
+        # it should probably be reported as a pytest bug.
         raise
 
 
