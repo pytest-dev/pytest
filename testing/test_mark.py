@@ -1236,10 +1236,15 @@ def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
 
         class TestClass:
             @pytest.mark.parametrize("value", [1, 2])
+            @classmethod
+            def test_classmethod_wrapper(cls, value: int):
+                assert value in [1, 2]
+
+            @pytest.mark.parametrize("value", [1, 2])
             @staticmethod
-            def test_foo(value: int):
+            def test_staticmethod_wrapper(value: int):
                 assert value in [1, 2]
         """
     )
     result = pytester.runpytest(foo)
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=4)

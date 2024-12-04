@@ -1,1 +1,1 @@
-Fix :func:`pytest.mark.parametrize` marker placed above `@staticmethod`
+Fix :func:`pytest.mark.parametrize <pytest.mark.xfail>` marker placed above `@staticmethod`
