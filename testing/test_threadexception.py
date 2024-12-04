@@ -199,10 +199,7 @@ def test_unhandled_thread_exception_after_teardown(pytester: Pytester) -> None:
         import threading
         import pytest
 
-        @pytest.fixture(scope="session")
         def thread():
-            yield
-
             def oops():
                 time.sleep(0.5)
                 raise ValueError("Oops")
@@ -210,8 +207,8 @@ def test_unhandled_thread_exception_after_teardown(pytester: Pytester) -> None:
             t = threading.Thread(target=oops, name="MyThread")
             t.start()
 
-        def test_it(thread):
-            pass
+        def test_it(request):
+            request.config.add_cleanup(thread)
         """
     )
 
