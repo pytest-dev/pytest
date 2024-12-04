@@ -101,6 +101,9 @@ def unraisable_hook(
     append: Callable[[UnraisableMeta | BaseException], object],
 ) -> None:
     try:
+        # we need to compute these strings here as they might change after
+        # the unraisablehook finishes and before the metadata object is
+        # collected by a pytest hook
         err_msg = (
             "Exception ignored in" if unraisable.err_msg is None else unraisable.err_msg
         )
@@ -118,9 +121,6 @@ def unraisable_hook(
 
         append(
             UnraisableMeta(
-                # we need to compute these strings here as they might change after
-                # the unraisablehook finishes and before the unraisable object is
-                # collected by a hook
                 msg=msg,
                 cause_msg=cause_msg,
                 exc_value=unraisable.exc_value,

@@ -234,3 +234,39 @@ def test_create_task_unraisable(pytester: Pytester) -> None:
 
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
+
+
+@pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
+def test_possibly_none_excinfo(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_it="""
+        import sys
+        import types
+
+        def test_it():
+            sys.unraisablehook(
+                types.SimpleNamespace(
+                    exc_type=RuntimeError,
+                    exc_value=None,
+                    exc_traceback=None,
+                    err_msg=None,
+                    object=None,
+                )
+            )
+        """
+    )
+
+    result = pytester.runpytest()
+
+    # TODO: should be a test failure or error
+    assert result.ret == pytest.ExitCode.TESTS_FAILED
+
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "E                   pytest.PytestUnraisableExceptionWarning:"
+            " Exception ignored in: None",
+            "E                   ",
+            "E                   NoneType: None",
+        ]
+    )
