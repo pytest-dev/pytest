@@ -138,8 +138,7 @@ def thread_exception_hook(
     except BaseException as e:
         append(e)
         # Raising this will cause the exception to be logged twice, once in our
-        # collect_thread_exception and once by the unraisablehook plugin
-        # (exceptions raised from this hook are 'unraisable')
+        # collect_thread_exception and once by sys.excepthook
         # which is fine - this should never happen anyway and if it does
         # it should probably be reported as a pytest bug.
         raise
