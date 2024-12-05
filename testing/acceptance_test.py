@@ -1593,9 +1593,8 @@ def test_get_exception_on_teardown_failure(pytester: Pytester) -> None:
         import sys
         import pytest
         def pytest_exception_interact(node, call, report):
-            sys.stderr.write("{}".format(node.teardown_exceptions))
+            sys.stderr.write("teardown_exceptions: `{}`".format(node.teardown_exceptions))
 
-        import pytest
         @pytest.fixture
         def mylist():
             yield
@@ -1608,5 +1607,5 @@ def test_get_exception_on_teardown_failure(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == ExitCode.TESTS_FAILED
-    assert "AssertionError(111)" in result.stderr.str()
-    result.stdout.fnmatch_lines(["*1 error*"])
+    assert "teardown_exceptions: `[AssertionError(111)]`" in result.stderr.str()
+    result.assert_outcomes(passed=1, errors=1)
