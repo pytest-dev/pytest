@@ -1590,7 +1590,7 @@ class TestFixtureUsages:
         result.stdout.no_fnmatch_line("* ERROR at teardown *")
 
     def test_unwrapping_pytest_fixture(self, pytester: Pytester) -> None:
-        """Regression test for #12600."""
+        """Ensure the unwrap method on `FixtureFunctionDefinition` correctly wraps and unwraps methods and functions"""
         pytester.makepyfile(
             """
             import pytest
