@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-import inspect
 import os
 from pathlib import Path
 import sys
@@ -1589,6 +1588,43 @@ class TestFixtureUsages:
         )
         result = pytester.runpytest()
         result.stdout.no_fnmatch_line("* ERROR at teardown *")
+
+    def test_unwrapping_pytest_fixture(self, pytester: Pytester) -> None:
+        """Regression test for #12600."""
+        pytester.makepyfile(
+            """
+            import pytest
+            import inspect
+
+            class FixtureFunctionDefTestClass:
+                def __init__(self) -> None:
+                    self.i = 10
+
+                @pytest.fixture
+                def fixture_function_def_test_method(self):
+                    return self.i
+
+
+            @pytest.fixture
+            def fixture_function_def_test_func():
+                return 9
+
+
+            def test_get_wrapped_func_returns_method():
+                obj = FixtureFunctionDefTestClass()
+                wrapped_function_result = (
+                    obj.fixture_function_def_test_method._get_wrapped_function()
+                )
+                assert inspect.ismethod(wrapped_function_result)
+                assert wrapped_function_result() == 10
+
+
+            def test_get_wrapped_func_returns_function():
+                assert fixture_function_def_test_func._get_wrapped_function()() == 9
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2)
 
 
 class TestFixtureManagerParseFactories:
@@ -3338,33 +3374,6 @@ class TestFixtureMarker:
         ]
         assert len(output1) == 12
         assert output1 == output2
-
-
-class FixtureFunctionDefTestClass:
-    def __init__(self) -> None:
-        self.i = 10
-
-    @pytest.fixture
-    def fixture_function_def_test_method(self):
-        return self.i
-
-
-@pytest.fixture
-def fixture_function_def_test_func():
-    return 9
-
-
-def test_get_wrapped_func_returns_method():
-    obj = FixtureFunctionDefTestClass()
-    wrapped_function_result = (
-        obj.fixture_function_def_test_method._get_wrapped_function()
-    )
-    assert inspect.ismethod(wrapped_function_result)
-    assert wrapped_function_result() == 10
-
-
-def test_get_wrapped_func_returns_function():
-    assert fixture_function_def_test_func._get_wrapped_function()() == 9
 
 
 class TestRequestScopeAccess:

@@ -1208,7 +1208,7 @@ class FixtureFunctionMarker:
             warnings.warn(MARKED_FIXTURE, stacklevel=2)
 
         fixture_definition = FixtureFunctionDefinition(
-            function=function, fixture_function_marker=self
+            function=function, fixture_function_marker=self, _ispytest=True
         )
 
         name = self.name or function.__name__
@@ -1250,6 +1250,7 @@ class FixtureFunctionDefinition:
             function=self._fixture_function,
             fixture_function_marker=self._fixture_function_marker,
             instance=instance,
+            _ispytest=True,
         )
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
