@@ -1224,6 +1224,7 @@ class FixtureFunctionMarker:
 class FixtureFunctionDefinition:
     def __init__(
         self,
+        *,
         function: Callable[..., Any],
         fixture_function_marker: FixtureFunctionMarker,
         instance: object | None = None,
