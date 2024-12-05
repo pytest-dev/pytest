@@ -195,17 +195,16 @@ def test_unraisable_collection_failure(pytester: Pytester) -> None:
 def test_unhandled_thread_exception_after_teardown(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_it="""
-        import time
         import threading
         import pytest
 
         def thread():
             def oops():
-                time.sleep(0.5)
                 raise ValueError("Oops")
 
             t = threading.Thread(target=oops, name="MyThread")
             t.start()
+            t.join()
 
         def test_it(request):
             request.config.add_cleanup(thread)
