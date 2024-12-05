@@ -539,7 +539,6 @@ class SetupState:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
             node, (finalizers, _) = self.stack.popitem()
-            node.teardown_exceptions = []
             while finalizers:
                 fin = finalizers.pop()
                 try:
