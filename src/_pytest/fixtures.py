@@ -1227,7 +1227,7 @@ class FixtureFunctionDefinition:
         function: Callable[..., Any],
         fixture_function_marker: FixtureFunctionMarker,
         instance: type | None = None,
-    ):
+    ) -> None:
         self.name = fixture_function_marker.name or function.__name__
         self.__name__ = self.name
         self._fixture_function_marker = fixture_function_marker
