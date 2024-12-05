@@ -668,7 +668,7 @@ def _import_module_using_spec(
     parent_module: ModuleType | None = None
     if parent_module_name:
         parent_module = sys.modules.get(parent_module_name)
-        if parent_module is None:
+        if parent_module is None or not hasattr(parent_module, "__path__"):
             # Get parent_location based on location, get parent_path based on path.
             if module_path.name == "__init__.py":
                 # If the current module is in a package,
