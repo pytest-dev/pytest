@@ -1232,6 +1232,8 @@ class FixtureFunctionDefinition:
         instance: object | None = None,
     ) -> None:
         self.name = fixture_function_marker.name or function.__name__
+        # In order to show the function that this fixture contains in messages.
+        # Set the __name__ to be same as the function __name__ or the given fixture name.
         self.__name__ = self.name
         self._fixture_function_marker = fixture_function_marker
         self._fixture_function = function
@@ -1241,6 +1243,7 @@ class FixtureFunctionDefinition:
         return f"<pytest_fixture({self._fixture_function})>"
 
     def __get__(self, instance, owner=None):
+        """Behave like a method if the function it was applied to was a method."""
         return FixtureFunctionDefinition(
             function=self._fixture_function,
             fixture_function_marker=self._fixture_function_marker,
