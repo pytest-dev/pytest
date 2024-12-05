@@ -79,7 +79,7 @@ def cleanup(
 ) -> None:
     try:
         try:
-            # we don't join threads here, so exceptions raised from any
+            # We don't join threads here, so exceptions raised from any
             # threads still running by the time _threading_atexits joins them
             # do not get captured.
             collect_thread_exception(config)
