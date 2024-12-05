@@ -1207,7 +1207,9 @@ class FixtureFunctionMarker:
         if hasattr(function, "pytestmark"):
             warnings.warn(MARKED_FIXTURE, stacklevel=2)
 
-        fixture_definition = FixtureFunctionDefinition(function, self)
+        fixture_definition = FixtureFunctionDefinition(
+            function=function, fixture_function_marker=self
+        )
 
         name = self.name or function.__name__
         if name == "request":
@@ -1240,7 +1242,9 @@ class FixtureFunctionDefinition:
 
     def __get__(self, instance, owner=None):
         return FixtureFunctionDefinition(
-            self._fixture_function, self._fixture_function_marker, instance
+            function=self._fixture_function,
+            fixture_function_marker=self._fixture_function_marker,
+            instance=instance,
         )
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
