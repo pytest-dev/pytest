@@ -5,7 +5,6 @@ from collections.abc import Callable
 import functools
 import sys
 import threading
-import time
 import traceback
 from typing import NamedTuple
 from typing import TYPE_CHECKING
