@@ -1230,7 +1230,9 @@ class FixtureFunctionDefinition:
         function: Callable[..., Any],
         fixture_function_marker: FixtureFunctionMarker,
         instance: object | None = None,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
         self.name = fixture_function_marker.name or function.__name__
         # In order to show the function that this fixture contains in messages.
         # Set the __name__ to be same as the function __name__ or the given fixture name.
