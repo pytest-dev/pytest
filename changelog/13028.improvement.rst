@@ -1,0 +1,3 @@
+Remove (unreleased) 1-second join from threadexception plugin.
+Exceptions in threads that terminate after the pytest run will
+continue to not be captured.
