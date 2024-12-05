@@ -81,7 +81,7 @@ def cleanup(
         try:
             # We don't join threads here, so exceptions raised from any
             # threads still running by the time _threading_atexits joins them
-            # do not get captured.
+            # do not get captured (see #13027).
             collect_thread_exception(config)
         finally:
             threading.excepthook = prev_hook
