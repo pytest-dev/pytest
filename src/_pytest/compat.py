@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import enum
 import functools
 import inspect
@@ -12,7 +13,6 @@ import os
 from pathlib import Path
 import sys
 from typing import Any
-from typing import Callable
 from typing import Final
 from typing import NoReturn
 
@@ -70,8 +70,8 @@ def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
         except ValueError:
             pass
         else:
-            return "%s:%d" % (relfn, lineno + 1)
-    return "%s:%d" % (fn, lineno + 1)
+            return f"{relfn}:{lineno+1}"
+    return f"{fn}:{lineno+1}"
 
 
 def num_mock_patch_args(function) -> int:

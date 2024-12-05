@@ -1,6 +1,9 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Iterator
+from collections.abc import Sequence
 import errno
 import importlib.abc
 import importlib.machinery
@@ -12,9 +15,6 @@ import sys
 from textwrap import dedent
 from types import ModuleType
 from typing import Any
-from typing import Generator
-from typing import Iterator
-from typing import Sequence
 import unittest.mock
 
 from _pytest.config import ExitCode

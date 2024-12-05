@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import datetime
 from functools import partial
@@ -17,14 +21,10 @@ import platform
 import sys
 import textwrap
 from typing import Any
-from typing import Callable
 from typing import ClassVar
 from typing import final
-from typing import Generator
 from typing import Literal
-from typing import Mapping
 from typing import NamedTuple
-from typing import Sequence
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
@@ -766,13 +766,13 @@ class TerminalReporter:
             str(self._numcollected) + " item" + ("" if self._numcollected == 1 else "s")
         )
         if errors:
-            line += " / %d error%s" % (errors, "s" if errors != 1 else "")
+            line += f" / {errors} error{'s' if errors != 1 else ''}"
         if deselected:
-            line += " / %d deselected" % deselected
+            line += f" / {deselected} deselected"
         if skipped:
-            line += " / %d skipped" % skipped
+            line += f" / {skipped} skipped"
         if self._numcollected > selected:
-            line += " / %d selected" % selected
+            line += f" / {selected} selected"
         if self.isatty:
             self.rewrite(line, bold=True, erase=True)
             if final:
@@ -862,7 +862,7 @@ class TerminalReporter:
             if test_cases_verbosity < -1:
                 counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
                 for name, count in sorted(counts.items()):
-                    self._tw.line("%s: %d" % (name, count))
+                    self._tw.line(f"{name}: {count}")
             else:
                 for item in items:
                     self._tw.line(item.nodeid)
@@ -1254,11 +1254,9 @@ class TerminalReporter:
                 if reason.startswith(prefix):
                     reason = reason[len(prefix) :]
                 if lineno is not None:
-                    lines.append(
-                        "%s [%d] %s:%d: %s" % (markup_word, num, fspath, lineno, reason)
-                    )
+                    lines.append(f"{markup_word} [{num}] {fspath}:{lineno}: {reason}")
                 else:
-                    lines.append("%s [%d] %s: %s" % (markup_word, num, fspath, reason))
+                    lines.append(f"{markup_word} [{num}] {fspath}: {reason}")
 
         def show_skipped_unfolded(lines: list[str]) -> None:
             skipped: list[CollectReport] = self.stats.get("skipped", [])
@@ -1375,7 +1373,7 @@ class TerminalReporter:
                 count = len(reports)
                 color = _color_for_type.get(key, _color_for_type_default)
                 markup = {color: True, "bold": color == main_color}
-                parts.append(("%d %s" % pluralize(count, key), markup))
+                parts.append(("%d %s" % pluralize(count, key), markup))  # noqa: UP031
 
         if not parts:
             parts = [("no tests ran", {_color_for_type_default: True})]
@@ -1394,7 +1392,7 @@ class TerminalReporter:
 
         elif deselected == 0:
             main_color = "green"
-            collected_output = "%d %s collected" % pluralize(self._numcollected, "test")
+            collected_output = "%d %s collected" % pluralize(self._numcollected, "test")  # noqa: UP031
             parts = [(collected_output, {main_color: True})]
         else:
             all_tests_were_deselected = self._numcollected == deselected
@@ -1410,7 +1408,7 @@ class TerminalReporter:
 
         if errors:
             main_color = _color_for_type["error"]
-            parts += [("%d %s" % pluralize(errors, "error"), {main_color: True})]
+            parts += [("%d %s" % pluralize(errors, "error"), {main_color: True})]  # noqa: UP031
 
         return parts, main_color
 

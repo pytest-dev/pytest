@@ -1,11 +1,11 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Callable
 import inspect
 from pathlib import Path
 import sys
 import textwrap
-from typing import Callable
 
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
@@ -1328,7 +1328,7 @@ class TestDoctestAutoUseFixtures:
         params = ("--doctest-modules",) if enable_doctest else ()
         passes = 3 if enable_doctest else 2
         result = pytester.runpytest(*params)
-        result.stdout.fnmatch_lines(["*=== %d passed in *" % passes])
+        result.stdout.fnmatch_lines([f"*=== {passes} passed in *"])
 
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("autouse", [True, False])

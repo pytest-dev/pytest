@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import ast
 from collections import defaultdict
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Sequence
 import errno
 import functools
 import importlib.abc
@@ -19,11 +23,7 @@ import struct
 import sys
 import tokenize
 import types
-from typing import Callable
 from typing import IO
-from typing import Iterable
-from typing import Iterator
-from typing import Sequence
 from typing import TYPE_CHECKING
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
@@ -54,7 +54,7 @@ assertstate_key = StashKey["AssertionState"]()
 
 # pytest caches rewritten pycs in pycache dirs
 PYTEST_TAG = f"{sys.implementation.cache_tag}-pytest-{version}"
-PYC_EXT = ".py" + (__debug__ and "c" or "o")
+PYC_EXT = ".py" + ((__debug__ and "c") or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
 # Special marker that denotes we have just left a scope definition
@@ -483,7 +483,7 @@ def _should_repr_global_name(obj: object) -> bool:
 
 
 def _format_boolop(explanations: Iterable[str], is_or: bool) -> str:
-    explanation = "(" + (is_or and " or " or " and ").join(explanations) + ")"
+    explanation = "(" + ((is_or and " or ") or " and ").join(explanations) + ")"
     return explanation.replace("%", "%%")
 
 

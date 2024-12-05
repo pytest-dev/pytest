@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import inspect
 from inspect import CO_VARARGS
@@ -17,21 +21,13 @@ from types import CodeType
 from types import FrameType
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import ClassVar
 from typing import Final
 from typing import final
 from typing import Generic
-from typing import Iterable
-from typing import List
 from typing import Literal
-from typing import Mapping
 from typing import overload
-from typing import Pattern
-from typing import Sequence
 from typing import SupportsIndex
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -56,7 +52,7 @@ if sys.version_info < (3, 11):
 
 TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-EXCEPTION_OR_MORE = Union[Type[BaseException], Tuple[Type[BaseException], ...]]
+EXCEPTION_OR_MORE = Union[type[BaseException], tuple[type[BaseException], ...]]
 
 
 class Code:
@@ -221,7 +217,7 @@ class TracebackEntry:
         return self.lineno - self.frame.code.firstlineno
 
     def __repr__(self) -> str:
-        return "<TracebackEntry %s:%d>" % (self.frame.code.path, self.lineno + 1)
+        return f"<TracebackEntry {self.frame.code.path}:{self.lineno+1}>"
 
     @property
     def statement(self) -> Source:
@@ -307,12 +303,7 @@ class TracebackEntry:
         # This output does not quite match Python's repr for traceback entries,
         # but changing it to do so would break certain plugins.  See
         # https://github.com/pytest-dev/pytest/pull/7535/ for details.
-        return "  File %r:%d in %s\n  %s\n" % (
-            str(self.path),
-            self.lineno + 1,
-            name,
-            line,
-        )
+        return f"  File '{self.path}':{self.lineno+1} in {name}\n  {line}\n"
 
     @property
     def name(self) -> str:
@@ -320,7 +311,7 @@ class TracebackEntry:
         return self.frame.code.raw.co_name
 
 
-class Traceback(List[TracebackEntry]):
+class Traceback(list[TracebackEntry]):
     """Traceback objects encapsulate and offer higher level access to Traceback entries."""
 
     def __init__(
@@ -725,7 +716,7 @@ class ExceptionInfo(Generic[E]):
             ]
         )
 
-    def match(self, regexp: str | Pattern[str]) -> Literal[True]:
+    def match(self, regexp: str | re.Pattern[str]) -> Literal[True]:
         """Check whether the regular expression `regexp` matches the string
         representation of the exception using :func:`python:re.search`.
 
@@ -744,7 +735,7 @@ class ExceptionInfo(Generic[E]):
         self,
         exc_group: BaseExceptionGroup[BaseException],
         expected_exception: EXCEPTION_OR_MORE,
-        match: str | Pattern[str] | None,
+        match: str | re.Pattern[str] | None,
         target_depth: int | None = None,
         current_depth: int = 1,
     ) -> bool:
@@ -774,7 +765,7 @@ class ExceptionInfo(Generic[E]):
         self,
         expected_exception: EXCEPTION_OR_MORE,
         *,
-        match: str | Pattern[str] | None = None,
+        match: str | re.Pattern[str] | None = None,
         depth: int | None = None,
     ) -> bool:
         """Check whether a captured exception group contains a matching exception.
@@ -783,7 +774,7 @@ class ExceptionInfo(Generic[E]):
             The expected exception type, or a tuple if one of multiple possible
             exception types are expected.
 
-        :param str | Pattern[str] | None match:
+        :param str | re.Pattern[str] | None match:
             If specified, a string containing a regular expression,
             or a regular expression object, that is tested against the string
             representation of the exception and its `PEP-678 <https://peps.python.org/pep-0678/>` `__notes__`
@@ -957,7 +948,7 @@ class FormattedExcinfo:
             if short:
                 message = f"in {entry.name}"
             else:
-                message = excinfo and excinfo.typename or ""
+                message = (excinfo and excinfo.typename) or ""
             entry_path = entry.path
             path = self._makepath(entry_path)
             reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
@@ -1186,10 +1177,8 @@ class ReprTraceback(TerminalRepr):
             entry.toterminal(tw)
             if i < len(self.reprentries) - 1:
                 next_entry = self.reprentries[i + 1]
-                if (
-                    entry.style == "long"
-                    or entry.style == "short"
-                    and next_entry.style == "long"
+                if entry.style == "long" or (
+                    entry.style == "short" and next_entry.style == "long"
                 ):
                     tw.sep(self.entrysep)
 
@@ -1373,7 +1362,7 @@ def getfslineno(obj: object) -> tuple[str | Path, int]:
         except TypeError:
             return "", -1
 
-        fspath = fn and absolutepath(fn) or ""
+        fspath = (fn and absolutepath(fn)) or ""
         lineno = -1
         if fspath:
             try:

@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.7.4"
+  rev: "v0.8.1"
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -53,6 +53,10 @@ repos:
     rev: v3.19.0
     hooks:
     -   id: pyupgrade
+        args:
+          - "--py39-plus"
+        # Manual because ruff does what pyupgrade does and the two are not out of sync
+        # often enough to make launching pyupgrade everytime worth it
         stages: [manual]
 -   repo: local
     hooks:
