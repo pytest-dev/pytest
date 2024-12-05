@@ -25,22 +25,6 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
-def join_threads() -> None:
-    start = time.monotonic()
-    current_thread = threading.current_thread()
-    # This function is executed right at the end of the pytest run, just
-    # before we return an exit code, which is where the interpreter joins
-    # any remaining non-daemonic threads anyway, so it's ok to join all the
-    # threads. However there might be threads that depend on some shutdown
-    # signal that happens after pytest finishes, so we want to limit the
-    # join time somewhat. A one second timeout seems reasonable.
-    timeout = 1
-    for thread in threading.enumerate():
-        if thread is not current_thread and not thread.daemon:
-            # TODO: raise an error/warning if there's dangling threads.
-            thread.join(timeout - (time.monotonic() - start))
-
-
 class ThreadExceptionMeta(NamedTuple):
     msg: str
     cause_msg: str
@@ -96,7 +80,9 @@ def cleanup(
 ) -> None:
     try:
         try:
-            join_threads()
+            # we don't join threads here, so exceptions raised from any
+            # threads still running by the time _threading_atexits joins them
+            # do not get captured.
             collect_thread_exception(config)
         finally:
             threading.excepthook = prev_hook
