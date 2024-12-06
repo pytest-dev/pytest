@@ -473,35 +473,35 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
     :return: True if the path should be ignored, None otherwise.
     :rtype: bool | None
     """
-    # Ignore `__pycache__` directories by default
     if collection_path.name == "__pycache__":
         return True
-
+    
     # Check for paths explicitly marked as ignored
     ignore_paths = config._getconftest_pathlist(
         "collect_ignore", path=collection_path.parent
-    ) or []
+    )
+    ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
     if excludeopt:
         ignore_paths.extend(absolutepath(x) for x in excludeopt)
+
     if collection_path in ignore_paths:
         return True
-
     # Check for ignored paths using glob patterns
     ignore_globs = config._getconftest_pathlist(
         "collect_ignore_glob", path=collection_path.parent
-    ) or []
+    )
+    ignore_globs = ignore_globs or []
     excludeglobopt = config.getoption("ignore_glob")
     if excludeglobopt:
         ignore_globs.extend(absolutepath(x) for x in excludeglobopt)
+
     if any(fnmatch.fnmatch(str(collection_path), str(glob)) for glob in ignore_globs):
         return True
-
     # Ignore virtual environment roots unless explicitly allowed
     allow_in_venv = config.getoption("collect_in_virtualenv")
     if not allow_in_venv and _in_venv(collection_path):
         return True
-
     # Check if the directory matches patterns for non-recursion
     if collection_path.is_dir():
         norecursepatterns = config.getini("norecursedirs")
