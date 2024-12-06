@@ -438,25 +438,23 @@ def pytest_runtestloop(session: Session) -> bool:
 
 
 def _in_venv(path: Path) -> bool:
-    """
-    Check if the given path is the root of a virtual environment.
+    """Attempt to detect if ``path`` is the root of a Virtual Environment by
+    checking for the existence of the pyvenv.cfg file.
 
-    This is done by checking for specific files such as `pyvenv.cfg` (PEP 405)
-    or Conda environment metadata.
+    [https://peps.python.org/pep-0405/]
 
-    :param path: The path to check.
-    :type path: Path
-    :return: True if the path is a virtual environment root, False otherwise.
-    :rtype: bool
+    For regression protection we also check for conda environments that do not include pyenv.cfg yet --
+    https://github.com/conda/conda/issues/13337 is the conda issue tracking adding pyenv.cfg.
+
+    Checking for the `conda-meta/history` file per https://github.com/pytest-dev/pytest/issues/12652#issuecomment-2246336902.
+
     """
     try:
-        # Look for standard virtual environment or Conda metadata files
         return (
             path.joinpath("pyvenv.cfg").is_file()
             or path.joinpath("conda-meta", "history").is_file()
         )
     except OSError:
-        # Return False if an OSError occurs (e.g., permission issues)
         return False
 
 
