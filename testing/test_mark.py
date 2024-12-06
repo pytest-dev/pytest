@@ -1228,7 +1228,6 @@ def test_mark_fixture_order_mro(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
-# @pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/12863")
 def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
     """Check that applying marks works as intended on classmethods and staticmethods.
 
