@@ -349,9 +349,13 @@ class MarkDecorator:
         if args and not kwargs:
             func = args[0]
             is_class = inspect.isclass(func)
-            marking_func = getattr(func, "__func__", func)
-            if len(args) == 1 and (istestfunc(marking_func) or is_class):
-                store_mark(marking_func, self.mark, stacklevel=3)
+            # For staticmethods/classmethods, the marks are eventually fetched from the
+            # function object, not the descriptor, so unwrap.
+            unwrapped_func = func
+            if isinstance(func, (staticmethod, classmethod)):
+                unwrapped_func = func.__func__
+            if len(args) == 1 and (istestfunc(unwrapped_func) or is_class):
+                store_mark(unwrapped_func, self.mark, stacklevel=3)
                 return func
         return self.with_args(*args, **kwargs)
 
