@@ -1287,7 +1287,7 @@ def fixture(
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
     name: str | None = None,
-) -> FixtureFunctionDefinition: ...
+) -> FixtureFunctionMarker: ...
 
 
 def fixture(
