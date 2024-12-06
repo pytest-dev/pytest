@@ -1235,7 +1235,6 @@ class FixtureFunctionDefinition:
         # Set the __name__ to be same as the function __name__ or the given fixture name.
         self.__name__ = self.name
         self._fixture_function_marker = fixture_function_marker
-        self._instance = instance
         if instance is not None:
             self._fixture_function = cast(
                 Callable[..., Any], function.__get__(instance)
