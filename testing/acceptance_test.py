@@ -1608,4 +1608,6 @@ def test_get_exception_on_teardown_failure(pytester: Pytester) -> None:
     result = pytester.runpytest()
     assert result.ret == ExitCode.TESTS_FAILED
     assert "teardown_exceptions: `[AssertionError(111)]`" in result.stderr.str()
+    # Related to the #9909 - first the test passes, then the teardown fails, what
+    # results in a double-reporting.
     result.assert_outcomes(passed=1, errors=1)
