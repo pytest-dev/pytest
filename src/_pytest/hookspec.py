@@ -893,6 +893,23 @@ def pytest_fixture_setup(
     """
 
 
+def pytest_fixture_teardown(fixturedef: FixtureDef[Any], request: SubRequest) -> None:
+    """Perform fixture teardown execution.
+
+    :param fixturdef:
+        The fixture definition object.
+    :param request:
+        The fixture request object.
+
+    Use in conftest plugins
+    =======================
+
+    Any conftest file can implement this hook. For a given fixture, only
+    conftest files in the fixture scope's directory and its parent directories
+    are consulted.
+    """
+
+
 def pytest_fixture_post_finalizer(
     fixturedef: FixtureDef[Any], request: SubRequest
 ) -> None:
@@ -904,6 +921,8 @@ def pytest_fixture_post_finalizer(
         The fixture definition object.
     :param request:
         The fixture request object.
+    :param exception:
+        An exception raised in the finalisation of the fixtures.
 
     Use in conftest plugins
     =======================
