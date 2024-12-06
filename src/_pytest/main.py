@@ -394,6 +394,7 @@ def _main(config: Config, session: Session) -> int | ExitCode | None:
         return ExitCode.NO_TESTS_COLLECTED
     return None
 
+
 def pytest_collection(session: Session) -> None:
     """
     Perform the collection phase of the pytest session.
@@ -473,7 +474,7 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
     """
     if collection_path.name == "__pycache__":
         return True
-    
+
     # Check for paths explicitly marked as ignored
     ignore_paths = config._getconftest_pathlist(
         "collect_ignore", path=collection_path.parent
@@ -553,6 +554,7 @@ def pytest_collection_modifyitems(items: list[nodes.Item], config: Config) -> No
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
+
 
 class FSHookProxy:
     def __init__(
