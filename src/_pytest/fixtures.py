@@ -1235,8 +1235,13 @@ class FixtureFunctionDefinition:
         # Set the __name__ to be same as the function __name__ or the given fixture name.
         self.__name__ = self.name
         self._fixture_function_marker = fixture_function_marker
-        self._fixture_function = function
         self._instance = instance
+        if instance is not None:
+            self._fixture_function = cast(
+                Callable[..., Any], function.__get__(instance)
+            )
+        else:
+            self._fixture_function = function
         functools.update_wrapper(self, function)
         # Wrapping the original function will create a __wrapped__ in this object.
         # Remove the __wrapped__ so the inspect.unwrap will not access the original function.
@@ -1265,10 +1270,7 @@ class FixtureFunctionDefinition:
         fail(message, pytrace=False)
 
     def _get_wrapped_function(self) -> Callable[..., Any]:
-        if self._instance is None:
-            return self._fixture_function
-
-        return cast(Callable[..., Any], self._fixture_function.__get__(self._instance))
+        return self._fixture_function
 
 
 @overload
