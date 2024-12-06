@@ -1238,6 +1238,10 @@ class FixtureFunctionDefinition:
         self._fixture_function = function
         self._instance = instance
         functools.update_wrapper(self, function)
+        # Wrapping the original function will create a __wrapped__ in this object.
+        # Remove the __wrapped__ so the inspect.unwrap will not access the original function.
+        # Unwrapping must be done with the _get_wrapped_function method.
+        delattr(self, "__wrapped__")
 
     def __repr__(self) -> str:
         return f"<pytest_fixture({self._fixture_function})>"
