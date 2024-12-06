@@ -1643,6 +1643,26 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.assert_outcomes(passed=2)
 
+    def test_fixture_wrapped_looks_liked_wrapped_function(
+        self, pytester: Pytester
+    ) -> None:
+        """Ensure that `FixtureFunctionDefinition` behaves like the function it wrapped."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixture_function_def_test_func():
+                return 9
+            fixture_function_def_test_func.__doc__ = "documentation"
+
+            def test_fixture_has_same_doc():
+                assert fixture_function_def_test_func.__doc__ == "documentation"
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
 
 class TestFixtureManagerParseFactories:
     @pytest.fixture

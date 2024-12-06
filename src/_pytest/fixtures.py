@@ -1237,6 +1237,7 @@ class FixtureFunctionDefinition:
         self._fixture_function_marker = fixture_function_marker
         self._fixture_function = function
         self._instance = instance
+        functools.update_wrapper(self, function)
 
     def __repr__(self) -> str:
         return f"<pytest_fixture({self._fixture_function})>"
