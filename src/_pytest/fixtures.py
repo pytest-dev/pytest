@@ -95,6 +95,9 @@ FixtureValue = TypeVar("FixtureValue")
 # The parameters that a fixture function receives.
 FixtureParams = ParamSpec("FixtureParams")
 
+# A dict of fixture name -> its FixtureDef.
+FixtureDefDict: TypeAlias = dict[str, "FixtureDef[Any]"]
+
 # The type of fixture function (type alias generic in fixture params and value).
 _FixtureFunc: TypeAlias = Union[
     Callable[FixtureParams, FixtureValue],
@@ -370,7 +373,7 @@ class FixtureRequest(abc.ABC):
         pyfuncitem: Function,
         fixturename: str | None,
         arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]],
-        fixture_defs: dict[str, FixtureDef[Any]],
+        fixture_defs: FixtureDefDict,
         *,
         _ispytest: bool = False,
     ) -> None:
