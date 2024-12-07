@@ -975,6 +975,23 @@ class TestAssertionRewrite:
         assert "UnicodeDecodeError" not in msg
         assert "UnicodeEncodeError" not in msg
 
+    def test_assert_fixture(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """\
+        import pytest
+        @pytest.fixture
+        def fixt():
+            return 42
+
+        def test_something():  # missing "fixt" argument
+            assert fixt == 42
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            ["*assert <pytest_fixture(<function fixt at *>)> == 42*"]
+        )
+
 
 class TestRewriteOnImport:
     def test_pycache_is_a_file(self, pytester: Pytester) -> None:

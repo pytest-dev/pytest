@@ -31,6 +31,7 @@ from _pytest._io.saferepr import saferepr
 from _pytest._version import version
 from _pytest.assertion import util
 from _pytest.config import Config
+from _pytest.fixtures import FixtureFunctionDefinition
 from _pytest.main import Session
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import fnmatch_ex
@@ -472,7 +473,8 @@ def _format_assertmsg(obj: object) -> str:
 
 def _should_repr_global_name(obj: object) -> bool:
     if callable(obj):
-        return False
+        # For pytest fixtures the __repr__ method provides more information than the function name.
+        return isinstance(obj, FixtureFunctionDefinition)
 
     try:
         return not hasattr(obj, "__name__")

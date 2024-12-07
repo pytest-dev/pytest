@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-import dataclasses
 import enum
 import functools
 import inspect
@@ -205,56 +204,13 @@ def ascii_escaped(val: bytes | str) -> str:
     return ret.translate(_non_printable_ascii_translate_table)
 
 
-@dataclasses.dataclass
-class _PytestWrapper:
-    """Dummy wrapper around a function object for internal use only.
-
-    Used to correctly unwrap the underlying function object when we are
-    creating fixtures, because we wrap the function object ourselves with a
-    decorator to issue warnings when the fixture function is called directly.
-    """
-
-    obj: Any
-
-
 def get_real_func(obj):
     """Get the real function object of the (possibly) wrapped object by
-    functools.wraps or functools.partial."""
-    start_obj = obj
-    for i in range(100):
-        # __pytest_wrapped__ is set by @pytest.fixture when wrapping the fixture function
-        # to trigger a warning if it gets called directly instead of by pytest: we don't
-        # want to unwrap further than this otherwise we lose useful wrappings like @mock.patch (#3774)
-        new_obj = getattr(obj, "__pytest_wrapped__", None)
-        if isinstance(new_obj, _PytestWrapper):
-            obj = new_obj.obj
-            break
-        new_obj = getattr(obj, "__wrapped__", None)
-        if new_obj is None:
-            break
-        obj = new_obj
-    else:
-        from _pytest._io.saferepr import saferepr
+    :func:`functools.wraps`, or :func:`functools.partial`."""
+    obj = inspect.unwrap(obj)
 
-        raise ValueError(
-            f"could not find real function of {saferepr(start_obj)}\nstopped at {saferepr(obj)}"
-        )
     if isinstance(obj, functools.partial):
         obj = obj.func
-    return obj
-
-
-def get_real_method(obj, holder):
-    """Attempt to obtain the real function object that might be wrapping
-    ``obj``, while at the same time returning a bound method to ``holder`` if
-    the original object was a bound method."""
-    try:
-        is_method = hasattr(obj, "__func__")
-        obj = get_real_func(obj)
-    except Exception:  # pragma: no cover
-        return obj
-    if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
-        obj = obj.__get__(holder)
     return obj
 
 
