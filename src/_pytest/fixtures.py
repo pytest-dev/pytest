@@ -1263,13 +1263,13 @@ class FixtureFunctionDefinition(Generic[FixtureParams, FixtureValue]):
         return f"<pytest_fixture({self._fixture_function})>"
 
     def __get__(
-        self, obj: object, objtype: type | None = None
+        self, instance: object, owner: type | None = None
     ) -> FixtureFunctionDefinition[FixtureParams, FixtureValue]:
         """Behave like a method if the function it was applied to was a method."""
         return FixtureFunctionDefinition(
             function=self._fixture_function,
             fixture_function_marker=self._fixture_function_marker,
-            instance=obj,
+            instance=instance,
             _ispytest=True,
         )
 
