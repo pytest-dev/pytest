@@ -866,7 +866,7 @@ def pytest_report_from_serializable(
 
 @hookspec(firstresult=True)
 def pytest_fixture_setup(
-    fixturedef: FixtureDef[Any, Any], request: SubRequest
+    fixturedef: FixtureDef[Any], request: SubRequest
 ) -> object | None:
     """Perform fixture setup execution.
 
@@ -894,7 +894,7 @@ def pytest_fixture_setup(
 
 
 def pytest_fixture_post_finalizer(
-    fixturedef: FixtureDef[Any, Any], request: SubRequest
+    fixturedef: FixtureDef[Any], request: SubRequest
 ) -> None:
     """Called after fixture teardown, but before the cache is cleared, so
     the fixture result ``fixturedef.cached_result`` is still available (not

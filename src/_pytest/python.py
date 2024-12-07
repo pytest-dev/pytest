@@ -1085,7 +1085,7 @@ def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
 
 
 # Used for storing pseudo fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[dict[str, FixtureDef[Any, Any]]]()
+name2pseudofixturedef_key = StashKey[dict[str, FixtureDef[Any]]]()
 
 
 @final
@@ -1271,7 +1271,7 @@ class Metafunc:
         if node is None:
             name2pseudofixturedef = None
         else:
-            default: dict[str, FixtureDef[Any, Any]] = {}
+            default: dict[str, FixtureDef[Any]] = {}
             name2pseudofixturedef = node.stash.setdefault(
                 name2pseudofixturedef_key, default
             )
@@ -1458,7 +1458,7 @@ class Metafunc:
 
 def _find_parametrized_scope(
     argnames: Sequence[str],
-    arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[Any, object]]],
+    arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
     indirect: bool | Sequence[str],
 ) -> Scope:
     """Find the most appropriate scope for a parametrized call based on its arguments.

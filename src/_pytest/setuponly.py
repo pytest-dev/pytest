@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import Any
 
 from _pytest._io.saferepr import saferepr
 from _pytest.config import Config
@@ -31,7 +30,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.hookimpl(wrapper=True)
 def pytest_fixture_setup(
-    fixturedef: FixtureDef[Any, object], request: SubRequest
+    fixturedef: FixtureDef[object], request: SubRequest
 ) -> Generator[None, object, object]:
     try:
         return (yield)
@@ -52,7 +51,7 @@ def pytest_fixture_setup(
 
 
 def pytest_fixture_post_finalizer(
-    fixturedef: FixtureDef[Any, object], request: SubRequest
+    fixturedef: FixtureDef[object], request: SubRequest
 ) -> None:
     if fixturedef.cached_result is not None:
         config = request.config
@@ -63,7 +62,7 @@ def pytest_fixture_post_finalizer(
 
 
 def _show_fixture_action(
-    fixturedef: FixtureDef[Any, object], config: Config, msg: str
+    fixturedef: FixtureDef[object], config: Config, msg: str
 ) -> None:
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:
