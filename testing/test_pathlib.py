@@ -922,6 +922,37 @@ class TestImportLibMode:
         result = pytester.runpytest("--import-mode=importlib")
         result.stdout.fnmatch_lines("* 1 passed *")
 
+    @pytest.mark.parametrize("name", ["code", "time", "math"])
+    def test_importlib_same_name_as_stl(
+        self, pytester, ns_param: bool, tmp_path: Path, name: str
+    ):
+        """Import a namespace package with the same name as the standard library (#13026)."""
+        file_path = pytester.path / f"{name}/foo/test_demo.py"
+        file_path.parent.mkdir(parents=True)
+        file_path.write_text(
+            dedent(
+                """
+            def test_demo():
+                pass
+            """
+            ),
+            encoding="utf-8",
+        )
+
+        # unit test
+        __import__(name)  # import standard library
+
+        import_path(  # import user files
+            file_path,
+            mode=ImportMode.importlib,
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+
+        # E2E test
+        result = pytester.runpytest("--import-mode=importlib")
+        result.stdout.fnmatch_lines("* 1 passed *")
+
     def create_installed_doctests_and_tests_dir(
         self, path: Path, monkeypatch: MonkeyPatch
     ) -> tuple[Path, Path, Path]:

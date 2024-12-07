@@ -668,7 +668,10 @@ def _import_module_using_spec(
     parent_module: ModuleType | None = None
     if parent_module_name:
         parent_module = sys.modules.get(parent_module_name)
-        if parent_module is None:
+        # If the parent_module lacks the `__path__` attribute, AttributeError when finding a submodule's spec,
+        # requiring re-import according to the path.
+        need_reimport = not hasattr(parent_module, "__path__")
+        if parent_module is None or need_reimport:
             # Get parent_location based on location, get parent_path based on path.
             if module_path.name == "__init__.py":
                 # If the current module is in a package,
