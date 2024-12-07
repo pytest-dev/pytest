@@ -1760,3 +1760,27 @@ def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
         assert junit_logging == "no"
         assert len(node.find_by_tag("system-err")) == 0
         assert len(node.find_by_tag("system-out")) == 0
+
+
+def test_output_relative_path_when_skip(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        **{
+            "tests/test_p1": """
+        import pytest
+        @pytest.mark.skip("balabala")
+        def test_skip():
+            pass
+        """
+        }
+    )
+    pytester.runpytest("--junit-xml=junit.xml")
+
+    dom = minidom.parse(str(pytester.path / "junit.xml"))
+
+    el = dom.getElementsByTagName("skipped")[0]
+
+    assert el.getAttribute("message") == "balabala"
+
+    text = el.childNodes[0].nodeValue
+    relative_path = os.path.join("tests", "test_p1.py")
+    assert text == f"{relative_path}:2: balabala"

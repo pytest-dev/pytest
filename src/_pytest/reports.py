@@ -367,9 +367,11 @@ class TestReport(BaseReport):
                 if excinfo.value._use_item_location:
                     path, line = item.reportinfo()[:2]
                     assert line is not None
-                    longrepr = os.fspath(path), line + 1, r.message
+                    relative_path = item.config.cwd_relative_path(path)
+                    longrepr = relative_path, line + 1, r.message
                 else:
-                    longrepr = (str(r.path), r.lineno, r.message)
+                    relative_path = item.config.cwd_relative_path(r.path)
+                    longrepr = (relative_path, r.lineno, r.message)
             else:
                 outcome = "failed"
                 if call.when == "call":
