@@ -1,0 +1,1 @@
+Fix applying markers, including :ref:`pytest.mark.parametrize <pytest.mark.parametrize ref>` when placed above `@staticmethod` or `@classmethod`.

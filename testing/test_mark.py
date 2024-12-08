@@ -1226,3 +1226,38 @@ def test_mark_fixture_order_mro(pytester: Pytester):
     )
     result = pytester.runpytest(foo)
     result.assert_outcomes(passed=1)
+
+
+def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
+    """Check that applying marks works as intended on classmethods and staticmethods.
+
+    Regression test for #12863.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.mark.parametrize("value", [1, 2])
+            @classmethod
+            def test_classmethod_wrapper(cls, value: int):
+                assert value in [1, 2]
+
+            @classmethod
+            @pytest.mark.parametrize("value", [1, 2])
+            def test_classmethod_wrapper_on_top(cls, value: int):
+                assert value in [1, 2]
+
+            @pytest.mark.parametrize("value", [1, 2])
+            @staticmethod
+            def test_staticmethod_wrapper(value: int):
+                assert value in [1, 2]
+
+            @staticmethod
+            @pytest.mark.parametrize("value", [1, 2])
+            def test_staticmethod_wrapper_on_top(value: int):
+                assert value in [1, 2]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=8)
