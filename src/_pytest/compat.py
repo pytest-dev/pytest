@@ -173,6 +173,21 @@ def get_default_arg_names(function: Callable[..., Any]) -> tuple[str, ...]:
         and p.default is not Parameter.empty
     )
 
+# def check_default_arguments(func, nodeid):
+#     """Check for default arguments in the function and issue warnings."""
+#     sig = inspect.signature(func)
+#     for param in sig.parameters.values():
+#         if param.default is not param.empty:
+#             function_name = func.__name__
+#             async_default_arg_warn(nodeid, function_name, param)
+
+def get_default_name_val(function: Callable[..., Any]) -> dict[str, Any]:
+    sig = signature(function)
+    return {
+        param.name: param.default
+        for param in sig.parameters.values()
+        if param.default is not Parameter.empty
+    }
 
 _non_printable_ascii_translate_table = {
     i: f"\\x{i:02x}" for i in range(128) if i not in range(32, 127)

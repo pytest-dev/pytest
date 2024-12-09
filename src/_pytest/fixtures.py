@@ -41,6 +41,7 @@ from _pytest._code.code import FormattedExcinfo
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import _PytestWrapper
+from _pytest.compat import get_default_name_val
 from _pytest.compat import assert_never
 from _pytest.compat import get_real_func
 from _pytest.compat import get_real_method
@@ -70,7 +71,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
-from _pytest.warning_types import PytestRemovedIn9Warning
+from _pytest.warning_types import PytestDefaultArgumentWarning, PytestRemovedIn9Warning
 from _pytest.warning_types import PytestWarning
 
 
@@ -1448,6 +1449,20 @@ def deduplicate_names(*seqs: Iterable[str]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(name for seq in seqs for name in seq))
 
 
+def default_arg_warn(nodeid: str, function_name, param_name, param_val) -> None:
+    msg = (
+        f"Test function '{function_name}' has a default argument '{param_name}={param_val}'.\n"
+    )
+    warnings.simplefilter("always", PytestDefaultArgumentWarning)
+    warnings.warn(PytestDefaultArgumentWarning(msg))
+
+
+def check_default_arguments(func_name, default_args, nodeid):
+    """Check for default arguments in the function and issue warnings."""
+    for arg_name, default_val in default_args.items():
+        default_arg_warn(nodeid, func_name, arg_name, default_val)
+
+
 class FixtureManager:
     """pytest fixture definitions and information is stored and managed
     from this class.
@@ -1528,6 +1543,11 @@ class FixtureManager:
             ignore_args=direct_parametrize_args,
         )
 
+        if func is not None:
+            function_name = func.__name__
+            default_args = get_default_name_val(func)
+            check_default_arguments(function_name, default_args, node.nodeid)
+                
         return FuncFixtureInfo(argnames, initialnames, names_closure, arg2fixturedefs)
 
     def pytest_plugin_registered(self, plugin: _PluggyPlugin, plugin_name: str) -> None:
