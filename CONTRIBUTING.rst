@@ -270,7 +270,7 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Run all the tests
 
-   You need to have Python 3.8 or later available in your system.  Now
+   You need to have Python 3.9 or later available in your system.  Now
    running tests is as simple as issuing this command::
 
     $ tox -e linting,py39

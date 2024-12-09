@@ -6,6 +6,12 @@ from __future__ import annotations
 import abc
 from collections import Counter
 from collections import defaultdict
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import enum
 import fnmatch
@@ -14,18 +20,11 @@ import inspect
 import itertools
 import os
 from pathlib import Path
+import re
 import types
 from typing import Any
-from typing import Callable
-from typing import Dict
 from typing import final
-from typing import Generator
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
-from typing import Mapping
-from typing import Pattern
-from typing import Sequence
 from typing import TYPE_CHECKING
 import warnings
 
@@ -43,7 +42,6 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
-from _pytest.compat import is_generator
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
@@ -57,7 +55,6 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
-from _pytest.mark import MARK_GEN
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import Mark
@@ -73,8 +70,6 @@ from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
-from _pytest.warning_types import PytestReturnNotNoneWarning
-from _pytest.warning_types import PytestUnhandledCoroutineWarning
 
 
 if TYPE_CHECKING:
@@ -135,36 +130,36 @@ def pytest_configure(config: Config) -> None:
     )
 
 
-def async_warn_and_skip(nodeid: str) -> None:
-    msg = "async def functions are not natively supported and have been skipped.\n"
-    msg += (
+def async_fail(nodeid: str) -> None:
+    msg = (
+        "async def functions are not natively supported.\n"
         "You need to install a suitable plugin for your async framework, for example:\n"
+        "  - anyio\n"
+        "  - pytest-asyncio\n"
+        "  - pytest-tornasync\n"
+        "  - pytest-trio\n"
+        "  - pytest-twisted"
     )
-    msg += "  - anyio\n"
-    msg += "  - pytest-asyncio\n"
-    msg += "  - pytest-tornasync\n"
-    msg += "  - pytest-trio\n"
-    msg += "  - pytest-twisted"
-    warnings.warn(PytestUnhandledCoroutineWarning(msg.format(nodeid)))
-    skip(reason="async def function and no async plugin installed (see warnings)")
+    fail(msg, pytrace=False)
 
 
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     testfunction = pyfuncitem.obj
     if is_async_function(testfunction):
-        async_warn_and_skip(pyfuncitem.nodeid)
+        async_fail(pyfuncitem.nodeid)
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
-        async_warn_and_skip(pyfuncitem.nodeid)
+        async_fail(pyfuncitem.nodeid)
     elif result is not None:
-        warnings.warn(
-            PytestReturnNotNoneWarning(
-                f"Expected None, but {pyfuncitem.nodeid} returned {result!r}, which will be an error in a "
-                "future version of pytest.  Did you mean to use `assert` instead of `return`?"
-            )
+        fail(
+            (
+                f"Expected None, but test returned {result!r}. "
+                "Did you mean to use `assert` instead of `return`?"
+            ),
+            pytrace=False,
         )
     return True
 
@@ -233,16 +228,13 @@ def pytest_pycollect_makeitem(
                 lineno=lineno + 1,
             )
         elif getattr(obj, "__test__", True):
-            if is_generator(obj):
-                res = Function.from_parent(collector, name=name)
-                reason = (
-                    f"yield tests were removed in pytest 4.0 - {name} will be ignored"
+            if inspect.isgeneratorfunction(obj):
+                fail(
+                    f"'yield' keyword is allowed in fixtures, but not in tests ({name})",
+                    pytrace=False,
                 )
-                res.add_marker(MARK_GEN.xfail(run=False, reason=reason))
-                res.warn(PytestCollectionWarning(reason))
-                return res
-            else:
-                return list(collector._genfunctions(name, obj))
+            return list(collector._genfunctions(name, obj))
+        return None
     return None
 
 
@@ -405,6 +397,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         # __dict__ is definition ordered.
         seen: set[str] = set()
         dict_values: list[list[nodes.Item | nodes.Collector]] = []
+        collect_imported_tests = self.session.config.getini("collect_imported_tests")
         ihook = self.ihook
         for dic in dicts:
             values: list[nodes.Item | nodes.Collector] = []
@@ -416,6 +409,13 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
                 if name in seen:
                     continue
                 seen.add(name)
+
+                if not collect_imported_tests and isinstance(self, Module):
+                    # Do not collect functions and classes from other modules.
+                    if inspect.isfunction(obj) or inspect.isclass(obj):
+                        if obj.__module__ != self._getobj().__name__:
+                            continue
+
                 res = ihook.pytest_pycollect_makeitem(
                     collector=self, name=name, obj=obj
                 )
@@ -439,7 +439,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         assert modulecol is not None
         module = modulecol.obj
         clscol = self.getparent(Class)
-        cls = clscol and clscol.obj or None
+        cls = (clscol and clscol.obj) or None
 
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
         fixtureinfo = definition._fixtureinfo
@@ -856,12 +856,12 @@ class IdMaker:
 
     __slots__ = (
         "argnames",
-        "parametersets",
+        "config",
+        "func_name",
         "idfn",
         "ids",
-        "config",
         "nodeid",
-        "func_name",
+        "parametersets",
     )
 
     # The argnames of the parametrization.
@@ -981,7 +981,7 @@ class IdMaker:
             return _ascii_escaped_by_config(val, self.config)
         elif val is None or isinstance(val, (float, int, bool, complex)):
             return str(val)
-        elif isinstance(val, Pattern):
+        elif isinstance(val, re.Pattern):
             return ascii_escaped(val.pattern)
         elif val is NOTSET:
             # Fallback to default. Note that NOTSET is an enum.Enum.
@@ -1085,7 +1085,7 @@ def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
 
 
 # Used for storing pseudo fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[Dict[str, FixtureDef[Any]]]()
+name2pseudofixturedef_key = StashKey[dict[str, FixtureDef[Any]]]()
 
 
 @final

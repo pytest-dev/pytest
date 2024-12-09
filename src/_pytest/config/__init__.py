@@ -5,6 +5,12 @@ from __future__ import annotations
 
 import argparse
 import collections.abc
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Sequence
+import contextlib
 import copy
 import dataclasses
 import enum
@@ -21,17 +27,11 @@ from textwrap import dedent
 import types
 from types import FunctionType
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import IO
-from typing import Iterable
-from typing import Iterator
-from typing import Sequence
 from typing import TextIO
-from typing import Type
 from typing import TYPE_CHECKING
 import warnings
 
@@ -72,7 +72,6 @@ from _pytest.warning_types import warn_explicit_for
 if TYPE_CHECKING:
     from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
-
 
 _PluggyPlugin = object
 """A type to represent plugin objects.
@@ -1077,7 +1076,7 @@ class Config:
         self._inicache: dict[str, Any] = {}
         self._override_ini: Sequence[str] = ()
         self._opt2dest: dict[str, str] = {}
-        self._cleanup: list[Callable[[], None]] = []
+        self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         self.hook.pytest_addoption.call_historic(
@@ -1106,8 +1105,9 @@ class Config:
 
     def add_cleanup(self, func: Callable[[], None]) -> None:
         """Add a function to be called when the config object gets out of
-        use (usually coinciding with pytest_unconfigure)."""
-        self._cleanup.append(func)
+        use (usually coinciding with pytest_unconfigure).
+        """
+        self._cleanup_stack.callback(func)
 
     def _do_configure(self) -> None:
         assert not self._configured
@@ -1117,13 +1117,18 @@ class Config:
             self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
     def _ensure_unconfigure(self) -> None:
-        if self._configured:
-            self._configured = False
-            self.hook.pytest_unconfigure(config=self)
-            self.hook.pytest_configure._call_history = []
-        while self._cleanup:
-            fin = self._cleanup.pop()
-            fin()
+        try:
+            if self._configured:
+                self._configured = False
+                try:
+                    self.hook.pytest_unconfigure(config=self)
+                finally:
+                    self.hook.pytest_configure._call_history = []
+        finally:
+            try:
+                self._cleanup_stack.close()
+            finally:
+                self._cleanup_stack = contextlib.ExitStack()
 
     def get_terminal_writer(self) -> TerminalWriter:
         terminalreporter: TerminalReporter | None = self.pluginmanager.get_plugin(
@@ -1697,11 +1702,12 @@ class Config:
     def getoption(self, name: str, default=notset, skip: bool = False):
         """Return command line option value.
 
-        :param name: Name of the option.  You may also specify
+        :param name: Name of the option. You may also specify
             the literal ``--OPT`` option instead of the "dest" option name.
-        :param default: Default value if no option of that name exists.
-        :param skip: If True, raise pytest.skip if option does not exists
-            or has a None value.
+        :param default: Fallback value if no option of that name is **declared** via :hook:`pytest_addoption`.
+            Note this parameter will be ignored when the option is **declared** even if the option's value is ``None``.
+        :param skip: If ``True``, raise :func:`pytest.skip` if option is undeclared or has a ``None`` value.
+            Note that even if ``True``, if a default was specified it will be returned instead of a skip.
         """
         name = self._opt2dest.get(name, name)
         try:
@@ -1971,7 +1977,7 @@ def _resolve_warning_category(category: str) -> type[Warning]:
     cat = getattr(m, klass)
     if not issubclass(cat, Warning):
         raise UsageError(f"{cat} is not a Warning subclass")
-    return cast(Type[Warning], cat)
+    return cast(type[Warning], cat)
 
 
 def apply_warning_filters(

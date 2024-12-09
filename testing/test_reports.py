@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr

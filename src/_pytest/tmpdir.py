@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 import dataclasses
 import os
 from pathlib import Path
@@ -10,9 +11,7 @@ import re
 from shutil import rmtree
 import tempfile
 from typing import Any
-from typing import Dict
 from typing import final
-from typing import Generator
 from typing import Literal
 
 from .pathlib import cleanup_dead_symlinks
@@ -34,16 +33,15 @@ from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 
 
-tmppath_result_key = StashKey[Dict[str, bool]]()
+tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
 
 
 @final
 @dataclasses.dataclass
 class TempPathFactory:
-    """Factory for temporary directories under the common base temp directory.
-
-    The base directory can be configured using the ``--basetemp`` option.
+    """Factory for temporary directories under the common base temp directory,
+    as discussed at :ref:`temporary directory location and retention`.
     """
 
     _given_basetemp: Path | None
@@ -257,18 +255,11 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 def tmp_path(
     request: FixtureRequest, tmp_path_factory: TempPathFactory
 ) -> Generator[Path]:
-    """Return a temporary directory path object which is unique to each test
-    function invocation, created as a sub directory of the base temporary
-    directory.
-
-    By default, a new base temporary directory is created each test session,
-    and old bases are removed after 3 sessions, to aid in debugging.
-    This behavior can be configured with :confval:`tmp_path_retention_count` and
-    :confval:`tmp_path_retention_policy`.
-    If ``--basetemp`` is used then it is cleared each session. See
-    :ref:`temporary directory location and retention`.
-
-    The returned object is a :class:`pathlib.Path` object.
+    """Return a temporary directory (as :class:`pathlib.Path` object)
+    which is unique to each test function invocation.
+    The temporary directory is created as a subdirectory
+    of the base temporary directory, with configurable retention,
+    as discussed in :ref:`temporary directory location and retention`.
     """
     path = _mk_tmp(request, tmp_path_factory)
     yield path

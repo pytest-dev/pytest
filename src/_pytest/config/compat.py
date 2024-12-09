@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import functools
 from pathlib import Path
 from typing import Any
-from typing import Mapping
 import warnings
 
 import pluggy

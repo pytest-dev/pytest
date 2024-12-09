@@ -1,0 +1,1 @@
+Fixed :class:`AttributeError`  crash when using ``--import-mode=importlib`` when top-level directory same name as another module of the standard library.

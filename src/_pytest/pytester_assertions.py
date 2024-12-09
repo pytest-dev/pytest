@@ -6,7 +6,7 @@
 # module to not be already imported.
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport

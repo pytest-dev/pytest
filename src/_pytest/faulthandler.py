@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 import os
 import sys
-from typing import Generator
 
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser

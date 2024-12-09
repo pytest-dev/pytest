@@ -2,19 +2,19 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
+from collections.abc import Collection
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import MutableMapping
+from collections.abc import Sequence
 import dataclasses
 import inspect
 from typing import Any
-from typing import Callable
-from typing import Collection
 from typing import final
-from typing import Iterable
-from typing import Iterator
-from typing import Mapping
-from typing import MutableMapping
 from typing import NamedTuple
 from typing import overload
-from typing import Sequence
 from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
@@ -48,13 +48,7 @@ def get_empty_parameterset_mark(
     from ..nodes import Collector
 
     fs, lineno = getfslineno(func)
-    reason = "got empty parameter set %r, function %s at %s:%d" % (
-        argnames,
-        func.__name__,
-        fs,
-        lineno,
-    )
-
+    reason = f"got empty parameter set {argnames!r}, function {func.__name__} at {fs}:{lineno}"
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ("", None, "skip"):
         mark = MARK_GEN.skip(reason=reason)
@@ -64,7 +58,7 @@ def get_empty_parameterset_mark(
         f_name = func.__name__
         _, lineno = getfslineno(func)
         raise Collector.CollectError(
-            "Empty parameter set in '%s' at line %d" % (f_name, lineno + 1)
+            f"Empty parameter set in '{f_name}' at line {lineno + 1}"
         )
     else:
         raise LookupError(requested_mark)
@@ -562,7 +556,7 @@ MARK_GEN = MarkGenerator(_ispytest=True)
 
 @final
 class NodeKeywords(MutableMapping[str, Any]):
-    __slots__ = ("node", "parent", "_markers")
+    __slots__ = ("_markers", "node", "parent")
 
     def __init__(self, node: Node) -> None:
         self.node = node
@@ -584,10 +578,8 @@ class NodeKeywords(MutableMapping[str, Any]):
     # below and use the collections.abc fallback, but that would be slow.
 
     def __contains__(self, key: object) -> bool:
-        return (
-            key in self._markers
-            or self.parent is not None
-            and key in self.parent.keywords
+        return key in self._markers or (
+            self.parent is not None and key in self.parent.keywords
         )
 
     def update(  # type: ignore[override]

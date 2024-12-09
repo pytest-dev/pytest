@@ -1163,6 +1163,11 @@ processes can inspect it, see :ref:`pytest current test env` for more informatio
 
 When set, pytest will print tracing and debug information.
 
+.. envvar:: PYTEST_DEBUG_TEMPROOT
+
+Root for temporary directories produced by fixtures like :fixture:`tmp_path`
+as discussed in :ref:`temporary directory location and retention`.
+
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
 When set, disables plugin auto-loading through :std:doc:`entry point packaging
@@ -1239,14 +1244,8 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestExperimentalApiWarning
    :show-inheritance:
 
-.. autoclass:: pytest.PytestReturnNotNoneWarning
-  :show-inheritance:
-
 .. autoclass:: pytest.PytestRemovedIn9Warning
   :show-inheritance:
-
-.. autoclass:: pytest.PytestUnhandledCoroutineWarning
-   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnknownMarkWarning
    :show-inheritance:
@@ -1311,6 +1310,40 @@ passed multiple times. The expected format is ``name=value``. For example::
    relative to :ref:`rootdir <rootdir>`. Additionally, a path may contain environment
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
+
+.. confval:: collect_imported_tests
+
+   .. versionadded:: 8.4
+
+   Setting this to ``false`` will make pytest collect classes/functions from test
+   files **only** if they are defined in that file (as opposed to imported there).
+
+   .. code-block:: ini
+
+        [pytest]
+        collect_imported_tests = false
+
+   Default: ``true``
+
+   pytest traditionally collects classes/functions in the test module namespace even if they are imported from another file.
+
+   For example:
+
+   .. code-block:: python
+
+       # contents of src/domain.py
+       class Testament: ...
+
+
+       # contents of tests/test_testament.py
+       from domain import Testament
+
+
+       def test_testament(): ...
+
+   In this scenario, with the default options, pytest will collect the class `Testament` from `tests/test_testament.py` because it starts with `Test`, even though in this case it is a production class being imported in the test module namespace.
+
+   Set ``collected_imported_tests`` to ``false`` in the configuration file prevents that.
 
 .. confval:: consider_namespace_packages
 
@@ -1872,10 +1905,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
        pytest testing doc
 
-
 .. confval:: tmp_path_retention_count
-
-
 
    How many sessions should we keep the `tmp_path` directories,
    according to `tmp_path_retention_policy`.

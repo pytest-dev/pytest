@@ -3,15 +3,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Mapping
+from collections.abc import MutableMapping
 from contextlib import contextmanager
 import os
 import re
 import sys
 from typing import Any
 from typing import final
-from typing import Generator
-from typing import Mapping
-from typing import MutableMapping
 from typing import overload
 from typing import TypeVar
 import warnings
