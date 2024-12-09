@@ -47,7 +47,7 @@ class PytestCollectionWarning(PytestWarning):
 @final
 class PytestDefaultArgumentWarning(PytestWarning):
     """Warning emitted when a test function has default arguments."""
-    
+
     __module__ = "pytest"
 
 

@@ -69,7 +69,8 @@ from _pytest.pathlib import scandir
 from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
-from _pytest.warning_types import PytestCollectionWarning, PytestDefaultArgumentWarning, warn_explicit_for
+from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestDefaultArgumentWarning
 
 
 if TYPE_CHECKING:
@@ -145,12 +146,18 @@ def async_fail(nodeid: str) -> None:
 
 def async_default_arg_warn(nodeid: str, function_name, param) -> None:
     msg = (
-        "Test function '" + function_name + "' has a default argument '" + param.name + "=" + str(param.default) + "'.\n"
+        "Test function '"
+        + function_name
+        + "' has a default argument '"
+        + param.name
+        + "="
+        + str(param.default)
+        + "'.\n"
     )
     warnings.simplefilter("always", PytestDefaultArgumentWarning)
     warnings.warn(PytestDefaultArgumentWarning(msg))
 
-            
+
 @hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     testfunction = pyfuncitem.obj
