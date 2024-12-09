@@ -975,7 +975,10 @@ class TestApprox:
         dict1 = {"a": 1.0, "b": 1.0, "c": 3.1}
         dict2 = {"b": 2.0, "a": 1.0, "c": 3.1}  # 'b' has a different value
 
-        with pytest.raises(AssertionError, match="Mismatched elements: 1 / 3:\n  Max absolute difference: 1.0\n"):
+        with pytest.raises(
+            AssertionError,
+            match="Mismatched elements: 1 / 3:\n  Max absolute difference: 1.0\n",
+        ):
             assert dict1 == pytest.approx(dict2)
 
 
