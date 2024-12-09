@@ -44,6 +44,13 @@ class PytestCollectionWarning(PytestWarning):
     __module__ = "pytest"
 
 
+@final
+class PytestDefaultArgumentWarning(PytestWarning):
+    """Warning emitted when a test function has default arguments."""
+    
+    __module__ = "pytest"
+
+
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """Warning class for features that will be removed in a future version."""
 
