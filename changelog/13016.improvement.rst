@@ -1,0 +1,8 @@
+A number of :ref:`threadexception <unraisable>` enhancements:
+
+* Set the excepthook as early as possible and unset it as late as possible, to collect the most possible number of unhandled exceptions from threads.
+* Collect multiple thread exceptions per test phase.
+* Report the :mod:`tracemalloc` allocation traceback (if available).
+* Avoid using a generator based hook to allow handling :class:`StopIteration` in test failures.
+* Report the thread exception as the cause of the :class:`pytest.PytestUnhandledThreadExceptionWarning` exception if raised.
+* Extract the ``name`` of the thread object in the excepthook which should help with resurrection of the thread.

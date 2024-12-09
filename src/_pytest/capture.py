@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import abc
 import collections
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
 import contextlib
 import io
 from io import UnsupportedOperation
@@ -15,12 +18,10 @@ from types import TracebackType
 from typing import Any
 from typing import AnyStr
 from typing import BinaryIO
+from typing import cast
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import Generic
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
 from typing import NamedTuple
 from typing import TextIO
@@ -177,7 +178,8 @@ class EncodedFile(io.TextIOWrapper):
     def mode(self) -> str:
         # TextIOWrapper doesn't expose a mode, but at least some of our
         # tests check it.
-        return self.buffer.mode.replace("b", "")
+        assert hasattr(self.buffer, "mode")
+        return cast(str, self.buffer.mode.replace("b", ""))
 
 
 class CaptureIO(io.TextIOWrapper):
@@ -358,7 +360,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             class_name,
             self.name,
-            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
             self._state,
             self.tmpfile,
         )
@@ -367,7 +369,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             self.__class__.__name__,
             self.name,
-            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
             self._state,
             self.tmpfile,
         )
@@ -550,7 +552,7 @@ class FDCaptureBinary(FDCaptureBase[bytes]):
         res = self.tmpfile.buffer.read()
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
-        return res
+        return res  # type: ignore[return-value]
 
     def writeorg(self, data: bytes) -> None:
         """Write to original file descriptor."""

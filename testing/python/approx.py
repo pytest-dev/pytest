@@ -90,13 +90,26 @@ def assert_approx_raises_regex(pytestconfig):
     return do_assert
 
 
-SOME_FLOAT = r"[+-]?([0-9]*[.])?[0-9]+\s*"
+SOME_FLOAT = r"[+-]?((?:([0-9]*[.])?[0-9]+(e-?[0-9]+)?)|inf|nan)\s*"
 SOME_INT = r"[0-9]+\s*"
 SOME_TOLERANCE = rf"({SOME_FLOAT}|[+-]?[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]+\s*)"
 
 
 class TestApprox:
     def test_error_messages_native_dtypes(self, assert_approx_raises_regex):
+        # Treat bool exactly.
+        assert_approx_raises_regex(
+            {"a": 1.0, "b": True},
+            {"a": 1.0, "b": False},
+            [
+                "",
+                "  comparison failed. Mismatched elements: 1 / 2:",
+                f"  Max absolute difference: {SOME_FLOAT}",
+                f"  Max relative difference: {SOME_FLOAT}",
+                r"  Index\s+\| Obtained\s+\| Expected",
+                r".*(True|False)\s+",
+            ],
+        )
         assert_approx_raises_regex(
             2.0,
             1.0,
@@ -377,6 +390,37 @@ class TestApprox:
 
         assert err.match(r"approx\(\) is not supported in a boolean context")
 
+    def test_mixed_sequence(self, assert_approx_raises_regex) -> None:
+        """Approx should work on sequences that also contain non-numbers (#13010)."""
+        assert_approx_raises_regex(
+            [1.1, 2, "word"],
+            [1.0, 2, "different"],
+            [
+                "",
+                r"  comparison failed. Mismatched elements: 2 / 3:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected\s+",
+                r"\s*0\s*\|\s*1\.1\s*\|\s*1\.0\s*±\s*1\.0e\-06\s*",
+                r"\s*2\s*\|\s*word\s*\|\s*different\s*",
+            ],
+            verbosity_level=2,
+        )
+        assert_approx_raises_regex(
+            [1.1, 2, "word"],
+            [1.0, 2, "word"],
+            [
+                "",
+                r"  comparison failed. Mismatched elements: 1 / 3:",
+                rf"  Max absolute difference: {SOME_FLOAT}",
+                rf"  Max relative difference: {SOME_FLOAT}",
+                r"  Index \| Obtained\s+\| Expected\s+",
+                r"\s*0\s*\|\s*1\.1\s*\|\s*1\.0\s*±\s*1\.0e\-06\s*",
+            ],
+            verbosity_level=2,
+        )
+        assert [1.1, 2, "word"] == pytest.approx([1.1, 2, "word"])
+
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
         assert not (1 != approx(1, rel=1e-6, abs=1e-12))
@@ -596,6 +640,13 @@ class TestApprox:
             assert approx(x, rel=5e-6, abs=0) == a
             assert approx(x, rel=5e-7, abs=0) != a
 
+    def test_expecting_bool(self) -> None:
+        assert True == approx(True)  # noqa: E712
+        assert False == approx(False)  # noqa: E712
+        assert True != approx(False)  # noqa: E712
+        assert True != approx(False, abs=2)  # noqa: E712
+        assert 1 != approx(True)
+
     def test_list(self):
         actual = [1 + 1e-7, 2 + 1e-8]
         expected = [1, 2]
@@ -661,6 +712,7 @@ class TestApprox:
     def test_dict_nonnumeric(self):
         assert {"a": 1.0, "b": None} == pytest.approx({"a": 1.0, "b": None})
         assert {"a": 1.0, "b": 1} != pytest.approx({"a": 1.0, "b": None})
+        assert {"a": 1.0, "b": True} != pytest.approx({"a": 1.0, "b": False}, abs=2)
 
     def test_dict_vs_other(self):
         assert 1 != approx({"a": 0})

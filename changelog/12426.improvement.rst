@@ -1,0 +1,1 @@
+A warning is now issued when :ref:`pytest.mark.usefixtures ref` is used without specifying any fixtures. Previously, empty usefixtures markers were silently ignored.

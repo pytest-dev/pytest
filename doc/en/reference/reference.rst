@@ -1301,6 +1301,40 @@ passed multiple times. The expected format is ``name=value``. For example::
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
+.. confval:: collect_imported_tests
+
+   .. versionadded:: 8.4
+
+   Setting this to ``false`` will make pytest collect classes/functions from test
+   files **only** if they are defined in that file (as opposed to imported there).
+
+   .. code-block:: ini
+
+        [pytest]
+        collect_imported_tests = false
+
+   Default: ``true``
+
+   pytest traditionally collects classes/functions in the test module namespace even if they are imported from another file.
+
+   For example:
+
+   .. code-block:: python
+
+       # contents of src/domain.py
+       class Testament: ...
+
+
+       # contents of tests/test_testament.py
+       from domain import Testament
+
+
+       def test_testament(): ...
+
+   In this scenario, with the default options, pytest will collect the class `Testament` from `tests/test_testament.py` because it starts with `Test`, even though in this case it is a production class being imported in the test module namespace.
+
+   Set ``collected_imported_tests`` to ``false`` in the configuration file prevents that.
+
 .. confval:: consider_namespace_packages
 
    Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
@@ -1861,10 +1895,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
        pytest testing doc
 
-
 .. confval:: tmp_path_retention_count
-
-
 
    How many sessions should we keep the `tmp_path` directories,
    according to `tmp_path_retention_policy`.

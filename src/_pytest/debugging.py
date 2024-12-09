@@ -5,12 +5,12 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
+from collections.abc import Generator
 import functools
 import sys
 import types
 from typing import Any
-from typing import Callable
-from typing import Generator
 import unittest
 
 from _pytest import outcomes

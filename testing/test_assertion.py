@@ -1,10 +1,10 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 import sys
 import textwrap
 from typing import Any
-from typing import MutableSequence
 from typing import NamedTuple
 
 import attr
@@ -1406,15 +1406,14 @@ class TestTruncateExplanation:
         line_len = 100
         expected_truncated_lines = 2
         pytester.makepyfile(
-            r"""
+            rf"""
             def test_many_lines():
-                a = list([str(i)[0] * %d for i in range(%d)])
+                a = list([str(i)[0] * {line_len} for i in range({line_count})])
                 b = a[::2]
                 a = '\n'.join(map(str, a))
                 b = '\n'.join(map(str, b))
                 assert a == b
         """
-            % (line_len, line_count)
         )
         monkeypatch.delenv("CI", raising=False)
 
@@ -1424,7 +1423,7 @@ class TestTruncateExplanation:
             [
                 "*+ 1*",
                 "*+ 3*",
-                "*truncated (%d lines hidden)*use*-vv*" % expected_truncated_lines,
+                f"*truncated ({expected_truncated_lines} lines hidden)*use*-vv*",
             ]
         )
 
