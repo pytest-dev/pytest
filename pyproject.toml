@@ -334,7 +334,7 @@ disable = [
 
 [tool.codespell]
 ignore-words-list = "afile,asend,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,socio-economic,tesults,varius,wil"
-skip = "*/plugin_list.rst"
+skip = "AUTHORS,*/plugin_list.rst"
 write-changes = true
 
 [tool.check-wheel-contents]
