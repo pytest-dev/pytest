@@ -1682,3 +1682,19 @@ def test_collection_hierarchy(pytester: Pytester) -> None:
         ],
         consecutive=True,
     )
+
+
+def test_output_relative_path_when_import_error(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        **{"tests/test_p1": "raise ImportError('Something bad happened ☺')"}
+    )
+    relative_path = os.path.join("tests", "test_p1.py")
+
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            f"ImportError while importing test module '{relative_path}'*",
+            "Traceback:",
+            "*raise ImportError*Something bad happened*",
+        ]
+    )

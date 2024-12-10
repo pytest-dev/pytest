@@ -1,0 +1,1 @@
+Prioritize displaying relative paths in the terminal output, such as for :class:`~pytest.FixtureLookupError`, :class:`~pytest.Collector.CollectError`, and any warnings.
