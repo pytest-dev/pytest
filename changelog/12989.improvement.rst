@@ -1,1 +1,1 @@
-A warning is now issued when tests incorrectly use :class:`@pytest.fixture`, whereas this was previously silently ignored.
+Issues a warning when a function is not collected as a test case just because it uses :py:func:`@pytest.fixture`
