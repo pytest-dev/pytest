@@ -1498,6 +1498,34 @@ class TestNamespacePackages:
             ]
         )
 
+    def test_ns_multiple_levels_import_error(
+        self,
+        tmp_path: Path,
+        pytester: Pytester,
+    ) -> None:
+        # Trigger condition 1: ns and file with the same name
+        file = pytester.path / "cow/moo/moo.py"
+        file.parent.mkdir(parents=True)
+        file.write_text("data=123", encoding="utf-8")
+
+        # Trigger condition 2: tests are located in ns
+        tests = pytester.path / "cow/moo/test_moo.py"
+
+        tests.write_text(
+            dedent(
+                """
+            from cow.moo.moo import data
+
+            def test_moo():
+                print(data)
+            """
+            ),
+            encoding="utf-8",
+        )
+
+        result = pytester.runpytest("--import-mode=importlib")
+        assert result.ret == ExitCode.OK
+
     @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
     def test_incorrect_namespace_package(
         self,
