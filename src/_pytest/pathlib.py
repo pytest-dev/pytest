@@ -696,8 +696,8 @@ def _import_module_using_spec(
     for meta_importer in sys.meta_path:
         module_name_of_meta = getattr(meta_importer.__class__, "__module__", "")
         if module_name_of_meta == "_pytest.assertion.rewrite" and module_path.is_file():
-            # import modules in subdirectories by module_path
-            # to ensure assertion rewrites are not missed (#12659)
+            # Import modules in subdirectories by module_path
+            # to ensure assertion rewrites are not missed (#12659).
             find_spec_path = [str(module_location), str(module_path)]
         else:
             find_spec_path = [str(module_location)]
