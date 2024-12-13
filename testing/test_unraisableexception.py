@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Generator
+import contextlib
 import gc
 import sys
 from unittest import mock
@@ -203,6 +205,24 @@ def test_unraisable_collection_failure(pytester: Pytester) -> None:
     )
 
 
+def _set_gc_state(enabled: bool) -> bool:
+    was_enabled = gc.isenabled()
+    if enabled:
+        gc.enable()
+    else:
+        gc.disable()
+    return was_enabled
+
+
+@contextlib.contextmanager
+def _disable_gc() -> Generator[None]:
+    was_enabled = _set_gc_state(enabled=False)
+    try:
+        yield
+    finally:
+        _set_gc_state(enabled=was_enabled)
+
+
 def test_create_task_unraisable(pytester: Pytester) -> None:
     # see: https://github.com/pytest-dev/pytest/issues/10404
     pytester.makepyfile(
@@ -221,13 +241,8 @@ def test_create_task_unraisable(pytester: Pytester) -> None:
         """
     )
 
-    was_enabled = gc.isenabled()
-    gc.disable()
-    try:
+    with _disable_gc():
         result = pytester.runpytest()
-    finally:
-        if was_enabled:
-            gc.enable()
 
     # TODO: should be a test failure or error
     assert result.ret == pytest.ExitCode.INTERNAL_ERROR
@@ -255,13 +270,8 @@ def test_create_task_unraisable_warning_filter(pytester: Pytester) -> None:
         """
     )
 
-    was_enabled = gc.isenabled()
-    gc.disable()
-    try:
+    with _disable_gc():
         result = pytester.runpytest("-Werror")
-    finally:
-        if was_enabled:
-            gc.enable()
 
     # TODO: should be a test failure or error
     assert result.ret == pytest.ExitCode.INTERNAL_ERROR
