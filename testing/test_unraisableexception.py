@@ -235,6 +235,38 @@ def test_create_task_unraisable(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
 
+@pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
+def test_create_task_unraisable_warning_filter(pytester: Pytester) -> None:
+    # see: https://github.com/pytest-dev/pytest/issues/10404
+    pytester.makepyfile(
+        test_it="""
+        import pytest
+
+        class BrokenDel:
+            def __init__(self):
+                self.self = self  # make a reference cycle
+
+            def __del__(self):
+                raise ValueError("del is broken")
+
+        def test_it():
+            BrokenDel()
+        """
+    )
+
+    was_enabled = gc.isenabled()
+    gc.disable()
+    try:
+        result = pytester.runpytest("-Werror")
+    finally:
+        if was_enabled:
+            gc.enable()
+
+    # TODO: should be a test failure or error
+    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
+
+    result.assert_outcomes(passed=1)
+    result.stderr.fnmatch_lines("ValueError: del is broken")
 
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
 def test_possibly_none_excinfo(pytester: Pytester) -> None:
