@@ -235,6 +235,7 @@ def test_create_task_unraisable(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
 
+
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_create_task_unraisable_warning_filter(pytester: Pytester) -> None:
     # see: https://github.com/pytest-dev/pytest/issues/10404
@@ -267,6 +268,7 @@ def test_create_task_unraisable_warning_filter(pytester: Pytester) -> None:
 
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
+
 
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
 def test_possibly_none_excinfo(pytester: Pytester) -> None:
