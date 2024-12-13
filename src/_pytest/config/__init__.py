@@ -264,11 +264,11 @@ default_plugins = (
     "setuponly",
     "setupplan",
     "stepwise",
+    "unraisableexception",
+    "threadexception",
     "warnings",
     "logging",
     "reports",
-    "unraisableexception",
-    "threadexception",
     "faulthandler",
 )
 
