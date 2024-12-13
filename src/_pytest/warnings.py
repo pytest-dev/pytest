@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from contextlib import contextmanager, ExitStack
+from contextlib import contextmanager
+from contextlib import ExitStack
 import sys
 from typing import Literal
 import warnings
@@ -131,6 +132,7 @@ def pytest_load_initial_conftests(
         config=early_config, ihook=early_config.hook, when="config", item=None
     ):
         return (yield)
+
 
 def pytest_configure(config: Config) -> None:
     with ExitStack() as stack:
