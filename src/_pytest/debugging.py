@@ -159,6 +159,8 @@ class pytestPDB:
                 cls._recursive_debug -= 1
                 return ret
 
+            do_debug.__doc__ = pdb_cls.do_debug.__doc__
+
             def do_continue(self, arg):
                 ret = super().do_continue(arg)
                 if cls._recursive_debug == 0:
@@ -185,21 +187,24 @@ class pytestPDB:
                 self._continued = True
                 return ret
 
+            do_continue.__doc__ = pdb_cls.do_continue.__doc__
+
             do_c = do_cont = do_continue
 
             def do_quit(self, arg):
-                """Raise Exit outcome when quit command is used in pdb.
-
-                This is a bit of a hack - it would be better if BdbQuit
-                could be handled, but this would require to wrap the
-                whole pytest run, and adjust the report etc.
-                """
+                # Raise Exit outcome when quit command is used in pdb.
+                #
+                # This is a bit of a hack - it would be better if BdbQuit
+                # could be handled, but this would require to wrap the
+                # whole pytest run, and adjust the report etc.
                 ret = super().do_quit(arg)
 
                 if cls._recursive_debug == 0:
                     outcomes.exit("Quitting debugger")
 
                 return ret
+
+            do_quit.__doc__ = pdb_cls.do_quit.__doc__
 
             do_q = do_quit
             do_exit = do_quit
