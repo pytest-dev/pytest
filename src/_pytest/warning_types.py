@@ -125,7 +125,9 @@ class UnformattedWarning(Generic[_W]):
 
 @final
 class PytestFDWarning(PytestWarning):
-    pass
+    """When the lsof plugin finds leaked fds."""
+
+    __module__ = "pytest"
 
 
 def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
