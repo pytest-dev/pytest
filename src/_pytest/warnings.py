@@ -18,14 +18,6 @@ from _pytest.tracemalloc import tracemalloc_message
 import pytest
 
 
-def pytest_configure(config: Config) -> None:
-    config.addinivalue_line(
-        "markers",
-        "filterwarnings(warning): add a warning filter to the given test. "
-        "see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#pytest-mark-filterwarnings ",
-    )
-
-
 @contextmanager
 def catch_warnings_for_item(
     config: Config,
@@ -140,5 +132,10 @@ def pytest_configure(config: Config) -> None:
             catch_warnings_for_item(
                 config=config, ihook=config.hook, when="config", item=None
             )
+        )
+        config.addinivalue_line(
+            "markers",
+            "filterwarnings(warning): add a warning filter to the given test. "
+            "see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#pytest-mark-filterwarnings ",
         )
         config.add_cleanup(stack.pop_all().close)
