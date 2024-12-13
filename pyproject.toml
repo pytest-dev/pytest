@@ -405,7 +405,7 @@ filterwarnings = [
     "ignore:isSet\\(\\) is deprecated, use is_set\\(\\) instead:DeprecationWarning",
     # https://github.com/pytest-dev/pytest/issues/2366
     # https://github.com/pytest-dev/pytest/pull/13057
-    "default:.*:pytest.PytestFDWarning",
+    "default::pytest.PytestFDWarning",
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [
