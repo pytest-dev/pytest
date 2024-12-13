@@ -65,7 +65,7 @@ from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
-from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import PytestFDWarning
 
 
 if TYPE_CHECKING:
@@ -188,7 +188,7 @@ class LsofFdLeakChecker:
                     "*** function {}:{}: {} ".format(*item.location),
                     "See issue #2366",
                 ]
-                item.warn(PytestWarning("\n".join(error)))
+                item.warn(PytestFDWarning("\n".join(error)))
 
 
 # used at least by pytest-xdist plugin

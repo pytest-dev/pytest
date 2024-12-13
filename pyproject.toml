@@ -403,6 +403,9 @@ filterwarnings = [
     "ignore:VendorImporter\\.find_spec\\(\\) not found; falling back to find_module\\(\\):ImportWarning",
     # https://github.com/pytest-dev/execnet/pull/127
     "ignore:isSet\\(\\) is deprecated, use is_set\\(\\) instead:DeprecationWarning",
+    # https://github.com/pytest-dev/pytest/issues/2366
+    # https://github.com/pytest-dev/pytest/pull/13057
+    "default:.*:pytest.PytestFDWarning",
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [

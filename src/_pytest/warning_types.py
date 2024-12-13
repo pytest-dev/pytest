@@ -123,6 +123,11 @@ class UnformattedWarning(Generic[_W]):
         return self.category(self.template.format(**kwargs))
 
 
+@final
+class PytestFDWarning(PytestWarning):
+    pass
+
+
 def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
     """
     Issue the warning :param:`message` for the definition of the given :param:`method`
