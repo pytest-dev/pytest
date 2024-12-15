@@ -2617,6 +2617,23 @@ def test_short_summary_with_verbose(
     )
 
 
+def test_force_short_summary(monkeypatch: MonkeyPatch, pytester: Pytester) -> None:
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+
+    pytester.makepyfile(
+        """
+        def test():
+            assert "a\\n" * 10 == ""
+        """
+    )
+
+    result = pytester.runpytest("-vv", "--force-short-summary")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        ["*short test summary info*", "*AssertionError: assert 'a\\na\\na\\na..."]
+    )
+
+
 @pytest.mark.parametrize(
     "seconds, expected",
     [
