@@ -11,6 +11,10 @@ repos:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-yaml
+- repo: https://github.com/woodruffw/zizmor-pre-commit
+  rev: v0.9.2
+  hooks:
+    - id: zizmor
 -   repo: https://github.com/adamchainz/blacken-docs
     rev: 1.19.1
     hooks:
