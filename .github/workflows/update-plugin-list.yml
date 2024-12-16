@@ -23,12 +23,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
+
       - name: requests-cache
         uses: actions/cache@v4
         with:
@@ -40,7 +42,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install packaging requests tabulate[widechars] tqdm requests-cache platformdirs
-
 
       - name: Update Plugin List
         run: python scripts/update-plugin-list.py
@@ -61,8 +62,9 @@ jobs:
       - name: Instruct the maintainers to trigger CI by undrafting the PR
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
         run: >-
           gh pr comment
           --body 'Please mark the PR as ready for review to trigger PR checks.'
           --repo '${{ github.repository }}'
-          '${{ steps.pr.outputs.pull-request-number }}'
+          "$PULL_REQUEST_NUMBER"
