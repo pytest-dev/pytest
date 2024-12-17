@@ -253,6 +253,8 @@ def test_refcycle_unraisable(pytester: Pytester) -> None:
 
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_refcycle_unraisable_warning_filter(pytester: Pytester) -> None:
+    # note that the host pytest warning filter is disabled and the pytester
+    # warning filter applies during config teardown of unraisablehook.
     # see: https://github.com/pytest-dev/pytest/issues/10404
     pytester.makepyfile(
         test_it="""
@@ -282,7 +284,11 @@ def test_refcycle_unraisable_warning_filter(pytester: Pytester) -> None:
 
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> None:
+    # note that the host pytest warning filter is disabled and the pytester
+    # warning filter applies during config teardown of unraisablehook.
     # see: https://github.com/pytest-dev/pytest/issues/10404
+    # This is a dupe of the above test, but using the exact reproducer from
+    # the issue
     pytester.makepyfile(
         test_it="""
         import asyncio
