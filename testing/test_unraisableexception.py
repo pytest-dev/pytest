@@ -223,7 +223,7 @@ def _disable_gc() -> Generator[None]:
         _set_gc_state(enabled=was_enabled)
 
 
-def test_create_task_unraisable(pytester: Pytester) -> None:
+def test_refcycle_unraisable(pytester: Pytester) -> None:
     # see: https://github.com/pytest-dev/pytest/issues/10404
     pytester.makepyfile(
         test_it="""
@@ -252,7 +252,7 @@ def test_create_task_unraisable(pytester: Pytester) -> None:
 
 
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
-def test_create_task_unraisable_warning_filter(pytester: Pytester) -> None:
+def test_refcycle_unraisable_warning_filter(pytester: Pytester) -> None:
     # see: https://github.com/pytest-dev/pytest/issues/10404
     pytester.makepyfile(
         test_it="""
@@ -278,6 +278,33 @@ def test_create_task_unraisable_warning_filter(pytester: Pytester) -> None:
 
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
+
+
+@pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
+def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> None:
+    # see: https://github.com/pytest-dev/pytest/issues/10404
+    pytester.makepyfile(
+        test_it="""
+        import asyncio
+        import pytest
+
+        async def my_task():
+            pass
+
+        def test_scheduler_must_be_created_within_running_loop() -> None:
+            with pytest.raises(RuntimeError) as _:
+                asyncio.create_task(my_task())
+        """
+    )
+
+    with _disable_gc():
+        result = pytester.runpytest("-Werror")
+
+    # TODO: should be a test failure or error
+    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
+
+    result.assert_outcomes(passed=1)
+    result.stderr.fnmatch_lines("RuntimeWarning: coroutine 'my_task' was never awaited")
 
 
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
