@@ -1,0 +1,2 @@
+``pytest.mark.parametrize([], idfunc=...)`` will no longer trigger a call to ``idfunc`` with internal objects.
+instead the concrete id ``NOTSET`` is used.
