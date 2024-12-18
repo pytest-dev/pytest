@@ -340,6 +340,8 @@ def test_refcycle_unraisable_warning_filter_default(pytester: Pytester) -> None:
 
     assert result.ret == pytest.ExitCode.OK
 
+    # TODO: should be warnings=1, but the outcome has already come out
+    # by the time the warning triggers
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
 
