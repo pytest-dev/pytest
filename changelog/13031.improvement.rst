@@ -1,0 +1,2 @@
+``pytest.mark.parametrize([], isfunc=...)`` will no longer call the idfunc with the internal ``NOTSET``
+value - instead the concrete id "NOTSET" is passed and ``idfunc`` is no longer invoked
