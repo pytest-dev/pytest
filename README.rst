@@ -42,6 +42,10 @@
     :target: https://web.libera.chat/#pytest
     :alt: Libera chat
 
+.. image:: https://img.shields.io/badge/Gurubase-Ask%20pytest%20Guru-006BFF
+    :target: https://gurubase.io/g/pytest
+    :alt: Gurubase
+
 
 The ``pytest`` framework makes it easy to write small tests, yet
 scales to support complex functional testing for applications and libraries.
