@@ -1728,6 +1728,20 @@ class FixtureManager:
         )
 
         faclist = self._arg2fixturedefs.setdefault(name, [])
+
+        by_plugin = fixture_def.baseid == ""
+
+        if not by_plugin and faclist:
+            # If the fixture from a plugin, no conflict detection is performed.
+            if faclist[-1].baseid == fixture_def.baseid:
+                # The same file may create two fixtures with the same name (#12952).
+                msg = (
+                    f"Fixture definition conflict: {name!r} has multiple implementations,"
+                    f"namely {faclist[-1].func!r} and {func}  (from: {nodeid!r})."
+                )
+                print(msg)
+                raise ValueError(msg)
+
         if fixture_def.has_location:
             faclist.append(fixture_def)
         else:

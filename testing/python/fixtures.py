@@ -5009,3 +5009,26 @@ def test_subfixture_teardown_order(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_fixture_name_conflict(pytester: Pytester) -> None:
+    """The same file may create two fixtures with the same name, but not override(#12952)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(name="cache")
+        def c1():  # Create first, but register later
+            return 1
+
+        @pytest.fixture(name="cache")  # Create later, but register first
+        def c0():
+            return 0
+
+        def test_value(cache):
+            assert cache == 0  # Failed, `cache` from c1
+    """
+    )
+
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["E   ValueError: Fixture definition conflict:*"])
