@@ -123,6 +123,7 @@ jobs:
             python: "3.9"
             os: ubuntu-latest
             tox_env: "py39-lsof-numpy-pexpect"
+            use_coverage: true
 
           - name: "ubuntu-py39-pluggy"
             python: "3.9"
