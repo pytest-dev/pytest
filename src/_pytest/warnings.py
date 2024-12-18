@@ -24,6 +24,8 @@ def catch_warnings_for_item(
     ihook,
     when: Literal["config", "collect", "runtest"],
     item: Item | None,
+    *,
+    record: bool = True,
 ) -> Generator[None]:
     """Context manager that catches warnings generated in the contained execution block.
 
@@ -33,10 +35,7 @@ def catch_warnings_for_item(
     """
     config_filters = config.getini("filterwarnings")
     cmdline_filters = config.known_args_namespace.pythonwarnings or []
-    with warnings.catch_warnings(record=True) as log:
-        # mypy can't infer that record=True means log is not None; help it.
-        assert log is not None
-
+    with warnings.catch_warnings(record=record) as log:
         if not sys.warnoptions:
             # If user is not explicitly configuring warning filters, show deprecation warnings by default (#2908).
             warnings.filterwarnings("always", category=DeprecationWarning)
@@ -57,15 +56,19 @@ def catch_warnings_for_item(
         try:
             yield
         finally:
-            for warning_message in log:
-                ihook.pytest_warning_recorded.call_historic(
-                    kwargs=dict(
-                        warning_message=warning_message,
-                        nodeid=nodeid,
-                        when=when,
-                        location=None,
+            if record:
+                # mypy can't infer that record=True means log is not None; help it.
+                assert log is not None
+
+                for warning_message in log:
+                    ihook.pytest_warning_recorded.call_historic(
+                        kwargs=dict(
+                            warning_message=warning_message,
+                            nodeid=nodeid,
+                            when=when,
+                            location=None,
+                        )
                     )
-                )
 
 
 def warning_record_to_str(warning_message: warnings.WarningMessage) -> str:
@@ -130,7 +133,15 @@ def pytest_configure(config: Config) -> None:
     with ExitStack() as stack:
         stack.enter_context(
             catch_warnings_for_item(
-                config=config, ihook=config.hook, when="config", item=None
+                config=config,
+                ihook=config.hook,
+                when="config",
+                item=None,
+                # this disables recording because the terminalreporter has
+                # finished by the time it comes to reporting logged warnings
+                # from the end of config cleanup. So for now, this is only
+                # useful for setting a warning filter with an 'error' action.
+                record=False,
             )
         )
         config.addinivalue_line(

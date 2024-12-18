@@ -313,6 +313,37 @@ def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> Non
     result.stderr.fnmatch_lines("RuntimeWarning: coroutine 'my_task' was never awaited")
 
 
+def test_refcycle_unraisable_warning_filter_default(pytester: Pytester) -> None:
+    # note this time we use a default warning filter for pytester
+    # and run it in a subprocess, because the warning can only go to the
+    # sys.stdout rather than the terminal reporter, which has already
+    # finished.
+    # see: https://github.com/pytest-dev/pytest/pull/13057#discussion_r1888396126
+    pytester.makepyfile(
+        test_it="""
+        import pytest
+
+        class BrokenDel:
+            def __init__(self):
+                self.self = self  # make a reference cycle
+
+            def __del__(self):
+                raise ValueError("del is broken")
+
+        def test_it():
+            BrokenDel()
+        """
+    )
+
+    with _disable_gc():
+        result = pytester.runpytest_subprocess("-Wdefault")
+
+    assert result.ret == pytest.ExitCode.OK
+
+    result.assert_outcomes(passed=1)
+    result.stderr.fnmatch_lines("ValueError: del is broken")
+
+
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
 def test_possibly_none_excinfo(pytester: Pytester) -> None:
     pytester.makepyfile(
