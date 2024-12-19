@@ -7,6 +7,10 @@ PYTEST_DONT_REWRITE
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Sequence
 import contextlib
 from fnmatch import fnmatch
 import gc
@@ -22,15 +26,11 @@ import subprocess
 import sys
 import traceback
 from typing import Any
-from typing import Callable
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import IO
-from typing import Iterable
 from typing import Literal
 from typing import overload
-from typing import Sequence
 from typing import TextIO
 from typing import TYPE_CHECKING
 from weakref import WeakKeyDictionary
@@ -65,7 +65,7 @@ from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
-from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import PytestFDWarning
 
 
 if TYPE_CHECKING:
@@ -188,7 +188,7 @@ class LsofFdLeakChecker:
                     "*** function {}:{}: {} ".format(*item.location),
                     "See issue #2366",
                 ]
-                item.warn(PytestWarning("\n".join(error)))
+                item.warn(PytestFDWarning("\n".join(error)))
 
 
 # used at least by pytest-xdist plugin
@@ -547,8 +547,10 @@ class RunResult:
 
     def __repr__(self) -> str:
         return (
-            "<RunResult ret=%s len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
-            % (self.ret, len(self.stdout.lines), len(self.stderr.lines), self.duration)
+            f"<RunResult ret={self.ret!s} "
+            f"len(stdout.lines)={len(self.stdout.lines)} "
+            f"len(stderr.lines)={len(self.stderr.lines)} "
+            f"duration={self.duration:.2f}s>"
         )
 
     def parseoutcomes(self) -> dict[str, int]:

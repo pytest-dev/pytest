@@ -1,8 +1,12 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Collection
+from collections.abc import Mapping
+from collections.abc import Sequence
 from collections.abc import Sized
+from contextlib import AbstractContextManager
 from decimal import Decimal
 import math
 from numbers import Complex
@@ -10,16 +14,9 @@ import pprint
 import re
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import cast
-from typing import ContextManager
 from typing import final
-from typing import Mapping
 from typing import overload
-from typing import Pattern
-from typing import Sequence
-from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -262,19 +259,22 @@ class ApproxMapping(ApproxBase):
         ):
             if approx_value != other_value:
                 if approx_value.expected is not None and other_value is not None:
-                    max_abs_diff = max(
-                        max_abs_diff, abs(approx_value.expected - other_value)
-                    )
-                    if approx_value.expected == 0.0:
-                        max_rel_diff = math.inf
-                    else:
-                        max_rel_diff = max(
-                            max_rel_diff,
-                            abs(
-                                (approx_value.expected - other_value)
-                                / approx_value.expected
-                            ),
+                    try:
+                        max_abs_diff = max(
+                            max_abs_diff, abs(approx_value.expected - other_value)
                         )
+                        if approx_value.expected == 0.0:
+                            max_rel_diff = math.inf
+                        else:
+                            max_rel_diff = max(
+                                max_rel_diff,
+                                abs(
+                                    (approx_value.expected - other_value)
+                                    / approx_value.expected
+                                ),
+                            )
+                    except ZeroDivisionError:
+                        pass
                 different_ids.append(approx_key)
 
         message_data = [
@@ -340,14 +340,18 @@ class ApproxSequenceLike(ApproxBase):
             zip(approx_side_as_map, other_side)
         ):
             if approx_value != other_value:
-                abs_diff = abs(approx_value.expected - other_value)
-                max_abs_diff = max(max_abs_diff, abs_diff)
-                if other_value == 0.0:
-                    max_rel_diff = math.inf
+                try:
+                    abs_diff = abs(approx_value.expected - other_value)
+                    max_abs_diff = max(max_abs_diff, abs_diff)
+                # Ignore non-numbers for the diff calculations (#13012).
+                except TypeError:
+                    pass
                 else:
-                    max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
+                    if other_value == 0.0:
+                        max_rel_diff = math.inf
+                    else:
+                        max_rel_diff = max(max_rel_diff, abs_diff / abs(other_value))
                 different_ids.append(i)
-
         message_data = [
             (str(i), str(other_side[i]), str(approx_side_as_map[i]))
             for i in different_ids
@@ -398,8 +402,10 @@ class ApproxScalar(ApproxBase):
         # Don't show a tolerance for values that aren't compared using
         # tolerances, i.e. non-numerics and infinities. Need to call abs to
         # handle complex numbers, e.g. (inf + 1j).
-        if (not isinstance(self.expected, (Complex, Decimal))) or math.isinf(
-            abs(self.expected)
+        if (
+            isinstance(self.expected, bool)
+            or (not isinstance(self.expected, (Complex, Decimal)))
+            or math.isinf(abs(self.expected) or isinstance(self.expected, bool))
         ):
             return str(self.expected)
 
@@ -431,14 +437,17 @@ class ApproxScalar(ApproxBase):
             # numpy<1.13.  See #3748.
             return all(self.__eq__(a) for a in asarray.flat)
 
-        # Short-circuit exact equality.
-        if actual == self.expected:
+        # Short-circuit exact equality, except for bool
+        if isinstance(self.expected, bool) and not isinstance(actual, bool):
+            return False
+        elif actual == self.expected:
             return True
 
         # If either type is non-numeric, fall back to strict equality.
         # NB: we need Complex, rather than just Number, to ensure that __abs__,
-        # __sub__, and __float__ are defined.
-        if not (
+        # __sub__, and __float__ are defined. Also, consider bool to be
+        # nonnumeric, even though it has the required arithmetic.
+        if isinstance(self.expected, bool) or not (
             isinstance(self.expected, (Complex, Decimal))
             and isinstance(actual, (Complex, Decimal))
         ):
@@ -782,7 +791,7 @@ E = TypeVar("E", bound=BaseException)
 def raises(
     expected_exception: type[E] | tuple[type[E], ...],
     *,
-    match: str | Pattern[str] | None = ...,
+    match: str | re.Pattern[str] | None = ...,
 ) -> RaisesContext[E]: ...
 
 
@@ -957,7 +966,7 @@ def raises(
     message = f"DID NOT RAISE {expected_exception}"
 
     if not args:
-        match: str | Pattern[str] | None = kwargs.pop("match", None)
+        match: str | re.Pattern[str] | None = kwargs.pop("match", None)
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))
@@ -980,12 +989,12 @@ raises.Exception = fail.Exception  # type: ignore
 
 
 @final
-class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
+class RaisesContext(AbstractContextManager[_pytest._code.ExceptionInfo[E]]):
     def __init__(
         self,
         expected_exception: type[E] | tuple[type[E], ...],
         message: str,
-        match_expr: str | Pattern[str] | None = None,
+        match_expr: str | re.Pattern[str] | None = None,
     ) -> None:
         self.expected_exception = expected_exception
         self.message = message
@@ -1017,7 +1026,7 @@ class RaisesContext(ContextManager[_pytest._code.ExceptionInfo[E]]):
         if not issubclass(exc_type, self.expected_exception):
             return False
         # Cast to narrow the exception type now that it's verified.
-        exc_info = cast(Tuple[Type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
+        exc_info = cast(tuple[type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
         self.excinfo.fill_unfilled(exc_info)
         if self.match_expr is not None:
             self.excinfo.match(self.match_expr)

@@ -1,0 +1,9 @@
+A number of :ref:`unraisable <unraisable>` enhancements:
+
+* Set the unraisable hook as early as possible and unset it as late as possible, to collect the most possible number of unraisable exceptions.
+* Call the garbage collector just before unsetting the unraisable hook, to collect any straggling exceptions.
+* Collect multiple unraisable exceptions per test phase.
+* Report the :mod:`tracemalloc` allocation traceback (if available).
+* Avoid using a generator based hook to allow handling :class:`StopIteration` in test failures.
+* Report the unraisable exception as the cause of the :class:`pytest.PytestUnraisableExceptionWarning` exception if raised.
+* Compute the ``repr`` of the unraisable object in the unraisable hook so you get the latest information if available, and should help with resurrection of the object.

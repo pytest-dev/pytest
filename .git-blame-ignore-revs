@@ -5,7 +5,7 @@
 #
 # To "install" it:
 #
-#   git config --local blame.ignoreRevsFile .gitblameignore
+#   git config --local blame.ignoreRevsFile .git-blame-ignore-revs
 
 # run black
 703e4b11ba76171eccd3f13e723c47b810ded7ef

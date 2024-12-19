@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import errno
 import os
 import sys
-from typing import Callable
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -69,7 +69,7 @@ class ErrorMaker:
         try:
             return self._errno2class[eno]
         except KeyError:
-            clsname = errno.errorcode.get(eno, "UnknownErrno%d" % (eno,))
+            clsname = errno.errorcode.get(eno, f"UnknownErrno{eno}")
             errorcls = type(
                 clsname,
                 (Error,),

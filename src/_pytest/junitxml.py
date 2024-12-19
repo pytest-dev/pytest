@@ -10,14 +10,13 @@ https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jen
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 from datetime import timezone
 import functools
 import os
 import platform
 import re
-from typing import Callable
-from typing import Match
 import xml.etree.ElementTree as ET
 
 from _pytest import nodes
@@ -48,7 +47,7 @@ def bin_xml_escape(arg: object) -> str:
     The idea is to escape visually for the user rather than for XML itself.
     """
 
-    def repl(matchobj: Match[str]) -> str:
+    def repl(matchobj: re.Match[str]) -> str:
         i = ord(matchobj.group())
         if i <= 0xFF:
             return f"#x{i:02X}"
@@ -74,10 +73,10 @@ def merge_family(left, right) -> None:
     left.update(result)
 
 
-families = {}
-families["_base"] = {"testcase": ["classname", "name"]}
-families["_base_legacy"] = {"testcase": ["file", "line", "url"]}
-
+families = {  # pylint: disable=dict-init-mutate
+    "_base": {"testcase": ["classname", "name"]},
+    "_base_legacy": {"testcase": ["file", "line", "url"]},
+}
 # xUnit 1.x inherits legacy attributes.
 families["xunit1"] = families["_base"].copy()
 merge_family(families["xunit1"], families["_base_legacy"])

@@ -1,6 +1,9 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Iterator
+from collections.abc import Sequence
 import errno
 import importlib.abc
 import importlib.machinery
@@ -12,9 +15,6 @@ import sys
 from textwrap import dedent
 from types import ModuleType
 from typing import Any
-from typing import Generator
-from typing import Iterator
-from typing import Sequence
 import unittest.mock
 
 from _pytest.config import ExitCode
@@ -922,6 +922,37 @@ class TestImportLibMode:
         result = pytester.runpytest("--import-mode=importlib")
         result.stdout.fnmatch_lines("* 1 passed *")
 
+    @pytest.mark.parametrize("name", ["code", "time", "math"])
+    def test_importlib_same_name_as_stl(
+        self, pytester, ns_param: bool, tmp_path: Path, name: str
+    ):
+        """Import a namespace package with the same name as the standard library (#13026)."""
+        file_path = pytester.path / f"{name}/foo/test_demo.py"
+        file_path.parent.mkdir(parents=True)
+        file_path.write_text(
+            dedent(
+                """
+            def test_demo():
+                pass
+            """
+            ),
+            encoding="utf-8",
+        )
+
+        # unit test
+        __import__(name)  # import standard library
+
+        import_path(  # import user files
+            file_path,
+            mode=ImportMode.importlib,
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+
+        # E2E test
+        result = pytester.runpytest("--import-mode=importlib")
+        result.stdout.fnmatch_lines("* 1 passed *")
+
     def create_installed_doctests_and_tests_dir(
         self, path: Path, monkeypatch: MonkeyPatch
     ) -> tuple[Path, Path, Path]:
@@ -1466,6 +1497,34 @@ class TestNamespacePackages:
                 "E         + four lights",
             ]
         )
+
+    def test_ns_multiple_levels_import_error(
+        self,
+        tmp_path: Path,
+        pytester: Pytester,
+    ) -> None:
+        # Trigger condition 1: ns and file with the same name
+        file = pytester.path / "cow/moo/moo.py"
+        file.parent.mkdir(parents=True)
+        file.write_text("data=123", encoding="utf-8")
+
+        # Trigger condition 2: tests are located in ns
+        tests = pytester.path / "cow/moo/test_moo.py"
+
+        tests.write_text(
+            dedent(
+                """
+            from cow.moo.moo import data
+
+            def test_moo():
+                print(data)
+            """
+            ),
+            encoding="utf-8",
+        )
+
+        result = pytester.runpytest("--import-mode=importlib")
+        assert result.ret == ExitCode.OK
 
     @pytest.mark.parametrize("import_mode", ["prepend", "append", "importlib"])
     def test_incorrect_namespace_package(

@@ -123,6 +123,13 @@ class UnformattedWarning(Generic[_W]):
         return self.category(self.template.format(**kwargs))
 
 
+@final
+class PytestFDWarning(PytestWarning):
+    """When the lsof plugin finds leaked fds."""
+
+    __module__ = "pytest"
+
+
 def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
     """
     Issue the warning :param:`message` for the definition of the given :param:`method`

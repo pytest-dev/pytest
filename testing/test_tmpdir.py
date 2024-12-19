@@ -1,12 +1,12 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Callable
 import dataclasses
 import os
 from pathlib import Path
 import stat
 import sys
-from typing import Callable
 from typing import cast
 import warnings
 

@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Sequence
 import dataclasses
 import importlib.metadata
 import os
@@ -9,7 +10,6 @@ import re
 import sys
 import textwrap
 from typing import Any
-from typing import Sequence
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list
@@ -982,6 +982,37 @@ class TestConfigAPI:
     )
     def test_iter_rewritable_modules(self, names, expected) -> None:
         assert list(_iter_rewritable_modules(names)) == expected
+
+    def test_add_cleanup(self, pytester: Pytester) -> None:
+        config = Config.fromdictargs({}, [])
+        config._do_configure()
+        report = []
+
+        class MyError(BaseException):
+            pass
+
+        @config.add_cleanup
+        def cleanup_last():
+            report.append("cleanup_last")
+
+        @config.add_cleanup
+        def raise_2():
+            report.append("raise_2")
+            raise MyError("raise_2")
+
+        @config.add_cleanup
+        def raise_1():
+            report.append("raise_1")
+            raise MyError("raise_1")
+
+        @config.add_cleanup
+        def cleanup_first():
+            report.append("cleanup_first")
+
+        with pytest.raises(MyError, match=r"raise_2"):
+            config._ensure_unconfigure()
+
+        assert report == ["cleanup_first", "raise_1", "raise_2", "cleanup_last"]
 
 
 class TestConfigFromdictargs:

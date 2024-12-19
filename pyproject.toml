@@ -23,7 +23,7 @@ authors = [
     { name = "Florian Bruhin" },
     { name = "Others (See AUTHORS)" },
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
@@ -33,7 +33,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -51,7 +50,7 @@ dependencies = [
     "exceptiongroup>=1.0.0rc8; python_version<'3.11'",
     "iniconfig",
     "packaging",
-    "pluggy<2,>=1.5",
+    "pluggy>=1.5,<2",
     "tomli>=1; python_version<'3.11'",
 ]
 optional-dependencies.dev = [
@@ -84,11 +83,11 @@ scripts.pytest = "pytest:console_main"
 write_to = "src/_pytest/_version.py"
 
 [tool.black]
-target-version = [
-    'py38',
-]
+# See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#t-target-version
+target-version = [ "py39", "py310", "py311", "py312", "py313" ]
 
 [tool.ruff]
+target-version = "py39"
 line-length = 88
 src = [
     "src",
@@ -200,7 +199,9 @@ disable = [
     "arguments-renamed",
     "assigning-non-slot",
     "attribute-defined-outside-init",
+    "bad-builtin",
     "bad-classmethod-argument",
+    "bad-dunder-name",
     "bad-mcs-method-argument",
     "broad-exception-caught",
     "broad-exception-raised",
@@ -209,25 +210,38 @@ disable = [
     "comparison-with-callable",
     "comparison-with-itself",                 # PLR0124 from ruff
     "condition-evals-to-constant",
+    "consider-alternative-union-syntax",
+    "confusing-consecutive-elif",
+    "consider-using-assignment-expr",
     "consider-using-dict-items",
     "consider-using-from-import",
     "consider-using-f-string",
     "consider-using-in",
+    "consider-using-namedtuple-or-dataclass",
     "consider-using-ternary",
+    "consider-using-tuple",
     "consider-using-with",
     "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
+    "consider-ternary-expression",
     "cyclic-import",
+    "differing-param-doc",
+    "docstring-first-line-empty",
+    "deprecated-argument",
+    "deprecated-attribute",
+    "deprecated-class",
     "disallowed-name",                        # foo / bar are used often in tests
     "duplicate-code",
     "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
     "empty-comment",                          # not activated by default, PLR2044 disabled in ruff
     "eval-used",
+    "eq-without-hash",
     "exec-used",
     "expression-not-assigned",
     "fixme",
     "global-statement",                       # PLW0603 disabled in ruff
     "import-error",
     "import-outside-toplevel",
+    "import-private-name",
     "inconsistent-return-statements",
     "invalid-bool-returned",
     "invalid-name",
@@ -238,8 +252,12 @@ disable = [
     "magic-value-comparison",                 # not activated by default, PLR2004 disabled in ruff
     "method-hidden",
     "missing-docstring",
+    "missing-param-doc",
+    "missing-raises-doc",
     "missing-timeout",
+    "missing-type-doc",
     "misplaced-bare-raise",                   # PLE0704 from ruff
+    "misplaced-comparison-constant",
     "multiple-statements",                    # multiple-statements-on-one-line-colon (E701) from ruff
     "no-else-break",
     "no-else-continue",
@@ -248,6 +266,7 @@ disable = [
     "no-member",
     "no-name-in-module",
     "no-self-argument",
+    "no-self-use",
     "not-an-iterable",
     "not-callable",
     "pointless-exception-statement",          # https://github.com/pytest-dev/pytest/pull/12379
@@ -260,12 +279,14 @@ disable = [
     "redefined-builtin",
     "redefined-loop-name",                    # PLW2901 disabled in ruff
     "redefined-outer-name",
+    "redefined-variable-type",
     "reimported",
     "simplifiable-condition",
     "simplifiable-if-expression",
     "singleton-comparison",
     "superfluous-parens",
     "super-init-not-called",
+    "too-complex",
     "too-few-public-methods",
     "too-many-ancestors",
     "too-many-arguments",                     # disabled in ruff
@@ -275,9 +296,11 @@ disable = [
     "too-many-lines",
     "too-many-locals",
     "too-many-nested-blocks",
+    "too-many-positional-arguments",
     "too-many-public-methods",
     "too-many-return-statements",             # disabled in ruff
     "too-many-statements",                    # disabled in ruff
+    "too-many-try-statements",
     "try-except-raise",
     "typevar-name-incorrect-variance",        # PLC0105 disabled in ruff
     "unbalanced-tuple-unpacking",
@@ -299,17 +322,19 @@ disable = [
     "use-dict-literal",
     "use-implicit-booleaness-not-comparison",
     "use-implicit-booleaness-not-len",
+    "use-set-for-membership",
     "useless-else-on-loop",                   # PLC0414 disabled in ruff
     "useless-import-alias",
     "useless-return",
     "using-constant-test",
+    "while-used",
     "wrong-import-order",                     # handled by isort / ruff
     "wrong-import-position",                  # handled by isort / ruff
 ]
 
 [tool.codespell]
-ignore-words-list = "afile,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,socio-economic,tesults,varius,wil"
-skip = "*/plugin_list.rst"
+ignore-words-list = "afile,asend,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,socio-economic,tesults,varius,wil"
+skip = "AUTHORS,*/plugin_list.rst"
 write-changes = true
 
 [tool.check-wheel-contents]
@@ -378,6 +403,9 @@ filterwarnings = [
     "ignore:VendorImporter\\.find_spec\\(\\) not found; falling back to find_module\\(\\):ImportWarning",
     # https://github.com/pytest-dev/execnet/pull/127
     "ignore:isSet\\(\\) is deprecated, use is_set\\(\\) instead:DeprecationWarning",
+    # https://github.com/pytest-dev/pytest/issues/2366
+    # https://github.com/pytest-dev/pytest/pull/13057
+    "default::pytest.PytestFDWarning",
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [
@@ -481,7 +509,7 @@ files = [
 mypy_path = [
     "src",
 ]
-python_version = "3.8"
+python_version = "3.9"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true
