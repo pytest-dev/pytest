@@ -1,0 +1,3 @@
+Fixtures are now clearly represented in the output as a "fixture object", not as a normal function as before, making it easy for beginners to catch mistakes such as referencing a fixture declared in the same module but not requested in the test function.
+
+-- by :user:`the-compiler` and :user:`glyphack`

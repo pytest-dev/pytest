@@ -1284,7 +1284,7 @@ def test_collect_handles_raising_on_dunder_class(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed in*"])
+    result.assert_outcomes(passed=1)
     assert result.ret == 0
 
 
@@ -1348,7 +1348,7 @@ def test_collect_pyargs_with_testpaths(
     with monkeypatch.context() as mp:
         mp.chdir(root)
         result = pytester.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*1 passed in*"])
+    result.assert_outcomes(passed=1)
 
 
 def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
@@ -1878,3 +1878,20 @@ def test_respect_system_exceptions(
     result.stdout.fnmatch_lines([f"*{head}*"])
     result.stdout.fnmatch_lines([msg])
     result.stdout.no_fnmatch_line(f"*{tail}*")
+
+
+def test_yield_disallowed_in_tests(pytester: Pytester):
+    """Ensure generator test functions with 'yield' fail collection (#12960)."""
+    pytester.makepyfile(
+        """
+        def test_with_yield():
+            yield 1
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 2
+    result.stdout.fnmatch_lines(
+        ["*'yield' keyword is allowed in fixtures, but not in tests (test_with_yield)*"]
+    )
+    # Assert that no tests were collected
+    result.stdout.fnmatch_lines(["*collected 0 items*"])

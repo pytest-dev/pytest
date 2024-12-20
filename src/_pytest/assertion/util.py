@@ -4,16 +4,16 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import os
 import pprint
-from typing import AbstractSet
 from typing import Any
-from typing import Callable
-from typing import Iterable
 from typing import Literal
-from typing import Mapping
 from typing import Protocol
-from typing import Sequence
 from unicodedata import normalize
 
 from _pytest import outcomes
@@ -406,8 +406,7 @@ def _compare_eq_sequence(
             ]
         else:
             explanation += [
-                "%s contains %d more items, first extra item: %s"
-                % (dir_with_more, len_diff, highlighter(extra))
+                f"{dir_with_more} contains {len_diff} more items, first extra item: {highlighter(extra)}"
             ]
     return explanation
 
@@ -510,8 +509,7 @@ def _compare_eq_dict(
     len_extra_left = len(extra_left)
     if len_extra_left:
         explanation.append(
-            "Left contains %d more item%s:"
-            % (len_extra_left, "" if len_extra_left == 1 else "s")
+            f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
         )
         explanation.extend(
             highlighter(pprint.pformat({k: left[k] for k in extra_left})).splitlines()
@@ -520,8 +518,7 @@ def _compare_eq_dict(
     len_extra_right = len(extra_right)
     if len_extra_right:
         explanation.append(
-            "Right contains %d more item%s:"
-            % (len_extra_right, "" if len_extra_right == 1 else "s")
+            f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
         )
         explanation.extend(
             highlighter(pprint.pformat({k: right[k] for k in extra_right})).splitlines()

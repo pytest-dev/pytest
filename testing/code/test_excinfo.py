@@ -964,8 +964,8 @@ raise ValueError()
             upframe = sys._getframe().f_back
             assert upframe is not None
             if upframe.f_code.co_name == "_makepath":
-                # Only raise with expected calls, but not via e.g. inspect for
-                # py38-windows.
+                # Only raise with expected calls, and not accidentally via 'inspect'
+                # See 79ae86cc3f76d69460e1c7beca4ce95e68ab80a6
                 raised += 1
                 raise OSError(2, "custom_oserror")
             return orig_path_cwd()
@@ -1193,6 +1193,23 @@ raise ValueError()
         assert msg == str(path)
         line = tw_mock.lines[-1]
         assert line == ":3: ValueError"
+
+    def test_toterminal_value(self, importasmod, tw_mock):
+        mod = importasmod(
+            """
+            def g(x):
+                raise ValueError(x)
+            def f():
+                g('some_value')
+        """
+        )
+        excinfo = pytest.raises(ValueError, mod.f)
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
+        repr = excinfo.getrepr(style="value")
+        repr.toterminal(tw_mock)
+
+        assert tw_mock.get_write_msg(0) == "some_value"
+        assert tw_mock.get_write_msg(1) == "\n"
 
     @pytest.mark.parametrize(
         "reproptions",
@@ -1701,6 +1718,83 @@ def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
     # with py>=3.11 does not depend on exceptiongroup, though there is a toxenv for it
     pytest.importorskip("exceptiongroup")
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
+
+
+def test_exceptiongroup_short_summary_info(pytester: Pytester):
+    pytester.makepyfile(
+        """
+        import sys
+
+        if sys.version_info < (3, 11):
+            from exceptiongroup import BaseExceptionGroup, ExceptionGroup
+
+        def test_base() -> None:
+            raise BaseExceptionGroup("NOT IN SUMMARY", [SystemExit("a" * 10)])
+
+        def test_nonbase() -> None:
+            raise ExceptionGroup("NOT IN SUMMARY", [ValueError("a" * 10)])
+
+        def test_nested() -> None:
+            raise ExceptionGroup(
+                "NOT DISPLAYED", [
+                    ExceptionGroup("NOT IN SUMMARY", [ValueError("a" * 10)])
+                ]
+            )
+
+        def test_multiple() -> None:
+            raise ExceptionGroup(
+                "b" * 10,
+                [
+                    ValueError("NOT IN SUMMARY"),
+                    TypeError("NOT IN SUMMARY"),
+                ]
+            )
+
+        def test_nested_multiple() -> None:
+            raise ExceptionGroup(
+                "b" * 10,
+                [
+                    ExceptionGroup(
+                        "c" * 10,
+                        [
+                            ValueError("NOT IN SUMMARY"),
+                            TypeError("NOT IN SUMMARY"),
+                        ]
+                    )
+                ]
+            )
+        """
+    )
+    # run with -vv to not truncate summary info, default width in tests is very low
+    result = pytester.runpytest("-vv")
+    assert result.ret == 1
+    backport_str = "exceptiongroup." if sys.version_info < (3, 11) else ""
+    result.stdout.fnmatch_lines(
+        [
+            "*= short test summary info =*",
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_base - "
+                "SystemExit('aaaaaaaaaa') [single exception in BaseExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nonbase - "
+                "ValueError('aaaaaaaaaa') [single exception in ExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nested - "
+                "ValueError('aaaaaaaaaa') [single exception in ExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_multiple - "
+                f"{backport_str}ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nested_multiple - "
+                f"{backport_str}ExceptionGroup: bbbbbbbbbb (1 sub-exception)"
+            ),
+            "*= 5 failed in *",
+        ]
+    )
 
 
 @pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))

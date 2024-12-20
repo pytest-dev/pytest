@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 import bdb
+from collections.abc import Callable
 import dataclasses
 import os
 import sys
 import types
-from typing import Callable
 from typing import cast
 from typing import final
 from typing import Generic
@@ -533,7 +533,7 @@ class SetupState:
         When nextitem is None (meaning we're at the last item), the entire
         stack is torn down.
         """
-        needed_collectors = nextitem and nextitem.listchain() or []
+        needed_collectors = (nextitem and nextitem.listchain()) or []
         exceptions: list[BaseException] = []
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:

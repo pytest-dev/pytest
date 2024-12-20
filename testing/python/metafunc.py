@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
+from collections.abc import Sequence
 import dataclasses
 import itertools
 import re
@@ -8,9 +10,6 @@ import sys
 import textwrap
 from typing import Any
 from typing import cast
-from typing import Dict
-from typing import Iterator
-from typing import Sequence
 
 import hypothesis
 from hypothesis import strategies
@@ -154,7 +153,7 @@ class TestMetafunc:
             _scope: Scope
 
         fixtures_defs = cast(
-            Dict[str, Sequence[fixtures.FixtureDef[object]]],
+            dict[str, Sequence[fixtures.FixtureDef[object]]],
             dict(
                 session_fix=[DummyFixtureDef(Scope.Session)],
                 package_fix=[DummyFixtureDef(Scope.Package)],
@@ -1439,13 +1438,13 @@ class TestMetafuncFunctional:
         self, pytester: Pytester, scope: str, length: int
     ) -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest
             values = []
             def pytest_generate_tests(metafunc):
                 if "arg" in metafunc.fixturenames:
                     metafunc.parametrize("arg", [1,2], indirect=True,
-                                         scope=%r)
+                                         scope={scope!r})
             @pytest.fixture
             def arg(request):
                 values.append(request.param)
@@ -1455,9 +1454,8 @@ class TestMetafuncFunctional:
             def test_world(arg):
                 assert arg in (1,2)
             def test_checklength():
-                assert len(values) == %d
+                assert len(values) == {length}
         """
-            % (scope, length)
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=5)

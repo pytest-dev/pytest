@@ -1435,6 +1435,23 @@ class TestFixtureUsages:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_empty_usefixtures_marker(self, pytester: Pytester) -> None:
+        """Empty usefixtures() marker issues a warning (#12439)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.usefixtures()
+            def test_one():
+                assert 1 == 1
+        """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            "*PytestWarning: usefixtures() in test_empty_usefixtures_marker.py::test_one"
+            " without arguments has no effect"
+        )
+
     def test_usefixtures_ini(self, pytester: Pytester) -> None:
         pytester.makeini(
             """
@@ -1588,6 +1605,63 @@ class TestFixtureUsages:
         )
         result = pytester.runpytest()
         result.stdout.no_fnmatch_line("* ERROR at teardown *")
+
+    def test_unwrapping_pytest_fixture(self, pytester: Pytester) -> None:
+        """Ensure the unwrap method on `FixtureFunctionDefinition` correctly wraps and unwraps methods and functions"""
+        pytester.makepyfile(
+            """
+            import pytest
+            import inspect
+
+            class FixtureFunctionDefTestClass:
+                def __init__(self) -> None:
+                    self.i = 10
+
+                @pytest.fixture
+                def fixture_function_def_test_method(self):
+                    return self.i
+
+
+            @pytest.fixture
+            def fixture_function_def_test_func():
+                return 9
+
+
+            def test_get_wrapped_func_returns_method():
+                obj = FixtureFunctionDefTestClass()
+                wrapped_function_result = (
+                    obj.fixture_function_def_test_method._get_wrapped_function()
+                )
+                assert inspect.ismethod(wrapped_function_result)
+                assert wrapped_function_result() == 10
+
+
+            def test_get_wrapped_func_returns_function():
+                assert fixture_function_def_test_func._get_wrapped_function()() == 9
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2)
+
+    def test_fixture_wrapped_looks_liked_wrapped_function(
+        self, pytester: Pytester
+    ) -> None:
+        """Ensure that `FixtureFunctionDefinition` behaves like the function it wrapped."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixture_function_def_test_func():
+                return 9
+            fixture_function_def_test_func.__doc__ = "documentation"
+
+            def test_fixture_has_same_doc():
+                assert fixture_function_def_test_func.__doc__ == "documentation"
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
 
 
 class TestFixtureManagerParseFactories:
@@ -4507,6 +4581,21 @@ def test_fixture_double_decorator(pytester: Pytester) -> None:
             "E * ValueError: @pytest.fixture is being applied more than once to the same function 'fixt'"
         ]
     )
+
+
+def test_fixture_class(pytester: Pytester) -> None:
+    """Check if an error is raised when using @pytest.fixture on a class."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        class A:
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
 
 
 def test_fixture_param_shadowing(pytester: Pytester) -> None:
