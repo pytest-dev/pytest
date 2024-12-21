@@ -1051,6 +1051,7 @@ def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
 def test_paramset_empty_no_idfunc(
     pytester: Pytester, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """An empty parameter set should not call the user provided id function (#13031)."""
     p1 = pytester.makepyfile(
         """
         import pytest
