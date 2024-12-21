@@ -47,18 +47,18 @@ def get_empty_parameterset_mark(
 ) -> MarkDecorator:
     from ..nodes import Collector
 
+    argslisting = ", ".join(argnames)
+
     fs, lineno = getfslineno(func)
-    reason = f"got empty parameter set {argnames!r}, function {func.__name__} at {fs}:{lineno}"
+    reason = f"got empty parameter set for ({argslisting})"
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ("", None, "skip"):
         mark = MARK_GEN.skip(reason=reason)
     elif requested_mark == "xfail":
         mark = MARK_GEN.xfail(reason=reason, run=False)
     elif requested_mark == "fail_at_collect":
-        f_name = func.__name__
-        _, lineno = getfslineno(func)
         raise Collector.CollectError(
-            f"Empty parameter set in '{f_name}' at line {lineno + 1}"
+            f"Empty parameter set in '{func.__name__}' at line {lineno + 1}"
         )
     else:
         raise LookupError(requested_mark)
@@ -181,7 +181,9 @@ class ParameterSet(NamedTuple):
             # parameter set with NOTSET values, with the "empty parameter set" mark applied to it.
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
-                ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
+                ParameterSet(
+                    values=(NOTSET,) * len(argnames), marks=[mark], id="NOTSET"
+                )
             )
         return argnames, parameters
 
