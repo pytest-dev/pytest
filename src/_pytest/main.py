@@ -62,9 +62,7 @@ def pytest_addoption(parser: Parser) -> None:
             "*.egg",
             ".*",
             "_darcs",
-            "build",
             "CVS",
-            "dist",
             "node_modules",
             "venv",
             "{arch}",
@@ -371,6 +369,47 @@ def pytest_runtestloop(session: Session) -> bool:
     return True
 
 
+def _is_setuptools_in_pyproject_toml(toml: Path) -> bool:
+    """Attempt to decode a toml file into a dict, returning None if fails."""
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:
+        import tomli as tomllib
+
+    try:
+        toml_text = toml.read_text(encoding="utf-8")
+        parsed_toml = tomllib.loads(toml_text)
+        build_system = parsed_toml.get("build-system", {}).get("requires")
+        if "setuptools" in build_system:
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
+def _in_build(path: Path) -> bool:
+    """Attempt to detect if ``path`` is the root of a buildsystem's artifacts
+    by checking known dirnames patterns, and the presence of configuration in
+    the parent dir by checking for a setup.py, setup.cfg, or pyproject.toml.
+    """
+    if not path.is_dir():
+        return False
+
+    if any(fnmatch_ex(pat, path) for pat in ("build", "dist")):
+        setup_cfg = path.parent / "setup.cfg"
+        if (setup_cfg).is_file():
+            setup_py = path.parent / "setup.py"
+            if setup_py.is_file():
+                return True
+
+            toml = path.parent / "pyproject.toml"
+            if toml.is_file() and _is_setuptools_in_pyproject_toml(toml):
+                return True
+
+    return False
+
+
 def _in_venv(path: Path) -> bool:
     """Attempt to detect if ``path`` is the root of a Virtual Environment by
     checking for the existence of the pyvenv.cfg file.
@@ -420,6 +459,10 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
     if not allow_in_venv and _in_venv(collection_path):
+        return True
+
+    allow_in_build = False  # config.getoption("collect_in_build")
+    if not allow_in_build and _in_build(collection_path):
         return True
 
     if collection_path.is_dir():
