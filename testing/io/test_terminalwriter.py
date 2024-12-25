@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 import io
+from io import StringIO
 import os
 from pathlib import Path
 import re
@@ -68,6 +69,7 @@ win32 = int(sys.platform == "win32")
 class TestTerminalWriter:
     @pytest.fixture(params=["path", "stringio"])
     def tw(self, request, tmp_path: Path) -> Generator[terminalwriter.TerminalWriter]:
+        f: io.TextIOWrapper | StringIO
         if request.param == "path":
             p = tmp_path.joinpath("tmpfile")
             f = open(str(p), "w+", encoding="utf8")
