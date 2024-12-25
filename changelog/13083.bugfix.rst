@@ -1,0 +1,6 @@
+13083.bugfix.rst:
+
+Fix issue where the `scandir` function in `pathlib.py` caused symlink loops under certain conditions.
+
+- Issue: https://github.com/pytest-dev/pytest/issues/13083
+- Authors: Reza Mousavi
