@@ -97,6 +97,16 @@ class ErrorMaker:
                     raise value
             else:
                 # we are not on Windows, or we got a proper OSError
+                # Not sure if we should do that:
+                # if errno is None:
+                #     clsname = errno.errorcode.get(errno, f"UnknownErrno{errno}")
+                #     cls = type(
+                #         clsname,
+                #         (Error,),
+                #         {"__module__": "py.error", "__doc__": os.strerror(errno)},
+                #     )
+                # Or that:
+                assert isinstance(value.errno, int)
                 cls = self._geterrnoclass(value.errno)
 
             raise cls(f"{func.__name__}{args!r}")
