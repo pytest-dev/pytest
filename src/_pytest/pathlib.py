@@ -974,8 +974,8 @@ def scandir(
         return entries
     except FileNotFoundError:
         return []
-    
-    
+
+
 def visit(
     path: str | os.PathLike[str], recurse: Callable[[os.DirEntry[str]], bool]
 ) -> Iterator[os.DirEntry[str]]:
