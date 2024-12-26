@@ -38,6 +38,7 @@ from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
+from _pytest.pathlib import scandir
 from _pytest.pathlib import spec_matches_module_path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
@@ -567,6 +568,29 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
             module_path, root=tmp_path, consider_namespace_packages=False
         )
     assert getattr(module, "foo")() == 42
+
+
+def test_scandir_with_non_existent_directory() -> None:
+    # Test with a directory that does not exist
+    non_existent_dir = "path_to_non_existent_dir"
+    result = scandir(non_existent_dir)
+    # Assert that the result is an empty list
+    assert result == []
+
+
+def test_scandir_handles_os_error():
+    # Create a mock entry that will raise an OSError when is_file is called
+    mock_entry = unittest.mock.MagicMock()
+    mock_entry.is_file.side_effect = OSError("Permission denied")
+    # Mock os.scandir to return an iterator with our mock entry
+    with unittest.mock.patch("os.scandir") as mock_scandir:
+        mock_scandir.return_value.__enter__.return_value = [mock_entry]
+        # Call the scandir function with a path
+        # We expect an OSError to be raised here
+        with pytest.raises(OSError, match="Permission denied"):
+            scandir("/fake/path")
+        # Verify that the is_file method was called on the mock entry
+        mock_entry.is_file.assert_called_once()
 
 
 class TestImportLibMode:

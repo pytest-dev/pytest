@@ -955,23 +955,27 @@ def scandir(
 
     The returned entries are sorted according to the given key.
     The default is to sort by name.
+    If the directory does not exist, return an empty list.
     """
-    entries = []
-    with os.scandir(path) as s:
-        # Skip entries with symlink loops and other brokenness, so the caller
-        # doesn't have to deal with it.
-        for entry in s:
-            try:
-                entry.is_file()
-            except OSError as err:
-                if _ignore_error(err):
-                    continue
-                raise
-            entries.append(entry)
-    entries.sort(key=sort_key)  # type: ignore[arg-type]
-    return entries
-
-
+    try:
+        entries = []
+        with os.scandir(path) as s:
+            # Skip entries with symlink loops and other brokenness, so the caller
+            # doesn't have to deal with it.
+            for entry in s:
+                try:
+                    entry.is_file()
+                except OSError as err:
+                    if _ignore_error(err):
+                        continue
+                    raise
+                entries.append(entry)
+        entries.sort(key=sort_key)  # type: ignore[arg-type]
+        return entries
+    except FileNotFoundError:
+        return []
+    
+    
 def visit(
     path: str | os.PathLike[str], recurse: Callable[[os.DirEntry[str]], bool]
 ) -> Iterator[os.DirEntry[str]]:
