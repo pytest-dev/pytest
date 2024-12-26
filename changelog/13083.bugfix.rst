@@ -1,6 +1,1 @@
-13083.bugfix.rst:
-
-Fix issue where scandir failed for empty or non-existent directories.
-
-- Issue: https://github.com/pytest-dev/pytest/issues/13083
-- Authors: Reza Mousavi
+Fixed issue where pytest could crash if one of the collected directories got removed during collection.
