@@ -957,23 +957,26 @@ def scandir(
     The default is to sort by name.
     If the directory does not exist, return an empty list.
     """
+    entries = [] 
+    # Attempt to create a scandir iterator for the given path.
     try:
-        entries = []
-        with os.scandir(path) as s:
-            # Skip entries with symlink loops and other brokenness, so the caller
-            # doesn't have to deal with it.
-            for entry in s:
-                try:
-                    entry.is_file()
-                except OSError as err:
-                    if _ignore_error(err):
-                        continue
-                    raise
-                entries.append(entry)
-        entries.sort(key=sort_key)  # type: ignore[arg-type]
-        return entries
+        scandir_iter = os.scandir(path)
     except FileNotFoundError:
+        # If the directory does not exist, return an empty list.
         return []
+    # Use the scandir iterator in a context manager to ensure it is properly closed.
+    with scandir_iter as s:
+        for entry in s:
+            try:
+                entry.is_file()
+            except OSError as err:
+                if _ignore_error(err):
+                    continue
+                # Reraise non-ignorable errors to avoid hiding issues.
+                raise
+            entries.append(entry)
+    entries.sort(key=sort_key)  # type: ignore[arg-type]
+    return entries
 
 
 def visit(
