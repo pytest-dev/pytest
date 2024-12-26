@@ -284,6 +284,23 @@ TESTCASES = [
         """,
         id="Compare attrs classes",
     ),
+    pytest.param(
+        """
+        def test_this():
+            result =   '''spam    bacon
+            eggs love'''
+            desired = "spam bacon eggs love"
+            assert result == desired
+        """,
+        """
+        >       assert result == desired
+        E       AssertionError: assert 'spam    bacon\\n    eggs love' == 'spam bacon eggs love'
+        E         - spam bacon eggs love
+        E         + spam\\tbacon
+        E         + \\teggs love
+        """,
+        id="Test tab repr in diff",
+    ),
 ]
 
 
