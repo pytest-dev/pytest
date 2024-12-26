@@ -578,7 +578,7 @@ def test_scandir_with_non_existent_directory() -> None:
     assert result == []
 
 
-def test_scandir_handles_os_error():
+def test_scandir_handles_os_error() -> None:
     # Create a mock entry that will raise an OSError when is_file is called
     mock_entry = unittest.mock.MagicMock()
     mock_entry.is_file.side_effect = OSError("Permission denied")
