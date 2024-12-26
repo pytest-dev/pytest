@@ -957,7 +957,7 @@ def scandir(
     The default is to sort by name.
     If the directory does not exist, return an empty list.
     """
-    entries = [] 
+    entries = []
     # Attempt to create a scandir iterator for the given path.
     try:
         scandir_iter = os.scandir(path)
