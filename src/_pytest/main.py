@@ -249,7 +249,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 def validate_basetemp(path: str) -> str:
     """
-    Validate the provided `basetemp` path to ensure it is not empty, 
+    Validate the provided `basetemp` path to ensure it is not empty,
     the current working directory (cwd), or any ancestor of the cwd.
 
     Args:
@@ -298,7 +298,7 @@ def wrap_session(
     config: Config, doit: Callable[[Config, Session], int | ExitCode | None]
 ) -> int | ExitCode:
     """
-    Run the main pytest session while managing initialization, 
+    Run the main pytest session while managing initialization,
     cleanup, and error handling.
 
     Args:
