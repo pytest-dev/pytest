@@ -248,24 +248,46 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def validate_basetemp(path: str) -> str:
-    # GH 7119
+    """
+    Validate the provided `basetemp` path to ensure it is not empty, 
+    the current working directory (cwd), or any ancestor of the cwd.
+
+    Args:
+        path (str): The path to validate.
+
+    Returns:
+        str: The validated path.
+
+    Raises:
+        argparse.ArgumentTypeError: If the path is invalid.
+    """
+    # GH 7119: Issue reference for additional context on the validation requirements.
     msg = "basetemp must not be empty, the current working directory or any parent directory of it"
 
-    # empty path
+    # Ensure the path is not empty.
     if not path:
         raise argparse.ArgumentTypeError(msg)
 
     def is_ancestor(base: Path, query: Path) -> bool:
-        """Return whether query is an ancestor of base."""
+        """
+        Check if `query` is an ancestor of `base`.
+
+        Args:
+            base (Path): The base path to compare.
+            query (Path): The potential ancestor path.
+
+        Returns:
+            bool: True if `query` is an ancestor of `base`, False otherwise.
+        """
         if base == query:
             return True
         return query in base.parents
 
-    # check if path is an ancestor of cwd
+    # Ensure the path is not an ancestor of the current working directory (cwd).
     if is_ancestor(Path.cwd(), Path(path).absolute()):
         raise argparse.ArgumentTypeError(msg)
 
-    # check symlinks for ancestors
+    # Check symlinks to ensure the resolved path is not an ancestor of cwd.
     if is_ancestor(Path.cwd().resolve(), Path(path).resolve()):
         raise argparse.ArgumentTypeError(msg)
 
@@ -275,23 +297,35 @@ def validate_basetemp(path: str) -> str:
 def wrap_session(
     config: Config, doit: Callable[[Config, Session], int | ExitCode | None]
 ) -> int | ExitCode:
-    """Skeleton command line program."""
-    session = Session.from_config(config)
+    """
+    Run the main pytest session while managing initialization, 
+    cleanup, and error handling.
+
+    Args:
+        config (Config): The pytest configuration object.
+        doit (Callable): A callable that performs the main logic of the session.
+
+    Returns:
+        int | ExitCode: The exit status of the pytest session.
+    """
+    session = Session.from_config(config)  # Create a session from the configuration.
     session.exitstatus = ExitCode.OK
-    initstate = 0
+    initstate = 0  # Track initialization progress for error handling.
+
     try:
         try:
-            config._do_configure()
+            config._do_configure()  # Configure pytest.
             initstate = 1
-            config.hook.pytest_sessionstart(session=session)
+            config.hook.pytest_sessionstart(session=session)  # Trigger session start hooks.
             initstate = 2
-            session.exitstatus = doit(config, session) or 0
+            session.exitstatus = doit(config, session) or 0  # Run the main logic.
         except UsageError:
             session.exitstatus = ExitCode.USAGE_ERROR
             raise
         except Failed:
             session.exitstatus = ExitCode.TESTS_FAILED
         except (KeyboardInterrupt, exit.Exception):
+            # Handle user interruption or pytest-specific exit exceptions.
             excinfo = _pytest._code.ExceptionInfo.from_current()
             exitstatus: int | ExitCode = ExitCode.INTERRUPTED
             if isinstance(excinfo.value, exit.Exception):
@@ -302,6 +336,7 @@ def wrap_session(
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = exitstatus
         except BaseException:
+            # Handle unexpected exceptions.
             session.exitstatus = ExitCode.INTERNAL_ERROR
             excinfo = _pytest._code.ExceptionInfo.from_current()
             try:
@@ -313,11 +348,10 @@ def wrap_session(
             else:
                 if isinstance(excinfo.value, SystemExit):
                     sys.stderr.write("mainloop: caught unexpected SystemExit!\n")
-
     finally:
-        # Explicitly break reference cycle.
-        excinfo = None  # type: ignore
-        os.chdir(session.startpath)
+        # Cleanup logic and session finalization.
+        excinfo = None  # Explicitly break reference cycle.
+        os.chdir(session.startpath)  # Restore original working directory.
         if initstate >= 2:
             try:
                 config.hook.pytest_sessionfinish(
@@ -327,43 +361,65 @@ def wrap_session(
                 if exc.returncode is not None:
                     session.exitstatus = exc.returncode
                 sys.stderr.write(f"{type(exc).__name__}: {exc}\n")
-        config._ensure_unconfigure()
+        config._ensure_unconfigure()  # Ensure proper unconfiguration.
+
     return session.exitstatus
 
 
 def pytest_cmdline_main(config: Config) -> int | ExitCode:
+    """
+    Main entry point for the pytest command line interface.
+
+    Args:
+        config (Config): The pytest configuration object.
+
+    Returns:
+        int | ExitCode: The exit status of the pytest session.
+    """
     return wrap_session(config, _main)
+    def pytest_collection(session: Session) -> None:
+    """
+    Trigger the collection process for the current test session.
 
-
-def _main(config: Config, session: Session) -> int | ExitCode | None:
-    """Default command line protocol for initialization, session,
-    running tests and reporting."""
-    config.hook.pytest_collection(session=session)
-    config.hook.pytest_runtestloop(session=session)
-
-    if session.testsfailed:
-        return ExitCode.TESTS_FAILED
-    elif session.testscollected == 0:
-        return ExitCode.NO_TESTS_COLLECTED
-    return None
-
-
-def pytest_collection(session: Session) -> None:
+    Args:
+        session (Session): The pytest session object containing collected items.
+    """
     session.perform_collect()
 
 
 def pytest_runtestloop(session: Session) -> bool:
+    """
+    Execute the main loop for running tests.
+
+    Handles the execution of collected test items and manages interrupts
+    or failures during the process.
+
+    Args:
+        session (Session): The pytest session object.
+
+    Returns:
+        bool: True if collection-only mode is active; otherwise, execution continues.
+
+    Raises:
+        session.Interrupted: If collection errors or a manual stop condition occurs.
+        session.Failed: If a stopping failure condition is met.
+    """
+    # Check for test collection failures and handle user-configured continuation.
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
         raise session.Interrupted(
             f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
         )
 
+    # Return early if only collecting tests, not running them.
     if session.config.option.collectonly:
         return True
 
+    # Iterate through collected items and execute each test.
     for i, item in enumerate(session.items):
         nextitem = session.items[i + 1] if i + 1 < len(session.items) else None
         item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+
+        # Handle failure or stop conditions.
         if session.shouldfail:
             raise session.Failed(session.shouldfail)
         if session.shouldstop:
@@ -372,16 +428,20 @@ def pytest_runtestloop(session: Session) -> bool:
 
 
 def _in_venv(path: Path) -> bool:
-    """Attempt to detect if ``path`` is the root of a Virtual Environment by
-    checking for the existence of the pyvenv.cfg file.
+    """
+    Check if the given path is the root of a virtual environment.
 
-    [https://peps.python.org/pep-0405/]
+    This is done by verifying the existence of the `pyvenv.cfg` file or
+    a `conda-meta/history` file in the given path.
 
-    For regression protection we also check for conda environments that do not include pyenv.cfg yet --
-    https://github.com/conda/conda/issues/13337 is the conda issue tracking adding pyenv.cfg.
+    Args:
+        path (Path): The directory path to check.
 
-    Checking for the `conda-meta/history` file per https://github.com/pytest-dev/pytest/issues/12652#issuecomment-2246336902.
+    Returns:
+        bool: True if the directory is part of a virtual environment; False otherwise.
 
+    Exceptions:
+        OSError: If an OS-level error occurs during the check.
     """
     try:
         return (
@@ -393,104 +453,181 @@ def _in_venv(path: Path) -> bool:
 
 
 def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
+    """
+    Determine if a given path should be ignored during test collection.
+
+    This considers various factors such as ignored paths, virtual environments,
+    and configured patterns to avoid during collection.
+
+    Args:
+        collection_path (Path): The path to check for collection exclusion.
+        config (Config): The pytest configuration object.
+
+    Returns:
+        bool | None: True if the path should be ignored, False if it should not,
+                     or None if no definitive decision can be made.
+    """
+    # Ignore `__pycache__` directories as they do not contain tests.
     if collection_path.name == "__pycache__":
         return True
 
+    # Retrieve and check paths configured to be ignored.
     ignore_paths = config._getconftest_pathlist(
         "collect_ignore", path=collection_path.parent
     )
-    ignore_paths = ignore_paths or []
-    excludeopt = config.getoption("ignore")
-    if excludeopt:
-        ignore_paths.extend(absolutepath(x) for x in excludeopt)
+    # Check for paths to be ignored
+ignore_paths = ignore_paths or []  # If ignore_paths is empty, assign an empty list.
+excludeopt = config.getoption("ignore")  # Get ignore options from command-line settings
+if excludeopt:
+    # Add additional paths to ignore_paths
+    ignore_paths.extend(absolutepath(x) for x in excludeopt)
 
-    if collection_path in ignore_paths:
+# If the collection path is in the ignore paths, we ignore it
+if collection_path in ignore_paths:
+    return True
+
+# Check for glob patterns for paths to be ignored
+ignore_globs = config._getconftest_pathlist(
+    "collect_ignore_glob", path=collection_path.parent
+)
+ignore_globs = ignore_globs or []  # If ignore_globs is empty, assign an empty list.
+excludeglobopt = config.getoption("ignore_glob")  # Get ignore_glob options from command-line settings
+if excludeglobopt:
+    # Add glob patterns to ignore_globs
+    ignore_globs.extend(absolutepath(x) for x in excludeglobopt)
+
+# If the collection path matches any of the glob patterns, we ignore it
+if any(fnmatch.fnmatch(str(collection_path), str(glob)) for glob in ignore_globs):
+    return True
+
+# Check if the path is within a virtual environment
+allow_in_venv = config.getoption("collect_in_virtualenv")
+if not allow_in_venv and _in_venv(collection_path):
+    return True
+
+# If the collection path is a directory, check for directory ignore patterns
+if collection_path.is_dir():
+    norecursepatterns = config.getini("norecursedirs")  # Get directory ignore patterns
+    if any(fnmatch_ex(pat, collection_path) for pat in norecursepatterns):
         return True
 
-    ignore_globs = config._getconftest_pathlist(
-        "collect_ignore_glob", path=collection_path.parent
-    )
-    ignore_globs = ignore_globs or []
-    excludeglobopt = config.getoption("ignore_glob")
-    if excludeglobopt:
-        ignore_globs.extend(absolutepath(x) for x in excludeglobopt)
+# If none of the above conditions match, collect the path
+return None
 
-    if any(fnmatch.fnmatch(str(collection_path), str(glob)) for glob in ignore_globs):
-        return True
-
-    allow_in_venv = config.getoption("collect_in_virtualenv")
-    if not allow_in_venv and _in_venv(collection_path):
-        return True
-
-    if collection_path.is_dir():
-        norecursepatterns = config.getini("norecursedirs")
-        if any(fnmatch_ex(pat, collection_path) for pat in norecursepatterns):
-            return True
-
-    return None
-
-
+# Function for collecting directories
 def pytest_collect_directory(
     path: Path, parent: nodes.Collector
 ) -> nodes.Collector | None:
+    """
+    Collect files in a directory and return a collector for the directory.
+
+    Args:
+        path (Path): The directory path to collect from.
+        parent (nodes.Collector): The parent collector.
+
+    Returns:
+        nodes.Collector | None: The directory collector or None if no collection happens.
+    """
     return Dir.from_parent(parent, path=path)
 
-
+# Function to modify the list of collected items based on deselect prefixes
 def pytest_collection_modifyitems(items: list[nodes.Item], config: Config) -> None:
-    deselect_prefixes = tuple(config.getoption("deselect") or [])
+    """
+    Modify collected items based on deselect prefixes.
+
+    Args:
+        items (list): The list of collected test items.
+        config (Config): The pytest configuration object.
+
+    Returns:
+        None: Modifies the list in place.
+    """
+    deselect_prefixes = tuple(config.getoption("deselect") or [])  # Get deselect prefixes
     if not deselect_prefixes:
         return
 
     remaining = []
     deselected = []
     for colitem in items:
+        # If the item matches a deselect prefix, remove it from the selected list
         if colitem.nodeid.startswith(deselect_prefixes):
             deselected.append(colitem)
         else:
             remaining.append(colitem)
 
+    # If items were deselected, notify and update the list
     if deselected:
         config.hook.pytest_deselected(items=deselected)
-        items[:] = remaining
+        items[:] = remaining  # Update the list of items
 
-
+# Proxy class for managing filesystem hook calls
 class FSHookProxy:
     def __init__(
         self,
         pm: PytestPluginManager,
         remove_mods: AbstractSet[object],
     ) -> None:
+        """
+        Proxy class for managing the file system hook calls.
+
+        Args:
+            pm (PytestPluginManager): The pytest plugin manager.
+            remove_mods (AbstractSet[object]): Set of plugins to remove.
+        """
         self.pm = pm
         self.remove_mods = remove_mods
 
     def __getattr__(self, name: str) -> pluggy.HookCaller:
+        """
+        Dynamically retrieves hook calls for the given name.
+
+        Args:
+            name (str): The name of the hook to retrieve.
+
+        Returns:
+            pluggy.HookCaller: The hook caller for the given hook.
+        """
         x = self.pm.subset_hook_caller(name, remove_plugins=self.remove_mods)
         self.__dict__[name] = x
         return x
 
-
+# Exception class for interrupted test runs
 class Interrupted(KeyboardInterrupt):
     """Signals that the test run was interrupted."""
 
     __module__ = "builtins"  # For py3.
 
-
 class Failed(Exception):
     """Signals a stop as failed test run."""
 
-
+# Cache class for storing best relative paths for improved performance
 @dataclasses.dataclass
 class _bestrelpath_cache(dict[Path, str]):
+    """
+    Cache for storing best relative paths for improved performance.
+
+    Attributes:
+        path (Path): The base path for calculating relative paths.
+    """
     __slots__ = ("path",)
 
     path: Path
 
     def __missing__(self, path: Path) -> str:
+        """
+        Retrieves the best relative path for a given path.
+
+        Args:
+            path (Path): The path to calculate the relative path for.
+
+        Returns:
+            str: The best relative path.
+        """
         r = bestrelpath(self.path, path)
         self[path] = r
         return r
 
-
+# Directory collector class for collecting files in a directory
 @final
 class Dir(nodes.Directory):
     """Collector of files in a file system directory.
@@ -498,11 +635,173 @@ class Dir(nodes.Directory):
     .. versionadded:: 8.0
 
     .. note::
-
-        Python directories with an `__init__.py` file are instead collected by
-        :class:`~pytest.Package` by default. Both are :class:`~pytest.Directory`
-        collectors.
+        This collector is responsible for gathering all files within a directory.
     """
+# Check if collection path should be ignored based on patterns
+ignore_paths = ignore_paths or []  # If ignore_paths is empty, assign an empty list.
+excludeopt = config.getoption("ignore")  # Get the ignore option from command-line arguments.
+if excludeopt:
+    # Add additional paths to the ignore_paths list
+    ignore_paths.extend(absolutepath(x) for x in excludeopt)
+
+# If the collection path is in the ignore paths, we return True to indicate it should be ignored.
+if collection_path in ignore_paths:
+    return True
+
+# Check for ignore glob patterns
+ignore_globs = config._getconftest_pathlist(
+    "collect_ignore_glob", path=collection_path.parent
+)
+ignore_globs = ignore_globs or []  # If ignore_globs is empty, assign an empty list.
+excludeglobopt = config.getoption("ignore_glob")  # Get the ignore glob option from command-line arguments.
+if excludeglobopt:
+    # Add additional glob patterns to the ignore_globs list.
+    ignore_globs.extend(absolutepath(x) for x in excludeglobopt)
+
+# If the collection path matches any ignore glob pattern, we return True to ignore it.
+if any(fnmatch.fnmatch(str(collection_path), str(glob)) for glob in ignore_globs):
+    return True
+
+# Check if the path is inside a virtual environment
+allow_in_venv = config.getoption("collect_in_virtualenv")
+if not allow_in_venv and _in_venv(collection_path):
+    return True
+
+# If the collection path is a directory, check if it matches the norecurse patterns.
+if collection_path.is_dir():
+    norecursepatterns = config.getini("norecursedirs")  # Get the norecurse patterns from configuration.
+    if any(fnmatch_ex(pat, collection_path) for pat in norecursepatterns):
+        return True
+
+# If none of the above conditions are met, return None to indicate the path should be collected.
+return None
+
+# Function to collect directories from the filesystem.
+def pytest_collect_directory(
+    path: Path, parent: nodes.Collector
+) -> nodes.Collector | None:
+    """
+    Collects files from the specified directory and returns a collector for that directory.
+
+    Args:
+        path (Path): The directory path to collect files from.
+        parent (nodes.Collector): The parent collector object.
+
+    Returns:
+        nodes.Collector | None: Returns a directory collector or None if no files are collected.
+    """
+    return Dir.from_parent(parent, path=path)
+
+# Function to modify collected items based on deselection criteria.
+def pytest_collection_modifyitems(items: list[nodes.Item], config: Config) -> None:
+    """
+    Modify the collected items list based on deselection prefixes from the command line.
+
+    Args:
+        items (list): The list of collected test items.
+        config (Config): The pytest configuration object.
+
+    Returns:
+        None: This function modifies the items list in place.
+    """
+    deselect_prefixes = tuple(config.getoption("deselect") or [])  # Get deselect prefixes from the config.
+    if not deselect_prefixes:
+        return
+
+    remaining = []
+    deselected = []
+    for colitem in items:
+        # If an item matches a deselect prefix, move it to the deselected list.
+        if colitem.nodeid.startswith(deselect_prefixes):
+            deselected.append(colitem)
+        else:
+            remaining.append(colitem)
+
+    # If any items were deselected, update the list and notify through the pytest hook.
+    if deselected:
+        config.hook.pytest_deselected(items=deselected)
+        items[:] = remaining  # Update the items list with the remaining items.
+
+# Proxy class to manage hook calls related to filesystem operations.
+class FSHookProxy:
+    def __init__(
+        self,
+        pm: PytestPluginManager,
+        remove_mods: AbstractSet[object],
+    ) -> None:
+        """
+        Proxy class to manage hook calls related to the file system.
+
+        Args:
+            pm (PytestPluginManager): The pytest plugin manager.
+            remove_mods (AbstractSet[object]): A set of plugins to remove.
+        """
+        self.pm = pm
+        self.remove_mods = remove_mods
+
+    def __getattr__(self, name: str) -> pluggy.HookCaller:
+        """
+        Retrieves hook callers dynamically based on the hook name.
+
+        Args:
+            name (str): The name of the hook to retrieve.
+
+        Returns:
+            pluggy.HookCaller: The hook caller associated with the given hook name.
+        """
+        x = self.pm.subset_hook_caller(name, remove_plugins=self.remove_mods)
+        self.__dict__[name] = x
+        return x
+
+# Exception class to handle interrupted test runs.
+class Interrupted(KeyboardInterrupt):
+    """Signals that the test run was interrupted."""
+
+    __module__ = "builtins"  # For Python 3.
+
+class Failed(Exception):
+    """Signals that the test run should stop due to a failed test."""
+
+# Cache class for storing and retrieving best relative paths to optimize performance.
+@dataclasses.dataclass
+class _bestrelpath_cache(dict[Path, str]):
+    """
+    Cache for storing best relative paths to optimize performance.
+
+    Attributes:
+        path (Path): The base path used for calculating relative paths.
+    """
+    __slots__ = ("path",)
+
+    path: Path
+
+    def __missing__(self, path: Path) -> str:
+        """
+        Retrieves the best relative path for a given path.
+
+        Args:
+            path (Path): The path for which to compute the best relative path.
+
+        Returns:
+            str: The best relative path.
+        """
+        r = bestrelpath(self.path, path)  # Calculate the best relative path.
+        self[path] = r  # Store the result in the cache.
+        return r
+
+# Class for collecting files in a directory (extends nodes.Directory).
+@final
+class Dir(nodes.Directory):
+    """Collector for files in a filesystem directory.
+
+    .. versionadded:: 8.0
+
+    .. note::
+        This collector is responsible for gathering all files within a directory.
+    """
+
+
+
 
     @classmethod
     def from_parent(  # type: ignore[override]
