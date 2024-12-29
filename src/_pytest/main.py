@@ -258,7 +258,7 @@ def validate_basetemp(path: str) -> str:
         str: The validated path.
 
     Raises:
-        argparse.ArgumentTypeError: If the path is invalid, such as being empty, the 
+        argparse.ArgumentTypeError: If the path is invalid, such as being empty, the
         current working directory, or a parent directory of the current working directory.
     """
     # Error message for invalid paths
@@ -365,7 +365,6 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode:
     return wrap_session(config, _main)
 
 
-
 def _main(config: Config, session: Session) -> int | ExitCode | None:
     """
     Default command line protocol for initialization, session,
@@ -388,7 +387,6 @@ def _main(config: Config, session: Session) -> int | ExitCode | None:
     return None
 
 
-
 def pytest_collection(session: Session) -> None:
     """
     Perform the test collection phase for the given pytest session.
@@ -397,7 +395,6 @@ def pytest_collection(session: Session) -> None:
         session (Session): The pytest session object.
     """
     session.perform_collect()
-
 
 
 def pytest_runtestloop(session: Session) -> bool:
@@ -430,7 +427,6 @@ def pytest_runtestloop(session: Session) -> bool:
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)
     return True
-
 
 
 def _in_venv(path: Path) -> bool:
