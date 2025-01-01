@@ -33,11 +33,11 @@ class Scope(Enum):
     """
 
     # Scopes need to be listed from lower to higher.
-    Function: _ScopeName = "function"
-    Class: _ScopeName = "class"
-    Module: _ScopeName = "module"
-    Package: _ScopeName = "package"
-    Session: _ScopeName = "session"
+    Function = "function"
+    Class = "class"
+    Module = "module"
+    Package = "package"
+    Session = "session"
 
     def next_lower(self) -> Scope:
         """Return the next lower scope."""
