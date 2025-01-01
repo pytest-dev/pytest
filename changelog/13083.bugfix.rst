@@ -1,0 +1,1 @@
+Fixed issue where pytest could crash if one of the collected directories got removed during collection.
