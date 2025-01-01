@@ -162,6 +162,13 @@ def pytest_addoption(parser: Parser) -> None:
         help="Do not fold skipped tests in short summary.",
     )
     group._addoption(
+        "--force-short-summary",
+        action="store_true",
+        dest="force_short_summary",
+        default=False,
+        help="Force condensed summary output regardless of verbosity level.",
+    )
+    group._addoption(
         "-q",
         "--quiet",
         action=MoreQuietAction,
@@ -1467,7 +1474,9 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        if running_on_ci() or config.option.verbose >= 2:
+        if (
+            running_on_ci() or config.option.verbose >= 2
+        ) and not config.option.force_short_summary:
             msg = f" - {msg}"
         else:
             available_width = tw.fullwidth - line_width

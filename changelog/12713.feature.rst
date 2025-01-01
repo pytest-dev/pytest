@@ -1,0 +1,5 @@
+Add `--force-short-summary` option to force condensed summary output regardless of verbosity level
+
+Adds ability to still see condensed summary output of failures for quick reference in log files from job outputs. Especially useful if non-condensed output is very verbose.
+
+Also includes full fix for :issue:`11777` where sequences were still being shortened even with `-vv` verbosity.
