@@ -94,15 +94,11 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
     for i, rep in enumerate(dlist):
         if rep.duration < durations_min:
             tr.write_line("")
-            tr.write_line(
-                f"({len(dlist) - i} durations < {durations_min:g}s hidden."
-                + (
-                    "  Use -vv to show these durations."
-                    if terminalreporter.config.option.durations_min is None
-                    else ""
-                )
-                + ")"
-            )
+            message = f"({len(dlist) - i} durations < {durations_min:g}s hidden."
+            if terminalreporter.config.option.durations_min is None:
+                message += "  Use -vv to show these durations."
+            message += ")"
+            tr.write_line(message)
             break
         tr.write_line(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}")
 
