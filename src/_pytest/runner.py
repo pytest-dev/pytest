@@ -64,7 +64,7 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         metavar="N",
         help="Minimal duration in seconds for inclusion in slowest list. "
-        "Default: 0.005.",
+        "Default: 0.005 (or 0.0 if -vv is given).",
     )
 
 
