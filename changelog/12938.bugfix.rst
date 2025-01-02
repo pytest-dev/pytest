@@ -1,0 +1,1 @@
+Fixed ``--durations-min`` argument not respected if ``-vv`` is used.
