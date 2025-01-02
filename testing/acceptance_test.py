@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Sequence
 import dataclasses
 import importlib.metadata
 import os
@@ -970,28 +971,39 @@ class TestDurations:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=0")
         assert result.ret == 0
-
-        tested = "3"
-        for x in tested:
-            for y in ("call",):  # 'setup', 'call', 'teardown':
-                for line in result.stdout.lines:
-                    if (f"test_{x}") in line and y in line:
-                        break
-                else:
-                    raise AssertionError(f"not found {x} {y}")
+        print(result.stdout)
+        TestDurations.check_tests_in_output(result.stdout.lines, "23")
 
     def test_calls_showall_verbose(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=0", "-vv")
         assert result.ret == 0
+        TestDurations.check_tests_in_output(result.stdout.lines, "123")
 
-        for x in "123":
-            for y in ("call",):  # 'setup', 'call', 'teardown':
-                for line in result.stdout.lines:
-                    if (f"test_{x}") in line and y in line:
-                        break
-                else:
-                    raise AssertionError(f"not found {x} {y}")
+    def test_calls_showall_durationsmin(self, pytester: Pytester, mock_timing) -> None:
+        pytester.makepyfile(self.source)
+        result = pytester.runpytest_inprocess("--durations=0", "--durations-min=0.015")
+        assert result.ret == 0
+        TestDurations.check_tests_in_output(result.stdout.lines, "3")
+
+    def test_calls_showall_durationsmin_verbose(
+        self, pytester: Pytester, mock_timing
+    ) -> None:
+        pytester.makepyfile(self.source)
+        result = pytester.runpytest_inprocess(
+            "--durations=0", "--durations-min=0.015", "-vv"
+        )
+        assert result.ret == 0
+        TestDurations.check_tests_in_output(result.stdout.lines, "3")
+
+    @staticmethod
+    def check_tests_in_output(lines: Sequence[str], expected_test_numbers: str) -> None:
+        found_test_numbers = "".join(
+            test_number
+            for test_number in "123"
+            if any(f"test_{test_number}" in line and " call " in line for line in lines)
+        )
+        assert found_test_numbers == expected_test_numbers
 
     def test_with_deselected(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
