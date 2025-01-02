@@ -971,7 +971,6 @@ class TestDurations:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=0")
         assert result.ret == 0
-        print(result.stdout)
         TestDurations.check_tests_in_output(result.stdout.lines, "23")
 
     def test_calls_showall_verbose(self, pytester: Pytester, mock_timing) -> None:
