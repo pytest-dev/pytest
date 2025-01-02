@@ -957,17 +957,21 @@ def scandir(
     The default is to sort by name.
     """
     entries = []
-    with os.scandir(path) as s:
-        # Skip entries with symlink loops and other brokenness, so the caller
-        # doesn't have to deal with it.
-        for entry in s:
-            try:
-                entry.is_file()
-            except OSError as err:
-                if _ignore_error(err):
-                    continue
-                raise
-            entries.append(entry)
+    try:
+        with os.scandir(path) as s:
+            scanned = list(s)
+    except FileNotFoundError:
+        return []
+    # Skip entries with symlink loops and other brokenness, so the caller
+    # doesn't have to deal with it.
+    for entry in scanned:
+        try:
+            entry.is_file()
+        except OSError as err:
+            if _ignore_error(err):
+                continue
+            raise
+        entries.append(entry)
     entries.sort(key=sort_key)  # type: ignore[arg-type]
     return entries
 

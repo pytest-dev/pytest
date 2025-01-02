@@ -1,0 +1,1 @@
+Fixes an issue where the :func:`_pytest.pathlib.scandir` function crashes if the directory to scan does not exist by catching the ``FileNotFoundError`` and returning an empty array.
