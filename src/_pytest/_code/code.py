@@ -215,17 +215,26 @@ class TracebackEntry:
         return stack_summary[0]
 
     @property
-    def end_lineno(self) -> int:
-        return self.get_python_framesummary().end_lineno - 1
+    def end_lineno_relative(self) -> int | None:
+        if sys.version_info < (3, 11):
+            return None
+        frame_summary = self.get_python_framesummary()
+        if frame_summary.end_lineno is None:
+            return None
+        return frame_summary.end_lineno - 1 - self.frame.code.firstlineno
 
     @property
     def colno(self) -> int | None:
         """Starting byte offset of the expression in the traceback entry."""
+        if sys.version_info < (3, 11):
+            return None
         return self.get_python_framesummary().colno
 
     @property
     def end_colno(self) -> int | None:
         """Ending byte offset of the expression in the traceback entry."""
+        if sys.version_info < (3, 11):
+            return None
         return self.get_python_framesummary().end_colno
 
     @property
@@ -1023,8 +1032,8 @@ class FormattedExcinfo:
                 line_index = 0
                 end_line_index, colno, end_colno = None, None, None
             else:
-                line_index = entry.lineno - entry.getfirstlinesource()
-                end_line_index = entry.end_lineno - entry.getfirstlinesource()
+                line_index = entry.relline
+                end_line_index = entry.end_lineno_relative
                 colno = entry.colno
                 end_colno = entry.end_colno
             short = style == "short"
