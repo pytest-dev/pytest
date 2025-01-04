@@ -214,28 +214,38 @@ class TracebackEntry:
         stack_summary = traceback.extract_tb(self._rawentry, limit=1)
         return stack_summary[0]
 
-    @property
-    def end_lineno_relative(self) -> int | None:
-        if sys.version_info < (3, 11):
-            return None
-        frame_summary = self.get_python_framesummary()
-        if frame_summary.end_lineno is None:
-            return None
-        return frame_summary.end_lineno - 1 - self.frame.code.firstlineno
+    # Column and end line numbers introduced in python 3.11
+    if sys.version_info < (3, 11):
 
-    @property
-    def colno(self) -> int | None:
-        """Starting byte offset of the expression in the traceback entry."""
-        if sys.version_info < (3, 11):
+        @property
+        def end_lineno_relative(self) -> int | None:
             return None
-        return self.get_python_framesummary().colno
 
-    @property
-    def end_colno(self) -> int | None:
-        """Ending byte offset of the expression in the traceback entry."""
-        if sys.version_info < (3, 11):
+        @property
+        def colno(self) -> int | None:
             return None
-        return self.get_python_framesummary().end_colno
+
+        @property
+        def end_colno(self) -> int | None:
+            return None
+    else:
+
+        @property
+        def end_lineno_relative(self) -> int | None:
+            frame_summary = self.get_python_framesummary()
+            if frame_summary.end_lineno is None:
+                return None
+            return frame_summary.end_lineno - 1 - self.frame.code.firstlineno
+
+        @property
+        def colno(self) -> int | None:
+            """Starting byte offset of the expression in the traceback entry."""
+            return self.get_python_framesummary().colno
+
+        @property
+        def end_colno(self) -> int | None:
+            """Ending byte offset of the expression in the traceback entry."""
+            return self.get_python_framesummary().end_colno
 
     @property
     def frame(self) -> Frame:
@@ -956,10 +966,8 @@ class FormattedExcinfo:
 
         num_stripped_chars = len(raw_line) - len(line)
 
-        start_char_offset = traceback._byte_offset_to_character_offset(raw_line, colno)
-        end_char_offset = traceback._byte_offset_to_character_offset(
-            raw_line, end_colno
-        )
+        start_char_offset = _byte_offset_to_character_offset(raw_line, colno)
+        end_char_offset = _byte_offset_to_character_offset(raw_line, end_colno)
         num_carets = end_char_offset - start_char_offset
         # If the highlight would span the whole line, it is redundant, don't
         # show it.
@@ -1475,6 +1483,12 @@ def getfslineno(obj: object) -> tuple[str | Path, int]:
         return fspath, lineno
 
     return code.path, code.firstlineno
+
+
+def _byte_offset_to_character_offset(str, offset):
+    """Converts a byte based offset in a string to a code-point."""
+    as_utf8 = str.encode("utf-8")
+    return len(as_utf8[:offset].decode("utf-8", errors="replace"))
 
 
 # Relative paths that we use to filter traceback entries from appearing to the user;
