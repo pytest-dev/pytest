@@ -849,6 +849,10 @@ raise ValueError()
         assert basename in str(reprtb.reprfileloc.path)
         assert reprtb.reprfileloc.lineno == 3
 
+    @pytest.mark.skipif(
+        "sys.version_info < (3,11)",
+        reason="Column level traceback info added in python 3.11",
+    )
     def test_repr_traceback_entry_short_carets(self, importasmod) -> None:
         mod = importasmod(
             """
@@ -1397,13 +1401,22 @@ raise ValueError()
         assert tw_mock.lines[40] == ("_ ", None)
         assert tw_mock.lines[41] == ""
         assert tw_mock.lines[42] == "    def h():"
-        assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
-        assert tw_mock.lines[44] == "                 ^^^^^^^^^^^^^^^^^^^^^^"
-        assert tw_mock.lines[45] == "E       AttributeError"
-        assert tw_mock.lines[46] == ""
-        line = tw_mock.get_write_msg(47)
-        assert line.endswith("mod.py")
-        assert tw_mock.lines[48] == ":15: AttributeError"
+        # On python 3.11 and greater, check for carets in the traceback.
+        if sys.version_info >= (3, 11):
+            assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
+            assert tw_mock.lines[44] == "                 ^^^^^^^^^^^^^^^^^^^^^^"
+            assert tw_mock.lines[45] == "E       AttributeError"
+            assert tw_mock.lines[46] == ""
+            line = tw_mock.get_write_msg(47)
+            assert line.endswith("mod.py")
+            assert tw_mock.lines[48] == ":15: AttributeError"
+        else:
+            assert tw_mock.lines[43] == ">       raise AttributeError()"
+            assert tw_mock.lines[44] == "E       AttributeError"
+            assert tw_mock.lines[45] == ""
+            line = tw_mock.get_write_msg(46)
+            assert line.endswith("mod.py")
+            assert tw_mock.lines[47] == ":15: AttributeError"
 
     @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
     def test_exc_repr_chain_suppression(self, importasmod, mode, tw_mock):
