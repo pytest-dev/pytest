@@ -208,6 +208,26 @@ class TracebackEntry:
     def lineno(self) -> int:
         return self._rawentry.tb_lineno - 1
 
+    def get_python_framesummary(self) -> traceback.FrameSummary:
+        # Python's built-in traceback module implements all the nitty gritty
+        # details to get column numbers of out frames.
+        stack_summary = traceback.extract_tb(self._rawentry, limit=1)
+        return stack_summary[0]
+
+    @property
+    def end_lineno(self) -> int:
+        return self.get_python_framesummary().end_lineno - 1
+
+    @property
+    def colno(self) -> int | None:
+        """Starting byte offset of the expression in the traceback entry."""
+        return self.get_python_framesummary().colno
+
+    @property
+    def end_colno(self) -> int | None:
+        """Ending byte offset of the expression in the traceback entry."""
+        return self.get_python_framesummary().end_colno
+
     @property
     def frame(self) -> Frame:
         return Frame(self._rawentry.tb_frame)
@@ -856,6 +876,9 @@ class FormattedExcinfo:
         line_index: int = -1,
         excinfo: ExceptionInfo[BaseException] | None = None,
         short: bool = False,
+        end_line_index: int | None = None,
+        colno: int | None = None,
+        end_colno: int | None = None,
     ) -> list[str]:
         """Return formatted and marked up source lines."""
         lines = []
@@ -869,16 +892,75 @@ class FormattedExcinfo:
         space_prefix = "    "
         if short:
             lines.append(space_prefix + source.lines[line_index].strip())
+            lines.extend(
+                self.get_highlight_arrows_for_line(
+                    raw_line=source.raw_lines[line_index],
+                    line=source.lines[line_index].strip(),
+                    lineno=line_index,
+                    end_lineno=end_line_index,
+                    colno=colno,
+                    end_colno=end_colno,
+                )
+            )
         else:
             for line in source.lines[:line_index]:
                 lines.append(space_prefix + line)
             lines.append(self.flow_marker + "   " + source.lines[line_index])
+            lines.extend(
+                self.get_highlight_arrows_for_line(
+                    raw_line=source.raw_lines[line_index],
+                    line=source.lines[line_index],
+                    lineno=line_index,
+                    end_lineno=end_line_index,
+                    colno=colno,
+                    end_colno=end_colno,
+                )
+            )
             for line in source.lines[line_index + 1 :]:
                 lines.append(space_prefix + line)
         if excinfo is not None:
             indent = 4 if short else self._getindent(source)
             lines.extend(self.get_exconly(excinfo, indent=indent, markall=True))
         return lines
+
+    def get_highlight_arrows_for_line(
+        self,
+        line: str,
+        raw_line: str,
+        lineno: int | None,
+        end_lineno: int | None,
+        colno: int | None,
+        end_colno: int | None,
+    ) -> list[str]:
+        """Return characters highlighting a source line.
+
+        Example with colno and end_colno pointing to the bar expression:
+                   "foo() + bar()"
+        returns    "        ^^^^^"
+        """
+        if lineno != end_lineno:
+            # Don't handle expressions that span multiple lines.
+            return []
+        if colno is None or end_colno is None:
+            # Can't do anything without column information.
+            return []
+
+        num_stripped_chars = len(raw_line) - len(line)
+
+        start_char_offset = traceback._byte_offset_to_character_offset(raw_line, colno)
+        end_char_offset = traceback._byte_offset_to_character_offset(
+            raw_line, end_colno
+        )
+        num_carets = end_char_offset - start_char_offset
+        # If the highlight would span the whole line, it is redundant, don't
+        # show it.
+        if num_carets >= len(line.strip()):
+            return []
+
+        highlights = "    "
+        highlights += " " * (start_char_offset - num_stripped_chars + 1)
+        highlights += "^" * num_carets
+        return [highlights]
 
     def get_exconly(
         self,
@@ -939,11 +1021,23 @@ class FormattedExcinfo:
             if source is None:
                 source = Source("???")
                 line_index = 0
+                end_line_index, colno, end_colno = None, None, None
             else:
                 line_index = entry.lineno - entry.getfirstlinesource()
+                end_line_index = entry.end_lineno - entry.getfirstlinesource()
+                colno = entry.colno
+                end_colno = entry.end_colno
             short = style == "short"
             reprargs = self.repr_args(entry) if not short else None
-            s = self.get_source(source, line_index, excinfo, short=short)
+            s = self.get_source(
+                source=source,
+                line_index=line_index,
+                excinfo=excinfo,
+                short=short,
+                end_line_index=end_line_index,
+                colno=colno,
+                end_colno=end_colno,
+            )
             lines.extend(s)
             if short:
                 message = f"in {entry.name}"
