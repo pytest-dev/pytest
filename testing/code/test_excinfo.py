@@ -849,6 +849,33 @@ raise ValueError()
         assert basename in str(reprtb.reprfileloc.path)
         assert reprtb.reprfileloc.lineno == 3
 
+    def test_repr_traceback_entry_short_carets(self, importasmod) -> None:
+        mod = importasmod(
+            """
+            def div_by_zero():
+                return 1 / 0
+            def func1():
+                return 42 + div_by_zero()
+            def entry():
+                func1()
+        """
+        )
+        excinfo = pytest.raises(ZeroDivisionError, mod.entry)
+        p = FormattedExcinfo(style="short")
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-3])
+        assert len(reprtb.lines) == 1
+        assert reprtb.lines[0] == "    func1()"
+
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
+        assert len(reprtb.lines) == 2
+        assert reprtb.lines[0] == "    return 42 + div_by_zero()"
+        assert reprtb.lines[1] == "                ^^^^^^^^^^^^^"
+
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
+        assert len(reprtb.lines) == 2
+        assert reprtb.lines[0] == "    return 1 / 0"
+        assert reprtb.lines[1] == "           ^^^^^"
+
     def test_repr_tracebackentry_no(self, importasmod):
         mod = importasmod(
             """
@@ -1309,7 +1336,7 @@ raise ValueError()
                 raise ValueError()
 
             def h():
-                raise AttributeError()
+                if True: raise AttributeError()
         """
         )
         excinfo = pytest.raises(AttributeError, mod.f)
@@ -1370,12 +1397,13 @@ raise ValueError()
         assert tw_mock.lines[40] == ("_ ", None)
         assert tw_mock.lines[41] == ""
         assert tw_mock.lines[42] == "    def h():"
-        assert tw_mock.lines[43] == ">       raise AttributeError()"
-        assert tw_mock.lines[44] == "E       AttributeError"
-        assert tw_mock.lines[45] == ""
-        line = tw_mock.get_write_msg(46)
+        assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
+        assert tw_mock.lines[44] == "                 ^^^^^^^^^^^^^^^^^^^^^^"
+        assert tw_mock.lines[45] == "E       AttributeError"
+        assert tw_mock.lines[46] == ""
+        line = tw_mock.get_write_msg(47)
         assert line.endswith("mod.py")
-        assert tw_mock.lines[47] == ":15: AttributeError"
+        assert tw_mock.lines[48] == ":15: AttributeError"
 
     @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
     def test_exc_repr_chain_suppression(self, importasmod, mode, tw_mock):
@@ -1509,6 +1537,7 @@ raise ValueError()
                 fail()
             :5: in fail
                 return 0 / 0
+                       ^^^^^
             E   ZeroDivisionError: division by zero"""
         )
         assert out == expected_out
