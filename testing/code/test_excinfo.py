@@ -1411,7 +1411,7 @@ raise ValueError()
             assert line.endswith("mod.py")
             assert tw_mock.lines[48] == ":15: AttributeError"
         else:
-            assert tw_mock.lines[43] == ">       raise AttributeError()"
+            assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
             assert tw_mock.lines[44] == "E       AttributeError"
             assert tw_mock.lines[45] == ""
             line = tw_mock.get_write_msg(46)
@@ -1535,24 +1535,44 @@ raise ValueError()
         r = excinfo.getrepr(style="short")
         r.toterminal(tw_mock)
         out = "\n".join(line for line in tw_mock.lines if isinstance(line, str))
-        expected_out = textwrap.dedent(
-            """\
-            :13: in unreraise
-                reraise()
-            :10: in reraise
-                raise Err() from e
-            E   test_exc_chain_repr_cycle0.mod.Err
+        # Assert highlighting carets in python3.11+
+        if sys.version_info >= (3, 11):
+            expected_out = textwrap.dedent(
+                """\
+                :13: in unreraise
+                    reraise()
+                :10: in reraise
+                    raise Err() from e
+                E   test_exc_chain_repr_cycle0.mod.Err
 
-            During handling of the above exception, another exception occurred:
-            :15: in unreraise
-                raise e.__cause__
-            :8: in reraise
-                fail()
-            :5: in fail
-                return 0 / 0
-                       ^^^^^
-            E   ZeroDivisionError: division by zero"""
-        )
+                During handling of the above exception, another exception occurred:
+                :15: in unreraise
+                    raise e.__cause__
+                :8: in reraise
+                    fail()
+                :5: in fail
+                    return 0 / 0
+                           ^^^^^
+                E   ZeroDivisionError: division by zero"""
+            )
+        else:
+            expected_out = textwrap.dedent(
+                """\
+                :13: in unreraise
+                    reraise()
+                :10: in reraise
+                    raise Err() from e
+                E   test_exc_chain_repr_cycle0.mod.Err
+
+                During handling of the above exception, another exception occurred:
+                :15: in unreraise
+                    raise e.__cause__
+                :8: in reraise
+                    fail()
+                :5: in fail
+                    return 0 / 0
+                E   ZeroDivisionError: division by zero"""
+            )
         assert out == expected_out
 
     def test_exec_type_error_filter(self, importasmod):
