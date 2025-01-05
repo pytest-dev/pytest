@@ -2169,6 +2169,29 @@ class TestProgressOutputStyle:
             ]
         )
 
+    def test_timer(self, many_tests_files, pytester: Pytester) -> None:
+        from _pytest.terminal import format_node_duration
+
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = timer
+        """
+        )
+        output = pytester.runpytest()
+        reporter = output.reprec.getcall("pytest_terminal_summary").terminalreporter
+        reports = reporter.getreports("") + reporter.getreports("passed")
+        bar_time = format_node_duration(sum(r.duration for r in reports if r.fspath == "test_bar.py"))
+        foo_time = format_node_duration(sum(r.duration for r in reports if r.fspath == "test_foo.py"))
+        foobar_time = format_node_duration(sum(r.duration for r in reports if r.fspath == "test_foobar.py"))
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py \.{10} \s+" + bar_time,
+                r"test_foo.py \.{5} \s+ " + foo_time,
+                r"test_foobar.py \.{5} \s+ " + foobar_time,
+            ]
+        )
+
     def test_verbose(self, many_tests_files, pytester: Pytester) -> None:
         output = pytester.runpytest("-v")
         output.stdout.re_match_lines(
@@ -2192,6 +2215,29 @@ class TestProgressOutputStyle:
                 r"test_bar.py::test_bar\[0\] PASSED \s+ \[ 1/20\]",
                 r"test_foo.py::test_foo\[4\] PASSED \s+ \[15/20\]",
                 r"test_foobar.py::test_foobar\[4\] PASSED \s+ \[20/20\]",
+            ]
+        )
+
+    def test_verbose_timer(self, many_tests_files, pytester: Pytester) -> None:
+        from _pytest.terminal import format_node_duration
+
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = timer
+        """
+        )
+        output = pytester.runpytest("-v")
+        reporter = output.reprec.getcall("pytest_terminal_summary").terminalreporter
+        reports = reporter.getreports("") + reporter.getreports("passed")
+        bar_time = format_node_duration(sum(r.duration for r in reports if r.head_line == "test_bar[0]" and r.when != "teardown"))
+        foo_time = format_node_duration(sum(r.duration for r in reports if r.head_line == "test_foo[4]" and r.when != "teardown"))
+        foobar_time = format_node_duration(sum(r.duration for r in reports if r.head_line == "test_foobar[4]" and r.when != "teardown"))
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py::test_bar\[0\] PASSED \s+ " + bar_time,
+                r"test_foo.py::test_foo\[4\] PASSED \s+ " + foo_time,
+                r"test_foobar.py::test_foobar\[4\] PASSED \s+ " + foobar_time,
             ]
         )
 
@@ -2535,6 +2581,27 @@ def test_format_session_duration(seconds, expected):
     from _pytest.terminal import format_session_duration
 
     assert format_session_duration(seconds) == expected
+
+
+@pytest.mark.parametrize(
+    "seconds, expected",
+    [
+        (3600 * 100 - 60, "99h 59m"),
+        (31 * 60 - 1, "30m 59s"),
+        (10.1236, "10.124s"),
+        (9.1236, "9.124s"),
+        (0.1236, "123.6ms"),
+        (0.01236, "12.36ms"),
+        (0.001236, "1.236ms"),
+        (0.0001236, "123.6us"),
+        (0.00001236, "12.36us"),
+        (0.000001236, "1.236us"),
+    ],
+)
+def test_format_node_duration(seconds, expected):
+    from _pytest.terminal import format_node_duration
+
+    assert format_node_duration(seconds) == expected
 
 
 def test_collecterror(pytester: Pytester) -> None:
