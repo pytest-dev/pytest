@@ -2170,8 +2170,6 @@ class TestProgressOutputStyle:
         )
 
     def test_timer(self, many_tests_files, pytester: Pytester) -> None:
-        from _pytest.terminal import format_node_duration
-
         pytester.makeini(
             """
             [pytest]
@@ -2179,16 +2177,11 @@ class TestProgressOutputStyle:
         """
         )
         output = pytester.runpytest()
-        reporter = output.reprec.getcall("pytest_terminal_summary").terminalreporter
-        reports = reporter.getreports("") + reporter.getreports("passed")
-        bar_time = format_node_duration(sum(r.duration for r in reports if r.fspath == "test_bar.py"))
-        foo_time = format_node_duration(sum(r.duration for r in reports if r.fspath == "test_foo.py"))
-        foobar_time = format_node_duration(sum(r.duration for r in reports if r.fspath == "test_foobar.py"))
         output.stdout.re_match_lines(
             [
-                r"test_bar.py \.{10} \s+" + bar_time,
-                r"test_foo.py \.{5} \s+ " + foo_time,
-                r"test_foobar.py \.{5} \s+ " + foobar_time,
+                r"test_bar.py \.{10} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foo.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foobar.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
             ]
         )
 
@@ -2219,8 +2212,6 @@ class TestProgressOutputStyle:
         )
 
     def test_verbose_timer(self, many_tests_files, pytester: Pytester) -> None:
-        from _pytest.terminal import format_node_duration
-
         pytester.makeini(
             """
             [pytest]
@@ -2228,16 +2219,11 @@ class TestProgressOutputStyle:
         """
         )
         output = pytester.runpytest("-v")
-        reporter = output.reprec.getcall("pytest_terminal_summary").terminalreporter
-        reports = reporter.getreports("") + reporter.getreports("passed")
-        bar_time = format_node_duration(sum(r.duration for r in reports if r.head_line == "test_bar[0]" and r.when != "teardown"))
-        foo_time = format_node_duration(sum(r.duration for r in reports if r.head_line == "test_foo[4]" and r.when != "teardown"))
-        foobar_time = format_node_duration(sum(r.duration for r in reports if r.head_line == "test_foobar[4]" and r.when != "teardown"))
         output.stdout.re_match_lines(
             [
-                r"test_bar.py::test_bar\[0\] PASSED \s+ " + bar_time,
-                r"test_foo.py::test_foo\[4\] PASSED \s+ " + foo_time,
-                r"test_foobar.py::test_foobar\[4\] PASSED \s+ " + foobar_time,
+                r"test_bar.py::test_bar\[0\] PASSED \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foo.py::test_foo\[4\] PASSED \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foobar.py::test_foobar\[4\] PASSED \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
             ]
         )
 

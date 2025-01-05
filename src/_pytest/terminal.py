@@ -388,7 +388,9 @@ class TerminalReporter:
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
 
-    def _determine_show_progress_info(self) -> Literal["progress", "count", "timer", False]:
+    def _determine_show_progress_info(
+        self,
+    ) -> Literal["progress", "count", "timer", False]:
         """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038) unless explicitly
         # overridden by progress-even-when-capture-no
@@ -698,23 +700,26 @@ class TerminalReporter:
         if self._show_progress_info == "timer":
             if not collected:
                 return ""
-            all_reports = self._get_reports_to_display("passed") \
-                + self._get_reports_to_display("xpassed") \
-                + self._get_reports_to_display("failed") \
-                + self._get_reports_to_display("xfailed") \
-                + self._get_reports_to_display("skipped") \
-                + self._get_reports_to_display("error") \
+            all_reports = (
+                self._get_reports_to_display("passed")
+                + self._get_reports_to_display("xpassed")
+                + self._get_reports_to_display("failed")
+                + self._get_reports_to_display("xfailed")
+                + self._get_reports_to_display("skipped")
+                + self._get_reports_to_display("error")
                 + self._get_reports_to_display("")
+            )
             current_location = all_reports[-1].location[0]
             not_reported = [
-                r for r in all_reports
-                if r.nodeid not in self._timing_nodeids_reported
+                r for r in all_reports if r.nodeid not in self._timing_nodeids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
             )
             tests_completed = sum(
-                r.when == "setup" for r in not_reported if r.location[0] == current_location
+                r.when == "setup"
+                for r in not_reported
+                if r.location[0] == current_location
             )
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
@@ -722,9 +727,7 @@ class TerminalReporter:
                 return format_node_duration(sum(r.duration for r in not_reported))
             return ""
         if collected:
-            return (
-                f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
-            )
+            return f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
         return " [100%]"
 
     def _write_progress_information_if_past_edge(self) -> None:
