@@ -997,9 +997,8 @@ class TestDurations:
 
     @staticmethod
     def check_tests_in_output(
-        lines: Sequence[str], *expected_test_numbers: int
+        lines: Sequence[str], *expected_test_numbers: int, number_of_tests: int = 3
     ) -> None:
-        number_of_tests = 3
         found_test_numbers = set(
             test_number
             for test_number in range(1, number_of_tests + 1)
