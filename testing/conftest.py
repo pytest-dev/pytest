@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-import importlib.metadata
 import dataclasses
+import importlib.metadata
 import re
 import sys
 
-import pygments
 from packaging.version import Version
 
 from _pytest.monkeypatch import MonkeyPatch
