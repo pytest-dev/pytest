@@ -217,7 +217,7 @@ class TracebackEntry:
         return self.lineno - self.frame.code.firstlineno
 
     def __repr__(self) -> str:
-        return f"<TracebackEntry {self.frame.code.path}:{self.lineno+1}>"
+        return f"<TracebackEntry {self.frame.code.path}:{self.lineno + 1}>"
 
     @property
     def statement(self) -> Source:
@@ -303,7 +303,7 @@ class TracebackEntry:
         # This output does not quite match Python's repr for traceback entries,
         # but changing it to do so would break certain plugins.  See
         # https://github.com/pytest-dev/pytest/pull/7535/ for details.
-        return f"  File '{self.path}':{self.lineno+1} in {name}\n  {line}\n"
+        return f"  File '{self.path}':{self.lineno + 1} in {name}\n  {line}\n"
 
     @property
     def name(self) -> str:
@@ -527,33 +527,33 @@ class ExceptionInfo(Generic[E]):
     @property
     def type(self) -> type[E]:
         """The exception class."""
-        assert (
-            self._excinfo is not None
-        ), ".type can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".type can only be used after the context manager exits"
+        )
         return self._excinfo[0]
 
     @property
     def value(self) -> E:
         """The exception value."""
-        assert (
-            self._excinfo is not None
-        ), ".value can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".value can only be used after the context manager exits"
+        )
         return self._excinfo[1]
 
     @property
     def tb(self) -> TracebackType:
         """The exception raw traceback."""
-        assert (
-            self._excinfo is not None
-        ), ".tb can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".tb can only be used after the context manager exits"
+        )
         return self._excinfo[2]
 
     @property
     def typename(self) -> str:
         """The type name of the exception."""
-        assert (
-            self._excinfo is not None
-        ), ".typename can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".typename can only be used after the context manager exits"
+        )
         return self.type.__name__
 
     @property

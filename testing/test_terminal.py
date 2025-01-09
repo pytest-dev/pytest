@@ -336,7 +336,7 @@ class TestTerminal:
         pytester.makeconftest(
             f"""
             def pytest_report_teststatus(report):
-                return {category !r}, 'F', ('FOO', {{'red': True}})
+                return {category!r}, 'F', ('FOO', {{'red': True}})
         """
         )
         pytester.makepyfile(
@@ -1187,7 +1187,7 @@ class TestTerminalFunctional:
 @pytest.mark.parametrize(
     ("use_ci", "expected_message"),
     (
-        (True, f"- AssertionError: {'this_failed'*100}"),
+        (True, f"- AssertionError: {'this_failed' * 100}"),
         (False, "- AssertionError: this_failedt..."),
     ),
     ids=("on CI", "not on CI"),

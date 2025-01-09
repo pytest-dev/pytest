@@ -482,8 +482,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--last-failed",
         action="store_true",
         dest="lf",
-        help="Rerun only the tests that failed "
-        "at the last run (or all if none failed)",
+        help="Rerun only the tests that failed at the last run (or all if none failed)",
     )
     group.addoption(
         "--ff",

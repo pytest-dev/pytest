@@ -746,7 +746,9 @@ class SubRequest(FixtureRequest):
         if node is None and scope is Scope.Class:
             # Fallback to function item itself.
             node = self._pyfuncitem
-        assert node, f'Could not obtain a node for scope "{scope}" for function {self._pyfuncitem!r}'
+        assert node, (
+            f'Could not obtain a node for scope "{scope}" for function {self._pyfuncitem!r}'
+        )
         return node
 
     def _check_scope(
@@ -808,9 +810,9 @@ class FixtureLookupError(LookupError):
         # new cases it might break.
         # Add the assert to make it clearer to developer that this will fail, otherwise
         # it crashes because `fspath` does not get set due to `stack` being empty.
-        assert (
-            self.msg is None or self.fixturestack
-        ), "formatrepr assumptions broken, rewrite it to handle it"
+        assert self.msg is None or self.fixturestack, (
+            "formatrepr assumptions broken, rewrite it to handle it"
+        )
         if msg is not None:
             # The last fixture raise an error, let's present
             # it at the requesting side.

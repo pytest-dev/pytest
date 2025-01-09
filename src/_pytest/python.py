@@ -914,9 +914,9 @@ class IdMaker:
                         new_id = f"{id}{suffix}{id_suffixes[id]}"
                     resolved_ids[index] = new_id
                     id_suffixes[id] += 1
-        assert len(resolved_ids) == len(
-            set(resolved_ids)
-        ), f"Internal error: {resolved_ids=}"
+        assert len(resolved_ids) == len(set(resolved_ids)), (
+            f"Internal error: {resolved_ids=}"
+        )
         return resolved_ids
 
     def _resolve_ids(self) -> Iterable[str]:
