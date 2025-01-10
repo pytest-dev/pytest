@@ -384,7 +384,11 @@ def test_do_not_clear_cache_if_disabled(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("--stepwise")
     result.stdout.fnmatch_lines(
-        ["*::test_2 - assert False*", "*failed, continuing from this test next run*"]
+        [
+            "*::test_2 - assert False*",
+            "*failed, continuing from this test next run*",
+            "=* 1 failed, 1 passed in *",
+        ]
     )
 
     # Run a specific test without passing `--stepwise`.
@@ -394,7 +398,12 @@ def test_do_not_clear_cache_if_disabled(pytester: Pytester) -> None:
     # Running with `--stepwise` should continue from the last failing test.
     result = pytester.runpytest("--stepwise")
     result.stdout.fnmatch_lines(
-        ["*::test_2 - assert False*", "*failed, continuing from this test next run*"]
+        [
+            "stepwise: skipping 1 already passed items.",
+            "*::test_2 - assert False*",
+            "*failed, continuing from this test next run*",
+            "=* 1 failed, 1 deselected in *",
+        ]
     )
 
 
