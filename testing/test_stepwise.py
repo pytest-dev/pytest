@@ -396,3 +396,34 @@ def test_do_not_clear_cache_if_disabled(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         ["*::test_2 - assert False*", "*failed, continuing from this test next run*"]
     )
+
+
+def test_stepwise_reset(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_1():
+            pass
+        def test_2():
+            assert False
+        def test_3():
+            pass
+        """
+    )
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*::test_1 *PASSED*",
+            "*::test_2 *FAILED*",
+            "*failed, continuing from this test next run*",
+        ]
+    )
+
+    # Running with --stepwise-reset restarts the stepwise workflow.
+    result = pytester.runpytest("-v", "--stepwise-reset")
+    result.stdout.fnmatch_lines(
+        [
+            "*::test_1 *PASSED*",
+            "*::test_2 *FAILED*",
+            "*failed, continuing from this test next run*",
+        ]
+    )

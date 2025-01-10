@@ -30,11 +30,23 @@ def pytest_addoption(parser: Parser) -> None:
         help="Ignore the first failing test but stop on the next failing test. "
         "Implicitly enables --stepwise.",
     )
+    group.addoption(
+        "--sw-reset",
+        "--stepwise-reset",
+        action="store_true",
+        default=False,
+        dest="stepwise_reset",
+        help="Resets stepwise state, restarting the stepwise workflow. "
+        "Implicitly enables --stepwise.",
+    )
 
 
 def pytest_configure(config: Config) -> None:
+    # --stepwise-skip implies stepwise.
     if config.option.stepwise_skip:
-        # allow --stepwise-skip to work on its own merits.
+        config.option.stepwise = True
+    # --stepwise-clear implies stepwise.
+    if config.option.stepwise_reset:
         config.option.stepwise = True
     if config.getoption("stepwise"):
         config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
@@ -58,6 +70,8 @@ class StepwisePlugin:
         self.cache: Cache = config.cache
         self.lastfailed: str | None = self.cache.get(STEPWISE_CACHE_DIR, None)
         self.skip: bool = config.getoption("stepwise_skip")
+        if config.getoption("stepwise_reset"):
+            self.lastfailed = None
 
     def pytest_sessionstart(self, session: Session) -> None:
         self.session = session

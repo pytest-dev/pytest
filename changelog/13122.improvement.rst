@@ -1,4 +1,4 @@
-Improve the ``--stepwise`` flag to not forget the last failed test in case pytest is executed later without the flag.
+Improve the ``--stepwise``/``--sw`` flag to not forget the last failed test in case pytest is executed later without the flag.
 
 This enables the following workflow:
 
@@ -9,3 +9,5 @@ This enables the following workflow:
    failed test, and if it passes, continue with the next tests.
 
 Previously, at step 3, pytest would start from the beginning, forgetting the failed tests.
+
+Also added the new ``--stepwise-reset``/``--sw-reset``, allowing the user to explicitly reset the stepwise state and restart the workflow from the beginning.
