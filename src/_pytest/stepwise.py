@@ -47,8 +47,6 @@ def pytest_sessionfinish(session: Session) -> None:
             # Do not update cache if this process is a xdist worker to prevent
             # race conditions (#10641).
             return
-        # Clear the list of failing tests if the plugin is not active.
-        session.config.cache.set(STEPWISE_CACHE_DIR, [])
 
 
 class StepwisePlugin:

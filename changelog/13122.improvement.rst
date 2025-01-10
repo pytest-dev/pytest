@@ -1,0 +1,11 @@
+Improve the ``--stepwise`` flag to not forget the last failed test in case pytest is executed later without the flag.
+
+This enables the following workflow:
+
+1. Execute pytest with ``--stepwise``, pytest then stops at the first failing test;
+2. User iteratively updates the code and runs the test in isolation, without the ``--stepwise`` flag
+   (for example in an IDE), until it is fixed.
+3. At this point, the user can execute pytest with ``--stepwise`` again and pytest will continue from the previously
+   failed test, and if it passes, continue with the next tests.
+
+Previously, at step 3, pytest would start from the beginning, forgetting the failed tests.

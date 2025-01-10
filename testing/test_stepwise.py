@@ -358,3 +358,41 @@ def test_one():
     with stepwise_cache_file.open(encoding="utf-8") as file_handle:
         observed_value = file_handle.readlines()
     assert [expected_value] == observed_value
+
+
+def test_do_not_clear_cache_if_disabled(pytester: Pytester) -> None:
+    """
+    If pytest is run without --step-wise, do not clear the stepwise cache.
+
+    Keeping the cache around is important for this workflow:
+
+    1. Run tests with --stepwise
+    2. Stop at the failing test, and iterate over it changing the code and running it in isolation
+    (in the IDE for example).
+    3. Run tests with --stepwise again - at this point we expect to start from the failing test, which should now pass,
+       and continue with the next tests.
+    """
+    pytester.makepyfile(
+        """
+        def test_1():
+            pass
+        def test_2():
+            assert False
+        def test_3():
+            pass
+        """
+    )
+    result = pytester.runpytest("--stepwise")
+    result.stdout.fnmatch_lines(
+        ["*::test_2 - assert False*", "*failed, continuing from this test next run*"]
+    )
+
+    # Run a specific test without passing `--stepwise`.
+    result = pytester.runpytest("-k", "test_1")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+    # Running with `--stepwise` should continue from the last failing test.
+    result = pytester.runpytest("--stepwise")
+    result.stdout.fnmatch_lines(
+        ["*::test_2 - assert False*", "*failed, continuing from this test next run*"]
+    )
