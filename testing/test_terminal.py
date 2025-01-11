@@ -2073,6 +2073,21 @@ class TestProgressOutputStyle:
             """,
         )
 
+    @pytest.fixture
+    def more_tests_files(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_bar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(30))
+                def test_bar(i): pass
+            """,
+            test_foo="""
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_foo(i): pass
+            """,
+        )
+
     def test_zero_tests_collected(self, pytester: Pytester) -> None:
         """Some plugins (testmon for example) might issue pytest_runtest_logreport without any tests being
         actually collected (#2971)."""
@@ -2183,6 +2198,26 @@ class TestProgressOutputStyle:
                 r"test_foo.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
                 r"test_foobar.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
             ]
+        )
+
+    def test_timer_multiline(
+        self, more_tests_files, monkeypatch, pytester: Pytester
+    ) -> None:
+        monkeypatch.setenv("COLUMNS", "40")
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = timer
+        """
+        )
+        output = pytester.runpytest()
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py ...................",
+                r"........... \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foo.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+            ],
+            consecutive=True
         )
 
     def test_verbose(self, many_tests_files, pytester: Pytester) -> None:
