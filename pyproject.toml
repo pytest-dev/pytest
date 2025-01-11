@@ -64,11 +64,11 @@ optional-dependencies.dev = [
     "xmlschema",
 ]
 urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
+urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
+urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
 urls.Homepage = "https://docs.pytest.org/en/latest/"
 urls.Source = "https://github.com/pytest-dev/pytest"
 urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
-urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
-urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
 scripts."py.test" = "pytest:console_main"
 scripts.pytest = "pytest:console_main"
 
