@@ -3,16 +3,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
 import inspect
 import sys
 import traceback
 import types
 from typing import Any
-from typing import Callable
-from typing import Generator
-from typing import Iterable
-from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -43,8 +41,8 @@ if TYPE_CHECKING:
 
 
 _SysExcInfoType = Union[
-    Tuple[Type[BaseException], BaseException, types.TracebackType],
-    Tuple[None, None, None],
+    tuple[type[BaseException], BaseException, types.TracebackType],
+    tuple[None, None, None],
 ]
 
 

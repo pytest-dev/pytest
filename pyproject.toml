@@ -23,7 +23,7 @@ authors = [
     { name = "Florian Bruhin" },
     { name = "Others (See AUTHORS)" },
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
@@ -33,7 +33,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -65,10 +64,11 @@ optional-dependencies.dev = [
     "xmlschema",
 ]
 urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
+urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
+urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
 urls.Homepage = "https://docs.pytest.org/en/latest/"
 urls.Source = "https://github.com/pytest-dev/pytest"
 urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
-urls.Twitter = "https://twitter.com/pytestdotorg"
 scripts."py.test" = "pytest:console_main"
 scripts.pytest = "pytest:console_main"
 
@@ -84,11 +84,11 @@ scripts.pytest = "pytest:console_main"
 write_to = "src/_pytest/_version.py"
 
 [tool.black]
-target-version = [
-    'py38',
-]
+# See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#t-target-version
+target-version = [ "py39", "py310", "py311", "py312", "py313" ]
 
 [tool.ruff]
+target-version = "py39"
 line-length = 88
 src = [
     "src",
@@ -213,7 +213,6 @@ disable = [
     "condition-evals-to-constant",
     "consider-alternative-union-syntax",
     "confusing-consecutive-elif",
-    "consider-using-any-or-all",
     "consider-using-assignment-expr",
     "consider-using-dict-items",
     "consider-using-from-import",
@@ -231,7 +230,6 @@ disable = [
     "deprecated-argument",
     "deprecated-attribute",
     "deprecated-class",
-    "deprecated-typing-alias",
     "disallowed-name",                        # foo / bar are used often in tests
     "duplicate-code",
     "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
@@ -336,8 +334,8 @@ disable = [
 ]
 
 [tool.codespell]
-ignore-words-list = "afile,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,socio-economic,tesults,varius,wil"
-skip = "*/plugin_list.rst"
+ignore-words-list = "afile,asend,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,socio-economic,tesults,varius,wil"
+skip = "AUTHORS,*/plugin_list.rst"
 write-changes = true
 
 [tool.check-wheel-contents]
@@ -406,6 +404,9 @@ filterwarnings = [
     "ignore:VendorImporter\\.find_spec\\(\\) not found; falling back to find_module\\(\\):ImportWarning",
     # https://github.com/pytest-dev/execnet/pull/127
     "ignore:isSet\\(\\) is deprecated, use is_set\\(\\) instead:DeprecationWarning",
+    # https://github.com/pytest-dev/pytest/issues/2366
+    # https://github.com/pytest-dev/pytest/pull/13057
+    "default::pytest.PytestFDWarning",
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [
@@ -509,7 +510,7 @@ files = [
 mypy_path = [
     "src",
 ]
-python_version = "3.8"
+python_version = "3.9"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true

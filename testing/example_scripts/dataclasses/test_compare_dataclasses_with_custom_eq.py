@@ -10,8 +10,8 @@ def test_dataclasses() -> None:
         field_a: int = field()
         field_b: str = field()
 
-        def __eq__(self, __o: object) -> bool:
-            return super().__eq__(__o)
+        def __eq__(self, o: object, /) -> bool:
+            return super().__eq__(o)
 
     left = SimpleDataObject(1, "b")
     right = SimpleDataObject(1, "c")

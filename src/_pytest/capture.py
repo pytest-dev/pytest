@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import abc
 import collections
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
 import contextlib
 import io
 from io import UnsupportedOperation
@@ -18,10 +21,7 @@ from typing import BinaryIO
 from typing import cast
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import Generic
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
 from typing import NamedTuple
 from typing import TextIO
@@ -360,7 +360,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             class_name,
             self.name,
-            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
             self._state,
             self.tmpfile,
         )
@@ -369,16 +369,16 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             self.__class__.__name__,
             self.name,
-            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
             self._state,
             self.tmpfile,
         )
 
     def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:
@@ -492,10 +492,10 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         )
 
     def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:

@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import dataclasses
 import fnmatch
 import functools
@@ -11,15 +16,9 @@ import importlib.util
 import os
 from pathlib import Path
 import sys
-from typing import AbstractSet
-from typing import Callable
-from typing import Dict
 from typing import final
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
 from typing import overload
-from typing import Sequence
 from typing import TYPE_CHECKING
 import warnings
 
@@ -77,6 +76,12 @@ def pytest_addoption(parser: Parser) -> None:
         "command line",
         type="args",
         default=[],
+    )
+    parser.addini(
+        "collect_imported_tests",
+        "Whether to collect tests in imported modules outside `testpaths`",
+        type="bool",
+        default=True,
     )
     group = parser.getgroup("general", "Running and selection options")
     group._addoption(
@@ -350,8 +355,7 @@ def pytest_collection(session: Session) -> None:
 def pytest_runtestloop(session: Session) -> bool:
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
         raise session.Interrupted(
-            "%d error%s during collection"
-            % (session.testsfailed, "s" if session.testsfailed != 1 else "")
+            f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
         )
 
     if session.config.option.collectonly:
@@ -476,7 +480,7 @@ class Failed(Exception):
 
 
 @dataclasses.dataclass
-class _bestrelpath_cache(Dict[Path, str]):
+class _bestrelpath_cache(dict[Path, str]):
     __slots__ = ("path",)
 
     path: Path
@@ -586,13 +590,12 @@ class Session(nodes.Collector):
         return session
 
     def __repr__(self) -> str:
-        return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (
-            self.__class__.__name__,
-            self.name,
-            getattr(self, "exitstatus", "<UNSET>"),
-            self.testsfailed,
-            self.testscollected,
-        )
+        return (
+            f"<{self.__class__.__name__} {self.name} "
+            f"exitstatus=%r "
+            f"testsfailed={self.testsfailed} "
+            f"testscollected={self.testscollected}>"
+        ) % getattr(self, "exitstatus", "<UNSET>")
 
     @property
     def shouldstop(self) -> bool | str:
@@ -655,7 +658,7 @@ class Session(nodes.Collector):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self.testsfailed >= maxfail:
-                self.shouldfail = "stopping after %d failures" % (self.testsfailed)
+                self.shouldfail = f"stopping after {self.testsfailed} failures"
 
     pytest_collectreport = pytest_runtest_logreport
 

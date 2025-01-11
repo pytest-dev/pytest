@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from collections.abc import Mapping
 import dataclasses
 import os
 import platform
 import sys
 import traceback
-from typing import Generator
 from typing import Optional
 
 from _pytest.config import Config
@@ -196,7 +196,7 @@ def evaluate_skip_marks(item: Item) -> Skip | None:
 class Xfail:
     """The result of evaluate_xfail_marks()."""
 
-    __slots__ = ("reason", "run", "strict", "raises")
+    __slots__ = ("raises", "reason", "run", "strict")
 
     reason: str
     run: bool

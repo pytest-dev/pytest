@@ -1,13 +1,12 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Sequence
 import os
 from pathlib import Path
 import textwrap
 from typing import cast
-from typing import Generator
-from typing import List
-from typing import Sequence
 
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
@@ -459,7 +458,7 @@ def test_conftest_import_order(pytester: Pytester, monkeypatch: MonkeyPatch) -> 
         rootpath=pytester.path,
         consider_namespace_packages=False,
     )
-    mods = cast(List[Path], conftest._getconftestmodules(sub))
+    mods = cast(list[Path], conftest._getconftestmodules(sub))
     expected = [ct1, ct2]
     assert mods == expected
 
@@ -700,9 +699,9 @@ def test_search_conftest_up_to_inifile(
     result = pytester.runpytest(*args)
     match = ""
     if passed:
-        match += "*%d passed*" % passed
+        match += f"*{passed} passed*"
     if error:
-        match += "*%d error*" % error
+        match += f"*{error} error*"
     result.stdout.fnmatch_lines(match)
 
 

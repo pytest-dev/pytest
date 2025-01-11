@@ -5,6 +5,8 @@
 # pytest-cache version.
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Iterable
 import dataclasses
 import errno
 import json
@@ -12,8 +14,6 @@ import os
 from pathlib import Path
 import tempfile
 from typing import final
-from typing import Generator
-from typing import Iterable
 
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
@@ -388,8 +388,8 @@ class LFPlugin:
             if not previously_failed:
                 # Running a subset of all tests with recorded failures
                 # only outside of it.
-                self._report_status = "%d known failures not in selected tests" % (
-                    len(self.lastfailed),
+                self._report_status = (
+                    f"{len(self.lastfailed)} known failures not in selected tests"
                 )
             else:
                 if self.config.getoption("lf"):
@@ -482,8 +482,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--last-failed",
         action="store_true",
         dest="lf",
-        help="Rerun only the tests that failed "
-        "at the last run (or all if none failed)",
+        help="Rerun only the tests that failed at the last run (or all if none failed)",
     )
     group.addoption(
         "--ff",
@@ -622,5 +621,5 @@ def cacheshow(config: Config, session: Session) -> int:
             #    print("%s/" % p.relative_to(basedir))
             if p.is_file():
                 key = str(p.relative_to(basedir))
-                tw.line(f"{key} is a file of length {p.stat().st_size:d}")
+                tw.line(f"{key} is a file of length {p.stat().st_size}")
     return 0

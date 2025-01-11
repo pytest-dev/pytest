@@ -16,14 +16,14 @@
 from __future__ import annotations
 
 import collections as _collections
+from collections.abc import Callable
+from collections.abc import Iterator
 import dataclasses as _dataclasses
 from io import StringIO as _StringIO
 import re
 import types as _types
 from typing import Any
-from typing import Callable
 from typing import IO
-from typing import Iterator
 
 
 class _safe_key:
@@ -540,7 +540,7 @@ class PrettyPrinter:
     ) -> None:
         stream.write(object.__class__.__name__ + "(")
         if object.maxlen is not None:
-            stream.write("maxlen=%d, " % object.maxlen)
+            stream.write(f"maxlen={object.maxlen}, ")
         stream.write("[")
 
         self._format_items(object, stream, indent, allowance + 1, context, level)

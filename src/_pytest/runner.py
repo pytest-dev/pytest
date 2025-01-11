@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 import bdb
+from collections.abc import Callable
 import dataclasses
 import os
 import sys
 import types
-from typing import Callable
 from typing import cast
 from typing import final
 from typing import Generic
@@ -61,10 +61,10 @@ def pytest_addoption(parser: Parser) -> None:
         "--durations-min",
         action="store",
         type=float,
-        default=0.005,
+        default=None,
         metavar="N",
         help="Minimal duration in seconds for inclusion in slowest list. "
-        "Default: 0.005.",
+        "Default: 0.005 (or 0.0 if -vv is given).",
     )
 
 
@@ -74,6 +74,8 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
     verbose = terminalreporter.config.get_verbosity()
     if durations is None:
         return
+    if durations_min is None:
+        durations_min = 0.005 if verbose < 2 else 0.0
     tr = terminalreporter
     dlist = []
     for replist in tr.stats.values():
@@ -90,11 +92,13 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):
-        if verbose < 2 and rep.duration < durations_min:
+        if rep.duration < durations_min:
             tr.write_line("")
-            tr.write_line(
-                f"({len(dlist) - i} durations < {durations_min:g}s hidden.  Use -vv to show these durations.)"
-            )
+            message = f"({len(dlist) - i} durations < {durations_min:g}s hidden."
+            if terminalreporter.config.option.durations_min is None:
+                message += "  Use -vv to show these durations."
+            message += ")"
+            tr.write_line(message)
             break
         tr.write_line(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}")
 
@@ -533,7 +537,7 @@ class SetupState:
         When nextitem is None (meaning we're at the last item), the entire
         stack is torn down.
         """
-        needed_collectors = nextitem and nextitem.listchain() or []
+        needed_collectors = (nextitem and nextitem.listchain()) or []
         exceptions: list[BaseException] = []
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:

@@ -1,0 +1,4 @@
+`This
+example`<https://docs.pytest.org/en/latest/example/simple.html#making-test-result-information-available-in-fixtures>
+showed ``print`` statements that do not exactly reflect what the
+different branches actually do.  The fix makes the example more precise.

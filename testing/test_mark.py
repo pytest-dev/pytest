@@ -1048,6 +1048,32 @@ def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
     assert result.ret == ExitCode.INTERRUPTED
 
 
+def test_paramset_empty_no_idfunc(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An empty parameter set should not call the user provided id function (#13031)."""
+    p1 = pytester.makepyfile(
+        """
+        import pytest
+
+        def idfunc(value):
+            raise ValueError()
+        @pytest.mark.parametrize("param", [], ids=idfunc)
+        def test(param):
+            pass
+        """
+    )
+    result = pytester.runpytest(p1, "-v", "-rs")
+    result.stdout.fnmatch_lines(
+        [
+            "* collected 1 item",
+            "test_paramset_empty_no_idfunc* SKIPPED *",
+            "SKIPPED [1] test_paramset_empty_no_idfunc.py:5: got empty parameter set for (param)",
+            "*= 1 skipped in *",
+        ]
+    )
+
+
 def test_parameterset_for_parametrize_bad_markname(pytester: Pytester) -> None:
     with pytest.raises(pytest.UsageError):
         test_parameterset_for_parametrize_marks(pytester, "bad")
@@ -1226,3 +1252,38 @@ def test_mark_fixture_order_mro(pytester: Pytester):
     )
     result = pytester.runpytest(foo)
     result.assert_outcomes(passed=1)
+
+
+def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
+    """Check that applying marks works as intended on classmethods and staticmethods.
+
+    Regression test for #12863.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.mark.parametrize("value", [1, 2])
+            @classmethod
+            def test_classmethod_wrapper(cls, value: int):
+                assert value in [1, 2]
+
+            @classmethod
+            @pytest.mark.parametrize("value", [1, 2])
+            def test_classmethod_wrapper_on_top(cls, value: int):
+                assert value in [1, 2]
+
+            @pytest.mark.parametrize("value", [1, 2])
+            @staticmethod
+            def test_staticmethod_wrapper(value: int):
+                assert value in [1, 2]
+
+            @staticmethod
+            @pytest.mark.parametrize("value", [1, 2])
+            def test_staticmethod_wrapper_on_top(value: int):
+                assert value in [1, 2]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=8)
