@@ -241,7 +241,7 @@ class ApproxMapping(ApproxBase):
     with numeric values (the keys can be anything)."""
 
     def __repr__(self) -> str:
-        return f"approx({({k: self._approx_scalar(v) for k, v in self.expected.items()})!r})"
+        return f"approx({ ({k: self._approx_scalar(v) for k, v in self.expected.items()})!r})"
 
     def _repr_compare(self, other_side: Mapping[object, float]) -> list[str]:
         import math
@@ -867,7 +867,8 @@ def raises(
 
        Given that ``pytest.raises`` matches subclasses, be wary of using it to match :class:`Exception` like this::
 
-           with pytest.raises(Exception):  # Careful, this will catch ANY exception raised.
+           # Careful, this will catch ANY exception raised.
+           with pytest.raises(Exception):
                some_function()
 
        Because :class:`Exception` is the base class of almost all exceptions, it is easy for this to hide

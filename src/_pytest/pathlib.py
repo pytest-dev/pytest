@@ -711,7 +711,7 @@ def _import_module_using_spec(
         if module_path.is_dir():
             # The `spec_from_file_location` matches a loader based on the file extension by default.
             # For a namespace package, need to manually specify a loader.
-            loader = NamespaceLoader(name, module_path, PathFinder())
+            loader = NamespaceLoader(name, module_path, PathFinder())  # type: ignore[arg-type]
 
         spec = importlib.util.spec_from_file_location(
             module_name, str(module_path), loader=loader
@@ -955,17 +955,24 @@ def scandir(
 
     The returned entries are sorted according to the given key.
     The default is to sort by name.
+    If the directory does not exist, return an empty list.
     """
     entries = []
-    with os.scandir(path) as s:
-        # Skip entries with symlink loops and other brokenness, so the caller
-        # doesn't have to deal with it.
+    # Attempt to create a scandir iterator for the given path.
+    try:
+        scandir_iter = os.scandir(path)
+    except FileNotFoundError:
+        # If the directory does not exist, return an empty list.
+        return []
+    # Use the scandir iterator in a context manager to ensure it is properly closed.
+    with scandir_iter as s:
         for entry in s:
             try:
                 entry.is_file()
             except OSError as err:
                 if _ignore_error(err):
                     continue
+                # Reraise non-ignorable errors to avoid hiding issues.
                 raise
             entries.append(entry)
     entries.sort(key=sort_key)  # type: ignore[arg-type]

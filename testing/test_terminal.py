@@ -336,7 +336,7 @@ class TestTerminal:
         pytester.makeconftest(
             f"""
             def pytest_report_teststatus(report):
-                return {category !r}, 'F', ('FOO', {{'red': True}})
+                return {category!r}, 'F', ('FOO', {{'red': True}})
         """
         )
         pytester.makepyfile(
@@ -1187,7 +1187,7 @@ class TestTerminalFunctional:
 @pytest.mark.parametrize(
     ("use_ci", "expected_message"),
     (
-        (True, f"- AssertionError: {'this_failed'*100}"),
+        (True, f"- AssertionError: {'this_failed' * 100}"),
         (False, "- AssertionError: this_failedt..."),
     ),
     ids=("on CI", "not on CI"),
@@ -1294,13 +1294,13 @@ def test_color_yes(pytester: Pytester, color_mapping) -> None:
                 "=*= FAILURES =*=",
                 "{red}{bold}_*_ test_this _*_{reset}",
                 "",
-                "    {reset}{kw}def{hl-reset} {function}test_this{hl-reset}():{endline}",
+                "    {reset}{kw}def{hl-reset}{kwspace}{function}test_this{hl-reset}():{endline}",
                 ">       fail(){endline}",
                 "",
                 "{bold}{red}test_color_yes.py{reset}:5: ",
                 "_ _ * _ _*",
                 "",
-                "    {reset}{kw}def{hl-reset} {function}fail{hl-reset}():{endline}",
+                "    {reset}{kw}def{hl-reset}{kwspace}{function}fail{hl-reset}():{endline}",
                 ">       {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                 "{bold}{red}E       assert 0{reset}",
                 "",
@@ -2633,7 +2633,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset}{kwspace}{function}test_foo{hl-reset}():{endline}",
                     ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
@@ -2655,7 +2655,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset}{kwspace}{function}test_foo{hl-reset}():{endline}",
                     "        {print}print{hl-reset}({str}'''{hl-reset}{str}{hl-reset}",
                     ">   {str}    {hl-reset}{str}'''{hl-reset}); {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                     "{bold}{red}E       assert 0{reset}",
@@ -2678,7 +2678,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset}{kwspace}{function}test_foo{hl-reset}():{endline}",
                     ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]

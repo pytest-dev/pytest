@@ -541,28 +541,28 @@ class TestPython:
             systemout_xml = systemout.toxml()
             assert systemout.tag == "system-out", "Expected tag: system-out"
             assert "info msg" not in systemout_xml, "INFO message found in system-out"
-            assert (
-                "hello-stdout" in systemout_xml
-            ), "Missing 'hello-stdout' in system-out"
+            assert "hello-stdout" in systemout_xml, (
+                "Missing 'hello-stdout' in system-out"
+            )
         if junit_logging in ["system-err", "out-err", "all"]:
             systemerr = tnode.find_first_by_tag("system-err")
             systemerr_xml = systemerr.toxml()
             assert systemerr.tag == "system-err", "Expected tag: system-err"
             assert "info msg" not in systemerr_xml, "INFO message found in system-err"
-            assert (
-                "hello-stderr" in systemerr_xml
-            ), "Missing 'hello-stderr' in system-err"
-            assert (
-                "warning msg" not in systemerr_xml
-            ), "WARN message found in system-err"
+            assert "hello-stderr" in systemerr_xml, (
+                "Missing 'hello-stderr' in system-err"
+            )
+            assert "warning msg" not in systemerr_xml, (
+                "WARN message found in system-err"
+            )
         if junit_logging == "no":
             assert not tnode.find_by_tag("log"), "Found unexpected content: log"
-            assert not tnode.find_by_tag(
-                "system-out"
-            ), "Found unexpected content: system-out"
-            assert not tnode.find_by_tag(
-                "system-err"
-            ), "Found unexpected content: system-err"
+            assert not tnode.find_by_tag("system-out"), (
+                "Found unexpected content: system-out"
+            )
+            assert not tnode.find_by_tag("system-err"), (
+                "Found unexpected content: system-err"
+            )
 
     @parametrize_families
     def test_failure_verbose_message(
@@ -807,14 +807,14 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
-            assert not node.find_by_tag(
-                "system-out"
-            ), "system-out should not be generated"
+            assert not node.find_by_tag("system-out"), (
+                "system-out should not be generated"
+            )
         if junit_logging == "system-out":
             systemout = pnode.find_first_by_tag("system-out")
-            assert (
-                "hello-stdout" in systemout.toxml()
-            ), "'hello-stdout' should be in system-out"
+            assert "hello-stdout" in systemout.toxml(), (
+                "'hello-stdout' should be in system-out"
+            )
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-err"])
     def test_pass_captures_stderr(
@@ -831,14 +831,14 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
-            assert not node.find_by_tag(
-                "system-err"
-            ), "system-err should not be generated"
+            assert not node.find_by_tag("system-err"), (
+                "system-err should not be generated"
+            )
         if junit_logging == "system-err":
             systemerr = pnode.find_first_by_tag("system-err")
-            assert (
-                "hello-stderr" in systemerr.toxml()
-            ), "'hello-stderr' should be in system-err"
+            assert "hello-stderr" in systemerr.toxml(), (
+                "'hello-stderr' should be in system-err"
+            )
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
     def test_setup_error_captures_stdout(
@@ -860,14 +860,14 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
-            assert not node.find_by_tag(
-                "system-out"
-            ), "system-out should not be generated"
+            assert not node.find_by_tag("system-out"), (
+                "system-out should not be generated"
+            )
         if junit_logging == "system-out":
             systemout = pnode.find_first_by_tag("system-out")
-            assert (
-                "hello-stdout" in systemout.toxml()
-            ), "'hello-stdout' should be in system-out"
+            assert "hello-stdout" in systemout.toxml(), (
+                "'hello-stdout' should be in system-out"
+            )
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-err"])
     def test_setup_error_captures_stderr(
@@ -890,14 +890,14 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
-            assert not node.find_by_tag(
-                "system-err"
-            ), "system-err should not be generated"
+            assert not node.find_by_tag("system-err"), (
+                "system-err should not be generated"
+            )
         if junit_logging == "system-err":
             systemerr = pnode.find_first_by_tag("system-err")
-            assert (
-                "hello-stderr" in systemerr.toxml()
-            ), "'hello-stderr' should be in system-err"
+            assert "hello-stderr" in systemerr.toxml(), (
+                "'hello-stderr' should be in system-err"
+            )
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
     def test_avoid_double_stdout(
@@ -921,9 +921,9 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         pnode = node.find_first_by_tag("testcase")
         if junit_logging == "no":
-            assert not node.find_by_tag(
-                "system-out"
-            ), "system-out should not be generated"
+            assert not node.find_by_tag("system-out"), (
+                "system-out should not be generated"
+            )
         if junit_logging == "system-out":
             systemout = pnode.find_first_by_tag("system-out")
             assert "hello-stdout call" in systemout.toxml()
@@ -1544,9 +1544,9 @@ def test_url_property(pytester: Pytester) -> None:
 
     test_case = minidom.parse(str(path)).getElementsByTagName("testcase")[0]
 
-    assert (
-        test_case.getAttribute("url") == test_url
-    ), "The URL did not get written to the xml"
+    assert test_case.getAttribute("url") == test_url, (
+        "The URL did not get written to the xml"
+    )
 
 
 @parametrize_families

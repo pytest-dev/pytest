@@ -90,15 +90,21 @@ class ErrorMaker:
         except OSError as value:
             if not hasattr(value, "errno"):
                 raise
-            errno = value.errno
             if sys.platform == "win32":
                 try:
-                    cls = self._geterrnoclass(_winerrnomap[errno])
+                    cls = self._geterrnoclass(_winerrnomap[value.errno])
                 except KeyError:
                     raise value
             else:
                 # we are not on Windows, or we got a proper OSError
-                cls = self._geterrnoclass(errno)
+                if value.errno is None:
+                    cls = type(
+                        "UnknownErrnoNone",
+                        (Error,),
+                        {"__module__": "py.error", "__doc__": None},
+                    )
+                else:
+                    cls = self._geterrnoclass(value.errno)
 
             raise cls(f"{func.__name__}{args!r}")
 
