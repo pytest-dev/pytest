@@ -3,8 +3,11 @@ from __future__ import annotations
 
 from collections.abc import Generator
 import dataclasses
+import importlib.metadata
 import re
 import sys
+
+from packaging.version import Version
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -168,6 +171,9 @@ def color_mapping():
 
     Used by tests which check the actual colors output by pytest.
     """
+    # https://github.com/pygments/pygments/commit/d24e272894a56a98b1b718d9ac5fabc20124882a
+    pygments_version = Version(importlib.metadata.version("pygments"))
+    pygments_has_kwspace_hl = pygments_version >= Version("2.19")
 
     class ColorMapping:
         COLORS = {
@@ -180,6 +186,7 @@ def color_mapping():
             "bold": "\x1b[1m",
             "reset": "\x1b[0m",
             "kw": "\x1b[94m",
+            "kwspace": "\x1b[90m \x1b[39;49;00m" if pygments_has_kwspace_hl else " ",
             "hl-reset": "\x1b[39;49;00m",
             "function": "\x1b[92m",
             "number": "\x1b[94m",

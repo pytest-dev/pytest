@@ -163,7 +163,7 @@ def find_next_version(
     last_version = valid_versions[-1]
 
     if is_major:
-        return f"{last_version[0]+1}.0.0{prerelease}"
+        return f"{last_version[0] + 1}.0.0{prerelease}"
     elif is_feature_release:
         return f"{last_version[0]}.{last_version[1] + 1}.0{prerelease}"
     else:
