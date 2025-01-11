@@ -24,6 +24,13 @@ Chat
   <https://web.libera.chat/#pytest>`_)
 - ``#pytest`` `on Matrix <https://matrix.to/#/#pytest:matrix.org>`_.
 
+Microblogging
+-------------
+
+- Twitter/X: `@pytestdotorg <https://x.com/pytestdotorg>`_
+- Bluesky: `@pytest.org <https://bsky.app/profile/pytest.org>`_
+- Mastodon: `@pytest@fosstodon.org <https://fosstodon.org/@pytest>`_
+
 Mail
 ----
 
