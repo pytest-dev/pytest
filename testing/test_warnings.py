@@ -511,6 +511,22 @@ class TestDeprecationWarningsByDefault:
         result = pytester.runpytest_subprocess()
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
+    def test_invalid_regex_in_filterwarning(self, pytester: Pytester) -> None:
+        self.create_file(pytester)
+        pytester.makeini(
+            """
+                [pytest]
+                filterwarnings = 
+                    ignore::DeprecationWarning:*
+        """
+        )
+        result = pytester.runpytest_subprocess()
+        result.stderr.fnmatch_lines(
+            [
+                "*invalid regex: nothing to repeat at position 0*",
+            ]
+        )
+
 
 @pytest.mark.skip("not relevant until pytest 9.0")
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
