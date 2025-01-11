@@ -523,7 +523,7 @@ class TestDeprecationWarningsByDefault:
         result = pytester.runpytest_subprocess()
         result.stderr.fnmatch_lines(
             [
-                "*invalid regex: nothing to repeat at position 0*",
+                "*Invalid regex '*': nothing to repeat at position 0*",
             ]
         )
 
