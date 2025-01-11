@@ -1953,6 +1953,11 @@ def parse_warning_filter(
             ) from None
     else:
         lineno = 0
+    try:
+        re.compile(message)
+        re.compile(module)
+    except re.error as e:
+        raise UsageError(error_template.format(error=f"invalid regex: {e}"))
     return action, message, category, module, lineno
 
 
