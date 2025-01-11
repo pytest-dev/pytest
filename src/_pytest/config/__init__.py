@@ -1959,7 +1959,7 @@ def parse_warning_filter(
     except re.error as e:
         raise UsageError(
             error_template.format(error=f"Invalid regex {e.pattern!r}: {e}")
-        )
+        ) from None
     return action, message, category, module, lineno
 
 
