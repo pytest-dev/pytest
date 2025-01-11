@@ -27,9 +27,9 @@ Chat
 Microblogging
 -------------
 
-- Twitter/X: `@pytestdotorg <https://x.com/pytestdotorg>`_
 - Bluesky: `@pytest.org <https://bsky.app/profile/pytest.org>`_
 - Mastodon: `@pytest@fosstodon.org <https://fosstodon.org/@pytest>`_
+- Twitter/X: `@pytestdotorg <https://x.com/pytestdotorg>`_
 
 Mail
 ----

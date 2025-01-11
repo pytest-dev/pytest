@@ -170,6 +170,6 @@ Both automatic and manual processes described above follow the same steps from t
 
    And announce it with the ``#pytest`` hashtag on:
 
-   * `Twitter/X <https://x.com/>`_
-   * `BlueSky <https://bsky.app/>`_
-   * `Fosstodon <https://fosstodon.org/>`_
+   * `Bluesky <https://bsky.app>`_
+   * `Fosstodon <https://fosstodon.org>`_
+   * `Twitter/X <https://x.com>`_
