@@ -1,1 +1,1 @@
-Improve handling of invalid regex patterns in :func:`parse_warning_filter(message=..., module=...) <parse_warning_filter>` by providing a clear error message.
+Improved handling of invalid regex patterns for filter warnings by providing a clear error message.
