@@ -516,7 +516,7 @@ class TestDeprecationWarningsByDefault:
         pytester.makeini(
             """
                 [pytest]
-                filterwarnings = 
+                filterwarnings =
                     ignore::DeprecationWarning:*
         """
         )
