@@ -2220,6 +2220,16 @@ class TestProgressOutputStyle:
             consecutive=True,
         )
 
+    def test_timer_none_collected(self, pytester: Pytester) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = timer
+        """
+        )
+        output = pytester.runpytest()
+        assert output.ret == ExitCode.NO_TESTS_COLLECTED
+
     def test_verbose(self, many_tests_files, pytester: Pytester) -> None:
         output = pytester.runpytest("-v")
         output.stdout.re_match_lines(
