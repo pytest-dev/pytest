@@ -2520,6 +2520,51 @@ def test_short_summary_with_verbose(
     )
 
 
+def test_full_sequence_print_with_vv(
+    monkeypatch: MonkeyPatch, pytester: Pytester
+) -> None:
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+
+    pytester.makepyfile(
+        """
+        def test_len_list():
+            l = list(range(10))
+            assert len(l) == 9
+
+        def test_len_dict():
+            d = dict(zip(range(10), range(10)))
+            assert len(d) == 9
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            f"*{list(range(10))}*",
+            f"*{dict(zip(range(10), range(10)))}*",
+        ]
+    )
+
+
+def test_force_short_summary(monkeypatch: MonkeyPatch, pytester: Pytester) -> None:
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+
+    pytester.makepyfile(
+        """
+        def test():
+            assert "a\\n" * 10 == ""
+        """
+    )
+
+    result = pytester.runpytest("-vv", "--force-short-summary")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        ["*short test summary info*", "*AssertionError: assert 'a\\na\\na\\na..."]
+    )
+
+
 @pytest.mark.parametrize(
     "seconds, expected",
     [
