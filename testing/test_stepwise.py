@@ -1,6 +1,8 @@
-# mypy: allow-untyped-defs
+# mypy: disallow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Sequence
+import json
 from pathlib import Path
 
 from _pytest.cacheprovider import Cache
@@ -84,7 +86,7 @@ def broken_pytester(pytester: Pytester) -> Pytester:
     return pytester
 
 
-def _strip_resource_warnings(lines):
+def _strip_resource_warnings(lines: Sequence[str]) -> Sequence[str]:
     # Strip unreliable ResourceWarnings, so no-output assertions on stderr can work.
     # (https://github.com/pytest-dev/pytest/issues/5088)
     return [
@@ -114,7 +116,10 @@ def test_stepwise_output_summary(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["stepwise: no previously failed tests, not skipping."])
     result = pytester.runpytest("-v", "--stepwise")
     result.stdout.fnmatch_lines(
-        ["stepwise: skipping 4 already passed items.", "*1 failed, 4 deselected*"]
+        [
+            "stepwise: skipping 4 already passed items (cache from *, use --sw-reset to discard).",
+            "*1 failed, 4 deselected*",
+        ]
     )
 
 
@@ -360,9 +365,9 @@ def test_one():
     assert [expected_value] == observed_value
 
 
-def test_do_not_clear_cache_if_disabled(pytester: Pytester) -> None:
+def test_do_not_reset_cache_if_disabled(pytester: Pytester) -> None:
     """
-    If pytest is run without --step-wise, do not clear the stepwise cache.
+    If pytest is run without --stepwise, do not clear the stepwise cache.
 
     Keeping the cache around is important for this workflow:
 
@@ -374,12 +379,9 @@ def test_do_not_clear_cache_if_disabled(pytester: Pytester) -> None:
     """
     pytester.makepyfile(
         """
-        def test_1():
-            pass
-        def test_2():
-            assert False
-        def test_3():
-            pass
+        def test_1(): pass
+        def test_2(): assert False
+        def test_3(): pass
         """
     )
     result = pytester.runpytest("--stepwise")
@@ -399,7 +401,7 @@ def test_do_not_clear_cache_if_disabled(pytester: Pytester) -> None:
     result = pytester.runpytest("--stepwise")
     result.stdout.fnmatch_lines(
         [
-            "stepwise: skipping 1 already passed items.",
+            "stepwise: skipping 1 already passed items (cache from *, use --sw-reset to discard).",
             "*::test_2 - assert False*",
             "*failed, continuing from this test next run*",
             "=* 1 failed, 1 deselected in *",
@@ -407,23 +409,32 @@ def test_do_not_clear_cache_if_disabled(pytester: Pytester) -> None:
     )
 
 
-def test_stepwise_reset(pytester: Pytester) -> None:
+def test_reset(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
-        def test_1():
-            pass
-        def test_2():
-            assert False
-        def test_3():
-            pass
+        def test_1(): pass
+        def test_2(): assert False
+        def test_3(): pass
         """
     )
     result = pytester.runpytest("--stepwise", "-v")
     result.stdout.fnmatch_lines(
         [
+            "stepwise: no previously failed tests, not skipping.",
             "*::test_1 *PASSED*",
             "*::test_2 *FAILED*",
             "*failed, continuing from this test next run*",
+            "* 1 failed, 1 passed in *",
+        ]
+    )
+
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "stepwise: skipping 1 already passed items (cache from *, use --sw-reset to discard).",
+            "*::test_2 *FAILED*",
+            "*failed, continuing from this test next run*",
+            "* 1 failed, 1 deselected in *",
         ]
     )
 
@@ -431,8 +442,104 @@ def test_stepwise_reset(pytester: Pytester) -> None:
     result = pytester.runpytest("-v", "--stepwise-reset")
     result.stdout.fnmatch_lines(
         [
+            "stepwise: resetting state, not skipping.",
             "*::test_1 *PASSED*",
             "*::test_2 *FAILED*",
             "*failed, continuing from this test next run*",
+            "* 1 failed, 1 passed in *",
+        ]
+    )
+
+
+def test_change_test_count(pytester: Pytester) -> None:
+    # Run initially with 3 tests.
+    pytester.makepyfile(
+        """
+        def test_1(): pass
+        def test_2(): assert False
+        def test_3(): pass
+        """
+    )
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "stepwise: no previously failed tests, not skipping.",
+            "*::test_1 *PASSED*",
+            "*::test_2 *FAILED*",
+            "*failed, continuing from this test next run*",
+            "* 1 failed, 1 passed in *",
+        ]
+    )
+
+    # Change the number of tests, which invalidates the test cache.
+    pytester.makepyfile(
+        """
+        def test_1(): pass
+        def test_2(): assert False
+        def test_3(): pass
+        def test_4(): pass
+        """
+    )
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "stepwise: test count changed, not skipping (now 4 tests, previously 3).",
+            "*::test_1 *PASSED*",
+            "*::test_2 *FAILED*",
+            "*failed, continuing from this test next run*",
+            "* 1 failed, 1 passed in *",
+        ]
+    )
+
+    # Fix the failing test and run again.
+    pytester.makepyfile(
+        """
+        def test_1(): pass
+        def test_2(): pass
+        def test_3(): pass
+        def test_4(): pass
+        """
+    )
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "stepwise: skipping 1 already passed items (cache from *, use --sw-reset to discard).",
+            "*::test_2 *PASSED*",
+            "*::test_3 *PASSED*",
+            "*::test_4 *PASSED*",
+            "* 3 passed, 1 deselected in *",
+        ]
+    )
+
+
+def test_cache_error(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_1(): pass
+        """
+    )
+    # Run stepwise normally to generate the cache information.
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "stepwise: no previously failed tests, not skipping.",
+            "*::test_1 *PASSED*",
+            "* 1 passed in *",
+        ]
+    )
+
+    # Corrupt the cache.
+    cache_file = pytester.path / f".pytest_cache/v/{STEPWISE_CACHE_DIR}"
+    assert cache_file.is_file()
+    cache_file.write_text(json.dumps({"invalid": True}), encoding="UTF-8")
+
+    # Check we run as if the cache did not exist, but also show an error message.
+    result = pytester.runpytest("--stepwise", "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "stepwise: error reading cache, discarding (KeyError: *",
+            "stepwise: no previously failed tests, not skipping.",
+            "*::test_1 *PASSED*",
+            "* 1 passed in *",
         ]
     )
