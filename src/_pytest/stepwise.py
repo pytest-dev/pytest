@@ -14,11 +14,9 @@ from _pytest.reports import TestReport
 
 
 if TYPE_CHECKING:
-    from typing import ClassVar
-
     from typing_extensions import Self
 
-STEPWISE_CACHE_DIR = "cache/stepwise2"
+STEPWISE_CACHE_DIR = "cache/stepwise"
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -52,11 +50,8 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
-    # --stepwise-skip implies stepwise.
-    if config.option.stepwise_skip:
-        config.option.stepwise = True
-    # --stepwise-clear implies stepwise.
-    if config.option.stepwise_reset:
+    # --stepwise-skip/--stepwise-reset implies stepwise.
+    if config.option.stepwise_skip or config.option.stepwise_reset:
         config.option.stepwise = True
     if config.getoption("stepwise"):
         config.pluginmanager.register(StepwisePlugin(config), "stepwiseplugin")
@@ -84,22 +79,20 @@ class StepwiseCacheInfo:
     # The date when the cache was last updated, for information purposes only.
     last_cache_date_str: str
 
-    _DATE_FORMAT: ClassVar[str] = "%Y-%m-%d %H:%M:%S"
-
     @property
     def last_cache_date(self) -> datetime:
-        return datetime.strptime(self.last_cache_date_str, self._DATE_FORMAT)
+        return datetime.fromisoformat(self.last_cache_date_str)
 
     @classmethod
     def empty(cls) -> Self:
         return cls(
             last_failed=None,
             last_test_count=None,
-            last_cache_date_str=datetime.now().strftime(cls._DATE_FORMAT),
+            last_cache_date_str=datetime.now().isoformat(),
         )
 
     def update_date_to_now(self) -> None:
-        self.last_cache_date_str = datetime.now().strftime(self._DATE_FORMAT)
+        self.last_cache_date_str = datetime.now().isoformat()
 
 
 class StepwisePlugin:
@@ -122,7 +115,7 @@ class StepwisePlugin:
                     cached_dict["last_test_count"],
                     cached_dict["last_cache_date_str"],
                 )
-            except Exception as e:
+            except (KeyError, TypeError) as e:
                 error = f"{type(e).__name__}: {e}"
                 self.report_status.append(f"error reading cache, discarding ({error})")
 
