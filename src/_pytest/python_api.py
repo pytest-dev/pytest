@@ -20,8 +20,9 @@ from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
-import _pytest._code
 import numpy as np
+
+import _pytest._code
 from _pytest.outcomes import fail
 
 
@@ -439,7 +440,9 @@ class ApproxScalar(ApproxBase):
             return all(self.__eq__(a) for a in asarray.flat)
 
         # Short-circuit exact equality, except for bool
-        if isinstance(self.expected, (bool, np.bool_)) and not isinstance(actual, (bool, np.bool_)):
+        if isinstance(self.expected, (bool, np.bool_)) and not isinstance(
+            actual, (bool, np.bool_)
+        ):
             return False
         elif actual == self.expected:
             return True
@@ -449,8 +452,8 @@ class ApproxScalar(ApproxBase):
         # __sub__, and __float__ are defined. Also, consider bool to be
         # nonnumeric, even though it has the required arithmetic.
         if isinstance(self.expected, (bool, np.bool_)) or not (
-                isinstance(self.expected, (Complex, Decimal))
-                and isinstance(actual, (Complex, Decimal))
+            isinstance(self.expected, (Complex, Decimal))
+            and isinstance(actual, (Complex, Decimal))
         ):
             return False
 
