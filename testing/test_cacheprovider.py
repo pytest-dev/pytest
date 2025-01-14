@@ -104,7 +104,7 @@ class TestNewAPI:
         pytester.makepyfile("def test_error(): raise Exception")
         result = pytester.runpytest()
         assert result.ret == 1
-        # warnings from nodeids, lastfailed, and stepwise
+        # warnings from nodeids and lastfailed
         result.stdout.fnmatch_lines(
             [
                 # Validate location/stacklevel of warning from cacheprovider.
@@ -113,7 +113,7 @@ class TestNewAPI:
                 "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
                 f"{unwritable_cache_dir}/v/cache/nodeids: *",
                 '    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))',
-                "*1 failed, 3 warnings in*",
+                "*1 failed, 2 warnings in*",
             ]
         )
 
