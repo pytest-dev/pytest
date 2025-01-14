@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from _pytest._code.code import TracebackStyle
 
 if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
 
 
@@ -451,6 +452,32 @@ def test_match_raises_error(pytester: Pytester) -> None:
     result = pytester.runpytest("--fulltrace")
     assert result.ret != 0
     result.stdout.re_match_lines([r".*__tracebackhide__ = True.*", *match])
+
+
+def test_raises_accepts_generic_group() -> None:
+    exc_group = ExceptionGroup("", [RuntimeError()])
+    with pytest.raises(ExceptionGroup[Exception]) as exc_info:
+        raise exc_group
+    assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_accepts_generic_base_group() -> None:
+    exc_group = ExceptionGroup("", [RuntimeError()])
+    with pytest.raises(BaseExceptionGroup[BaseException]) as exc_info:
+        raise exc_group
+    assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_rejects_specific_generic_group() -> None:
+    with pytest.raises(ValueError):
+        pytest.raises(ExceptionGroup[RuntimeError])
+
+
+def test_raises_accepts_generic_group_in_tuple() -> None:
+    exc_group = ExceptionGroup("", [RuntimeError()])
+    with pytest.raises((ValueError, ExceptionGroup[Exception])) as exc_info:
+        raise exc_group
+    assert exc_info.group_contains(RuntimeError)
 
 
 class TestGroupContains:
