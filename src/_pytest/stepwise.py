@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 from datetime import datetime
+from datetime import timedelta
 from typing import Any
 from typing import TYPE_CHECKING
 
@@ -159,8 +160,11 @@ class StepwisePlugin:
         if failed_index is None:
             self.report_status.append("previously failed test not found, not skipping.")
         else:
+            cache_age = datetime.now() - self.cached_info.last_cache_date
+            # Round up to avoid showing microseconds.
+            cache_age = timedelta(seconds=int(cache_age.total_seconds()))
             self.report_status.append(
-                f"skipping {failed_index} already passed items (cache from {self.cached_info.last_cache_date},"
+                f"skipping {failed_index} already passed items (cache from {cache_age} ago,"
                 f" use --sw-reset to discard)."
             )
             deselected = items[:failed_index]

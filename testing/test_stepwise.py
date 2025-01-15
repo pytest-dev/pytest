@@ -117,7 +117,7 @@ def test_stepwise_output_summary(pytester: Pytester) -> None:
     result = pytester.runpytest("-v", "--stepwise")
     result.stdout.fnmatch_lines(
         [
-            "stepwise: skipping 4 already passed items (cache from *, use --sw-reset to discard).",
+            "stepwise: skipping 4 already passed items (cache from * ago, use --sw-reset to discard).",
             "*1 failed, 4 deselected*",
         ]
     )
