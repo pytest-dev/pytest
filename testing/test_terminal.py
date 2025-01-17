@@ -2184,11 +2184,11 @@ class TestProgressOutputStyle:
             ]
         )
 
-    def test_timer(self, many_tests_files, pytester: Pytester) -> None:
+    def test_times(self, many_tests_files, pytester: Pytester) -> None:
         pytester.makeini(
             """
             [pytest]
-            console_output_style = timer
+            console_output_style = times
         """
         )
         output = pytester.runpytest()
@@ -2200,14 +2200,14 @@ class TestProgressOutputStyle:
             ]
         )
 
-    def test_timer_multiline(
+    def test_times_multiline(
         self, more_tests_files, monkeypatch, pytester: Pytester
     ) -> None:
         monkeypatch.setenv("COLUMNS", "40")
         pytester.makeini(
             """
             [pytest]
-            console_output_style = timer
+            console_output_style = times
         """
         )
         output = pytester.runpytest()
@@ -2220,11 +2220,11 @@ class TestProgressOutputStyle:
             consecutive=True,
         )
 
-    def test_timer_none_collected(self, pytester: Pytester) -> None:
+    def test_times_none_collected(self, pytester: Pytester) -> None:
         pytester.makeini(
             """
             [pytest]
-            console_output_style = timer
+            console_output_style = times
         """
         )
         output = pytester.runpytest()
@@ -2256,11 +2256,11 @@ class TestProgressOutputStyle:
             ]
         )
 
-    def test_verbose_timer(self, many_tests_files, pytester: Pytester) -> None:
+    def test_verbose_times(self, many_tests_files, pytester: Pytester) -> None:
         pytester.makeini(
             """
             [pytest]
-            console_output_style = timer
+            console_output_style = times
         """
         )
         output = pytester.runpytest("-v")
@@ -2321,6 +2321,26 @@ class TestProgressOutputStyle:
                     "[gw?] [ 95%] PASSED test_*[?] ",
                     "[gw?] [100%] PASSED test_*[?] ",
                 ]
+            ]
+        )
+
+    def test_xdist_times(
+        self, many_tests_files, pytester: Pytester, monkeypatch
+    ) -> None:
+        pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = times
+        """
+        )
+        output = pytester.runpytest("-n2", "-v")
+        output.stdout.re_match_lines_random(
+            [
+                r"\[gw\d\] \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2} PASSED test_bar.py::test_bar\[1\]",
+                r"\[gw\d\] \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2} PASSED test_foo.py::test_foo\[1\]",
+                r"\[gw\d\] \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2} PASSED test_foobar.py::test_foobar\[1\]",
             ]
         )
 
@@ -2617,16 +2637,16 @@ def test_format_session_duration(seconds, expected):
 @pytest.mark.parametrize(
     "seconds, expected",
     [
-        (3600 * 100 - 60, "99h 59m"),
-        (31 * 60 - 1, "30m 59s"),
-        (10.1236, "10.124s"),
-        (9.1236, "9.124s"),
-        (0.1236, "123.6ms"),
-        (0.01236, "12.36ms"),
-        (0.001236, "1.236ms"),
-        (0.0001236, "123.6us"),
-        (0.00001236, "12.36us"),
-        (0.000001236, "1.236us"),
+        (3600 * 100 - 60, " 99h 59m"),
+        (31 * 60 - 1, " 30m 59s"),
+        (10.1236, " 10.124s"),
+        (9.1236, " 9.124s"),
+        (0.1236, " 123.6ms"),
+        (0.01236, " 12.36ms"),
+        (0.001236, " 1.236ms"),
+        (0.0001236, " 123.6us"),
+        (0.00001236, " 12.36us"),
+        (0.000001236, " 1.236us"),
     ],
 )
 def test_format_node_duration(seconds: float, expected: str) -> None:

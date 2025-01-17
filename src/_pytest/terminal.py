@@ -390,7 +390,7 @@ class TerminalReporter:
 
     def _determine_show_progress_info(
         self,
-    ) -> Literal["progress", "count", "timer", False]:
+    ) -> Literal["progress", "count", "times", False]:
         """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038) unless explicitly
         # overridden by progress-even-when-capture-no
@@ -408,8 +408,8 @@ class TerminalReporter:
             return "progress"
         elif cfg == "count":
             return "count"
-        elif cfg == "timer":
-            return "timer"
+        elif cfg == "times":
+            return "times"
         else:
             return False
 
@@ -697,7 +697,7 @@ class TerminalReporter:
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(progress, collected)
             return f" [ {collected} / {collected} ]"
-        if self._show_progress_info == "timer":
+        if self._show_progress_info == "times":
             if not collected:
                 return ""
             all_reports = (
@@ -736,7 +736,7 @@ class TerminalReporter:
             assert self._session
             num_tests = self._session.testscollected
             progress_length = len(f" [{num_tests}/{num_tests}]")
-        elif self._show_progress_info == "timer":
+        elif self._show_progress_info == "times":
             progress_length = len(" 99h 59m")
         else:
             progress_length = len(" [100%]")
@@ -1592,22 +1592,22 @@ def format_node_duration(seconds: float) -> str:
     # The formatting is designed to be compact and readable, with at most 7 characters
     # for durations below 100 hours.
     if seconds < 0.00001:
-        return f"{seconds * 1000000:.3f}us"
+        return f" {seconds * 1000000:.3f}us"
     if seconds < 0.0001:
-        return f"{seconds * 1000000:.2f}us"
+        return f" {seconds * 1000000:.2f}us"
     if seconds < 0.001:
-        return f"{seconds * 1000000:.1f}us"
+        return f" {seconds * 1000000:.1f}us"
     if seconds < 0.01:
-        return f"{seconds * 1000:.3f}ms"
+        return f" {seconds * 1000:.3f}ms"
     if seconds < 0.1:
-        return f"{seconds * 1000:.2f}ms"
+        return f" {seconds * 1000:.2f}ms"
     if seconds < 1:
-        return f"{seconds * 1000:.1f}ms"
+        return f" {seconds * 1000:.1f}ms"
     if seconds < 60:
-        return f"{seconds:.3f}s"
+        return f" {seconds:.3f}s"
     if seconds < 3600:
-        return f"{seconds // 60:.0f}m {seconds % 60:.0f}s"
-    return f"{seconds // 3600:.0f}h {(seconds % 3600) // 60:.0f}m"
+        return f" {seconds // 60:.0f}m {seconds % 60:.0f}s"
+    return f" {seconds // 3600:.0f}h {(seconds % 3600) // 60:.0f}m"
 
 
 def _get_raw_skip_reason(report: TestReport) -> str:
