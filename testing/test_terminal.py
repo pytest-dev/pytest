@@ -2629,7 +2629,7 @@ def test_format_session_duration(seconds, expected):
         (0.000001236, "1.236us"),
     ],
 )
-def test_format_node_duration(seconds, expected):
+def test_format_node_duration(seconds: float, expected: str) -> None:
     from _pytest.terminal import format_node_duration
 
     assert format_node_duration(seconds) == expected
