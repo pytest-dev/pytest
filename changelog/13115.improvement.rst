@@ -1,1 +1,2 @@
 Allows supplying ``ExceptionGroup[Exception]`` and ``BaseExceptionGroup[BaseException]`` to ``pytest.raises`` to keep full typing on ExcInfo.
+Parametrizing with other element types remains an error - we do not check the types of child exceptions and thus do not permit code that might look like we do.
