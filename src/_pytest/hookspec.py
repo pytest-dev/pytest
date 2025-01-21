@@ -277,7 +277,7 @@ def pytest_collection_modifyitems(
     When items are deselected (filtered out from ``items``),
     the hook :hook:`pytest_deselected` must be called explicitly
     with the deselected items to properly notify other plugins,
-    e.g. with ``config.hook.pytest_deselected(deselected_items)``.
+    e.g. with ``config.hook.pytest_deselected(items=deselected_items)``.
 
     :param session: The pytest session object.
     :param config: The pytest config object.
