@@ -92,7 +92,9 @@ class ErrorMaker:
                 raise
             if sys.platform == "win32":
                 try:
-                    cls = self._geterrnoclass(_winerrnomap[value.errno])
+                    # error: Invalid index type "Optional[int]" for "dict[int, int]"; expected type "int"  [index]
+                    # OK to ignore because we catch the KeyError below.
+                    cls = self._geterrnoclass(_winerrnomap[value.errno])  # type:ignore[index]
                 except KeyError:
                     raise value
             else:
