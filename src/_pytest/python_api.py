@@ -972,6 +972,7 @@ def raises(
         expected_exceptions = expected_exception
 
     def validate_exc(exc: type[E]) -> type[E]:
+        __tracebackhide__ = True
         origin_exc: type[E] | None = get_origin(exc)
         if origin_exc and issubclass(origin_exc, BaseExceptionGroup):
             exc_type = get_args(exc)[0]

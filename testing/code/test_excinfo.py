@@ -455,16 +455,14 @@ def test_match_raises_error(pytester: Pytester) -> None:
 
 
 def test_raises_accepts_generic_group() -> None:
-    exc_group = ExceptionGroup("", [RuntimeError()])
     with pytest.raises(ExceptionGroup[Exception]) as exc_info:
-        raise exc_group
+        raise ExceptionGroup("", [RuntimeError()])
     assert exc_info.group_contains(RuntimeError)
 
 
 def test_raises_accepts_generic_base_group() -> None:
-    exc_group = ExceptionGroup("", [RuntimeError()])
     with pytest.raises(BaseExceptionGroup[BaseException]) as exc_info:
-        raise exc_group
+        raise ExceptionGroup("", [RuntimeError()])
     assert exc_info.group_contains(RuntimeError)
 
 
@@ -474,10 +472,19 @@ def test_raises_rejects_specific_generic_group() -> None:
 
 
 def test_raises_accepts_generic_group_in_tuple() -> None:
-    exc_group = ExceptionGroup("", [RuntimeError()])
     with pytest.raises((ValueError, ExceptionGroup[Exception])) as exc_info:
-        raise exc_group
+        raise ExceptionGroup("", [RuntimeError()])
     assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_exception_escapes_generic_group() -> None:
+    try:
+        with pytest.raises(ExceptionGroup[Exception]):
+            raise ValueError("my value error")
+    except ValueError as e:
+        assert str(e) == "my value error"
+    else:
+        pytest.fail("Expected ValueError to be raised")
 
 
 class TestGroupContains:
