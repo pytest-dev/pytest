@@ -976,11 +976,11 @@ def raises(
         origin_exc: type[E] | None = get_origin(exc)
         if origin_exc and issubclass(origin_exc, BaseExceptionGroup):
             exc_type = get_args(exc)[0]
-            if issubclass(origin_exc, ExceptionGroup) and exc_type in (Exception, Any):
-                return cast(type[E], origin_exc)
-            elif issubclass(origin_exc, BaseExceptionGroup) and exc_type in (
-                BaseException,
-                Any,
+            if (
+                issubclass(origin_exc, ExceptionGroup) and exc_type in (Exception, Any)
+            ) or (
+                issubclass(origin_exc, BaseExceptionGroup)
+                and exc_type in (BaseException, Any)
             ):
                 return cast(type[E], origin_exc)
             else:
