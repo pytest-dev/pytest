@@ -1,1 +1,0 @@
-Properly escape the ``reason`` of a :ref:`skip <pytest.mark.skip ref>` mark when writing JUnit XML files.

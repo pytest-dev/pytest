@@ -1,0 +1,15 @@
+The ``--stepwise`` mode received a number of improvements:
+
+* It no longer forgets the last failed test in case pytest is executed later without the flag.
+
+  This enables the following workflow:
+
+  1. Execute pytest with ``--stepwise``, pytest then stops at the first failing test;
+  2. Iteratively update the code and run the test in isolation, without the ``--stepwise`` flag (for example in an IDE), until it is fixed.
+  3. Execute pytest with ``--stepwise`` again and pytest will continue from the previously failed test, and if it passes, continue on to the next tests.
+
+  Previously, at step 3, pytest would start from the beginning, forgetting the previously failed test.
+
+  This change however might cause issues if the ``--stepwise`` mode is used far apart in time, as the state might get stale, so the internal state will be reset automatically in case the test suite changes (for now only the number of tests are considered for this, we might change/improve this on the future).
+
+* New ``--stepwise-reset``/``--sw-reset`` flag, allowing the user to explicitly reset the stepwise state and restart the workflow from the beginning.

@@ -1,9 +1,12 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 import re
 import sys
 
-import pytest
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestRaises:
@@ -129,6 +132,26 @@ class TestRaises:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*2 failed*"])
 
+    def test_raises_with_invalid_regex(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_invalid_regex():
+                with pytest.raises(ValueError, match="invalid regex character ["):
+                    raise ValueError()
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*Invalid regex pattern provided to 'match': unterminated character set at position 24*",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*Traceback*")
+        result.stdout.no_fnmatch_line("*File*")
+        result.stdout.no_fnmatch_line("*line*")
+
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
             pytest.raises("wrong", lambda: None)  # type: ignore[call-overload]
@@ -146,7 +169,7 @@ class TestRaises:
         try:
             pytest.raises(ValueError, int, "0")
         except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE {repr(ValueError)}"
+            assert e.msg == f"DID NOT RAISE {ValueError!r}"
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -154,7 +177,7 @@ class TestRaises:
             with pytest.raises(ValueError):
                 pass
         except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE {repr(ValueError)}"
+            assert e.msg == f"DID NOT RAISE {ValueError!r}"
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -279,7 +302,7 @@ class TestRaises:
 
     def test_raises_context_manager_with_kwargs(self):
         with pytest.raises(TypeError) as excinfo:
-            with pytest.raises(Exception, foo="bar"):  # type: ignore[call-overload]
+            with pytest.raises(OSError, foo="bar"):  # type: ignore[call-overload]
                 pass
         assert "Unexpected keyword arguments" in str(excinfo.value)
 
@@ -301,3 +324,16 @@ class TestRaises:
             with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
                 pass  # pragma: no cover
         assert "must be a BaseException type, not str" in str(excinfo.value)
+
+    def test_issue_11872(self) -> None:
+        """Regression test for #11872.
+
+        urllib.error.HTTPError on Python<=3.9 raises KeyError instead of
+        AttributeError on invalid attribute access.
+
+        https://github.com/python/cpython/issues/98778
+        """
+        from urllib.error import HTTPError
+
+        with pytest.raises(HTTPError, match="Not Found"):
+            raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]

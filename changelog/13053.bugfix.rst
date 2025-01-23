@@ -1,0 +1,1 @@
+Fixed a regression in pytest 8.3.4 where, when using ``--import-mode=importlib``, a directory containing py file with the same name would cause an ``ImportError``

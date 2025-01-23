@@ -1,9 +1,9 @@
+from __future__ import annotations
+
 from typing import Any
 from typing import cast
-from typing import Dict
 from typing import Generic
 from typing import TypeVar
-from typing import Union
 
 
 __all__ = ["Stash", "StashKey"]
@@ -19,6 +19,8 @@ class StashKey(Generic[T]):
     A ``StashKey`` is associated with the type ``T`` of the value of the key.
 
     A ``StashKey`` is unique and cannot conflict with another key.
+
+    .. versionadded:: 7.0
     """
 
     __slots__ = ()
@@ -61,12 +63,14 @@ class Stash:
         some_str = stash[some_str_key]
         # The static type of some_bool is bool.
         some_bool = stash[some_bool_key]
+
+    .. versionadded:: 7.0
     """
 
     __slots__ = ("_storage",)
 
     def __init__(self) -> None:
-        self._storage: Dict[StashKey[Any], object] = {}
+        self._storage: dict[StashKey[Any], object] = {}
 
     def __setitem__(self, key: StashKey[T], value: T) -> None:
         """Set a value for key."""
@@ -79,7 +83,7 @@ class Stash:
         """
         return cast(T, self._storage[key])
 
-    def get(self, key: StashKey[T], default: D) -> Union[T, D]:
+    def get(self, key: StashKey[T], default: D) -> T | D:
         """Get the value for key, or return default if the key wasn't set
         before."""
         try:

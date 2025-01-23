@@ -6,6 +6,19 @@ Release announcements
    :maxdepth: 2
 
 
+   release-8.3.3
+   release-8.3.2
+   release-8.3.1
+   release-8.3.0
+   release-8.2.2
+   release-8.2.1
+   release-8.2.0
+   release-8.1.2
+   release-8.1.1
+   release-8.1.0
+   release-8.0.2
+   release-8.0.1
+   release-8.0.0
    release-8.0.0rc2
    release-8.0.0rc1
    release-7.4.4

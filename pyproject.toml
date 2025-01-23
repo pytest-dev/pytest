@@ -1,26 +1,376 @@
 [build-system]
-requires = [
-  "setuptools>=45.0",
-  "setuptools-scm[toml]>=6.2.3",
-]
 build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=61",
+    "setuptools-scm[toml]>=6.2.3",
+]
+
+[project]
+name = "pytest"
+description = "pytest: simple powerful testing with Python"
+readme = "README.rst"
+keywords = [
+    "test",
+    "unittest",
+]
+license = { text = "MIT" }
+authors = [
+    { name = "Holger Krekel" },
+    { name = "Bruno Oliveira" },
+    { name = "Ronny Pfannschmidt" },
+    { name = "Floris Bruynooghe" },
+    { name = "Brianna Laugher" },
+    { name = "Florian Bruhin" },
+    { name = "Others (See AUTHORS)" },
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Utilities",
+]
+dynamic = [
+    "version",
+]
+dependencies = [
+    "colorama; sys_platform=='win32'",
+    "exceptiongroup>=1.0.0rc8; python_version<'3.11'",
+    "iniconfig",
+    "packaging",
+    "pluggy>=1.5,<2",
+    "tomli>=1; python_version<'3.11'",
+]
+optional-dependencies.dev = [
+    "argcomplete",
+    "attrs>=19.2",
+    "hypothesis>=3.56",
+    "mock",
+    "pygments>=2.7.2",
+    "requests",
+    "setuptools",
+    "xmlschema",
+]
+urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
+urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
+urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
+urls.Homepage = "https://docs.pytest.org/en/latest/"
+urls.Source = "https://github.com/pytest-dev/pytest"
+urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
+scripts."py.test" = "pytest:console_main"
+scripts.pytest = "pytest:console_main"
+
+[tool.setuptools.package-data]
+"_pytest" = [
+    "py.typed",
+]
+"pytest" = [
+    "py.typed",
+]
 
 [tool.setuptools_scm]
 write_to = "src/_pytest/_version.py"
 
+[tool.black]
+# See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#t-target-version
+target-version = [ "py39", "py310", "py311", "py312", "py313" ]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+src = [
+    "src",
+]
+format.docstring-code-format = true
+lint.select = [
+    "B",       # bugbear
+    "D",       # pydocstyle
+    "E",       # pycodestyle
+    "F",       # pyflakes
+    "FA100",   # add future annotations
+    "I",       # isort
+    "PGH004",  # pygrep-hooks - Use specific rule codes when using noqa
+    "PIE",     # flake8-pie
+    "PLC",     # pylint convention
+    "PLE",     # pylint error
+    "PLR",     # pylint refactor
+    "PLR1714", # Consider merging multiple comparisons
+    "PLW",     # pylint warning
+    "PYI",     # flake8-pyi
+    "RUF",     # ruff
+    "T100",    # flake8-debugger
+    "UP",      # pyupgrade
+    "W",       # pycodestyle
+]
+lint.ignore = [
+    # bugbear ignore
+    "B004", # Using `hasattr(x, "__call__")` to test if x is callable is unreliable.
+    "B007", # Loop control variable `i` not used within loop body
+    "B009", # Do not call `getattr` with a constant attribute value
+    "B010", # [*] Do not call `setattr` with a constant attribute value.
+    "B011", # Do not `assert False` (`python -O` removes these calls)
+    "B028", # No explicit `stacklevel` keyword argument found
+    # pydocstyle ignore
+    "D100", # Missing docstring in public module
+    "D101", # Missing docstring in public class
+    "D102", # Missing docstring in public method
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic method
+    "D106", # Missing docstring in public nested class
+    "D107", # Missing docstring in `__init__`
+    "D205", # 1 blank line required between summary line and description
+    "D209", # [*] Multi-line docstring closing quotes should be on a separate line
+    "D400", # First line should end with a period
+    "D401", # First line of docstring should be in imperative mood
+    "D402", # First line should not be the function's signature
+    "D404", # First word of the docstring should not be "This"
+    "D415", # First line should end with a period, question mark, or exclamation point
+    # pytest can do weird low-level things, and we usually know
+    # what we're doing when we use type(..) is ...
+    "E721", # Do not compare types, use `isinstance()`
+    # pylint ignore
+    "PLC0105", # `TypeVar` name "E" does not reflect its covariance;
+    "PLC0414", # Import alias does not rename original package
+    "PLR0124", # Name compared with itself
+    "PLR0133", # Two constants compared in a comparison (lots of those in tests)
+    "PLR0402", # Use `from x.y import z` in lieu of alias
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements
+    "PLR2004", # Magic value used in comparison
+    "PLR2044", # Line with empty comment
+    "PLR5501", # Use `elif` instead of `else` then `if`
+    "PLW0120", # remove the else and dedent its contents
+    "PLW0603", # Using the global statement
+    "PLW2901", # for loop variable overwritten by assignment target
+    # ruff ignore
+    "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+]
+lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
+    "B",
+    "PYI",
+]
+lint.per-file-ignores."src/_pytest/_version.py" = [
+    "I001",
+]
+lint.per-file-ignores."testing/python/approx.py" = [
+    "B015",
+]
+lint.extend-safe-fixes = [
+    "UP006",
+    "UP007",
+]
+lint.isort.combine-as-imports = true
+lint.isort.force-single-line = true
+lint.isort.force-sort-within-sections = true
+lint.isort.known-local-folder = [
+    "pytest",
+    "_pytest",
+]
+lint.isort.lines-after-imports = 2
+lint.isort.order-by-type = false
+lint.isort.required-imports = [
+    "from __future__ import annotations",
+]
+# In order to be able to format for 88 char in ruff format
+lint.pycodestyle.max-line-length = 120
+lint.pydocstyle.convention = "pep257"
+lint.pyupgrade.keep-runtime-typing = false
+
+[tool.pylint.main]
+# Maximum number of characters on a single line.
+max-line-length = 120
+disable = [
+    "abstract-method",
+    "arguments-differ",
+    "arguments-renamed",
+    "assigning-non-slot",
+    "attribute-defined-outside-init",
+    "bad-builtin",
+    "bad-classmethod-argument",
+    "bad-dunder-name",
+    "bad-mcs-method-argument",
+    "broad-exception-caught",
+    "broad-exception-raised",
+    "cell-var-from-loop",                     # B023 from ruff / flake8-bugbear
+    "comparison-of-constants",                # disabled in ruff (PLR0133)
+    "comparison-with-callable",
+    "comparison-with-itself",                 # PLR0124 from ruff
+    "condition-evals-to-constant",
+    "consider-alternative-union-syntax",
+    "confusing-consecutive-elif",
+    "consider-using-assignment-expr",
+    "consider-using-dict-items",
+    "consider-using-from-import",
+    "consider-using-f-string",
+    "consider-using-in",
+    "consider-using-namedtuple-or-dataclass",
+    "consider-using-ternary",
+    "consider-using-tuple",
+    "consider-using-with",
+    "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
+    "consider-ternary-expression",
+    "cyclic-import",
+    "differing-param-doc",
+    "docstring-first-line-empty",
+    "deprecated-argument",
+    "deprecated-attribute",
+    "deprecated-class",
+    "disallowed-name",                        # foo / bar are used often in tests
+    "duplicate-code",
+    "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
+    "empty-comment",                          # not activated by default, PLR2044 disabled in ruff
+    "eval-used",
+    "eq-without-hash",
+    "exec-used",
+    "expression-not-assigned",
+    "fixme",
+    "global-statement",                       # PLW0603 disabled in ruff
+    "import-error",
+    "import-outside-toplevel",
+    "import-private-name",
+    "inconsistent-return-statements",
+    "invalid-bool-returned",
+    "invalid-name",
+    "invalid-repr-returned",
+    "invalid-str-returned",
+    "keyword-arg-before-vararg",
+    "line-too-long",
+    "magic-value-comparison",                 # not activated by default, PLR2004 disabled in ruff
+    "method-hidden",
+    "missing-docstring",
+    "missing-param-doc",
+    "missing-raises-doc",
+    "missing-timeout",
+    "missing-type-doc",
+    "misplaced-bare-raise",                   # PLE0704 from ruff
+    "misplaced-comparison-constant",
+    "multiple-statements",                    # multiple-statements-on-one-line-colon (E701) from ruff
+    "no-else-break",
+    "no-else-continue",
+    "no-else-raise",
+    "no-else-return",
+    "no-member",
+    "no-name-in-module",
+    "no-self-argument",
+    "no-self-use",
+    "not-an-iterable",
+    "not-callable",
+    "pointless-exception-statement",          # https://github.com/pytest-dev/pytest/pull/12379
+    "pointless-statement",                    # https://github.com/pytest-dev/pytest/pull/12379
+    "pointless-string-statement",             # https://github.com/pytest-dev/pytest/pull/12379
+    "possibly-used-before-assignment",
+    "protected-access",
+    "raise-missing-from",
+    "redefined-argument-from-local",
+    "redefined-builtin",
+    "redefined-loop-name",                    # PLW2901 disabled in ruff
+    "redefined-outer-name",
+    "redefined-variable-type",
+    "reimported",
+    "simplifiable-condition",
+    "simplifiable-if-expression",
+    "singleton-comparison",
+    "superfluous-parens",
+    "super-init-not-called",
+    "too-complex",
+    "too-few-public-methods",
+    "too-many-ancestors",
+    "too-many-arguments",                     # disabled in ruff
+    "too-many-branches",                      # disabled in ruff
+    "too-many-function-args",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-nested-blocks",
+    "too-many-positional-arguments",
+    "too-many-public-methods",
+    "too-many-return-statements",             # disabled in ruff
+    "too-many-statements",                    # disabled in ruff
+    "too-many-try-statements",
+    "try-except-raise",
+    "typevar-name-incorrect-variance",        # PLC0105 disabled in ruff
+    "unbalanced-tuple-unpacking",
+    "undefined-loop-variable",
+    "undefined-variable",
+    "unexpected-keyword-arg",
+    "unidiomatic-typecheck",
+    "unnecessary-comprehension",
+    "unnecessary-dunder-call",
+    "unnecessary-lambda",
+    "unnecessary-lambda-assignment",
+    "unpacking-non-sequence",
+    "unspecified-encoding",
+    "unsubscriptable-object",
+    "unused-argument",
+    "unused-import",
+    "unused-variable",
+    "used-before-assignment",
+    "use-dict-literal",
+    "use-implicit-booleaness-not-comparison",
+    "use-implicit-booleaness-not-len",
+    "use-set-for-membership",
+    "useless-else-on-loop",                   # PLC0414 disabled in ruff
+    "useless-import-alias",
+    "useless-return",
+    "using-constant-test",
+    "while-used",
+    "wrong-import-order",                     # handled by isort / ruff
+    "wrong-import-position",                  # handled by isort / ruff
+]
+
+[tool.codespell]
+ignore-words-list = "afile,asend,asser,assertio,feld,hove,ned,noes,notin,paramete,parth,socio-economic,tesults,varius,wil"
+skip = "AUTHORS,*/plugin_list.rst"
+write-changes = true
+
+[tool.check-wheel-contents]
+# check-wheel-contents is executed by the build-and-inspect-python-package action.
+# W009: Wheel contains multiple toplevel library entries
+ignore = "W009"
+
+[tool.pyproject-fmt]
+indent = 4
+max_supported_python = "3.13"
+
 [tool.pytest.ini_options]
 minversion = "2.0"
 addopts = "-rfEX -p pytester --strict-markers"
-python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
-python_classes = ["Test", "Acceptance"]
-python_functions = ["test"]
+python_files = [
+    "test_*.py",
+    "*_test.py",
+    "testing/python/*.py",
+]
+python_classes = [
+    "Test",
+    "Acceptance",
+]
+python_functions = [
+    "test",
+]
 # NOTE: "doc" is not included here, but gets tested explicitly via "doctesting".
-testpaths = ["testing"]
+testpaths = [
+    "testing",
+]
 norecursedirs = [
-  "testing/example_scripts",
-  ".*",
-  "build",
-  "dist",
+    "testing/example_scripts",
+    ".*",
+    "build",
+    "dist",
 ]
 xfail_strict = true
 filterwarnings = [
@@ -54,6 +404,9 @@ filterwarnings = [
     "ignore:VendorImporter\\.find_spec\\(\\) not found; falling back to find_module\\(\\):ImportWarning",
     # https://github.com/pytest-dev/execnet/pull/127
     "ignore:isSet\\(\\) is deprecated, use is_set\\(\\) instead:DeprecationWarning",
+    # https://github.com/pytest-dev/pytest/issues/2366
+    # https://github.com/pytest-dev/pytest/pull/13057
+    "default::pytest.PytestFDWarning",
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [
@@ -61,12 +414,14 @@ markers = [
     "foo",
     "bar",
     "baz",
+    "number_mark",
+    "builtin_matchers_mark",
+    "str_mark",
     # conftest.py reorders tests moving slow ones to the end of the list
     "slow",
     # experimental mark for all tests using pexpect
     "uses_pexpect",
 ]
-
 
 [tool.towncrier]
 package = "pytest"
@@ -76,50 +431,95 @@ directory = "changelog/"
 title_format = "pytest {version} ({project_date})"
 template = "changelog/_template.rst"
 
-  [[tool.towncrier.type]]
-  directory = "breaking"
-  name = "Breaking Changes"
-  showcontent = true
+# NOTE: The types are declared because:
+# NOTE: - there is no mechanism to override just the value of
+# NOTE:   `tool.towncrier.type.misc.showcontent`;
+# NOTE: - and, we want to declare extra non-default types for
+# NOTE:   clarity and flexibility.
 
-  [[tool.towncrier.type]]
-  directory = "deprecation"
-  name = "Deprecations"
-  showcontent = true
+[[tool.towncrier.type]]
+# When something public gets removed in a breaking way. Could be
+# deprecated in an earlier release.
+directory = "breaking"
+name = "Removals and backward incompatible breaking changes"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "feature"
-  name = "Features"
-  showcontent = true
+[[tool.towncrier.type]]
+# Declarations of future API removals and breaking changes in behavior.
+directory = "deprecation"
+name = "Deprecations (removal in next major release)"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "improvement"
-  name = "Improvements"
-  showcontent = true
+[[tool.towncrier.type]]
+# New behaviors, public APIs. That sort of stuff.
+directory = "feature"
+name = "New features"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "bugfix"
-  name = "Bug Fixes"
-  showcontent = true
+[[tool.towncrier.type]]
+# New behaviors in existing features.
+directory = "improvement"
+name = "Improvements in existing functionality"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "vendor"
-  name = "Vendored Libraries"
-  showcontent = true
+[[tool.towncrier.type]]
+# Something we deemed an improper undesired behavior that got corrected
+# in the release to match pre-agreed expectations.
+directory = "bugfix"
+name = "Bug fixes"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "doc"
-  name = "Improved Documentation"
-  showcontent = true
+[[tool.towncrier.type]]
+# Updates regarding bundling dependencies.
+directory = "vendor"
+name = "Vendored libraries"
+showcontent = true
 
-  [[tool.towncrier.type]]
-  directory = "trivial"
-  name = "Trivial/Internal Changes"
-  showcontent = true
+[[tool.towncrier.type]]
+# Notable updates to the documentation structure or build process.
+directory = "doc"
+name = "Improved documentation"
+showcontent = true
 
-[tool.black]
-target-version = ['py38']
+[[tool.towncrier.type]]
+# Notes for downstreams about unobvious side effects and tooling. Changes
+# in the test invocation considerations and runtime assumptions.
+directory = "packaging"
+name = "Packaging updates and notes for downstreams"
+showcontent = true
 
-# check-wheel-contents is executed by the build-and-inspect-python-package action.
-[tool.check-wheel-contents]
-# W009: Wheel contains multiple toplevel library entries
-ignore = "W009"
+[[tool.towncrier.type]]
+# Stuff that affects the contributor experience. e.g. Running tests,
+# building the docs, setting up the development environment.
+directory = "contrib"
+name = "Contributor-facing changes"
+showcontent = true
+
+[[tool.towncrier.type]]
+# Changes that are hard to assign to any of the above categories.
+directory = "misc"
+name = "Miscellaneous internal changes"
+showcontent = true
+
+[tool.mypy]
+files = [
+    "src",
+    "testing",
+    "scripts",
+]
+mypy_path = [
+    "src",
+]
+python_version = "3.9"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+show_error_codes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+no_implicit_reexport = true
+warn_unused_ignores = true

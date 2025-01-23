@@ -1,17 +1,18 @@
+# mypy: allow-untyped-defs
 """Support for providing temporary directories to test functions."""
+
+from __future__ import annotations
+
+from collections.abc import Generator
 import dataclasses
 import os
-import re
-import tempfile
 from pathlib import Path
+import re
 from shutil import rmtree
+import tempfile
 from typing import Any
-from typing import Dict
 from typing import final
-from typing import Generator
 from typing import Literal
-from typing import Optional
-from typing import Union
 
 from .pathlib import cleanup_dead_symlinks
 from .pathlib import LOCK_TIMEOUT
@@ -31,32 +32,32 @@ from _pytest.nodes import Item
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 
-tmppath_result_key = StashKey[Dict[str, bool]]()
+
+tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
 
 
 @final
 @dataclasses.dataclass
 class TempPathFactory:
-    """Factory for temporary directories under the common base temp directory.
-
-    The base directory can be configured using the ``--basetemp`` option.
+    """Factory for temporary directories under the common base temp directory,
+    as discussed at :ref:`temporary directory location and retention`.
     """
 
-    _given_basetemp: Optional[Path]
+    _given_basetemp: Path | None
     # pluggy TagTracerSub, not currently exposed, so Any.
     _trace: Any
-    _basetemp: Optional[Path]
+    _basetemp: Path | None
     _retention_count: int
     _retention_policy: RetentionType
 
     def __init__(
         self,
-        given_basetemp: Optional[Path],
+        given_basetemp: Path | None,
         retention_count: int,
         retention_policy: RetentionType,
         trace,
-        basetemp: Optional[Path] = None,
+        basetemp: Path | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -79,7 +80,7 @@ class TempPathFactory:
         config: Config,
         *,
         _ispytest: bool = False,
-    ) -> "TempPathFactory":
+    ) -> TempPathFactory:
         """Create a factory according to pytest configuration.
 
         :meta private:
@@ -195,7 +196,7 @@ class TempPathFactory:
         return basetemp
 
 
-def get_user() -> Optional[str]:
+def get_user() -> str | None:
     """Return the current user name, or None if getuser() does not work
     in the current environment (see #1010)."""
     try:
@@ -203,7 +204,7 @@ def get_user() -> Optional[str]:
         import getpass
 
         return getpass.getuser()
-    except (ImportError, KeyError):
+    except (ImportError, OSError, KeyError):
         return None
 
 
@@ -253,21 +254,13 @@ def _mk_tmp(request: FixtureRequest, factory: TempPathFactory) -> Path:
 @fixture
 def tmp_path(
     request: FixtureRequest, tmp_path_factory: TempPathFactory
-) -> Generator[Path, None, None]:
-    """Return a temporary directory path object which is unique to each test
-    function invocation, created as a sub directory of the base temporary
-    directory.
-
-    By default, a new base temporary directory is created each test session,
-    and old bases are removed after 3 sessions, to aid in debugging.
-    This behavior can be configured with :confval:`tmp_path_retention_count` and
-    :confval:`tmp_path_retention_policy`.
-    If ``--basetemp`` is used then it is cleared each session. See
-    :ref:`temporary directory location and retention`.
-
-    The returned object is a :class:`pathlib.Path` object.
+) -> Generator[Path]:
+    """Return a temporary directory (as :class:`pathlib.Path` object)
+    which is unique to each test function invocation.
+    The temporary directory is created as a subdirectory
+    of the base temporary directory, with configurable retention,
+    as discussed in :ref:`temporary directory location and retention`.
     """
-
     path = _mk_tmp(request, tmp_path_factory)
     yield path
 
@@ -284,7 +277,7 @@ def tmp_path(
     del request.node.stash[tmppath_result_key]
 
 
-def pytest_sessionfinish(session, exitstatus: Union[int, ExitCode]):
+def pytest_sessionfinish(session, exitstatus: int | ExitCode):
     """After each session, remove base directory if all the tests passed,
     the policy is "failed", and the basetemp is not specified by a user.
     """
@@ -315,6 +308,6 @@ def pytest_runtest_makereport(
 ) -> Generator[None, TestReport, TestReport]:
     rep = yield
     assert rep.when is not None
-    empty: Dict[str, bool] = {}
+    empty: dict[str, bool] = {}
     item.stash.setdefault(tmppath_result_key, empty)[rep.when] = rep.passed
     return rep

@@ -7,10 +7,6 @@ This page lists all pytest features that are currently deprecated or have been r
 The objective is to give users a clear rationale why a certain feature has been removed, and what alternatives
 should be used instead.
 
-.. contents::
-    :depth: 3
-    :local:
-
 
 Deprecated Features
 -------------------
@@ -19,7 +15,150 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
-.. _legacy-path-hooks-deprecated:
+.. _sync-test-async-fixture:
+
+sync test depending on async fixture
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.4
+
+Pytest has for a long time given an error when encountering an asynchronous test function, prompting the user to install
+a plugin that can handle it. It has not given any errors if you have an asynchronous fixture that's depended on by a
+synchronous test. If the fixture was an async function you did get an "unawaited coroutine" warning, but for async yield fixtures you didn't even get that.
+This is a problem even if you do have a plugin installed for handling async tests, as they may require
+special decorators for async fixtures to be handled, and some may not robustly handle if a user accidentally requests an
+async fixture from their sync tests. Fixture values being cached can make this even more unintuitive, where everything will
+"work" if the fixture is first requested by an async test, and then requested by a synchronous test.
+
+Unfortunately there is no 100% reliable method of identifying when a user has made a mistake, versus when they expect an
+unawaited object from their fixture that they will handle on their own. To suppress this warning
+when you in fact did intend to handle this you can wrap your async fixture in a synchronous fixture:
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+
+    @pytest.fixture
+    async def unawaited_fixture():
+        return 1
+
+
+    def test_foo(unawaited_fixture):
+        assert 1 == asyncio.run(unawaited_fixture)
+
+should be changed to
+
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+
+    @pytest.fixture
+    def unawaited_fixture():
+        async def inner_fixture():
+            return 1
+
+        return inner_fixture()
+
+
+    def test_foo(unawaited_fixture):
+        assert 1 == asyncio.run(unawaited_fixture)
+
+
+You can also make use of `pytest_fixture_setup` to handle the coroutine/asyncgen before pytest sees it - this is the way current async pytest plugins handle it.
+
+If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file
+containing both synchronous tests and the fixture, they will receive this warning.
+Unless you're using a plugin that specifically handles async fixtures
+with synchronous tests, we strongly recommend against this practice.
+It can lead to unpredictable behavior (with larger scopes, it may appear to "work" if an async
+test is the first to request the fixture, due to value caching) and will generate
+unawaited-coroutine runtime warnings (but only for non-yield fixtures).
+Additionally, it creates ambiguity for other developers about whether the fixture is intended to perform
+setup for synchronous tests.
+
+The `anyio pytest plugin <https://anyio.readthedocs.io/en/stable/testing.html>`_ supports
+synchronous tests with async fixtures, though certain limitations apply.
+
+
+.. _import-or-skip-import-error:
+
+``pytest.importorskip`` default behavior regarding :class:`ImportError`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.2
+
+Traditionally :func:`pytest.importorskip` will capture :class:`ImportError`, with the original intent being to skip
+tests where a dependent module is not installed, for example testing with different dependencies.
+
+However some packages might be installed in the system, but are not importable due to
+some other issue, for example, a compilation error or a broken installation. In those cases :func:`pytest.importorskip`
+would still silently skip the test, but more often than not users would like to see the unexpected
+error so the underlying issue can be fixed.
+
+In ``8.2`` the ``exc_type`` parameter has been added, giving users the ability of passing :class:`ModuleNotFoundError`
+to skip tests only if the module cannot really be found, and not because of some other error.
+
+Catching only :class:`ModuleNotFoundError` by default (and letting other errors propagate) would be the best solution,
+however for backward compatibility, pytest will keep the existing behavior but raise an warning if:
+
+1. The captured exception is of type :class:`ImportError`, and:
+2. The user does not pass ``exc_type`` explicitly.
+
+If the import attempt raises :class:`ModuleNotFoundError` (the usual case), then the module is skipped and no
+warning is emitted.
+
+This way, the usual cases will keep working the same way, while unexpected errors will now issue a warning, with
+users being able to suppress the warning by passing ``exc_type=ImportError`` explicitly.
+
+In ``9.0``, the warning will turn into an error, and in ``9.1`` :func:`pytest.importorskip` will only capture
+:class:`ModuleNotFoundError` by default and no warnings will be issued anymore -- but users can still capture
+:class:`ImportError` by passing it to ``exc_type``.
+
+
+.. _node-ctor-fspath-deprecation:
+
+``fspath`` argument for Node constructors replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`,
+the ``fspath`` argument to :class:`~_pytest.nodes.Node` constructors like
+:func:`pytest.Function.from_parent()` and :func:`pytest.Class.from_parent()`
+is now deprecated.
+
+Plugins which construct nodes should pass the ``path`` argument, of type
+:class:`pathlib.Path`, instead of the ``fspath`` argument.
+
+Plugins which implement custom items and collectors are encouraged to replace
+``fspath`` parameters (``py.path.local``) with ``path`` parameters
+(``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
+
+If possible, plugins with custom items should use :ref:`cooperative
+constructors <uncooperative-constructors-deprecated>` to avoid hardcoding
+arguments they only pass on to the superclass.
+
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
+    new attribute being ``path``) is **the opposite** of the situation for
+    hooks, :ref:`outlined below <legacy-path-hooks-deprecated>` (the old
+    argument being ``path``).
+
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
+
+Due to the ongoing migration of methods like :meth:`~pytest.Item.reportinfo`
+which still is expected to return a ``py.path.local`` object, nodes still have
+both ``fspath`` (``py.path.local``) and ``path`` (``pathlib.Path``) attributes,
+no matter what argument was used in the constructor. We expect to deprecate the
+``fspath`` attribute in a future release.
+
 
 Configuring hook specs/impls using markers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,13 +172,11 @@ have been available since years and should be used instead.
 .. code-block:: python
 
     @pytest.mark.tryfirst
-    def pytest_runtest_call():
-        ...
+    def pytest_runtest_call(): ...
 
 
     # or
-    def pytest_runtest_call():
-        ...
+    def pytest_runtest_call(): ...
 
 
     pytest_runtest_call.tryfirst = True
@@ -49,8 +186,7 @@ should be changed to:
 .. code-block:: python
 
     @pytest.hookimpl(tryfirst=True)
-    def pytest_runtest_call():
-        ...
+    def pytest_runtest_call(): ...
 
 Changed ``hookimpl`` attributes:
 
@@ -64,6 +200,33 @@ Changed ``hookwrapper`` attributes:
 * ``firstresult``
 * ``historic``
 
+
+.. _legacy-path-hooks-deprecated:
+
+``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
+
+*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
+*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
+*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
+*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
+*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
+
+The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
+
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
+    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
+    being ``path``) is **the opposite** of the situation for hooks (the old
+    argument being ``path``).
+
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
 
 Directly constructing internal classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,8 +309,7 @@ Applying a mark to a fixture function never had any effect, but it is a common u
 
     @pytest.mark.usefixtures("clean_database")
     @pytest.fixture
-    def user() -> User:
-        ...
+    def user() -> User: ...
 
 Users expected in this case that the ``usefixtures`` mark would have its intended effect of using the ``clean_database`` fixture when ``user`` was invoked, when in fact it has no effect at all.
 
@@ -159,7 +321,7 @@ Returning non-None value in test functions
 
 .. deprecated:: 7.2
 
-A :class:`pytest.PytestReturnNotNoneWarning` is now emitted if a test function returns something other than `None`.
+A ``pytest.PytestReturnNotNoneWarning`` is now emitted if a test function returns something other than `None`.
 
 This prevents a common mistake among beginners that expect that returning a `bool` would cause a test to pass or fail, for example:
 
@@ -212,72 +374,41 @@ an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
 
-.. _node-ctor-fspath-deprecation:
+.. _yield tests deprecated:
 
-``fspath`` argument for Node constructors replaced with ``pathlib.Path``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``yield`` tests
+~~~~~~~~~~~~~~~
 
-.. deprecated:: 7.0
+.. versionremoved:: 4.0
 
-In order to support the transition from ``py.path.local`` to :mod:`pathlib`,
-the ``fspath`` argument to :class:`~_pytest.nodes.Node` constructors like
-:func:`pytest.Function.from_parent()` and :func:`pytest.Class.from_parent()`
-is now deprecated.
+    ``yield`` tests ``xfail``.
 
-Plugins which construct nodes should pass the ``path`` argument, of type
-:class:`pathlib.Path`, instead of the ``fspath`` argument.
+.. versionremoved:: 8.4
 
-Plugins which implement custom items and collectors are encouraged to replace
-``fspath`` parameters (``py.path.local``) with ``path`` parameters
-(``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
+    ``yield`` tests raise a collection error.
 
-If possible, plugins with custom items should use :ref:`cooperative
-constructors <uncooperative-constructors-deprecated>` to avoid hardcoding
-arguments they only pass on to the superclass.
+pytest no longer supports ``yield``-style tests, where a test function actually ``yield`` functions and values
+that are then turned into proper test methods. Example:
 
-.. note::
-    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
-    new attribute being ``path``) is **the opposite** of the situation for
-    hooks, :ref:`outlined below <legacy-path-hooks-deprecated>` (the old
-    argument being ``path``).
+.. code-block:: python
 
-    This is an unfortunate artifact due to historical reasons, which should be
-    resolved in future versions as we slowly get rid of the :pypi:`py`
-    dependency (see :issue:`9283` for a longer discussion).
-
-Due to the ongoing migration of methods like :meth:`~pytest.Item.reportinfo`
-which still is expected to return a ``py.path.local`` object, nodes still have
-both ``fspath`` (``py.path.local``) and ``path`` (``pathlib.Path``) attributes,
-no matter what argument was used in the constructor. We expect to deprecate the
-``fspath`` attribute in a future release.
+    def check(x, y):
+        assert x**x == y
 
 
-``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    def test_squared():
+        yield check, 2, 4
+        yield check, 3, 9
 
-.. deprecated:: 7.0
-.. versionremoved:: 8.0
+This would result in two actual test functions being generated.
 
-In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
+This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parametrize``:
 
-*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
-*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
-*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
-*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
-*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
+.. code-block:: python
 
-The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
-
-.. note::
-    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
-    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
-    being ``path``) is **the opposite** of the situation for hooks (the old
-    argument being ``path``).
-
-    This is an unfortunate artifact due to historical reasons, which should be
-    resolved in future versions as we slowly get rid of the :pypi:`py`
-    dependency (see :issue:`9283` for a longer discussion).
-
+    @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
+    def test_squared(x, y):
+        assert x**x == y
 
 .. _nose-deprecation:
 
@@ -308,11 +439,9 @@ they are in fact part of the ``nose`` support.
         def teardown(self):
             self.resource.close()
 
-        def test_foo(self):
-            ...
+        def test_foo(self): ...
 
-        def test_bar(self):
-            ...
+        def test_bar(self): ...
 
 
 
@@ -327,11 +456,9 @@ Native pytest support uses ``setup_method`` and ``teardown_method`` (see :ref:`x
         def teardown_method(self):
             self.resource.close()
 
-        def test_foo(self):
-            ...
+        def test_foo(self): ...
 
-        def test_bar(self):
-            ...
+        def test_bar(self): ...
 
 
 This is easy to do in an entire code base by doing a simple find/replace.
@@ -346,17 +473,14 @@ Code using `@with_setup <with-setup-nose>`_ such as this:
     from nose.tools import with_setup
 
 
-    def setup_some_resource():
-        ...
+    def setup_some_resource(): ...
 
 
-    def teardown_some_resource():
-        ...
+    def teardown_some_resource(): ...
 
 
     @with_setup(setup_some_resource, teardown_some_resource)
-    def test_foo():
-        ...
+    def test_foo(): ...
 
 Will also need to be ported to a supported pytest style. One way to do it is using a fixture:
 
@@ -365,12 +489,10 @@ Will also need to be ported to a supported pytest style. One way to do it is usi
     import pytest
 
 
-    def setup_some_resource():
-        ...
+    def setup_some_resource(): ...
 
 
-    def teardown_some_resource():
-        ...
+    def teardown_some_resource(): ...
 
 
     @pytest.fixture
@@ -380,8 +502,7 @@ Will also need to be ported to a supported pytest style. One way to do it is usi
         teardown_some_resource()
 
 
-    def test_foo(some_resource):
-        ...
+    def test_foo(some_resource): ...
 
 
 .. _`with-setup-nose`: https://nose.readthedocs.io/en/latest/testing_tools.html?highlight=with_setup#nose.tools.with_setup
@@ -443,7 +564,7 @@ Now :class:`~pytest.Class` collects the test methods directly.
 Most plugins which reference ``Instance`` do so in order to ignore or skip it,
 using a check such as ``if isinstance(node, Instance): return``.
 Such plugins should simply remove consideration of ``Instance`` on pytest>=7.
-However, to keep such uses working, a dummy type has been instanted in ``pytest.Instance`` and ``_pytest.python.Instance``,
+However, to keep such uses working, a dummy type has been instanced in ``pytest.Instance`` and ``_pytest.python.Instance``,
 and importing it emits a deprecation warning. This was removed in pytest 8.
 
 
@@ -500,8 +621,7 @@ Implement the :hook:`pytest_load_initial_conftests` hook instead.
 
 .. code-block:: python
 
-    def pytest_cmdline_preparse(config: Config, args: List[str]) -> None:
-        ...
+    def pytest_cmdline_preparse(config: Config, args: List[str]) -> None: ...
 
 
     # becomes:
@@ -509,8 +629,7 @@ Implement the :hook:`pytest_load_initial_conftests` hook instead.
 
     def pytest_load_initial_conftests(
         early_config: Config, parser: Parser, args: List[str]
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 Collection changes in pytest 8
@@ -925,8 +1044,7 @@ Applying marks to values of a ``pytest.mark.parametrize`` call is now deprecated
             (50, 500),
         ],
     )
-    def test_foo(a, b):
-        ...
+    def test_foo(a, b): ...
 
 This code applies the ``pytest.mark.xfail(reason="flaky")`` mark to the ``(6, 36)`` value of the above parametrization
 call.
@@ -949,8 +1067,7 @@ To update the code, use ``pytest.param``:
             (50, 500),
         ],
     )
-    def test_foo(a, b):
-        ...
+    def test_foo(a, b): ...
 
 
 .. _pytest_funcarg__ prefix deprecated:
@@ -1101,15 +1218,13 @@ This is just a matter of renaming the fixture as the API is the same:
 
 .. code-block:: python
 
-    def test_foo(record_xml_property):
-        ...
+    def test_foo(record_xml_property): ...
 
 Change to:
 
 .. code-block:: python
 
-    def test_foo(record_property):
-        ...
+    def test_foo(record_property): ...
 
 
 .. _passing command-line string to pytest.main deprecated:
@@ -1191,36 +1306,6 @@ with the ``name`` parameter:
         return cell()
 
 
-.. _yield tests deprecated:
-
-``yield`` tests
-~~~~~~~~~~~~~~~
-
-.. versionremoved:: 4.0
-
-pytest supported ``yield``-style tests, where a test function actually ``yield`` functions and values
-that are then turned into proper test methods. Example:
-
-.. code-block:: python
-
-    def check(x, y):
-        assert x**x == y
-
-
-    def test_squared():
-        yield check, 2, 4
-        yield check, 3, 9
-
-This would result into two actual test functions being generated.
-
-This form of test function doesn't support fixtures properly, and users should switch to ``pytest.mark.parametrize``:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize("x, y", [(2, 4), (3, 9)])
-    def test_squared(x, y):
-        assert x**x == y
-
 .. _internal classes accessed through node deprecated:
 
 Internal classes accessed through ``Node``
@@ -1271,8 +1356,7 @@ Example of usage:
 
 .. code-block:: python
 
-    class MySymbol:
-        ...
+    class MySymbol: ...
 
 
     def pytest_namespace():

@@ -25,10 +25,12 @@ You can "mark" a test function with custom metadata like this:
         pass  # perform some webtest test for your app
 
 
+    @pytest.mark.device(serial="123")
     def test_something_quick():
         pass
 
 
+    @pytest.mark.device(serial="abc")
     def test_another():
         pass
 
@@ -70,6 +72,28 @@ Or the inverse, running all tests except the webtest ones:
     test_server.py::TestClass::test_method PASSED                        [100%]
 
     ===================== 3 passed, 1 deselected in 0.12s ======================
+
+.. _`marker_keyword_expression_example`:
+
+Additionally, you can restrict a test run to only run tests matching one or multiple marker
+keyword arguments, e.g. to run only tests marked with ``device`` and the specific ``serial="123"``:
+
+.. code-block:: pytest
+
+    $ pytest -v -m "device(serial='123')"
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
+    collecting ... collected 4 items / 3 deselected / 1 selected
+
+    test_server.py::test_something_quick PASSED                          [100%]
+
+    ===================== 1 passed, 3 deselected in 0.12s ======================
+
+.. note:: Only keyword argument matching is supported in marker expressions.
+
+.. note:: Only :class:`int`, (unescaped) :class:`str`, :class:`bool` & :data:`None` values are supported in marker expressions.
 
 Selecting tests based on their node ID
 --------------------------------------

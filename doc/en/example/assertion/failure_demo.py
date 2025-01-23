@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from pytest import raises
 
@@ -172,7 +174,7 @@ class TestRaises:
         raise ValueError("demo error")
 
     def test_tupleerror(self):
-        a, b = [1]  # NOQA
+        a, b = [1]  # noqa: F841
 
     def test_reinterpret_fails_with_print_for_the_fun_of_it(self):
         items = [1, 2, 3]
@@ -180,7 +182,7 @@ class TestRaises:
         a, b = items.pop()
 
     def test_some_error(self):
-        if namenotexi:  # NOQA
+        if namenotexi:  # noqa: F821
             pass
 
     def func1(self):
@@ -265,9 +267,9 @@ class TestCustomAssertMsg:
             a = 1
 
         b = 2
-        assert (
-            A.a == b
-        ), "A.a appears not to be b\nor does not appear to be b\none of those"
+        assert A.a == b, (
+            "A.a appears not to be b\nor does not appear to be b\none of those"
+        )
 
     def test_custom_repr(self):
         class JSON:

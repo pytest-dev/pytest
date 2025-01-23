@@ -1,16 +1,19 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
+from collections.abc import Generator
 import io
+from io import StringIO
 import os
+from pathlib import Path
 import re
 import shutil
 import sys
-from pathlib import Path
-from typing import Generator
-from typing import Optional
 from unittest import mock
 
-import pytest
 from _pytest._io import terminalwriter
 from _pytest.monkeypatch import MonkeyPatch
+import pytest
 
 
 # These tests were initially copied from py 1.8.1.
@@ -65,9 +68,8 @@ win32 = int(sys.platform == "win32")
 
 class TestTerminalWriter:
     @pytest.fixture(params=["path", "stringio"])
-    def tw(
-        self, request, tmp_path: Path
-    ) -> Generator[terminalwriter.TerminalWriter, None, None]:
+    def tw(self, request, tmp_path: Path) -> Generator[terminalwriter.TerminalWriter]:
+        f: io.TextIOWrapper | StringIO
         if request.param == "path":
             p = tmp_path.joinpath("tmpfile")
             f = open(str(p), "w+", encoding="utf8")
@@ -165,7 +167,7 @@ def test_attr_hasmarkup() -> None:
     assert "\x1b[0m" in s
 
 
-def assert_color(expected: bool, default: Optional[bool] = None) -> None:
+def assert_color(expected: bool, default: bool | None = None) -> None:
     file = io.StringIO()
     if default is None:
         default = not expected

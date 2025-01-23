@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import os.path
 
 import pytest
+
 
 mydir = os.path.dirname(__file__)
 

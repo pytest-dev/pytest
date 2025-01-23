@@ -1,23 +1,24 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 import sys
-from typing import List
-from typing import Optional
 from unittest import mock
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.mark import MarkGenerator
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
+import pytest
 
 
 class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
     def test_pytest_exists_in_namespace_all(self, attr: str) -> None:
         module = sys.modules["pytest"]
-        assert attr in module.__all__  # type: ignore
+        assert attr in module.__all__
 
     def test_pytest_mark_notcallable(self) -> None:
         mark = MarkGenerator(_ispytest=True)
@@ -33,7 +34,7 @@ class TestMark:
 
         assert pytest.mark.foo(some_function) is some_function
         marked_with_args = pytest.mark.foo.with_args(some_function)
-        assert marked_with_args is not some_function  # type: ignore[comparison-overlap]
+        assert marked_with_args is not some_function
 
         assert pytest.mark.foo(SomeClass) is SomeClass
         assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap]
@@ -41,7 +42,7 @@ class TestMark:
     def test_pytest_mark_name_starts_with_underscore(self) -> None:
         mark = MarkGenerator(_ispytest=True)
         with pytest.raises(AttributeError):
-            mark._some_name
+            _ = mark._some_name
 
 
 def test_marked_class_run_twice(pytester: Pytester) -> None:
@@ -213,7 +214,7 @@ def test_strict_prohibits_unregistered_markers(
     ],
 )
 def test_mark_option(
-    expr: str, expected_passed: List[Optional[str]], pytester: Pytester
+    expr: str, expected_passed: list[str | None], pytester: Pytester
 ) -> None:
     pytester.makepyfile(
         """
@@ -234,10 +235,58 @@ def test_mark_option(
 
 @pytest.mark.parametrize(
     ("expr", "expected_passed"),
+    [
+        ("car(color='red')", ["test_one"]),
+        ("car(color='red') or car(color='blue')", ["test_one", "test_two"]),
+        ("car and not car(temp=5)", ["test_one", "test_three"]),
+        ("car(temp=4)", ["test_one"]),
+        ("car(temp=4) or car(temp=5)", ["test_one", "test_two"]),
+        ("car(temp=4) and car(temp=5)", []),
+        ("car(temp=-5)", ["test_three"]),
+        ("car(ac=True)", ["test_one"]),
+        ("car(ac=False)", ["test_two"]),
+        ("car(ac=None)", ["test_three"]),  # test NOT_NONE_SENTINEL
+    ],
+    ids=str,
+)
+def test_mark_option_with_kwargs(
+    expr: str, expected_passed: list[str | None], pytester: Pytester
+) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.car
+        @pytest.mark.car(ac=True)
+        @pytest.mark.car(temp=4)
+        @pytest.mark.car(color="red")
+        def test_one():
+            pass
+        @pytest.mark.car
+        @pytest.mark.car(ac=False)
+        @pytest.mark.car(temp=5)
+        @pytest.mark.car(color="blue")
+        def test_two():
+            pass
+        @pytest.mark.car
+        @pytest.mark.car(ac=None)
+        @pytest.mark.car(temp=-5)
+        def test_three():
+            pass
+
+    """
+    )
+    rec = pytester.inline_run("-m", expr)
+    passed, skipped, fail = rec.listoutcomes()
+    passed_str = [x.nodeid.split("::")[-1] for x in passed]
+    assert passed_str == expected_passed
+
+
+@pytest.mark.parametrize(
+    ("expr", "expected_passed"),
     [("interface", ["test_interface"]), ("not interface", ["test_nointer"])],
 )
 def test_mark_option_custom(
-    expr: str, expected_passed: List[str], pytester: Pytester
+    expr: str, expected_passed: list[str], pytester: Pytester
 ) -> None:
     pytester.makeconftest(
         """
@@ -275,7 +324,7 @@ def test_mark_option_custom(
     ],
 )
 def test_keyword_option_custom(
-    expr: str, expected_passed: List[str], pytester: Pytester
+    expr: str, expected_passed: list[str], pytester: Pytester
 ) -> None:
     pytester.makepyfile(
         """
@@ -313,7 +362,7 @@ def test_keyword_option_considers_mark(pytester: Pytester) -> None:
     ],
 )
 def test_keyword_option_parametrize(
-    expr: str, expected_passed: List[str], pytester: Pytester
+    expr: str, expected_passed: list[str], pytester: Pytester
 ) -> None:
     pytester.makepyfile(
         """
@@ -370,6 +419,10 @@ def test_parametrize_with_module(pytester: Pytester) -> None:
         (
             "not or",
             "at column 5: expected not OR left parenthesis OR identifier; got or",
+        ),
+        (
+            "nonexistent_mark(non_supported='kwarg')",
+            "Keyword expressions do not support call parameters",
         ),
     ],
 )
@@ -894,7 +947,7 @@ class TestKeywordSelection:
         )
         monkeypatch.chdir(pytester.path / "suite")
 
-        def get_collected_names(*args: str) -> List[str]:
+        def get_collected_names(*args: str) -> list[str]:
             _, rec = pytester.inline_genitems(*args)
             calls = rec.getcalls("pytest_collection_finish")
             assert len(calls) == 1
@@ -929,20 +982,19 @@ class TestMarkDecorator:
 
 @pytest.mark.parametrize("mark", [None, "", "skip", "xfail"])
 def test_parameterset_for_parametrize_marks(
-    pytester: Pytester, mark: Optional[str]
+    pytester: Pytester, mark: str | None
 ) -> None:
     if mark is not None:
         pytester.makeini(
-            """
+            f"""
         [pytest]
-        {}={}
-        """.format(
-                EMPTY_PARAMETERSET_OPTION, mark
-            )
+        {EMPTY_PARAMETERSET_OPTION}={mark}
+        """
         )
 
     config = pytester.parseconfig()
-    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+    from _pytest.mark import get_empty_parameterset_mark
+    from _pytest.mark import pytest_configure
 
     pytest_configure(config)
     result_mark = get_empty_parameterset_mark(config, ["a"], all)
@@ -957,16 +1009,15 @@ def test_parameterset_for_parametrize_marks(
 
 def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
     pytester.makeini(
-        """
+        f"""
     [pytest]
-    {}=fail_at_collect
-    """.format(
-            EMPTY_PARAMETERSET_OPTION
-        )
+    {EMPTY_PARAMETERSET_OPTION}=fail_at_collect
+    """
     )
 
     config = pytester.parseconfig()
-    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+    from _pytest.mark import get_empty_parameterset_mark
+    from _pytest.mark import pytest_configure
 
     pytest_configure(config)
 
@@ -995,6 +1046,32 @@ def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
         ]
     )
     assert result.ret == ExitCode.INTERRUPTED
+
+
+def test_paramset_empty_no_idfunc(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An empty parameter set should not call the user provided id function (#13031)."""
+    p1 = pytester.makepyfile(
+        """
+        import pytest
+
+        def idfunc(value):
+            raise ValueError()
+        @pytest.mark.parametrize("param", [], ids=idfunc)
+        def test(param):
+            pass
+        """
+    )
+    result = pytester.runpytest(p1, "-v", "-rs")
+    result.stdout.fnmatch_lines(
+        [
+            "* collected 1 item",
+            "test_paramset_empty_no_idfunc* SKIPPED *",
+            "SKIPPED [1] test_paramset_empty_no_idfunc.py:5: got empty parameter set for (param)",
+            "*= 1 skipped in *",
+        ]
+    )
 
 
 def test_parameterset_for_parametrize_bad_markname(pytester: Pytester) -> None:
@@ -1175,3 +1252,38 @@ def test_mark_fixture_order_mro(pytester: Pytester):
     )
     result = pytester.runpytest(foo)
     result.assert_outcomes(passed=1)
+
+
+def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
+    """Check that applying marks works as intended on classmethods and staticmethods.
+
+    Regression test for #12863.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.mark.parametrize("value", [1, 2])
+            @classmethod
+            def test_classmethod_wrapper(cls, value: int):
+                assert value in [1, 2]
+
+            @classmethod
+            @pytest.mark.parametrize("value", [1, 2])
+            def test_classmethod_wrapper_on_top(cls, value: int):
+                assert value in [1, 2]
+
+            @pytest.mark.parametrize("value", [1, 2])
+            @staticmethod
+            def test_staticmethod_wrapper(value: int):
+                assert value in [1, 2]
+
+            @staticmethod
+            @pytest.mark.parametrize("value", [1, 2])
+            def test_staticmethod_wrapper_on_top(value: int):
+                assert value in [1, 2]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=8)

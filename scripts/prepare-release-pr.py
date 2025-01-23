@@ -13,9 +13,12 @@ After that, it will create a release using the `release` tox environment, and pu
 **Token**: currently the token from the GitHub Actions is used, pushed with
 `pytest bot <pytestbot@gmail.com>` commit author.
 """
+
+from __future__ import annotations
+
 import argparse
-import re
 from pathlib import Path
+import re
 from subprocess import check_call
 from subprocess import check_output
 from subprocess import run
@@ -79,7 +82,7 @@ def prepare_release_pr(
         )
     except InvalidFeatureRelease as e:
         print(f"{Fore.RED}{e}")
-        raise SystemExit(1)
+        raise SystemExit(1) from None
 
     print(f"Version: {Fore.CYAN}{version}")
 
@@ -160,7 +163,7 @@ def find_next_version(
     last_version = valid_versions[-1]
 
     if is_major:
-        return f"{last_version[0]+1}.0.0{prerelease}"
+        return f"{last_version[0] + 1}.0.0{prerelease}"
     elif is_feature_release:
         return f"{last_version[0]}.{last_version[1] + 1}.0{prerelease}"
     else:

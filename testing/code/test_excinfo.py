@@ -1,18 +1,20 @@
+# mypy: allow-untyped-defs
 from __future__ import annotations
 
+import fnmatch
 import importlib
 import io
 import operator
+from pathlib import Path
 import queue
 import re
 import sys
 import textwrap
-from pathlib import Path
 from typing import Any
+from typing import cast
 from typing import TYPE_CHECKING
 
 import _pytest._code
-import pytest
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import FormattedExcinfo
@@ -22,12 +24,13 @@ from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import import_path
 from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
+import pytest
 
 
 if TYPE_CHECKING:
-    from _pytest._code.code import _TracebackStyle
+    from _pytest._code.code import TracebackStyle
 
-if sys.version_info[:2] < (3, 11):
+if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
@@ -179,7 +182,7 @@ class TestTraceback_f_g_h:
     def test_traceback_cut_excludepath(self, pytester: Pytester) -> None:
         p = pytester.makepyfile("def f(): raise ValueError")
         with pytest.raises(ValueError) as excinfo:
-            import_path(p, root=pytester.path).f()  # type: ignore[attr-defined]
+            import_path(p, root=pytester.path, consider_namespace_packages=False).f()
         basedir = Path(pytest.__file__).parent
         newtraceback = excinfo.traceback.cut(excludepath=basedir)
         for x in newtraceback:
@@ -236,7 +239,7 @@ class TestTraceback_f_g_h:
                 n += 1
             f(n)
 
-        excinfo = pytest.raises(RuntimeError, f, 8)
+        excinfo = pytest.raises(RecursionError, f, 8)
         traceback = excinfo.traceback
         recindex = traceback.recursionindex()
         assert recindex == 3
@@ -372,7 +375,10 @@ def test_excinfo_no_sourcecode():
     except ValueError:
         excinfo = _pytest._code.ExceptionInfo.from_current()
     s = str(excinfo.traceback[-1])
-    assert s == "  File '<string>':1 in <module>\n  ???\n"
+    # TODO: Since Python 3.13b1 under pytest-xdist, the * is `import
+    # sys;exec(eval(sys.stdin.readline()))` (execnet bootstrap code)
+    # instead of `???` like before. Is this OK?
+    fnmatch.fnmatch(s, "  File '<string>':1 in <module>\n  *\n")
 
 
 def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
@@ -386,7 +392,7 @@ def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     excinfo = pytest.raises(ValueError, template.render, h=h)
     for item in excinfo.traceback:
         print(item)  # XXX: for some reason jinja.Template.render is printed in full
-        item.source  # shouldn't fail
+        _ = item.source  # shouldn't fail
         if isinstance(item.path, Path) and item.path.name == "test.txt":
             assert str(item.source) == "{{ h()}}:"
 
@@ -417,7 +423,7 @@ def test_codepath_Queue_example() -> None:
 
 def test_match_succeeds():
     with pytest.raises(ZeroDivisionError) as excinfo:
-        0 // 0
+        _ = 0 // 0
     excinfo.match(r".*zero.*")
 
 
@@ -542,7 +548,9 @@ class TestFormattedExcinfo:
             tmp_path.joinpath("__init__.py").touch()
             modpath.write_text(source, encoding="utf-8")
             importlib.invalidate_caches()
-            return import_path(modpath, root=tmp_path)
+            return import_path(
+                modpath, root=tmp_path, consider_namespace_packages=False
+            )
 
         return importasmod
 
@@ -583,7 +591,7 @@ class TestFormattedExcinfo:
         try:
 
             def f():
-                1 / 0
+                _ = 1 / 0
 
             f()
 
@@ -600,7 +608,7 @@ class TestFormattedExcinfo:
             print(line)
         assert lines == [
             "    def f():",
-            ">       1 / 0",
+            ">       _ = 1 / 0",
             "E       ZeroDivisionError: division by zero",
         ]
 
@@ -637,7 +645,7 @@ raise ValueError()
         pr = FormattedExcinfo()
 
         try:
-            1 / 0
+            _ = 1 / 0
         except ZeroDivisionError:
             excinfo = ExceptionInfo.from_current()
 
@@ -704,6 +712,29 @@ raise ValueError()
         assert full_reprlocals is not None
         assert full_reprlocals.lines
         assert full_reprlocals.lines[0] == "l          = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+
+    def test_repr_args_not_truncated(self, importasmod) -> None:
+        mod = importasmod(
+            """
+            def func1(m):
+                raise ValueError("hello\\nworld")
+        """
+        )
+        excinfo = pytest.raises(ValueError, mod.func1, "m" * 500)
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
+        entry = excinfo.traceback[-1]
+        p = FormattedExcinfo(funcargs=True, truncate_args=True)
+        reprfuncargs = p.repr_args(entry)
+        assert reprfuncargs is not None
+        arg1 = cast(str, reprfuncargs.args[0][1])
+        assert len(arg1) < 500
+        assert "..." in arg1
+        # again without truncate
+        p = FormattedExcinfo(funcargs=True, truncate_args=False)
+        reprfuncargs = p.repr_args(entry)
+        assert reprfuncargs is not None
+        assert reprfuncargs.args[0] == ("m", repr("m" * 500))
+        assert "..." not in cast(str, reprfuncargs.args[0][1])
 
     def test_repr_tracebackentry_lines(self, importasmod) -> None:
         mod = importasmod(
@@ -894,7 +925,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: tuple[_TracebackStyle, ...] = ("long", "short")
+        styles: tuple[TracebackStyle, ...] = ("long", "short")
         for style in styles:
             p = FormattedExcinfo(style=style)
             reprtb = p.repr_traceback(excinfo)
@@ -933,8 +964,8 @@ raise ValueError()
             upframe = sys._getframe().f_back
             assert upframe is not None
             if upframe.f_code.co_name == "_makepath":
-                # Only raise with expected calls, but not via e.g. inspect for
-                # py38-windows.
+                # Only raise with expected calls, and not accidentally via 'inspect'
+                # See 79ae86cc3f76d69460e1c7beca4ce95e68ab80a6
                 raised += 1
                 raise OSError(2, "custom_oserror")
             return orig_path_cwd()
@@ -1021,7 +1052,7 @@ raise ValueError()
         )
         excinfo = pytest.raises(ValueError, mod.entry)
 
-        styles: tuple[_TracebackStyle, ...] = ("short", "long", "no")
+        styles: tuple[TracebackStyle, ...] = ("short", "long", "no")
         for style in styles:
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)
@@ -1163,6 +1194,23 @@ raise ValueError()
         line = tw_mock.lines[-1]
         assert line == ":3: ValueError"
 
+    def test_toterminal_value(self, importasmod, tw_mock):
+        mod = importasmod(
+            """
+            def g(x):
+                raise ValueError(x)
+            def f():
+                g('some_value')
+        """
+        )
+        excinfo = pytest.raises(ValueError, mod.f)
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
+        repr = excinfo.getrepr(style="value")
+        repr.toterminal(tw_mock)
+
+        assert tw_mock.get_write_msg(0) == "some_value"
+        assert tw_mock.get_write_msg(1) == "\n"
+
     @pytest.mark.parametrize(
         "reproptions",
         [
@@ -1173,9 +1221,7 @@ raise ValueError()
                     "funcargs": funcargs,
                     "tbfilter": tbfilter,
                 },
-                id="style={},showlocals={},funcargs={},tbfilter={}".format(
-                    style, showlocals, funcargs, tbfilter
-                ),
+                id=f"style={style},showlocals={showlocals},funcargs={funcargs},tbfilter={tbfilter}",
             )
             for style in ["long", "short", "line", "no", "native", "value", "auto"]
             for showlocals in (True, False)
@@ -1339,7 +1385,7 @@ raise ValueError()
         """
         raise_suffix = " from None" if mode == "from_none" else ""
         mod = importasmod(
-            """
+            f"""
             def f():
                 try:
                     g()
@@ -1347,9 +1393,7 @@ raise ValueError()
                     raise AttributeError(){raise_suffix}
             def g():
                 raise ValueError()
-        """.format(
-                raise_suffix=raise_suffix
-            )
+        """
         )
         excinfo = pytest.raises(AttributeError, mod.f)
         r = excinfo.getrepr(style="long", chain=mode != "explicit_suppress")
@@ -1361,9 +1405,7 @@ raise ValueError()
         assert tw_mock.lines[2] == "        try:"
         assert tw_mock.lines[3] == "            g()"
         assert tw_mock.lines[4] == "        except Exception:"
-        assert tw_mock.lines[5] == ">           raise AttributeError(){}".format(
-            raise_suffix
-        )
+        assert tw_mock.lines[5] == f">           raise AttributeError(){raise_suffix}"
         assert tw_mock.lines[6] == "E           AttributeError"
         assert tw_mock.lines[7] == ""
         line = tw_mock.get_write_msg(8)
@@ -1394,7 +1436,7 @@ raise ValueError()
         """
         exc_handling_code = " from e" if reason == "cause" else ""
         mod = importasmod(
-            """
+            f"""
             def f():
                 try:
                     g()
@@ -1402,16 +1444,14 @@ raise ValueError()
                     raise RuntimeError('runtime problem'){exc_handling_code}
             def g():
                 raise ValueError('invalid value')
-        """.format(
-                exc_handling_code=exc_handling_code
-            )
+        """
         )
 
         with pytest.raises(RuntimeError) as excinfo:
             mod.f()
 
         # emulate the issue described in #1984
-        attr = "__%s__" % reason
+        attr = f"__{reason}__"
         getattr(excinfo.value, attr).__traceback__ = None
 
         r = excinfo.getrepr()
@@ -1520,7 +1560,7 @@ def test_cwd_deleted(pytester: Pytester) -> None:
     result.stderr.no_fnmatch_line("*INTERNALERROR*")
 
 
-def test_regression_nagative_line_index(pytester: Pytester) -> None:
+def test_regression_negative_line_index(pytester: Pytester) -> None:
     """
     With Python 3.10 alphas, there was an INTERNALERROR reported in
     https://github.com/pytest-dev/pytest/pull/8227
@@ -1589,7 +1629,7 @@ def test_no_recursion_index_on_recursion_error():
             return getattr(self, "_" + attr)
 
     with pytest.raises(RuntimeError) as excinfo:
-        RecursionDepthError().trigger
+        _ = RecursionDepthError().trigger
     assert "maximum recursion" in str(excinfo.getrepr())
 
 
@@ -1680,6 +1720,83 @@ def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
 
 
+def test_exceptiongroup_short_summary_info(pytester: Pytester):
+    pytester.makepyfile(
+        """
+        import sys
+
+        if sys.version_info < (3, 11):
+            from exceptiongroup import BaseExceptionGroup, ExceptionGroup
+
+        def test_base() -> None:
+            raise BaseExceptionGroup("NOT IN SUMMARY", [SystemExit("a" * 10)])
+
+        def test_nonbase() -> None:
+            raise ExceptionGroup("NOT IN SUMMARY", [ValueError("a" * 10)])
+
+        def test_nested() -> None:
+            raise ExceptionGroup(
+                "NOT DISPLAYED", [
+                    ExceptionGroup("NOT IN SUMMARY", [ValueError("a" * 10)])
+                ]
+            )
+
+        def test_multiple() -> None:
+            raise ExceptionGroup(
+                "b" * 10,
+                [
+                    ValueError("NOT IN SUMMARY"),
+                    TypeError("NOT IN SUMMARY"),
+                ]
+            )
+
+        def test_nested_multiple() -> None:
+            raise ExceptionGroup(
+                "b" * 10,
+                [
+                    ExceptionGroup(
+                        "c" * 10,
+                        [
+                            ValueError("NOT IN SUMMARY"),
+                            TypeError("NOT IN SUMMARY"),
+                        ]
+                    )
+                ]
+            )
+        """
+    )
+    # run with -vv to not truncate summary info, default width in tests is very low
+    result = pytester.runpytest("-vv")
+    assert result.ret == 1
+    backport_str = "exceptiongroup." if sys.version_info < (3, 11) else ""
+    result.stdout.fnmatch_lines(
+        [
+            "*= short test summary info =*",
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_base - "
+                "SystemExit('aaaaaaaaaa') [single exception in BaseExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nonbase - "
+                "ValueError('aaaaaaaaaa') [single exception in ExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nested - "
+                "ValueError('aaaaaaaaaa') [single exception in ExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_multiple - "
+                f"{backport_str}ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nested_multiple - "
+                f"{backport_str}ExceptionGroup: bbbbbbbbbb (1 sub-exception)"
+            ),
+            "*= 5 failed in *",
+        ]
+    )
+
+
 @pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
 def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
     """Regression test for #10903."""
@@ -1746,7 +1863,7 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
 def add_note(err: BaseException, msg: str) -> None:
     """Adds a note to an exception inplace."""
     if sys.version_info < (3, 11):
-        err.__notes__ = getattr(err, "__notes__", []) + [msg]  # type: ignore[attr-defined]
+        err.__notes__ = [*getattr(err, "__notes__", []), msg]  # type: ignore[attr-defined]
     else:
         err.add_note(msg)
 

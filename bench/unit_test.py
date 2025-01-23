@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from unittest import TestCase  # noqa: F401
+
 
 for i in range(15000):
     exec(

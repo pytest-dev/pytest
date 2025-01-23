@@ -1,18 +1,19 @@
+# mypy: allow-untyped-defs
 """Implementation of the cache provider."""
+
 # This plugin was not named "cache" to avoid conflicts with the external
 # pytest-cache version.
+from __future__ import annotations
+
+from collections.abc import Generator
+from collections.abc import Iterable
 import dataclasses
+import errno
 import json
 import os
 from pathlib import Path
-from typing import Dict
+import tempfile
 from typing import final
-from typing import Generator
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Union
 
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
@@ -30,6 +31,7 @@ from _pytest.main import Session
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
+
 
 README_CONTENT = """\
 # pytest cache directory #
@@ -72,7 +74,7 @@ class Cache:
         self._config = config
 
     @classmethod
-    def for_config(cls, config: Config, *, _ispytest: bool = False) -> "Cache":
+    def for_config(cls, config: Config, *, _ispytest: bool = False) -> Cache:
         """Create the Cache instance for a Config.
 
         :meta private:
@@ -111,6 +113,7 @@ class Cache:
         """
         check_ispytest(_ispytest)
         import warnings
+
         from _pytest.warning_types import PytestCacheWarning
 
         warnings.warn(
@@ -118,6 +121,10 @@ class Cache:
             self._config.hook,
             stacklevel=3,
         )
+
+    def _mkdir(self, path: Path) -> None:
+        self._ensure_cache_dir_and_supporting_files()
+        path.mkdir(exist_ok=True, parents=True)
 
     def mkdir(self, name: str) -> Path:
         """Return a directory path object with the given name.
@@ -137,7 +144,7 @@ class Cache:
         if len(path.parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
         res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
-        res.mkdir(exist_ok=True, parents=True)
+        self._mkdir(res)
         return res
 
     def _getvaluepath(self, key: str) -> Path:
@@ -174,19 +181,13 @@ class Cache:
         """
         path = self._getvaluepath(key)
         try:
-            if path.parent.is_dir():
-                cache_dir_exists_already = True
-            else:
-                cache_dir_exists_already = self._cachedir.exists()
-                path.parent.mkdir(exist_ok=True, parents=True)
+            self._mkdir(path.parent)
         except OSError as exc:
             self.warn(
                 f"could not create cache path {path}: {exc}",
                 _ispytest=True,
             )
             return
-        if not cache_dir_exists_already:
-            self._ensure_supporting_files()
         data = json.dumps(value, ensure_ascii=False, indent=2)
         try:
             f = path.open("w", encoding="UTF-8")
@@ -199,21 +200,54 @@ class Cache:
             with f:
                 f.write(data)
 
-    def _ensure_supporting_files(self) -> None:
-        """Create supporting files in the cache dir that are not really part of the cache."""
-        readme_path = self._cachedir / "README.md"
-        readme_path.write_text(README_CONTENT, encoding="UTF-8")
+    def _ensure_cache_dir_and_supporting_files(self) -> None:
+        """Create the cache dir and its supporting files."""
+        if self._cachedir.is_dir():
+            return
 
-        gitignore_path = self._cachedir.joinpath(".gitignore")
-        msg = "# Created by pytest automatically.\n*\n"
-        gitignore_path.write_text(msg, encoding="UTF-8")
+        self._cachedir.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            prefix="pytest-cache-files-",
+            dir=self._cachedir.parent,
+        ) as newpath:
+            path = Path(newpath)
 
-        cachedir_tag_path = self._cachedir.joinpath("CACHEDIR.TAG")
-        cachedir_tag_path.write_bytes(CACHEDIR_TAG_CONTENT)
+            # Reset permissions to the default, see #12308.
+            # Note: there's no way to get the current umask atomically, eek.
+            umask = os.umask(0o022)
+            os.umask(umask)
+            path.chmod(0o777 - umask)
+
+            with open(path.joinpath("README.md"), "x", encoding="UTF-8") as f:
+                f.write(README_CONTENT)
+            with open(path.joinpath(".gitignore"), "x", encoding="UTF-8") as f:
+                f.write("# Created by pytest automatically.\n*\n")
+            with open(path.joinpath("CACHEDIR.TAG"), "xb") as f:
+                f.write(CACHEDIR_TAG_CONTENT)
+
+            try:
+                path.rename(self._cachedir)
+            except OSError as e:
+                # If 2 concurrent pytests both race to the rename, the loser
+                # gets "Directory not empty" from the rename. In this case,
+                # everything is handled so just continue (while letting the
+                # temporary directory be cleaned up).
+                # On Windows, the error is a FileExistsError which translates to EEXIST.
+                if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
+                    raise
+            else:
+                # Create a directory in place of the one we just moved so that
+                # `TemporaryDirectory`'s cleanup doesn't complain.
+                #
+                # TODO: pass ignore_cleanup_errors=True when we no longer support python < 3.10.
+                # See https://github.com/python/cpython/issues/74168. Note that passing
+                # delete=False would do the wrong thing in case of errors and isn't supported
+                # until python 3.12.
+                path.mkdir()
 
 
 class LFPluginCollWrapper:
-    def __init__(self, lfplugin: "LFPlugin") -> None:
+    def __init__(self, lfplugin: LFPlugin) -> None:
         self.lfplugin = lfplugin
         self._collected_at_least_one_failure = False
 
@@ -226,8 +260,8 @@ class LFPluginCollWrapper:
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 
-            # Use stable sort to priorize last failed.
-            def sort_key(node: Union[nodes.Item, nodes.Collector]) -> bool:
+            # Use stable sort to prioritize last failed.
+            def sort_key(node: nodes.Item | nodes.Collector) -> bool:
                 return node.path in lf_paths
 
             res.result = sorted(
@@ -265,13 +299,13 @@ class LFPluginCollWrapper:
 
 
 class LFPluginCollSkipfiles:
-    def __init__(self, lfplugin: "LFPlugin") -> None:
+    def __init__(self, lfplugin: LFPlugin) -> None:
         self.lfplugin = lfplugin
 
     @hookimpl
     def pytest_make_collect_report(
         self, collector: nodes.Collector
-    ) -> Optional[CollectReport]:
+    ) -> CollectReport | None:
         if isinstance(collector, File):
             if collector.path not in self.lfplugin._last_failed_paths:
                 self.lfplugin._skipped_files += 1
@@ -290,9 +324,9 @@ class LFPlugin:
         active_keys = "lf", "failedfirst"
         self.active = any(config.getoption(key) for key in active_keys)
         assert config.cache
-        self.lastfailed: Dict[str, bool] = config.cache.get("cache/lastfailed", {})
-        self._previously_failed_count: Optional[int] = None
-        self._report_status: Optional[str] = None
+        self.lastfailed: dict[str, bool] = config.cache.get("cache/lastfailed", {})
+        self._previously_failed_count: int | None = None
+        self._report_status: str | None = None
         self._skipped_files = 0  # count skipped files during collection due to --lf
 
         if config.getoption("lf"):
@@ -301,7 +335,7 @@ class LFPlugin:
                 LFPluginCollWrapper(self), "lfplugin-collwrapper"
             )
 
-    def get_last_failed_paths(self) -> Set[Path]:
+    def get_last_failed_paths(self) -> set[Path]:
         """Return a set with all Paths of the previously failed nodeids and
         their parents."""
         rootpath = self.config.rootpath
@@ -312,9 +346,9 @@ class LFPlugin:
             result.update(path.parents)
         return {x for x in result if x.exists()}
 
-    def pytest_report_collectionfinish(self) -> Optional[str]:
-        if self.active and self.config.getoption("verbose") >= 0:
-            return "run-last-failure: %s" % self._report_status
+    def pytest_report_collectionfinish(self) -> str | None:
+        if self.active and self.config.get_verbosity() >= 0:
+            return f"run-last-failure: {self._report_status}"
         return None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
@@ -334,8 +368,8 @@ class LFPlugin:
 
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
-        self, config: Config, items: List[nodes.Item]
-    ) -> Generator[None, None, None]:
+        self, config: Config, items: list[nodes.Item]
+    ) -> Generator[None]:
         res = yield
 
         if not self.active:
@@ -354,8 +388,8 @@ class LFPlugin:
             if not previously_failed:
                 # Running a subset of all tests with recorded failures
                 # only outside of it.
-                self._report_status = "%d known failures not in selected tests" % (
-                    len(self.lastfailed),
+                self._report_status = (
+                    f"{len(self.lastfailed)} known failures not in selected tests"
                 )
             else:
                 if self.config.getoption("lf"):
@@ -366,15 +400,13 @@ class LFPlugin:
 
                 noun = "failure" if self._previously_failed_count == 1 else "failures"
                 suffix = " first" if self.config.getoption("failedfirst") else ""
-                self._report_status = "rerun previous {count} {noun}{suffix}".format(
-                    count=self._previously_failed_count, suffix=suffix, noun=noun
+                self._report_status = (
+                    f"rerun previous {self._previously_failed_count} {noun}{suffix}"
                 )
 
             if self._skipped_files > 0:
                 files_noun = "file" if self._skipped_files == 1 else "files"
-                self._report_status += " (skipped {files} {files_noun})".format(
-                    files=self._skipped_files, files_noun=files_noun
-                )
+                self._report_status += f" (skipped {self._skipped_files} {files_noun})"
         else:
             self._report_status = "no previously failed tests, "
             if self.config.getoption("last_failed_no_failures") == "none":
@@ -407,14 +439,12 @@ class NFPlugin:
         self.cached_nodeids = set(config.cache.get("cache/nodeids", []))
 
     @hookimpl(wrapper=True, tryfirst=True)
-    def pytest_collection_modifyitems(
-        self, items: List[nodes.Item]
-    ) -> Generator[None, None, None]:
+    def pytest_collection_modifyitems(self, items: list[nodes.Item]) -> Generator[None]:
         res = yield
 
         if self.active:
-            new_items: Dict[str, nodes.Item] = {}
-            other_items: Dict[str, nodes.Item] = {}
+            new_items: dict[str, nodes.Item] = {}
+            other_items: dict[str, nodes.Item] = {}
             for item in items:
                 if item.nodeid not in self.cached_nodeids:
                     new_items[item.nodeid] = item
@@ -430,8 +460,8 @@ class NFPlugin:
 
         return res
 
-    def _get_increasing_order(self, items: Iterable[nodes.Item]) -> List[nodes.Item]:
-        return sorted(items, key=lambda item: item.path.stat().st_mtime, reverse=True)  # type: ignore[no-any-return]
+    def _get_increasing_order(self, items: Iterable[nodes.Item]) -> list[nodes.Item]:
+        return sorted(items, key=lambda item: item.path.stat().st_mtime, reverse=True)
 
     def pytest_sessionfinish(self) -> None:
         config = self.config
@@ -452,8 +482,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--last-failed",
         action="store_true",
         dest="lf",
-        help="Rerun only the tests that failed "
-        "at the last run (or all if none failed)",
+        help="Rerun only the tests that failed at the last run (or all if none failed)",
     )
     group.addoption(
         "--ff",
@@ -507,7 +536,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-def pytest_cmdline_main(config: Config) -> Optional[Union[int, ExitCode]]:
+def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.cacheshow and not config.option.help:
         from _pytest.main import wrap_session
 
@@ -538,7 +567,7 @@ def cache(request: FixtureRequest) -> Cache:
     return request.config.cache
 
 
-def pytest_report_header(config: Config) -> Optional[str]:
+def pytest_report_header(config: Config) -> str | None:
     """Display cachedir with --cache-show and if non-default."""
     if config.option.verbose > 0 or config.getini("cache_dir") != ".pytest_cache":
         assert config.cache is not None
@@ -572,25 +601,25 @@ def cacheshow(config: Config, session: Session) -> int:
     dummy = object()
     basedir = config.cache._cachedir
     vdir = basedir / Cache._CACHE_PREFIX_VALUES
-    tw.sep("-", "cache values for %r" % glob)
+    tw.sep("-", f"cache values for {glob!r}")
     for valpath in sorted(x for x in vdir.rglob(glob) if x.is_file()):
         key = str(valpath.relative_to(vdir))
         val = config.cache.get(key, dummy)
         if val is dummy:
-            tw.line("%s contains unreadable content, will be ignored" % key)
+            tw.line(f"{key} contains unreadable content, will be ignored")
         else:
-            tw.line("%s contains:" % key)
+            tw.line(f"{key} contains:")
             for line in pformat(val).splitlines():
                 tw.line("  " + line)
 
     ddir = basedir / Cache._CACHE_PREFIX_DIRS
     if ddir.is_dir():
         contents = sorted(ddir.rglob(glob))
-        tw.sep("-", "cache directories for %r" % glob)
+        tw.sep("-", f"cache directories for {glob!r}")
         for p in contents:
             # if p.is_dir():
             #    print("%s/" % p.relative_to(basedir))
             if p.is_file():
                 key = str(p.relative_to(basedir))
-                tw.line(f"{key} is a file of length {p.stat().st_size:d}")
+                tw.line(f"{key} is a file of length {p.stat().st_size}")
     return 0

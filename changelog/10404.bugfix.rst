@@ -1,0 +1,7 @@
+Apply filterwarnings from config/cli as soon as possible, and revert them as late as possible
+so that warnings as errors are collected throughout the pytest run and before the
+unraisable and threadexcept hooks are removed.
+
+This allows very late warnings and unraisable/threadexcept exceptions to fail the test suite.
+
+This also changes the warning that the lsof plugin issues from PytestWarning to the new warning PytestFDWarning so it can be more easily filtered.

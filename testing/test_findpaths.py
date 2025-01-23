@@ -1,13 +1,16 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
 from _pytest.config import UsageError
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import get_dirs_from_args
 from _pytest.config.findpaths import is_fs_root
 from _pytest.config.findpaths import load_config_dict_from_file
+import pytest
 
 
 class TestLoadConfigDictFromFile:

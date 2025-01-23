@@ -1,15 +1,15 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
+from collections.abc import Callable
 import dataclasses
 import os
+from pathlib import Path
 import stat
 import sys
-import warnings
-from pathlib import Path
-from typing import Callable
 from typing import cast
-from typing import List
-from typing import Union
+import warnings
 
-import pytest
 from _pytest import pathlib
 from _pytest.config import Config
 from _pytest.monkeypatch import MonkeyPatch
@@ -23,6 +23,7 @@ from _pytest.pathlib import rm_rf
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import TempPathFactory
+import pytest
 
 
 def test_tmp_path_fixture(pytester: Pytester) -> None:
@@ -33,7 +34,7 @@ def test_tmp_path_fixture(pytester: Pytester) -> None:
 
 @dataclasses.dataclass
 class FakeConfig:
-    basetemp: Union[str, Path]
+    basetemp: str | Path
 
     @property
     def trace(self):
@@ -86,11 +87,11 @@ class TestConfigTmpPath:
                 pass
         """
         )
-        pytester.runpytest(p, "--basetemp=%s" % mytemp)
+        pytester.runpytest(p, f"--basetemp={mytemp}")
         assert mytemp.exists()
         mytemp.joinpath("hello").touch()
 
-        pytester.runpytest(p, "--basetemp=%s" % mytemp)
+        pytester.runpytest(p, f"--basetemp={mytemp}")
         assert mytemp.exists()
         assert not mytemp.joinpath("hello").exists()
 
@@ -241,15 +242,13 @@ testdata = [
 def test_mktemp(pytester: Pytester, basename: str, is_ok: bool) -> None:
     mytemp = pytester.mkdir("mytemp")
     p = pytester.makepyfile(
-        """
+        f"""
         def test_abs_path(tmp_path_factory):
-            tmp_path_factory.mktemp('{}', numbered=False)
-        """.format(
-            basename
-        )
+            tmp_path_factory.mktemp('{basename}', numbered=False)
+        """
     )
 
-    result = pytester.runpytest(p, "--basetemp=%s" % mytemp)
+    result = pytester.runpytest(p, f"--basetemp={mytemp}")
     if is_ok:
         assert result.ret == 0
         assert mytemp.joinpath(basename).exists()
@@ -337,7 +336,6 @@ def test_tmp_path_fallback_uid_not_found(pytester: Pytester) -> None:
     """Test that tmp_path works even if the current process's user id does not
     correspond to a valid user.
     """
-
     pytester.makepyfile(
         """
         def test_some(tmp_path):
@@ -396,7 +394,7 @@ class TestNumberedDir:
     def test_lock_register_cleanup_removal(self, tmp_path: Path) -> None:
         lock = create_cleanup_lock(tmp_path)
 
-        registry: List[Callable[..., None]] = []
+        registry: list[Callable[..., None]] = []
         register_cleanup_lock_removal(lock, register=registry.append)
 
         (cleanup_func,) = registry

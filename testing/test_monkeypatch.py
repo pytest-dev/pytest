@@ -1,19 +1,20 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
+from collections.abc import Generator
 import os
+from pathlib import Path
 import re
 import sys
 import textwrap
-from pathlib import Path
-from typing import Dict
-from typing import Generator
-from typing import Type
 
-import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+import pytest
 
 
 @pytest.fixture
-def mp() -> Generator[MonkeyPatch, None, None]:
+def mp() -> Generator[MonkeyPatch]:
     cwd = os.getcwd()
     sys_path = list(sys.path)
     yield MonkeyPatch()
@@ -134,7 +135,7 @@ def test_setitem() -> None:
 
 
 def test_setitem_deleted_meanwhile() -> None:
-    d: Dict[str, object] = {}
+    d: dict[str, object] = {}
     monkeypatch = MonkeyPatch()
     monkeypatch.setitem(d, "x", 2)
     del d["x"]
@@ -159,7 +160,7 @@ def test_setenv_deleted_meanwhile(before: bool) -> None:
 
 
 def test_delitem() -> None:
-    d: Dict[str, object] = {"x": 1}
+    d: dict[str, object] = {"x": 1}
     monkeypatch = MonkeyPatch()
     monkeypatch.delitem(d, "x")
     assert "x" not in d
@@ -359,7 +360,7 @@ class SampleInherit(Sample):
     [Sample, SampleInherit],
     ids=["new", "new-inherit"],
 )
-def test_issue156_undo_staticmethod(Sample: Type[Sample]) -> None:
+def test_issue156_undo_staticmethod(Sample: type[Sample]) -> None:
     monkeypatch = MonkeyPatch()
 
     monkeypatch.setattr(Sample, "hello", None)
@@ -414,7 +415,7 @@ def test_context() -> None:
     with monkeypatch.context() as m:
         m.setattr(functools, "partial", 3)
         assert not inspect.isclass(functools.partial)
-    assert inspect.isclass(functools.partial)
+    assert inspect.isclass(functools.partial)  # type:ignore[unreachable]
 
 
 def test_context_classmethod() -> None:
@@ -441,7 +442,7 @@ def test_syspath_prepend_with_namespace_packages(
         lib = ns.joinpath(dirname)
         lib.mkdir()
         lib.joinpath("__init__.py").write_text(
-            "def check(): return %r" % dirname, encoding="utf-8"
+            f"def check(): return {dirname!r}", encoding="utf-8"
         )
 
     monkeypatch.syspath_prepend("hello")

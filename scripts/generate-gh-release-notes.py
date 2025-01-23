@@ -8,10 +8,13 @@ our CHANGELOG) into Markdown (which is required by GitHub Releases).
 
 Requires Python3.6+.
 """
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
-from typing import Sequence
 
 import pypandoc
 

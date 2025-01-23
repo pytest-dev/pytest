@@ -60,8 +60,10 @@ Within Python modules, ``pytest`` also discovers tests using the standard
 :ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
 
 
-Choosing a test layout / import rules
--------------------------------------
+.. _`test layout`:
+
+Choosing a test layout
+----------------------
 
 ``pytest`` supports two common test layouts:
 
@@ -208,8 +210,8 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     to avoid surprises such as a test module getting imported twice.
 
     With ``--import-mode=importlib`` things are less convoluted because
-    pytest doesn't need to change ``sys.path`` or ``sys.modules``, making things
-    much less surprising.
+    pytest doesn't need to change ``sys.path``, making things much less
+    surprising.
 
 
 .. _which-import-mode:

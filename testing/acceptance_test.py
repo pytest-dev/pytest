@@ -1,14 +1,19 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
+from collections.abc import Sequence
 import dataclasses
 import importlib.metadata
 import os
+from pathlib import Path
 import subprocess
 import sys
 import types
 
-import pytest
 from _pytest.config import ExitCode
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
+import pytest
 
 
 def prepend_pythonpath(*dirs) -> str:
@@ -240,7 +245,7 @@ class TestGeneralUsage:
         pytester.copy_example("issue88_initial_file_multinodes")
         p = pytester.makepyfile("def test_hello(): pass")
         result = pytester.runpytest(p, "--collect-only")
-        result.stdout.fnmatch_lines(["*Module*test_issue88*", "*MyFile*test_issue88*"])
+        result.stdout.fnmatch_lines(["*MyFile*test_issue88*", "*Module*test_issue88*"])
 
     def test_issue93_initialnode_importing_capturing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -398,7 +403,7 @@ class TestGeneralUsage:
 
         for name, value in vars(hookspec).items():
             if name.startswith("pytest_"):
-                assert value.__doc__, "no docstring for %s" % name
+                assert value.__doc__, f"no docstring for {name}"
 
     def test_initialization_error_issue49(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -539,6 +544,32 @@ class TestGeneralUsage:
         )
         res = pytester.runpytest(p)
         res.assert_outcomes(passed=3)
+
+    # Warning ignore because of:
+    # https://github.com/python/cpython/issues/85308
+    # Can be removed once Python<3.12 support is dropped.
+    @pytest.mark.filterwarnings("ignore:'encoding' argument not specified")
+    def test_command_line_args_from_file(
+        self, pytester: Pytester, tmp_path: Path
+    ) -> None:
+        pytester.makepyfile(
+            test_file="""
+            import pytest
+
+            class TestClass:
+                @pytest.mark.parametrize("a", ["x","y"])
+                def test_func(self, a):
+                    pass
+            """
+        )
+        tests = [
+            "test_file.py::TestClass::test_func[x]",
+            "test_file.py::TestClass::test_func[y]",
+            "-q",
+        ]
+        args_file = pytester.maketxtfile(tests="\n".join(tests))
+        result = pytester.runpytest(f"@{args_file}")
+        result.assert_outcomes(failed=0, passed=2)
 
 
 class TestInvocationVariants:
@@ -940,28 +971,43 @@ class TestDurations:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=0")
         assert result.ret == 0
-
-        tested = "3"
-        for x in tested:
-            for y in ("call",):  # 'setup', 'call', 'teardown':
-                for line in result.stdout.lines:
-                    if ("test_%s" % x) in line and y in line:
-                        break
-                else:
-                    raise AssertionError(f"not found {x} {y}")
+        TestDurations.check_tests_in_output(result.stdout.lines, 2, 3)
 
     def test_calls_showall_verbose(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
         result = pytester.runpytest_inprocess("--durations=0", "-vv")
         assert result.ret == 0
+        TestDurations.check_tests_in_output(result.stdout.lines, 1, 2, 3)
 
-        for x in "123":
-            for y in ("call",):  # 'setup', 'call', 'teardown':
-                for line in result.stdout.lines:
-                    if ("test_%s" % x) in line and y in line:
-                        break
-                else:
-                    raise AssertionError(f"not found {x} {y}")
+    def test_calls_showall_durationsmin(self, pytester: Pytester, mock_timing) -> None:
+        pytester.makepyfile(self.source)
+        result = pytester.runpytest_inprocess("--durations=0", "--durations-min=0.015")
+        assert result.ret == 0
+        TestDurations.check_tests_in_output(result.stdout.lines, 3)
+
+    def test_calls_showall_durationsmin_verbose(
+        self, pytester: Pytester, mock_timing
+    ) -> None:
+        pytester.makepyfile(self.source)
+        result = pytester.runpytest_inprocess(
+            "--durations=0", "--durations-min=0.015", "-vv"
+        )
+        assert result.ret == 0
+        TestDurations.check_tests_in_output(result.stdout.lines, 3)
+
+    @staticmethod
+    def check_tests_in_output(
+        lines: Sequence[str], *expected_test_numbers: int, number_of_tests: int = 3
+    ) -> None:
+        found_test_numbers = set(
+            test_number
+            for test_number in range(1, number_of_tests + 1)
+            if any(
+                line.endswith(f"test_{test_number}") and " call " in line
+                for line in lines
+            )
+        )
+        assert found_test_numbers == set(expected_test_numbers)
 
     def test_with_deselected(self, pytester: Pytester, mock_timing) -> None:
         pytester.makepyfile(self.source)
@@ -1205,7 +1251,7 @@ def test_usage_error_code(pytester: Pytester) -> None:
     assert result.ret == ExitCode.USAGE_ERROR
 
 
-def test_warn_on_async_function(pytester: Pytester) -> None:
+def test_error_on_async_function(pytester: Pytester) -> None:
     # In the below we .close() the coroutine only to avoid
     # "RuntimeWarning: coroutine 'test_2' was never awaited"
     # which messes with other tests.
@@ -1221,23 +1267,19 @@ def test_warn_on_async_function(pytester: Pytester) -> None:
             return coro
     """
     )
-    result = pytester.runpytest("-Wdefault")
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "test_async.py::test_1",
-            "test_async.py::test_2",
-            "test_async.py::test_3",
             "*async def functions are not natively supported*",
-            "*3 skipped, 3 warnings in*",
+            "*test_async.py::test_1*",
+            "*test_async.py::test_2*",
+            "*test_async.py::test_3*",
         ]
     )
-    # ensure our warning message appears only once
-    assert (
-        result.stdout.str().count("async def functions are not natively supported") == 1
-    )
+    result.assert_outcomes(failed=3)
 
 
-def test_warn_on_async_gen_function(pytester: Pytester) -> None:
+def test_error_on_async_gen_function(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_async="""
         async def test_1():
@@ -1248,20 +1290,114 @@ def test_warn_on_async_gen_function(pytester: Pytester) -> None:
             return test_2()
     """
     )
-    result = pytester.runpytest("-Wdefault")
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "test_async.py::test_1",
-            "test_async.py::test_2",
-            "test_async.py::test_3",
             "*async def functions are not natively supported*",
-            "*3 skipped, 3 warnings in*",
+            "*test_async.py::test_1*",
+            "*test_async.py::test_2*",
+            "*test_async.py::test_3*",
         ]
     )
-    # ensure our warning message appears only once
-    assert (
-        result.stdout.str().count("async def functions are not natively supported") == 1
+    result.assert_outcomes(failed=3)
+
+
+def test_warning_on_sync_test_async_fixture(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture
+            async def async_fixture():
+                ...
+
+            def test_foo(async_fixture):
+                # suppress unawaited coroutine warning
+                try:
+                    async_fixture.send(None)
+                except StopIteration:
+                    pass
+        """
     )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== warnings summary ==*",
+            (
+                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
+                "fixture 'async_fixture', with no plugin or hook that handled it. "
+                "This is usually an error, as pytest does not natively support it. "
+                "This will turn into an error in pytest 9."
+            ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+        ]
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_warning_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture
+            async def async_fixture():
+                yield
+
+            def test_foo(async_fixture):
+                # async gens don't emit unawaited-coroutine
+                ...
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== warnings summary ==*",
+            (
+                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
+                "fixture 'async_fixture', with no plugin or hook that handled it. "
+                "This is usually an error, as pytest does not natively support it. "
+                "This will turn into an error in pytest 9."
+            ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+        ]
+    )
+    result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_sync="""
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            async def async_fixture():
+                ...
+
+            # We explicitly request the fixture to be able to
+            # suppress the RuntimeWarning for unawaited coroutine.
+            def test_foo(async_fixture):
+                try:
+                    async_fixture.send(None)
+                except StopIteration:
+                    pass
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*== warnings summary ==*",
+            (
+                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
+                "fixture 'async_fixture' with autouse=True, with no plugin or hook "
+                "that handled it. "
+                "This is usually an error, as pytest does not natively support it. "
+                "This will turn into an error in pytest 9."
+            ),
+            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+        ]
+    )
+    result.assert_outcomes(passed=1, warnings=1)
 
 
 def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
@@ -1347,7 +1483,7 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
     popen.stderr.close()
 
 
-def test_function_return_non_none_warning(pytester: Pytester) -> None:
+def test_function_return_non_none_error(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         def test_stuff():
@@ -1355,6 +1491,7 @@ def test_function_return_non_none_warning(pytester: Pytester) -> None:
     """
     )
     res = pytester.runpytest()
+    res.assert_outcomes(failed=1)
     res.stdout.fnmatch_lines(["*Did you mean to use `assert` instead of `return`?*"])
 
 
@@ -1436,16 +1573,30 @@ def test_issue_9765(pytester: Pytester) -> None:
         }
     )
 
-    subprocess.run([sys.executable, "setup.py", "develop"], check=True)
+    subprocess.run(
+        [sys.executable, "-Im", "pip", "install", "-e", "."],
+        check=True,
+    )
     try:
         # We are using subprocess.run rather than pytester.run on purpose.
         # pytester.run is adding the current directory to PYTHONPATH which avoids
         # the bug. We also use pytest rather than python -m pytest for the same
         # PYTHONPATH reason.
         subprocess.run(
-            ["pytest", "my_package"], capture_output=True, check=True, text=True
+            ["pytest", "my_package"],
+            capture_output=True,
+            check=True,
+            encoding="utf-8",
+            text=True,
         )
     except subprocess.CalledProcessError as exc:
         raise AssertionError(
             f"pytest command failed:\n{exc.stdout=!s}\n{exc.stderr=!s}"
         ) from exc
+
+
+def test_no_terminal_plugin(pytester: Pytester) -> None:
+    """Smoke test to ensure pytest can execute without the terminal plugin (#9422)."""
+    pytester.makepyfile("def test(): assert 1 == 2")
+    result = pytester.runpytest("-pno:terminal", "-s")
+    assert result.ret == ExitCode.TESTS_FAILED

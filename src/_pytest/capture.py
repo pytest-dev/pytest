@@ -1,31 +1,35 @@
+# mypy: allow-untyped-defs
 """Per-test stdout/stderr capturing mechanism."""
+
+from __future__ import annotations
+
 import abc
 import collections
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
 import contextlib
 import io
+from io import UnsupportedOperation
 import os
 import sys
-from io import UnsupportedOperation
 from tempfile import TemporaryFile
 from types import TracebackType
 from typing import Any
 from typing import AnyStr
 from typing import BinaryIO
+from typing import cast
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import Generic
-from typing import Iterable
-from typing import Iterator
-from typing import List
 from typing import Literal
 from typing import NamedTuple
-from typing import Optional
 from typing import TextIO
-from typing import Tuple
-from typing import Type
 from typing import TYPE_CHECKING
-from typing import Union
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -37,6 +41,7 @@ from _pytest.nodes import Collector
 from _pytest.nodes import File
 from _pytest.nodes import Item
 from _pytest.reports import CollectReport
+
 
 _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
@@ -103,17 +108,16 @@ def _windowsconsoleio_workaround(stream: TextIO) -> None:
         return
 
     # Bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666).
-    if not hasattr(stream, "buffer"):  # type: ignore[unreachable]
+    if not hasattr(stream, "buffer"):  # type: ignore[unreachable,unused-ignore]
         return
 
-    buffered = hasattr(stream.buffer, "raw")
-    raw_stdout = stream.buffer.raw if buffered else stream.buffer  # type: ignore[attr-defined]
+    raw_stdout = stream.buffer.raw if hasattr(stream.buffer, "raw") else stream.buffer
 
-    if not isinstance(raw_stdout, io._WindowsConsoleIO):  # type: ignore[attr-defined]
+    if not isinstance(raw_stdout, io._WindowsConsoleIO):  # type: ignore[attr-defined,unused-ignore]
         return
 
     def _reopen_stdio(f, mode):
-        if not buffered and mode[0] == "w":
+        if not hasattr(stream.buffer, "raw") and mode[0] == "w":
             buffering = 0
         else:
             buffering = -1
@@ -132,7 +136,7 @@ def _windowsconsoleio_workaround(stream: TextIO) -> None:
 
 
 @hookimpl(wrapper=True)
-def pytest_load_initial_conftests(early_config: Config) -> Generator[None, None, None]:
+def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
         _windowsconsoleio_workaround(sys.stdout)
@@ -174,7 +178,8 @@ class EncodedFile(io.TextIOWrapper):
     def mode(self) -> str:
         # TextIOWrapper doesn't expose a mode, but at least some of our
         # tests check it.
-        return self.buffer.mode.replace("b", "")
+        assert hasattr(self.buffer, "mode")
+        return cast(str, self.buffer.mode.replace("b", ""))
 
 
 class CaptureIO(io.TextIOWrapper):
@@ -199,6 +204,7 @@ class TeeCaptureIO(CaptureIO):
 class DontReadFromInput(TextIO):
     @property
     def encoding(self) -> str:
+        assert sys.__stdin__ is not None
         return sys.__stdin__.encoding
 
     def read(self, size: int = -1) -> str:
@@ -211,7 +217,7 @@ class DontReadFromInput(TextIO):
     def __next__(self) -> str:
         return self.readline()
 
-    def readlines(self, hint: Optional[int] = -1) -> List[str]:
+    def readlines(self, hint: int | None = -1) -> list[str]:
         raise OSError(
             "pytest: reading from stdin while output is captured!  Consider using `-s`."
         )
@@ -243,7 +249,7 @@ class DontReadFromInput(TextIO):
     def tell(self) -> int:
         raise UnsupportedOperation("redirected stdin is pseudofile, has no tell()")
 
-    def truncate(self, size: Optional[int] = None) -> int:
+    def truncate(self, size: int | None = None) -> int:
         raise UnsupportedOperation("cannot truncate stdin")
 
     def write(self, data: str) -> int:
@@ -255,14 +261,14 @@ class DontReadFromInput(TextIO):
     def writable(self) -> bool:
         return False
 
-    def __enter__(self) -> "DontReadFromInput":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(
         self,
-        type: Optional[Type[BaseException]],
-        value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        type: type[BaseException] | None,
+        value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         pass
 
@@ -337,7 +343,7 @@ class NoCapture(CaptureBase[str]):
 
 class SysCaptureBase(CaptureBase[AnyStr]):
     def __init__(
-        self, fd: int, tmpfile: Optional[TextIO] = None, *, tee: bool = False
+        self, fd: int, tmpfile: TextIO | None = None, *, tee: bool = False
     ) -> None:
         name = patchsysdict[fd]
         self._old: TextIO = getattr(sys, name)
@@ -354,7 +360,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             class_name,
             self.name,
-            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
             self._state,
             self.tmpfile,
         )
@@ -363,16 +369,16 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             self.__class__.__name__,
             self.name,
-            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
             self._state,
             self.tmpfile,
         )
 
-    def _assert_state(self, op: str, states: Tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+    def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:
@@ -455,7 +461,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             # Further complications are the need to support suspend() and the
             # possibility of FD reuse (e.g. the tmpfile getting the very same
             # target FD). The following approach is robust, I believe.
-            self.targetfd_invalid: Optional[int] = os.open(os.devnull, os.O_RDWR)
+            self.targetfd_invalid: int | None = os.open(os.devnull, os.O_RDWR)
             os.dup2(self.targetfd_invalid, targetfd)
         else:
             self.targetfd_invalid = None
@@ -480,19 +486,16 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         self._state = "initialized"
 
     def __repr__(self) -> str:
-        return "<{} {} oldfd={} _state={!r} tmpfile={!r}>".format(
-            self.__class__.__name__,
-            self.targetfd,
-            self.targetfd_save,
-            self._state,
-            self.tmpfile,
+        return (
+            f"<{self.__class__.__name__} {self.targetfd} oldfd={self.targetfd_save} "
+            f"_state={self._state!r} tmpfile={self.tmpfile!r}>"
         )
 
-    def _assert_state(self, op: str, states: Tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+    def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:
@@ -549,7 +552,7 @@ class FDCaptureBinary(FDCaptureBase[bytes]):
         res = self.tmpfile.buffer.read()
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
-        return res
+        return res  # type: ignore[return-value]
 
     def writeorg(self, data: bytes) -> None:
         """Write to original file descriptor."""
@@ -596,7 +599,8 @@ if sys.version_info >= (3, 11) or TYPE_CHECKING:
 else:
 
     class CaptureResult(
-        collections.namedtuple("CaptureResult", ["out", "err"]), Generic[AnyStr]
+        collections.namedtuple("CaptureResult", ["out", "err"]),  # noqa: PYI024
+        Generic[AnyStr],
     ):
         """The result of :method:`caplog.readouterr() <pytest.CaptureFixture.readouterr>`."""
 
@@ -609,21 +613,18 @@ class MultiCapture(Generic[AnyStr]):
 
     def __init__(
         self,
-        in_: Optional[CaptureBase[AnyStr]],
-        out: Optional[CaptureBase[AnyStr]],
-        err: Optional[CaptureBase[AnyStr]],
+        in_: CaptureBase[AnyStr] | None,
+        out: CaptureBase[AnyStr] | None,
+        err: CaptureBase[AnyStr] | None,
     ) -> None:
-        self.in_: Optional[CaptureBase[AnyStr]] = in_
-        self.out: Optional[CaptureBase[AnyStr]] = out
-        self.err: Optional[CaptureBase[AnyStr]] = err
+        self.in_: CaptureBase[AnyStr] | None = in_
+        self.out: CaptureBase[AnyStr] | None = out
+        self.err: CaptureBase[AnyStr] | None = err
 
     def __repr__(self) -> str:
-        return "<MultiCapture out={!r} err={!r} in_={!r} _state={!r} _in_suspended={!r}>".format(
-            self.out,
-            self.err,
-            self.in_,
-            self._state,
-            self._in_suspended,
+        return (
+            f"<MultiCapture out={self.out!r} err={self.err!r} in_={self.in_!r} "
+            f"_state={self._state!r} _in_suspended={self._in_suspended!r}>"
         )
 
     def start_capturing(self) -> None:
@@ -635,7 +636,7 @@ class MultiCapture(Generic[AnyStr]):
         if self.err:
             self.err.start()
 
-    def pop_outerr_to_orig(self) -> Tuple[AnyStr, AnyStr]:
+    def pop_outerr_to_orig(self) -> tuple[AnyStr, AnyStr]:
         """Pop current snapshot out/err capture and flush to orig streams."""
         out, err = self.readouterr()
         if out:
@@ -728,19 +729,20 @@ class CaptureManager:
 
     def __init__(self, method: _CaptureMethod) -> None:
         self._method: Final = method
-        self._global_capturing: Optional[MultiCapture[str]] = None
-        self._capture_fixture: Optional[CaptureFixture[Any]] = None
+        self._global_capturing: MultiCapture[str] | None = None
+        self._capture_fixture: CaptureFixture[Any] | None = None
 
     def __repr__(self) -> str:
-        return "<CaptureManager _method={!r} _global_capturing={!r} _capture_fixture={!r}>".format(
-            self._method, self._global_capturing, self._capture_fixture
+        return (
+            f"<CaptureManager _method={self._method!r} _global_capturing={self._global_capturing!r} "
+            f"_capture_fixture={self._capture_fixture!r}>"
         )
 
-    def is_capturing(self) -> Union[str, bool]:
+    def is_capturing(self) -> str | bool:
         if self.is_globally_capturing():
             return "global"
         if self._capture_fixture:
-            return "fixture %s" % self._capture_fixture.request.fixturename
+            return f"fixture {self._capture_fixture.request.fixturename}"
         return False
 
     # Global capturing control
@@ -784,14 +786,12 @@ class CaptureManager:
 
     # Fixture Control
 
-    def set_fixture(self, capture_fixture: "CaptureFixture[Any]") -> None:
+    def set_fixture(self, capture_fixture: CaptureFixture[Any]) -> None:
         if self._capture_fixture:
             current_fixture = self._capture_fixture.request.fixturename
             requested_fixture = capture_fixture.request.fixturename
             capture_fixture.request.raiseerror(
-                "cannot use {} and {} at the same time".format(
-                    requested_fixture, current_fixture
-                )
+                f"cannot use {requested_fixture} and {current_fixture} at the same time"
             )
         self._capture_fixture = capture_fixture
 
@@ -820,7 +820,7 @@ class CaptureManager:
     # Helper context managers
 
     @contextlib.contextmanager
-    def global_and_fixture_disabled(self) -> Generator[None, None, None]:
+    def global_and_fixture_disabled(self) -> Generator[None]:
         """Context manager to temporarily disable global and current fixture capturing."""
         do_fixture = self._capture_fixture and self._capture_fixture._is_started()
         if do_fixture:
@@ -837,7 +837,7 @@ class CaptureManager:
                 self.resume_fixture()
 
     @contextlib.contextmanager
-    def item_capture(self, when: str, item: Item) -> Generator[None, None, None]:
+    def item_capture(self, when: str, item: Item) -> Generator[None]:
         self.resume_global_capture()
         self.activate_fixture()
         try:
@@ -872,17 +872,17 @@ class CaptureManager:
         return rep
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_setup(self, item: Item) -> Generator[None, None, None]:
+    def pytest_runtest_setup(self, item: Item) -> Generator[None]:
         with self.item_capture("setup", item):
             return (yield)
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_call(self, item: Item) -> Generator[None, None, None]:
+    def pytest_runtest_call(self, item: Item) -> Generator[None]:
         with self.item_capture("call", item):
             return (yield)
 
     @hookimpl(wrapper=True)
-    def pytest_runtest_teardown(self, item: Item) -> Generator[None, None, None]:
+    def pytest_runtest_teardown(self, item: Item) -> Generator[None]:
         with self.item_capture("teardown", item):
             return (yield)
 
@@ -901,15 +901,15 @@ class CaptureFixture(Generic[AnyStr]):
 
     def __init__(
         self,
-        captureclass: Type[CaptureBase[AnyStr]],
+        captureclass: type[CaptureBase[AnyStr]],
         request: SubRequest,
         *,
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
-        self.captureclass: Type[CaptureBase[AnyStr]] = captureclass
+        self.captureclass: type[CaptureBase[AnyStr]] = captureclass
         self.request = request
-        self._capture: Optional[MultiCapture[AnyStr]] = None
+        self._capture: MultiCapture[AnyStr] | None = None
         self._captured_out: AnyStr = self.captureclass.EMPTY_BUFFER
         self._captured_err: AnyStr = self.captureclass.EMPTY_BUFFER
 
@@ -964,7 +964,7 @@ class CaptureFixture(Generic[AnyStr]):
         return False
 
     @contextlib.contextmanager
-    def disabled(self) -> Generator[None, None, None]:
+    def disabled(self) -> Generator[None]:
         """Temporarily disable capturing while inside the ``with`` block."""
         capmanager: CaptureManager = self.request.config.pluginmanager.getplugin(
             "capturemanager"
@@ -977,7 +977,7 @@ class CaptureFixture(Generic[AnyStr]):
 
 
 @fixture
-def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
+def capsys(request: SubRequest) -> Generator[CaptureFixture[str]]:
     r"""Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
     The captured output is made available via ``capsys.readouterr()`` method
@@ -1005,7 +1005,7 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
 
 
 @fixture
-def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, None]:
+def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes]]:
     r"""Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
 
     The captured output is made available via ``capsysbinary.readouterr()``
@@ -1033,7 +1033,7 @@ def capsysbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, 
 
 
 @fixture
-def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
+def capfd(request: SubRequest) -> Generator[CaptureFixture[str]]:
     r"""Enable text capturing of writes to file descriptors ``1`` and ``2``.
 
     The captured output is made available via ``capfd.readouterr()`` method
@@ -1061,7 +1061,7 @@ def capfd(request: SubRequest) -> Generator[CaptureFixture[str], None, None]:
 
 
 @fixture
-def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes], None, None]:
+def capfdbinary(request: SubRequest) -> Generator[CaptureFixture[bytes]]:
     r"""Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
 
     The captured output is made available via ``capfd.readouterr()`` method

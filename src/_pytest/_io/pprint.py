@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 # This module was imported from the cpython standard library
 # (https://github.com/python/cpython/) at commit
 # c5140945c723ae6c4b7ee81ff720ac8ea4b52cfd (python3.12).
@@ -12,20 +13,17 @@
 #  tuples with fairly non-descriptive content.  This is modeled very much
 #  after Lisp/Scheme - style pretty-printing of lists.  If you find it
 #  useful, thank small children who sleep at night.
+from __future__ import annotations
+
 import collections as _collections
+from collections.abc import Callable
+from collections.abc import Iterator
 import dataclasses as _dataclasses
+from io import StringIO as _StringIO
 import re
 import types as _types
-from io import StringIO as _StringIO
 from typing import Any
-from typing import Callable
-from typing import Dict
 from typing import IO
-from typing import Iterator
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
 
 
 class _safe_key:
@@ -63,7 +61,7 @@ class PrettyPrinter:
         self,
         indent: int = 4,
         width: int = 80,
-        depth: Optional[int] = None,
+        depth: int | None = None,
     ) -> None:
         """Handle pretty printing operations onto a stream using a set of
         configured parameters.
@@ -99,7 +97,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         objid = id(object)
@@ -115,7 +113,7 @@ class PrettyPrinter:
         elif (
             _dataclasses.is_dataclass(object)
             and not isinstance(object, type)
-            and object.__dataclass_params__.repr
+            and object.__dataclass_params__.repr  # type:ignore[attr-defined]
             and
             # Check dataclass has generated repr method.
             hasattr(object.__repr__, "__wrapped__")
@@ -135,7 +133,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         cls_name = object.__class__.__name__
@@ -148,9 +146,9 @@ class PrettyPrinter:
         self._format_namespace_items(items, stream, indent, allowance, context, level)
         stream.write(")")
 
-    _dispatch: Dict[
+    _dispatch: dict[
         Callable[..., str],
-        Callable[["PrettyPrinter", Any, IO[str], int, int, Set[int], int], None],
+        Callable[[PrettyPrinter, Any, IO[str], int, int, set[int], int], None],
     ] = {}
 
     def _pprint_dict(
@@ -159,7 +157,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         write = stream.write
@@ -176,7 +174,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         if not len(object):
@@ -195,7 +193,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         stream.write("[")
@@ -210,7 +208,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         stream.write("(")
@@ -225,7 +223,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         if not len(object):
@@ -251,7 +249,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         write = stream.write
@@ -310,7 +308,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         write = stream.write
@@ -339,7 +337,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         write = stream.write
@@ -357,7 +355,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         stream.write("mappingproxy(")
@@ -372,7 +370,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         if type(object) is _types.SimpleNamespace:
@@ -390,11 +388,11 @@ class PrettyPrinter:
 
     def _format_dict_items(
         self,
-        items: List[Tuple[Any, Any]],
+        items: list[tuple[Any, Any]],
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         if not items:
@@ -414,11 +412,11 @@ class PrettyPrinter:
 
     def _format_namespace_items(
         self,
-        items: List[Tuple[Any, Any]],
+        items: list[tuple[Any, Any]],
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         if not items:
@@ -451,11 +449,11 @@ class PrettyPrinter:
 
     def _format_items(
         self,
-        items: List[Any],
+        items: list[Any],
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         if not items:
@@ -472,7 +470,7 @@ class PrettyPrinter:
 
         write("\n" + " " * indent)
 
-    def _repr(self, object: Any, context: Set[int], level: int) -> str:
+    def _repr(self, object: Any, context: set[int], level: int) -> str:
         return self._safe_repr(object, context.copy(), self._depth, level)
 
     def _pprint_default_dict(
@@ -481,7 +479,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         rdf = self._repr(object.default_factory, context, level)
@@ -497,7 +495,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         stream.write(object.__class__.__name__ + "(")
@@ -518,7 +516,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         if not len(object.maps) or (len(object.maps) == 1 and not len(object.maps[0])):
@@ -537,12 +535,12 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         stream.write(object.__class__.__name__ + "(")
         if object.maxlen is not None:
-            stream.write("maxlen=%d, " % object.maxlen)
+            stream.write(f"maxlen={object.maxlen}, ")
         stream.write("[")
 
         self._format_items(object, stream, indent, allowance + 1, context, level)
@@ -556,7 +554,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         self._format(object.data, stream, indent, allowance, context, level - 1)
@@ -569,7 +567,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         self._format(object.data, stream, indent, allowance, context, level - 1)
@@ -582,7 +580,7 @@ class PrettyPrinter:
         stream: IO[str],
         indent: int,
         allowance: int,
-        context: Set[int],
+        context: set[int],
         level: int,
     ) -> None:
         self._format(object.data, stream, indent, allowance, context, level - 1)
@@ -590,7 +588,7 @@ class PrettyPrinter:
     _dispatch[_collections.UserString.__repr__] = _pprint_user_string
 
     def _safe_repr(
-        self, object: Any, context: Set[int], maxlevels: Optional[int], level: int
+        self, object: Any, context: set[int], maxlevels: int | None, level: int
     ) -> str:
         typ = type(object)
         if typ in _builtin_scalars:
@@ -607,7 +605,7 @@ class PrettyPrinter:
             if objid in context:
                 return _recursion(object)
             context.add(objid)
-            components: List[str] = []
+            components: list[str] = []
             append = components.append
             level += 1
             for k, v in sorted(object.items(), key=_safe_tuple):
@@ -615,7 +613,7 @@ class PrettyPrinter:
                 vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")
             context.remove(objid)
-            return "{%s}" % ", ".join(components)
+            return "{{{}}}".format(", ".join(components))
 
         if (issubclass(typ, list) and r is list.__repr__) or (
             issubclass(typ, tuple) and r is tuple.__repr__

@@ -1,1 +1,0 @@
-Documented the retention of temporary directories created using the ``tmp_path`` fixture in more detail.

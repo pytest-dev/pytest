@@ -27,9 +27,6 @@
    :target: https://results.pre-commit.ci/latest/github/pytest-dev/pytest/main
    :alt: pre-commit.ci status
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
-
 .. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg
     :target: https://www.codetriage.com/pytest-dev/pytest
 
@@ -100,9 +97,9 @@ Features
 - Can run `unittest <https://docs.pytest.org/en/stable/how-to/unittest.html>`_ (or trial)
   test suites out of the box
 
-- Python 3.8+ or PyPy3
+- Python 3.9+ or PyPy3
 
-- Rich plugin architecture, with over 850+ `external plugins <https://docs.pytest.org/en/latest/reference/plugin_list.html>`_ and thriving community
+- Rich plugin architecture, with over 1300+ `external plugins <https://docs.pytest.org/en/latest/reference/plugin_list.html>`_ and thriving community
 
 
 Documentation

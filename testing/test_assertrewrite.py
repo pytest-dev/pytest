@@ -1,31 +1,33 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 import ast
+from collections.abc import Generator
+from collections.abc import Mapping
+import dis
 import errno
+from functools import partial
 import glob
 import importlib
+import inspect
 import marshal
 import os
+from pathlib import Path
 import py_compile
+import re
 import stat
 import sys
 import textwrap
-import zipfile
-from functools import partial
-from pathlib import Path
 from typing import cast
-from typing import Dict
-from typing import Generator
-from typing import List
-from typing import Mapping
-from typing import Optional
-from typing import Set
 from unittest import mock
+import zipfile
 
 import _pytest._code
-import pytest
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import _get_assertion_exprs
 from _pytest.assertion.rewrite import _get_maxsize_for_saferepr
+from _pytest.assertion.rewrite import _saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
 from _pytest.assertion.rewrite import get_cache_dir
 from _pytest.assertion.rewrite import PYC_TAIL
@@ -35,6 +37,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
+import pytest
 
 
 def rewrite(src: str) -> ast.Module:
@@ -44,13 +47,13 @@ def rewrite(src: str) -> ast.Module:
 
 
 def getmsg(
-    f, extra_ns: Optional[Mapping[str, object]] = None, *, must_pass: bool = False
-) -> Optional[str]:
+    f, extra_ns: Mapping[str, object] | None = None, *, must_pass: bool = False
+) -> str | None:
     """Rewrite the assertions in f, run it, and get the failure message."""
     src = "\n".join(_pytest._code.Code.from_function(f).source().lines)
     mod = rewrite(src)
     code = compile(mod, "<test>", "exec")
-    ns: Dict[str, object] = {}
+    ns: dict[str, object] = {}
     if extra_ns is not None:
         ns.update(extra_ns)
     exec(code, ns)
@@ -129,10 +132,212 @@ class TestAssertionRewrite:
             if isinstance(node, ast.Import):
                 continue
             for n in [node, *ast.iter_child_nodes(node)]:
-                assert n.lineno == 3
-                assert n.col_offset == 0
-                assert n.end_lineno == 6
-                assert n.end_col_offset == 3
+                assert isinstance(n, (ast.stmt, ast.expr))
+                for location in [
+                    (n.lineno, n.col_offset),
+                    (n.end_lineno, n.end_col_offset),
+                ]:
+                    assert (3, 0) <= location <= (6, 3)
+
+    def test_positions_are_preserved(self) -> None:
+        """Ensure AST positions are preserved during rewriting (#12818)."""
+
+        def preserved(code: str) -> None:
+            s = textwrap.dedent(code)
+            locations = []
+
+            def loc(msg: str | None = None) -> None:
+                frame = inspect.currentframe()
+                assert frame
+                frame = frame.f_back
+                assert frame
+                frame = frame.f_back
+                assert frame
+
+                offset = frame.f_lasti
+
+                instructions = {i.offset: i for i in dis.get_instructions(frame.f_code)}
+
+                # skip CACHE instructions
+                while offset not in instructions and offset >= 0:
+                    offset -= 1
+
+                instruction = instructions[offset]
+                if sys.version_info >= (3, 11):
+                    position = instruction.positions
+                else:
+                    position = instruction.starts_line
+
+                locations.append((msg, instruction.opname, position))
+
+            globals = {"loc": loc}
+
+            m = rewrite(s)
+            mod = compile(m, "<string>", "exec")
+            exec(mod, globals, globals)
+            transformed_locations = locations
+            locations = []
+
+            mod = compile(s, "<string>", "exec")
+            exec(mod, globals, globals)
+            original_locations = locations
+
+            assert len(original_locations) > 0
+            assert original_locations == transformed_locations
+
+        preserved("""
+            def f():
+                loc()
+                return 8
+
+            assert f() in [8]
+            assert (f()
+                    in
+                    [8])
+        """)
+
+        preserved("""
+            class T:
+                def __init__(self):
+                    loc("init")
+                def __getitem__(self,index):
+                    loc("getitem")
+                    return index
+
+            assert T()[5] == 5
+            assert (T
+                    ()
+                    [5]
+                    ==
+                    5)
+        """)
+
+        for name, op in [
+            ("pos", "+"),
+            ("neg", "-"),
+            ("invert", "~"),
+        ]:
+            preserved(f"""
+                class T:
+                    def __{name}__(self):
+                        loc("{name}")
+                        return "{name}"
+
+                assert {op}T() == "{name}"
+                assert ({op}
+                        T
+                        ()
+                        ==
+                        "{name}")
+            """)
+
+        for name, op in [
+            ("add", "+"),
+            ("sub", "-"),
+            ("mul", "*"),
+            ("truediv", "/"),
+            ("floordiv", "//"),
+            ("mod", "%"),
+            ("pow", "**"),
+            ("lshift", "<<"),
+            ("rshift", ">>"),
+            ("or", "|"),
+            ("xor", "^"),
+            ("and", "&"),
+            ("matmul", "@"),
+        ]:
+            preserved(f"""
+                class T:
+                    def __{name}__(self,other):
+                        loc("{name}")
+                        return other
+
+                    def __r{name}__(self,other):
+                        loc("r{name}")
+                        return other
+
+                assert T() {op} 2 == 2
+                assert 2 {op} T() == 2
+
+                assert (T
+                        ()
+                        {op}
+                        2
+                        ==
+                        2)
+
+                assert (2
+                        {op}
+                        T
+                        ()
+                        ==
+                        2)
+        """)
+
+        for name, op in [
+            ("eq", "=="),
+            ("ne", "!="),
+            ("lt", "<"),
+            ("le", "<="),
+            ("gt", ">"),
+            ("ge", ">="),
+        ]:
+            preserved(f"""
+                class T:
+                    def __{name}__(self,other):
+                        loc()
+                        return True
+
+                assert  T() {op} 5
+                assert  (T
+                        ()
+                        {op}
+                        5)
+        """)
+
+        for name, op in [
+            ("eq", "=="),
+            ("ne", "!="),
+            ("lt", ">"),
+            ("le", ">="),
+            ("gt", "<"),
+            ("ge", "<="),
+            ("contains", "in"),
+        ]:
+            preserved(f"""
+                class T:
+                    def __{name}__(self,other):
+                        loc()
+                        return True
+
+                assert  5 {op} T()
+                assert  (5
+                         {op}
+                         T
+                         ())
+        """)
+
+        preserved("""
+            def func(value):
+                loc("func")
+                return value
+
+            class T:
+                def __iter__(self):
+                    loc("iter")
+                    return iter([5])
+
+            assert  func(*T()) == 5
+        """)
+
+        preserved("""
+            class T:
+                def __getattr__(self,name):
+                    loc()
+                    return name
+
+            assert  T().attr == "attr"
+        """)
 
     def test_dont_rewrite(self) -> None:
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
@@ -199,7 +404,7 @@ class TestAssertionRewrite:
         assert getmsg(f2) == "assert False"
 
         def f3() -> None:
-            assert a_global  # type: ignore[name-defined] # noqa
+            assert a_global  # type: ignore[name-defined] # noqa: F821
 
         assert getmsg(f3, {"a_global": False}) == "assert False"
 
@@ -307,9 +512,7 @@ class TestAssertionRewrite:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(
-            ["*AssertionError*%s*" % repr((1, 2)), "*assert 1 == 2*"]
-        )
+        result.stdout.fnmatch_lines([f"*AssertionError*{(1, 2)!r}*", "*assert 1 == 2*"])
 
     def test_assertion_message_expr(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -340,6 +543,34 @@ class TestAssertionRewrite:
         result = pytester.runpytest()
         assert result.ret == 1
         result.stdout.fnmatch_lines(["*AssertionError: b'ohai!'", "*assert False"])
+
+    def test_assertion_message_verbosity(self, pytester: Pytester) -> None:
+        """
+        Obey verbosity levels when printing the "message" part of assertions, when they are
+        non-strings (#6682).
+        """
+        pytester.makepyfile(
+            """
+            class LongRepr:
+
+                def __repr__(self):
+                    return "A" * 500
+
+            def test_assertion_verbosity():
+                assert False, LongRepr()
+            """
+        )
+        # Normal verbosity: assertion message gets abbreviated.
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.re_match_lines(
+            [r".*AssertionError: A+\.\.\.A+$", ".*assert False"]
+        )
+
+        # High-verbosity: do not abbreviate the assertion message.
+        result = pytester.runpytest("-vv")
+        assert result.ret == 1
+        result.stdout.re_match_lines([r".*AssertionError: A+$", ".*assert False"])
 
     def test_boolop(self) -> None:
         def f1() -> None:
@@ -428,7 +659,7 @@ class TestAssertionRewrite:
 
         def f2() -> None:
             x = 1
-            assert x == 1 or x == 2
+            assert x == 1 or x == 2  # noqa: PLR1714
 
         getmsg(f2, must_pass=True)
 
@@ -744,6 +975,23 @@ class TestAssertionRewrite:
         assert "UnicodeDecodeError" not in msg
         assert "UnicodeEncodeError" not in msg
 
+    def test_assert_fixture(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """\
+        import pytest
+        @pytest.fixture
+        def fixt():
+            return 42
+
+        def test_something():  # missing "fixt" argument
+            assert fixt == 42
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            ["*assert <pytest_fixture(<function fixt at *>)> == 42*"]
+        )
+
 
 class TestRewriteOnImport:
     def test_pycache_is_a_file(self, pytester: Pytester) -> None:
@@ -780,18 +1028,13 @@ class TestRewriteOnImport:
             f.close()
         z.chmod(256)
         pytester.makepyfile(
-            """
+            f"""
             import sys
-            sys.path.append(%r)
+            sys.path.append({z_fn!r})
             import test_gum.test_lizard"""
-            % (z_fn,)
         )
         assert pytester.runpytest().ret == ExitCode.NO_TESTS_COLLECTED
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 9),
-        reason="importlib.resources.files was introduced in 3.9",
-    )
     def test_load_resource_via_files_with_rewrite(self, pytester: Pytester) -> None:
         example = pytester.path.joinpath("demo") / "example"
         init = pytester.path.joinpath("demo") / "__init__.py"
@@ -908,7 +1151,7 @@ def test_rewritten():
                 assert test_optimized.__doc__ is None"""
         )
         p = make_numbered_dir(root=Path(pytester.path), prefix="runpytest-")
-        tmp = "--basetemp=%s" % p
+        tmp = f"--basetemp={p}"
         with monkeypatch.context() as mp:
             mp.setenv("PYTHONOPTIMIZE", "2")
             mp.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
@@ -1036,8 +1279,8 @@ class TestAssertionRewriteHookDetails:
         assert pytester.runpytest().ret == 0
 
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
-        from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
+        from _pytest.assertion.rewrite import _write_pyc
 
         config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
@@ -1087,6 +1330,7 @@ class TestAssertionRewriteHookDetails:
         an exception that is propagated to the caller.
         """
         import py_compile
+
         from _pytest.assertion.rewrite import _read_pyc
 
         source = tmp_path / "source.py"
@@ -1632,14 +1876,14 @@ class TestEarlyRewriteBailout:
     @pytest.fixture
     def hook(
         self, pytestconfig, monkeypatch, pytester: Pytester
-    ) -> Generator[AssertionRewritingHook, None, None]:
+    ) -> Generator[AssertionRewritingHook]:
         """Returns a patched AssertionRewritingHook instance so we can configure its initial paths and track
         if PathFinder.find_spec has been called.
         """
         import importlib.machinery
 
-        self.find_spec_calls: List[str] = []
-        self.initial_paths: Set[Path] = set()
+        self.find_spec_calls: list[str] = []
+        self.initial_paths: set[Path] = set()
 
         class StubSession:
             _initialpaths = self.initial_paths
@@ -1730,8 +1974,8 @@ class TestEarlyRewriteBailout:
                     import os
                     import tempfile
 
-                    with tempfile.TemporaryDirectory() as d:
-                        os.chdir(d)
+                    with tempfile.TemporaryDirectory() as newpath:
+                        os.chdir(newpath)
                 """,
                 "test_test.py": """\
                     def test():
@@ -1855,10 +2099,10 @@ class TestAssertionPass:
         result.assert_outcomes(passed=1)
 
 
+# fmt: off
 @pytest.mark.parametrize(
     ("src", "expected"),
     (
-        # fmt: off
         pytest.param(b"", {}, id="trivial"),
         pytest.param(
             b"def x(): assert 1\n",
@@ -1935,9 +2179,9 @@ class TestAssertionPass:
             {1: "5"},
             id="no newline at end of file",
         ),
-        # fmt: on
     ),
 )
+# fmt: on
 def test_get_assertion_exprs(src, expected) -> None:
     assert _get_assertion_exprs(src) == expected
 
@@ -1970,6 +2214,11 @@ def test_try_makedirs(monkeypatch, tmp_path: Path) -> None:
 
     err = OSError()
     err.errno = errno.EROFS
+    monkeypatch.setattr(os, "makedirs", partial(fake_mkdir, exc=err))
+    assert not try_makedirs(p)
+
+    err = OSError()
+    err.errno = errno.ENOSYS
     monkeypatch.setattr(os, "makedirs", partial(fake_mkdir, exc=err))
     assert not try_makedirs(p)
 
@@ -2033,8 +2282,8 @@ class TestPyCacheDir:
         assert test_foo_pyc.is_file()
 
         # normal file: not touched by pytest, normal cache tag
-        bar_init_pyc = get_cache_dir(bar_init) / "__init__.{cache_tag}.pyc".format(
-            cache_tag=sys.implementation.cache_tag
+        bar_init_pyc = (
+            get_cache_dir(bar_init) / f"__init__.{sys.implementation.cache_tag}.pyc"
         )
         assert bar_init_pyc.is_file()
 
@@ -2056,7 +2305,7 @@ class TestReprSizeVerbosity:
     )
     def test_get_maxsize_for_saferepr(self, verbose: int, expected_size) -> None:
         class FakeConfig:
-            def get_verbosity(self, verbosity_type: Optional[str] = None) -> int:
+            def get_verbosity(self, verbosity_type: str | None = None) -> int:
                 return verbose
 
         config = FakeConfig()
@@ -2102,3 +2351,26 @@ class TestIssue11140:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+
+class TestSafereprUnbounded:
+    class Help:
+        def bound_method(self):  # pragma: no cover
+            pass
+
+    def test_saferepr_bound_method(self):
+        """saferepr() of a bound method should show only the method name"""
+        assert _saferepr(self.Help().bound_method) == "bound_method"
+
+    def test_saferepr_unbounded(self):
+        """saferepr() of an unbound method should still show the full information"""
+        obj = self.Help()
+        # using id() to fetch memory address fails on different platforms
+        pattern = re.compile(
+            rf"<{Path(__file__).stem}.{self.__class__.__name__}.Help object at 0x[0-9a-fA-F]*>",
+        )
+        assert pattern.match(_saferepr(obj))
+        assert (
+            _saferepr(self.Help)
+            == f"<class '{Path(__file__).stem}.{self.__class__.__name__}.Help'>"
+        )

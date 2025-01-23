@@ -2,7 +2,10 @@
 #                      2.7.5     3.3.2
 # FilesCompleter       75.1109   69.2116
 # FastFilesCompleter    0.7383    1.0760
+from __future__ import annotations
+
 import timeit
+
 
 imports = [
     "from argcomplete.completers import FilesCompleter as completer",

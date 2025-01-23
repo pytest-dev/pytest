@@ -1,13 +1,14 @@
+# mypy: allow-untyped-defs
+from __future__ import annotations
+
 import os
 import sys
 import warnings
-from typing import List
-from typing import Optional
-from typing import Tuple
 
-import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import Pytester
+import pytest
+
 
 WARNINGS_SUMMARY_HEADER = "warnings summary"
 
@@ -16,16 +17,13 @@ WARNINGS_SUMMARY_HEADER = "warnings summary"
 def pyfile_with_warnings(pytester: Pytester, request: FixtureRequest) -> str:
     """Create a test file which calls a function in a module which generates warnings."""
     pytester.syspathinsert()
-    test_name = request.function.__name__
-    module_name = test_name.lstrip("test_") + "_module"
+    module_name = request.function.__name__[len("test_") :] + "_module"
     test_file = pytester.makepyfile(
-        """
+        f"""
         import {module_name}
         def test_func():
             assert {module_name}.foo() == 1
-        """.format(
-            module_name=module_name
-        ),
+        """,
         **{
             module_name: """
             import warnings
@@ -45,7 +43,7 @@ def test_normal_flow(pytester: Pytester, pyfile_with_warnings) -> None:
     result = pytester.runpytest(pyfile_with_warnings)
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "test_normal_flow.py::test_func",
             "*normal_flow_module.py:3: UserWarning: user warning",
             '*  warnings.warn(UserWarning("user warning"))',
@@ -76,7 +74,7 @@ def test_setup_teardown_warnings(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "*test_setup_teardown_warnings.py:6: UserWarning: warning during setup",
             '*warnings.warn(UserWarning("warning during setup"))',
             "*test_setup_teardown_warnings.py:8: UserWarning: warning during teardown",
@@ -144,7 +142,7 @@ def test_unicode(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "*test_unicode.py:7: UserWarning: \u6d4b\u8bd5*",
             "* 1 passed, 1 warning*",
         ]
@@ -281,10 +279,8 @@ def test_warning_recorded_hook(pytester: Pytester) -> None:
         ("call warning", "runtest", "test_warning_recorded_hook.py::test_func"),
         ("teardown warning", "runtest", "test_warning_recorded_hook.py::test_func"),
     ]
-    for index in range(len(expected)):
-        collected_result = collected[index]
-        expected_result = expected[index]
-
+    assert len(collected) == len(expected)  # python < 3.10 zip(strict=True)
+    for collected_result, expected_result in zip(collected, expected):
         assert collected_result[0] == expected_result[0], str(collected)
         assert collected_result[1] == expected_result[1], str(collected)
         assert collected_result[2] == expected_result[2], str(collected)
@@ -316,7 +312,7 @@ def test_collection_warnings(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "  *collection_warnings.py:3: UserWarning: collection warning",
             '    warnings.warn(UserWarning("collection warning"))',
             "* 1 passed, 1 warning*",
@@ -375,7 +371,7 @@ def test_hide_pytest_internal_warnings(
     else:
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                f"*== {WARNINGS_SUMMARY_HEADER} ==*",
                 "*test_hide_pytest_internal_warnings.py:4: PytestWarning: some internal warning",
                 "* 1 passed, 1 warning *",
             ]
@@ -436,7 +432,7 @@ class TestDeprecationWarningsByDefault:
 
     def create_file(self, pytester: Pytester, mark="") -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest, warnings
 
             warnings.warn(DeprecationWarning("collection"))
@@ -444,9 +440,7 @@ class TestDeprecationWarningsByDefault:
             {mark}
             def test_foo():
                 warnings.warn(PendingDeprecationWarning("test run"))
-        """.format(
-                mark=mark
-            )
+        """
         )
 
     @pytest.mark.parametrize("customize_filters", [True, False])
@@ -464,7 +458,7 @@ class TestDeprecationWarningsByDefault:
         result = pytester.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                f"*== {WARNINGS_SUMMARY_HEADER} ==*",
                 "*test_shown_by_default.py:3: DeprecationWarning: collection",
                 "*test_shown_by_default.py:7: PendingDeprecationWarning: test run",
                 "* 1 passed, 2 warnings*",
@@ -495,7 +489,7 @@ class TestDeprecationWarningsByDefault:
         result = pytester.runpytest_subprocess()
         result.stdout.fnmatch_lines(
             [
-                "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+                f"*== {WARNINGS_SUMMARY_HEADER} ==*",
                 "*test_hidden_by_mark.py:3: DeprecationWarning: collection",
                 "* 1 passed, 1 warning*",
             ]
@@ -558,7 +552,7 @@ def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> No
 class TestAssertionWarnings:
     @staticmethod
     def assert_result_warns(result, msg) -> None:
-        result.stdout.fnmatch_lines(["*PytestAssertRewriteWarning: %s*" % msg])
+        result.stdout.fnmatch_lines([f"*PytestAssertRewriteWarning: {msg}*"])
 
     def test_tuple_warning(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -588,7 +582,7 @@ def test_group_warnings_by_message(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "test_group_warnings_by_message.py::test_foo[[]0[]]",
             "test_group_warnings_by_message.py::test_foo[[]1[]]",
             "test_group_warnings_by_message.py::test_foo[[]2[]]",
@@ -620,14 +614,14 @@ def test_group_warnings_by_message_summary(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(
         [
-            "*== %s ==*" % WARNINGS_SUMMARY_HEADER,
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
             "test_1.py: 21 warnings",
             "test_2.py: 1 warning",
-            "  */test_1.py:7: UserWarning: foo",
+            "  */test_1.py:10: UserWarning: foo",
             "    warnings.warn(UserWarning(msg))",
             "",
             "test_1.py: 20 warnings",
-            "  */test_1.py:7: UserWarning: bar",
+            "  */test_1.py:10: UserWarning: bar",
             "    warnings.warn(UserWarning(msg))",
             "",
             "-- Docs: *",
@@ -659,8 +653,8 @@ class TestStackLevel:
     @pytest.fixture
     def capwarn(self, pytester: Pytester):
         class CapturedWarnings:
-            captured: List[
-                Tuple[warnings.WarningMessage, Optional[Tuple[str, int, str]]]
+            captured: list[
+                tuple[warnings.WarningMessage, tuple[str, int, str] | None]
             ] = []
 
             @classmethod
@@ -797,7 +791,7 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
     # available, using `importorskip("tracemalloc")` for example,
     # because we want to ensure the same code path does not break in those platforms.
     try:
-        import tracemalloc  # noqa
+        import tracemalloc  # noqa: F401
 
         has_tracemalloc = True
     except ImportError:

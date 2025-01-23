@@ -1,24 +1,29 @@
+# mypy: allow-untyped-defs
 """Record warnings during test function execution."""
-import re
-import warnings
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterator
 from pprint import pformat
+import re
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import final
-from typing import Generator
-from typing import Iterator
-from typing import List
-from typing import Optional
 from typing import overload
-from typing import Pattern
-from typing import Tuple
-from typing import Type
+from typing import TYPE_CHECKING
 from typing import TypeVar
-from typing import Union
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+import warnings
 
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
+from _pytest.outcomes import Exit
 from _pytest.outcomes import fail
 
 
@@ -26,11 +31,10 @@ T = TypeVar("T")
 
 
 @fixture
-def recwarn() -> Generator["WarningsRecorder", None, None]:
+def recwarn() -> Generator[WarningsRecorder]:
     """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
-    See https://docs.pytest.org/en/latest/how-to/capture-warnings.html for information
-    on warning categories.
+    See :ref:`warnings` for information on warning categories.
     """
     wrec = WarningsRecorder(_ispytest=True)
     with wrec:
@@ -40,21 +44,17 @@ def recwarn() -> Generator["WarningsRecorder", None, None]:
 
 @overload
 def deprecated_call(
-    *, match: Optional[Union[str, Pattern[str]]] = ...
-) -> "WarningsRecorder":
-    ...
+    *, match: str | re.Pattern[str] | None = ...
+) -> WarningsRecorder: ...
 
 
 @overload
-def deprecated_call(  # noqa: F811
-    func: Callable[..., T], *args: Any, **kwargs: Any
-) -> T:
-    ...
+def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T: ...
 
 
-def deprecated_call(  # noqa: F811
-    func: Optional[Callable[..., Any]] = None, *args: Any, **kwargs: Any
-) -> Union["WarningsRecorder", Any]:
+def deprecated_call(
+    func: Callable[..., Any] | None = None, *args: Any, **kwargs: Any
+) -> WarningsRecorder | Any:
     """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning`` or ``FutureWarning``.
 
     This function can be used as a context manager::
@@ -80,7 +80,7 @@ def deprecated_call(  # noqa: F811
     """
     __tracebackhide__ = True
     if func is not None:
-        args = (func,) + args
+        args = (func, *args)
     return warns(
         (DeprecationWarning, PendingDeprecationWarning, FutureWarning), *args, **kwargs
     )
@@ -88,29 +88,27 @@ def deprecated_call(  # noqa: F811
 
 @overload
 def warns(
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = ...,
+    expected_warning: type[Warning] | tuple[type[Warning], ...] = ...,
     *,
-    match: Optional[Union[str, Pattern[str]]] = ...,
-) -> "WarningsChecker":
-    ...
+    match: str | re.Pattern[str] | None = ...,
+) -> WarningsChecker: ...
 
 
 @overload
-def warns(  # noqa: F811
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]],
+def warns(
+    expected_warning: type[Warning] | tuple[type[Warning], ...],
     func: Callable[..., T],
     *args: Any,
     **kwargs: Any,
-) -> T:
-    ...
+) -> T: ...
 
 
-def warns(  # noqa: F811
-    expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
+def warns(
+    expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
     *args: Any,
-    match: Optional[Union[str, Pattern[str]]] = None,
+    match: str | re.Pattern[str] | None = None,
     **kwargs: Any,
-) -> Union["WarningsChecker", Any]:
+) -> WarningsChecker | Any:
     r"""Assert that code raises a particular class of warning.
 
     Specifically, the parameter ``expected_warning`` can be a warning class or tuple
@@ -184,21 +182,20 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 
     def __init__(self, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
-        # Type ignored due to the way typeshed handles warnings.catch_warnings.
-        super().__init__(record=True)  # type: ignore[call-arg]
+        super().__init__(record=True)
         self._entered = False
-        self._list: List[warnings.WarningMessage] = []
+        self._list: list[warnings.WarningMessage] = []
 
     @property
-    def list(self) -> List["warnings.WarningMessage"]:
+    def list(self) -> list[warnings.WarningMessage]:
         """The list of recorded warnings."""
         return self._list
 
-    def __getitem__(self, i: int) -> "warnings.WarningMessage":
+    def __getitem__(self, i: int) -> warnings.WarningMessage:
         """Get a recorded warning by index."""
         return self._list[i]
 
-    def __iter__(self) -> Iterator["warnings.WarningMessage"]:
+    def __iter__(self) -> Iterator[warnings.WarningMessage]:
         """Iterate through the recorded warnings."""
         return iter(self._list)
 
@@ -206,12 +203,12 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         """The number of recorded warnings."""
         return len(self._list)
 
-    def pop(self, cls: Type[Warning] = Warning) -> "warnings.WarningMessage":
+    def pop(self, cls: type[Warning] = Warning) -> warnings.WarningMessage:
         """Pop the first recorded warning which is an instance of ``cls``,
         but not an instance of a child class of any other match.
         Raises ``AssertionError`` if there is no match.
         """
-        best_idx: Optional[int] = None
+        best_idx: int | None = None
         for i, w in enumerate(self._list):
             if w.category == cls:
                 return self._list.pop(i)  # exact match, stop looking
@@ -229,9 +226,7 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         """Clear the list of recorded warnings."""
         self._list[:] = []
 
-    # Type ignored because it doesn't exactly warnings.catch_warnings.__enter__
-    # -- it returns a List but we only emulate one.
-    def __enter__(self) -> "WarningsRecorder":  # type: ignore
+    def __enter__(self) -> Self:
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError(f"Cannot enter {self!r} twice")
@@ -244,9 +239,9 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         if not self._entered:
             __tracebackhide__ = True
@@ -263,8 +258,8 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
 class WarningsChecker(WarningsRecorder):
     def __init__(
         self,
-        expected_warning: Union[Type[Warning], Tuple[Type[Warning], ...]] = Warning,
-        match_expr: Optional[Union[str, Pattern[str]]] = None,
+        expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
+        match_expr: str | re.Pattern[str] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -295,15 +290,26 @@ class WarningsChecker(WarningsRecorder):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         super().__exit__(exc_type, exc_val, exc_tb)
 
         __tracebackhide__ = True
 
-        def found_str():
+        # BaseExceptions like pytest.{skip,fail,xfail,exit} or Ctrl-C within
+        # pytest.warns should *not* trigger "DID NOT WARN" and get suppressed
+        # when the warning doesn't happen. Control-flow exceptions should always
+        # propagate.
+        if exc_val is not None and (
+            not isinstance(exc_val, Exception)
+            # Exit is an Exception, not a BaseException, for some reason.
+            or isinstance(exc_val, Exit)
+        ):
+            return
+
+        def found_str() -> str:
             return pformat([record.message for record in self], indent=2)
 
         try:
@@ -323,10 +329,37 @@ class WarningsChecker(WarningsRecorder):
             for w in self:
                 if not self.matches(w):
                     warnings.warn_explicit(
-                        str(w.message),
-                        w.message.__class__,  # type: ignore[arg-type]
-                        w.filename,
-                        w.lineno,
+                        message=w.message,
+                        category=w.category,
+                        filename=w.filename,
+                        lineno=w.lineno,
                         module=w.__module__,
                         source=w.source,
                     )
+
+            # Currently in Python it is possible to pass other types than an
+            # `str` message when creating `Warning` instances, however this
+            # causes an exception when :func:`warnings.filterwarnings` is used
+            # to filter those warnings. See
+            # https://github.com/python/cpython/issues/103577 for a discussion.
+            # While this can be considered a bug in CPython, we put guards in
+            # pytest as the error message produced without this check in place
+            # is confusing (#10865).
+            for w in self:
+                if type(w.message) is not UserWarning:
+                    # If the warning was of an incorrect type then `warnings.warn()`
+                    # creates a UserWarning. Any other warning must have been specified
+                    # explicitly.
+                    continue
+                if not w.message.args:
+                    # UserWarning() without arguments must have been specified explicitly.
+                    continue
+                msg = w.message.args[0]
+                if isinstance(msg, str):
+                    continue
+                # It's possible that UserWarning was explicitly specified, and
+                # its first argument was not a string. But that case can't be
+                # distinguished from an invalid type.
+                raise TypeError(
+                    f"Warning must be str or Warning, got {msg!r} (type {type(msg).__name__})"
+                )

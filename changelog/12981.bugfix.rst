@@ -1,0 +1,1 @@
+Prevent exceptions in :func:`pytest.Config.add_cleanup` callbacks preventing further cleanups.

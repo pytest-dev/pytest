@@ -1,23 +1,22 @@
 """Helper plugin for pytester; should not be loaded on its own."""
+
 # This plugin contains assertions used by pytester. pytester cannot
 # contain them itself, since it is imported by the `pytest` module,
 # hence cannot be subject to assertion rewriting, which requires a
 # module to not be already imported.
-from typing import Dict
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from __future__ import annotations
+
+from collections.abc import Sequence
 
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 
 
 def assertoutcome(
-    outcomes: Tuple[
+    outcomes: tuple[
         Sequence[TestReport],
-        Sequence[Union[CollectReport, TestReport]],
-        Sequence[Union[CollectReport, TestReport]],
+        Sequence[CollectReport | TestReport],
+        Sequence[CollectReport | TestReport],
     ],
     passed: int = 0,
     skipped: int = 0,
@@ -36,15 +35,15 @@ def assertoutcome(
 
 
 def assert_outcomes(
-    outcomes: Dict[str, int],
+    outcomes: dict[str, int],
     passed: int = 0,
     skipped: int = 0,
     failed: int = 0,
     errors: int = 0,
     xpassed: int = 0,
     xfailed: int = 0,
-    warnings: Optional[int] = None,
-    deselected: Optional[int] = None,
+    warnings: int | None = None,
+    deselected: int | None = None,
 ) -> None:
     """Assert that the specified outcomes appear with the respective
     numbers (0 means it didn't occur) in the text output from a test run."""

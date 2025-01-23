@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .terminalwriter import get_terminal_width
 from .terminalwriter import TerminalWriter
 

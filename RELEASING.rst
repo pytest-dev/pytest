@@ -158,8 +158,6 @@ Both automatic and manual processes described above follow the same steps from t
        git tag MAJOR.{MINOR+1}.0.dev0
        git push upstream MAJOR.{MINOR+1}.0.dev0
 
-#. For major and minor releases, change the default version in the `Read the Docs Settings <https://readthedocs.org/dashboard/pytest/advanced/>`_ to the new branch.
-
 #. Send an email announcement with the contents from::
 
      doc/en/announce/release-<VERSION>.rst
@@ -170,4 +168,8 @@ Both automatic and manual processes described above follow the same steps from t
    * python-announce-list@python.org (all releases)
    * testing-in-python@lists.idyll.org (only major/minor releases)
 
-   And announce it on `Twitter <https://twitter.com/>`_ with the ``#pytest`` hashtag.
+   And announce it with the ``#pytest`` hashtag on:
+
+   * `Bluesky <https://bsky.app>`_
+   * `Fosstodon <https://fosstodon.org>`_
+   * `Twitter/X <https://x.com>`_

@@ -1,24 +1,36 @@
+# mypy: allow-untyped-defs
 """Python version compatibility code."""
+
 from __future__ import annotations
 
-import dataclasses
+from collections.abc import Callable
 import enum
 import functools
 import inspect
-import os
-import sys
 from inspect import Parameter
 from inspect import signature
+import os
 from pathlib import Path
+import sys
 from typing import Any
-from typing import Callable
 from typing import Final
 from typing import NoReturn
-from typing import TypeVar
+
+import py
 
 
-_T = TypeVar("_T")
-_S = TypeVar("_S")
+#: constant to prepare valuing pylib path replacements/lazy proxies later on
+#  intended for removal in pytest 8.0 or 9.0
+
+# fmt: off
+# intentional space to create a fake difference for the verification
+LEGACY_PATH = py.path. local
+# fmt: on
+
+
+def legacy_path(path: str | os.PathLike[str]) -> LEGACY_PATH:
+    """Internal wrapper to prepare lazy proxies for legacy_path instances"""
+    return LEGACY_PATH(path)
 
 
 # fmt: off
@@ -26,13 +38,8 @@ _S = TypeVar("_S")
 # https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
 class NotSetType(enum.Enum):
     token = 0
-NOTSET: Final = NotSetType.token  # noqa: E305
+NOTSET: Final = NotSetType.token
 # fmt: on
-
-
-def is_generator(func: object) -> bool:
-    genfunc = inspect.isgeneratorfunction(func)
-    return genfunc and not iscoroutinefunction(func)
 
 
 def iscoroutinefunction(func: object) -> bool:
@@ -40,7 +47,7 @@ def iscoroutinefunction(func: object) -> bool:
     def syntax, and doesn't contain yield), or a function decorated with
     @asyncio.coroutine.
 
-    Note: copied and modified from Python 3.5's builtin couroutines.py to avoid
+    Note: copied and modified from Python 3.5's builtin coroutines.py to avoid
     importing asyncio directly, which in turns also initializes the "logging"
     module as a side-effect (see issue #8).
     """
@@ -63,8 +70,8 @@ def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
         except ValueError:
             pass
         else:
-            return "%s:%d" % (relfn, lineno + 1)
-    return "%s:%d" % (fn, lineno + 1)
+            return f"{relfn}:{lineno + 1}"
+    return f"{fn}:{lineno + 1}"
 
 
 def num_mock_patch_args(function) -> int:
@@ -90,7 +97,6 @@ def getfuncargnames(
     function: Callable[..., object],
     *,
     name: str = "",
-    is_method: bool = False,
     cls: type | None = None,
 ) -> tuple[str, ...]:
     """Return the names of a function's mandatory arguments.
@@ -101,9 +107,8 @@ def getfuncargnames(
     * Aren't bound with functools.partial.
     * Aren't replaced with mocks.
 
-    The is_method and cls arguments indicate that the function should
-    be treated as a bound method even though it's not unless, only in
-    the case of cls, the function is a static method.
+    The cls arguments indicate that the function should be treated as a bound
+    method even though it's not unless the function is a static method.
 
     The name parameter should be the original name in which the function was collected.
     """
@@ -141,7 +146,7 @@ def getfuncargnames(
     # If this function should be treated as a bound method even though
     # it's passed as an unbound method or function, remove the first
     # parameter name.
-    if is_method or (
+    if (
         # Not using `getattr` because we don't want to resolve the staticmethod.
         # Not using `cls.__dict__` because we want to check the entire MRO.
         cls
@@ -176,25 +181,13 @@ _non_printable_ascii_translate_table.update(
 )
 
 
-def _translate_non_printable(s: str) -> str:
-    return s.translate(_non_printable_ascii_translate_table)
-
-
-STRING_TYPES = bytes, str
-
-
-def _bytes_to_ascii(val: bytes) -> str:
-    return val.decode("ascii", "backslashreplace")
-
-
 def ascii_escaped(val: bytes | str) -> str:
     r"""If val is pure ASCII, return it as an str, otherwise, escape
     bytes objects into a sequence of escaped bytes:
 
     b'\xc3\xb4\xc5\xd6' -> r'\xc3\xb4\xc5\xd6'
 
-    and escapes unicode objects into a sequence of escaped unicode
-    ids, e.g.:
+    and escapes strings into a sequence of escaped unicode ids, e.g.:
 
     r'4\nV\U00043efa\x0eMXWB\x1e\u3028\u15fd\xcd\U0007d944'
 
@@ -205,64 +198,19 @@ def ascii_escaped(val: bytes | str) -> str:
        a UTF-8 string.
     """
     if isinstance(val, bytes):
-        ret = _bytes_to_ascii(val)
+        ret = val.decode("ascii", "backslashreplace")
     else:
         ret = val.encode("unicode_escape").decode("ascii")
-    return _translate_non_printable(ret)
-
-
-@dataclasses.dataclass
-class _PytestWrapper:
-    """Dummy wrapper around a function object for internal use only.
-
-    Used to correctly unwrap the underlying function object when we are
-    creating fixtures, because we wrap the function object ourselves with a
-    decorator to issue warnings when the fixture function is called directly.
-    """
-
-    obj: Any
+    return ret.translate(_non_printable_ascii_translate_table)
 
 
 def get_real_func(obj):
     """Get the real function object of the (possibly) wrapped object by
-    functools.wraps or functools.partial."""
-    start_obj = obj
-    for i in range(100):
-        # __pytest_wrapped__ is set by @pytest.fixture when wrapping the fixture function
-        # to trigger a warning if it gets called directly instead of by pytest: we don't
-        # want to unwrap further than this otherwise we lose useful wrappings like @mock.patch (#3774)
-        new_obj = getattr(obj, "__pytest_wrapped__", None)
-        if isinstance(new_obj, _PytestWrapper):
-            obj = new_obj.obj
-            break
-        new_obj = getattr(obj, "__wrapped__", None)
-        if new_obj is None:
-            break
-        obj = new_obj
-    else:
-        from _pytest._io.saferepr import saferepr
+    :func:`functools.wraps`, or :func:`functools.partial`."""
+    obj = inspect.unwrap(obj)
 
-        raise ValueError(
-            ("could not find real function of {start}\nstopped at {current}").format(
-                start=saferepr(start_obj), current=saferepr(obj)
-            )
-        )
     if isinstance(obj, functools.partial):
         obj = obj.func
-    return obj
-
-
-def get_real_method(obj, holder):
-    """Attempt to obtain the real function object that might be wrapping
-    ``obj``, while at the same time returning a bound method to ``holder`` if
-    the original object was a bound method."""
-    try:
-        is_method = hasattr(obj, "__func__")
-        obj = get_real_func(obj)
-    except Exception:  # pragma: no cover
-        return obj
-    if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
-        obj = obj.__get__(holder)
     return obj
 
 

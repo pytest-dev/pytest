@@ -1,0 +1,1 @@
+An empty parameter set as in ``pytest.mark.parametrize([], ids=idfunc)`` will no longer trigger a call to ``idfunc`` with internal objects.

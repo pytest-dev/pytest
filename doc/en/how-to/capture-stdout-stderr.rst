@@ -106,9 +106,10 @@ of the failing function and hide the other one:
 Accessing captured output from a test function
 ---------------------------------------------------
 
-The ``capsys``, ``capsysbinary``, ``capfd``, and ``capfdbinary`` fixtures
-allow access to stdout/stderr output created during test execution.  Here is
-an example test function that performs some output related checks:
+The :fixture:`capsys`, :fixture:`capsysbinary`, :fixture:`capfd`, and :fixture:`capfdbinary` fixtures
+allow access to ``stdout``/``stderr`` output created during test execution.
+
+Here is an example test function that performs some output related checks:
 
 .. code-block:: python
 
@@ -125,40 +126,27 @@ an example test function that performs some output related checks:
 The ``readouterr()`` call snapshots the output so far -
 and capturing will be continued.  After the test
 function finishes the original streams will
-be restored.  Using ``capsys`` this way frees your
+be restored.  Using :fixture:`capsys` this way frees your
 test from having to care about setting/resetting
 output streams and also interacts well with pytest's
 own per-test capturing.
 
-If you want to capture on filedescriptor level you can use
-the ``capfd`` fixture which offers the exact
-same interface but allows to also capture output from
-libraries or subprocesses that directly write to operating
-system level output streams (FD1 and FD2).
-
-
-
 The return value from ``readouterr`` changed to a ``namedtuple`` with two attributes, ``out`` and ``err``.
 
-
-
-If the code under test writes non-textual data, you can capture this using
-the ``capsysbinary`` fixture which instead returns ``bytes`` from
+If the code under test writes non-textual data (``bytes``), you can capture this using
+the :fixture:`capsysbinary` fixture which instead returns ``bytes`` from
 the ``readouterr`` method.
 
+If you want to capture at the file descriptor level you can use
+the :fixture:`capfd` fixture which offers the exact
+same interface but allows to also capture output from
+libraries or subprocesses that directly write to operating
+system level output streams (FD1 and FD2). Similarly to :fixture:`capsysbinary`, :fixture:`capfdbinary` can be
+used to capture ``bytes`` at the file descriptor level.
 
 
-
-If the code under test writes non-textual data, you can capture this using
-the ``capfdbinary`` fixture which instead returns ``bytes`` from
-the ``readouterr`` method.  The ``capfdbinary`` fixture operates on the
-filedescriptor level.
-
-
-
-
-To temporarily disable capture within a test, both ``capsys``
-and ``capfd`` have a ``disabled()`` method that can be used
+To temporarily disable capture within a test, the capture fixtures
+have a ``disabled()`` method that can be used
 as a context manager, disabling capture inside the ``with`` block:
 
 .. code-block:: python
