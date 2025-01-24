@@ -382,12 +382,15 @@ class TerminalReporter:
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
         self._progress_nodeids_reported: set[str] = set()
+        self._timing_nodeids_reported: set[str] = set()
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write: float | None = None
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
 
-    def _determine_show_progress_info(self) -> Literal["progress", "count", False]:
+    def _determine_show_progress_info(
+        self,
+    ) -> Literal["progress", "count", "times", False]:
         """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038) unless explicitly
         # overridden by progress-even-when-capture-no
@@ -405,6 +408,8 @@ class TerminalReporter:
             return "progress"
         elif cfg == "count":
             return "count"
+        elif cfg == "times":
+            return "times"
         else:
             return False
 
@@ -692,12 +697,38 @@ class TerminalReporter:
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(progress, collected)
             return f" [ {collected} / {collected} ]"
-        else:
-            if collected:
-                return (
-                    f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
-                )
-            return " [100%]"
+        if self._show_progress_info == "times":
+            if not collected:
+                return ""
+            all_reports = (
+                self._get_reports_to_display("passed")
+                + self._get_reports_to_display("xpassed")
+                + self._get_reports_to_display("failed")
+                + self._get_reports_to_display("xfailed")
+                + self._get_reports_to_display("skipped")
+                + self._get_reports_to_display("error")
+                + self._get_reports_to_display("")
+            )
+            current_location = all_reports[-1].location[0]
+            not_reported = [
+                r for r in all_reports if r.nodeid not in self._timing_nodeids_reported
+            ]
+            tests_in_module = sum(
+                i.location[0] == current_location for i in self._session.items
+            )
+            tests_completed = sum(
+                r.when == "setup"
+                for r in not_reported
+                if r.location[0] == current_location
+            )
+            last_in_module = tests_completed == tests_in_module
+            if self.showlongtestinfo or last_in_module:
+                self._timing_nodeids_reported.update(r.nodeid for r in not_reported)
+                return format_node_duration(sum(r.duration for r in not_reported))
+            return ""
+        if collected:
+            return f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
+        return " [100%]"
 
     def _write_progress_information_if_past_edge(self) -> None:
         w = self._width_of_current_line
@@ -705,6 +736,8 @@ class TerminalReporter:
             assert self._session
             num_tests = self._session.testscollected
             progress_length = len(f" [{num_tests}/{num_tests}]")
+        elif self._show_progress_info == "times":
+            progress_length = len(" 99h 59m")
         else:
             progress_length = len(" [100%]")
         past_edge = w + progress_length + 1 >= self._screen_width
@@ -1552,6 +1585,29 @@ def format_session_duration(seconds: float) -> str:
     else:
         dt = datetime.timedelta(seconds=int(seconds))
         return f"{seconds:.2f}s ({dt})"
+
+
+def format_node_duration(seconds: float) -> str:
+    """Format the given seconds in a human readable manner to show in the test progress."""
+    # The formatting is designed to be compact and readable, with at most 7 characters
+    # for durations below 100 hours.
+    if seconds < 0.00001:
+        return f" {seconds * 1000000:.3f}us"
+    if seconds < 0.0001:
+        return f" {seconds * 1000000:.2f}us"
+    if seconds < 0.001:
+        return f" {seconds * 1000000:.1f}us"
+    if seconds < 0.01:
+        return f" {seconds * 1000:.3f}ms"
+    if seconds < 0.1:
+        return f" {seconds * 1000:.2f}ms"
+    if seconds < 1:
+        return f" {seconds * 1000:.1f}ms"
+    if seconds < 60:
+        return f" {seconds:.3f}s"
+    if seconds < 3600:
+        return f" {seconds // 60:.0f}m {seconds % 60:.0f}s"
+    return f" {seconds // 3600:.0f}h {(seconds % 3600) // 60:.0f}m"
 
 
 def _get_raw_skip_reason(report: TestReport) -> str:

@@ -176,7 +176,7 @@ def iter_plugins() -> Iterator[PluginInfo]:
                 )
                 last_release = release_date.strftime("%b %d, %Y")
                 break
-        name = f':pypi:`{info["name"]}`'
+        name = f":pypi:`{info['name']}`"
         summary = ""
         if info["summary"]:
             summary = escape_rst(info["summary"].replace("\n", ""))
@@ -194,7 +194,7 @@ def plugin_definitions(plugins: Iterable[PluginInfo]) -> Iterator[str]:
     for plugin in plugins:
         yield dedent(
             f"""
-            {plugin['name']}
+            {plugin["name"]}
                *last release*: {plugin["last_release"]},
                *status*: {plugin["status"]},
                *requires*: {plugin["requires"]}
