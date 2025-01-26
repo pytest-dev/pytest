@@ -1,0 +1,1 @@
+Fixed issue where sequences were still being shortened even with ``-vv`` verbosity.
