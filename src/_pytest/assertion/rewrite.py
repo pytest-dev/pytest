@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
+from _pytest._io.saferepr import saferepr_unlimited
 from _pytest._version import version
 from _pytest.assertion import util
 from _pytest.config import Config
@@ -433,6 +434,8 @@ def _saferepr(obj: object) -> str:
         return obj.__name__
 
     maxsize = _get_maxsize_for_saferepr(util._config)
+    if not maxsize:
+        return saferepr_unlimited(obj).replace("\n", "\\n")
     return saferepr(obj, maxsize=maxsize).replace("\n", "\\n")
 
 
