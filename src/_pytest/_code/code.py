@@ -233,7 +233,7 @@ class TracebackEntry:
         @property
         def end_lineno_relative(self) -> int | None:
             frame_summary = self.get_python_framesummary()
-            if frame_summary.end_lineno is None:
+            if frame_summary.end_lineno is None:  # pragma: no cover
                 return None
             return frame_summary.end_lineno - 1 - self.frame.code.firstlineno
 
