@@ -1,0 +1,18 @@
+pytest's ``short`` and ``long`` traceback styles (:ref:`how-to-modifying-python-tb-printing`)
+now have partial :pep:`657` support and will show specific code segments in the
+traceback.
+
+.. code-block:: pytest
+
+    ================================= FAILURES =================================
+    _______________________ test_gets_correct_tracebacks _______________________
+
+    test_tracebacks.py:12: in test_gets_correct_tracebacks
+        assert manhattan_distance(p1, p2) == 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    test_tracebacks.py:6: in manhattan_distance
+        return abs(point_1.x - point_2.x) + abs(point_1.y - point_2.y)
+                               ^^^^^^^^^
+    E   AttributeError: 'NoneType' object has no attribute 'x'
+
+-- by :user:`ammaraskar`
