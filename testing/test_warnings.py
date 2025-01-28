@@ -518,7 +518,7 @@ class TestDeprecationWarningsByDefault:
                 [pytest]
                 filterwarnings =
                     ignore::DeprecationWarning:*
-        """
+            """
         )
         result = pytester.runpytest_subprocess()
         result.stderr.fnmatch_lines(
