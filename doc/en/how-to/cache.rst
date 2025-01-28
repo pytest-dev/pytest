@@ -199,7 +199,7 @@ The new config.cache object
 
 Plugins or conftest.py support code can get a cached value using the
 pytest ``config`` object.  Here is a basic example plugin which
-implements a :ref:`fixture <fixture>` which re-uses previously created state
+implements a :ref:`fixture <fixture>` which reuses previously created state
 across pytest invocations:
 
 .. code-block:: python
