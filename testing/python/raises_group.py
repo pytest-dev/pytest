@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+# several expected multi-line strings contain long lines. We don't wanna break them up
+# as that makes it confusing to see where the line breaks are.
+# ruff: noqa: E501
 import re
 import sys
 from typing import TYPE_CHECKING
@@ -761,48 +764,48 @@ def test_assert_message_nested() -> None:
             "  RaisesGroup(Matcher(TypeError, match='foo'))\n"
             "  RaisesGroup(TypeError, ValueError)\n"
             "The following raised exceptions did not find a match\n"
-            "  TypeError('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'):\n"
+            "  TypeError('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'):\n"
             "    RaisesGroup(ValueError): 'TypeError' is not an exception group\n"
             "    RaisesGroup(RaisesGroup(ValueError)): 'TypeError' is not an exception group\n"
             "    RaisesGroup(Matcher(TypeError, match='foo')): 'TypeError' is not an exception group\n"
             "    RaisesGroup(TypeError, ValueError): 'TypeError' is not an exception group\n"
-            "  ExceptionGroup('Exceptions from Trio nursery', [TypeError('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb')]):\n"
+            "  ExceptionGroup('Exceptions from Trio nursery', [TypeError('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb')]):\n"
             "    RaisesGroup(ValueError): 'TypeError' is not of type 'ValueError'\n"
             "    RaisesGroup(RaisesGroup(ValueError)): RaisesGroup(ValueError): 'TypeError' is not an exception group\n"
-            "    RaisesGroup(Matcher(TypeError, match='foo')): Matcher(TypeError, match='foo'): Regex pattern 'foo' did not match 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n"
+            "    RaisesGroup(Matcher(TypeError, match='foo')): Matcher(TypeError, match='foo'): Regex pattern 'foo' did not match 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n"
             "    RaisesGroup(TypeError, ValueError): 1 matched exception. Too few exceptions raised, found no match for: ['ValueError']\n"
-            "  ExceptionGroup('Exceptions from Trio nursery', [TypeError('cccccccccccccccccccccccccccccccccccccccc'), TypeError('dddddddddddddddddddddddddddddddddddddddd')]):\n"
+            "  ExceptionGroup('Exceptions from Trio nursery', [TypeError('cccccccccccccccccccccccccccccc'), TypeError('dddddddddddddddddddddddddddddd')]):\n"
             "    RaisesGroup(ValueError): \n"
             "      The following expected exceptions did not find a match:\n"
             "        'ValueError'\n"
             "      The following raised exceptions did not find a match\n"
-            "        TypeError('cccccccccccccccccccccccccccccccccccccccc'):\n"
+            "        TypeError('cccccccccccccccccccccccccccccc'):\n"
             "          'TypeError' is not of type 'ValueError'\n"
-            "        TypeError('dddddddddddddddddddddddddddddddddddddddd'):\n"
+            "        TypeError('dddddddddddddddddddddddddddddd'):\n"
             "          'TypeError' is not of type 'ValueError'\n"
             "    RaisesGroup(RaisesGroup(ValueError)): \n"
             "      The following expected exceptions did not find a match:\n"
             "        RaisesGroup(ValueError)\n"
             "      The following raised exceptions did not find a match\n"
-            "        TypeError('cccccccccccccccccccccccccccccccccccccccc'):\n"
+            "        TypeError('cccccccccccccccccccccccccccccc'):\n"
             "          RaisesGroup(ValueError): 'TypeError' is not an exception group\n"
-            "        TypeError('dddddddddddddddddddddddddddddddddddddddd'):\n"
+            "        TypeError('dddddddddddddddddddddddddddddd'):\n"
             "          RaisesGroup(ValueError): 'TypeError' is not an exception group\n"
             "    RaisesGroup(Matcher(TypeError, match='foo')): \n"
             "      The following expected exceptions did not find a match:\n"
             "        Matcher(TypeError, match='foo')\n"
             "      The following raised exceptions did not find a match\n"
-            "        TypeError('cccccccccccccccccccccccccccccccccccccccc'):\n"
-            "          Matcher(TypeError, match='foo'): Regex pattern 'foo' did not match 'cccccccccccccccccccccccccccccccccccccccc'\n"
-            "        TypeError('dddddddddddddddddddddddddddddddddddddddd'):\n"
-            "          Matcher(TypeError, match='foo'): Regex pattern 'foo' did not match 'dddddddddddddddddddddddddddddddddddddddd'\n"
+            "        TypeError('cccccccccccccccccccccccccccccc'):\n"
+            "          Matcher(TypeError, match='foo'): Regex pattern 'foo' did not match 'cccccccccccccccccccccccccccccc'\n"
+            "        TypeError('dddddddddddddddddddddddddddddd'):\n"
+            "          Matcher(TypeError, match='foo'): Regex pattern 'foo' did not match 'dddddddddddddddddddddddddddddd'\n"
             "    RaisesGroup(TypeError, ValueError): \n"
             "      1 matched exception. \n"
             "      The following expected exceptions did not find a match:\n"
             "        'ValueError'\n"
             "      The following raised exceptions did not find a match\n"
-            "        TypeError('dddddddddddddddddddddddddddddddddddddddd'):\n"
-            "          It matches 'TypeError' which was paired with TypeError('cccccccccccccccccccccccccccccccccccccccc')\n"
+            "        TypeError('dddddddddddddddddddddddddddddd'):\n"
+            "          It matches 'TypeError' which was paired with TypeError('cccccccccccccccccccccccccccccc')\n"
             "          'TypeError' is not of type 'ValueError'",
             add_prefix=False,  # to see the full structure
         ),
@@ -816,16 +819,16 @@ def test_assert_message_nested() -> None:
         raise ExceptionGroup(
             "",
             [
-                TypeError("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                TypeError("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
                 ExceptionGroup(
                     "Exceptions from Trio nursery",
-                    [TypeError("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")],
+                    [TypeError("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")],
                 ),
                 ExceptionGroup(
                     "Exceptions from Trio nursery",
                     [
-                        TypeError("cccccccccccccccccccccccccccccccccccccccc"),
-                        TypeError("dddddddddddddddddddddddddddddddddddddddd"),
+                        TypeError("cccccccccccccccccccccccccccccc"),
+                        TypeError("dddddddddddddddddddddddddddddd"),
                     ],
                 ),
             ],

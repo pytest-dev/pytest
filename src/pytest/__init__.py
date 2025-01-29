@@ -115,6 +115,7 @@ __all__ = [
     "Mark",
     "MarkDecorator",
     "MarkGenerator",
+    "Matcher",
     "Metafunc",
     "Module",
     "MonkeyPatch",
