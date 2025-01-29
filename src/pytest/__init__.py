@@ -8,6 +8,7 @@ from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
 from _pytest._raises_group import Matcher
 from _pytest._raises_group import RaisesGroup
+from _pytest._raises_group import RaisesGroup as raises_group
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
@@ -166,6 +167,7 @@ __all__ = [
     "mark",
     "param",
     "raises",
+    "raises_group",
     "register_assert_rewrite",
     "set_trace",
     "skip",

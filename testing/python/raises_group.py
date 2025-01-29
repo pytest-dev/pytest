@@ -397,8 +397,22 @@ def test_check() -> None:
         raise exc
 
     with (
-        fails_raises_group(f"check {is_exc_repr} did not return True"),
+        fails_raises_group(
+            f"check {is_exc_repr} did not return True on the ExceptionGroup"
+        ),
         RaisesGroup(ValueError, check=is_exc),
+    ):
+        raise ExceptionGroup("", (ValueError(),))
+
+    def is_value_error(e: BaseException) -> bool:
+        return isinstance(e, ValueError)
+
+    # helpful suggestion if the user thinks the check is for the sub-exception
+    with (
+        fails_raises_group(
+            f"check {is_value_error} did not return True on the ExceptionGroup, but did return True for the expected 'ValueError'. You might want RaisesGroup(Matcher(ValueError, check=<...>))"
+        ),
+        RaisesGroup(ValueError, check=is_value_error),
     ):
         raise ExceptionGroup("", (ValueError(),))
 

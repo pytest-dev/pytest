@@ -696,8 +696,23 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
             return False
 
         # Only run `self.check` once we know `exc_val` is of the correct type.
-        # TODO: if this fails, we should say the *group* did not match
-        return self._check_check(exc_val)
+        if not self._check_check(exc_val):
+            reason = cast(str, self._fail_reason) + f" on the {type(exc_val).__name__}"
+            if (
+                len(actual_exceptions) == len(self.expected_exceptions) == 1
+                and isinstance(expected := self.expected_exceptions[0], type)
+                # we explicitly break typing here :)
+                and self._check_check(actual_exceptions[0])  # type: ignore[arg-type]
+            ):
+                self._fail_reason = reason + (
+                    f", but did return True for the expected {self._repr_expected(expected)}."
+                    f" You might want RaisesGroup(Matcher({expected.__name__}, check=<...>))"
+                )
+            else:
+                self._fail_reason = reason
+            return False
+
+        return True
 
     @staticmethod
     def _check_expected(
