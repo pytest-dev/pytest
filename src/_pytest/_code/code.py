@@ -208,6 +208,45 @@ class TracebackEntry:
     def lineno(self) -> int:
         return self._rawentry.tb_lineno - 1
 
+    def get_python_framesummary(self) -> traceback.FrameSummary:
+        # Python's built-in traceback module implements all the nitty gritty
+        # details to get column numbers of out frames.
+        stack_summary = traceback.extract_tb(self._rawentry, limit=1)
+        return stack_summary[0]
+
+    # Column and end line numbers introduced in python 3.11
+    if sys.version_info < (3, 11):
+
+        @property
+        def end_lineno_relative(self) -> int | None:
+            return None
+
+        @property
+        def colno(self) -> int | None:
+            return None
+
+        @property
+        def end_colno(self) -> int | None:
+            return None
+    else:
+
+        @property
+        def end_lineno_relative(self) -> int | None:
+            frame_summary = self.get_python_framesummary()
+            if frame_summary.end_lineno is None:  # pragma: no cover
+                return None
+            return frame_summary.end_lineno - 1 - self.frame.code.firstlineno
+
+        @property
+        def colno(self) -> int | None:
+            """Starting byte offset of the expression in the traceback entry."""
+            return self.get_python_framesummary().colno
+
+        @property
+        def end_colno(self) -> int | None:
+            """Ending byte offset of the expression in the traceback entry."""
+            return self.get_python_framesummary().end_colno
+
     @property
     def frame(self) -> Frame:
         return Frame(self._rawentry.tb_frame)
@@ -217,7 +256,7 @@ class TracebackEntry:
         return self.lineno - self.frame.code.firstlineno
 
     def __repr__(self) -> str:
-        return f"<TracebackEntry {self.frame.code.path}:{self.lineno+1}>"
+        return f"<TracebackEntry {self.frame.code.path}:{self.lineno + 1}>"
 
     @property
     def statement(self) -> Source:
@@ -303,7 +342,7 @@ class TracebackEntry:
         # This output does not quite match Python's repr for traceback entries,
         # but changing it to do so would break certain plugins.  See
         # https://github.com/pytest-dev/pytest/pull/7535/ for details.
-        return f"  File '{self.path}':{self.lineno+1} in {name}\n  {line}\n"
+        return f"  File '{self.path}':{self.lineno + 1} in {name}\n  {line}\n"
 
     @property
     def name(self) -> str:
@@ -527,33 +566,33 @@ class ExceptionInfo(Generic[E]):
     @property
     def type(self) -> type[E]:
         """The exception class."""
-        assert (
-            self._excinfo is not None
-        ), ".type can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".type can only be used after the context manager exits"
+        )
         return self._excinfo[0]
 
     @property
     def value(self) -> E:
         """The exception value."""
-        assert (
-            self._excinfo is not None
-        ), ".value can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".value can only be used after the context manager exits"
+        )
         return self._excinfo[1]
 
     @property
     def tb(self) -> TracebackType:
         """The exception raw traceback."""
-        assert (
-            self._excinfo is not None
-        ), ".tb can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".tb can only be used after the context manager exits"
+        )
         return self._excinfo[2]
 
     @property
     def typename(self) -> str:
         """The type name of the exception."""
-        assert (
-            self._excinfo is not None
-        ), ".typename can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".typename can only be used after the context manager exits"
+        )
         return self.type.__name__
 
     @property
@@ -856,6 +895,9 @@ class FormattedExcinfo:
         line_index: int = -1,
         excinfo: ExceptionInfo[BaseException] | None = None,
         short: bool = False,
+        end_line_index: int | None = None,
+        colno: int | None = None,
+        end_colno: int | None = None,
     ) -> list[str]:
         """Return formatted and marked up source lines."""
         lines = []
@@ -869,16 +911,73 @@ class FormattedExcinfo:
         space_prefix = "    "
         if short:
             lines.append(space_prefix + source.lines[line_index].strip())
+            lines.extend(
+                self.get_highlight_arrows_for_line(
+                    raw_line=source.raw_lines[line_index],
+                    line=source.lines[line_index].strip(),
+                    lineno=line_index,
+                    end_lineno=end_line_index,
+                    colno=colno,
+                    end_colno=end_colno,
+                )
+            )
         else:
             for line in source.lines[:line_index]:
                 lines.append(space_prefix + line)
             lines.append(self.flow_marker + "   " + source.lines[line_index])
+            lines.extend(
+                self.get_highlight_arrows_for_line(
+                    raw_line=source.raw_lines[line_index],
+                    line=source.lines[line_index],
+                    lineno=line_index,
+                    end_lineno=end_line_index,
+                    colno=colno,
+                    end_colno=end_colno,
+                )
+            )
             for line in source.lines[line_index + 1 :]:
                 lines.append(space_prefix + line)
         if excinfo is not None:
             indent = 4 if short else self._getindent(source)
             lines.extend(self.get_exconly(excinfo, indent=indent, markall=True))
         return lines
+
+    def get_highlight_arrows_for_line(
+        self,
+        line: str,
+        raw_line: str,
+        lineno: int | None,
+        end_lineno: int | None,
+        colno: int | None,
+        end_colno: int | None,
+    ) -> list[str]:
+        """Return characters highlighting a source line.
+
+        Example with colno and end_colno pointing to the bar expression:
+                   "foo() + bar()"
+        returns    "        ^^^^^"
+        """
+        if lineno != end_lineno:
+            # Don't handle expressions that span multiple lines.
+            return []
+        if colno is None or end_colno is None:
+            # Can't do anything without column information.
+            return []
+
+        num_stripped_chars = len(raw_line) - len(line)
+
+        start_char_offset = _byte_offset_to_character_offset(raw_line, colno)
+        end_char_offset = _byte_offset_to_character_offset(raw_line, end_colno)
+        num_carets = end_char_offset - start_char_offset
+        # If the highlight would span the whole line, it is redundant, don't
+        # show it.
+        if num_carets >= len(line.strip()):
+            return []
+
+        highlights = "    "
+        highlights += " " * (start_char_offset - num_stripped_chars + 1)
+        highlights += "^" * num_carets
+        return [highlights]
 
     def get_exconly(
         self,
@@ -939,11 +1038,23 @@ class FormattedExcinfo:
             if source is None:
                 source = Source("???")
                 line_index = 0
+                end_line_index, colno, end_colno = None, None, None
             else:
-                line_index = entry.lineno - entry.getfirstlinesource()
+                line_index = entry.relline
+                end_line_index = entry.end_lineno_relative
+                colno = entry.colno
+                end_colno = entry.end_colno
             short = style == "short"
             reprargs = self.repr_args(entry) if not short else None
-            s = self.get_source(source, line_index, excinfo, short=short)
+            s = self.get_source(
+                source=source,
+                line_index=line_index,
+                excinfo=excinfo,
+                short=short,
+                end_line_index=end_line_index,
+                colno=colno,
+                end_colno=end_colno,
+            )
             lines.extend(s)
             if short:
                 message = f"in {entry.name}"
@@ -1372,6 +1483,12 @@ def getfslineno(obj: object) -> tuple[str | Path, int]:
         return fspath, lineno
 
     return code.path, code.firstlineno
+
+
+def _byte_offset_to_character_offset(str, offset):
+    """Converts a byte based offset in a string to a code-point."""
+    as_utf8 = str.encode("utf-8")
+    return len(as_utf8[:offset].decode("utf-8", errors="replace"))
 
 
 # Relative paths that we use to filter traceback entries from appearing to the user;

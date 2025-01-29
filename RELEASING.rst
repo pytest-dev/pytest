@@ -168,4 +168,8 @@ Both automatic and manual processes described above follow the same steps from t
    * python-announce-list@python.org (all releases)
    * testing-in-python@lists.idyll.org (only major/minor releases)
 
-   And announce it on `Twitter <https://twitter.com/>`_ and `BlueSky <https://bsky.app/>`_ with the ``#pytest`` hashtag.
+   And announce it with the ``#pytest`` hashtag on:
+
+   * `Bluesky <https://bsky.app>`_
+   * `Fosstodon <https://fosstodon.org>`_
+   * `Twitter/X <https://x.com>`_

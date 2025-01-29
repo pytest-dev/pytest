@@ -375,10 +375,10 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         )
 
     def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:
@@ -492,10 +492,10 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         )
 
     def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:
