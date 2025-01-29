@@ -33,7 +33,6 @@ if sys.version_info < (3, 11):
 
 if TYPE_CHECKING:
     from numpy import ndarray
-    from typing_extensions import TypeGuard
 
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
@@ -1028,110 +1027,6 @@ def raises(
 
 # This doesn't work with mypy for now. Use fail.Exception instead.
 raises.Exception = fail.Exception  # type: ignore
-
-
-@final
-class RaisesGroup(
-    AbstractContextManager[_pytest._code.ExceptionInfo[BaseExceptionGroup[E]]]
-):
-    """Helper for catching exceptions wrapped in an ExceptionGroup.
-
-    Similar to pytest.raises, except:
-    * It requires that the exception is inside an exceptiongroup
-    * It is only able to be used as a contextmanager
-    * Due to the above, is not split into a caller function and a cm class
-    Similar to trio.RaisesGroup, except:
-    * does not handle multiple levels of nested groups.
-    * does not have trio.Matcher, to add matching on the sub-exception
-    * does not handle multiple exceptions in the exceptiongroup.
-
-    TODO: copy over docstring example usage from trio.RaisesGroup
-    """
-
-    def __init__(
-        self,
-        exception: type[E],
-        check: Callable[[BaseExceptionGroup[E]], bool] | None = None,
-    ):
-        # copied from raises() above
-        if not isinstance(exception, type) or not issubclass(exception, BaseException):
-            msg = "expected exception must be a BaseException type, not {}"  # type: ignore[unreachable]
-            not_a = (
-                exception.__name__
-                if isinstance(exception, type)
-                else type(exception).__name__
-            )
-            raise TypeError(msg.format(not_a))
-
-        self.exception = exception
-        self.check = check
-
-    def __enter__(self) -> _pytest._code.ExceptionInfo[BaseExceptionGroup[E]]:
-        self.excinfo: _pytest._code.ExceptionInfo[BaseExceptionGroup[E]] = (
-            _pytest._code.ExceptionInfo.for_later()
-        )
-        return self.excinfo
-
-    def matches(
-        self,
-        exc_val: BaseException | None,
-    ) -> TypeGuard[BaseExceptionGroup[E]]:
-        return (
-            exc_val is not None
-            and isinstance(exc_val, BaseExceptionGroup)
-            and len(exc_val.exceptions) == 1
-            and isinstance(exc_val.exceptions[0], self.exception)
-            and (self.check is None or self.check(exc_val))
-        )
-
-    def assert_matches(
-        self,
-        exc_val: BaseException | None,
-    ) -> TypeGuard[BaseExceptionGroup[E]]:
-        assert exc_val is not None, (
-            "Internal Error: exc_type is not None but exc_val is"
-        )
-        assert isinstance(exc_val, BaseExceptionGroup), (
-            f"Expected an ExceptionGroup, not {type(exc_val)}"
-        )
-        assert len(exc_val.exceptions) == 1, (
-            f"Wrong number of exceptions: got {len(exc_val.exceptions)}, expected 1."
-        )
-        assert isinstance(exc_val.exceptions[0], self.exception), (
-            f"Wrong type in group: got {type(exc_val.exceptions[0])}, expected {self.exception}"
-        )
-        if self.check is not None:
-            assert self.check(exc_val), f"Check failed on {exc_val!r}."
-
-        return True
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        __tracebackhide__ = True
-        if exc_type is None:
-            fail("DID NOT RAISE ANY EXCEPTION, expected " + self.expected_type())
-        assert self.excinfo is not None, "__exit__ without __enter__"
-
-        self.assert_matches(exc_val)
-
-        # Cast to narrow the exception type now that it's verified.
-        exc_info = cast(
-            tuple[type[BaseExceptionGroup[E]], BaseExceptionGroup[E], TracebackType],
-            (exc_type, exc_val, exc_tb),
-        )
-        self.excinfo.fill_unfilled(exc_info)
-        return True
-
-    def expected_type(self) -> str:
-        if not issubclass(self.exception, Exception):
-            base = "Base"
-        else:
-            base = ""
-        return f"{base}ExceptionGroup({self.exception})"
 
 
 @final

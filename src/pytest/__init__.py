@@ -6,6 +6,8 @@ from __future__ import annotations
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
+from _pytest._raises_group import Matcher
+from _pytest._raises_group import RaisesGroup
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
 from _pytest.capture import CaptureFixture
@@ -60,7 +62,6 @@ from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
 from _pytest.python_api import raises
-from _pytest.python_api import RaisesGroup
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
