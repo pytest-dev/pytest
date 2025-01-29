@@ -1,0 +1,8 @@
+Allows supplying ``ExceptionGroup[Exception]`` and ``BaseExceptionGroup[BaseException]`` to ``pytest.raises`` to keep full typing on :class:`ExceptionInfo <pytest.ExceptionInfo>`:
+
+.. code-block:: python
+
+    with pytest.raises(ExceptionGroup[Exception]) as exc_info:
+        some_function()
+
+Parametrizing with other exception types remains an error - we do not check the types of child exceptions and thus do not permit code that might look like we do.

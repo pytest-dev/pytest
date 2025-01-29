@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from _pytest._code.code import TracebackStyle
 
 if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
 
 
@@ -453,6 +454,39 @@ def test_match_raises_error(pytester: Pytester) -> None:
     result.stdout.re_match_lines([r".*__tracebackhide__ = True.*", *match])
 
 
+def test_raises_accepts_generic_group() -> None:
+    with pytest.raises(ExceptionGroup[Exception]) as exc_info:
+        raise ExceptionGroup("", [RuntimeError()])
+    assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_accepts_generic_base_group() -> None:
+    with pytest.raises(BaseExceptionGroup[BaseException]) as exc_info:
+        raise ExceptionGroup("", [RuntimeError()])
+    assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_rejects_specific_generic_group() -> None:
+    with pytest.raises(ValueError):
+        pytest.raises(ExceptionGroup[RuntimeError])
+
+
+def test_raises_accepts_generic_group_in_tuple() -> None:
+    with pytest.raises((ValueError, ExceptionGroup[Exception])) as exc_info:
+        raise ExceptionGroup("", [RuntimeError()])
+    assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_exception_escapes_generic_group() -> None:
+    try:
+        with pytest.raises(ExceptionGroup[Exception]):
+            raise ValueError("my value error")
+    except ValueError as e:
+        assert str(e) == "my value error"
+    else:
+        pytest.fail("Expected ValueError to be raised")
+
+
 class TestGroupContains:
     def test_contains_exception_type(self) -> None:
         exc_group = ExceptionGroup("", [RuntimeError()])
@@ -848,6 +882,37 @@ raise ValueError()
         assert reprtb.reprfileloc is not None
         assert basename in str(reprtb.reprfileloc.path)
         assert reprtb.reprfileloc.lineno == 3
+
+    @pytest.mark.skipif(
+        "sys.version_info < (3,11)",
+        reason="Column level traceback info added in python 3.11",
+    )
+    def test_repr_traceback_entry_short_carets(self, importasmod) -> None:
+        mod = importasmod(
+            """
+            def div_by_zero():
+                return 1 / 0
+            def func1():
+                return 42 + div_by_zero()
+            def entry():
+                func1()
+        """
+        )
+        excinfo = pytest.raises(ZeroDivisionError, mod.entry)
+        p = FormattedExcinfo(style="short")
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-3])
+        assert len(reprtb.lines) == 1
+        assert reprtb.lines[0] == "    func1()"
+
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
+        assert len(reprtb.lines) == 2
+        assert reprtb.lines[0] == "    return 42 + div_by_zero()"
+        assert reprtb.lines[1] == "                ^^^^^^^^^^^^^"
+
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
+        assert len(reprtb.lines) == 2
+        assert reprtb.lines[0] == "    return 1 / 0"
+        assert reprtb.lines[1] == "           ^^^^^"
 
     def test_repr_tracebackentry_no(self, importasmod):
         mod = importasmod(
@@ -1309,7 +1374,7 @@ raise ValueError()
                 raise ValueError()
 
             def h():
-                raise AttributeError()
+                if True: raise AttributeError()
         """
         )
         excinfo = pytest.raises(AttributeError, mod.f)
@@ -1370,12 +1435,22 @@ raise ValueError()
         assert tw_mock.lines[40] == ("_ ", None)
         assert tw_mock.lines[41] == ""
         assert tw_mock.lines[42] == "    def h():"
-        assert tw_mock.lines[43] == ">       raise AttributeError()"
-        assert tw_mock.lines[44] == "E       AttributeError"
-        assert tw_mock.lines[45] == ""
-        line = tw_mock.get_write_msg(46)
-        assert line.endswith("mod.py")
-        assert tw_mock.lines[47] == ":15: AttributeError"
+        # On python 3.11 and greater, check for carets in the traceback.
+        if sys.version_info >= (3, 11):
+            assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
+            assert tw_mock.lines[44] == "                 ^^^^^^^^^^^^^^^^^^^^^^"
+            assert tw_mock.lines[45] == "E       AttributeError"
+            assert tw_mock.lines[46] == ""
+            line = tw_mock.get_write_msg(47)
+            assert line.endswith("mod.py")
+            assert tw_mock.lines[48] == ":15: AttributeError"
+        else:
+            assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
+            assert tw_mock.lines[44] == "E       AttributeError"
+            assert tw_mock.lines[45] == ""
+            line = tw_mock.get_write_msg(46)
+            assert line.endswith("mod.py")
+            assert tw_mock.lines[47] == ":15: AttributeError"
 
     @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
     def test_exc_repr_chain_suppression(self, importasmod, mode, tw_mock):
@@ -1494,23 +1569,44 @@ raise ValueError()
         r = excinfo.getrepr(style="short")
         r.toterminal(tw_mock)
         out = "\n".join(line for line in tw_mock.lines if isinstance(line, str))
-        expected_out = textwrap.dedent(
-            """\
-            :13: in unreraise
-                reraise()
-            :10: in reraise
-                raise Err() from e
-            E   test_exc_chain_repr_cycle0.mod.Err
+        # Assert highlighting carets in python3.11+
+        if sys.version_info >= (3, 11):
+            expected_out = textwrap.dedent(
+                """\
+                :13: in unreraise
+                    reraise()
+                :10: in reraise
+                    raise Err() from e
+                E   test_exc_chain_repr_cycle0.mod.Err
 
-            During handling of the above exception, another exception occurred:
-            :15: in unreraise
-                raise e.__cause__
-            :8: in reraise
-                fail()
-            :5: in fail
-                return 0 / 0
-            E   ZeroDivisionError: division by zero"""
-        )
+                During handling of the above exception, another exception occurred:
+                :15: in unreraise
+                    raise e.__cause__
+                :8: in reraise
+                    fail()
+                :5: in fail
+                    return 0 / 0
+                           ^^^^^
+                E   ZeroDivisionError: division by zero"""
+            )
+        else:
+            expected_out = textwrap.dedent(
+                """\
+                :13: in unreraise
+                    reraise()
+                :10: in reraise
+                    raise Err() from e
+                E   test_exc_chain_repr_cycle0.mod.Err
+
+                During handling of the above exception, another exception occurred:
+                :15: in unreraise
+                    raise e.__cause__
+                :8: in reraise
+                    fail()
+                :5: in fail
+                    return 0 / 0
+                E   ZeroDivisionError: division by zero"""
+            )
         assert out == expected_out
 
     def test_exec_type_error_filter(self, importasmod):

@@ -1,0 +1,3 @@
+New `--force-short-summary` option to force condensed summary output regardless of verbosity level.
+
+This lets users still see condensed summary output of failures for quick reference in log files from job outputs, being especially useful if non-condensed output is very verbose.
