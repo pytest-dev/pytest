@@ -530,7 +530,7 @@ class TestDeprecationWarningsByDefault:
                 "",
                 "This error occurred:",
                 "",
-                "Invalid regex '*': nothing to repeat at position 0",
+                "Invalid regex '[*]': nothing to repeat at position 0",
             ]
         )
 
