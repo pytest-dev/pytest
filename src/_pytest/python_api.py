@@ -34,9 +34,6 @@ if sys.version_info < (3, 11):
 if TYPE_CHECKING:
     from numpy import ndarray
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-
 
 def _compare_approx(
     full_object: object,

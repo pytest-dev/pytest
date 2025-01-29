@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from _pytest._raises_group import Matcher
 from _pytest._raises_group import RaisesGroup
 from _pytest._raises_group import repr_callable
+from _pytest.outcomes import Failed
 import pytest
 
 
@@ -25,24 +26,22 @@ def wrap_escape(s: str) -> str:
     return "^" + re.escape(s) + "$"
 
 
-def fails_raises_group(
-    msg: str, add_prefix: bool = True
-) -> RaisesContext[AssertionError]:
+def fails_raises_group(msg: str, add_prefix: bool = True) -> RaisesContext[Failed]:
     assert msg[-1] != "\n", (
         "developer error, expected string should not end with newline"
     )
     prefix = "Raised exception group did not match: " if add_prefix else ""
-    return pytest.raises(AssertionError, match=wrap_escape(prefix + msg))
+    return pytest.raises(Failed, match=wrap_escape(prefix + msg))
 
 
 def test_raises_group() -> None:
     with pytest.raises(
-        ValueError,
+        TypeError,
         match=wrap_escape(
-            f'Invalid argument "{TypeError()!r}" must be exception type, Matcher, or RaisesGroup.',
+            f'Invalid argument "{ValueError()!r}" must be exception type, Matcher, or RaisesGroup.',
         ),
     ):
-        RaisesGroup(TypeError())  # type: ignore[call-overload]
+        RaisesGroup(ValueError())  # type: ignore[call-overload]
     with RaisesGroup(ValueError):
         raise ExceptionGroup("foo", (ValueError(),))
 
@@ -449,7 +448,7 @@ def test_message() -> None:
     ) -> None:
         with (
             pytest.raises(
-                AssertionError,
+                Failed,
                 match=f"^DID NOT RAISE any exception, expected {re.escape(message)}$",
             ),
             body,
@@ -844,23 +843,21 @@ def test_check_no_patched_repr() -> None:
     # repr. The other tests that use `check` make use of `_check_repr` so they'll
     # continue passing in case it is patched - but we have this one test that
     # demonstrates just how nasty it gets otherwise.
+    match_str = (
+        r"^Raised exception group did not match: \n"
+        r"The following expected exceptions did not find a match:\n"
+        r"  Matcher\(check=<function test_check_no_patched_repr.<locals>.<lambda> at .*>\)\n"
+        r"  'TypeError'\n"
+        r"The following raised exceptions did not find a match\n"
+        r"  ValueError\('foo'\):\n"
+        r"    Matcher\(check=<function test_check_no_patched_repr.<locals>.<lambda> at .*>\): check did not return True\n"
+        r"    'ValueError' is not of type 'TypeError'\n"
+        r"  ValueError\('bar'\):\n"
+        r"    Matcher\(check=<function test_check_no_patched_repr.<locals>.<lambda> at .*>\): check did not return True\n"
+        r"    'ValueError' is not of type 'TypeError'$"
+    )
     with (
-        pytest.raises(
-            AssertionError,
-            match=(
-                r"^Raised exception group did not match: \n"
-                r"The following expected exceptions did not find a match:\n"
-                r"  Matcher\(check=<function test_check_no_patched_repr.<locals>.<lambda> at .*>\)\n"
-                r"  'TypeError'\n"
-                r"The following raised exceptions did not find a match\n"
-                r"  ValueError\('foo'\):\n"
-                r"    Matcher\(check=<function test_check_no_patched_repr.<locals>.<lambda> at .*>\): check did not return True\n"
-                r"    'ValueError' is not of type 'TypeError'\n"
-                r"  ValueError\('bar'\):\n"
-                r"    Matcher\(check=<function test_check_no_patched_repr.<locals>.<lambda> at .*>\): check did not return True\n"
-                r"    'ValueError' is not of type 'TypeError'$"
-            ),
-        ),
+        pytest.raises(Failed, match=match_str),
         RaisesGroup(Matcher(check=lambda x: False), TypeError),
     ):
         raise ExceptionGroup("", [ValueError("foo"), ValueError("bar")])
@@ -994,7 +991,7 @@ def test_matcher() -> None:
     ):
         Matcher()  # type: ignore[call-overload]
     with pytest.raises(
-        ValueError,
+        TypeError,
         match=f"^exception_type {re.escape(repr(object))} must be a subclass of BaseException$",
     ):
         Matcher(object)  # type: ignore[type-var]

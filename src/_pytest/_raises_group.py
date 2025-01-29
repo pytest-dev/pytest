@@ -14,13 +14,14 @@ from typing import overload
 from typing import TYPE_CHECKING
 
 from _pytest._code import ExceptionInfo
+from _pytest.outcomes import fail
 
 
 if TYPE_CHECKING:
-    # sphinx will *only* work if we use types.TracebackType, and import
-    # *inside* TYPE_CHECKING. No other combination works.....
     from collections.abc import Callable
     from collections.abc import Sequence
+
+    # for some reason Sphinx does not play well with 'from types import TracebackType'
     import types
 
     from typing_extensions import TypeGuard
@@ -50,16 +51,12 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
-# this differs slightly from pytest.ExceptionInfo
-# we do `getattr(exc, "message", str(exc)`, they do str(exc)
-# this is because we don't want '(x sub-exceptions)' when checking
-# exception groups.
-# Does it differ in behaviour on any other exceptions? Should we do an
-# isinstance check instead?
+# this differs slightly from pytest.ExceptionInfo._stringify_exception
+# as we don't want '(1 sub-exception)' when matching group strings
 def _stringify_exception(exc: BaseException) -> str:
     return "\n".join(
         [
-            getattr(exc, "message", str(exc)),
+            exc.message if isinstance(exc, BaseExceptionGroup) else str(exc),
             *getattr(exc, "__notes__", []),
         ],
     )
@@ -77,7 +74,7 @@ def _match_pattern(match: Pattern[str]) -> str | Pattern[str]:
 def repr_callable(fun: Callable[[BaseExcT_1], bool]) -> str:
     """Get the repr of a ``check`` parameter.
 
-    Split out so it can be monkeypatched (e.g. by our hypothesis plugin)
+    Split out so it can be monkeypatched (e.g. by hypothesis)
     """
     return repr(fun)
 
@@ -127,10 +124,9 @@ class AbstractMatcher(ABC, Generic[BaseExcT_co]):
 
     @property
     def fail_reason(self) -> str | None:
-        """Set after a call to `matches` to give a human-readable
-        reason for why the match failed.
+        """Set after a call to `matches` to give a human-readable reason for why the match failed.
         When used as a context manager the string will be given as the text of an
-        `AssertionError`"""
+        `Failed`"""
         return self._fail_reason
 
     def _check_check(
@@ -198,6 +194,11 @@ class Matcher(AbstractMatcher[MatchE]):
     readable ``repr``s of ``check`` callables in the output.
     """
 
+    # Trio bundled hypothesis monkeypatching, we will probably instead assume that
+    # hypothesis will handle that in their pytest plugin by the time this is released.
+    # Alternatively we could add a version of get_pretty_function_description ourselves
+    # https://github.com/HypothesisWorks/hypothesis/blob/8ced2f59f5c7bea3344e35d2d53e1f8f8eb9fcd8/hypothesis-python/src/hypothesis/internal/reflection.py#L439
+
     # At least one of the three parameters must be passed.
     @overload
     def __init__(
@@ -229,7 +230,7 @@ class Matcher(AbstractMatcher[MatchE]):
         if exception_type is None and match is None and check is None:
             raise ValueError("You must specify at least one parameter to match on.")
         if exception_type is not None and not issubclass(exception_type, BaseException):
-            raise ValueError(
+            raise TypeError(
                 f"exception_type {exception_type} must be a subclass of BaseException",
             )
         self.exception_type = exception_type
@@ -533,7 +534,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
             elif isinstance(exc, type) and issubclass(exc, BaseException):
                 self.is_baseexceptiongroup |= not issubclass(exc, Exception)
             else:
-                raise ValueError(
+                raise TypeError(
                     f'Invalid argument "{exc!r}" must be exception type, Matcher, or'
                     " RaisesGroup.",
                 )
@@ -841,8 +842,10 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
                 if results.get_result(i_exp, i_actual) is None:
                     # we print full repr of match target
                     s += (
-                        f"\n{indent_2}It matches {actual!r} which was "
-                        f"paired with {self._repr_expected(self.expected_exceptions[rev_matches[i_actual]])}"
+                        f"\n{indent_2}It matches {actual!r} which was paired with "
+                        + self._repr_expected(
+                            self.expected_exceptions[rev_matches[i_actual]]
+                        )
                     )
 
         if remaining_actual:
@@ -882,10 +885,9 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
         exc_tb: types.TracebackType | None,
     ) -> bool:
         __tracebackhide__ = True
-        # assert vs fail ... probably a thing everywhere?
-        assert exc_type is not None, (
-            f"DID NOT RAISE any exception, expected {self.expected_type()}"
-        )
+        if exc_type is None:
+            fail(f"DID NOT RAISE any exception, expected {self.expected_type()}")
+
         assert self.excinfo is not None, (
             "Internal error - should have been constructed in __enter__"
         )
@@ -896,11 +898,11 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
             else "group"
         )
 
-        assert self.matches(
-            exc_val,
-        ), f"Raised exception {group_str} did not match: {self._fail_reason}"
+        if not self.matches(exc_val):
+            fail(f"Raised exception {group_str} did not match: {self._fail_reason}")
 
-        # Cast to narrow the exception type now that it's verified.
+        # Cast to narrow the exception type now that it's verified....
+        # even though the TypeGuard in self.matches should be narrowing
         exc_info = cast(
             "tuple[type[BaseExceptionGroup[BaseExcT_co]], BaseExceptionGroup[BaseExcT_co], types.TracebackType]",
             (exc_type, exc_val, exc_tb),
@@ -925,7 +927,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
 
 @final
 class NotChecked:
-    """Singleton for null values in ResultHolder"""
+    """Singleton for unchecked values in ResultHolder"""
 
 
 class ResultHolder:
