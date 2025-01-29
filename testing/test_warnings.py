@@ -526,7 +526,7 @@ class TestDeprecationWarningsByDefault:
             [
                 "ERROR: while parsing the following warning configuration:",
                 "",
-                "  ignore::DeprecationWarning:*",
+                "  ignore::DeprecationWarning:[*]",
                 "",
                 "This error occurred:",
                 "",
