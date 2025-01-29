@@ -521,9 +521,16 @@ class TestDeprecationWarningsByDefault:
             """
         )
         result = pytester.runpytest_subprocess()
+        assert result.ret == pytest.ExitCode.USAGE_ERROR
         result.stderr.fnmatch_lines(
             [
-                "*Invalid regex '*': nothing to repeat at position 0*",
+                "ERROR: while parsing the following warning configuration:",
+                "",
+                "  ignore::DeprecationWarning:*",
+                "",
+                "This error occurred:",
+                "",
+                "Invalid regex '*': nothing to repeat at position 0",
             ]
         )
 
