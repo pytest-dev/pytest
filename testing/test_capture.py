@@ -1684,8 +1684,7 @@ def test_libedit_workaround(pytester: Pytester) -> None:
 
         capture.resume_global_capture()
     """)
-    import readline
-
+    readline = pytest.importorskip("readline")
     backend = getattr(readline, "backend", readline.__doc__)  # added in Python 3.13
     print(f"Readline backend: {backend}")
 

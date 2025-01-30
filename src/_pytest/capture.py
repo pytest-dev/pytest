@@ -91,7 +91,10 @@ def _readline_workaround() -> None:
     workaround consists of importing readline here, so we already worked around
     the issue by the time we could check if we need to.
     """
-    import readline  # noqa: F401
+    try:
+        import readline  # noqa: F401
+    except ImportError:
+        pass
 
 
 def _windowsconsoleio_workaround(stream: TextIO) -> None:
