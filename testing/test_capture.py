@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from collections.abc import Generator
 import contextlib
-import re
 import io
 from io import UnsupportedOperation
 import os
+import re
 import subprocess
 import sys
 import textwrap
@@ -1685,6 +1685,7 @@ def test_libedit_workaround(pytester: Pytester) -> None:
         capture.resume_global_capture()
     """)
     import readline
+
     backend = getattr(readline, "backend", readline.__doc__)  # added in Python 3.13
     print(f"Readline backend: {backend}")
 
