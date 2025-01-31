@@ -1,0 +1,5 @@
+Exposed autoused fixture names as global variables for tests.
+
+Two caveats:
+- It is still not possible to directly use, for example, `autoused_int_fixture += 1` without a prior `global autoused_int_fixture` statement in test definition.
+- This feature makes the test work on an augmented copy of its `.__globals__` dict. So if the test actually modifies `globals()` (which looks like a terrible idea and is probably discouraged somewhere in pytest docs), it may cause issues.

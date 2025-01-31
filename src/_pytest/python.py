@@ -150,6 +150,10 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
         async_fail(pyfuncitem.nodeid)
     funcargs = pyfuncitem.funcargs
     testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
+    autoused = {arg: funcargs[arg] for arg in funcargs if arg not in testargs}
+    testfunction = types.FunctionType(
+        testfunction.__code__, testfunction.__globals__ | autoused
+    )
     result = testfunction(**testargs)
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
         async_fail(pyfuncitem.nodeid)
