@@ -399,16 +399,18 @@ def _in_build(path: Path) -> bool:
     if not path.is_dir():
         return False
 
-    if any(fnmatch_ex(pat, path) for pat in ("build", "dist")):
-        setup_cfg = path.parent / "setup.cfg"
-        if (setup_cfg).is_file():
-            setup_py = path.parent / "setup.py"
-            if setup_py.is_file():
-                return True
+    setup_cfg = path.parent / "setup.cfg"
+    if not setup_cfg.is_file():
+        return False
 
-            toml = path.parent / "pyproject.toml"
-            if toml.is_file() and _is_setuptools_in_pyproject_toml(toml):
-                return True
+    if any(fnmatch_ex(pat, path) for pat in ("build", "dist")):
+        setup_py = path.parent / "setup.py"
+        if setup_py.is_file():
+            return True
+
+        toml = path.parent / "pyproject.toml"
+        if toml.is_file() and _is_setuptools_in_pyproject_toml(toml):
+            return True
 
     return False
 
