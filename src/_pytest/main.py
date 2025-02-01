@@ -391,7 +391,7 @@ def _is_setuptools_in_pyproject_toml(toml: Path) -> bool:
 
 
 def _in_build(path: Path) -> bool:
-    """Attempt to detect if ``path`` is the root of a buildsystem's artifacts
+    """Detect if ``path`` is the root of a buildsystem's artifacts
     by checking known dirnames patterns, and the presence of configuration in
     the parent dir by checking for a setup.py, setup.cfg, or pyproject.toml.
     """
