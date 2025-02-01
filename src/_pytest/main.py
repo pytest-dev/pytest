@@ -219,6 +219,13 @@ def pytest_addoption(parser: Parser) -> None:
         help="Don't ignore tests in a local virtualenv directory",
     )
     group.addoption(
+        "--collect-in-build",
+        action="store_true",
+        dest="collect_in_build",
+        default=False,
+        help="Don't ignore builds in a local build/dist artifacts directory",
+    )
+    group.addoption(
         "--import-mode",
         default="prepend",
         choices=["prepend", "append", "importlib"],
@@ -466,7 +473,7 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
     if not allow_in_venv and _in_venv(collection_path):
         return True
 
-    allow_in_build = False  # config.getoption("collect_in_build")
+    allow_in_build = config.getoption("collect_in_build")
     if not allow_in_build and _in_build(collection_path):
         return True
 
