@@ -277,7 +277,7 @@ class TestCollectFS:
     known_build_dirs = pytest.mark.parametrize("build_dir", ["build", "dist"])
 
     @known_build_dirs
-    def test_build_dirs_collected_when_setuptools_setup_py_present(
+    def test_build_dirs_ignored_when_setuptools_setup_py_present(
         self, pytester: Pytester, build_dir: str
     ) -> None:
         tmp_path = pytester.path
@@ -297,8 +297,11 @@ class TestCollectFS:
         result = pytester.runpytest("--collect-only").stdout.str()
         assert "test_module" not in result
 
+        result = pytester.runpytest("--collect-only", "--collect-in-build").stdout.str()
+        assert "test_module" in result
+
     @known_build_dirs
-    def test_build_dirs_collected_when_setuptools_present_in_pyproject_toml(
+    def test_build_dirs_ignored_when_setuptools_present_in_pyproject_toml(
         self, pytester: Pytester, build_dir: str
     ) -> None:
         tmp_path = pytester.path
@@ -320,6 +323,9 @@ class TestCollectFS:
         )
         result = pytester.runpytest("--collect-only").stdout.str()
         assert "test_module" not in result
+
+        result = pytester.runpytest("--collect-only", "--collect-in-build").stdout.str()
+        assert "test_module" in result
 
 
 class TestCollectPluginHookRelay:
