@@ -58,7 +58,7 @@ if TYPE_CHECKING:
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "norecursedirs",
-        "Directory patterns to avoid for recursion",
+        "Directory patterns to avoid collecting (defaults to ignore build artifacts)",
         type="args",
         default=[
             "*.egg",
