@@ -384,7 +384,8 @@ def _is_setuptools_in_pyproject_toml(toml: Path) -> bool:
         build_system = parsed_toml.get("build-system", {}).get("requires")
         if "setuptools" in build_system:
             return True
-    except Exception:
+    except tomllib.TOMLDecodeError:
+        # Not a valid Toml, so no setuptools.
         pass
 
     return False
