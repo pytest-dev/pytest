@@ -20,7 +20,7 @@ Example:
 
 The `pytest.ini` file:
 
-.. code-block:: pytest
+.. code-block:: ini
 
   [pytest]
   int_value = 3
