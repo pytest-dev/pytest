@@ -1662,12 +1662,12 @@ class Config:
             try:
                 return int(value)
             except ValueError:
-                raise ValueError(f"invalid integer value {value!r}")
+                raise ValueError(f"invalid integer value {value!r}") from None
         elif type == "float":
             try:
                 return float(value)
             except ValueError:
-                raise ValueError(f"invalid float value {value!r}")
+                raise ValueError(f"invalid float value {value!r}") from None
         elif type is None:
             return value
         else:
