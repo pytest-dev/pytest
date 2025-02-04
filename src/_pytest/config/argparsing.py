@@ -193,6 +193,10 @@ class Parser:
                 * ``pathlist``: a list of ``py.path``, separated as in a shell
                 * ``int``: an integer
                 * ``float``: a floating-point number
+                
+                .. versionadded:: 8.4
+                
+                    The ``float`` and ``int`` types.
 
             For ``paths`` and ``pathlist`` types, they are considered relative to the ini-file.
             In case the execution is happening without an ini-file defined,
