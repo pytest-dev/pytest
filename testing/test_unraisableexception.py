@@ -321,6 +321,9 @@ def test_refcycle_unraisable_warning_filter_default(pytester: Pytester) -> None:
     # see: https://github.com/pytest-dev/pytest/pull/13057#discussion_r1888396126
     pytester.makepyfile(
         test_it="""
+        import gc
+        gc.disable()
+
         import pytest
 
         class BrokenDel:
@@ -335,8 +338,8 @@ def test_refcycle_unraisable_warning_filter_default(pytester: Pytester) -> None:
         """
     )
 
-    with _disable_gc():
-        result = pytester.runpytest_subprocess("-Wdefault")
+    # since we use subprocess we need to disable gc inside test_it
+    result = pytester.runpytest_subprocess("-Wdefault")
 
     assert result.ret == pytest.ExitCode.OK
 
