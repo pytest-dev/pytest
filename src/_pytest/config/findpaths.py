@@ -172,7 +172,7 @@ def determine_setup(
     args: Sequence[str],
     rootdir_cmd_arg: str | None,
     invocation_dir: Path,
-) -> tuple[Path, Path | None, dict[str, str | list[str]]]:
+) -> tuple[Path, Path | None, dict[str, int | float | str | list[str]]]:
     """Determine the rootdir, inifile and ini configuration values from the
     command line arguments.
 
