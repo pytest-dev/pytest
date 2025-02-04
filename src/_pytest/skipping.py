@@ -12,6 +12,7 @@ import sys
 import traceback
 from typing import Optional
 
+from _pytest._raises_group import AbstractMatcher
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
@@ -201,7 +202,12 @@ class Xfail:
     reason: str
     run: bool
     strict: bool
-    raises: tuple[type[BaseException], ...] | None
+    raises: (
+        type[BaseException]
+        | tuple[type[BaseException], ...]
+        | AbstractMatcher[BaseException]
+        | None
+    )
 
 
 def evaluate_xfail_marks(item: Item) -> Xfail | None:
@@ -277,11 +283,20 @@ def pytest_runtest_makereport(
     elif not rep.skipped and xfailed:
         if call.excinfo:
             raises = xfailed.raises
-            if raises is not None and not isinstance(call.excinfo.value, raises):
-                rep.outcome = "failed"
-            else:
+            if raises is None or (
+                (
+                    isinstance(raises, (type, tuple))
+                    and isinstance(call.excinfo.value, raises)
+                )
+                or (
+                    isinstance(raises, AbstractMatcher)
+                    and raises.matches(call.excinfo.value)
+                )
+            ):
                 rep.outcome = "skipped"
                 rep.wasxfail = xfailed.reason
+            else:
+                rep.outcome = "failed"
         elif call.when == "call":
             if xfailed.strict:
                 rep.outcome = "failed"

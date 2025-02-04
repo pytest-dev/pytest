@@ -11,6 +11,7 @@ from _pytest._raises_group import Matcher
 from _pytest._raises_group import RaisesGroup
 from _pytest._raises_group import repr_callable
 from _pytest.outcomes import Failed
+from _pytest.pytester import Pytester
 import pytest
 
 
@@ -1135,3 +1136,30 @@ def test_assert_matches() -> None:
 
     # but even if we add assert_matches, will people remember to use it?
     # other than writing a linter rule, I don't think we can catch `assert Matcher(...).matches`
+
+
+# https://github.com/pytest-dev/pytest/issues/12504
+def test_xfail_raisesgroup(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.xfail(raises=pytest.RaisesGroup(ValueError))
+        def test_foo() -> None:
+            raise ExceptionGroup("foo", [ValueError()])
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(xfailed=1)
+
+
+def test_xfail_Matcher(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        @pytest.mark.xfail(raises=pytest.Matcher(ValueError))
+        def test_foo() -> None:
+            raise ValueError
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(xfailed=1)
