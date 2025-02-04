@@ -18,7 +18,7 @@ Example:
           help="my float value"
       )
 
-The **pytest.ini** file:
+The `pytest.ini` file:
 
 .. code-block:: pytest
 
