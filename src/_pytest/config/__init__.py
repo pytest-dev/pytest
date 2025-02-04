@@ -1667,7 +1667,7 @@ class Config:
             try:
                 return float(value)
             except ValueError:
-                raise ValueError(f"invalid float value {value!r}") from None
+                raise ValueError(f"invalid float value for option {name}: {value!r}") from None
         elif type is None:
             return value
         else:
