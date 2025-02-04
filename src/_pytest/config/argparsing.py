@@ -192,7 +192,7 @@ class Parser:
                 * ``paths``: a list of :class:`pathlib.Path`, separated as in a shell
                 * ``pathlist``: a list of ``py.path``, separated as in a shell
                 * ``int``: an integer
-                * ``float``: a floating-point number 
+                * ``float``: a floating-point number
 
             For ``paths`` and ``pathlist`` types, they are considered relative to the ini-file.
             In case the execution is happening without an ini-file defined,
@@ -211,7 +211,17 @@ class Parser:
         The value of ini-variables can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
-        assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float")
+        assert type in (
+            None,
+            "string",
+            "paths",
+            "pathlist",
+            "args",
+            "linelist",
+            "bool",
+            "int",
+            "float",
+        )
         if default is NOT_SET:
             default = get_ini_default_for_type(type)
 
@@ -220,7 +230,10 @@ class Parser:
 
 
 def get_ini_default_for_type(
-    type: Literal["string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"] | None,
+    type: Literal[
+        "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
+    ]
+    | None,
 ) -> Any:
     """
     Used by addini to get the default value for a given ini-option type, when
