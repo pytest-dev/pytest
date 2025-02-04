@@ -5,18 +5,8 @@ Example:
 .. code-block:: python
 
   def pytest_addoption(parser):
-      parser.addini(
-          "int_value",
-          type="int",
-          default=2,
-          help="my int value"
-      )
-      parser.addini(
-          "float_value",
-          type="float",
-          default=4.2,
-          help="my float value"
-      )
+      parser.addini("int_value", type="int", default=2, help="my int value")
+      parser.addini("float_value", type="float", default=4.2, help="my float value")
 
 The `pytest.ini` file:
 
