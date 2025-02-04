@@ -1662,7 +1662,7 @@ class Config:
             try:
                 return int(value)
             except ValueError:
-                raise ValueError(f"invalid integer value {value!r}") from None
+                raise ValueError(f"invalid integer value for option {name}: {value!r}") from None
         elif type == "float":
             try:
                 return float(value)
