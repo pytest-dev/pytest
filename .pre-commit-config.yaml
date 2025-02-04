@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.9.3"
+  rev: "v0.9.4"
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -12,7 +12,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
 - repo: https://github.com/woodruffw/zizmor-pre-commit
-  rev: v1.2.2
+  rev: v1.3.0
   hooks:
     - id: zizmor
 -   repo: https://github.com/adamchainz/blacken-docs
@@ -21,7 +21,7 @@ repos:
     -   id: blacken-docs
         additional_dependencies: [black==24.1.1]
 -   repo: https://github.com/codespell-project/codespell
-    rev: v2.4.0
+    rev: v2.4.1
     hooks:
     -   id: codespell
         args: ["--toml=pyproject.toml"]
