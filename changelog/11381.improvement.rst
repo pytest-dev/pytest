@@ -2,7 +2,7 @@ The ``type`` parameter of the ``parser.addini`` method now accepts the **int** a
 
 Example:
 
-.. code-block:: pytest
+.. code-block:: python
 
   def pytest_addoption(parser):
       parser.addini(
