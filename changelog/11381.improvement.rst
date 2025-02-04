@@ -1,0 +1,27 @@
+The ``type`` parameter of the ``parser.addini`` method now accepts the **int** and **float** literals, allowing the usage of those data types in the **ini** file.
+
+Example:
+
+.. code-block:: pytest
+
+  def pytest_addoption(parser):
+      parser.addini(
+          "int_value",
+          type="int",
+          default=2,
+          help="my int value"
+      )
+      parser.addini(
+          "float_value",
+          type="float",
+          default=4.2,
+          help="my float value"
+      )
+
+The **pytest.ini** file:
+
+.. code-block:: pytest
+
+  [pytest]
+  int_value = 3
+  float_value = 5.4
