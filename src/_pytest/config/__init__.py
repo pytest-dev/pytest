@@ -1587,6 +1587,8 @@ class Config:
         ``paths``, ``pathlist``, ``args`` and ``linelist`` : empty list ``[]``
         ``bool`` : ``False``
         ``string`` : empty string ``""``
+        ``int`` : ``0``
+        ``float`` : ``0.0``
 
         If neither the ``default`` nor the ``type`` parameter is passed
         while registering the configuration through
@@ -1656,6 +1658,16 @@ class Config:
             return _strtobool(str(value).strip())
         elif type == "string":
             return value
+        elif type == "int":
+            try:
+                return int(value)
+            except ValueError:
+                raise ValueError(f"invalid integer value {value!r}")
+        elif type == "float":
+            try:
+                return float(value)
+            except ValueError:
+                raise ValueError(f"invalid float value {value!r}")
         elif type is None:
             return value
         else:
