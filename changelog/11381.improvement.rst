@@ -1,4 +1,4 @@
-The ``type`` parameter of the ``parser.addini`` method now accepts the **int** and **float** literals, facilitating the parsing of configuration values in the **ini** file.
+The ``type`` parameter of the ``parser.addini`` method now accepts `"int"` and ``"float"`` parameters, facilitating the parsing of configuration values in the configuration file.
 
 Example:
 
