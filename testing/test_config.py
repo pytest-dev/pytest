@@ -873,18 +873,18 @@ class TestConfigAPI:
         pytester.makeconftest(
             """
             def pytest_addoption(parser):
-                parser.addini("float_val", "", type="float", default=2.2)
+                parser.addini("ini_param", "", type="float", default=2.2)
         """
         )
         if str_val != "no-ini":
             pytester.makeini(
                 f"""
                 [pytest]
-                float_val={str_val}
+                ini_param={str_val}
             """
             )
         config = pytester.parseconfig()
-        assert config.getini("float_val") == float_val
+        assert config.getini("ini_param") == float_val
 
     def test_addinivalue_line_existing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
