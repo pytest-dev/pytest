@@ -33,6 +33,7 @@ from typing import final
 from typing import IO
 from typing import TextIO
 from typing import TYPE_CHECKING
+from typing import Union
 import warnings
 
 import pluggy
@@ -1645,6 +1646,7 @@ class Config:
                 if self.inipath is not None
                 else self.invocation_params.dir
             )
+            value = cast(Union[str, list[str]], value)
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp / x for x in input_values]
         elif type == "args":
@@ -1659,6 +1661,7 @@ class Config:
         elif type == "string":
             return value
         elif type == "int":
+            value = cast(str, value)
             try:
                 return int(value)
             except ValueError:
@@ -1666,6 +1669,7 @@ class Config:
                     f"invalid integer value for option {name}: {value!r}"
                 ) from None
         elif type == "float":
+            value = cast(str, value)
             try:
                 return float(value)
             except ValueError:
@@ -1675,6 +1679,7 @@ class Config:
         elif type is None:
             return value
         else:
+            value = cast(Union[str, list[str]], value)
             return self._getini_unknown_type(name, type, value)
 
     def _getconftest_pathlist(
