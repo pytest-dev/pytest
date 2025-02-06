@@ -1145,6 +1145,8 @@ def test_xfail_raisesgroup(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         import pytest
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
         @pytest.mark.xfail(raises=pytest.RaisesGroup(ValueError))
         def test_foo() -> None:
             raise ExceptionGroup("foo", [ValueError()])
