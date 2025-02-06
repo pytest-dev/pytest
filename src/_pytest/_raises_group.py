@@ -28,8 +28,8 @@ if TYPE_CHECKING:
     from typing_extensions import TypeVar
 
     # this conditional definition is because we want to allow a TypeVar default
-    MatchE = TypeVar(
-        "MatchE",
+    BaseExcT_co_default = TypeVar(
+        "BaseExcT_co_default",
         bound=BaseException,
         default=BaseException,
         covariant=True,
@@ -37,7 +37,9 @@ if TYPE_CHECKING:
 else:
     from typing import TypeVar
 
-    MatchE = TypeVar("MatchE", bound=BaseException, covariant=True)
+    BaseExcT_co_default = TypeVar(
+        "BaseExcT_co_default", bound=BaseException, covariant=True
+    )
 
 # RaisesGroup doesn't work with a default.
 BaseExcT_co = TypeVar("BaseExcT_co", bound=BaseException, covariant=True)
@@ -104,8 +106,8 @@ def _check_raw_type(
     return None
 
 
-class AbstractMatcher(ABC, Generic[BaseExcT_co]):
-    """ABC with common functionality shared between Matcher and RaisesGroup"""
+class AbstractRaises(ABC, Generic[BaseExcT_co]):
+    """ABC with common functionality shared between RaisesExc and RaisesGroup"""
 
     def __init__(
         self,
@@ -130,7 +132,7 @@ class AbstractMatcher(ABC, Generic[BaseExcT_co]):
         return self._fail_reason
 
     def _check_check(
-        self: AbstractMatcher[BaseExcT_1],
+        self: AbstractRaises[BaseExcT_1],
         exception: BaseExcT_1,
     ) -> bool:
         if self.check is None:
@@ -165,29 +167,29 @@ class AbstractMatcher(ABC, Generic[BaseExcT_co]):
 
     @abstractmethod
     def matches(
-        self: AbstractMatcher[BaseExcT_1], exc_val: BaseException
+        self: AbstractRaises[BaseExcT_1], exc_val: BaseException
     ) -> TypeGuard[BaseExcT_1]:
-        """Check if an exception matches the requirements of this AbstractMatcher.
-        If it fails, `AbstractMatcher.fail_reason` should be set.
+        """Check if an exception matches the requirements of this AbstractRaises.
+        If it fails, `AbstractRaises.fail_reason` should be set.
         """
 
 
 @final
-class Matcher(AbstractMatcher[MatchE]):
+class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     """Helper class to be used together with RaisesGroups when you want to specify requirements on sub-exceptions.
     Only specifying the type is redundant, and it's also unnecessary when the type is a
     nested `RaisesGroup` since it supports the same arguments.
     The type is checked with `isinstance`, and does not need to be an exact match.
     If that is wanted you can use the ``check`` parameter.
-    :meth:`Matcher.matches` can also be used standalone to check individual exceptions.
+    :meth:`RaisesExc.matches` can also be used standalone to check individual exceptions.
 
     Examples::
 
-        with RaisesGroups(Matcher(ValueError, match="string"))
+        with RaisesGroups(RaisesExc(ValueError, match="string"))
             ...
-        with RaisesGroups(Matcher(check=lambda x: x.args == (3, "hello"))):
+        with RaisesGroups(RaisesExc(check=lambda x: x.args == (3, "hello"))):
             ...
-        with RaisesGroups(Matcher(check=lambda x: type(x) is ValueError)):
+        with RaisesGroups(RaisesExc(check=lambda x: type(x) is ValueError)):
             ...
 
     Tip: if you install ``hypothesis`` and import it in ``conftest.py`` you will get
@@ -202,15 +204,15 @@ class Matcher(AbstractMatcher[MatchE]):
     # At least one of the three parameters must be passed.
     @overload
     def __init__(
-        self: Matcher[MatchE],
-        exception_type: type[MatchE],
+        self: RaisesExc[BaseExcT_co_default],
+        exception_type: type[BaseExcT_co_default],
         match: str | Pattern[str] = ...,
-        check: Callable[[MatchE], bool] = ...,
+        check: Callable[[BaseExcT_co_default], bool] = ...,
     ) -> None: ...
 
     @overload
     def __init__(
-        self: Matcher[BaseException],  # Give E a value.
+        self: RaisesExc[BaseException],  # Give E a value.
         *,
         match: str | Pattern[str],
         # If exception_type is not provided, check() must do any typechecks itself.
@@ -222,9 +224,9 @@ class Matcher(AbstractMatcher[MatchE]):
 
     def __init__(
         self,
-        exception_type: type[MatchE] | None = None,
+        exception_type: type[BaseExcT_co_default] | None = None,
         match: str | Pattern[str] | None = None,
-        check: Callable[[MatchE], bool] | None = None,
+        check: Callable[[BaseExcT_co_default], bool] | None = None,
     ):
         super().__init__(match, check)
         if exception_type is None and match is None and check is None:
@@ -238,20 +240,20 @@ class Matcher(AbstractMatcher[MatchE]):
     def matches(
         self,
         exception: BaseException,
-    ) -> TypeGuard[MatchE]:
-        """Check if an exception matches the requirements of this Matcher.
-        If it fails, `Matcher.fail_reason` will be set.
+    ) -> TypeGuard[BaseExcT_co_default]:
+        """Check if an exception matches the requirements of this RaisesExc.
+        If it fails, `RaisesExc.fail_reason` will be set.
 
         Examples::
 
-            assert Matcher(ValueError).matches(my_exception):
+            assert RaisesExc(ValueError).matches(my_exception):
             # is equivalent to
             assert isinstance(my_exception, ValueError)
 
             # this can be useful when checking e.g. the ``__cause__`` of an exception.
             with pytest.raises(ValueError) as excinfo:
                 ...
-            assert Matcher(SyntaxError, match="foo").matches(excinfo.value.__cause__)
+            assert RaisesExc(SyntaxError, match="foo").matches(excinfo.value.__cause__)
             # above line is equivalent to
             assert isinstance(excinfo.value.__cause__, SyntaxError)
             assert re.search("foo", str(excinfo.value.__cause__)
@@ -276,15 +278,15 @@ class Matcher(AbstractMatcher[MatchE]):
             )
         if self.check is not None:
             parameters.append(f"check={repr_callable(self.check)}")
-        return f"Matcher({', '.join(parameters)})"
+        return f"RaisesExc({', '.join(parameters)})"
 
-    def _check_type(self, exception: BaseException) -> TypeGuard[MatchE]:
+    def _check_type(self, exception: BaseException) -> TypeGuard[BaseExcT_co_default]:
         self._fail_reason = _check_raw_type(self.exception_type, exception)
         return self._fail_reason is None
 
 
 @final
-class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
+class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     """Contextmanager for checking for an expected `ExceptionGroup`.
     This works similar to ``pytest.raises``, but allows for specifying the structure of an `ExceptionGroup`.
     `ExceptionInfo.group_contains` also tries to handle exception groups,
@@ -299,13 +301,13 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     #. All specified exceptions must be present, *and no others*.
 
        * If you expect a variable number of exceptions you need to use ``pytest.raises(ExceptionGroup)`` and manually
-         check the contained exceptions. Consider making use of :func:`Matcher.matches`.
+         check the contained exceptions. Consider making use of :func:`RaisesExc.matches`.
 
     #. It will only catch exceptions wrapped in an exceptiongroup by default.
 
-       * With ``allow_unwrapped=True`` you can specify a single expected exception or `Matcher` and it will match
+       * With ``allow_unwrapped=True`` you can specify a single expected exception or `RaisesExc` and it will match
          the exception even if it is not inside an `ExceptionGroup`.
-         If you expect one of several different exception types you need to use a `Matcher` object.
+         If you expect one of several different exception types you need to use a `RaisesExc` object.
 
     #. By default it cares about the full structure with nested `ExceptionGroup`'s. You can specify nested
        `ExceptionGroup`'s by passing `RaisesGroup` objects as expected exceptions.
@@ -323,7 +325,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
         with RaisesGroups(ValueError):
             raise ExceptionGroup("", (ValueError(),))
         with RaisesGroups(
-            ValueError, ValueError, Matcher(TypeError, match="expected int")
+            ValueError, ValueError, RaisesExc(TypeError, match="expected int")
         ):
             ...
         with RaisesGroups(
@@ -349,11 +351,11 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
 
     The matching algorithm is greedy, which means cases such as this may fail::
 
-        with RaisesGroups(ValueError, Matcher(ValueError, match="hello")):
+        with RaisesGroups(ValueError, RaisesExc(ValueError, match="hello")):
             raise ExceptionGroup("", (ValueError("hello"), ValueError("goodbye")))
 
     even though it generally does not care about the order of the exceptions in the group.
-    To avoid the above you should specify the first ValueError with a Matcher as well.
+    To avoid the above you should specify the first ValueError with a RaisesExc as well.
 
     Tip: if you install ``hypothesis`` and import it in ``conftest.py`` you will get
     readable ``repr``s of ``check`` callables in the output.
@@ -364,7 +366,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     @overload
     def __init__(
         self,
-        exception: type[BaseExcT_co] | Matcher[BaseExcT_co],
+        exception: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
         *,
         allow_unwrapped: Literal[True],
         flatten_subgroups: bool = False,
@@ -374,8 +376,8 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     @overload
     def __init__(
         self,
-        exception: type[BaseExcT_co] | Matcher[BaseExcT_co],
-        *other_exceptions: type[BaseExcT_co] | Matcher[BaseExcT_co],
+        exception: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
+        *other_exceptions: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
         flatten_subgroups: Literal[True],
         match: str | Pattern[str] | None = None,
         check: Callable[[BaseExceptionGroup[BaseExcT_co]], bool] | None = None,
@@ -389,8 +391,8 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     @overload
     def __init__(
         self: RaisesGroup[ExcT_1],
-        exception: type[ExcT_1] | Matcher[ExcT_1],
-        *other_exceptions: type[ExcT_1] | Matcher[ExcT_1],
+        exception: type[ExcT_1] | RaisesExc[ExcT_1],
+        *other_exceptions: type[ExcT_1] | RaisesExc[ExcT_1],
         match: str | Pattern[str] | None = None,
         check: Callable[[ExceptionGroup[ExcT_1]], bool] | None = None,
     ) -> None: ...
@@ -407,8 +409,8 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     @overload
     def __init__(
         self: RaisesGroup[ExcT_1 | ExceptionGroup[ExcT_2]],
-        exception: type[ExcT_1] | Matcher[ExcT_1] | RaisesGroup[ExcT_2],
-        *other_exceptions: type[ExcT_1] | Matcher[ExcT_1] | RaisesGroup[ExcT_2],
+        exception: type[ExcT_1] | RaisesExc[ExcT_1] | RaisesGroup[ExcT_2],
+        *other_exceptions: type[ExcT_1] | RaisesExc[ExcT_1] | RaisesGroup[ExcT_2],
         match: str | Pattern[str] | None = None,
         check: (
             Callable[[ExceptionGroup[ExcT_1 | ExceptionGroup[ExcT_2]]], bool] | None
@@ -419,8 +421,8 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     @overload
     def __init__(
         self: RaisesGroup[BaseExcT_1],
-        exception: type[BaseExcT_1] | Matcher[BaseExcT_1],
-        *other_exceptions: type[BaseExcT_1] | Matcher[BaseExcT_1],
+        exception: type[BaseExcT_1] | RaisesExc[BaseExcT_1],
+        *other_exceptions: type[BaseExcT_1] | RaisesExc[BaseExcT_1],
         match: str | Pattern[str] | None = None,
         check: Callable[[BaseExceptionGroup[BaseExcT_1]], bool] | None = None,
     ) -> None: ...
@@ -439,9 +441,9 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     @overload
     def __init__(
         self: RaisesGroup[BaseExcT_1 | BaseExceptionGroup[BaseExcT_2]],
-        exception: type[BaseExcT_1] | Matcher[BaseExcT_1] | RaisesGroup[BaseExcT_2],
+        exception: type[BaseExcT_1] | RaisesExc[BaseExcT_1] | RaisesGroup[BaseExcT_2],
         *other_exceptions: type[BaseExcT_1]
-        | Matcher[BaseExcT_1]
+        | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
         match: str | Pattern[str] | None = None,
         check: (
@@ -455,9 +457,9 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
 
     def __init__(
         self: RaisesGroup[ExcT_1 | BaseExcT_1 | BaseExceptionGroup[BaseExcT_2]],
-        exception: type[BaseExcT_1] | Matcher[BaseExcT_1] | RaisesGroup[BaseExcT_2],
+        exception: type[BaseExcT_1] | RaisesExc[BaseExcT_1] | RaisesGroup[BaseExcT_2],
         *other_exceptions: type[BaseExcT_1]
-        | Matcher[BaseExcT_1]
+        | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
         allow_unwrapped: bool = False,
         flatten_subgroups: bool = False,
@@ -479,7 +481,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
         )
         super().__init__(match, check)
         self.expected_exceptions: tuple[
-            type[BaseExcT_co] | Matcher[BaseExcT_co] | RaisesGroup[BaseException], ...
+            type[BaseExcT_co] | RaisesExc[BaseExcT_co] | RaisesGroup[BaseException], ...
         ] = (
             exception,
             *other_exceptions,
@@ -492,8 +494,8 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
             raise ValueError(
                 "You cannot specify multiple exceptions with `allow_unwrapped=True.`"
                 " If you want to match one of multiple possible exceptions you should"
-                " use a `Matcher`."
-                " E.g. `Matcher(check=lambda e: isinstance(e, (...)))`",
+                " use a `RaisesExc`."
+                " E.g. `RaisesExc(check=lambda e: isinstance(e, (...)))`",
             )
         if allow_unwrapped and isinstance(exception, RaisesGroup):
             raise ValueError(
@@ -505,7 +507,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
             raise ValueError(
                 "`allow_unwrapped=True` bypasses the `match` and `check` parameters"
                 " if the exception is unwrapped. If you intended to match/check the"
-                " exception you should use a `Matcher` object. If you want to match/check"
+                " exception you should use a `RaisesExc` object. If you want to match/check"
                 " the exceptiongroup when the exception *is* wrapped you need to"
                 " do e.g. `if isinstance(exc.value, ExceptionGroup):"
                 " assert RaisesGroup(...).matches(exc.value)` afterwards.",
@@ -523,9 +525,9 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
                     )
                 self.is_baseexceptiongroup |= exc.is_baseexceptiongroup
                 exc._nested = True
-            elif isinstance(exc, Matcher):
+            elif isinstance(exc, RaisesExc):
                 if exc.exception_type is not None:
-                    # Matcher __init__ assures it's a subclass of BaseException
+                    # RaisesExc __init__ assures it's a subclass of BaseException
                     self.is_baseexceptiongroup |= not issubclass(
                         exc.exception_type,
                         Exception,
@@ -535,7 +537,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
                 self.is_baseexceptiongroup |= not issubclass(exc, Exception)
             else:
                 raise TypeError(
-                    f'Invalid argument "{exc!r}" must be exception type, Matcher, or'
+                    f'Invalid argument "{exc!r}" must be exception type, RaisesExc, or'
                     " RaisesGroup.",
                 )
 
@@ -657,7 +659,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
                 assert self._fail_reason is old_reason is not None
                 self._fail_reason += (
                     f", but matched the expected {self._repr_expected(expected)}."
-                    f" You might want RaisesGroup(Matcher({expected.__name__}, match={_match_pattern(self.match)!r}))"
+                    f" You might want RaisesGroup(RaisesExc({expected.__name__}, match={_match_pattern(self.match)!r}))"
                 )
             else:
                 self._fail_reason = old_reason
@@ -706,7 +708,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
             ):
                 self._fail_reason = reason + (
                     f", but did return True for the expected {self._repr_expected(expected)}."
-                    f" You might want RaisesGroup(Matcher({expected.__name__}, check=<...>))"
+                    f" You might want RaisesGroup(RaisesExc({expected.__name__}, check=<...>))"
                 )
             else:
                 self._fail_reason = reason
@@ -717,7 +719,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     @staticmethod
     def _check_expected(
         expected_type: (
-            type[BaseException] | Matcher[BaseException] | RaisesGroup[BaseException]
+            type[BaseException] | RaisesExc[BaseException] | RaisesGroup[BaseException]
         ),
         exception: BaseException,
     ) -> str | None:
@@ -734,8 +736,8 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
         return f"{expected_type!r}: {expected_type.fail_reason}"
 
     @staticmethod
-    def _repr_expected(e: type[BaseException] | AbstractMatcher[BaseException]) -> str:
-        """Get the repr of an expected type/Matcher/RaisesGroup, but we only want
+    def _repr_expected(e: type[BaseException] | AbstractRaises[BaseException]) -> str:
+        """Get the repr of an expected type/RaisesExc/RaisesGroup, but we only want
         the name if it's a type"""
         if isinstance(e, type):
             return _exception_type_name(e)
@@ -887,7 +889,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
             s += (
                 "\nThere exist a possible match when attempting an exhaustive check,"
                 " but RaisesGroup uses a greedy algorithm. "
-                "Please make your expected exceptions more stringent with `Matcher` etc"
+                "Please make your expected exceptions more stringent with `RaisesExc` etc"
                 " so the greedy algorithm can function."
             )
         self._fail_reason = s
@@ -928,7 +930,7 @@ class RaisesGroup(AbstractMatcher[BaseExceptionGroup[BaseExcT_co]]):
     def expected_type(self) -> str:
         subexcs = []
         for e in self.expected_exceptions:
-            if isinstance(e, Matcher):
+            if isinstance(e, RaisesExc):
                 subexcs.append(str(e))
             elif isinstance(e, RaisesGroup):
                 subexcs.append(e.expected_type())
@@ -953,7 +955,7 @@ class ResultHolder:
     def __init__(
         self,
         expected_exceptions: tuple[
-            type[BaseException] | AbstractMatcher[BaseException], ...
+            type[BaseException] | AbstractRaises[BaseException], ...
         ],
         actual_exceptions: Sequence[BaseException],
     ) -> None:

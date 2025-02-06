@@ -828,6 +828,13 @@ class ExceptionInfo(Generic[E]):
             the exceptions contained within the topmost exception group).
 
         .. versionadded:: 8.0
+
+        .. warning::
+           This helper makes it easy to check for the presence of specific exceptions,
+           but it is very bad for checking that the group does *not* contain
+           *any other exceptions*.
+           You should instead consider using :class:`pytest.raises_group <pytest.RaisesGroup>`
+
         """
         msg = "Captured exception is not an instance of `BaseExceptionGroup`"
         assert isinstance(self.value, BaseExceptionGroup), msg

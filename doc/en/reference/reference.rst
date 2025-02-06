@@ -1014,6 +1014,18 @@ PytestPluginManager
     :inherited-members:
     :show-inheritance:
 
+RaisesExc
+~~~~~~~~~
+
+.. autoclass:: pytest.RaisesExc()
+    :members:
+
+RaisesGroup
+~~~~~~~~~~~
+
+.. autoclass:: pytest.RaisesGroup()
+    :members:
+
 TerminalReporter
 ~~~~~~~~~~~~~~~~
 

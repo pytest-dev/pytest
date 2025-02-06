@@ -6,7 +6,7 @@ from __future__ import annotations
 from _pytest import __version__
 from _pytest import version_tuple
 from _pytest._code import ExceptionInfo
-from _pytest._raises_group import Matcher
+from _pytest._raises_group import RaisesExc
 from _pytest._raises_group import RaisesGroup
 from _pytest._raises_group import RaisesGroup as raises_group
 from _pytest.assertion import register_assert_rewrite
@@ -116,7 +116,6 @@ __all__ = [
     "Mark",
     "MarkDecorator",
     "MarkGenerator",
-    "Matcher",
     "Metafunc",
     "Module",
     "MonkeyPatch",
@@ -137,6 +136,7 @@ __all__ = [
     "PytestUnraisableExceptionWarning",
     "PytestWarning",
     "Pytester",
+    "RaisesExc",
     "RaisesGroup",
     "RecordedHookCall",
     "RunResult",

@@ -908,6 +908,11 @@ def raises(
            ...
            >>> assert exc_info.type is ValueError
 
+    **Expecting exception groups**
+
+    When expecting exceptions wrapped in :exc:`BaseExceptionGroup` or
+    :exc:`ExceptionGroup`, you should instead use :class:`pytest.RaisesGroup`.
+
     **Using with** ``pytest.mark.parametrize``
 
     When using :ref:`pytest.mark.parametrize ref`

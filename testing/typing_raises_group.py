@@ -6,7 +6,7 @@ from typing import Union
 
 from typing_extensions import assert_type
 
-from _pytest._raises_group import Matcher
+from _pytest._raises_group import RaisesExc
 from _pytest._raises_group import RaisesGroup
 
 
@@ -17,7 +17,7 @@ if sys.version_info < (3, 11):
 # split into functions to isolate the different scopes
 
 
-def check_matcher_typevar_default(e: Matcher) -> None:
+def check_raisesexc_typevar_default(e: RaisesExc) -> None:
     assert e.exception_type is not None
     _exc: type[BaseException] = e.exception_type
     # this would previously pass, as the type would be `Any`
@@ -53,30 +53,30 @@ def check_matches_with_different_exception_type() -> None:
         assert_type(e, ExceptionGroup[ValueError])
 
 
-def check_matcher_init() -> None:
+def check_raisesexc_init() -> None:
     def check_exc(exc: BaseException) -> bool:
         return isinstance(exc, ValueError)
 
     # Check various combinations of constructor signatures.
     # At least 1 arg must be provided.
-    Matcher()  # type: ignore
-    Matcher(ValueError)
-    Matcher(ValueError, "regex")
-    Matcher(ValueError, "regex", check_exc)
-    Matcher(exception_type=ValueError)
-    Matcher(match="regex")
-    Matcher(check=check_exc)
-    Matcher(ValueError, match="regex")
-    Matcher(match="regex", check=check_exc)
+    RaisesExc()  # type: ignore
+    RaisesExc(ValueError)
+    RaisesExc(ValueError, "regex")
+    RaisesExc(ValueError, "regex", check_exc)
+    RaisesExc(exception_type=ValueError)
+    RaisesExc(match="regex")
+    RaisesExc(check=check_exc)
+    RaisesExc(ValueError, match="regex")
+    RaisesExc(match="regex", check=check_exc)
 
     def check_filenotfound(exc: FileNotFoundError) -> bool:
         return not exc.filename.endswith(".tmp")
 
     # If exception_type is provided, that narrows the `check` method's argument.
-    Matcher(FileNotFoundError, check=check_filenotfound)
-    Matcher(ValueError, check=check_filenotfound)  # type: ignore
-    Matcher(check=check_filenotfound)  # type: ignore
-    Matcher(FileNotFoundError, match="regex", check=check_filenotfound)
+    RaisesExc(FileNotFoundError, check=check_filenotfound)
+    RaisesExc(ValueError, check=check_filenotfound)  # type: ignore
+    RaisesExc(check=check_filenotfound)  # type: ignore
+    RaisesExc(FileNotFoundError, match="regex", check=check_filenotfound)
 
 
 def raisesgroup_check_type_narrowing() -> None:
@@ -126,8 +126,8 @@ def raisesgroup_narrow_baseexceptiongroup() -> None:
     RaisesGroup(Exception, check=handle_group)
 
 
-def check_matcher_transparent() -> None:
-    with RaisesGroup(Matcher(ValueError)) as e:
+def check_raisesexc_transparent() -> None:
+    with RaisesGroup(RaisesExc(ValueError)) as e:
         ...
     _: BaseExceptionGroup[ValueError] = e.value
     assert_type(e.value, ExceptionGroup[ValueError])
@@ -167,8 +167,8 @@ def check_nested_raisesgroups_matches() -> None:
 
 def check_multiple_exceptions_1() -> None:
     a = RaisesGroup(ValueError, ValueError)
-    b = RaisesGroup(Matcher(ValueError), Matcher(ValueError))
-    c = RaisesGroup(ValueError, Matcher(ValueError))
+    b = RaisesGroup(RaisesExc(ValueError), RaisesExc(ValueError))
+    c = RaisesGroup(ValueError, RaisesExc(ValueError))
 
     d: RaisesGroup[ValueError]
     d = a
@@ -179,8 +179,8 @@ def check_multiple_exceptions_1() -> None:
 
 def check_multiple_exceptions_2() -> None:
     # This previously failed due to lack of covariance in the TypeVar
-    a = RaisesGroup(Matcher(ValueError), Matcher(TypeError))
-    b = RaisesGroup(Matcher(ValueError), TypeError)
+    a = RaisesGroup(RaisesExc(ValueError), RaisesExc(TypeError))
+    b = RaisesGroup(RaisesExc(ValueError), TypeError)
     c = RaisesGroup(ValueError, TypeError)
 
     d: RaisesGroup[Exception]
@@ -203,7 +203,7 @@ def check_raisesgroup_overloads() -> None:
     # allowed variants
     RaisesGroup(ValueError, allow_unwrapped=True)
     RaisesGroup(ValueError, allow_unwrapped=True, flatten_subgroups=True)
-    RaisesGroup(Matcher(ValueError), allow_unwrapped=True)
+    RaisesGroup(RaisesExc(ValueError), allow_unwrapped=True)
 
     # flatten_subgroups=True does not allow nested RaisesGroup
     RaisesGroup(RaisesGroup(ValueError), flatten_subgroups=True)  # type: ignore
@@ -212,7 +212,7 @@ def check_raisesgroup_overloads() -> None:
     RaisesGroup(ValueError, match="foo", flatten_subgroups=True)
     RaisesGroup(ValueError, check=bool, flatten_subgroups=True)
     RaisesGroup(ValueError, flatten_subgroups=True)
-    RaisesGroup(Matcher(ValueError), flatten_subgroups=True)
+    RaisesGroup(RaisesExc(ValueError), flatten_subgroups=True)
 
     # if they're both false we can of course specify nested raisesgroup
     RaisesGroup(RaisesGroup(ValueError))

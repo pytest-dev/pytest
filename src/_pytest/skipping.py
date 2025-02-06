@@ -12,7 +12,7 @@ import sys
 import traceback
 from typing import Optional
 
-from _pytest._raises_group import AbstractMatcher
+from _pytest._raises_group import AbstractRaises
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
@@ -205,7 +205,7 @@ class Xfail:
     raises: (
         type[BaseException]
         | tuple[type[BaseException], ...]
-        | AbstractMatcher[BaseException]
+        | AbstractRaises[BaseException]
         | None
     )
 
@@ -289,7 +289,7 @@ def pytest_runtest_makereport(
                     and isinstance(call.excinfo.value, raises)
                 )
                 or (
-                    isinstance(raises, AbstractMatcher)
+                    isinstance(raises, AbstractRaises)
                     and raises.matches(call.excinfo.value)
                 )
             ):

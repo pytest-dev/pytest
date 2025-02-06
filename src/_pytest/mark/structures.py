@@ -23,7 +23,7 @@ import warnings
 from .._code import getfslineno
 from ..compat import NOTSET
 from ..compat import NotSetType
-from _pytest._raises_group import AbstractMatcher
+from _pytest._raises_group import AbstractRaises
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
@@ -463,7 +463,7 @@ if TYPE_CHECKING:
             raises: None
             | type[BaseException]
             | tuple[type[BaseException], ...]
-            | AbstractMatcher[BaseException] = ...,
+            | AbstractRaises[BaseException] = ...,
             strict: bool = ...,
         ) -> MarkDecorator: ...
 
