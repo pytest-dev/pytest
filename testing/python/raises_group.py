@@ -1144,6 +1144,7 @@ def test_assert_matches() -> None:
 def test_xfail_raisesgroup(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
+        import sys
         import pytest
         if sys.version_info < (3, 11):
             from exceptiongroup import ExceptionGroup

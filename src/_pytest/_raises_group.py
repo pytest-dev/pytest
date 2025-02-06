@@ -126,9 +126,9 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
 
     @property
     def fail_reason(self) -> str | None:
-        """Set after a call to `matches` to give a human-readable reason for why the match failed.
-        When used as a context manager the string will be given as the text of an
-        `Failed`"""
+        """Set after a call to :meth:`matches` to give a human-readable reason for why the match failed.
+        When used as a context manager the string will be printed as the reason for the
+        test failing."""
         return self._fail_reason
 
     def _check_check(
@@ -170,17 +170,20 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
         self: AbstractRaises[BaseExcT_1], exc_val: BaseException
     ) -> TypeGuard[BaseExcT_1]:
         """Check if an exception matches the requirements of this AbstractRaises.
-        If it fails, `AbstractRaises.fail_reason` should be set.
+        If it fails, :meth:`AbstractRaises.fail_reason` should be set.
         """
 
 
 @final
 class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     """Helper class to be used together with RaisesGroups when you want to specify requirements on sub-exceptions.
-    Only specifying the type is redundant, and it's also unnecessary when the type is a
-    nested `RaisesGroup` since it supports the same arguments.
-    The type is checked with `isinstance`, and does not need to be an exact match.
+
+    You don't need this if you only want to specify the type, since :class:`RaisesGroup`
+    accepts ``type[BaseException]``.
+
+    The type is checked with :func:`isinstance`, and does not need to be an exact match.
     If that is wanted you can use the ``check`` parameter.
+
     :meth:`RaisesExc.matches` can also be used standalone to check individual exceptions.
 
     Examples::
@@ -193,7 +196,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             ...
 
     Tip: if you install ``hypothesis`` and import it in ``conftest.py`` you will get
-    readable ``repr``s of ``check`` callables in the output.
+    readable ``repr``'s of ``check`` callables in the output.
     """
 
     # Trio bundled hypothesis monkeypatching, we will probably instead assume that
@@ -241,8 +244,8 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         self,
         exception: BaseException,
     ) -> TypeGuard[BaseExcT_co_default]:
-        """Check if an exception matches the requirements of this RaisesExc.
-        If it fails, `RaisesExc.fail_reason` will be set.
+        """Check if an exception matches the requirements of this :class:`RaisesExc`.
+        If it fails, :attr:`RaisesExc.fail_reason` will be set.
 
         Examples::
 
@@ -287,33 +290,34 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
 
 @final
 class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
-    """Contextmanager for checking for an expected `ExceptionGroup`.
-    This works similar to ``pytest.raises``, but allows for specifying the structure of an `ExceptionGroup`.
-    `ExceptionInfo.group_contains` also tries to handle exception groups,
-    but it is very bad at checking that you *didn't* get exceptions you didn't expect.
+    """Contextmanager for checking for an expected :exc:`ExceptionGroup`.
+    This works similar to :func:`pytest.raises`, but allows for specifying the structure of an :exc:`ExceptionGroup`.
+    :meth:`ExceptionInfo.group_contains` also tries to handle exception groups,
+    but it is very bad at checking that you *didn't* get unexpected exceptions.
 
 
-    The catching behaviour differs from :ref:`except* <except_star>` in multiple
-    different ways, being much stricter by default.
+    The catching behaviour differs from :ref:`except* <except_star>`, being much
+    stricter about the structure by default.
     By using ``allow_unwrapped=True`` and ``flatten_subgroups=True`` you can match
-    ``except*`` fully when expecting a single exception.
+    :ref:`except* <except_star>` fully when expecting a single exception.
 
     #. All specified exceptions must be present, *and no others*.
 
-       * If you expect a variable number of exceptions you need to use ``pytest.raises(ExceptionGroup)`` and manually
-         check the contained exceptions. Consider making use of :func:`RaisesExc.matches`.
+       * If you expect a variable number of exceptions you need to use
+         :func:`pytest.raises(ExceptionGroup) <pytest.raises>` and manually check
+         the contained exceptions. Consider making use of :meth:`RaisesExc.matches`.
 
     #. It will only catch exceptions wrapped in an exceptiongroup by default.
 
-       * With ``allow_unwrapped=True`` you can specify a single expected exception or `RaisesExc` and it will match
-         the exception even if it is not inside an `ExceptionGroup`.
-         If you expect one of several different exception types you need to use a `RaisesExc` object.
+       * With ``allow_unwrapped=True`` you can specify a single expected exception (or `RaisesExc`) and it will match
+         the exception even if it is not inside an :exc:`ExceptionGroup`.
+         If you expect one of several different exception types you need to use a :class:`RaisesExc` object.
 
-    #. By default it cares about the full structure with nested `ExceptionGroup`'s. You can specify nested
-       `ExceptionGroup`'s by passing `RaisesGroup` objects as expected exceptions.
+    #. By default it cares about the full structure with nested :exc:`ExceptionGroup`'s. You can specify nested
+       :exc:`ExceptionGroup`'s by passing :class:`RaisesGroup` objects as expected exceptions.
 
-       * With ``flatten_subgroups=True`` it will "flatten" the raised `ExceptionGroup`,
-         extracting all exceptions inside any nested :class:`ExceptionGroup`, before matching.
+       * With ``flatten_subgroups=True`` it will "flatten" the raised :exc:`ExceptionGroup`,
+         extracting all exceptions inside any nested :exc:`ExceptionGroup`, before matching.
 
     It does not care about the order of the exceptions, so
     ``RaisesGroups(ValueError, TypeError)``
@@ -346,7 +350,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             raise ValueError
 
 
-    `RaisesGroup.matches` can also be used directly to check a standalone exception group.
+    :meth:`RaisesGroup.matches` can also be used directly to check a standalone exception group.
 
 
     The matching algorithm is greedy, which means cases such as this may fail::
@@ -355,10 +359,10 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             raise ExceptionGroup("", (ValueError("hello"), ValueError("goodbye")))
 
     even though it generally does not care about the order of the exceptions in the group.
-    To avoid the above you should specify the first ValueError with a RaisesExc as well.
+    To avoid the above you should specify the first :exc:`ValueError` with a :class:`RaisesExc` as well.
 
     Tip: if you install ``hypothesis`` and import it in ``conftest.py`` you will get
-    readable ``repr``s of ``check`` callables in the output.
+    readable ``repr``'s of ``check`` callables in the output.
     """
 
     # allow_unwrapped=True requires: singular exception, exception not being

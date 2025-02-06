@@ -1020,11 +1020,16 @@ RaisesExc
 .. autoclass:: pytest.RaisesExc()
     :members:
 
+    .. autoattribute:: fail_reason
+
 RaisesGroup
 ~~~~~~~~~~~
+**Tutorial**: :ref:`assert-matching-exception-groups`
 
 .. autoclass:: pytest.RaisesGroup()
     :members:
+
+    .. autoattribute:: fail_reason
 
 TerminalReporter
 ~~~~~~~~~~~~~~~~
