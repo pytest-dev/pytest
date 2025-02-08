@@ -33,7 +33,6 @@ from typing import final
 from typing import IO
 from typing import TextIO
 from typing import TYPE_CHECKING
-from typing import Union
 import warnings
 
 import pluggy
@@ -1646,7 +1645,10 @@ class Config:
                 if self.inipath is not None
                 else self.invocation_params.dir
             )
-            value = cast(Union[str, list[str]], value)
+            if not isinstance(value, (str, Sequence)):
+                raise TypeError(
+                    f"Expected str or sequence for option {name} of type str/list, but got: {value!r}"
+                ) from None
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp / x for x in input_values]
         elif type == "args":
@@ -1661,25 +1663,24 @@ class Config:
         elif type == "string":
             return value
         elif type == "int":
-            value = cast(str, value)
-            try:
-                return int(value)
-            except ValueError:
-                raise ValueError(
-                    f"invalid integer value for option {name}: {value!r}"
+            if not isinstance(value, (str, int)):
+                raise TypeError(
+                    f"Expected str or int for option {name} of type integer, but got: {value!r}"
                 ) from None
+            return int(value)
         elif type == "float":
-            value = cast(str, value)
-            try:
-                return float(value)
-            except ValueError:
-                raise ValueError(
-                    f"invalid float value for option {name}: {value!r}"
+            if not isinstance(value, (str, float)):
+                raise TypeError(
+                    f"Expected str or flot for option {name} of type float, but got: {value!r}"
                 ) from None
+            return float(value)
         elif type is None:
             return value
         else:
-            value = cast(Union[str, list[str]], value)
+            if not isinstance(value, (str, Sequence)):
+                raise TypeError(
+                    f"Expected str or sequence for option {name} of type str/list, but got: {value!r}"
+                ) from None
             return self._getini_unknown_type(name, type, value)
 
     def _getconftest_pathlist(
