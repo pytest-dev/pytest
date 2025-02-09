@@ -21,7 +21,9 @@ if TYPE_CHECKING:
 
     from typing_extensions import TypeAlias
 
-    ConfigDict: TypeAlias = dict[str, Union[str, int, float, list[str]]]
+    # Even though TOML supports richer data types, all values are converted to str/list[str] during
+    # parsing to maintain compatibility with the rest of the configuration system.
+    ConfigDict: TypeAlias = dict[str, Union[str, list[str]]]
 
 
 def _parse_ini_config(path: Path) -> iniconfig.IniConfig:

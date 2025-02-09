@@ -1607,8 +1607,10 @@ class Config:
 
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.
-    def _getini_unknown_type(self, name: str, type: str, value: str | list[str]):
-        msg = f"unknown configuration type: {type}"
+    def _getini_unknown_type(self, name: str, type: str, value: object):
+        msg = (
+            f"Option {name} has unknown configuration type {type} with value {value!r}"
+        )
         raise ValueError(msg, value)  # pragma: no cover
 
     def _getini(self, name: str):
@@ -1671,16 +1673,12 @@ class Config:
         elif type == "float":
             if not isinstance(value, (str, float)):
                 raise TypeError(
-                    f"Expected str or flot for option {name} of type float, but got: {value!r}"
+                    f"Expected str or float for option {name} of type float, but got: {value!r}"
                 ) from None
             return float(value)
         elif type is None:
             return value
         else:
-            if not isinstance(value, (str, Sequence)):
-                raise TypeError(
-                    f"Expected str or sequence for option {name} of type str/list, but got: {value!r}"
-                ) from None
             return self._getini_unknown_type(name, type, value)
 
     def _getconftest_pathlist(
