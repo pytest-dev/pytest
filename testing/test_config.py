@@ -880,7 +880,9 @@ class TestConfigAPI:
             """
         )
         config = pytester.parseconfig()
-        with pytest.raises(TypeError, match="Expected str or int for option ini_param"):
+        with pytest.raises(
+            TypeError, match="Expected an int string for option ini_param"
+        ):
             _ = config.getini("ini_param")
 
     @pytest.mark.parametrize("str_val, float_val", [("10.5", 10.5), ("no-ini", 2.2)])
@@ -918,7 +920,7 @@ class TestConfigAPI:
         )
         config = pytester.parseconfig()
         with pytest.raises(
-            TypeError, match="Expected str or float for option ini_param"
+            TypeError, match="Expected a float string for option ini_param"
         ):
             _ = config.getini("ini_param")
 

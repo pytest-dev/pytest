@@ -1647,10 +1647,6 @@ class Config:
                 if self.inipath is not None
                 else self.invocation_params.dir
             )
-            if not isinstance(value, (str, Sequence)):
-                raise TypeError(
-                    f"Expected str or sequence for option {name} of type str/list, but got: {value!r}"
-                ) from None
             input_values = shlex.split(value) if isinstance(value, str) else value
             return [dp / x for x in input_values]
         elif type == "args":
@@ -1665,15 +1661,15 @@ class Config:
         elif type == "string":
             return value
         elif type == "int":
-            if not isinstance(value, (str, int)):
+            if not isinstance(value, str):
                 raise TypeError(
-                    f"Expected str or int for option {name} of type integer, but got: {value!r}"
+                    f"Expected an int string for option {name} of type integer, but got: {value!r}"
                 ) from None
             return int(value)
         elif type == "float":
-            if not isinstance(value, (str, float)):
+            if not isinstance(value, str):
                 raise TypeError(
-                    f"Expected str or float for option {name} of type float, but got: {value!r}"
+                    f"Expected a float string for option {name} of type float, but got: {value!r}"
                 ) from None
             return float(value)
         elif type is None:
