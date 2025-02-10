@@ -1,0 +1,1 @@
+Add assertions for `stderr` in capture output tests and docs.
