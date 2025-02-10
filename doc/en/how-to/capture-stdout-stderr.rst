@@ -122,6 +122,7 @@ Here is an example test function that performs some output related checks:
         print("next")
         captured = capsys.readouterr()
         assert captured.out == "next\n"
+        assert captured.err == ""
 
 The ``readouterr()`` call snapshots the output so far -
 and capturing will be continued.  After the test

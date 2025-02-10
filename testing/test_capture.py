@@ -1589,6 +1589,7 @@ def test_capture_with_live_logging(
 
             captured = {capture_fixture}.readouterr()
             assert captured.out == "next\\n"
+            assert captured.err == ""
         """
     )
 
