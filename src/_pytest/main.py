@@ -92,20 +92,6 @@ def pytest_addoption(parser: Parser) -> None:
         const=1,
         help="Exit instantly on first error or failed test",
     )
-    group = parser.getgroup("pytest-warnings")
-    group.addoption(
-        "-W",
-        "--pythonwarnings",
-        action="append",
-        help="Set which warnings to report, see -W option of Python itself",
-    )
-    parser.addini(
-        "filterwarnings",
-        type="linelist",
-        help="Each line specifies a pattern for "
-        "warnings.filterwarnings. "
-        "Processed after -W/--pythonwarnings.",
-    )
     group._addoption(
         "--maxfail",
         metavar="num",
@@ -155,6 +141,21 @@ def pytest_addoption(parser: Parser) -> None:
         help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
         "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
         "'$HOME/root_dir'.",
+    )
+
+    group = parser.getgroup("pytest-warnings")
+    group.addoption(
+        "-W",
+        "--pythonwarnings",
+        action="append",
+        help="Set which warnings to report, see -W option of Python itself",
+    )
+    parser.addini(
+        "filterwarnings",
+        type="linelist",
+        help="Each line specifies a pattern for "
+        "warnings.filterwarnings. "
+        "Processed after -W/--pythonwarnings.",
     )
 
     group = parser.getgroup("collect", "collection")
