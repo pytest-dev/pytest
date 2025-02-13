@@ -54,35 +54,6 @@ if TYPE_CHECKING:
 
 
 def pytest_addoption(parser: Parser) -> None:
-    parser.addini(
-        "norecursedirs",
-        "Directory patterns to avoid for recursion",
-        type="args",
-        default=[
-            "*.egg",
-            ".*",
-            "_darcs",
-            "build",
-            "CVS",
-            "dist",
-            "node_modules",
-            "venv",
-            "{arch}",
-        ],
-    )
-    parser.addini(
-        "testpaths",
-        "Directories to search for tests when no files or directories are given on the "
-        "command line",
-        type="args",
-        default=[],
-    )
-    parser.addini(
-        "collect_imported_tests",
-        "Whether to collect tests in imported modules outside `testpaths`",
-        type="bool",
-        default=True,
-    )
     group = parser.getgroup("general", "Running and selection options")
     group._addoption(
         "-x",
@@ -126,13 +97,6 @@ def pytest_addoption(parser: Parser) -> None:
         dest="inifilename",
         help="Load configuration from `FILE` instead of trying to locate one of the "
         "implicit configuration files.",
-    )
-    group._addoption(
-        "--continue-on-collection-errors",
-        action="store_true",
-        default=False,
-        dest="continue_on_collection_errors",
-        help="Force test execution even if collection errors occur",
     )
     group._addoption(
         "--rootdir",
@@ -219,6 +183,13 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Don't ignore tests in a local virtualenv directory",
     )
+    group._addoption(
+        "--continue-on-collection-errors",
+        action="store_true",
+        default=False,
+        dest="continue_on_collection_errors",
+        help="Force test execution even if collection errors occur",
+    )
     group.addoption(
         "--import-mode",
         default="prepend",
@@ -226,6 +197,35 @@ def pytest_addoption(parser: Parser) -> None:
         dest="importmode",
         help="Prepend/append to sys.path when importing test modules and conftest "
         "files. Default: prepend.",
+    )
+    parser.addini(
+        "norecursedirs",
+        "Directory patterns to avoid for recursion",
+        type="args",
+        default=[
+            "*.egg",
+            ".*",
+            "_darcs",
+            "build",
+            "CVS",
+            "dist",
+            "node_modules",
+            "venv",
+            "{arch}",
+        ],
+    )
+    parser.addini(
+        "testpaths",
+        "Directories to search for tests when no files or directories are given on the "
+        "command line",
+        type="args",
+        default=[],
+    )
+    parser.addini(
+        "collect_imported_tests",
+        "Whether to collect tests in imported modules outside `testpaths`",
+        type="bool",
+        default=True,
     )
     parser.addini(
         "consider_namespace_packages",
