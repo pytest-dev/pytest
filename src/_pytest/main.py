@@ -55,7 +55,7 @@ if TYPE_CHECKING:
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general", "Running and selection options")
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-x",
         "--exitfirst",
         action="store_const",
@@ -63,7 +63,7 @@ def pytest_addoption(parser: Parser) -> None:
         const=1,
         help="Exit instantly on first error or failed test",
     )
-    group._addoption(
+    group.addoption(
         "--maxfail",
         metavar="num",
         action="store",
@@ -72,19 +72,19 @@ def pytest_addoption(parser: Parser) -> None:
         default=0,
         help="Exit after first num failures or errors",
     )
-    group._addoption(
+    group.addoption(
         "--strict-config",
         action="store_true",
         help="Any warnings encountered while parsing the `pytest` section of the "
         "configuration file raise errors",
     )
-    group._addoption(
+    group.addoption(
         "--strict-markers",
         action="store_true",
         help="Markers not registered in the `markers` section of the configuration "
         "file raise errors",
     )
-    group._addoption(
+    group.addoption(
         "--strict",
         action="store_true",
         help="(Deprecated) alias to --strict-markers",
@@ -166,7 +166,7 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Don't ignore tests in a local virtualenv directory",
     )
-    group._addoption(
+    group.addoption(
         "--continue-on-collection-errors",
         action="store_true",
         default=False,
@@ -218,7 +218,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-c",
         "--config-file",
         metavar="FILE",
@@ -227,7 +227,7 @@ def pytest_addoption(parser: Parser) -> None:
         help="Load configuration from `FILE` instead of trying to locate one of the "
         "implicit configuration files.",
     )
-    group._addoption(
+    group.addoption(
         "--rootdir",
         action="store",
         dest="rootdir",

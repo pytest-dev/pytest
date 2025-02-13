@@ -40,13 +40,13 @@ def _validate_usepdb_cls(value: str) -> tuple[str, str]:
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
-    group._addoption(
+    group.addoption(
         "--pdb",
         dest="usepdb",
         action="store_true",
         help="Start the interactive Python debugger on errors or KeyboardInterrupt",
     )
-    group._addoption(
+    group.addoption(
         "--pdbcls",
         dest="usepdb_cls",
         metavar="modulename:classname",
@@ -54,7 +54,7 @@ def pytest_addoption(parser: Parser) -> None:
         help="Specify a custom interactive Python debugger for use with --pdb."
         "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
     )
-    group._addoption(
+    group.addoption(
         "--trace",
         dest="trace",
         action="store_true",
