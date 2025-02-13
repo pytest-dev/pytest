@@ -89,23 +89,6 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         help="(Deprecated) alias to --strict-markers",
     )
-    group._addoption(
-        "-c",
-        "--config-file",
-        metavar="FILE",
-        type=str,
-        dest="inifilename",
-        help="Load configuration from `FILE` instead of trying to locate one of the "
-        "implicit configuration files.",
-    )
-    group._addoption(
-        "--rootdir",
-        action="store",
-        dest="rootdir",
-        help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
-        "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
-        "'$HOME/root_dir'.",
-    )
 
     group = parser.getgroup("pytest-warnings")
     group.addoption(
@@ -235,6 +218,23 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
+    group._addoption(
+        "-c",
+        "--config-file",
+        metavar="FILE",
+        type=str,
+        dest="inifilename",
+        help="Load configuration from `FILE` instead of trying to locate one of the "
+        "implicit configuration files.",
+    )
+    group._addoption(
+        "--rootdir",
+        action="store",
+        dest="rootdir",
+        help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
+        "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
+        "'$HOME/root_dir'.",
+    )
     group.addoption(
         "--basetemp",
         dest="basetemp",
