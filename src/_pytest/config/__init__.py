@@ -1611,7 +1611,7 @@ class Config:
         msg = (
             f"Option {name} has unknown configuration type {type} with value {value!r}"
         )
-        raise ValueError(msg, value)  # pragma: no cover
+        raise ValueError(msg)  # pragma: no cover
 
     def _getini(self, name: str):
         try:
