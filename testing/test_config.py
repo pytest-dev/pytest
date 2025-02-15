@@ -848,6 +848,82 @@ class TestConfigAPI:
         config = pytester.parseconfig()
         assert config.getini("strip") is bool_val
 
+    @pytest.mark.parametrize("str_val, int_val", [("10", 10), ("no-ini", 2)])
+    def test_addini_int(self, pytester: Pytester, str_val: str, int_val: bool) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type="int", default=2)
+        """
+        )
+        if str_val != "no-ini":
+            pytester.makeini(
+                f"""
+                [pytest]
+                ini_param={str_val}
+            """
+            )
+        config = pytester.parseconfig()
+        assert config.getini("ini_param") == int_val
+
+    def test_addini_int_invalid(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type="int", default=2)
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            ini_param=["foo"]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.raises(
+            TypeError, match="Expected an int string for option ini_param"
+        ):
+            _ = config.getini("ini_param")
+
+    @pytest.mark.parametrize("str_val, float_val", [("10.5", 10.5), ("no-ini", 2.2)])
+    def test_addini_float(
+        self, pytester: Pytester, str_val: str, float_val: bool
+    ) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type="float", default=2.2)
+        """
+        )
+        if str_val != "no-ini":
+            pytester.makeini(
+                f"""
+                [pytest]
+                ini_param={str_val}
+            """
+            )
+        config = pytester.parseconfig()
+        assert config.getini("ini_param") == float_val
+
+    def test_addini_float_invalid(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type="float", default=2.2)
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            ini_param=["foo"]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.raises(
+            TypeError, match="Expected a float string for option ini_param"
+        ):
+            _ = config.getini("ini_param")
+
     def test_addinivalue_line_existing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
