@@ -29,10 +29,6 @@ pytest enables test parametrization at several levels:
 
 .. regendoc: wipe
 
-
-
-    Several improvements.
-
 The builtin :ref:`pytest.mark.parametrize ref` decorator enables
 parametrization of arguments for a test function.  Here is a typical example
 of a test function that implements checking that a certain input leads
