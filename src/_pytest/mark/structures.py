@@ -66,7 +66,7 @@ def get_empty_parameterset_mark(
     return mark
 
 
-# Singleton type for NOTSET, as described in:
+# Singleton type for HIDDEN_PARAM, as described in:
 # https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
 class _HiddenParam(enum.Enum):
     token = 0
