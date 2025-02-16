@@ -2149,7 +2149,7 @@ class TestHiddenParam:
     """Test that pytest.HIDDEN_PARAM works"""
 
     def test_parametrize_ids(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
+        items = pytester.getitems(
             """
             import pytest
 
@@ -2166,18 +2166,15 @@ class TestHiddenParam:
                 pass
         """
         )
-        result = pytester.runpytest("-vv", "-s")
-        result.stdout.fnmatch_lines(
-            [
-                "test_parametrize_ids.py::test_func[paramset1] PASSED",
-                "test_parametrize_ids.py::test_func PASSED",
-                "test_parametrize_ids.py::test_func[paramset3] PASSED",
-                "*= 3 passed in *",
-            ]
-        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[paramset1]",
+            "test_func",
+            "test_func[paramset3]",
+        ]
 
     def test_param_id(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
+        items = pytester.getitems(
             """
             import pytest
 
@@ -2193,15 +2190,12 @@ class TestHiddenParam:
                 pass
         """
         )
-        result = pytester.runpytest("-vv", "-s")
-        result.stdout.fnmatch_lines(
-            [
-                "test_param_id.py::test_func[paramset1] PASSED",
-                "test_param_id.py::test_func PASSED",
-                "test_param_id.py::test_func[c-z] PASSED",
-                "*= 3 passed in *",
-            ]
-        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[paramset1]",
+            "test_func",
+            "test_func[c-z]",
+        ]
 
     def test_multiple_hidden_param_is_forbidden(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -2235,7 +2229,7 @@ class TestHiddenParam:
         )
 
     def test_multiple_parametrize(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
+        items = pytester.getitems(
             """
             import pytest
 
@@ -2252,13 +2246,10 @@ class TestHiddenParam:
                 pass
         """
         )
-        result = pytester.runpytest("-vv", "-s")
-        result.stdout.fnmatch_lines(
-            [
-                "test_multiple_parametrize.py::test_func[a-x] PASSED",
-                "test_multiple_parametrize.py::test_func[a-y] PASSED",
-                "test_multiple_parametrize.py::test_func[x] PASSED",
-                "test_multiple_parametrize.py::test_func[y] PASSED",
-                "*= 4 passed in *",
-            ]
-        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[a-x]",
+            "test_func[a-y]",
+            "test_func[x]",
+            "test_func[y]",
+        ]

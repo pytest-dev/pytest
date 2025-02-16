@@ -475,14 +475,13 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
             fixtureinfo.prune_dependency_tree()
 
             for callspec in metafunc._calls:
-                params_id = callspec.id
-                subname = f"{name}[{params_id}]" if params_id else name
+                subname = f"{name}[{callspec.id}]" if callspec._idlist else name
                 yield Function.from_parent(
                     self,
                     name=subname,
                     callspec=callspec,
                     fixtureinfo=fixtureinfo,
-                    keywords={params_id: True},
+                    keywords={callspec.id: True},
                     originalname=name,
                 )
 
@@ -1086,7 +1085,7 @@ class CallSpec2:
             params=params,
             indices=indices,
             _arg2scope=arg2scope,
-            _idlist=[*self._idlist, id] if id else self._idlist,
+            _idlist=[*self._idlist, id] if id is not None else self._idlist,
             marks=[*self.marks, *normalize_mark_list(marks)],
         )
 
