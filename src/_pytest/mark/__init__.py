@@ -14,6 +14,7 @@ from .expression import Expression
 from .expression import ParseError
 from .structures import EMPTY_PARAMETERSET_OPTION
 from .structures import get_empty_parameterset_mark
+from .structures import HIDDEN_PARAM
 from .structures import Mark
 from .structures import MARK_GEN
 from .structures import MarkDecorator
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "HIDDEN_PARAM",
     "MARK_GEN",
     "Mark",
     "MarkDecorator",

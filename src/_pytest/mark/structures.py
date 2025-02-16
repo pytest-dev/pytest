@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from collections.abc import MutableMapping
 from collections.abc import Sequence
 import dataclasses
+import enum
 import inspect
 from typing import Any
 from typing import final
@@ -65,17 +66,27 @@ def get_empty_parameterset_mark(
     return mark
 
 
+# Singleton type for NOTSET, as described in:
+# https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
+class _HiddenParam(enum.Enum):
+    token = 0
+
+
+#: Can be used as a parameter set id to hide it from the test name.
+HIDDEN_PARAM = _HiddenParam.token
+
+
 class ParameterSet(NamedTuple):
     values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
-    id: str | None
+    id: str | _HiddenParam | None
 
     @classmethod
     def param(
         cls,
         *values: object,
         marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
-        id: str | None = None,
+        id: str | _HiddenParam | None = None,
     ) -> ParameterSet:
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
@@ -88,7 +99,7 @@ class ParameterSet(NamedTuple):
             )
 
         if id is not None:
-            if not isinstance(id, str):
+            if not isinstance(id, str) and id is not HIDDEN_PARAM:
                 raise TypeError(f"Expected id to be a string, got {type(id)}: {id!r}")
         return cls(values, marks, id)
 

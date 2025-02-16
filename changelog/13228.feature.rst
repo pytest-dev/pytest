@@ -1,0 +1,1 @@
+``pytest.HIDDEN_PARAM`` can now be used in ``id`` of ``pytest.param`` or in ``ids`` of ``parametrize``. It hides the parameter set from the test name.
