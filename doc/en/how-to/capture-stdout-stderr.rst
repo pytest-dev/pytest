@@ -131,7 +131,7 @@ test from having to care about setting/resetting
 output streams and also interacts well with pytest's
 own per-test capturing.
 
-The return value from ``readouterr`` changed to a ``namedtuple`` with two attributes, ``out`` and ``err``.
+The return value of ``readouterr()`` is a ``namedtuple`` with two attributes, ``out`` and ``err``.
 
 If the code under test writes non-textual data (``bytes``), you can capture this using
 the :fixture:`capsysbinary` fixture which instead returns ``bytes`` from
