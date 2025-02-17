@@ -19,6 +19,7 @@ from _pytest import python
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
+from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
@@ -2227,6 +2228,20 @@ class TestHiddenParam:
                 "*= no tests collected, 1 error in *",
             ]
         )
+
+    def test_multiple_hidden_param_is_forbidden_idmaker(self) -> None:
+        id_maker = IdMaker(
+            ("foo", "bar"),
+            [pytest.param("a", "x"), pytest.param("b", "y")],
+            None,
+            [pytest.HIDDEN_PARAM, pytest.HIDDEN_PARAM],
+            None,
+            "some_node_id",
+            None,
+        )
+        expected = "In some_node_id: multiple instances of HIDDEN_PARAM"
+        with pytest.raises(Failed, match=expected):
+            id_maker.make_unique_parameterset_ids()
 
     def test_multiple_parametrize(self, pytester: Pytester) -> None:
         items = pytester.getitems(
