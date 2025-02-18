@@ -290,7 +290,10 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
 
 @final
 class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
-    """Contextmanager for checking for an expected :exc:`ExceptionGroup`.
+    """
+    .. versionadded:: 8.4
+    
+    Contextmanager for checking for an expected :exc:`ExceptionGroup`.
     This works similar to :func:`pytest.raises`, but allows for specifying the structure of an :exc:`ExceptionGroup`.
     :meth:`ExceptionInfo.group_contains` also tries to handle exception groups,
     but it is very bad at checking that you *didn't* get unexpected exceptions.
@@ -309,7 +312,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
 
     #. It will only catch exceptions wrapped in an exceptiongroup by default.
 
-       * With ``allow_unwrapped=True`` you can specify a single expected exception (or `RaisesExc`) and it will match
+       * With ``allow_unwrapped=True`` you can specify a single expected exception (or :class:`RaisesExc`) and it will match
          the exception even if it is not inside an :exc:`ExceptionGroup`.
          If you expect one of several different exception types you need to use a :class:`RaisesExc` object.
 
