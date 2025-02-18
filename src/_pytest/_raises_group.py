@@ -176,7 +176,10 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
 
 @final
 class RaisesExc(AbstractRaises[BaseExcT_co_default]):
-    """Helper class to be used together with RaisesGroups when you want to specify requirements on sub-exceptions.
+    """
+    .. versionadded:: 8.4
+    
+    Helper class to be used together with RaisesGroups when you want to specify requirements on sub-exceptions.
 
     You don't need this if you only want to specify the type, since :class:`RaisesGroup`
     accepts ``type[BaseException]``.
