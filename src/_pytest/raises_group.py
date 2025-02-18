@@ -179,7 +179,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     """
     .. versionadded:: 8.4
 
-    Helper class to be used together with RaisesGroups when you want to specify requirements on sub-exceptions.
+    Helper class to be used together with RaisesGroup when you want to specify requirements on sub-exceptions.
 
     You don't need this if you only want to specify the type, since :class:`RaisesGroup`
     accepts ``type[BaseException]``.
@@ -191,11 +191,11 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
 
     Examples::
 
-        with RaisesGroups(RaisesExc(ValueError, match="string"))
+        with RaisesGroup(RaisesExc(ValueError, match="string"))
             ...
-        with RaisesGroups(RaisesExc(check=lambda x: x.args == (3, "hello"))):
+        with RaisesGroup(RaisesExc(check=lambda x: x.args == (3, "hello"))):
             ...
-        with RaisesGroups(RaisesExc(check=lambda x: type(x) is ValueError)):
+        with RaisesGroup(RaisesExc(check=lambda x: type(x) is ValueError)):
             ...
     """
 
@@ -323,33 +323,33 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
          extracting all exceptions inside any nested :exc:`ExceptionGroup`, before matching.
 
     It does not care about the order of the exceptions, so
-    ``RaisesGroups(ValueError, TypeError)``
+    ``RaisesGroup(ValueError, TypeError)``
     is equivalent to
-    ``RaisesGroups(TypeError, ValueError)``.
+    ``RaisesGroup(TypeError, ValueError)``.
 
     Examples::
 
-        with RaisesGroups(ValueError):
+        with RaisesGroup(ValueError):
             raise ExceptionGroup("", (ValueError(),))
-        with RaisesGroups(
+        with RaisesGroup(
             ValueError, ValueError, RaisesExc(TypeError, match="expected int")
         ):
             ...
-        with RaisesGroups(
+        with RaisesGroup(
             KeyboardInterrupt,
             match="hello",
             check=lambda x: type(x) is BaseExceptionGroup,
         ):
             ...
-        with RaisesGroups(RaisesGroups(ValueError)):
+        with RaisesGroup(RaisesGroup(ValueError)):
             raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
 
         # flatten_subgroups
-        with RaisesGroups(ValueError, flatten_subgroups=True):
+        with RaisesGroup(ValueError, flatten_subgroups=True):
             raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
 
         # allow_unwrapped
-        with RaisesGroups(ValueError, allow_unwrapped=True):
+        with RaisesGroup(ValueError, allow_unwrapped=True):
             raise ValueError
 
 
@@ -358,7 +358,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
 
     The matching algorithm is greedy, which means cases such as this may fail::
 
-        with RaisesGroups(ValueError, RaisesExc(ValueError, match="hello")):
+        with RaisesGroup(ValueError, RaisesExc(ValueError, match="hello")):
             raise ExceptionGroup("", (ValueError("hello"), ValueError("goodbye")))
 
     even though it generally does not care about the order of the exceptions in the group.
@@ -620,7 +620,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
 
             with pytest.raises(TypeError) as excinfo:
                 ...
-            assert RaisesGroups(ValueError).matches(excinfo.value.__cause__)
+            assert RaisesGroup(ValueError).matches(excinfo.value.__cause__)
             # the above line is equivalent to
             myexc = excinfo.value.__cause
             assert isinstance(myexc, BaseExceptionGroup)

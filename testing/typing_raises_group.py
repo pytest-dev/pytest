@@ -155,7 +155,7 @@ def check_nested_raisesgroups_contextmanager() -> None:
 
 
 def check_nested_raisesgroups_matches() -> None:
-    """Check nested RaisesGroups with .matches"""
+    """Check nested RaisesGroup with .matches"""
     exc: ExceptionGroup[ExceptionGroup[ValueError]] = ExceptionGroup(
         "",
         (ExceptionGroup("", (ValueError(),)),),
