@@ -292,7 +292,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
 class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     """
     .. versionadded:: 8.4
-    
+
     Contextmanager for checking for an expected :exc:`ExceptionGroup`.
     This works similar to :func:`pytest.raises`, but allows for specifying the structure of an :exc:`ExceptionGroup`.
     :meth:`ExceptionInfo.group_contains` also tries to handle exception groups,
