@@ -132,7 +132,7 @@ class TestShortLogReport(NamedTuple):
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "Reporting", after="general")
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-v",
         "--verbose",
         action="count",
@@ -140,35 +140,35 @@ def pytest_addoption(parser: Parser) -> None:
         dest="verbose",
         help="Increase verbosity",
     )
-    group._addoption(
+    group.addoption(
         "--no-header",
         action="store_true",
         default=False,
         dest="no_header",
         help="Disable header",
     )
-    group._addoption(
+    group.addoption(
         "--no-summary",
         action="store_true",
         default=False,
         dest="no_summary",
         help="Disable summary",
     )
-    group._addoption(
+    group.addoption(
         "--no-fold-skipped",
         action="store_false",
         dest="fold_skipped",
         default=True,
         help="Do not fold skipped tests in short summary.",
     )
-    group._addoption(
+    group.addoption(
         "--force-short-summary",
         action="store_true",
         dest="force_short_summary",
         default=False,
         help="Force condensed summary output regardless of verbosity level.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-q",
         "--quiet",
         action=MoreQuietAction,
@@ -176,14 +176,14 @@ def pytest_addoption(parser: Parser) -> None:
         dest="verbose",
         help="Decrease verbosity",
     )
-    group._addoption(
+    group.addoption(
         "--verbosity",
         dest="verbose",
         type=int,
         default=0,
         help="Set verbosity. Default: 0.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-r",
         action="store",
         dest="reportchars",
@@ -195,7 +195,7 @@ def pytest_addoption(parser: Parser) -> None:
         "(w)arnings are enabled by default (see --disable-warnings), "
         "'N' can be used to reset the list. (default: 'fE').",
     )
-    group._addoption(
+    group.addoption(
         "--disable-warnings",
         "--disable-pytest-warnings",
         default=False,
@@ -203,7 +203,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         help="Disable warnings summary",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-l",
         "--showlocals",
         action="store_true",
@@ -211,13 +211,13 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Show locals in tracebacks (disabled by default)",
     )
-    group._addoption(
+    group.addoption(
         "--no-showlocals",
         action="store_false",
         dest="showlocals",
         help="Hide locals in tracebacks (negate --showlocals passed through addopts)",
     )
-    group._addoption(
+    group.addoption(
         "--tb",
         metavar="style",
         action="store",
@@ -226,14 +226,14 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["auto", "long", "short", "no", "line", "native"],
         help="Traceback print mode (auto/long/short/line/native/no)",
     )
-    group._addoption(
+    group.addoption(
         "--xfail-tb",
         action="store_true",
         dest="xfail_tb",
         default=False,
         help="Show tracebacks for xfail (as long as --tb != no)",
     )
-    group._addoption(
+    group.addoption(
         "--show-capture",
         action="store",
         dest="showcapture",
@@ -242,14 +242,14 @@ def pytest_addoption(parser: Parser) -> None:
         help="Controls how captured stdout/stderr/log is shown on failed tests. "
         "Default: all.",
     )
-    group._addoption(
+    group.addoption(
         "--fulltrace",
         "--full-trace",
         action="store_true",
         default=False,
         help="Don't cut any tracebacks (default is to cut)",
     )
-    group._addoption(
+    group.addoption(
         "--color",
         metavar="color",
         action="store",
@@ -258,7 +258,7 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["yes", "no", "auto"],
         help="Color terminal output (yes/no/auto)",
     )
-    group._addoption(
+    group.addoption(
         "--code-highlight",
         default="yes",
         choices=["yes", "no"],

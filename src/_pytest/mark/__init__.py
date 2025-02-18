@@ -79,7 +79,7 @@ def param(
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-k",
         action="store",
         dest="keyword",
@@ -99,7 +99,7 @@ def pytest_addoption(parser: Parser) -> None:
         "The matching is case-insensitive.",
     )
 
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-m",
         action="store",
         dest="markexpr",
