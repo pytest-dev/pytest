@@ -20,7 +20,7 @@ pastebinfile_key = StashKey[IO[bytes]]()
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting")
-    group._addoption(
+    group.addoption(
         "--pastebin",
         metavar="mode",
         action="store",

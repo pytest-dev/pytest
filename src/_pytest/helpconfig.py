@@ -55,14 +55,14 @@ def pytest_addoption(parser: Parser) -> None:
         help="Display pytest version and information about plugins. "
         "When given twice, also display information about plugins.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-h",
         "--help",
         action=HelpAction,
         dest="help",
         help="Show help message and configuration info",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-p",
         action="append",
         dest="plugins",
@@ -90,7 +90,7 @@ def pytest_addoption(parser: Parser) -> None:
         "This file is opened with 'w' and truncated as a result, care advised. "
         "Default: pytestdebug.log.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-o",
         "--override-ini",
         dest="override_ini",

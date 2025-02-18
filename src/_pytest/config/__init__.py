@@ -1587,6 +1587,8 @@ class Config:
         ``paths``, ``pathlist``, ``args`` and ``linelist`` : empty list ``[]``
         ``bool`` : ``False``
         ``string`` : empty string ``""``
+        ``int`` : ``0``
+        ``float`` : ``0.0``
 
         If neither the ``default`` nor the ``type`` parameter is passed
         while registering the configuration through
@@ -1605,9 +1607,11 @@ class Config:
 
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.
-    def _getini_unknown_type(self, name: str, type: str, value: str | list[str]):
-        msg = f"unknown configuration type: {type}"
-        raise ValueError(msg, value)  # pragma: no cover
+    def _getini_unknown_type(self, name: str, type: str, value: object):
+        msg = (
+            f"Option {name} has unknown configuration type {type} with value {value!r}"
+        )
+        raise ValueError(msg)  # pragma: no cover
 
     def _getini(self, name: str):
         try:
@@ -1656,6 +1660,18 @@ class Config:
             return _strtobool(str(value).strip())
         elif type == "string":
             return value
+        elif type == "int":
+            if not isinstance(value, str):
+                raise TypeError(
+                    f"Expected an int string for option {name} of type integer, but got: {value!r}"
+                ) from None
+            return int(value)
+        elif type == "float":
+            if not isinstance(value, str):
+                raise TypeError(
+                    f"Expected a float string for option {name} of type float, but got: {value!r}"
+                ) from None
+            return float(value)
         elif type is None:
             return value
         else:

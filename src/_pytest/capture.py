@@ -48,7 +48,7 @@ _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
-    group._addoption(
+    group.addoption(
         "--capture",
         action="store",
         default="fd",
@@ -56,7 +56,7 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["fd", "sys", "no", "tee-sys"],
         help="Per-test capturing method: one of fd|sys|no|tee-sys",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-s",
         action="store_const",
         const="no",
