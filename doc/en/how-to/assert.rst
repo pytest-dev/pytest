@@ -279,12 +279,12 @@ exception at a specific level; exceptions contained directly in the top
         assert not excinfo.group_contains(RuntimeError, depth=2)
         assert not excinfo.group_contains(TypeError, depth=1)
 
-Alternate form (legacy)
-~~~~~~~~~~~~~~~~~~~~~~~
+Alternate `pytest.raises` form (legacy)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is an alternate form where you pass
-a function that will be executed, along ``*args`` and ``**kwargs``, and :func:`pytest.raises`
-will execute the function with the arguments and assert that the given exception is raised:
+There is an alternate form of :func:`pytest.raises` where you pass
+a function that will be executed, along with ``*args`` and ``**kwargs``. :func:`pytest.raises`
+will then execute the function with those arguments and assert that the given exception is raised:
 
 .. code-block:: python
 
@@ -328,6 +328,18 @@ This will only "xfail" if the test fails by raising ``IndexError`` or subclasses
 
 * Using :func:`pytest.raises` is likely to be better for cases where you are
   testing exceptions your own code is deliberately raising, which is the majority of cases.
+
+You can also use :class:`pytest.RaisesGroup`:
+
+.. code-block:: python
+
+    def f():
+        raise ExceptionGroup("", [IndexError()])
+
+
+    @pytest.mark.xfail(raises=RaisesGroup(IndexError))
+    def test_f():
+        f()
 
 
 .. _`assertwarns`:

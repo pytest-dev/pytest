@@ -197,9 +197,6 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             ...
         with RaisesGroups(RaisesExc(check=lambda x: type(x) is ValueError)):
             ...
-
-    Tip: if you install ``hypothesis`` and import it in ``conftest.py`` you will get
-    readable ``repr``'s of ``check`` callables in the output.
     """
 
     # Trio bundled hypothesis monkeypatching, we will probably instead assume that
@@ -367,8 +364,13 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     even though it generally does not care about the order of the exceptions in the group.
     To avoid the above you should specify the first :exc:`ValueError` with a :class:`RaisesExc` as well.
 
-    Tip: if you install ``hypothesis`` and import it in ``conftest.py`` you will get
-    readable ``repr``'s of ``check`` callables in the output.
+    .. note::
+        When raised exceptions don't match the expected ones, you'll get a detailed error
+        message explaining why. This includes ``repr(check)`` if set, which in Python can be
+        overly verbose, showing memory locations etc etc.
+
+        If installed and imported (in e.g. ``conftest.py``), the ``hypothesis`` library will
+        monkeypatch this output to provide shorter & more readable repr's.
     """
 
     # allow_unwrapped=True requires: singular exception, exception not being
