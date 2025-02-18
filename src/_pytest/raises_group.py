@@ -312,8 +312,8 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
 
     #. It will only catch exceptions wrapped in an exceptiongroup by default.
 
-       * With ``allow_unwrapped=True`` you can specify a single expected exception (or :class:`RaisesExc`) and it will match
-         the exception even if it is not inside an :exc:`ExceptionGroup`.
+       * With ``allow_unwrapped=True`` you can specify a single expected exception (or :class:`RaisesExc`) and it will
+         match the exception even if it is not inside an :exc:`ExceptionGroup`.
          If you expect one of several different exception types you need to use a :class:`RaisesExc` object.
 
     #. By default it cares about the full structure with nested :exc:`ExceptionGroup`'s. You can specify nested

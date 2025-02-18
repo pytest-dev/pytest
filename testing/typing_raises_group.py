@@ -6,8 +6,8 @@ from typing import Union
 
 from typing_extensions import assert_type
 
-from _pytest._raises_group import RaisesExc
-from _pytest._raises_group import RaisesGroup
+from _pytest.raises_group import RaisesExc
+from _pytest.raises_group import RaisesGroup
 
 
 if sys.version_info < (3, 11):
