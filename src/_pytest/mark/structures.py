@@ -23,11 +23,11 @@ import warnings
 from .._code import getfslineno
 from ..compat import NOTSET
 from ..compat import NotSetType
-from _pytest._raises_group import AbstractRaises
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
+from _pytest.raises_group import AbstractRaises
 from _pytest.scope import _ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
 

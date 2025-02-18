@@ -9,11 +9,11 @@ import sys
 from typing import TYPE_CHECKING
 
 from _pytest._code import ExceptionInfo
-from _pytest._raises_group import RaisesExc
-from _pytest._raises_group import RaisesGroup
-from _pytest._raises_group import repr_callable
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
+from _pytest.raises_group import RaisesExc
+from _pytest.raises_group import RaisesGroup
+from _pytest.raises_group import repr_callable
 import pytest
 
 
