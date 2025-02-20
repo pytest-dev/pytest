@@ -20,7 +20,7 @@ The current pytest version, as a string::
     >>> pytest.__version__
     '7.0.0'
 
-.. _`pytest.HIDDEN_PARAM ref`:
+.. _`hidden-param`:
 
 pytest.HIDDEN_PARAM
 ~~~~~~~~~~~~~~~~~~~

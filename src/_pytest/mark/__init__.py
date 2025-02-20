@@ -75,11 +75,12 @@ def param(
 
         :ref:`pytest.mark.usefixtures <pytest.mark.usefixtures ref>` cannot be added via this parameter.
 
+    :type id: str | Literal[pytest.HIDDEN_PARAM] | None
     :param id: The id to attribute to this parameter set.
 
         .. versionadded: 8.4
 
-        :ref:`pytest.HIDDEN_PARAM` means to hide the parameter set
+        :ref:`hidden-param` means to hide the parameter set
         from the test name. Can only be used at most 1 time, as
         test names need to be unique.
     """
