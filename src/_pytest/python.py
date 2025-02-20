@@ -1181,11 +1181,17 @@ class Metafunc:
             The list of argvalues determines how often a test is invoked with
             different argument values.
 
-            If only one argname was specified argvalues is a list of values.
+            If only one argname was specified, argvalues is a list of values.
             If N argnames were specified, argvalues must be a list of
             N-tuples, where each tuple-element specifies a value for its
             respective argname.
+            :func:`pytest.param` can be used instead of tuples for additional
+            control over parameter sets.
+
+            Parameter sets can be generated depending on previous
+            parametrizations, see :ref:`parametrize_dependent`.
         :type argvalues: Iterable[_pytest.mark.structures.ParameterSet | Sequence[object] | object] | Callable
+
         :param indirect:
             A list of arguments' names (subset of argnames) or a boolean.
             If True the list contains all names from the argnames. Each

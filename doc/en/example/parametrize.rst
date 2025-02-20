@@ -688,3 +688,70 @@ For example:
 In the example above, the first three test cases should run without any
 exceptions, while the fourth should raise a ``ZeroDivisionError`` exception,
 which is expected by pytest.
+
+.. _`parametrize_dependent`:
+
+Adding parameters depending on previous parametrizations
+--------------------------------------------------------------------
+
+By default, :hook:`pytest_generate_tests` hooks and
+:ref:`pytest.mark.parametrize <pytest.mark.parametrize ref>` generate
+a Cartesian product of parameter sets in case of multiple parametrizations,
+see :ref:`parametrize-basics` for some examples.
+
+Sometimes, values of some parameters need to be generated based on values
+of previous parameters or based on their associated marks.
+
+In such cases ``parametrize`` can be passed a callable for ``argvalues``,
+which will decide how to further parametrize each test instance:
+
+.. code-block:: python
+
+    # content of test_parametrize_dependent.py
+    def pytest_generate_tests(metafunc: pytest.Metafunc):
+        if "bar" in metafunc.fixturenames:
+            # parametrize "bar" arg based on "bar_params" mark
+            base_bar_marks = list(metafunc.definition.iter_markers("bar_params"))
+
+            def gen_params(callspec: pytest.CallSpec):
+                # collect all marks
+                bar_marks = base_bar_marks + [
+                    mark for mark in callspec.marks if mark.name == "bar_params"
+                ]
+                # collect all args from all marks
+                return [arg for mark in bar_marks for arg in mark.args]
+
+            metafunc.parametrize("bar", gen_params)
+
+
+    @pytest.mark.bar_params("x")
+    @pytest.mark.parametrize(
+        "foo",
+        [
+            "a",
+            pytest.param("b", marks=[pytest.mark.bar_params("y", "z")]),
+            pytest.param("c", marks=[pytest.mark.bar_params("w")]),
+        ],
+    )
+    def test_function(foo, bar):
+        pass
+
+Running ``pytest`` with verbose mode outputs:
+
+.. code-block:: pytest
+
+    $ pytest -v
+    =========================== test session starts ============================
+    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    cachedir: .pytest_cache
+    rootdir: /home/sweet/project
+    collecting ... collected 6 items
+
+    test_parametrize_dependent.py::test_function[a-x] PASSED             [ 16%]
+    test_parametrize_dependent.py::test_function[b-x] PASSED             [ 33%]
+    test_parametrize_dependent.py::test_function[b-y] PASSED             [ 50%]
+    test_parametrize_dependent.py::test_function[b-z] PASSED             [ 66%]
+    test_parametrize_dependent.py::test_function[c-x] PASSED             [ 83%]
+    test_parametrize_dependent.py::test_function[c-w] PASSED             [100%]
+
+    ============================ 6 passed in 0.12s =============================
