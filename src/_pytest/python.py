@@ -1210,8 +1210,6 @@ class Metafunc:
             They are mapped to the corresponding index in ``argvalues``.
             ``None`` means to use the auto-generated id.
 
-            .. versionadded: 8.4
-
             :ref:`hidden-param` means to hide the parameter set
             from the test name. Can only be used at most 1 time, as
             test names need to be unique.
