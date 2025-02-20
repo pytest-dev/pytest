@@ -18,8 +18,8 @@ if sys.version_info < (3, 11):
 
 
 def check_raisesexc_typevar_default(e: RaisesExc) -> None:
-    assert e.exception_type is not None
-    _exc: type[BaseException] = e.exception_type
+    assert e.expected_exceptions is not None
+    _exc: type[BaseException] | tuple[type[BaseException], ...] = e.expected_exceptions
     # this would previously pass, as the type would be `Any`
     e.exception_type().blah()  # type: ignore
 
@@ -63,7 +63,7 @@ def check_raisesexc_init() -> None:
     RaisesExc(ValueError)
     RaisesExc(ValueError, "regex")
     RaisesExc(ValueError, "regex", check_exc)
-    RaisesExc(exception_type=ValueError)
+    RaisesExc(expected_exception=ValueError)
     RaisesExc(match="regex")
     RaisesExc(check=check_exc)
     RaisesExc(ValueError, match="regex")

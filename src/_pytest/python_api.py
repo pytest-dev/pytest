@@ -6,30 +6,25 @@ from collections.abc import Collection
 from collections.abc import Mapping
 from collections.abc import Sequence
 from collections.abc import Sized
-from contextlib import AbstractContextManager
 from decimal import Decimal
 import math
 from numbers import Complex
 import pprint
 import re
 import sys
-from types import TracebackType
 from typing import Any
-from typing import cast
-from typing import final
-from typing import get_args
-from typing import get_origin
 from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
 import _pytest._code
 from _pytest.outcomes import fail
+from _pytest.raises_group import BaseExcT_co_default
+from _pytest.raises_group import RaisesExc
 
 
 if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-    from exceptiongroup import ExceptionGroup
+    pass
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -791,7 +786,7 @@ def _as_numpy_array(obj: object) -> ndarray | None:
 
 # builtin pytest.raises helper
 
-E = TypeVar("E", bound=BaseException)
+E = TypeVar("E", bound=BaseException, default=BaseException)
 
 
 @overload
@@ -799,7 +794,21 @@ def raises(
     expected_exception: type[E] | tuple[type[E], ...],
     *,
     match: str | re.Pattern[str] | None = ...,
-) -> RaisesContext[E]: ...
+    check: Callable[[BaseExcT_co_default], bool] = ...,
+) -> RaisesExc[E]: ...
+
+
+@overload
+def raises(
+    *,
+    match: str | re.Pattern[str],
+    # If exception_type is not provided, check() must do any typechecks itself.
+    check: Callable[[BaseException], bool] = ...,
+) -> RaisesExc[BaseException]: ...
+
+
+@overload
+def raises(*, check: Callable[[BaseException], bool]) -> RaisesExc[BaseException]: ...
 
 
 @overload
@@ -812,8 +821,10 @@ def raises(
 
 
 def raises(
-    expected_exception: type[E] | tuple[type[E], ...], *args: Any, **kwargs: Any
-) -> RaisesContext[E] | _pytest._code.ExceptionInfo[E]:
+    expected_exception: type[E] | tuple[type[E], ...] | None = None,
+    *args: Any,
+    **kwargs: Any,
+) -> RaisesExc[BaseException] | _pytest._code.ExceptionInfo[E]:
     r"""Assert that a code block/function call raises an exception type, or one of its subclasses.
 
     :param expected_exception:
@@ -960,117 +971,38 @@ def raises(
     """
     __tracebackhide__ = True
 
+    if not args:
+        if set(kwargs) - {"match", "check", "expected_exception"}:
+            msg = "Unexpected keyword arguments passed to pytest.raises: "
+            msg += ", ".join(sorted(kwargs))
+            msg += "\nUse context-manager form instead?"
+            raise TypeError(msg)
+
+        if expected_exception is None:
+            return RaisesExc(**kwargs)
+        return RaisesExc(expected_exception, **kwargs)
+
     if not expected_exception:
         raise ValueError(
             f"Expected an exception type or a tuple of exception types, but got `{expected_exception!r}`. "
             f"Raising exceptions is already understood as failing the test, so you don't need "
             f"any special code to say 'this should never raise an exception'."
         )
-
-    expected_exceptions: tuple[type[E], ...]
-    origin_exc: type[E] | None = get_origin(expected_exception)
-    if isinstance(expected_exception, type):
-        expected_exceptions = (expected_exception,)
-    elif origin_exc and issubclass(origin_exc, BaseExceptionGroup):
-        expected_exceptions = (cast(type[E], expected_exception),)
-    else:
-        expected_exceptions = expected_exception
-
-    def validate_exc(exc: type[E]) -> type[E]:
-        __tracebackhide__ = True
-        origin_exc: type[E] | None = get_origin(exc)
-        if origin_exc and issubclass(origin_exc, BaseExceptionGroup):
-            exc_type = get_args(exc)[0]
-            if (
-                issubclass(origin_exc, ExceptionGroup) and exc_type in (Exception, Any)
-            ) or (
-                issubclass(origin_exc, BaseExceptionGroup)
-                and exc_type in (BaseException, Any)
-            ):
-                return cast(type[E], origin_exc)
-            else:
-                raise ValueError(
-                    f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` "
-                    f"are accepted as generic types but got `{exc}`. "
-                    f"As `raises` will catch all instances of the specified group regardless of the "
-                    f"generic argument specific nested exceptions has to be checked "
-                    f"with `ExceptionInfo.group_contains()`"
-                )
-
-        elif not isinstance(exc, type) or not issubclass(exc, BaseException):
-            msg = "expected exception must be a BaseException type, not {}"  # type: ignore[unreachable]
-            not_a = exc.__name__ if isinstance(exc, type) else type(exc).__name__
-            raise TypeError(msg.format(not_a))
-        else:
-            return exc
-
-    expected_exceptions = tuple(validate_exc(exc) for exc in expected_exceptions)
-
-    message = f"DID NOT RAISE {expected_exception}"
-
-    if not args:
-        match: str | re.Pattern[str] | None = kwargs.pop("match", None)
-        if kwargs:
-            msg = "Unexpected keyword arguments passed to pytest.raises: "
-            msg += ", ".join(sorted(kwargs))
-            msg += "\nUse context-manager form instead?"
-            raise TypeError(msg)
-        return RaisesContext(expected_exceptions, message, match)
-    else:
-        func = args[0]
-        if not callable(func):
-            raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
-        try:
-            func(*args[1:], **kwargs)
-        except expected_exceptions as e:
-            return _pytest._code.ExceptionInfo.from_exception(e)
-    fail(message)
+    func = args[0]
+    if not callable(func):
+        raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
+    with RaisesExc(expected_exception) as excinfo:
+        func(*args[1:], **kwargs)
+    try:
+        return excinfo
+    finally:
+        del excinfo
 
 
-# This doesn't work with mypy for now. Use fail.Exception instead.
-raises.Exception = fail.Exception  # type: ignore
-
-
-@final
-class RaisesContext(AbstractContextManager[_pytest._code.ExceptionInfo[E]]):
-    def __init__(
-        self,
-        expected_exception: type[E] | tuple[type[E], ...],
-        message: str,
-        match_expr: str | re.Pattern[str] | None = None,
-    ) -> None:
-        self.expected_exception = expected_exception
-        self.message = message
-        self.match_expr = match_expr
-        self.excinfo: _pytest._code.ExceptionInfo[E] | None = None
-        if self.match_expr is not None:
-            re_error = None
-            try:
-                re.compile(self.match_expr)
-            except re.error as e:
-                re_error = e
-            if re_error is not None:
-                fail(f"Invalid regex pattern provided to 'match': {re_error}")
-
-    def __enter__(self) -> _pytest._code.ExceptionInfo[E]:
-        self.excinfo = _pytest._code.ExceptionInfo.for_later()
-        return self.excinfo
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> bool:
-        __tracebackhide__ = True
-        if exc_type is None:
-            fail(self.message)
-        assert self.excinfo is not None
-        if not issubclass(exc_type, self.expected_exception):
-            return False
-        # Cast to narrow the exception type now that it's verified.
-        exc_info = cast(tuple[type[E], E, TracebackType], (exc_type, exc_val, exc_tb))
-        self.excinfo.fill_unfilled(exc_info)
-        if self.match_expr is not None:
-            self.excinfo.match(self.match_expr)
-        return True
+# note: RaisesExc/RaisesGroup uses fail() internally, so this alias
+# indicates (to [internal] plugins?) that `pytest.raises` will
+# raise `_pytest.outcomes.Failed`, where
+# `outcomes.Failed is outcomes.fail.Exception is raises.Exception`
+# note: this is *not* the same as `_pytest.main.Failed`
+# note: mypy does not recognize this attribute
+raises.Exception = fail.Exception  # type: ignore[attr-defined]
