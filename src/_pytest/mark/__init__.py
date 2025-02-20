@@ -79,9 +79,10 @@ def param(
     :param id:
         The id to attribute to this parameter set.
 
-        :ref:`hidden-param` means to hide the parameter set
-        from the test name. Can only be used at most 1 time, as
-        test names need to be unique.
+        .. versionadded:: 8.4
+            :ref:`hidden-param` means to hide the parameter set
+            from the test name. Can only be used at most 1 time, as
+            test names need to be unique.
     """
     return ParameterSet.param(*values, marks=marks, id=id)
 
