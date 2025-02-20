@@ -853,7 +853,7 @@ class TestCaptureIO:
     def test_unicode_and_str_mixture(self) -> None:
         f = capture.CaptureIO()
         f.write("\u00f6")
-        pytest.raises(TypeError, f.write, b"hello")
+        pytest.raises(TypeError, f.write, b"hello")  # type: ignore[call-overload]
 
     def test_write_bytes_to_buffer(self) -> None:
         """In python3, stdout / stderr are text io wrappers (exposing a buffer
@@ -880,7 +880,7 @@ class TestTeeCaptureIO(TestCaptureIO):
         sio = io.StringIO()
         f = capture.TeeCaptureIO(sio)
         f.write("\u00f6")
-        pytest.raises(TypeError, f.write, b"hello")
+        pytest.raises(TypeError, f.write, b"hello")  # type: ignore[call-overload]
 
 
 def test_dontreadfrominput() -> None:
@@ -900,7 +900,7 @@ def test_dontreadfrominput() -> None:
     assert not f.seekable()
     pytest.raises(UnsupportedOperation, f.tell)
     pytest.raises(UnsupportedOperation, f.truncate, 0)
-    pytest.raises(UnsupportedOperation, f.write, b"")
+    pytest.raises(UnsupportedOperation, f.write, b"")  # type: ignore[call-overload]
     pytest.raises(UnsupportedOperation, f.writelines, [])
     assert not f.writable()
     assert isinstance(f.encoding, str)
@@ -1635,7 +1635,7 @@ def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
 
 def test__get_multicapture() -> None:
     assert isinstance(_get_multicapture("no"), MultiCapture)
-    pytest.raises(ValueError, _get_multicapture, "unknown").match(
+    pytest.raises(ValueError, _get_multicapture, "unknown").match(  # type: ignore[call-overload]
         r"^unknown capturing method: 'unknown'"
     )
 

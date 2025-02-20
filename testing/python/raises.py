@@ -231,7 +231,7 @@ class TestRaises:
             pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
 
-        pytest.raises(TypeError, int, match="invalid")
+        pytest.raises(TypeError, int, match="invalid")  # type: ignore[call-overload]
 
         def tfunc(match):
             raise ValueError(f"match={match}")
@@ -337,3 +337,11 @@ class TestRaises:
 
         with pytest.raises(HTTPError, match="Not Found"):
             raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]
+
+    def test_callable_func_kwarg(self) -> None:
+        # raises previously assumed that `func` was passed as positional, but
+        # the type hint indicated it could be a keyword parameter
+        def my_raise() -> None:
+            raise ValueError
+
+        pytest.raises(expected_exception=ValueError, func=my_raise)

@@ -33,6 +33,9 @@ if sys.version_info < (3, 11):
 
 if TYPE_CHECKING:
     from numpy import ndarray
+    from typing_extensions import ParamSpec
+
+    P = ParamSpec("P")
 
 
 def _compare_approx(
@@ -805,14 +808,17 @@ def raises(
 @overload
 def raises(
     expected_exception: type[E] | tuple[type[E], ...],
-    func: Callable[..., Any],
-    *args: Any,
-    **kwargs: Any,
+    func: Callable[P, object],
+    *args: P.args,
+    **kwargs: P.kwargs,
 ) -> _pytest._code.ExceptionInfo[E]: ...
 
 
 def raises(
-    expected_exception: type[E] | tuple[type[E], ...], *args: Any, **kwargs: Any
+    expected_exception: type[E] | tuple[type[E], ...],
+    func: Callable[P, object] | None = None,
+    *args: Any,
+    **kwargs: Any,
 ) -> RaisesContext[E] | _pytest._code.ExceptionInfo[E]:
     r"""Assert that a code block/function call raises an exception type, or one of its subclasses.
 
@@ -1003,7 +1009,7 @@ def raises(
 
     message = f"DID NOT RAISE {expected_exception}"
 
-    if not args:
+    if func is None and not args:
         match: str | re.Pattern[str] | None = kwargs.pop("match", None)
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
@@ -1012,11 +1018,10 @@ def raises(
             raise TypeError(msg)
         return RaisesContext(expected_exceptions, message, match)
     else:
-        func = args[0]
         if not callable(func):
             raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
         try:
-            func(*args[1:], **kwargs)
+            func(*args, **kwargs)
         except expected_exceptions as e:
             return _pytest._code.ExceptionInfo.from_exception(e)
     fail(message)
