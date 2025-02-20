@@ -694,6 +694,8 @@ which is expected by pytest.
 Adding parameters depending on previous parametrizations
 --------------------------------------------------------------------
 
+.. versionadded: 8.4
+
 By default, :hook:`pytest_generate_tests` hooks and
 :ref:`pytest.mark.parametrize <pytest.mark.parametrize ref>` generate
 a Cartesian product of parameter sets in case of multiple parametrizations,
@@ -702,7 +704,8 @@ see :ref:`parametrize-basics` for some examples.
 Sometimes, values of some parameters need to be generated based on values
 of previous parameters or based on their associated marks.
 
-In such cases ``parametrize`` can be passed a callable for ``argvalues``,
+In such cases :py:func:`Metafunc.parametrize <pytest.Metafunc.parametrize>`
+can be passed a callable for ``argvalues``,
 which will decide how to further parametrize each test instance:
 
 .. code-block:: python
@@ -755,3 +758,10 @@ Running ``pytest`` with verbose mode outputs:
     test_parametrize_dependent.py::test_function[c-w] PASSED             [100%]
 
     ============================ 6 passed in 0.12s =============================
+
+In the example above, the callable form was used to ensure that all marks are
+accounted for.
+
+Params from :hook:`pytest_generate_tests` hooks go after params from
+:ref:`pytest.mark.parametrize <pytest.mark.parametrize ref>` by default.
+:py:func:`pytest.hookimpl` can be used to affect the order of hooks.

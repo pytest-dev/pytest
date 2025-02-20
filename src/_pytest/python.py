@@ -1177,6 +1177,7 @@ class Metafunc:
             A comma-separated string denoting one or more argument names, or
             a list/tuple of argument strings.
 
+        :type argvalues: Iterable[_pytest.mark.structures.ParameterSet | Sequence[object] | object] | Callable
         :param argvalues:
             The list of argvalues determines how often a test is invoked with
             different argument values.
@@ -1188,9 +1189,9 @@ class Metafunc:
             :func:`pytest.param` can be used instead of tuples for additional
             control over parameter sets.
 
-            Parameter sets can be generated depending on previous
-            parametrizations, see :ref:`parametrize_dependent`.
-        :type argvalues: Iterable[_pytest.mark.structures.ParameterSet | Sequence[object] | object] | Callable
+            .. versionadded: 8.4
+                ``argvalues`` can be passed a callable,
+                see :ref:`parametrize_dependent`.
 
         :param indirect:
             A list of arguments' names (subset of argnames) or a boolean.

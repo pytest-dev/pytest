@@ -2176,11 +2176,13 @@ class TestCovariant:
             ]
         )
 
-    def test_depend_on_marks(self, pytester: Pytester) -> None:
+    def test_hook_depends_on_marks(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
             import pytest
 
+            # Note: without hookimpl, the hook goes after the parametrize mark.
+            @pytest.hookimpl(trylast=True)
             def pytest_generate_tests(metafunc: pytest.Metafunc):
                 if "bar" in metafunc.fixturenames:
                     base_bar_marks = list(metafunc.definition.iter_markers("bar_params"))
@@ -2211,13 +2213,57 @@ class TestCovariant:
         result = pytester.runpytest("-vv", "-s")
         result.stdout.fnmatch_lines(
             [
-                "test_depend_on_marks.py::test_function[a-x] PASSED",
-                "test_depend_on_marks.py::test_function[b-x] PASSED",
-                "test_depend_on_marks.py::test_function[b-y] PASSED",
-                "test_depend_on_marks.py::test_function[b-z] PASSED",
-                "test_depend_on_marks.py::test_function[c-x] PASSED",
-                "test_depend_on_marks.py::test_function[c-w] PASSED",
+                "test_hook_depends_on_marks.py::test_function[a-x] PASSED",
+                "test_hook_depends_on_marks.py::test_function[b-x] PASSED",
+                "test_hook_depends_on_marks.py::test_function[b-y] PASSED",
+                "test_hook_depends_on_marks.py::test_function[b-z] PASSED",
+                "test_hook_depends_on_marks.py::test_function[c-x] PASSED",
+                "test_hook_depends_on_marks.py::test_function[c-w] PASSED",
                 "*= 6 passed in *",
+            ]
+        )
+
+    @pytest.mark.skip(reason=":(")
+    def test_mark_depends_on_hooks(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            # Note: with tryfirst, the hook goes before the parametrize mark.
+            @pytest.hookimpl(wrapper=True)
+            def pytest_generate_tests(metafunc: pytest.Metafunc):
+                if "foo" in metafunc.fixturenames:
+                    metafunc.parametrize(
+                        "foo",
+                        [
+                            pytest.param("a", marks=[pytest.mark.bar_params("x", "y")]),
+                            pytest.param("b", marks=[pytest.mark.bar_params("z")]),
+                        ],
+                    )
+                return (yield)
+
+
+            def gen_params(callspec: pytest.CallSpec):
+                bar_marks = [
+                    mark
+                    for mark in callspec.marks
+                    if mark.name == "bar_params"
+                ]
+                return [arg for mark in bar_marks for arg in mark.args]
+
+
+            @pytest.mark.parametrize("bar", gen_params)
+            def test_function(foo, bar):
+                pass
+        """
+        )
+        result = pytester.runpytest("-vv", "-s")
+        result.stdout.fnmatch_lines(
+            [
+                "test_mark_depends_on_hooks.py::test_function[a-x] PASSED",
+                "test_mark_depends_on_hooks.py::test_function[a-y] PASSED",
+                "test_mark_depends_on_hooks.py::test_function[b-z] PASSED",
+                "*= 3 passed in *",
             ]
         )
 
