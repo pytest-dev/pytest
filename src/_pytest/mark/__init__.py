@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from .expression import Expression
 from .expression import ParseError
+from .structures import _HiddenParam
 from .structures import EMPTY_PARAMETERSET_OPTION
 from .structures import get_empty_parameterset_mark
 from .structures import HIDDEN_PARAM
@@ -50,7 +51,7 @@ old_mark_config_key = StashKey[Optional[Config]]()
 def param(
     *values: object,
     marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
-    id: str | None = None,
+    id: str | _HiddenParam | None = None,
 ) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.
@@ -75,6 +76,12 @@ def param(
         :ref:`pytest.mark.usefixtures <pytest.mark.usefixtures ref>` cannot be added via this parameter.
 
     :param id: The id to attribute to this parameter set.
+
+        .. versionadded: 8.4
+
+        :ref:`pytest.HIDDEN_PARAM` means to hide the parameter set
+        from the test name. Can only be used at most 1 time, as
+        test names need to be unique.
     """
     return ParameterSet.param(*values, marks=marks, id=id)
 

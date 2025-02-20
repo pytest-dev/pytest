@@ -1209,8 +1209,12 @@ class Metafunc:
             ``bool``, or ``None``.
             They are mapped to the corresponding index in ``argvalues``.
             ``None`` means to use the auto-generated id.
-            ``pytest.HIDDEN_PARAM`` means to hide the parameter set
-            from the test name.
+
+            .. versionadded: 8.4
+
+            :ref:`pytest.HIDDEN_PARAM` means to hide the parameter set
+            from the test name. Can only be used at most 1 time, as
+            test names need to be unique.
 
             If it is a callable it will be called for each entry in
             ``argvalues``, and the return value is used as part of the
