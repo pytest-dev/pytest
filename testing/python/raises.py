@@ -238,7 +238,7 @@ class TestRaises:
 
         msg = "with base 16"
         expr = (
-            "Raised exception did not match: Regex pattern did not match.\n"
+            "Regex pattern did not match.\n"
             f" Regex: {msg!r}\n"
             " Input: \"invalid literal for int() with base 10: 'asdf'\""
         )
@@ -277,10 +277,7 @@ class TestRaises:
             with pytest.raises(AssertionError, match="'foo"):
                 raise AssertionError("'bar")
         (msg,) = excinfo.value.args
-        assert (
-            msg
-            == '''Raised exception did not match: Regex pattern did not match.\n Regex: "'foo"\n Input: "'bar"'''
-        )
+        assert msg == '''Regex pattern did not match.\n Regex: "'foo"\n Input: "'bar"'''
 
     def test_match_failure_exact_string_message(self):
         message = "Oh here is a message with (42) numbers in parameters"
@@ -289,7 +286,7 @@ class TestRaises:
                 raise AssertionError(message)
         (msg,) = excinfo.value.args
         assert msg == (
-            "Raised exception did not match: Regex pattern did not match.\n"
+            "Regex pattern did not match.\n"
             " Regex: 'Oh here is a message with (42) numbers in parameters'\n"
             " Input: 'Oh here is a message with (42) numbers in parameters'\n"
             " Did you mean to `re.escape()` the regex?"
@@ -303,9 +300,7 @@ class TestRaises:
         """
         with pytest.raises(
             AssertionError,
-            match=wrap_escape(
-                "Raised exception did not match: `ValueError()` is not an instance of `IndexError`"
-            ),
+            match=wrap_escape("`ValueError()` is not an instance of `IndexError`"),
         ):
             with pytest.raises(IndexError, match="nomatch"):
                 int("asdf")

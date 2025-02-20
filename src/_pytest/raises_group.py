@@ -218,7 +218,8 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                     self.is_baseexception = True
                 return cast(type[BaseExcT_1], origin_exc)
             else:
-                raise TypeError(
+                # I kinda think this should be a TypeError...
+                raise ValueError(
                     f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` "
                     f"are accepted as generic types but got `{exc}`. "
                     f"As `raises` will catch all instances of the specified group regardless of the "
@@ -451,7 +452,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         )
 
         if not self.matches(exc_val):
-            raise AssertionError(f"Raised exception did not match: {self._fail_reason}")
+            raise AssertionError(self._fail_reason)
 
         # Cast to narrow the exception type now that it's verified....
         # even though the TypeGuard in self.matches should be narrowing

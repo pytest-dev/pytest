@@ -1101,11 +1101,10 @@ def test_raisesexc() -> None:
         with RaisesExc((ValueError, TypeError)):
             ...
 
+    # currently RaisesGroup says "Raised exception did not match" but RaisesExc doesn't...
     with pytest.raises(
         AssertionError,
-        match=wrap_escape(
-            "Raised exception did not match: `TypeError()` is not an instance of `ValueError`"
-        ),
+        match=wrap_escape("`TypeError()` is not an instance of `ValueError`"),
     ):
         with RaisesExc(ValueError):
             raise TypeError
@@ -1287,13 +1286,15 @@ def test_parametrizing_conditional_raisesgroup(
 
 
 def test_annotated_group() -> None:
+    # repr depends on if exceptiongroup backport is being used or not
+    t = repr(ExceptionGroup[ValueError])
     fail_msg = wrap_escape(
-        "Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` are accepted as generic types but got `ExceptionGroup[ValueError]`. As `raises` will catch all instances of the specified group regardless of the generic argument specific nested exceptions has to be checked with `RaisesGroup`."
+        f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` are accepted as generic types but got `{t}`. As `raises` will catch all instances of the specified group regardless of the generic argument specific nested exceptions has to be checked with `RaisesGroup`."
     )
-    with pytest.raises(TypeError, match=fail_msg):
+    with pytest.raises(ValueError, match=fail_msg):
         with RaisesGroup(ExceptionGroup[ValueError]):
             ...  # pragma: no cover
-    with pytest.raises(TypeError, match=fail_msg):
+    with pytest.raises(ValueError, match=fail_msg):
         with RaisesExc(ExceptionGroup[ValueError]):
             ...  # pragma: no cover
     with RaisesGroup(ExceptionGroup[Exception]):

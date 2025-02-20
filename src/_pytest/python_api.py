@@ -29,6 +29,8 @@ if sys.version_info < (3, 11):
 if TYPE_CHECKING:
     from numpy import ndarray
 
+    E = TypeVar("E", bound=BaseException, default=BaseException)
+
 
 def _compare_approx(
     full_object: object,
@@ -785,8 +787,6 @@ def _as_numpy_array(obj: object) -> ndarray | None:
 
 
 # builtin pytest.raises helper
-
-E = TypeVar("E", bound=BaseException, default=BaseException)
 
 
 @overload
