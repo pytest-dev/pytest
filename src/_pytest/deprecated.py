@@ -28,8 +28,11 @@ elif TYPE_CHECKING:
     from typing_extensions import deprecated as deprecated
 else:
 
-    def deprecated(func: object) -> object:
-        return func
+    def deprecated(reason: str = "") -> object:
+        def decorator(func: object) -> object:
+            return func
+
+        return decorator
 
 
 CALLABLE_RAISES = PytestDeprecationWarning(
