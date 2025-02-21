@@ -6,9 +6,18 @@ from typing import Union
 
 from typing_extensions import assert_type
 
-from _pytest.raises_group import RaisesExc
-from _pytest.raises_group import RaisesGroup
+from _pytest.main import Failed as main_Failed
+from _pytest.outcomes import Failed
+from pytest import raises
+from pytest import RaisesExc
+from pytest import RaisesGroup
 
+
+# does not work
+assert_type(raises.Exception, Failed)  # type: ignore[assert-type, attr-defined]
+
+# FIXME: these are different for some reason(?)
+assert Failed is not main_Failed  # type: ignore[comparison-overlap]
 
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup

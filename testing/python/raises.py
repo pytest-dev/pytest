@@ -261,12 +261,10 @@ class TestRaises:
         pytest.raises(ValueError, tfunc, match="").match("match=")
 
         # empty string matches everything, which is probably not what the user wants
-        # FIXME: I have no clue what session.shouldstop is doing here
         with pytest.warns(
             PytestWarning,
             match=wrap_escape(
-                "session.shouldstop cannot be unset after it has been set; ignoring.matching against "
-                "an empty string will *always* pass. If you want to check for an empty message you "
+                "matching against an empty string will *always* pass. If you want to check for an empty message you "
                 "need to pass '^$'. If you don't want to match you should pass `None` or leave out the parameter."
             ),
         ):

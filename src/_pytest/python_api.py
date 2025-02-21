@@ -787,6 +787,9 @@ def _as_numpy_array(obj: object) -> ndarray | None:
 
 
 # builtin pytest.raises helper
+# FIXME: This should probably me moved to 'src/_pytest.raises_group.py'
+# (and rename the file to 'raises.py')
+# since it's much more closely tied to those than to the other stuff in this file.
 
 
 @overload
@@ -1000,9 +1003,11 @@ def raises(
 
 
 # note: RaisesExc/RaisesGroup uses fail() internally, so this alias
-# indicates (to [internal] plugins?) that `pytest.raises` will
-# raise `_pytest.outcomes.Failed`, where
-# `outcomes.Failed is outcomes.fail.Exception is raises.Exception`
+#  indicates (to [internal] plugins?) that `pytest.raises` will
+#  raise `_pytest.outcomes.Failed`, where
+#  `outcomes.Failed is outcomes.fail.Exception is raises.Exception`
 # note: this is *not* the same as `_pytest.main.Failed`
-# note: mypy does not recognize this attribute
+# note: mypy does not recognize this attribute, and it's not possible
+#  to use a protocol/decorator like the others in outcomes due to
+#  https://github.com/python/mypy/issues/18715
 raises.Exception = fail.Exception  # type: ignore[attr-defined]

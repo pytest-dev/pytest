@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 import warnings
 
 from _pytest._code import ExceptionInfo
+from _pytest._code.code import stringify_exception
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestWarning
 
@@ -59,17 +60,6 @@ ExcT_2 = TypeVar("ExcT_2", bound=Exception)
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
-
-
-# this differs slightly from pytest.ExceptionInfo._stringify_exception
-# as we don't want '(1 sub-exception)' when matching group strings
-def _stringify_exception(exc: BaseException) -> str:
-    return "\n".join(
-        [
-            exc.message if isinstance(exc, BaseExceptionGroup) else str(exc),
-            *getattr(exc, "__notes__", []),
-        ],
-    )
 
 
 # String patterns default to including the unicode flag.
@@ -141,6 +131,12 @@ def unescape(s: str) -> str:
     return re.sub(r"\\([{}()+-.*?^$\[\]\s\\])", r"\1", s)
 
 
+# These classes conceptually differ from ExceptionInfo in that ExceptionInfo is tied, and
+# constructed from, a particular exception - whereas these are constructed with expected
+# exceptions, and later allow matching towards particular exceptions.
+# But there's overlap in `ExceptionInfo.match` and `AbstractRaises._check_match`, as with
+# `AbstractRaises.matches` and `ExceptionInfo.errisinstance`+`ExceptionInfo.group_contains`.
+# The interaction between these classes should perhaps be improved.
 class AbstractRaises(ABC, Generic[BaseExcT_co]):
     """ABC with common functionality shared between RaisesExc and RaisesGroup"""
 
@@ -161,7 +157,6 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             if match == "":
                 warnings.warn(
                     PytestWarning(
-                        "session.shouldstop cannot be unset after it has been set; ignoring."
                         "matching against an empty string will *always* pass. If you want "
                         "to check for an empty message you need to pass '^$'. If you don't "
                         "want to match you should pass `None` or leave out the parameter."
@@ -251,10 +246,13 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
         self._fail_reason = f"check{check_repr} did not return True"
         return False
 
+    # TODO: harmonize with ExceptionInfo.match
     def _check_match(self, e: BaseException) -> bool:
         if self.match is None or re.search(
             self.match,
-            stringified_exception := _stringify_exception(e),
+            stringified_exception := stringify_exception(
+                e, include_subexception_msg=False
+            ),
         ):
             return True
 
