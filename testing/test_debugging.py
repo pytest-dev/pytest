@@ -304,7 +304,8 @@ class TestPDB:
             def globalfunc():
                 pass
             def test_1():
-                pytest.raises(ValueError, globalfunc)
+                with pytest.raises(ValueError):
+                    globalfunc()
         """
         )
         child = pytester.spawn_pytest(f"--pdb {p1}")

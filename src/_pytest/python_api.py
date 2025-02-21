@@ -22,8 +22,11 @@ from typing import get_origin
 from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
+import warnings
 
 import _pytest._code
+from _pytest.deprecated import CALLABLE_RAISES
+from _pytest.deprecated import deprecated
 from _pytest.outcomes import fail
 
 
@@ -806,6 +809,7 @@ def raises(
 
 
 @overload
+@deprecated("Use context-manager form instead")
 def raises(
     expected_exception: type[E] | tuple[type[E], ...],
     func: Callable[P, object],
@@ -1020,6 +1024,7 @@ def raises(
     else:
         if not callable(func):
             raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
+        warnings.warn(CALLABLE_RAISES, stacklevel=2)
         try:
             func(*args, **kwargs)
         except expected_exceptions as e:
