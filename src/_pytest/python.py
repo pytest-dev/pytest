@@ -57,6 +57,7 @@ from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
+from _pytest.mark.structures import _HiddenParam
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import HIDDEN_PARAM
 from _pytest.mark.structures import Mark
@@ -886,7 +887,7 @@ class IdMaker:
     # Used only for clearer error messages.
     func_name: str | None
 
-    def make_unique_parameterset_ids(self) -> list[str | None]:
+    def make_unique_parameterset_ids(self) -> list[str | _HiddenParam]:
         """Make a unique identifier for each ParameterSet, that may be used to
         identify the parametrization in a node ID.
 
@@ -907,7 +908,7 @@ class IdMaker:
             # Suffix non-unique IDs to make them unique.
             for index, id in enumerate(resolved_ids):
                 if id_counts[id] > 1:
-                    if id is None:
+                    if id is HIDDEN_PARAM:
                         self._complain_multiple_hidden_parameter_sets()
                     suffix = ""
                     if id and id[-1].isdigit():
@@ -923,19 +924,19 @@ class IdMaker:
         )
         return resolved_ids
 
-    def _resolve_ids(self) -> Iterable[str | None]:
+    def _resolve_ids(self) -> Iterable[str | _HiddenParam]:
         """Resolve IDs for all ParameterSets (may contain duplicates)."""
         for idx, parameterset in enumerate(self.parametersets):
             if parameterset.id is not None:
                 # ID provided directly - pytest.param(..., id="...")
                 if parameterset.id is HIDDEN_PARAM:
-                    yield None
+                    yield HIDDEN_PARAM
                 else:
                     yield _ascii_escaped_by_config(parameterset.id, self.config)
             elif self.ids and idx < len(self.ids) and self.ids[idx] is not None:
                 # ID provided in the IDs list - parametrize(..., ids=[...]).
                 if self.ids[idx] is HIDDEN_PARAM:
-                    yield None
+                    yield HIDDEN_PARAM
                 else:
                     yield self._idval_from_value_required(self.ids[idx], idx)
             else:
@@ -1067,7 +1068,7 @@ class CallSpec2:
         *,
         argnames: Iterable[str],
         valset: Iterable[object],
-        id: str | None,
+        id: str | _HiddenParam,
         marks: Iterable[Mark | MarkDecorator],
         scope: Scope,
         param_index: int,
@@ -1085,7 +1086,7 @@ class CallSpec2:
             params=params,
             indices=indices,
             _arg2scope=arg2scope,
-            _idlist=[*self._idlist, id] if id is not None else self._idlist,
+            _idlist=self._idlist if id is HIDDEN_PARAM else [*self._idlist, id],
             marks=[*self.marks, *normalize_mark_list(marks)],
         )
 
@@ -1347,7 +1348,7 @@ class Metafunc:
         ids: Iterable[object | None] | Callable[[Any], object | None] | None,
         parametersets: Sequence[ParameterSet],
         nodeid: str,
-    ) -> list[str | None]:
+    ) -> list[str | _HiddenParam]:
         """Resolve the actual ids for the given parameter sets.
 
         :param argnames:

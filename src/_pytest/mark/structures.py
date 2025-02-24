@@ -39,6 +39,16 @@ if TYPE_CHECKING:
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 
+# Singleton type for HIDDEN_PARAM, as described in:
+# https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
+class _HiddenParam(enum.Enum):
+    token = 0
+
+
+#: Can be used as a parameter set id to hide it from the test name.
+HIDDEN_PARAM = _HiddenParam.token
+
+
 def istestfunc(func) -> bool:
     return callable(func) and getattr(func, "__name__", "<lambda>") != "<lambda>"
 
@@ -64,16 +74,6 @@ def get_empty_parameterset_mark(
     else:
         raise LookupError(requested_mark)
     return mark
-
-
-# Singleton type for HIDDEN_PARAM, as described in:
-# https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
-class _HiddenParam(enum.Enum):
-    token = 0
-
-
-#: Can be used as a parameter set id to hide it from the test name.
-HIDDEN_PARAM = _HiddenParam.token
 
 
 class ParameterSet(NamedTuple):
