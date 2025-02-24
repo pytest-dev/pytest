@@ -106,6 +106,8 @@ nitpick_ignore = [
     ("py:obj", "_pytest.fixtures.FixtureValue"),
     ("py:obj", "_pytest.stash.T"),
     ("py:class", "_ScopeName"),
+    ("py:class", "BaseExcT_1"),
+    ("py:class", "ExcT_1"),
 ]
 
 add_module_names = False

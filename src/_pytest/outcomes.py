@@ -77,8 +77,8 @@ class Exit(Exception):
         super().__init__(msg)
 
 
-# Elaborate hack to work around https://github.com/python/mypy/issues/2087.
-# Ideally would just be `exit.Exception = Exit` etc.
+# We need a callable protocol to add attributes, for discussion see
+# https://github.com/python/mypy/issues/2087.
 
 _F = TypeVar("_F", bound=Callable[..., object])
 _ET = TypeVar("_ET", bound=type[BaseException])

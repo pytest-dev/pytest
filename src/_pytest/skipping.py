@@ -20,6 +20,7 @@ from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
+from _pytest.raises_group import AbstractRaises
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
@@ -201,7 +202,12 @@ class Xfail:
     reason: str
     run: bool
     strict: bool
-    raises: tuple[type[BaseException], ...] | None
+    raises: (
+        type[BaseException]
+        | tuple[type[BaseException], ...]
+        | AbstractRaises[BaseException]
+        | None
+    )
 
 
 def evaluate_xfail_marks(item: Item) -> Xfail | None:
@@ -277,11 +283,20 @@ def pytest_runtest_makereport(
     elif not rep.skipped and xfailed:
         if call.excinfo:
             raises = xfailed.raises
-            if raises is not None and not isinstance(call.excinfo.value, raises):
-                rep.outcome = "failed"
-            else:
+            if raises is None or (
+                (
+                    isinstance(raises, (type, tuple))
+                    and isinstance(call.excinfo.value, raises)
+                )
+                or (
+                    isinstance(raises, AbstractRaises)
+                    and raises.matches(call.excinfo.value)
+                )
+            ):
                 rep.outcome = "skipped"
                 rep.wasxfail = xfailed.reason
+            else:
+                rep.outcome = "failed"
         elif call.when == "call":
             if xfailed.strict:
                 rep.outcome = "failed"

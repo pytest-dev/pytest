@@ -481,8 +481,9 @@ def test_raises_exception_escapes_generic_group() -> None:
     try:
         with pytest.raises(ExceptionGroup[Exception]):
             raise ValueError("my value error")
-    except ValueError as e:
-        assert str(e) == "my value error"
+    except AssertionError as e:
+        assert str(e) == "`ValueError()` is not an instance of `ExceptionGroup`"
+        assert str(e.__context__) == "my value error"
     else:
         pytest.fail("Expected ValueError to be raised")
 
