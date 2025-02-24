@@ -824,7 +824,7 @@ def raises(
     *args: Any,
     **kwargs: Any,
 ) -> RaisesContext[E] | _pytest._code.ExceptionInfo[E]:
-    r"""Assert that a code block/function call raises an exception type, or one of its subclasses.
+    r"""Assert that a code block raises an exception type, or one of its subclasses.
 
     :param expected_exception:
         The expected exception type, or a tuple if one of multiple possible
@@ -929,25 +929,6 @@ def raises(
     .. seealso::
 
         :ref:`assertraises` for more examples and detailed discussion.
-
-    **Legacy form**
-
-    It is possible to specify a callable by passing a to-be-called lambda::
-
-        >>> raises(ZeroDivisionError, lambda: 1/0)
-        <ExceptionInfo ...>
-
-    or you can specify an arbitrary callable with arguments::
-
-        >>> def f(x): return 1/x
-        ...
-        >>> raises(ZeroDivisionError, f, 0)
-        <ExceptionInfo ...>
-        >>> raises(ZeroDivisionError, f, x=0)
-        <ExceptionInfo ...>
-
-    The form above is fully supported but discouraged for new code because the
-    context manager form is regarded as more readable and less error-prone.
 
     .. note::
         Similar to caught exception objects in Python, explicitly clearing

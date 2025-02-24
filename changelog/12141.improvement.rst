@@ -1,1 +1,0 @@
-:func:`pytest.raises` now uses :class:`ParamSpec` for the type hint to the legacy callable overload, instead of :class:`Any`. Also ``func`` can now be passed as a kwarg, which the type hint previously showed as possible but didn't accept.

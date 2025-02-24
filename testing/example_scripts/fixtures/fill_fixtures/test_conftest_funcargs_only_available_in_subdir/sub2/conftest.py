@@ -6,5 +6,5 @@ import pytest
 
 @pytest.fixture
 def arg2(request):
-    with pytest.raises(Exception):  # noqa: B017
+    with pytest.raises(Exception):  # noqa: B017  # too general exception
         request.getfixturevalue("arg1")
