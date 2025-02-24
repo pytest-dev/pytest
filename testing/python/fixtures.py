@@ -5026,8 +5026,12 @@ def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:
         def my_fixture(request):
             return getattr(request, "param", None)
 
+        @pytest.fixture(scope="session")
+        def another_fixture(my_fixture):
+            return my_fixture
+
         @pytest.mark.parametrize("my_fixture", ["a"], indirect=True, scope="function")
-        def test_foo(my_fixture):
+        def test_foo(another_fixture):
             pass
         """
     )
