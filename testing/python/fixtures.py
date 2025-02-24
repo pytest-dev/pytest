@@ -5009,3 +5009,27 @@ def test_subfixture_teardown_order(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:
+    """
+    Make sure scope from parametrize does not affect fixture's ability to be
+    depended upon.
+
+    Regression test for #13248
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="session")
+        def my_fixture(request):
+            return getattr(request, "param", None)
+
+        @pytest.mark.parametrize("my_fixture", ["a"], indirect=True, scope="function")
+        def test_foo(my_fixture):
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
