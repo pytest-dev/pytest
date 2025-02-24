@@ -100,7 +100,10 @@ class ParameterSet(NamedTuple):
 
         if id is not None:
             if not isinstance(id, str) and id is not HIDDEN_PARAM:
-                raise TypeError(f"Expected id to be a string, got {type(id)}: {id!r}")
+                raise TypeError(
+                    "Expected id to be a string or a `pytest.HIDDEN_PARAM` sentinel, "
+                    f"got {type(id)}: {id!r}",
+                )
         return cls(values, marks, id)
 
     @classmethod
