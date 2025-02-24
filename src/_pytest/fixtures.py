@@ -605,7 +605,12 @@ class FixtureRequest(abc.ABC):
             param_index = 0
             scope = fixturedef._scope
             self._check_fixturedef_without_param(fixturedef)
-        self._check_scope(fixturedef, scope)
+        # The parametrize invocation scope only controls caching behavior while
+        # allowing wider-scoped fixtures to keep depending on the parametrized
+        # fixture. Scope control is enforced for parametrized fixtures
+        # by recreating the whole fixture tree on parameter change.
+        # Hence `fixturedef._scope`, not `scope`.
+        self._check_scope(fixturedef, fixturedef._scope)
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
