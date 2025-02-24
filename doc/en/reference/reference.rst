@@ -20,6 +20,16 @@ The current pytest version, as a string::
     >>> pytest.__version__
     '7.0.0'
 
+.. _`hidden-param`:
+
+pytest.HIDDEN_PARAM
+~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 8.4
+
+Can be passed to ``ids`` of :py:func:`Metafunc.parametrize <pytest.Metafunc.parametrize>`
+or to ``id`` of :func:`pytest.param` to hide a parameter set from the test name.
+Can only be used at most 1 time, as test names need to be unique.
 
 .. _`version-tuple`:
 
