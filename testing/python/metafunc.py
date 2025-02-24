@@ -2177,8 +2177,7 @@ class TestCovariant:
         )
 
     def test_hook_depends_on_marks(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
+        plugin_contents = """
             import pytest
 
             # Note: without hookimpl, the hook goes after the parametrize mark.
@@ -2196,6 +2195,13 @@ class TestCovariant:
                         return [arg for mark in bar_marks for arg in mark.args]
 
                     metafunc.parametrize("bar", gen_params)
+        """
+        pytester.makepyfile(**{"my_plugin.py": plugin_contents})
+        pytester.makepyfile(
+            """
+            import pytest
+
+            pytest_plugins = ["my_plugin"]
 
             @pytest.mark.bar_params("x")
             @pytest.mark.parametrize(
@@ -2223,14 +2229,12 @@ class TestCovariant:
             ]
         )
 
-    @pytest.mark.skip(reason=":(")
     def test_mark_depends_on_hooks(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
+        plugin_contents = """
             import pytest
 
             # Note: with tryfirst, the hook goes before the parametrize mark.
-            @pytest.hookimpl(wrapper=True)
+            @pytest.hookimpl(tryfirst=True)
             def pytest_generate_tests(metafunc: pytest.Metafunc):
                 if "foo" in metafunc.fixturenames:
                     metafunc.parametrize(
@@ -2240,8 +2244,13 @@ class TestCovariant:
                             pytest.param("b", marks=[pytest.mark.bar_params("z")]),
                         ],
                     )
-                return (yield)
+        """
+        pytester.makepyfile(**{"my_plugin.py": plugin_contents})
+        pytester.makepyfile(
+            """
+            import pytest
 
+            pytest_plugins = ["my_plugin"]
 
             def gen_params(callspec: pytest.CallSpec):
                 bar_marks = [

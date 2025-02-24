@@ -107,7 +107,6 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-@hookimpl(tryfirst=True)
 def pytest_generate_tests(metafunc: Metafunc) -> None:
     for marker in metafunc.definition.iter_markers(name="parametrize"):
         metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
