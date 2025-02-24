@@ -17,10 +17,9 @@ from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
-import _pytest._code
 from _pytest.outcomes import fail
-from _pytest.raises_group import BaseExcT_co_default
 from _pytest.raises_group import RaisesExc
+from pytest import ExceptionInfo
 
 
 if sys.version_info < (3, 11):
@@ -797,7 +796,7 @@ def raises(
     expected_exception: type[E] | tuple[type[E], ...],
     *,
     match: str | re.Pattern[str] | None = ...,
-    check: Callable[[BaseExcT_co_default], bool] = ...,
+    check: Callable[[E], bool] = ...,
 ) -> RaisesExc[E]: ...
 
 
@@ -820,14 +819,14 @@ def raises(
     func: Callable[..., Any],
     *args: Any,
     **kwargs: Any,
-) -> _pytest._code.ExceptionInfo[E]: ...
+) -> ExceptionInfo[E]: ...
 
 
 def raises(
     expected_exception: type[E] | tuple[type[E], ...] | None = None,
     *args: Any,
     **kwargs: Any,
-) -> RaisesExc[BaseException] | _pytest._code.ExceptionInfo[E]:
+) -> RaisesExc[BaseException] | ExceptionInfo[E]:
     r"""Assert that a code block/function call raises an exception type, or one of its subclasses.
 
     :param expected_exception:
