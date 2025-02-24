@@ -22,8 +22,11 @@ from typing import get_origin
 from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
+import warnings
 
 import _pytest._code
+from _pytest.deprecated import CALLABLE_RAISES
+from _pytest.deprecated import deprecated
 from _pytest.outcomes import fail
 
 
@@ -33,6 +36,9 @@ if sys.version_info < (3, 11):
 
 if TYPE_CHECKING:
     from numpy import ndarray
+    from typing_extensions import ParamSpec
+
+    P = ParamSpec("P")
 
 
 def _compare_approx(
@@ -803,18 +809,22 @@ def raises(
 
 
 @overload
+@deprecated("Use context-manager form instead")
 def raises(
     expected_exception: type[E] | tuple[type[E], ...],
-    func: Callable[..., Any],
-    *args: Any,
-    **kwargs: Any,
+    func: Callable[P, object],
+    *args: P.args,
+    **kwargs: P.kwargs,
 ) -> _pytest._code.ExceptionInfo[E]: ...
 
 
 def raises(
-    expected_exception: type[E] | tuple[type[E], ...], *args: Any, **kwargs: Any
+    expected_exception: type[E] | tuple[type[E], ...],
+    func: Callable[P, object] | None = None,
+    *args: Any,
+    **kwargs: Any,
 ) -> RaisesContext[E] | _pytest._code.ExceptionInfo[E]:
-    r"""Assert that a code block/function call raises an exception type, or one of its subclasses.
+    r"""Assert that a code block raises an exception type, or one of its subclasses.
 
     :param expected_exception:
         The expected exception type, or a tuple if one of multiple possible
@@ -920,25 +930,6 @@ def raises(
 
         :ref:`assertraises` for more examples and detailed discussion.
 
-    **Legacy form**
-
-    It is possible to specify a callable by passing a to-be-called lambda::
-
-        >>> raises(ZeroDivisionError, lambda: 1/0)
-        <ExceptionInfo ...>
-
-    or you can specify an arbitrary callable with arguments::
-
-        >>> def f(x): return 1/x
-        ...
-        >>> raises(ZeroDivisionError, f, 0)
-        <ExceptionInfo ...>
-        >>> raises(ZeroDivisionError, f, x=0)
-        <ExceptionInfo ...>
-
-    The form above is fully supported but discouraged for new code because the
-    context manager form is regarded as more readable and less error-prone.
-
     .. note::
         Similar to caught exception objects in Python, explicitly clearing
         local references to returned ``ExceptionInfo`` objects can
@@ -1003,7 +994,7 @@ def raises(
 
     message = f"DID NOT RAISE {expected_exception}"
 
-    if not args:
+    if func is None and not args:
         match: str | re.Pattern[str] | None = kwargs.pop("match", None)
         if kwargs:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
@@ -1012,11 +1003,11 @@ def raises(
             raise TypeError(msg)
         return RaisesContext(expected_exceptions, message, match)
     else:
-        func = args[0]
         if not callable(func):
             raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
+        warnings.warn(CALLABLE_RAISES, stacklevel=2)
         try:
-            func(*args[1:], **kwargs)
+            func(*args, **kwargs)
         except expected_exceptions as e:
             return _pytest._code.ExceptionInfo.from_exception(e)
     fail(message)

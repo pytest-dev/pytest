@@ -11,11 +11,43 @@ in case of warnings which need to format their messages.
 
 from __future__ import annotations
 
+import sys
+from typing import TYPE_CHECKING
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
+
+
+# the `as` indicates explicit re-export to type checkers
+# mypy currently does not support overload+deprecated
+if sys.version_info >= (3, 13):
+    from warnings import deprecated as deprecated
+elif TYPE_CHECKING:
+    from typing_extensions import deprecated as deprecated
+else:
+
+    def deprecated(reason: str = "") -> object:
+        def decorator(func: object) -> object:
+            return func
+
+        return decorator
+
+
+CALLABLE_RAISES = PytestDeprecationWarning(
+    "The callable form of pytest.raises is deprecated.\n"
+    "Use `with pytest.raises(...):` instead."
+)
+
+CALLABLE_WARNS = PytestDeprecationWarning(
+    "The callable form of pytest.warns is deprecated.\n"
+    "Use `with pytest.warns(...):` instead."
+)
+CALLABLE_DEPRECATED_CALL = PytestDeprecationWarning(
+    "The callable form of pytest.deprecated_call is deprecated.\n"
+    "Use `with pytest.deprecated_call():` instead."
+)
 
 
 # set of plugins which have been integrated into the core; we use this list to ignore
