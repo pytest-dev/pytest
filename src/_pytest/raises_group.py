@@ -17,10 +17,10 @@ from typing import overload
 from typing import TYPE_CHECKING
 import warnings
 
+from _pytest._code import ExceptionInfo
 from _pytest._code.code import stringify_exception
 from _pytest.outcomes import fail
 from _pytest.warning_types import PytestWarning
-from pytest import ExceptionInfo
 
 
 if TYPE_CHECKING:

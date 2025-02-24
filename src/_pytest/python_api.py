@@ -17,9 +17,9 @@ from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
+from _pytest._code import ExceptionInfo
 from _pytest.outcomes import fail
 from _pytest.raises_group import RaisesExc
-from pytest import ExceptionInfo
 
 
 if sys.version_info < (3, 11):
