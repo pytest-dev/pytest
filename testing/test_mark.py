@@ -1170,7 +1170,11 @@ def test_pytest_param_id_requires_string() -> None:
     with pytest.raises(TypeError) as excinfo:
         pytest.param(id=True)  # type: ignore[arg-type]
     (msg,) = excinfo.value.args
-    assert msg == "Expected id to be a string, got <class 'bool'>: True"
+    expected = (
+        "Expected id to be a string or a `pytest.HIDDEN_PARAM` sentinel, "
+        "got <class 'bool'>: True"
+    )
+    assert msg == expected
 
 
 @pytest.mark.parametrize("s", (None, "hello world"))
