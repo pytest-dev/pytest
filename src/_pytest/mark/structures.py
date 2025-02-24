@@ -32,6 +32,8 @@ from _pytest.warning_types import PytestUnknownMarkWarning
 
 
 if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
+
     from ..nodes import Node
 
 
@@ -65,6 +67,9 @@ def get_empty_parameterset_mark(
     return mark
 
 
+RawParameterSet: TypeAlias = "ParameterSet | Sequence[object] | object"
+
+
 class ParameterSet(NamedTuple):
     values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
@@ -95,7 +100,7 @@ class ParameterSet(NamedTuple):
     @classmethod
     def extract_from(
         cls,
-        parameterset: ParameterSet | Sequence[object] | object,
+        parameterset: RawParameterSet,
         force_tuple: bool = False,
     ) -> ParameterSet:
         """Extract from an object or objects.
@@ -123,7 +128,6 @@ class ParameterSet(NamedTuple):
     @staticmethod
     def _parse_parametrize_args(
         argnames: str | Sequence[str],
-        argvalues: Iterable[ParameterSet | Sequence[object] | object],
         *args,
         **kwargs,
     ) -> tuple[Sequence[str], bool]:
@@ -136,7 +140,7 @@ class ParameterSet(NamedTuple):
 
     @staticmethod
     def _parse_parametrize_parameters(
-        argvalues: Iterable[ParameterSet | Sequence[object] | object],
+        argvalues: Iterable[RawParameterSet],
         force_tuple: bool,
     ) -> list[ParameterSet]:
         return [
@@ -147,12 +151,12 @@ class ParameterSet(NamedTuple):
     def _for_parametrize(
         cls,
         argnames: str | Sequence[str],
-        argvalues: Iterable[ParameterSet | Sequence[object] | object],
+        argvalues: Iterable[RawParameterSet],
         func,
         config: Config,
         nodeid: str,
     ) -> tuple[Sequence[str], list[ParameterSet]]:
-        argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
+        argnames, force_tuple = cls._parse_parametrize_args(argnames)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
 
@@ -467,7 +471,7 @@ if TYPE_CHECKING:
         def __call__(  # type: ignore[override]
             self,
             argnames: str | Sequence[str],
-            argvalues: Iterable[ParameterSet | Sequence[object] | object],
+            argvalues: Iterable[RawParameterSet],
             *,
             indirect: bool | Sequence[str] = ...,
             ids: Iterable[None | str | float | int | bool]

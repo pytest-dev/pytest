@@ -53,6 +53,7 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import RecordedHookCall
 from _pytest.pytester import RunResult
+from _pytest.python import CallSpec
 from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Metafunc
@@ -91,6 +92,7 @@ set_trace = __pytestPDB.set_trace
 __all__ = [
     "Cache",
     "CallInfo",
+    "CallSpec",
     "CaptureFixture",
     "Class",
     "CollectReport",
