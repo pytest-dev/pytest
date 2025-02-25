@@ -771,7 +771,8 @@ def test_importorskip(monkeypatch) -> None:
         assert sysmod is sys
         # path = pytest.importorskip("os.path")
         # assert path == os.path
-        excinfo = pytest.raises(pytest.skip.Exception, f)
+        with pytest.raises(pytest.skip.Exception) as excinfo:
+            f()
         assert excinfo is not None
         excrepr = excinfo.getrepr()
         assert excrepr is not None
@@ -780,8 +781,10 @@ def test_importorskip(monkeypatch) -> None:
         # check that importorskip reports the actual call
         # in this test the test_runner.py file
         assert path.stem == "test_runner"
-        pytest.raises(SyntaxError, pytest.importorskip, "x y z")
-        pytest.raises(SyntaxError, pytest.importorskip, "x=y")
+        with pytest.raises(SyntaxError):
+            pytest.importorskip("x y z")
+        with pytest.raises(SyntaxError):
+            pytest.importorskip("x=y")
         mod = types.ModuleType("hello123")
         mod.__version__ = "1.3"  # type: ignore
         monkeypatch.setitem(sys.modules, "hello123", mod)
