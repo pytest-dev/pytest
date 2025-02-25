@@ -19,6 +19,7 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from .structures import RawParameterSet
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -38,6 +39,7 @@ __all__ = [
     "MarkDecorator",
     "MarkGenerator",
     "ParameterSet",
+    "RawParameterSet",
     "get_empty_parameterset_mark",
 ]
 

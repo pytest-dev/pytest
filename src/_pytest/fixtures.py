@@ -77,7 +77,7 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
-    from _pytest.python import CallSpec2
+    from _pytest.python import CallSpec
     from _pytest.python import Function
     from _pytest.python import Metafunc
 
@@ -184,7 +184,7 @@ def get_parametrized_fixture_argkeys(
     assert scope is not Scope.Function
 
     try:
-        callspec: CallSpec2 = item.callspec  # type: ignore[attr-defined]
+        callspec: CallSpec = item.callspec  # type: ignore[attr-defined]
     except AttributeError:
         return
 

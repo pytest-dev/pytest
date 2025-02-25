@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 import re
 import types
+import typing
 from typing import Any
 from typing import final
 from typing import Literal
@@ -56,6 +57,7 @@ from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
+from _pytest.mark import RawParameterSet
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
@@ -1022,27 +1024,34 @@ class IdMaker:
 
 @final
 @dataclasses.dataclass(frozen=True)
-class CallSpec2:
+class CallSpec:
     """A planned parameterized invocation of a test function.
 
-    Calculated during collection for a given test function's Metafunc.
-    Once collection is over, each callspec is turned into a single Item
-    and stored in item.callspec.
+    Calculated during collection for a given test function's ``Metafunc``.
+    Once collection is over, each callspec is turned into a single ``Item``
+    and stored in ``item.callspec``.
     """
 
-    # arg name -> arg value which will be passed to a fixture or pseudo-fixture
-    # of the same name. (indirect or direct parametrization respectively)
-    params: dict[str, object] = dataclasses.field(default_factory=dict)
-    # arg name -> arg index.
-    indices: dict[str, int] = dataclasses.field(default_factory=dict)
+    #: arg name -> arg value which will be passed to a fixture or pseudo-fixture
+    #: of the same name. (indirect or direct parametrization respectively)
+    params: Mapping[str, object] = dataclasses.field(default_factory=dict)
+    #: arg name -> arg index.
+    indices: Mapping[str, int] = dataclasses.field(default_factory=dict)
+    #: Marks which will be applied to the item.
+    marks: Sequence[Mark] = dataclasses.field(default_factory=list)
+
     # Used for sorting parametrized resources.
     _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
     # Parts which will be added to the item's name in `[..]` separated by "-".
     _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
-    # Marks which will be applied to the item.
-    marks: list[Mark] = dataclasses.field(default_factory=list)
+    # Make __init__ internal.
+    _ispytest: dataclasses.InitVar[bool] = False
 
-    def setmulti(
+    def __post_init__(self, _ispytest: bool):
+        """:meta private:"""
+        check_ispytest(_ispytest)
+
+    def _setmulti(
         self,
         *,
         argnames: Iterable[str],
@@ -1051,9 +1060,9 @@ class CallSpec2:
         marks: Iterable[Mark | MarkDecorator],
         scope: Scope,
         param_index: int,
-    ) -> CallSpec2:
-        params = self.params.copy()
-        indices = self.indices.copy()
+    ) -> CallSpec:
+        params = dict(self.params)
+        indices = dict(self.indices)
         arg2scope = dict(self._arg2scope)
         for arg, val in zip(argnames, valset):
             if arg in params:
@@ -1061,15 +1070,17 @@ class CallSpec2:
             params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
-        return CallSpec2(
+        return CallSpec(
             params=params,
             indices=indices,
+            marks=[*self.marks, *normalize_mark_list(marks)],
             _arg2scope=arg2scope,
             _idlist=[*self._idlist, id],
-            marks=[*self.marks, *normalize_mark_list(marks)],
+            _ispytest=True,
         )
 
     def getparam(self, name: str) -> object:
+        """:meta private:"""
         try:
             return self.params[name]
         except KeyError as e:
@@ -1077,6 +1088,7 @@ class CallSpec2:
 
     @property
     def id(self) -> str:
+        """The combined display name of ``params``."""
         return "-".join(self._idlist)
 
 
@@ -1130,14 +1142,15 @@ class Metafunc:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
         # Result of parametrize().
-        self._calls: list[CallSpec2] = []
+        self._calls: list[CallSpec] = []
 
         self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
 
     def parametrize(
         self,
         argnames: str | Sequence[str],
-        argvalues: Iterable[ParameterSet | Sequence[object] | object],
+        argvalues: Iterable[RawParameterSet]
+        | Callable[[CallSpec], Iterable[RawParameterSet]],
         indirect: bool | Sequence[str] = False,
         ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
         scope: _ScopeName | None = None,
@@ -1163,15 +1176,22 @@ class Metafunc:
             A comma-separated string denoting one or more argument names, or
             a list/tuple of argument strings.
 
+        :type argvalues: Iterable[_pytest.mark.structures.ParameterSet | Sequence[object] | object] | Callable
         :param argvalues:
             The list of argvalues determines how often a test is invoked with
             different argument values.
 
-            If only one argname was specified argvalues is a list of values.
+            If only one argname was specified, argvalues is a list of values.
             If N argnames were specified, argvalues must be a list of
             N-tuples, where each tuple-element specifies a value for its
             respective argname.
-        :type argvalues: Iterable[_pytest.mark.structures.ParameterSet | Sequence[object] | object]
+            :func:`pytest.param` can be used instead of tuples for additional
+            control over parameter sets.
+
+            .. versionadded: 8.4
+                ``argvalues`` can be passed a callable,
+                see :ref:`parametrize_dependent`.
+
         :param indirect:
             A list of arguments' names (subset of argnames) or a boolean.
             If True the list contains all names from the argnames. Each
@@ -1206,13 +1226,19 @@ class Metafunc:
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
-        argnames, parametersets = ParameterSet._for_parametrize(
-            argnames,
-            argvalues,
-            self.function,
-            self.config,
-            nodeid=self.definition.nodeid,
-        )
+        if callable(argvalues):
+            raw_argnames = argnames
+            param_factory = argvalues
+            argnames, _ = ParameterSet._parse_parametrize_args(raw_argnames)
+        else:
+            param_factory = None
+            argnames, parametersets = ParameterSet._for_parametrize(
+                argnames,
+                argvalues,
+                self.function,
+                self.config,
+                nodeid=self.definition.nodeid,
+            )
         del argvalues
 
         if "request" in argnames:
@@ -1230,19 +1256,22 @@ class Metafunc:
 
         self._validate_if_using_arg_names(argnames, indirect)
 
-        # Use any already (possibly) generated ids with parametrize Marks.
-        if _param_mark and _param_mark._param_ids_from:
-            generated_ids = _param_mark._param_ids_from._param_ids_generated
-            if generated_ids is not None:
-                ids = generated_ids
+        if param_factory is None:
+            # Use any already (possibly) generated ids with parametrize Marks.
+            if _param_mark and _param_mark._param_ids_from:
+                generated_ids = _param_mark._param_ids_from._param_ids_generated
+                if generated_ids is not None:
+                    ids = generated_ids
 
-        ids = self._resolve_parameter_set_ids(
-            argnames, ids, parametersets, nodeid=self.definition.nodeid
-        )
+            ids_ = self._resolve_parameter_set_ids(
+                argnames, ids, parametersets, nodeid=self.definition.nodeid
+            )
 
-        # Store used (possibly generated) ids with parametrize Marks.
-        if _param_mark and _param_mark._param_ids_from and generated_ids is None:
-            object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
+            # Store used (possibly generated) ids with parametrize Marks.
+            if _param_mark and _param_mark._param_ids_from and generated_ids is None:
+                object.__setattr__(
+                    _param_mark._param_ids_from, "_param_ids_generated", ids_
+                )
 
         # Add funcargs as fixturedefs to fixtureinfo.arg2fixturedefs by registering
         # artificial "pseudo" FixtureDef's so that later at test execution time we can
@@ -1301,11 +1330,22 @@ class Metafunc:
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls.
         newcalls = []
-        for callspec in self._calls or [CallSpec2()]:
+        for callspec in self._calls or [CallSpec(_ispytest=True)]:
+            if param_factory:
+                _, parametersets = ParameterSet._for_parametrize(
+                    raw_argnames,
+                    param_factory(callspec),
+                    self.function,
+                    self.config,
+                    nodeid=self.definition.nodeid,
+                )
+                ids_ = self._resolve_parameter_set_ids(
+                    argnames, ids, parametersets, nodeid=self.definition.nodeid
+                )
             for param_index, (param_id, param_set) in enumerate(
-                zip(ids, parametersets)
+                zip(ids_, parametersets)
             ):
-                newcallspec = callspec.setmulti(
+                newcallspec = callspec._setmulti(
                     argnames=argnames,
                     valset=param_set.values,
                     id=param_id,
@@ -1453,7 +1493,7 @@ class Metafunc:
         for argname, param_type in self._params_directness.items():
             if param_type == "direct":
                 for i, callspec in enumerate(self._calls):
-                    callspec.indices[argname] = i
+                    typing.cast(dict[str, int], callspec.indices)[argname] = i
 
 
 def _find_parametrized_scope(
@@ -1538,7 +1578,7 @@ class Function(PyobjMixin, nodes.Item):
         name: str,
         parent,
         config: Config | None = None,
-        callspec: CallSpec2 | None = None,
+        callspec: CallSpec | None = None,
         callobj=NOTSET,
         keywords: Mapping[str, Any] | None = None,
         session: Session | None = None,

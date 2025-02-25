@@ -913,6 +913,12 @@ Objects accessible from :ref:`fixtures <fixture>` or :ref:`hooks <hook-reference
 or importable from ``pytest``.
 
 
+CallSpec
+~~~~~~~~
+
+.. autoclass:: pytest.CallSpec()
+    :members:
+
 CallInfo
 ~~~~~~~~
 

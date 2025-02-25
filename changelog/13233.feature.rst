@@ -1,0 +1,5 @@
+:hook:`pytest_generate_tests` hooks and :ref:`pytest.mark.parametrize <pytest.mark.parametrize ref>`
+can now depend on previous parametrizations instead of generating a Cartesian product of parameter sets.
+See details in :ref:`parametrize_dependent`.
+
+For example, a :hook:`pytest_generate_tests` hook that relies on marks can now account for all the marks correctly.

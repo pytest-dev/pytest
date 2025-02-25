@@ -2143,3 +2143,212 @@ class TestMarkersWithParametrization:
                 "*= 6 passed in *",
             ]
         )
+
+
+class TestCovariant:
+    """Tests related to parametrize with callable argvalues."""
+
+    def test_basic(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def bar_values(callspec: pytest.CallSpec):
+                return [
+                    callspec.params["foo"] * 3,
+                    callspec.params["foo"] * 4,
+                ]
+
+            @pytest.mark.parametrize("bar", bar_values)
+            @pytest.mark.parametrize("foo", ["a", "b"])
+            def test_function(foo, bar):
+                pass
+        """
+        )
+        result = pytester.runpytest("-vv", "-s")
+        result.stdout.fnmatch_lines(
+            [
+                "test_basic.py::test_function[a-aaa] PASSED",
+                "test_basic.py::test_function[a-aaaa] PASSED",
+                "test_basic.py::test_function[b-bbb] PASSED",
+                "test_basic.py::test_function[b-bbbb] PASSED",
+                "*= 4 passed in *",
+            ]
+        )
+
+    def test_hook_depends_on_marks(self, pytester: Pytester) -> None:
+        plugin_contents = """
+            import pytest
+
+            # Note: without hookimpl, the hook goes after the parametrize mark.
+            @pytest.hookimpl(trylast=True)
+            def pytest_generate_tests(metafunc: pytest.Metafunc):
+                if "bar" in metafunc.fixturenames:
+                    base_bar_marks = list(metafunc.definition.iter_markers("bar_params"))
+
+                    def gen_params(callspec: pytest.CallSpec):
+                        bar_marks = base_bar_marks + [
+                            mark
+                            for mark in callspec.marks
+                            if mark.name == "bar_params"
+                        ]
+                        return [arg for mark in bar_marks for arg in mark.args]
+
+                    metafunc.parametrize("bar", gen_params)
+        """
+        pytester.makepyfile(**{"my_plugin.py": plugin_contents})
+        pytester.makepyfile(
+            """
+            import pytest
+
+            pytest_plugins = ["my_plugin"]
+
+            @pytest.mark.bar_params("x")
+            @pytest.mark.parametrize(
+                "foo",
+                [
+                    "a",
+                    pytest.param("b", marks=[pytest.mark.bar_params("y", "z")]),
+                    pytest.param("c", marks=[pytest.mark.bar_params("w")]),
+                ],
+            )
+            def test_function(foo, bar):
+                pass
+        """
+        )
+        result = pytester.runpytest("-vv", "-s")
+        result.stdout.fnmatch_lines(
+            [
+                "test_hook_depends_on_marks.py::test_function[a-x] PASSED",
+                "test_hook_depends_on_marks.py::test_function[b-x] PASSED",
+                "test_hook_depends_on_marks.py::test_function[b-y] PASSED",
+                "test_hook_depends_on_marks.py::test_function[b-z] PASSED",
+                "test_hook_depends_on_marks.py::test_function[c-x] PASSED",
+                "test_hook_depends_on_marks.py::test_function[c-w] PASSED",
+                "*= 6 passed in *",
+            ]
+        )
+
+    def test_mark_depends_on_hooks(self, pytester: Pytester) -> None:
+        plugin_contents = """
+            import pytest
+
+            # Note: with tryfirst, the hook goes before the parametrize mark.
+            @pytest.hookimpl(tryfirst=True)
+            def pytest_generate_tests(metafunc: pytest.Metafunc):
+                if "foo" in metafunc.fixturenames:
+                    metafunc.parametrize(
+                        "foo",
+                        [
+                            pytest.param("a", marks=[pytest.mark.bar_params("x", "y")]),
+                            pytest.param("b", marks=[pytest.mark.bar_params("z")]),
+                        ],
+                    )
+        """
+        pytester.makepyfile(**{"my_plugin.py": plugin_contents})
+        pytester.makepyfile(
+            """
+            import pytest
+
+            pytest_plugins = ["my_plugin"]
+
+            def gen_params(callspec: pytest.CallSpec):
+                bar_marks = [
+                    mark
+                    for mark in callspec.marks
+                    if mark.name == "bar_params"
+                ]
+                return [arg for mark in bar_marks for arg in mark.args]
+
+
+            @pytest.mark.parametrize("bar", gen_params)
+            def test_function(foo, bar):
+                pass
+        """
+        )
+        result = pytester.runpytest("-vv", "-s")
+        result.stdout.fnmatch_lines(
+            [
+                "test_mark_depends_on_hooks.py::test_function[a-x] PASSED",
+                "test_mark_depends_on_hooks.py::test_function[a-y] PASSED",
+                "test_mark_depends_on_hooks.py::test_function[b-z] PASSED",
+                "*= 3 passed in *",
+            ]
+        )
+
+    def test_id_and_marks(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def gen_params(callspec: pytest.CallSpec):
+                return [
+                    pytest.param("a", id="aparam", marks=[pytest.mark.foo_value("a")]),
+                    pytest.param("b", id="bparam", marks=[pytest.mark.foo_value("b")]),
+                ]
+
+            @pytest.mark.parametrize("foo", gen_params)
+            def test_function(request, foo):
+                assert request.node.get_closest_marker("foo_value").args[0] == foo
+        """
+        )
+        result = pytester.runpytest("-vv", "-s")
+        result.stdout.fnmatch_lines(
+            [
+                "test_id_and_marks.py::test_function[aparam] PASSED",
+                "test_id_and_marks.py::test_function[bparam] PASSED",
+                "*= 2 passed in *",
+            ]
+        )
+
+    def test_invalid_arg_name(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def gen_params(callspec: pytest.CallSpec):
+                assert False, "This function does not need to be called to detect the mistake"
+
+            @pytest.mark.parametrize("foo", gen_params)
+            def test_function():
+                pass
+        """
+        )
+        result = pytester.runpytest("--collect-only")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 0 items / 1 error",
+                "",
+                "*= ERRORS =*",
+                "*_ ERROR collecting test_invalid_arg_name.py _*",
+                "*In test_function: function uses no argument 'foo'",
+                "*! Interrupted: 1 error during collection !*",
+                "*= no tests collected, 1 error in *",
+            ]
+        )
+
+    def test_no_parameter_sets(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def gen_params(callspec: pytest.CallSpec):
+                return range(1, callspec.params["foo"] + 1)
+
+            @pytest.mark.parametrize("bar", gen_params)
+            @pytest.mark.parametrize("foo", [3, 1, 0])
+            def test_function(foo, bar):
+                pass
+        """
+        )
+        result = pytester.runpytest("-vv", "-s")
+        result.stdout.fnmatch_lines(
+            [
+                "test_no_parameter_sets.py::test_function[[]3-1] PASSED",
+                "test_no_parameter_sets.py::test_function[[]3-2] PASSED",
+                "test_no_parameter_sets.py::test_function[[]3-3] PASSED",
+                "test_no_parameter_sets.py::test_function[[]1-1] PASSED",
+                "test_no_parameter_sets.py::test_function[[]0-NOTSET] SKIPPED *",
+                "*= 4 passed, 1 skipped in *",
+            ]
+        )
