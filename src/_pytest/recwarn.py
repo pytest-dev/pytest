@@ -86,11 +86,12 @@ def deprecated_call(
     __tracebackhide__ = True
     # potential QoL: allow `with deprecated_call:` - i.e. no parens
     dep_warnings = (DeprecationWarning, PendingDeprecationWarning, FutureWarning)
-    if func is not None:
-        warnings.warn(CALLABLE_DEPRECATED_CALL, stacklevel=2)
-        with warns(dep_warnings):
-            return func(*args, **kwargs)
-    return warns(dep_warnings, *args, **kwargs)
+    if func is None:
+        return warns(dep_warnings, *args, **kwargs)
+
+    warnings.warn(CALLABLE_DEPRECATED_CALL, stacklevel=2)
+    with warns(dep_warnings):
+        return func(*args, **kwargs)
 
 
 @overload
