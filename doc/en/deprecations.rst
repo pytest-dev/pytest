@@ -14,8 +14,8 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
-legacy callable form of :func:`raises<pytest.raises>`, :func:`warns<pytest.warns>` and :func:`deprecated_call<pytest.deprecated_call>`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+legacy callable form of :func:`raises <pytest.raises>`, :func:`warns <pytest.warns>` and :func:`deprecated_call <pytest.deprecated_call>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 8.4
 
