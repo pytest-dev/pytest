@@ -1161,8 +1161,9 @@ as discussed in :ref:`temporary directory location and retention`.
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
 When set, disables plugin auto-loading through :std:doc:`entry point packaging
-metadata <packaging:guides/creating-and-discovering-plugins>`. Only explicitly
-specified plugins will be loaded.
+metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
+explicitly specified in :envvar:`PYTEST_PLUGINS` or with ``-p`` will be loaded.
+See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
 
@@ -1171,6 +1172,8 @@ Contains comma-separated list of modules that should be loaded as plugins:
 .. code-block:: bash
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
+
+See also ``-p``.
 
 .. envvar:: PYTEST_THEME
 
