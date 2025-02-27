@@ -1380,8 +1380,9 @@ def test_disable_plugin_autoload(
     # files being empty means that _mark_plugins_for_rewrite doesn't find the plugin.
     # But enable_method==flag ends up in mark_rewrite being called and __loader__
     # being accessed.
-    assert ("__loader__" in PseudoPlugin.attrs_used) == has_loaded and not (
-        enable_plugin_method in ("env_var", "") and not disable_plugin_method
+    assert ("__loader__" in PseudoPlugin.attrs_used) == (
+        has_loaded
+        and not (enable_plugin_method in ("env_var", "") and not disable_plugin_method)
     )
 
     # __spec__ is accessed in AssertionRewritingHook.exec_module, which would be
