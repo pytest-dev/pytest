@@ -141,7 +141,7 @@ Resources
   * `Where do Google's flaky tests come from? <https://testing.googleblog.com/2017/04/where-do-our-flaky-tests-come-from.html>`_  by Jeff Listfield, 2017
 
 * Dropbox:
-  * `Athena: Our automated build health management system <https://mill-build.org/blog/4-flaky-tests.html>`_ by Utsav Shah, 2019
+  * `Athena: Our automated build health management system <https://dropbox.tech/infrastructure/athena-our-automated-build-health-management-system>`_ by Utsav Shah, 2019
   * `How To Manage Flaky Tests in your CI Workflows <https://mill-build.org/blog/4-flaky-tests.html>`_ by Li Haoyi, 2025
 
 * Uber:
