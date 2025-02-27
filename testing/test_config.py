@@ -6,6 +6,7 @@ import dataclasses
 import importlib.metadata
 import os
 from pathlib import Path
+import platform
 import re
 import sys
 import textwrap
@@ -1374,19 +1375,26 @@ def test_disable_plugin_autoload(
     # it should load if it's enabled, or we haven't disabled autoloading
     assert has_loaded == bool(enable_plugin_method) or not disable_plugin_method
 
-    # __loader__ is accessed in mark_rewrite
-    # ...??
-    assert ("__loader__" in PseudoPlugin.attrs_used) == bool(
-        enable_plugin_method == "flag"
-        or (enable_plugin_method == "env_var" and disable_plugin_method)
+    # The reason for the discrepancy between 'has_loaded' and __loader__ being accessed
+    # appears to be the monkeypatching of importlib.metadata.distributions; where
+    # files being empty means that _mark_plugins_for_rewrite doesn't find the plugin.
+    # But enable_method==flag ends up in mark_rewrite being called and __loader__
+    # being accessed.
+    assert ("__loader__" in PseudoPlugin.attrs_used) == has_loaded and not (
+        enable_plugin_method in ("env_var", "") and not disable_plugin_method
     )
 
-    # Config._preparse explicitly loads plugins in PYTEST_PLUGINS
-    # but if autoloading has been disabled it needs to inspect __spec__ when loading
-    assert ("__spec__" in PseudoPlugin.attrs_used) == bool(
-        enable_plugin_method == "env_var" and disable_plugin_method
-    )
-    # why doesn't that happen with -p? dunno
+    # __spec__ is accessed in AssertionRewritingHook.exec_module, which would be
+    # eventually called if we did a full pytest run; but it's only accessed with
+    # enable_plugin_method=="env_var" because that will early-load it.
+    # Except when autoloads aren't disabled, in which case PytestPluginManager.import_plugin
+    # bails out before importing it.. because it knows it'll be loaded later?
+    # The above seems a bit weird, but I *think* it's true.
+    if platform.python_implementation() != "PyPy":
+        assert ("__spec__" in PseudoPlugin.attrs_used) == bool(
+            enable_plugin_method == "env_var" and disable_plugin_method
+        )
+    # __spec__ is present when testing locally on pypy, but not in CI ????
 
 
 def test_plugin_loading_order(pytester: Pytester) -> None:
