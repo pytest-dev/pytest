@@ -1373,7 +1373,7 @@ def test_disable_plugin_autoload(
 
     has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
     # it should load if it's enabled, or we haven't disabled autoloading
-    assert has_loaded == bool(enable_plugin_method) or not disable_plugin_method
+    assert has_loaded == (bool(enable_plugin_method) or not disable_plugin_method)
 
     # The reason for the discrepancy between 'has_loaded' and __loader__ being accessed
     # appears to be the monkeypatching of importlib.metadata.distributions; where
