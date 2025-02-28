@@ -144,7 +144,7 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 .. code-block:: bash
 
    export PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
-   export PYTEST_PLUGINS=NAME
+   export PYTEST_PLUGINS=NAME,NAME2
    pytest
 
 .. code-block:: bash

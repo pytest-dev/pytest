@@ -70,7 +70,7 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="name",
         help="Early-load given plugin module name or entry point (multi-allowed). "
         "To avoid loading of plugins, use the `no:` prefix, e.g. "
-        "`no:doctest`. See also --disable-plugin-autoload",
+        "`no:doctest`. See also --disable-plugin-autoload.",
     )
     group.addoption(
         "--disable-plugin-autoload",
