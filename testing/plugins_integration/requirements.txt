@@ -1,9 +1,9 @@
 anyio[trio]==4.8.0
-django==5.1.4
-pytest-asyncio==0.25.0
+django==5.1.6
+pytest-asyncio==0.25.3
 pytest-bdd==8.1.0
 pytest-cov==6.0.0
-pytest-django==4.9.0
+pytest-django==4.10.0
 pytest-flakes==4.0.5
 pytest-html==4.1.1
 pytest-mock==3.14.0

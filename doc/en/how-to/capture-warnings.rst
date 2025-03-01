@@ -250,7 +250,7 @@ See :ref:`@pytest.mark.filterwarnings <filterwarnings>` and
     the :envvar:`python:PYTHONWARNINGS` environment variable or the
     ``-W`` command-line option, pytest will not configure any filters by default.
 
-    Also pytest doesn't follow :pep:`506` suggestion of resetting all warning filters because
+    Also pytest doesn't follow :pep:`565` suggestion of resetting all warning filters because
     it might break test suites that configure warning filters themselves
     by calling :func:`warnings.simplefilter` (see :issue:`2430` for an example of that).
 

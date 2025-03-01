@@ -18,7 +18,7 @@ import pytest
 @contextlib.contextmanager
 def ignore_encoding_warning():
     with warnings.catch_warnings():
-        if sys.version_info > (3, 10):
+        if sys.version_info >= (3, 10):
             warnings.simplefilter("ignore", EncodingWarning)  # noqa: F821
         yield
 
@@ -555,9 +555,9 @@ def batch_make_numbered_dirs(rootdir, repeats):
         file_ = dir_.join("foo")
         file_.write_text(f"{i}", encoding="utf-8")
         actual = int(file_.read_text(encoding="utf-8"))
-        assert (
-            actual == i
-        ), f"int(file_.read_text(encoding='utf-8')) is {actual} instead of {i}"
+        assert actual == i, (
+            f"int(file_.read_text(encoding='utf-8')) is {actual} instead of {i}"
+        )
         dir_.join(".lock").remove(ignore_errors=True)
     return True
 

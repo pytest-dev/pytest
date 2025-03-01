@@ -48,7 +48,7 @@ _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
-    group._addoption(
+    group.addoption(
         "--capture",
         action="store",
         default="fd",
@@ -56,7 +56,7 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["fd", "sys", "no", "tee-sys"],
         help="Per-test capturing method: one of fd|sys|no|tee-sys",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-s",
         action="store_const",
         const="no",
@@ -78,6 +78,23 @@ def _colorama_workaround() -> None:
             import colorama  # noqa: F401
         except ImportError:
             pass
+
+
+def _readline_workaround() -> None:
+    """Ensure readline is imported early so it attaches to the correct stdio handles.
+
+    This isn't a problem with the default GNU readline implementation, but in
+    some configurations, Python uses libedit instead (on macOS, and for prebuilt
+    binaries such as used by uv).
+
+    In theory this is only needed if readline.backend == "libedit", but the
+    workaround consists of importing readline here, so we already worked around
+    the issue by the time we could check if we need to.
+    """
+    try:
+        import readline  # noqa: F401
+    except ImportError:
+        pass
 
 
 def _windowsconsoleio_workaround(stream: TextIO) -> None:
@@ -141,6 +158,7 @@ def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
     if ns.capture == "fd":
         _windowsconsoleio_workaround(sys.stdout)
     _colorama_workaround()
+    _readline_workaround()
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
@@ -375,10 +393,10 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         )
 
     def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:
@@ -492,10 +510,10 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         )
 
     def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:

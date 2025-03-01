@@ -1,0 +1,1 @@
+:confval:`console_output_style` now supports ``times`` to show execution time of each test.

@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.8.3"
+  rev: "v0.9.7"
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -12,7 +12,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
 - repo: https://github.com/woodruffw/zizmor-pre-commit
-  rev: v0.9.2
+  rev: v1.3.1
   hooks:
     - id: zizmor
 -   repo: https://github.com/adamchainz/blacken-docs
@@ -21,7 +21,7 @@ repos:
     -   id: blacken-docs
         additional_dependencies: [black==24.1.1]
 -   repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
     -   id: codespell
         args: ["--toml=pyproject.toml"]
@@ -32,7 +32,7 @@ repos:
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
+    rev: v1.15.0
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
@@ -54,7 +54,7 @@ repos:
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.0
+    rev: v3.19.1
     hooks:
     -   id: pyupgrade
         args:

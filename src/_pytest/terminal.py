@@ -132,7 +132,7 @@ class TestShortLogReport(NamedTuple):
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "Reporting", after="general")
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-v",
         "--verbose",
         action="count",
@@ -140,28 +140,35 @@ def pytest_addoption(parser: Parser) -> None:
         dest="verbose",
         help="Increase verbosity",
     )
-    group._addoption(
+    group.addoption(
         "--no-header",
         action="store_true",
         default=False,
         dest="no_header",
         help="Disable header",
     )
-    group._addoption(
+    group.addoption(
         "--no-summary",
         action="store_true",
         default=False,
         dest="no_summary",
         help="Disable summary",
     )
-    group._addoption(
+    group.addoption(
         "--no-fold-skipped",
         action="store_false",
         dest="fold_skipped",
         default=True,
         help="Do not fold skipped tests in short summary.",
     )
-    group._addoption(
+    group.addoption(
+        "--force-short-summary",
+        action="store_true",
+        dest="force_short_summary",
+        default=False,
+        help="Force condensed summary output regardless of verbosity level.",
+    )
+    group._addoption(  # private to use reserved lower-case short option
         "-q",
         "--quiet",
         action=MoreQuietAction,
@@ -169,14 +176,14 @@ def pytest_addoption(parser: Parser) -> None:
         dest="verbose",
         help="Decrease verbosity",
     )
-    group._addoption(
+    group.addoption(
         "--verbosity",
         dest="verbose",
         type=int,
         default=0,
         help="Set verbosity. Default: 0.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-r",
         action="store",
         dest="reportchars",
@@ -188,7 +195,7 @@ def pytest_addoption(parser: Parser) -> None:
         "(w)arnings are enabled by default (see --disable-warnings), "
         "'N' can be used to reset the list. (default: 'fE').",
     )
-    group._addoption(
+    group.addoption(
         "--disable-warnings",
         "--disable-pytest-warnings",
         default=False,
@@ -196,7 +203,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         help="Disable warnings summary",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-l",
         "--showlocals",
         action="store_true",
@@ -204,13 +211,13 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Show locals in tracebacks (disabled by default)",
     )
-    group._addoption(
+    group.addoption(
         "--no-showlocals",
         action="store_false",
         dest="showlocals",
         help="Hide locals in tracebacks (negate --showlocals passed through addopts)",
     )
-    group._addoption(
+    group.addoption(
         "--tb",
         metavar="style",
         action="store",
@@ -219,14 +226,14 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["auto", "long", "short", "no", "line", "native"],
         help="Traceback print mode (auto/long/short/line/native/no)",
     )
-    group._addoption(
+    group.addoption(
         "--xfail-tb",
         action="store_true",
         dest="xfail_tb",
         default=False,
         help="Show tracebacks for xfail (as long as --tb != no)",
     )
-    group._addoption(
+    group.addoption(
         "--show-capture",
         action="store",
         dest="showcapture",
@@ -235,14 +242,14 @@ def pytest_addoption(parser: Parser) -> None:
         help="Controls how captured stdout/stderr/log is shown on failed tests. "
         "Default: all.",
     )
-    group._addoption(
+    group.addoption(
         "--fulltrace",
         "--full-trace",
         action="store_true",
         default=False,
         help="Don't cut any tracebacks (default is to cut)",
     )
-    group._addoption(
+    group.addoption(
         "--color",
         metavar="color",
         action="store",
@@ -251,7 +258,7 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["yes", "no", "auto"],
         help="Color terminal output (yes/no/auto)",
     )
-    group._addoption(
+    group.addoption(
         "--code-highlight",
         default="yes",
         choices=["yes", "no"],
@@ -382,12 +389,15 @@ class TerminalReporter:
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
         self._progress_nodeids_reported: set[str] = set()
+        self._timing_nodeids_reported: set[str] = set()
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write: float | None = None
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
 
-    def _determine_show_progress_info(self) -> Literal["progress", "count", False]:
+    def _determine_show_progress_info(
+        self,
+    ) -> Literal["progress", "count", "times", False]:
         """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038) unless explicitly
         # overridden by progress-even-when-capture-no
@@ -405,6 +415,8 @@ class TerminalReporter:
             return "progress"
         elif cfg == "count":
             return "count"
+        elif cfg == "times":
+            return "times"
         else:
             return False
 
@@ -692,12 +704,38 @@ class TerminalReporter:
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(progress, collected)
             return f" [ {collected} / {collected} ]"
-        else:
-            if collected:
-                return (
-                    f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
-                )
-            return " [100%]"
+        if self._show_progress_info == "times":
+            if not collected:
+                return ""
+            all_reports = (
+                self._get_reports_to_display("passed")
+                + self._get_reports_to_display("xpassed")
+                + self._get_reports_to_display("failed")
+                + self._get_reports_to_display("xfailed")
+                + self._get_reports_to_display("skipped")
+                + self._get_reports_to_display("error")
+                + self._get_reports_to_display("")
+            )
+            current_location = all_reports[-1].location[0]
+            not_reported = [
+                r for r in all_reports if r.nodeid not in self._timing_nodeids_reported
+            ]
+            tests_in_module = sum(
+                i.location[0] == current_location for i in self._session.items
+            )
+            tests_completed = sum(
+                r.when == "setup"
+                for r in not_reported
+                if r.location[0] == current_location
+            )
+            last_in_module = tests_completed == tests_in_module
+            if self.showlongtestinfo or last_in_module:
+                self._timing_nodeids_reported.update(r.nodeid for r in not_reported)
+                return format_node_duration(sum(r.duration for r in not_reported))
+            return ""
+        if collected:
+            return f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
+        return " [100%]"
 
     def _write_progress_information_if_past_edge(self) -> None:
         w = self._width_of_current_line
@@ -705,6 +743,8 @@ class TerminalReporter:
             assert self._session
             num_tests = self._session.testscollected
             progress_length = len(f" [{num_tests}/{num_tests}]")
+        elif self._show_progress_info == "times":
+            progress_length = len(" 99h 59m")
         else:
             progress_length = len(" [100%]")
         past_edge = w + progress_length + 1 >= self._screen_width
@@ -1467,7 +1507,9 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        if running_on_ci() or config.option.verbose >= 2:
+        if (
+            running_on_ci() or config.option.verbose >= 2
+        ) and not config.option.force_short_summary:
             msg = f" - {msg}"
         else:
             available_width = tw.fullwidth - line_width
@@ -1552,6 +1594,29 @@ def format_session_duration(seconds: float) -> str:
     else:
         dt = datetime.timedelta(seconds=int(seconds))
         return f"{seconds:.2f}s ({dt})"
+
+
+def format_node_duration(seconds: float) -> str:
+    """Format the given seconds in a human readable manner to show in the test progress."""
+    # The formatting is designed to be compact and readable, with at most 7 characters
+    # for durations below 100 hours.
+    if seconds < 0.00001:
+        return f" {seconds * 1000000:.3f}us"
+    if seconds < 0.0001:
+        return f" {seconds * 1000000:.2f}us"
+    if seconds < 0.001:
+        return f" {seconds * 1000000:.1f}us"
+    if seconds < 0.01:
+        return f" {seconds * 1000:.3f}ms"
+    if seconds < 0.1:
+        return f" {seconds * 1000:.2f}ms"
+    if seconds < 1:
+        return f" {seconds * 1000:.1f}ms"
+    if seconds < 60:
+        return f" {seconds:.3f}s"
+    if seconds < 3600:
+        return f" {seconds // 60:.0f}m {seconds % 60:.0f}s"
+    return f" {seconds // 3600:.0f}h {(seconds % 3600) // 60:.0f}m"
 
 
 def _get_raw_skip_reason(report: TestReport) -> str:

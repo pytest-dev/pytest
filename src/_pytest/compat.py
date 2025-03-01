@@ -70,8 +70,8 @@ def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
         except ValueError:
             pass
         else:
-            return f"{relfn}:{lineno+1}"
-    return f"{fn}:{lineno+1}"
+            return f"{relfn}:{lineno + 1}"
+    return f"{fn}:{lineno + 1}"
 
 
 def num_mock_patch_args(function) -> int:

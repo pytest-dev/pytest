@@ -51,6 +51,7 @@ dependencies = [
     "iniconfig",
     "packaging",
     "pluggy>=1.5,<2",
+    "pygments>=2.7.2",
     "tomli>=1; python_version<'3.11'",
 ]
 optional-dependencies.dev = [
@@ -58,16 +59,16 @@ optional-dependencies.dev = [
     "attrs>=19.2",
     "hypothesis>=3.56",
     "mock",
-    "pygments>=2.7.2",
     "requests",
     "setuptools",
     "xmlschema",
 ]
 urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
+urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
+urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
 urls.Homepage = "https://docs.pytest.org/en/latest/"
 urls.Source = "https://github.com/pytest-dev/pytest"
 urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
-urls.Twitter = "https://twitter.com/pytestdotorg"
 scripts."py.test" = "pytest:console_main"
 scripts.pytest = "pytest:console_main"
 

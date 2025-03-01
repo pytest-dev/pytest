@@ -20,6 +20,16 @@ The current pytest version, as a string::
     >>> pytest.__version__
     '7.0.0'
 
+.. _`hidden-param`:
+
+pytest.HIDDEN_PARAM
+~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 8.4
+
+Can be passed to ``ids`` of :py:func:`Metafunc.parametrize <pytest.Metafunc.parametrize>`
+or to ``id`` of :func:`pytest.param` to hide a parameter set from the test name.
+Can only be used at most 1 time, as test names need to be unique.
 
 .. _`version-tuple`:
 
@@ -1355,6 +1365,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    * ``progress``: like classic pytest output, but with a progress indicator.
    * ``progress-even-when-capture-no``: allows the use of the progress indicator even when ``capture=no``.
    * ``count``: like progress, but shows progress as the number of tests completed instead of a percent.
+   * ``times``: show tests duration.
 
    The default is ``progress``, but you can fallback to ``classic`` if you prefer or
    the new mode is causing unexpected problems:
