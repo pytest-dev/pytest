@@ -1,10 +1,12 @@
 .. _types:
 
-Enhancing Type Annotations with Pytest
-======================================
+Typing in pytest
+================
 
-This page assumes the reader is familiar with Python's typing system and its advantages.
-For more information, refer to `Python's Typing Documentation <https://docs.python.org/3/library/typing.html>`_.
+.. note::
+    This page assumes the reader is familiar with Python's typing system and its advantages.
+
+    For more information, refer to `Python's Typing Documentation <https://docs.python.org/3/library/typing.html>`_.
 
 Why type tests?
 ---------------
@@ -37,8 +39,8 @@ Note the code above has 100% coverage, but the bug is not caught (of course the 
 
 
 
-Typing fixtures
----------------
+Using typing in test suites
+---------------------------
 
 To type fixtures in pytest, just add normal types to the fixture functions -- there is nothing special that needs to be done just because of the `fixture` decorator.
 
@@ -61,18 +63,14 @@ In the same manner, the fixtures passed to test functions need be annotated with
 From the POV of the type checker, it does not matter that `sample_fixture` is actually a fixture managed by pytest, all it matters to it is that `sample_fixture` is a parameter of type `int`.
 
 
-The same logic applies to `@pytest.mark.parametrize`:
+The same logic applies to :ref:`@pytest.mark.parametrize <@pytest.mark.parametrize>`:
 
 .. code-block:: python
-
-    import pytest
 
 
     @pytest.mark.parametrize("input_value, expected_output", [(1, 2), (5, 6), (10, 11)])
     def test_increment(input_value: int, expected_output: int) -> None:
         assert input_value + 1 == expected_output
-
-
 
 
 The same logic applies when typing fixture functions which receive other fixtures:
@@ -82,8 +80,6 @@ The same logic applies when typing fixture functions which receive other fixture
     @pytest.fixture
     def mock_env_user(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("USER", "TestingUser")
-
-
 
 
 Conclusion
