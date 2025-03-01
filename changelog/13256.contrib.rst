@@ -1,0 +1,2 @@
+Support for Towncier versions released in 2024 has been re-enabled
+when building Sphinx docs -- by :user:`webknjaz`.
