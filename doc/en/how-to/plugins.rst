@@ -155,7 +155,7 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 
     [pytest]
     addopts = --disable-plugin-autoload -p NAME,NAME2
-    
+
 .. versionadded:: 8.4
 
    The ``--disable-plugin-autoload`` command-line flag.
