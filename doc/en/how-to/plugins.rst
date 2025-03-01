@@ -138,7 +138,7 @@ See :ref:`findpluginname` for how to obtain the name of a plugin.
 Disabling plugins from autoloading
 ----------------------------------
 
-If you want to disable plugins from loading automatically, requiring you to
+If you want to disable plugins from loading automatically, instead of requiring you to
 manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can use ``--disable-plugin-autoload`` or :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD`.
 
 .. code-block:: bash
@@ -155,3 +155,7 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 
     [pytest]
     addopts = --disable-plugin-autoload -p NAME,NAME2
+    
+.. versionadded:: 8.4
+
+   The ``--disable-plugin-autoload`` command-line flag.

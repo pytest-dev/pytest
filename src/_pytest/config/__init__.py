@@ -1273,7 +1273,7 @@ class Config:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
         mode = getattr(ns, "assertmode", "plain")
 
-        disable_autoload = getattr(ns, "disable_plugin_autoload", False) | bool(
+        disable_autoload = getattr(ns, "disable_plugin_autoload", False) or bool(
             os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
         )
         if mode == "rewrite":
