@@ -9,7 +9,7 @@ For more information, refer to `Python's Typing Documentation <https://docs.pyth
 Why type tests?
 ---------------
 
-Typing tests provides significant advantages: 
+Typing tests provides significant advantages:
 
 - **Readability:** Clearly defines expected inputs and outputs, improving readability, especially in complex or parameterized tests.
 
@@ -23,8 +23,8 @@ For production code, typing also helps catching some bugs that might not be caug
         for value, caption in items:
             if value == target:
                 return caption
-                
-                    
+
+
 The type checker will correctly error out that the function might return `None`, however even a full coverage test suite might miss that case:
 
 .. code-block:: python
@@ -50,7 +50,7 @@ To type fixtures in pytest, just add normal types to the fixture functions -- th
     @pytest.fixture
     def sample_fixture() -> int:
         return 38
-        
+
 In the same manner, the fixtures passed to test functions need be annotated with the fixture's return type:
 
 .. code-block:: python
@@ -66,6 +66,7 @@ The same logic applies to `@pytest.mark.parametrize`:
 .. code-block:: python
 
     import pytest
+
 
     @pytest.mark.parametrize("input_value, expected_output", [(1, 2), (5, 6), (10, 11)])
     def test_increment(input_value: int, expected_output: int) -> None:
