@@ -238,11 +238,7 @@ class TestImportHookInstallation:
             assert disable_plugin_autoload == ""
             monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
 
-        # FIXME: if it's already loaded then you get a ValueError: "Plugin already
-        # registered under a different name."
-        # vaguely related to https://github.com/pytest-dev/pytest/issues/5661
-        name = "spamplugin" if disable_plugin_autoload else "spam"
-        # is there a single dotted name that can be used either way? idk
+        name = "spamplugin"
 
         if explicit_specify == "env_var":
             monkeypatch.setenv("PYTEST_PLUGINS", name)
@@ -280,7 +276,7 @@ class TestImportHookInstallation:
             import pytest
 
             class DummyEntryPoint(object):
-                name = 'spam'
+                name = 'spamplugin'
                 module_name = 'spam.py'
                 group = 'pytest11'
 
