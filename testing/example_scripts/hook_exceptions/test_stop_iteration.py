@@ -1,5 +1,5 @@
 """
-test example file exposing mltiple issues with corutine exception passover in case of stopiteration
+test example file exposing multiple issues with coroutine exception passover in case of stopiteration
 
 the stdlib contextmanager implementation explicitly catches
 and reshapes in case a StopIteration was send in and is raised out
