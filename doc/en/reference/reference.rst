@@ -2102,7 +2102,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Show cache contents, don't perform collection or
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
-      --lfnf={all,none}, --last-failed-no-failures={all,none}
+      --lfnf, --last-failed-no-failures={all,none}
                             With ``--lf``, determines whether to execute tests
                             when there are no previously (known) failures or
                             when no cached ``lastfailed`` data was found.
@@ -2148,11 +2148,13 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Whether code should be highlighted (only if --color
                             is also enabled). Default: yes.
       --pastebin=mode       Send failed|all info to bpaste.net pastebin service
-      --junit-xml=path      Create junit-xml style report file at given path
-      --junit-prefix=str    Prepend prefix to classnames in junit-xml output
+      --junitxml, --junit-xml=path
+                            Create junit-xml style report file at given path
+      --junitprefix, --junit-prefix=str
+                            Prepend prefix to classnames in junit-xml output
 
     pytest-warnings:
-      -W PYTHONWARNINGS, --pythonwarnings=PYTHONWARNINGS
+      -W, --pythonwarnings PYTHONWARNINGS
                             Set which warnings to report, see -W option of
                             Python itself
       --maxfail=num         Exit after first num failures or errors
@@ -2161,7 +2163,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --strict-markers      Markers not registered in the `markers` section of
                             the configuration file raise errors
       --strict              (Deprecated) alias to --strict-markers
-      -c FILE, --config-file=FILE
+      -c, --config-file FILE
                             Load configuration from `FILE` instead of trying to
                             locate one of the implicit configuration files.
       --continue-on-collection-errors
@@ -2215,7 +2217,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Store internal tracing debug information in this log
                             file. This file is opened with 'w' and truncated as
                             a result, care advised. Default: pytestdebug.log.
-      -o OVERRIDE_INI, --override-ini=OVERRIDE_INI
+      -o, --override-ini OVERRIDE_INI
                             Override ini option with "option=value" style, e.g.
                             `-o xfail_strict=True -o cache_dir=cache`.
       --assert=MODE         Control assertion debugging tools.

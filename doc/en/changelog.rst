@@ -31,6 +31,47 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.3.5 (2025-03-02)
+=========================
+
+Bug fixes
+---------
+
+- `#11777 <https://github.com/pytest-dev/pytest/issues/11777>`_: Fixed issue where sequences were still being shortened even with ``-vv`` verbosity.
+
+
+- `#12888 <https://github.com/pytest-dev/pytest/issues/12888>`_: Fixed broken input when using Python 3.13+ and a ``libedit`` build of Python, such as on macOS or with uv-managed Python binaries from the ``python-build-standalone`` project. This could manifest e.g. by a broken prompt when using ``Pdb``, or seeing empty inputs with manual usage of ``input()`` and suspended capturing.
+
+
+- `#13026 <https://github.com/pytest-dev/pytest/issues/13026>`_: Fixed :class:`AttributeError`  crash when using ``--import-mode=importlib`` when top-level directory same name as another module of the standard library.
+
+
+- `#13053 <https://github.com/pytest-dev/pytest/issues/13053>`_: Fixed a regression in pytest 8.3.4 where, when using ``--import-mode=importlib``, a directory containing py file with the same name would cause an ``ImportError``
+
+
+- `#13083 <https://github.com/pytest-dev/pytest/issues/13083>`_: Fixed issue where pytest could crash if one of the collected directories got removed during collection.
+
+
+
+Improved documentation
+----------------------
+
+- `#12842 <https://github.com/pytest-dev/pytest/issues/12842>`_: Added dedicated page about using types with pytest.
+
+  See :ref:`types` for detailed usage.
+
+
+
+Contributor-facing changes
+--------------------------
+
+- `#13112 <https://github.com/pytest-dev/pytest/issues/13112>`_: Fixed selftest failures in ``test_terminal.py`` with Pygments >= 2.19.0
+
+
+- `#13256 <https://github.com/pytest-dev/pytest/issues/13256>`_: Support for Towncier versions released in 2024 has been re-enabled
+  when building Sphinx docs -- by :user:`webknjaz`.
+
+
 pytest 8.3.4 (2024-12-01)
 =========================
 
