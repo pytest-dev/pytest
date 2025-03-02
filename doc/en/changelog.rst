@@ -68,7 +68,7 @@ Contributor-facing changes
 - `#13112 <https://github.com/pytest-dev/pytest/issues/13112>`_: Fixed selftest failures in ``test_terminal.py`` with Pygments >= 2.19.0
 
 
-- `#13256 <https://github.com/pytest-dev/pytest/issues/13256>`_: Support for Towncier versions released in 2024 has been re-enabled
+- `#13256 <https://github.com/pytest-dev/pytest/issues/13256>`_: Support for Towncrier versions released in 2024 has been re-enabled
   when building Sphinx docs -- by :user:`webknjaz`.
 
 
