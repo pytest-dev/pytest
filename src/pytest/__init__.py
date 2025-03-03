@@ -33,6 +33,7 @@ from _pytest.legacypath import Testdir
 from _pytest.logging import LogCaptureFixture
 from _pytest.main import Dir
 from _pytest.main import Session
+from _pytest.mark import HIDDEN_PARAM
 from _pytest.mark import Mark
 from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import MarkDecorator
@@ -91,6 +92,7 @@ set_trace = __pytestPDB.set_trace
 
 
 __all__ = [
+    "HIDDEN_PARAM",
     "Cache",
     "CallInfo",
     "CaptureFixture",

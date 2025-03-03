@@ -6,6 +6,7 @@ import dataclasses
 import importlib.metadata
 import os
 from pathlib import Path
+import platform
 import re
 import sys
 import textwrap
@@ -1314,14 +1315,13 @@ def test_plugin_preparse_prevents_setuptools_loading(
         )
 
 
-@pytest.mark.parametrize(
-    "parse_args,should_load", [(("-p", "mytestplugin"), True), ((), False)]
-)
+@pytest.mark.parametrize("disable_plugin_method", ["env_var", "flag", ""])
+@pytest.mark.parametrize("enable_plugin_method", ["env_var", "flag", ""])
 def test_disable_plugin_autoload(
     pytester: Pytester,
     monkeypatch: MonkeyPatch,
-    parse_args: tuple[str, str] | tuple[()],
-    should_load: bool,
+    enable_plugin_method: str,
+    disable_plugin_method: str,
 ) -> None:
     class DummyEntryPoint:
         project_name = name = "mytestplugin"
@@ -1342,23 +1342,60 @@ def test_disable_plugin_autoload(
         attrs_used = []
 
         def __getattr__(self, name):
-            assert name == "__loader__"
+            assert name in ("__loader__", "__spec__")
             self.attrs_used.append(name)
             return object()
 
     def distributions():
         return (Distribution(),)
 
-    monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    parse_args: list[str] = []
+
+    if disable_plugin_method == "env_var":
+        monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    elif disable_plugin_method == "flag":
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        parse_args.append("--disable-plugin-autoload")
+    else:
+        assert disable_plugin_method == ""
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+
+    if enable_plugin_method == "env_var":
+        monkeypatch.setenv("PYTEST_PLUGINS", "mytestplugin")
+    elif enable_plugin_method == "flag":
+        parse_args.extend(["-p", "mytestplugin"])
+    else:
+        assert enable_plugin_method == ""
+
     monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())
     config = pytester.parseconfig(*parse_args)
+
     has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
-    assert has_loaded == should_load
-    if should_load:
-        assert PseudoPlugin.attrs_used == ["__loader__"]
-    else:
-        assert PseudoPlugin.attrs_used == []
+    # it should load if it's enabled, or we haven't disabled autoloading
+    assert has_loaded == (bool(enable_plugin_method) or not disable_plugin_method)
+
+    # The reason for the discrepancy between 'has_loaded' and __loader__ being accessed
+    # appears to be the monkeypatching of importlib.metadata.distributions; where
+    # files being empty means that _mark_plugins_for_rewrite doesn't find the plugin.
+    # But enable_method==flag ends up in mark_rewrite being called and __loader__
+    # being accessed.
+    assert ("__loader__" in PseudoPlugin.attrs_used) == (
+        has_loaded
+        and not (enable_plugin_method in ("env_var", "") and not disable_plugin_method)
+    )
+
+    # __spec__ is accessed in AssertionRewritingHook.exec_module, which would be
+    # eventually called if we did a full pytest run; but it's only accessed with
+    # enable_plugin_method=="env_var" because that will early-load it.
+    # Except when autoloads aren't disabled, in which case PytestPluginManager.import_plugin
+    # bails out before importing it.. because it knows it'll be loaded later?
+    # The above seems a bit weird, but I *think* it's true.
+    if platform.python_implementation() != "PyPy":
+        assert ("__spec__" in PseudoPlugin.attrs_used) == bool(
+            enable_plugin_method == "env_var" and disable_plugin_method
+        )
+    # __spec__ is present when testing locally on pypy, but not in CI ????
 
 
 def test_plugin_loading_order(pytester: Pytester) -> None:

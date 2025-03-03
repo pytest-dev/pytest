@@ -1,0 +1,1 @@
+New flag: :ref:`--disable-plugin-autoload <disable_plugin_autoload>` which works as an alternative to :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD` when setting environment variables is inconvenient; and allows setting it in config files with :confval:`addopts`.

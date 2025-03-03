@@ -19,6 +19,7 @@ from _pytest import python
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
+from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
@@ -2143,3 +2144,127 @@ class TestMarkersWithParametrization:
                 "*= 6 passed in *",
             ]
         )
+
+
+class TestHiddenParam:
+    """Test that pytest.HIDDEN_PARAM works"""
+
+    def test_parametrize_ids(self, pytester: Pytester) -> None:
+        items = pytester.getitems(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                ("foo", "bar"),
+                [
+                    ("a", "x"),
+                    ("b", "y"),
+                    ("c", "z"),
+                ],
+                ids=["paramset1", pytest.HIDDEN_PARAM, "paramset3"],
+            )
+            def test_func(foo, bar):
+                pass
+        """
+        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[paramset1]",
+            "test_func",
+            "test_func[paramset3]",
+        ]
+
+    def test_param_id(self, pytester: Pytester) -> None:
+        items = pytester.getitems(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                ("foo", "bar"),
+                [
+                    pytest.param("a", "x", id="paramset1"),
+                    pytest.param("b", "y", id=pytest.HIDDEN_PARAM),
+                    ("c", "z"),
+                ],
+            )
+            def test_func(foo, bar):
+                pass
+        """
+        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[paramset1]",
+            "test_func",
+            "test_func[c-z]",
+        ]
+
+    def test_multiple_hidden_param_is_forbidden(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                ("foo", "bar"),
+                [
+                    ("a", "x"),
+                    ("b", "y"),
+                ],
+                ids=[pytest.HIDDEN_PARAM, pytest.HIDDEN_PARAM],
+            )
+            def test_func(foo, bar):
+                pass
+        """
+        )
+        result = pytester.runpytest("--collect-only")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 0 items / 1 error",
+                "",
+                "*= ERRORS =*",
+                "*_ ERROR collecting test_multiple_hidden_param_is_forbidden.py _*",
+                "E   Failed: In test_func: multiple instances of HIDDEN_PARAM cannot be used "
+                "in the same parametrize call, because the tests names need to be unique.",
+                "*! Interrupted: 1 error during collection !*",
+                "*= no tests collected, 1 error in *",
+            ]
+        )
+
+    def test_multiple_hidden_param_is_forbidden_idmaker(self) -> None:
+        id_maker = IdMaker(
+            ("foo", "bar"),
+            [pytest.param("a", "x"), pytest.param("b", "y")],
+            None,
+            [pytest.HIDDEN_PARAM, pytest.HIDDEN_PARAM],
+            None,
+            "some_node_id",
+            None,
+        )
+        expected = "In some_node_id: multiple instances of HIDDEN_PARAM"
+        with pytest.raises(Failed, match=expected):
+            id_maker.make_unique_parameterset_ids()
+
+    def test_multiple_parametrize(self, pytester: Pytester) -> None:
+        items = pytester.getitems(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                "bar",
+                ["x", "y"],
+            )
+            @pytest.mark.parametrize(
+                "foo",
+                ["a", "b"],
+                ids=["a", pytest.HIDDEN_PARAM],
+            )
+            def test_func(foo, bar):
+                pass
+        """
+        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[a-x]",
+            "test_func[a-y]",
+            "test_func[x]",
+            "test_func[y]",
+        ]
