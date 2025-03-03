@@ -160,15 +160,13 @@ def get_extended_length_path_str(path: str) -> str:
 
 
 def rm_rf(path: Path) -> None:
-    """Remove the path contents recursively, even if some elements
-    are read-only."""
-    path = ensure_extended_length_path(path)
-    onerror = partial(on_rm_rf_error, start_path=path)
-    if sys.version_info >= (3, 12):
-        shutil.rmtree(str(path), onexc=onerror)
-    else:
-        shutil.rmtree(str(path), onerror=onerror)
-
+    """Force remove directory even if it's not empty."""
+    for root, dirs, files in os.walk(path, topdown=False):
+        for file in files:
+            os.remove(os.path.join(root, file))
+        for dir in dirs:
+            shutil.rmtree(os.path.join(root,dir), ignore_errors=True)
+    shutil.rmtree(path, ignore_errors=True)
 
 def find_prefixed(root: Path, prefix: str) -> Iterator[os.DirEntry[str]]:
     """Find all elements in root that begin with the prefix, case-insensitive."""
