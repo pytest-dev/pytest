@@ -194,30 +194,6 @@ exception at a specific level; exceptions contained directly in the top
         assert not excinfo.group_contains(RuntimeError, depth=2)
         assert not excinfo.group_contains(TypeError, depth=1)
 
-Alternate form (legacy)
-~~~~~~~~~~~~~~~~~~~~~~~
-
-There is an alternate form where you pass
-a function that will be executed, along ``*args`` and ``**kwargs``, and :func:`pytest.raises`
-will execute the function with the arguments and assert that the given exception is raised:
-
-.. code-block:: python
-
-    def func(x):
-        if x <= 0:
-            raise ValueError("x needs to be larger than zero")
-
-
-    pytest.raises(ValueError, func, x=-1)
-
-The reporter will provide you with helpful output in case of failures such as *no
-exception* or *wrong exception*.
-
-This form was the original :func:`pytest.raises` API, developed before the ``with`` statement was
-added to the Python language. Nowadays, this form is rarely used, with the context-manager form (using ``with``)
-being considered more readable.
-Nonetheless, this form is fully supported and not deprecated in any way.
-
 xfail mark and pytest.raises
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
