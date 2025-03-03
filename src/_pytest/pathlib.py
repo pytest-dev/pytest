@@ -11,7 +11,6 @@ from errno import ELOOP
 from errno import ENOENT
 from errno import ENOTDIR
 import fnmatch
-from functools import partial
 from importlib.machinery import ModuleSpec
 from importlib.machinery import PathFinder
 import importlib.util
@@ -165,8 +164,9 @@ def rm_rf(path: Path) -> None:
         for file in files:
             os.remove(os.path.join(root, file))
         for dir in dirs:
-            shutil.rmtree(os.path.join(root,dir), ignore_errors=True)
+            shutil.rmtree(os.path.join(root, dir), ignore_errors=True)
     shutil.rmtree(path, ignore_errors=True)
+
 
 def find_prefixed(root: Path, prefix: str) -> Iterator[os.DirEntry[str]]:
     """Find all elements in root that begin with the prefix, case-insensitive."""
