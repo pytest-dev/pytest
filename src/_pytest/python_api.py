@@ -1017,7 +1017,7 @@ def raises(
             raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
         try:
             func(*args[1:], **kwargs)
-        except expected_exceptions as e:
+        except expected_exceptions as e:  # pylint: disable=catching-non-exception
             return _pytest._code.ExceptionInfo.from_exception(e)
     fail(message)
 
