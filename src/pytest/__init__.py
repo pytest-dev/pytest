@@ -62,7 +62,6 @@ from _pytest.python_api import approx
 from _pytest.python_api import raises
 from _pytest.raises_group import RaisesExc
 from _pytest.raises_group import RaisesGroup
-from _pytest.raises_group import RaisesGroup as raises_group
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
@@ -167,7 +166,6 @@ __all__ = [
     "mark",
     "param",
     "raises",
-    "raises_group",
     "register_assert_rewrite",
     "set_trace",
     "skip",

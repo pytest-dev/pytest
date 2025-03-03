@@ -225,9 +225,9 @@ Check the documentation on :class:`pytest.RaisesGroup` and :class:`pytest.Raises
                if very_unlucky():
                    excs.append(EXTREMELYBADERROR())
                raise ExceptionGroup("", excs)
-           # this passes regardless of if there's other exceptions
+           # This passes regardless of if there's other exceptions.
            assert excinfo.group_contains(ValueError)
-           # you can't simply list all exceptions you *don't* want to get here
+           # You can't simply list all exceptions you *don't* want to get here.
 
 
    There is no good way of using :func:`excinfo.group_contains() <pytest.ExceptionInfo.group_contains>` to ensure you're not getting *any* other exceptions than the one you expected.
