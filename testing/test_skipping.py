@@ -4,12 +4,12 @@ from __future__ import annotations
 import sys
 import textwrap
 
+from _pytest.outcomes import Skipped
 from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
 from _pytest.skipping import evaluate_xfail_marks
 from _pytest.skipping import pytest_runtest_setup
-from _pytest.outcomes import Skipped
 import pytest
 
 

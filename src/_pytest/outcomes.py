@@ -60,7 +60,7 @@ class Skipped(OutcomeException):
         self._use_item_location = _use_item_location
 
     def __repr__(self) -> str:
-        return f"<Skipped msg={repr(self.msg)}>"
+        return f"<Skipped msg={self.msg!r}>"
 
 
 class Failed(OutcomeException):
