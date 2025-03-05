@@ -1,0 +1,1 @@
+:func:`pytest.mark.xfail` now accepts :class:`pytest.RaisesGroup` for the ``raises`` parameter when you expect an exception group. You can also pass a :class:`pytest.RaisesExc` if you e.g. want to make use of the ``check`` parameter.

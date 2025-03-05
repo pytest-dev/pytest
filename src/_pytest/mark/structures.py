@@ -28,6 +28,7 @@ from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
+from _pytest.raises_group import AbstractRaises
 from _pytest.scope import _ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
 
@@ -473,7 +474,10 @@ if TYPE_CHECKING:
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
-            raises: None | type[BaseException] | tuple[type[BaseException], ...] = ...,
+            raises: None
+            | type[BaseException]
+            | tuple[type[BaseException], ...]
+            | AbstractRaises[BaseException] = ...,
             strict: bool = ...,
         ) -> MarkDecorator: ...
 

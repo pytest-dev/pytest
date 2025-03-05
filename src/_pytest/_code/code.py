@@ -459,6 +459,32 @@ class Traceback(list[TracebackEntry]):
         return None
 
 
+def stringify_exception(
+    exc: BaseException, include_subexception_msg: bool = True
+) -> str:
+    try:
+        notes = getattr(exc, "__notes__", [])
+    except KeyError:
+        # Workaround for https://github.com/python/cpython/issues/98778 on
+        # Python <= 3.9, and some 3.10 and 3.11 patch versions.
+        HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
+        if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
+            notes = []
+        else:
+            raise
+    if not include_subexception_msg and isinstance(exc, BaseExceptionGroup):
+        message = exc.message
+    else:
+        message = str(exc)
+
+    return "\n".join(
+        [
+            message,
+            *notes,
+        ]
+    )
+
+
 E = TypeVar("E", bound=BaseException, covariant=True)
 
 
@@ -736,25 +762,6 @@ class ExceptionInfo(Generic[E]):
         )
         return fmt.repr_excinfo(self)
 
-    def _stringify_exception(self, exc: BaseException) -> str:
-        try:
-            notes = getattr(exc, "__notes__", [])
-        except KeyError:
-            # Workaround for https://github.com/python/cpython/issues/98778 on
-            # Python <= 3.9, and some 3.10 and 3.11 patch versions.
-            HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
-            if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
-                notes = []
-            else:
-                raise
-
-        return "\n".join(
-            [
-                str(exc),
-                *notes,
-            ]
-        )
-
     def match(self, regexp: str | re.Pattern[str]) -> Literal[True]:
         """Check whether the regular expression `regexp` matches the string
         representation of the exception using :func:`python:re.search`.
@@ -762,7 +769,7 @@ class ExceptionInfo(Generic[E]):
         If it matches `True` is returned, otherwise an `AssertionError` is raised.
         """
         __tracebackhide__ = True
-        value = self._stringify_exception(self.value)
+        value = stringify_exception(self.value)
         msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
@@ -794,7 +801,7 @@ class ExceptionInfo(Generic[E]):
             if not isinstance(exc, expected_exception):
                 continue
             if match is not None:
-                value = self._stringify_exception(exc)
+                value = stringify_exception(exc)
                 if not re.search(match, value):
                     continue
             return True
@@ -828,6 +835,13 @@ class ExceptionInfo(Generic[E]):
             the exceptions contained within the topmost exception group).
 
         .. versionadded:: 8.0
+
+        .. warning::
+           This helper makes it easy to check for the presence of specific exceptions,
+           but it is very bad for checking that the group does *not* contain
+           *any other exceptions*.
+           You should instead consider using :class:`pytest.RaisesGroup`
+
         """
         msg = "Captured exception is not an instance of `BaseExceptionGroup`"
         assert isinstance(self.value, BaseExceptionGroup), msg
