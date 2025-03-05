@@ -22,9 +22,6 @@ from _pytest.outcomes import fail
 from _pytest.raises_group import RaisesExc
 
 
-if sys.version_info < (3, 11):
-    pass
-
 if TYPE_CHECKING:
     from numpy import ndarray
 
@@ -771,8 +768,6 @@ def _as_numpy_array(obj: object) -> ndarray | None:
     Return an ndarray if the given object is implicitly convertible to ndarray,
     and numpy is already imported, otherwise None.
     """
-    import sys
-
     np: Any = sys.modules.get("numpy")
     if np is not None:
         # avoid infinite recursion on numpy scalars, which have __array__

@@ -148,14 +148,14 @@ Notes:
 Assertions about expected exception groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When expecting a :exc:`BaseExceptionGroup` or :exc:`ExceptionGroup` you can use :class:`pytest.RaisesGroup`, also available as :class:`pytest.raises_group <pytest.RaisesGroup>`:
+When expecting a :exc:`BaseExceptionGroup` or :exc:`ExceptionGroup` you can use :class:`pytest.RaisesGroup`:
 
 .. code-block:: python
 
     def test_exception_in_group():
-        with pytest.raises_group(ValueError):
+        with pytest.RaisesGroup(ValueError):
             raise ExceptionGroup("group msg", [ValueError("value msg")])
-        with pytest.raises_group(ValueError, TypeError):
+        with pytest.RaisesGroup(ValueError, TypeError):
             raise ExceptionGroup("msg", [ValueError("foo"), TypeError("bar")])
 
 
@@ -164,9 +164,9 @@ It accepts a ``match`` parameter, that checks against the group message, and a `
 .. code-block:: python
 
     def test_raisesgroup_match_and_check():
-        with pytest.raises_group(BaseException, match="my group msg"):
+        with pytest.RaisesGroup(BaseException, match="my group msg"):
             raise BaseExceptionGroup("my group msg", [KeyboardInterrupt()])
-        with pytest.raises_group(
+        with pytest.RaisesGroup(
             Exception, check=lambda eg: isinstance(eg.__cause__, ValueError)
         ):
             raise ExceptionGroup("", [TypeError()]) from ValueError()
@@ -176,11 +176,11 @@ It is strict about structure and unwrapped exceptions, unlike :ref:`except* <exc
 .. code-block:: python
 
     def test_structure():
-        with pytest.raises_group(pytest.raises_group(ValueError)):
+        with pytest.RaisesGroup(pytest.RaisesGroup(ValueError)):
             raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
-        with pytest.raises_group(ValueError, flatten_subgroups=True):
+        with pytest.RaisesGroup(ValueError, flatten_subgroups=True):
             raise ExceptionGroup("1st group", [ExceptionGroup("2nd group", [ValueError()])])
-        with pytest.raises_group(ValueError, allow_unwrapped=True):
+        with pytest.RaisesGroup(ValueError, allow_unwrapped=True):
             raise ValueError
 
 To specify more details about the contained exception you can use :class:`pytest.RaisesExc`
@@ -188,7 +188,7 @@ To specify more details about the contained exception you can use :class:`pytest
 .. code-block:: python
 
     def test_raises_exc():
-        with pytest.raises_group(pytest.RaisesExc(ValueError, match="foo")):
+        with pytest.RaisesGroup(pytest.RaisesExc(ValueError, match="foo")):
             raise ExceptionGroup("", (ValueError("foo")))
 
 They both supply a method :meth:`pytest.RaisesGroup.matches` :meth:`pytest.RaisesExc.matches` if you want to do matching outside of using it as a contextmanager. This can be helpful when checking ``.__context__`` or ``.__cause__``.
@@ -231,7 +231,7 @@ Check the documentation on :class:`pytest.RaisesGroup` and :class:`pytest.Raises
 
 
    There is no good way of using :func:`excinfo.group_contains() <pytest.ExceptionInfo.group_contains>` to ensure you're not getting *any* other exceptions than the one you expected.
-   You should instead use :class:`pytest.raises_group <pytest.RaisesGroup>`, see :ref:`assert-matching-exception-groups`.
+   You should instead use :class:`pytest.RaisesGroup`, see :ref:`assert-matching-exception-groups`.
 
 You can also use the :func:`excinfo.group_contains() <pytest.ExceptionInfo.group_contains>`
 method to test for exceptions returned as part of an :class:`ExceptionGroup`:
