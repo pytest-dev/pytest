@@ -9,6 +9,7 @@ from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
 from _pytest.skipping import evaluate_xfail_marks
 from _pytest.skipping import pytest_runtest_setup
+from _pytest.outcomes import Skipped
 import pytest
 
 
@@ -1500,3 +1501,9 @@ def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines("*_pytest.outcomes.Exit: foo*")
+
+
+def test_skipped_repr():
+    """Test that Skipped has a useful repr."""
+    skipped = Skipped("Test skipped due to condition")
+    assert repr(skipped) == "<Skipped msg='Test skipped due to condition'>"

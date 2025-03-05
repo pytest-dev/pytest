@@ -59,6 +59,9 @@ class Skipped(OutcomeException):
         # instead of the place that raises the exception/calls skip().
         self._use_item_location = _use_item_location
 
+    def __repr__(self) -> str:
+        return f"<Skipped msg={repr(self.msg)}>"
+
 
 class Failed(OutcomeException):
     """Raised from an explicit call to pytest.fail()."""
