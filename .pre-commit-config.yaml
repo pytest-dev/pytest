@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.9.7"
+  rev: "v0.9.9"
   hooks:
     - id: ruff
       args: ["--fix"]
@@ -12,7 +12,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
 - repo: https://github.com/woodruffw/zizmor-pre-commit
-  rev: v1.3.1
+  rev: v1.4.1
   hooks:
     - id: zizmor
 -   repo: https://github.com/adamchainz/blacken-docs
@@ -48,7 +48,7 @@ repos:
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "v2.5.0"
+  rev: "v2.5.1"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
