@@ -213,7 +213,7 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                     self.is_baseexception = True
                 return cast(type[BaseExcT_1], origin_exc)
             else:
-                # I kinda think this should be a TypeError...
+                # TODO: I kinda think this should be a TypeError...
                 raise ValueError(
                     f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` "
                     f"are accepted as generic types but got `{exc}`. "
@@ -423,11 +423,6 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     def __enter__(self) -> ExceptionInfo[BaseExcT_co_default]:
         self.excinfo: ExceptionInfo[BaseExcT_co_default] = ExceptionInfo.for_later()
         return self.excinfo
-
-    def expected_type(self) -> str:
-        if self.expected_exceptions == ():
-            return "BaseException"
-        return _exception_type_name(self.expected_exceptions)
 
     # TODO: move common code into superclass
     def __exit__(

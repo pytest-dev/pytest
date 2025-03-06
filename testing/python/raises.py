@@ -219,7 +219,7 @@ class TestRaises:
         elif method == "with_group":
             with pytest.RaisesGroup(ValueError, allow_unwrapped=True):
                 t()
-        else:
+        else:  # pragma: no cover
             raise AssertionError("bad parametrization")
 
         # ensure both forms of pytest.raises don't leave exceptions in sys.exc_info()

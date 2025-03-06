@@ -458,11 +458,15 @@ def test_unwrapped_match_check() -> None:
         assert RaisesGroup(ValueError, match="bar").matches(exc.value)
 
 
-def test_RaisesGroup_matches() -> None:
+def test_matches() -> None:
     rg = RaisesGroup(ValueError)
     assert not rg.matches(None)
     assert not rg.matches(ValueError())
     assert rg.matches(ExceptionGroup("", (ValueError(),)))
+
+    re = RaisesExc(ValueError)
+    assert not re.matches(None)
+    assert re.matches(ValueError())
 
 
 def test_message() -> None:
@@ -884,11 +888,13 @@ def test_assert_message_nested() -> None:
         )
 
 
+# CI always runs with hypothesis, but this is not a critical test - it overlaps
+# with several others
 @pytest.mark.skipif(
     "hypothesis" in sys.modules,
     reason="hypothesis may have monkeypatched _check_repr",
 )
-def test_check_no_patched_repr() -> None:
+def test_check_no_patched_repr() -> None:  # pragma: no cover
     # We make `_check_repr` monkeypatchable to avoid this very ugly and verbose
     # repr. The other tests that use `check` make use of `_check_repr` so they'll
     # continue passing in case it is patched - but we have this one test that
@@ -1288,15 +1294,20 @@ def test_parametrizing_conditional_raisesgroup(
 def test_annotated_group() -> None:
     # repr depends on if exceptiongroup backport is being used or not
     t = repr(ExceptionGroup[ValueError])
-    fail_msg = wrap_escape(
-        f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` are accepted as generic types but got `{t}`. As `raises` will catch all instances of the specified group regardless of the generic argument specific nested exceptions has to be checked with `RaisesGroup`."
-    )
+    msg = "Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` are accepted as generic types but got `{}`. As `raises` will catch all instances of the specified group regardless of the generic argument specific nested exceptions has to be checked with `RaisesGroup`."
+
+    fail_msg = wrap_escape(msg.format(t))
     with pytest.raises(ValueError, match=fail_msg):
-        with RaisesGroup(ExceptionGroup[ValueError]):
-            ...  # pragma: no cover
+        RaisesGroup(ExceptionGroup[ValueError])
     with pytest.raises(ValueError, match=fail_msg):
-        with RaisesExc(ExceptionGroup[ValueError]):
-            ...  # pragma: no cover
+        RaisesExc(ExceptionGroup[ValueError])
+    with pytest.raises(
+        ValueError,
+        match=wrap_escape(msg.format(repr(BaseExceptionGroup[KeyboardInterrupt]))),
+    ):
+        with RaisesExc(BaseExceptionGroup[KeyboardInterrupt]):
+            raise BaseExceptionGroup("", [KeyboardInterrupt()])
+
     with RaisesGroup(ExceptionGroup[Exception]):
         raise ExceptionGroup(
             "", [ExceptionGroup("", [ValueError(), ValueError(), ValueError()])]
