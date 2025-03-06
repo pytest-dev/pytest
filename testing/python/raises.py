@@ -36,6 +36,19 @@ class TestRaises:
             # so we can ignore Mypy telling us that None is invalid.
             pytest.raises(expected_exception=None)  # type: ignore
 
+    # it's unclear if this message is helpful, and if it is, should it trigger more
+    # liberally? Usually you'd get a TypeError here
+    def test_raises_false_and_arg(self):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape(
+                "Expected an exception type or a tuple of exception types, but got `False`. "
+                "Raising exceptions is already understood as failing the test, so you don't need "
+                "any special code to say 'this should never raise an exception'."
+            ),
+        ):
+            pytest.raises(False, int)  # type: ignore[call-overload]
+
     def test_raises_does_not_allow_empty_tuple(self):
         with pytest.raises(
             ValueError,
@@ -337,10 +350,15 @@ class TestRaises:
     def test_raises_context_manager_with_kwargs(self):
         with pytest.raises(expected_exception=ValueError):
             raise ValueError
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape(
+                "Unexpected keyword arguments passed to pytest.raises: foo\n"
+                "Use context-manager form instead?"
+            ),
+        ):
             with pytest.raises(OSError, foo="bar"):  # type: ignore[call-overload]
                 pass
-        assert "Unexpected keyword arguments" in str(excinfo.value)
 
     def test_expected_exception_is_not_a_baseexception(self) -> None:
         with pytest.raises(TypeError) as excinfo:
