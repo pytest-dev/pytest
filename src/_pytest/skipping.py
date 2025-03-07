@@ -20,7 +20,7 @@ from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
-from _pytest.raises_group import AbstractRaises
+from _pytest.raises import AbstractRaises
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
