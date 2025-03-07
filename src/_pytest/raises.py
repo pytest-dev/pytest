@@ -958,7 +958,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             return exc
         elif isinstance(exc, tuple):
             raise TypeError(
-                f"expected exception must be {expected}, not {type(exc)!r}.\n"
+                f"expected exception must be {expected}, not {type(exc).__name__!r}.\n"
                 "RaisesGroup does not support tuples of exception types when expecting one of "
                 "several possible exception types like RaisesExc.\n"
                 "If you meant to expect a group with multiple exceptions, list them as separate arguments."

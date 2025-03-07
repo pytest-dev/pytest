@@ -1339,7 +1339,7 @@ def test_tuples() -> None:
     with pytest.raises(
         TypeError,
         match=wrap_escape(
-            "expected exception must be a BaseException type, RaisesExc, or RaisesGroup, not <class 'tuple'>.\n"
+            "expected exception must be a BaseException type, RaisesExc, or RaisesGroup, not 'tuple'.\n"
             "RaisesGroup does not support tuples of exception types when expecting one of "
             "several possible exception types like RaisesExc.\n"
             "If you meant to expect a group with multiple exceptions, list them as separate arguments."
