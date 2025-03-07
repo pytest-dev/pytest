@@ -1,0 +1,1 @@
+:func:`pytest.raises` will now print a helpful string diff if matching fails and the match parameter has ``^`` and ``$`` and is otherwise escaped.
