@@ -470,7 +470,8 @@ def stringify_exception(
         HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
         if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
             notes = []
-        else:
+        else:  # pragma: no cover
+            # exception not related to above bug, reraise
             raise
     if not include_subexception_msg and isinstance(exc, BaseExceptionGroup):
         message = exc.message
