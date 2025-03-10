@@ -113,6 +113,9 @@ def raises(
         exception types are expected. Note that subclasses of the passed exceptions
         will also match.
 
+        This is not a required parameter, you may opt to only use ``match`` and/or
+        ``check`` for verifying the raised exception.
+
     :kwparam str | re.Pattern[str] | None match:
         If specified, a string containing a regular expression,
         or a regular expression object, that is tested against the string
@@ -126,6 +129,13 @@ def raises(
         and passed through to the function otherwise.
         When using ``pytest.raises`` as a function, you can use:
         ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
+
+    :kwparam Callable[[BaseException], bool] check
+        If specified, a callable that will be called with the exception as a parameter
+        after checking the type and the match regex if specified.
+        If it returns ``True`` it will be considered a match, if not it will
+        be considered a failed match.
+
 
     Use ``pytest.raises`` as a context manager, which will capture the exception of the given
     type, or any of its subclasses::
@@ -526,13 +536,27 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     """
     .. versionadded:: 8.4
 
-    Helper class to be used together with RaisesGroup when you want to specify requirements on sub-exceptions.
+
+    This is the class constructed when calling :func:`pytest.raises`, but may be used
+    directly as a helper class with :class:`RaisesGroup` when you want to specify
+    requirements on sub-exceptions.
 
     You don't need this if you only want to specify the type, since :class:`RaisesGroup`
     accepts ``type[BaseException]``.
 
-    The type is checked with :func:`isinstance`, and does not need to be an exact match.
-    If that is wanted you can use the ``check`` parameter.
+    :param type[BaseException] | tuple[type[BaseException]] | None expected_exception:
+        The expected type, or one of several possible types.
+        May be ``None`` in order to only make use of ``match`` and/or ``check``
+
+        The type is checked with :func:`isinstance`, and does not need to be an exact match.
+        If that is wanted you can use the ``check`` parameter.
+    :kwparam str | Pattern[str] match
+        A regex to match.
+    :kwparam Callable[[BaseException], bool] check
+        If specified, a callable that will be called with the exception as a parameter
+        after checking the type and the match regex if specified.
+        If it returns ``True`` it will be considered a match, if not it will
+        be considered a failed match.
 
     :meth:`RaisesExc.matches` can also be used standalone to check individual exceptions.
 
@@ -695,49 +719,77 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     :meth:`ExceptionInfo.group_contains` also tries to handle exception groups,
     but it is very bad at checking that you *didn't* get unexpected exceptions.
 
-
     The catching behaviour differs from :ref:`except* <except_star>`, being much
     stricter about the structure by default.
     By using ``allow_unwrapped=True`` and ``flatten_subgroups=True`` you can match
     :ref:`except* <except_star>` fully when expecting a single exception.
 
-    #. All specified exceptions must be present, *and no others*.
+    :param args:
+        Any number of exception types, :class:`RaisesGroup` or :class:`RaisesExc`
+        to specify the exceptions contained in this exception.
+        All specified exceptions must be present in the raised group, *and no others*.
 
-       * If you expect a variable number of exceptions you need to use
-         :func:`pytest.raises(ExceptionGroup) <pytest.raises>` and manually check
-         the contained exceptions. Consider making use of :meth:`RaisesExc.matches`.
+        If you expect a variable number of exceptions you need to use
+        :func:`pytest.raises(ExceptionGroup) <pytest.raises>` and manually check
+        the contained exceptions. Consider making use of :meth:`RaisesExc.matches`.
 
-    #. It will only catch exceptions wrapped in an exceptiongroup by default.
+        It does not care about the order of the exceptions, so
+        ``RaisesGroup(ValueError, TypeError)``
+        is equivalent to
+        ``RaisesGroup(TypeError, ValueError)``.
+    :kwparam str | re.Pattern[str] | None match:
+        If specified, a string containing a regular expression,
+        or a regular expression object, that is tested against the string
+        representation of the exception group and its :pep:`678` `__notes__`
+        using :func:`re.search`.
 
-       * With ``allow_unwrapped=True`` you can specify a single expected exception (or :class:`RaisesExc`) and it will
-         match the exception even if it is not inside an :exc:`ExceptionGroup`.
-         If you expect one of several different exception types you need to use a :class:`RaisesExc` object.
+        To match a literal string that may contain :ref:`special characters
+        <re-syntax>`, the pattern can first be escaped with :func:`re.escape`.
 
-    #. By default it cares about the full structure with nested :exc:`ExceptionGroup`'s. You can specify nested
-       :exc:`ExceptionGroup`'s by passing :class:`RaisesGroup` objects as expected exceptions.
+        Note that " (5 subgroups)" will be stripped from the ``repr`` before matching.
+    :kwparam Callable[[E], bool] check:
+        If specified, a callable that will be called with the group as a parameter
+        after successfully matching the expected exceptions. If it returns ``True``
+        it will be considered a match, if not it will be considered a failed match.
+    :kwparam bool allow_unwrapped:
+        If expecting a single exception or :class:`RaisesExc` it will match even
+        if the exception is not inside an exceptiongroup.
 
-       * With ``flatten_subgroups=True`` it will "flatten" the raised :exc:`ExceptionGroup`,
-         extracting all exceptions inside any nested :exc:`ExceptionGroup`, before matching.
-
-    It does not care about the order of the exceptions, so
-    ``RaisesGroup(ValueError, TypeError)``
-    is equivalent to
-    ``RaisesGroup(TypeError, ValueError)``.
+        Using this together with ``match``, ``check`` or expecting multiple exceptions
+        will raise an error.
+    :kwparam bool flatten_subgroups:
+        "flatten" any groups inside the raised exception group, extracting all exceptions
+        inside any nested groups, before matching. Without this it expects you to
+        fully specify the nesting structure by passing :class:`RaisesGroup` as expected
+        parameter.
 
     Examples::
 
         with RaisesGroup(ValueError):
             raise ExceptionGroup("", (ValueError(),))
+        # match
         with RaisesGroup(
-            ValueError, ValueError, RaisesExc(TypeError, match="expected int")
+            ValueError,
+            ValueError,
+            RaisesExc(TypeError, match="^expected int$"),
+            match="^my group$",
         ):
-            ...
+            raise ExceptionGroup(
+                "my group",
+                [
+                    ValueError(),
+                    TypeError("expected int"),
+                    ValueError(),
+                ],
+            )
+        # check
         with RaisesGroup(
             KeyboardInterrupt,
-            match="hello",
-            check=lambda x: type(x) is BaseExceptionGroup,
+            match="^hello$",
+            check=lambda x: isinstance(x.__cause__, ValueError),
         ):
-            ...
+            raise BaseExceptionGroup("hello", [KeyboardInterrupt()]) from ValueError
+        # nested groups
         with RaisesGroup(RaisesGroup(ValueError)):
             raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
 
