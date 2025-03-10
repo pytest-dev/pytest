@@ -550,8 +550,10 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
 
         The type is checked with :func:`isinstance`, and does not need to be an exact match.
         If that is wanted you can use the ``check`` parameter.
+
     :kwparam str | Pattern[str] match
         A regex to match.
+
     :kwparam Callable[[BaseException], bool] check
         If specified, a callable that will be called with the exception as a parameter
         after checking the type and the match regex if specified.
