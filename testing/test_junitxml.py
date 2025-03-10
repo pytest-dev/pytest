@@ -829,7 +829,7 @@ class TestPython:
                 "system-out should not be generated"
             )
         if junit_logging == "system-out":
-            systemout = pnode.find_first_by_tag("system-out")
+            systemout = pnode.get_first_by_tag("system-out")
             assert "hello-stdout" in systemout.toxml(), (
                 "'hello-stdout' should be in system-out"
             )
@@ -853,7 +853,7 @@ class TestPython:
                 "system-err should not be generated"
             )
         if junit_logging == "system-err":
-            systemerr = pnode.find_first_by_tag("system-err")
+            systemerr = pnode.get_first_by_tag("system-err")
             assert "hello-stderr" in systemerr.toxml(), (
                 "'hello-stderr' should be in system-err"
             )
@@ -882,7 +882,7 @@ class TestPython:
                 "system-out should not be generated"
             )
         if junit_logging == "system-out":
-            systemout = pnode.find_first_by_tag("system-out")
+            systemout = pnode.get_first_by_tag("system-out")
             assert "hello-stdout" in systemout.toxml(), (
                 "'hello-stdout' should be in system-out"
             )
@@ -912,7 +912,7 @@ class TestPython:
                 "system-err should not be generated"
             )
         if junit_logging == "system-err":
-            systemerr = pnode.find_first_by_tag("system-err")
+            systemerr = pnode.get_first_by_tag("system-err")
             assert "hello-stderr" in systemerr.toxml(), (
                 "'hello-stderr' should be in system-err"
             )

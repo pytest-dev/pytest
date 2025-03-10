@@ -33,7 +33,7 @@ class MockTiming:
     Time is static, and only advances through `sleep` calls, thus tests might sleep over large
     numbers and obtain accurate time() calls at the end, making tests reliable and instant."""
 
-    _current_time: float = datetime(2020, 5, 22, 14, 20, 50).timestamp()  # noqa: RUF009
+    _current_time: float = datetime(2020, 5, 22, 14, 20, 50).timestamp()
 
     def sleep(self, seconds: float) -> None:
         self._current_time += seconds

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-import dataclasses
 import importlib.metadata
 import re
 import sys
