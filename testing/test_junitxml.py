@@ -145,9 +145,47 @@ class DomNode(DomDocument):
     def tag(self) -> str:
         return self._node.tagName
 
-    @property
-    def next_sibling(self) -> DomNode:
-        return DomNode(self._node.nextSibling)
+
+class TestJunitHelpers:
+    """minimal test to increase coverage for methods that are used in debugging"""
+
+    @pytest.fixture
+    def document(self) -> DomDocument:
+        doc = minidom.parseString("""
+        <root>
+          <item name="a"></item>
+          <item name="b"></item>
+        </root>
+""")
+        return DomDocument(doc)
+
+    def test_uc_root(self, document: DomDocument) -> None:
+        assert document.get_unique_child.tag == "root"
+
+    def test_node_assert_attr(self, document: DomDocument) -> None:
+        item = document.get_first_by_tag("item")
+
+        item.assert_attr(name="a")
+
+        with pytest.raises(AssertionError):
+            item.assert_attr(missing="foo")
+
+    def test_node_getitem(self, document: DomDocument) -> None:
+        item = document.get_first_by_tag("item")
+        assert item["name"] == "a"
+
+        with pytest.raises(KeyError, match="missing"):
+            item["missing"]
+
+    def test_node_get_first_lookup(self, document: DomDocument) -> None:
+        with pytest.raises(LookupError, match="missing"):
+            document.get_first_by_tag("missing")
+
+    def test_node_repr(self, document: DomDocument) -> None:
+        item = document.get_first_by_tag("item")
+
+        assert repr(item) == item.toxml()
+        assert item.toxml() == '<item name="a"/>'
 
 
 parametrize_families = pytest.mark.parametrize("xunit_family", ["xunit1", "xunit2"])
