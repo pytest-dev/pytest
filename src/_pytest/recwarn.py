@@ -62,9 +62,9 @@ def deprecated_call(func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> 
 def deprecated_call(
     func: Callable[..., Any] | None = None, *args: Any, **kwargs: Any
 ) -> WarningsRecorder | Any:
-    """Assert that a code block produces a ``DeprecationWarning`` or ``PendingDeprecationWarning`` or ``FutureWarning``.
+    """Assert that code produces a ``DeprecationWarning`` or ``PendingDeprecationWarning`` or ``FutureWarning``.
 
-    This function is used as a context manager::
+    This function can be used as a context manager::
 
         >>> import warnings
         >>> def api_call_v2():
@@ -77,14 +77,19 @@ def deprecated_call(
         >>> with pytest.deprecated_call(match="^use v3 of this api$") as warning_messages:
         ...    assert api_call_v2() == 200
 
-    You may use the keyword argument ``match`` to assert
+    It can also be used by passing a function and ``*args`` and ``**kwargs``,
+    in which case it will ensure calling ``func(*args, **kwargs)`` produces one of
+    the warnings types above. The return value is the return value of the function.
+
+    In the context manager form you may use the keyword argument ``match`` to assert
     that the warning matches a text or regex.
 
-    This helper produces a list of :class:`warnings.WarningMessage` objects, one for
-    each warning emitted (regardless of whether it is an ``expected_warning`` or not).
+    The context manager produces a list of :class:`warnings.WarningMessage` objects,
+    one for each warning emitted
+    (regardless of whether it is an ``expected_warning`` or not).
     """
     __tracebackhide__ = True
-    # potential QoL: allow `with deprecated_call:` - i.e. no parens
+    # Potential QoL: allow `with deprecated_call:` - i.e. no parens
     dep_warnings = (DeprecationWarning, PendingDeprecationWarning, FutureWarning)
     if func is None:
         return warns(dep_warnings, *args, **kwargs)
@@ -118,7 +123,7 @@ def warns(
     *args: Any,
     **kwargs: Any,
 ) -> WarningsChecker | Any:
-    r"""Assert that a code block raises a particular class of warning.
+    r"""Assert that code raises a particular class of warning.
 
     Specifically, the parameter ``expected_warning`` can be a warning class or tuple
     of warning classes, and the code inside the ``with`` block must issue at least one
@@ -128,13 +133,13 @@ def warns(
     each warning emitted (regardless of whether it is an ``expected_warning`` or not).
     Since pytest 8.0, unmatched warnings are also re-emitted when the context closes.
 
-    Use this function as a context manager::
+    This function can be used as a context manager::
 
         >>> import pytest
         >>> with pytest.warns(RuntimeWarning):
         ...    warnings.warn("my warning", RuntimeWarning)
 
-    You can use the keyword argument ``match`` to assert
+    In the context manager form you may use the keyword argument ``match`` to assert
     that the warning matches a text or regex::
 
         >>> with pytest.warns(UserWarning, match='must be 0 or None'):

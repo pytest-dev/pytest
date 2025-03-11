@@ -14,7 +14,7 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
-legacy callable form of :func:`raises <pytest.raises>`, :func:`warns <pytest.warns>` and :func:`deprecated_call <pytest.deprecated_call>`
+Legacy callable form of :func:`raises <pytest.raises>`, :func:`warns <pytest.warns>` and :func:`deprecated_call <pytest.deprecated_call>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 8.4
@@ -30,13 +30,13 @@ to read and doesn't allow passing `match` or other parameters.
         return 6.28
 
 
-    # deprecated callable form
+    # Deprecated form, using callable + arguments
 
     excinfo = pytest.raises(ValueError, int, "hello")
     ret1 = pytest.warns(DeprecationWarning, my_warns, "a", "b", "c")
     ret2 = pytest.deprecated_call(my_warns, "d", "e", "f")
 
-    # context-manager form
+    # The calls above can be upgraded to the context-manager form
 
     with pytest.raises(ValueError) as excinfo:
         int("hello")
@@ -45,6 +45,10 @@ to read and doesn't allow passing `match` or other parameters.
     with pytest.deprecated_call():
         ret2 = my_warns("d", "e", "f")
 
+
+.. note::
+   This feature is not fully deprecated as of yet, awaiting the availability of an
+   automated tool to automatically fix code making extensive use of it.
 
 .. _sync-test-async-fixture:
 
