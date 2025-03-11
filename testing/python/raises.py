@@ -108,7 +108,7 @@ class TestRaises:
                            int()
 
             def test_raise_wrong_exception_passes_by():
-                with pytest.raises(AssertionError):
+                with pytest.raises(ZeroDivisionError):
                     with pytest.raises(ValueError):
                            1/0
         """
@@ -310,8 +310,8 @@ class TestRaises:
         really relevant if we got a different exception.
         """
         with pytest.raises(
-            AssertionError,
-            match=wrap_escape("`ValueError()` is not an instance of `IndexError`"),
+            ValueError,
+            match=wrap_escape("invalid literal for int() with base 10: 'asdf'"),
         ):
             with pytest.raises(IndexError, match="nomatch"):
                 int("asdf")

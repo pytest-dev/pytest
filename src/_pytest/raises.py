@@ -624,6 +624,8 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             for e in expected_exceptions
         )
 
+        self._just_propagate = False
+
     def matches(
         self,
         exception: BaseException | None,
@@ -646,10 +648,12 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             assert re.search("foo", str(excinfo.value.__cause__)
 
         """
+        self._just_propagate = False
         if exception is None:
             self._fail_reason = "exception is None"
             return False
         if not self._check_type(exception):
+            self._just_propagate = True
             return False
 
         if not self._check_match(exception):
@@ -699,6 +703,8 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         )
 
         if not self.matches(exc_val):
+            if self._just_propagate:
+                return False
             raise AssertionError(self._fail_reason)
 
         # Cast to narrow the exception type now that it's verified....
