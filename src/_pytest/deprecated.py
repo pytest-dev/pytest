@@ -27,12 +27,13 @@ if TYPE_CHECKING:
 else:
 
     def deprecated(reason: str = "") -> object:
-        raise AssertionError(
-            "This decorator should only be used to indicate that overloads are deprecated"
-        )
-        # once py<3.13 is no longer supported, or when somebody wants to use decorators
-        # to deprecated, we can consider adapting this function to raise warnings
-        # at runtime
+        # This decorator should only be used to indicate that overloads are deprecated
+        # once py<3.13 is no longer supported, or when somebody wants to use @deprecated
+        # for runtime warning, we can consider adapting this decorator to support that
+        def decorator(func: object) -> object:
+            return func
+
+        return decorator
 
 
 CALLABLE_RAISES = PytestPendingDeprecationWarning(

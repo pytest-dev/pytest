@@ -164,8 +164,11 @@ class TestDeprecatedCall:
             PytestPendingDeprecationWarning,
             match=(
                 wrap_escape(
-                    "The callable form of pytest.deprecated_call is deprecated.\n"
+                    "The callable form of pytest.deprecated_call will be deprecated in a future version.\n"
                     "Use `with pytest.deprecated_call():` instead."
+                    "Full deprecation will not be made until there's a tool to automatically update"
+                    " code to use the context-manager form.\n"
+                    "See https://docs.pytest.org/en/stable/reference/deprecations.html#legacy-callable-form-of-raises-warns-and-deprecated-call"
                 )
             ),
         ):
@@ -297,8 +300,11 @@ class TestWarns:
             PytestPendingDeprecationWarning,
             match=(
                 wrap_escape(
-                    "The callable form of pytest.warns is deprecated.\n"
+                    "The callable form of pytest.warns will be deprecated in a future version.\n"
                     "Use `with pytest.warns(...):` instead."
+                    "Full deprecation will not be made until there's a tool to automatically update"
+                    " code to use the context-manager form.\n"
+                    "See https://docs.pytest.org/en/stable/reference/deprecations.html#legacy-callable-form-of-raises-warns-and-deprecated-call"
                 )
             ),
         ):
