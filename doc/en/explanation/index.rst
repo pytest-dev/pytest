@@ -12,5 +12,6 @@ Explanation
    fixtures
    goodpractices
    pythonpath
+   types
    ci
    flaky

@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from collections.abc import MutableMapping
 from collections.abc import Sequence
 import dataclasses
+import enum
 import inspect
 from typing import Any
 from typing import final
@@ -27,6 +28,7 @@ from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.outcomes import fail
+from _pytest.raises_group import AbstractRaises
 from _pytest.scope import _ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
 
@@ -36,6 +38,16 @@ if TYPE_CHECKING:
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
+
+
+# Singleton type for HIDDEN_PARAM, as described in:
+# https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
+class _HiddenParam(enum.Enum):
+    token = 0
+
+
+#: Can be used as a parameter set id to hide it from the test name.
+HIDDEN_PARAM = _HiddenParam.token
 
 
 def istestfunc(func) -> bool:
@@ -68,14 +80,14 @@ def get_empty_parameterset_mark(
 class ParameterSet(NamedTuple):
     values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
-    id: str | None
+    id: str | _HiddenParam | None
 
     @classmethod
     def param(
         cls,
         *values: object,
         marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
-        id: str | None = None,
+        id: str | _HiddenParam | None = None,
     ) -> ParameterSet:
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
@@ -88,8 +100,11 @@ class ParameterSet(NamedTuple):
             )
 
         if id is not None:
-            if not isinstance(id, str):
-                raise TypeError(f"Expected id to be a string, got {type(id)}: {id!r}")
+            if not isinstance(id, str) and id is not HIDDEN_PARAM:
+                raise TypeError(
+                    "Expected id to be a string or a `pytest.HIDDEN_PARAM` sentinel, "
+                    f"got {type(id)}: {id!r}",
+                )
         return cls(values, marks, id)
 
     @classmethod
@@ -459,7 +474,10 @@ if TYPE_CHECKING:
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
-            raises: None | type[BaseException] | tuple[type[BaseException], ...] = ...,
+            raises: None
+            | type[BaseException]
+            | tuple[type[BaseException], ...]
+            | AbstractRaises[BaseException] = ...,
             strict: bool = ...,
         ) -> MarkDecorator: ...
 

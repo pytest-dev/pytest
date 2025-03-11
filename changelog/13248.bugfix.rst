@@ -1,0 +1,2 @@
+Fixed an issue where passing a ``scope`` in :py:func:`Metafunc.parametrize <pytest.Metafunc.parametrize>` with ``indirect=True``
+could result in other fixtures being unable to depend on the parametrized fixture.

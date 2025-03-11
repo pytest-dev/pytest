@@ -2315,14 +2315,14 @@ class TestAutouseManagement:
     ) -> None:
         """#226"""
         pytester.makepyfile(
-            """
+            f"""
             import pytest
             values = []
-            @pytest.fixture(%(param1)s)
+            @pytest.fixture({param1})
             def arg1(request):
                 request.addfinalizer(lambda: values.append("fin1"))
                 values.append("new1")
-            @pytest.fixture(%(param2)s)
+            @pytest.fixture({param2})
             def arg2(request, arg1):
                 request.addfinalizer(lambda: values.append("fin2"))
                 values.append("new2")
@@ -2331,8 +2331,7 @@ class TestAutouseManagement:
                 pass
             def test_check():
                 assert values == ["new1", "new2", "fin2", "fin1"]
-        """  # noqa: UP031 (python syntax issues)
-            % locals()
+        """
         )
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(passed=2)
@@ -3212,21 +3211,21 @@ class TestFixtureMarker:
     ) -> None:
         """#246"""
         pytester.makepyfile(
-            """
+            f"""
             import pytest
             values = []
 
-            @pytest.fixture(scope=%(scope)r, params=["1"])
+            @pytest.fixture(scope={scope!r}, params=["1"])
             def fix1(request):
                 return request.param
 
-            @pytest.fixture(scope=%(scope)r)
+            @pytest.fixture(scope={scope!r})
             def fix2(request, base):
                 def cleanup_fix2():
                     assert not values, "base should not have been finalized"
                 request.addfinalizer(cleanup_fix2)
 
-            @pytest.fixture(scope=%(scope)r)
+            @pytest.fixture(scope={scope!r})
             def base(request, fix1):
                 def cleanup_base():
                     values.append("fin_base")
@@ -3239,8 +3238,7 @@ class TestFixtureMarker:
                 pass
             def test_other():
                 pass
-        """  # noqa: UP031 (python syntax issues)
-            % {"scope": scope}
+        """
         )
         reprec = pytester.inline_run("-lvs")
         reprec.assertoutcome(passed=3)
@@ -3426,42 +3424,40 @@ class TestRequestScopeAccess:
 
     def test_setup(self, pytester: Pytester, scope, ok, error) -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest
-            @pytest.fixture(scope=%r, autouse=True)
+            @pytest.fixture(scope={scope!r}, autouse=True)
             def myscoped(request):
-                for x in %r:
+                for x in {ok.split()}:
                     assert hasattr(request, x)
-                for x in %r:
+                for x in {error.split()}:
                     pytest.raises(AttributeError, lambda:
                         getattr(request, x))
                 assert request.session
                 assert request.config
             def test_func():
                 pass
-        """  # noqa: UP031 (python syntax issues)
-            % (scope, ok.split(), error.split())
+        """
         )
         reprec = pytester.inline_run("-l")
         reprec.assertoutcome(passed=1)
 
     def test_funcarg(self, pytester: Pytester, scope, ok, error) -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest
-            @pytest.fixture(scope=%r)
+            @pytest.fixture(scope={scope!r})
             def arg(request):
-                for x in %r:
+                for x in {ok.split()!r}:
                     assert hasattr(request, x)
-                for x in %r:
+                for x in {error.split()!r}:
                     pytest.raises(AttributeError, lambda:
                         getattr(request, x))
                 assert request.session
                 assert request.config
             def test_func(arg):
                 pass
-        """  # noqa: UP031 (python syntax issues)
-            % (scope, ok.split(), error.split())
+        """
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
@@ -5009,3 +5005,31 @@ def test_subfixture_teardown_order(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:
+    """
+    Make sure scope from parametrize does not affect fixture's ability to be
+    depended upon.
+
+    Regression test for #13248
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="session")
+        def my_fixture(request):
+            return getattr(request, "param", None)
+
+        @pytest.fixture(scope="session")
+        def another_fixture(my_fixture):
+            return my_fixture
+
+        @pytest.mark.parametrize("my_fixture", ["a value"], indirect=True, scope="function")
+        def test_foo(another_fixture):
+            assert another_fixture == "a value"
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)

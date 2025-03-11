@@ -164,7 +164,7 @@ Now we'll get feedback on a bad argument:
 
     $ pytest -q --cmdopt=type3
     ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
-    pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from 'type1', 'type2')
+    pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from type1, type2)
 
 
 If you need to provide more detailed error messages, you can use the

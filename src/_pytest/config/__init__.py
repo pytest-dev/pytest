@@ -70,6 +70,7 @@ from _pytest.warning_types import warn_explicit_for
 
 
 if TYPE_CHECKING:
+    from _pytest.assertions.rewrite import AssertionRewritingHook
     from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
 
@@ -1271,6 +1272,10 @@ class Config:
         """
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
         mode = getattr(ns, "assertmode", "plain")
+
+        disable_autoload = getattr(ns, "disable_plugin_autoload", False) or bool(
+            os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        )
         if mode == "rewrite":
             import _pytest.assertion
 
@@ -1279,16 +1284,18 @@ class Config:
             except SystemError:
                 mode = "plain"
             else:
-                self._mark_plugins_for_rewrite(hook)
+                self._mark_plugins_for_rewrite(hook, disable_autoload)
         self._warn_about_missing_assertion(mode)
 
-    def _mark_plugins_for_rewrite(self, hook) -> None:
+    def _mark_plugins_for_rewrite(
+        self, hook: AssertionRewritingHook, disable_autoload: bool
+    ) -> None:
         """Given an importhook, mark for rewrite any top-level
         modules or packages in the distribution package for
         all pytest plugins."""
         self.pluginmanager.rewrite_hook = hook
 
-        if os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
+        if disable_autoload:
             # We don't autoload from distribution package entry points,
             # no need to continue.
             return
@@ -1393,10 +1400,15 @@ class Config:
         self._consider_importhook(args)
         self._configure_python_path()
         self.pluginmanager.consider_preparse(args, exclude_only=False)
-        if not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"):
-            # Don't autoload from distribution package entry point. Only
-            # explicitly specified plugins are going to be loaded.
+        if (
+            not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+            and not self.known_args_namespace.disable_plugin_autoload
+        ):
+            # Autoloading from distribution package entry point has
+            # not been disabled.
             self.pluginmanager.load_setuptools_entrypoints("pytest11")
+        # Otherwise only plugins explicitly specified in PYTEST_PLUGINS
+        # are going to be loaded.
         self.pluginmanager.consider_env()
 
         self.known_args_namespace = self._parser.parse_known_args(
@@ -1419,7 +1431,7 @@ class Config:
         except ConftestImportFailure as e:
             if self.known_args_namespace.help or self.known_args_namespace.version:
                 # we don't want to prevent --help/--version to work
-                # so just let is pass and print a warning at the end
+                # so just let it pass and print a warning at the end
                 self.issue_config_time_warning(
                     PytestConfigWarning(f"could not load initial conftests: {e.path}"),
                     stacklevel=2,

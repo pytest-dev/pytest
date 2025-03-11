@@ -1418,7 +1418,7 @@ Running the above tests results in the following test IDs being used:
    rootdir: /home/sweet/project
    collected 12 items
 
-   <Dir fixtures.rst-224>
+   <Dir fixtures.rst-227>
      <Module test_anothersmtp.py>
        <Function test_showhelo[smtp.gmail.com]>
        <Function test_showhelo[mail.python.org]>

@@ -1,1 +1,0 @@
-Fixed selftest failures in ``test_terminal.py`` with Pygments >= 2.19.0

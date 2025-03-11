@@ -218,10 +218,36 @@ class TestImportHookInstallation:
         assert result.ret == 0
 
     @pytest.mark.parametrize("mode", ["plain", "rewrite"])
+    @pytest.mark.parametrize("disable_plugin_autoload", ["env_var", "cli", ""])
+    @pytest.mark.parametrize("explicit_specify", ["env_var", "cli", ""])
     def test_installed_plugin_rewrite(
-        self, pytester: Pytester, mode, monkeypatch
+        self,
+        pytester: Pytester,
+        mode: str,
+        monkeypatch: pytest.MonkeyPatch,
+        disable_plugin_autoload: str,
+        explicit_specify: str,
     ) -> None:
-        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        args = ["mainwrapper.py", "-s", f"--assert={mode}"]
+        if disable_plugin_autoload == "env_var":
+            monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+        elif disable_plugin_autoload == "cli":
+            monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+            args.append("--disable-plugin-autoload")
+        else:
+            assert disable_plugin_autoload == ""
+            monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+        name = "spamplugin"
+
+        if explicit_specify == "env_var":
+            monkeypatch.setenv("PYTEST_PLUGINS", name)
+        elif explicit_specify == "cli":
+            args.append("-p")
+            args.append(name)
+        else:
+            assert explicit_specify == ""
+
         # Make sure the hook is installed early enough so that plugins
         # installed via distribution package are rewritten.
         pytester.mkdir("hampkg")
@@ -250,7 +276,7 @@ class TestImportHookInstallation:
             import pytest
 
             class DummyEntryPoint(object):
-                name = 'spam'
+                name = 'spamplugin'
                 module_name = 'spam.py'
                 group = 'pytest11'
 
@@ -275,20 +301,29 @@ class TestImportHookInstallation:
                 check_first([10, 30], 30)
 
             def test2(check_first2):
-                check_first([10, 30], 30)
+                check_first2([10, 30], 30)
             """,
         }
         pytester.makepyfile(**contents)
-        result = pytester.run(
-            sys.executable, "mainwrapper.py", "-s", f"--assert={mode}"
-        )
+        result = pytester.run(sys.executable, *args)
         if mode == "plain":
             expected = "E       AssertionError"
         elif mode == "rewrite":
             expected = "*assert 10 == 30*"
         else:
             assert 0
-        result.stdout.fnmatch_lines([expected])
+
+        if not disable_plugin_autoload or explicit_specify:
+            result.assert_outcomes(failed=2)
+            result.stdout.fnmatch_lines([expected, expected])
+        else:
+            result.assert_outcomes(errors=2)
+            result.stdout.fnmatch_lines(
+                [
+                    "E       fixture 'check_first' not found",
+                    "E       fixture 'check_first2' not found",
+                ]
+            )
 
     def test_rewrite_ast(self, pytester: Pytester) -> None:
         pytester.mkdir("pkg")

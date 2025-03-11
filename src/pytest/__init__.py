@@ -33,6 +33,7 @@ from _pytest.legacypath import Testdir
 from _pytest.logging import LogCaptureFixture
 from _pytest.main import Dir
 from _pytest.main import Session
+from _pytest.mark import HIDDEN_PARAM
 from _pytest.mark import Mark
 from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import MarkDecorator
@@ -60,6 +61,8 @@ from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
 from _pytest.python_api import raises
+from _pytest.raises_group import RaisesExc
+from _pytest.raises_group import RaisesGroup
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
@@ -89,6 +92,7 @@ set_trace = __pytestPDB.set_trace
 
 
 __all__ = [
+    "HIDDEN_PARAM",
     "Cache",
     "CallInfo",
     "CaptureFixture",
@@ -133,6 +137,8 @@ __all__ = [
     "PytestUnraisableExceptionWarning",
     "PytestWarning",
     "Pytester",
+    "RaisesExc",
+    "RaisesGroup",
     "RecordedHookCall",
     "RunResult",
     "Session",

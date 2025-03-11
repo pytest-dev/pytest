@@ -6,6 +6,8 @@ codecov:
 
 coverage:
   status:
-    patch: true
+    patch:
+      default:
+        target: 100%  # require patches to be 100%
     project: false
 comment: false
