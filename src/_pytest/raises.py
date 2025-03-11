@@ -384,6 +384,7 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
 
     def __init__(
         self,
+        *,
         match: str | Pattern[str] | None,
         check: Callable[[BaseExcT_co], bool] | None,
     ) -> None:
@@ -591,6 +592,8 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         expected_exception: (
             type[BaseExcT_co_default] | tuple[type[BaseExcT_co_default], ...]
         ),
+        /,
+        *,
         match: str | Pattern[str] | None = ...,
         check: Callable[[BaseExcT_co_default], bool] | None = ...,
     ) -> None: ...
@@ -598,6 +601,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     @overload
     def __init__(
         self: RaisesExc[BaseException],  # Give E a value.
+        /,
         *,
         match: str | Pattern[str] | None,
         # If exception_type is not provided, check() must do any typechecks itself.
@@ -605,17 +609,19 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     ) -> None: ...
 
     @overload
-    def __init__(self, *, check: Callable[[BaseException], bool]) -> None: ...
+    def __init__(self, /, *, check: Callable[[BaseException], bool]) -> None: ...
 
     def __init__(
         self,
         expected_exception: (
             type[BaseExcT_co_default] | tuple[type[BaseExcT_co_default], ...] | None
         ) = None,
+        /,
+        *,
         match: str | Pattern[str] | None = None,
         check: Callable[[BaseExcT_co_default], bool] | None = None,
     ):
-        super().__init__(match, check)
+        super().__init__(match=match, check=check)
         if isinstance(expected_exception, tuple):
             expected_exceptions = expected_exception
         elif expected_exception is None:
@@ -843,6 +849,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self,
         expected_exception: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
+        /,
         *,
         allow_unwrapped: Literal[True],
         flatten_subgroups: bool = False,
@@ -853,6 +860,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self,
         expected_exception: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
+        /,
         *other_exceptions: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
         flatten_subgroups: Literal[True],
         match: str | Pattern[str] | None = None,
@@ -868,6 +876,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[ExcT_1],
         expected_exception: type[ExcT_1] | RaisesExc[ExcT_1],
+        /,
         *other_exceptions: type[ExcT_1] | RaisesExc[ExcT_1],
         match: str | Pattern[str] | None = None,
         check: Callable[[ExceptionGroup[ExcT_1]], bool] | None = None,
@@ -877,6 +886,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[ExceptionGroup[ExcT_2]],
         expected_exception: RaisesGroup[ExcT_2],
+        /,
         *other_exceptions: RaisesGroup[ExcT_2],
         match: str | Pattern[str] | None = None,
         check: Callable[[ExceptionGroup[ExceptionGroup[ExcT_2]]], bool] | None = None,
@@ -886,6 +896,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[ExcT_1 | ExceptionGroup[ExcT_2]],
         expected_exception: type[ExcT_1] | RaisesExc[ExcT_1] | RaisesGroup[ExcT_2],
+        /,
         *other_exceptions: type[ExcT_1] | RaisesExc[ExcT_1] | RaisesGroup[ExcT_2],
         match: str | Pattern[str] | None = None,
         check: (
@@ -898,6 +909,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[BaseExcT_1],
         expected_exception: type[BaseExcT_1] | RaisesExc[BaseExcT_1],
+        /,
         *other_exceptions: type[BaseExcT_1] | RaisesExc[BaseExcT_1],
         match: str | Pattern[str] | None = None,
         check: Callable[[BaseExceptionGroup[BaseExcT_1]], bool] | None = None,
@@ -907,6 +919,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[BaseExceptionGroup[BaseExcT_2]],
         expected_exception: RaisesGroup[BaseExcT_2],
+        /,
         *other_exceptions: RaisesGroup[BaseExcT_2],
         match: str | Pattern[str] | None = None,
         check: (
@@ -920,6 +933,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         expected_exception: type[BaseExcT_1]
         | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
+        /,
         *other_exceptions: type[BaseExcT_1]
         | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
@@ -938,6 +952,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         expected_exception: type[BaseExcT_1]
         | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
+        /,
         *other_exceptions: type[BaseExcT_1]
         | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
@@ -959,7 +974,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             "], bool]",
             check,
         )
-        super().__init__(match, check)
+        super().__init__(match=match, check=check)
         self.allow_unwrapped = allow_unwrapped
         self.flatten_subgroups: bool = flatten_subgroups
         self.is_baseexception = False

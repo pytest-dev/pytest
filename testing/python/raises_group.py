@@ -509,7 +509,7 @@ def test_message() -> None:
     # RaisesExc
     check_message(
         "ExceptionGroup(RaisesExc(ValueError, match='my_str'))",
-        RaisesGroup(RaisesExc(ValueError, "my_str")),
+        RaisesGroup(RaisesExc(ValueError, match="my_str")),
     )
     check_message(
         "ExceptionGroup(RaisesExc(match='my_str'))",
@@ -1127,7 +1127,7 @@ def test_raisesexc() -> None:
 
 
 def test_raisesexc_match() -> None:
-    with RaisesGroup(RaisesExc(ValueError, "foo")):
+    with RaisesGroup(RaisesExc(ValueError, match="foo")):
         raise ExceptionGroup("", (ValueError("foo"),))
     with (
         fails_raises_group(
@@ -1135,7 +1135,7 @@ def test_raisesexc_match() -> None:
             " Regex: 'foo'\n"
             " Input: 'bar'"
         ),
-        RaisesGroup(RaisesExc(ValueError, "foo")),
+        RaisesGroup(RaisesExc(ValueError, match="foo")),
     ):
         raise ExceptionGroup("", (ValueError("bar"),))
 
