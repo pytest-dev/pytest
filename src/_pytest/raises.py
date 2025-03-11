@@ -169,7 +169,7 @@ def raises(
 
         >>> import errno
         >>> with pytest.raises(OSError, check=lambda e: e.errno == errno.EACCES):
-                raise OSError(errno.EACCES, "no permission to view")
+        ...     raise OSError(errno.EACCES, "no permission to view")
 
     The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
     details of the captured exception::
