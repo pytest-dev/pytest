@@ -164,6 +164,13 @@ def raises(
         ...     e.add_note("had a note added")
         ...     raise e
 
+    The ``check`` argument, if provided, must return True when passed the raised exception
+    for the match to be successful, otherwise an :exc:`AssertionError` is raised.
+
+        >>> import errno
+        >>> with pytest.raises(OSError, check=lambda e: e.errno == errno.EACCES):
+                raise OSError(errno.EACCES, "no permission to view")
+
     The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
     details of the captured exception::
 
