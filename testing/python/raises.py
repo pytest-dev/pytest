@@ -225,10 +225,10 @@ class TestRaises:
         refcount = len(gc.get_referrers(t))
 
         if method == "function":
-            with pytest.warns(pytest.PytestDeprecationWarning):
+            with pytest.warns(pytest.PytestPendingDeprecationWarning):
                 pytest.raises(ValueError, t)
         elif method == "function_match":
-            with pytest.warns(pytest.PytestDeprecationWarning):
+            with pytest.warns(pytest.PytestPendingDeprecationWarning):
                 pytest.raises(ValueError, t).match("^$")
         elif method == "with":
             with pytest.raises(ValueError):
@@ -267,22 +267,22 @@ class TestRaises:
                 int("asdf", base=10)
 
         # "match" without context manager.
-        with pytest.warns(pytest.PytestDeprecationWarning):
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
             pytest.raises(ValueError, int, "asdf").match("invalid literal")
         with pytest.raises(AssertionError) as excinfo:
-            with pytest.warns(pytest.PytestDeprecationWarning):
+            with pytest.warns(pytest.PytestPendingDeprecationWarning):
                 pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
 
-        with pytest.warns(pytest.PytestDeprecationWarning):
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
             pytest.raises(TypeError, int, match="invalid")  # type: ignore[call-overload]
 
         def tfunc(match):
             raise ValueError(f"match={match}")
 
-        with pytest.warns(pytest.PytestDeprecationWarning):
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
             pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
-        with pytest.warns(pytest.PytestDeprecationWarning):
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
             pytest.raises(ValueError, tfunc, match="").match("match=")
 
         # empty string matches everything, which is probably not what the user wants
@@ -411,5 +411,5 @@ class TestRaises:
         def my_raise() -> None:
             raise ValueError
 
-        with pytest.warns(pytest.PytestDeprecationWarning):
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
             pytest.raises(expected_exception=ValueError, func=my_raise)

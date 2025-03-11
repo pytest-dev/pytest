@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
+from _pytest.warning_types import PytestPendingDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
 
@@ -35,18 +36,24 @@ else:
         return decorator
 
 
-CALLABLE_RAISES = PytestDeprecationWarning(
-    "The callable form of pytest.raises is deprecated.\n"
-    "Use `with pytest.raises(...):` instead."
+CALLABLE_RAISES = PytestPendingDeprecationWarning(
+    "The callable form of pytest.raises will be deprecated in a future version.\n"
+    "Use `with pytest.raises(...):` instead.\n"
+    "Full deprecation will not be made until there's a tool to automatically update"
+    " code to use the context-manager form"
 )
 
-CALLABLE_WARNS = PytestDeprecationWarning(
-    "The callable form of pytest.warns is deprecated.\n"
+CALLABLE_WARNS = PytestPendingDeprecationWarning(
+    "The callable form of pytest.warns will be deprecated in a future version.\n"
     "Use `with pytest.warns(...):` instead."
+    "Full deprecation will not be made until there's a tool to automatically update"
+    " code to use the context-manager form"
 )
-CALLABLE_DEPRECATED_CALL = PytestDeprecationWarning(
-    "The callable form of pytest.deprecated_call is deprecated.\n"
+CALLABLE_DEPRECATED_CALL = PytestPendingDeprecationWarning(
+    "The callable form of pytest.deprecated_call will be deprecated in a future version.\n"
     "Use `with pytest.deprecated_call():` instead."
+    "Full deprecation will not be made until there's a tool to automatically update"
+    " code to use the context-manager form"
 )
 
 

@@ -957,7 +957,7 @@ def raises(
         >>> raises(ZeroDivisionError, f, x=0)
         <ExceptionInfo ...>
 
-    The form above is fully supported but discouraged for new code because the
+    The form above is going to be deprecated in a future pytest release as the
     context manager form is regarded as more readable and less error-prone.
 
     .. note::
