@@ -887,7 +887,9 @@ class IdMaker:
     # Used only for clearer error messages.
     func_name: str | None
 
-    def make_unique_parameterset_ids(self, id_names: bool = False) -> list[str | _HiddenParam]:
+    def make_unique_parameterset_ids(
+        self, id_names: bool = False
+    ) -> list[str | _HiddenParam]:
         """Make a unique identifier for each ParameterSet, that may be used to
         identify the parametrization in a node ID.
 
