@@ -44,7 +44,7 @@ if TYPE_CHECKING:
         covariant=True,
     )
 
-    # use short name because it shows up in docs
+    # Use short name because it shows up in docs.
     E = TypeVar("E", bound=BaseException, default=BaseException)
 else:
     from typing import TypeVar
@@ -130,7 +130,10 @@ def raises(
         When using ``pytest.raises`` as a function, you can use:
         ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
 
-    :kwparam Callable[[BaseException], bool] check
+    :kwparam Callable[[BaseException], bool] check:
+    
+        .. versionadded:: 8.4
+        
         If specified, a callable that will be called with the exception as a parameter
         after checking the type and the match regex if specified.
         If it returns ``True`` it will be considered a match, if not it will
@@ -562,7 +565,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     :kwparam str | Pattern[str] match
         A regex to match.
 
-    :kwparam Callable[[BaseException], bool] check
+    :kwparam Callable[[BaseException], bool] check:
         If specified, a callable that will be called with the exception as a parameter
         after checking the type and the match regex if specified.
         If it returns ``True`` it will be considered a match, if not it will
