@@ -131,9 +131,9 @@ def raises(
         ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
 
     :kwparam Callable[[BaseException], bool] check:
-    
+
         .. versionadded:: 8.4
-        
+
         If specified, a callable that will be called with the exception as a parameter
         after checking the type and the match regex if specified.
         If it returns ``True`` it will be considered a match, if not it will
