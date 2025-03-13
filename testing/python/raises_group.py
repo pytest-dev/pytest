@@ -10,9 +10,9 @@ import sys
 from _pytest._code import ExceptionInfo
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
-from _pytest.raises_group import RaisesExc
-from _pytest.raises_group import RaisesGroup
-from _pytest.raises_group import repr_callable
+from _pytest.raises import RaisesExc
+from _pytest.raises import RaisesGroup
+from _pytest.raises import repr_callable
 import pytest
 
 
@@ -36,9 +36,19 @@ def fails_raises_group(msg: str, add_prefix: bool = True) -> RaisesExc[Failed]:
 def test_raises_group() -> None:
     with pytest.raises(
         TypeError,
+        match=wrap_escape("expected exception must be a BaseException type, not 'int'"),
+    ):
+        RaisesExc(5)  # type: ignore[call-overload]
+    with pytest.raises(
+        ValueError,
+        match=wrap_escape("expected exception must be a BaseException type, not 'int'"),
+    ):
+        RaisesExc(int)  # type: ignore[type-var]
+    with pytest.raises(
+        TypeError,
         # TODO: bad sentence structure
         match=wrap_escape(
-            "expected exception must be a BaseException type, RaisesExc, or RaisesGroup, not ValueError",
+            "expected exception must be a BaseException type, RaisesExc, or RaisesGroup, not an exception instance (ValueError)",
         ),
     ):
         RaisesGroup(ValueError())  # type: ignore[call-overload]
@@ -499,7 +509,7 @@ def test_message() -> None:
     # RaisesExc
     check_message(
         "ExceptionGroup(RaisesExc(ValueError, match='my_str'))",
-        RaisesGroup(RaisesExc(ValueError, "my_str")),
+        RaisesGroup(RaisesExc(ValueError, match="my_str")),
     )
     check_message(
         "ExceptionGroup(RaisesExc(match='my_str'))",
@@ -1067,9 +1077,9 @@ def test_raisesexc() -> None:
     ):
         RaisesExc()  # type: ignore[call-overload]
     with pytest.raises(
-        TypeError,
+        ValueError,
         match=wrap_escape(
-            "expected exception must be a BaseException type, not object"
+            "expected exception must be a BaseException type, not 'object'"
         ),
     ):
         RaisesExc(object)  # type: ignore[type-var]
@@ -1110,14 +1120,14 @@ def test_raisesexc() -> None:
     # currently RaisesGroup says "Raised exception did not match" but RaisesExc doesn't...
     with pytest.raises(
         AssertionError,
-        match=wrap_escape("`TypeError()` is not an instance of `ValueError`"),
+        match=wrap_escape("Regex pattern did not match.\n Regex: 'foo'\n Input: 'bar'"),
     ):
-        with RaisesExc(ValueError):
-            raise TypeError
+        with RaisesExc(TypeError, match="foo"):
+            raise TypeError("bar")
 
 
 def test_raisesexc_match() -> None:
-    with RaisesGroup(RaisesExc(ValueError, "foo")):
+    with RaisesGroup(RaisesExc(ValueError, match="foo")):
         raise ExceptionGroup("", (ValueError("foo"),))
     with (
         fails_raises_group(
@@ -1125,7 +1135,7 @@ def test_raisesexc_match() -> None:
             " Regex: 'foo'\n"
             " Input: 'bar'"
         ),
-        RaisesGroup(RaisesExc(ValueError, "foo")),
+        RaisesGroup(RaisesExc(ValueError, match="foo")),
     ):
         raise ExceptionGroup("", (ValueError("bar"),))
 
@@ -1328,6 +1338,11 @@ def test_tuples() -> None:
     # RaisesGroup(ValueError, TypeError), and the former might be interpreted as the latter.
     with pytest.raises(
         TypeError,
-        match="expected exception must be a BaseException type, RaisesExc, or RaisesGroup, not tuple",
+        match=wrap_escape(
+            "expected exception must be a BaseException type, RaisesExc, or RaisesGroup, not 'tuple'.\n"
+            "RaisesGroup does not support tuples of exception types when expecting one of "
+            "several possible exception types like RaisesExc.\n"
+            "If you meant to expect a group with multiple exceptions, list them as separate arguments."
+        ),
     ):
         RaisesGroup((ValueError, IndexError))  # type: ignore[call-overload]
