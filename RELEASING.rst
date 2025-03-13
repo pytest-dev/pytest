@@ -137,6 +137,10 @@ Both automatic and manual processes described above follow the same steps from t
    in https://github.com/pytest-dev/pytest/actions/workflows/deploy.yml, using the ``release-MAJOR.MINOR.PATCH`` branch
    as source.
 
+   Using the command-line::
+
+     $ gh workflow run deploy.yml -R pytest-dev/pytest --ref=release-{VERSION} -f version={VERSION}
+
    This job will require approval from ``pytest-dev/core``, after which it will publish to PyPI
    and tag the repository.
 
