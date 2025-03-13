@@ -1383,7 +1383,7 @@ class TestAssertionRewriteHookDetails:
 
         mtime = b"\x58\x3c\xb0\x5f"
         mtime_int = int.from_bytes(mtime, "little")
-        os.utime(source, (mtime_int, mtime_int))
+        os.utime(source, ns=(mtime_int, mtime_int))
 
         size = len(source_bytes).to_bytes(4, "little")
 
@@ -2374,3 +2374,25 @@ class TestSafereprUnbounded:
             _saferepr(self.Help)
             == f"<class '{Path(__file__).stem}.{self.__class__.__name__}.Help'>"
         )
+
+
+class TestIssue13292:
+    def test_load_cache_based_on_file_st_mtime_ns(self, pytester: Pytester) -> None:
+        pytester.makepyfile("""
+            def test_dummy1():
+                def func():
+                    pass
+                print(func.__qualname__)
+            """)
+        r = pytester.runpytest("-s")
+        assert r.ret == 0
+        assert "test_dummy1.<locals>.func" in r.stdout.str()
+        pytester.makepyfile("""
+            def test_dummy2():
+                def func():
+                    pass
+                print(func.__qualname__)
+            """)
+        r = pytester.runpytest("-s")
+        assert r.ret == 0
+        assert "test_dummy2.<locals>.func" in r.stdout.str()

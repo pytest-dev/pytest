@@ -317,7 +317,7 @@ def _write_pyc_fp(
     flags = b"\x00\x00\x00\x00"
     fp.write(flags)
     # as of now, bytecode header expects 32-bit numbers for size and mtime (#4903)
-    mtime = int(source_stat.st_mtime) & 0xFFFFFFFF
+    mtime = source_stat.st_mtime_ns & 0xFFFFFFFF
     size = source_stat.st_size & 0xFFFFFFFF
     # "<LL" stands for 2 unsigned longs, little-endian.
     fp.write(struct.pack("<LL", mtime, size))
@@ -374,7 +374,7 @@ def _read_pyc(
     with fp:
         try:
             stat_result = os.stat(source)
-            mtime = int(stat_result.st_mtime)
+            mtime = stat_result.st_mtime_ns
             size = stat_result.st_size
             data = fp.read(16)
         except OSError as e:
