@@ -161,7 +161,7 @@ def has_default_eq(
         code_filename = obj.__eq__.__code__.co_filename
 
         if isattrs(obj):
-            return "attrs generated eq" in code_filename
+            return "attrs generated " in code_filename
 
         return code_filename == "<string>"  # data class
     return True
