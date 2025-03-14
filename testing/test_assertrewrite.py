@@ -2377,7 +2377,12 @@ class TestSafereprUnbounded:
 
 
 class TestIssue13292:
-    def test_load_cache_based_on_file_st_mtime_ns(self, pytester: Pytester) -> None:
+    """
+    Check the pyc cache generated in the 1st test execution
+    is not loaded in the 2nd test execution.
+    """
+
+    def test_stale_pyc_cache_is_not_loaded(self, pytester: Pytester) -> None:
         pytester.makepyfile("""
             def test_dummy1():
                 def func():
