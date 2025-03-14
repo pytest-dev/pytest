@@ -1381,9 +1381,12 @@ class TestAssertionRewriteHookDetails:
 
         flags = b"\x00\x00\x00\x00"
 
-        mtime = b"\x58\x3c\xb0\x5f"
+        mtime = b"\x98\xf34\x10\x91\x8b,\x18"
         mtime_int = int.from_bytes(mtime, "little")
-        os.utime(source, (mtime_int, mtime_int))
+        # set mtime_ns for win requires integer nanoseconds
+        os.utime(source, ns=(mtime_int, mtime_int))
+
+        mtime = (mtime_int & 0xFFFFFFFF).to_bytes(4, "little")
 
         size = len(source_bytes).to_bytes(4, "little")
 
@@ -2374,3 +2377,30 @@ class TestSafereprUnbounded:
             _saferepr(self.Help)
             == f"<class '{Path(__file__).stem}.{self.__class__.__name__}.Help'>"
         )
+
+
+class TestIssue13292:
+    """
+    Check the pyc cache generated in the 1st test execution
+    is not loaded in the 2nd test execution.
+    """
+
+    def test_stale_pyc_cache_is_not_loaded(self, pytester: Pytester) -> None:
+        pytester.makepyfile("""
+            def test_dummy1():
+                def func():
+                    pass
+                print(func.__qualname__)
+            """)
+        r = pytester.runpytest("-s")
+        assert r.ret == 0
+        assert "test_dummy1.<locals>.func" in r.stdout.str()
+        pytester.makepyfile("""
+            def test_dummy2():
+                def func():
+                    pass
+                print(func.__qualname__)
+            """)
+        r = pytester.runpytest("-s")
+        assert r.ret == 0
+        assert "test_dummy2.<locals>.func" in r.stdout.str()
