@@ -10,8 +10,7 @@ The appropriate version will be obtained based on the given branch automatically
 
 After that, it will create a release using the `release` tox environment, and push a new PR.
 
-**Token**: currently the token from the GitHub Actions is used, pushed with
-`pytest bot <pytestbot@gmail.com>` commit author.
+Note: the script uses the `gh` command-line tool, so `GH_TOKEN` must be set in the environment.
 """
 
 from __future__ import annotations
@@ -25,7 +24,6 @@ from subprocess import run
 
 from colorama import Fore
 from colorama import init
-from github3.repos import Repository
 
 
 class InvalidFeatureRelease(Exception):
@@ -54,17 +52,7 @@ After the workflow has been approved by a core maintainer, the package will be u
 """
 
 
-def login(token: str) -> Repository:
-    import github3
-
-    github = github3.login(token=token)
-    owner, repo = SLUG.split("/")
-    return github.repository(owner, repo)
-
-
-def prepare_release_pr(
-    base_branch: str, is_major: bool, token: str, prerelease: str
-) -> None:
+def prepare_release_pr(base_branch: str, is_major: bool, prerelease: str) -> None:
     print()
     print(f"Processing release for branch {Fore.CYAN}{base_branch}")
 
@@ -131,22 +119,25 @@ def prepare_release_pr(
         check=True,
     )
 
-    oauth_url = f"https://{token}:x-oauth-basic@github.com/{SLUG}.git"
     run(
-        ["git", "push", oauth_url, f"HEAD:{release_branch}", "--force"],
+        ["git", "push", "origin", f"HEAD:{release_branch}", "--force"],
         check=True,
     )
     print(f"Branch {Fore.CYAN}{release_branch}{Fore.RESET} pushed.")
 
     body = PR_BODY.format(version=version)
-    repo = login(token)
-    pr = repo.create_pull(
-        f"Prepare release {version}",
-        base=base_branch,
-        head=release_branch,
-        body=body,
+    run(
+        [
+            "gh",
+            "pr",
+            "new",
+            f"--base={base_branch}",
+            f"--head={release_branch}",
+            f"--title=Release {version}",
+            f"--body={body}",
+        ],
+        check=True,
     )
-    print(f"Pull request {Fore.CYAN}{pr.url}{Fore.RESET} created.")
 
 
 def find_next_version(
@@ -174,14 +165,12 @@ def main() -> None:
     init(autoreset=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("base_branch")
-    parser.add_argument("token")
     parser.add_argument("--major", action="store_true", default=False)
     parser.add_argument("--prerelease", default="")
     options = parser.parse_args()
     prepare_release_pr(
         base_branch=options.base_branch,
         is_major=options.major,
-        token=options.token,
         prerelease=options.prerelease,
     )
 
