@@ -1381,9 +1381,12 @@ class TestAssertionRewriteHookDetails:
 
         flags = b"\x00\x00\x00\x00"
 
-        mtime = b"\x58\x3c\xb0\x5f"
+        mtime = b"\x98\xf34\x10\x91\x8b,\x18"
         mtime_int = int.from_bytes(mtime, "little")
+        # set mtime_ns for win requires integer nanoseconds
         os.utime(source, ns=(mtime_int, mtime_int))
+
+        mtime = (mtime_int & 0xFFFFFFFF).to_bytes(4, "little")
 
         size = len(source_bytes).to_bytes(4, "little")
 
