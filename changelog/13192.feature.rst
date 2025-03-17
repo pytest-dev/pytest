@@ -1,0 +1,1 @@
+:func:`pytest.raises` will now raise a warning when passing an empty string to ``match``, as this will match against any value. Use ``match="^$"`` if you want to check that an exception has no message.
