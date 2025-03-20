@@ -483,7 +483,7 @@ def test_pytester_subprocess_with_plugins(pytester: Pytester) -> None:
     )
     pytester.plugins.extend(["no:plug_1", "no:plug_2"])
 
-    pytester.runpytest_subprocess().assert_outcomes(passed=1)
+    pytester.runpytest_subprocess(testfile).assert_outcomes(passed=1)
 
 
 def test_linematcher_with_nonlist() -> None:
