@@ -183,12 +183,12 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             state.trace(f"found cached rewritten pyc for {fn}")
 
         return co
-    
+
     def exec_module(self, module: types.ModuleType) -> None:
         module_name = module.__name__
-        
+
         self._rewritten_names[module_name] = fn
-        
+
         exec(self.get_code(module_name), module.__dict__)
 
     def _early_rewrite_bailout(self, name: str, state: AssertionState) -> bool:
