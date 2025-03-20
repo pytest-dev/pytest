@@ -472,6 +472,20 @@ def test_pytester_run_timeout_expires(pytester: Pytester) -> None:
         pytester.runpytest_subprocess(testfile, timeout=1)
 
 
+def test_pytester_subprocess_with_plugins(pytester: Pytester) -> None:
+    testfile = pytester.makepyfile(
+        """
+        def test_plugins(pytestconfig):
+            plugins = pytestconfig.pluginmanager.list_name_plugin()
+            assert ("plug_1", None) in plugins
+            assert ("plug_2", None) in plugins
+        """
+    )
+    pytester.plugins.extend(["no:plug_1", "no:plug_2"])
+
+    pytester.runpytest_subprocess().assert_outcomes(passed=1)
+
+
 def test_linematcher_with_nonlist() -> None:
     """Test LineMatcher with regard to passing in a set (accidentally)."""
     from _pytest._code.source import Source
