@@ -144,7 +144,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
     ) -> types.ModuleType | None:
         return None  # default behaviour is fine
 
-    def get_code(self, fullname: str) -> types.CodeType
+    def get_code(self, fullname: str) -> types.CodeType:
         assert self.fn is not None
         fn = Path(self.fn)
         state = self.config.stash[assertstate_key]
