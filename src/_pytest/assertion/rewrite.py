@@ -185,9 +185,11 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         return co
 
     def exec_module(self, module: types.ModuleType) -> None:
+        assert self.fn is not None
+
         module_name = module.__name__
 
-        self._rewritten_names[module_name] = fn
+        self._rewritten_names[module_name] = Path(self.fn)
 
         exec(self.get_code(module_name), module.__dict__)
 
