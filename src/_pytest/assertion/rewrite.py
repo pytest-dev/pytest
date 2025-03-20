@@ -80,6 +80,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         self._basenames_to_check_rewrite = {"conftest"}
         self._marked_for_rewrite_cache: dict[str, bool] = {}
         self._session_paths_checked = False
+        self.fn: str | None = None
 
     def set_session(self, session: Session | None) -> None:
         self.session = session
@@ -126,7 +127,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         ):
             return None
         else:
-            fn = spec.origin
+            self.fn = fn = spec.origin
 
         if not self._should_rewrite(name, fn, state):
             return None
@@ -143,13 +144,10 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
     ) -> types.ModuleType | None:
         return None  # default behaviour is fine
 
-    def exec_module(self, module: types.ModuleType) -> None:
-        assert module.__spec__ is not None
-        assert module.__spec__.origin is not None
-        fn = Path(module.__spec__.origin)
+    def get_code(self, fullname: str) -> types.CodeType
+        assert self.fn is not None
+        fn = Path(self.fn)
         state = self.config.stash[assertstate_key]
-
-        self._rewritten_names[module.__name__] = fn
 
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
@@ -183,7 +181,15 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
                     self._writing_pyc = False
         else:
             state.trace(f"found cached rewritten pyc for {fn}")
-        exec(co, module.__dict__)
+
+        return co
+    
+    def exec_module(self, module: types.ModuleType) -> None:
+        module_name = module.__name__
+        
+        self._rewritten_names[module_name] = fn
+        
+        exec(self.get_code(module_name), module.__dict__)
 
     def _early_rewrite_bailout(self, name: str, state: AssertionState) -> bool:
         """A fast way to get out of rewriting modules.
