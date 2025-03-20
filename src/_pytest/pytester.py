@@ -1488,8 +1488,8 @@ class Pytester:
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
         args = (f"--basetemp={p}", *args)
         plugins = [x for x in self.plugins if isinstance(x, str)]
-        if plugins:
-            args = ("-p", plugins[0], *args)
+        for plugin in reversed(plugins):
+            args = ("-p", plugin, *args)
         args = self._getpytestargs() + args
         return self.run(*args, timeout=timeout)
 
