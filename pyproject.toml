@@ -47,7 +47,7 @@ dynamic = [
 ]
 dependencies = [
     "colorama>=0.4.0; sys_platform=='win32'",
-    "exceptiongroup>=1.0.0rc8; python_version<'3.11'",
+    "exceptiongroup>=1.0.0; python_version<'3.11'",
     "iniconfig>=1.0.0",
     "packaging>=20.0",
     "pluggy>=1.5,<2",
