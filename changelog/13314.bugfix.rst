@@ -1,1 +1,1 @@
-Fix bug where `pytester.runpytest_subprocess` only included the first plugin from `pytester.plugins`. Now it correctly includes all of them.
+Fix bug where ``pytester.runpytest_subprocess`` only included the first plugin from ``pytester.plugins``. Now it correctly includes all of them.
