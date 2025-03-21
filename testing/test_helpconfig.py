@@ -8,6 +8,7 @@ import pytest
 
 def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+    monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
     result = pytester.runpytest("--version", "--version")
     assert result.ret == 0
     result.stdout.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
@@ -17,6 +18,7 @@ def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
 
 def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+    monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
     result = pytester.runpytest("--version")
     assert result.ret == 0
     result.stdout.fnmatch_lines([f"pytest {pytest.__version__}"])
