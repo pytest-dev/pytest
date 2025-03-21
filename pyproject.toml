@@ -167,6 +167,10 @@ lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
 lint.per-file-ignores."src/_pytest/_version.py" = [
     "I001",
 ]
+# can't be disabled on a line-by-line basis in file
+lint.per-file-ignores."testing/code/test_source.py" = [
+    "F841",
+]
 lint.per-file-ignores."testing/python/approx.py" = [
     "B015",
 ]

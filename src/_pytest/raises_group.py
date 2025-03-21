@@ -119,12 +119,9 @@ def _check_raw_type(
 def is_fully_escaped(s: str) -> bool:
     # we know we won't compile with re.VERBOSE, so whitespace doesn't need to be escaped
     metacharacters = "{}()+.*?^$[]"
-
-    for i, c in enumerate(s):
-        if c in metacharacters and (i == 0 or s[i - 1] != "\\"):
-            return False
-
-    return True
+    return not any(
+        c in metacharacters and (i == 0 or s[i - 1] != "\\") for (i, c) in enumerate(s)
+    )
 
 
 def unescape(s: str) -> str:
@@ -1198,8 +1195,7 @@ def possible_match(results: ResultHolder, used: set[int] | None = None) -> bool:
     curr_row = len(used)
     if curr_row == len(results.results):
         return True
-
-    for i, val in enumerate(results.results[curr_row]):
-        if val is None and i not in used and possible_match(results, used | {i}):
-            return True
-    return False
+    return any(
+        val is None and i not in used and possible_match(results, used | {i})
+        for (i, val) in enumerate(results.results[curr_row])
+    )
