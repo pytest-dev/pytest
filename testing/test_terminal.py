@@ -859,6 +859,7 @@ class TestTerminalFunctional:
         self, monkeypatch: MonkeyPatch, pytester: Pytester, request
     ) -> None:
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
         pytester.makepyfile(
             """
             def test_passes():
