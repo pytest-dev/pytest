@@ -1,0 +1,4 @@
+Specified minimum allowed versions of ``colorama``, ``iniconfig``,
+and ``packaging``; and bumped the minimum allowed version
+of ``exceptiongroup`` for ``python_version<'3.11'`` from a release
+candidate to a full release.
