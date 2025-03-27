@@ -42,23 +42,7 @@ unraisable_exceptions: StashKey[collections.deque[UnraisableMeta | BaseException
 )
 
 
-def _warn_if_triggered(self) -> None:
-        if self.unraisable:
-            if self.unraisable.err_msg is not None:
-                err_msg = self.unraisable.err_msg
-            else:
-                err_msg = "Exception ignored in"
-            msg = f"{err_msg}: {self.unraisable.object!r}\n\n"
-            msg += "".join(
-                traceback.format_exception(
-                    self.unraisable.exc_type,
-                    self.unraisable.exc_value,
-                    self.unraisable.exc_traceback,
-                )
-            )
-            warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
-
-    def collect_unraisable(config: Config) -> None:
+def collect_unraisable(config: Config) -> None:
     pop_unraisable = config.stash[unraisable_exceptions].pop
     errors: list[pytest.PytestUnraisableExceptionWarning | RuntimeError] = []
     meta = None
