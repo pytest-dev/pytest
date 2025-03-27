@@ -1,21 +1,19 @@
 # mypy: allow-untyped-defs
-# flake8: noqa
-# disable flake check on this file because some constructs are strange
-# or redundant on purpose and can't be disable on a line-by-line basis
+from __future__ import annotations
+
 import inspect
 import linecache
+from pathlib import Path
 import sys
 import textwrap
-from pathlib import Path
 from typing import Any
-from typing import Dict
 
-import pytest
 from _pytest._code import Code
 from _pytest._code import Frame
 from _pytest._code import getfslineno
 from _pytest._code import Source
 from _pytest.pathlib import import_path
+import pytest
 
 
 def test_source_str_function() -> None:
@@ -464,7 +462,6 @@ def test_comment_in_statement() -> None:
 
 def test_source_with_decorator() -> None:
     """Test behavior with Source / Code().source with regard to decorators."""
-    from _pytest.compat import get_real_func
 
     @pytest.mark.foo
     def deco_mark():

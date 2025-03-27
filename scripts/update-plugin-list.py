@@ -67,6 +67,7 @@ ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
     "nuts",
     "flask_fixture",
     "databricks-labs-pytester",
+    "tursu",
 }
 
 

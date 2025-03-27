@@ -999,14 +999,14 @@ class TestDurations:
     def check_tests_in_output(
         lines: Sequence[str], *expected_test_numbers: int, number_of_tests: int = 3
     ) -> None:
-        found_test_numbers = set(
+        found_test_numbers = {
             test_number
             for test_number in range(1, number_of_tests + 1)
             if any(
                 line.endswith(f"test_{test_number}") and " call " in line
                 for line in lines
             )
-        )
+        }
         assert found_test_numbers == set(expected_test_numbers)
 
     def test_with_deselected(self, pytester: Pytester, mock_timing) -> None:

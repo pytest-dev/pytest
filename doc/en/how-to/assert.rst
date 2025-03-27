@@ -145,8 +145,93 @@ Notes:
 
 .. _`assert-matching-exception-groups`:
 
-Matching exception groups
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Assertions about expected exception groups
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When expecting a :exc:`BaseExceptionGroup` or :exc:`ExceptionGroup` you can use :class:`pytest.RaisesGroup`:
+
+.. code-block:: python
+
+    def test_exception_in_group():
+        with pytest.RaisesGroup(ValueError):
+            raise ExceptionGroup("group msg", [ValueError("value msg")])
+        with pytest.RaisesGroup(ValueError, TypeError):
+            raise ExceptionGroup("msg", [ValueError("foo"), TypeError("bar")])
+
+
+It accepts a ``match`` parameter, that checks against the group message, and a ``check`` parameter that takes an arbitrary callable which it passes the group to, and only succeeds if the callable returns ``True``.
+
+.. code-block:: python
+
+    def test_raisesgroup_match_and_check():
+        with pytest.RaisesGroup(BaseException, match="my group msg"):
+            raise BaseExceptionGroup("my group msg", [KeyboardInterrupt()])
+        with pytest.RaisesGroup(
+            Exception, check=lambda eg: isinstance(eg.__cause__, ValueError)
+        ):
+            raise ExceptionGroup("", [TypeError()]) from ValueError()
+
+It is strict about structure and unwrapped exceptions, unlike :ref:`except* <except_star>`, so you might want to set the ``flatten_subgroups`` and/or ``allow_unwrapped`` parameters.
+
+.. code-block:: python
+
+    def test_structure():
+        with pytest.RaisesGroup(pytest.RaisesGroup(ValueError)):
+            raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
+        with pytest.RaisesGroup(ValueError, flatten_subgroups=True):
+            raise ExceptionGroup("1st group", [ExceptionGroup("2nd group", [ValueError()])])
+        with pytest.RaisesGroup(ValueError, allow_unwrapped=True):
+            raise ValueError
+
+To specify more details about the contained exception you can use :class:`pytest.RaisesExc`
+
+.. code-block:: python
+
+    def test_raises_exc():
+        with pytest.RaisesGroup(pytest.RaisesExc(ValueError, match="foo")):
+            raise ExceptionGroup("", (ValueError("foo")))
+
+They both supply a method :meth:`pytest.RaisesGroup.matches` :meth:`pytest.RaisesExc.matches` if you want to do matching outside of using it as a contextmanager. This can be helpful when checking ``.__context__`` or ``.__cause__``.
+
+.. code-block:: python
+
+    def test_matches():
+        exc = ValueError()
+        exc_group = ExceptionGroup("", [exc])
+        if RaisesGroup(ValueError).matches(exc_group):
+            ...
+        # helpful error is available in `.fail_reason` if it fails to match
+        r = RaisesExc(ValueError)
+        assert r.matches(e), r.fail_reason
+
+Check the documentation on :class:`pytest.RaisesGroup` and :class:`pytest.RaisesExc` for more details and examples.
+
+``ExceptionInfo.group_contains()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+   This helper makes it easy to check for the presence of specific exceptions, but it is very bad for checking that the group does *not* contain *any other exceptions*. So this will pass:
+
+    .. code-block:: python
+
+       class EXTREMELYBADERROR(BaseException):
+           """This is a very bad error to miss"""
+
+
+       def test_for_value_error():
+           with pytest.raises(ExceptionGroup) as excinfo:
+               excs = [ValueError()]
+               if very_unlucky():
+                   excs.append(EXTREMELYBADERROR())
+               raise ExceptionGroup("", excs)
+           # This passes regardless of if there's other exceptions.
+           assert excinfo.group_contains(ValueError)
+           # You can't simply list all exceptions you *don't* want to get here.
+
+
+   There is no good way of using :func:`excinfo.group_contains() <pytest.ExceptionInfo.group_contains>` to ensure you're not getting *any* other exceptions than the one you expected.
+   You should instead use :class:`pytest.RaisesGroup`, see :ref:`assert-matching-exception-groups`.
 
 You can also use the :func:`excinfo.group_contains() <pytest.ExceptionInfo.group_contains>`
 method to test for exceptions returned as part of an :class:`ExceptionGroup`:
@@ -194,12 +279,12 @@ exception at a specific level; exceptions contained directly in the top
         assert not excinfo.group_contains(RuntimeError, depth=2)
         assert not excinfo.group_contains(TypeError, depth=1)
 
-Alternate form (legacy)
-~~~~~~~~~~~~~~~~~~~~~~~
+Alternate `pytest.raises` form (legacy)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is an alternate form where you pass
-a function that will be executed, along ``*args`` and ``**kwargs``, and :func:`pytest.raises`
-will execute the function with the arguments and assert that the given exception is raised:
+There is an alternate form of :func:`pytest.raises` where you pass
+a function that will be executed, along with ``*args`` and ``**kwargs``. :func:`pytest.raises`
+will then execute the function with those arguments and assert that the given exception is raised:
 
 .. code-block:: python
 
@@ -243,6 +328,18 @@ This will only "xfail" if the test fails by raising ``IndexError`` or subclasses
 
 * Using :func:`pytest.raises` is likely to be better for cases where you are
   testing exceptions your own code is deliberately raising, which is the majority of cases.
+
+You can also use :class:`pytest.RaisesGroup`:
+
+.. code-block:: python
+
+    def f():
+        raise ExceptionGroup("", [IndexError()])
+
+
+    @pytest.mark.xfail(raises=RaisesGroup(IndexError))
+    def test_f():
+        f()
 
 
 .. _`assertwarns`:

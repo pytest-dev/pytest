@@ -70,7 +70,14 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="name",
         help="Early-load given plugin module name or entry point (multi-allowed). "
         "To avoid loading of plugins, use the `no:` prefix, e.g. "
-        "`no:doctest`.",
+        "`no:doctest`. See also --disable-plugin-autoload.",
+    )
+    group.addoption(
+        "--disable-plugin-autoload",
+        action="store_true",
+        default=False,
+        help="Disable plugin auto-loading through entry point packaging metadata. "
+        "Only plugins explicitly specified in -p or env var PYTEST_PLUGINS will be loaded.",
     )
     group.addoption(
         "--traceconfig",

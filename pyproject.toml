@@ -46,10 +46,10 @@ dynamic = [
     "version",
 ]
 dependencies = [
-    "colorama; sys_platform=='win32'",
-    "exceptiongroup>=1.0.0rc8; python_version<'3.11'",
-    "iniconfig",
-    "packaging",
+    "colorama>=0.4; sys_platform=='win32'",
+    "exceptiongroup>=1; python_version<'3.11'",
+    "iniconfig>=1",
+    "packaging>=20",
     "pluggy>=1.5,<2",
     "pygments>=2.7.2",
     "tomli>=1; python_version<'3.11'",
@@ -166,6 +166,10 @@ lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
 ]
 lint.per-file-ignores."src/_pytest/_version.py" = [
     "I001",
+]
+# can't be disabled on a line-by-line basis in file
+lint.per-file-ignores."testing/code/test_source.py" = [
+    "F841",
 ]
 lint.per-file-ignores."testing/python/approx.py" = [
     "B015",
