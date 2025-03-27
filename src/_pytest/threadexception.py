@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 import collections
 from collections.abc import Callable
 import functools
 import sys
 import threading
 import traceback
-from types import TracebackType
-from typing import Any
-from typing import Callable
-from typing import Generator
-from typing import Iterator
 from typing import NamedTuple
 from typing import TYPE_CHECKING
 import warnings
