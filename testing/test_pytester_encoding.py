@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 from encodings.aliases import aliases
 from pathlib import Path
 from textwrap import dedent
-from typing import Generator
 
 import pytest
 
@@ -95,12 +95,12 @@ def test_compare_write_bytes(fix, request, encoding, any_charset):
     try:
         basic_file.write_bytes(bytes_content)
     except Exception as e:
-        assert type(error) is type(
-            e
-        ), f"basically never should happen, but {e=} was raised."
+        assert type(error) is type(e), (
+            f"basically never should happen, but {e=} was raised."
+        )
     else:
         assert error is None, f"makepyfile screwed up {encoding=} and raised {error=}"
 
-    assert (
-        Path(make_file).is_file() and Path(basic_file).is_file()
-    ), "files are missing."
+    assert Path(make_file).is_file() and Path(basic_file).is_file(), (
+        "files are missing."
+    )
