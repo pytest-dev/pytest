@@ -43,6 +43,9 @@ if TYPE_CHECKING:
         default=BaseException,
         covariant=True,
     )
+
+    # Use short name because it shows up in docs.
+    E = TypeVar("E", bound=BaseException, default=BaseException)
 else:
     from typing import TypeVar
 
@@ -64,6 +67,248 @@ if sys.version_info < (3, 11):
 
 # String patterns default to including the unicode flag.
 _REGEX_NO_FLAGS = re.compile(r"").flags
+
+
+# pytest.raises helper
+@overload
+def raises(
+    expected_exception: type[E] | tuple[type[E], ...],
+    *,
+    match: str | re.Pattern[str] | None = ...,
+    check: Callable[[E], bool] = ...,
+) -> RaisesExc[E]: ...
+
+
+@overload
+def raises(
+    *,
+    match: str | re.Pattern[str],
+    # If exception_type is not provided, check() must do any typechecks itself.
+    check: Callable[[BaseException], bool] = ...,
+) -> RaisesExc[BaseException]: ...
+
+
+@overload
+def raises(*, check: Callable[[BaseException], bool]) -> RaisesExc[BaseException]: ...
+
+
+@overload
+def raises(
+    expected_exception: type[E] | tuple[type[E], ...],
+    func: Callable[..., Any],
+    *args: Any,
+    **kwargs: Any,
+) -> ExceptionInfo[E]: ...
+
+
+def raises(
+    expected_exception: type[E] | tuple[type[E], ...] | None = None,
+    *args: Any,
+    **kwargs: Any,
+) -> RaisesExc[BaseException] | ExceptionInfo[E]:
+    r"""Assert that a code block/function call raises an exception type, or one of its subclasses.
+
+    :param expected_exception:
+        The expected exception type, or a tuple if one of multiple possible
+        exception types are expected. Note that subclasses of the passed exceptions
+        will also match.
+
+        This is not a required parameter, you may opt to only use ``match`` and/or
+        ``check`` for verifying the raised exception.
+
+    :kwparam str | re.Pattern[str] | None match:
+        If specified, a string containing a regular expression,
+        or a regular expression object, that is tested against the string
+        representation of the exception and its :pep:`678` `__notes__`
+        using :func:`re.search`.
+
+        To match a literal string that may contain :ref:`special characters
+        <re-syntax>`, the pattern can first be escaped with :func:`re.escape`.
+
+        (This is only used when ``pytest.raises`` is used as a context manager,
+        and passed through to the function otherwise.
+        When using ``pytest.raises`` as a function, you can use:
+        ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
+
+    :kwparam Callable[[BaseException], bool] check:
+
+        .. versionadded:: 8.4
+
+        If specified, a callable that will be called with the exception as a parameter
+        after checking the type and the match regex if specified.
+        If it returns ``True`` it will be considered a match, if not it will
+        be considered a failed match.
+
+
+    Use ``pytest.raises`` as a context manager, which will capture the exception of the given
+    type, or any of its subclasses::
+
+        >>> import pytest
+        >>> with pytest.raises(ZeroDivisionError):
+        ...    1/0
+
+    If the code block does not raise the expected exception (:class:`ZeroDivisionError` in the example
+    above), or no exception at all, the check will fail instead.
+
+    You can also use the keyword argument ``match`` to assert that the
+    exception matches a text or regex::
+
+        >>> with pytest.raises(ValueError, match='must be 0 or None'):
+        ...     raise ValueError("value must be 0 or None")
+
+        >>> with pytest.raises(ValueError, match=r'must be \d+$'):
+        ...     raise ValueError("value must be 42")
+
+    The ``match`` argument searches the formatted exception string, which includes any
+    `PEP-678 <https://peps.python.org/pep-0678/>`__ ``__notes__``:
+
+        >>> with pytest.raises(ValueError, match=r"had a note added"):  # doctest: +SKIP
+        ...     e = ValueError("value must be 42")
+        ...     e.add_note("had a note added")
+        ...     raise e
+
+    The ``check`` argument, if provided, must return True when passed the raised exception
+    for the match to be successful, otherwise an :exc:`AssertionError` is raised.
+
+        >>> import errno
+        >>> with pytest.raises(OSError, check=lambda e: e.errno == errno.EACCES):
+        ...     raise OSError(errno.EACCES, "no permission to view")
+
+    The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
+    details of the captured exception::
+
+        >>> with pytest.raises(ValueError) as exc_info:
+        ...     raise ValueError("value must be 42")
+        >>> assert exc_info.type is ValueError
+        >>> assert exc_info.value.args[0] == "value must be 42"
+
+    .. warning::
+
+       Given that ``pytest.raises`` matches subclasses, be wary of using it to match :class:`Exception` like this::
+
+           # Careful, this will catch ANY exception raised.
+           with pytest.raises(Exception):
+               some_function()
+
+       Because :class:`Exception` is the base class of almost all exceptions, it is easy for this to hide
+       real bugs, where the user wrote this expecting a specific exception, but some other exception is being
+       raised due to a bug introduced during a refactoring.
+
+       Avoid using ``pytest.raises`` to catch :class:`Exception` unless certain that you really want to catch
+       **any** exception raised.
+
+    .. note::
+
+       When using ``pytest.raises`` as a context manager, it's worthwhile to
+       note that normal context manager rules apply and that the exception
+       raised *must* be the final line in the scope of the context manager.
+       Lines of code after that, within the scope of the context manager will
+       not be executed. For example::
+
+           >>> value = 15
+           >>> with pytest.raises(ValueError) as exc_info:
+           ...     if value > 10:
+           ...         raise ValueError("value must be <= 10")
+           ...     assert exc_info.type is ValueError  # This will not execute.
+
+       Instead, the following approach must be taken (note the difference in
+       scope)::
+
+           >>> with pytest.raises(ValueError) as exc_info:
+           ...     if value > 10:
+           ...         raise ValueError("value must be <= 10")
+           ...
+           >>> assert exc_info.type is ValueError
+
+    **Expecting exception groups**
+
+    When expecting exceptions wrapped in :exc:`BaseExceptionGroup` or
+    :exc:`ExceptionGroup`, you should instead use :class:`pytest.RaisesGroup`.
+
+    **Using with** ``pytest.mark.parametrize``
+
+    When using :ref:`pytest.mark.parametrize ref`
+    it is possible to parametrize tests such that
+    some runs raise an exception and others do not.
+
+    See :ref:`parametrizing_conditional_raising` for an example.
+
+    .. seealso::
+
+        :ref:`assertraises` for more examples and detailed discussion.
+
+    **Legacy form**
+
+    It is possible to specify a callable by passing a to-be-called lambda::
+
+        >>> raises(ZeroDivisionError, lambda: 1/0)
+        <ExceptionInfo ...>
+
+    or you can specify an arbitrary callable with arguments::
+
+        >>> def f(x): return 1/x
+        ...
+        >>> raises(ZeroDivisionError, f, 0)
+        <ExceptionInfo ...>
+        >>> raises(ZeroDivisionError, f, x=0)
+        <ExceptionInfo ...>
+
+    The form above is fully supported but discouraged for new code because the
+    context manager form is regarded as more readable and less error-prone.
+
+    .. note::
+        Similar to caught exception objects in Python, explicitly clearing
+        local references to returned ``ExceptionInfo`` objects can
+        help the Python interpreter speed up its garbage collection.
+
+        Clearing those references breaks a reference cycle
+        (``ExceptionInfo`` --> caught exception --> frame stack raising
+        the exception --> current frame stack --> local variables -->
+        ``ExceptionInfo``) which makes Python keep all objects referenced
+        from that cycle (including all local variables in the current
+        frame) alive until the next cyclic garbage collection run.
+        More detailed information can be found in the official Python
+        documentation for :ref:`the try statement <python:try>`.
+    """
+    __tracebackhide__ = True
+
+    if not args:
+        if set(kwargs) - {"match", "check", "expected_exception"}:
+            msg = "Unexpected keyword arguments passed to pytest.raises: "
+            msg += ", ".join(sorted(kwargs))
+            msg += "\nUse context-manager form instead?"
+            raise TypeError(msg)
+
+        if expected_exception is None:
+            return RaisesExc(**kwargs)
+        return RaisesExc(expected_exception, **kwargs)
+
+    if not expected_exception:
+        raise ValueError(
+            f"Expected an exception type or a tuple of exception types, but got `{expected_exception!r}`. "
+            f"Raising exceptions is already understood as failing the test, so you don't need "
+            f"any special code to say 'this should never raise an exception'."
+        )
+    func = args[0]
+    if not callable(func):
+        raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
+    with RaisesExc(expected_exception) as excinfo:
+        func(*args[1:], **kwargs)
+    try:
+        return excinfo
+    finally:
+        del excinfo
+
+
+# note: RaisesExc/RaisesGroup uses fail() internally, so this alias
+#  indicates (to [internal] plugins?) that `pytest.raises` will
+#  raise `_pytest.outcomes.Failed`, where
+#  `outcomes.Failed is outcomes.fail.Exception is raises.Exception`
+# note: this is *not* the same as `_pytest.main.Failed`
+# note: mypy does not recognize this attribute, and it's not possible
+#  to use a protocol/decorator like the others in outcomes due to
+#  https://github.com/python/mypy/issues/18715
+raises.Exception = fail.Exception  # type: ignore[attr-defined]
 
 
 def _match_pattern(match: Pattern[str]) -> str | Pattern[str]:
@@ -139,6 +384,7 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
 
     def __init__(
         self,
+        *,
         match: str | Pattern[str] | None,
         check: Callable[[BaseExcT_co], bool] | None,
     ) -> None:
@@ -217,9 +463,13 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                     f"generic argument specific nested exceptions has to be checked "
                     f"with `RaisesGroup`."
                 )
-        not_a = exc.__name__ if isinstance(exc, type) else type(exc).__name__
-        msg = f"expected exception must be {expected}, not {not_a}"
-        raise TypeError(msg)
+        # unclear if the Type/ValueError distinction is even helpful here
+        msg = f"expected exception must be {expected}, not "
+        if isinstance(exc, type):
+            raise ValueError(msg + f"{exc.__name__!r}")
+        if isinstance(exc, BaseException):
+            raise TypeError(msg + f"an exception instance ({type(exc).__name__})")
+        raise TypeError(msg + repr(type(exc).__name__))
 
     @property
     def fail_reason(self) -> str | None:
@@ -294,13 +544,29 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     """
     .. versionadded:: 8.4
 
-    Helper class to be used together with RaisesGroup when you want to specify requirements on sub-exceptions.
+
+    This is the class constructed when calling :func:`pytest.raises`, but may be used
+    directly as a helper class with :class:`RaisesGroup` when you want to specify
+    requirements on sub-exceptions.
 
     You don't need this if you only want to specify the type, since :class:`RaisesGroup`
     accepts ``type[BaseException]``.
 
-    The type is checked with :func:`isinstance`, and does not need to be an exact match.
-    If that is wanted you can use the ``check`` parameter.
+    :param type[BaseException] | tuple[type[BaseException]] | None expected_exception:
+        The expected type, or one of several possible types.
+        May be ``None`` in order to only make use of ``match`` and/or ``check``
+
+        The type is checked with :func:`isinstance`, and does not need to be an exact match.
+        If that is wanted you can use the ``check`` parameter.
+
+    :kwparam str | Pattern[str] match
+        A regex to match.
+
+    :kwparam Callable[[BaseException], bool] check:
+        If specified, a callable that will be called with the exception as a parameter
+        after checking the type and the match regex if specified.
+        If it returns ``True`` it will be considered a match, if not it will
+        be considered a failed match.
 
     :meth:`RaisesExc.matches` can also be used standalone to check individual exceptions.
 
@@ -326,6 +592,8 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         expected_exception: (
             type[BaseExcT_co_default] | tuple[type[BaseExcT_co_default], ...]
         ),
+        /,
+        *,
         match: str | Pattern[str] | None = ...,
         check: Callable[[BaseExcT_co_default], bool] | None = ...,
     ) -> None: ...
@@ -333,6 +601,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     @overload
     def __init__(
         self: RaisesExc[BaseException],  # Give E a value.
+        /,
         *,
         match: str | Pattern[str] | None,
         # If exception_type is not provided, check() must do any typechecks itself.
@@ -340,17 +609,19 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     ) -> None: ...
 
     @overload
-    def __init__(self, *, check: Callable[[BaseException], bool]) -> None: ...
+    def __init__(self, /, *, check: Callable[[BaseException], bool]) -> None: ...
 
     def __init__(
         self,
         expected_exception: (
             type[BaseExcT_co_default] | tuple[type[BaseExcT_co_default], ...] | None
         ) = None,
+        /,
+        *,
         match: str | Pattern[str] | None = None,
         check: Callable[[BaseExcT_co_default], bool] | None = None,
     ):
-        super().__init__(match, check)
+        super().__init__(match=match, check=check)
         if isinstance(expected_exception, tuple):
             expected_exceptions = expected_exception
         elif expected_exception is None:
@@ -365,6 +636,8 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             self._parse_exc(e, expected="a BaseException type")
             for e in expected_exceptions
         )
+
+        self._just_propagate = False
 
     def matches(
         self,
@@ -388,10 +661,12 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             assert re.search("foo", str(excinfo.value.__cause__)
 
         """
+        self._just_propagate = False
         if exception is None:
             self._fail_reason = "exception is None"
             return False
         if not self._check_type(exception):
+            self._just_propagate = True
             return False
 
         if not self._check_match(exception):
@@ -441,6 +716,8 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         )
 
         if not self.matches(exc_val):
+            if self._just_propagate:
+                return False
             raise AssertionError(self._fail_reason)
 
         # Cast to narrow the exception type now that it's verified....
@@ -463,49 +740,77 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     :meth:`ExceptionInfo.group_contains` also tries to handle exception groups,
     but it is very bad at checking that you *didn't* get unexpected exceptions.
 
-
     The catching behaviour differs from :ref:`except* <except_star>`, being much
     stricter about the structure by default.
     By using ``allow_unwrapped=True`` and ``flatten_subgroups=True`` you can match
     :ref:`except* <except_star>` fully when expecting a single exception.
 
-    #. All specified exceptions must be present, *and no others*.
+    :param args:
+        Any number of exception types, :class:`RaisesGroup` or :class:`RaisesExc`
+        to specify the exceptions contained in this exception.
+        All specified exceptions must be present in the raised group, *and no others*.
 
-       * If you expect a variable number of exceptions you need to use
-         :func:`pytest.raises(ExceptionGroup) <pytest.raises>` and manually check
-         the contained exceptions. Consider making use of :meth:`RaisesExc.matches`.
+        If you expect a variable number of exceptions you need to use
+        :func:`pytest.raises(ExceptionGroup) <pytest.raises>` and manually check
+        the contained exceptions. Consider making use of :meth:`RaisesExc.matches`.
 
-    #. It will only catch exceptions wrapped in an exceptiongroup by default.
+        It does not care about the order of the exceptions, so
+        ``RaisesGroup(ValueError, TypeError)``
+        is equivalent to
+        ``RaisesGroup(TypeError, ValueError)``.
+    :kwparam str | re.Pattern[str] | None match:
+        If specified, a string containing a regular expression,
+        or a regular expression object, that is tested against the string
+        representation of the exception group and its :pep:`678` `__notes__`
+        using :func:`re.search`.
 
-       * With ``allow_unwrapped=True`` you can specify a single expected exception (or :class:`RaisesExc`) and it will
-         match the exception even if it is not inside an :exc:`ExceptionGroup`.
-         If you expect one of several different exception types you need to use a :class:`RaisesExc` object.
+        To match a literal string that may contain :ref:`special characters
+        <re-syntax>`, the pattern can first be escaped with :func:`re.escape`.
 
-    #. By default it cares about the full structure with nested :exc:`ExceptionGroup`'s. You can specify nested
-       :exc:`ExceptionGroup`'s by passing :class:`RaisesGroup` objects as expected exceptions.
+        Note that " (5 subgroups)" will be stripped from the ``repr`` before matching.
+    :kwparam Callable[[E], bool] check:
+        If specified, a callable that will be called with the group as a parameter
+        after successfully matching the expected exceptions. If it returns ``True``
+        it will be considered a match, if not it will be considered a failed match.
+    :kwparam bool allow_unwrapped:
+        If expecting a single exception or :class:`RaisesExc` it will match even
+        if the exception is not inside an exceptiongroup.
 
-       * With ``flatten_subgroups=True`` it will "flatten" the raised :exc:`ExceptionGroup`,
-         extracting all exceptions inside any nested :exc:`ExceptionGroup`, before matching.
-
-    It does not care about the order of the exceptions, so
-    ``RaisesGroup(ValueError, TypeError)``
-    is equivalent to
-    ``RaisesGroup(TypeError, ValueError)``.
+        Using this together with ``match``, ``check`` or expecting multiple exceptions
+        will raise an error.
+    :kwparam bool flatten_subgroups:
+        "flatten" any groups inside the raised exception group, extracting all exceptions
+        inside any nested groups, before matching. Without this it expects you to
+        fully specify the nesting structure by passing :class:`RaisesGroup` as expected
+        parameter.
 
     Examples::
 
         with RaisesGroup(ValueError):
             raise ExceptionGroup("", (ValueError(),))
+        # match
         with RaisesGroup(
-            ValueError, ValueError, RaisesExc(TypeError, match="expected int")
+            ValueError,
+            ValueError,
+            RaisesExc(TypeError, match="^expected int$"),
+            match="^my group$",
         ):
-            ...
+            raise ExceptionGroup(
+                "my group",
+                [
+                    ValueError(),
+                    TypeError("expected int"),
+                    ValueError(),
+                ],
+            )
+        # check
         with RaisesGroup(
             KeyboardInterrupt,
-            match="hello",
-            check=lambda x: type(x) is BaseExceptionGroup,
+            match="^hello$",
+            check=lambda x: isinstance(x.__cause__, ValueError),
         ):
-            ...
+            raise BaseExceptionGroup("hello", [KeyboardInterrupt()]) from ValueError
+        # nested groups
         with RaisesGroup(RaisesGroup(ValueError)):
             raise ExceptionGroup("", (ExceptionGroup("", (ValueError(),)),))
 
@@ -544,6 +849,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self,
         expected_exception: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
+        /,
         *,
         allow_unwrapped: Literal[True],
         flatten_subgroups: bool = False,
@@ -554,6 +860,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self,
         expected_exception: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
+        /,
         *other_exceptions: type[BaseExcT_co] | RaisesExc[BaseExcT_co],
         flatten_subgroups: Literal[True],
         match: str | Pattern[str] | None = None,
@@ -569,6 +876,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[ExcT_1],
         expected_exception: type[ExcT_1] | RaisesExc[ExcT_1],
+        /,
         *other_exceptions: type[ExcT_1] | RaisesExc[ExcT_1],
         match: str | Pattern[str] | None = None,
         check: Callable[[ExceptionGroup[ExcT_1]], bool] | None = None,
@@ -578,6 +886,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[ExceptionGroup[ExcT_2]],
         expected_exception: RaisesGroup[ExcT_2],
+        /,
         *other_exceptions: RaisesGroup[ExcT_2],
         match: str | Pattern[str] | None = None,
         check: Callable[[ExceptionGroup[ExceptionGroup[ExcT_2]]], bool] | None = None,
@@ -587,6 +896,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[ExcT_1 | ExceptionGroup[ExcT_2]],
         expected_exception: type[ExcT_1] | RaisesExc[ExcT_1] | RaisesGroup[ExcT_2],
+        /,
         *other_exceptions: type[ExcT_1] | RaisesExc[ExcT_1] | RaisesGroup[ExcT_2],
         match: str | Pattern[str] | None = None,
         check: (
@@ -599,6 +909,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[BaseExcT_1],
         expected_exception: type[BaseExcT_1] | RaisesExc[BaseExcT_1],
+        /,
         *other_exceptions: type[BaseExcT_1] | RaisesExc[BaseExcT_1],
         match: str | Pattern[str] | None = None,
         check: Callable[[BaseExceptionGroup[BaseExcT_1]], bool] | None = None,
@@ -608,6 +919,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def __init__(
         self: RaisesGroup[BaseExceptionGroup[BaseExcT_2]],
         expected_exception: RaisesGroup[BaseExcT_2],
+        /,
         *other_exceptions: RaisesGroup[BaseExcT_2],
         match: str | Pattern[str] | None = None,
         check: (
@@ -621,6 +933,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         expected_exception: type[BaseExcT_1]
         | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
+        /,
         *other_exceptions: type[BaseExcT_1]
         | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
@@ -639,6 +952,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         expected_exception: type[BaseExcT_1]
         | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
+        /,
         *other_exceptions: type[BaseExcT_1]
         | RaisesExc[BaseExcT_1]
         | RaisesGroup[BaseExcT_2],
@@ -660,7 +974,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             "], bool]",
             check,
         )
-        super().__init__(match, check)
+        super().__init__(match=match, check=check)
         self.allow_unwrapped = allow_unwrapped
         self.flatten_subgroups: bool = flatten_subgroups
         self.is_baseexception = False
@@ -724,8 +1038,14 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             self.is_baseexception |= exc.is_baseexception
             exc._nested = True
             return exc
+        elif isinstance(exc, tuple):
+            raise TypeError(
+                f"expected exception must be {expected}, not {type(exc).__name__!r}.\n"
+                "RaisesGroup does not support tuples of exception types when expecting one of "
+                "several possible exception types like RaisesExc.\n"
+                "If you meant to expect a group with multiple exceptions, list them as separate arguments."
+            )
         else:
-            # validate_exc transforms GenericAlias ExceptionGroup[Exception] -> type[ExceptionGroup]
             return super()._parse_exc(exc, expected)
 
     @overload

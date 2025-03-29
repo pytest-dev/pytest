@@ -60,9 +60,9 @@ from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
-from _pytest.python_api import raises
-from _pytest.raises_group import RaisesExc
-from _pytest.raises_group import RaisesGroup
+from _pytest.raises import raises
+from _pytest.raises import RaisesExc
+from _pytest.raises import RaisesGroup
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
