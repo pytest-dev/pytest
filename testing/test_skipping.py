@@ -448,8 +448,8 @@ class TestXFail:
         result = pytester.runpytest(p, "-rx")
         result.stdout.fnmatch_lines(
             [
-                "*test_one*test_this - reason: *NOTRUN* noway",
-                "*test_one*test_this_true - reason: *NOTRUN* condition: True",
+                "*test_one*test_this - *NOTRUN* noway",
+                "*test_one*test_this_true - *NOTRUN* condition: True",
                 "*1 passed*",
             ]
         )
@@ -510,7 +510,7 @@ class TestXFail:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["*1 xfailed*"])
         result = pytester.runpytest(p, "-rx")
-        result.stdout.fnmatch_lines(["*XFAIL*test_this*reason:*hello*"])
+        result.stdout.fnmatch_lines(["*XFAIL*test_this*hello*"])
         result = pytester.runpytest(p, "--runxfail")
         result.stdout.fnmatch_lines(
             """
