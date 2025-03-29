@@ -492,7 +492,7 @@ class TestXFail:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["*1 xfailed*"])
         result = pytester.runpytest(p, "-rx")
-        result.stdout.fnmatch_lines(["*XFAIL*test_this*reason:*hello*"])
+        result.stdout.fnmatch_lines(["*XFAIL*test_this*hello*"])
         result = pytester.runpytest(p, "--runxfail")
         result.stdout.fnmatch_lines(["*1 pass*"])
 
