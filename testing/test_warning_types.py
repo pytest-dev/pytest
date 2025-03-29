@@ -43,7 +43,7 @@ def test_pytest_warnings_repr_integration_test(pytester: Pytester) -> None:
 
 @pytest.mark.filterwarnings("error")
 def test_warn_explicit_for_annotates_errors_with_location():
-    with pytest.raises(Warning, match="(?m)test\n at .*python_api.py:\\d+"):
+    with pytest.raises(Warning, match="(?m)test\n at .*raises.py:\\d+"):
         warning_types.warn_explicit_for(
             pytest.raises,  # type: ignore[arg-type]
             warning_types.PytestWarning("test"),
