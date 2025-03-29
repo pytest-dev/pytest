@@ -278,7 +278,7 @@ def pytest_runtest_makereport(
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):
         assert call.excinfo.value.msg is not None
-        rep.wasxfail = "reason: " + call.excinfo.value.msg
+        rep.wasxfail = call.excinfo.value.msg
         rep.outcome = "skipped"
     elif not rep.skipped and xfailed:
         if call.excinfo:
