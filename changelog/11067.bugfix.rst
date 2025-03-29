@@ -1,0 +1,3 @@
+The test report ``wasxfail`` attribute value is not consistent for XFailed tests. It yields a slightly different value when the xfailure occurs due to the use of the ``@pytest.mark.xfail`` marker, and when it occurs due to an explicit call to the ``pytest.fail`` function.
+
+This bugfix ensures a coherent value for the ``wasxfail`` attribute for XFailed tests.
