@@ -1,0 +1,1 @@
+* Fixed an issue in equality checks where `bool` and `numpy.bool_` types were not handled consistently. This ensures proper handling of native and numpy boolean types. See #13047.
