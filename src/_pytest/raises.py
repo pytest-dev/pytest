@@ -276,7 +276,7 @@ def raises(
     """
     __tracebackhide__ = True
 
-    if func is not None and not args:
+    if func is None and not args:
         if set(kwargs) - {"match", "check", "expected_exception"}:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))
