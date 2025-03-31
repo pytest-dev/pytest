@@ -30,7 +30,8 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        persist-credentials: false
+        # persist-credentials is needed in order for us to push the release branch.
+        persist-credentials: true
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -47,13 +48,15 @@ jobs:
       env:
         BRANCH: ${{ github.event.inputs.branch }}
         PRERELEASE: ${{ github.event.inputs.prerelease }}
+        GH_TOKEN: ${{ github.token }}
       run: |
-        tox -e prepare-release-pr -- "$BRANCH" ${{ github.token }} --prerelease="$PRERELEASE"
+        tox -e prepare-release-pr -- "$BRANCH" --prerelease="$PRERELEASE"
 
     - name: Prepare release PR (major release)
       if: github.event.inputs.major == 'yes'
       env:
         BRANCH: ${{ github.event.inputs.branch }}
         PRERELEASE: ${{ github.event.inputs.prerelease }}
+        GH_TOKEN: ${{ github.token }}
       run: |
-        tox -e prepare-release-pr -- "$BRANCH" ${{ github.token }} --major --prerelease="$PRERELEASE"
+        tox -e prepare-release-pr -- "$BRANCH" --major --prerelease="$PRERELEASE"

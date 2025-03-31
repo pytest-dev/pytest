@@ -215,7 +215,7 @@ class CommonFSTests:
         lst = []
         for i in path1.visit(fil):
             lst.append(i.relto(path1))
-        assert len(lst), 2
+        assert len(lst), 2  # noqa: PLC1802,RUF040
         assert "sampledir" in lst
         assert "otherdir" in lst
 
