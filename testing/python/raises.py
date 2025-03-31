@@ -331,10 +331,10 @@ class TestRaises:
     def test_raises_exception_looks_iterable(self):
         class Meta(type):
             def __getitem__(self, item):
-                return 1 / 0
+                return 1 / 0  # pragma: no cover
 
             def __len__(self):
-                return 1
+                return 1  # pragma: no cover
 
         class ClassLooksIterableException(Exception, metaclass=Meta):
             pass
