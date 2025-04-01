@@ -1485,13 +1485,15 @@ class Pytester:
             The result.
         """
         __tracebackhide__ = True
+        pytest_args = list(self._getpytestargs())
+        for plugin in self.plugins:
+            if isinstance(plugin, str):
+                pytest_args += ["-p", plugin]
+
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
-        args = (f"--basetemp={p}", *args)
-        plugins = [x for x in self.plugins if isinstance(x, str)]
-        for plugin in reversed(plugins):
-            args = ("-p", plugin, *args)
-        args = self._getpytestargs() + args
-        return self.run(*args, timeout=timeout)
+        pytest_args.append(f"--basetemp={p}")
+
+        return self.run(*pytest_args, *args, timeout=timeout)
 
     def spawn_pytest(self, string: str, expect_timeout: float = 10.0) -> pexpect.spawn:
         """Run pytest using pexpect.
