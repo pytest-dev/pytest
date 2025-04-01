@@ -641,11 +641,17 @@ class TestApprox:
             assert approx(x, rel=5e-7, abs=0) != a
 
     def test_expecting_bool(self) -> None:
+        np = pytest.importorskip("numpy")
         assert True == approx(True)  # noqa: E712
         assert False == approx(False)  # noqa: E712
         assert True != approx(False)  # noqa: E712
         assert True != approx(False, abs=2)  # noqa: E712
         assert 1 != approx(True)
+        assert np.False_ != approx(True)
+        assert np.True_ != approx(False)
+        assert np.True_ == approx(True)
+        assert np.False_ == approx(False)
+        assert np.True_ != approx(False, abs=2)
 
     def test_list(self):
         actual = [1 + 1e-7, 2 + 1e-8]
