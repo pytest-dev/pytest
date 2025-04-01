@@ -645,7 +645,7 @@ class TestApprox:
         assert False == approx(False)  # noqa: E712
         assert True != approx(False)  # noqa: E712
         assert True != approx(False, abs=2)  # noqa: E712
-        assert 1 != approx(True)        
+        assert 1 != approx(True)
 
     def test_expecting_bool_numpy(self) -> None:
         """Check approx comparing with numpy.bool (#13047)."""
