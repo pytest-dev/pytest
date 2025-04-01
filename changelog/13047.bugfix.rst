@@ -1,1 +1,23 @@
-* Fixed an issue in equality checks where `bool` and `numpy.bool_` types were not handled consistently.
+Bug Fix :func:`pytest.approx` to restore consistent handling of equality checks between `bool` and `numpy.bool_` types.
+  * This behavior was accidentally changed in version 8.3.4 and has now been restored to match the behavior of version 8.3.3.
+  * Users relying on comparisons between `bool` and `numpy.bool_` can now expect consistent results as before.
+
+    Example:
+
+    **Behavior on pytest 8.3.4:**
+
+    .. code-block:: console
+
+        >>> import numpy as np
+        >>> from pytest import approx
+        >>> np.False_ == pytest.approx(False)
+        False
+
+    **Behavior on pytest 8.3.3:**
+
+    .. code-block:: console
+
+        >>> import numpy as np
+        >>> from pytest import approx
+        >>> np.False_ == pytest.approx(False)
+        True
