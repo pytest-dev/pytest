@@ -522,8 +522,7 @@ class ApproxDecimal(ApproxScalar):
 
 def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
-    within some tolerance. Note that unlike built-in equality, this function considers
-    booleans unequal to numeric zero or one.
+    within some tolerance.
 
     Due to the :doc:`python:tutorial/floatingpoint`, numbers that we
     would intuitively expect to be equal are not always so::
@@ -631,6 +630,12 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> [None, 1.0000005] == approx([None,1])
         True
         >>> ["foo", 1.0000005] == approx([None,1])
+        False
+
+    Note that unlike built-in equality, this function considers
+    booleans unequal to numeric zero or one::
+
+        >>> 1 == approx(True)
         False
 
     If you're thinking about using ``approx``, then you might want to know how
