@@ -426,14 +426,26 @@ class ApproxScalar(ApproxBase):
     def __eq__(self, actual) -> bool:
         """Return whether the given value is equal to the expected value
         within the pre-specified tolerance."""
+
+        def is_bool(val: Any) -> bool:
+            # Check if `val` is a native bool or numpy bool.
+            if isinstance(val, bool):
+                return True
+            try:
+                import numpy as np
+
+                return isinstance(val, np.bool_)
+            except ImportError:
+                return False
+
         asarray = _as_numpy_array(actual)
         if asarray is not None:
             # Call ``__eq__()`` manually to prevent infinite-recursion with
             # numpy<1.13.  See #3748.
             return all(self.__eq__(a) for a in asarray.flat)
 
-        # Short-circuit exact equality, except for bool
-        if isinstance(self.expected, bool) and not isinstance(actual, bool):
+        # Short-circuit exact equality, except for bool and np.bool_
+        if is_bool(self.expected) and not is_bool(actual):
             return False
         elif actual == self.expected:
             return True
@@ -441,8 +453,8 @@ class ApproxScalar(ApproxBase):
         # If either type is non-numeric, fall back to strict equality.
         # NB: we need Complex, rather than just Number, to ensure that __abs__,
         # __sub__, and __float__ are defined. Also, consider bool to be
-        # nonnumeric, even though it has the required arithmetic.
-        if isinstance(self.expected, bool) or not (
+        # non-numeric, even though it has the required arithmetic.
+        if is_bool(self.expected) or not (
             isinstance(self.expected, (Complex, Decimal))
             and isinstance(actual, (Complex, Decimal))
         ):
