@@ -1,0 +1,17 @@
+Restore :func:`pytest.approx` handling of equality checks between `bool` and `numpy.bool_` types.
+
+Comparing `bool` and `numpy.bool_` using :func:`pytest.approx` accidentally changed in version `8.3.4` and `8.3.5` to no longer match:
+
+.. code-block:: pycon
+
+    >>> import numpy as np
+    >>> from pytest import approx
+    >>> [np.True_, np.True_] == pytest.approx([True, True])
+    False
+
+This has now been fixed:
+
+.. code-block:: pycon
+
+    >>> [np.True_, np.True_] == pytest.approx([True, True])
+    True
