@@ -680,7 +680,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
 
     .. note::
-    
+
         Unlike built-in equality, this function considers
         booleans unequal to numeric zero or one. For example::
 
