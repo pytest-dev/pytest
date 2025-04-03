@@ -637,8 +637,10 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> 1 + 1e-8 == approx(1, rel=1e-6, abs=1e-12)
         True
 
-    You can also use ``approx`` to compare nonnumeric types, or dicts and
-    sequences containing nonnumeric types, in which case it falls back to
+    **Non-numeric types**
+
+    You can also use ``approx`` to compare non-numeric types, or dicts and
+    sequences containing non-numeric types, in which case it falls back to
     strict equality. This can be useful for comparing dicts and sequences that
     can contain optional values::
 
@@ -713,10 +715,10 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
     .. versionchanged:: 3.7.1
        ``approx`` raises ``TypeError`` when it encounters a dict value or
-       sequence element of nonnumeric type.
+       sequence element of non-numeric type.
 
     .. versionchanged:: 6.1.0
-       ``approx`` falls back to strict equality for nonnumeric types instead
+       ``approx`` falls back to strict equality for non-numeric types instead
        of raising ``TypeError``.
     """
     # Delegate the comparison to a class that knows how to deal with the type
