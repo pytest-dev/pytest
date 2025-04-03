@@ -260,6 +260,9 @@ class TestReport(BaseReport):
     """
 
     __test__ = False
+
+    when: Literal["setup", "call", "teardown"]
+    location: tuple[str, int | None, str]
     # Defined by skipping plugin.
     # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
     wasxfail: str

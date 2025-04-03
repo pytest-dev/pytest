@@ -939,7 +939,7 @@ class TestApprox:
         ],
     )
     def test_nonnumeric_false_if_unequal(self, x):
-        """For nonnumeric types, x != pytest.approx(y) reduces to x != y"""
+        """For non-numeric types, x != pytest.approx(y) reduces to x != y"""
         assert "ab" != approx("abc")
         assert ["ab"] != approx(["abc"])
         # in particular, both of these should return False
