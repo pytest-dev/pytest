@@ -632,12 +632,6 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> ["foo", 1.0000005] == approx([None,1])
         False
 
-    Note that unlike built-in equality, this function considers
-    booleans unequal to numeric zero or one::
-
-        >>> 1 == approx(True)
-        False
-
     If you're thinking about using ``approx``, then you might want to know how
     it compares to other good ways of comparing floating-point numbers.  All of
     these algorithms are based on relative and absolute tolerances and should
@@ -683,6 +677,12 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         `Matches <https://github.com/asottile/re-assert#re_assertmatchespattern-str-args-kwargs>`_
         from the
         `re_assert package <https://github.com/asottile/re-assert>`_.
+
+        Note that unlike built-in equality, this function considers
+        booleans unequal to numeric zero or one. For example::
+
+           >>> 1 == approx(True)
+           False
 
     .. warning::
 
