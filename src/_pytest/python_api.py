@@ -692,6 +692,15 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         from the
         `re_assert package <https://github.com/asottile/re-assert>`_.
 
+
+    .. note::
+
+        Unlike built-in equality, this function considers
+        booleans unequal to numeric zero or one. For example::
+
+           >>> 1 == approx(True)
+           False
+
     .. warning::
 
        .. versionchanged:: 3.2

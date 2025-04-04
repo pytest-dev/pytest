@@ -1,0 +1,1 @@
+Pointed out in the :func:`pytest.approx` documentation that it considers booleans unequal to numeric zero or one.
