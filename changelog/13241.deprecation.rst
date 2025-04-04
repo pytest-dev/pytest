@@ -1,0 +1,1 @@
+The legacy callable form of :func:`pytest.raises`, :func:`pytest.warns` and :func:`pytest.deprecated_call` has been deprecated. Use the context-manager form instead.
