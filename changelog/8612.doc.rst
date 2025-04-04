@@ -1,0 +1,5 @@
+Add a recipe for handling abstract test classes in the documentation.
+
+A new example has been added to the documentation to demonstrate how to use a mixin class to handle abstract
+test classes without manually setting the ``__test__`` attribute for subclasses.
+This ensures that subclasses of abstract test classes are automatically collected by pytest.
