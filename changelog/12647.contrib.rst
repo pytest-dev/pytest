@@ -1,0 +1,1 @@
+Fixed running the test suite with the ``hypothesis`` pytest plugin.
