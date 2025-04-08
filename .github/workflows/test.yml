@@ -260,12 +260,12 @@ jobs:
       if: "matrix.use_coverage"
       run: python -m coverage xml
 
-    - name: Upload coverage to Codecov
+    - name: Upload coverage and test results to Codecov
       if: "matrix.use_coverage"
       uses: codecov/codecov-action@v5
       with:
         fail_ci_if_error: false
-        files: ./coverage.xml
+        files: ./coverage.xml,./report.xml
         verbose: true
 
   check:  # This job does nothing and is only used for the branch protection

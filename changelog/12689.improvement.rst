@@ -1,0 +1,1 @@
+Upload JUnit test reports to Codecov to enable test result visibility in the Codecov UI.
