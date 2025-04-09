@@ -11,11 +11,53 @@ in case of warnings which need to format their messages.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
+from _pytest.warning_types import PytestPendingDeprecationWarning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import UnformattedWarning
+
+
+# the `as` indicates explicit re-export to type checkers
+# mypy currently does not support overload+deprecated
+if TYPE_CHECKING:
+    from typing_extensions import deprecated as deprecated
+else:
+
+    def deprecated(reason: str = "") -> object:
+        # This decorator should only be used to indicate that overloads are deprecated
+        # once py<3.13 is no longer supported, or when somebody wants to use @deprecated
+        # for runtime warning, we can consider adapting this decorator to support that
+        def decorator(func: object) -> object:
+            return func
+
+        return decorator
+
+
+CALLABLE_RAISES = PytestPendingDeprecationWarning(
+    "The callable form of pytest.raises will be deprecated in a future version.\n"
+    "Use `with pytest.raises(...):` instead.\n"
+    "Full deprecation will not be made until there's a tool to automatically update"
+    " code to use the context-manager form.\n"
+    "See https://docs.pytest.org/en/stable/reference/deprecations.html#legacy-callable-form-of-raises-warns-and-deprecated-call"
+)
+
+CALLABLE_WARNS = PytestPendingDeprecationWarning(
+    "The callable form of pytest.warns will be deprecated in a future version.\n"
+    "Use `with pytest.warns(...):` instead."
+    "Full deprecation will not be made until there's a tool to automatically update"
+    " code to use the context-manager form.\n"
+    "See https://docs.pytest.org/en/stable/reference/deprecations.html#legacy-callable-form-of-raises-warns-and-deprecated-call"
+)
+CALLABLE_DEPRECATED_CALL = PytestPendingDeprecationWarning(
+    "The callable form of pytest.deprecated_call will be deprecated in a future version.\n"
+    "Use `with pytest.deprecated_call():` instead."
+    "Full deprecation will not be made until there's a tool to automatically update"
+    " code to use the context-manager form.\n"
+    "See https://docs.pytest.org/en/stable/reference/deprecations.html#legacy-callable-form-of-raises-warns-and-deprecated-call"
+)
 
 
 # set of plugins which have been integrated into the core; we use this list to ignore
