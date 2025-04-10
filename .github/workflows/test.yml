@@ -267,6 +267,7 @@ jobs:
         fail_ci_if_error: false
         files: ./coverage.xml,./report.xml
         verbose: true
+        report_type: "test_results"
 
   check:  # This job does nothing and is only used for the branch protection
     if: always()
