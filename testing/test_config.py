@@ -2022,7 +2022,7 @@ class TestOverrideIniArgs:
         """Check that -o no longer swallows all options after it (#3103)"""
         config = _config_for_test
         config._preparse(
-            ["-o", "cache_dir=/cache", "junit_family=legacy", "/some/test/path"]
+            ["-o", "cache_dir=/cache", "-o", "junit_family=legacy", "/some/test/path"]
         )
         assert sorted(set(config._override_ini)) == sorted(
             ["cache_dir=/cache", "junit_family=legacy"]
