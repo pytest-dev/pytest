@@ -57,3 +57,6 @@ pip-wheel-metadata/
 
 # pytest debug logs generated via --debug
 pytestdebug.log
+
+# JUnit test result file
+junit.xml
