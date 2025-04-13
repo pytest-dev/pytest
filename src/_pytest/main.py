@@ -249,6 +249,20 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def validate_basetemp(path: str) -> str:
+    """
+    Validate the provided `basetemp` path to ensure it is not empty,
+    the current working directory (cwd), or any ancestor of the cwd.
+    Args:
+        path (str): The basetemp path.
+    Returns:
+        string: The validated basetemp path.
+    Raises:
+        argparse.ArgumentTypeError in 3 cases:
+            1) if the path is empty;
+            2) if it is the cwd;
+            3) if it is an ancestor of the cwd.
+    """
+
     # GH 7119
     msg = "basetemp must not be empty, the current working directory or any parent directory of it"
 
