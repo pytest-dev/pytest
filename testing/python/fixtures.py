@@ -48,7 +48,23 @@ def test_getfuncargnames_methods():
         def f(self, arg1, arg2="hello"):
             raise NotImplementedError()
 
+        def g(self, /, arg1, arg2="hello"):
+            raise NotImplementedError()
+
+        def h(self, *, arg1, arg2="hello"):
+            raise NotImplementedError()
+
+        def j(self, arg1, *, arg2, arg3="hello"):
+            raise NotImplementedError()
+
+        def k(self, /, arg1, *, arg2, arg3="hello"):
+            raise NotImplementedError()
+
     assert getfuncargnames(A().f) == ("arg1",)
+    assert getfuncargnames(A().g) == ("arg1",)
+    assert getfuncargnames(A().h) == ("arg1",)
+    assert getfuncargnames(A().j) == ("arg1", "arg2")
+    assert getfuncargnames(A().k) == ("arg1", "arg2")
 
 
 def test_getfuncargnames_staticmethod():

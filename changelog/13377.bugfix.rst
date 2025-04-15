@@ -1,0 +1,27 @@
+Fixed handling of test methods with special parameter syntax.
+
+Now, methods are supported that formally define ``self`` as positional-only
+and/or fixture parameters as keyword-only, e.g.:
+
+.. code-block:: python
+
+    class TestClass:
+
+        def test_method(self, /, *, fixture): ...
+
+Before, this led to:
+
+.. code-block:: python-console
+
+    pyfuncitem = <Function test_method>
+
+        @hookimpl(trylast=True)
+        def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
+            testfunction = pyfuncitem.obj
+            if is_async_function(testfunction):
+                async_fail(pyfuncitem.nodeid)
+            funcargs = pyfuncitem.funcargs
+            testargs = {arg: funcargs[arg] for arg in pyfuncitem._fixtureinfo.argnames}
+    >       result = testfunction(**testargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^
+    E       TypeError: TestClass.test_method() missing 1 required positional argument: 'fixture'
