@@ -625,6 +625,84 @@ class TestMetafunc:
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
+    @pytest.mark.parametrize("id_style", ["short", "hash", "legacy"])
+    @pytest.mark.parametrize(
+        "kind",
+        [
+            pytest.param("a", id="str"),
+            pytest.param(b"a", id="bytes"),
+        ],
+    )
+    def test_idmaker_long_string(self, id_style: str, kind: str | bytes) -> None:
+        @dataclasses.dataclass
+        class FakeConfig:
+            id_style: str | None
+
+            def getini(self, name: str) -> str | None:
+                if name == "parametrize_long_str_id_strategy":
+                    return self.id_style
+                return None
+
+            @property
+            def hook(self):
+                return self
+
+            def pytest_make_parametrize_id(self, **kw: object) -> None:
+                return
+
+        maker = IdMaker(
+            "a",
+            [pytest.param(kind * 1000)],
+            None,
+            None,
+            cast(pytest.Config, FakeConfig(id_style)),
+            None,
+            None,
+        )
+
+        res = maker.make_unique_parameterset_ids()
+        expected = {
+            "legacy": "a" * 1000,
+            "short": "a0",
+            "hash": "41edece42d63e8d9bf515a9ba6932e1c20cbc9f5a5d134645adb5db1b9737ea3",
+        }
+        assert res == [expected[id_style]]
+
+    @pytest.mark.parametrize(
+        "kind",
+        [
+            pytest.param("a", id="str"),
+            pytest.param(b"a", id="bytes"),
+        ],
+    )
+    def test_idmaker_long_string_disallow(self, kind: str | bytes) -> None:
+        @dataclasses.dataclass
+        class FakeConfig:
+            def getini(self, name: str) -> str | None:
+                if name == "parametrize_long_str_id_strategy":
+                    return "disallow"
+                return None
+
+            @property
+            def hook(self):
+                return self
+
+            def pytest_make_parametrize_id(self, **kw: object) -> None:
+                return
+
+        maker = IdMaker(
+            "a",
+            [pytest.param(kind * 1000)],
+            None,
+            None,
+            cast(pytest.Config, FakeConfig()),
+            None,
+            None,
+        )
+
+        with pytest.raises(ValueError):
+            maker.make_unique_parameterset_ids()
+
     def test_idmaker_with_param_id_and_config(self) -> None:
         """Unit test for expected behavior to create ids with pytest.param(id=...) and
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
