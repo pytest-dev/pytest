@@ -1107,7 +1107,7 @@ class FormattedExcinfo:
             traceback_ = traceback_.filter(excinfo)
         return traceback_
 
-    def _repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> ReprTraceback:
+    def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> ReprTraceback:
         traceback_ = self._filtered_traceback(excinfo)
 
         if isinstance(excinfo.value, RecursionError):
@@ -1133,7 +1133,7 @@ class FormattedExcinfo:
         return ReprTraceback(entries, extraline, style=self.style)
 
     def _repr_exception_group_traceback(
-        self, excinfo: ExceptionInfo[BaseExceptionGroup]
+        self, excinfo: ExceptionInfo[BaseException]
     ) -> ReprTracebackNative:
         traceback_ = self._filtered_traceback(excinfo)
         return ReprTracebackNative(
@@ -1195,9 +1195,11 @@ class FormattedExcinfo:
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 if isinstance(e, BaseExceptionGroup):
-                    reprtraceback = self._repr_exception_group_traceback(excinfo_)
+                    reprtraceback: ReprTracebackNative | ReprTraceback = (
+                        self._repr_exception_group_traceback(excinfo_)
+                    )
                 else:
-                    reprtraceback = self._repr_traceback(excinfo_)
+                    reprtraceback = self.repr_traceback(excinfo_)
                 reprcrash = excinfo_._getreprcrash()
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
