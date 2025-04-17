@@ -1099,34 +1099,50 @@ class FormattedExcinfo:
                 return np
         return str(path)
 
-    def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> ReprTraceback:
-        traceback = excinfo.traceback
+    def _filtered_traceback(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
+        traceback_ = excinfo.traceback
         if callable(self.tbfilter):
-            traceback = self.tbfilter(excinfo)
+            traceback_ = self.tbfilter(excinfo)
         elif self.tbfilter:
-            traceback = traceback.filter(excinfo)
+            traceback_ = traceback_.filter(excinfo)
+        return traceback_
+
+    def _repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> ReprTraceback:
+        traceback_ = self._filtered_traceback(excinfo)
 
         if isinstance(excinfo.value, RecursionError):
-            traceback, extraline = self._truncate_recursive_traceback(traceback)
+            traceback_, extraline = self._truncate_recursive_traceback(traceback_)
         else:
             extraline = None
 
-        if not traceback:
+        if not traceback_:
             if extraline is None:
                 extraline = "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames."
             entries = [self.repr_traceback_entry(None, excinfo)]
             return ReprTraceback(entries, extraline, style=self.style)
 
-        last = traceback[-1]
+        last = traceback_[-1]
         if self.style == "value":
             entries = [self.repr_traceback_entry(last, excinfo)]
             return ReprTraceback(entries, None, style=self.style)
 
         entries = [
             self.repr_traceback_entry(entry, excinfo if last == entry else None)
-            for entry in traceback
+            for entry in traceback_
         ]
         return ReprTraceback(entries, extraline, style=self.style)
+
+    def _repr_exception_group_traceback(
+        self, excinfo: ExceptionInfo[BaseExceptionGroup]
+    ) -> ReprTracebackNative:
+        traceback_ = self._filtered_traceback(excinfo)
+        return ReprTracebackNative(
+            traceback.format_exception(
+                type(excinfo.value),
+                excinfo.value,
+                traceback_[0]._rawentry,
+            )
+        )
 
     def _truncate_recursive_traceback(
         self, traceback: Traceback
@@ -1179,17 +1195,9 @@ class FormattedExcinfo:
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 if isinstance(e, BaseExceptionGroup):
-                    reprtraceback: ReprTracebackNative | ReprTraceback = (
-                        ReprTracebackNative(
-                            traceback.format_exception(
-                                type(excinfo_.value),
-                                excinfo_.value,
-                                excinfo_.traceback[0]._rawentry,
-                            )
-                        )
-                    )
+                    reprtraceback = self._repr_exception_group_traceback(excinfo_)
                 else:
-                    reprtraceback = self.repr_traceback(excinfo_)
+                    reprtraceback = self._repr_traceback(excinfo_)
                 reprcrash = excinfo_._getreprcrash()
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
