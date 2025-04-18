@@ -5049,3 +5049,22 @@ def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_collect_positional_only(pytester: Pytester) -> None:
+    """Support the collection of tests with positional-only arguments (#13376)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Test:
+            @pytest.fixture
+            def fix(self):
+                return 1
+
+            def test_method(self, /, fix):
+                assert fix == 1
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
