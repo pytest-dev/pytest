@@ -48,7 +48,23 @@ def test_getfuncargnames_methods():
         def f(self, arg1, arg2="hello"):
             raise NotImplementedError()
 
+        def g(self, /, arg1, arg2="hello"):
+            raise NotImplementedError()
+
+        def h(self, *, arg1, arg2="hello"):
+            raise NotImplementedError()
+
+        def j(self, arg1, *, arg2, arg3="hello"):
+            raise NotImplementedError()
+
+        def k(self, /, arg1, *, arg2, arg3="hello"):
+            raise NotImplementedError()
+
     assert getfuncargnames(A().f) == ("arg1",)
+    assert getfuncargnames(A().g) == ("arg1",)
+    assert getfuncargnames(A().h) == ("arg1",)
+    assert getfuncargnames(A().j) == ("arg1", "arg2")
+    assert getfuncargnames(A().k) == ("arg1", "arg2")
 
 
 def test_getfuncargnames_staticmethod():
@@ -5029,6 +5045,25 @@ def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:
         @pytest.mark.parametrize("my_fixture", ["a value"], indirect=True, scope="function")
         def test_foo(another_fixture):
             assert another_fixture == "a value"
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_collect_positional_only(pytester: Pytester) -> None:
+    """Support the collection of tests with positional-only arguments (#13376)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Test:
+            @pytest.fixture
+            def fix(self):
+                return 1
+
+            def test_method(self, /, fix):
+                assert fix == 1
         """
     )
     result = pytester.runpytest()
