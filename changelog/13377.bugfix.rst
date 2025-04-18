@@ -1,0 +1,12 @@
+Fixed handling of test methods with positional-only parameter syntax.
+
+Now, methods are supported that formally define ``self`` as positional-only
+and/or fixture parameters as keyword-only, e.g.:
+
+.. code-block:: python
+
+    class TestClass:
+
+        def test_method(self, /, *, fixture): ...
+
+Before, this caused an internal error in pytest.
