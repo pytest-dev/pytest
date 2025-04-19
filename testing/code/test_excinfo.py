@@ -1797,7 +1797,7 @@ def _exceptiongroup_common(
             rf"FAILED test_excgroup.py::test - {pre_catch}BaseExceptionGroup: Oops \(2.*"
         )
     result.stdout.re_match_lines(match_lines)
-    # check for traceback filtering of pytest internals
+    # Check for traceback filtering of pytest internals.
     result.stdout.no_fnmatch_line("*, line *, in pytest_pyfunc_call")
     result.stdout.no_fnmatch_line("*, line *, in pytest_runtest_call")
 
