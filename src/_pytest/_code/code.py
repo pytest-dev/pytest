@@ -30,11 +30,11 @@ from typing import Generic
 from typing import Literal
 from typing import overload
 from typing import SupportsIndex
-from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
 import pluggy
+from typing_extensions import TypeAlias
 
 import _pytest
 from _pytest._code.source import findsource
@@ -853,15 +853,12 @@ class ExceptionInfo(Generic[E]):
         return self._group_contains(self.value, expected_exception, match, depth)
 
 
-if TYPE_CHECKING:
-    from typing_extensions import TypeAlias
-
-    # Type alias for the `tbfilter` setting:
-    # bool: If True, it should be filtered using Traceback.filter()
-    # callable: A callable that takes an ExceptionInfo and returns the filtered traceback.
-    TracebackFilter: TypeAlias = Union[
-        bool, Callable[[ExceptionInfo[BaseException]], Traceback]
-    ]
+# Type alias for the `tbfilter` setting:
+# bool: If True, it should be filtered using Traceback.filter()
+# callable: A callable that takes an ExceptionInfo and returns the filtered traceback.
+TracebackFilter: TypeAlias = Union[
+    bool, Callable[[ExceptionInfo[BaseException]], Traceback]
+]
 
 
 @dataclasses.dataclass
