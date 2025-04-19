@@ -44,6 +44,12 @@ class PytestCollectionWarning(PytestWarning):
     __module__ = "pytest"
 
 
+class PytestPendingDeprecationWarning(PytestWarning, PendingDeprecationWarning):
+    """Warning emitted for features that will be deprecated in a future version."""
+
+    __module__ = "pytest"
+
+
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """Warning class for features that will be removed in a future version."""
 
