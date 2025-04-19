@@ -1189,6 +1189,7 @@ class FormattedExcinfo:
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 reprtraceback: ReprTraceback | ReprTracebackNative
                 if isinstance(e, BaseExceptionGroup):
+                    # don't filter any sub-exceptions since they shouldn't have any internal frames
                     traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
                     reprtraceback = ReprTracebackNative(
                         format_exception(
