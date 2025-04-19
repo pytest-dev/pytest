@@ -1100,35 +1100,35 @@ class FormattedExcinfo:
         return str(path)
 
     def _filtered_traceback(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
-        traceback_ = excinfo.traceback
+        """Filter the exception traceback in ``excinfo`` according to ``tbfilter``, if any."""
         if callable(self.tbfilter):
-            traceback_ = self.tbfilter(excinfo)
+            return self.tbfilter(excinfo)
         elif self.tbfilter:
-            traceback_ = traceback_.filter(excinfo)
-        return traceback_
+            return excinfo.traceback.filter(excinfo)
+        return excinfo.traceback
 
     def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> ReprTraceback:
-        traceback_ = self._filtered_traceback(excinfo)
+        traceback = self._filtered_traceback(excinfo)
 
         if isinstance(excinfo.value, RecursionError):
-            traceback_, extraline = self._truncate_recursive_traceback(traceback_)
+            traceback, extraline = self._truncate_recursive_traceback(traceback)
         else:
             extraline = None
 
-        if not traceback_:
+        if not traceback:
             if extraline is None:
                 extraline = "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames."
             entries = [self.repr_traceback_entry(None, excinfo)]
             return ReprTraceback(entries, extraline, style=self.style)
 
-        last = traceback_[-1]
+        last = traceback[-1]
         if self.style == "value":
             entries = [self.repr_traceback_entry(last, excinfo)]
             return ReprTraceback(entries, None, style=self.style)
 
         entries = [
             self.repr_traceback_entry(entry, excinfo if last == entry else None)
-            for entry in traceback_
+            for entry in traceback
         ]
         return ReprTraceback(entries, extraline, style=self.style)
 
