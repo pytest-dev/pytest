@@ -262,7 +262,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest --cov --junitxml=junit.xml -o junit_family=legacy
+        tox -- --junitxml=junit.xml -o junit_family=legacy
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
