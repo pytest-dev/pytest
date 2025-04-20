@@ -260,9 +260,13 @@ jobs:
       if: "matrix.use_coverage"
       run: python -m coverage xml
 
-    - name: Test with pytest
+    - name: Test with tox (in CI)
       run: |
-        tox -- --junitxml=junit.xml -o junit_family=legacy
+        if [ "$CI" = "true" ]; then
+          tox -- --junitxml=junit.xml -o junit_family=legacy
+        else
+          tox
+        fi
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
