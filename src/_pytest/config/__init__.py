@@ -32,8 +32,8 @@ from typing import Final
 from typing import final
 from typing import IO
 from typing import TextIO
-from typing import TypeVar
 from typing import TYPE_CHECKING
+from typing import TypeVar
 import warnings
 
 import pluggy
@@ -962,7 +962,7 @@ def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
             yield from _iter_rewritable_modules(new_package_files)
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @final
@@ -1730,12 +1730,12 @@ class Config:
         return value
 
     @overload
-    def getoption(self, name: str, skip: bool = False) -> str | NotSet:
-        ...
+    def getoption(self, name: str, skip: bool = False) -> str | NotSet: ...
     @overload
-    def getoption(self, name: str, default: T, skip: bool = False) -> str | T:
-        ...
-    def getoption(self, name: str, default: T | NotSet = notset, skip: bool = False) -> str | T | NotSet:
+    def getoption(self, name: str, default: T, skip: bool = False) -> str | T: ...
+    def getoption(
+        self, name: str, default: T | NotSet = notset, skip: bool = False
+    ) -> str | T | NotSet:
         """Return command line option value.
 
         :param name: Name of the option. You may also specify
