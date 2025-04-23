@@ -31,6 +31,7 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import IO
+from typing import overload
 from typing import TextIO
 from typing import TYPE_CHECKING
 from typing import TypeVar
