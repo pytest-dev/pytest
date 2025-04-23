@@ -32,6 +32,7 @@ from typing import Final
 from typing import final
 from typing import IO
 from typing import TextIO
+from typing import TypeVar
 from typing import TYPE_CHECKING
 import warnings
 
@@ -961,6 +962,9 @@ def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
             yield from _iter_rewritable_modules(new_package_files)
 
 
+T = TypeVar('T')
+
+
 @final
 class Config:
     """Access to configuration values, pluginmanager and plugin hooks.
@@ -1725,7 +1729,13 @@ class Config:
                     value = user_ini_value
         return value
 
-    def getoption(self, name: str, default=notset, skip: bool = False):
+    @overload
+    def getoption(self, name: str, skip: bool = False) -> str | NotSet:
+        ...
+    @overload
+    def getoption(self, name: str, default: T, skip: bool = False) -> str | T:
+        ...
+    def getoption(self, name: str, default: T | NotSet = notset, skip: bool = False) -> str | T | NotSet:
         """Return command line option value.
 
         :param name: Name of the option. You may also specify
