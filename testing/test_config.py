@@ -2537,3 +2537,29 @@ class TestVerbosity:
             config.get_verbosity(TestVerbosity.SOME_OUTPUT_TYPE)
             == TestVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL
         )
+
+
+def test_conflicting_option_raises_error(pytester):
+    """Test that adding conflicting options raises a clear error."""
+    pytester.makepyfile(
+        """
+        def test_dummy():
+            pass
+        """
+    )
+
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+
+            # This should raise a ValueError because --keyword already exists in pytest
+            parser.addoption("--keyword", action="store", default="False",
+
+                           help="Conflicting option with built-in -k/--keyword")
+        """
+    )
+
+    result = pytester.runpytest()
+    result.stderr.fnmatch_lines(
+        ["*option names*--keyword*conflict with existing registered options*"]
+    )
