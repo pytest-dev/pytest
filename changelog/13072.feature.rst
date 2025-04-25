@@ -1,0 +1,9 @@
+Terminal tab progress reporting
+
+Added support for displaying test progress in the terminal tab using OSC 9;4; ANSI sequence.
+When pytest runs in a supported terminal emulator (like GNOME Terminal or ConEmu),
+you'll see the test progress as a percentage in the terminal tab, allowing you to monitor
+test execution progress without having to switch to the pytest tab.
+
+This feature is automatically enabled when running in a compatible terminal and requires
+no additional configuration.
