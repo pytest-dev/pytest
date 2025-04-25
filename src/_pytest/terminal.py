@@ -769,7 +769,7 @@ class TerminalReporter:
         if self.isatty:
             if self.config.option.verbose >= 0:
                 self.write("collecting ... ", flush=True, bold=True)
-                self._collect_report_last_write = timing.time()
+                self._collect_report_last_write = timing.perf_counter()
         elif self.config.option.verbose >= 1:
             self.write("collecting ... ", flush=True, bold=True)
 
@@ -789,7 +789,7 @@ class TerminalReporter:
 
         if not final:
             # Only write "collecting" report every 0.5s.
-            t = timing.time()
+            t = timing.perf_counter()
             if (
                 self._collect_report_last_write is not None
                 and self._collect_report_last_write > t - REPORT_COLLECTING_RESOLUTION
@@ -823,7 +823,7 @@ class TerminalReporter:
     @hookimpl(trylast=True)
     def pytest_sessionstart(self, session: Session) -> None:
         self._session = session
-        self._sessionstarttime = timing.time()
+        self._sessionstarttime = timing.perf_counter()
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
@@ -1202,7 +1202,7 @@ class TerminalReporter:
         if self.verbosity < -1:
             return
 
-        session_duration = timing.time() - self._sessionstarttime
+        session_duration = timing.perf_counter() - self._sessionstarttime
         (parts, main_color) = self.build_summary_stats_line()
         line_parts = []
 

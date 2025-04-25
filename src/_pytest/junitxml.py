@@ -636,7 +636,7 @@ class LogXML:
         reporter._add_simple("error", "internal error", str(excrepr))
 
     def pytest_sessionstart(self) -> None:
-        self.suite_start_time = timing.time()
+        self.suite_start_time = timing.perf_counter()
 
     def pytest_sessionfinish(self) -> None:
         dirname = os.path.dirname(os.path.abspath(self.logfile))
@@ -644,7 +644,7 @@ class LogXML:
         os.makedirs(dirname, exist_ok=True)
 
         with open(self.logfile, "w", encoding="utf-8") as logfile:
-            suite_stop_time = timing.time()
+            suite_stop_time = timing.perf_counter()
             suite_time_delta = suite_stop_time - self.suite_start_time
 
             numtests = (
