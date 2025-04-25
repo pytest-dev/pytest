@@ -1,2 +1,1 @@
-Fixed an issue where pytest could report negative durations due to the use of `time.time()`.
-Replaced `time.time()` with `_pytest.timing.perf_counter()` for more reliable timing.
+Fixed an issue where pytest could report negative durations.
