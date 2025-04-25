@@ -12,7 +12,7 @@ import warnings
 from py import error
 from py.path import local
 
-from _pytest.timing import perf_counter
+import _pytest.timing
 import pytest
 
 
@@ -747,7 +747,7 @@ class TestLocalPath(CommonFSTests):
             name = tempfile.mktemp()
             open(name, "w").close()
         try:
-            mtime = int(perf_counter()) - 100
+            mtime = int(_pytest.timing.perf_counter()) - 100
             path = local(name)
             assert path.mtime() != mtime
             path.setmtime(mtime)
@@ -1405,7 +1405,7 @@ class TestPOSIXLocalPath:
         import time
 
         path = tmpdir.ensure("samplefile")
-        now = perf_counter()
+        now = _pytest.timing.perf_counter()
         atime1 = path.atime()
         # we could wait here but timer resolution is very
         # system dependent
@@ -1413,7 +1413,7 @@ class TestPOSIXLocalPath:
         time.sleep(ATIME_RESOLUTION)
         atime2 = path.atime()
         time.sleep(ATIME_RESOLUTION)
-        duration = perf_counter() - now
+        duration = _pytest.timing.perf_counter() - now
         assert (atime2 - atime1) <= duration
 
     def test_commondir(self, path1):

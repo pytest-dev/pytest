@@ -15,7 +15,7 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
-from _pytest.timing import perf_counter
+import _pytest.timing
 import pytest
 
 
@@ -451,9 +451,9 @@ def test_pytester_run_with_timeout(pytester: Pytester) -> None:
 
     timeout = 120
 
-    start = perf_counter()
+    start = _pytest.timing.perf_counter()
     result = pytester.runpytest_subprocess(testfile, timeout=timeout)
-    end = perf_counter()
+    end = _pytest.timing.perf_counter()
     duration = end - start
 
     assert result.ret == ExitCode.OK
