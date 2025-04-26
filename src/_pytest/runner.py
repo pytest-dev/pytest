@@ -339,8 +339,7 @@ class CallInfo(Generic[TResult]):
             function, instead of being wrapped in the CallInfo.
         """
         excinfo = None
-        start = timing.time()
-        precise_start = timing.perf_counter()
+        instant = timing.Instant()
         try:
             result: TResult | None = func()
         except BaseException:
@@ -348,10 +347,8 @@ class CallInfo(Generic[TResult]):
             if reraise is not None and isinstance(excinfo.value, reraise):
                 raise
             result = None
-        # use the perf counter
-        precise_stop = timing.perf_counter()
-        duration = precise_stop - precise_start
-        stop = timing.time()
+        duration = instant.elapsed_s()
+        start, stop = instant.interval()
         return cls(
             start=start,
             stop=stop,

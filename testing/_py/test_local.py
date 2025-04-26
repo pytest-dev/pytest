@@ -1405,7 +1405,7 @@ class TestPOSIXLocalPath:
         import time
 
         path = tmpdir.ensure("samplefile")
-        now = _pytest.timing.perf_counter()
+        now = _pytest.timing.Instant()
         atime1 = path.atime()
         # we could wait here but timer resolution is very
         # system dependent
@@ -1413,7 +1413,7 @@ class TestPOSIXLocalPath:
         time.sleep(ATIME_RESOLUTION)
         atime2 = path.atime()
         time.sleep(ATIME_RESOLUTION)
-        duration = _pytest.timing.perf_counter() - now
+        duration = now.elapsed_s()
         assert (atime2 - atime1) <= duration
 
     def test_commondir(self, path1):

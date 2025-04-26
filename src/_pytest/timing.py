@@ -20,6 +20,38 @@ if TYPE_CHECKING:
     from pytest import MonkeyPatch
 
 
+class Instant:
+    """
+    Provides a measurement of timing between different points in the code.
+
+    Useful to compute the elapsed time between two points in time,
+    using a performance counter, and the beginning/end in actual times (as seconds since epoch).
+
+    Inspired by Rust's `std::time::Instant`.
+    """
+
+    def __init__(self) -> None:
+        import _pytest.timing  # noqa: PLW0406
+
+        self._start_perf = _pytest.timing.perf_counter()
+        self._start_time = _pytest.timing.time()
+
+    def elapsed_s(self) -> float:
+        """Return the elapsed time (in seconds) since this Instant was created, using a precise clock."""
+        import _pytest.timing  # noqa: PLW0406
+
+        return _pytest.timing.perf_counter() - self._start_perf
+
+    def interval(self) -> tuple[float, float]:
+        """Return the beginning and end times of this instant, in seconds since epoch, as provided by time.time()."""
+        import _pytest.timing  # noqa: PLW0406
+
+        return self._start_time, _pytest.timing.time()
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"Instant(start_time={self._start_time}, elapsed_s={self.elapsed_s()})"
+
+
 @dataclasses.dataclass
 class MockTiming:
     """Mocks _pytest.timing with a known object that can be used to control timing in tests

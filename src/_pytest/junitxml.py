@@ -636,8 +636,7 @@ class LogXML:
         reporter._add_simple("error", "internal error", str(excrepr))
 
     def pytest_sessionstart(self) -> None:
-        self.suite_start_time = timing.time()
-        self.suite_start_perf = timing.perf_counter()
+        self.suite_start_instant = timing.Instant()
 
     def pytest_sessionfinish(self) -> None:
         dirname = os.path.dirname(os.path.abspath(self.logfile))
@@ -645,8 +644,7 @@ class LogXML:
         os.makedirs(dirname, exist_ok=True)
 
         with open(self.logfile, "w", encoding="utf-8") as logfile:
-            suite_stop_perf = timing.perf_counter()
-            suite_time_delta = suite_stop_perf - self.suite_start_perf
+            suite_time_delta = self.suite_start_instant.elapsed_s()
 
             numtests = (
                 self.stats["passed"]
@@ -665,7 +663,9 @@ class LogXML:
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
                 time=f"{suite_time_delta:.3f}",
-                timestamp=datetime.fromtimestamp(self.suite_start_time, timezone.utc)
+                timestamp=datetime.fromtimestamp(
+                    self.suite_start_instant.interval()[0], timezone.utc
+                )
                 .astimezone()
                 .isoformat(),
                 hostname=platform.node(),

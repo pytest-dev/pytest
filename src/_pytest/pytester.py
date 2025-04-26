@@ -1150,7 +1150,7 @@ class Pytester:
 
         if syspathinsert:
             self.syspathinsert()
-        now = timing.perf_counter()
+        now = timing.Instant()
         capture = _get_multicapture("sys")
         capture.start_capturing()
         try:
@@ -1179,9 +1179,7 @@ class Pytester:
             sys.stderr.write(err)
 
         assert reprec.ret is not None
-        res = RunResult(
-            reprec.ret, out.splitlines(), err.splitlines(), timing.perf_counter() - now
-        )
+        res = RunResult(reprec.ret, out.splitlines(), err.splitlines(), now.elapsed_s())
         res.reprec = reprec  # type: ignore
         return res
 
@@ -1408,7 +1406,7 @@ class Pytester:
         print("     in:", Path.cwd())
 
         with p1.open("w", encoding="utf8") as f1, p2.open("w", encoding="utf8") as f2:
-            now = timing.perf_counter()
+            now = timing.Instant()
             popen = self.popen(
                 cmdargs,
                 stdin=stdin,
@@ -1445,7 +1443,7 @@ class Pytester:
 
         with contextlib.suppress(ValueError):
             ret = ExitCode(ret)
-        return RunResult(ret, out, err, timing.perf_counter() - now)
+        return RunResult(ret, out, err, now.elapsed_s())
 
     def _dump_lines(self, lines, fp):
         try:
