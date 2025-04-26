@@ -747,7 +747,7 @@ class TestLocalPath(CommonFSTests):
             name = tempfile.mktemp()
             open(name, "w").close()
         try:
-            mtime = int(_pytest.timing.perf_counter()) - 100
+            mtime = int(_pytest.timing.time()) - 100
             path = local(name)
             assert path.mtime() != mtime
             path.setmtime(mtime)
