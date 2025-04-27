@@ -347,12 +347,11 @@ class CallInfo(Generic[TResult]):
             if reraise is not None and isinstance(excinfo.value, reraise):
                 raise
             result = None
-        duration = instant.elapsed_s()
-        start, stop = instant.interval()
+        duration = instant.duration()
         return cls(
-            start=start,
-            stop=stop,
-            duration=duration,
+            start=duration.start,
+            stop=duration.stop,
+            duration=duration.elapsed_s,
             when=when,
             result=result,
             excinfo=excinfo,

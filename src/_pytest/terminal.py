@@ -789,7 +789,7 @@ class TerminalReporter:
         if not final:
             # Only write the "collecting" report every `REPORT_COLLECTING_RESOLUTION`.
             if (
-                self._collect_report_last_instant.elapsed_s()
+                self._collect_report_last_instant.duration().elapsed_s
                 < REPORT_COLLECTING_RESOLUTION
             ):
                 return
@@ -821,7 +821,7 @@ class TerminalReporter:
     @hookimpl(trylast=True)
     def pytest_sessionstart(self, session: Session) -> None:
         self._session = session
-        self._session_start_instant = timing.Instant()
+        self._session_start = timing.Instant()
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
@@ -1200,7 +1200,7 @@ class TerminalReporter:
         if self.verbosity < -1:
             return
 
-        session_duration = self._session_start_instant.elapsed_s()
+        session_duration = self._session_start.duration()
         (parts, main_color) = self.build_summary_stats_line()
         line_parts = []
 
@@ -1215,7 +1215,7 @@ class TerminalReporter:
         msg = ", ".join(line_parts)
 
         main_markup = {main_color: True}
-        duration = f" in {format_session_duration(session_duration)}"
+        duration = f" in {format_session_duration(session_duration.elapsed_s)}"
         duration_with_markup = self._tw.markup(duration, **main_markup)
         if display_sep:
             fullwidth += len(duration_with_markup) - len(duration)

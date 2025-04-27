@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 from datetime import datetime
+from datetime import timezone
 from time import perf_counter
 from time import sleep
 from time import time
@@ -20,36 +21,51 @@ if TYPE_CHECKING:
     from pytest import MonkeyPatch
 
 
+@dataclasses.dataclass(frozen=True)
 class Instant:
     """
-    Provides a measurement of timing between different points in the code.
-
-    Useful to compute the elapsed time between two points in time,
-    using a performance counter, and the beginning/end in actual times (as seconds since epoch).
+    Measures a span of time between different points in the code.
 
     Inspired by Rust's `std::time::Instant`.
     """
 
-    def __init__(self) -> None:
-        import _pytest.timing  # noqa: PLW0406
+    # Creation time of this instant, using time.time(), to measure actual time.
+    # Use a `lambda` to initialize the default to correctly get the mocked time via `MockTiming`.
+    _start_time: float = dataclasses.field(default_factory=lambda: time(), init=False)
 
-        self._start_perf = _pytest.timing.perf_counter()
-        self._start_time = _pytest.timing.time()
+    # Initial "tick" of the performance counter to measure precise elapsed time.
+    # Use a `lambda` to initialize the default to correctly get the mocked time via `MockTiming`.
+    _start_perf: float = dataclasses.field(
+        default_factory=lambda: perf_counter(), init=False
+    )
 
-    def elapsed_s(self) -> float:
-        """Return the elapsed time (in seconds) since this Instant was created, using a precise clock."""
-        import _pytest.timing  # noqa: PLW0406
+    def duration(self) -> Duration:
+        """Measure the duration since `Instant` was created."""
+        return Duration(
+            start=self._start_time,
+            elapsed_s=perf_counter() - self._start_perf,
+            stop=time(),
+        )
 
-        return _pytest.timing.perf_counter() - self._start_perf
 
-    def interval(self) -> tuple[float, float]:
-        """Return the beginning and end times of this instant, in seconds since epoch, as provided by time.time()."""
-        import _pytest.timing  # noqa: PLW0406
+@dataclasses.dataclass(frozen=True)
+class Duration:
+    """A span of time as measured by `Instant.duration()`."""
 
-        return self._start_time, _pytest.timing.time()
+    # Start time of the duration, as seconds since epoch.
+    start: float
+    # Stop time of the duration, as seconds since epoch.
+    stop: float
+    # Elapsed time of the duration, in seconds, measured using a performance counter for precise timing.
+    elapsed_s: float
 
-    def __repr__(self) -> str:  # pragma: no cover
-        return f"Instant(start_time={self._start_time}, elapsed_s={self.elapsed_s()})"
+    def start_utc(self) -> datetime:
+        """Start time of the duration, as a datetime in UTC."""
+        return datetime.fromtimestamp(self.start, timezone.utc)
+
+    def stop_utc(self) -> datetime:  # pragma: no cover
+        """Stop time of the duration, as a datetime in UTC."""
+        return datetime.fromtimestamp(self.stop, timezone.utc)
 
 
 @dataclasses.dataclass
