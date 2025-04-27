@@ -24,48 +24,42 @@ if TYPE_CHECKING:
 @dataclasses.dataclass(frozen=True)
 class Instant:
     """
-    Measures a span of time between different points in the code.
+    Represents an instant in time, used to both get the timestamp value and to measure
+    the duration of a time span.
 
     Inspired by Rust's `std::time::Instant`.
     """
 
     # Creation time of this instant, using time.time(), to measure actual time.
     # Use a `lambda` to initialize the default to correctly get the mocked time via `MockTiming`.
-    _start_time: float = dataclasses.field(default_factory=lambda: time(), init=False)
+    time: float = dataclasses.field(default_factory=lambda: time(), init=False)
 
-    # Initial "tick" of the performance counter to measure precise elapsed time.
+    # Performance counter tick of the instant, used to measure precise elapsed time.
     # Use a `lambda` to initialize the default to correctly get the mocked time via `MockTiming`.
-    _start_perf: float = dataclasses.field(
+    perf_count: float = dataclasses.field(
         default_factory=lambda: perf_counter(), init=False
     )
 
     def duration(self) -> Duration:
         """Measure the duration since `Instant` was created."""
-        return Duration(
-            start=self._start_time,
-            elapsed_s=perf_counter() - self._start_perf,
-            stop=time(),
-        )
+        return Duration(start=self, stop=Instant())
+
+    def as_utc(self) -> datetime:
+        """Instant as UTC datetime."""
+        return datetime.fromtimestamp(self.time, timezone.utc)
 
 
 @dataclasses.dataclass(frozen=True)
 class Duration:
     """A span of time as measured by `Instant.duration()`."""
 
-    # Start time of the duration, as seconds since epoch.
-    start: float
-    # Stop time of the duration, as seconds since epoch.
-    stop: float
-    # Elapsed time of the duration, in seconds, measured using a performance counter for precise timing.
-    elapsed_s: float
+    start: Instant
+    stop: Instant
 
-    def start_utc(self) -> datetime:
-        """Start time of the duration, as a datetime in UTC."""
-        return datetime.fromtimestamp(self.start, timezone.utc)
-
-    def stop_utc(self) -> datetime:  # pragma: no cover
-        """Stop time of the duration, as a datetime in UTC."""
-        return datetime.fromtimestamp(self.stop, timezone.utc)
+    @property
+    def elapsed_s(self) -> float:
+        """Elapsed time of the duration, in seconds, measured using a performance counter for precise timing."""
+        return self.stop.perf_count - self.start.perf_count
 
 
 @dataclasses.dataclass

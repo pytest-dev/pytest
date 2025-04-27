@@ -391,7 +391,7 @@ class TerminalReporter:
         self._progress_nodeids_reported: set[str] = set()
         self._timing_nodeids_reported: set[str] = set()
         self._show_progress_info = self._determine_show_progress_info()
-        self._collect_report_last_instant = timing.Instant()
+        self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
 
@@ -789,11 +789,11 @@ class TerminalReporter:
         if not final:
             # Only write the "collecting" report every `REPORT_COLLECTING_RESOLUTION`.
             if (
-                self._collect_report_last_instant.duration().elapsed_s
+                self._collect_report_last_write.duration().elapsed_s
                 < REPORT_COLLECTING_RESOLUTION
             ):
                 return
-            self._collect_report_last_instant = timing.Instant()
+            self._collect_report_last_write = timing.Instant()
 
         errors = len(self.stats.get("error", []))
         skipped = len(self.stats.get("skipped", []))

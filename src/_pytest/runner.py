@@ -349,8 +349,8 @@ class CallInfo(Generic[TResult]):
             result = None
         duration = instant.duration()
         return cls(
-            start=duration.start,
-            stop=duration.stop,
+            start=duration.start.time,
+            stop=duration.stop.time,
             duration=duration.elapsed_s,
             when=when,
             result=result,

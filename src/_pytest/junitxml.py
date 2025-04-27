@@ -661,7 +661,7 @@ class LogXML:
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
                 time=f"{duration.elapsed_s:.3f}",
-                timestamp=duration.start_utc().astimezone().isoformat(),
+                timestamp=self.suite_start.as_utc().astimezone().isoformat(),
                 hostname=platform.node(),
             )
             global_properties = self._get_global_properties_node()
