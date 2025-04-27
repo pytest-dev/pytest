@@ -289,6 +289,7 @@ class LFPluginCollWrapper:
                     x
                     for x in result
                     if x.nodeid in lastfailed
+                    or x.nodeid.split("::")[0] in lastfailed
                     # Include any passed arguments (not trivial to filter).
                     or session.isinitpath(x.path)
                     # Keep all sub-collectors.
@@ -317,7 +318,7 @@ class LFPluginCollSkipfiles:
 
 
 class LFPlugin:
-    """Plugin which implements the --lf (run last-failing) option."""
+    """Plugin which implements the --lf (run -last-failing) option."""
 
     def __init__(self, config: Config) -> None:
         self.config = config
@@ -331,6 +332,17 @@ class LFPlugin:
 
         if config.getoption("lf"):
             self._last_failed_paths = self.get_last_failed_paths()
+            config.pluginmanager.register(
+                LFPluginCollWrapper(self), "lfplugin-collwrapper"
+            )
+
+
+        if config.getoption("lff"):
+            self._last_failed_paths = self.get_last_failed_paths()
+            _lastfailed=self.lastfailed.copy()
+            for lf in self.lastfailed:
+                _lastfailed[lf.split("::")[0]] = self.lastfailed[lf]
+            self.lastfailed=_lastfailed
             config.pluginmanager.register(
                 LFPluginCollWrapper(self), "lfplugin-collwrapper"
             )
@@ -429,6 +441,7 @@ class LFPlugin:
             config.cache.set("cache/lastfailed", self.lastfailed)
 
 
+
 class NFPlugin:
     """Plugin which implements the --nf (run new-first) option."""
 
@@ -483,6 +496,14 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         dest="lf",
         help="Rerun only the tests that failed "
+        "at the last run (or all if none failed)",
+    )
+    group.addoption(
+        "--lff",
+        "--last-failed-files",
+        action="store_true",
+        dest="lff",
+        help="rerun all tests in file with last-failed tests"
         "at the last run (or all if none failed)",
     )
     group.addoption(

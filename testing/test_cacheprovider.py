@@ -328,6 +328,8 @@ class TestLastFailed:
         result = pytester.runpytest("--lf", "--cache-clear")
         result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
 
+
+
     def test_failedfirst_order(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             test_a="def test_always_passes(): pass",
@@ -437,6 +439,40 @@ class TestLastFailed:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 failed in*"])
+
+    def test_lastfailed_for_whole_files(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.setattr("sys.dont_write_bytecode", True)
+        p = pytester.makepyfile(
+            """
+            def test_1(): assert 0
+            def test_2(): assert 0
+            def test_3(): assert 1
+            """
+        )
+        result = pytester.runpytest(str(p))
+        result.stdout.fnmatch_lines(["*2 failed*"])
+        p = pytester.makepyfile(
+            """
+            def test_1(): assert 1
+            def test_2(): assert 0
+            def test_3(): assert 0
+            """
+        )
+        result = pytester.runpytest(str(p), "--lff")
+        result.stdout.fnmatch_lines(["*2 failed*1 passed*"])
+
+        pytester.path.joinpath(".pytest_cache", ".git").mkdir(parents=True)
+        result = pytester.runpytest(str(p), "--lff", "--cache-clear")
+        result.stdout.fnmatch_lines(["*2 failed*1 passed*"])
+        assert pytester.path.joinpath(".pytest_cache", "README.md").is_file()
+        assert pytester.path.joinpath(".pytest_cache", ".git").is_dir()
+
+        # Run this again to make sure clear-cache is robust
+        if os.path.isdir(".pytest_cache"):
+            shutil.rmtree(".pytest_cache")
+        result = pytester.runpytest("--lff", "--cache-clear")
+        result.stdout.fnmatch_lines(["*2 failed*1 passed*"])
+
 
     @pytest.mark.parametrize("parent", ("directory", "package"))
     def test_terminal_report_lastfailed(self, pytester: Pytester, parent: str) -> None:
