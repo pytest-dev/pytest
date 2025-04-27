@@ -337,7 +337,7 @@ class LFPlugin:
             )
 
 
-        if config.getoption("lff"):
+        if config.getoption("flf"):
             self._last_failed_paths = self.get_last_failed_paths()
             _lastfailed=self.lastfailed.copy()
             for lf in self.lastfailed:
@@ -502,8 +502,8 @@ def pytest_addoption(parser: Parser) -> None:
         "--lff",
         "--last-failed-files",
         action="store_true",
-        dest="lff",
-        help="rerun all tests in file with last-failed tests"
+        dest="flf",
+        help="rerun all tests in files with last-failed tests"
         "at the last run (or all if none failed)",
     )
     group.addoption(

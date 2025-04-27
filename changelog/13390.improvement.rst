@@ -1,1 +1,1 @@
-Add an option to rerun all tests in file with last-failed
+Add an option to rerun all tests in files with last-failed
