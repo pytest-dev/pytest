@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-import time
 from types import ModuleType
 
 from _pytest.config import ExitCode
@@ -16,6 +15,7 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
+import _pytest.timing
 import pytest
 
 
@@ -451,9 +451,9 @@ def test_pytester_run_with_timeout(pytester: Pytester) -> None:
 
     timeout = 120
 
-    start = time.time()
+    start = _pytest.timing.perf_counter()
     result = pytester.runpytest_subprocess(testfile, timeout=timeout)
-    end = time.time()
+    end = _pytest.timing.perf_counter()
     duration = end - start
 
     assert result.ret == ExitCode.OK

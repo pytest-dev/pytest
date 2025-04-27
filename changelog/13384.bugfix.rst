@@ -1,0 +1,1 @@
+Fixed an issue where pytest could report negative durations.
