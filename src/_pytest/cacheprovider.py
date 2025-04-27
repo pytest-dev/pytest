@@ -336,13 +336,12 @@ class LFPlugin:
                 LFPluginCollWrapper(self), "lfplugin-collwrapper"
             )
 
-
         if config.getoption("flf"):
             self._last_failed_paths = self.get_last_failed_paths()
-            _lastfailed=self.lastfailed.copy()
+            _lastfailed = self.lastfailed.copy()
             for lf in self.lastfailed:
                 _lastfailed[lf.split("::")[0]] = self.lastfailed[lf]
-            self.lastfailed=_lastfailed
+            self.lastfailed = _lastfailed
             config.pluginmanager.register(
                 LFPluginCollWrapper(self), "lfplugin-collwrapper"
             )
@@ -439,7 +438,6 @@ class LFPlugin:
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
         if saved_lastfailed != self.lastfailed:
             config.cache.set("cache/lastfailed", self.lastfailed)
-
 
 
 class NFPlugin:
