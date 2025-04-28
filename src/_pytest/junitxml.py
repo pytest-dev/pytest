@@ -642,7 +642,7 @@ class LogXML:
         os.makedirs(dirname, exist_ok=True)
 
         with open(self.logfile, "w", encoding="utf-8") as logfile:
-            duration = self.suite_start.duration()
+            duration = self.suite_start.elapsed()
 
             numtests = (
                 self.stats["passed"]
@@ -660,7 +660,7 @@ class LogXML:
                 failures=str(self.stats["failure"]),
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
-                time=f"{duration.elapsed_s:.3f}",
+                time=f"{duration.seconds:.3f}",
                 timestamp=self.suite_start.as_utc().astimezone().isoformat(),
                 hostname=platform.node(),
             )

@@ -1180,7 +1180,7 @@ class Pytester:
 
         assert reprec.ret is not None
         res = RunResult(
-            reprec.ret, out.splitlines(), err.splitlines(), instant.duration().elapsed_s
+            reprec.ret, out.splitlines(), err.splitlines(), instant.elapsed().seconds
         )
         res.reprec = reprec  # type: ignore
         return res
@@ -1445,7 +1445,7 @@ class Pytester:
 
         with contextlib.suppress(ValueError):
             ret = ExitCode(ret)
-        return RunResult(ret, out, err, instant.duration().elapsed_s)
+        return RunResult(ret, out, err, instant.elapsed().seconds)
 
     def _dump_lines(self, lines, fp):
         try:

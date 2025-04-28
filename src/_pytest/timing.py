@@ -31,16 +31,16 @@ class Instant:
     """
 
     # Creation time of this instant, using time.time(), to measure actual time.
-    # Use a `lambda` to initialize the default to correctly get the mocked time via `MockTiming`.
+    # Note: using a `lambda` to correctly get the mocked time via `MockTiming`.
     time: float = dataclasses.field(default_factory=lambda: time(), init=False)
 
     # Performance counter tick of the instant, used to measure precise elapsed time.
-    # Use a `lambda` to initialize the default to correctly get the mocked time via `MockTiming`.
+    # Note: using a `lambda` to correctly get the mocked time via `MockTiming`.
     perf_count: float = dataclasses.field(
         default_factory=lambda: perf_counter(), init=False
     )
 
-    def duration(self) -> Duration:
+    def elapsed(self) -> Duration:
         """Measure the duration since `Instant` was created."""
         return Duration(start=self, stop=Instant())
 
@@ -51,14 +51,14 @@ class Instant:
 
 @dataclasses.dataclass(frozen=True)
 class Duration:
-    """A span of time as measured by `Instant.duration()`."""
+    """A span of time as measured by `Instant.elapsed()`."""
 
     start: Instant
     stop: Instant
 
     @property
-    def elapsed_s(self) -> float:
-        """Elapsed time of the duration, in seconds, measured using a performance counter for precise timing."""
+    def seconds(self) -> float:
+        """Elapsed time of the duration in seconds, measured using a performance counter for precise timing."""
         return self.stop.perf_count - self.start.perf_count
 
 

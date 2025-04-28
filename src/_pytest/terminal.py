@@ -789,7 +789,7 @@ class TerminalReporter:
         if not final:
             # Only write the "collecting" report every `REPORT_COLLECTING_RESOLUTION`.
             if (
-                self._collect_report_last_write.duration().elapsed_s
+                self._collect_report_last_write.elapsed().seconds
                 < REPORT_COLLECTING_RESOLUTION
             ):
                 return
@@ -1200,7 +1200,7 @@ class TerminalReporter:
         if self.verbosity < -1:
             return
 
-        session_duration = self._session_start.duration()
+        session_duration = self._session_start.elapsed()
         (parts, main_color) = self.build_summary_stats_line()
         line_parts = []
 
@@ -1215,7 +1215,7 @@ class TerminalReporter:
         msg = ", ".join(line_parts)
 
         main_markup = {main_color: True}
-        duration = f" in {format_session_duration(session_duration.elapsed_s)}"
+        duration = f" in {format_session_duration(session_duration.seconds)}"
         duration_with_markup = self._tw.markup(duration, **main_markup)
         if display_sep:
             fullwidth += len(duration_with_markup) - len(duration)
