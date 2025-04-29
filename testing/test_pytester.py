@@ -451,13 +451,12 @@ def test_pytester_run_with_timeout(pytester: Pytester) -> None:
 
     timeout = 120
 
-    start = _pytest.timing.perf_counter()
+    instant = _pytest.timing.Instant()
     result = pytester.runpytest_subprocess(testfile, timeout=timeout)
-    end = _pytest.timing.perf_counter()
-    duration = end - start
+    duration = instant.elapsed()
 
     assert result.ret == ExitCode.OK
-    assert duration < timeout
+    assert duration.seconds < timeout
 
 
 def test_pytester_run_timeout_expires(pytester: Pytester) -> None:
