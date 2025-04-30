@@ -443,8 +443,7 @@ class TestLastFailed:
     ) -> None:
         monkeypatch.setattr("sys.dont_write_bytecode", True)
         test_a = pytester.makepyfile(
-            test_a=
-            """
+            test_a="""
             def test_1(): assert 0
             def test_2(): assert 0
             def test_3(): assert 1
@@ -452,7 +451,7 @@ class TestLastFailed:
             test_b="""
             def test_b1(): assert 1
             def test_b2(): assert 1
-        """
+        """,
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*2 failed*3 passed*"])
