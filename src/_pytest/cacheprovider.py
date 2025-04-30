@@ -289,7 +289,7 @@ class LFPluginCollWrapper:
                     x
                     for x in result
                     if x.nodeid in lastfailed
-                    or x.nodeid.split("::")[0] in lastfailed
+                    or collector.nodeid in lastfailed
                     # Include any passed arguments (not trivial to filter).
                     or session.isinitpath(x.path)
                     # Keep all sub-collectors.
