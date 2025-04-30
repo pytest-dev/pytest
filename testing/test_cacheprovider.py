@@ -328,8 +328,6 @@ class TestLastFailed:
         result = pytester.runpytest("--lf", "--cache-clear")
         result.stdout.fnmatch_lines(["*1 failed*2 passed*"])
 
-
-
     def test_failedfirst_order(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             test_a="def test_always_passes(): pass",
@@ -440,7 +438,9 @@ class TestLastFailed:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 failed in*"])
 
-    def test_lastfailed_for_whole_files(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    def test_lastfailed_for_whole_files(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
         monkeypatch.setattr("sys.dont_write_bytecode", True)
         test_a = pytester.makepyfile(
             test_a=
@@ -470,7 +470,6 @@ class TestLastFailed:
             shutil.rmtree(".pytest_cache")
         result = pytester.runpytest("--lff", "--cache-clear")
         result.stdout.fnmatch_lines(["*2 failed*3 passed*"])
-
 
     @pytest.mark.parametrize("parent", ("directory", "package"))
     def test_terminal_report_lastfailed(self, pytester: Pytester, parent: str) -> None:
