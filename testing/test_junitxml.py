@@ -1451,6 +1451,7 @@ def test_root_testsuites_tag(
     _, dom = run_and_parse(family=xunit_family)
     root = dom.get_unique_child
     assert root.tag == "testsuites"
+    root.assert_attr(name="pytest tests")
     suite_node = root.get_unique_child
     assert suite_node.tag == "testsuite"
 
