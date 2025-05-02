@@ -670,6 +670,7 @@ class LogXML:
             for node_reporter in self.node_reporters_ordered:
                 suite_node.append(node_reporter.to_xml())
             testsuites = ET.Element("testsuites")
+            testsuites.set("name", "pytest tests")
             testsuites.append(suite_node)
             logfile.write(ET.tostring(testsuites, encoding="unicode"))
 
