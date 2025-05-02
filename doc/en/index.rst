@@ -2,7 +2,8 @@
 
 .. sidebar:: **Next Open Trainings and Events**
 
-    - `pytest - simple, rapid and fun testing with Python <https://pretalx.com/pyconde-pydata-2025/talk/PDBAXQ/>`_, at `PyConDE <https://2025.pycon.de/>`_, **April 24th** (1.5), Darmstadt, Germany
+    - `pytest - simple, rapid and fun testing with Python <https://ep2025.europython.eu/session/pytest-simple-rapid-and-fun-testing-with-python/>`_, at `EuroPython 2025 <https://ep2025.europython.eu/>`_, **July 14th** (3h), Prague, Czech Republic
+    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 3th -- 5th 2026**, Leipzig (DE) / Remote
 
     Also see :doc:`previous talks and blogposts <talks>`
 
