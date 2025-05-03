@@ -20,11 +20,13 @@ class TestRaises:
             pytest.raises(RuntimeError, "int('qwe')")  # type: ignore[call-overload]
 
     def test_raises(self):
-        excinfo = pytest.raises(ValueError, int, "qwe")
+        with pytest.raises(ValueError) as excinfo:
+            int("qwe")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_function(self):
-        excinfo = pytest.raises(ValueError, int, "hello")
+        with pytest.raises(ValueError) as excinfo:
+            int("hello")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_does_not_allow_none(self):
@@ -62,7 +64,8 @@ class TestRaises:
                 pass
 
         try:
-            pytest.raises(ValueError, A())
+            with pytest.warns(pytest.PytestDeprecationWarning):
+                pytest.raises(ValueError, A())
         except pytest.fail.Exception:
             pass
 
@@ -178,7 +181,8 @@ class TestRaises:
 
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
-            pytest.raises("wrong", lambda: None)  # type: ignore[call-overload]
+            with pytest.raises("wrong"):  # type: ignore[call-overload]
+                ...  # pragma: no cover
 
     def test_invalid_arguments_to_raises(self) -> None:
         with pytest.raises(TypeError, match="unknown"):
@@ -191,7 +195,8 @@ class TestRaises:
 
     def test_no_raise_message(self) -> None:
         try:
-            pytest.raises(ValueError, int, "0")
+            with pytest.raises(ValueError):
+                int("0")
         except pytest.fail.Exception as e:
             assert e.msg == f"DID NOT RAISE {ValueError!r}"
         else:
@@ -220,9 +225,11 @@ class TestRaises:
         refcount = len(gc.get_referrers(t))
 
         if method == "function":
-            pytest.raises(ValueError, t)
+            with pytest.warns(pytest.PytestPendingDeprecationWarning):
+                pytest.raises(ValueError, t)
         elif method == "function_match":
-            pytest.raises(ValueError, t).match("^$")
+            with pytest.warns(pytest.PytestPendingDeprecationWarning):
+                pytest.raises(ValueError, t).match("^$")
         elif method == "with":
             with pytest.raises(ValueError):
                 t()
@@ -260,18 +267,23 @@ class TestRaises:
                 int("asdf", base=10)
 
         # "match" without context manager.
-        pytest.raises(ValueError, int, "asdf").match("invalid literal")
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
+            pytest.raises(ValueError, int, "asdf").match("invalid literal")
         with pytest.raises(AssertionError) as excinfo:
-            pytest.raises(ValueError, int, "asdf").match(msg)
+            with pytest.warns(pytest.PytestPendingDeprecationWarning):
+                pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
 
-        pytest.raises(TypeError, int, match="invalid")
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
+            pytest.raises(TypeError, int, match="invalid")  # type: ignore[call-overload]
 
         def tfunc(match):
             raise ValueError(f"match={match}")
 
-        pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
-        pytest.raises(ValueError, tfunc, match="").match("match=")
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
+            pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
+            pytest.raises(ValueError, tfunc, match="").match("match=")
 
         # empty string matches everything, which is probably not what the user wants
         with pytest.warns(
@@ -319,10 +331,10 @@ class TestRaises:
     def test_raises_exception_looks_iterable(self):
         class Meta(type):
             def __getitem__(self, item):
-                return 1 / 0
+                return 1 / 0  # pragma: no cover
 
             def __len__(self):
-                return 1
+                return 1  # pragma: no cover
 
         class ClassLooksIterableException(Exception, metaclass=Meta):
             pass
@@ -331,7 +343,8 @@ class TestRaises:
             Failed,
             match=r"DID NOT RAISE <class 'raises(\..*)*ClassLooksIterableException'>",
         ):
-            pytest.raises(ClassLooksIterableException, lambda: None)
+            with pytest.raises(ClassLooksIterableException):
+                ...  # pragma: no cover
 
     def test_raises_with_raising_dunder_class(self) -> None:
         """Test current behavior with regard to exceptions via __class__ (#4284)."""
@@ -403,3 +416,12 @@ class TestRaises:
 
         with pytest.raises(HTTPError, match="Not Found"):
             raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]
+
+    def test_callable_func_kwarg(self) -> None:
+        # raises previously assumed that `func` was passed as positional, but
+        # the type hint indicated it could be a keyword parameter
+        def my_raise() -> None:
+            raise ValueError
+
+        with pytest.warns(pytest.PytestPendingDeprecationWarning):
+            pytest.raises(expected_exception=ValueError, func=my_raise)
