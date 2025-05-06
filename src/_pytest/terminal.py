@@ -628,6 +628,24 @@ class TerminalReporter:
             else:
                 markup = {}
         self._progress_nodeids_reported.add(rep.nodeid)
+
+        # Calculate and send progress information to terminal tab
+        if self._show_progress_info:
+            total_items = 0
+            if hasattr(self, "_session") and self._session is not None:
+                if hasattr(self._session, "items"):
+                    total_items = len(self._session.items)
+
+            if total_items > 0:
+                # Calculate progress percentage (0-100)
+                progress = int(len(self._progress_nodeids_reported) / total_items * 100)
+                # OSC 9;4;1;XX ST sequence for progress reporting
+                # 1 = set progress value, followed by percentage (0-100)
+                progress_sequence = f"\033]9;4;1;{progress}\033\\"
+                # Only write the sequence if we're in a terminal
+                if hasattr(self._tw, "_file") and self._tw._file.isatty():
+                    print(progress_sequence, end="", file=self._tw._file, flush=True)
+
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
