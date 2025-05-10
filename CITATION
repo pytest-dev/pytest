@@ -1,16 +1,28 @@
 NOTE: Change "x.y" by the version you use. If you are unsure about which version
-you are using run: `pip show pytest`.
+you are using run: `pip show pytest`. Do not include the patch number (i.e., z in x.y.z)
 
 Text:
 
 [pytest] pytest x.y, 2004
 Krekel et al., https://github.com/pytest-dev/pytest
 
+BibLaTeX:
+
+@software{pytest,
+  title        = {pytest x.y},
+  author       = {Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Florian Bruhin},
+  year         = {2004},
+  version      = {x.y},
+  url          = {https://github.com/pytest-dev/pytest},
+  note         = {Contributors: Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Florian Bruhin and others}
+}
+
 BibTeX:
 
-@misc{pytestx.y,
-  title =        {pytest x.y},
-  author = {Krekel, Holger and Oliveira, Bruno and Pfannschmidt, Ronny and Bruynooghe, Floris and Laugher, Brianna and Bruhin, Florian},
-  year =         {2004},
-  url = {https://github.com/pytest-dev/pytest},
+@misc{pytest,
+  author       = {Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Florian Bruhin},
+  title        = {pytest x.y},
+  year         = {2004},
+  howpublished = {\url{https://github.com/pytest-dev/pytest}},
+  note         = {Version x.y. Contributors include Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin, and others.}
 }

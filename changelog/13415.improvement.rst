@@ -1,0 +1,5 @@
+The author metadata of the BibTex example is now correctly formatted with last names following first names.
+An example of BibLaTex has been added.
+BibTex and BibLaTex examples now clearly indicate that what is cited is software.
+
+-- by :user:`willynilly`
