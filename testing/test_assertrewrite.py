@@ -23,6 +23,8 @@ from typing import cast
 from unittest import mock
 import zipfile
 
+from _pytest.monkeypatch import MonkeyPatch
+
 import _pytest._code
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
