@@ -218,6 +218,10 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             if fnmatch_ex(pat, path):
                 return False
 
+        root_path = self._get_root_path()
+        if not path.is_relative_to(root_path):
+            return True
+
         if self._is_marked_for_rewrite(name, state):
             return False
 
@@ -238,12 +242,24 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         # modules not passed explicitly on the command line are only
         # rewritten if they match the naming convention for test files
         fn_path = PurePath(fn)
+        root_path = self._get_root_path()
+        if not fn_path.is_relative_to(root_path):
+            return False
+
         for pat in self.fnpats:
             if fnmatch_ex(pat, fn_path):
                 state.trace(f"matched test file {fn!r}")
                 return True
 
         return self._is_marked_for_rewrite(name, state)
+
+    @staticmethod
+    def _get_root_path():
+        try:
+            root_path = os.getcwd()
+            return root_path
+        except FileNotFoundError:
+            return os.path.dirname(os.path.abspath(sys.argv[0]))
 
     def _is_marked_for_rewrite(self, name: str, state: AssertionState) -> bool:
         try:

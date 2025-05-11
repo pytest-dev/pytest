@@ -22,6 +22,8 @@ from typing import cast
 from unittest import mock
 import zipfile
 
+from _pytest.monkeypatch import MonkeyPatch
+
 import _pytest._code
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
@@ -1954,6 +1956,27 @@ class TestEarlyRewriteBailout:
         with mock.patch.object(hook, "fnpats", ["tests/**.py"]):
             assert hook.find_spec("file") is not None
             assert self.find_spec_calls == ["file"]
+
+
+    def test_assert_excluded_rootpath(
+        self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
+    ) -> None:
+        """
+        If test files contained outside rootdir, then skip them
+        """
+        pytester.makepyfile(
+            **{
+                "file.py": """\
+                    def test_simple_failure():
+                        assert 1 + 1 == 3
+                """
+            }
+        )
+        root_path= "{0}/tests".format(os.getcwd())
+        monkeypatch.setattr("os.getcwd", lambda: root_path)
+        with mock.patch.object(hook, "fnpats", ["*.py"]):
+            assert hook.find_spec("file") is None
+
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
