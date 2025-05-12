@@ -1,0 +1,1 @@
+Added ``lru_cache`` to ``nodes._check_initialpaths_for_relpath``.

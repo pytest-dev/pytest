@@ -103,24 +103,15 @@ def test__check_initialpaths_for_relpath() -> None:
     """Ensure that it handles dirs, and does not always use dirname."""
     cwd = Path.cwd()
 
-    class FakeSession1:
-        _initialpaths = frozenset({cwd})
+    initial_paths = frozenset({cwd})
 
-    session = cast(pytest.Session, FakeSession1)
-
-    assert nodes._check_initialpaths_for_relpath(session, cwd) == ""
+    assert nodes._check_initialpaths_for_relpath(initial_paths, cwd) == ""
 
     sub = cwd / "file"
-
-    class FakeSession2:
-        _initialpaths = frozenset({cwd})
-
-    session = cast(pytest.Session, FakeSession2)
-
-    assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
+    assert nodes._check_initialpaths_for_relpath(initial_paths, sub) == "file"
 
     outside = Path("/outside-this-does-not-exist")
-    assert nodes._check_initialpaths_for_relpath(session, outside) is None
+    assert nodes._check_initialpaths_for_relpath(initial_paths, outside) is None
 
 
 def test_failure_with_changed_cwd(pytester: Pytester) -> None:
