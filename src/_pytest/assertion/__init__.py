@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Generator
 import sys
 from typing import Any
@@ -111,7 +112,7 @@ class AssertionState:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
         self.hook: rewrite.AssertionRewritingHook | None = None
-
+        self.root_path=os.getcwd()
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
     """Try to install the rewrite hook, raise SystemError if it fails."""

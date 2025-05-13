@@ -12,6 +12,7 @@ import importlib
 import inspect
 import marshal
 import os
+from os import mkdir
 from pathlib import Path
 import py_compile
 import re
@@ -1986,7 +1987,8 @@ class TestEarlyRewriteBailout:
             }
         )
         root_path = f"{os.getcwd()}/tests"
-        monkeypatch.setattr("os.getcwd", lambda: root_path)
+        mkdir(root_path)
+        monkeypatch.chdir(root_path)
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is None
 
