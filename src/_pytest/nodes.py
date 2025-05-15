@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import MutableMapping
 from functools import cached_property
+from functools import lru_cache
 from inspect import signature
 import os
 import pathlib
@@ -543,8 +544,11 @@ class Collector(Node, abc.ABC):
         return excinfo.traceback
 
 
-def _check_initialpaths_for_relpath(session: Session, path: Path) -> str | None:
-    for initial_path in session._initialpaths:
+@lru_cache(maxsize=1000)
+def _check_initialpaths_for_relpath(
+    initial_paths: frozenset[Path], path: Path
+) -> str | None:
+    for initial_path in initial_paths:
         if commonpath(path, initial_path) == initial_path:
             rel = str(path.relative_to(initial_path))
             return "" if rel == "." else rel
@@ -594,7 +598,7 @@ class FSCollector(Collector, abc.ABC):
             try:
                 nodeid = str(self.path.relative_to(session.config.rootpath))
             except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session, path)
+                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
 
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)
