@@ -112,7 +112,16 @@ class AssertionState:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
         self.hook: rewrite.AssertionRewritingHook | None = None
-        self.root_path=os.getcwd()
+
+    @property
+    def root_path(self):
+        try:
+            return os.getcwd()
+        except FileNotFoundError:
+            # Fixes for py's trying to os.getcwd() on py34
+            # when current working directory doesn't exist (previously triggered via xdist only).
+            # Ref: https://github.com/pytest-dev/py/pull/207
+            return os.path.dirname(os.path.abspath(sys.argv[0]))
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
     """Try to install the rewrite hook, raise SystemError if it fails."""
