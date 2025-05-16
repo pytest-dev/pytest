@@ -222,9 +222,6 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         if self._is_marked_for_rewrite(name, state):
             return False
 
-        if not path.is_relative_to(state.root_path):
-            return True
-
         state.trace(f"early skip of rewriting module: {name}")
         return True
 
