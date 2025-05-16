@@ -12,6 +12,7 @@ import importlib
 import inspect
 import marshal
 import os
+from os import mkdir
 from pathlib import Path
 import py_compile
 import re
@@ -1954,6 +1955,46 @@ class TestEarlyRewriteBailout:
         with mock.patch.object(hook, "fnpats", ["tests/**.py"]):
             assert hook.find_spec("file") is not None
             assert self.find_spec_calls == ["file"]
+
+    def test_assert_excluded_rootpath(
+        self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
+    ) -> None:
+        """
+        If test files contained outside rootdir, then skip them
+        """
+        pytester.makepyfile(
+            **{
+                "file.py": """\
+                    def test_simple_failure():
+                        assert 1 + 1 == 3
+                """
+            }
+        )
+        with mock.patch.object(hook, "fnpats", ["*.py"]):
+            assert hook.find_spec("file") is not None
+        root_path = f"{os.getcwd()}/tests"
+
+        if not os.path.exists(root_path):
+            mkdir(root_path)
+        monkeypatch.chdir(root_path)
+        with mock.patch.object(hook, "fnpats", ["*.py"]):
+            assert hook.find_spec("file") is None
+
+    def test_assert_excluded_rewrite_for_plugins(
+        self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
+    ) -> None:
+        plugins = {
+            "ayncio",
+            "fnpats",
+            "pytest_bdd",
+            "django",
+            "mock",
+            "pytest_twisted",
+            "trio",
+        }
+        with mock.patch.object(hook, "fnpats", ["*.py"]):
+            for plugin in plugins:
+                assert hook.find_spec(plugin) is None
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
