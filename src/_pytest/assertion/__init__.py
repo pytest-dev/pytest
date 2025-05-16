@@ -127,6 +127,7 @@ class AssertionState:
             return os.path.abspath(os.sep)
 
 
+
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
     """Try to install the rewrite hook, raise SystemError if it fails."""
     config.stash[assertstate_key] = AssertionState(config, "rewrite")
