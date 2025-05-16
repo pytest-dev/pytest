@@ -991,11 +991,19 @@ def search_pypath(module_name: str) -> str | None:
     # ValueError: not a module name
     except (AttributeError, ImportError, ValueError):
         return None
-    if spec is None or spec.origin is None or spec.origin == "namespace":
+
+    if spec is None:
         return None
-    elif spec.submodule_search_locations:
-        return os.path.dirname(spec.origin)
+    elif (
+        spec.submodule_search_locations is not None
+        and len(spec.submodule_search_locations) > 0
+    ):
+        # If submodule_search_locations is set, it's a package (regular or namespace).
+        # Typically there is a single entry, but documentation claims it can be empty too
+        #  (e.g. if the package has no physical location).
+        return spec.submodule_search_locations[0]
     else:
+        # Must be a simple module.
         return spec.origin
 
 

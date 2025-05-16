@@ -169,8 +169,13 @@ class TestResolveCollectionArgument:
         ):
             resolve_collection_argument(invocation_path, "src/pkg::foo::bar")
 
-    def test_pypath(self, invocation_path: Path) -> None:
+    @pytest.mark.parametrize("namespace_package", [False, True])
+    def test_pypath(self, namespace_package: bool, invocation_path: Path) -> None:
         """Dotted name and parts."""
+        if namespace_package:
+            # Namespace package doesn't have to contain __init__py
+            (invocation_path / "src/pkg/__init__.py").unlink()
+
         assert resolve_collection_argument(
             invocation_path, "pkg.test", as_pypath=True
         ) == CollectionArgument(
