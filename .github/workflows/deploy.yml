@@ -31,7 +31,7 @@ jobs:
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.12.0
+      uses: hynek/build-and-inspect-python-package@b5076c307dc91924a82ad150cdd1533b444d3310
       with:
         attest-build-provenance-github: 'true'
 
@@ -56,7 +56,7 @@ jobs:
         path: dist
 
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.12.4
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
       with:
         attestations: true
 
@@ -109,7 +109,7 @@ jobs:
         tox -e generate-gh-release-notes -- "$VERSION" scripts/latest-release-notes.md
 
     - name: Publish GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
       with:
         body_path: scripts/latest-release-notes.md
         files: dist/*

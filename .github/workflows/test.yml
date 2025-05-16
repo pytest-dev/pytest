@@ -40,7 +40,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.12.0
+      uses: hynek/build-and-inspect-python-package@b5076c307dc91924a82ad150cdd1533b444d3310
 
   build:
     needs: [package]
@@ -262,7 +262,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
