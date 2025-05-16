@@ -1882,6 +1882,7 @@ class TestEarlyRewriteBailout:
         if PathFinder.find_spec has been called.
         """
         import importlib.machinery
+
         self.find_spec_calls: list[str] = []
         self.initial_paths: set[Path] = set()
 
@@ -1955,7 +1956,6 @@ class TestEarlyRewriteBailout:
             assert hook.find_spec("file") is not None
             assert self.find_spec_calls == ["file"]
 
-
     def test_assert_excluded_rootpath(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
@@ -1975,20 +1975,26 @@ class TestEarlyRewriteBailout:
         root_path = f"{os.getcwd()}/tests"
 
         if not os.path.exists(root_path):
-           mkdir(root_path)
+            mkdir(root_path)
         monkeypatch.chdir(root_path)
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is None
 
-
     def test_assert_excluded_rewrite_for_plugins(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
-        plugins= {"ayncio", "fnpats", "pytest_bdd", "django", "mock", "pytest_twisted", "trio"}
+        plugins = {
+            "ayncio",
+            "fnpats",
+            "pytest_bdd",
+            "django",
+            "mock",
+            "pytest_twisted",
+            "trio",
+        }
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             for plugin in plugins:
                 assert hook.find_spec(plugin) is None
-
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"

@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-import os
 from collections.abc import Generator
+import os
 import sys
 from typing import Any
 from typing import TYPE_CHECKING
@@ -118,6 +118,7 @@ class AssertionState:
             # when current working directory doesn't exist (previously triggered via xdist only).
             # Ref: https://github.com/pytest-dev/py/pull/207
             return os.path.dirname(os.path.abspath(sys.argv[0]))
+
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
     """Try to install the rewrite hook, raise SystemError if it fails."""

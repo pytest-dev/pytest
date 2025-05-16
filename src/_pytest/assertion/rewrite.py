@@ -133,7 +133,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
         return importlib.util.spec_from_file_location(
             name,
-            fn  ,
+            fn,
             loader=self,
             submodule_search_locations=spec.submodule_search_locations,
         )
@@ -218,7 +218,6 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             if fnmatch_ex(pat, path):
                 return False
 
-
         if self._is_marked_for_rewrite(name, state):
             return False
 
@@ -246,7 +245,6 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
                 return True
 
         return self._is_marked_for_rewrite(name, state)
-
 
     def _is_marked_for_rewrite(self, name: str, state: AssertionState) -> bool:
         try:
