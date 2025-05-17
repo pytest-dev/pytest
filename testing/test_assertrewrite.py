@@ -1197,7 +1197,23 @@ def test_rewritten():
         )
         # needs to be a subprocess because pytester explicitly disables this warning
         result = pytester.runpytest_subprocess()
-        result.stdout.fnmatch_lines(["*Module already imported*: _pytest"])
+        result.stdout.fnmatch_lines(["*Module already imported*; _pytest"])
+
+    def test_rewrite_warning_ignore(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+            pytest.register_assert_rewrite("_pytest")
+        """
+        )
+        # needs to be a subprocess because pytester explicitly disables this warning
+        result = pytester.runpytest_subprocess(
+            "-W",
+            "ignore:Module already imported so cannot be rewritten; _pytest:pytest.PytestAssertRewriteWarning",
+        )
+        # Previously, when the message pattern used to contain an extra `:`, an error was raised.
+        assert not result.stderr.str().strip()
+        result.stdout.no_fnmatch_line("*Module already imported*; _pytest")
 
     def test_rewrite_module_imported_from_conftest(self, pytester: Pytester) -> None:
         pytester.makeconftest(
