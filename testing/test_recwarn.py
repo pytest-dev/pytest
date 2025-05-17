@@ -1,13 +1,19 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import re
 import sys
 import warnings
 
+from _pytest.warning_types import PytestPendingDeprecationWarning
 import pytest
 from pytest import ExitCode
 from pytest import Pytester
 from pytest import WarningsRecorder
+
+
+def wrap_escape(s: str) -> str:
+    return "^" + re.escape(s) + "$"
 
 
 def test_recwarn_stacklevel(recwarn: WarningsRecorder) -> None:
@@ -97,7 +103,8 @@ class TestWarningsRecorderChecker:
             rec.clear()
             assert len(rec.list) == 0
             assert values is rec.list
-            pytest.raises(AssertionError, rec.pop)
+            with pytest.raises(AssertionError):
+                rec.pop()
 
     def test_warn_stacklevel(self) -> None:
         """#4243"""
@@ -145,13 +152,30 @@ class TestDeprecatedCall:
 
     def test_deprecated_call_raises(self) -> None:
         with pytest.raises(pytest.fail.Exception, match="No warnings of type"):
-            pytest.deprecated_call(self.dep, 3, 5)
+            with pytest.deprecated_call():
+                self.dep(3, 5)
 
     def test_deprecated_call(self) -> None:
-        pytest.deprecated_call(self.dep, 0, 5)
+        with pytest.deprecated_call():
+            self.dep(0, 5)
 
     def test_deprecated_call_ret(self) -> None:
-        ret = pytest.deprecated_call(self.dep, 0)
+        with pytest.warns(
+            PytestPendingDeprecationWarning,
+            match=(
+                wrap_escape(
+                    "The callable form of pytest.deprecated_call will be deprecated in a future version.\n"
+                    "Use `with pytest.deprecated_call():` instead."
+                    "Full deprecation will not be made until there's a tool to automatically update"
+                    " code to use the context-manager form.\n"
+                    "See https://docs.pytest.org/en/stable/reference/deprecations.html#legacy-callable-form-of-raises-warns-and-deprecated-call"
+                )
+            ),
+        ):
+            ret = pytest.deprecated_call(self.dep, 0)
+        assert ret == 42
+        with pytest.deprecated_call():
+            ret = self.dep(0)
         assert ret == 42
 
     def test_deprecated_call_preserves(self) -> None:
@@ -170,11 +194,14 @@ class TestDeprecatedCall:
 
     def test_deprecated_explicit_call_raises(self) -> None:
         with pytest.raises(pytest.fail.Exception):
-            pytest.deprecated_call(self.dep_explicit, 3)
+            with pytest.deprecated_call():
+                self.dep_explicit(3)
 
     def test_deprecated_explicit_call(self) -> None:
-        pytest.deprecated_call(self.dep_explicit, 0)
-        pytest.deprecated_call(self.dep_explicit, 0)
+        with pytest.deprecated_call():
+            self.dep_explicit(0)
+        with pytest.deprecated_call():
+            self.dep_explicit(0)
 
     @pytest.mark.parametrize("mode", ["context_manager", "call"])
     def test_deprecated_call_no_warning(self, mode) -> None:
@@ -188,7 +215,8 @@ class TestDeprecatedCall:
         msg = "No warnings of type (.*DeprecationWarning.*, .*PendingDeprecationWarning.*)"
         with pytest.raises(pytest.fail.Exception, match=msg):
             if mode == "call":
-                pytest.deprecated_call(f)
+                with pytest.warns(PytestPendingDeprecationWarning):
+                    pytest.deprecated_call(f)
             else:
                 with pytest.deprecated_call():
                     f()
@@ -198,7 +226,7 @@ class TestDeprecatedCall:
     )
     @pytest.mark.parametrize("mode", ["context_manager", "call"])
     @pytest.mark.parametrize("call_f_first", [True, False])
-    @pytest.mark.filterwarnings("ignore")
+    @pytest.mark.filterwarnings("ignore:hi")
     def test_deprecated_call_modes(self, warning_type, mode, call_f_first) -> None:
         """Ensure deprecated_call() captures a deprecation warning as expected inside its
         block/function.
@@ -212,7 +240,8 @@ class TestDeprecatedCall:
         if call_f_first:
             assert f() == 10
         if mode == "call":
-            assert pytest.deprecated_call(f) == 10
+            with pytest.warns(PytestPendingDeprecationWarning):
+                assert pytest.deprecated_call(f) == 10
         else:
             with pytest.deprecated_call():
                 assert f() == 10
@@ -233,7 +262,8 @@ class TestDeprecatedCall:
 
             with pytest.warns(warning):
                 with pytest.raises(pytest.fail.Exception):
-                    pytest.deprecated_call(f)
+                    with pytest.warns(PytestPendingDeprecationWarning):
+                        pytest.deprecated_call(f)
                 with pytest.raises(pytest.fail.Exception):
                     with pytest.deprecated_call():
                         f()
@@ -256,32 +286,41 @@ class TestWarns:
 
     def test_several_messages(self) -> None:
         # different messages, b/c Python suppresses multiple identical warnings
-        pytest.warns(RuntimeWarning, lambda: warnings.warn("w1", RuntimeWarning))
+        with pytest.warns(RuntimeWarning):
+            warnings.warn("w1", RuntimeWarning)
         with pytest.warns(RuntimeWarning):
             with pytest.raises(pytest.fail.Exception):
-                pytest.warns(UserWarning, lambda: warnings.warn("w2", RuntimeWarning))
-        pytest.warns(RuntimeWarning, lambda: warnings.warn("w3", RuntimeWarning))
+                with pytest.warns(UserWarning):
+                    warnings.warn("w2", RuntimeWarning)
+        with pytest.warns(RuntimeWarning):
+            warnings.warn("w3", RuntimeWarning)
 
     def test_function(self) -> None:
-        pytest.warns(
-            SyntaxWarning, lambda msg: warnings.warn(msg, SyntaxWarning), "syntax"
-        )
+        with pytest.warns(
+            PytestPendingDeprecationWarning,
+            match=(
+                wrap_escape(
+                    "The callable form of pytest.warns will be deprecated in a future version.\n"
+                    "Use `with pytest.warns(...):` instead."
+                    "Full deprecation will not be made until there's a tool to automatically update"
+                    " code to use the context-manager form.\n"
+                    "See https://docs.pytest.org/en/stable/reference/deprecations.html#legacy-callable-form-of-raises-warns-and-deprecated-call"
+                )
+            ),
+        ):
+            pytest.warns(
+                SyntaxWarning, lambda msg: warnings.warn(msg, SyntaxWarning), "syntax"
+            )
 
     def test_warning_tuple(self) -> None:
-        pytest.warns(
-            (RuntimeWarning, SyntaxWarning), lambda: warnings.warn("w1", RuntimeWarning)
-        )
-        pytest.warns(
-            (RuntimeWarning, SyntaxWarning), lambda: warnings.warn("w2", SyntaxWarning)
-        )
-        with pytest.warns():
-            pytest.raises(
-                pytest.fail.Exception,
-                lambda: pytest.warns(
-                    (RuntimeWarning, SyntaxWarning),
-                    lambda: warnings.warn("w3", UserWarning),
-                ),
-            )
+        with pytest.warns((RuntimeWarning, SyntaxWarning)):
+            warnings.warn("w1", RuntimeWarning)
+        with pytest.warns((RuntimeWarning, SyntaxWarning)):
+            warnings.warn("w2", SyntaxWarning)
+        with pytest.warns(UserWarning, match="^w3$"):
+            with pytest.raises(pytest.fail.Exception):
+                with pytest.warns((RuntimeWarning, SyntaxWarning)):
+                    warnings.warn("w3", UserWarning)
 
     def test_as_contextmanager(self) -> None:
         with pytest.warns(RuntimeWarning):
@@ -420,16 +459,17 @@ class TestWarns:
                     warnings.warn("bbbbbbbbbb", UserWarning)
                     warnings.warn("cccccccccc", UserWarning)
 
-    @pytest.mark.filterwarnings("ignore")
+    @pytest.mark.filterwarnings("ignore:ohai")
     def test_can_capture_previously_warned(self) -> None:
         def f() -> int:
             warnings.warn(UserWarning("ohai"))
             return 10
 
         assert f() == 10
-        assert pytest.warns(UserWarning, f) == 10
-        assert pytest.warns(UserWarning, f) == 10
-        assert pytest.warns(UserWarning, f) != "10"  # type: ignore[comparison-overlap]
+        with pytest.warns(PytestPendingDeprecationWarning):
+            assert pytest.warns(UserWarning, f) == 10
+            assert pytest.warns(UserWarning, f) == 10
+            assert pytest.warns(UserWarning, f) != "10"  # type: ignore[comparison-overlap]
 
     def test_warns_context_manager_with_kwargs(self) -> None:
         with pytest.raises(TypeError) as excinfo:
