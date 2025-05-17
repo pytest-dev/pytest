@@ -281,7 +281,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
         self.config.issue_config_time_warning(
             PytestAssertRewriteWarning(
-                f"Module already imported so cannot be rewritten: {name}"
+                f"Module already imported so cannot be rewritten; {name}"
             ),
             stacklevel=5,
         )

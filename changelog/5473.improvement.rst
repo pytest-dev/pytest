@@ -1,0 +1,1 @@
+Replace `:` with `;` in the assertion rewrite warning message so it can be filtered using standard Python warning filters before calling :func:`pytest.main`.
