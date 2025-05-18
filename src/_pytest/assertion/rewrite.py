@@ -218,7 +218,6 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
             if fnmatch_ex(pat, path):
                 return False
 
-
         if self._is_marked_for_rewrite(name, state):
             return False
 
@@ -241,7 +240,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         fn_path = PurePath(fn)
 
         for pat in self.fnpats:
-            if fnmatch_ex(pat, fn_path) and fn_path.is_relative_to(state.root_path):
+            if fnmatch_ex(pat, fn_path) and fn_path.is_relative_to(state.rootpath):
                 state.trace(f"matched test file {fn!r}")
                 return True
 

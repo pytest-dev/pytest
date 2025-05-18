@@ -1956,11 +1956,11 @@ class TestEarlyRewriteBailout:
             assert self.find_spec_calls == ["file"]
 
 
-    def test_assert_excluded_rootpath(
+    def test_assert_rewrites_only_rootpath(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
         """
-        If test files contained outside rootdir, then skip them
+        If test files contained outside the rootpath, then skip them
         """
         pytester.makepyfile(
             **{
@@ -1972,22 +1972,58 @@ class TestEarlyRewriteBailout:
         )
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is not None
-        root_path = f"{os.getcwd()}/tests"
 
-        if not os.path.exists(root_path):
-           mkdir(root_path)
-        monkeypatch.chdir(root_path)
+        rootpath = f"{os.getcwd()}/tests"
+        if not os.path.exists(rootpath):
+           mkdir(rootpath)
+        monkeypatch.chdir(rootpath)
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is None
 
 
+    def test_assert_correct_for_conftfest(
+        self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
+    ) -> None:
+        """
+        Conftest is always rewritten regardless of the working dir
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+            @pytest.fixture
+            def fix(): return 1
+        """
+        )
+
+        rootpath = f"{os.getcwd()}/tests"
+        if not os.path.exists(rootpath):
+           mkdir(rootpath)
+        monkeypatch.chdir(rootpath)
+
+        with mock.patch.object(hook, "fnpats", ["*.py"]):
+            assert hook.find_spec("conftest") is not None
+            
+
     def test_assert_excluded_rewrite_for_plugins(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
-        plugins= {"ayncio", "fnpats", "pytest_bdd", "django", "mock", "pytest_twisted", "trio"}
+        pkgdir = pytester.mkpydir("plugin")
+        pkgdir.joinpath("__init__.py").write_text(
+            "import pytest\n"
+            "@pytest.fixture\n"
+            "def special_asserter():\n"
+            "    def special_assert(x, y):\n"
+            "        assert x == y\n"
+            "    return special_assert\n",
+            encoding="utf-8",
+        )
+        pytester.makeconftest('pytest_plugins = ["plugin"]')
+        rootpath = f"{os.getcwd()}/tests"
+        if not os.path.exists(rootpath):
+            mkdir(rootpath)
+        monkeypatch.chdir(rootpath)
         with mock.patch.object(hook, "fnpats", ["*.py"]):
-            for plugin in plugins:
-                assert hook.find_spec(plugin) is None
+            assert hook.find_spec("plugin") is not None
 
 
     @pytest.mark.skipif(
