@@ -114,7 +114,10 @@ class AssertionState:
         self.hook: rewrite.AssertionRewritingHook | None = None
 
     @property
-    def root_path(self):
+    def rootpath(self):
+        """
+        get current root path (current working dir)
+        """
         try:
             return os.getcwd()
         except FileNotFoundError:
