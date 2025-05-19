@@ -373,6 +373,7 @@ class TestAssertionRewrite:
         pytester.makeconftest('pytest_plugins = ["plugin"]')
         pytester.makepyfile("def test(special_asserter): special_asserter(1, 2)\n")
         result = pytester.runpytest()
+
         result.stdout.fnmatch_lines(["*assert 1 == 2*"])
 
     def test_honors_pep_235(self, pytester: Pytester, monkeypatch) -> None:
@@ -1999,11 +2000,11 @@ class TestEarlyRewriteBailout:
             assert hook.find_spec("file") is None
 
 
-    def test_assert_correct_for_conftfest(
+    def test_assert_rewrite_correct_for_conftfest(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
         """
-        Conftest is always rewritten regardless of the working dir
+        Conftest is always rewritten regardless of the root dir
         """
         pytester.makeconftest(
             """
@@ -2022,9 +2023,12 @@ class TestEarlyRewriteBailout:
             assert hook.find_spec("conftest") is not None
             
 
-    def test_assert_excluded_rewrite_for_plugins(
+    def test_assert_rewrite_correct_for_plugins(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
+        """
+        Plugins has always been rewritten regardless of the root dir
+        """
         pkgdir = pytester.mkpydir("plugin")
         pkgdir.joinpath("__init__.py").write_text(
             "import pytest\n"
@@ -2035,10 +2039,10 @@ class TestEarlyRewriteBailout:
             "    return special_assert\n",
             encoding="utf-8",
         )
-        pytester.makeconftest('pytest_plugins = ["plugin"]')
+        hook.mark_rewrite("plugin")
         rootpath = f"{os.getcwd()}/tests"
         if not os.path.exists(rootpath):
-            mkdir(rootpath)
+           mkdir(rootpath)
         monkeypatch.chdir(rootpath)
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("plugin") is not None
