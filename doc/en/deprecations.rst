@@ -14,6 +14,41 @@ Deprecated Features
 Below is a complete list of all pytest features which are considered deprecated. Using those features will issue
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
+Legacy callable form of :func:`raises <pytest.raises>`, :func:`warns <pytest.warns>` and :func:`deprecated_call <pytest.deprecated_call>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.4
+
+Pytest created the callable form of :func:`pytest.raises`, :func:`pytest.warns` and :func:`pytest.deprecated_call` before
+the ``with`` statement was added in :pep:`python 2.5 <343>`. It has been kept for a long time, but is considered harder
+to read and doesn't allow passing `match` or other parameters.
+
+.. code-block:: python
+
+    def my_warn(par1, par2, par3):
+        warnings.warn(DeprecationWarning(f"{par1}{par2}{par3}"))
+        return 6.28
+
+
+    # Deprecated form, using callable + arguments
+
+    excinfo = pytest.raises(ValueError, int, "hello")
+    ret1 = pytest.warns(DeprecationWarning, my_warns, "a", "b", "c")
+    ret2 = pytest.deprecated_call(my_warns, "d", "e", "f")
+
+    # The calls above can be upgraded to the context-manager form
+
+    with pytest.raises(ValueError) as excinfo:
+        int("hello")
+    with pytest.warns(DeprecationWarning):
+        ret1 = my_warns("a", "b", "c")
+    with pytest.deprecated_call():
+        ret2 = my_warns("d", "e", "f")
+
+
+.. note::
+   This feature is not fully deprecated as of yet, awaiting the availability of an
+   automated tool to automatically fix code making extensive use of it.
 
 .. _sync-test-async-fixture:
 
