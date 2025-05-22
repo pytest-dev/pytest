@@ -120,7 +120,7 @@ class AssertionState:
             # Fixes for py's trying to os.getcwd() on py34
             # when current working directory doesn't exist (previously triggered via xdist only).
             # Ref: https://github.com/pytest-dev/py/pull/207
-            return os.path.dirname(os.path.abspath(sys.argv[0]))
+            return os.path.abspath(os.sep)
 
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
