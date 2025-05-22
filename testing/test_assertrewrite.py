@@ -22,6 +22,7 @@ import textwrap
 from typing import cast
 from unittest import mock
 import zipfile
+
 from mock.mock import Mock
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -1300,12 +1301,12 @@ class TestAssertionRewriteHookDetails:
         )
         assert pytester.runpytest().ret == 0
 
-
     def test_rootpath_base(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
         """
         Base cases for get rootpath from AssertionState
         """
         from _pytest.assertion import AssertionState
+
         config = pytester.parseconfig()
         monkeypatch.chdir(pytester.path)
         state = AssertionState(config, "rewrite")
@@ -1317,23 +1318,26 @@ class TestAssertionRewriteHookDetails:
         state = AssertionState(config, "rewrite")
         assert state.rootpath == new_rootpath
 
-
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
     )
     @pytest.mark.skipif(
         sys.platform.startswith("sunos5"), reason="cannot remove cwd on Solaris"
     )
-    def test_rootpath_cwd_removed(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+    def test_rootpath_cwd_removed(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
         # Setup conditions for py's trying to os.getcwd() on py34
         # when current working directory doesn't exist (previously triggered via xdist only).
         # Ref: https://github.com/pytest-dev/py/pull/207
         from _pytest.assertion import AssertionState
-        config = pytester.parseconfig()
-        monkeypatch.setattr(target=os, name="getcwd", value=Mock(side_effect=FileNotFoundError))
-        state = AssertionState(config, "rewrite")
-        assert state.rootpath ==  os.path.abspath(os.sep)
 
+        config = pytester.parseconfig()
+        monkeypatch.setattr(
+            target=os, name="getcwd", value=Mock(side_effect=FileNotFoundError)
+        )
+        state = AssertionState(config, "rewrite")
+        assert state.rootpath == os.path.abspath(os.sep)
 
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion import AssertionState
@@ -1938,6 +1942,7 @@ class TestEarlyRewriteBailout:
         if PathFinder.find_spec has been called.
         """
         import importlib.machinery
+
         self.find_spec_calls: list[str] = []
         self.initial_paths: set[Path] = set()
 
@@ -2011,7 +2016,6 @@ class TestEarlyRewriteBailout:
             assert hook.find_spec("file") is not None
             assert self.find_spec_calls == ["file"]
 
-
     def test_assert_rewrites_only_rootpath(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
@@ -2031,11 +2035,10 @@ class TestEarlyRewriteBailout:
 
         rootpath = f"{os.getcwd()}/tests"
         if not os.path.exists(rootpath):
-           mkdir(rootpath)
+            mkdir(rootpath)
         monkeypatch.chdir(rootpath)
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is None
-
 
     def test_assert_rewrite_correct_for_conftfest(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
@@ -2053,12 +2056,11 @@ class TestEarlyRewriteBailout:
 
         rootpath = f"{os.getcwd()}/tests"
         if not os.path.exists(rootpath):
-           mkdir(rootpath)
+            mkdir(rootpath)
         monkeypatch.chdir(rootpath)
 
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("conftest") is not None
-            
 
     def test_assert_rewrite_correct_for_plugins(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
@@ -2079,11 +2081,10 @@ class TestEarlyRewriteBailout:
         hook.mark_rewrite("plugin")
         rootpath = f"{os.getcwd()}/tests"
         if not os.path.exists(rootpath):
-           mkdir(rootpath)
+            mkdir(rootpath)
         monkeypatch.chdir(rootpath)
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("plugin") is not None
-
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"

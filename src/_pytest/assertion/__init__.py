@@ -112,7 +112,7 @@ class AssertionState:
     @property
     def rootpath(self):
         """
-        get current root path (current working dir)
+        Get current root path (current working dir)
         """
         try:
             return os.getcwd()
