@@ -22,6 +22,7 @@ import textwrap
 from typing import cast
 from unittest import mock
 import zipfile
+from mock.mock import Mock
 
 import _pytest._code
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
@@ -36,6 +37,7 @@ from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
 import pytest
@@ -1279,6 +1281,41 @@ class TestAssertionRewriteHookDetails:
                 import sys; sys.meta_path = []"""
         )
         assert pytester.runpytest().ret == 0
+
+
+    def test_rootpath_base(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+        """
+        Base cases for get rootpath from AssertionState
+        """
+        from _pytest.assertion import AssertionState
+        config = pytester.parseconfig()
+        monkeypatch.chdir(pytester.path)
+        state = AssertionState(config, "rewrite")
+        assert state.rootpath == str(pytester.path)
+        new_rootpath = pytester.path + "/test"
+        if not os.path.exists(new_rootpath):
+            os.mkdir(new_rootpath)
+        monkeypatch.chdir(new_rootpath)
+        state = AssertionState(config, "rewrite")
+        assert state.rootpath == new_rootpath
+
+
+    @pytest.mark.skipif(
+        sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
+    )
+    @pytest.mark.skipif(
+        sys.platform.startswith("sunos5"), reason="cannot remove cwd on Solaris"
+    )
+    def test_rootpath_cwd_removed(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+        # Setup conditions for py's trying to os.getcwd() on py34
+        # when current working directory doesn't exist (previously triggered via xdist only).
+        # Ref: https://github.com/pytest-dev/py/pull/207
+        from _pytest.assertion import AssertionState
+        config = pytester.parseconfig()
+        monkeypatch.setattr(target=os, name="getcwd", value=Mock(side_effect=FileNotFoundError))
+        state = AssertionState(config, "rewrite")
+        assert state.rootpath ==  os.path.abspath(os.sep)
+
 
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion import AssertionState
