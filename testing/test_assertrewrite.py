@@ -1309,7 +1309,7 @@ class TestAssertionRewriteHookDetails:
         monkeypatch.chdir(pytester.path)
         state = AssertionState(config, "rewrite")
         assert state.rootpath == str(pytester.path)
-        new_rootpath = pytester.path + "/test"
+        new_rootpath = str(pytester.path) + "/test"
         if not os.path.exists(new_rootpath):
             os.mkdir(new_rootpath)
         monkeypatch.chdir(new_rootpath)
