@@ -111,20 +111,14 @@ class AssertionState:
     def __init__(self, config: Config, mode) -> None:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
+        self.config=config
         self.hook: rewrite.AssertionRewritingHook | None = None
 
     @property
     def rootpath(self):
+        """Get current root path (current working dir)
         """
-        Get current root path (current working dir)
-        """
-        try:
-            return os.getcwd()
-        except FileNotFoundError:
-            # Fixes for py's trying to os.getcwd() on py34
-            # when current working directory doesn't exist (previously triggered via xdist only).
-            # Ref: https://github.com/pytest-dev/py/pull/207
-            return os.path.abspath(os.sep)
+        return str(self.config.invocation_params.dir)
 
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:

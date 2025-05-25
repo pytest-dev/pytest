@@ -1308,13 +1308,16 @@ class TestAssertionRewriteHookDetails:
         from _pytest.assertion import AssertionState
 
         config = pytester.parseconfig()
-        monkeypatch.chdir(pytester.path)
         state = AssertionState(config, "rewrite")
-        assert state.rootpath == str(pytester.path)
-        new_rootpath = str(pytester.path) + "/test"
+        assert state.rootpath == str(config.invocation_params.dir)
+        new_rootpath =str(pytester.path / "test")
         if not os.path.exists(new_rootpath):
             os.mkdir(new_rootpath)
-        monkeypatch.chdir(new_rootpath)
+        monkeypatch.setattr(config,"invocation_params", Config.InvocationParams(
+            args= (),
+            plugins=(),
+            dir=Path(new_rootpath),
+        ))
         state = AssertionState(config, "rewrite")
         assert state.rootpath == new_rootpath
 
@@ -1324,20 +1327,6 @@ class TestAssertionRewriteHookDetails:
     @pytest.mark.skipif(
         sys.platform.startswith("sunos5"), reason="cannot remove cwd on Solaris"
     )
-    def test_rootpath_cwd_removed(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch
-    ) -> None:
-        # Setup conditions for py's trying to os.getcwd() on py34
-        # when current working directory doesn't exist (previously triggered via xdist only).
-        # Ref: https://github.com/pytest-dev/py/pull/207
-        from _pytest.assertion import AssertionState
-
-        config = pytester.parseconfig()
-        monkeypatch.setattr(
-            target=os, name="getcwd", value=Mock(side_effect=FileNotFoundError)
-        )
-        state = AssertionState(config, "rewrite")
-        assert state.rootpath == os.path.abspath(os.sep)
 
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion import AssertionState
@@ -2036,7 +2025,11 @@ class TestEarlyRewriteBailout:
         rootpath = f"{os.getcwd()}/tests"
         if not os.path.exists(rootpath):
             mkdir(rootpath)
-        monkeypatch.chdir(rootpath)
+        monkeypatch.setattr(pytester._request.config,"invocation_params", Config.InvocationParams(
+            args= (),
+            plugins=(),
+            dir=Path(rootpath),
+        ))
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is None
 
@@ -2057,8 +2050,15 @@ class TestEarlyRewriteBailout:
         rootpath = f"{os.getcwd()}/tests"
         if not os.path.exists(rootpath):
             mkdir(rootpath)
-        monkeypatch.chdir(rootpath)
-
+        monkeypatch.setattr(
+                pytester._request.config,
+                "invocation_params",
+                Config.InvocationParams(
+                    args= (),
+                    plugins=(),
+                    dir=Path(rootpath),
+                )
+        )
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("conftest") is not None
 
@@ -2082,7 +2082,15 @@ class TestEarlyRewriteBailout:
         rootpath = f"{os.getcwd()}/tests"
         if not os.path.exists(rootpath):
             mkdir(rootpath)
-        monkeypatch.chdir(rootpath)
+        monkeypatch.setattr(
+                pytester._request.config,
+                "invocation_params",
+                Config.InvocationParams(
+                    args= (),
+                    plugins=(),
+                    dir=Path(rootpath),
+                )
+        )
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("plugin") is not None
 
