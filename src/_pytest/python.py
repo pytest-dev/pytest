@@ -1270,14 +1270,13 @@ class Metafunc:
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
-        # Add funcargs as fixturedefs to fixtureinfo.arg2fixturedefs by registering
-        # artificial "pseudo" FixtureDef's so that later at test execution time we can
-        # rely on a proper FixtureDef to exist for fixture setup.
+        # Add direct parametrizations as fixturedefs to arg2fixturedefs by
+        # registering artificial "pseudo" FixtureDef's such that later at test
+        # setup time we can rely on FixtureDefs to exist for all argnames.
         node = None
-        # If we have a scope that is higher than function, we need
-        # to make sure we only ever create an according fixturedef on
-        # a per-scope basis. We thus store and cache the fixturedef on the
-        # node related to the scope.
+        # For scopes higher than function, a "pseudo" FixtureDef might have
+        # already been created for the scope. We thus store and cache the
+        # FixtureDef on the node related to the scope.
         if scope_ is not Scope.Function:
             collector = self.definition.parent
             assert collector is not None
