@@ -1168,7 +1168,7 @@ class Metafunc:
         """Add new invocations to the underlying test function using the list
         of argvalues for the given argnames. Parametrization is performed
         during the collection phase. If you need to setup expensive resources
-        see about setting indirect to do it rather than at test setup time.
+        see about setting ``indirect`` to do it at test setup time instead.
 
         Can be called multiple times per test function (but only on different
         argument names), in which case each call parametrizes all previous
