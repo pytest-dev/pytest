@@ -1270,6 +1270,10 @@ class Metafunc:
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
+        # Calculate directness.
+        arg_directness = self._resolve_args_directness(argnames, indirect)
+        self._params_directness.update(arg_directness)
+
         # Add direct parametrizations as fixturedefs to arg2fixturedefs by
         # registering artificial "pseudo" FixtureDef's such that later at test
         # setup time we can rely on FixtureDefs to exist for all argnames.
@@ -1277,7 +1281,9 @@ class Metafunc:
         # For scopes higher than function, a "pseudo" FixtureDef might have
         # already been created for the scope. We thus store and cache the
         # FixtureDef on the node related to the scope.
-        if scope_ is not Scope.Function:
+        if scope_ is Scope.Function:
+            name2pseudofixturedef = None
+        else:
             collector = self.definition.parent
             assert collector is not None
             node = get_scope_node(collector, scope_)
@@ -1293,15 +1299,10 @@ class Metafunc:
                     node = collector.session
                 else:
                     assert False, f"Unhandled missing scope: {scope}"
-        if node is None:
-            name2pseudofixturedef = None
-        else:
             default: dict[str, FixtureDef[Any]] = {}
             name2pseudofixturedef = node.stash.setdefault(
                 name2pseudofixturedef_key, default
             )
-        arg_directness = self._resolve_args_directness(argnames, indirect)
-        self._params_directness.update(arg_directness)
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
