@@ -132,6 +132,12 @@ def get_scope_package(
 
 
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
+    """Get the closest parent node (including self) which matches the given
+    scope.
+
+    If there is no parent node for the scope (e.g. asking for class scope on a
+    Module, or on a Function when not defined in a class), returns None.
+    """
     import _pytest.python
 
     if scope is Scope.Function:
