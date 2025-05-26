@@ -78,6 +78,33 @@ def get_empty_parameterset_mark(
 
 
 class ParameterSet(NamedTuple):
+    """A set of values for a set of parameters along with associated marks and
+    an optional ID for the set.
+
+    Examples::
+
+        pytest.param(1, 2, 3)
+        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+
+        pytest.param("hello", id="greeting")
+        # ParameterSet(values=("hello",), marks=(), id="greeting")
+
+        # Parameter set with marks
+        pytest.param(42, marks=pytest.mark.xfail)
+        # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
+
+        # From parametrize mark (parameter names + list of parameter sets)
+        pytest.mark.parametrize(
+            ("a", "b", "expected"),
+            [
+                (1, 2, 3),
+                pytest.param(40, 2, 42, id="everything"),
+            ],
+        )
+        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+        # ParameterSet(values=(2, 2, 3), marks=(), id="everything")
+    """
+
     values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
     id: str | _HiddenParam | None
