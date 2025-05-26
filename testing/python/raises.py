@@ -401,5 +401,7 @@ class TestRaises:
         """
         from urllib.error import HTTPError
 
-        with pytest.raises(HTTPError, match="Not Found"):
+        with pytest.raises(HTTPError, match="Not Found") as exc_info:
             raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]
+        with exc_info.value:
+            pass
