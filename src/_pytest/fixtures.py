@@ -132,6 +132,12 @@ def get_scope_package(
 
 
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
+    """Get the closest parent node (including self) which matches the given
+    scope.
+
+    If there is no parent node for the scope (e.g. asking for class scope on a
+    Module, or on a Function when not defined in a class), returns None.
+    """
     import _pytest.python
 
     if scope is Scope.Function:
@@ -165,10 +171,21 @@ def getfixturemarker(obj: object) -> FixtureFunctionMarker | None:
 
 
 @dataclasses.dataclass(frozen=True)
-class FixtureArgKey:
+class ParamArgKey:
+    """A key for a high-scoped parameter used by an item.
+
+    For use as a hashable key in `reorder_items`. The combination of fields
+    is meant to uniquely identify a particular "instance" of a param,
+    potentially shared by multiple items in a scope.
+    """
+
+    #: The param name.
     argname: str
     param_index: int
+    #: For scopes Package, Module, Class, the path to the file (directory in
+    #: Package's case) of the package/module/class where the item is defined.
     scoped_item_path: Path | None
+    #: For Class scope, the class where the item is defined.
     item_cls: type | None
 
 
@@ -176,11 +193,8 @@ _V = TypeVar("_V")
 OrderedSet = dict[_V, None]
 
 
-def get_parametrized_fixture_argkeys(
-    item: nodes.Item, scope: Scope
-) -> Iterator[FixtureArgKey]:
-    """Return list of keys for all parametrized arguments which match
-    the specified scope."""
+def get_param_argkeys(item: nodes.Item, scope: Scope) -> Iterator[ParamArgKey]:
+    """Return all ParamArgKeys for item matching the specified high scope."""
     assert scope is not Scope.Function
 
     try:
@@ -206,19 +220,17 @@ def get_parametrized_fixture_argkeys(
         if callspec._arg2scope[argname] != scope:
             continue
         param_index = callspec.indices[argname]
-        yield FixtureArgKey(argname, param_index, scoped_item_path, item_cls)
+        yield ParamArgKey(argname, param_index, scoped_item_path, item_cls)
 
 
 def reorder_items(items: Sequence[nodes.Item]) -> list[nodes.Item]:
-    argkeys_by_item: dict[Scope, dict[nodes.Item, OrderedSet[FixtureArgKey]]] = {}
-    items_by_argkey: dict[
-        Scope, dict[FixtureArgKey, OrderedDict[nodes.Item, None]]
-    ] = {}
+    argkeys_by_item: dict[Scope, dict[nodes.Item, OrderedSet[ParamArgKey]]] = {}
+    items_by_argkey: dict[Scope, dict[ParamArgKey, OrderedDict[nodes.Item, None]]] = {}
     for scope in HIGH_SCOPES:
         scoped_argkeys_by_item = argkeys_by_item[scope] = {}
         scoped_items_by_argkey = items_by_argkey[scope] = defaultdict(OrderedDict)
         for item in items:
-            argkeys = dict.fromkeys(get_parametrized_fixture_argkeys(item, scope))
+            argkeys = dict.fromkeys(get_param_argkeys(item, scope))
             if argkeys:
                 scoped_argkeys_by_item[item] = argkeys
                 for argkey in argkeys:
@@ -234,9 +246,9 @@ def reorder_items(items: Sequence[nodes.Item]) -> list[nodes.Item]:
 
 def reorder_items_atscope(
     items: OrderedSet[nodes.Item],
-    argkeys_by_item: Mapping[Scope, Mapping[nodes.Item, OrderedSet[FixtureArgKey]]],
+    argkeys_by_item: Mapping[Scope, Mapping[nodes.Item, OrderedSet[ParamArgKey]]],
     items_by_argkey: Mapping[
-        Scope, Mapping[FixtureArgKey, OrderedDict[nodes.Item, None]]
+        Scope, Mapping[ParamArgKey, OrderedDict[nodes.Item, None]]
     ],
     scope: Scope,
 ) -> OrderedSet[nodes.Item]:
@@ -246,7 +258,7 @@ def reorder_items_atscope(
     scoped_items_by_argkey = items_by_argkey[scope]
     scoped_argkeys_by_item = argkeys_by_item[scope]
 
-    ignore: set[FixtureArgKey] = set()
+    ignore: set[ParamArgKey] = set()
     items_deque = deque(items)
     items_done: OrderedSet[nodes.Item] = {}
     while items_deque:

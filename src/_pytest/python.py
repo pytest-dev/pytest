@@ -1056,6 +1056,7 @@ class CallSpec2:
     params: dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg index.
     indices: dict[str, int] = dataclasses.field(default_factory=dict)
+    # arg name -> parameter scope.
     # Used for sorting parametrized resources.
     _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
     # Parts which will be added to the item's name in `[..]` separated by "-".
@@ -1168,7 +1169,7 @@ class Metafunc:
         """Add new invocations to the underlying test function using the list
         of argvalues for the given argnames. Parametrization is performed
         during the collection phase. If you need to setup expensive resources
-        see about setting indirect to do it rather than at test setup time.
+        see about setting ``indirect`` to do it at test setup time instead.
 
         Can be called multiple times per test function (but only on different
         argument names), in which case each call parametrizes all previous
@@ -1192,7 +1193,7 @@ class Metafunc:
             If N argnames were specified, argvalues must be a list of
             N-tuples, where each tuple-element specifies a value for its
             respective argname.
-        :type argvalues: Iterable[_pytest.mark.structures.ParameterSet | Sequence[object] | object]
+
         :param indirect:
             A list of arguments' names (subset of argnames) or a boolean.
             If True the list contains all names from the argnames. Each
@@ -1270,15 +1271,20 @@ class Metafunc:
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
-        # Add funcargs as fixturedefs to fixtureinfo.arg2fixturedefs by registering
-        # artificial "pseudo" FixtureDef's so that later at test execution time we can
-        # rely on a proper FixtureDef to exist for fixture setup.
+        # Calculate directness.
+        arg_directness = self._resolve_args_directness(argnames, indirect)
+        self._params_directness.update(arg_directness)
+
+        # Add direct parametrizations as fixturedefs to arg2fixturedefs by
+        # registering artificial "pseudo" FixtureDef's such that later at test
+        # setup time we can rely on FixtureDefs to exist for all argnames.
         node = None
-        # If we have a scope that is higher than function, we need
-        # to make sure we only ever create an according fixturedef on
-        # a per-scope basis. We thus store and cache the fixturedef on the
-        # node related to the scope.
-        if scope_ is not Scope.Function:
+        # For scopes higher than function, a "pseudo" FixtureDef might have
+        # already been created for the scope. We thus store and cache the
+        # FixtureDef on the node related to the scope.
+        if scope_ is Scope.Function:
+            name2pseudofixturedef = None
+        else:
             collector = self.definition.parent
             assert collector is not None
             node = get_scope_node(collector, scope_)
@@ -1294,15 +1300,10 @@ class Metafunc:
                     node = collector.session
                 else:
                     assert False, f"Unhandled missing scope: {scope}"
-        if node is None:
-            name2pseudofixturedef = None
-        else:
             default: dict[str, FixtureDef[Any]] = {}
             name2pseudofixturedef = node.stash.setdefault(
                 name2pseudofixturedef_key, default
             )
-        arg_directness = self._resolve_args_directness(argnames, indirect)
-        self._params_directness.update(arg_directness)
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
