@@ -9,7 +9,17 @@ from typing import Any
 from typing import cast
 from typing import NoReturn
 from typing import Protocol
+from typing import TYPE_CHECKING
 from typing import TypeVar
+
+
+if TYPE_CHECKING:
+    from typing_extensions import ParamSpec
+
+    _P = ParamSpec("_P")
+else:
+    # in runtime context, _P needs to be a type variable when used in a Protocol
+    _P = TypeVar("_P")
 
 from .warning_types import PytestDeprecationWarning
 
@@ -80,18 +90,21 @@ class Exit(Exception):
 # We need a callable protocol to add attributes, for discussion see
 # https://github.com/python/mypy/issues/2087.
 
-_F = TypeVar("_F", bound=Callable[..., object])
+_R = TypeVar("_R", covariant=True)
 _ET = TypeVar("_ET", bound=type[BaseException])
 
 
-class _WithException(Protocol[_F, _ET]):
+class _WithException(Protocol[_P, _R, _ET]):
     Exception: _ET
-    __call__: _F
+
+    def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R: ...
 
 
-def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _ET]]:
-    def decorate(func: _F) -> _WithException[_F, _ET]:
-        func_with_exception = cast(_WithException[_F, _ET], func)
+def _with_exception(
+    exception_type: _ET,
+) -> Callable[[Callable[_P, _R]], _WithException[_P, _R, _ET]]:
+    def decorate(func: Callable[_P, _R]) -> _WithException[_P, _R, _ET]:
+        func_with_exception = cast(_WithException[_P, _R, _ET], func)
         func_with_exception.Exception = exception_type
         return func_with_exception
 
