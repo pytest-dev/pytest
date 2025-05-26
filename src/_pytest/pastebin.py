@@ -78,6 +78,7 @@ def create_new_paste(contents: str | bytes) -> str:
     import re
     from urllib.parse import urlencode
     from urllib.request import urlopen
+    from urllib.error import HTTPError
 
     params = {"code": contents, "lexer": "text", "expiry": "1week"}
     url = "https://bpa.st"
@@ -85,8 +86,11 @@ def create_new_paste(contents: str | bytes) -> str:
         response: str = (
             urlopen(url, data=urlencode(params).encode("ascii")).read().decode("utf-8")
         )
-    except OSError as exc_info:  # urllib errors
-        return f"bad response: {exc_info}"
+    except HTTPError as e:  # urllib.error errors
+        with e:
+            return f"bad response: {e}"
+    except OSError as e:  # urllib errors
+        return f"bad response: {e}"
     m = re.search(r'href="/raw/(\w+)"', response)
     if m:
         return f"{url}/show/{m.group(1)}"
