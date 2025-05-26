@@ -76,9 +76,9 @@ def create_new_paste(contents: str | bytes) -> str:
     :returns: URL to the pasted contents, or an error message.
     """
     import re
+    from urllib.error import HTTPError
     from urllib.parse import urlencode
     from urllib.request import urlopen
-    from urllib.error import HTTPError
 
     params = {"code": contents, "lexer": "text", "expiry": "1week"}
     url = "https://bpa.st"
