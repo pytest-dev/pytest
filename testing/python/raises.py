@@ -407,5 +407,4 @@ class TestRaises:
             raise HTTPError(
                 code=404, msg="Not Found", fp=io.BytesIO(), hdrs=Message(), url=""
             )
-        with exc_info.value:
-            pass
+        exc_info.value.close()  # avoid a resource warning
