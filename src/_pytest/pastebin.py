@@ -87,7 +87,7 @@ def create_new_paste(contents: str | bytes) -> str:
             urlopen(url, data=urlencode(params).encode("ascii")).read().decode("utf-8")
         )
     except HTTPError as e:  # urllib.error errors
-        with e:
+        with e:  # HTTPErrors are also http responses that must be closed!
             return f"bad response: {e}"
     except OSError as e:  # urllib errors
         return f"bad response: {e}"
