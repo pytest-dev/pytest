@@ -238,8 +238,9 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         # modules not passed explicitly on the command line are only
         # rewritten if they match the naming convention for test files
         fn_path = PurePath(fn)
+
         for pat in self.fnpats:
-            if fnmatch_ex(pat, fn_path):
+            if fnmatch_ex(pat, fn_path) and fn_path.is_relative_to(state.rootpath):
                 state.trace(f"matched test file {fn!r}")
                 return True
 

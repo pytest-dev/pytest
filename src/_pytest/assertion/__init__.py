@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import os
 import sys
 from typing import Any
 from typing import TYPE_CHECKING
@@ -106,7 +107,14 @@ class AssertionState:
     def __init__(self, config: Config, mode) -> None:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
+        self.config=config
         self.hook: rewrite.AssertionRewritingHook | None = None
+
+    @property
+    def rootpath(self):
+        """Get current root path (current working dir)
+        """
+        return str(self.config.invocation_params.dir)
 
 
 def install_importhook(config: Config) -> rewrite.AssertionRewritingHook:
