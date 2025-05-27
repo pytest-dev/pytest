@@ -749,11 +749,15 @@ class Pytester:
         This is done automatically upon instantiation.
         """
         self._monkeypatch.chdir(self.path)
-        self._monkeypatch.setattr(self._request.config,"invocation_params", Config.InvocationParams(
-                args= self._request.config.invocation_params.args,
+        self._monkeypatch.setattr(
+            self._request.config,
+            "invocation_params",
+            Config.InvocationParams(
+                args=self._request.config.invocation_params.args,
                 plugins=self._request.config.invocation_params.plugins,
                 dir=Path(self._path),
-        ))
+            ),
+        )
 
     def _makefile(
         self,

@@ -23,10 +23,6 @@ from typing import cast
 from unittest import mock
 import zipfile
 
-from mock.mock import Mock
-
-from _pytest.monkeypatch import MonkeyPatch
-
 import _pytest._code
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest.assertion import util
@@ -1310,14 +1306,18 @@ class TestAssertionRewriteHookDetails:
         config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
         assert state.rootpath == str(config.invocation_params.dir)
-        new_rootpath =str(pytester.path / "test")
+        new_rootpath = str(pytester.path / "test")
         if not os.path.exists(new_rootpath):
             os.mkdir(new_rootpath)
-        monkeypatch.setattr(config,"invocation_params", Config.InvocationParams(
-            args= (),
-            plugins=(),
-            dir=Path(new_rootpath),
-        ))
+        monkeypatch.setattr(
+            config,
+            "invocation_params",
+            Config.InvocationParams(
+                args=(),
+                plugins=(),
+                dir=Path(new_rootpath),
+            ),
+        )
         state = AssertionState(config, "rewrite")
         assert state.rootpath == new_rootpath
 
@@ -1327,7 +1327,6 @@ class TestAssertionRewriteHookDetails:
     @pytest.mark.skipif(
         sys.platform.startswith("sunos5"), reason="cannot remove cwd on Solaris"
     )
-
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion import AssertionState
         from _pytest.assertion.rewrite import _write_pyc
@@ -2025,11 +2024,15 @@ class TestEarlyRewriteBailout:
         rootpath = f"{os.getcwd()}/tests"
         if not os.path.exists(rootpath):
             mkdir(rootpath)
-        monkeypatch.setattr(pytester._request.config,"invocation_params", Config.InvocationParams(
-            args= (),
-            plugins=(),
-            dir=Path(rootpath),
-        ))
+        monkeypatch.setattr(
+            pytester._request.config,
+            "invocation_params",
+            Config.InvocationParams(
+                args=(),
+                plugins=(),
+                dir=Path(rootpath),
+            ),
+        )
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is None
 
@@ -2051,13 +2054,13 @@ class TestEarlyRewriteBailout:
         if not os.path.exists(rootpath):
             mkdir(rootpath)
         monkeypatch.setattr(
-                pytester._request.config,
-                "invocation_params",
-                Config.InvocationParams(
-                    args= (),
-                    plugins=(),
-                    dir=Path(rootpath),
-                )
+            pytester._request.config,
+            "invocation_params",
+            Config.InvocationParams(
+                args=(),
+                plugins=(),
+                dir=Path(rootpath),
+            ),
         )
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("conftest") is not None
@@ -2083,13 +2086,13 @@ class TestEarlyRewriteBailout:
         if not os.path.exists(rootpath):
             mkdir(rootpath)
         monkeypatch.setattr(
-                pytester._request.config,
-                "invocation_params",
-                Config.InvocationParams(
-                    args= (),
-                    plugins=(),
-                    dir=Path(rootpath),
-                )
+            pytester._request.config,
+            "invocation_params",
+            Config.InvocationParams(
+                args=(),
+                plugins=(),
+                dir=Path(rootpath),
+            ),
         )
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("plugin") is not None
