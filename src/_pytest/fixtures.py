@@ -278,10 +278,18 @@ def reorder_items_atscope(
                     for other_scope in HIGH_SCOPES:
                         other_scoped_items_by_argkey = items_by_argkey[other_scope]
                         for argkey in argkeys_by_item[other_scope].get(i, ()):
-                            other_scoped_items_by_argkey[argkey][i] = None
-                            other_scoped_items_by_argkey[argkey].move_to_end(
-                                i, last=False
-                            )
+                            argkey_dict = other_scoped_items_by_argkey[argkey]
+                            if not hasattr(sys, "pypy_version_info"):
+                                argkey_dict[i] = None
+                                argkey_dict.move_to_end(i, last=False)
+                            else:
+                                # Work around a bug in PyPy:
+                                # https://github.com/pypy/pypy/issues/5257
+                                # https://github.com/pytest-dev/pytest/issues/13312
+                                bkp = argkey_dict.copy()
+                                argkey_dict.clear()
+                                argkey_dict[i] = None
+                                argkey_dict.update(bkp)
                 break
         if no_argkey_items:
             reordered_no_argkey_items = reorder_items_atscope(
