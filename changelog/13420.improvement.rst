@@ -1,3 +1,3 @@
-Improves test collection performance by optimizing path resolution used in :class:`FSCollector` constructor.
+Improves test collection performance by optimizing path resolution used in ``FSCollector``
 
 * updates ``nodes._check_initialpaths_for_relpath`` to reduce the number of expensive relative path calculations
