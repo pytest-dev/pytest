@@ -1,1 +1,3 @@
-Update logic of ``nodes._check_initialpaths_for_relpath``
+Improves test collection performance by optimizing path resolution used in :class:`FSCollector` constructor.
+
+* updates ``nodes._check_initialpaths_for_relpath`` to reduce the number of expensive relative path calculations
