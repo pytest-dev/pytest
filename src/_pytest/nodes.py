@@ -38,7 +38,6 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
-from _pytest.pathlib import commonpath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
@@ -548,10 +547,13 @@ class Collector(Node, abc.ABC):
 def _check_initialpaths_for_relpath(
     initial_paths: frozenset[Path], path: Path
 ) -> str | None:
-    for initial_path in initial_paths:
-        if commonpath(path, initial_path) == initial_path:
-            rel = str(path.relative_to(initial_path))
-            return "" if rel == "." else rel
+    if path in initial_paths:
+        return ""
+
+    for parent in path.parents:
+        if parent in initial_paths:
+            return str(path.relative_to(parent))
+
     return None
 
 
