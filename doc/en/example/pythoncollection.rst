@@ -325,3 +325,30 @@ with ``Test`` by setting a boolean ``__test__`` attribute to ``False``.
     # Will not be discovered as a test
     class TestClass:
         __test__ = False
+
+.. note::
+
+   If you are working with abstract test classes and want to avoid manually setting
+   the ``__test__`` attribute for subclasses, you can use a mixin class to handle
+   this automatically. For example:
+
+   .. code-block:: python
+
+       # Mixin to handle abstract test classes
+       class NotATest:
+           def __init_subclass__(cls):
+               cls.__test__ = NotATest not in cls.__bases__
+
+
+       # Abstract test class
+       class AbstractTest(NotATest):
+           pass
+
+
+       # Subclass that will be collected as a test
+       class RealTest(AbstractTest):
+           def test_example(self):
+               assert 1 + 1 == 2
+
+   This approach ensures that subclasses of abstract test classes are automatically
+   collected without needing to explicitly set the ``__test__`` attribute.

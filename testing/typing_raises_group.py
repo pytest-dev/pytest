@@ -70,9 +70,8 @@ def check_raisesexc_init() -> None:
     # At least 1 arg must be provided.
     RaisesExc()  # type: ignore
     RaisesExc(ValueError)
-    RaisesExc(ValueError, "regex")
-    RaisesExc(ValueError, "regex", check_exc)
-    RaisesExc(expected_exception=ValueError)
+    RaisesExc(ValueError, match="regex")
+    RaisesExc(ValueError, match="regex", check=check_exc)
     RaisesExc(match="regex")
     RaisesExc(check=check_exc)
     RaisesExc(ValueError, match="regex")
@@ -86,6 +85,11 @@ def check_raisesexc_init() -> None:
     RaisesExc(ValueError, check=check_filenotfound)  # type: ignore
     RaisesExc(check=check_filenotfound)  # type: ignore
     RaisesExc(FileNotFoundError, match="regex", check=check_filenotfound)
+
+    # exceptions are pos-only
+    RaisesExc(expected_exception=ValueError)  # type: ignore
+    # match and check are kw-only
+    RaisesExc(ValueError, "regex")  # type: ignore
 
 
 def raisesgroup_check_type_narrowing() -> None:

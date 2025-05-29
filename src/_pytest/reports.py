@@ -260,6 +260,7 @@ class TestReport(BaseReport):
     """
 
     __test__ = False
+
     # Defined by skipping plugin.
     # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
     wasxfail: str
@@ -304,7 +305,7 @@ class TestReport(BaseReport):
         self.longrepr = longrepr
 
         #: One of 'setup', 'call', 'teardown' to indicate runtest phase.
-        self.when = when
+        self.when: Literal["setup", "call", "teardown"] = when
 
         #: User properties is a list of tuples (name, value) that holds user
         #: defined properties of the test.

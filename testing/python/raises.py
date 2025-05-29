@@ -108,7 +108,7 @@ class TestRaises:
                            int()
 
             def test_raise_wrong_exception_passes_by():
-                with pytest.raises(AssertionError):
+                with pytest.raises(ZeroDivisionError):
                     with pytest.raises(ValueError):
                            1/0
         """
@@ -310,8 +310,8 @@ class TestRaises:
         really relevant if we got a different exception.
         """
         with pytest.raises(
-            AssertionError,
-            match=wrap_escape("`ValueError()` is not an instance of `IndexError`"),
+            ValueError,
+            match=wrap_escape("invalid literal for int() with base 10: 'asdf'"),
         ):
             with pytest.raises(IndexError, match="nomatch"):
                 int("asdf")
@@ -361,23 +361,35 @@ class TestRaises:
                 pass
 
     def test_expected_exception_is_not_a_baseexception(self) -> None:
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape(
+                "expected exception must be a BaseException type, not 'str'"
+            ),
+        ):
             with pytest.raises("hello"):  # type: ignore[call-overload]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not str" in str(excinfo.value)
 
         class NotAnException:
             pass
 
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape(
+                "expected exception must be a BaseException type, not 'NotAnException'"
+            ),
+        ):
             with pytest.raises(NotAnException):  # type: ignore[type-var]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not NotAnException" in str(excinfo.value)
 
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape(
+                "expected exception must be a BaseException type, not 'str'"
+            ),
+        ):
             with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not str" in str(excinfo.value)
 
     def test_issue_11872(self) -> None:
         """Regression test for #11872.

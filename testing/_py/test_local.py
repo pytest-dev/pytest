@@ -738,7 +738,6 @@ class TestLocalPath(CommonFSTests):
 
     def test_setmtime(self):
         import tempfile
-        import time
 
         try:
             fd, name = tempfile.mkstemp()
@@ -747,6 +746,7 @@ class TestLocalPath(CommonFSTests):
             name = tempfile.mktemp()
             open(name, "w").close()
         try:
+            # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
             mtime = int(time.time()) - 100
             path = local(name)
             assert path.mtime() != mtime
@@ -1405,6 +1405,7 @@ class TestPOSIXLocalPath:
         import time
 
         path = tmpdir.ensure("samplefile")
+        # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
         now = time.time()
         atime1 = path.atime()
         # we could wait here but timer resolution is very

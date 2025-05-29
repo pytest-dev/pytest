@@ -391,7 +391,7 @@ class TerminalReporter:
         self._progress_nodeids_reported: set[str] = set()
         self._timing_nodeids_reported: set[str] = set()
         self._show_progress_info = self._determine_show_progress_info()
-        self._collect_report_last_write: float | None = None
+        self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
 
@@ -769,7 +769,6 @@ class TerminalReporter:
         if self.isatty:
             if self.config.option.verbose >= 0:
                 self.write("collecting ... ", flush=True, bold=True)
-                self._collect_report_last_write = timing.time()
         elif self.config.option.verbose >= 1:
             self.write("collecting ... ", flush=True, bold=True)
 
@@ -788,14 +787,13 @@ class TerminalReporter:
             return
 
         if not final:
-            # Only write "collecting" report every 0.5s.
-            t = timing.time()
+            # Only write the "collecting" report every `REPORT_COLLECTING_RESOLUTION`.
             if (
-                self._collect_report_last_write is not None
-                and self._collect_report_last_write > t - REPORT_COLLECTING_RESOLUTION
+                self._collect_report_last_write.elapsed().seconds
+                < REPORT_COLLECTING_RESOLUTION
             ):
                 return
-            self._collect_report_last_write = t
+            self._collect_report_last_write = timing.Instant()
 
         errors = len(self.stats.get("error", []))
         skipped = len(self.stats.get("skipped", []))
@@ -823,7 +821,7 @@ class TerminalReporter:
     @hookimpl(trylast=True)
     def pytest_sessionstart(self, session: Session) -> None:
         self._session = session
-        self._sessionstarttime = timing.time()
+        self._session_start = timing.Instant()
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
@@ -1202,7 +1200,7 @@ class TerminalReporter:
         if self.verbosity < -1:
             return
 
-        session_duration = timing.time() - self._sessionstarttime
+        session_duration = self._session_start.elapsed()
         (parts, main_color) = self.build_summary_stats_line()
         line_parts = []
 
@@ -1217,7 +1215,7 @@ class TerminalReporter:
         msg = ", ".join(line_parts)
 
         main_markup = {main_color: True}
-        duration = f" in {format_session_duration(session_duration)}"
+        duration = f" in {format_session_duration(session_duration.seconds)}"
         duration_with_markup = self._tw.markup(duration, **main_markup)
         if display_sep:
             fullwidth += len(duration_with_markup) - len(duration)

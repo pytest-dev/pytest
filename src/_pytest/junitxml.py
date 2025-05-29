@@ -11,8 +11,6 @@ https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jen
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime
-from datetime import timezone
 import functools
 import os
 import platform
@@ -636,7 +634,7 @@ class LogXML:
         reporter._add_simple("error", "internal error", str(excrepr))
 
     def pytest_sessionstart(self) -> None:
-        self.suite_start_time = timing.time()
+        self.suite_start = timing.Instant()
 
     def pytest_sessionfinish(self) -> None:
         dirname = os.path.dirname(os.path.abspath(self.logfile))
@@ -644,8 +642,7 @@ class LogXML:
         os.makedirs(dirname, exist_ok=True)
 
         with open(self.logfile, "w", encoding="utf-8") as logfile:
-            suite_stop_time = timing.time()
-            suite_time_delta = suite_stop_time - self.suite_start_time
+            duration = self.suite_start.elapsed()
 
             numtests = (
                 self.stats["passed"]
@@ -663,10 +660,8 @@ class LogXML:
                 failures=str(self.stats["failure"]),
                 skipped=str(self.stats["skipped"]),
                 tests=str(numtests),
-                time=f"{suite_time_delta:.3f}",
-                timestamp=datetime.fromtimestamp(self.suite_start_time, timezone.utc)
-                .astimezone()
-                .isoformat(),
+                time=f"{duration.seconds:.3f}",
+                timestamp=self.suite_start.as_utc().astimezone().isoformat(),
                 hostname=platform.node(),
             )
             global_properties = self._get_global_properties_node()
@@ -675,6 +670,7 @@ class LogXML:
             for node_reporter in self.node_reporters_ordered:
                 suite_node.append(node_reporter.to_xml())
             testsuites = ET.Element("testsuites")
+            testsuites.set("name", "pytest tests")
             testsuites.append(suite_node)
             logfile.write(ET.tostring(testsuites, encoding="unicode"))
 

@@ -20,7 +20,7 @@ from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import xfail
-from _pytest.raises_group import AbstractRaises
+from _pytest.raises import AbstractRaises
 from _pytest.reports import BaseReport
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
@@ -278,7 +278,7 @@ def pytest_runtest_makereport(
         pass  # don't interfere
     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):
         assert call.excinfo.value.msg is not None
-        rep.wasxfail = "reason: " + call.excinfo.value.msg
+        rep.wasxfail = call.excinfo.value.msg
         rep.outcome = "skipped"
     elif not rep.skipped and xfailed:
         if call.excinfo:

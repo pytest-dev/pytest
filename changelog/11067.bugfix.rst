@@ -1,0 +1,3 @@
+The test report is now consistent regardless if the test xfailed via :ref:`pytest.mark.xfail <pytest.mark.xfail ref>` or :func:`pytest.fail`.
+
+Previously, *xfailed* tests via the marker would have the string ``"reason: "`` prefixed to the message, while those *xfailed* via the function did not. The prefix has been removed.

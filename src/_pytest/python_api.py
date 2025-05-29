@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-from collections.abc import Callable
 from collections.abc import Collection
 from collections.abc import Mapping
 from collections.abc import Sequence
@@ -10,22 +9,13 @@ from decimal import Decimal
 import math
 from numbers import Complex
 import pprint
-import re
 import sys
 from typing import Any
-from typing import overload
 from typing import TYPE_CHECKING
-from typing import TypeVar
-
-from _pytest._code import ExceptionInfo
-from _pytest.outcomes import fail
-from _pytest.raises_group import RaisesExc
 
 
 if TYPE_CHECKING:
     from numpy import ndarray
-
-    E = TypeVar("E", bound=BaseException, default=BaseException)
 
 
 def _compare_approx(
@@ -431,14 +421,26 @@ class ApproxScalar(ApproxBase):
     def __eq__(self, actual) -> bool:
         """Return whether the given value is equal to the expected value
         within the pre-specified tolerance."""
+
+        def is_bool(val: Any) -> bool:
+            # Check if `val` is a native bool or numpy bool.
+            if isinstance(val, bool):
+                return True
+            try:
+                import numpy as np
+
+                return isinstance(val, np.bool_)
+            except ImportError:
+                return False
+
         asarray = _as_numpy_array(actual)
         if asarray is not None:
             # Call ``__eq__()`` manually to prevent infinite-recursion with
             # numpy<1.13.  See #3748.
             return all(self.__eq__(a) for a in asarray.flat)
 
-        # Short-circuit exact equality, except for bool
-        if isinstance(self.expected, bool) and not isinstance(actual, bool):
+        # Short-circuit exact equality, except for bool and np.bool_
+        if is_bool(self.expected) and not is_bool(actual):
             return False
         elif actual == self.expected:
             return True
@@ -446,8 +448,8 @@ class ApproxScalar(ApproxBase):
         # If either type is non-numeric, fall back to strict equality.
         # NB: we need Complex, rather than just Number, to ensure that __abs__,
         # __sub__, and __float__ are defined. Also, consider bool to be
-        # nonnumeric, even though it has the required arithmetic.
-        if isinstance(self.expected, bool) or not (
+        # non-numeric, even though it has the required arithmetic.
+        if is_bool(self.expected) or not (
             isinstance(self.expected, (Complex, Decimal))
             and isinstance(actual, (Complex, Decimal))
         ):
@@ -630,8 +632,10 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         >>> 1 + 1e-8 == approx(1, rel=1e-6, abs=1e-12)
         True
 
-    You can also use ``approx`` to compare nonnumeric types, or dicts and
-    sequences containing nonnumeric types, in which case it falls back to
+    **Non-numeric types**
+
+    You can also use ``approx`` to compare non-numeric types, or dicts and
+    sequences containing non-numeric types, in which case it falls back to
     strict equality. This can be useful for comparing dicts and sequences that
     can contain optional values::
 
@@ -688,6 +692,15 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         from the
         `re_assert package <https://github.com/asottile/re-assert>`_.
 
+
+    .. note::
+
+        Unlike built-in equality, this function considers
+        booleans unequal to numeric zero or one. For example::
+
+           >>> 1 == approx(True)
+           False
+
     .. warning::
 
        .. versionchanged:: 3.2
@@ -706,10 +719,10 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
 
     .. versionchanged:: 3.7.1
        ``approx`` raises ``TypeError`` when it encounters a dict value or
-       sequence element of nonnumeric type.
+       sequence element of non-numeric type.
 
     .. versionchanged:: 6.1.0
-       ``approx`` falls back to strict equality for nonnumeric types instead
+       ``approx`` falls back to strict equality for non-numeric types instead
        of raising ``TypeError``.
     """
     # Delegate the comparison to a class that knows how to deal with the type
@@ -778,230 +791,3 @@ def _as_numpy_array(obj: object) -> ndarray | None:
         elif hasattr(obj, "__array__") or hasattr("obj", "__array_interface__"):
             return np.asarray(obj)
     return None
-
-
-# builtin pytest.raises helper
-# FIXME: This should probably me moved to 'src/_pytest.raises_group.py'
-# (and rename the file to 'raises.py')
-# since it's much more closely tied to those than to the other stuff in this file.
-
-
-@overload
-def raises(
-    expected_exception: type[E] | tuple[type[E], ...],
-    *,
-    match: str | re.Pattern[str] | None = ...,
-    check: Callable[[E], bool] = ...,
-) -> RaisesExc[E]: ...
-
-
-@overload
-def raises(
-    *,
-    match: str | re.Pattern[str],
-    # If exception_type is not provided, check() must do any typechecks itself.
-    check: Callable[[BaseException], bool] = ...,
-) -> RaisesExc[BaseException]: ...
-
-
-@overload
-def raises(*, check: Callable[[BaseException], bool]) -> RaisesExc[BaseException]: ...
-
-
-@overload
-def raises(
-    expected_exception: type[E] | tuple[type[E], ...],
-    func: Callable[..., Any],
-    *args: Any,
-    **kwargs: Any,
-) -> ExceptionInfo[E]: ...
-
-
-def raises(
-    expected_exception: type[E] | tuple[type[E], ...] | None = None,
-    *args: Any,
-    **kwargs: Any,
-) -> RaisesExc[BaseException] | ExceptionInfo[E]:
-    r"""Assert that a code block/function call raises an exception type, or one of its subclasses.
-
-    :param expected_exception:
-        The expected exception type, or a tuple if one of multiple possible
-        exception types are expected. Note that subclasses of the passed exceptions
-        will also match.
-
-    :kwparam str | re.Pattern[str] | None match:
-        If specified, a string containing a regular expression,
-        or a regular expression object, that is tested against the string
-        representation of the exception and its :pep:`678` `__notes__`
-        using :func:`re.search`.
-
-        To match a literal string that may contain :ref:`special characters
-        <re-syntax>`, the pattern can first be escaped with :func:`re.escape`.
-
-        (This is only used when ``pytest.raises`` is used as a context manager,
-        and passed through to the function otherwise.
-        When using ``pytest.raises`` as a function, you can use:
-        ``pytest.raises(Exc, func, match="passed on").match("my pattern")``.)
-
-    Use ``pytest.raises`` as a context manager, which will capture the exception of the given
-    type, or any of its subclasses::
-
-        >>> import pytest
-        >>> with pytest.raises(ZeroDivisionError):
-        ...    1/0
-
-    If the code block does not raise the expected exception (:class:`ZeroDivisionError` in the example
-    above), or no exception at all, the check will fail instead.
-
-    You can also use the keyword argument ``match`` to assert that the
-    exception matches a text or regex::
-
-        >>> with pytest.raises(ValueError, match='must be 0 or None'):
-        ...     raise ValueError("value must be 0 or None")
-
-        >>> with pytest.raises(ValueError, match=r'must be \d+$'):
-        ...     raise ValueError("value must be 42")
-
-    The ``match`` argument searches the formatted exception string, which includes any
-    `PEP-678 <https://peps.python.org/pep-0678/>`__ ``__notes__``:
-
-        >>> with pytest.raises(ValueError, match=r"had a note added"):  # doctest: +SKIP
-        ...     e = ValueError("value must be 42")
-        ...     e.add_note("had a note added")
-        ...     raise e
-
-    The context manager produces an :class:`ExceptionInfo` object which can be used to inspect the
-    details of the captured exception::
-
-        >>> with pytest.raises(ValueError) as exc_info:
-        ...     raise ValueError("value must be 42")
-        >>> assert exc_info.type is ValueError
-        >>> assert exc_info.value.args[0] == "value must be 42"
-
-    .. warning::
-
-       Given that ``pytest.raises`` matches subclasses, be wary of using it to match :class:`Exception` like this::
-
-           # Careful, this will catch ANY exception raised.
-           with pytest.raises(Exception):
-               some_function()
-
-       Because :class:`Exception` is the base class of almost all exceptions, it is easy for this to hide
-       real bugs, where the user wrote this expecting a specific exception, but some other exception is being
-       raised due to a bug introduced during a refactoring.
-
-       Avoid using ``pytest.raises`` to catch :class:`Exception` unless certain that you really want to catch
-       **any** exception raised.
-
-    .. note::
-
-       When using ``pytest.raises`` as a context manager, it's worthwhile to
-       note that normal context manager rules apply and that the exception
-       raised *must* be the final line in the scope of the context manager.
-       Lines of code after that, within the scope of the context manager will
-       not be executed. For example::
-
-           >>> value = 15
-           >>> with pytest.raises(ValueError) as exc_info:
-           ...     if value > 10:
-           ...         raise ValueError("value must be <= 10")
-           ...     assert exc_info.type is ValueError  # This will not execute.
-
-       Instead, the following approach must be taken (note the difference in
-       scope)::
-
-           >>> with pytest.raises(ValueError) as exc_info:
-           ...     if value > 10:
-           ...         raise ValueError("value must be <= 10")
-           ...
-           >>> assert exc_info.type is ValueError
-
-    **Expecting exception groups**
-
-    When expecting exceptions wrapped in :exc:`BaseExceptionGroup` or
-    :exc:`ExceptionGroup`, you should instead use :class:`pytest.RaisesGroup`.
-
-    **Using with** ``pytest.mark.parametrize``
-
-    When using :ref:`pytest.mark.parametrize ref`
-    it is possible to parametrize tests such that
-    some runs raise an exception and others do not.
-
-    See :ref:`parametrizing_conditional_raising` for an example.
-
-    .. seealso::
-
-        :ref:`assertraises` for more examples and detailed discussion.
-
-    **Legacy form**
-
-    It is possible to specify a callable by passing a to-be-called lambda::
-
-        >>> raises(ZeroDivisionError, lambda: 1/0)
-        <ExceptionInfo ...>
-
-    or you can specify an arbitrary callable with arguments::
-
-        >>> def f(x): return 1/x
-        ...
-        >>> raises(ZeroDivisionError, f, 0)
-        <ExceptionInfo ...>
-        >>> raises(ZeroDivisionError, f, x=0)
-        <ExceptionInfo ...>
-
-    The form above is fully supported but discouraged for new code because the
-    context manager form is regarded as more readable and less error-prone.
-
-    .. note::
-        Similar to caught exception objects in Python, explicitly clearing
-        local references to returned ``ExceptionInfo`` objects can
-        help the Python interpreter speed up its garbage collection.
-
-        Clearing those references breaks a reference cycle
-        (``ExceptionInfo`` --> caught exception --> frame stack raising
-        the exception --> current frame stack --> local variables -->
-        ``ExceptionInfo``) which makes Python keep all objects referenced
-        from that cycle (including all local variables in the current
-        frame) alive until the next cyclic garbage collection run.
-        More detailed information can be found in the official Python
-        documentation for :ref:`the try statement <python:try>`.
-    """
-    __tracebackhide__ = True
-
-    if not args:
-        if set(kwargs) - {"match", "check", "expected_exception"}:
-            msg = "Unexpected keyword arguments passed to pytest.raises: "
-            msg += ", ".join(sorted(kwargs))
-            msg += "\nUse context-manager form instead?"
-            raise TypeError(msg)
-
-        if expected_exception is None:
-            return RaisesExc(**kwargs)
-        return RaisesExc(expected_exception, **kwargs)
-
-    if not expected_exception:
-        raise ValueError(
-            f"Expected an exception type or a tuple of exception types, but got `{expected_exception!r}`. "
-            f"Raising exceptions is already understood as failing the test, so you don't need "
-            f"any special code to say 'this should never raise an exception'."
-        )
-    func = args[0]
-    if not callable(func):
-        raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
-    with RaisesExc(expected_exception) as excinfo:
-        func(*args[1:], **kwargs)
-    try:
-        return excinfo
-    finally:
-        del excinfo
-
-
-# note: RaisesExc/RaisesGroup uses fail() internally, so this alias
-#  indicates (to [internal] plugins?) that `pytest.raises` will
-#  raise `_pytest.outcomes.Failed`, where
-#  `outcomes.Failed is outcomes.fail.Exception is raises.Exception`
-# note: this is *not* the same as `_pytest.main.Failed`
-# note: mypy does not recognize this attribute, and it's not possible
-#  to use a protocol/decorator like the others in outcomes due to
-#  https://github.com/python/mypy/issues/18715
-raises.Exception = fail.Exception  # type: ignore[attr-defined]

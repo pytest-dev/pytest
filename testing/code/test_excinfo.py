@@ -481,9 +481,8 @@ def test_raises_exception_escapes_generic_group() -> None:
     try:
         with pytest.raises(ExceptionGroup[Exception]):
             raise ValueError("my value error")
-    except AssertionError as e:
-        assert str(e) == "`ValueError()` is not an instance of `ExceptionGroup`"
-        assert str(e.__context__) == "my value error"
+    except ValueError as e:
+        assert str(e) == "my value error"
     else:
         pytest.fail("Expected ValueError to be raised")
 
@@ -1798,6 +1797,9 @@ def _exceptiongroup_common(
             rf"FAILED test_excgroup.py::test - {pre_catch}BaseExceptionGroup: Oops \(2.*"
         )
     result.stdout.re_match_lines(match_lines)
+    # Check for traceback filtering of pytest internals.
+    result.stdout.no_fnmatch_line("*, line *, in pytest_pyfunc_call")
+    result.stdout.no_fnmatch_line("*, line *, in pytest_runtest_call")
 
 
 @pytest.mark.skipif(

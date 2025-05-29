@@ -139,9 +139,8 @@ The objectives of the ``pytest-dev`` organisation are:
 * Sharing some of the maintenance responsibility (in case a maintainer no
   longer wishes to maintain a plugin)
 
-You can submit your plugin by subscribing to the `pytest-dev mail list
-<https://mail.python.org/mailman/listinfo/pytest-dev>`_ and writing a
-mail pointing to your existing pytest plugin repository which must have
+You can submit your plugin by posting a new topic in the `pytest-dev GitHub Discussions
+<https://github.com/pytest-dev/pytest/discussions>`_ pointing to your existing pytest plugin repository which must have
 the following:
 
 - PyPI presence with packaging metadata that contains a ``pytest-``

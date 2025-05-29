@@ -647,6 +647,15 @@ class TestApprox:
         assert True != approx(False, abs=2)  # noqa: E712
         assert 1 != approx(True)
 
+    def test_expecting_bool_numpy(self) -> None:
+        """Check approx comparing with numpy.bool (#13047)."""
+        np = pytest.importorskip("numpy")
+        assert np.False_ != approx(True)
+        assert np.True_ != approx(False)
+        assert np.True_ == approx(True)
+        assert np.False_ == approx(False)
+        assert np.True_ != approx(False, abs=2)
+
     def test_list(self):
         actual = [1 + 1e-7, 2 + 1e-8]
         expected = [1, 2]
@@ -930,7 +939,7 @@ class TestApprox:
         ],
     )
     def test_nonnumeric_false_if_unequal(self, x):
-        """For nonnumeric types, x != pytest.approx(y) reduces to x != y"""
+        """For non-numeric types, x != pytest.approx(y) reduces to x != y"""
         assert "ab" != approx("abc")
         assert ["ab"] != approx(["abc"])
         # in particular, both of these should return False
