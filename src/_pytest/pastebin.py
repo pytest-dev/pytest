@@ -86,10 +86,10 @@ def create_new_paste(contents: str | bytes) -> str:
         response: str = (
             urlopen(url, data=urlencode(params).encode("ascii")).read().decode("utf-8")
         )
-    except HTTPError as e:  # urllib.error errors
+    except HTTPError as e:
         with e:  # HTTPErrors are also http responses that must be closed!
             return f"bad response: {e}"
-    except OSError as e:  # urllib errors
+    except OSError as e:  # eg urllib.error.URLError
         return f"bad response: {e}"
     m = re.search(r'href="/raw/(\w+)"', response)
     if m:
