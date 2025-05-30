@@ -253,7 +253,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
-        check-latest: ${{ endsWith(matrix.python, '-dev') }}
+        check-latest: true
         allow-prereleases: true
 
     - name: Install dependencies
