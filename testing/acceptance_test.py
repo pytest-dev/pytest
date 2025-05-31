@@ -10,6 +10,8 @@ import subprocess
 import sys
 import types
 
+import setuptools
+
 from _pytest.config import ExitCode
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
@@ -722,10 +724,14 @@ class TestInvocationVariants:
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*not*found*test_missing*"])
 
-    def test_cmdline_python_namespace_package(
+    @pytest.mark.skipif(
+        int(setuptools.__version__.split(".")[0]) >= 80,
+        reason="modern setuptools removing pkg_resources",
+    )
+    def test_cmdline_python_legacy_namespace_package(
         self, pytester: Pytester, monkeypatch
     ) -> None:
-        """Test --pyargs option with namespace packages (#1567).
+        """Test --pyargs option with legacy namespace packages (#1567).
 
         Ref: https://packaging.python.org/guides/packaging-namespace-packages/
         """

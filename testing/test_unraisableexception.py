@@ -12,6 +12,24 @@ import pytest
 
 PYPY = hasattr(sys, "pypy_version_info")
 
+UNRAISABLE_LINE = (
+    (
+        "  * PytestUnraisableExceptionWarning: Exception ignored while calling "
+        "deallocator <function BrokenDel.__del__ at *>: None"
+    )
+    if sys.version_info >= (3, 14)
+    else "  * PytestUnraisableExceptionWarning: Exception ignored in: <function BrokenDel.__del__ at *>"
+)
+
+TRACEMALLOC_LINES = (
+    ()
+    if sys.version_info >= (3, 14)
+    else (
+        "  Enable tracemalloc to get traceback where the object was allocated.",
+        "  See https* for more info.",
+    )
+)
+
 
 @pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
@@ -36,13 +54,12 @@ def test_unraisable(pytester: Pytester) -> None:
         [
             "*= warnings summary =*",
             "test_it.py::test_it",
-            "  * PytestUnraisableExceptionWarning: Exception ignored in: <function BrokenDel.__del__ at *>",
+            UNRAISABLE_LINE,
             "  ",
             "  Traceback (most recent call last):",
             "  ValueError: del is broken",
             "  ",
-            "  Enable tracemalloc to get traceback where the object was allocated.",
-            "  See https* for more info.",
+            *TRACEMALLOC_LINES,
             "    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))",
         ]
     )
@@ -75,13 +92,12 @@ def test_unraisable_in_setup(pytester: Pytester) -> None:
         [
             "*= warnings summary =*",
             "test_it.py::test_it",
-            "  * PytestUnraisableExceptionWarning: Exception ignored in: <function BrokenDel.__del__ at *>",
+            UNRAISABLE_LINE,
             "  ",
             "  Traceback (most recent call last):",
             "  ValueError: del is broken",
             "  ",
-            "  Enable tracemalloc to get traceback where the object was allocated.",
-            "  See https* for more info.",
+            *TRACEMALLOC_LINES,
             "    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))",
         ]
     )
@@ -115,13 +131,12 @@ def test_unraisable_in_teardown(pytester: Pytester) -> None:
         [
             "*= warnings summary =*",
             "test_it.py::test_it",
-            "  * PytestUnraisableExceptionWarning: Exception ignored in: <function BrokenDel.__del__ at *>",
+            UNRAISABLE_LINE,
             "  ",
             "  Traceback (most recent call last):",
             "  ValueError: del is broken",
             "  ",
-            "  Enable tracemalloc to get traceback where the object was allocated.",
-            "  See https* for more info.",
+            *TRACEMALLOC_LINES,
             "    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))",
         ]
     )

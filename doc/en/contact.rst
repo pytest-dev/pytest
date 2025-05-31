@@ -35,7 +35,6 @@ Mail
 ----
 
 - `Testing In Python`_: a mailing list for Python testing tools and discussion.
-- `pytest-dev at python.org`_ a mailing list for pytest specific announcements and discussions.
 - Mail to `core@pytest.org <mailto:core@pytest.org>`_ for topics that cannot be
   discussed in public. Mails sent there will be distributed among the members
   in the pytest core team, who can also be contacted individually:
@@ -58,4 +57,3 @@ Other
 .. _`pytest issue tracker`: https://github.com/pytest-dev/pytest/issues
 .. _`pytest discussions`: https://github.com/pytest-dev/pytest/discussions
 .. _`Testing in Python`: http://lists.idyll.org/listinfo/testing-in-python
-.. _`pytest-dev at python.org`: http://mail.python.org/mailman/listinfo/pytest-dev

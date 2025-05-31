@@ -1,0 +1,1 @@
+Fixed a possible ``KeyError`` crash on PyPy during collection of tests involving higher-scoped parameters.
