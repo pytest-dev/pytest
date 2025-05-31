@@ -887,18 +887,21 @@ class IdMaker:
     # Used only for clearer error messages.
     func_name: str | None
 
-    def make_unique_parameterset_ids(self) -> list[str | _HiddenParam]:
+    def make_unique_parameterset_ids(
+        self, id_names: bool = False
+    ) -> list[str | _HiddenParam]:
         """Make a unique identifier for each ParameterSet, that may be used to
         identify the parametrization in a node ID.
 
-        Format is <prm_1_token>-...-<prm_n_token>[counter], where prm_x_token is
+        Format is [<prm_1>=]<prm_1_token>-...-[<prm_n>=]<prm_n_token>[counter],
+        where prm_x is <argname> (only for id_names=True) and prm_x_token is
         - user-provided id, if given
         - else an id derived from the value, applicable for certain types
         - else <argname><parameterset index>
         The counter suffix is appended only in case a string wouldn't be unique
         otherwise.
         """
-        resolved_ids = list(self._resolve_ids())
+        resolved_ids = list(self._resolve_ids(id_names=id_names))
         # All IDs must be unique!
         if len(resolved_ids) != len(set(resolved_ids)):
             # Record the number of occurrences of each ID.
@@ -924,7 +927,7 @@ class IdMaker:
         )
         return resolved_ids
 
-    def _resolve_ids(self) -> Iterable[str | _HiddenParam]:
+    def _resolve_ids(self, id_names: bool = False) -> Iterable[str | _HiddenParam]:
         """Resolve IDs for all ParameterSets (may contain duplicates)."""
         for idx, parameterset in enumerate(self.parametersets):
             if parameterset.id is not None:
@@ -941,8 +944,9 @@ class IdMaker:
                     yield self._idval_from_value_required(self.ids[idx], idx)
             else:
                 # ID not provided - generate it.
+                idval_func = self._idval_named if id_names else self._idval
                 yield "-".join(
-                    self._idval(val, argname, idx)
+                    idval_func(val, argname, idx)
                     for val, argname in zip(parameterset.values, self.argnames)
                 )
 
@@ -958,6 +962,11 @@ class IdMaker:
         if idval is not None:
             return idval
         return self._idval_from_argname(argname, idx)
+
+    def _idval_named(self, val: object, argname: str, idx: int) -> str:
+        """Make an ID in argname=value format for a parameter in a
+        ParameterSet."""
+        return "=".join((argname, self._idval(val, argname, idx)))
 
     def _idval_from_function(self, val: object, argname: str, idx: int) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet using the
@@ -1163,6 +1172,7 @@ class Metafunc:
         indirect: bool | Sequence[str] = False,
         ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
         scope: _ScopeName | None = None,
+        id_names: bool = False,
         *,
         _param_mark: Mark | None = None,
     ) -> None:
@@ -1232,6 +1242,11 @@ class Metafunc:
             The scope is used for grouping tests by parameter instances.
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
+
+        :param id_names:
+            Whether the argument names should be part of the auto-generated
+            ids. Defaults to ``False``. Must not be ``True`` if ``ids`` is
+            given.
         """
         argnames, parametersets = ParameterSet._for_parametrize(
             argnames,
@@ -1255,6 +1270,9 @@ class Metafunc:
         else:
             scope_ = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
+        if id_names and ids is not None:
+            fail("'id_names' must not be combined with 'ids'", pytrace=False)
+
         self._validate_if_using_arg_names(argnames, indirect)
 
         # Use any already (possibly) generated ids with parametrize Marks.
@@ -1264,7 +1282,11 @@ class Metafunc:
                 ids = generated_ids
 
         ids = self._resolve_parameter_set_ids(
-            argnames, ids, parametersets, nodeid=self.definition.nodeid
+            argnames,
+            ids,
+            parametersets,
+            nodeid=self.definition.nodeid,
+            id_names=id_names,
         )
 
         # Store used (possibly generated) ids with parametrize Marks.
@@ -1349,6 +1371,7 @@ class Metafunc:
         ids: Iterable[object | None] | Callable[[Any], object | None] | None,
         parametersets: Sequence[ParameterSet],
         nodeid: str,
+        id_names: bool,
     ) -> list[str | _HiddenParam]:
         """Resolve the actual ids for the given parameter sets.
 
@@ -1383,7 +1406,7 @@ class Metafunc:
             nodeid=nodeid,
             func_name=self.function.__name__,
         )
-        return id_maker.make_unique_parameterset_ids()
+        return id_maker.make_unique_parameterset_ids(id_names=id_names)
 
     def _validate_ids(
         self,
