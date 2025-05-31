@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import io
 import re
 import sys
 
@@ -399,7 +400,11 @@ class TestRaises:
 
         https://github.com/python/cpython/issues/98778
         """
+        from email.message import Message
         from urllib.error import HTTPError
 
-        with pytest.raises(HTTPError, match="Not Found"):
-            raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]
+        with pytest.raises(HTTPError, match="Not Found") as exc_info:
+            raise HTTPError(
+                code=404, msg="Not Found", fp=io.BytesIO(), hdrs=Message(), url=""
+            )
+        exc_info.value.close()  # avoid a resource warning

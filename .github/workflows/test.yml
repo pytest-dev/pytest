@@ -118,6 +118,10 @@ jobs:
             os: windows-latest
             tox_env: "py313"
 
+          - name: "windows-py314"
+            python: "3.14"
+            os: windows-latest
+            tox_env: "py314"
 
           - name: "ubuntu-py39-lsof-numpy-pexpect"
             python: "3.9"
@@ -163,6 +167,12 @@ jobs:
             tox_env: "py313-pexpect"
             use_coverage: true
 
+          - name: "ubuntu-py314"
+            python: "3.14"
+            os: ubuntu-latest
+            tox_env: "py314"
+            use_coverage: true
+
           - name: "ubuntu-pypy3-xdist"
             python: "pypy-3.9"
             os: ubuntu-latest
@@ -190,6 +200,10 @@ jobs:
             os: macos-latest
             tox_env: "py313-xdist"
 
+          - name: "macos-py314"
+            python: "3.14"
+            os: macos-latest
+            tox_env: "py314-xdist"
 
           - name: "plugins"
             python: "3.12"
@@ -239,7 +253,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
-        check-latest: ${{ endsWith(matrix.python, '-dev') }}
+        check-latest: true
+        allow-prereleases: true
 
     - name: Install dependencies
       run: |
