@@ -1617,7 +1617,7 @@ def test_stop_iteration_from_collect(pytester: Pytester) -> None:
         [
             "=* short test summary info =*",
             "ERROR test_it.py - StopIteration: hello",
-            "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!",
+            "!* Interrupted: 1 error during collection !*",
             "=* 1 error in * =*",
         ]
     )
