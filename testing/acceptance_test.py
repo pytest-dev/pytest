@@ -1607,6 +1607,7 @@ def test_no_terminal_plugin(pytester: Pytester) -> None:
     result = pytester.runpytest("-pno:terminal", "-s")
     assert result.ret == ExitCode.TESTS_FAILED
 
+
 def test_stop_iteration_from_collect(pytester: Pytester) -> None:
     pytester.makepyfile(test_it="raise StopIteration('hello')")
     result = pytester.runpytest()
