@@ -1105,7 +1105,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def matches(
         self,
         exception: BaseException | None,
-    ) -> TypeGuard[BaseExceptionGroup[BaseExcT_co]]:
+    ) -> bool:
         """Check if an exception matches the requirements of this RaisesGroup.
         If it fails, `RaisesGroup.fail_reason` will be set.
 
@@ -1269,7 +1269,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         self,
         _exception: BaseException,
         actual_exceptions: Sequence[BaseException],
-    ) -> TypeGuard[BaseExceptionGroup[BaseExcT_co]]:
+    ) -> bool:
         """Helper method for RaisesGroup.matches that attempts to pair up expected and actual exceptions"""
         # The _exception parameter is not used, but necessary for the TypeGuard
 
