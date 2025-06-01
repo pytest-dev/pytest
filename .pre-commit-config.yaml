@@ -47,6 +47,24 @@ repos:
             # for mypy running on python>=3.11 since exceptiongroup is only a dependency
             # on <3.11
           - exceptiongroup>=1.0.0rc8
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.401
+    hooks:
+    -   id: pyright
+        files: ^(src/|scripts/)
+        additional_dependencies:
+          - iniconfig>=1.1.0
+          - attrs>=19.2.0
+          - pluggy>=1.5.0
+          - packaging
+          - tomli
+          - types-setuptools
+          - types-tabulate
+            # for mypy running on python>=3.11 since exceptiongroup is only a dependency
+            # on <3.11
+          - exceptiongroup>=1.0.0rc8
+        # Manual because passing pyright is a work in progress.
+        stages: [manual]
 - repo: https://github.com/tox-dev/pyproject-fmt
   rev: "v2.6.0"
   hooks:
