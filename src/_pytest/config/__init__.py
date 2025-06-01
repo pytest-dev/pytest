@@ -273,9 +273,11 @@ default_plugins = (
     "faulthandler",
 )
 
-builtin_plugins = set(default_plugins)
-builtin_plugins.add("pytester")
-builtin_plugins.add("pytester_assertions")
+builtin_plugins = {
+    *default_plugins,
+    "pytester",
+    "pytester_assertions",
+}
 
 
 def get_config(
