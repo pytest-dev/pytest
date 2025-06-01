@@ -472,9 +472,10 @@ class PytestPluginManager(PluginManager):
         if not inspect.isroutine(method):
             return None
         # Collect unmarked hooks as long as they have the `pytest_' prefix.
-        return _get_legacy_hook_marks(  # type: ignore[return-value]
+        legacy = _get_legacy_hook_marks(
             method, "impl", ("tryfirst", "trylast", "optionalhook", "hookwrapper")
         )
+        return cast(HookimplOpts, legacy)
 
     def parse_hookspec_opts(self, module_or_class, name: str) -> HookspecOpts | None:
         """:meta private:"""
@@ -482,11 +483,10 @@ class PytestPluginManager(PluginManager):
         if opts is None:
             method = getattr(module_or_class, name)
             if name.startswith("pytest_"):
-                opts = _get_legacy_hook_marks(  # type: ignore[assignment]
-                    method,
-                    "spec",
-                    ("firstresult", "historic"),
+                legacy = _get_legacy_hook_marks(
+                    method, "spec", ("firstresult", "historic")
                 )
+                opts = cast(HookspecOpts, legacy)
         return opts
 
     def register(self, plugin: _PluggyPlugin, name: str | None = None) -> str | None:
