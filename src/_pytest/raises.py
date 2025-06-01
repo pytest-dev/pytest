@@ -588,7 +588,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     # At least one of the three parameters must be passed.
     @overload
     def __init__(
-        self: RaisesExc[BaseExcT_co_default],
+        self,
         expected_exception: (
             type[BaseExcT_co_default] | tuple[type[BaseExcT_co_default], ...]
         ),
