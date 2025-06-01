@@ -82,11 +82,15 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x", [1, 2])
-        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
-        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("x", [5, 6])
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("x", [5, 6])
         metafunc.parametrize("y", [1, 2])
-        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
-        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("y", [5, 6])
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("y", [5, 6])
 
         with pytest.raises(TypeError, match="^ids must be a callable or an iterable$"):
             metafunc.parametrize("y", [5, 6], ids=42)  # type: ignore[arg-type]

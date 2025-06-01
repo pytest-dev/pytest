@@ -1079,7 +1079,9 @@ class CallSpec2:
         arg2scope = dict(self._arg2scope)
         for arg, val in zip(argnames, valset):
             if arg in params:
-                raise ValueError(f"duplicate parametrization of {arg!r}")
+                raise nodes.Collector.CollectError(
+                    f"duplicate parametrization of {arg!r}"
+                )
             params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
