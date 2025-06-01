@@ -1582,7 +1582,7 @@ class Config:
         assert isinstance(x, list)
         x.append(line)  # modifies the cached list inline
 
-    def getini(self, name: str):
+    def getini(self, name: str) -> Any:
         """Return configuration value from an :ref:`ini file <configfiles>`.
 
         If a configuration value is not defined in an
@@ -1726,7 +1726,7 @@ class Config:
                     value = user_ini_value
         return value
 
-    def getoption(self, name: str, default=notset, skip: bool = False):
+    def getoption(self, name: str, default: Any = notset, skip: bool = False):
         """Return command line option value.
 
         :param name: Name of the option. You may also specify
