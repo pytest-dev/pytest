@@ -969,9 +969,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         # that are *very* hard to reconcile while adhering to the overloads, so we cast
         # it to avoid an error when passing it to super().__init__
         check = cast(
-            "Callable[["
-            "BaseExceptionGroup[ExcT_1|BaseExcT_1|BaseExceptionGroup[BaseExcT_2]]"
-            "], bool]",
+            "Callable[[BaseExceptionGroup[ExcT_1|BaseExcT_1|BaseExceptionGroup[BaseExcT_2]]], bool]",
             check,
         )
         super().__init__(match=match, check=check)
