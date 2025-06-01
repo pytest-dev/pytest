@@ -2005,7 +2005,7 @@ class TestEarlyRewriteBailout:
     def test_assert_rewrites_only_rootpath(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
-        """If test files contained outside the rootpath, then skip them"""
+        """Do not rewrite assertions in tests outside `AssertState.rootpath` (#13403)."""
         pytester.makepyfile(
             **{
                 "file.py": """\
