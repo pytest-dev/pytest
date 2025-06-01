@@ -1298,9 +1298,7 @@ class TestAssertionRewriteHookDetails:
         assert pytester.runpytest().ret == 0
 
     def test_rootpath_base(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
-        """
-        Base cases for get rootpath from AssertionState
-        """
+        """Base cases for get rootpath from AssertionState"""
         from _pytest.assertion import AssertionState
 
         config = pytester.parseconfig()
@@ -2007,9 +2005,7 @@ class TestEarlyRewriteBailout:
     def test_assert_rewrites_only_rootpath(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
-        """
-        If test files contained outside the rootpath, then skip them
-        """
+        """If test files contained outside the rootpath, then skip them"""
         pytester.makepyfile(
             **{
                 "file.py": """\
@@ -2039,9 +2035,7 @@ class TestEarlyRewriteBailout:
     def test_assert_rewrite_correct_for_conftfest(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
-        """
-        Conftest is always rewritten regardless of the root dir
-        """
+        """Conftest is always rewritten regardless of the root dir"""
         pytester.makeconftest(
             """
             import pytest
