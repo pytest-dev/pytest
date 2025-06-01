@@ -6,6 +6,7 @@ from __future__ import annotations
 from collections.abc import Generator
 import sys
 from typing import Any
+from typing import Protocol
 from typing import TYPE_CHECKING
 
 from _pytest.assertion import rewrite
@@ -82,15 +83,18 @@ def register_assert_rewrite(*names: str) -> None:
         if not isinstance(name, str):
             msg = "expected module names as *args, got {0} instead"  # type: ignore[unreachable]
             raise TypeError(msg.format(repr(names)))
+    rewrite_hook: RewriteHook
     for hook in sys.meta_path:
         if isinstance(hook, rewrite.AssertionRewritingHook):
-            importhook = hook
+            rewrite_hook = hook
             break
     else:
-        # TODO(typing): Add a protocol for mark_rewrite() and use it
-        # for importhook and for PytestPluginManager.rewrite_hook.
-        importhook = DummyRewriteHook()  # type: ignore
-    importhook.mark_rewrite(*names)
+        rewrite_hook = DummyRewriteHook()
+    rewrite_hook.mark_rewrite(*names)
+
+
+class RewriteHook(Protocol):
+    def mark_rewrite(self, *names: str) -> None: ...
 
 
 class DummyRewriteHook:

@@ -70,7 +70,7 @@ from _pytest.warning_types import warn_explicit_for
 
 
 if TYPE_CHECKING:
-    from _pytest.assertions.rewrite import AssertionRewritingHook
+    from _pytest.assertion.rewrite import AssertionRewritingHook
     from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
 
@@ -397,7 +397,8 @@ class PytestPluginManager(PluginManager):
     """
 
     def __init__(self) -> None:
-        import _pytest.assertion
+        from _pytest.assertion import DummyRewriteHook
+        from _pytest.assertion import RewriteHook
 
         super().__init__("pytest")
 
@@ -443,7 +444,7 @@ class PytestPluginManager(PluginManager):
             self.enable_tracing()
 
         # Config._consider_importhook will set a real object if required.
-        self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
+        self.rewrite_hook: RewriteHook = DummyRewriteHook()
         # Used to know when we are importing conftests after the pytest_configure stage.
         self._configured = False
 
