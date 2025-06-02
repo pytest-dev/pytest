@@ -1116,7 +1116,8 @@ class Pytester:
             rec = []
 
             class Collect:
-                def pytest_configure(x, config: Config) -> None:
+                @staticmethod
+                def pytest_configure(config: Config) -> None:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
             plugins.append(Collect())

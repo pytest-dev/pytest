@@ -528,3 +528,17 @@ warn_unreachable = true
 warn_unused_configs = true
 no_implicit_reexport = true
 warn_unused_ignores = true
+
+[tool.pyright]
+include = [
+    "src",
+    "testing",
+    "scripts",
+]
+extraPaths = [
+    "src",
+]
+pythonVersion = "3.9"
+typeCheckingMode = "basic"
+reportMissingImports = "none"
+reportMissingModuleSource = "none"

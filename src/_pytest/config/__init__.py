@@ -70,7 +70,7 @@ from _pytest.warning_types import warn_explicit_for
 
 
 if TYPE_CHECKING:
-    from _pytest.assertions.rewrite import AssertionRewritingHook
+    from _pytest.assertion.rewrite import AssertionRewritingHook
     from _pytest.cacheprovider import Cache
     from _pytest.terminal import TerminalReporter
 
@@ -273,9 +273,11 @@ default_plugins = (
     "faulthandler",
 )
 
-builtin_plugins = set(default_plugins)
-builtin_plugins.add("pytester")
-builtin_plugins.add("pytester_assertions")
+builtin_plugins = {
+    *default_plugins,
+    "pytester",
+    "pytester_assertions",
+}
 
 
 def get_config(
@@ -397,7 +399,8 @@ class PytestPluginManager(PluginManager):
     """
 
     def __init__(self) -> None:
-        import _pytest.assertion
+        from _pytest.assertion import DummyRewriteHook
+        from _pytest.assertion import RewriteHook
 
         super().__init__("pytest")
 
@@ -443,7 +446,7 @@ class PytestPluginManager(PluginManager):
             self.enable_tracing()
 
         # Config._consider_importhook will set a real object if required.
-        self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
+        self.rewrite_hook: RewriteHook = DummyRewriteHook()
         # Used to know when we are importing conftests after the pytest_configure stage.
         self._configured = False
 
@@ -469,9 +472,10 @@ class PytestPluginManager(PluginManager):
         if not inspect.isroutine(method):
             return None
         # Collect unmarked hooks as long as they have the `pytest_' prefix.
-        return _get_legacy_hook_marks(  # type: ignore[return-value]
+        legacy = _get_legacy_hook_marks(
             method, "impl", ("tryfirst", "trylast", "optionalhook", "hookwrapper")
         )
+        return cast(HookimplOpts, legacy)
 
     def parse_hookspec_opts(self, module_or_class, name: str) -> HookspecOpts | None:
         """:meta private:"""
@@ -479,11 +483,10 @@ class PytestPluginManager(PluginManager):
         if opts is None:
             method = getattr(module_or_class, name)
             if name.startswith("pytest_"):
-                opts = _get_legacy_hook_marks(  # type: ignore[assignment]
-                    method,
-                    "spec",
-                    ("firstresult", "historic"),
+                legacy = _get_legacy_hook_marks(
+                    method, "spec", ("firstresult", "historic")
                 )
+                opts = cast(HookspecOpts, legacy)
         return opts
 
     def register(self, plugin: _PluggyPlugin, name: str | None = None) -> str | None:
@@ -1581,7 +1584,7 @@ class Config:
         assert isinstance(x, list)
         x.append(line)  # modifies the cached list inline
 
-    def getini(self, name: str):
+    def getini(self, name: str) -> Any:
         """Return configuration value from an :ref:`ini file <configfiles>`.
 
         If a configuration value is not defined in an
@@ -1725,7 +1728,7 @@ class Config:
                     value = user_ini_value
         return value
 
-    def getoption(self, name: str, default=notset, skip: bool = False):
+    def getoption(self, name: str, default: Any = notset, skip: bool = False):
         """Return command line option value.
 
         :param name: Name of the option. You may also specify
