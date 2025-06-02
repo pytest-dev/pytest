@@ -168,8 +168,7 @@ Both automatic and manual processes described above follow the same steps from t
 
    To the following mailing lists:
 
-   * python-announce-list@python.org (all releases)
-   * testing-in-python@lists.idyll.org (only major/minor releases)
+   * python-announce-list@python.org
 
    And announce it with the ``#pytest`` hashtag on:
 
