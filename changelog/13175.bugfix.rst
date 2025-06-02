@@ -1,1 +1,0 @@
-The diff is now also highlighted correctly when comparing two strings.

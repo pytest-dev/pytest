@@ -66,6 +66,7 @@ as an error:
 
         def test_one():
     >       assert api_v1() == 1
+                   ^^^^^^^^
 
     test_show_warnings.py:10:
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _

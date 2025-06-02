@@ -1,1 +1,0 @@
-Async tests will now fail, instead of warning+skipping, if you don't have any suitable plugin installed.
