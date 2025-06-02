@@ -168,7 +168,6 @@ Both automatic and manual processes described above follow the same steps from t
 
    To the following mailing lists:
 
-   * pytest-dev@python.org (all releases)
    * python-announce-list@python.org (all releases)
    * testing-in-python@lists.idyll.org (only major/minor releases)
 
