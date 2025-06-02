@@ -1073,6 +1073,7 @@ class CallSpec2:
         marks: Iterable[Mark | MarkDecorator],
         scope: Scope,
         param_index: int,
+        nodeid: str,
     ) -> CallSpec2:
         params = self.params.copy()
         indices = self.indices.copy()
@@ -1080,7 +1081,7 @@ class CallSpec2:
         for arg, val in zip(argnames, valset):
             if arg in params:
                 raise nodes.Collector.CollectError(
-                    f"duplicate parametrization of {arg!r}"
+                    f"{nodeid}: duplicate parametrization of {arg!r}"
                 )
             params[arg] = val
             indices[arg] = param_index
@@ -1235,6 +1236,8 @@ class Metafunc:
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
+        nodeid = self.definition.nodeid
+
         argnames, parametersets = ParameterSet._for_parametrize(
             argnames,
             argvalues,
@@ -1246,7 +1249,7 @@ class Metafunc:
 
         if "request" in argnames:
             fail(
-                "'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
+                f"{nodeid}: 'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
                 pytrace=False,
             )
 
@@ -1341,6 +1344,7 @@ class Metafunc:
                     marks=param_set.marks,
                     scope=scope_,
                     param_index=param_index,
+                    nodeid=nodeid,
                 )
                 newcalls.append(newcallspec)
         self._calls = newcalls
