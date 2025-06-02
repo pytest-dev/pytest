@@ -442,6 +442,16 @@ class TestTerminal:
             ]
         )
 
+    @pytest.mark.parametrize("isatty", [True, False])
+    def test_isatty(self, pytester: Pytester, monkeypatch, isatty: bool) -> None:
+        config = pytester.parseconfig()
+        f = StringIO()
+        monkeypatch.setattr(f, "isatty", lambda: isatty)
+        tr = TerminalReporter(config, f)
+        assert tr.isatty() == isatty
+        # It was incorrectly implemented as a boolean so we still support using it as one.
+        assert bool(tr.isatty) == isatty
+
 
 class TestCollectonly:
     def test_collectonly_basic(self, pytester: Pytester) -> None:
