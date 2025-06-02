@@ -154,6 +154,7 @@ the ``self.db`` values in the traceback:
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db  # fail for demo purposes
+            ^^^^^^^^^^^^^^^^^
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef0001>
     E       assert 0
 
@@ -164,6 +165,7 @@ the ``self.db`` values in the traceback:
 
         def test_method2(self):
     >       assert 0, self.db  # fail for demo purposes
+            ^^^^^^^^^^^^^^^^^
     E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef0001>
     E       assert 0
 

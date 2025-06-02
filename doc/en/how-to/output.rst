@@ -447,7 +447,7 @@ Example:
     ================================= XPASSES ==================================
     ========================= short test summary info ==========================
     SKIPPED [1] test_example.py:22: skipping this test
-    XFAIL test_example.py::test_xfail - reason: xfailing this test
+    XFAIL test_example.py::test_xfail - xfailing this test
     XPASS test_example.py::test_xpass - always xfail
     ERROR test_example.py::test_error - assert 0
     FAILED test_example.py::test_fail - assert 0
