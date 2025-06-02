@@ -1,1 +1,0 @@
-Improved test collection performance by optimizing path resolution used in ``FSCollector``.
