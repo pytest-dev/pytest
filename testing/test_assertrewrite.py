@@ -1297,13 +1297,13 @@ class TestAssertionRewriteHookDetails:
         )
         assert pytester.runpytest().ret == 0
 
-    def test_rootpath_base(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
-        """Base cases for get rootpath from AssertionState"""
+    def test_invocation_dir(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+        """Test get invocation param afrom AssertionState"""
         from _pytest.assertion import AssertionState
 
         config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
-        assert state.rootpath == str(config.invocation_params.dir)
+        assert state.invocation_path == str( config.invocation_params.dir )
         new_rootpath = str(pytester.path / "test")
         if not os.path.exists(new_rootpath):
             os.mkdir(new_rootpath)
@@ -1317,7 +1317,7 @@ class TestAssertionRewriteHookDetails:
             ),
         )
         state = AssertionState(config, "rewrite")
-        assert state.rootpath == new_rootpath
+        assert state.invocation_path == new_rootpath
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
@@ -2062,9 +2062,7 @@ class TestEarlyRewriteBailout:
     def test_assert_rewrite_correct_for_plugins(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
-        """
-        Plugins has always been rewritten regardless of the root dir
-        """
+        """Plugins has always been rewritten regardless of the root dir"""
         pkgdir = pytester.mkpydir("plugin")
         pkgdir.joinpath("__init__.py").write_text(
             "import pytest\n"

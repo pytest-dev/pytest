@@ -1,1 +1,1 @@
-Disable assertion rewriting of external modules
+Disable assertion for modules outside current working dir(cwd)
