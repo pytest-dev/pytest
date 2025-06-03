@@ -257,7 +257,7 @@ def test_refcycle_unraisable(pytester: Pytester) -> None:
     )
 
     with _disable_gc():
-        result = pytester.runpytest()
+        result = pytester.runpytest("-Werror")
 
     # TODO: should be a test failure or error
     assert result.ret == pytest.ExitCode.INTERNAL_ERROR

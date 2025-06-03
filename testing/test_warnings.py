@@ -169,7 +169,7 @@ def test_works_with_filterwarnings(pytester: Pytester) -> None:
                     assert True
     """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Werror")
     result.stdout.fnmatch_lines(["*== 1 passed in *"])
 
 
