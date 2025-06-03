@@ -1615,7 +1615,7 @@ def test_class_from_parent(request: FixtureRequest) -> None:
             self.x = x
 
         @classmethod
-        def from_parent(cls, parent, *, name, x):
+        def from_parent(cls, parent, *, name, x):  # type: ignore[override]
             return super().from_parent(parent=parent, name=name, x=x)
 
     collector = MyCollector.from_parent(parent=request.session, name="foo", x=10)

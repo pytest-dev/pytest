@@ -702,7 +702,6 @@ class AssertionRewriter(ast.NodeVisitor):
         if doc is not None and self.is_rewrite_disabled(doc):
             return
         pos = 0
-        item = None
         for item in mod.body:
             if (
                 expect_docstring
