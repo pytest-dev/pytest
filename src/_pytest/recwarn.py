@@ -167,7 +167,7 @@ def warns(
             return func(*args[1:], **kwargs)
 
 
-class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
+class WarningsRecorder(warnings.catch_warnings):
     """A context manager to record raised warnings.
 
     Each recorded warning is an instance of :class:`warnings.WarningMessage`.
@@ -226,7 +226,9 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         """Clear the list of recorded warnings."""
         self._list[:] = []
 
-    def __enter__(self) -> Self:
+    # Type ignored because we basically want the `catch_warnings` generic type
+    # parameter to be ourselves but that is not possible(?).
+    def __enter__(self) -> Self:  # type: ignore[override]
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError(f"Cannot enter {self!r} twice")

@@ -284,7 +284,7 @@ def get_config(
     args: list[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
 ) -> Config:
-    # subsequent calls to main will create a fresh instance
+    # Subsequent calls to main will create a fresh instance.
     pluginmanager = PytestPluginManager()
     config = Config(
         pluginmanager,
@@ -330,8 +330,8 @@ def _prepareconfig(
         )
         raise TypeError(msg.format(args, type(args)))
 
-    config = get_config(args, plugins)
-    pluginmanager = config.pluginmanager
+    initial_config = get_config(args, plugins)
+    pluginmanager = initial_config.pluginmanager
     try:
         if plugins:
             for plugin in plugins:
@@ -339,12 +339,12 @@ def _prepareconfig(
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
-        config = pluginmanager.hook.pytest_cmdline_parse(
+        config: Config = pluginmanager.hook.pytest_cmdline_parse(
             pluginmanager=pluginmanager, args=args
         )
         return config
     except BaseException:
-        config._ensure_unconfigure()
+        initial_config._ensure_unconfigure()
         raise
 
 
