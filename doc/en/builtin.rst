@@ -69,7 +69,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         .. code-block:: python
 
-            def test_output(capsys):
+            def test_output(capteesys):
                 print("hello")
                 captured = capteesys.readouterr()
                 assert captured.out == "hello\n"
