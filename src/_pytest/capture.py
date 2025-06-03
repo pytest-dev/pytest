@@ -1043,7 +1043,7 @@ def capteesys(request: SubRequest) -> Generator[CaptureFixture[str]]:
 
     .. code-block:: python
 
-        def test_output(capsys):
+        def test_output(capteesys):
             print("hello")
             captured = capteesys.readouterr()
             assert captured.out == "hello\n"
