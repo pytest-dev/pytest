@@ -325,6 +325,8 @@ class TestTraceback_f_g_h:
         assert reprcrash.lineno == co.firstlineno + 1 + 1
 
     def test_getreprcrash_empty(self):
+        __tracebackhide__ = True
+
         def g():
             __tracebackhide__ = True
             raise ValueError
@@ -952,6 +954,7 @@ raise ValueError()
         assert not lines[1:]
 
     def test_repr_traceback_tbfilter(self, importasmod):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f(x):
@@ -1000,6 +1003,7 @@ raise ValueError()
         assert last_lines[1] == "E   ValueError: hello"
 
     def test_repr_traceback_and_excinfo(self, importasmod) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f(x):
@@ -1029,6 +1033,7 @@ raise ValueError()
             assert repr.reprcrash.message == "ValueError: 0"
 
     def test_repr_traceback_with_invalid_cwd(self, importasmod, monkeypatch) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f(x):
@@ -1164,6 +1169,7 @@ raise ValueError()
         assert x == "я"
 
     def test_toterminal_long(self, importasmod, tw_mock):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def g(x):
@@ -1198,6 +1204,7 @@ raise ValueError()
     def test_toterminal_long_missing_source(
         self, importasmod, tmp_path: Path, tw_mock
     ) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def g(x):
@@ -1231,6 +1238,7 @@ raise ValueError()
     def test_toterminal_long_incomplete_source(
         self, importasmod, tmp_path: Path, tw_mock
     ) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def g(x):
@@ -1344,6 +1352,7 @@ raise ValueError()
         assert file.getvalue()
 
     def test_traceback_repr_style(self, importasmod, tw_mock):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f():
@@ -1392,6 +1401,7 @@ raise ValueError()
         assert tw_mock.lines[20] == ":9: ValueError"
 
     def test_exc_chain_repr(self, importasmod, tw_mock):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             class Err(Exception):
@@ -1492,6 +1502,7 @@ raise ValueError()
         - When the exception is raised with "from None"
         - Explicitly suppressed with "chain=False" to ExceptionInfo.getrepr().
         """
+        __tracebackhide__ = True
         raise_suffix = " from None" if mode == "from_none" else ""
         mod = importasmod(
             f"""
@@ -1582,6 +1593,7 @@ raise ValueError()
         )
 
     def test_exc_chain_repr_cycle(self, importasmod, tw_mock):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             class Err(Exception):

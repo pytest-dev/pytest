@@ -270,8 +270,7 @@ class TestRaises:
             pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
 
-        with pytest.raises(TypeError, match="invalid"):
-            int()  # noqa: UP018
+        pytest.raises(TypeError, int, match="invalid")  # type: ignore[call-overload]
 
         def tfunc(match):
             raise ValueError(f"match={match}")
