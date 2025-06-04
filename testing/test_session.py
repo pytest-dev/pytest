@@ -63,7 +63,8 @@ class SessionTests:
             """
             import pytest
             def test_raises_doesnt():
-                pytest.raises(ValueError, int, "3")
+                with pytest.raises(ValueError):
+                    int("3")
         """
         )
         _passed, _skipped, failed = reprec.listoutcomes()
