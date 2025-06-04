@@ -73,14 +73,10 @@ def deprecated_call(
         >>> with pytest.deprecated_call(match="^use v3 of this api$") as warning_messages:
         ...    assert api_call_v2() == 200
 
-    It can also be used by passing a function and ``*args`` and ``**kwargs``,
-    in which case it will ensure calling ``func(*args, **kwargs)`` produces one of
-    the warnings types above. The return value is the return value of the function.
-
-    In the context manager form you may use the keyword argument ``match`` to assert
+    You may use the keyword argument ``match`` to assert
     that the warning matches a text or regex.
 
-    The context manager produces a list of :class:`warnings.WarningMessage` objects,
+    The return value is a list of :class:`warnings.WarningMessage` objects,
     one for each warning emitted
     (regardless of whether it is an ``expected_warning`` or not).
     """
@@ -127,13 +123,13 @@ def warns(
     each warning emitted (regardless of whether it is an ``expected_warning`` or not).
     Since pytest 8.0, unmatched warnings are also re-emitted when the context closes.
 
-    This function can be used as a context manager::
+    This function should be used as a context manager::
 
         >>> import pytest
         >>> with pytest.warns(RuntimeWarning):
         ...    warnings.warn("my warning", RuntimeWarning)
 
-    In the context manager form you may use the keyword argument ``match`` to assert
+    The ``match`` keyword argument can be used to assert
     that the warning matches a text or regex::
 
         >>> with pytest.warns(UserWarning, match='must be 0 or None'):

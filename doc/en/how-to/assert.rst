@@ -283,7 +283,7 @@ Alternate `pytest.raises` form (legacy)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. warning::
-   This will be deprecated and removed in a future release.
+   This form is likely to be deprecated and removed in a future release.
 
 
 There is an alternate form of :func:`pytest.raises` where you pass

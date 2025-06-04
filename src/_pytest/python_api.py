@@ -16,9 +16,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from numpy import ndarray
-    from typing_extensions import ParamSpec
-
-    P = ParamSpec("P")
 
 
 def _compare_approx(

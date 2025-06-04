@@ -238,25 +238,6 @@ def raises(
 
         :ref:`assertraises` for more examples and detailed discussion.
 
-    **Legacy form**
-
-    It is possible to specify a callable by passing a to-be-called lambda::
-
-        >>> raises(ZeroDivisionError, lambda: 1/0)
-        <ExceptionInfo ...>
-
-    or you can specify an arbitrary callable with arguments::
-
-        >>> def f(x): return 1/x
-        ...
-        >>> raises(ZeroDivisionError, f, 0)
-        <ExceptionInfo ...>
-        >>> raises(ZeroDivisionError, f, x=0)
-        <ExceptionInfo ...>
-
-    The form above is going to be deprecated in a future pytest release as the
-    context manager form is regarded as more readable and less error-prone.
-
     .. note::
         Similar to caught exception objects in Python, explicitly clearing
         local references to returned ``ExceptionInfo`` objects can
