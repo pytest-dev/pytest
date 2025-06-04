@@ -338,13 +338,6 @@ Some examples:
     ...     warnings.warn("issue with foo() func")
     ...
 
-You can also call :func:`pytest.warns` on a function or code string:
-
-.. code-block:: python
-
-    pytest.warns(expected_warning, func, *args, **kwargs)
-    pytest.warns(expected_warning, "func(*args, **kwargs)")
-
 The function also returns a list of all raised warnings (as
 ``warnings.WarningMessage`` objects), which you can query for
 additional information:

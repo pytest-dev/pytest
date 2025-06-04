@@ -21,11 +21,13 @@ class TestRaises:
             pytest.raises(RuntimeError, "int('qwe')")  # type: ignore[call-overload]
 
     def test_raises(self):
-        excinfo = pytest.raises(ValueError, int, "qwe")
+        with pytest.raises(ValueError) as excinfo:
+            int("qwe")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_function(self):
-        excinfo = pytest.raises(ValueError, int, "hello")
+        with pytest.raises(ValueError) as excinfo:
+            int("hello")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_does_not_allow_none(self):
@@ -179,7 +181,8 @@ class TestRaises:
 
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
-            pytest.raises("wrong", lambda: None)  # type: ignore[call-overload]
+            with pytest.raises("wrong"):  # type: ignore[call-overload]
+                ...  # pragma: no cover
 
     def test_invalid_arguments_to_raises(self) -> None:
         with pytest.raises(TypeError, match="unknown"):
@@ -192,7 +195,8 @@ class TestRaises:
 
     def test_no_raise_message(self) -> None:
         try:
-            pytest.raises(ValueError, int, "0")
+            with pytest.raises(ValueError):
+                int("0")
         except pytest.fail.Exception as e:
             assert e.msg == f"DID NOT RAISE {ValueError!r}"
         else:
@@ -266,7 +270,8 @@ class TestRaises:
             pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
 
-        pytest.raises(TypeError, int, match="invalid")
+        with pytest.raises(TypeError, match="invalid"):
+            int()  # noqa: UP018
 
         def tfunc(match):
             raise ValueError(f"match={match}")
@@ -320,10 +325,10 @@ class TestRaises:
     def test_raises_exception_looks_iterable(self):
         class Meta(type):
             def __getitem__(self, item):
-                return 1 / 0
+                return 1 / 0  # pragma: no cover
 
             def __len__(self):
-                return 1
+                return 1  # pragma: no cover
 
         class ClassLooksIterableException(Exception, metaclass=Meta):
             pass
@@ -332,7 +337,8 @@ class TestRaises:
             Failed,
             match=r"DID NOT RAISE <class 'raises(\..*)*ClassLooksIterableException'>",
         ):
-            pytest.raises(ClassLooksIterableException, lambda: None)
+            with pytest.raises(ClassLooksIterableException):
+                ...  # pragma: no cover
 
     def test_raises_with_raising_dunder_class(self) -> None:
         """Test current behavior with regard to exceptions via __class__ (#4284)."""

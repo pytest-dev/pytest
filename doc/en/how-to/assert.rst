@@ -282,6 +282,10 @@ exception at a specific level; exceptions contained directly in the top
 Alternate `pytest.raises` form (legacy)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. warning::
+   This will be deprecated and removed in a future release.
+
+
 There is an alternate form of :func:`pytest.raises` where you pass
 a function that will be executed, along with ``*args`` and ``**kwargs``. :func:`pytest.raises`
 will then execute the function with those arguments and assert that the given exception is raised:
@@ -301,7 +305,6 @@ exception* or *wrong exception*.
 This form was the original :func:`pytest.raises` API, developed before the ``with`` statement was
 added to the Python language. Nowadays, this form is rarely used, with the context-manager form (using ``with``)
 being considered more readable.
-Nonetheless, this form is fully supported and not deprecated in any way.
 
 xfail mark and pytest.raises
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

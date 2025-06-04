@@ -95,14 +95,15 @@ def raises(*, check: Callable[[BaseException], bool]) -> RaisesExc[BaseException
 @overload
 def raises(
     expected_exception: type[E] | tuple[type[E], ...],
-    func: Callable[..., Any],
-    *args: Any,
-    **kwargs: Any,
+    func: Callable[P, object],
+    *args: P.args,
+    **kwargs: P.kwargs,
 ) -> ExceptionInfo[E]: ...
 
 
 def raises(
     expected_exception: type[E] | tuple[type[E], ...] | None = None,
+    func: Callable[P, object] | None = None,
     *args: Any,
     **kwargs: Any,
 ) -> RaisesExc[BaseException] | ExceptionInfo[E]:
@@ -253,7 +254,7 @@ def raises(
         >>> raises(ZeroDivisionError, f, x=0)
         <ExceptionInfo ...>
 
-    The form above is fully supported but discouraged for new code because the
+    The form above is going to be deprecated in a future pytest release as the
     context manager form is regarded as more readable and less error-prone.
 
     .. note::
@@ -272,7 +273,7 @@ def raises(
     """
     __tracebackhide__ = True
 
-    if not args:
+    if func is None and not args:
         if set(kwargs) - {"match", "check", "expected_exception"}:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))
@@ -289,11 +290,10 @@ def raises(
             f"Raising exceptions is already understood as failing the test, so you don't need "
             f"any special code to say 'this should never raise an exception'."
         )
-    func = args[0]
     if not callable(func):
         raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
     with RaisesExc(expected_exception) as excinfo:
-        func(*args[1:], **kwargs)
+        func(*args, **kwargs)
     try:
         return excinfo
     finally:

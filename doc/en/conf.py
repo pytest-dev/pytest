@@ -97,6 +97,10 @@ nitpick_ignore = [
     # TypeVars
     ("py:class", "_pytest._code.code.E"),
     ("py:class", "E"),  # due to delayed annotation
+    ("py:class", "T"),
+    ("py:class", "P"),
+    ("py:class", "P.args"),
+    ("py:class", "P.kwargs"),
     ("py:class", "_pytest.fixtures.FixtureFunction"),
     ("py:class", "_pytest.nodes._NodeType"),
     ("py:class", "_NodeType"),  # due to delayed annotation
