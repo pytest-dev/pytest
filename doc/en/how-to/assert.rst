@@ -476,6 +476,50 @@ the conftest file:
    FAILED test_foocompare.py::test_compare - assert Comparing Foo instances:
    1 failed in 0.12s
 
+.. _`return-not-none`:
+
+Returning non-None value in test functions
+------------------------------------------
+
+A :class:`pytest.PytestReturnNotNoneWarning` is emitted when a test function returns a value other than ``None``.
+
+This helps prevent a common mistake made by beginners who assume that returning a ``bool`` (e.g., ``True`` or ``False``) will determine whether a test passes or fails.
+
+Example:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        ["a", "b", "result"],
+        [
+            [1, 2, 5],
+            [2, 3, 8],
+            [5, 3, 18],
+        ],
+    )
+    def test_foo(a, b, result):
+        return foo(a, b) == result  # Incorrect usage, do not do this.
+
+Since pytest ignores return values, it might be surprising that the test will never fail based on the returned value.
+
+The correct fix is to replace the ``return`` statement with an ``assert``:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        ["a", "b", "result"],
+        [
+            [1, 2, 5],
+            [2, 3, 8],
+            [5, 3, 18],
+        ],
+    )
+    def test_foo(a, b, result):
+        assert foo(a, b) == result
+
+
+
+
 .. _assert-details:
 .. _`assert introspection`:
 
