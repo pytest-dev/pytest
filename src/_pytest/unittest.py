@@ -197,6 +197,12 @@ class UnitTestCase(Class):
         )
 
 
+# Name of the attribute in `twisted.python.Failure` instances that stores
+# the `sys.exc_info()` tuple.
+# See twisted.trial support in `pytest_runtest_protocol`.
+TWISTED_RAW_EXCINFO_ATTR = "_twisted_raw_excinfo"
+
+
 class TestCaseFunction(Function):
     nofuncargs = True
     _excinfo: list[_pytest._code.ExceptionInfo[BaseException]] | None = None
@@ -229,7 +235,15 @@ class TestCaseFunction(Function):
 
     def _addexcinfo(self, rawexcinfo: _SysExcInfoType) -> None:
         # Unwrap potential exception info (see twisted trial support below).
-        rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
+        # Twisted calls addError() passing its own classes (like `twisted.python.Failure`), which violates
+        # the `addError()` signature, so we extract the original `sys.exc_info()` tuple which is stored
+        # in the object.
+        if hasattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR):
+            saved_exc_info = getattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR)
+            # Delete the attribute from the original object to avoid leaks.
+            delattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR)
+            rawexcinfo = saved_exc_info
+            del saved_exc_info
         try:
             excinfo = _pytest._code.ExceptionInfo[BaseException].from_exc_info(
                 rawexcinfo  # type: ignore[arg-type]
@@ -394,7 +408,6 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     if isinstance(item, TestCaseFunction) and "twisted.trial.unittest" in sys.modules:
         ut: Any = sys.modules["twisted.python.failure"]
         global classImplements_has_run
-        Failure__init__ = ut.Failure.__init__
         if not classImplements_has_run:
             from twisted.trial.itrial import IReporter
             from zope.interface import classImplements
@@ -402,15 +415,21 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
             classImplements(TestCaseFunction, IReporter)
             classImplements_has_run = True
 
-        def excstore(
+        # Monkeypatch `Failure.__init__` to store the raw exception info.
+        Failure__init__ = ut.Failure.__init__
+
+        def store_raw_exception_info(
             self, exc_value=None, exc_type=None, exc_tb=None, captureVars=None
         ):
             if exc_value is None:
-                self._rawexcinfo = sys.exc_info()
+                raw_exc_info = sys.exc_info()
             else:
                 if exc_type is None:
                     exc_type = type(exc_value)
-                self._rawexcinfo = (exc_type, exc_value, exc_tb)
+                if exc_tb is None:
+                    exc_tb = sys.exc_info()[2]
+                raw_exc_info = (exc_type, exc_value, exc_tb)
+            setattr(self, TWISTED_RAW_EXCINFO_ATTR, tuple(raw_exc_info))
             try:
                 Failure__init__(
                     self, exc_value, exc_type, exc_tb, captureVars=captureVars
@@ -418,7 +437,7 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
             except TypeError:
                 Failure__init__(self, exc_value, exc_type, exc_tb)
 
-        ut.Failure.__init__ = excstore
+        ut.Failure.__init__ = store_raw_exception_info
         try:
             res = yield
         finally:
