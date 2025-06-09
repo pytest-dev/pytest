@@ -474,8 +474,7 @@ class ApproxScalar(ApproxBase):
         result: bool = abs(self.expected - actual) <= self.tolerance
         return result
 
-    # Ignore type because of https://github.com/python/mypy/issues/4266.
-    __hash__ = None  # type: ignore
+    __hash__ = None
 
     @property
     def tolerance(self):

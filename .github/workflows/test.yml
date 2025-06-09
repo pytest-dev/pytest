@@ -61,6 +61,7 @@ jobs:
           "windows-py311",
           "windows-py312",
           "windows-py313",
+          "windows-py314",
 
           "ubuntu-py39-lsof-numpy-pexpect",
           "ubuntu-py39-pluggy",
@@ -70,12 +71,14 @@ jobs:
           "ubuntu-py311",
           "ubuntu-py312",
           "ubuntu-py313-pexpect",
+          "ubuntu-py314",
           "ubuntu-pypy3-xdist",
 
           "macos-py39",
           "macos-py310",
           "macos-py312",
           "macos-py313",
+          "macos-py314",
 
           "doctesting",
           "plugins",

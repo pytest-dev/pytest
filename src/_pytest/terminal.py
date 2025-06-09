@@ -31,6 +31,7 @@ import warnings
 
 import pluggy
 
+from _pytest import compat
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
@@ -387,7 +388,9 @@ class TerminalReporter:
         self.reportchars = getreportopt(config)
         self.foldskipped = config.option.fold_skipped
         self.hasmarkup = self._tw.hasmarkup
-        self.isatty = file.isatty()
+        # isatty should be a method but was wrongly implemented as a boolean.
+        # We use CallableBool here to support both.
+        self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[str] = set()
         self._timing_nodeids_reported: set[str] = set()
         self._show_progress_info = self._determine_show_progress_info()
@@ -766,7 +769,7 @@ class TerminalReporter:
         return self._tw.width_of_current_line
 
     def pytest_collection(self) -> None:
-        if self.isatty:
+        if self.isatty():
             if self.config.option.verbose >= 0:
                 self.write("collecting ... ", flush=True, bold=True)
         elif self.config.option.verbose >= 1:
@@ -779,7 +782,7 @@ class TerminalReporter:
             self._add_stats("skipped", [report])
         items = [x for x in report.result if isinstance(x, Item)]
         self._numcollected += len(items)
-        if self.isatty:
+        if self.isatty():
             self.report_collect()
 
     def report_collect(self, final: bool = False) -> None:
@@ -811,7 +814,7 @@ class TerminalReporter:
             line += f" / {skipped} skipped"
         if self._numcollected > selected:
             line += f" / {selected} selected"
-        if self.isatty:
+        if self.isatty():
             self.rewrite(line, bold=True, erase=True)
             if final:
                 self.write("\n")

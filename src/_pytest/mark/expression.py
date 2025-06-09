@@ -305,7 +305,7 @@ class Expression:
         self.code = code
 
     @classmethod
-    def compile(self, input: str) -> Expression:
+    def compile(cls, input: str) -> Expression:
         """Compile a match expression.
 
         :param input: The input expression - one line.

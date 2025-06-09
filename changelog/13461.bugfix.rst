@@ -1,0 +1,3 @@
+Corrected ``_pytest.terminal.TerminalReporter.isatty`` to support
+being called as a method. Before it was just a boolean which could
+break correct code when using ``-o log_cli=true``).

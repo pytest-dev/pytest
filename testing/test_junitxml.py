@@ -76,10 +76,10 @@ def assert_attr(node: minidom.Element, **kwargs: object) -> None:
 
 
 class DomDocument:
-    def __init__(self, dom: minidom.Document):
-        self._node = dom
-
     _node: minidom.Document | minidom.Element
+
+    def __init__(self, dom: minidom.Document) -> None:
+        self._node = dom
 
     def find_first_by_tag(self, tag: str) -> DomNode | None:
         return self.find_nth_by_tag(tag, 0)
@@ -105,7 +105,9 @@ class DomDocument:
 
     @property
     def children(self) -> list[DomNode]:
-        return [DomNode(x) for x in self._node.childNodes]
+        return [
+            DomNode(x) for x in self._node.childNodes if isinstance(x, minidom.Element)
+        ]
 
     @property
     def get_unique_child(self) -> DomNode:
@@ -120,7 +122,7 @@ class DomDocument:
 class DomNode(DomDocument):
     _node: minidom.Element
 
-    def __init__(self, dom: minidom.Element):
+    def __init__(self, dom: minidom.Element) -> None:
         self._node = dom
 
     def __repr__(self) -> str:
@@ -129,7 +131,7 @@ class DomNode(DomDocument):
     def __getitem__(self, key: str) -> str:
         node = self._node.getAttributeNode(key)
         if node is not None:
-            return cast(str, node.value)
+            return node.value
         else:
             raise KeyError(key)
 
@@ -139,7 +141,9 @@ class DomNode(DomDocument):
 
     @property
     def text(self) -> str:
-        return cast(str, self._node.childNodes[0].wholeText)
+        text = self._node.childNodes[0]
+        assert isinstance(text, minidom.Text)
+        return text.wholeText
 
     @property
     def tag(self) -> str:

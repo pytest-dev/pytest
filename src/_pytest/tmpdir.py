@@ -265,7 +265,6 @@ def tmp_path(
     yield path
 
     # Remove the tmpdir if the policy is "failed" and the test passed.
-    tmp_path_factory: TempPathFactory = request.session.config._tmp_path_factory  # type: ignore
     policy = tmp_path_factory._retention_policy
     result_dict = request.node.stash[tmppath_result_key]
 

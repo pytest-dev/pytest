@@ -2093,6 +2093,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             example: -m 'mark1 and not mark2'.
       --markers             show markers (builtin, plugin and per-project ones).
       -x, --exitfirst       Exit instantly on first error or failed test
+      --maxfail=num         Exit after first num failures or errors
+      --strict-config       Any warnings encountered while parsing the `pytest`
+                            section of the configuration file raise errors
+      --strict-markers      Markers not registered in the `markers` section of
+                            the configuration file raise errors
+      --strict              (Deprecated) alias to --strict-markers
       --fixtures, --funcargs
                             Show available fixtures, sorted by plugin appearance
                             (fixtures with leading '_' are only shown with '-v')
@@ -2131,15 +2137,21 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --sw-skip, --stepwise-skip
                             Ignore the first failing test but stop on the next
                             failing test. Implicitly enables --stepwise.
+      --sw-reset, --stepwise-reset
+                            Resets stepwise state, restarting the stepwise
+                            workflow. Implicitly enables --stepwise.
 
     Reporting:
       --durations=N         Show N slowest setup/test durations (N=0 for all)
       --durations-min=N     Minimal duration in seconds for inclusion in slowest
-                            list. Default: 0.005.
+                            list. Default: 0.005 (or 0.0 if -vv is given).
       -v, --verbose         Increase verbosity
       --no-header           Disable header
       --no-summary          Disable summary
       --no-fold-skipped     Do not fold skipped tests in short summary.
+      --force-short-summary
+                            Force condensed summary output regardless of
+                            verbosity level.
       -q, --quiet           Decrease verbosity
       --verbosity=VERBOSE   Set verbosity. Default: 0.
       -r chars              Show extra test summary info as specified by chars:
@@ -2174,22 +2186,6 @@ All the command-line flags can be obtained by running ``pytest --help``::
       -W, --pythonwarnings PYTHONWARNINGS
                             Set which warnings to report, see -W option of
                             Python itself
-      --maxfail=num         Exit after first num failures or errors
-      --strict-config       Any warnings encountered while parsing the `pytest`
-                            section of the configuration file raise errors
-      --strict-markers      Markers not registered in the `markers` section of
-                            the configuration file raise errors
-      --strict              (Deprecated) alias to --strict-markers
-      -c, --config-file FILE
-                            Load configuration from `FILE` instead of trying to
-                            locate one of the implicit configuration files.
-      --continue-on-collection-errors
-                            Force test execution even if collection errors occur
-      --rootdir=ROOTDIR     Define root directory for tests. Can be relative
-                            path: 'root_dir', './root_dir',
-                            'root_dir/another_dir/'; absolute path:
-                            '/home/user/root_dir'; path with variables:
-                            '$HOME/root_dir'.
 
     collection:
       --collect-only, --co  Only collect tests, don't execute them
@@ -2205,6 +2201,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --keep-duplicates     Keep duplicate tests
       --collect-in-virtualenv
                             Don't ignore tests in a local virtualenv directory
+      --continue-on-collection-errors
+                            Force test execution even if collection errors occur
       --import-mode={prepend,append,importlib}
                             Prepend/append to sys.path when importing test
                             modules and conftest files. Default: prepend.
@@ -2220,6 +2218,14 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             failure
 
     test session debugging and configuration:
+      -c, --config-file FILE
+                            Load configuration from `FILE` instead of trying to
+                            locate one of the implicit configuration files.
+      --rootdir=ROOTDIR     Define root directory for tests. Can be relative
+                            path: 'root_dir', './root_dir',
+                            'root_dir/another_dir/'; absolute path:
+                            '/home/user/root_dir'; path with variables:
+                            '$HOME/root_dir'.
       --basetemp=dir        Base temporary directory for this test run.
                             (Warning: this directory is removed if it exists.)
       -V, --version         Display pytest version and information about
@@ -2228,7 +2234,13 @@ All the command-line flags can be obtained by running ``pytest --help``::
       -h, --help            Show help message and configuration info
       -p name               Early-load given plugin module name or entry point
                             (multi-allowed). To avoid loading of plugins, use
-                            the `no:` prefix, e.g. `no:doctest`.
+                            the `no:` prefix, e.g. `no:doctest`. See also
+                            --disable-plugin-autoload.
+      --disable-plugin-autoload
+                            Disable plugin auto-loading through entry point
+                            packaging metadata. Only plugins explicitly
+                            specified in -p or env var PYTEST_PLUGINS will be
+                            loaded.
       --trace-config        Trace considerations of conftest.py files
       --debug=[DEBUG_FILE_NAME]
                             Store internal tracing debug information in this log
@@ -2283,13 +2295,16 @@ All the command-line flags can be obtained by running ``pytest --help``::
       markers (linelist):   Register new markers for test functions
       empty_parameter_set_mark (string):
                             Default marker for empty parametersets
-      norecursedirs (args): Directory patterns to avoid for recursion
-      testpaths (args):     Directories to search for tests when no files or
-                            directories are given on the command line
       filterwarnings (linelist):
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
+      norecursedirs (args): Directory patterns to avoid for recursion
+      testpaths (args):     Directories to search for tests when no files or
+                            directories are given on the command line
+      collect_imported_tests (bool):
+                            Whether to collect tests in imported modules outside
+                            `testpaths`
       consider_namespace_packages (bool):
                             Consider namespace packages when resolving module
                             names during import
@@ -2329,6 +2344,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
+      truncation_limit_lines (string):
+                            Set threshold of LINES after which truncation will
+                            take effect
+      truncation_limit_chars (string):
+                            Set threshold of CHARS after which truncation will
+                            take effect
       verbosity_assertions (string):
                             Specify a verbosity level for assertions, overriding
                             the main level. Higher levels will provide more
@@ -2373,12 +2394,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Default value for --log-file-date-format
       log_auto_indent (string):
                             Default value for --log-auto-indent
-      pythonpath (paths):   Add paths to sys.path
       faulthandler_timeout (string):
                             Dump the traceback of all threads if a test takes
                             more than TIMEOUT seconds to finish
       addopts (args):       Extra command line options
       minversion (string):  Minimally required pytest version
+      pythonpath (paths):   Add paths to sys.path
       required_plugins (args):
                             Plugins that must be present for pytest to run
 

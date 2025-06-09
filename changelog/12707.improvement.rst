@@ -1,1 +1,0 @@
-Exception chains can be navigated when dropped into Pdb in Python 3.13+.

@@ -29,5 +29,6 @@ exclude_lines =
 
     ^\s*if TYPE_CHECKING:
     ^\s*@overload( |$)
+    ^\s*def .+: \.\.\.$
 
     ^\s*@pytest\.mark\.xfail

@@ -1106,8 +1106,7 @@ class FixtureDef(Generic[FixtureValue]):
                     exc, exc_tb = self.cached_result[2]
                     raise exc.with_traceback(exc_tb)
                 else:
-                    result = self.cached_result[0]
-                    return result
+                    return self.cached_result[0]
             # We have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one.
             self.finish(request)
@@ -1123,10 +1122,12 @@ class FixtureDef(Generic[FixtureValue]):
         ihook = request.node.ihook
         try:
             # Setup the fixture, run the code in it, and cache the value
-            # in self.cached_result
-            result = ihook.pytest_fixture_setup(fixturedef=self, request=request)
+            # in self.cached_result.
+            result: FixtureValue = ihook.pytest_fixture_setup(
+                fixturedef=self, request=request
+            )
         finally:
-            # schedule our finalizer, even if the setup failed
+            # Schedule our finalizer, even if the setup failed.
             request.node.addfinalizer(finalizer)
 
         return result

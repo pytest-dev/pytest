@@ -1,1 +1,0 @@
-Improved grouping of CLI options in the ``--help`` output.

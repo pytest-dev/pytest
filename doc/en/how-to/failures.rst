@@ -112,7 +112,7 @@ on the command-line.
 
 Also the :confval:`faulthandler_timeout=X<faulthandler_timeout>` configuration option can be used
 to dump the traceback of all threads if a test takes longer than ``X``
-seconds to finish (not available on Windows).
+seconds to finish.
 
 .. note::
 

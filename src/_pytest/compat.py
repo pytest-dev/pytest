@@ -300,3 +300,23 @@ def get_user_id() -> int | None:
 # This also work for Enums (if you use `is` to compare) and Literals.
 def assert_never(value: NoReturn) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
+
+
+class CallableBool:
+    """
+    A bool-like object that can also be called, returning its true/false value.
+
+    Used for backwards compatibility in cases where something was supposed to be a method
+    but was implemented as a simple attribute by mistake (see `TerminalReporter.isatty`).
+
+    Do not use in new code.
+    """
+
+    def __init__(self, value: bool) -> None:
+        self._value = value
+
+    def __bool__(self) -> bool:
+        return self._value
+
+    def __call__(self) -> bool:
+        return self._value

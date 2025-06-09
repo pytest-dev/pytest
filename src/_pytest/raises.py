@@ -588,7 +588,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
     # At least one of the three parameters must be passed.
     @overload
     def __init__(
-        self: RaisesExc[BaseExcT_co_default],
+        self,
         expected_exception: (
             type[BaseExcT_co_default] | tuple[type[BaseExcT_co_default], ...]
         ),
@@ -969,9 +969,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         # that are *very* hard to reconcile while adhering to the overloads, so we cast
         # it to avoid an error when passing it to super().__init__
         check = cast(
-            "Callable[["
-            "BaseExceptionGroup[ExcT_1|BaseExcT_1|BaseExceptionGroup[BaseExcT_2]]"
-            "], bool]",
+            "Callable[[BaseExceptionGroup[ExcT_1|BaseExcT_1|BaseExceptionGroup[BaseExcT_2]]], bool]",
             check,
         )
         super().__init__(match=match, check=check)
@@ -1107,7 +1105,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def matches(
         self,
         exception: BaseException | None,
-    ) -> TypeGuard[BaseExceptionGroup[BaseExcT_co]]:
+    ) -> bool:
         """Check if an exception matches the requirements of this RaisesGroup.
         If it fails, `RaisesGroup.fail_reason` will be set.
 
@@ -1271,7 +1269,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         self,
         _exception: BaseException,
         actual_exceptions: Sequence[BaseException],
-    ) -> TypeGuard[BaseExceptionGroup[BaseExcT_co]]:
+    ) -> bool:
         """Helper method for RaisesGroup.matches that attempts to pair up expected and actual exceptions"""
         # The _exception parameter is not used, but necessary for the TypeGuard
 
