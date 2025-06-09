@@ -211,7 +211,7 @@ def test_unhandled_thread_exception_after_teardown(pytester: Pytester) -> None:
         """
     )
 
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Werror")
 
     # TODO: should be a test failure or error
     assert result.ret == pytest.ExitCode.INTERNAL_ERROR

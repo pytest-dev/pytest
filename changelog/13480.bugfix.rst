@@ -1,0 +1,3 @@
+Modified a few self-tests to explicitly pass ``-Werror``
+to ``runpytester()``, in order to fix test failures when the test suite
+is run with ``-Wdefault`` or a similar override.
