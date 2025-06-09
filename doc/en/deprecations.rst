@@ -316,46 +316,6 @@ Users expected in this case that the ``usefixtures`` mark would have its intende
 Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
 
 
-Returning non-None value in test functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.2
-
-A ``pytest.PytestReturnNotNoneWarning`` is now emitted if a test function returns something other than `None`.
-
-This prevents a common mistake among beginners that expect that returning a `bool` would cause a test to pass or fail, for example:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize(
-        ["a", "b", "result"],
-        [
-            [1, 2, 5],
-            [2, 3, 8],
-            [5, 3, 18],
-        ],
-    )
-    def test_foo(a, b, result):
-        return foo(a, b) == result
-
-Given that pytest ignores the return value, this might be surprising that it will never fail.
-
-The proper fix is to change the `return` to an `assert`:
-
-.. code-block:: python
-
-    @pytest.mark.parametrize(
-        ["a", "b", "result"],
-        [
-            [1, 2, 5],
-            [2, 3, 8],
-            [5, 3, 18],
-        ],
-    )
-    def test_foo(a, b, result):
-        assert foo(a, b) == result
-
-
 The ``yield_fixture`` function/decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
