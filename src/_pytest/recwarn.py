@@ -81,7 +81,6 @@ def deprecated_call(
     (regardless of whether it is an ``expected_warning`` or not).
     """
     __tracebackhide__ = True
-    # Potential QoL: allow `with deprecated_call:` - i.e. no parens
     dep_warnings = (DeprecationWarning, PendingDeprecationWarning, FutureWarning)
     if func is None:
         return warns(dep_warnings, *args, **kwargs)

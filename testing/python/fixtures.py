@@ -3447,8 +3447,8 @@ class TestRequestScopeAccess:
                 for x in {ok.split()}:
                     assert hasattr(request, x)
                 for x in {error.split()}:
-                    pytest.raises(AttributeError, lambda:
-                        getattr(request, x))
+                    with pytest.raises(AttributeError):
+                        getattr(request, x)
                 assert request.session
                 assert request.config
             def test_func():
@@ -3467,8 +3467,8 @@ class TestRequestScopeAccess:
                 for x in {ok.split()!r}:
                     assert hasattr(request, x)
                 for x in {error.split()!r}:
-                    pytest.raises(AttributeError, lambda:
-                        getattr(request, x))
+                    with pytest.raises(AttributeError):
+                        getattr(request, x)
                 assert request.session
                 assert request.config
             def test_func(arg):

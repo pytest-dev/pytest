@@ -282,10 +282,6 @@ exception at a specific level; exceptions contained directly in the top
 Alternate `pytest.raises` form (legacy)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. warning::
-   This form is likely to be deprecated and removed in a future release.
-
-
 There is an alternate form of :func:`pytest.raises` where you pass
 a function that will be executed, along with ``*args`` and ``**kwargs``. :func:`pytest.raises`
 will then execute the function with those arguments and assert that the given exception is raised:
@@ -298,9 +294,6 @@ will then execute the function with those arguments and assert that the given ex
 
 
     pytest.raises(ValueError, func, x=-1)
-
-The reporter will provide you with helpful output in case of failures such as *no
-exception* or *wrong exception*.
 
 This form was the original :func:`pytest.raises` API, developed before the ``with`` statement was
 added to the Python language. Nowadays, this form is rarely used, with the context-manager form (using ``with``)
