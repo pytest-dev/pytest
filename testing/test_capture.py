@@ -96,7 +96,8 @@ class TestCaptureManager:
         try:
             capman = CaptureManager("fd")
             capman.start_global_capturing()
-            pytest.raises(AssertionError, capman.start_global_capturing)
+            with pytest.raises(AssertionError):
+                capman.start_global_capturing()
             capman.stop_global_capturing()
         finally:
             capouter.stop_capturing()
@@ -885,7 +886,8 @@ class TestCaptureIO:
     def test_unicode_and_str_mixture(self) -> None:
         f = capture.CaptureIO()
         f.write("\u00f6")
-        pytest.raises(TypeError, f.write, b"hello")
+        with pytest.raises(TypeError):
+            f.write(b"hello")  # type: ignore[arg-type]
 
     def test_write_bytes_to_buffer(self) -> None:
         """In python3, stdout / stderr are text io wrappers (exposing a buffer
@@ -912,7 +914,8 @@ class TestTeeCaptureIO(TestCaptureIO):
         sio = io.StringIO()
         f = capture.TeeCaptureIO(sio)
         f.write("\u00f6")
-        pytest.raises(TypeError, f.write, b"hello")
+        with pytest.raises(TypeError):
+            f.write(b"hello")  # type: ignore[arg-type]
 
 
 def test_dontreadfrominput() -> None:
@@ -921,19 +924,29 @@ def test_dontreadfrominput() -> None:
     f = DontReadFromInput()
     assert f.buffer is f  # type: ignore[comparison-overlap]
     assert not f.isatty()
-    pytest.raises(OSError, f.read)
-    pytest.raises(OSError, f.readlines)
+    with pytest.raises(OSError):
+        f.read()
+    with pytest.raises(OSError):
+        f.readlines()
     iter_f = iter(f)
-    pytest.raises(OSError, next, iter_f)
-    pytest.raises(UnsupportedOperation, f.fileno)
-    pytest.raises(UnsupportedOperation, f.flush)
+    with pytest.raises(OSError):
+        next(iter_f)
+    with pytest.raises(UnsupportedOperation):
+        f.fileno()
+    with pytest.raises(UnsupportedOperation):
+        f.flush()
     assert not f.readable()
-    pytest.raises(UnsupportedOperation, f.seek, 0)
+    with pytest.raises(UnsupportedOperation):
+        f.seek(0)
     assert not f.seekable()
-    pytest.raises(UnsupportedOperation, f.tell)
-    pytest.raises(UnsupportedOperation, f.truncate, 0)
-    pytest.raises(UnsupportedOperation, f.write, b"")
-    pytest.raises(UnsupportedOperation, f.writelines, [])
+    with pytest.raises(UnsupportedOperation):
+        f.tell()
+    with pytest.raises(UnsupportedOperation):
+        f.truncate(0)
+    with pytest.raises(UnsupportedOperation):
+        f.write(b"")  # type: ignore[arg-type]
+    with pytest.raises(UnsupportedOperation):
+        f.writelines([])
     assert not f.writable()
     assert isinstance(f.encoding, str)
     f.close()  # just for completeness
@@ -1000,7 +1013,8 @@ class TestFDCapture:
         cap = capture.FDCapture(fd)
         data = b"hello"
         os.write(fd, data)
-        pytest.raises(AssertionError, cap.snap)
+        with pytest.raises(AssertionError):
+            cap.snap()
         cap.done()
         cap = capture.FDCapture(fd)
         cap.start()
@@ -1022,7 +1036,8 @@ class TestFDCapture:
         fd = tmpfile.fileno()
         cap = capture.FDCapture(fd)
         cap.done()
-        pytest.raises(AssertionError, cap.start)
+        with pytest.raises(AssertionError):
+            cap.start()
 
     def test_stderr(self) -> None:
         cap = capture.FDCapture(2)
@@ -1073,7 +1088,8 @@ class TestFDCapture:
             assert s == "but now yes\n"
             cap.suspend()
             cap.done()
-            pytest.raises(AssertionError, cap.suspend)
+            with pytest.raises(AssertionError):
+                cap.suspend()
 
             assert repr(cap) == (
                 f"<FDCapture 1 oldfd={cap.targetfd_save} _state='done' tmpfile={cap.tmpfile!r}>"
@@ -1155,7 +1171,8 @@ class TestStdCapture:
         with self.getcapture() as cap:
             print("hello")
             out, err = cap.readouterr()
-        pytest.raises(ValueError, cap.stop_capturing)
+        with pytest.raises(ValueError):
+            cap.stop_capturing()
         assert out == "hello\n"
         assert not err
 
@@ -1213,7 +1230,8 @@ class TestStdCapture:
         print("XXX which indicates an error in the underlying capturing")
         print("XXX mechanisms")
         with self.getcapture():
-            pytest.raises(OSError, sys.stdin.read)
+            with pytest.raises(OSError):
+                sys.stdin.read()
 
 
 class TestTeeStdCapture(TestStdCapture):
@@ -1667,9 +1685,8 @@ def test_encodedfile_writelines(tmpfile: BinaryIO) -> None:
 
 def test__get_multicapture() -> None:
     assert isinstance(_get_multicapture("no"), MultiCapture)
-    pytest.raises(ValueError, _get_multicapture, "unknown").match(
-        r"^unknown capturing method: 'unknown'"
-    )
+    with pytest.raises(ValueError, match=r"^unknown capturing method: 'unknown'$"):
+        _get_multicapture("unknown")  # type: ignore[arg-type]
 
 
 def test_logging_while_collecting(pytester: Pytester) -> None:
