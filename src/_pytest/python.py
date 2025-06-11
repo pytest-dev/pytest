@@ -16,6 +16,7 @@ import dataclasses
 import enum
 import fnmatch
 from functools import partial
+import hashlib
 import inspect
 import itertools
 import os
@@ -105,6 +106,16 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Disable string escape non-ASCII characters, might cause unwanted "
         "side effects(use at your own risk)",
+    )
+    parser.addini(
+        "parametrize_long_str_id_strategy",
+        type="string",
+        default="short",
+        help="strategy for parameer values that result in long ids\n"
+        "- short: default: shorten the value normally\n"
+        "- hash: take a sha3 of the value for content matching ids\n"
+        "- legacy: keep the long id (only use this for temporary backward compatibility)\n"
+        "- disallow: fail and request explicit ids",
     )
 
 
@@ -989,7 +1000,23 @@ class IdMaker:
         """Try to make an ID for a parameter in a ParameterSet from its value,
         if the value type is supported."""
         if isinstance(val, (str, bytes)):
-            return _ascii_escaped_by_config(val, self.config)
+            if self.config:
+                strategy = self.config.getini("parametrize_long_str_id_strategy")
+            else:
+                strategy = "short"
+            if strategy == "legacy":
+                return _ascii_escaped_by_config(val, self.config)
+            elif strategy == "short":
+                if len(val) > 100:
+                    return None
+                return _ascii_escaped_by_config(val, self.config)
+            elif strategy == "hash":
+                encoded = val.encode("utf-8") if isinstance(val, str) else val
+                return hashlib.sha256(encoded).hexdigest()
+            elif strategy == "disallow":
+                if len(val) > 100:
+                    raise ValueError("too long as id", len(val), val)
+                return _ascii_escaped_by_config(val, self.config)
         elif val is None or isinstance(val, (float, int, bool, complex)):
             return str(val)
         elif isinstance(val, re.Pattern):
