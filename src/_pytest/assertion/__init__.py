@@ -114,7 +114,7 @@ class AssertionState:
         self.hook: rewrite.AssertionRewritingHook | None = None
 
     @property
-    def invocation_path( self ):
+    def invocation_path(self):
         """Get current root path (current working dir)"""
         return str(self.config.invocation_params.dir)
 

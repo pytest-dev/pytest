@@ -1303,7 +1303,7 @@ class TestAssertionRewriteHookDetails:
 
         config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
-        assert state.invocation_path == str( config.invocation_params.dir )
+        assert state.invocation_path == str(config.invocation_params.dir)
         new_rootpath = str(pytester.path / "test")
         if not os.path.exists(new_rootpath):
             os.mkdir(new_rootpath)

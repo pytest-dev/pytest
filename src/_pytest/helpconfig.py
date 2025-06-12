@@ -87,7 +87,7 @@ def pytest_addoption(parser: Parser) -> None:
         help="Trace considerations of conftest.py files",
     )
     group.addoption(
-            "--debug",
+        "--debug",
         action="store",
         nargs="?",
         const="pytestdebug.log",
