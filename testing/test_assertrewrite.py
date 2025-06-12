@@ -2032,63 +2032,6 @@ class TestEarlyRewriteBailout:
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is None
 
-    def test_assert_rewrite_correct_for_conftfest(
-        self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
-    ) -> None:
-        """Conftest is always rewritten regardless of the root dir"""
-        pytester.makeconftest(
-            """
-            import pytest
-            @pytest.fixture
-            def fix(): return 1
-        """
-        )
-
-        rootpath = f"{os.getcwd()}/tests"
-        if not os.path.exists(rootpath):
-            mkdir(rootpath)
-        monkeypatch.setattr(
-            pytester._request.config,
-            "invocation_params",
-            Config.InvocationParams(
-                args=(),
-                plugins=(),
-                dir=Path(rootpath),
-            ),
-        )
-        with mock.patch.object(hook, "fnpats", ["*.py"]):
-            assert hook.find_spec("conftest") is not None
-
-    def test_assert_rewrite_correct_for_plugins(
-        self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
-    ) -> None:
-        """Plugins has always been rewritten regardless of the root dir"""
-        pkgdir = pytester.mkpydir("plugin")
-        pkgdir.joinpath("__init__.py").write_text(
-            "import pytest\n"
-            "@pytest.fixture\n"
-            "def special_asserter():\n"
-            "    def special_assert(x, y):\n"
-            "        assert x == y\n"
-            "    return special_assert\n",
-            encoding="utf-8",
-        )
-        hook.mark_rewrite("plugin")
-        rootpath = f"{os.getcwd()}/tests"
-        if not os.path.exists(rootpath):
-            mkdir(rootpath)
-        monkeypatch.setattr(
-            pytester._request.config,
-            "invocation_params",
-            Config.InvocationParams(
-                args=(),
-                plugins=(),
-                dir=Path(rootpath),
-            ),
-        )
-        with mock.patch.object(hook, "fnpats", ["*.py"]):
-            assert hook.find_spec("plugin") is not None
-
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
     )

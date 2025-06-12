@@ -12,6 +12,7 @@ from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
+import dataclasses
 from fnmatch import fnmatch
 import gc
 import importlib
@@ -752,10 +753,8 @@ class Pytester:
         self._monkeypatch.setattr(
             self._request.config,
             "invocation_params",
-            Config.InvocationParams(
-                args=self._request.config.invocation_params.args,
-                plugins=self._request.config.invocation_params.plugins,
-                dir=Path(self._path),
+            dataclasses.replace(
+                self._request.config.invocation_params, dir=Path(self._path)
             ),
         )
 
