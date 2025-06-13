@@ -12,7 +12,6 @@ from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
-import dataclasses
 from fnmatch import fnmatch
 import gc
 import importlib
@@ -41,6 +40,7 @@ from iniconfig import SectionWrapper
 
 from _pytest import timing
 from _pytest._code import Source
+from _pytest.assertion.rewrite import assertstate_key
 from _pytest.capture import _get_multicapture
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
@@ -751,11 +751,7 @@ class Pytester:
         """
         self._monkeypatch.chdir(self.path)
         self._monkeypatch.setattr(
-            self._request.config,
-            "invocation_params",
-            dataclasses.replace(
-                self._request.config.invocation_params, dir=Path(self._path)
-            ),
+            self._request.config.stash[assertstate_key], "invocation_path", self.path
         )
 
     def _makefile(
