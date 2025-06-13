@@ -6,8 +6,8 @@ from __future__ import annotations
 from collections.abc import Generator
 import sys
 from typing import Any
-from typing import TYPE_CHECKING
 from typing import Protocol
+from typing import TYPE_CHECKING
 
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
