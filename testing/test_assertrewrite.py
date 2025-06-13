@@ -12,6 +12,7 @@ import importlib
 import inspect
 import marshal
 import os
+from os import mkdir
 from pathlib import Path
 import py_compile
 import re
@@ -35,6 +36,7 @@ from _pytest.assertion.rewrite import PYTEST_TAG
 from _pytest.assertion.rewrite import rewrite_asserts
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import make_numbered_dir
 from _pytest.pytester import Pytester
 import pytest
@@ -370,6 +372,7 @@ class TestAssertionRewrite:
         pytester.makeconftest('pytest_plugins = ["plugin"]')
         pytester.makepyfile("def test(special_asserter): special_asserter(1, 2)\n")
         result = pytester.runpytest()
+
         result.stdout.fnmatch_lines(["*assert 1 == 2*"])
 
     def test_honors_pep_235(self, pytester: Pytester, monkeypatch) -> None:
@@ -1294,6 +1297,34 @@ class TestAssertionRewriteHookDetails:
         )
         assert pytester.runpytest().ret == 0
 
+    def test_invocation_dir(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
+        """Test get invocation param afrom AssertionState"""
+        from _pytest.assertion import AssertionState
+
+        config = pytester.parseconfig()
+        state = AssertionState(config, "rewrite")
+        assert state.invocation_path == str(config.invocation_params.dir)
+        new_rootpath = str(pytester.path / "test")
+        if not os.path.exists(new_rootpath):
+            os.mkdir(new_rootpath)
+        monkeypatch.setattr(
+            config,
+            "invocation_params",
+            Config.InvocationParams(
+                args=(),
+                plugins=(),
+                dir=Path(new_rootpath),
+            ),
+        )
+        state = AssertionState(config, "rewrite")
+        assert state.invocation_path == new_rootpath
+
+    @pytest.mark.skipif(
+        sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
+    )
+    @pytest.mark.skipif(
+        sys.platform.startswith("sunos5"), reason="cannot remove cwd on Solaris"
+    )
     def test_write_pyc(self, pytester: Pytester, tmp_path) -> None:
         from _pytest.assertion import AssertionState
         from _pytest.assertion.rewrite import _write_pyc
@@ -1970,6 +2001,36 @@ class TestEarlyRewriteBailout:
         with mock.patch.object(hook, "fnpats", ["tests/**.py"]):
             assert hook.find_spec("file") is not None
             assert self.find_spec_calls == ["file"]
+
+    def test_assert_rewrites_only_rootpath(
+        self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
+    ) -> None:
+        """Do not rewrite assertions in tests outside `AssertState.rootpath` (#13403)."""
+        pytester.makepyfile(
+            **{
+                "file.py": """\
+                    def test_simple_failure():
+                        assert 1 + 1 == 3
+                """
+            }
+        )
+        with mock.patch.object(hook, "fnpats", ["*.py"]):
+            assert hook.find_spec("file") is not None
+
+        rootpath = f"{os.getcwd()}/tests"
+        if not os.path.exists(rootpath):
+            mkdir(rootpath)
+        monkeypatch.setattr(
+            pytester._request.config,
+            "invocation_params",
+            Config.InvocationParams(
+                args=(),
+                plugins=(),
+                dir=Path(rootpath),
+            ),
+        )
+        with mock.patch.object(hook, "fnpats", ["*.py"]):
+            assert hook.find_spec("file") is None
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
