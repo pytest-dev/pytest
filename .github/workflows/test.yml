@@ -54,9 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py39-asynctest",
-          "windows-py39-twisted24",
-          "windows-py39-twisted25",
+          "windows-py39-unittest-extras",
           "windows-py39-pluggy",
           "windows-py39-xdist",
           "windows-py310",
@@ -65,9 +63,7 @@ jobs:
           "windows-py313",
           "windows-py314",
 
-          "ubuntu-py39-asynctest",
-          "ubuntu-py39-twisted24",
-          "ubuntu-py39-twisted25",
+          "ubuntu-py39-unittest-extras",
           "ubuntu-py39-lsof-numpy-pexpect",
           "ubuntu-py39-pluggy",
           "ubuntu-py39-freeze",
@@ -90,22 +86,10 @@ jobs:
         ]
 
         include:
-          - name: "windows-py39-asynctest"
+          - name: "windows-py39-unittest-extras"
             python: "3.9"
             os: windows-latest
-            tox_env: "py39-twisted24"
-            use_coverage: true
-
-          - name: "windows-py39-twisted24"
-            python: "3.9"
-            os: windows-latest
-            tox_env: "py39-twisted24"
-            use_coverage: true
-
-          - name: "windows-py39-twisted25"
-            python: "3.9"
-            os: windows-latest
-            tox_env: "py39-twisted25"
+            tox_env: "py39-asynctest,py39-twisted24,py39-twisted25"
             use_coverage: true
 
           - name: "windows-py39-pluggy"
@@ -143,22 +127,10 @@ jobs:
             os: windows-latest
             tox_env: "py314"
 
-          - name: "ubuntu-py39-asynctest"
+          - name: "ubuntu-py39-unittest-extras"
             python: "3.9"
             os: ubuntu-latest
-            tox_env: "py39-asynctest"
-            use_coverage: true
-
-          - name: "ubuntu-py39-twisted24"
-            python: "3.9"
-            os: ubuntu-latest
-            tox_env: "py39-twisted24"
-            use_coverage: true
-
-          - name: "ubuntu-py39-twisted25"
-            python: "3.9"
-            os: ubuntu-latest
-            tox_env: "py39-twisted25"
+            tox_env: "py39-asynctest,py39-twisted24,py39-twisted25"
             use_coverage: true
 
           - name: "ubuntu-py39-lsof-numpy-pexpect"
