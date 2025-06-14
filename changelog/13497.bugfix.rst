@@ -1,1 +1,1 @@
-Fixed compatibility with ``Twisted``, however version ``25`` or later is required.
+Fixed compatibility with ``Twisted 25+``.

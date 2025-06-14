@@ -6,6 +6,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
+from collections.abc import Iterator
+from enum import auto
+from enum import Enum
 import inspect
 import sys
 import traceback
@@ -17,6 +20,7 @@ import _pytest._code
 from _pytest.compat import is_async_function
 from _pytest.config import hookimpl
 from _pytest.fixtures import FixtureRequest
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import exit
@@ -383,22 +387,91 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
         call.excinfo = call2.excinfo
 
 
+def _is_skipped(obj) -> bool:
+    """Return True if the given object has been marked with @unittest.skip."""
+    return bool(getattr(obj, "__unittest_skip__", False))
+
+
 def pytest_configure() -> None:
     """Register the TestCaseFunction class as an IReporter if twisted.trial is available."""
-    if _is_twisted_trial_available():
+    if _get_twisted_version() is not TwistedVersion.NotInstalled:
         from twisted.trial.itrial import IReporter
         from zope.interface import classImplements
 
         classImplements(TestCaseFunction, IReporter)
 
 
-def _is_skipped(obj) -> bool:
-    """Return True if the given object has been marked with @unittest.skip."""
-    return bool(getattr(obj, "__unittest_skip__", False))
+class TwistedVersion(Enum):
+    """
+    The Twisted version installed in the environment.
+
+    We have different workarounds in place for different versions of Twisted.
+    """
+
+    # Twisted version 24 or prior.
+    Version24 = auto()
+    # Twisted version 25 or later.
+    Version25 = auto()
+    # Twisted version is not available.
+    NotInstalled = auto()
 
 
-def _is_twisted_trial_available() -> bool:
-    return "twisted.trial.unittest" in sys.modules
+def _get_twisted_version() -> TwistedVersion:
+    # Check `"twisted.trial.unittest` is in sys.modules to ensure that Twisted is installed
+    # being used to run the test suite.
+    if "twisted.trial.unittest" not in sys.modules:
+        return TwistedVersion.NotInstalled
+
+    import importlib.metadata
+
+    import packaging.version
+
+    version_str = importlib.metadata.version("twisted")
+    version = packaging.version.parse(version_str)
+    if version.major <= 24:
+        return TwistedVersion.Version24
+    else:
+        return TwistedVersion.Version25
+
+
+# Name of the attribute in `twisted.python.Failure` instances that stores
+# the `sys.exc_info()` tuple.
+# See twisted.trial support in `pytest_runtest_protocol`.
+TWISTED_RAW_EXCINFO_ATTR = "_twisted_raw_excinfo"
+
+
+@hookimpl(wrapper=True)
+def pytest_runtest_protocol(item: Item) -> Iterator[None]:
+    if _get_twisted_version() is TwistedVersion.Version24:
+        import twisted.python.failure as ut
+
+        # Monkeypatch `Failure.__init__` to store the raw exception info.
+        original__init__ = ut.Failure.__init__
+
+        def store_raw_exception_info(
+            self, exc_value=None, exc_type=None, exc_tb=None, captureVars=None
+        ):
+            if exc_value is None:
+                raw_exc_info = sys.exc_info()
+            else:
+                if exc_type is None:
+                    exc_type = type(exc_value)
+                if exc_tb is None:
+                    exc_tb = sys.exc_info()[2]
+                raw_exc_info = (exc_type, exc_value, exc_tb)
+            setattr(self, TWISTED_RAW_EXCINFO_ATTR, tuple(raw_exc_info))
+            try:
+                original__init__(
+                    self, exc_value, exc_type, exc_tb, captureVars=captureVars
+                )
+            except TypeError:
+                original__init__(self, exc_value, exc_type, exc_tb)
+
+        with MonkeyPatch.context() as patcher:
+            patcher.setattr(ut.Failure, "__init__", store_raw_exception_info)
+            return (yield)
+    else:
+        return (yield)
 
 
 def _handle_twisted_exc_info(
@@ -409,16 +482,34 @@ def _handle_twisted_exc_info(
     Therefore, if `rawexcinfo` is a `Failure` instance, convert it into the equivalent `sys.exc_info()` tuple
     as expected by pytest.
     """
-    if isinstance(rawexcinfo, BaseException) and _is_twisted_trial_available():
-        import twisted.python.failure
+    twisted_version = _get_twisted_version()
+    if twisted_version is TwistedVersion.NotInstalled:
+        # Unfortunately, because we cannot import `twisted.python.failure` at the top of the file
+        # and use it in the signature, we need to use `type:ignore` here because we cannot narrow
+        # the type properly in the `if` statement above.
+        return rawexcinfo  # type:ignore[return-value]
+    elif twisted_version is TwistedVersion.Version24:
+        # Twisted calls addError() passing its own classes (like `twisted.python.Failure`), which violates
+        # the `addError()` signature, so we extract the original `sys.exc_info()` tuple which is stored
+        # in the object.
+        if hasattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR):
+            saved_exc_info = getattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR)
+            # Delete the attribute from the original object to avoid leaks.
+            delattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR)
+            return saved_exc_info  # type:ignore[no-any-return]
+        return rawexcinfo  # type:ignore[return-value]
+    elif twisted_version is TwistedVersion.Version25:
+        if isinstance(rawexcinfo, BaseException):
+            import twisted.python.failure
 
-        if isinstance(rawexcinfo, twisted.python.failure.Failure):
-            tb = rawexcinfo.__traceback__
-            if tb is None:
-                tb = sys.exc_info()[2]
-            return type(rawexcinfo.value), rawexcinfo.value, tb
+            if isinstance(rawexcinfo, twisted.python.failure.Failure):
+                tb = rawexcinfo.__traceback__
+                if tb is None:
+                    tb = sys.exc_info()[2]
+                return type(rawexcinfo.value), rawexcinfo.value, tb
 
-    # Unfortunately, because we cannot import `twisted.python.failure` at the top of the file
-    # and use it in the signature, we need to use `type:ignore` here because we cannot narrow
-    # the type properly in the `if` statement above.
-    return rawexcinfo  # type:ignore[return-value]
+        return rawexcinfo  # type:ignore[return-value]
+    else:
+        # Ideally we would use assert_never() here, but it is not available in all Python versions
+        # we support, plus we do not require `type_extensions` currently.
+        assert False, f"Unexpected Twisted version: {twisted_version}"
