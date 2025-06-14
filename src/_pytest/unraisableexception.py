@@ -24,10 +24,13 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
+# This constant was determined experimentally by the Trio project.
+GC_COLLECT_ITERATIONS = 5
+
+
 def gc_collect_harder() -> None:
-    # A single collection doesn't necessarily collect everything.
-    # Constant determined experimentally by the Trio project.
-    for _ in range(5):
+    """Call gc.collect() multiple times, a single collection doesn't necessarily collect everything."""
+    for _ in range(GC_COLLECT_ITERATIONS):
         gc.collect()
 
 

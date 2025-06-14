@@ -6,6 +6,7 @@ import gc
 import sys
 from unittest import mock
 
+from _pytest import unraisableexception
 from _pytest.pytester import Pytester
 import pytest
 
@@ -238,7 +239,10 @@ def _disable_gc() -> Generator[None]:
         _set_gc_state(enabled=was_enabled)
 
 
-def test_refcycle_unraisable(pytester: Pytester) -> None:
+def test_refcycle_unraisable(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(unraisableexception, "GC_COLLECT_ITERATIONS", 5)
     # see: https://github.com/pytest-dev/pytest/issues/10404
     pytester.makepyfile(
         test_it="""
@@ -267,7 +271,10 @@ def test_refcycle_unraisable(pytester: Pytester) -> None:
 
 
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
-def test_refcycle_unraisable_warning_filter(pytester: Pytester) -> None:
+def test_refcycle_unraisable_warning_filter(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(unraisableexception, "GC_COLLECT_ITERATIONS", 5)
     # note that the host pytest warning filter is disabled and the pytester
     # warning filter applies during config teardown of unraisablehook.
     # see: https://github.com/pytest-dev/pytest/issues/10404
@@ -298,7 +305,10 @@ def test_refcycle_unraisable_warning_filter(pytester: Pytester) -> None:
 
 
 @pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
-def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> None:
+def test_create_task_raises_unraisable_warning_filter(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(unraisableexception, "GC_COLLECT_ITERATIONS", 5)
     # note that the host pytest warning filter is disabled and the pytester
     # warning filter applies during config teardown of unraisablehook.
     # see: https://github.com/pytest-dev/pytest/issues/10404
