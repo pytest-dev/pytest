@@ -706,6 +706,13 @@ class Pytester:
         # Do not use colors for inner runs by default.
         mp.setenv("PY_COLORS", "0")
 
+        # Pytester executes a full pytest section, including calling `pytest_unconfigure()`, which causes
+        # the `unraisableexception` plugin to call `gc.collect()` multiple times.
+        # Disable this forced garbage collection as it seriously slows down the entire test suite (#13482).
+        from _pytest import unraisableexception
+
+        mp.setattr(unraisableexception, "GC_COLLECT_ITERATIONS", 0)
+
     @property
     def path(self) -> Path:
         """Temporary directory path used to create files/run tests from, etc."""
