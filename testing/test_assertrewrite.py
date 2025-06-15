@@ -30,6 +30,7 @@ from _pytest.assertion.rewrite import _get_assertion_exprs
 from _pytest.assertion.rewrite import _get_maxsize_for_saferepr
 from _pytest.assertion.rewrite import _saferepr
 from _pytest.assertion.rewrite import AssertionRewritingHook
+from _pytest.assertion.rewrite import assertstate_key
 from _pytest.assertion.rewrite import get_cache_dir
 from _pytest.assertion.rewrite import PYC_TAIL
 from _pytest.assertion.rewrite import PYTEST_TAG
@@ -2002,7 +2003,7 @@ class TestEarlyRewriteBailout:
             assert hook.find_spec("file") is not None
             assert self.find_spec_calls == ["file"]
 
-    def test_assert_rewrites_only_rootpath(
+    def test_assert_rewrites_only_invocation_path(
         self, pytester: Pytester, hook: AssertionRewritingHook, monkeypatch
     ) -> None:
         """Do not rewrite assertions in tests outside `AssertState.rootpath` (#13403)."""
@@ -2014,21 +2015,19 @@ class TestEarlyRewriteBailout:
                 """
             }
         )
+
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is not None
 
-        rootpath = f"{os.getcwd()}/tests"
-        if not os.path.exists(rootpath):
-            mkdir(rootpath)
+        invocation_path = f"{os.getcwd()}/tests"
+        if not os.path.exists(invocation_path):
+            mkdir(invocation_path)
         monkeypatch.setattr(
-            pytester._request.config,
-            "invocation_params",
-            Config.InvocationParams(
-                args=(),
-                plugins=(),
-                dir=Path(rootpath),
-            ),
+            pytester._request.config.stash[assertstate_key],
+            "invocation_path",
+            invocation_path,
         )
+
         with mock.patch.object(hook, "fnpats", ["*.py"]):
             assert hook.find_spec("file") is None
 
