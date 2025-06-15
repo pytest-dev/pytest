@@ -352,7 +352,7 @@ The first invocation with ``db == "DB1"`` passed while the second with ``db == "
 Indirect parametrization
 ---------------------------------------------------
 
-Using the ``indirect=True`` parameter when parametrizing a test allows to
+Using the ``indirect=True`` parameter when parametrizing a test allows one to
 parametrize a test with a fixture receiving the values before passing them to a
 test:
 
