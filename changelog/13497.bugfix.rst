@@ -1,0 +1,1 @@
+Fixed compatibility with ``Twisted 25+``.
