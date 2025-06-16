@@ -11,5 +11,5 @@ pytest-rerunfailures==15.1
 pytest-sugar==1.0.0
 pytest-trio==0.8.0
 pytest-twisted==1.14.3
-twisted==24.11.0
+twisted==25.5.0
 pytest-xvfb==3.1.1
