@@ -65,7 +65,6 @@ from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
-from _pytest.unraisableexception import gc_collect_iterations_key
 from _pytest.warning_types import PytestFDWarning
 
 
@@ -1093,6 +1092,8 @@ class Pytester:
             Typically we reraise keyboard interrupts from the child run. If
             True, the KeyboardInterrupt exception is captured.
         """
+        from _pytest.unraisableexception import gc_collect_iterations_key
+
         # (maybe a cpython bug?) the importlib cache sometimes isn't updated
         # properly between file creation and inline_run (especially if imports
         # are interspersed with file creation)
