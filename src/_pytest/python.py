@@ -73,6 +73,7 @@ from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestReturnNotNoneWarning
 
 
 if TYPE_CHECKING:
@@ -157,12 +158,12 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
         async_fail(pyfuncitem.nodeid)
     elif result is not None:
-        fail(
-            (
-                f"Expected None, but test returned {result!r}. "
-                "Did you mean to use `assert` instead of `return`?"
-            ),
-            pytrace=False,
+        warnings.warn(
+            PytestReturnNotNoneWarning(
+                f"Test functions should return None, but {pyfuncitem.nodeid} returned {type(result)!r}.\n"
+                "Did you mean to use `assert` instead of `return`?\n"
+                "See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information."
+            )
         )
     return True
 

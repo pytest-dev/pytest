@@ -1489,7 +1489,8 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
     popen.stderr.close()
 
 
-def test_function_return_non_none_error(pytester: Pytester) -> None:
+@pytest.mark.filterwarnings("default")
+def test_function_return_non_none_warning(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         def test_stuff():
@@ -1497,7 +1498,6 @@ def test_function_return_non_none_error(pytester: Pytester) -> None:
     """
     )
     res = pytester.runpytest()
-    res.assert_outcomes(failed=1)
     res.stdout.fnmatch_lines(["*Did you mean to use `assert` instead of `return`?*"])
 
 
