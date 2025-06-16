@@ -682,9 +682,11 @@ class Pytester:
         self._name = name
         self._path: Path = tmp_path_factory.mktemp(name, numbered=True)
         #: A list of plugins to use with :py:meth:`parseconfig` and
-        #: :py:meth:`runpytest`.  Initially this is an empty list but plugins can
-        #: be added to the list.  The type of items to add to the list depends on
-        #: the method using them so refer to them for details.
+        #: :py:meth:`runpytest`. Initially this is an empty list but plugins can
+        #: be added to the list.
+        #:
+        #: When running in subprocess mode, specify plugins by name (str) - adding
+        #: plugin objects directly is not supported.
         self.plugins: list[str | _PluggyPlugin] = []
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
@@ -1494,8 +1496,12 @@ class Pytester:
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
         args = (f"--basetemp={p}", *args)
         for plugin in self.plugins:
-            if isinstance(plugin, str):
-                args = ("-p", plugin, *args)
+            if not isinstance(plugin, str):
+                raise ValueError(
+                    f"Specifying plugins as objects is not supported in pytester subprocess mode; "
+                    f"specify by name instead: {plugin}"
+                )
+            args = ("-p", plugin, *args)
         args = self._getpytestargs() + args
         return self.run(*args, timeout=timeout)
 
