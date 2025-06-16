@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Generator
-import contextlib
 import gc
 import sys
 from unittest import mock
@@ -229,19 +227,13 @@ def _set_gc_state(enabled: bool) -> bool:
     return was_enabled
 
 
-@contextlib.contextmanager
-def _disable_gc() -> Generator[None]:
-    was_enabled = _set_gc_state(enabled=False)
-    try:
-        yield
-    finally:
-        _set_gc_state(enabled=was_enabled)
-
-
 def test_refcycle_unraisable(pytester: Pytester) -> None:
     # see: https://github.com/pytest-dev/pytest/issues/10404
     pytester.makepyfile(
         test_it="""
+        # Should catch the unraisable exception even if gc is disabled.
+        import gc; gc.disable()
+
         import pytest
 
         class BrokenDel:
@@ -256,23 +248,22 @@ def test_refcycle_unraisable(pytester: Pytester) -> None:
         """
     )
 
-    with _disable_gc():
-        result = pytester.runpytest()
+    result = pytester.runpytest_subprocess(
+        "-Wdefault::pytest.PytestUnraisableExceptionWarning"
+    )
 
-    # TODO: should be a test failure or error
-    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
+    assert result.ret == 0
 
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
 
 
-@pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_refcycle_unraisable_warning_filter(pytester: Pytester) -> None:
-    # note that the host pytest warning filter is disabled and the pytester
-    # warning filter applies during config teardown of unraisablehook.
-    # see: https://github.com/pytest-dev/pytest/issues/10404
     pytester.makepyfile(
         test_it="""
+        # Should catch the unraisable exception even if gc is disabled.
+        import gc; gc.disable()
+
         import pytest
 
         class BrokenDel:
@@ -287,17 +278,18 @@ def test_refcycle_unraisable_warning_filter(pytester: Pytester) -> None:
         """
     )
 
-    with _disable_gc():
-        result = pytester.runpytest("-Werror")
+    result = pytester.runpytest_subprocess(
+        "-Werror::pytest.PytestUnraisableExceptionWarning"
+    )
 
-    # TODO: should be a test failure or error
-    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
+    # TODO: Should be a test failure or error. Currently the exception
+    # propagates all the way to the top resulting in exit code 1.
+    assert result.ret == 1
 
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("ValueError: del is broken")
 
 
-@pytest.mark.filterwarnings("default::pytest.PytestUnraisableExceptionWarning")
 def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> None:
     # note that the host pytest warning filter is disabled and the pytester
     # warning filter applies during config teardown of unraisablehook.
@@ -306,6 +298,9 @@ def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> Non
     # the issue
     pytester.makepyfile(
         test_it="""
+        # Should catch the unraisable exception even if gc is disabled.
+        import gc; gc.disable()
+
         import asyncio
         import pytest
 
@@ -318,11 +313,11 @@ def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> Non
         """
     )
 
-    with _disable_gc():
-        result = pytester.runpytest("-Werror")
+    result = pytester.runpytest_subprocess("-Werror")
 
-    # TODO: should be a test failure or error
-    assert result.ret == pytest.ExitCode.INTERNAL_ERROR
+    # TODO: Should be a test failure or error. Currently the exception
+    # propagates all the way to the top resulting in exit code 1.
+    assert result.ret == 1
 
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("RuntimeWarning: coroutine 'my_task' was never awaited")
