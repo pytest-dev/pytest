@@ -65,6 +65,7 @@ from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
+from _pytest.unraisableexception import gc_collect_iterations_key
 from _pytest.warning_types import PytestFDWarning
 
 
@@ -1115,12 +1116,16 @@ class Pytester:
 
             rec = []
 
-            class Collect:
+            class PytesterHelperPlugin:
                 @staticmethod
                 def pytest_configure(config: Config) -> None:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
-            plugins.append(Collect())
+                    # The unraisable plugin GC collect slows down inline
+                    # pytester runs too much.
+                    config.stash[gc_collect_iterations_key] = 0
+
+            plugins.append(PytesterHelperPlugin())
             ret = main([str(x) for x in args], plugins=plugins)
             if len(rec) == 1:
                 reprec = rec.pop()
