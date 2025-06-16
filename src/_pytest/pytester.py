@@ -1229,10 +1229,9 @@ class Pytester:
         """
         import _pytest.config
 
-        new_args = self._ensure_basetemp(args)
-        new_args = [str(x) for x in new_args]
+        new_args = [str(x) for x in self._ensure_basetemp(args)]
 
-        config = _pytest.config._prepareconfig(new_args, self.plugins)  # type: ignore[arg-type]
+        config = _pytest.config._prepareconfig(new_args, self.plugins)
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)
