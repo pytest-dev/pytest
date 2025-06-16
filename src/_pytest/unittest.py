@@ -372,18 +372,6 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
             except AttributeError:
                 pass
 
-    # Convert unittest.SkipTest to pytest.skip.
-    # This is actually only needed for nose, which reuses unittest.SkipTest for
-    # its own nose.SkipTest. For unittest TestCases, SkipTest is already
-    # handled internally, and doesn't reach here.
-    unittest = sys.modules.get("unittest")
-    if unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest):
-        excinfo = call.excinfo
-        call2 = CallInfo[None].from_call(
-            lambda: pytest.skip(str(excinfo.value)), call.when
-        )
-        call.excinfo = call2.excinfo
-
 
 # Twisted trial support.
 classImplements_has_run = False
