@@ -1,0 +1,1 @@
+Fixed :fixture:`pytester` in subprocess mode ignored all :attr`pytester.plugins <pytest.Pytester.plugins>` except the first.
