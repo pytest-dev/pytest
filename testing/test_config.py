@@ -2175,7 +2175,8 @@ def test_invocation_args(pytester: Pytester) -> None:
     plugins = config.invocation_params.plugins
     assert len(plugins) == 2
     assert plugins[0] is plugin
-    assert type(plugins[1]).__name__ == "Collect"  # installed by pytester.inline_run()
+    # Installed by pytester.inline_run().
+    assert type(plugins[1]).__name__ == "PytesterHelperPlugin"
 
     # args cannot be None
     with pytest.raises(TypeError):

@@ -24,10 +24,12 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
-def gc_collect_harder() -> None:
-    # A single collection doesn't necessarily collect everything.
-    # Constant determined experimentally by the Trio project.
-    for _ in range(5):
+# This is a stash item and not a simple constant to allow pytester to override it.
+gc_collect_iterations_key = StashKey[int]()
+
+
+def gc_collect_harder(iterations: int) -> None:
+    for _ in range(iterations):
         gc.collect()
 
 
@@ -84,9 +86,12 @@ def collect_unraisable(config: Config) -> None:
 def cleanup(
     *, config: Config, prev_hook: Callable[[sys.UnraisableHookArgs], object]
 ) -> None:
+    # A single collection doesn't necessarily collect everything.
+    # Constant determined experimentally by the Trio project.
+    gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
     try:
         try:
-            gc_collect_harder()
+            gc_collect_harder(gc_collect_iterations)
             collect_unraisable(config)
         finally:
             sys.unraisablehook = prev_hook
