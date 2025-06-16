@@ -12,7 +12,6 @@ import importlib
 import inspect
 import marshal
 import os
-from os import mkdir
 from pathlib import Path
 import py_compile
 import re
@@ -1299,13 +1298,15 @@ class TestAssertionRewriteHookDetails:
         assert pytester.runpytest().ret == 0
 
     def test_invocation_dir(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
-        """Test get invocation param afrom AssertionState"""
+        """Test get invocation param from AssertionState"""
         from _pytest.assertion import AssertionState
 
         config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
+
         assert state.invocation_path == str(config.invocation_params.dir)
-        new_rootpath = str(pytester.path / "test")
+
+        new_rootpath = pytester.path / "test"
         if not os.path.exists(new_rootpath):
             os.mkdir(new_rootpath)
         monkeypatch.setattr(
@@ -1314,11 +1315,11 @@ class TestAssertionRewriteHookDetails:
             Config.InvocationParams(
                 args=(),
                 plugins=(),
-                dir=Path(new_rootpath),
+                dir=new_rootpath,
             ),
         )
         state = AssertionState(config, "rewrite")
-        assert state.invocation_path == new_rootpath
+        assert state.invocation_path == str(new_rootpath)
 
     @pytest.mark.skipif(
         sys.platform.startswith("win32"), reason="cannot remove cwd on Windows"
@@ -2020,8 +2021,6 @@ class TestEarlyRewriteBailout:
             assert hook.find_spec("file") is not None
 
         invocation_path = f"{os.getcwd()}/tests"
-        if not os.path.exists(invocation_path):
-            mkdir(invocation_path)
         monkeypatch.setattr(
             pytester._request.config.stash[assertstate_key],
             "invocation_path",
