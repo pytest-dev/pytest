@@ -31,6 +31,34 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.4.1 (2025-06-17)
+=========================
+
+Bug fixes
+---------
+
+- `#13461 <https://github.com/pytest-dev/pytest/issues/13461>`_: Corrected ``_pytest.terminal.TerminalReporter.isatty`` to support
+  being called as a method. Before it was just a boolean which could
+  break correct code when using ``-o log_cli=true``).
+
+
+- `#13477 <https://github.com/pytest-dev/pytest/issues/13477>`_: Reintroduced :class:`pytest.PytestReturnNotNoneWarning` which was removed by accident in pytest `8.4`.
+
+  This warning is raised when a test functions returns a value other than ``None``, which is often a mistake made by beginners.
+
+  See :ref:`return-not-none` for more information.
+
+
+- `#13497 <https://github.com/pytest-dev/pytest/issues/13497>`_: Fixed compatibility with ``Twisted 25+``.
+
+
+
+Improved documentation
+----------------------
+
+- `#13492 <https://github.com/pytest-dev/pytest/issues/13492>`_: Fixed outdated warning about ``faulthandler`` not working on Windows.
+
+
 pytest 8.4.0 (2025-06-02)
 =========================
 
