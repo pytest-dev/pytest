@@ -154,7 +154,10 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 .. code-block:: ini
 
     [pytest]
-    addopts = --disable-plugin-autoload -p NAME,NAME2
+    addopts =
+            --disable-plugin-autoload
+            -p NAME
+            -p NAME2
 
 .. versionadded:: 8.4
 
