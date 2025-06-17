@@ -72,6 +72,17 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
 
 
 @final
+class PytestReturnNotNoneWarning(PytestWarning):
+    """
+    Warning emitted when a test function returns a value other than ``None``.
+
+    See :ref:`return-not-none` for details.
+    """
+
+    __module__ = "pytest"
+
+
+@final
 class PytestUnknownMarkWarning(PytestWarning):
     """Warning emitted on use of unknown markers.
 
