@@ -135,6 +135,7 @@ def prepare_release_pr(base_branch: str, is_major: bool, prerelease: str) -> Non
             f"--head={release_branch}",
             f"--title=Release {version}",
             f"--body={body}",
+            "--draft",
         ],
         check=True,
     )
