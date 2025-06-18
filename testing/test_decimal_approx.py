@@ -5,7 +5,7 @@ import decimal
 import pytest
 
 
-def test_decimal_approx_repr_issue():
+def test_decimal_approx_repr_issue() -> None:
     trap = decimal.getcontext().traps[decimal.FloatOperation]
     decimal.getcontext().traps[decimal.FloatOperation] = False
 
