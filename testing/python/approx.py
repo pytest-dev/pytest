@@ -1015,7 +1015,7 @@ class TestApprox:
         expected_repr = "approx([1 ± 1.0e-06, 2 ± 2.0e-06, 3 ± 3.0e-06, 4 ± 4.0e-06])"
         assert repr(approx(expected)) == expected_repr
 
-    def test_decimal_approx_repr(self, monkeypatch):
+    def test_decimal_approx_repr(self, monkeypatch) -> None:
         monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
         approx_obj = pytest.approx(decimal.Decimal("2.60"))
         print(f"Attempting to represent pytest.approx(Decimal): {approx_obj}")
