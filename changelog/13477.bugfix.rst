@@ -1,5 +1,0 @@
-Reintroduced :class:`pytest.PytestReturnNotNoneWarning` which was removed by accident in pytest `8.4`.
-
-This warning is raised when a test functions returns a value other than ``None``, which is often a mistake made by beginners.
-
-See :ref:`return-not-none` for more information.
