@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import decimal
+
 import pytest
+
 
 def test_decimal_approx_repr_issue():
     trap = decimal.getcontext().traps[decimal.FloatOperation]
