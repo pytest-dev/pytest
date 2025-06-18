@@ -1018,7 +1018,7 @@ class TestApprox:
     def test_decimal_approx_repr(self, monkeypatch):
         monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
         approx_obj = pytest.approx(decimal.Decimal("2.60"))
-        print(f"Attempting to represent pytest.approx(Decimal): {approx_obj}") 
+        print(f"Attempting to represent pytest.approx(Decimal): {approx_obj}")
         assert decimal.Decimal("2.600001") == approx_obj
 
     def test_allow_ordered_sequences_only(self) -> None:
