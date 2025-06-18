@@ -109,8 +109,8 @@ jobs:
         tox -e generate-gh-release-notes -- "$VERSION" scripts/latest-release-notes.md
 
     - name: Publish GitHub Release
-      uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
-      with:
-        body_path: scripts/latest-release-notes.md
-        files: dist/*
-        tag_name: ${{ github.event.inputs.version }}
+      env:
+        VERSION: ${{ github.event.inputs.version }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create --notes-file scripts/latest-release-notes.md --verify-tag "$VERSION" dist/*
