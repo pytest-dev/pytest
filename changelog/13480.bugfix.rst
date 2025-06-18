@@ -1,0 +1,1 @@
+Fixed a few test failures in pytest's own test suite when run with ``-Wdefault`` or a similar override.
