@@ -1,0 +1,1 @@
+Fixed a crash when using :func:`pytest.approx` and :class:`decimal.Decimal` instances with the :class:`decimal.FloatOperation` trap set.
