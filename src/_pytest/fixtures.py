@@ -49,6 +49,7 @@ from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
+from _pytest.compat import signature
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -804,8 +805,8 @@ class SubRequest(FixtureRequest):
         path, lineno = getfslineno(factory)
         if isinstance(path, Path):
             path = bestrelpath(self._pyfuncitem.session.path, path)
-        signature = inspect.signature(factory)
-        return f"{path}:{lineno + 1}:  def {factory.__name__}{signature}"
+        sig = signature(factory)
+        return f"{path}:{lineno + 1}:  def {factory.__name__}{sig}"
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._fixturedef.addfinalizer(finalizer)

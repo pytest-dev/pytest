@@ -1895,3 +1895,43 @@ def test_yield_disallowed_in_tests(pytester: Pytester):
     )
     # Assert that no tests were collected
     result.stdout.fnmatch_lines(["*collected 0 items*"])
+
+
+def test_annotations_deferred_future(pytester: Pytester):
+    """Ensure stringified annotations don't raise any errors."""
+    pytester.makepyfile(
+        """
+        from __future__ import annotations
+        import pytest
+
+        @pytest.fixture
+        def func() -> X: ...  # X is undefined
+
+        def test_func():
+            assert True
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 14), reason="Annotations are only skipped on 3.14+"
+)
+def test_annotations_deferred_314(pytester: Pytester):
+    """Ensure annotation eval is deferred."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def func() -> X: ...  # X is undefined
+
+        def test_func():
+            assert True
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])

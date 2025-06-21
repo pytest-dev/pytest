@@ -1,0 +1,1 @@
+Pytest no longer evaluates type annotations on Python 3.14 when inspecting a function signature.
