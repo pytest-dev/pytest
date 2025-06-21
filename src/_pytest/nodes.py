@@ -8,7 +8,6 @@ from collections.abc import Iterator
 from collections.abc import MutableMapping
 from functools import cached_property
 from functools import lru_cache
-from inspect import signature
 import os
 import pathlib
 from pathlib import Path
@@ -29,6 +28,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
 from _pytest.compat import LEGACY_PATH
+from _pytest.compat import signature
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config.compat import _check_path

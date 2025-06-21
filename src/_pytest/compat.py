@@ -8,7 +8,7 @@ import enum
 import functools
 import inspect
 from inspect import Parameter
-from inspect import signature
+from inspect import Signature
 import os
 from pathlib import Path
 import sys
@@ -17,6 +17,10 @@ from typing import Final
 from typing import NoReturn
 
 import py
+
+
+if sys.version_info >= (3, 14):
+    from annotationlib import Format
 
 
 #: constant to prepare valuing pylib path replacements/lazy proxies later on
@@ -58,6 +62,13 @@ def is_async_function(func: object) -> bool:
     """Return True if the given function seems to be an async function or
     an async generator."""
     return iscoroutinefunction(func) or inspect.isasyncgenfunction(func)
+
+
+def signature(obj: Callable[..., Any]) -> Signature:
+    """Return signature without evaluating annotations."""
+    if sys.version_info >= (3, 14):
+        return inspect.signature(obj, annotation_format=Format.STRING)
+    return inspect.signature(obj)
 
 
 def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
