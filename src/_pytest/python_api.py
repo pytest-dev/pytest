@@ -541,12 +541,11 @@ class ApproxDecimal(ApproxScalar):
         else:
             abs_ = self.abs
 
+        tol_str = "???"
         if rel is not None and Decimal("1e-3") <= rel <= Decimal("1e3"):
             tol_str = f"{rel:.1e}"
         elif abs_ is not None:
             tol_str = f"{abs_:.1e}"
-        else:
-            tol_str = "???"
 
         return f"{self.expected} ± {tol_str}"
 

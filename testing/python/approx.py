@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import decimal
 from decimal import Decimal
 from fractions import Fraction
 from math import sqrt
