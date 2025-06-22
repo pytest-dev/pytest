@@ -530,6 +530,25 @@ class ApproxDecimal(ApproxScalar):
     DEFAULT_ABSOLUTE_TOLERANCE = Decimal("1e-12")
     DEFAULT_RELATIVE_TOLERANCE = Decimal("1e-6")
 
+    def __repr__(self) -> str:
+        if isinstance(self.rel, float):
+            rel = Decimal.from_float(self.rel)
+        else:
+            rel = self.rel
+
+        if isinstance(self.abs, float):
+            abs_ = Decimal.from_float(self.abs)
+        else:
+            abs_ = self.abs
+
+        tol_str = "???"
+        if rel is not None and Decimal("1e-3") <= rel <= Decimal("1e3"):
+            tol_str = f"{rel:.1e}"
+        elif abs_ is not None:
+            tol_str = f"{abs_:.1e}"
+
+        return f"{self.expected} ± {tol_str}"
+
 
 def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
     """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
