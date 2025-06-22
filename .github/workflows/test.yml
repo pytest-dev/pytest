@@ -20,6 +20,8 @@ on:
     - reopened  # default
     - ready_for_review  # used in PRs created from the release workflow
 
+  workflow_dispatch:  # allows manual triggering of the workflow
+
 env:
   PYTEST_ADDOPTS: "--color=yes"
 
