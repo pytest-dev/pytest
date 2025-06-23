@@ -145,6 +145,7 @@ lint.ignore = [
     # pylint ignore
     "PLC0105", # `TypeVar` name "E" does not reflect its covariance;
     "PLC0414", # Import alias does not rename original package
+    "PLC0415", # import should be at top level of package
     "PLR0124", # Name compared with itself
     "PLR0133", # Two constants compared in a comparison (lots of those in tests)
     "PLR0402", # Use `from x.y import z` in lieu of alias
@@ -246,7 +247,7 @@ disable = [
     "fixme",
     "global-statement",                       # PLW0603 disabled in ruff
     "import-error",
-    "import-outside-toplevel",
+    "import-outside-toplevel",                # PLC0415 disabled in ruff
     "import-private-name",
     "inconsistent-return-statements",
     "invalid-bool-returned",
