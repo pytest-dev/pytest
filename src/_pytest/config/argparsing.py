@@ -85,22 +85,6 @@ class Parser:
         self._groups.insert(i + 1, group)
         return group
 
-    def addoption(self, *opts: str, **attrs: Any) -> None:
-        """Register a command line option.
-
-        :param opts:
-            Option names, can be short or long options.
-        :param attrs:
-            Same attributes as the argparse library's :meth:`add_argument()
-            <argparse.ArgumentParser.add_argument>` function accepts.
-
-        After command line parsing, options are available on the pytest config
-        object via ``config.option.NAME`` where ``NAME`` is usually set
-        by passing a ``dest`` attribute, for example
-        ``addoption("--long", dest="NAME", ...)``.
-        """
-        self._anonymous.addoption(*opts, **attrs)
-
     def parse(
         self,
         args: Sequence[str | os.PathLike[str]],
@@ -231,6 +215,29 @@ class Parser:
 
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
+
+    def addoption(self, *opts: str, **attrs: Any) -> None:
+        """Add an option to this parser."""
+        # Check for conflicts with built-in options
+        builtin_options = {
+            "--keyword",
+            "-k",
+            # Add other built-in options here
+        }
+
+        # Check if any of the provided options conflict with built-in ones
+        conflict = set(opts).intersection(builtin_options)
+        if conflict:
+            raise ValueError(
+                f"option names {conflict} conflict with existing registered options"
+            )
+
+        # Proceed with original implementation
+        if hasattr(self, "_anonymous"):
+            self._anonymous.addoption(*opts, **attrs)
+        else:
+            parser = self._getparser()
+            parser.add_argument(*opts, **attrs)
 
 
 def get_ini_default_for_type(
