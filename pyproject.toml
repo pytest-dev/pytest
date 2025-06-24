@@ -156,6 +156,7 @@ lint.ignore = [
     "PLR2004", # Magic value used in comparison
     "PLR2044", # Line with empty comment
     "PLR5501", # Use `elif` instead of `else` then `if`
+    "PLW1641", # Does not implement the __hash__ method
     "PLW0120", # remove the else and dedent its contents
     "PLW0603", # Using the global statement
     "PLW2901", # for loop variable overwritten by assignment target
@@ -241,7 +242,7 @@ disable = [
     "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
     "empty-comment",                          # not activated by default, PLR2044 disabled in ruff
     "eval-used",
-    "eq-without-hash",
+    "eq-without-hash",                        # PLW1641 disabled in ruff
     "exec-used",
     "expression-not-assigned",
     "fixme",
