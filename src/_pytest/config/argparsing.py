@@ -174,7 +174,9 @@ class Parser:
         self,
         name: str,
         help: str,
-        type: Literal["string", "paths", "pathlist", "args", "linelist", "bool"]
+        type: Literal[
+            "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
+        ]
         | None = None,
         default: Any = NOT_SET,
     ) -> None:
