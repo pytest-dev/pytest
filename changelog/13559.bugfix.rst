@@ -1,0 +1,3 @@
+In [argpasring.py](https://github.com/pytest-dev/pytest/commit/d126389308eb787efa0c0ebffc566a5bb1619e4d#diff-fba659a65c3f48c4b1aa922c07dddb92d10c059c84eb383b1ae16197987463b5R177) supported type "int" and "float" are not added. So type checker tools shows error.
+
+Fixed by adding "int" and "float" as valid type literal
