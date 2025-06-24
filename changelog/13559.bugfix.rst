@@ -1,0 +1,1 @@
+Added missing `int` and `float` variants to the `Literal` type annotation of the `type` parameter in :meth:`pytest.Parser.addini`.
