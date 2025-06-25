@@ -1,0 +1,1 @@
+:func:`pytest.approx` now only imports ``numpy`` if NumPy is already in ``sys.modules``. This fixes unconditional import behavior introduced in `8.4.0`.
