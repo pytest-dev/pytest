@@ -426,12 +426,9 @@ class ApproxScalar(ApproxBase):
             # Check if `val` is a native bool or numpy bool.
             if isinstance(val, bool):
                 return True
-            try:
-                import numpy as np
-
+            if np := sys.modules.get("numpy"):
                 return isinstance(val, np.bool_)
-            except ImportError:
-                return False
+            return False
 
         asarray = _as_numpy_array(actual)
         if asarray is not None:
