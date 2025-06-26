@@ -104,6 +104,34 @@ exit: _Exit = _Exit()
 
 
 class _Skip:
+    """Skip an executing test with the given message.
+
+    This function should be called only during testing (setup, call or teardown) or
+    during collection by using the ``allow_module_level`` flag.  This function can
+    be called in doctests as well.
+
+    :param reason:
+        The message to show the user as reason for the skip.
+
+    :param allow_module_level:
+        Allows this function to be called at module level.
+        Raising the skip exception at module level will stop
+        the execution of the module and prevent the collection of all tests in the module,
+        even those defined before the `skip` call.
+
+        Defaults to False.
+
+    :raises pytest.skip.Exception:
+        The exception that is raised.
+
+    .. note::
+        It is better to use the :ref:`pytest.mark.skipif ref` marker when
+        possible to declare a test to be skipped under certain conditions
+        like mismatching platforms or dependencies.
+        Similarly, use the ``# doctest: +SKIP`` directive (see :py:data:`doctest.SKIP`)
+        to skip a doctest statically.
+    """
+
     Exception: ClassVar[type[Skipped]] = Skipped
 
     def __call__(self, reason: str = "", allow_module_level: bool = False) -> NoReturn:
@@ -112,33 +140,6 @@ class _Skip:
 
 
 skip: _Skip = _Skip()
-"""Skip an executing test with the given message.
-
-This function should be called only during testing (setup, call or teardown) or
-during collection by using the ``allow_module_level`` flag.  This function can
-be called in doctests as well.
-
-:param reason:
-    The message to show the user as reason for the skip.
-
-:param allow_module_level:
-    Allows this function to be called at module level.
-    Raising the skip exception at module level will stop
-    the execution of the module and prevent the collection of all tests in the module,
-    even those defined before the `skip` call.
-
-    Defaults to False.
-
-:raises pytest.skip.Exception:
-    The exception that is raised.
-
-.. note::
-    It is better to use the :ref:`pytest.mark.skipif ref` marker when
-    possible to declare a test to be skipped under certain conditions
-    like mismatching platforms or dependencies.
-    Similarly, use the ``# doctest: +SKIP`` directive (see :py:data:`doctest.SKIP`)
-    to skip a doctest statically.
-"""
 
 
 class _Fail:
