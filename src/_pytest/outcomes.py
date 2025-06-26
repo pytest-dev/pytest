@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import sys
 from typing import Any
+from typing import ClassVar
 from typing import NoReturn
 
 from .warning_types import PytestDeprecationWarning
@@ -78,112 +79,120 @@ class XFailed(Failed):
 
 
 class _Exit:
-    Exception: type[Exit] = Exit
+    """Exit testing process.
+
+    :param reason:
+        The message to show as the reason for exiting pytest.  reason has a default value
+        only because `msg` is deprecated.
+
+    :param returncode:
+        Return code to be used when exiting pytest. None means the same as ``0`` (no error),
+        same as :func:`sys.exit`.
+
+    :raises pytest.exit.Exception:
+        The exception that is raised.
+    """
+
+    Exception: ClassVar[type[Exit]] = Exit
 
     def __call__(self, reason: str = "", returncode: int | None = None) -> NoReturn:
-        """Exit testing process.
-
-        :param reason:
-            The message to show as the reason for exiting pytest.  reason has a default value
-            only because `msg` is deprecated.
-
-        :param returncode:
-            Return code to be used when exiting pytest. None means the same as ``0`` (no error),
-            same as :func:`sys.exit`.
-
-        :raises pytest.exit.Exception:
-            The exception that is raised.
-        """
         __tracebackhide__ = True
         raise Exit(msg=reason, returncode=returncode)
 
 
+exit: _Exit = _Exit()
+
+
 class _Skip:
-    Exception: type[Skipped] = Skipped
+    """Skip an executing test with the given message.
+
+    This function should be called only during testing (setup, call or teardown) or
+    during collection by using the ``allow_module_level`` flag.  This function can
+    be called in doctests as well.
+
+    :param reason:
+        The message to show the user as reason for the skip.
+
+    :param allow_module_level:
+        Allows this function to be called at module level.
+        Raising the skip exception at module level will stop
+        the execution of the module and prevent the collection of all tests in the module,
+        even those defined before the `skip` call.
+
+        Defaults to False.
+
+    :raises pytest.skip.Exception:
+        The exception that is raised.
+
+    .. note::
+        It is better to use the :ref:`pytest.mark.skipif ref` marker when
+        possible to declare a test to be skipped under certain conditions
+        like mismatching platforms or dependencies.
+        Similarly, use the ``# doctest: +SKIP`` directive (see :py:data:`doctest.SKIP`)
+        to skip a doctest statically.
+    """
+
+    Exception: ClassVar[type[Skipped]] = Skipped
 
     def __call__(self, reason: str = "", allow_module_level: bool = False) -> NoReturn:
-        """Skip an executing test with the given message.
-
-        This function should be called only during testing (setup, call or teardown) or
-        during collection by using the ``allow_module_level`` flag.  This function can
-        be called in doctests as well.
-
-        :param reason:
-            The message to show the user as reason for the skip.
-
-        :param allow_module_level:
-            Allows this function to be called at module level.
-            Raising the skip exception at module level will stop
-            the execution of the module and prevent the collection of all tests in the module,
-            even those defined before the `skip` call.
-
-            Defaults to False.
-
-        :raises pytest.skip.Exception:
-            The exception that is raised.
-
-        .. note::
-            It is better to use the :ref:`pytest.mark.skipif ref` marker when
-            possible to declare a test to be skipped under certain conditions
-            like mismatching platforms or dependencies.
-            Similarly, use the ``# doctest: +SKIP`` directive (see :py:data:`doctest.SKIP`)
-            to skip a doctest statically.
-        """
         __tracebackhide__ = True
         raise Skipped(msg=reason, allow_module_level=allow_module_level)
 
 
+skip: _Skip = _Skip()
+
+
 class _Fail:
-    Exception: type[Failed] = Failed
+    """Explicitly fail an executing test with the given message.
+
+    :param reason:
+        The message to show the user as reason for the failure.
+
+    :param pytrace:
+        If False, msg represents the full failure information and no
+        python traceback will be reported.
+
+    :raises pytest.fail.Exception:
+        The exception that is raised.
+    """
+
+    Exception: ClassVar[type[Failed]] = Failed
 
     def __call__(self, reason: str = "", pytrace: bool = True) -> NoReturn:
-        """Explicitly fail an executing test with the given message.
-
-        :param reason:
-            The message to show the user as reason for the failure.
-
-        :param pytrace:
-            If False, msg represents the full failure information and no
-            python traceback will be reported.
-
-        :raises pytest.fail.Exception:
-            The exception that is raised.
-        """
         __tracebackhide__ = True
         raise Failed(msg=reason, pytrace=pytrace)
 
 
+fail: _Fail = _Fail()
+
+
 class _XFail:
-    Exception: type[XFailed] = XFailed
+    """Imperatively xfail an executing test or setup function with the given reason.
+
+    This function should be called only during testing (setup, call or teardown).
+
+    No other code is executed after using ``xfail()`` (it is implemented
+    internally by raising an exception).
+
+    :param reason:
+        The message to show the user as reason for the xfail.
+
+    .. note::
+        It is better to use the :ref:`pytest.mark.xfail ref` marker when
+        possible to declare a test to be xfailed under certain conditions
+        like known bugs or missing features.
+
+    :raises pytest.xfail.Exception:
+        The exception that is raised.
+    """
+
+    Exception: ClassVar[type[XFailed]] = XFailed
 
     def __call__(self, reason: str = "") -> NoReturn:
-        """Imperatively xfail an executing test or setup function with the given reason.
-
-        This function should be called only during testing (setup, call or teardown).
-
-        No other code is executed after using ``xfail()`` (it is implemented
-        internally by raising an exception).
-
-        :param reason:
-            The message to show the user as reason for the xfail.
-
-        .. note::
-            It is better to use the :ref:`pytest.mark.xfail ref` marker when
-            possible to declare a test to be xfailed under certain conditions
-            like known bugs or missing features.
-
-        :raises pytest.xfail.Exception:
-            The exception that is raised.
-        """
         __tracebackhide__ = True
         raise XFailed(msg=reason)
 
 
-# Exposed helper methods.
-
-exit: _Exit = _Exit()
-skip: _Skip = _Skip()
-fail: _Fail = _Fail()
 xfail: _XFail = _XFail()
 
 
