@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import pytest
 from _pytest.pytester import Pytester
+
 
 def test_console_output_style_times_with_skipped_and_passed(pytester: Pytester) -> None:
     pytester.makepyfile(
@@ -18,7 +18,8 @@ def test_console_output_style_times_with_skipped_and_passed(pytester: Pytester) 
     result = pytester.runpytest(
         "test_repro.py",
         "test_repro_skip.py",
-        "-o", "console_output_style=times",
+        "-o",
+        "console_output_style=times",
     )
 
     print("Captured stdout:")
@@ -27,4 +28,7 @@ def test_console_output_style_times_with_skipped_and_passed(pytester: Pytester) 
     print(result.stderr.str())
 
     combined = result.stdout.lines + result.stderr.lines
-    assert any("'CollectReport' object has no attribute 'duration'" in line for line in combined)
+    assert any(
+        "'CollectReport' object has no attribute 'duration'" in line
+        for line in combined
+    )
