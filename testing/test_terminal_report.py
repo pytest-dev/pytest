@@ -27,8 +27,4 @@ def test_console_output_style_times_with_skipped_and_passed(pytester: Pytester) 
     print("Captured stderr:")
     print(result.stderr.str())
 
-    combined = result.stdout.lines + result.stderr.lines
-    assert any(
-        "'CollectReport' object has no attribute 'duration'" in line
-        for line in combined
-    )
+    result.stdout.fnmatch_lines(["* 1 passed, 1 skipped in *])
