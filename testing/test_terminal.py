@@ -132,11 +132,10 @@ class TestTerminal:
             "console_output_style=times",
         )
 
-        combined = result.stdout.lines + result.stderr.lines
-        assert not any(
-            "'CollectReport' object has no attribute 'duration'" in line
-            for line in combined
-        )
+        result.stdout.fnmatch_lines("* 1 passed, 1 skipped in *")
+
+        combined = "\n".join(result.stdout.lines + result.stderr.lines)
+        assert "INTERNALERROR" not in combined
 
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
