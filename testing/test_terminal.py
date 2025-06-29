@@ -112,9 +112,7 @@ class TestTerminal:
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )
 
-    def test_console_output_style_times_with_skipped_and_passed(
-        self, pytester: Pytester
-    ) -> None:
+    def test_console_output_style_times_with_skipped_and_passed(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             test_repro="""
                 def test_hello():
