@@ -1,0 +1,1 @@
+Fixed a crash when using :confval:`console_output_style` with ``times`` and a module is skipped.
