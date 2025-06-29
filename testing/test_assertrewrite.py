@@ -2197,9 +2197,9 @@ class TestAssertionPass:
         ),
     ),
 )
-# fmt: on
 def test_get_assertion_exprs(src, expected) -> None:
     assert _get_assertion_exprs(src) == expected
+# fmt: on
 
 
 def test_try_makedirs(monkeypatch, tmp_path: Path) -> None:

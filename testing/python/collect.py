@@ -1075,7 +1075,8 @@ class TestTracebackCutting:
     def test_skip_simple(self):
         with pytest.raises(pytest.skip.Exception) as excinfo:
             pytest.skip("xxx")
-        assert excinfo.traceback[-1].frame.code.name == "skip"
+        if sys.version_info >= (3, 11):
+            assert excinfo.traceback[-1].frame.code.raw.co_qualname == "_Skip.__call__"
         assert excinfo.traceback[-1].ishidden(excinfo)
         assert excinfo.traceback[-2].frame.code.name == "test_skip_simple"
         assert not excinfo.traceback[-2].ishidden(excinfo)
