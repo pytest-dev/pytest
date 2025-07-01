@@ -612,20 +612,14 @@ class TestConfigCmdlineParsing:
         assert config.getini("custom") == "1"
 
     def test_absolute_win32_path(self, pytester: Pytester) -> None:
-        temp_ini_file = pytester.makefile(
-            ".ini",
-            custom="""
-            [pytest]
-            addopts = --version
-        """,
-        )
+        temp_ini_file = pytester.makeini("[pytest]")
         from os.path import normpath
 
         temp_ini_file_norm = normpath(str(temp_ini_file))
         ret = pytest.main(["-c", temp_ini_file_norm])
-        assert ret == ExitCode.OK
+        assert ret == ExitCode.NO_TESTS_COLLECTED
         ret = pytest.main(["--config-file", temp_ini_file_norm])
-        assert ret == ExitCode.OK
+        assert ret == ExitCode.NO_TESTS_COLLECTED
 
 
 class TestConfigAPI:
@@ -2121,7 +2115,7 @@ def test_help_and_version_after_argument_error(pytester: Pytester) -> None:
 
     result = pytester.runpytest("--version")
     result.stdout.fnmatch_lines([f"pytest {pytest.__version__}"])
-    assert result.ret == ExitCode.USAGE_ERROR
+    assert result.ret == ExitCode.OK
 
 
 def test_help_formatter_uses_py_get_terminal_width(monkeypatch: MonkeyPatch) -> None:
