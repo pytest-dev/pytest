@@ -112,6 +112,31 @@ class TestTerminal:
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )
 
+    def test_console_output_style_times_with_skipped_and_passed(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                def test_hello():
+                    pass
+            """,
+            test_repro_skip="""
+                import pytest
+                pytest.importorskip("fakepackage_does_not_exist")
+            """,
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "test_repro_skip.py",
+            "-o",
+            "console_output_style=times",
+        )
+
+        result.stdout.fnmatch_lines("* 1 passed, 1 skipped in *")
+
+        combined = "\n".join(result.stdout.lines + result.stderr.lines)
+        assert "INTERNALERROR" not in combined
+
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
