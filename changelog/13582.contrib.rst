@@ -1,0 +1,1 @@
+Made documentation build reproducible by unconditionally setting `IS_RELEASE_ON_RTD` to `true`.

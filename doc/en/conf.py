@@ -257,7 +257,7 @@ issues_github_path = "pytest-dev/pytest"
 # https://docs.readthedocs.io/en/stable/reference/environment-variables.html#environment-variable-reference
 # https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#including-content-based-on-tags
 
-IS_RELEASE_ON_RTD = (
+IS_RELEASE_ON_RTD = True or (
     os.getenv("READTHEDOCS", "False") == "True"
     and os.environ["READTHEDOCS_VERSION_TYPE"] == "tag"
 )
