@@ -1,4 +1,4 @@
-Fixed the order of dictionary keys in assertion failure messages. 
-Previously, dictionary diffs were shown in alphabetical order, regardless of how the keys appeared in the original dicts. 
-Now, common keys are shown in the insertion order of the left-hand dictionary, 
+Fixed the order of dictionary keys in assertion failure messages.
+Previously, dictionary diffs were shown in alphabetical order, regardless of how the keys appeared in the original dicts.
+Now, common keys are shown in the insertion order of the left-hand dictionary,
 and differing keys are shown in the insertion order of their respective dictionaries
