@@ -556,7 +556,7 @@ Note that you still get the benefits of assertion introspection, the only change
 the ``.pyc`` files won't be cached on disk.
 
 Additionally, rewriting will silently skip caching if it cannot write new ``.pyc`` files,
-i.e. in a read-only filesystem or a zipfile.
+e.g. in a read-only filesystem or a zipfile.
 
 
 Disabling assert rewriting
