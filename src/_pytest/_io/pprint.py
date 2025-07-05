@@ -75,7 +75,7 @@ class PrettyPrinter:
 
         depth
             The maximum depth to print out nested structures.
-        
+
         sort_dicts
             If true, dict keys are sorted.
 
