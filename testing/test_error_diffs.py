@@ -201,6 +201,70 @@ TESTCASES = [
     pytest.param(
         """
         def test_this():
+            result = {'d': 4, 'c': 3, 'b': 2, 'a': 1}
+            expected = {'d': 4, 'c': 3, 'e': 5}
+            assert result == expected
+        """,
+        """
+        >       assert result == expected
+        E       AssertionError: assert {'d': 4, 'c': 3, 'b': 2, 'a': 1} == {'d': 4, 'c': 3, 'e': 5}
+        E         
+        E         Common items:
+        E         {'d': 4, 'c': 3}
+        E         Left contains 2 more items:
+        E         {'b': 2, 'a': 1}
+        E         Right contains 1 more item:
+        E         {'e': 5}
+        E         
+        E         Full diff:
+        E           {
+        E               'd': 4,
+        E               'c': 3,
+        E         -     'e': 5,
+        E         ?      ^   ^
+        E         +     'b': 2,
+        E         ?      ^   ^
+        E         +     'a': 1,
+        E           }
+        """,
+        id="Compare dicts and check order of diff",
+    ),
+    pytest.param(
+        """
+        def test_this():
+            result = {'c': 3, 'd': 4, 'b': 2, 'a': 1}
+            expected = {'d': 5, 'c': 3, 'b': 1}
+            assert result == expected
+        """,
+        """
+        >       assert result == expected
+        E       AssertionError: assert {'c': 3, 'd': 4, 'b': 2, 'a': 1} == {'d': 5, 'c': 3, 'b': 1}
+        E         
+        E         Common items:
+        E         {'c': 3}
+        E         Differing items:
+        E         {'d': 4} != {'d': 5}
+        E         {'b': 2} != {'b': 1}
+        E         Left contains 1 more item:
+        E         {'a': 1}
+        E         
+        E         Full diff:
+        E           {
+        E         -     'd': 5,
+        E               'c': 3,
+        E         +     'd': 4,
+        E         -     'b': 1,
+        E         ?          ^
+        E         +     'b': 2,
+        E         ?          ^
+        E         +     'a': 1,
+        E           }
+        """,
+        id="Compare dicts with different order and values",
+    ),
+    pytest.param(
+        """
+        def test_this():
             result =   "spmaeggs"
             expected = "spameggs"
             assert result == expected
