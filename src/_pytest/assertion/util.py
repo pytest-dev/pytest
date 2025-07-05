@@ -530,7 +530,11 @@ def _compare_eq_dict(
             f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
         )
         explanation.extend(
-            highlighter(pprint.pformat({k: left[k] for k in left if k in extra_left}, sort_dicts=False)).splitlines()
+            highlighter(
+                pprint.pformat(
+                    {k: left[k] for k in left if k in extra_left}, sort_dicts=False
+                )
+            ).splitlines()
         )
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
@@ -539,7 +543,11 @@ def _compare_eq_dict(
             f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
         )
         explanation.extend(
-            highlighter(pprint.pformat({k: right[k] for k in right if k in extra_right}, sort_dicts=False)).splitlines()
+            highlighter(
+                pprint.pformat(
+                    {k: right[k] for k in right if k in extra_right}, sort_dicts=False
+                )
+            ).splitlines()
         )
     return explanation
 
