@@ -208,14 +208,14 @@ TESTCASES = [
         """
         >       assert result == expected
         E       AssertionError: assert {'d': 4, 'c': 3, 'b': 2, 'a': 1} == {'d': 4, 'c': 3, 'e': 5}
-        E
+        E         
         E         Common items:
         E         {'d': 4, 'c': 3}
         E         Left contains 2 more items:
         E         {'b': 2, 'a': 1}
         E         Right contains 1 more item:
         E         {'e': 5}
-        E
+        E         
         E         Full diff:
         E           {
         E               'd': 4,
@@ -239,7 +239,7 @@ TESTCASES = [
         """
         >       assert result == expected
         E       AssertionError: assert {'c': 3, 'd': 4, 'b': 2, 'a': 1} == {'d': 5, 'c': 3, 'b': 1}
-        E
+        E         
         E         Common items:
         E         {'c': 3}
         E         Differing items:
@@ -247,7 +247,7 @@ TESTCASES = [
         E         {'b': 2} != {'b': 1}
         E         Left contains 1 more item:
         E         {'a': 1}
-        E
+        E         
         E         Full diff:
         E           {
         E         -     'd': 5,
