@@ -1,0 +1,1 @@
+Shorten `ExceptionGroup` summary to a single line.

@@ -666,6 +666,9 @@ class ExceptionInfo(Generic[E]):
         ):
             return f"{subexc!r} [single exception in {type(self.value).__name__}]"
 
+        if isinstance(self.value, BaseExceptionGroup):
+            return f"{self.typename}: {self.value.message} ({len(self.value.exceptions)} sub-exceptions)"
+
         lines = format_exception_only(self.type, self.value)
         text = "".join(lines)
         text = text.rstrip()
@@ -1188,18 +1191,7 @@ class FormattedExcinfo:
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 reprtraceback: ReprTraceback | ReprTracebackNative
-                if isinstance(e, BaseExceptionGroup):
-                    # don't filter any sub-exceptions since they shouldn't have any internal frames
-                    traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
-                    reprtraceback = ReprTracebackNative(
-                        format_exception(
-                            type(excinfo.value),
-                            excinfo.value,
-                            traceback[0]._rawentry,
-                        )
-                    )
-                else:
-                    reprtraceback = self.repr_traceback(excinfo_)
+                reprtraceback = self.repr_traceback(excinfo_)
                 reprcrash = excinfo_._getreprcrash()
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
