@@ -1,1 +1,2 @@
-Support PEP420 (implicit namespace packages) as `--pyargs` target.
+Support PEP420 (implicit namespace packages) as `--pyargs` target when `consider_namespace_packages = true` is set in the config.
+Previously, this option only impacted package names, now it also impacts tests discovery.

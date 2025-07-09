@@ -191,7 +191,10 @@ class TestResolveCollectionArgument:
             module_name="pkg.test",
         )
         assert resolve_collection_argument(
-            invocation_path, "pkg", as_pypath=True
+            invocation_path,
+            "pkg",
+            as_pypath=True,
+            consider_namespace_packages=namespace_package,
         ) == CollectionArgument(
             path=invocation_path / "src/pkg",
             parts=[],
@@ -202,7 +205,10 @@ class TestResolveCollectionArgument:
             UsageError, match=r"package argument cannot contain :: selection parts"
         ):
             resolve_collection_argument(
-                invocation_path, "pkg::foo::bar", as_pypath=True
+                invocation_path,
+                "pkg::foo::bar",
+                as_pypath=True,
+                consider_namespace_packages=namespace_package,
             )
 
     def test_parametrized_name_with_colons(self, invocation_path: Path) -> None:
