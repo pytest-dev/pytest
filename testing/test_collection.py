@@ -1935,3 +1935,64 @@ def test_annotations_deferred_314(pytester: Pytester):
     result = pytester.runpytest()
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize("import_mode", ["prepend", "importlib", "append"])
+def test_namespace_packages(pytester: Pytester, import_mode: str):
+    pytester.makeini(
+        f"""
+        [pytest]
+        consider_namespace_packages = true
+        pythonpath = .
+        python_files = *.py
+        addopts = --import-mode {import_mode}
+    """
+    )
+    pytester.makepyfile(
+        **{
+            "pkg/module1.py": "def test_module1(): pass",
+            "pkg/subpkg_namespace/module2.py": "def test_module1(): pass",
+            "pkg/subpkg_regular/__init__.py": "",
+            "pkg/subpkg_regular/module3": "def test_module3(): pass",
+        }
+    )
+
+    # should collect when called with top-level package correctly
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 3 items",
+            "<Dir pkg>",
+            "  <Module module1.py>",
+            "    <Function test_module1>",
+            "  <Dir subpkg_namespace>",
+            "    <Module module2.py>",
+            "      <Function test_module1>",
+            "  <Package subpkg_regular>",
+            "    <Module module3.py>",
+            "      <Function test_module3>",
+        ]
+    )
+
+    # should also work when called against a more specific subpackage/module
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg.subpkg_namespace")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 1 item",
+            "<Dir pkg>",
+            "  <Dir subpkg_namespace>",
+            "    <Module module2.py>",
+            "      <Function test_module1>",
+        ]
+    )
+
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg.subpkg_regular")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 1 item",
+            "<Dir pkg>",
+            "  <Package subpkg_regular>",
+            "    <Module module3.py>",
+            "      <Function test_module3>",
+        ]
+    )
