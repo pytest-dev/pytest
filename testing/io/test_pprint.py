@@ -407,6 +407,7 @@ class DataclassWithTwoItems:
 def test_consistent_pretty_printer(data: Any, expected: str) -> None:
     assert PrettyPrinter().pformat(data) == textwrap.dedent(expected).strip()
 
+
 @pytest.mark.parametrize(
     ("sort_dicts"),
     (
