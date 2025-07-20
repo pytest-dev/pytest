@@ -275,7 +275,7 @@ TESTCASES = [
         E               },
         E           }
                 """,
-                id="Compare nested dicts and check order of diff",
+        id="Compare nested dicts and check order of diff",
     ),
     pytest.param(
         """

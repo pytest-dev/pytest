@@ -307,7 +307,7 @@ While the built-in pytest support provides a good set of functionalities for usi
 doctests, if you use them extensively you might be interested in those external packages
 which add many more features, and include pytest integration:
 
-* `pytest-doctestplus <https://github.com/astropy/pytest-doctestplus>`__: provides
+* `pytest-doctestplus <https://github.com/scientific-python/pytest-doctestplus>`__: provides
   advanced doctest support and enables the testing of reStructuredText (".rst") files.
 
 * `Sybil <https://sybil.readthedocs.io>`__: provides a way to test examples in
