@@ -244,7 +244,8 @@ TESTCASES = [
         """,
         """
         >       assert result == expected
-        E       AssertionError: assert {'b': {'m': 3, 'n': 4}, 'a': {'x': 1, 'y': 2}, 'c': {'k': 5, 'l': 6}} == {'c': {'l': 6, 'k': 5}, 'e': {'v': 8}, 'd': {'u': 7}}
+                E       AssertionError: assert {'b': {'m': 3, 'n': 4}, 'a': {'x': 1, 'y': 2}, 'c': {'k': 5, 'l': 6}} \
+== {'c': {'l': 6, 'k': 5}, 'e': {'v': 8}, 'd': {'u': 7}}
         E         Common items:
         E         {'c': {'k': 5, 'l': 6}}
         E         Left contains 2 more items:
