@@ -196,6 +196,7 @@ def test_saferepr_unlimited_exc():
 
 def test_saferepr_dict_insertion_order():
     from _pytest._io.saferepr import safeformat
+
     d = {}
     d["z"] = 1
     d["a"] = 2
