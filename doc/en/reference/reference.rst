@@ -1384,6 +1384,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    when collecting Python modules. Default is ``False``.
 
    Set to ``True`` if the package you are testing is part of a namespace package.
+   Namespace packages are also supported as ``--pyargs`` target.
 
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.

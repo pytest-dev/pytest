@@ -734,7 +734,9 @@ class TerminalReporter:
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
                 self._timing_nodeids_reported.update(r.nodeid for r in not_reported)
-                return format_node_duration(sum(r.duration for r in not_reported))
+                return format_node_duration(
+                    sum(r.duration for r in not_reported if isinstance(r, TestReport))
+                )
             return ""
         if collected:
             return f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"

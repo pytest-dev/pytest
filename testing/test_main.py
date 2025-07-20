@@ -169,8 +169,13 @@ class TestResolveCollectionArgument:
         ):
             resolve_collection_argument(invocation_path, "src/pkg::foo::bar")
 
-    def test_pypath(self, invocation_path: Path) -> None:
+    @pytest.mark.parametrize("namespace_package", [False, True])
+    def test_pypath(self, namespace_package: bool, invocation_path: Path) -> None:
         """Dotted name and parts."""
+        if namespace_package:
+            # Namespace package doesn't have to contain __init__py
+            (invocation_path / "src/pkg/__init__.py").unlink()
+
         assert resolve_collection_argument(
             invocation_path, "pkg.test", as_pypath=True
         ) == CollectionArgument(
@@ -186,7 +191,10 @@ class TestResolveCollectionArgument:
             module_name="pkg.test",
         )
         assert resolve_collection_argument(
-            invocation_path, "pkg", as_pypath=True
+            invocation_path,
+            "pkg",
+            as_pypath=True,
+            consider_namespace_packages=namespace_package,
         ) == CollectionArgument(
             path=invocation_path / "src/pkg",
             parts=[],
@@ -197,7 +205,10 @@ class TestResolveCollectionArgument:
             UsageError, match=r"package argument cannot contain :: selection parts"
         ):
             resolve_collection_argument(
-                invocation_path, "pkg::foo::bar", as_pypath=True
+                invocation_path,
+                "pkg::foo::bar",
+                as_pypath=True,
+                consider_namespace_packages=namespace_package,
             )
 
     def test_parametrized_name_with_colons(self, invocation_path: Path) -> None:
