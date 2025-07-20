@@ -406,3 +406,37 @@ class DataclassWithTwoItems:
 )
 def test_consistent_pretty_printer(data: Any, expected: str) -> None:
     assert PrettyPrinter().pformat(data) == textwrap.dedent(expected).strip()
+
+@pytest.mark.parametrize(
+    ("sort_dicts"),
+    (
+        pytest.param(True, id="sort_dicts-True"),
+        pytest.param(False, id="sort_dicts-False"),
+    ),
+)
+def test_pretty_printer_sort_dicts(sort_dicts: bool) -> None:
+    data = {
+        "b": 2,
+        "a": 1,
+        "c": 3,
+    }
+
+    if sort_dicts:
+        expected = textwrap.dedent("""
+            {
+                'a': 1,
+                'b': 2,
+                'c': 3,
+            }
+        """).strip()
+    else:
+        expected = textwrap.dedent("""
+            {
+                'b': 2,
+                'a': 1,
+                'c': 3,
+            }
+        """).strip()
+
+    actual = PrettyPrinter(sort_dicts=sort_dicts).pformat(data)
+    assert actual == expected
