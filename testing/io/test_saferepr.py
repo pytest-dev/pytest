@@ -192,3 +192,14 @@ def test_saferepr_unlimited_exc():
     assert saferepr_unlimited(A()).startswith(
         "<[ValueError(42) raised in repr()] A object at 0x"
     )
+
+
+def test_saferepr_dict_insertion_order():
+    from _pytest._io.saferepr import safeformat
+    d = {}
+    d["z"] = 1
+    d["a"] = 2
+    d["m"] = 3
+    output = safeformat(d)
+    # output should contain 'z', 'a', 'm' in this order (not 'a', 'm', 'z')
+    assert output.find("'z'") < output.find("'a'") < output.find("'m'")
