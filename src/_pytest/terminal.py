@@ -1452,7 +1452,12 @@ class TerminalReporter:
         if errors:
             main_color = _color_for_type["error"]
             parts += [("%d %s" % pluralize(errors, "error"), {main_color: True})]  # noqa: UP031
-
+        if self.verbosity >= 2:
+            for item in self.stats["deselected"]:
+                self.write_line(
+                    f"Deselected: {item.nodeid}: {item._deselected_reason}",
+                    cyan=True,
+                )
         return parts, main_color
 
 

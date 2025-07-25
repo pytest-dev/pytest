@@ -217,6 +217,9 @@ def deselect_by_keyword(items: list[Item], config: Config) -> None:
     deselected = []
     for colitem in items:
         if not expr.evaluate(KeywordMatcher.from_item(colitem)):
+            colitem._deselected_reason = (
+                f"Keyword expression '{keywordexpr}' did not match."
+            )
             deselected.append(colitem)
         else:
             remaining.append(colitem)
@@ -266,9 +269,9 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
         if expr.evaluate(MarkMatcher.from_markers(item.iter_markers())):
             remaining.append(item)
         else:
+            item._deselected_reason = f"Mark expression '{matchexpr}' did not match."
             deselected.append(item)
     if deselected:
-        config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
 
 

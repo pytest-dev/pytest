@@ -144,6 +144,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     # Note that __dict__ is still available.
     __slots__ = (
         "__dict__",
+        "_deselected_reason",
         "_nodeid",
         "_store",
         "config",
@@ -213,6 +214,9 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.stash: Stash = Stash()
         # Deprecated alias. Was never public. Can be removed in a few releases.
         self._store = self.stash
+
+        #: A reason for deselection.
+        self._deselected_reason = ""
 
     @classmethod
     def from_parent(cls, parent: Node, **kw) -> Self:
