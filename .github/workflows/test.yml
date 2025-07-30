@@ -335,6 +335,6 @@ jobs:
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@223e4bb7a751b91f43eda76992bcfbf23b8b0302
+      uses: re-actors/alls-green@2765efec08f0fd63e83ad900f5fd75646be69ff6
       with:
         jobs: ${{ toJSON(needs) }}
