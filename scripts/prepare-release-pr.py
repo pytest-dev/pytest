@@ -130,7 +130,7 @@ def prepare_release_pr(base_branch: str, is_major: bool, prerelease: str) -> Non
         [
             "gh",
             "pr",
-            "new",
+            "create",
             f"--base={base_branch}",
             f"--head={release_branch}",
             f"--title=Release {version}",
