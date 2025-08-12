@@ -12,6 +12,8 @@ from typing import final
 from typing import Literal
 from typing import NoReturn
 
+from _pytest import PREAMBLE
+from _pytest import shtab
 import _pytest._io
 from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
@@ -122,11 +124,19 @@ class Parser:
             if group.options:
                 desc = group.description or group.name
                 arggroup = optparser.add_argument_group(desc)
+                if group.name == "debugconfig":
+                    shtab.add_argument_to(arggroup, preamble=PREAMBLE)
                 for option in group.options:
                     n = option.names()
                     a = option.attrs()
-                    arggroup.add_argument(*n, **a)
+                    complete = a.get("complete")
+                    if complete:
+                        del a["complete"]  # type: ignore
+                    action = arggroup.add_argument(*n, **a)
+                    if complete:
+                        action.complete = complete  # type: ignore
         file_or_dir_arg = optparser.add_argument(FILE_OR_DIR, nargs="*")
+        file_or_dir_arg.complete = shtab.FILE  # type: ignore
         # bash like autocompletion for dirs (appending '/')
         # Type ignored because typeshed doesn't know about argcomplete.
         file_or_dir_arg.completer = filescompleter  # type: ignore

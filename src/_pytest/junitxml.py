@@ -17,6 +17,7 @@ import platform
 import re
 import xml.etree.ElementTree as ET
 
+from . import XML_FILE
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
@@ -384,6 +385,7 @@ def pytest_addoption(parser: Parser) -> None:
         type=functools.partial(filename_arg, optname="--junitxml"),
         default=None,
         help="Create junit-xml style report file at given path",
+        complete=XML_FILE,
     )
     group.addoption(
         "--junitprefix",

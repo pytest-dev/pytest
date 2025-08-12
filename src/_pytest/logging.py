@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 
 from _pytest import nodes
+from _pytest import shtab
 from _pytest._io import TerminalWriter
 from _pytest.capture import CaptureManager
 from _pytest.config import _strtobool
@@ -294,6 +295,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="log_file",
         default=None,
         help="Path to a file when logging will be written to",
+        complete=shtab.FILE,
     )
     add_option_ini(
         "--log-file-mode",

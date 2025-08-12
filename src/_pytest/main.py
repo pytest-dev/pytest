@@ -25,6 +25,7 @@ import warnings
 import pluggy
 
 from _pytest import nodes
+from _pytest import shtab
 import _pytest._code
 from _pytest.config import Config
 from _pytest.config import directory_arg
@@ -143,6 +144,7 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="dir",
         type=functools.partial(directory_arg, optname="--confcutdir"),
         help="Only load conftest.py's relative to specified dir",
+        complete=shtab.DIR,
     )
     group.addoption(
         "--noconftest",
@@ -226,6 +228,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="inifilename",
         help="Load configuration from `FILE` instead of trying to locate one of the "
         "implicit configuration files.",
+        complete=shtab.FILE,
     )
     group.addoption(
         "--rootdir",
@@ -234,6 +237,7 @@ def pytest_addoption(parser: Parser) -> None:
         help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
         "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
         "'$HOME/root_dir'.",
+        complete=shtab.DIR,
     )
     group.addoption(
         "--basetemp",
@@ -245,6 +249,7 @@ def pytest_addoption(parser: Parser) -> None:
             "Base temporary directory for this test run. "
             "(Warning: this directory is removed if it exists.)"
         ),
+        complete=shtab.DIR,
     )
 
 

@@ -8,6 +8,7 @@ from collections.abc import Generator
 import os
 import sys
 
+from _pytest import shtab
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
@@ -96,6 +97,7 @@ def pytest_addoption(parser: Parser) -> None:
         help="Store internal tracing debug information in this log file. "
         "This file is opened with 'w' and truncated as a result, care advised. "
         "Default: pytestdebug.log.",
+        complete=shtab.FILE,
     )
     group._addoption(  # private to use reserved lower-case short option
         "-o",
