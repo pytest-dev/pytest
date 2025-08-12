@@ -868,7 +868,7 @@ def test_error_during_readouterr(pytester: Pytester) -> None:
         FDCapture.snap = bad_snap
     """
     )
-    result = pytester.runpytest_subprocess("-p", "pytest_xyz", "--version")
+    result = pytester.runpytest_subprocess("-p", "pytest_xyz")
     result.stderr.fnmatch_lines(
         ["*in bad_snap", "    raise Exception('boom')", "Exception: boom"]
     )
