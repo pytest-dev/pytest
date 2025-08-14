@@ -201,6 +201,85 @@ TESTCASES = [
     pytest.param(
         """
         def test_this():
+            result = {'d': 4, 'c': 3, 'b': 2, 'a': 1}
+            expected = {'d': 4, 'c': 3, 'e': 5}
+            assert result == expected
+        """,
+        """
+        >       assert result == expected
+        E       AssertionError: assert {'d': 4, 'c': 3, 'b': 2, 'a': 1} == {'d': 4, 'c': 3, 'e': 5}
+        E         Common items:
+        E         {'d': 4, 'c': 3}
+        E         Left contains 2 more items:
+        E         {'b': 2, 'a': 1}
+        E         Right contains 1 more item:
+        E         {'e': 5}
+        E         Full diff:
+        E           {
+        E               'd': 4,
+        E               'c': 3,
+        E         -     'e': 5,
+        E         ?      ^   ^
+        E         +     'b': 2,
+        E         ?      ^   ^
+        E         +     'a': 1,
+        E           }
+        """,
+        id="Compare dicts and check order of diff",
+    ),
+    pytest.param(
+        """
+        def test_this():
+            result = {
+                "b": {"m": 3, "n": 4},
+                "a": {"x": 1, "y": 2},
+                "c": {"k": 5, "l": 6}
+            }
+            expected = {
+                "c": {"l": 6, "k": 5},
+                "e": {"v": 8},
+                "d": {"u": 7}
+            }
+            assert result == expected
+        """,
+        """
+        >       assert result == expected
+                E       AssertionError: assert {'b': {'m': 3, 'n': 4}, 'a': {'x': 1, 'y': 2}, 'c': {'k': 5, 'l': 6}} \
+== {'c': {'l': 6, 'k': 5}, 'e': {'v': 8}, 'd': {'u': 7}}
+        E         Common items:
+        E         {'c': {'k': 5, 'l': 6}}
+        E         Left contains 2 more items:
+        E         {'b': {'m': 3, 'n': 4}, 'a': {'x': 1, 'y': 2}}
+        E         Right contains 2 more items:
+        E         {'e': {'v': 8}, 'd': {'u': 7}}
+        E         Full diff:
+        E           {
+        E         +     'b': {
+        E         +         'm': 3,
+        E         +         'n': 4,
+        E         +     },
+        E         +     'a': {
+        E         +         'x': 1,
+        E         +         'y': 2,
+        E         +     },
+        E               'c': {
+        E         +         'k': 5,
+        E                   'l': 6,
+        E         -         'k': 5,
+        E         -     },
+        E         -     'e': {
+        E         -         'v': 8,
+        E         -     },
+        E         -     'd': {
+        E         -         'u': 7,
+        E               },
+        E           }
+                """,
+        id="Compare nested dicts and check order of diff",
+    ),
+    pytest.param(
+        """
+        def test_this():
             result =   "spmaeggs"
             expected = "spameggs"
             assert result == expected
