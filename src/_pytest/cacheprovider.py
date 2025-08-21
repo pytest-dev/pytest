@@ -476,6 +476,14 @@ class NFPlugin:
 
 
 def pytest_addoption(parser: Parser) -> None:
+    """Add command-line options for cache functionality.
+
+    Adds options for last-failed (--lf), failed-first (--ff), new-first (--nf),
+    cache display (--cache-show), cache clearing (--cache-clear), and
+    last-failed-no-failures behavior (--lfnf). Also adds cache_dir ini option.
+
+    :param parser: Parser object to add command-line options to.
+    """
     group = parser.getgroup("general")
     group.addoption(
         "--lf",
@@ -546,6 +554,13 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
 
 @hookimpl(tryfirst=True)
 def pytest_configure(config: Config) -> None:
+    """Configure cache system and register related plugins.
+
+    Creates the Cache instance and registers the last-failed (LFPlugin)
+    and new-first (NFPlugin) plugins with the plugin manager.
+
+    :param config: pytest configuration object.
+    """
     config.cache = Cache.for_config(config, _ispytest=True)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
@@ -584,6 +599,16 @@ def pytest_report_header(config: Config) -> str | None:
 
 
 def cacheshow(config: Config, session: Session) -> int:
+    """Display cache contents when --cache-show is used.
+
+    Shows cached values and directories matching the specified glob pattern
+    (default: '*'). Displays cache location, cached test results, and
+    any cached directories created by plugins.
+
+    :param config: pytest configuration object.
+    :param session: pytest session object.
+    :returns: Exit code (0 for success).
+    """
     from pprint import pformat
 
     assert config.cache is not None

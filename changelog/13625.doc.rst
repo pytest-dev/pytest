@@ -1,0 +1,1 @@
+Added missing docstrings to ``pytest_addoption()``, ``pytest_configure()``, and ``cacheshow()`` functions in ``cacheprovider.py``.
