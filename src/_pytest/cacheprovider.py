@@ -478,10 +478,6 @@ class NFPlugin:
 def pytest_addoption(parser: Parser) -> None:
     """Add command-line options for cache functionality.
 
-    Adds options for last-failed (--lf), failed-first (--ff), new-first (--nf),
-    cache display (--cache-show), cache clearing (--cache-clear), and
-    last-failed-no-failures behavior (--lfnf). Also adds cache_dir ini option.
-
     :param parser: Parser object to add command-line options to.
     """
     group = parser.getgroup("general")
