@@ -1,0 +1,2 @@
+Add smoke tests for `--cache-show` (basic listing and glob filter).
+
