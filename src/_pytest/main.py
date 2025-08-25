@@ -39,6 +39,7 @@ from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import safe_exists
+from _pytest.pathlib import samefile_nofollow
 from _pytest.pathlib import scandir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -935,14 +936,10 @@ class Session(nodes.Collector):
                         is_match = node.path == matchparts[0]
                         if sys.platform == "win32" and not is_match:
                             # In case the file paths do not match, fallback to samefile() to
-                            # account for short-paths on Windows (#11895).
-                            same_file = os.path.samefile(node.path, matchparts[0])
-                            # We don't want to match links to the current node,
-                            # otherwise we would match the same file more than once (#12039).
-                            is_match = same_file and (
-                                os.path.islink(node.path)
-                                == os.path.islink(matchparts[0])
-                            )
+                            # account for short-paths on Windows (#11895). But use a version
+                            # which doesn't resolve symlinks, otherwise we might match the
+                            # same file more than once (#12039).
+                            is_match = samefile_nofollow(node.path, matchparts[0])
 
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
