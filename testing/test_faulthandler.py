@@ -79,7 +79,7 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
     If faulthandler is disabled, no traceback will be dumped.
     """
     if enabled and "CI" in os.environ:
-        pytest.skip(reason="sometimes crashes on CI (#7022)")
+        pytest.xfail(reason="sometimes crashes on CI (#7022)")
 
     pytester.makepyfile(
         """
@@ -110,7 +110,7 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
 def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
     """Test option to force exit pytest process after a certain timeout."""
     if "CI" in os.environ:
-        pytest.skip(reason="sometimes crashes on CI (#7022)")
+        pytest.xfail(reason="sometimes crashes on CI (#7022)")
 
     pytester.makepyfile(
         """
