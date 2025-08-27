@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import os
 import sys
 
 from _pytest.pytester import Pytester
@@ -71,20 +72,15 @@ def test_disabled(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-@pytest.mark.parametrize(
-    "enabled",
-    [
-        pytest.param(
-            True, marks=pytest.mark.skip(reason="sometimes crashes on CI (#7022)")
-        ),
-        False,
-    ],
-)
+@pytest.mark.parametrize("enabled", [True, False])
 def test_timeout(pytester: Pytester, enabled: bool) -> None:
     """Test option to dump tracebacks after a certain timeout.
 
     If faulthandler is disabled, no traceback will be dumped.
     """
+    if enabled and "CI" in os.environ:
+        pytest.xfail(reason="sometimes crashes on CI (#7022)")
+
     pytester.makepyfile(
         """
     import os, time
@@ -108,6 +104,41 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
         assert tb_output not in result.stderr.str()
     result.stdout.fnmatch_lines(["*1 passed*"])
     assert result.ret == 0
+
+
+@pytest.mark.parametrize("exit_on_timeout", [True, False])
+def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
+    """Test option to force exit pytest process after a certain timeout."""
+    if "CI" in os.environ:
+        pytest.xfail(reason="sometimes crashes on CI (#7022)")
+
+    pytester.makepyfile(
+        """
+    import os, time
+    def test_long_sleep_and_raise():
+        time.sleep(1 if "CI" in os.environ else 0.1)
+        raise AssertionError(
+            "This test should have been interrupted before reaching this point."
+        )
+    """
+    )
+    pytester.makeini(
+        f"""
+        [pytest]
+        faulthandler_timeout = 0.01
+        faulthandler_exit_on_timeout = {"true" if exit_on_timeout else "false"}
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    tb_output = "most recent call first"
+    result.stderr.fnmatch_lines([f"*{tb_output}*"])
+    if exit_on_timeout:
+        result.stdout.no_fnmatch_line("*1 failed*")
+        result.stdout.no_fnmatch_line("*AssertionError*")
+    else:
+        result.stdout.fnmatch_lines(["*1 failed*"])
+        result.stdout.fnmatch_lines(["*AssertionError*"])
+    assert result.ret == 1
 
 
 @pytest.mark.parametrize("hook_name", ["pytest_enter_pdb", "pytest_exception_interact"])
