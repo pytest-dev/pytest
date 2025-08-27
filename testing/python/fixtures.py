@@ -5097,7 +5097,7 @@ def test_get_return_annotation() -> None:
     def two_sixes() -> tuple[int, str]:
         return (6, "six")
 
-    assert get_return_annotation(two_sixes) == "Tuple[int, str]"
+    assert get_return_annotation(two_sixes) == "tuple[int, str]"
 
     def no_annot():
         return 6
@@ -5108,3 +5108,5 @@ def test_get_return_annotation() -> None:
         pass
 
     assert get_return_annotation(none_return) == "None"
+
+    assert get_return_annotation(range) == ""
