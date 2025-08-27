@@ -7,12 +7,12 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
 
-# Set permissions at the job level.
+# Set permissions at the job level, if needed.
 permissions: {}
 
 jobs:
   doc-check-links:
-    # if: github.repository_owner == 'pytest-dev'
+    if: github.repository_owner == 'pytest-dev'
     runs-on: ubuntu-latest
 
     steps:
@@ -33,5 +33,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox
 
-      - name: Run Doc Check Links via tox
+      - name: Run sphinx linkcheck via tox
         run: tox -e docs-checklinks
