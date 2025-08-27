@@ -3625,12 +3625,12 @@ class TestShowFixtures:
 
     def test_show_fixtures_return_annotation(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
-            '''
+            """
             import pytest
             @pytest.fixture
             def six() -> int:
                 return 6
-        '''
+        """
         )
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
