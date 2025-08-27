@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 import sys
 import textwrap
-from typing import Tuple
 
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
@@ -5089,19 +5088,24 @@ def test_collect_positional_only(pytester: Pytester) -> None:
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
+
 def test_get_return_annotation() -> None:
     def six() -> int:
         return 6
+
     assert get_return_annotation(six) == "int"
 
-    def two_sixes() -> Tuple[int, str]:
+    def two_sixes() -> tuple[int, str]:
         return (6, "six")
+
     assert get_return_annotation(two_sixes) == "Tuple[int, str]"
 
     def no_annot():
         return 6
+
     assert get_return_annotation(no_annot) == ""
 
     def none_return() -> None:
         pass
+
     assert get_return_annotation(none_return) == "None"
