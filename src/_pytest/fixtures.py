@@ -2015,7 +2015,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         tw.line()
 
 
-def get_return_annotation(fixture_func: Callable) -> str:
+def get_return_annotation(fixture_func: Callable[..., Any]) -> str:
     try:
         sig = signature(fixture_func)
         annotation = sig.return_annotation
