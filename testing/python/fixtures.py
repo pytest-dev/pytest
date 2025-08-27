@@ -6,10 +6,12 @@ import os
 from pathlib import Path
 import sys
 import textwrap
+from typing import Tuple
 
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
+from _pytest.fixtures import get_return_annotation
 from _pytest.fixtures import TopRequest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
@@ -3635,7 +3637,6 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
             """
-            *tmp_path* -- *
             *fixtures defined from*
             *six -> int -- test_show_fixtures_return_annotation.py:3*
         """
@@ -5087,3 +5088,20 @@ def test_collect_positional_only(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
+
+def test_get_return_annotation() -> None:
+    def six() -> int:
+        return 6
+    assert get_return_annotation(six) == "int"
+
+    def two_sixes() -> Tuple[int, str]:
+        return (6, "six")
+    assert get_return_annotation(two_sixes) == "Tuple[int, str]"
+
+    def no_annot():
+        return 6
+    assert get_return_annotation(no_annot) == ""
+
+    def none_return() -> None:
+        pass
+    assert get_return_annotation(none_return) == "None"

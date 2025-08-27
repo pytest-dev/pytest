@@ -1911,7 +1911,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             return
         prettypath = _pretty_fixture_path(invocation_dir, fixture_def.func)
         tw.write(f"{argname}", green=True)
-        ret_annotation = get_return_annotation(fixture_def)
+        ret_annotation = get_return_annotation(fixture_def.func)
         if ret_annotation:
             tw.write(f" -> {ret_annotation}", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
@@ -1998,7 +1998,7 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if verbose <= 0 and argname.startswith("_"):
             continue
         tw.write(f"{argname}", green=True)
-        ret_annotation = get_return_annotation(fixturedef)
+        ret_annotation = get_return_annotation(fixturedef.func)
         if ret_annotation:
             tw.write(f" -> {ret_annotation}", cyan=True)
         if fixturedef.scope != "function":
@@ -2015,12 +2015,12 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         tw.line()
 
 
-def get_return_annotation(fixturedef: FixtureDef[object]) -> str:
+def get_return_annotation(fixture_func: Callable) -> str:
     try:
-        sig = signature(fixturedef.func)
+        sig = signature(fixture_func)
         annotation = sig.return_annotation
         if annotation is not sig.empty and annotation != inspect._empty:
-            return inspect.formatannotation(annotation)
+            return inspect.formatannotation(annotation).replace("'", "")
     except (ValueError, TypeError):
         pass
     return ""
