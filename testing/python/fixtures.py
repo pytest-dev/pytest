@@ -3582,9 +3582,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
+                "tmp_path_factory* [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -- .../_pytest/tmpdir.py:*",
+                "tmp_path* -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3593,9 +3593,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
+                "tmp_path_factory* [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -- .../_pytest/tmpdir.py:*",
+                "tmp_path* -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3615,13 +3615,31 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
             """
-            *tmp_path -- *
+            *tmp_path* -- *
             *fixtures defined from*
             *arg1 -- test_show_fixtures_testmodule.py:6*
             *hello world*
         """
         )
         result.stdout.no_fnmatch_line("*arg0*")
+
+    def test_show_fixtures_return_annotation(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            '''
+            import pytest
+            @pytest.fixture
+            def six() -> int:
+                return 6
+        '''
+        )
+        result = pytester.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines(
+            """
+            *tmp_path* -- *
+            *fixtures defined from*
+            *six -> int -- test_show_fixtures_return_annotation.py:3*
+        """
+        )
 
     @pytest.mark.parametrize("testmod", [True, False])
     def test_show_fixtures_conftest(self, pytester: Pytester, testmod) -> None:
