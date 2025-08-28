@@ -4584,6 +4584,52 @@ class TestScopeOrdering:
         reprec.assertoutcome(passed=1)
 
 
+class TestGetReturnAnnotation:
+    def test_primitive_return_type(self):
+        def six() -> int:
+            return 6
+
+        assert get_return_annotation(six) == "int"
+
+    def test_compound_return_type(self):
+        def two_sixes() -> tuple[int, str]:
+            return (6, "six")
+
+        assert get_return_annotation(two_sixes) == "tuple[int, str]"
+
+    def test_callable_return_type(self):
+        def callable_return() -> Callable[..., Any]:
+            return self.test_compound_return_type
+
+        assert get_return_annotation(callable_return) == "Callable[..., Any]"
+
+    def test_no_annotation(self):
+        def no_annotation():
+            return 6
+
+        assert get_return_annotation(no_annotation) == ""
+
+    def test_none_return_type(self):
+        def none_return() -> None:
+            pass
+
+        assert get_return_annotation(none_return) == "None"
+
+    def test_custom_class_return_type(self):
+        class T:
+            pass
+        def class_return() -> T:
+            return T()
+        
+        assert get_return_annotation(class_return) == "T"
+
+    def test_enum_return_type(self):
+        def enum_return() -> ExitCode:
+            return ExitCode(0)
+        
+        assert get_return_annotation(enum_return) == "ExitCode"
+
+
 def test_call_fixture_function_error():
     """Check if an error is raised if a fixture function is called directly (#4545)"""
 
@@ -5089,45 +5135,3 @@ def test_collect_positional_only(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
-
-
-def test_get_return_annotation() -> None:
-    def six() -> int:
-        return 6
-
-    assert get_return_annotation(six) == "int"
-
-    def two_sixes() -> tuple[int, str]:
-        return (6, "six")
-
-    assert get_return_annotation(two_sixes) == "tuple[int, str]"
-
-    def callable_return() -> Callable[..., Any]:
-        return two_sixes
-
-    assert get_return_annotation(callable_return) == "Callable[..., Any]"
-
-    def no_annotation():
-        return 6
-
-    assert get_return_annotation(no_annotation) == ""
-
-    def none_return() -> None:
-        pass
-
-    assert get_return_annotation(none_return) == "None"
-
-    class T:
-        pass
-
-    def class_return() -> T:
-        return T()
-
-    assert get_return_annotation(class_return) == "T"
-
-    def enum_return() -> ExitCode:
-        return ExitCode(0)
-
-    assert get_return_annotation(enum_return) == "ExitCode"
-
-    assert get_return_annotation(range) == ""

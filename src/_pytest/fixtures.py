@@ -2020,11 +2020,13 @@ def get_return_annotation(fixture_func: Callable[..., Any]) -> str:
         sig = signature(fixture_func)
         annotation = sig.return_annotation
         if annotation is not sig.empty:
+            if type(annotation) == type(None):
+                return "None"
             if isinstance(annotation, str):
                 return annotation
             if annotation.__module__ == "typing":
                 return str(annotation).replace("typing.", "")
-            return annotation.__name__
+            return str(annotation.__name__)
     except (ValueError, TypeError):
         pass
     return ""
