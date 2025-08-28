@@ -1,1 +1,1 @@
-Added return type annotations in ``fixtures`` and ``fixtures-per-test``.
+Return type annotations are now shown in ``--fixtures`` and ``--fixtures-per-test``.
