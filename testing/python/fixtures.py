@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 import sys
 import textwrap
-from typing import Any, Callable
+from typing import Any
+from typing import Callable
 
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
@@ -5118,14 +5119,15 @@ def test_get_return_annotation() -> None:
 
     class T:
         pass
+
     def class_return() -> T:
         return T()
-    
+
     assert get_return_annotation(class_return) == "T"
 
     def enum_return() -> ExitCode:
         return ExitCode(0)
-    
+
     assert get_return_annotation(enum_return) == "ExitCode"
 
     assert get_return_annotation(range) == ""
