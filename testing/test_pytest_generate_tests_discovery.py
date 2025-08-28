@@ -1,4 +1,11 @@
-def test_generate_tests_discovery_in_test_module_and_not_other_hooks(pytester):
+from __future__ import annotations
+
+from _pytest.pytester import Pytester
+
+
+def test_generate_tests_discovery_in_test_module_and_not_other_hooks(
+    pytester: Pytester,
+) -> None:
     pytester.makepyfile(
         """
         def pytest_generate_tests(metafunc):
