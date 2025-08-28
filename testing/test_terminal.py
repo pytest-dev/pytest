@@ -2536,6 +2536,7 @@ def test_skip_reasons_folding() -> None:
 
 
 def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.delenv("CI")
     mocked_verbose_word = "FAILED"
 
     mocked_pos = "some::nodeid"
