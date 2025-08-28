@@ -80,7 +80,9 @@ def get_timeout_config_value(config: Config) -> float:
 
 
 def get_exit_on_timeout_config_value(config: Config) -> bool:
-    return bool(config.getini("faulthandler_exit_on_timeout"))
+    exit_on_timeout = config.getini("faulthandler_exit_on_timeout")
+    assert isinstance(exit_on_timeout, bool)
+    return exit_on_timeout
 
 
 @pytest.hookimpl(wrapper=True, trylast=True)
