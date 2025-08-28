@@ -4618,15 +4618,16 @@ class TestGetReturnAnnotation:
     def test_custom_class_return_type(self):
         class T:
             pass
+
         def class_return() -> T:
             return T()
-        
+
         assert get_return_annotation(class_return) == "T"
 
     def test_enum_return_type(self):
         def enum_return() -> ExitCode:
             return ExitCode(0)
-        
+
         assert get_return_annotation(enum_return) == "ExitCode"
 
 
