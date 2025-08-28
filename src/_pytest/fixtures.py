@@ -2019,8 +2019,12 @@ def get_return_annotation(fixture_func: Callable[..., Any]) -> str:
     try:
         sig = signature(fixture_func)
         annotation = sig.return_annotation
-        if annotation is not sig.empty and annotation != inspect._empty:
-            return inspect.formatannotation(annotation).replace("'", "")
+        if annotation is not sig.empty:
+            if isinstance(annotation, str):
+                return annotation
+            if annotation.__module__ == "typing":
+                return str(annotation).replace("typing.", "")
+            return annotation.__name__
     except (ValueError, TypeError):
         pass
     return ""

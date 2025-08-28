@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import sys
 import textwrap
+from typing import Any, Callable
 
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
@@ -5100,14 +5101,31 @@ def test_get_return_annotation() -> None:
 
     assert get_return_annotation(two_sixes) == "tuple[int, str]"
 
-    def no_annot():
+    def callable_return() -> Callable[..., Any]:
+        return two_sixes
+
+    assert get_return_annotation(callable_return) == "Callable[..., Any]"
+
+    def no_annotation():
         return 6
 
-    assert get_return_annotation(no_annot) == ""
+    assert get_return_annotation(no_annotation) == ""
 
     def none_return() -> None:
         pass
 
     assert get_return_annotation(none_return) == "None"
+
+    class T:
+        pass
+    def class_return() -> T:
+        return T()
+    
+    assert get_return_annotation(class_return) == "T"
+
+    def enum_return() -> ExitCode:
+        return ExitCode(0)
+    
+    assert get_return_annotation(enum_return) == "ExitCode"
 
     assert get_return_annotation(range) == ""

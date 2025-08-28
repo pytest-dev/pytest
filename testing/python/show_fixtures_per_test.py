@@ -160,6 +160,30 @@ def test_verbose_include_private_fixtures_and_loc(pytester: Pytester) -> None:
     )
 
 
+def test_show_return_annotation(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        '''
+        import pytest
+        @pytest.fixture
+        def five() -> int:
+            return 5
+        def test_five(five):
+            pass
+    '''
+    )
+
+    result = pytester.runpytest("--fixtures-per-test", p)
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines(
+        [
+            "*fixtures used by test_five*",
+            "*(test_show_return_annotation.py:6)*",
+            "five -> int -- test_show_return_annotation.py:3",
+        ]
+    )
+
+
 def test_doctest_items(pytester: Pytester) -> None:
     pytester.makepyfile(
         '''
