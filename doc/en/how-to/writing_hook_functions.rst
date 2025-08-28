@@ -235,6 +235,12 @@ Example:
         """
         print(config.hook)
 
+.. note::
+
+    Unlike other hooks, the :hook:`pytest_generate_tests` hook is also discovered when
+    defined inside a test module or test class. Other hooks must live in
+    :ref:`conftest.py plugins <localplugin>` or external plugins.
+    See :ref:`parametrize-basics` and the :ref:`hook-reference`.
 
 .. _`addoptionhooks`:
 
