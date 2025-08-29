@@ -1,0 +1,1 @@
+Clarify that ``pytest_generate_tests`` is discovered in test modules/classes; other hooks must be in ``conftest.py`` or plugins.
