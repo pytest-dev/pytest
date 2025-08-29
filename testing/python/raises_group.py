@@ -1304,7 +1304,7 @@ def test_parametrizing_conditional_raisesgroup(
 def test_annotated_group() -> None:
     # repr depends on if exceptiongroup backport is being used or not
     t = repr(ExceptionGroup[ValueError])
-    msg = "Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` are accepted as generic types but got `{}`. As `raises` will catch all instances of the specified group regardless of the generic argument specific nested exceptions has to be checked with `RaisesGroup`."
+    msg = "Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseException]` are accepted as generic types but got `{}`. As `raises` will catch all instances of the specified group regardless of the generic argument specific nested exceptions has to be checked with `RaisesGroup`."
 
     fail_msg = wrap_escape(msg.format(t))
     with pytest.raises(ValueError, match=fail_msg):

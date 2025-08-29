@@ -457,7 +457,7 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                 return cast(type[BaseExcT_1], origin_exc)
             else:
                 raise ValueError(
-                    f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` "
+                    f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseException]` "
                     f"are accepted as generic types but got `{exc}`. "
                     f"As `raises` will catch all instances of the specified group regardless of the "
                     f"generic argument specific nested exceptions has to be checked "
