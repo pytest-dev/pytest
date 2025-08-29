@@ -95,55 +95,55 @@ jobs:
           # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
           - name: "windows-py39-unittest-asynctest"
             python: "3.9"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py39-asynctest"
             use_coverage: true
 
           - name: "windows-py39-unittest-twisted24"
             python: "3.9"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py39-twisted24"
             use_coverage: true
 
           - name: "windows-py39-unittest-twisted25"
             python: "3.9"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py39-twisted25"
             use_coverage: true
 
           - name: "windows-py39-pluggy"
             python: "3.9"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py39-pluggymain-pylib-xdist"
 
           - name: "windows-py39-xdist"
             python: "3.9"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py39-xdist"
 
           - name: "windows-py310"
             python: "3.10"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py310-xdist"
 
           - name: "windows-py311"
             python: "3.11"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py311"
 
           - name: "windows-py312"
             python: "3.12"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py312"
 
           - name: "windows-py313"
             python: "3.13"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py313"
 
           - name: "windows-py314"
             python: "3.14"
-            os: windows-latest
+            os: windows-2025
             tox_env: "py314"
 
           # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
@@ -223,28 +223,28 @@ jobs:
 
           - name: "macos-py39"
             python: "3.9"
-            os: macos-latest
+            os: macos-15
             tox_env: "py39-xdist"
             use_coverage: true
 
           - name: "macos-py310"
             python: "3.10"
-            os: macos-latest
+            os: macos-15
             tox_env: "py310-xdist"
 
           - name: "macos-py312"
             python: "3.12"
-            os: macos-latest
+            os: macos-15
             tox_env: "py312-xdist"
 
           - name: "macos-py313"
             python: "3.13"
-            os: macos-latest
+            os: macos-15
             tox_env: "py313-xdist"
 
           - name: "macos-py314"
             python: "3.14"
-            os: macos-latest
+            os: macos-15
             tox_env: "py314-xdist"
 
           - name: "plugins"
