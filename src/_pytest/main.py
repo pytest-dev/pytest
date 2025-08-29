@@ -446,6 +446,9 @@ def pytest_collection_modifyitems(items: list[nodes.Item], config: Config) -> No
     deselected = []
     for colitem in items:
         if colitem.nodeid.startswith(deselect_prefixes):
+            colitem._deselected_reason = (
+                f"Deselected by --deselect option: {colitem.nodeid}"
+            )
             deselected.append(colitem)
         else:
             remaining.append(colitem)
