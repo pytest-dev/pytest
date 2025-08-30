@@ -1915,6 +1915,9 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             return
         prettypath = _pretty_fixture_path(invocation_dir, fixture_def.func)
         tw.write(f"{argname}", green=True)
+        ret_annotation = get_return_annotation(fixture_def.func)
+        if ret_annotation:
+            tw.write(f" -> {ret_annotation}", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
         tw.write("\n")
         fixture_doc = inspect.getdoc(fixture_def.func)
@@ -1999,6 +2002,9 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         if verbose <= 0 and argname.startswith("_"):
             continue
         tw.write(f"{argname}", green=True)
+        ret_annotation = get_return_annotation(fixturedef.func)
+        if ret_annotation:
+            tw.write(f" -> {ret_annotation}", cyan=True)
         if fixturedef.scope != "function":
             tw.write(f" [{fixturedef.scope} scope]", cyan=True)
         tw.write(f" -- {prettypath}", yellow=True)
@@ -2011,6 +2017,23 @@ def _showfixtures_main(config: Config, session: Session) -> None:
         else:
             tw.line("    no docstring available", red=True)
         tw.line()
+
+
+def get_return_annotation(fixture_func: Callable[..., Any]) -> str:
+    try:
+        sig = signature(fixture_func)
+        annotation = sig.return_annotation
+        if annotation is not sig.empty:
+            if type(annotation) == type(None):
+                return "None"
+            if isinstance(annotation, str):
+                return annotation
+            if annotation.__module__ == "typing":
+                return str(annotation).replace("typing.", "")
+            return str(annotation.__name__)
+    except (ValueError, TypeError):
+        pass
+    return ""
 
 
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
