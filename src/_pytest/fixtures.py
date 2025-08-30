@@ -215,7 +215,7 @@ def get_param_argkeys(item: nodes.Item, scope: Scope) -> Iterator[ParamArgKey]:
         scoped_item_path = item.path
         item_cls = item.cls  # type: ignore[attr-defined]
     else:
-        assert_never(scope)
+        assert_never(scope)  # type: ignore[arg-type]
 
     for argname in callspec.indices:
         if callspec._arg2scope[argname] != scope:
@@ -552,9 +552,11 @@ class FixtureRequest(abc.ABC):
             "This can happen when the fixture has already been torn down."
         )
 
-        if (isinstance(fixturedef, FixtureDef)
-                and fixturedef is not None
-                and fixturedef.scope == Scope.Invocation.value):
+        if (
+            isinstance(fixturedef, FixtureDef)
+            and fixturedef is not None
+            and fixturedef.scope == Scope.Invocation.value
+        ):
             self._fixture_defs.pop(argname)
 
         return fixturedef.cached_result[0]
@@ -649,7 +651,10 @@ class FixtureRequest(abc.ABC):
         finally:
             for arg_name in fixturedef.argnames:
                 arg_fixture = self._fixture_defs.get(arg_name)
-                if arg_fixture is not None and arg_fixture.scope == Scope.Invocation.value:
+                if (
+                    arg_fixture is not None
+                    and arg_fixture.scope == Scope.Invocation.value
+                ):
                     self._fixture_defs.pop(arg_name)
 
         return fixturedef
@@ -794,7 +799,10 @@ class SubRequest(FixtureRequest):
         requested_fixturedef: FixtureDef[object] | PseudoFixtureDef[object],
         requested_scope: Scope,
     ) -> None:
-        if isinstance(requested_fixturedef, PseudoFixtureDef) or requested_scope == Scope.Invocation:
+        if (
+            isinstance(requested_fixturedef, PseudoFixtureDef)
+            or requested_scope == Scope.Invocation
+        ):
             return
         if self._scope > requested_scope:
             # Try to report something helpful.
