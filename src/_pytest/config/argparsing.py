@@ -2,18 +2,15 @@
 from __future__ import annotations
 
 import argparse
-from gettext import gettext
+from collections.abc import Callable
+from collections.abc import Mapping
+from collections.abc import Sequence
 import os
-import sys
 from typing import Any
-from typing import Callable
 from typing import cast
 from typing import final
-from typing import List
 from typing import Literal
-from typing import Mapping
 from typing import NoReturn
-from typing import Sequence
 
 import _pytest._io
 from _pytest.config.exceptions import UsageError
@@ -144,7 +141,7 @@ class Parser:
         parsedoption = self.parse(args, namespace=namespace)
         for name, value in parsedoption.__dict__.items():
             setattr(option, name, value)
-        return cast(List[str], getattr(parsedoption, FILE_OR_DIR))
+        return cast(list[str], getattr(parsedoption, FILE_OR_DIR))
 
     def parse_known_args(
         self,
@@ -177,7 +174,9 @@ class Parser:
         self,
         name: str,
         help: str,
-        type: Literal["string", "paths", "pathlist", "args", "linelist", "bool"]
+        type: Literal[
+            "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
+        ]
         | None = None,
         default: Any = NOT_SET,
     ) -> None:
@@ -194,6 +193,12 @@ class Parser:
                 * ``linelist``: a list of strings, separated by line breaks
                 * ``paths``: a list of :class:`pathlib.Path`, separated as in a shell
                 * ``pathlist``: a list of ``py.path``, separated as in a shell
+                * ``int``: an integer
+                * ``float``: a floating-point number
+
+                .. versionadded:: 8.4
+
+                    The ``float`` and ``int`` types.
 
             For ``paths`` and ``pathlist`` types, they are considered relative to the ini-file.
             In case the execution is happening without an ini-file defined,
@@ -212,7 +217,17 @@ class Parser:
         The value of ini-variables can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
-        assert type in (None, "string", "paths", "pathlist", "args", "linelist", "bool")
+        assert type in (
+            None,
+            "string",
+            "paths",
+            "pathlist",
+            "args",
+            "linelist",
+            "bool",
+            "int",
+            "float",
+        )
         if default is NOT_SET:
             default = get_ini_default_for_type(type)
 
@@ -221,7 +236,10 @@ class Parser:
 
 
 def get_ini_default_for_type(
-    type: Literal["string", "paths", "pathlist", "args", "linelist", "bool"] | None,
+    type: Literal[
+        "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
+    ]
+    | None,
 ) -> Any:
     """
     Used by addini to get the default value for a given ini-option type, when
@@ -233,6 +251,10 @@ def get_ini_default_for_type(
         return []
     elif type == "bool":
         return False
+    elif type == "int":
+        return 0
+    elif type == "float":
+        return 0.0
     else:
         return ""
 
@@ -446,44 +468,6 @@ class MyOptionParser(argparse.ArgumentParser):
                     self.error("\n".join(lines))
             getattr(parsed, FILE_OR_DIR).extend(unrecognized)
         return parsed
-
-    if sys.version_info < (3, 9):  # pragma: no cover
-        # Backport of https://github.com/python/cpython/pull/14316 so we can
-        # disable long --argument abbreviations without breaking short flags.
-        def _parse_optional(
-            self, arg_string: str
-        ) -> tuple[argparse.Action | None, str, str | None] | None:
-            if not arg_string:
-                return None
-            if arg_string[0] not in self.prefix_chars:
-                return None
-            if arg_string in self._option_string_actions:
-                action = self._option_string_actions[arg_string]
-                return action, arg_string, None
-            if len(arg_string) == 1:
-                return None
-            if "=" in arg_string:
-                option_string, explicit_arg = arg_string.split("=", 1)
-                if option_string in self._option_string_actions:
-                    action = self._option_string_actions[option_string]
-                    return action, option_string, explicit_arg
-            if self.allow_abbrev or not arg_string.startswith("--"):
-                option_tuples = self._get_option_tuples(arg_string)
-                if len(option_tuples) > 1:
-                    msg = gettext(
-                        "ambiguous option: %(option)s could match %(matches)s"
-                    )
-                    options = ", ".join(option for _, option, _ in option_tuples)
-                    self.error(msg % {"option": arg_string, "matches": options})
-                elif len(option_tuples) == 1:
-                    (option_tuple,) = option_tuples
-                    return option_tuple
-            if self._negative_number_matcher.match(arg_string):
-                if not self._has_negative_number_optionals:
-                    return None
-            if " " in arg_string:
-                return None
-            return None, arg_string, None
 
 
 class DropShorterLongHelpFormatter(argparse.HelpFormatter):

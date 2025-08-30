@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 from contextlib import contextmanager
 from contextlib import nullcontext
 from datetime import datetime
@@ -16,14 +19,9 @@ import os
 from pathlib import Path
 import re
 from types import TracebackType
-from typing import AbstractSet
-from typing import Dict
 from typing import final
-from typing import Generator
 from typing import Generic
-from typing import List
 from typing import Literal
-from typing import Mapping
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -53,7 +51,7 @@ DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 _ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
 caplog_handler_key = StashKey["LogCaptureHandler"]()
-caplog_records_key = StashKey[Dict[str, List[logging.LogRecord]]]()
+caplog_records_key = StashKey[dict[str, list[logging.LogRecord]]]()
 
 
 def _remove_ansi_escape_sequences(text: str) -> str:
@@ -811,15 +809,19 @@ class LoggingPlugin:
     def pytest_runtest_logreport(self) -> None:
         self.log_cli_handler.set_when("logreport")
 
+    @contextmanager
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None]:
         """Implement the internals of the pytest_runtest_xxx() hooks."""
-        with catching_logs(
-            self.caplog_handler,
-            level=self.log_level,
-        ) as caplog_handler, catching_logs(
-            self.report_handler,
-            level=self.log_level,
-        ) as report_handler:
+        with (
+            catching_logs(
+                self.caplog_handler,
+                level=self.log_level,
+            ) as caplog_handler,
+            catching_logs(
+                self.report_handler,
+                level=self.log_level,
+            ) as report_handler,
+        ):
             caplog_handler.reset()
             report_handler.reset()
             item.stash[caplog_records_key][when] = caplog_handler.records
@@ -837,20 +839,23 @@ class LoggingPlugin:
 
         empty: dict[str, list[logging.LogRecord]] = {}
         item.stash[caplog_records_key] = empty
-        yield from self._runtest_for(item, "setup")
+        with self._runtest_for(item, "setup"):
+            yield
 
     @hookimpl(wrapper=True)
     def pytest_runtest_call(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("call")
 
-        yield from self._runtest_for(item, "call")
+        with self._runtest_for(item, "call"):
+            yield
 
     @hookimpl(wrapper=True)
     def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("teardown")
 
         try:
-            yield from self._runtest_for(item, "teardown")
+            with self._runtest_for(item, "teardown"):
+                yield
         finally:
             del item.stash[caplog_records_key]
             del item.stash[caplog_handler_key]

@@ -20,15 +20,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
+
       - name: requests-cache
         uses: actions/cache@v4
         with:
@@ -41,13 +43,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install packaging requests tabulate[widechars] tqdm requests-cache platformdirs
 
-
       - name: Update Plugin List
         run: python scripts/update-plugin-list.py
 
       - name: Create Pull Request
         id: pr
-        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e
         with:
           commit-message: '[automated] Update plugin list'
           author: 'pytest bot <pytestbot@users.noreply.github.com>'
@@ -61,8 +62,9 @@ jobs:
       - name: Instruct the maintainers to trigger CI by undrafting the PR
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
         run: >-
           gh pr comment
           --body 'Please mark the PR as ready for review to trigger PR checks.'
           --repo '${{ github.repository }}'
-          '${{ steps.pr.outputs.pull-request-number }}'
+          "$PULL_REQUEST_NUMBER"

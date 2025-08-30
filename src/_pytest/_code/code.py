@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import inspect
 from inspect import CO_VARARGS
@@ -11,27 +15,22 @@ import os
 from pathlib import Path
 import re
 import sys
-import traceback
+from traceback import extract_tb
+from traceback import format_exception
 from traceback import format_exception_only
+from traceback import FrameSummary
 from types import CodeType
 from types import FrameType
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import ClassVar
 from typing import Final
 from typing import final
 from typing import Generic
-from typing import Iterable
-from typing import List
 from typing import Literal
-from typing import Mapping
 from typing import overload
-from typing import Pattern
-from typing import Sequence
 from typing import SupportsIndex
-from typing import Tuple
-from typing import Type
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import Union
 
@@ -56,7 +55,7 @@ if sys.version_info < (3, 11):
 
 TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-EXCEPTION_OR_MORE = Union[Type[BaseException], Tuple[Type[BaseException], ...]]
+EXCEPTION_OR_MORE = Union[type[BaseException], tuple[type[BaseException], ...]]
 
 
 class Code:
@@ -212,6 +211,45 @@ class TracebackEntry:
     def lineno(self) -> int:
         return self._rawentry.tb_lineno - 1
 
+    def get_python_framesummary(self) -> FrameSummary:
+        # Python's built-in traceback module implements all the nitty gritty
+        # details to get column numbers of out frames.
+        stack_summary = extract_tb(self._rawentry, limit=1)
+        return stack_summary[0]
+
+    # Column and end line numbers introduced in python 3.11
+    if sys.version_info < (3, 11):
+
+        @property
+        def end_lineno_relative(self) -> int | None:
+            return None
+
+        @property
+        def colno(self) -> int | None:
+            return None
+
+        @property
+        def end_colno(self) -> int | None:
+            return None
+    else:
+
+        @property
+        def end_lineno_relative(self) -> int | None:
+            frame_summary = self.get_python_framesummary()
+            if frame_summary.end_lineno is None:  # pragma: no cover
+                return None
+            return frame_summary.end_lineno - 1 - self.frame.code.firstlineno
+
+        @property
+        def colno(self) -> int | None:
+            """Starting byte offset of the expression in the traceback entry."""
+            return self.get_python_framesummary().colno
+
+        @property
+        def end_colno(self) -> int | None:
+            """Ending byte offset of the expression in the traceback entry."""
+            return self.get_python_framesummary().end_colno
+
     @property
     def frame(self) -> Frame:
         return Frame(self._rawentry.tb_frame)
@@ -221,7 +259,7 @@ class TracebackEntry:
         return self.lineno - self.frame.code.firstlineno
 
     def __repr__(self) -> str:
-        return "<TracebackEntry %s:%d>" % (self.frame.code.path, self.lineno + 1)
+        return f"<TracebackEntry {self.frame.code.path}:{self.lineno + 1}>"
 
     @property
     def statement(self) -> Source:
@@ -307,12 +345,7 @@ class TracebackEntry:
         # This output does not quite match Python's repr for traceback entries,
         # but changing it to do so would break certain plugins.  See
         # https://github.com/pytest-dev/pytest/pull/7535/ for details.
-        return "  File %r:%d in %s\n  %s\n" % (
-            str(self.path),
-            self.lineno + 1,
-            name,
-            line,
-        )
+        return f"  File '{self.path}':{self.lineno + 1} in {name}\n  {line}\n"
 
     @property
     def name(self) -> str:
@@ -320,7 +353,7 @@ class TracebackEntry:
         return self.frame.code.raw.co_name
 
 
-class Traceback(List[TracebackEntry]):
+class Traceback(list[TracebackEntry]):
     """Traceback objects encapsulate and offer higher level access to Traceback entries."""
 
     def __init__(
@@ -427,6 +460,33 @@ class Traceback(List[TracebackEntry]):
                         return i
             values.append(loc)
         return None
+
+
+def stringify_exception(
+    exc: BaseException, include_subexception_msg: bool = True
+) -> str:
+    try:
+        notes = getattr(exc, "__notes__", [])
+    except KeyError:
+        # Workaround for https://github.com/python/cpython/issues/98778 on
+        # Python <= 3.9, and some 3.10 and 3.11 patch versions.
+        HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
+        if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
+            notes = []
+        else:  # pragma: no cover
+            # exception not related to above bug, reraise
+            raise
+    if not include_subexception_msg and isinstance(exc, BaseExceptionGroup):
+        message = exc.message
+    else:
+        message = str(exc)
+
+    return "\n".join(
+        [
+            message,
+            *notes,
+        ]
+    )
 
 
 E = TypeVar("E", bound=BaseException, covariant=True)
@@ -536,33 +596,33 @@ class ExceptionInfo(Generic[E]):
     @property
     def type(self) -> type[E]:
         """The exception class."""
-        assert (
-            self._excinfo is not None
-        ), ".type can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".type can only be used after the context manager exits"
+        )
         return self._excinfo[0]
 
     @property
     def value(self) -> E:
         """The exception value."""
-        assert (
-            self._excinfo is not None
-        ), ".value can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".value can only be used after the context manager exits"
+        )
         return self._excinfo[1]
 
     @property
     def tb(self) -> TracebackType:
         """The exception raw traceback."""
-        assert (
-            self._excinfo is not None
-        ), ".tb can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".tb can only be used after the context manager exits"
+        )
         return self._excinfo[2]
 
     @property
     def typename(self) -> str:
         """The type name of the exception."""
-        assert (
-            self._excinfo is not None
-        ), ".typename can only be used after the context manager exits"
+        assert self._excinfo is not None, (
+            ".typename can only be used after the context manager exits"
+        )
         return self.type.__name__
 
     @property
@@ -589,6 +649,23 @@ class ExceptionInfo(Generic[E]):
         representation is returned (so 'AssertionError: ' is removed from
         the beginning).
         """
+
+        def _get_single_subexc(
+            eg: BaseExceptionGroup[BaseException],
+        ) -> BaseException | None:
+            if len(eg.exceptions) != 1:
+                return None
+            if isinstance(e := eg.exceptions[0], BaseExceptionGroup):
+                return _get_single_subexc(e)
+            return e
+
+        if (
+            tryshort
+            and isinstance(self.value, BaseExceptionGroup)
+            and (subexc := _get_single_subexc(self.value)) is not None
+        ):
+            return f"{subexc!r} [single exception in {type(self.value).__name__}]"
+
         lines = format_exception_only(self.type, self.value)
         text = "".join(lines)
         text = text.rstrip()
@@ -620,8 +697,7 @@ class ExceptionInfo(Generic[E]):
         showlocals: bool = False,
         style: TracebackStyle = "long",
         abspath: bool = False,
-        tbfilter: bool
-        | Callable[[ExceptionInfo[BaseException]], _pytest._code.code.Traceback] = True,
+        tbfilter: bool | Callable[[ExceptionInfo[BaseException]], Traceback] = True,
         funcargs: bool = False,
         truncate_locals: bool = True,
         truncate_args: bool = True,
@@ -668,7 +744,7 @@ class ExceptionInfo(Generic[E]):
         if style == "native":
             return ReprExceptionInfo(
                 reprtraceback=ReprTracebackNative(
-                    traceback.format_exception(
+                    format_exception(
                         self.type,
                         self.value,
                         self.traceback[0]._rawentry if self.traceback else None,
@@ -689,33 +765,14 @@ class ExceptionInfo(Generic[E]):
         )
         return fmt.repr_excinfo(self)
 
-    def _stringify_exception(self, exc: BaseException) -> str:
-        try:
-            notes = getattr(exc, "__notes__", [])
-        except KeyError:
-            # Workaround for https://github.com/python/cpython/issues/98778 on
-            # Python <= 3.9, and some 3.10 and 3.11 patch versions.
-            HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
-            if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
-                notes = []
-            else:
-                raise
-
-        return "\n".join(
-            [
-                str(exc),
-                *notes,
-            ]
-        )
-
-    def match(self, regexp: str | Pattern[str]) -> Literal[True]:
+    def match(self, regexp: str | re.Pattern[str]) -> Literal[True]:
         """Check whether the regular expression `regexp` matches the string
         representation of the exception using :func:`python:re.search`.
 
         If it matches `True` is returned, otherwise an `AssertionError` is raised.
         """
         __tracebackhide__ = True
-        value = self._stringify_exception(self.value)
+        value = stringify_exception(self.value)
         msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
@@ -727,7 +784,7 @@ class ExceptionInfo(Generic[E]):
         self,
         exc_group: BaseExceptionGroup[BaseException],
         expected_exception: EXCEPTION_OR_MORE,
-        match: str | Pattern[str] | None,
+        match: str | re.Pattern[str] | None,
         target_depth: int | None = None,
         current_depth: int = 1,
     ) -> bool:
@@ -747,7 +804,7 @@ class ExceptionInfo(Generic[E]):
             if not isinstance(exc, expected_exception):
                 continue
             if match is not None:
-                value = self._stringify_exception(exc)
+                value = stringify_exception(exc)
                 if not re.search(match, value):
                     continue
             return True
@@ -757,7 +814,7 @@ class ExceptionInfo(Generic[E]):
         self,
         expected_exception: EXCEPTION_OR_MORE,
         *,
-        match: str | Pattern[str] | None = None,
+        match: str | re.Pattern[str] | None = None,
         depth: int | None = None,
     ) -> bool:
         """Check whether a captured exception group contains a matching exception.
@@ -766,7 +823,7 @@ class ExceptionInfo(Generic[E]):
             The expected exception type, or a tuple if one of multiple possible
             exception types are expected.
 
-        :param str | Pattern[str] | None match:
+        :param str | re.Pattern[str] | None match:
             If specified, a string containing a regular expression,
             or a regular expression object, that is tested against the string
             representation of the exception and its `PEP-678 <https://peps.python.org/pep-0678/>` `__notes__`
@@ -781,12 +838,30 @@ class ExceptionInfo(Generic[E]):
             the exceptions contained within the topmost exception group).
 
         .. versionadded:: 8.0
+
+        .. warning::
+           This helper makes it easy to check for the presence of specific exceptions,
+           but it is very bad for checking that the group does *not* contain
+           *any other exceptions*.
+           You should instead consider using :class:`pytest.RaisesGroup`
+
         """
         msg = "Captured exception is not an instance of `BaseExceptionGroup`"
         assert isinstance(self.value, BaseExceptionGroup), msg
         msg = "`depth` must be >= 1 if specified"
         assert (depth is None) or (depth >= 1), msg
         return self._group_contains(self.value, expected_exception, match, depth)
+
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
+
+    # Type alias for the `tbfilter` setting:
+    # bool: If True, it should be filtered using Traceback.filter()
+    # callable: A callable that takes an ExceptionInfo and returns the filtered traceback.
+    TracebackFilter: TypeAlias = Union[
+        bool, Callable[[ExceptionInfo[BaseException]], Traceback]
+    ]
 
 
 @dataclasses.dataclass
@@ -800,7 +875,7 @@ class FormattedExcinfo:
     showlocals: bool = False
     style: TracebackStyle = "long"
     abspath: bool = True
-    tbfilter: bool | Callable[[ExceptionInfo[BaseException]], Traceback] = True
+    tbfilter: TracebackFilter = True
     funcargs: bool = False
     truncate_locals: bool = True
     truncate_args: bool = True
@@ -848,6 +923,9 @@ class FormattedExcinfo:
         line_index: int = -1,
         excinfo: ExceptionInfo[BaseException] | None = None,
         short: bool = False,
+        end_line_index: int | None = None,
+        colno: int | None = None,
+        end_colno: int | None = None,
     ) -> list[str]:
         """Return formatted and marked up source lines."""
         lines = []
@@ -861,16 +939,73 @@ class FormattedExcinfo:
         space_prefix = "    "
         if short:
             lines.append(space_prefix + source.lines[line_index].strip())
+            lines.extend(
+                self.get_highlight_arrows_for_line(
+                    raw_line=source.raw_lines[line_index],
+                    line=source.lines[line_index].strip(),
+                    lineno=line_index,
+                    end_lineno=end_line_index,
+                    colno=colno,
+                    end_colno=end_colno,
+                )
+            )
         else:
             for line in source.lines[:line_index]:
                 lines.append(space_prefix + line)
             lines.append(self.flow_marker + "   " + source.lines[line_index])
+            lines.extend(
+                self.get_highlight_arrows_for_line(
+                    raw_line=source.raw_lines[line_index],
+                    line=source.lines[line_index],
+                    lineno=line_index,
+                    end_lineno=end_line_index,
+                    colno=colno,
+                    end_colno=end_colno,
+                )
+            )
             for line in source.lines[line_index + 1 :]:
                 lines.append(space_prefix + line)
         if excinfo is not None:
             indent = 4 if short else self._getindent(source)
             lines.extend(self.get_exconly(excinfo, indent=indent, markall=True))
         return lines
+
+    def get_highlight_arrows_for_line(
+        self,
+        line: str,
+        raw_line: str,
+        lineno: int | None,
+        end_lineno: int | None,
+        colno: int | None,
+        end_colno: int | None,
+    ) -> list[str]:
+        """Return characters highlighting a source line.
+
+        Example with colno and end_colno pointing to the bar expression:
+                   "foo() + bar()"
+        returns    "        ^^^^^"
+        """
+        if lineno != end_lineno:
+            # Don't handle expressions that span multiple lines.
+            return []
+        if colno is None or end_colno is None:
+            # Can't do anything without column information.
+            return []
+
+        num_stripped_chars = len(raw_line) - len(line)
+
+        start_char_offset = _byte_offset_to_character_offset(raw_line, colno)
+        end_char_offset = _byte_offset_to_character_offset(raw_line, end_colno)
+        num_carets = end_char_offset - start_char_offset
+        # If the highlight would span the whole line, it is redundant, don't
+        # show it.
+        if num_carets >= len(line.strip()):
+            return []
+
+        highlights = "    "
+        highlights += " " * (start_char_offset - num_stripped_chars + 1)
+        highlights += "^" * num_carets
+        return [highlights]
 
     def get_exconly(
         self,
@@ -931,16 +1066,28 @@ class FormattedExcinfo:
             if source is None:
                 source = Source("???")
                 line_index = 0
+                end_line_index, colno, end_colno = None, None, None
             else:
-                line_index = entry.lineno - entry.getfirstlinesource()
+                line_index = entry.relline
+                end_line_index = entry.end_lineno_relative
+                colno = entry.colno
+                end_colno = entry.end_colno
             short = style == "short"
             reprargs = self.repr_args(entry) if not short else None
-            s = self.get_source(source, line_index, excinfo, short=short)
+            s = self.get_source(
+                source=source,
+                line_index=line_index,
+                excinfo=excinfo,
+                short=short,
+                end_line_index=end_line_index,
+                colno=colno,
+                end_colno=end_colno,
+            )
             lines.extend(s)
             if short:
                 message = f"in {entry.name}"
             else:
-                message = excinfo and excinfo.typename or ""
+                message = (excinfo and excinfo.typename) or ""
             entry_path = entry.path
             path = self._makepath(entry_path)
             reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
@@ -966,11 +1113,7 @@ class FormattedExcinfo:
         return str(path)
 
     def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> ReprTraceback:
-        traceback = excinfo.traceback
-        if callable(self.tbfilter):
-            traceback = self.tbfilter(excinfo)
-        elif self.tbfilter:
-            traceback = traceback.filter(excinfo)
+        traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
 
         if isinstance(excinfo.value, RecursionError):
             traceback, extraline = self._truncate_recursive_traceback(traceback)
@@ -1044,14 +1187,15 @@ class FormattedExcinfo:
                 # Fall back to native traceback as a temporary workaround until
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
+                reprtraceback: ReprTraceback | ReprTracebackNative
                 if isinstance(e, BaseExceptionGroup):
-                    reprtraceback: ReprTracebackNative | ReprTraceback = (
-                        ReprTracebackNative(
-                            traceback.format_exception(
-                                type(excinfo_.value),
-                                excinfo_.value,
-                                excinfo_.traceback[0]._rawentry,
-                            )
+                    # don't filter any sub-exceptions since they shouldn't have any internal frames
+                    traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
+                    reprtraceback = ReprTracebackNative(
+                        format_exception(
+                            type(excinfo.value),
+                            excinfo.value,
+                            traceback[0]._rawentry,
                         )
                     )
                 else:
@@ -1060,9 +1204,7 @@ class FormattedExcinfo:
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
-                reprtraceback = ReprTracebackNative(
-                    traceback.format_exception(type(e), e, None)
-                )
+                reprtraceback = ReprTracebackNative(format_exception(type(e), e, None))
                 reprcrash = None
             repr_chain += [(reprtraceback, reprcrash, descr)]
 
@@ -1169,10 +1311,8 @@ class ReprTraceback(TerminalRepr):
             entry.toterminal(tw)
             if i < len(self.reprentries) - 1:
                 next_entry = self.reprentries[i + 1]
-                if (
-                    entry.style == "long"
-                    or entry.style == "short"
-                    and next_entry.style == "long"
+                if entry.style == "long" or (
+                    entry.style == "short" and next_entry.style == "long"
                 ):
                     tw.sep(self.entrysep)
 
@@ -1221,6 +1361,15 @@ class ReprEntry(TerminalRepr):
         if not self.lines:
             return
 
+        if self.style == "value":
+            # Using tw.write instead of tw.line for testing purposes due to TWMock implementation;
+            # lines written with TWMock.line and TWMock._write_source cannot be distinguished
+            # from each other, whereas lines written with TWMock.write are marked with TWMock.WRITE
+            for line in self.lines:
+                tw.write(line)
+                tw.write("\n")
+            return
+
         # separate indents and source lines that are not failures: we want to
         # highlight the code but not the indentation, which may contain markers
         # such as ">   assert 0"
@@ -1236,11 +1385,8 @@ class ReprEntry(TerminalRepr):
                 failure_lines.extend(self.lines[index:])
                 break
             else:
-                if self.style == "value":
-                    source_lines.append(line)
-                else:
-                    indents.append(line[:indent_size])
-                    source_lines.append(line[indent_size:])
+                indents.append(line[:indent_size])
+                source_lines.append(line[indent_size:])
 
         tw._write_source(source_lines, indents)
 
@@ -1350,7 +1496,7 @@ def getfslineno(obj: object) -> tuple[str | Path, int]:
         except TypeError:
             return "", -1
 
-        fspath = fn and absolutepath(fn) or ""
+        fspath = (fn and absolutepath(fn)) or ""
         lineno = -1
         if fspath:
             try:
@@ -1360,6 +1506,12 @@ def getfslineno(obj: object) -> tuple[str | Path, int]:
         return fspath, lineno
 
     return code.path, code.firstlineno
+
+
+def _byte_offset_to_character_offset(str, offset):
+    """Converts a byte based offset in a string to a code-point."""
+    as_utf8 = str.encode("utf-8")
+    return len(as_utf8[:offset].decode("utf-8", errors="replace"))
 
 
 # Relative paths that we use to filter traceback entries from appearing to the user;
@@ -1401,3 +1553,15 @@ def filter_traceback(entry: TracebackEntry) -> bool:
         return False
 
     return True
+
+
+def filter_excinfo_traceback(
+    tbfilter: TracebackFilter, excinfo: ExceptionInfo[BaseException]
+) -> Traceback:
+    """Filter the exception traceback in ``excinfo`` according to ``tbfilter``."""
+    if callable(tbfilter):
+        return tbfilter(excinfo)
+    elif tbfilter:
+        return excinfo.traceback.filter(excinfo)
+    else:
+        return excinfo.traceback

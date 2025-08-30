@@ -18,7 +18,7 @@ import pytest
 @contextlib.contextmanager
 def ignore_encoding_warning():
     with warnings.catch_warnings():
-        if sys.version_info > (3, 10):
+        if sys.version_info >= (3, 10):
             warnings.simplefilter("ignore", EncodingWarning)  # noqa: F821
         yield
 
@@ -215,7 +215,7 @@ class CommonFSTests:
         lst = []
         for i in path1.visit(fil):
             lst.append(i.relto(path1))
-        assert len(lst), 2
+        assert len(lst), 2  # noqa: PLC1802,RUF040
         assert "sampledir" in lst
         assert "otherdir" in lst
 
@@ -555,9 +555,9 @@ def batch_make_numbered_dirs(rootdir, repeats):
         file_ = dir_.join("foo")
         file_.write_text(f"{i}", encoding="utf-8")
         actual = int(file_.read_text(encoding="utf-8"))
-        assert (
-            actual == i
-        ), f"int(file_.read_text(encoding='utf-8')) is {actual} instead of {i}"
+        assert actual == i, (
+            f"int(file_.read_text(encoding='utf-8')) is {actual} instead of {i}"
+        )
         dir_.join(".lock").remove(ignore_errors=True)
     return True
 
@@ -738,7 +738,6 @@ class TestLocalPath(CommonFSTests):
 
     def test_setmtime(self):
         import tempfile
-        import time
 
         try:
             fd, name = tempfile.mkstemp()
@@ -747,6 +746,7 @@ class TestLocalPath(CommonFSTests):
             name = tempfile.mktemp()
             open(name, "w").close()
         try:
+            # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
             mtime = int(time.time()) - 100
             path = local(name)
             assert path.mtime() != mtime
@@ -855,7 +855,7 @@ class TestLocalPath(CommonFSTests):
         assert b.fnmatch(pattern)
 
     def test_sysfind(self):
-        name = sys.platform == "win32" and "cmd" or "test"
+        name = (sys.platform == "win32" and "cmd") or "test"
         x = local.sysfind(name)
         assert x.check(file=1)
         assert local.sysfind("jaksdkasldqwe") is None
@@ -948,7 +948,7 @@ class TestExecution:
                 prefix="base.", rootdir=tmpdir, keep=2, lock_timeout=0
             )
             assert numdir.check()
-            assert numdir.basename == "base.%d" % i
+            assert numdir.basename == f"base.{i}"
             if i >= 1:
                 assert numdir.new(ext=str(i - 1)).check()
             if i >= 2:
@@ -993,7 +993,7 @@ class TestExecution:
         for i in range(10):
             numdir = local.make_numbered_dir(prefix="base2.", rootdir=tmpdir, keep=2)
             assert numdir.check()
-            assert numdir.basename == "base2.%d" % i
+            assert numdir.basename == f"base2.{i}"
             for j in range(i):
                 assert numdir.new(ext=str(j)).check()
 
@@ -1250,7 +1250,7 @@ class TestWINLocalPath:
     def test_chmod_simple_int(self, path1):
         mode = path1.stat().mode
         # Ensure that we actually change the mode to something different.
-        path1.chmod(mode == 0 and 1 or 0)
+        path1.chmod((mode == 0 and 1) or 0)
         try:
             print(path1.stat().mode)
             print(mode)
@@ -1405,6 +1405,7 @@ class TestPOSIXLocalPath:
         import time
 
         path = tmpdir.ensure("samplefile")
+        # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
         now = time.time()
         atime1 = path.atime()
         # we could wait here but timer resolution is very

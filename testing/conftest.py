@@ -1,10 +1,12 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-import dataclasses
+from collections.abc import Generator
+import importlib.metadata
 import re
 import sys
-from typing import Generator
+
+from packaging.version import Version
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -119,8 +121,8 @@ def tw_mock():
             return text
 
         def get_write_msg(self, idx):
-            flag, msg = self.lines[idx]
-            assert flag == TWMock.WRITE
+            assert self.lines[idx][0] == TWMock.WRITE
+            msg = self.lines[idx][1]
             return msg
 
         fullwidth = 80
@@ -168,6 +170,9 @@ def color_mapping():
 
     Used by tests which check the actual colors output by pytest.
     """
+    # https://github.com/pygments/pygments/commit/d24e272894a56a98b1b718d9ac5fabc20124882a
+    pygments_version = Version(importlib.metadata.version("pygments"))
+    pygments_has_kwspace_hl = pygments_version >= Version("2.19")
 
     class ColorMapping:
         COLORS = {
@@ -180,6 +185,7 @@ def color_mapping():
             "bold": "\x1b[1m",
             "reset": "\x1b[0m",
             "kw": "\x1b[94m",
+            "kwspace": "\x1b[90m \x1b[39;49;00m" if pygments_has_kwspace_hl else " ",
             "hl-reset": "\x1b[39;49;00m",
             "function": "\x1b[92m",
             "number": "\x1b[94m",
@@ -226,24 +232,8 @@ def mock_timing(monkeypatch: MonkeyPatch):
     Time is static, and only advances through `sleep` calls, thus tests might sleep over large
     numbers and obtain accurate time() calls at the end, making tests reliable and instant.
     """
-
-    @dataclasses.dataclass
-    class MockTiming:
-        _current_time: float = 1590150050.0
-
-        def sleep(self, seconds: float) -> None:
-            self._current_time += seconds
-
-        def time(self) -> float:
-            return self._current_time
-
-        def patch(self) -> None:
-            from _pytest import timing
-
-            monkeypatch.setattr(timing, "sleep", self.sleep)
-            monkeypatch.setattr(timing, "time", self.time)
-            monkeypatch.setattr(timing, "perf_counter", self.time)
+    from _pytest.timing import MockTiming
 
     result = MockTiming()
-    result.patch()
+    result.patch(monkeypatch)
     return result

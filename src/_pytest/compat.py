@@ -3,21 +3,24 @@
 
 from __future__ import annotations
 
-import dataclasses
+from collections.abc import Callable
 import enum
 import functools
 import inspect
 from inspect import Parameter
-from inspect import signature
+from inspect import Signature
 import os
 from pathlib import Path
 import sys
 from typing import Any
-from typing import Callable
 from typing import Final
 from typing import NoReturn
 
 import py
+
+
+if sys.version_info >= (3, 14):
+    from annotationlib import Format
 
 
 #: constant to prepare valuing pylib path replacements/lazy proxies later on
@@ -43,11 +46,6 @@ NOTSET: Final = NotSetType.token
 # fmt: on
 
 
-def is_generator(func: object) -> bool:
-    genfunc = inspect.isgeneratorfunction(func)
-    return genfunc and not iscoroutinefunction(func)
-
-
 def iscoroutinefunction(func: object) -> bool:
     """Return True if func is a coroutine function (a function defined with async
     def syntax, and doesn't contain yield), or a function decorated with
@@ -66,6 +64,13 @@ def is_async_function(func: object) -> bool:
     return iscoroutinefunction(func) or inspect.isasyncgenfunction(func)
 
 
+def signature(obj: Callable[..., Any]) -> Signature:
+    """Return signature without evaluating annotations."""
+    if sys.version_info >= (3, 14):
+        return inspect.signature(obj, annotation_format=Format.STRING)
+    return inspect.signature(obj)
+
+
 def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
@@ -76,8 +81,8 @@ def getlocation(function, curdir: str | os.PathLike[str] | None = None) -> str:
         except ValueError:
             pass
         else:
-            return "%s:%d" % (relfn, lineno + 1)
-    return "%s:%d" % (fn, lineno + 1)
+            return f"{relfn}:{lineno + 1}"
+    return f"{fn}:{lineno + 1}"
 
 
 def num_mock_patch_args(function) -> int:
@@ -128,7 +133,7 @@ def getfuncargnames(
     # creates a tuple of the names of the parameters that don't have
     # defaults.
     try:
-        parameters = signature(function).parameters
+        parameters = signature(function).parameters.values()
     except (ValueError, TypeError) as e:
         from _pytest.outcomes import fail
 
@@ -139,7 +144,7 @@ def getfuncargnames(
 
     arg_names = tuple(
         p.name
-        for p in parameters.values()
+        for p in parameters
         if (
             p.kind is Parameter.POSITIONAL_OR_KEYWORD
             or p.kind is Parameter.KEYWORD_ONLY
@@ -150,9 +155,9 @@ def getfuncargnames(
         name = function.__name__
 
     # If this function should be treated as a bound method even though
-    # it's passed as an unbound method or function, remove the first
-    # parameter name.
-    if (
+    # it's passed as an unbound method or function, and its first parameter
+    # wasn't defined as positional only, remove the first parameter name.
+    if not any(p.kind is Parameter.POSITIONAL_ONLY for p in parameters) and (
         # Not using `getattr` because we don't want to resolve the staticmethod.
         # Not using `cls.__dict__` because we want to check the entire MRO.
         cls
@@ -210,56 +215,13 @@ def ascii_escaped(val: bytes | str) -> str:
     return ret.translate(_non_printable_ascii_translate_table)
 
 
-@dataclasses.dataclass
-class _PytestWrapper:
-    """Dummy wrapper around a function object for internal use only.
-
-    Used to correctly unwrap the underlying function object when we are
-    creating fixtures, because we wrap the function object ourselves with a
-    decorator to issue warnings when the fixture function is called directly.
-    """
-
-    obj: Any
-
-
 def get_real_func(obj):
     """Get the real function object of the (possibly) wrapped object by
-    functools.wraps or functools.partial."""
-    start_obj = obj
-    for i in range(100):
-        # __pytest_wrapped__ is set by @pytest.fixture when wrapping the fixture function
-        # to trigger a warning if it gets called directly instead of by pytest: we don't
-        # want to unwrap further than this otherwise we lose useful wrappings like @mock.patch (#3774)
-        new_obj = getattr(obj, "__pytest_wrapped__", None)
-        if isinstance(new_obj, _PytestWrapper):
-            obj = new_obj.obj
-            break
-        new_obj = getattr(obj, "__wrapped__", None)
-        if new_obj is None:
-            break
-        obj = new_obj
-    else:
-        from _pytest._io.saferepr import saferepr
+    :func:`functools.wraps`, or :func:`functools.partial`."""
+    obj = inspect.unwrap(obj)
 
-        raise ValueError(
-            f"could not find real function of {saferepr(start_obj)}\nstopped at {saferepr(obj)}"
-        )
     if isinstance(obj, functools.partial):
         obj = obj.func
-    return obj
-
-
-def get_real_method(obj, holder):
-    """Attempt to obtain the real function object that might be wrapping
-    ``obj``, while at the same time returning a bound method to ``holder`` if
-    the original object was a bound method."""
-    try:
-        is_method = hasattr(obj, "__func__")
-        obj = get_real_func(obj)
-    except Exception:  # pragma: no cover
-        return obj
-    if is_method and hasattr(obj, "__get__") and callable(obj.__get__):
-        obj = obj.__get__(holder)
     return obj
 
 
@@ -349,3 +311,23 @@ def get_user_id() -> int | None:
 # This also work for Enums (if you use `is` to compare) and Literals.
 def assert_never(value: NoReturn) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
+
+
+class CallableBool:
+    """
+    A bool-like object that can also be called, returning its true/false value.
+
+    Used for backwards compatibility in cases where something was supposed to be a method
+    but was implemented as a simple attribute by mistake (see `TerminalReporter.isatty`).
+
+    Do not use in new code.
+    """
+
+    def __init__(self, value: bool) -> None:
+        self._value = value
+
+    def __bool__(self) -> bool:
+        return self._value
+
+    def __call__(self) -> bool:
+        return self._value

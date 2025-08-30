@@ -28,7 +28,7 @@ class TestParser:
 
     def test_custom_prog(self, parser: parseopt.Parser) -> None:
         """Custom prog can be set for `argparse.ArgumentParser`."""
-        assert parser._getparser().prog == os.path.basename(sys.argv[0])
+        assert parser._getparser().prog == argparse.ArgumentParser().prog
         parser.prog = "custom-prog"
         assert parser._getparser().prog == "custom-prog"
 

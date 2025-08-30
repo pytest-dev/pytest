@@ -56,12 +56,6 @@ class PytestRemovedIn9Warning(PytestDeprecationWarning):
     __module__ = "pytest"
 
 
-class PytestReturnNotNoneWarning(PytestWarning):
-    """Warning emitted when a test function is returning value other than None."""
-
-    __module__ = "pytest"
-
-
 @final
 class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     """Warning category used to denote experiments in pytest.
@@ -78,12 +72,11 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
 
 
 @final
-class PytestUnhandledCoroutineWarning(PytestReturnNotNoneWarning):
-    """Warning emitted for an unhandled coroutine.
+class PytestReturnNotNoneWarning(PytestWarning):
+    """
+    Warning emitted when a test function returns a value other than ``None``.
 
-    A coroutine was encountered when collecting test functions, but was not
-    handled by any async-aware plugin.
-    Coroutine test functions are not natively supported.
+    See :ref:`return-not-none` for details.
     """
 
     __module__ = "pytest"
@@ -139,6 +132,13 @@ class UnformattedWarning(Generic[_W]):
     def format(self, **kwargs: Any) -> _W:
         """Return an instance of the warning category, formatted with given kwargs."""
         return self.category(self.template.format(**kwargs))
+
+
+@final
+class PytestFDWarning(PytestWarning):
+    """When the lsof plugin finds leaked fds."""
+
+    __module__ = "pytest"
 
 
 def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:

@@ -48,7 +48,23 @@ def test_getfuncargnames_methods():
         def f(self, arg1, arg2="hello"):
             raise NotImplementedError()
 
+        def g(self, /, arg1, arg2="hello"):
+            raise NotImplementedError()
+
+        def h(self, *, arg1, arg2="hello"):
+            raise NotImplementedError()
+
+        def j(self, arg1, *, arg2, arg3="hello"):
+            raise NotImplementedError()
+
+        def k(self, /, arg1, *, arg2, arg3="hello"):
+            raise NotImplementedError()
+
     assert getfuncargnames(A().f) == ("arg1",)
+    assert getfuncargnames(A().g) == ("arg1",)
+    assert getfuncargnames(A().h) == ("arg1",)
+    assert getfuncargnames(A().j) == ("arg1", "arg2")
+    assert getfuncargnames(A().k) == ("arg1", "arg2")
 
 
 def test_getfuncargnames_staticmethod():
@@ -1435,6 +1451,23 @@ class TestFixtureUsages:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_empty_usefixtures_marker(self, pytester: Pytester) -> None:
+        """Empty usefixtures() marker issues a warning (#12439)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.usefixtures()
+            def test_one():
+                assert 1 == 1
+        """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            "*PytestWarning: usefixtures() in test_empty_usefixtures_marker.py::test_one"
+            " without arguments has no effect"
+        )
+
     def test_usefixtures_ini(self, pytester: Pytester) -> None:
         pytester.makeini(
             """
@@ -1588,6 +1621,63 @@ class TestFixtureUsages:
         )
         result = pytester.runpytest()
         result.stdout.no_fnmatch_line("* ERROR at teardown *")
+
+    def test_unwrapping_pytest_fixture(self, pytester: Pytester) -> None:
+        """Ensure the unwrap method on `FixtureFunctionDefinition` correctly wraps and unwraps methods and functions"""
+        pytester.makepyfile(
+            """
+            import pytest
+            import inspect
+
+            class FixtureFunctionDefTestClass:
+                def __init__(self) -> None:
+                    self.i = 10
+
+                @pytest.fixture
+                def fixture_function_def_test_method(self):
+                    return self.i
+
+
+            @pytest.fixture
+            def fixture_function_def_test_func():
+                return 9
+
+
+            def test_get_wrapped_func_returns_method():
+                obj = FixtureFunctionDefTestClass()
+                wrapped_function_result = (
+                    obj.fixture_function_def_test_method._get_wrapped_function()
+                )
+                assert inspect.ismethod(wrapped_function_result)
+                assert wrapped_function_result() == 10
+
+
+            def test_get_wrapped_func_returns_function():
+                assert fixture_function_def_test_func._get_wrapped_function()() == 9
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2)
+
+    def test_fixture_wrapped_looks_liked_wrapped_function(
+        self, pytester: Pytester
+    ) -> None:
+        """Ensure that `FixtureFunctionDefinition` behaves like the function it wrapped."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixture_function_def_test_func():
+                return 9
+            fixture_function_def_test_func.__doc__ = "documentation"
+
+            def test_fixture_has_same_doc():
+                assert fixture_function_def_test_func.__doc__ == "documentation"
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
 
 
 class TestFixtureManagerParseFactories:
@@ -2241,14 +2331,14 @@ class TestAutouseManagement:
     ) -> None:
         """#226"""
         pytester.makepyfile(
-            """
+            f"""
             import pytest
             values = []
-            @pytest.fixture(%(param1)s)
+            @pytest.fixture({param1})
             def arg1(request):
                 request.addfinalizer(lambda: values.append("fin1"))
                 values.append("new1")
-            @pytest.fixture(%(param2)s)
+            @pytest.fixture({param2})
             def arg2(request, arg1):
                 request.addfinalizer(lambda: values.append("fin2"))
                 values.append("new2")
@@ -2257,8 +2347,7 @@ class TestAutouseManagement:
                 pass
             def test_check():
                 assert values == ["new1", "new2", "fin2", "fin1"]
-        """  # noqa: UP031 (python syntax issues)
-            % locals()
+        """
         )
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(passed=2)
@@ -2996,7 +3085,7 @@ class TestFixtureMarker:
             *3 passed*
         """
         )
-        result.stdout.no_fnmatch_line("*error*")
+        assert result.ret == 0
 
     def test_fixture_finalizer(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -3138,21 +3227,21 @@ class TestFixtureMarker:
     ) -> None:
         """#246"""
         pytester.makepyfile(
-            """
+            f"""
             import pytest
             values = []
 
-            @pytest.fixture(scope=%(scope)r, params=["1"])
+            @pytest.fixture(scope={scope!r}, params=["1"])
             def fix1(request):
                 return request.param
 
-            @pytest.fixture(scope=%(scope)r)
+            @pytest.fixture(scope={scope!r})
             def fix2(request, base):
                 def cleanup_fix2():
                     assert not values, "base should not have been finalized"
                 request.addfinalizer(cleanup_fix2)
 
-            @pytest.fixture(scope=%(scope)r)
+            @pytest.fixture(scope={scope!r})
             def base(request, fix1):
                 def cleanup_base():
                     values.append("fin_base")
@@ -3165,8 +3254,7 @@ class TestFixtureMarker:
                 pass
             def test_other():
                 pass
-        """  # noqa: UP031 (python syntax issues)
-            % {"scope": scope}
+        """
         )
         reprec = pytester.inline_run("-lvs")
         reprec.assertoutcome(passed=3)
@@ -3352,42 +3440,40 @@ class TestRequestScopeAccess:
 
     def test_setup(self, pytester: Pytester, scope, ok, error) -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest
-            @pytest.fixture(scope=%r, autouse=True)
+            @pytest.fixture(scope={scope!r}, autouse=True)
             def myscoped(request):
-                for x in %r:
+                for x in {ok.split()}:
                     assert hasattr(request, x)
-                for x in %r:
+                for x in {error.split()}:
                     pytest.raises(AttributeError, lambda:
                         getattr(request, x))
                 assert request.session
                 assert request.config
             def test_func():
                 pass
-        """  # noqa: UP031 (python syntax issues)
-            % (scope, ok.split(), error.split())
+        """
         )
         reprec = pytester.inline_run("-l")
         reprec.assertoutcome(passed=1)
 
     def test_funcarg(self, pytester: Pytester, scope, ok, error) -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest
-            @pytest.fixture(scope=%r)
+            @pytest.fixture(scope={scope!r})
             def arg(request):
-                for x in %r:
+                for x in {ok.split()!r}:
                     assert hasattr(request, x)
-                for x in %r:
+                for x in {error.split()!r}:
                     pytest.raises(AttributeError, lambda:
                         getattr(request, x))
                 assert request.session
                 assert request.config
             def test_func(arg):
                 pass
-        """  # noqa: UP031 (python syntax issues)
-            % (scope, ok.split(), error.split())
+        """
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
@@ -4509,6 +4595,21 @@ def test_fixture_double_decorator(pytester: Pytester) -> None:
     )
 
 
+def test_fixture_class(pytester: Pytester) -> None:
+    """Check if an error is raised when using @pytest.fixture on a class."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        class A:
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
+
+
 def test_fixture_param_shadowing(pytester: Pytester) -> None:
     """Parametrized arguments would be shadowed if a fixture with the same name also exists (#5036)"""
     pytester.makepyfile(
@@ -4920,3 +5021,50 @@ def test_subfixture_teardown_order(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_parametrized_fixture_scope_allowed(pytester: Pytester) -> None:
+    """
+    Make sure scope from parametrize does not affect fixture's ability to be
+    depended upon.
+
+    Regression test for #13248
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(scope="session")
+        def my_fixture(request):
+            return getattr(request, "param", None)
+
+        @pytest.fixture(scope="session")
+        def another_fixture(my_fixture):
+            return my_fixture
+
+        @pytest.mark.parametrize("my_fixture", ["a value"], indirect=True, scope="function")
+        def test_foo(another_fixture):
+            assert another_fixture == "a value"
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_collect_positional_only(pytester: Pytester) -> None:
+    """Support the collection of tests with positional-only arguments (#13376)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Test:
+            @pytest.fixture
+            def fix(self):
+                return 1
+
+            def test_method(self, /, fix):
+                assert fix == 1
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)

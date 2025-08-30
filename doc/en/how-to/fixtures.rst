@@ -449,6 +449,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
+            ^^^^^^^^
     E       assert 0
 
     test_module.py:7: AssertionError
@@ -460,6 +461,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
             response, msg = smtp_connection.noop()
             assert response == 250
     >       assert 0  # for demo purposes
+            ^^^^^^^^
     E       assert 0
 
     test_module.py:13: AssertionError
@@ -1308,6 +1310,7 @@ So let's just do another run:
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
+            ^^^^^^^^
     E       assert 0
 
     test_module.py:7: AssertionError
@@ -1319,6 +1322,7 @@ So let's just do another run:
             response, msg = smtp_connection.noop()
             assert response == 250
     >       assert 0  # for demo purposes
+            ^^^^^^^^
     E       assert 0
 
     test_module.py:13: AssertionError
@@ -1343,6 +1347,7 @@ So let's just do another run:
             response, msg = smtp_connection.noop()
             assert response == 250
     >       assert 0  # for demo purposes
+            ^^^^^^^^
     E       assert 0
 
     test_module.py:13: AssertionError
@@ -1418,7 +1423,7 @@ Running the above tests results in the following test IDs being used:
    rootdir: /home/sweet/project
    collected 12 items
 
-   <Dir fixtures.rst-224>
+   <Dir fixtures.rst-229>
      <Module test_anothersmtp.py>
        <Function test_showhelo[smtp.gmail.com]>
        <Function test_showhelo[mail.python.org]>

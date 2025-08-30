@@ -162,7 +162,7 @@ objects, they are still using the default pytest representation:
     rootdir: /home/sweet/project
     collected 8 items
 
-    <Dir parametrize.rst-204>
+    <Dir parametrize.rst-208>
       <Module test_time.py>
         <Function test_timedistance_v0[a0-b0-expected0]>
         <Function test_timedistance_v0[a1-b1-expected1]>
@@ -239,7 +239,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     rootdir: /home/sweet/project
     collected 4 items
 
-    <Dir parametrize.rst-204>
+    <Dir parametrize.rst-208>
       <Module test_scenarios.py>
         <Class TestSampleWithScenarios>
           <Function test_demo1[basic]>
@@ -318,7 +318,7 @@ Let's first see how it looks like at collection time:
     rootdir: /home/sweet/project
     collected 2 items
 
-    <Dir parametrize.rst-204>
+    <Dir parametrize.rst-208>
       <Module test_backends.py>
         <Function test_db_initialized[d1]>
         <Function test_db_initialized[d2]>
@@ -352,7 +352,7 @@ The first invocation with ``db == "DB1"`` passed while the second with ``db == "
 Indirect parametrization
 ---------------------------------------------------
 
-Using the ``indirect=True`` parameter when parametrizing a test allows to
+Using the ``indirect=True`` parameter when parametrizing a test allows one to
 parametrize a test with a fixture receiving the values before passing them to a
 test:
 
@@ -503,11 +503,12 @@ Running it results in some skips if we don't have all the python interpreters in
 .. code-block:: pytest
 
    . $ pytest -rs -q multipython.py
-   ssssssssssss...ssssssssssss                                          [100%]
+   sssssssssssssssssssssssssss                                          [100%]
    ========================= short test summary info ==========================
-   SKIPPED [12] multipython.py:67: 'python3.9' not found
-   SKIPPED [12] multipython.py:67: 'python3.11' not found
-   3 passed, 24 skipped in 0.12s
+   SKIPPED [9] multipython.py:67: 'python3.9' not found
+   SKIPPED [9] multipython.py:67: 'python3.10' not found
+   SKIPPED [9] multipython.py:67: 'python3.11' not found
+   27 skipped in 0.12s
 
 Parametrization of optional implementations/imports
 ---------------------------------------------------

@@ -1,14 +1,14 @@
 # mypy: disallow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Iterator
 import datetime
 import pathlib
 import re
 from textwrap import dedent
 from textwrap import indent
 from typing import Any
-from typing import Iterable
-from typing import Iterator
 from typing import TypedDict
 
 import packaging.version
@@ -67,6 +67,7 @@ ADDITIONAL_PROJECTS = {  # set of additional projects to consider as plugins
     "nuts",
     "flask_fixture",
     "databricks-labs-pytester",
+    "tursu",
 }
 
 
@@ -176,7 +177,7 @@ def iter_plugins() -> Iterator[PluginInfo]:
                 )
                 last_release = release_date.strftime("%b %d, %Y")
                 break
-        name = f':pypi:`{info["name"]}`'
+        name = f":pypi:`{info['name']}`"
         summary = ""
         if info["summary"]:
             summary = escape_rst(info["summary"].replace("\n", ""))
@@ -194,7 +195,7 @@ def plugin_definitions(plugins: Iterable[PluginInfo]) -> Iterator[str]:
     for plugin in plugins:
         yield dedent(
             f"""
-            {plugin['name']}
+            {plugin["name"]}
                *last release*: {plugin["last_release"]},
                *status*: {plugin["status"]},
                *requires*: {plugin["requires"]}

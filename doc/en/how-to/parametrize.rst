@@ -29,10 +29,6 @@ pytest enables test parametrization at several levels:
 
 .. regendoc: wipe
 
-
-
-    Several improvements.
-
 The builtin :ref:`pytest.mark.parametrize ref` decorator enables
 parametrization of arguments for a test function.  Here is a typical example
 of a test function that implements checking that a certain input leads
@@ -244,6 +240,13 @@ command line option and the parametrization of our test function:
         if "stringinput" in metafunc.fixturenames:
             metafunc.parametrize("stringinput", metafunc.config.getoption("stringinput"))
 
+.. note::
+
+    The :hook:`pytest_generate_tests` hook can also be implemented directly in a test
+    module or inside a test class; unlike other hooks, pytest will discover it there
+    as well. Other hooks must live in a :ref:`conftest.py <localplugin>` or a plugin.
+    See :ref:`writinghooks`.
+
 If we now pass two stringinput values, our test will run twice:
 
 .. code-block:: pytest
@@ -285,7 +288,7 @@ list:
     $ pytest -q -rs test_strings.py
     s                                                                    [100%]
     ========================= short test summary info ==========================
-    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at /home/sweet/project/test_strings.py:2
+    SKIPPED [1] test_strings.py: got empty parameter set for (stringinput)
     1 skipped in 0.12s
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across

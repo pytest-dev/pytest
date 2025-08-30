@@ -8,12 +8,14 @@ none of the code triggers any mypy errors.
 from __future__ import annotations
 
 import contextlib
+from typing import Literal
 from typing import Optional
 
 from typing_extensions import assert_type
 
 import pytest
 from pytest import MonkeyPatch
+from pytest import TestReport
 
 
 # Issue #7488.
@@ -51,3 +53,9 @@ def check_raises_is_a_context_manager(val: bool) -> None:
     with pytest.raises(RuntimeError) if val else contextlib.nullcontext() as excinfo:
         pass
     assert_type(excinfo, Optional[pytest.ExceptionInfo[RuntimeError]])
+
+
+# Issue #12941.
+def check_testreport_attributes(report: TestReport) -> None:
+    assert_type(report.when, Literal["setup", "call", "teardown"])
+    assert_type(report.location, tuple[str, Optional[int], str])

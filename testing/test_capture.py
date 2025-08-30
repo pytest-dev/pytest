@@ -1,16 +1,17 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
 import contextlib
 import io
 from io import UnsupportedOperation
 import os
+import re
 import subprocess
 import sys
 import textwrap
 from typing import BinaryIO
 from typing import cast
-from typing import Generator
 from typing import TextIO
 
 from _pytest import capture
@@ -444,6 +445,38 @@ class TestCaptureFixture:
             *opt,
         )
         reprec.assertoutcome(passed=1)
+
+    def test_capteesys(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """\
+            import sys
+            def test_one(capteesys):
+                print("sTdoUt")
+                print("sTdeRr", file=sys.stderr)
+                out, err = capteesys.readouterr()
+                assert out == "sTdoUt\\n"
+                assert err == "sTdeRr\\n"
+            """
+        )
+        # -rN and --capture=tee-sys means we'll read them on stdout/stderr,
+        # as opposed to both being reported on stdout
+        result = pytester.runpytest(p, "--quiet", "--quiet", "-rN", "--capture=tee-sys")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["sTdoUt"])  # tee'd out
+        result.stderr.fnmatch_lines(["sTdeRr"])  # tee'd out
+
+        result = pytester.runpytest(p, "--quiet", "--quiet", "-rA", "--capture=tee-sys")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(
+            ["sTdoUt", "sTdoUt", "sTdeRr"]
+        )  # tee'd out, the next two reported
+        result.stderr.fnmatch_lines(["sTdeRr"])  # tee'd out
+
+        # -rA and --capture=sys means we'll read them on stdout.
+        result = pytester.runpytest(p, "--quiet", "--quiet", "-rA", "--capture=sys")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["sTdoUt", "sTdeRr"])  # no tee, just reported
+        assert not result.stderr.lines
 
     def test_capsyscapfd(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -950,8 +983,13 @@ def tmpfile(pytester: Pytester) -> Generator[BinaryIO]:
 def lsof_check():
     pid = os.getpid()
     try:
-        out = subprocess.check_output(("lsof", "-p", str(pid))).decode()
-    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError) as exc:
+        out = subprocess.check_output(("lsof", "-p", str(pid)), timeout=10).decode()
+    except (
+        OSError,
+        UnicodeDecodeError,
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+    ) as exc:
         # about UnicodeDecodeError, see note on pytester
         pytest.skip(f"could not run 'lsof' ({exc!r})")
     yield
@@ -1666,3 +1704,32 @@ def test_logging_while_collecting(pytester: Pytester) -> None:
     )
     result.stdout.no_fnmatch_line("*Captured stderr call*")
     result.stdout.no_fnmatch_line("*during collection*")
+
+
+def test_libedit_workaround(pytester: Pytester) -> None:
+    pytester.makeconftest("""
+    import pytest
+
+
+    def pytest_terminal_summary(config):
+        capture = config.pluginmanager.getplugin("capturemanager")
+        capture.suspend_global_capture(in_=True)
+
+        print("Enter 'hi'")
+        value = input()
+        print(f"value: {value!r}")
+
+        capture.resume_global_capture()
+    """)
+    readline = pytest.importorskip("readline")
+    backend = getattr(readline, "backend", readline.__doc__)  # added in Python 3.13
+    print(f"Readline backend: {backend}")
+
+    child = pytester.spawn_pytest("")
+    child.expect(r"Enter 'hi'")
+    child.sendline("hi")
+    rest = child.read().decode("utf8")
+    print(rest)
+    match = re.search(r"^value: '(.*)'\r?$", rest, re.MULTILINE)
+    assert match is not None
+    assert match.group(1) == "hi"

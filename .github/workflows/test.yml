@@ -20,6 +20,8 @@ on:
     - reopened  # default
     - ready_for_review  # used in PRs created from the release workflow
 
+  workflow_dispatch:  # allows manual triggering of the workflow
+
 env:
   PYTEST_ADDOPTS: "--color=yes"
 
@@ -35,12 +37,12 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.9.0
+      uses: hynek/build-and-inspect-python-package@c52c3a4710070b50470d903818a7b25115dcd076
 
   build:
     needs: [package]
@@ -54,135 +56,205 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py38",
-          "windows-py38-pluggy",
-          "windows-py39",
+          "windows-py39-unittest-asynctest",
+          "windows-py39-unittest-twisted24",
+          "windows-py39-unittest-twisted25",
+          "windows-py39-pluggy",
+          "windows-py39-xdist",
           "windows-py310",
           "windows-py311",
           "windows-py312",
           "windows-py313",
+          "windows-py314",
 
-          "ubuntu-py38",
-          "ubuntu-py38-pluggy",
-          "ubuntu-py38-freeze",
-          "ubuntu-py39",
-          "ubuntu-py310",
+          "ubuntu-py39-unittest-asynctest",
+          "ubuntu-py39-unittest-twisted24",
+          "ubuntu-py39-unittest-twisted25",
+          "ubuntu-py39-lsof-numpy-pexpect",
+          "ubuntu-py39-pluggy",
+          "ubuntu-py39-freeze",
+          "ubuntu-py39-xdist",
+          "ubuntu-py310-xdist",
           "ubuntu-py311",
           "ubuntu-py312",
-          "ubuntu-py313",
-          "ubuntu-pypy3",
+          "ubuntu-py313-pexpect",
+          "ubuntu-py314",
+          "ubuntu-pypy3-xdist",
 
-          "macos-py38",
           "macos-py39",
           "macos-py310",
           "macos-py312",
           "macos-py313",
+          "macos-py314",
 
           "doctesting",
           "plugins",
         ]
 
         include:
-          - name: "windows-py38"
-            python: "3.8"
+          # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
+          - name: "windows-py39-unittest-asynctest"
+            python: "3.9"
             os: windows-latest
-            tox_env: "py38-unittestextras"
+            tox_env: "py39-asynctest"
             use_coverage: true
-          - name: "windows-py38-pluggy"
-            python: "3.8"
+
+          - name: "windows-py39-unittest-twisted24"
+            python: "3.9"
             os: windows-latest
-            tox_env: "py38-pluggymain-pylib-xdist"
-          - name: "windows-py39"
+            tox_env: "py39-twisted24"
+            use_coverage: true
+
+          - name: "windows-py39-unittest-twisted25"
+            python: "3.9"
+            os: windows-latest
+            tox_env: "py39-twisted25"
+            use_coverage: true
+
+          - name: "windows-py39-pluggy"
+            python: "3.9"
+            os: windows-latest
+            tox_env: "py39-pluggymain-pylib-xdist"
+
+          - name: "windows-py39-xdist"
             python: "3.9"
             os: windows-latest
             tox_env: "py39-xdist"
+
           - name: "windows-py310"
             python: "3.10"
             os: windows-latest
             tox_env: "py310-xdist"
+
           - name: "windows-py311"
             python: "3.11"
             os: windows-latest
             tox_env: "py311"
+
           - name: "windows-py312"
             python: "3.12"
             os: windows-latest
             tox_env: "py312"
+
           - name: "windows-py313"
-            python: "3.13-dev"
+            python: "3.13"
             os: windows-latest
             tox_env: "py313"
 
-          - name: "ubuntu-py38"
-            python: "3.8"
+          - name: "windows-py314"
+            python: "3.14"
+            os: windows-latest
+            tox_env: "py314"
+
+          # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
+          - name: "ubuntu-py39-unittest-asynctest"
+            python: "3.9"
             os: ubuntu-latest
-            tox_env: "py38-lsof-numpy-pexpect"
+            tox_env: "py39-asynctest"
             use_coverage: true
-          - name: "ubuntu-py38-pluggy"
-            python: "3.8"
+
+          - name: "ubuntu-py39-unittest-twisted24"
+            python: "3.9"
             os: ubuntu-latest
-            tox_env: "py38-pluggymain-pylib-xdist"
-          - name: "ubuntu-py38-freeze"
-            python: "3.8"
+            tox_env: "py39-twisted24"
+            use_coverage: true
+
+          - name: "ubuntu-py39-unittest-twisted25"
+            python: "3.9"
             os: ubuntu-latest
-            tox_env: "py38-freeze"
-          - name: "ubuntu-py39"
+            tox_env: "py39-twisted25"
+            use_coverage: true
+
+          - name: "ubuntu-py39-lsof-numpy-pexpect"
+            python: "3.9"
+            os: ubuntu-latest
+            tox_env: "py39-lsof-numpy-pexpect"
+            use_coverage: true
+
+          - name: "ubuntu-py39-pluggy"
+            python: "3.9"
+            os: ubuntu-latest
+            tox_env: "py39-pluggymain-pylib-xdist"
+
+          - name: "ubuntu-py39-freeze"
+            python: "3.9"
+            os: ubuntu-latest
+            tox_env: "py39-freeze"
+
+          - name: "ubuntu-py39-xdist"
             python: "3.9"
             os: ubuntu-latest
             tox_env: "py39-xdist"
-          - name: "ubuntu-py310"
+
+          - name: "ubuntu-py310-xdist"
             python: "3.10"
             os: ubuntu-latest
             tox_env: "py310-xdist"
+
           - name: "ubuntu-py311"
             python: "3.11"
             os: ubuntu-latest
             tox_env: "py311"
             use_coverage: true
+
           - name: "ubuntu-py312"
             python: "3.12"
             os: ubuntu-latest
             tox_env: "py312"
             use_coverage: true
-          - name: "ubuntu-py313"
-            python: "3.13-dev"
+
+          - name: "ubuntu-py313-pexpect"
+            python: "3.13"
             os: ubuntu-latest
-            tox_env: "py313"
+            tox_env: "py313-pexpect"
             use_coverage: true
-          - name: "ubuntu-pypy3"
+
+          - name: "ubuntu-py314"
+            python: "3.14"
+            os: ubuntu-latest
+            tox_env: "py314"
+            use_coverage: true
+
+          - name: "ubuntu-pypy3-xdist"
             python: "pypy-3.9"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
-          - name: "macos-py38"
-            python: "3.8"
-            os: macos-latest
-            tox_env: "py38-xdist"
+
           - name: "macos-py39"
             python: "3.9"
             os: macos-latest
             tox_env: "py39-xdist"
             use_coverage: true
+
           - name: "macos-py310"
             python: "3.10"
             os: macos-latest
             tox_env: "py310-xdist"
+
           - name: "macos-py312"
             python: "3.12"
             os: macos-latest
             tox_env: "py312-xdist"
+
           - name: "macos-py313"
-            python: "3.13-dev"
+            python: "3.13"
             os: macos-latest
             tox_env: "py313-xdist"
+
+          - name: "macos-py314"
+            python: "3.14"
+            os: macos-latest
+            tox_env: "py314-xdist"
 
           - name: "plugins"
             python: "3.12"
             os: ubuntu-latest
             tox_env: "plugins"
 
+
           - name: "doctesting"
-            python: "3.8"
+            python: "3.9"
             os: ubuntu-latest
             tox_env: "doctesting"
             use_coverage: true
@@ -192,12 +264,12 @@ jobs:
         contains(
           fromJSON(
             '[
-              "windows-py38-pluggy",
+              "windows-py39-pluggy",
               "windows-py313",
-              "ubuntu-py38-pluggy",
-              "ubuntu-py38-freeze",
+              "ubuntu-py39-pluggy",
+              "ubuntu-py39-freeze",
               "ubuntu-py313",
-              "macos-py38",
+              "macos-py39",
               "macos-py313"
             ]'
           ),
@@ -208,13 +280,13 @@ jobs:
       }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: Packages
         path: dist
@@ -223,7 +295,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
-        check-latest: ${{ endsWith(matrix.python, '-dev') }}
+        check-latest: true
+        allow-prereleases: true
 
     - name: Install dependencies
       run: |
@@ -246,7 +319,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
@@ -262,6 +335,6 @@ jobs:
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@223e4bb7a751b91f43eda76992bcfbf23b8b0302
+      uses: re-actors/alls-green@2765efec08f0fd63e83ad900f5fd75646be69ff6
       with:
         jobs: ${{ toJSON(needs) }}

@@ -25,13 +25,13 @@ jobs:
       attestations: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.9.0
+      uses: hynek/build-and-inspect-python-package@c52c3a4710070b50470d903818a7b25115dcd076
       with:
         attest-build-provenance-github: 'true'
 
@@ -45,25 +45,29 @@ jobs:
       id-token: write
       contents: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: true
 
     - name: Download Package
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: Packages
         path: dist
 
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.10.2
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
       with:
         attestations: true
 
     - name: Push tag
+      env:
+          VERSION: ${{ github.event.inputs.version }}
       run: |
         git config user.name "pytest bot"
         git config user.email "pytestbot@gmail.com"
-        git tag --annotate --message=v${{ github.event.inputs.version }} ${{ github.event.inputs.version }} ${{ github.sha }}
-        git push origin ${{ github.event.inputs.version }}
+        git tag --annotate --message=v"$VERSION" "$VERSION" ${{ github.sha }}
+        git push origin "$VERSION"
 
   release-notes:
 
@@ -76,13 +80,13 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: Packages
         path: dist
@@ -98,13 +102,15 @@ jobs:
         pip install --upgrade tox
 
     - name: Generate release notes
+      env:
+        VERSION: ${{ github.event.inputs.version }}
       run: |
         sudo apt-get install pandoc
-        tox -e generate-gh-release-notes -- ${{ github.event.inputs.version }} scripts/latest-release-notes.md
+        tox -e generate-gh-release-notes -- "$VERSION" scripts/latest-release-notes.md
 
     - name: Publish GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: scripts/latest-release-notes.md
-        files: dist/*
-        tag_name: ${{ github.event.inputs.version }}
+      env:
+        VERSION: ${{ github.event.inputs.version }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create --notes-file scripts/latest-release-notes.md --verify-tag "$VERSION" dist/*

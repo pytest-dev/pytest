@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import abc
 import collections
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Iterator
 import contextlib
 import io
 from io import UnsupportedOperation
@@ -15,12 +18,10 @@ from types import TracebackType
 from typing import Any
 from typing import AnyStr
 from typing import BinaryIO
+from typing import cast
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import Generic
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
 from typing import NamedTuple
 from typing import TextIO
@@ -47,7 +48,7 @@ _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
-    group._addoption(
+    group.addoption(
         "--capture",
         action="store",
         default="fd",
@@ -55,7 +56,7 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["fd", "sys", "no", "tee-sys"],
         help="Per-test capturing method: one of fd|sys|no|tee-sys",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-s",
         action="store_const",
         const="no",
@@ -77,6 +78,23 @@ def _colorama_workaround() -> None:
             import colorama  # noqa: F401
         except ImportError:
             pass
+
+
+def _readline_workaround() -> None:
+    """Ensure readline is imported early so it attaches to the correct stdio handles.
+
+    This isn't a problem with the default GNU readline implementation, but in
+    some configurations, Python uses libedit instead (on macOS, and for prebuilt
+    binaries such as used by uv).
+
+    In theory this is only needed if readline.backend == "libedit", but the
+    workaround consists of importing readline here, so we already worked around
+    the issue by the time we could check if we need to.
+    """
+    try:
+        import readline  # noqa: F401
+    except ImportError:
+        pass
 
 
 def _windowsconsoleio_workaround(stream: TextIO) -> None:
@@ -140,6 +158,7 @@ def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
     if ns.capture == "fd":
         _windowsconsoleio_workaround(sys.stdout)
     _colorama_workaround()
+    _readline_workaround()
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
@@ -177,7 +196,8 @@ class EncodedFile(io.TextIOWrapper):
     def mode(self) -> str:
         # TextIOWrapper doesn't expose a mode, but at least some of our
         # tests check it.
-        return self.buffer.mode.replace("b", "")
+        assert hasattr(self.buffer, "mode")
+        return cast(str, self.buffer.mode.replace("b", ""))
 
 
 class CaptureIO(io.TextIOWrapper):
@@ -358,7 +378,7 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             class_name,
             self.name,
-            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
             self._state,
             self.tmpfile,
         )
@@ -367,16 +387,16 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             self.__class__.__name__,
             self.name,
-            hasattr(self, "_old") and repr(self._old) or "<UNSET>",
+            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
             self._state,
             self.tmpfile,
         )
 
     def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:
@@ -490,10 +510,10 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         )
 
     def _assert_state(self, op: str, states: tuple[str, ...]) -> None:
-        assert (
-            self._state in states
-        ), "cannot {} in state {!r}: expected one of {}".format(
-            op, self._state, ", ".join(states)
+        assert self._state in states, (
+            "cannot {} in state {!r}: expected one of {}".format(
+                op, self._state, ", ".join(states)
+            )
         )
 
     def start(self) -> None:
@@ -550,7 +570,7 @@ class FDCaptureBinary(FDCaptureBase[bytes]):
         res = self.tmpfile.buffer.read()
         self.tmpfile.seek(0)
         self.tmpfile.truncate()
-        return res
+        return res  # type: ignore[return-value]
 
     def writeorg(self, data: bytes) -> None:
         """Write to original file descriptor."""
@@ -902,11 +922,13 @@ class CaptureFixture(Generic[AnyStr]):
         captureclass: type[CaptureBase[AnyStr]],
         request: SubRequest,
         *,
+        config: dict[str, Any] | None = None,
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
         self.captureclass: type[CaptureBase[AnyStr]] = captureclass
         self.request = request
+        self._config = config if config else {}
         self._capture: MultiCapture[AnyStr] | None = None
         self._captured_out: AnyStr = self.captureclass.EMPTY_BUFFER
         self._captured_err: AnyStr = self.captureclass.EMPTY_BUFFER
@@ -915,8 +937,8 @@ class CaptureFixture(Generic[AnyStr]):
         if self._capture is None:
             self._capture = MultiCapture(
                 in_=None,
-                out=self.captureclass(1),
-                err=self.captureclass(2),
+                out=self.captureclass(1, **self._config),
+                err=self.captureclass(2, **self._config),
             )
             self._capture.start_capturing()
 
@@ -995,6 +1017,41 @@ def capsys(request: SubRequest) -> Generator[CaptureFixture[str]]:
     """
     capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
     capture_fixture = CaptureFixture(SysCapture, request, _ispytest=True)
+    capman.set_fixture(capture_fixture)
+    capture_fixture._start()
+    yield capture_fixture
+    capture_fixture.close()
+    capman.unset_fixture()
+
+
+@fixture
+def capteesys(request: SubRequest) -> Generator[CaptureFixture[str]]:
+    r"""Enable simultaneous text capturing and pass-through of writes
+    to ``sys.stdout`` and ``sys.stderr`` as defined by ``--capture=``.
+
+
+    The captured output is made available via ``capteesys.readouterr()`` method
+    calls, which return a ``(out, err)`` namedtuple.
+    ``out`` and ``err`` will be ``text`` objects.
+
+    The output is also passed-through, allowing it to be "live-printed",
+    reported, or both as defined by ``--capture=``.
+
+    Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_output(capteesys):
+            print("hello")
+            captured = capteesys.readouterr()
+            assert captured.out == "hello\n"
+    """
+    capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
+    capture_fixture = CaptureFixture(
+        SysCapture, request, config=dict(tee=True), _ispytest=True
+    )
     capman.set_fixture(capture_fixture)
     capture_fixture._start()
     yield capture_fixture

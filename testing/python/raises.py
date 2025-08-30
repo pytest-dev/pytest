@@ -1,12 +1,18 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import io
 import re
 import sys
 
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestWarning
 import pytest
+
+
+def wrap_escape(s: str) -> str:
+    return "^" + re.escape(s) + "$"
 
 
 class TestRaises:
@@ -23,13 +29,32 @@ class TestRaises:
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_does_not_allow_none(self):
-        with pytest.raises(ValueError, match="Expected an exception type or"):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape("You must specify at least one parameter to match on."),
+        ):
             # We're testing that this invalid usage gives a helpful error,
             # so we can ignore Mypy telling us that None is invalid.
             pytest.raises(expected_exception=None)  # type: ignore
 
+    # it's unclear if this message is helpful, and if it is, should it trigger more
+    # liberally? Usually you'd get a TypeError here
+    def test_raises_false_and_arg(self):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape(
+                "Expected an exception type or a tuple of exception types, but got `False`. "
+                "Raising exceptions is already understood as failing the test, so you don't need "
+                "any special code to say 'this should never raise an exception'."
+            ),
+        ):
+            pytest.raises(False, int)  # type: ignore[call-overload]
+
     def test_raises_does_not_allow_empty_tuple(self):
-        with pytest.raises(ValueError, match="Expected an exception type or"):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape("You must specify at least one parameter to match on."),
+        ):
             pytest.raises(expected_exception=())
 
     def test_raises_callable_no_exception(self) -> None:
@@ -181,7 +206,9 @@ class TestRaises:
         else:
             assert False, "Expected pytest.raises.Exception"
 
-    @pytest.mark.parametrize("method", ["function", "function_match", "with"])
+    @pytest.mark.parametrize(
+        "method", ["function", "function_match", "with", "with_raisesexc", "with_group"]
+    )
     def test_raises_cyclic_reference(self, method):
         """Ensure pytest.raises does not leave a reference cycle (#1965)."""
         import gc
@@ -197,9 +224,17 @@ class TestRaises:
             pytest.raises(ValueError, t)
         elif method == "function_match":
             pytest.raises(ValueError, t).match("^$")
-        else:
+        elif method == "with":
             with pytest.raises(ValueError):
                 t()
+        elif method == "with_raisesexc":
+            with pytest.RaisesExc(ValueError):
+                t()
+        elif method == "with_group":
+            with pytest.RaisesGroup(ValueError, allow_unwrapped=True):
+                t()
+        else:  # pragma: no cover
+            raise AssertionError("bad parametrization")
 
         # ensure both forms of pytest.raises don't leave exceptions in sys.exc_info()
         assert sys.exc_info() == (None, None, None)
@@ -221,7 +256,7 @@ class TestRaises:
             f" Regex: {msg!r}\n"
             " Input: \"invalid literal for int() with base 10: 'asdf'\""
         )
-        with pytest.raises(AssertionError, match="(?m)" + re.escape(expr)):
+        with pytest.raises(AssertionError, match="^" + re.escape(expr) + "$"):
             with pytest.raises(ValueError, match=msg):
                 int("asdf", base=10)
 
@@ -238,6 +273,16 @@ class TestRaises:
 
         pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
         pytest.raises(ValueError, tfunc, match="").match("match=")
+
+        # empty string matches everything, which is probably not what the user wants
+        with pytest.warns(
+            PytestWarning,
+            match=wrap_escape(
+                "matching against an empty string will *always* pass. If you want to check for an empty message you "
+                "need to pass '^$'. If you don't want to match you should pass `None` or leave out the parameter."
+            ),
+        ):
+            pytest.raises(match="")
 
     def test_match_failure_string_quoting(self):
         with pytest.raises(AssertionError) as excinfo:
@@ -265,7 +310,10 @@ class TestRaises:
         pytest should throw the unexpected exception - the pattern match is not
         really relevant if we got a different exception.
         """
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape("invalid literal for int() with base 10: 'asdf'"),
+        ):
             with pytest.raises(IndexError, match="nomatch"):
                 int("asdf")
 
@@ -301,29 +349,48 @@ class TestRaises:
         assert "via __class__" in excinfo.value.args[0]
 
     def test_raises_context_manager_with_kwargs(self):
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(expected_exception=ValueError):
+            raise ValueError
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape(
+                "Unexpected keyword arguments passed to pytest.raises: foo\n"
+                "Use context-manager form instead?"
+            ),
+        ):
             with pytest.raises(OSError, foo="bar"):  # type: ignore[call-overload]
                 pass
-        assert "Unexpected keyword arguments" in str(excinfo.value)
 
     def test_expected_exception_is_not_a_baseexception(self) -> None:
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape(
+                "expected exception must be a BaseException type, not 'str'"
+            ),
+        ):
             with pytest.raises("hello"):  # type: ignore[call-overload]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not str" in str(excinfo.value)
 
         class NotAnException:
             pass
 
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape(
+                "expected exception must be a BaseException type, not 'NotAnException'"
+            ),
+        ):
             with pytest.raises(NotAnException):  # type: ignore[type-var]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not NotAnException" in str(excinfo.value)
 
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape(
+                "expected exception must be a BaseException type, not 'str'"
+            ),
+        ):
             with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not str" in str(excinfo.value)
 
     def test_issue_11872(self) -> None:
         """Regression test for #11872.
@@ -333,7 +400,11 @@ class TestRaises:
 
         https://github.com/python/cpython/issues/98778
         """
+        from email.message import Message
         from urllib.error import HTTPError
 
-        with pytest.raises(HTTPError, match="Not Found"):
-            raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]
+        with pytest.raises(HTTPError, match="Not Found") as exc_info:
+            raise HTTPError(
+                code=404, msg="Not Found", fp=io.BytesIO(), hdrs=Message(), url=""
+            )
+        exc_info.value.close()  # avoid a resource warning

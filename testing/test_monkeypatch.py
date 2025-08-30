@@ -1,12 +1,14 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
 import os
 from pathlib import Path
 import re
 import sys
 import textwrap
-from typing import Generator
+
+import setuptools
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -429,6 +431,10 @@ def test_context_classmethod() -> None:
 
 
 @pytest.mark.filterwarnings(r"ignore:.*\bpkg_resources\b:DeprecationWarning")
+@pytest.mark.skipif(
+    int(setuptools.__version__.split(".")[0]) >= 80,
+    reason="modern setuptools removing pkg_resources",
+)
 def test_syspath_prepend_with_namespace_packages(
     pytester: Pytester, monkeypatch: MonkeyPatch
 ) -> None:

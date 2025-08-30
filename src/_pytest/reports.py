@@ -1,6 +1,10 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 from io import StringIO
 import os
@@ -8,12 +12,8 @@ from pprint import pprint
 from typing import Any
 from typing import cast
 from typing import final
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
-from typing import Mapping
 from typing import NoReturn
-from typing import Sequence
 from typing import TYPE_CHECKING
 
 from _pytest._code.code import ExceptionChainRepr
@@ -260,6 +260,7 @@ class TestReport(BaseReport):
     """
 
     __test__ = False
+
     # Defined by skipping plugin.
     # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
     wasxfail: str
@@ -304,7 +305,7 @@ class TestReport(BaseReport):
         self.longrepr = longrepr
 
         #: One of 'setup', 'call', 'teardown' to indicate runtest phase.
-        self.when = when
+        self.when: Literal["setup", "call", "teardown"] = when
 
         #: User properties is a list of tuples (name, value) that holds user
         #: defined properties of the test.
@@ -361,9 +362,9 @@ class TestReport(BaseReport):
             elif isinstance(excinfo.value, skip.Exception):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
-                assert (
-                    r is not None
-                ), "There should always be a traceback entry for skipping a test."
+                assert r is not None, (
+                    "There should always be a traceback entry for skipping a test."
+                )
                 if excinfo.value._use_item_location:
                     path, line = item.reportinfo()[:2]
                     assert line is not None

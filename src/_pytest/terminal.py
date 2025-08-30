@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import datetime
 from functools import partial
@@ -17,20 +21,17 @@ import platform
 import sys
 import textwrap
 from typing import Any
-from typing import Callable
 from typing import ClassVar
 from typing import final
-from typing import Generator
 from typing import Literal
-from typing import Mapping
 from typing import NamedTuple
-from typing import Sequence
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
 
 import pluggy
 
+from _pytest import compat
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
@@ -132,7 +133,7 @@ class TestShortLogReport(NamedTuple):
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "Reporting", after="general")
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-v",
         "--verbose",
         action="count",
@@ -140,28 +141,35 @@ def pytest_addoption(parser: Parser) -> None:
         dest="verbose",
         help="Increase verbosity",
     )
-    group._addoption(
+    group.addoption(
         "--no-header",
         action="store_true",
         default=False,
         dest="no_header",
         help="Disable header",
     )
-    group._addoption(
+    group.addoption(
         "--no-summary",
         action="store_true",
         default=False,
         dest="no_summary",
         help="Disable summary",
     )
-    group._addoption(
+    group.addoption(
         "--no-fold-skipped",
         action="store_false",
         dest="fold_skipped",
         default=True,
         help="Do not fold skipped tests in short summary.",
     )
-    group._addoption(
+    group.addoption(
+        "--force-short-summary",
+        action="store_true",
+        dest="force_short_summary",
+        default=False,
+        help="Force condensed summary output regardless of verbosity level.",
+    )
+    group._addoption(  # private to use reserved lower-case short option
         "-q",
         "--quiet",
         action=MoreQuietAction,
@@ -169,14 +177,14 @@ def pytest_addoption(parser: Parser) -> None:
         dest="verbose",
         help="Decrease verbosity",
     )
-    group._addoption(
+    group.addoption(
         "--verbosity",
         dest="verbose",
         type=int,
         default=0,
         help="Set verbosity. Default: 0.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-r",
         action="store",
         dest="reportchars",
@@ -188,7 +196,7 @@ def pytest_addoption(parser: Parser) -> None:
         "(w)arnings are enabled by default (see --disable-warnings), "
         "'N' can be used to reset the list. (default: 'fE').",
     )
-    group._addoption(
+    group.addoption(
         "--disable-warnings",
         "--disable-pytest-warnings",
         default=False,
@@ -196,7 +204,7 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         help="Disable warnings summary",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-l",
         "--showlocals",
         action="store_true",
@@ -204,13 +212,13 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Show locals in tracebacks (disabled by default)",
     )
-    group._addoption(
+    group.addoption(
         "--no-showlocals",
         action="store_false",
         dest="showlocals",
         help="Hide locals in tracebacks (negate --showlocals passed through addopts)",
     )
-    group._addoption(
+    group.addoption(
         "--tb",
         metavar="style",
         action="store",
@@ -219,14 +227,14 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["auto", "long", "short", "no", "line", "native"],
         help="Traceback print mode (auto/long/short/line/native/no)",
     )
-    group._addoption(
+    group.addoption(
         "--xfail-tb",
         action="store_true",
         dest="xfail_tb",
         default=False,
         help="Show tracebacks for xfail (as long as --tb != no)",
     )
-    group._addoption(
+    group.addoption(
         "--show-capture",
         action="store",
         dest="showcapture",
@@ -235,14 +243,14 @@ def pytest_addoption(parser: Parser) -> None:
         help="Controls how captured stdout/stderr/log is shown on failed tests. "
         "Default: all.",
     )
-    group._addoption(
+    group.addoption(
         "--fulltrace",
         "--full-trace",
         action="store_true",
         default=False,
         help="Don't cut any tracebacks (default is to cut)",
     )
-    group._addoption(
+    group.addoption(
         "--color",
         metavar="color",
         action="store",
@@ -251,7 +259,7 @@ def pytest_addoption(parser: Parser) -> None:
         choices=["yes", "no", "auto"],
         help="Color terminal output (yes/no/auto)",
     )
-    group._addoption(
+    group.addoption(
         "--code-highlight",
         default="yes",
         choices=["yes", "no"],
@@ -380,14 +388,19 @@ class TerminalReporter:
         self.reportchars = getreportopt(config)
         self.foldskipped = config.option.fold_skipped
         self.hasmarkup = self._tw.hasmarkup
-        self.isatty = file.isatty()
+        # isatty should be a method but was wrongly implemented as a boolean.
+        # We use CallableBool here to support both.
+        self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[str] = set()
+        self._timing_nodeids_reported: set[str] = set()
         self._show_progress_info = self._determine_show_progress_info()
-        self._collect_report_last_write: float | None = None
+        self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
 
-    def _determine_show_progress_info(self) -> Literal["progress", "count", False]:
+    def _determine_show_progress_info(
+        self,
+    ) -> Literal["progress", "count", "times", False]:
         """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038) unless explicitly
         # overridden by progress-even-when-capture-no
@@ -405,6 +418,8 @@ class TerminalReporter:
             return "progress"
         elif cfg == "count":
             return "count"
+        elif cfg == "times":
+            return "times"
         else:
             return False
 
@@ -692,12 +707,40 @@ class TerminalReporter:
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(progress, collected)
             return f" [ {collected} / {collected} ]"
-        else:
-            if collected:
-                return (
-                    f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
+        if self._show_progress_info == "times":
+            if not collected:
+                return ""
+            all_reports = (
+                self._get_reports_to_display("passed")
+                + self._get_reports_to_display("xpassed")
+                + self._get_reports_to_display("failed")
+                + self._get_reports_to_display("xfailed")
+                + self._get_reports_to_display("skipped")
+                + self._get_reports_to_display("error")
+                + self._get_reports_to_display("")
+            )
+            current_location = all_reports[-1].location[0]
+            not_reported = [
+                r for r in all_reports if r.nodeid not in self._timing_nodeids_reported
+            ]
+            tests_in_module = sum(
+                i.location[0] == current_location for i in self._session.items
+            )
+            tests_completed = sum(
+                r.when == "setup"
+                for r in not_reported
+                if r.location[0] == current_location
+            )
+            last_in_module = tests_completed == tests_in_module
+            if self.showlongtestinfo or last_in_module:
+                self._timing_nodeids_reported.update(r.nodeid for r in not_reported)
+                return format_node_duration(
+                    sum(r.duration for r in not_reported if isinstance(r, TestReport))
                 )
-            return " [100%]"
+            return ""
+        if collected:
+            return f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
+        return " [100%]"
 
     def _write_progress_information_if_past_edge(self) -> None:
         w = self._width_of_current_line
@@ -705,6 +748,8 @@ class TerminalReporter:
             assert self._session
             num_tests = self._session.testscollected
             progress_length = len(f" [{num_tests}/{num_tests}]")
+        elif self._show_progress_info == "times":
+            progress_length = len(" 99h 59m")
         else:
             progress_length = len(" [100%]")
         past_edge = w + progress_length + 1 >= self._screen_width
@@ -726,10 +771,9 @@ class TerminalReporter:
         return self._tw.width_of_current_line
 
     def pytest_collection(self) -> None:
-        if self.isatty:
+        if self.isatty():
             if self.config.option.verbose >= 0:
                 self.write("collecting ... ", flush=True, bold=True)
-                self._collect_report_last_write = timing.time()
         elif self.config.option.verbose >= 1:
             self.write("collecting ... ", flush=True, bold=True)
 
@@ -740,7 +784,7 @@ class TerminalReporter:
             self._add_stats("skipped", [report])
         items = [x for x in report.result if isinstance(x, Item)]
         self._numcollected += len(items)
-        if self.isatty:
+        if self.isatty():
             self.report_collect()
 
     def report_collect(self, final: bool = False) -> None:
@@ -748,14 +792,13 @@ class TerminalReporter:
             return
 
         if not final:
-            # Only write "collecting" report every 0.5s.
-            t = timing.time()
+            # Only write the "collecting" report every `REPORT_COLLECTING_RESOLUTION`.
             if (
-                self._collect_report_last_write is not None
-                and self._collect_report_last_write > t - REPORT_COLLECTING_RESOLUTION
+                self._collect_report_last_write.elapsed().seconds
+                < REPORT_COLLECTING_RESOLUTION
             ):
                 return
-            self._collect_report_last_write = t
+            self._collect_report_last_write = timing.Instant()
 
         errors = len(self.stats.get("error", []))
         skipped = len(self.stats.get("skipped", []))
@@ -766,14 +809,14 @@ class TerminalReporter:
             str(self._numcollected) + " item" + ("" if self._numcollected == 1 else "s")
         )
         if errors:
-            line += " / %d error%s" % (errors, "s" if errors != 1 else "")
+            line += f" / {errors} error{'s' if errors != 1 else ''}"
         if deselected:
-            line += " / %d deselected" % deselected
+            line += f" / {deselected} deselected"
         if skipped:
-            line += " / %d skipped" % skipped
+            line += f" / {skipped} skipped"
         if self._numcollected > selected:
-            line += " / %d selected" % selected
-        if self.isatty:
+            line += f" / {selected} selected"
+        if self.isatty():
             self.rewrite(line, bold=True, erase=True)
             if final:
                 self.write("\n")
@@ -783,7 +826,7 @@ class TerminalReporter:
     @hookimpl(trylast=True)
     def pytest_sessionstart(self, session: Session) -> None:
         self._session = session
-        self._sessionstarttime = timing.time()
+        self._session_start = timing.Instant()
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
@@ -862,7 +905,7 @@ class TerminalReporter:
             if test_cases_verbosity < -1:
                 counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
                 for name, count in sorted(counts.items()):
-                    self._tw.line("%s: %d" % (name, count))
+                    self._tw.line(f"{name}: {count}")
             else:
                 for item in items:
                     self._tw.line(item.nodeid)
@@ -1162,7 +1205,7 @@ class TerminalReporter:
         if self.verbosity < -1:
             return
 
-        session_duration = timing.time() - self._sessionstarttime
+        session_duration = self._session_start.elapsed()
         (parts, main_color) = self.build_summary_stats_line()
         line_parts = []
 
@@ -1177,7 +1220,7 @@ class TerminalReporter:
         msg = ", ".join(line_parts)
 
         main_markup = {main_color: True}
-        duration = f" in {format_session_duration(session_duration)}"
+        duration = f" in {format_session_duration(session_duration.seconds)}"
         duration_with_markup = self._tw.markup(duration, **main_markup)
         if display_sep:
             fullwidth += len(duration_with_markup) - len(duration)
@@ -1254,11 +1297,9 @@ class TerminalReporter:
                 if reason.startswith(prefix):
                     reason = reason[len(prefix) :]
                 if lineno is not None:
-                    lines.append(
-                        "%s [%d] %s:%d: %s" % (markup_word, num, fspath, lineno, reason)
-                    )
+                    lines.append(f"{markup_word} [{num}] {fspath}:{lineno}: {reason}")
                 else:
-                    lines.append("%s [%d] %s: %s" % (markup_word, num, fspath, reason))
+                    lines.append(f"{markup_word} [{num}] {fspath}: {reason}")
 
         def show_skipped_unfolded(lines: list[str]) -> None:
             skipped: list[CollectReport] = self.stats.get("skipped", [])
@@ -1375,7 +1416,7 @@ class TerminalReporter:
                 count = len(reports)
                 color = _color_for_type.get(key, _color_for_type_default)
                 markup = {color: True, "bold": color == main_color}
-                parts.append(("%d %s" % pluralize(count, key), markup))
+                parts.append(("%d %s" % pluralize(count, key), markup))  # noqa: UP031
 
         if not parts:
             parts = [("no tests ran", {_color_for_type_default: True})]
@@ -1394,7 +1435,7 @@ class TerminalReporter:
 
         elif deselected == 0:
             main_color = "green"
-            collected_output = "%d %s collected" % pluralize(self._numcollected, "test")
+            collected_output = "%d %s collected" % pluralize(self._numcollected, "test")  # noqa: UP031
             parts = [(collected_output, {main_color: True})]
         else:
             all_tests_were_deselected = self._numcollected == deselected
@@ -1410,7 +1451,7 @@ class TerminalReporter:
 
         if errors:
             main_color = _color_for_type["error"]
-            parts += [("%d %s" % pluralize(errors, "error"), {main_color: True})]
+            parts += [("%d %s" % pluralize(errors, "error"), {main_color: True})]  # noqa: UP031
 
         return parts, main_color
 
@@ -1469,7 +1510,9 @@ def _get_line_with_reprcrash_message(
     except AttributeError:
         pass
     else:
-        if running_on_ci() or config.option.verbose >= 2:
+        if (
+            running_on_ci() or config.option.verbose >= 2
+        ) and not config.option.force_short_summary:
             msg = f" - {msg}"
         else:
             available_width = tw.fullwidth - line_width
@@ -1554,6 +1597,29 @@ def format_session_duration(seconds: float) -> str:
     else:
         dt = datetime.timedelta(seconds=int(seconds))
         return f"{seconds:.2f}s ({dt})"
+
+
+def format_node_duration(seconds: float) -> str:
+    """Format the given seconds in a human readable manner to show in the test progress."""
+    # The formatting is designed to be compact and readable, with at most 7 characters
+    # for durations below 100 hours.
+    if seconds < 0.00001:
+        return f" {seconds * 1000000:.3f}us"
+    if seconds < 0.0001:
+        return f" {seconds * 1000000:.2f}us"
+    if seconds < 0.001:
+        return f" {seconds * 1000000:.1f}us"
+    if seconds < 0.01:
+        return f" {seconds * 1000:.3f}ms"
+    if seconds < 0.1:
+        return f" {seconds * 1000:.2f}ms"
+    if seconds < 1:
+        return f" {seconds * 1000:.1f}ms"
+    if seconds < 60:
+        return f" {seconds:.3f}s"
+    if seconds < 3600:
+        return f" {seconds // 60:.0f}m {seconds % 60:.0f}s"
+    return f" {seconds // 3600:.0f}h {(seconds % 3600) // 60:.0f}m"
 
 
 def _get_raw_skip_reason(report: TestReport) -> str:

@@ -104,6 +104,7 @@ Let's run this without supplying our new option:
             elif cmdopt == "type2":
                 print("second")
     >       assert 0  # to see what was printed
+            ^^^^^^^^
     E       assert 0
 
     test_sample.py:6: AssertionError
@@ -130,6 +131,7 @@ And now with supplying a command line option:
             elif cmdopt == "type2":
                 print("second")
     >       assert 0  # to see what was printed
+            ^^^^^^^^
     E       assert 0
 
     test_sample.py:6: AssertionError
@@ -164,7 +166,7 @@ Now we'll get feedback on a bad argument:
 
     $ pytest -q --cmdopt=type3
     ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
-    pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from 'type1', 'type2')
+    pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from type1, type2)
 
 
 If you need to provide more detailed error messages, you can use the
@@ -646,7 +648,7 @@ If we run this:
 
     test_step.py:11: AssertionError
     ========================= short test summary info ==========================
-    XFAIL test_step.py::TestUserHandling::test_deletion - reason: previous test failed (test_modification)
+    XFAIL test_step.py::TestUserHandling::test_deletion - previous test failed (test_modification)
     ================== 1 failed, 2 passed, 1 xfailed in 0.12s ==================
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
@@ -725,7 +727,7 @@ We can run this:
     file /home/sweet/project/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
     /home/sweet/project/b/test_error.py:1
@@ -736,6 +738,7 @@ We can run this:
 
         def test_a1(db):
     >       assert 0, db  # to show value
+            ^^^^^^^^^^^^
     E       AssertionError: <conftest.DB object at 0xdeadbeef0002>
     E       assert 0
 
@@ -746,6 +749,7 @@ We can run this:
 
         def test_a2(db):
     >       assert 0, db  # to show value
+            ^^^^^^^^^^^^
     E       AssertionError: <conftest.DB object at 0xdeadbeef0002>
     E       assert 0
 
@@ -904,7 +908,9 @@ here is a little example implemented via a local plugin:
         # "function" scope
         report = request.node.stash[phase_report_key]
         if report["setup"].failed:
-            print("setting up a test failed or skipped", request.node.nodeid)
+            print("setting up a test failed", request.node.nodeid)
+        elif report["setup"].skipped:
+            print("setting up a test skipped", request.node.nodeid)
         elif ("call" not in report) or report["call"].failed:
             print("executing test failed or skipped", request.node.nodeid)
 
@@ -944,7 +950,7 @@ and run it:
     rootdir: /home/sweet/project
     collected 3 items
 
-    test_module.py Esetting up a test failed or skipped test_module.py::test_setup_fails
+    test_module.py Esetting up a test failed test_module.py::test_setup_fails
     Fexecuting test failed or skipped test_module.py::test_call_fails
     F
 

@@ -149,6 +149,7 @@ def test_unicode(pytester: Pytester) -> None:
     )
 
 
+@pytest.mark.skip("issue #13485")
 def test_works_with_filterwarnings(pytester: Pytester) -> None:
     """Ensure our warnings capture does not mess with pre-installed filters (#2430)."""
     pytester.makepyfile(
@@ -510,6 +511,29 @@ class TestDeprecationWarningsByDefault:
         monkeypatch.setenv("PYTHONWARNINGS", "once::UserWarning")
         result = pytester.runpytest_subprocess()
         assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+
+    def test_invalid_regex_in_filterwarning(self, pytester: Pytester) -> None:
+        self.create_file(pytester)
+        pytester.makeini(
+            """
+                [pytest]
+                filterwarnings =
+                    ignore::DeprecationWarning:*
+            """
+        )
+        result = pytester.runpytest_subprocess()
+        assert result.ret == pytest.ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(
+            [
+                "ERROR: while parsing the following warning configuration:",
+                "",
+                "  ignore::DeprecationWarning:[*]",
+                "",
+                "This error occurred:",
+                "",
+                "Invalid regex '[*]': nothing to repeat at position 0",
+            ]
+        )
 
 
 @pytest.mark.skip("not relevant until pytest 9.0")

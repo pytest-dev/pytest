@@ -4,6 +4,12 @@
 How to capture stdout/stderr output
 =========================================================
 
+Pytest intercepts stdout and stderr as configured by the ``--capture=``
+command-line argument or by using fixtures. The ``--capture=`` flag configures
+reporting, whereas the fixtures offer more granular control and allows
+inspection of output during testing. The reports can be customized with the
+`-r flag <../reference/reference.html#command-line-flags>`_.
+
 Default stdout/stderr/stdin capturing behaviour
 ---------------------------------------------------------
 
@@ -106,8 +112,8 @@ of the failing function and hide the other one:
 Accessing captured output from a test function
 ---------------------------------------------------
 
-The :fixture:`capsys`, :fixture:`capsysbinary`, :fixture:`capfd`, and :fixture:`capfdbinary` fixtures
-allow access to ``stdout``/``stderr`` output created during test execution.
+The :fixture:`capsys`, :fixture:`capteesys`, :fixture:`capsysbinary`, :fixture:`capfd`, and :fixture:`capfdbinary`
+fixtures allow access to ``stdout``/``stderr`` output created during test execution.
 
 Here is an example test function that performs some output related checks:
 
@@ -131,7 +137,7 @@ test from having to care about setting/resetting
 output streams and also interacts well with pytest's
 own per-test capturing.
 
-The return value from ``readouterr`` changed to a ``namedtuple`` with two attributes, ``out`` and ``err``.
+The return value of ``readouterr()`` is a ``namedtuple`` with two attributes, ``out`` and ``err``.
 
 If the code under test writes non-textual data (``bytes``), you can capture this using
 the :fixture:`capsysbinary` fixture which instead returns ``bytes`` from

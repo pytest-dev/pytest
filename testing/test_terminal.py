@@ -49,7 +49,7 @@ class Option:
     @property
     def args(self):
         values = []
-        values.append("--verbosity=%d" % self.verbosity)
+        values.append(f"--verbosity={self.verbosity}")
         return values
 
 
@@ -111,6 +111,31 @@ class TestTerminal:
         result.stdout.fnmatch_lines(
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )
+
+    def test_console_output_style_times_with_skipped_and_passed(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                def test_hello():
+                    pass
+            """,
+            test_repro_skip="""
+                import pytest
+                pytest.importorskip("fakepackage_does_not_exist")
+            """,
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "test_repro_skip.py",
+            "-o",
+            "console_output_style=times",
+        )
+
+        result.stdout.fnmatch_lines("* 1 passed, 1 skipped in *")
+
+        combined = "\n".join(result.stdout.lines + result.stderr.lines)
+        assert "INTERNALERROR" not in combined
 
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
@@ -336,7 +361,7 @@ class TestTerminal:
         pytester.makeconftest(
             f"""
             def pytest_report_teststatus(report):
-                return {category !r}, 'F', ('FOO', {{'red': True}})
+                return {category!r}, 'F', ('FOO', {{'red': True}})
         """
         )
         pytester.makepyfile(
@@ -441,6 +466,16 @@ class TestTerminal:
                 "because baz is missing due to I don't know what) *",
             ]
         )
+
+    @pytest.mark.parametrize("isatty", [True, False])
+    def test_isatty(self, pytester: Pytester, monkeypatch, isatty: bool) -> None:
+        config = pytester.parseconfig()
+        f = StringIO()
+        monkeypatch.setattr(f, "isatty", lambda: isatty)
+        tr = TerminalReporter(config, f)
+        assert tr.isatty() == isatty
+        # It was incorrectly implemented as a boolean so we still support using it as one.
+        assert bool(tr.isatty) == isatty
 
 
 class TestCollectonly:
@@ -859,6 +894,7 @@ class TestTerminalFunctional:
         self, monkeypatch: MonkeyPatch, pytester: Pytester, request
     ) -> None:
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
         pytester.makepyfile(
             """
             def test_passes():
@@ -1042,10 +1078,6 @@ class TestTerminalFunctional:
             class TestClass(object):
                 def test_skip(self):
                     pytest.skip("hello")
-            def test_gen():
-                def check(x):
-                    assert x == 1
-                yield check, 0
         """
         )
 
@@ -1058,7 +1090,6 @@ class TestTerminalFunctional:
                 "*test_verbose_reporting.py::test_fail *FAIL*",
                 "*test_verbose_reporting.py::test_pass *PASS*",
                 "*test_verbose_reporting.py::TestClass::test_skip *SKIP*",
-                "*test_verbose_reporting.py::test_gen *XFAIL*",
             ]
         )
         assert result.ret == 1
@@ -1192,7 +1223,7 @@ class TestTerminalFunctional:
 @pytest.mark.parametrize(
     ("use_ci", "expected_message"),
     (
-        (True, f"- AssertionError: {'this_failed'*100}"),
+        (True, f"- AssertionError: {'this_failed' * 100}"),
         (False, "- AssertionError: this_failedt..."),
     ),
     ids=("on CI", "not on CI"),
@@ -1299,13 +1330,13 @@ def test_color_yes(pytester: Pytester, color_mapping) -> None:
                 "=*= FAILURES =*=",
                 "{red}{bold}_*_ test_this _*_{reset}",
                 "",
-                "    {reset}{kw}def{hl-reset} {function}test_this{hl-reset}():{endline}",
+                "    {reset}{kw}def{hl-reset}{kwspace}{function}test_this{hl-reset}():{endline}",
                 ">       fail(){endline}",
                 "",
                 "{bold}{red}test_color_yes.py{reset}:5: ",
                 "_ _ * _ _*",
                 "",
-                "    {reset}{kw}def{hl-reset} {function}fail{hl-reset}():{endline}",
+                "    {reset}{kw}def{hl-reset}{kwspace}{function}fail{hl-reset}():{endline}",
                 ">       {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                 "{bold}{red}E       assert 0{reset}",
                 "",
@@ -2078,6 +2109,21 @@ class TestProgressOutputStyle:
             """,
         )
 
+    @pytest.fixture
+    def more_tests_files(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_bar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(30))
+                def test_bar(i): pass
+            """,
+            test_foo="""
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_foo(i): pass
+            """,
+        )
+
     def test_zero_tests_collected(self, pytester: Pytester) -> None:
         """Some plugins (testmon for example) might issue pytest_runtest_logreport without any tests being
         actually collected (#2971)."""
@@ -2174,6 +2220,52 @@ class TestProgressOutputStyle:
             ]
         )
 
+    def test_times(self, many_tests_files, pytester: Pytester) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = times
+        """
+        )
+        output = pytester.runpytest()
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py \.{10} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foo.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foobar.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+            ]
+        )
+
+    def test_times_multiline(
+        self, more_tests_files, monkeypatch, pytester: Pytester
+    ) -> None:
+        monkeypatch.setenv("COLUMNS", "40")
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = times
+        """
+        )
+        output = pytester.runpytest()
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py ...................",
+                r"........... \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foo.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+            ],
+            consecutive=True,
+        )
+
+    def test_times_none_collected(self, pytester: Pytester) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = times
+        """
+        )
+        output = pytester.runpytest()
+        assert output.ret == ExitCode.NO_TESTS_COLLECTED
+
     def test_verbose(self, many_tests_files, pytester: Pytester) -> None:
         output = pytester.runpytest("-v")
         output.stdout.re_match_lines(
@@ -2197,6 +2289,22 @@ class TestProgressOutputStyle:
                 r"test_bar.py::test_bar\[0\] PASSED \s+ \[ 1/20\]",
                 r"test_foo.py::test_foo\[4\] PASSED \s+ \[15/20\]",
                 r"test_foobar.py::test_foobar\[4\] PASSED \s+ \[20/20\]",
+            ]
+        )
+
+    def test_verbose_times(self, many_tests_files, pytester: Pytester) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = times
+        """
+        )
+        output = pytester.runpytest("-v")
+        output.stdout.re_match_lines(
+            [
+                r"test_bar.py::test_bar\[0\] PASSED \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foo.py::test_foo\[4\] PASSED \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foobar.py::test_foobar\[4\] PASSED \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
             ]
         )
 
@@ -2249,6 +2357,26 @@ class TestProgressOutputStyle:
                     "[gw?] [ 95%] PASSED test_*[?] ",
                     "[gw?] [100%] PASSED test_*[?] ",
                 ]
+            ]
+        )
+
+    def test_xdist_times(
+        self, many_tests_files, pytester: Pytester, monkeypatch
+    ) -> None:
+        pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = times
+        """
+        )
+        output = pytester.runpytest("-n2", "-v")
+        output.stdout.re_match_lines_random(
+            [
+                r"\[gw\d\] \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2} PASSED test_bar.py::test_bar\[1\]",
+                r"\[gw\d\] \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2} PASSED test_foo.py::test_foo\[1\]",
+                r"\[gw\d\] \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2} PASSED test_foobar.py::test_foobar\[1\]",
             ]
         )
 
@@ -2525,6 +2653,52 @@ def test_short_summary_with_verbose(
     )
 
 
+def test_full_sequence_print_with_vv(
+    monkeypatch: MonkeyPatch, pytester: Pytester
+) -> None:
+    """Do not truncate sequences in summaries with -vv (#11777)."""
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+
+    pytester.makepyfile(
+        """
+        def test_len_list():
+            l = list(range(10))
+            assert len(l) == 9
+
+        def test_len_dict():
+            d = dict(zip(range(10), range(10)))
+            assert len(d) == 9
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*short test summary info*",
+            f"*{list(range(10))}*",
+            f"*{dict(zip(range(10), range(10)))}*",
+        ]
+    )
+
+
+def test_force_short_summary(monkeypatch: MonkeyPatch, pytester: Pytester) -> None:
+    monkeypatch.setattr(_pytest.terminal, "running_on_ci", lambda: False)
+
+    pytester.makepyfile(
+        """
+        def test():
+            assert "a\\n" * 10 == ""
+        """
+    )
+
+    result = pytester.runpytest("-vv", "--force-short-summary")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        ["*short test summary info*", "*AssertionError: assert 'a\\na\\na\\na..."]
+    )
+
+
 @pytest.mark.parametrize(
     "seconds, expected",
     [
@@ -2540,6 +2714,27 @@ def test_format_session_duration(seconds, expected):
     from _pytest.terminal import format_session_duration
 
     assert format_session_duration(seconds) == expected
+
+
+@pytest.mark.parametrize(
+    "seconds, expected",
+    [
+        (3600 * 100 - 60, " 99h 59m"),
+        (31 * 60 - 1, " 30m 59s"),
+        (10.1236, " 10.124s"),
+        (9.1236, " 9.124s"),
+        (0.1236, " 123.6ms"),
+        (0.01236, " 12.36ms"),
+        (0.001236, " 1.236ms"),
+        (0.0001236, " 123.6us"),
+        (0.00001236, " 12.36us"),
+        (0.000001236, " 1.236us"),
+    ],
+)
+def test_format_node_duration(seconds: float, expected: str) -> None:
+    from _pytest.terminal import format_node_duration
+
+    assert format_node_duration(seconds) == expected
 
 
 def test_collecterror(pytester: Pytester) -> None:
@@ -2585,7 +2780,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset}{kwspace}{function}test_foo{hl-reset}():{endline}",
                     ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]
@@ -2607,7 +2802,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset}{kwspace}{function}test_foo{hl-reset}():{endline}",
                     "        {print}print{hl-reset}({str}'''{hl-reset}{str}{hl-reset}",
                     ">   {str}    {hl-reset}{str}'''{hl-reset}); {kw}assert{hl-reset} {number}0{hl-reset}{endline}",
                     "{bold}{red}E       assert 0{reset}",
@@ -2630,7 +2825,7 @@ class TestCodeHighlight:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(
                 [
-                    "    {reset}{kw}def{hl-reset} {function}test_foo{hl-reset}():{endline}",
+                    "    {reset}{kw}def{hl-reset}{kwspace}{function}test_foo{hl-reset}():{endline}",
                     ">       {kw}assert{hl-reset} {number}1{hl-reset} == {number}10{hl-reset}{endline}",
                     "{bold}{red}E       assert 1 == 10{reset}",
                 ]

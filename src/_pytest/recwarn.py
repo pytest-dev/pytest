@@ -3,16 +3,15 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterator
 from pprint import pformat
 import re
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import final
-from typing import Generator
-from typing import Iterator
 from typing import overload
-from typing import Pattern
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -35,8 +34,7 @@ T = TypeVar("T")
 def recwarn() -> Generator[WarningsRecorder]:
     """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
-    See https://docs.pytest.org/en/latest/how-to/capture-warnings.html for information
-    on warning categories.
+    See :ref:`warnings` for information on warning categories.
     """
     wrec = WarningsRecorder(_ispytest=True)
     with wrec:
@@ -45,7 +43,9 @@ def recwarn() -> Generator[WarningsRecorder]:
 
 
 @overload
-def deprecated_call(*, match: str | Pattern[str] | None = ...) -> WarningsRecorder: ...
+def deprecated_call(
+    *, match: str | re.Pattern[str] | None = ...
+) -> WarningsRecorder: ...
 
 
 @overload
@@ -90,7 +90,7 @@ def deprecated_call(
 def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...] = ...,
     *,
-    match: str | Pattern[str] | None = ...,
+    match: str | re.Pattern[str] | None = ...,
 ) -> WarningsChecker: ...
 
 
@@ -106,7 +106,7 @@ def warns(
 def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
     *args: Any,
-    match: str | Pattern[str] | None = None,
+    match: str | re.Pattern[str] | None = None,
     **kwargs: Any,
 ) -> WarningsChecker | Any:
     r"""Assert that code raises a particular class of warning.
@@ -167,7 +167,7 @@ def warns(
             return func(*args[1:], **kwargs)
 
 
-class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
+class WarningsRecorder(warnings.catch_warnings):
     """A context manager to record raised warnings.
 
     Each recorded warning is an instance of :class:`warnings.WarningMessage`.
@@ -226,7 +226,9 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         """Clear the list of recorded warnings."""
         self._list[:] = []
 
-    def __enter__(self) -> Self:
+    # Type ignored because we basically want the `catch_warnings` generic type
+    # parameter to be ourselves but that is not possible(?).
+    def __enter__(self) -> Self:  # type: ignore[override]
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError(f"Cannot enter {self!r} twice")
@@ -259,7 +261,7 @@ class WarningsChecker(WarningsRecorder):
     def __init__(
         self,
         expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
-        match_expr: str | Pattern[str] | None = None,
+        match_expr: str | re.Pattern[str] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:

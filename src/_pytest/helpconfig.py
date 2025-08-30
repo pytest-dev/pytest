@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 from argparse import Action
+from collections.abc import Generator
 import os
 import sys
-from typing import Generator
 
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -55,14 +55,14 @@ def pytest_addoption(parser: Parser) -> None:
         help="Display pytest version and information about plugins. "
         "When given twice, also display information about plugins.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-h",
         "--help",
         action=HelpAction,
         dest="help",
         help="Show help message and configuration info",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-p",
         action="append",
         dest="plugins",
@@ -70,7 +70,14 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="name",
         help="Early-load given plugin module name or entry point (multi-allowed). "
         "To avoid loading of plugins, use the `no:` prefix, e.g. "
-        "`no:doctest`.",
+        "`no:doctest`. See also --disable-plugin-autoload.",
+    )
+    group.addoption(
+        "--disable-plugin-autoload",
+        action="store_true",
+        default=False,
+        help="Disable plugin auto-loading through entry point packaging metadata. "
+        "Only plugins explicitly specified in -p or env var PYTEST_PLUGINS will be loaded.",
     )
     group.addoption(
         "--traceconfig",
@@ -90,7 +97,7 @@ def pytest_addoption(parser: Parser) -> None:
         "This file is opened with 'w' and truncated as a result, care advised. "
         "Default: pytestdebug.log.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-o",
         "--override-ini",
         dest="override_ini",

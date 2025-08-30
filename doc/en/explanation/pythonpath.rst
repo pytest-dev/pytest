@@ -8,7 +8,7 @@ pytest import mechanisms and ``sys.path``/``PYTHONPATH``
 Import modes
 ------------
 
-pytest as a testing framework that needs to import test modules and ``conftest.py`` files for execution.
+pytest as a testing framework needs to import test modules and ``conftest.py`` files for execution.
 
 Importing files in Python is a non-trivial process, so aspects of the
 import process can be controlled through the ``--import-mode`` command-line flag, which can assume
@@ -64,7 +64,7 @@ these values:
 
   * Test modules can't import each other.
   * Testing utility modules in the tests directories (for example a ``tests.helpers`` module containing test-related functions/classes)
-    are not importable. The recommendation in this case it to place testing utility modules together with the application/library
+    are not importable. The recommendation in this case is to place testing utility modules together with the application/library
     code, for example ``app.testing.helpers``.
 
     Important: by "test utility modules", we mean functions/classes which are imported by
@@ -78,7 +78,7 @@ these values:
 
      For non-test modules, this will work if they are accessible via :py:data:`sys.path`. So
      for example, ``.env/lib/site-packages/app/core.py`` will be importable as ``app.core``.
-     This is happens when plugins import non-test modules (for example doctesting).
+     This happens when plugins import non-test modules (for example doctesting).
 
      If this step succeeds, the module is returned.
 

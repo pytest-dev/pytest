@@ -137,6 +137,10 @@ Both automatic and manual processes described above follow the same steps from t
    in https://github.com/pytest-dev/pytest/actions/workflows/deploy.yml, using the ``release-MAJOR.MINOR.PATCH`` branch
    as source.
 
+   Using the command-line::
+
+     $ gh workflow run deploy.yml -R pytest-dev/pytest --ref=release-{VERSION} -f version={VERSION}
+
    This job will require approval from ``pytest-dev/core``, after which it will publish to PyPI
    and tag the repository.
 
@@ -164,8 +168,10 @@ Both automatic and manual processes described above follow the same steps from t
 
    To the following mailing lists:
 
-   * pytest-dev@python.org (all releases)
-   * python-announce-list@python.org (all releases)
-   * testing-in-python@lists.idyll.org (only major/minor releases)
+   * python-announce-list@python.org
 
-   And announce it on `Twitter <https://twitter.com/>`_ with the ``#pytest`` hashtag.
+   And announce it with the ``#pytest`` hashtag on:
+
+   * `Bluesky <https://bsky.app>`_
+   * `Fosstodon <https://fosstodon.org>`_
+   * `Twitter/X <https://x.com>`_

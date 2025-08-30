@@ -139,9 +139,8 @@ The objectives of the ``pytest-dev`` organisation are:
 * Sharing some of the maintenance responsibility (in case a maintainer no
   longer wishes to maintain a plugin)
 
-You can submit your plugin by subscribing to the `pytest-dev mail list
-<https://mail.python.org/mailman/listinfo/pytest-dev>`_ and writing a
-mail pointing to your existing pytest plugin repository which must have
+You can submit your plugin by posting a new topic in the `pytest-dev GitHub Discussions
+<https://github.com/pytest-dev/pytest/discussions>`_ pointing to your existing pytest plugin repository which must have
 the following:
 
 - PyPI presence with packaging metadata that contains a ``pytest-``
@@ -270,7 +269,7 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Run all the tests
 
-   You need to have Python 3.8 or later available in your system.  Now
+   You need to have Python 3.9 or later available in your system.  Now
    running tests is as simple as issuing this command::
 
     $ tox -e linting,py39

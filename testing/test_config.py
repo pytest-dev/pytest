@@ -1,15 +1,16 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Sequence
 import dataclasses
 import importlib.metadata
 import os
 from pathlib import Path
+import platform
 import re
 import sys
 import textwrap
 from typing import Any
-from typing import Sequence
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list
@@ -636,7 +637,7 @@ class TestConfigAPI:
         assert len(values) == 1
         assert values[0] == "hello [config]\n"
 
-    def test_config_getoption(self, pytester: Pytester) -> None:
+    def test_config_getoption_declared_option_name(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             def pytest_addoption(parser):
@@ -647,6 +648,18 @@ class TestConfigAPI:
         for x in ("hello", "--hello", "-X"):
             assert config.getoption(x) == "this"
         pytest.raises(ValueError, config.getoption, "qweqwe")
+
+        config_novalue = pytester.parseconfig()
+        assert config_novalue.getoption("hello") is None
+        assert config_novalue.getoption("hello", default=1) is None
+        assert config_novalue.getoption("hello", default=1, skip=True) == 1
+
+    def test_config_getoption_undeclared_option_name(self, pytester: Pytester) -> None:
+        config = pytester.parseconfig()
+        with pytest.raises(ValueError):
+            config.getoption("x")
+        assert config.getoption("x", default=1) == 1
+        assert config.getoption("x", default=1, skip=True) == 1
 
     def test_config_getoption_unicode(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -674,12 +687,6 @@ class TestConfigAPI:
         config = pytester.parseconfig()
         with pytest.raises(pytest.skip.Exception):
             config.getvalueorskip("hello")
-
-    def test_getoption(self, pytester: Pytester) -> None:
-        config = pytester.parseconfig()
-        with pytest.raises(ValueError):
-            config.getvalue("x")
-        assert config.getoption("x", 1) == 1
 
     def test_getconftest_pathlist(self, pytester: Pytester, tmp_path: Path) -> None:
         somepath = tmp_path.joinpath("x", "y", "z")
@@ -842,6 +849,82 @@ class TestConfigAPI:
         config = pytester.parseconfig()
         assert config.getini("strip") is bool_val
 
+    @pytest.mark.parametrize("str_val, int_val", [("10", 10), ("no-ini", 2)])
+    def test_addini_int(self, pytester: Pytester, str_val: str, int_val: bool) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type="int", default=2)
+        """
+        )
+        if str_val != "no-ini":
+            pytester.makeini(
+                f"""
+                [pytest]
+                ini_param={str_val}
+            """
+            )
+        config = pytester.parseconfig()
+        assert config.getini("ini_param") == int_val
+
+    def test_addini_int_invalid(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type="int", default=2)
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            ini_param=["foo"]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.raises(
+            TypeError, match="Expected an int string for option ini_param"
+        ):
+            _ = config.getini("ini_param")
+
+    @pytest.mark.parametrize("str_val, float_val", [("10.5", 10.5), ("no-ini", 2.2)])
+    def test_addini_float(
+        self, pytester: Pytester, str_val: str, float_val: bool
+    ) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type="float", default=2.2)
+        """
+        )
+        if str_val != "no-ini":
+            pytester.makeini(
+                f"""
+                [pytest]
+                ini_param={str_val}
+            """
+            )
+        config = pytester.parseconfig()
+        assert config.getini("ini_param") == float_val
+
+    def test_addini_float_invalid(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type="float", default=2.2)
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            ini_param=["foo"]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.raises(
+            TypeError, match="Expected a float string for option ini_param"
+        ):
+            _ = config.getini("ini_param")
+
     def test_addinivalue_line_existing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
@@ -976,6 +1059,37 @@ class TestConfigAPI:
     )
     def test_iter_rewritable_modules(self, names, expected) -> None:
         assert list(_iter_rewritable_modules(names)) == expected
+
+    def test_add_cleanup(self, pytester: Pytester) -> None:
+        config = Config.fromdictargs({}, [])
+        config._do_configure()
+        report = []
+
+        class MyError(BaseException):
+            pass
+
+        @config.add_cleanup
+        def cleanup_last():
+            report.append("cleanup_last")
+
+        @config.add_cleanup
+        def raise_2():
+            report.append("raise_2")
+            raise MyError("raise_2")
+
+        @config.add_cleanup
+        def raise_1():
+            report.append("raise_1")
+            raise MyError("raise_1")
+
+        @config.add_cleanup
+        def cleanup_first():
+            report.append("cleanup_first")
+
+        with pytest.raises(MyError, match=r"raise_2"):
+            config._ensure_unconfigure()
+
+        assert report == ["cleanup_first", "raise_1", "raise_2", "cleanup_last"]
 
 
 class TestConfigFromdictargs:
@@ -1201,14 +1315,13 @@ def test_plugin_preparse_prevents_setuptools_loading(
         )
 
 
-@pytest.mark.parametrize(
-    "parse_args,should_load", [(("-p", "mytestplugin"), True), ((), False)]
-)
+@pytest.mark.parametrize("disable_plugin_method", ["env_var", "flag", ""])
+@pytest.mark.parametrize("enable_plugin_method", ["env_var", "flag", ""])
 def test_disable_plugin_autoload(
     pytester: Pytester,
     monkeypatch: MonkeyPatch,
-    parse_args: tuple[str, str] | tuple[()],
-    should_load: bool,
+    enable_plugin_method: str,
+    disable_plugin_method: str,
 ) -> None:
     class DummyEntryPoint:
         project_name = name = "mytestplugin"
@@ -1229,23 +1342,60 @@ def test_disable_plugin_autoload(
         attrs_used = []
 
         def __getattr__(self, name):
-            assert name == "__loader__"
+            assert name in ("__loader__", "__spec__")
             self.attrs_used.append(name)
             return object()
 
     def distributions():
         return (Distribution(),)
 
-    monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    parse_args: list[str] = []
+
+    if disable_plugin_method == "env_var":
+        monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    elif disable_plugin_method == "flag":
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        parse_args.append("--disable-plugin-autoload")
+    else:
+        assert disable_plugin_method == ""
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+
+    if enable_plugin_method == "env_var":
+        monkeypatch.setenv("PYTEST_PLUGINS", "mytestplugin")
+    elif enable_plugin_method == "flag":
+        parse_args.extend(["-p", "mytestplugin"])
+    else:
+        assert enable_plugin_method == ""
+
     monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     monkeypatch.setitem(sys.modules, "mytestplugin", PseudoPlugin())
     config = pytester.parseconfig(*parse_args)
+
     has_loaded = config.pluginmanager.get_plugin("mytestplugin") is not None
-    assert has_loaded == should_load
-    if should_load:
-        assert PseudoPlugin.attrs_used == ["__loader__"]
-    else:
-        assert PseudoPlugin.attrs_used == []
+    # it should load if it's enabled, or we haven't disabled autoloading
+    assert has_loaded == (bool(enable_plugin_method) or not disable_plugin_method)
+
+    # The reason for the discrepancy between 'has_loaded' and __loader__ being accessed
+    # appears to be the monkeypatching of importlib.metadata.distributions; where
+    # files being empty means that _mark_plugins_for_rewrite doesn't find the plugin.
+    # But enable_method==flag ends up in mark_rewrite being called and __loader__
+    # being accessed.
+    assert ("__loader__" in PseudoPlugin.attrs_used) == (
+        has_loaded
+        and not (enable_plugin_method in ("env_var", "") and not disable_plugin_method)
+    )
+
+    # __spec__ is accessed in AssertionRewritingHook.exec_module, which would be
+    # eventually called if we did a full pytest run; but it's only accessed with
+    # enable_plugin_method=="env_var" because that will early-load it.
+    # Except when autoloads aren't disabled, in which case PytestPluginManager.import_plugin
+    # bails out before importing it.. because it knows it'll be loaded later?
+    # The above seems a bit weird, but I *think* it's true.
+    if platform.python_implementation() != "PyPy":
+        assert ("__spec__" in PseudoPlugin.attrs_used) == bool(
+            enable_plugin_method == "env_var" and disable_plugin_method
+        )
+    # __spec__ is present when testing locally on pypy, but not in CI ????
 
 
 def test_plugin_loading_order(pytester: Pytester) -> None:
@@ -2025,7 +2175,8 @@ def test_invocation_args(pytester: Pytester) -> None:
     plugins = config.invocation_params.plugins
     assert len(plugins) == 2
     assert plugins[0] is plugin
-    assert type(plugins[1]).__name__ == "Collect"  # installed by pytester.inline_run()
+    # Installed by pytester.inline_run().
+    assert type(plugins[1]).__name__ == "PytesterHelperPlugin"
 
     # args cannot be None
     with pytest.raises(TypeError):

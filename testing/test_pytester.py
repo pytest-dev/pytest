@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-import time
 from types import ModuleType
 
 from _pytest.config import ExitCode
@@ -16,6 +15,7 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
+import _pytest.timing
 import pytest
 
 
@@ -451,13 +451,12 @@ def test_pytester_run_with_timeout(pytester: Pytester) -> None:
 
     timeout = 120
 
-    start = time.time()
+    instant = _pytest.timing.Instant()
     result = pytester.runpytest_subprocess(testfile, timeout=timeout)
-    end = time.time()
-    duration = end - start
+    duration = instant.elapsed()
 
     assert result.ret == ExitCode.OK
-    assert duration < timeout
+    assert duration.seconds < timeout
 
 
 def test_pytester_run_timeout_expires(pytester: Pytester) -> None:
@@ -835,3 +834,25 @@ def test_pytester_outcomes_deselected(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1, deselected=1)
     # If deselected is not passed, it is not checked at all.
     result.assert_outcomes(passed=1)
+
+
+def test_pytester_subprocess_with_string_plugins(pytester: Pytester) -> None:
+    """Test that pytester.runpytest_subprocess is OK with named (string)
+    `.plugins`."""
+    pytester.plugins = ["pytester"]
+
+    result = pytester.runpytest_subprocess()
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+
+def test_pytester_subprocess_with_non_string_plugins(pytester: Pytester) -> None:
+    """Test that pytester.runpytest_subprocess fails with a proper error given
+    non-string `.plugins`."""
+
+    class MyPlugin:
+        pass
+
+    pytester.plugins = [MyPlugin()]
+
+    with pytest.raises(ValueError, match="plugins as objects is not supported"):
+        pytester.runpytest_subprocess()

@@ -1284,7 +1284,7 @@ def test_collect_handles_raising_on_dunder_class(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed in*"])
+    result.assert_outcomes(passed=1)
     assert result.ret == 0
 
 
@@ -1348,7 +1348,7 @@ def test_collect_pyargs_with_testpaths(
     with monkeypatch.context() as mp:
         mp.chdir(root)
         result = pytester.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*1 passed in*"])
+    result.assert_outcomes(passed=1)
 
 
 def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
@@ -1615,7 +1615,7 @@ def test_class_from_parent(request: FixtureRequest) -> None:
             self.x = x
 
         @classmethod
-        def from_parent(cls, parent, *, name, x):
+        def from_parent(cls, parent, *, name, x):  # type: ignore[override]
             return super().from_parent(parent=parent, name=name, x=x)
 
     collector = MyCollector.from_parent(parent=request.session, name="foo", x=10)
@@ -1878,3 +1878,121 @@ def test_respect_system_exceptions(
     result.stdout.fnmatch_lines([f"*{head}*"])
     result.stdout.fnmatch_lines([msg])
     result.stdout.no_fnmatch_line(f"*{tail}*")
+
+
+def test_yield_disallowed_in_tests(pytester: Pytester):
+    """Ensure generator test functions with 'yield' fail collection (#12960)."""
+    pytester.makepyfile(
+        """
+        def test_with_yield():
+            yield 1
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 2
+    result.stdout.fnmatch_lines(
+        ["*'yield' keyword is allowed in fixtures, but not in tests (test_with_yield)*"]
+    )
+    # Assert that no tests were collected
+    result.stdout.fnmatch_lines(["*collected 0 items*"])
+
+
+def test_annotations_deferred_future(pytester: Pytester):
+    """Ensure stringified annotations don't raise any errors."""
+    pytester.makepyfile(
+        """
+        from __future__ import annotations
+        import pytest
+
+        @pytest.fixture
+        def func() -> X: ...  # X is undefined
+
+        def test_func():
+            assert True
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 14), reason="Annotations are only skipped on 3.14+"
+)
+def test_annotations_deferred_314(pytester: Pytester):
+    """Ensure annotation eval is deferred."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def func() -> X: ...  # X is undefined
+
+        def test_func():
+            assert True
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize("import_mode", ["prepend", "importlib", "append"])
+def test_namespace_packages(pytester: Pytester, import_mode: str):
+    pytester.makeini(
+        f"""
+        [pytest]
+        consider_namespace_packages = true
+        pythonpath = .
+        python_files = *.py
+        addopts = --import-mode {import_mode}
+    """
+    )
+    pytester.makepyfile(
+        **{
+            "pkg/module1.py": "def test_module1(): pass",
+            "pkg/subpkg_namespace/module2.py": "def test_module1(): pass",
+            "pkg/subpkg_regular/__init__.py": "",
+            "pkg/subpkg_regular/module3": "def test_module3(): pass",
+        }
+    )
+
+    # should collect when called with top-level package correctly
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 3 items",
+            "<Dir pkg>",
+            "  <Module module1.py>",
+            "    <Function test_module1>",
+            "  <Dir subpkg_namespace>",
+            "    <Module module2.py>",
+            "      <Function test_module1>",
+            "  <Package subpkg_regular>",
+            "    <Module module3.py>",
+            "      <Function test_module3>",
+        ]
+    )
+
+    # should also work when called against a more specific subpackage/module
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg.subpkg_namespace")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 1 item",
+            "<Dir pkg>",
+            "  <Dir subpkg_namespace>",
+            "    <Module module2.py>",
+            "      <Function test_module1>",
+        ]
+    )
+
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg.subpkg_regular")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 1 item",
+            "<Dir pkg>",
+            "  <Package subpkg_regular>",
+            "    <Module module3.py>",
+            "      <Function test_module3>",
+        ]
+    )

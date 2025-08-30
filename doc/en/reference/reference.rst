@@ -20,6 +20,16 @@ The current pytest version, as a string::
     >>> pytest.__version__
     '7.0.0'
 
+.. _`hidden-param`:
+
+pytest.HIDDEN_PARAM
+~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 8.4
+
+Can be passed to ``ids`` of :py:func:`Metafunc.parametrize <pytest.Metafunc.parametrize>`
+or to ``id`` of :func:`pytest.param` to hide a parameter set from the test name.
+Can only be used at most 1 time, as test names need to be unique.
 
 .. _`version-tuple`:
 
@@ -402,6 +412,16 @@ capsys
 .. autoclass:: pytest.CaptureFixture()
     :members:
 
+.. fixture:: capteesys
+
+capteesys
+~~~~~~~~~
+
+**Tutorial**: :ref:`captures`
+
+.. autofunction:: _pytest.capture.capteesys()
+    :no-auto-options:
+
 .. fixture:: capsysbinary
 
 capsysbinary
@@ -529,13 +549,14 @@ record_testsuite_property
 recwarn
 ~~~~~~~
 
-**Tutorial**: :ref:`assertwarnings`
+**Tutorial**: :ref:`recwarn`
 
 .. autofunction:: _pytest.recwarn.recwarn()
     :no-auto-options:
 
 .. autoclass:: pytest.WarningsRecorder()
     :members:
+    :special-members: __getitem__, __iter__, __len__
 
 
 .. fixture:: request
@@ -1013,6 +1034,23 @@ PytestPluginManager
     :inherited-members:
     :show-inheritance:
 
+RaisesExc
+~~~~~~~~~
+
+.. autoclass:: pytest.RaisesExc()
+    :members:
+
+    .. autoattribute:: fail_reason
+
+RaisesGroup
+~~~~~~~~~~~
+**Tutorial**: :ref:`assert-matching-exception-groups`
+
+.. autoclass:: pytest.RaisesGroup()
+    :members:
+
+    .. autoattribute:: fail_reason
+
 TerminalReporter
 ~~~~~~~~~~~~~~~~
 
@@ -1152,11 +1190,17 @@ processes can inspect it, see :ref:`pytest current test env` for more informatio
 
 When set, pytest will print tracing and debug information.
 
+.. envvar:: PYTEST_DEBUG_TEMPROOT
+
+Root for temporary directories produced by fixtures like :fixture:`tmp_path`
+as discussed in :ref:`temporary directory location and retention`.
+
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
 When set, disables plugin auto-loading through :std:doc:`entry point packaging
-metadata <packaging:guides/creating-and-discovering-plugins>`. Only explicitly
-specified plugins will be loaded.
+metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
+explicitly specified in :envvar:`PYTEST_PLUGINS` or with ``-p`` will be loaded.
+See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
 
@@ -1165,6 +1209,8 @@ Contains comma-separated list of modules that should be loaded as plugins:
 .. code-block:: bash
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
+
+See also ``-p``.
 
 .. envvar:: PYTEST_THEME
 
@@ -1234,9 +1280,6 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestRemovedIn9Warning
   :show-inheritance:
 
-.. autoclass:: pytest.PytestUnhandledCoroutineWarning
-   :show-inheritance:
-
 .. autoclass:: pytest.PytestUnknownMarkWarning
    :show-inheritance:
 
@@ -1301,12 +1344,47 @@ passed multiple times. The expected format is ``name=value``. For example::
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
+.. confval:: collect_imported_tests
+
+   .. versionadded:: 8.4
+
+   Setting this to ``false`` will make pytest collect classes/functions from test
+   files **only** if they are defined in that file (as opposed to imported there).
+
+   .. code-block:: ini
+
+        [pytest]
+        collect_imported_tests = false
+
+   Default: ``true``
+
+   pytest traditionally collects classes/functions in the test module namespace even if they are imported from another file.
+
+   For example:
+
+   .. code-block:: python
+
+       # contents of src/domain.py
+       class Testament: ...
+
+
+       # contents of tests/test_testament.py
+       from domain import Testament
+
+
+       def test_testament(): ...
+
+   In this scenario, with the default options, pytest will collect the class `Testament` from `tests/test_testament.py` because it starts with `Test`, even though in this case it is a production class being imported in the test module namespace.
+
+   Set ``collected_imported_tests`` to ``false`` in the configuration file prevents that.
+
 .. confval:: consider_namespace_packages
 
    Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
    when collecting Python modules. Default is ``False``.
 
    Set to ``True`` if the package you are testing is part of a namespace package.
+   Namespace packages are also supported as ``--pyargs`` target.
 
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
@@ -1321,6 +1399,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    * ``progress``: like classic pytest output, but with a progress indicator.
    * ``progress-even-when-capture-no``: allows the use of the progress indicator even when ``capture=no``.
    * ``count``: like progress, but shows progress as the number of tests completed instead of a percent.
+   * ``times``: show tests duration.
 
    The default is ``progress``, but you can fallback to ``classic`` if you prefer or
    the new mode is causing unexpected problems:
@@ -1331,6 +1410,29 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         console_output_style = classic
 
+
+.. confval:: disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+
+   .. versionadded:: 4.4
+
+   pytest by default escapes any non-ascii characters used in unicode strings
+   for the parametrization because it has several downsides.
+   If however you would like to use unicode strings in parametrization
+   and see them in the terminal as is (non-escaped), use this option
+   in your ``pytest.ini``:
+
+   .. code-block:: ini
+
+       [pytest]
+       disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+
+   Keep in mind however that this might cause unwanted side effects and
+   even bugs depending on the OS used and plugins currently installed,
+   so use it at your own risk.
+
+   Default: ``False``.
+
+   See :ref:`parametrizemark`.
 
 .. confval:: doctest_encoding
 
@@ -1838,10 +1940,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
        pytest testing doc
 
-
 .. confval:: tmp_path_retention_count
-
-
 
    How many sessions should we keep the `tmp_path` directories,
    according to `tmp_path_retention_policy`.
@@ -1998,6 +2097,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             example: -m 'mark1 and not mark2'.
       --markers             show markers (builtin, plugin and per-project ones).
       -x, --exitfirst       Exit instantly on first error or failed test
+      --maxfail=num         Exit after first num failures or errors
+      --strict-config       Any warnings encountered while parsing the `pytest`
+                            section of the configuration file raise errors
+      --strict-markers      Markers not registered in the `markers` section of
+                            the configuration file raise errors
+      --strict              (Deprecated) alias to --strict-markers
       --fixtures, --funcargs
                             Show available fixtures, sorted by plugin appearance
                             (fixtures with leading '_' are only shown with '-v')
@@ -2024,7 +2129,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Show cache contents, don't perform collection or
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
-      --lfnf={all,none}, --last-failed-no-failures={all,none}
+      --lfnf, --last-failed-no-failures={all,none}
                             With ``--lf``, determines whether to execute tests
                             when there are no previously (known) failures or
                             when no cached ``lastfailed`` data was found.
@@ -2036,15 +2141,21 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --sw-skip, --stepwise-skip
                             Ignore the first failing test but stop on the next
                             failing test. Implicitly enables --stepwise.
+      --sw-reset, --stepwise-reset
+                            Resets stepwise state, restarting the stepwise
+                            workflow. Implicitly enables --stepwise.
 
     Reporting:
       --durations=N         Show N slowest setup/test durations (N=0 for all)
       --durations-min=N     Minimal duration in seconds for inclusion in slowest
-                            list. Default: 0.005.
+                            list. Default: 0.005 (or 0.0 if -vv is given).
       -v, --verbose         Increase verbosity
       --no-header           Disable header
       --no-summary          Disable summary
       --no-fold-skipped     Do not fold skipped tests in short summary.
+      --force-short-summary
+                            Force condensed summary output regardless of
+                            verbosity level.
       -q, --quiet           Decrease verbosity
       --verbosity=VERBOSE   Set verbosity. Default: 0.
       -r chars              Show extra test summary info as specified by chars:
@@ -2070,29 +2181,15 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Whether code should be highlighted (only if --color
                             is also enabled). Default: yes.
       --pastebin=mode       Send failed|all info to bpaste.net pastebin service
-      --junit-xml=path      Create junit-xml style report file at given path
-      --junit-prefix=str    Prepend prefix to classnames in junit-xml output
+      --junitxml, --junit-xml=path
+                            Create junit-xml style report file at given path
+      --junitprefix, --junit-prefix=str
+                            Prepend prefix to classnames in junit-xml output
 
     pytest-warnings:
-      -W PYTHONWARNINGS, --pythonwarnings=PYTHONWARNINGS
+      -W, --pythonwarnings PYTHONWARNINGS
                             Set which warnings to report, see -W option of
                             Python itself
-      --maxfail=num         Exit after first num failures or errors
-      --strict-config       Any warnings encountered while parsing the `pytest`
-                            section of the configuration file raise errors
-      --strict-markers      Markers not registered in the `markers` section of
-                            the configuration file raise errors
-      --strict              (Deprecated) alias to --strict-markers
-      -c FILE, --config-file=FILE
-                            Load configuration from `FILE` instead of trying to
-                            locate one of the implicit configuration files.
-      --continue-on-collection-errors
-                            Force test execution even if collection errors occur
-      --rootdir=ROOTDIR     Define root directory for tests. Can be relative
-                            path: 'root_dir', './root_dir',
-                            'root_dir/another_dir/'; absolute path:
-                            '/home/user/root_dir'; path with variables:
-                            '$HOME/root_dir'.
 
     collection:
       --collect-only, --co  Only collect tests, don't execute them
@@ -2108,6 +2205,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --keep-duplicates     Keep duplicate tests
       --collect-in-virtualenv
                             Don't ignore tests in a local virtualenv directory
+      --continue-on-collection-errors
+                            Force test execution even if collection errors occur
       --import-mode={prepend,append,importlib}
                             Prepend/append to sys.path when importing test
                             modules and conftest files. Default: prepend.
@@ -2123,6 +2222,14 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             failure
 
     test session debugging and configuration:
+      -c, --config-file FILE
+                            Load configuration from `FILE` instead of trying to
+                            locate one of the implicit configuration files.
+      --rootdir=ROOTDIR     Define root directory for tests. Can be relative
+                            path: 'root_dir', './root_dir',
+                            'root_dir/another_dir/'; absolute path:
+                            '/home/user/root_dir'; path with variables:
+                            '$HOME/root_dir'.
       --basetemp=dir        Base temporary directory for this test run.
                             (Warning: this directory is removed if it exists.)
       -V, --version         Display pytest version and information about
@@ -2131,13 +2238,19 @@ All the command-line flags can be obtained by running ``pytest --help``::
       -h, --help            Show help message and configuration info
       -p name               Early-load given plugin module name or entry point
                             (multi-allowed). To avoid loading of plugins, use
-                            the `no:` prefix, e.g. `no:doctest`.
+                            the `no:` prefix, e.g. `no:doctest`. See also
+                            --disable-plugin-autoload.
+      --disable-plugin-autoload
+                            Disable plugin auto-loading through entry point
+                            packaging metadata. Only plugins explicitly
+                            specified in -p or env var PYTEST_PLUGINS will be
+                            loaded.
       --trace-config        Trace considerations of conftest.py files
       --debug=[DEBUG_FILE_NAME]
                             Store internal tracing debug information in this log
                             file. This file is opened with 'w' and truncated as
                             a result, care advised. Default: pytestdebug.log.
-      -o OVERRIDE_INI, --override-ini=OVERRIDE_INI
+      -o, --override-ini OVERRIDE_INI
                             Override ini option with "option=value" style, e.g.
                             `-o xfail_strict=True -o cache_dir=cache`.
       --assert=MODE         Control assertion debugging tools.
@@ -2186,13 +2299,16 @@ All the command-line flags can be obtained by running ``pytest --help``::
       markers (linelist):   Register new markers for test functions
       empty_parameter_set_mark (string):
                             Default marker for empty parametersets
-      norecursedirs (args): Directory patterns to avoid for recursion
-      testpaths (args):     Directories to search for tests when no files or
-                            directories are given on the command line
       filterwarnings (linelist):
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
+      norecursedirs (args): Directory patterns to avoid for recursion
+      testpaths (args):     Directories to search for tests when no files or
+                            directories are given on the command line
+      collect_imported_tests (bool):
+                            Whether to collect tests in imported modules outside
+                            `testpaths`
       consider_namespace_packages (bool):
                             Consider namespace packages when resolving module
                             names during import
@@ -2232,6 +2348,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
+      truncation_limit_lines (string):
+                            Set threshold of LINES after which truncation will
+                            take effect
+      truncation_limit_chars (string):
+                            Set threshold of CHARS after which truncation will
+                            take effect
       verbosity_assertions (string):
                             Specify a verbosity level for assertions, overriding
                             the main level. Higher levels will provide more
@@ -2276,12 +2398,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Default value for --log-file-date-format
       log_auto_indent (string):
                             Default value for --log-auto-indent
-      pythonpath (paths):   Add paths to sys.path
       faulthandler_timeout (string):
                             Dump the traceback of all threads if a test takes
                             more than TIMEOUT seconds to finish
       addopts (args):       Extra command line options
       minversion (string):  Minimally required pytest version
+      pythonpath (paths):   Add paths to sys.path
       required_plugins (args):
                             Plugins that must be present for pytest to run
 

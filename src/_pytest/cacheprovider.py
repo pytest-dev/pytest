@@ -5,6 +5,8 @@
 # pytest-cache version.
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Iterable
 import dataclasses
 import errno
 import json
@@ -12,8 +14,6 @@ import os
 from pathlib import Path
 import tempfile
 from typing import final
-from typing import Generator
-from typing import Iterable
 
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
@@ -388,8 +388,8 @@ class LFPlugin:
             if not previously_failed:
                 # Running a subset of all tests with recorded failures
                 # only outside of it.
-                self._report_status = "%d known failures not in selected tests" % (
-                    len(self.lastfailed),
+                self._report_status = (
+                    f"{len(self.lastfailed)} known failures not in selected tests"
                 )
             else:
                 if self.config.getoption("lf"):
@@ -476,14 +476,17 @@ class NFPlugin:
 
 
 def pytest_addoption(parser: Parser) -> None:
+    """Add command-line options for cache functionality.
+
+    :param parser: Parser object to add command-line options to.
+    """
     group = parser.getgroup("general")
     group.addoption(
         "--lf",
         "--last-failed",
         action="store_true",
         dest="lf",
-        help="Rerun only the tests that failed "
-        "at the last run (or all if none failed)",
+        help="Rerun only the tests that failed at the last run (or all if none failed)",
     )
     group.addoption(
         "--ff",
@@ -547,6 +550,13 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
 
 @hookimpl(tryfirst=True)
 def pytest_configure(config: Config) -> None:
+    """Configure cache system and register related plugins.
+
+    Creates the Cache instance and registers the last-failed (LFPlugin)
+    and new-first (NFPlugin) plugins with the plugin manager.
+
+    :param config: pytest configuration object.
+    """
     config.cache = Cache.for_config(config, _ispytest=True)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
     config.pluginmanager.register(NFPlugin(config), "nfplugin")
@@ -585,6 +595,16 @@ def pytest_report_header(config: Config) -> str | None:
 
 
 def cacheshow(config: Config, session: Session) -> int:
+    """Display cache contents when --cache-show is used.
+
+    Shows cached values and directories matching the specified glob pattern
+    (default: '*'). Displays cache location, cached test results, and
+    any cached directories created by plugins.
+
+    :param config: pytest configuration object.
+    :param session: pytest session object.
+    :returns: Exit code (0 for success).
+    """
     from pprint import pformat
 
     assert config.cache is not None
@@ -622,5 +642,5 @@ def cacheshow(config: Config, session: Session) -> int:
             #    print("%s/" % p.relative_to(basedir))
             if p.is_file():
                 key = str(p.relative_to(basedir))
-                tw.line(f"{key} is a file of length {p.stat().st_size:d}")
+                tw.line(f"{key} is a file of length {p.stat().st_size}")
     return 0

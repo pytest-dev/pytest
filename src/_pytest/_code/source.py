@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import ast
 from bisect import bisect_right
+from collections.abc import Iterable
+from collections.abc import Iterator
 import inspect
 import textwrap
 import tokenize
 import types
-from typing import Iterable
-from typing import Iterator
 from typing import overload
 import warnings
 
@@ -22,12 +22,16 @@ class Source:
     def __init__(self, obj: object = None) -> None:
         if not obj:
             self.lines: list[str] = []
+            self.raw_lines: list[str] = []
         elif isinstance(obj, Source):
             self.lines = obj.lines
+            self.raw_lines = obj.raw_lines
         elif isinstance(obj, (tuple, list)):
             self.lines = deindent(x.rstrip("\n") for x in obj)
+            self.raw_lines = list(x.rstrip("\n") for x in obj)
         elif isinstance(obj, str):
             self.lines = deindent(obj.split("\n"))
+            self.raw_lines = obj.split("\n")
         else:
             try:
                 rawcode = getrawcode(obj)
@@ -35,6 +39,7 @@ class Source:
             except TypeError:
                 src = inspect.getsource(obj)  # type: ignore[arg-type]
             self.lines = deindent(src.split("\n"))
+            self.raw_lines = src.split("\n")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Source):
@@ -58,6 +63,7 @@ class Source:
                 raise IndexError("cannot slice a Source with a step")
             newsource = Source()
             newsource.lines = self.lines[key.start : key.stop]
+            newsource.raw_lines = self.raw_lines[key.start : key.stop]
             return newsource
 
     def __iter__(self) -> Iterator[str]:
@@ -74,6 +80,7 @@ class Source:
         while end > start and not self.lines[end - 1].strip():
             end -= 1
         source = Source()
+        source.raw_lines = self.raw_lines
         source.lines[:] = self.lines[start:end]
         return source
 
@@ -81,6 +88,7 @@ class Source:
         """Return a copy of the source object with all lines indented by the
         given indent-string."""
         newsource = Source()
+        newsource.raw_lines = self.raw_lines
         newsource.lines = [(indent + line) for line in self.lines]
         return newsource
 
@@ -102,6 +110,7 @@ class Source:
         """Return a new Source object deindented."""
         newsource = Source()
         newsource.lines[:] = deindent(self.lines)
+        newsource.raw_lines = self.raw_lines
         return newsource
 
     def __str__(self) -> str:
@@ -120,6 +129,7 @@ def findsource(obj) -> tuple[Source | None, int]:
         return None, -1
     source = Source()
     source.lines = [line.rstrip() for line in sourcelines]
+    source.raw_lines = sourcelines
     return source, lineno
 
 

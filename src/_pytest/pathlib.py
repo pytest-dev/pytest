@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import atexit
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
 import contextlib
 from enum import Enum
 from errno import EBADF
@@ -26,9 +29,6 @@ import sys
 import types
 from types import ModuleType
 from typing import Any
-from typing import Callable
-from typing import Iterable
-from typing import Iterator
 from typing import TypeVar
 import uuid
 import warnings
@@ -668,7 +668,10 @@ def _import_module_using_spec(
     parent_module: ModuleType | None = None
     if parent_module_name:
         parent_module = sys.modules.get(parent_module_name)
-        if parent_module is None:
+        # If the parent_module lacks the `__path__` attribute, AttributeError when finding a submodule's spec,
+        # requiring re-import according to the path.
+        need_reimport = not hasattr(parent_module, "__path__")
+        if parent_module is None or need_reimport:
             # Get parent_location based on location, get parent_path based on path.
             if module_path.name == "__init__.py":
                 # If the current module is in a package,
@@ -691,9 +694,16 @@ def _import_module_using_spec(
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
     for meta_importer in sys.meta_path:
-        spec = meta_importer.find_spec(
-            module_name, [str(module_location), str(module_path)]
-        )
+        module_name_of_meta = getattr(meta_importer.__class__, "__module__", "")
+        if module_name_of_meta == "_pytest.assertion.rewrite" and module_path.is_file():
+            # Import modules in subdirectories by module_path
+            # to ensure assertion rewrites are not missed (#12659).
+            find_spec_path = [str(module_location), str(module_path)]
+        else:
+            find_spec_path = [str(module_location)]
+
+        spec = meta_importer.find_spec(module_name, find_spec_path)
+
         if spec_matches_module_path(spec, module_path):
             break
     else:
@@ -701,7 +711,7 @@ def _import_module_using_spec(
         if module_path.is_dir():
             # The `spec_from_file_location` matches a loader based on the file extension by default.
             # For a namespace package, need to manually specify a loader.
-            loader = NamespaceLoader(name, module_path, PathFinder())
+            loader = NamespaceLoader(name, module_path, PathFinder())  # type: ignore[arg-type]
 
         spec = importlib.util.spec_from_file_location(
             module_name, str(module_path), loader=loader
@@ -945,17 +955,24 @@ def scandir(
 
     The returned entries are sorted according to the given key.
     The default is to sort by name.
+    If the directory does not exist, return an empty list.
     """
     entries = []
-    with os.scandir(path) as s:
-        # Skip entries with symlink loops and other brokenness, so the caller
-        # doesn't have to deal with it.
+    # Attempt to create a scandir iterator for the given path.
+    try:
+        scandir_iter = os.scandir(path)
+    except FileNotFoundError:
+        # If the directory does not exist, return an empty list.
+        return []
+    # Use the scandir iterator in a context manager to ensure it is properly closed.
+    with scandir_iter as s:
         for entry in s:
             try:
                 entry.is_file()
             except OSError as err:
                 if _ignore_error(err):
                     continue
+                # Reraise non-ignorable errors to avoid hiding issues.
                 raise
             entries.append(entry)
     entries.sort(key=sort_key)  # type: ignore[arg-type]

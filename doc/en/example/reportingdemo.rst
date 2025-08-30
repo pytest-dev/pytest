@@ -384,6 +384,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
             i = Foo()
     >       assert i.b == 2
+                   ^^^
 
     failure_demo.py:148:
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -446,6 +447,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
         def test_tupleerror(self):
     >       a, b = [1]  # noqa: F841
+            ^^^^
     E       ValueError: not enough values to unpack (expected 2, got 1)
 
     failure_demo.py:177: ValueError
@@ -457,6 +459,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
             items = [1, 2, 3]
             print(f"items is {items!r}")
     >       a, b = items.pop()
+            ^^^^
     E       TypeError: cannot unpack non-iterable int object
 
     failure_demo.py:182: TypeError
@@ -468,6 +471,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
         def test_some_error(self):
     >       if namenotexi:  # noqa: F821
+               ^^^^^^^^^^
     E       NameError: name 'namenotexi' is not defined
 
     failure_demo.py:185: NameError
@@ -526,6 +530,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_z1_unpack_error(self):
             items = []
     >       a, b = items
+            ^^^^
     E       ValueError: not enough values to unpack (expected 2, got 0)
 
     failure_demo.py:219: ValueError
@@ -536,6 +541,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
         def test_z2_type_error(self):
             items = 3
     >       a, b = items
+            ^^^^
     E       TypeError: cannot unpack non-iterable int object
 
     failure_demo.py:223: TypeError
@@ -638,9 +644,9 @@ Here is a nice run of several failures and how ``pytest`` presents things:
                 a = 1
 
             b = 2
-    >       assert (
-                A.a == b
-            ), "A.a appears not to be b\nor does not appear to be b\none of those"
+    >       assert A.a == b, (
+                "A.a appears not to be b\nor does not appear to be b\none of those"
+            )
     E       AssertionError: A.a appears not to be b
     E         or does not appear to be b
     E         one of those

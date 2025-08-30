@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import errno
 import os
 import sys
-from typing import Callable
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -69,7 +69,7 @@ class ErrorMaker:
         try:
             return self._errno2class[eno]
         except KeyError:
-            clsname = errno.errorcode.get(eno, "UnknownErrno%d" % (eno,))
+            clsname = errno.errorcode.get(eno, f"UnknownErrno{eno}")
             errorcls = type(
                 clsname,
                 (Error,),
@@ -90,15 +90,23 @@ class ErrorMaker:
         except OSError as value:
             if not hasattr(value, "errno"):
                 raise
-            errno = value.errno
             if sys.platform == "win32":
                 try:
-                    cls = self._geterrnoclass(_winerrnomap[errno])
+                    # error: Invalid index type "Optional[int]" for "dict[int, int]"; expected type "int"  [index]
+                    # OK to ignore because we catch the KeyError below.
+                    cls = self._geterrnoclass(_winerrnomap[value.errno])  # type:ignore[index]
                 except KeyError:
                     raise value
             else:
                 # we are not on Windows, or we got a proper OSError
-                cls = self._geterrnoclass(errno)
+                if value.errno is None:
+                    cls = type(
+                        "UnknownErrnoNone",
+                        (Error,),
+                        {"__module__": "py.error", "__doc__": None},
+                    )
+                else:
+                    cls = self._geterrnoclass(value.errno)
 
             raise cls(f"{func.__name__}{args!r}")
 

@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import ast
 from collections import defaultdict
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Sequence
 import errno
 import functools
 import importlib.abc
@@ -19,18 +23,16 @@ import struct
 import sys
 import tokenize
 import types
-from typing import Callable
 from typing import IO
-from typing import Iterable
-from typing import Iterator
-from typing import Sequence
 from typing import TYPE_CHECKING
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
+from _pytest._io.saferepr import saferepr_unlimited
 from _pytest._version import version
 from _pytest.assertion import util
 from _pytest.config import Config
+from _pytest.fixtures import FixtureFunctionDefinition
 from _pytest.main import Session
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import fnmatch_ex
@@ -53,7 +55,7 @@ assertstate_key = StashKey["AssertionState"]()
 
 # pytest caches rewritten pycs in pycache dirs
 PYTEST_TAG = f"{sys.implementation.cache_tag}-pytest-{version}"
-PYC_EXT = ".py" + (__debug__ and "c" or "o")
+PYC_EXT = ".py" + ((__debug__ and "c") or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
 # Special marker that denotes we have just left a scope definition
@@ -279,7 +281,7 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
 
         self.config.issue_config_time_warning(
             PytestAssertRewriteWarning(
-                f"Module already imported so cannot be rewritten: {name}"
+                f"Module already imported so cannot be rewritten; {name}"
             ),
             stacklevel=5,
         )
@@ -432,6 +434,8 @@ def _saferepr(obj: object) -> str:
         return obj.__name__
 
     maxsize = _get_maxsize_for_saferepr(util._config)
+    if not maxsize:
+        return saferepr_unlimited(obj).replace("\n", "\\n")
     return saferepr(obj, maxsize=maxsize).replace("\n", "\\n")
 
 
@@ -472,7 +476,8 @@ def _format_assertmsg(obj: object) -> str:
 
 def _should_repr_global_name(obj: object) -> bool:
     if callable(obj):
-        return False
+        # For pytest fixtures the __repr__ method provides more information than the function name.
+        return isinstance(obj, FixtureFunctionDefinition)
 
     try:
         return not hasattr(obj, "__name__")
@@ -481,7 +486,7 @@ def _should_repr_global_name(obj: object) -> bool:
 
 
 def _format_boolop(explanations: Iterable[str], is_or: bool) -> str:
-    explanation = "(" + (is_or and " or " or " and ").join(explanations) + ")"
+    explanation = "(" + ((is_or and " or ") or " and ").join(explanations) + ")"
     return explanation.replace("%", "%%")
 
 
@@ -697,7 +702,6 @@ class AssertionRewriter(ast.NodeVisitor):
         if doc is not None and self.is_rewrite_disabled(doc):
             return
         pos = 0
-        item = None
         for item in mod.body:
             if (
                 expect_docstring
@@ -792,7 +796,7 @@ class AssertionRewriter(ast.NodeVisitor):
         """Give *expr* a name."""
         name = self.variable()
         self.statements.append(ast.Assign([ast.Name(name, ast.Store())], expr))
-        return ast.Name(name, ast.Load())
+        return ast.copy_location(ast.Name(name, ast.Load()), expr)
 
     def display(self, expr: ast.expr) -> ast.expr:
         """Call saferepr on the expression."""
@@ -975,7 +979,10 @@ class AssertionRewriter(ast.NodeVisitor):
         # Fix locations (line numbers/column offsets).
         for stmt in self.statements:
             for node in traverse_node(stmt):
-                ast.copy_location(node, assert_)
+                if getattr(node, "lineno", None) is None:
+                    # apply the assertion location to all generated ast nodes without source location
+                    # and preserve the location of existing nodes or generated nodes with an correct location.
+                    ast.copy_location(node, assert_)
         return self.statements
 
     def visit_NamedExpr(self, name: ast.NamedExpr) -> tuple[ast.NamedExpr, str]:
@@ -1052,7 +1059,7 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_UnaryOp(self, unary: ast.UnaryOp) -> tuple[ast.Name, str]:
         pattern = UNARY_MAP[unary.op.__class__]
         operand_res, operand_expl = self.visit(unary.operand)
-        res = self.assign(ast.UnaryOp(unary.op, operand_res))
+        res = self.assign(ast.copy_location(ast.UnaryOp(unary.op, operand_res), unary))
         return res, pattern % (operand_expl,)
 
     def visit_BinOp(self, binop: ast.BinOp) -> tuple[ast.Name, str]:
@@ -1060,7 +1067,9 @@ class AssertionRewriter(ast.NodeVisitor):
         left_expr, left_expl = self.visit(binop.left)
         right_expr, right_expl = self.visit(binop.right)
         explanation = f"({left_expl} {symbol} {right_expl})"
-        res = self.assign(ast.BinOp(left_expr, binop.op, right_expr))
+        res = self.assign(
+            ast.copy_location(ast.BinOp(left_expr, binop.op, right_expr), binop)
+        )
         return res, explanation
 
     def visit_Call(self, call: ast.Call) -> tuple[ast.Name, str]:
@@ -1089,7 +1098,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 arg_expls.append("**" + expl)
 
         expl = "{}({})".format(func_expl, ", ".join(arg_expls))
-        new_call = ast.Call(new_func, new_args, new_kwargs)
+        new_call = ast.copy_location(ast.Call(new_func, new_args, new_kwargs), call)
         res = self.assign(new_call)
         res_expl = self.explanation_param(self.display(res))
         outer_expl = f"{res_expl}\n{{{res_expl} = {expl}\n}}"
@@ -1105,7 +1114,9 @@ class AssertionRewriter(ast.NodeVisitor):
         if not isinstance(attr.ctx, ast.Load):
             return self.generic_visit(attr)
         value, value_expl = self.visit(attr.value)
-        res = self.assign(ast.Attribute(value, attr.attr, ast.Load()))
+        res = self.assign(
+            ast.copy_location(ast.Attribute(value, attr.attr, ast.Load()), attr)
+        )
         res_expl = self.explanation_param(self.display(res))
         pat = "%s\n{%s = %s.%s\n}"
         expl = pat % (res_expl, res_expl, value_expl, attr.attr)
@@ -1146,7 +1157,7 @@ class AssertionRewriter(ast.NodeVisitor):
             syms.append(ast.Constant(sym))
             expl = f"{left_expl} {sym} {next_expl}"
             expls.append(ast.Constant(expl))
-            res_expr = ast.Compare(left_res, [op], [next_res])
+            res_expr = ast.copy_location(ast.Compare(left_res, [op], [next_res]), comp)
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
         # Use pytest.assertion.util._reprcompare if that's available.

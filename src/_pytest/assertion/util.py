@@ -4,16 +4,16 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import os
 import pprint
-from typing import AbstractSet
 from typing import Any
-from typing import Callable
-from typing import Iterable
 from typing import Literal
-from typing import Mapping
 from typing import Protocol
-from typing import Sequence
 from unicodedata import normalize
 
 from _pytest import outcomes
@@ -41,6 +41,14 @@ _config: Config | None = None
 class _HighlightFunc(Protocol):
     def __call__(self, source: str, lexer: Literal["diff", "python"] = "python") -> str:
         """Apply highlighting to the given source."""
+
+
+def dummy_highlighter(source: str, lexer: Literal["diff", "python"] = "python") -> str:
+    """Dummy highlighter that returns the text unprocessed.
+
+    Needed for _notin_text, as the diff gets post-processed to only show the "+" part.
+    """
+    return source
 
 
 def format_explanation(explanation: str) -> str:
@@ -161,7 +169,7 @@ def has_default_eq(
         code_filename = obj.__eq__.__code__.co_filename
 
         if isattrs(obj):
-            return "attrs generated eq" in code_filename
+            return "attrs generated " in code_filename
 
         return code_filename == "<string>"  # data class
     return True
@@ -242,7 +250,7 @@ def _compare_eq_any(
 ) -> list[str]:
     explanation = []
     if istext(left) and istext(right):
-        explanation = _diff_text(left, right, verbose)
+        explanation = _diff_text(left, right, highlighter, verbose)
     else:
         from _pytest.python_api import ApproxBase
 
@@ -274,7 +282,9 @@ def _compare_eq_any(
     return explanation
 
 
-def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
+def _diff_text(
+    left: str, right: str, highlighter: _HighlightFunc, verbose: int = 0
+) -> list[str]:
     """Return the explanation for the diff between text.
 
     Unless --verbose is used this will skip leading and trailing
@@ -315,10 +325,15 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
         explanation += ["Strings contain only whitespace, escaping them using repr()"]
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
-    explanation += [
-        line.strip("\n")
-        for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
-    ]
+    explanation.extend(
+        highlighter(
+            "\n".join(
+                line.strip("\n")
+                for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
+            ),
+            lexer="diff",
+        ).splitlines()
+    )
     return explanation
 
 
@@ -406,8 +421,7 @@ def _compare_eq_sequence(
             ]
         else:
             explanation += [
-                "%s contains %d more items, first extra item: %s"
-                % (dir_with_more, len_diff, highlighter(extra))
+                f"{dir_with_more} contains {len_diff} more items, first extra item: {highlighter(extra)}"
             ]
     return explanation
 
@@ -510,8 +524,7 @@ def _compare_eq_dict(
     len_extra_left = len(extra_left)
     if len_extra_left:
         explanation.append(
-            "Left contains %d more item%s:"
-            % (len_extra_left, "" if len_extra_left == 1 else "s")
+            f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
         )
         explanation.extend(
             highlighter(pprint.pformat({k: left[k] for k in extra_left})).splitlines()
@@ -520,8 +533,7 @@ def _compare_eq_dict(
     len_extra_right = len(extra_right)
     if len_extra_right:
         explanation.append(
-            "Right contains %d more item%s:"
-            % (len_extra_right, "" if len_extra_right == 1 else "s")
+            f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
         )
         explanation.extend(
             highlighter(pprint.pformat({k: right[k] for k in extra_right})).splitlines()
@@ -589,7 +601,7 @@ def _notin_text(term: str, text: str, verbose: int = 0) -> list[str]:
     head = text[:index]
     tail = text[index + len(term) :]
     correct_text = head + tail
-    diff = _diff_text(text, correct_text, verbose)
+    diff = _diff_text(text, correct_text, dummy_highlighter, verbose)
     newdiff = [f"{saferepr(term, maxsize=42)} is contained here:"]
     for line in diff:
         if line.startswith("Skipping"):

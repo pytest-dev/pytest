@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
+from collections.abc import Sequence
 import dataclasses
 import itertools
 import re
@@ -8,9 +10,6 @@ import sys
 import textwrap
 from typing import Any
 from typing import cast
-from typing import Dict
-from typing import Iterator
-from typing import Sequence
 
 import hypothesis
 from hypothesis import strategies
@@ -20,6 +19,7 @@ from _pytest import python
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
+from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
@@ -82,11 +82,15 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x", [1, 2])
-        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
-        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("x", [5, 6])
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("x", [5, 6])
         metafunc.parametrize("y", [1, 2])
-        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
-        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("y", [5, 6])
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("y", [5, 6])
 
         with pytest.raises(TypeError, match="^ids must be a callable or an iterable$"):
             metafunc.parametrize("y", [5, 6], ids=42)  # type: ignore[arg-type]
@@ -154,7 +158,7 @@ class TestMetafunc:
             _scope: Scope
 
         fixtures_defs = cast(
-            Dict[str, Sequence[fixtures.FixtureDef[object]]],
+            dict[str, Sequence[fixtures.FixtureDef[object]]],
             dict(
                 session_fix=[DummyFixtureDef(Scope.Session)],
                 package_fix=[DummyFixtureDef(Scope.Package)],
@@ -622,6 +626,37 @@ class TestMetafunc:
         for config, expected in values:
             result = IdMaker(
                 ("a",), [pytest.param("string")], None, ["ação"], config, None, None
+            ).make_unique_parameterset_ids()
+            assert result == [expected]
+
+    def test_idmaker_with_param_id_and_config(self) -> None:
+        """Unit test for expected behavior to create ids with pytest.param(id=...) and
+        disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+        option (#9037).
+        """
+
+        class MockConfig:
+            def __init__(self, config):
+                self.config = config
+
+            def getini(self, name):
+                return self.config[name]
+
+        option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
+
+        values: list[tuple[Any, str]] = [
+            (MockConfig({option: True}), "ação"),
+            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+        ]
+        for config, expected in values:
+            result = IdMaker(
+                ("a",),
+                [pytest.param("string", id="ação")],
+                None,
+                None,
+                config,
+                None,
+                None,
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
@@ -1408,13 +1443,13 @@ class TestMetafuncFunctional:
         self, pytester: Pytester, scope: str, length: int
     ) -> None:
         pytester.makepyfile(
-            """
+            f"""
             import pytest
             values = []
             def pytest_generate_tests(metafunc):
                 if "arg" in metafunc.fixturenames:
                     metafunc.parametrize("arg", [1,2], indirect=True,
-                                         scope=%r)
+                                         scope={scope!r})
             @pytest.fixture
             def arg(request):
                 values.append(request.param)
@@ -1424,9 +1459,8 @@ class TestMetafuncFunctional:
             def test_world(arg):
                 assert arg in (1,2)
             def test_checklength():
-                assert len(values) == %d
+                assert len(values) == {length}
         """
-            % (scope, length)
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=5)
@@ -2114,3 +2148,127 @@ class TestMarkersWithParametrization:
                 "*= 6 passed in *",
             ]
         )
+
+
+class TestHiddenParam:
+    """Test that pytest.HIDDEN_PARAM works"""
+
+    def test_parametrize_ids(self, pytester: Pytester) -> None:
+        items = pytester.getitems(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                ("foo", "bar"),
+                [
+                    ("a", "x"),
+                    ("b", "y"),
+                    ("c", "z"),
+                ],
+                ids=["paramset1", pytest.HIDDEN_PARAM, "paramset3"],
+            )
+            def test_func(foo, bar):
+                pass
+        """
+        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[paramset1]",
+            "test_func",
+            "test_func[paramset3]",
+        ]
+
+    def test_param_id(self, pytester: Pytester) -> None:
+        items = pytester.getitems(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                ("foo", "bar"),
+                [
+                    pytest.param("a", "x", id="paramset1"),
+                    pytest.param("b", "y", id=pytest.HIDDEN_PARAM),
+                    ("c", "z"),
+                ],
+            )
+            def test_func(foo, bar):
+                pass
+        """
+        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[paramset1]",
+            "test_func",
+            "test_func[c-z]",
+        ]
+
+    def test_multiple_hidden_param_is_forbidden(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                ("foo", "bar"),
+                [
+                    ("a", "x"),
+                    ("b", "y"),
+                ],
+                ids=[pytest.HIDDEN_PARAM, pytest.HIDDEN_PARAM],
+            )
+            def test_func(foo, bar):
+                pass
+        """
+        )
+        result = pytester.runpytest("--collect-only")
+        result.stdout.fnmatch_lines(
+            [
+                "collected 0 items / 1 error",
+                "",
+                "*= ERRORS =*",
+                "*_ ERROR collecting test_multiple_hidden_param_is_forbidden.py _*",
+                "E   Failed: In test_func: multiple instances of HIDDEN_PARAM cannot be used "
+                "in the same parametrize call, because the tests names need to be unique.",
+                "*! Interrupted: 1 error during collection !*",
+                "*= no tests collected, 1 error in *",
+            ]
+        )
+
+    def test_multiple_hidden_param_is_forbidden_idmaker(self) -> None:
+        id_maker = IdMaker(
+            ("foo", "bar"),
+            [pytest.param("a", "x"), pytest.param("b", "y")],
+            None,
+            [pytest.HIDDEN_PARAM, pytest.HIDDEN_PARAM],
+            None,
+            "some_node_id",
+            None,
+        )
+        expected = "In some_node_id: multiple instances of HIDDEN_PARAM"
+        with pytest.raises(Failed, match=expected):
+            id_maker.make_unique_parameterset_ids()
+
+    def test_multiple_parametrize(self, pytester: Pytester) -> None:
+        items = pytester.getitems(
+            """
+            import pytest
+
+            @pytest.mark.parametrize(
+                "bar",
+                ["x", "y"],
+            )
+            @pytest.mark.parametrize(
+                "foo",
+                ["a", "b"],
+                ids=["a", pytest.HIDDEN_PARAM],
+            )
+            def test_func(foo, bar):
+                pass
+        """
+        )
+        names = [item.name for item in items]
+        assert names == [
+            "test_func[a-x]",
+            "test_func[a-y]",
+            "test_func[x]",
+            "test_func[y]",
+        ]

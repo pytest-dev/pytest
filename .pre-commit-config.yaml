@@ -1,23 +1,27 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.6.8"
+  rev: "v0.12.10"
   hooks:
     - id: ruff
       args: ["--fix"]
     - id: ruff-format
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-yaml
+- repo: https://github.com/woodruffw/zizmor-pre-commit
+  rev: v1.12.1
+  hooks:
+    - id: zizmor
 -   repo: https://github.com/adamchainz/blacken-docs
-    rev: 1.18.0
+    rev: 1.19.1
     hooks:
     -   id: blacken-docs
         additional_dependencies: [black==24.1.1]
 -   repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
     -   id: codespell
         args: ["--toml=pyproject.toml"]
@@ -28,12 +32,10 @@ repos:
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.2
+    rev: v1.17.1
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
-        args: []
-        language_version: "3.8"
         additional_dependencies:
           - iniconfig>=1.1.0
           - attrs>=19.2.0
@@ -45,16 +47,38 @@ repos:
             # for mypy running on python>=3.11 since exceptiongroup is only a dependency
             # on <3.11
           - exceptiongroup>=1.0.0rc8
+-   repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.404
+    hooks:
+    -   id: pyright
+        files: ^(src/|scripts/)
+        additional_dependencies:
+          - iniconfig>=1.1.0
+          - attrs>=19.2.0
+          - pluggy>=1.5.0
+          - packaging
+          - tomli
+          - types-setuptools
+          - types-tabulate
+            # for mypy running on python>=3.11 since exceptiongroup is only a dependency
+            # on <3.11
+          - exceptiongroup>=1.0.0rc8
+        # Manual because passing pyright is a work in progress.
+        stages: [manual]
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "2.2.4"
+  rev: "v2.6.0"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
+    rev: v3.20.0
     hooks:
     -   id: pyupgrade
+        args:
+          - "--py39-plus"
+        # Manual because ruff does what pyupgrade does and the two are not out of sync
+        # often enough to make launching pyupgrade everytime worth it
         stages: [manual]
 -   repo: local
     hooks:
@@ -63,7 +87,8 @@ repos:
         entry: pylint
         language: system
         types: [python]
-        args: ["-rn", "-sn", "--fail-on=I"]
+        args: ["-rn", "-sn", "--fail-on=I", "--enable-all-extentions"]
+        require_serial: true
         stages: [manual]
     -   id: rst
         name: rst

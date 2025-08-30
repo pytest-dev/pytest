@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 import collections
+from collections.abc import Collection
+from collections.abc import Iterable
+from collections.abc import Set as AbstractSet
 import dataclasses
-from typing import AbstractSet
-from typing import Collection
-from typing import Iterable
 from typing import Optional
 from typing import TYPE_CHECKING
 
 from .expression import Expression
 from .expression import ParseError
+from .structures import _HiddenParam
 from .structures import EMPTY_PARAMETERSET_OPTION
 from .structures import get_empty_parameterset_mark
+from .structures import HIDDEN_PARAM
 from .structures import Mark
 from .structures import MARK_GEN
 from .structures import MarkDecorator
@@ -33,6 +35,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "HIDDEN_PARAM",
     "MARK_GEN",
     "Mark",
     "MarkDecorator",
@@ -48,7 +51,7 @@ old_mark_config_key = StashKey[Optional[Config]]()
 def param(
     *values: object,
     marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
-    id: str | None = None,
+    id: str | _HiddenParam | None = None,
 ) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.
@@ -66,15 +69,27 @@ def param(
             assert eval(test_input) == expected
 
     :param values: Variable args of the values of the parameter set, in order.
-    :param marks: A single mark or a list of marks to be applied to this parameter set.
-    :param id: The id to attribute to this parameter set.
+
+    :param marks:
+        A single mark or a list of marks to be applied to this parameter set.
+
+        :ref:`pytest.mark.usefixtures <pytest.mark.usefixtures ref>` cannot be added via this parameter.
+
+    :type id: str | Literal[pytest.HIDDEN_PARAM] | None
+    :param id:
+        The id to attribute to this parameter set.
+
+        .. versionadded:: 8.4
+            :ref:`hidden-param` means to hide the parameter set
+            from the test name. Can only be used at most 1 time, as
+            test names need to be unique.
     """
     return ParameterSet.param(*values, marks=marks, id=id)
 
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-k",
         action="store",
         dest="keyword",
@@ -94,7 +109,7 @@ def pytest_addoption(parser: Parser) -> None:
         "The matching is case-insensitive.",
     )
 
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-m",
         action="store",
         dest="markexpr",
@@ -188,12 +203,7 @@ class KeywordMatcher:
         if kwargs:
             raise UsageError("Keyword expressions do not support call parameters.")
         subname = subname.lower()
-        names = (name.lower() for name in self._names)
-
-        for name in names:
-            if subname in name:
-                return True
-        return False
+        return any(subname in name.lower() for name in self._names)
 
 
 def deselect_by_keyword(items: list[Item], config: Config) -> None:
@@ -238,10 +248,9 @@ class MarkMatcher:
         if not (matches := self.own_mark_name_mapping.get(name, [])):
             return False
 
-        for mark in matches:
+        for mark in matches:  # pylint: disable=consider-using-any-or-all
             if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
                 return True
-
         return False
 
 

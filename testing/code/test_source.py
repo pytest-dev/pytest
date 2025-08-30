@@ -1,21 +1,19 @@
 # mypy: allow-untyped-defs
-# flake8: noqa
-# disable flake check on this file because some constructs are strange
-# or redundant on purpose and can't be disable on a line-by-line basis
+from __future__ import annotations
+
 import inspect
 import linecache
+from pathlib import Path
 import sys
 import textwrap
-from pathlib import Path
 from typing import Any
-from typing import Dict
 
-import pytest
 from _pytest._code import Code
 from _pytest._code import Frame
 from _pytest._code import getfslineno
 from _pytest._code import Source
 from _pytest.pathlib import import_path
+import pytest
 
 
 def test_source_str_function() -> None:
@@ -336,7 +334,7 @@ def test_findsource(monkeypatch) -> None:
     assert src is not None
     assert "if 1:" in str(src)
 
-    d: Dict[str, Any] = {}
+    d: dict[str, Any] = {}
     eval(co, d)
     src, lineno = findsource(d["x"])
     assert src is not None
@@ -464,7 +462,6 @@ def test_comment_in_statement() -> None:
 
 def test_source_with_decorator() -> None:
     """Test behavior with Source / Code().source with regard to decorators."""
-    from _pytest.compat import get_real_func
 
     @pytest.mark.foo
     def deco_mark():
@@ -478,14 +475,14 @@ def test_source_with_decorator() -> None:
     def deco_fixture():
         assert False
 
-    src = inspect.getsource(deco_fixture)
+    src = inspect.getsource(deco_fixture._get_wrapped_function())
     assert src == "    @pytest.fixture\n    def deco_fixture():\n        assert False\n"
-    # currently Source does not unwrap decorators, testing the
-    # existing behavior here for explicitness, but perhaps we should revisit/change this
-    # in the future
-    assert str(Source(deco_fixture)).startswith("@functools.wraps(function)")
+    # Make sure the decorator is not a wrapped function
+    assert not str(Source(deco_fixture)).startswith("@functools.wraps(function)")
     assert (
-        textwrap.indent(str(Source(get_real_func(deco_fixture))), "    ") + "\n" == src
+        textwrap.indent(str(Source(deco_fixture._get_wrapped_function())), "    ")
+        + "\n"
+        == src
     )
 
 

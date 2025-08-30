@@ -447,7 +447,7 @@ Example:
     ================================= XPASSES ==================================
     ========================= short test summary info ==========================
     SKIPPED [1] test_example.py:22: skipping this test
-    XFAIL test_example.py::test_xfail - reason: xfailing this test
+    XFAIL test_example.py::test_xfail - xfailing this test
     XPASS test_example.py::test_xpass - always xfail
     ERROR test_example.py::test_error - assert 0
     FAILED test_example.py::test_fail - assert 0
@@ -570,29 +570,6 @@ That will cause pytest to truncate the assertions to 10 lines or 90 characters, 
 
 Setting both :confval:`truncation_limit_lines` and :confval:`truncation_limit_chars` to ``0`` will disable the truncation.
 However, setting only one of those values will disable one truncation mode, but will leave the other one intact.
-
-Creating resultlog format files
---------------------------------------------------
-
-To create plain-text machine-readable result files you can issue:
-
-.. code-block:: bash
-
-    pytest --resultlog=path
-
-and look at the content at the ``path`` location.  Such files are used e.g.
-by the `PyPy-test`_ web page to show test results over several revisions.
-
-.. warning::
-
-    This option is rarely used and is scheduled for removal in pytest 6.0.
-
-    If you use this option, consider using the new `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin instead.
-
-    See :ref:`the deprecation docs <resultlog deprecated>` for more information.
-
-
-.. _`PyPy-test`: http://buildbot.pypy.org/summary
 
 
 Creating JUnitXML format files

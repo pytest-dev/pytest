@@ -2,17 +2,17 @@
 from __future__ import annotations
 
 import abc
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import MutableMapping
 from functools import cached_property
-from inspect import signature
+from functools import lru_cache
 import os
 import pathlib
 from pathlib import Path
 from typing import Any
-from typing import Callable
 from typing import cast
-from typing import Iterable
-from typing import Iterator
-from typing import MutableMapping
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -28,6 +28,7 @@ from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
 from _pytest.compat import LEGACY_PATH
+from _pytest.compat import signature
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
 from _pytest.config.compat import _check_path
@@ -37,7 +38,6 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
-from _pytest.pathlib import commonpath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
@@ -143,14 +143,14 @@ class Node(abc.ABC, metaclass=NodeMeta):
     # Use __slots__ to make attribute access faster.
     # Note that __dict__ is still available.
     __slots__ = (
-        "name",
-        "parent",
-        "config",
-        "session",
-        "path",
+        "__dict__",
         "_nodeid",
         "_store",
-        "__dict__",
+        "config",
+        "name",
+        "parent",
+        "path",
+        "session",
     )
 
     def __init__(
@@ -543,11 +543,17 @@ class Collector(Node, abc.ABC):
         return excinfo.traceback
 
 
-def _check_initialpaths_for_relpath(session: Session, path: Path) -> str | None:
-    for initial_path in session._initialpaths:
-        if commonpath(path, initial_path) == initial_path:
-            rel = str(path.relative_to(initial_path))
-            return "" if rel == "." else rel
+@lru_cache(maxsize=1000)
+def _check_initialpaths_for_relpath(
+    initial_paths: frozenset[Path], path: Path
+) -> str | None:
+    if path in initial_paths:
+        return ""
+
+    for parent in path.parents:
+        if parent in initial_paths:
+            return str(path.relative_to(parent))
+
     return None
 
 
@@ -594,7 +600,7 @@ class FSCollector(Collector, abc.ABC):
             try:
                 nodeid = str(self.path.relative_to(session.config.rootpath))
             except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session, path)
+                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
 
             if nodeid and os.sep != SEP:
                 nodeid = nodeid.replace(os.sep, SEP)

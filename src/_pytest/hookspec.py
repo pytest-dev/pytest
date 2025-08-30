@@ -5,10 +5,10 @@ and by builtin plugins."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
-from typing import Mapping
-from typing import Sequence
 from typing import TYPE_CHECKING
 
 from pluggy import HookspecMarker
@@ -277,7 +277,7 @@ def pytest_collection_modifyitems(
     When items are deselected (filtered out from ``items``),
     the hook :hook:`pytest_deselected` must be called explicitly
     with the deselected items to properly notify other plugins,
-    e.g. with ``config.hook.pytest_deselected(deselected_items)``.
+    e.g. with ``config.hook.pytest_deselected(items=deselected_items)``.
 
     :param session: The pytest session object.
     :param config: The pytest config object.

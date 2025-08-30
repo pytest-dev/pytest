@@ -27,14 +27,16 @@ jobs:
       pull-requests: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
+        # persist-credentials is needed in order for us to push the release branch.
+        persist-credentials: true
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.8"
+        python-version: "3.x"
 
     - name: Install dependencies
       run: |
@@ -43,10 +45,18 @@ jobs:
 
     - name: Prepare release PR (minor/patch release)
       if: github.event.inputs.major == 'no'
+      env:
+        BRANCH: ${{ github.event.inputs.branch }}
+        PRERELEASE: ${{ github.event.inputs.prerelease }}
+        GH_TOKEN: ${{ github.token }}
       run: |
-        tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ github.token }} --prerelease='${{ github.event.inputs.prerelease }}'
+        tox -e prepare-release-pr -- "$BRANCH" --prerelease="$PRERELEASE"
 
     - name: Prepare release PR (major release)
       if: github.event.inputs.major == 'yes'
+      env:
+        BRANCH: ${{ github.event.inputs.branch }}
+        PRERELEASE: ${{ github.event.inputs.prerelease }}
+        GH_TOKEN: ${{ github.token }}
       run: |
-        tox -e prepare-release-pr -- ${{ github.event.inputs.branch }} ${{ github.token }} --major --prerelease='${{ github.event.inputs.prerelease }}'
+        tox -e prepare-release-pr -- "$BRANCH" --major --prerelease="$PRERELEASE"

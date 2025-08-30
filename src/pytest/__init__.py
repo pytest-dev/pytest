@@ -33,6 +33,7 @@ from _pytest.legacypath import Testdir
 from _pytest.logging import LogCaptureFixture
 from _pytest.main import Dir
 from _pytest.main import Session
+from _pytest.mark import HIDDEN_PARAM
 from _pytest.mark import Mark
 from _pytest.mark import MARK_GEN as mark
 from _pytest.mark import MarkDecorator
@@ -59,7 +60,9 @@ from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
-from _pytest.python_api import raises
+from _pytest.raises import raises
+from _pytest.raises import RaisesExc
+from _pytest.raises import RaisesGroup
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
@@ -77,9 +80,9 @@ from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
+from _pytest.warning_types import PytestFDWarning
 from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestReturnNotNoneWarning
-from _pytest.warning_types import PytestUnhandledCoroutineWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestUnraisableExceptionWarning
@@ -90,41 +93,28 @@ set_trace = __pytestPDB.set_trace
 
 
 __all__ = [
-    "__version__",
-    "approx",
+    "HIDDEN_PARAM",
     "Cache",
     "CallInfo",
     "CaptureFixture",
     "Class",
-    "cmdline",
-    "Collector",
     "CollectReport",
+    "Collector",
     "Config",
-    "console_main",
-    "deprecated_call",
     "Dir",
     "Directory",
     "DoctestItem",
-    "exit",
     "ExceptionInfo",
     "ExitCode",
-    "fail",
     "File",
-    "fixture",
     "FixtureDef",
     "FixtureLookupError",
     "FixtureRequest",
-    "freeze_includes",
     "Function",
-    "hookimpl",
     "HookRecorder",
-    "hookspec",
-    "importorskip",
     "Item",
     "LineMatcher",
     "LogCaptureFixture",
-    "main",
-    "mark",
     "Mark",
     "MarkDecorator",
     "MarkGenerator",
@@ -133,7 +123,6 @@ __all__ = [
     "MonkeyPatch",
     "OptionGroup",
     "Package",
-    "param",
     "Parser",
     "PytestAssertRewriteWarning",
     "PytestCacheWarning",
@@ -141,33 +130,50 @@ __all__ = [
     "PytestConfigWarning",
     "PytestDeprecationWarning",
     "PytestExperimentalApiWarning",
+    "PytestFDWarning",
+    "PytestPluginManager",
     "PytestRemovedIn9Warning",
     "PytestReturnNotNoneWarning",
-    "Pytester",
-    "PytestPluginManager",
-    "PytestUnhandledCoroutineWarning",
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
     "PytestUnraisableExceptionWarning",
     "PytestWarning",
-    "raises",
+    "Pytester",
+    "RaisesExc",
+    "RaisesGroup",
     "RecordedHookCall",
-    "register_assert_rewrite",
     "RunResult",
     "Session",
-    "set_trace",
-    "skip",
     "Stash",
     "StashKey",
-    "version_tuple",
-    "TempdirFactory",
     "TempPathFactory",
+    "TempdirFactory",
     "TerminalReporter",
-    "Testdir",
     "TestReport",
     "TestShortLogReport",
+    "Testdir",
     "UsageError",
     "WarningsRecorder",
+    "__version__",
+    "approx",
+    "cmdline",
+    "console_main",
+    "deprecated_call",
+    "exit",
+    "fail",
+    "fixture",
+    "freeze_includes",
+    "hookimpl",
+    "hookspec",
+    "importorskip",
+    "main",
+    "mark",
+    "param",
+    "raises",
+    "register_assert_rewrite",
+    "set_trace",
+    "skip",
+    "version_tuple",
     "warns",
     "xfail",
     "yield_fixture",

@@ -1,11 +1,11 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Callable
 import inspect
 from pathlib import Path
 import sys
 import textwrap
-from typing import Callable
 
 from _pytest.doctest import _get_checker
 from _pytest.doctest import _is_main_py
@@ -223,9 +223,12 @@ class TestDoctests:
                 "002 >>> 0 / i",
                 "UNEXPECTED EXCEPTION: ZeroDivisionError*",
                 "Traceback (most recent call last):",
-                '  File "*/doctest.py", line *, in __run',
-                "    *",
-                *((" *^^^^*", " *", " *") if sys.version_info >= (3, 13) else ()),
+                *(
+                    ('  File "*/doctest.py", line *, in __run', "    *")
+                    if sys.version_info <= (3, 14)
+                    else ()
+                ),
+                *((" *^^^^*", " *", " *") if sys.version_info[:2] == (3, 13) else ()),
                 '  File "<doctest test_doctest_unexpected_exception.txt[1]>", line 1, in <module>',
                 "ZeroDivisionError: division by zero",
                 "*/test_doctest_unexpected_exception.txt:2: UnexpectedException",
@@ -1328,7 +1331,7 @@ class TestDoctestAutoUseFixtures:
         params = ("--doctest-modules",) if enable_doctest else ()
         passes = 3 if enable_doctest else 2
         result = pytester.runpytest(*params)
-        result.stdout.fnmatch_lines(["*=== %d passed in *" % passes])
+        result.stdout.fnmatch_lines([f"*=== {passes} passed in *"])
 
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("autouse", [True, False])

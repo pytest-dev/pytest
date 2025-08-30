@@ -7,6 +7,10 @@ PYTEST_DONT_REWRITE
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Sequence
 import contextlib
 from fnmatch import fnmatch
 import gc
@@ -22,15 +26,11 @@ import subprocess
 import sys
 import traceback
 from typing import Any
-from typing import Callable
 from typing import Final
 from typing import final
-from typing import Generator
 from typing import IO
-from typing import Iterable
 from typing import Literal
 from typing import overload
-from typing import Sequence
 from typing import TextIO
 from typing import TYPE_CHECKING
 from weakref import WeakKeyDictionary
@@ -65,7 +65,7 @@ from _pytest.pathlib import make_numbered_dir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.tmpdir import TempPathFactory
-from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import PytestFDWarning
 
 
 if TYPE_CHECKING:
@@ -188,7 +188,7 @@ class LsofFdLeakChecker:
                     "*** function {}:{}: {} ".format(*item.location),
                     "See issue #2366",
                 ]
-                item.warn(PytestWarning("\n".join(error)))
+                item.warn(PytestFDWarning("\n".join(error)))
 
 
 # used at least by pytest-xdist plugin
@@ -547,8 +547,10 @@ class RunResult:
 
     def __repr__(self) -> str:
         return (
-            "<RunResult ret=%s len(stdout.lines)=%d len(stderr.lines)=%d duration=%.2fs>"
-            % (self.ret, len(self.stdout.lines), len(self.stderr.lines), self.duration)
+            f"<RunResult ret={self.ret!s} "
+            f"len(stdout.lines)={len(self.stdout.lines)} "
+            f"len(stderr.lines)={len(self.stderr.lines)} "
+            f"duration={self.duration:.2f}s>"
         )
 
     def parseoutcomes(self) -> dict[str, int]:
@@ -680,9 +682,11 @@ class Pytester:
         self._name = name
         self._path: Path = tmp_path_factory.mktemp(name, numbered=True)
         #: A list of plugins to use with :py:meth:`parseconfig` and
-        #: :py:meth:`runpytest`.  Initially this is an empty list but plugins can
-        #: be added to the list.  The type of items to add to the list depends on
-        #: the method using them so refer to them for details.
+        #: :py:meth:`runpytest`. Initially this is an empty list but plugins can
+        #: be added to the list.
+        #:
+        #: When running in subprocess mode, specify plugins by name (str) - adding
+        #: plugin objects directly is not supported.
         self.plugins: list[str | _PluggyPlugin] = []
         self._sys_path_snapshot = SysPathsSnapshot()
         self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
@@ -1090,6 +1094,8 @@ class Pytester:
             Typically we reraise keyboard interrupts from the child run. If
             True, the KeyboardInterrupt exception is captured.
         """
+        from _pytest.unraisableexception import gc_collect_iterations_key
+
         # (maybe a cpython bug?) the importlib cache sometimes isn't updated
         # properly between file creation and inline_run (especially if imports
         # are interspersed with file creation)
@@ -1113,11 +1119,16 @@ class Pytester:
 
             rec = []
 
-            class Collect:
-                def pytest_configure(x, config: Config) -> None:
+            class PytesterHelperPlugin:
+                @staticmethod
+                def pytest_configure(config: Config) -> None:
                     rec.append(self.make_hook_recorder(config.pluginmanager))
 
-            plugins.append(Collect())
+                    # The unraisable plugin GC collect slows down inline
+                    # pytester runs too much.
+                    config.stash[gc_collect_iterations_key] = 0
+
+            plugins.append(PytesterHelperPlugin())
             ret = main([str(x) for x in args], plugins=plugins)
             if len(rec) == 1:
                 reprec = rec.pop()
@@ -1148,7 +1159,7 @@ class Pytester:
 
         if syspathinsert:
             self.syspathinsert()
-        now = timing.time()
+        instant = timing.Instant()
         capture = _get_multicapture("sys")
         capture.start_capturing()
         try:
@@ -1178,7 +1189,7 @@ class Pytester:
 
         assert reprec.ret is not None
         res = RunResult(
-            reprec.ret, out.splitlines(), err.splitlines(), timing.time() - now
+            reprec.ret, out.splitlines(), err.splitlines(), instant.elapsed().seconds
         )
         res.reprec = reprec  # type: ignore
         return res
@@ -1220,10 +1231,9 @@ class Pytester:
         """
         import _pytest.config
 
-        new_args = self._ensure_basetemp(args)
-        new_args = [str(x) for x in new_args]
+        new_args = [str(x) for x in self._ensure_basetemp(args)]
 
-        config = _pytest.config._prepareconfig(new_args, self.plugins)  # type: ignore[arg-type]
+        config = _pytest.config._prepareconfig(new_args, self.plugins)
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)
@@ -1406,7 +1416,7 @@ class Pytester:
         print("     in:", Path.cwd())
 
         with p1.open("w", encoding="utf8") as f1, p2.open("w", encoding="utf8") as f2:
-            now = timing.time()
+            instant = timing.Instant()
             popen = self.popen(
                 cmdargs,
                 stdin=stdin,
@@ -1443,7 +1453,7 @@ class Pytester:
 
         with contextlib.suppress(ValueError):
             ret = ExitCode(ret)
-        return RunResult(ret, out, err, timing.time() - now)
+        return RunResult(ret, out, err, instant.elapsed().seconds)
 
     def _dump_lines(self, lines, fp):
         try:
@@ -1485,9 +1495,13 @@ class Pytester:
         __tracebackhide__ = True
         p = make_numbered_dir(root=self.path, prefix="runpytest-", mode=0o700)
         args = (f"--basetemp={p}", *args)
-        plugins = [x for x in self.plugins if isinstance(x, str)]
-        if plugins:
-            args = ("-p", plugins[0], *args)
+        for plugin in self.plugins:
+            if not isinstance(plugin, str):
+                raise ValueError(
+                    f"Specifying plugins as objects is not supported in pytester subprocess mode; "
+                    f"specify by name instead: {plugin}"
+                )
+            args = ("-p", plugin, *args)
         args = self._getpytestargs() + args
         return self.run(*args, timeout=timeout)
 
