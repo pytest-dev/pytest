@@ -426,6 +426,9 @@ markers = [
     "slow",
     # experimental mark for all tests using pexpect
     "uses_pexpect",
+    # Disables the `remove_ci_env_var` autouse fixture on a given test that
+    # actually inspects whether the CI environment variable is set.
+    "keep_ci_var",
 ]
 
 [tool.towncrier]

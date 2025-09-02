@@ -1,0 +1,1 @@
+Make pytest's own testsuite insensitive to the presence of the ``CI`` environment variable -- by :user:`ogrisel`.
