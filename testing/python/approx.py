@@ -1085,10 +1085,10 @@ class TestRecursiveSequenceMap:
         ]
 
     def test_map_over_mixed_sequence(self):
-        assert _recursive_sequence_map(sqrt, [4, (25, 64), [(49)]]) == [
+        assert _recursive_sequence_map(sqrt, [4, (25, 64), [49]]) == [
             2,
             (5, 8),
-            [(7)],
+            [7],
         ]
 
     def test_map_over_sequence_like(self):
