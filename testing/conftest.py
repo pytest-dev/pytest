@@ -237,3 +237,9 @@ def mock_timing(monkeypatch: MonkeyPatch):
     result = MockTiming()
     result.patch(monkeypatch)
     return result
+
+
+@pytest.fixture
+def remove_ci_env_var(monkeypatch: MonkeyPatch) -> None:
+    """Make the test insensitive if it is running in CI or not."""
+    monkeypatch.delenv("CI", raising=False)

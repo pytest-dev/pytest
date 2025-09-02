@@ -2535,8 +2535,7 @@ def test_skip_reasons_folding() -> None:
     assert reason == message
 
 
-def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
-    monkeypatch.delenv("CI")
+def test_line_with_reprcrash(monkeypatch: MonkeyPatch, remove_ci_env_var) -> None:
     mocked_verbose_word = "FAILED"
 
     mocked_pos = "some::nodeid"

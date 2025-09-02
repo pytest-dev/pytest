@@ -14,7 +14,6 @@ from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
 import pytest
 from pytest import approx
-from pytest import MonkeyPatch
 
 
 inf, nan = float("inf"), float("nan")
@@ -285,9 +284,8 @@ class TestApprox:
         )
 
     def test_error_messages_with_different_verbosity(
-        self, assert_approx_raises_regex, monkeypatch: MonkeyPatch
+        self, assert_approx_raises_regex, remove_ci_env_var
     ):
-        monkeypatch.delenv("CI")
         np = pytest.importorskip("numpy")
         for v in [0, 1, 2]:
             # Verbosity level doesn't affect the error message for scalars
@@ -1089,10 +1087,10 @@ class TestRecursiveSequenceMap:
         ]
 
     def test_map_over_mixed_sequence(self):
-        assert _recursive_sequence_map(sqrt, [4, (25, 64), [(49)]]) == [
+        assert _recursive_sequence_map(sqrt, [4, (25, 64), [49]]) == [
             2,
             (5, 8),
-            [(7)],
+            [7],
         ]
 
     def test_map_over_sequence_like(self):

@@ -111,13 +111,12 @@ class TestImportHookInstallation:
         result.stdout.fnmatch_lines([expected])
 
     def test_rewrite_assertions_pytester_plugin(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch
+        self, pytester: Pytester, remove_ci_env_var
     ) -> None:
         """
         Assertions in the pytester plugin must also benefit from assertion
         rewriting (#1920).
         """
-        monkeypatch.delenv("CI")
         pytester.makepyfile(
             """
             pytest_plugins = ['pytester']
@@ -455,9 +454,8 @@ class TestAssert_reprcompare:
         assert "- eggs" in diff
         assert "+ spam" in diff
 
-    def test_bytes_diff_normal(self, monkeypatch: MonkeyPatch) -> None:
+    def test_bytes_diff_normal(self, remove_ci_env_var) -> None:
         """Check special handling for bytes diff (#5260)"""
-        monkeypatch.delenv("CI")
         diff = callequal(b"spam", b"eggs")
 
         assert diff == [
@@ -534,15 +532,12 @@ class TestAssert_reprcompare:
             ),
         ],
     )
-    def test_iterable_full_diff(
-        self, left, right, expected, monkeypatch: MonkeyPatch
-    ) -> None:
+    def test_iterable_full_diff(self, left, right, expected, remove_ci_env_var) -> None:
         """Test the full diff assertion failure explanation.
 
         When verbose is False, then just a -v notice to get the diff is rendered,
         when verbose is True, then ndiff of the pprint is returned.
         """
-        monkeypatch.delenv("CI")
         expl = callequal(left, right, verbose=0)
         assert expl is not None
         assert expl[-1] == "Use -v to get more diff"
@@ -550,8 +545,7 @@ class TestAssert_reprcompare:
         assert verbose_expl is not None
         assert "\n".join(verbose_expl).endswith(textwrap.dedent(expected).strip())
 
-    def test_iterable_quiet(self, monkeypatch: MonkeyPatch) -> None:
-        monkeypatch.delenv("CI")
+    def test_iterable_quiet(self, remove_ci_env_var) -> None:
         expl = callequal([1, 2], [10, 2], verbose=-1)
         assert expl == [
             "[1, 2] == [10, 2]",
@@ -721,8 +715,7 @@ class TestAssert_reprcompare:
         assert expl is not None
         assert len(expl) > 1
 
-    def test_dict_omitting(self, monkeypatch: MonkeyPatch) -> None:
-        monkeypatch.delenv("CI")
+    def test_dict_omitting(self, remove_ci_env_var) -> None:
         lines = callequal({"a": 0, "b": 1}, {"a": 1, "b": 1})
         assert lines is not None
         assert lines[2].startswith("Omitting 1 identical item")
@@ -990,10 +983,7 @@ class TestAssert_reprcompare_dataclass:
             consecutive=True,
         )
 
-    def test_recursive_dataclasses(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch
-    ) -> None:
-        monkeypatch.delenv("CI")
+    def test_recursive_dataclasses(self, pytester: Pytester, remove_ci_env_var) -> None:
         p = pytester.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
         result = pytester.runpytest(p)
         result.assert_outcomes(failed=1, passed=0)
@@ -1225,9 +1215,7 @@ class TestAssert_reprcompare_attrsclass:
 
 
 class TestAssert_reprcompare_namedtuple:
-    def test_namedtuple(self, monkeypatch: MonkeyPatch) -> None:
-        monkeypatch.delenv("CI")
-
+    def test_namedtuple(self, remove_ci_env_var) -> None:
         class NT(NamedTuple):
             a: Any
             b: Any
@@ -1250,9 +1238,7 @@ class TestAssert_reprcompare_namedtuple:
             "Use -v to get more diff",
         ]
 
-    def test_comparing_two_different_namedtuple(self, monkeypatch: MonkeyPatch) -> None:
-        monkeypatch.delenv("CI")
-
+    def test_comparing_two_different_namedtuple(self, remove_ci_env_var) -> None:
         class NT1(NamedTuple):
             a: Any
             b: Any
