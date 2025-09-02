@@ -283,9 +283,7 @@ class TestApprox:
             ]
         )
 
-    def test_error_messages_with_different_verbosity(
-        self, assert_approx_raises_regex, remove_ci_env_var
-    ):
+    def test_error_messages_with_different_verbosity(self, assert_approx_raises_regex):
         np = pytest.importorskip("numpy")
         for v in [0, 1, 2]:
             # Verbosity level doesn't affect the error message for scalars

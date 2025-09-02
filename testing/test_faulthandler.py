@@ -71,15 +71,8 @@ def test_disabled(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
-@pytest.mark.parametrize(
-    "enabled",
-    [
-        pytest.param(
-            True, marks=pytest.mark.skip(reason="sometimes crashes on CI (#7022)")
-        ),
-        False,
-    ],
-)
+@pytest.mark.keep_ci_var
+@pytest.mark.parametrize("enabled", [True, False])
 def test_timeout(pytester: Pytester, enabled: bool) -> None:
     """Test option to dump tracebacks after a certain timeout.
 
