@@ -1461,6 +1461,7 @@ class Pytester:
                 print(line, file=fp)
         except UnicodeEncodeError:
             print(f"couldn't print to {fp} because of encoding")
+        fp.flush()
 
     def _getpytestargs(self) -> tuple[str, ...]:
         return sys.executable, "-mpytest"
