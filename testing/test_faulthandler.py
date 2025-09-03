@@ -82,7 +82,7 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
         """
     import os, time
     def test_timeout():
-        time.sleep(5 if "CI" in os.environ else 0.1)
+        time.sleep(1 if "CI" in os.environ else 0.1)
     """
     )
     pytester.makeini(
