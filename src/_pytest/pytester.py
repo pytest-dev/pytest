@@ -1443,6 +1443,8 @@ class Pytester:
                     ret = popen.wait(timeout)
                 except subprocess.TimeoutExpired:
                     handle_timeout()
+            f1.flush()
+            f2.flush()
 
         with p1.open(encoding="utf8") as f1, p2.open(encoding="utf8") as f2:
             out = f1.read().splitlines()
@@ -1461,7 +1463,6 @@ class Pytester:
                 print(line, file=fp)
         except UnicodeEncodeError:
             print(f"couldn't print to {fp} because of encoding")
-        fp.flush()
 
     def _getpytestargs(self) -> tuple[str, ...]:
         return sys.executable, "-mpytest"
