@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import os
 import sys
 
 from _pytest.pytester import Pytester
@@ -76,7 +77,10 @@ def test_disabled(pytester: Pytester) -> None:
     "enabled",
     [
         pytest.param(
-            True, marks=pytest.mark.skip(reason="sometimes crashes on CI (#7022)")
+            True,
+            marks=pytest.mark.skipif(
+                "CI" in os.environ, reason="sometimes crashes on CI (#7022)"
+            ),
         ),
         False,
     ],
@@ -111,7 +115,8 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
     assert result.ret == 0
 
 
-@pytest.mark.skip(reason="sometimes crashes on CI (#7022)")
+@pytest.mark.keep_ci_var
+@pytest.mark.skipif("CI" in os.environ, reason="sometimes crashes on CI (#7022)")
 @pytest.mark.parametrize("exit_on_timeout", [True, False])
 def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
     """Test option to force exit pytest process after a certain timeout."""
