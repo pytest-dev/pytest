@@ -71,6 +71,7 @@ def test_disabled(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+@pytest.mark.keep_ci_var
 @pytest.mark.parametrize(
     "enabled",
     [
