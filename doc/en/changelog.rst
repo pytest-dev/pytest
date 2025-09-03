@@ -31,6 +31,49 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 8.4.2 (2025-09-03)
+=========================
+
+Bug fixes
+---------
+
+- `#13478 <https://github.com/pytest-dev/pytest/issues/13478>`_: Fixed a crash when using :confval:`console_output_style` with ``times`` and a module is skipped.
+
+
+- `#13530 <https://github.com/pytest-dev/pytest/issues/13530>`_: Fixed a crash when using :func:`pytest.approx` and :class:`decimal.Decimal` instances with the :class:`decimal.FloatOperation` trap set.
+
+
+- `#13549 <https://github.com/pytest-dev/pytest/issues/13549>`_: No longer evaluate type annotations in Python ``3.14`` when inspecting function signatures.
+
+  This prevents crashes during module collection when modules do not explicitly use ``from __future__ import annotations`` and import types for annotations within a ``if TYPE_CHECKING:`` block.
+
+
+- `#13559 <https://github.com/pytest-dev/pytest/issues/13559>`_: Added missing `int` and `float` variants to the `Literal` type annotation of the `type` parameter in :meth:`pytest.Parser.addini`.
+
+
+- `#13563 <https://github.com/pytest-dev/pytest/issues/13563>`_: :func:`pytest.approx` now only imports ``numpy`` if NumPy is already in ``sys.modules``. This fixes unconditional import behavior introduced in `8.4.0`.
+
+
+
+Improved documentation
+----------------------
+
+- `#13577 <https://github.com/pytest-dev/pytest/issues/13577>`_: Clarify that ``pytest_generate_tests`` is discovered in test modules/classes; other hooks must be in ``conftest.py`` or plugins.
+
+
+
+Contributor-facing changes
+--------------------------
+
+- `#13480 <https://github.com/pytest-dev/pytest/issues/13480>`_: Self-testing: fixed a few test failures when run with ``-Wdefault`` or a similar override.
+
+
+- `#13547 <https://github.com/pytest-dev/pytest/issues/13547>`_: Self-testing: corrected expected message for ``test_doctest_unexpected_exception`` in Python ``3.14``.
+
+
+- `#13684 <https://github.com/pytest-dev/pytest/issues/13684>`_: Make pytest's own testsuite insensitive to the presence of the ``CI`` environment variable -- by :user:`ogrisel`.
+
+
 pytest 8.4.1 (2025-06-17)
 =========================
 

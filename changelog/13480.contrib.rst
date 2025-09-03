@@ -1,1 +1,0 @@
-Self-testing: fixed a few test failures when run with ``-Wdefault`` or a similar override.
