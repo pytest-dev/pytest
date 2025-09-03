@@ -237,3 +237,15 @@ def mock_timing(monkeypatch: MonkeyPatch):
     result = MockTiming()
     result.patch(monkeypatch)
     return result
+
+
+@pytest.fixture(autouse=True)
+def remove_ci_env_var(monkeypatch: MonkeyPatch, request: pytest.FixtureRequest) -> None:
+    """Make the test insensitive if it is running in CI or not.
+
+    Use `@pytest.mark.keep_ci_var` in a test to avoid applying this fixture, letting the test
+    see the real `CI` variable (if present).
+    """
+    has_keep_ci_mark = request.node.get_closest_marker("keep_ci_var") is not None
+    if not has_keep_ci_mark:
+        monkeypatch.delenv("CI", raising=False)
