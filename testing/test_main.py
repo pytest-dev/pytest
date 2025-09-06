@@ -121,66 +121,72 @@ class TestResolveCollectionArgument:
     def test_file(self, invocation_path: Path) -> None:
         """File and parts."""
         assert resolve_collection_argument(
-            invocation_path, "src/pkg/test.py"
+            invocation_path, "src/pkg/test.py", 0
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[],
             parametrization=None,
             module_name=None,
+            original_index=0,
         )
         assert resolve_collection_argument(
-            invocation_path, "src/pkg/test.py::"
+            invocation_path, "src/pkg/test.py::", 10
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[""],
             parametrization=None,
             module_name=None,
+            original_index=10,
         )
         assert resolve_collection_argument(
-            invocation_path, "src/pkg/test.py::foo::bar"
+            invocation_path, "src/pkg/test.py::foo::bar", 20
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar"],
             parametrization=None,
             module_name=None,
+            original_index=20,
         )
         assert resolve_collection_argument(
-            invocation_path, "src/pkg/test.py::foo::bar::"
+            invocation_path, "src/pkg/test.py::foo::bar::", 30
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar", ""],
             parametrization=None,
             module_name=None,
+            original_index=30,
         )
         assert resolve_collection_argument(
-            invocation_path, "src/pkg/test.py::foo::bar[a,b,c]"
+            invocation_path, "src/pkg/test.py::foo::bar[a,b,c]", 40
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar"],
             parametrization="[a,b,c]",
             module_name=None,
+            original_index=40,
         )
 
     def test_dir(self, invocation_path: Path) -> None:
         """Directory and parts."""
         assert resolve_collection_argument(
-            invocation_path, "src/pkg"
+            invocation_path, "src/pkg", 0
         ) == CollectionArgument(
             path=invocation_path / "src/pkg",
             parts=[],
             parametrization=None,
             module_name=None,
+            original_index=0,
         )
 
         with pytest.raises(
             UsageError, match=r"directory argument cannot contain :: selection parts"
         ):
-            resolve_collection_argument(invocation_path, "src/pkg::")
+            resolve_collection_argument(invocation_path, "src/pkg::", 0)
 
         with pytest.raises(
             UsageError, match=r"directory argument cannot contain :: selection parts"
         ):
-            resolve_collection_argument(invocation_path, "src/pkg::foo::bar")
+            resolve_collection_argument(invocation_path, "src/pkg::foo::bar", 0)
 
     @pytest.mark.parametrize("namespace_package", [False, True])
     def test_pypath(self, namespace_package: bool, invocation_path: Path) -> None:
@@ -190,24 +196,27 @@ class TestResolveCollectionArgument:
             (invocation_path / "src/pkg/__init__.py").unlink()
 
         assert resolve_collection_argument(
-            invocation_path, "pkg.test", as_pypath=True
+            invocation_path, "pkg.test", 0, as_pypath=True
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[],
             parametrization=None,
             module_name="pkg.test",
+            original_index=0,
         )
         assert resolve_collection_argument(
-            invocation_path, "pkg.test::foo::bar", as_pypath=True
+            invocation_path, "pkg.test::foo::bar", 0, as_pypath=True
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar"],
             parametrization=None,
             module_name="pkg.test",
+            original_index=0,
         )
         assert resolve_collection_argument(
             invocation_path,
             "pkg",
+            0,
             as_pypath=True,
             consider_namespace_packages=namespace_package,
         ) == CollectionArgument(
@@ -215,6 +224,7 @@ class TestResolveCollectionArgument:
             parts=[],
             parametrization=None,
             module_name="pkg",
+            original_index=0,
         )
 
         with pytest.raises(
@@ -223,18 +233,20 @@ class TestResolveCollectionArgument:
             resolve_collection_argument(
                 invocation_path,
                 "pkg::foo::bar",
+                0,
                 as_pypath=True,
                 consider_namespace_packages=namespace_package,
             )
 
     def test_parametrized_name_with_colons(self, invocation_path: Path) -> None:
         assert resolve_collection_argument(
-            invocation_path, "src/pkg/test.py::test[a::b]"
+            invocation_path, "src/pkg/test.py::test[a::b]", 0
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["test"],
             parametrization="[a::b]",
             module_name=None,
+            original_index=0,
         )
 
     @pytest.mark.parametrize(
@@ -246,17 +258,14 @@ class TestResolveCollectionArgument:
         with pytest.raises(
             UsageError, match=r"path cannot contain \[\] parametrization"
         ):
-            resolve_collection_argument(
-                invocation_path,
-                arg,
-            )
+            resolve_collection_argument(invocation_path, arg, 0)
 
     def test_does_not_exist(self, invocation_path: Path) -> None:
         """Given a file/module that does not exist raises UsageError."""
         with pytest.raises(
             UsageError, match=re.escape("file or directory not found: foobar")
         ):
-            resolve_collection_argument(invocation_path, "foobar")
+            resolve_collection_argument(invocation_path, "foobar", 0)
 
         with pytest.raises(
             UsageError,
@@ -264,30 +273,32 @@ class TestResolveCollectionArgument:
                 "module or package not found: foobar (missing __init__.py?)"
             ),
         ):
-            resolve_collection_argument(invocation_path, "foobar", as_pypath=True)
+            resolve_collection_argument(invocation_path, "foobar", 0, as_pypath=True)
 
     def test_absolute_paths_are_resolved_correctly(self, invocation_path: Path) -> None:
         """Absolute paths resolve back to absolute paths."""
         full_path = str(invocation_path / "src")
         assert resolve_collection_argument(
-            invocation_path, full_path
+            invocation_path, full_path, 0
         ) == CollectionArgument(
             path=Path(os.path.abspath("src")),
             parts=[],
             parametrization=None,
             module_name=None,
+            original_index=0,
         )
 
         # ensure full paths given in the command-line without the drive letter resolve
         # to the full path correctly (#7628)
         drive, full_path_without_drive = os.path.splitdrive(full_path)
         assert resolve_collection_argument(
-            invocation_path, full_path_without_drive
+            invocation_path, full_path_without_drive, 0
         ) == CollectionArgument(
             path=Path(os.path.abspath("src")),
             parts=[],
             parametrization=None,
             module_name=None,
+            original_index=0,
         )
 
 
