@@ -85,21 +85,21 @@ Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` stat
 Features
 --------
 
-- Detailed info on failing `assert statements <https://docs.pytest.org/en/stable/how-to/assert.html>`_ (no need to remember ``self.assert*`` names)
+- Detailed info on failing `assert statements <https://docs.pytest.org/en/stable/how-to/assert.html>`_ (no need to remember ``self.assert*`` names).
 
 - `Auto-discovery
   <https://docs.pytest.org/en/stable/explanation/goodpractices.html#python-test-discovery>`_
-  of test modules and functions
+  of test modules and functions.
 
 - `Modular fixtures <https://docs.pytest.org/en/stable/explanation/fixtures.html>`_ for
-  managing small or parametrized long-lived test resources
+  managing small or parametrized long-lived test resources.
 
 - Can run `unittest <https://docs.pytest.org/en/stable/how-to/unittest.html>`_ (or trial)
-  test suites out of the box
+  test suites out of the box.
 
-- Python 3.9+ or PyPy3
+- Python 3.9+ or PyPy3.
 
-- Rich plugin architecture, with over 1300+ `external plugins <https://docs.pytest.org/en/latest/reference/plugin_list.html>`_ and thriving community
+- Rich plugin architecture, with over 1300+ `external plugins <https://docs.pytest.org/en/latest/reference/plugin_list.html>`_ and thriving community.
 
 
 Documentation
