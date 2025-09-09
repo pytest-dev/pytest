@@ -2250,8 +2250,8 @@ class TestProgressOutputStyle:
         output.stdout.re_match_lines(
             [
                 r"test_bar.py ...................",
-                r"........... \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
-                r"test_foo.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"........... \s+ \d{1,4}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foo.py \.{5} \s+ \d{1,4}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
             ],
             consecutive=True,
         )
