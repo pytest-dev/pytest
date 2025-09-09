@@ -99,7 +99,6 @@ class TerminalWriter:
         except OSError:
             # fallback to shutil
             width, _ = shutil.get_terminal_size(fallback=(80, 24))
-            width = width
         return width
 
 
