@@ -119,6 +119,10 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
 
 
 @pytest.mark.keep_ci_var
+@pytest.mark.skipif(
+    "CI" in os.environ and sys.platform == "linux" and sys.version_info >= (3, 14),
+    reason="sometimes crashes on CI because of truncated outputs (#7022)",
+)
 @pytest.mark.parametrize("exit_on_timeout", [True, False])
 def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
     """Test option to force exit pytest process after a certain timeout."""
