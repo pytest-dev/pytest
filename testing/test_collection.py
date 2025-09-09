@@ -1780,6 +1780,41 @@ def test_collect_short_file_windows(pytester: Pytester) -> None:
     assert result.parseoutcomes() == {"passed": 1}
 
 
+def test_collect_short_file_windows_multi_level_symlink(
+    pytester: Pytester,
+    request: FixtureRequest,
+) -> None:
+    """Regression test for multi-level Windows short-path comparison with
+    symlinks.
+
+    Previously, when matching collection arguments against collected nodes on
+    Windows, the short path fallback resolved symlinks. With a chain a -> b ->
+    target, comparing 'a' against 'b' would incorrectly succeed because both
+    resolved to 'target', which could cause incorrect matching or duplicate
+    collection.
+    """
+    # Prepare target directory with a test file.
+    short_path = Path(tempfile.mkdtemp())
+    request.addfinalizer(lambda: shutil.rmtree(short_path, ignore_errors=True))
+    target = short_path / "target"
+    target.mkdir()
+    (target / "test_chain.py").write_text("def test_chain(): pass", encoding="UTF-8")
+
+    # Create multi-level symlink chain: a -> b -> target.
+    b = short_path / "b"
+    a = short_path / "a"
+    symlink_or_skip(target, b, target_is_directory=True)
+    symlink_or_skip(b, a, target_is_directory=True)
+
+    # Collect via the first symlink; should find exactly one test.
+    result = pytester.runpytest(a)
+    result.assert_outcomes(passed=1)
+
+    # Collect via the intermediate symlink; also exactly one test.
+    result = pytester.runpytest(b)
+    result.assert_outcomes(passed=1)
+
+
 def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     """When using `--pyargs`, the collection tree of a pyargs collection
     argument should only include parents in the import path, not up to confcutdir.

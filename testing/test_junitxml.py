@@ -1822,3 +1822,13 @@ def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
         assert junit_logging == "no"
         assert len(node.find_by_tag("system-err")) == 0
         assert len(node.find_by_tag("system-out")) == 0
+
+
+def test_no_message_quiet(pytester: Pytester) -> None:
+    """Do not show the summary banner when --quiet is given (#13700)."""
+    pytester.makepyfile("def test(): pass")
+    result = pytester.runpytest("--junitxml=pytest.xml")
+    result.stdout.fnmatch_lines("* generated xml file: *")
+
+    result = pytester.runpytest("--junitxml=pytest.xml", "--quiet")
+    result.stdout.no_fnmatch_line("* generated xml file: *")
