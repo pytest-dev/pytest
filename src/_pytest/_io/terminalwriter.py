@@ -90,10 +90,18 @@ class TerminalWriter:
         self.code_highlight = True
 
     @property
-    def fullwidth(self) -> int:
-        if self._terminal_width is not None:
-            return self._terminal_width
-        return get_terminal_width()
+    def fullwidth(self):
+        import os, sys, shutil
+
+        # Try original stdout first
+        try:
+            width = os.get_terminal_size(sys.__stdout__.fileno()).columns
+        except OSError:
+            # fallback to shutil
+            width, _ = shutil.get_terminal_size(fallback=(80, 24))
+            width = width
+        return width
+
 
     @fullwidth.setter
     def fullwidth(self, value: int) -> None:
