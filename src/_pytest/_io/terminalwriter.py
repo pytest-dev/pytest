@@ -91,7 +91,9 @@ class TerminalWriter:
 
     @property
     def fullwidth(self):
-        import os, sys, shutil
+        import os
+        import shutil
+        import sys
 
         # Try original stdout first
         try:
@@ -100,7 +102,6 @@ class TerminalWriter:
             # fallback to shutil
             width, _ = shutil.get_terminal_size(fallback=(80, 24))
         return width
-
 
     @fullwidth.setter
     def fullwidth(self, value: int) -> None:
