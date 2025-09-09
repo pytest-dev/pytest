@@ -1,0 +1,1 @@
+Detect original terminal width when using --capture=fd.
