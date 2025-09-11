@@ -13,3 +13,4 @@ class TestClass:
 
     def test_anothermethod(self):
         pass
+
