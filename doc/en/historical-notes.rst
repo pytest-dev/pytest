@@ -1,4 +1,4 @@
-Historical Notes
+Historical Notes 
 ================
 
 This page lists features or behavior from previous versions of pytest which have changed over the years. They are
