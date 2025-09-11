@@ -1,5 +1,5 @@
 pytest-{version}
-=======================================
+======================================= 
 
 The pytest team is proud to announce the {version} release!
 
