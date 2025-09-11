@@ -1,4 +1,4 @@
-.. image:: https://github.com/pytest-dev/pytest/raw/main/doc/en/img/pytest_logo_curves.svg
+.. image::  https://github.com/pytest-dev/pytest/raw/main/doc/en/img/pytest_logo_curves.svg
    :target: https://docs.pytest.org/en/stable/
    :align: center
    :height: 200
@@ -162,3 +162,4 @@ Copyright Holger Krekel and others, 2004.
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 
 .. _`MIT`: https://github.com/pytest-dev/pytest/blob/main/LICENSE
+
