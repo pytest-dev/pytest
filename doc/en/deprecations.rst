@@ -1,4 +1,4 @@
-.. _deprecations:
+.. _deprecations: 
 
 Deprecations and Removals
 =========================
