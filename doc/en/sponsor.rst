@@ -1,4 +1,4 @@
-Sponsor
+Sponsor 
 =======
 
 pytest is maintained by a team of volunteers from all around the world in their free time. While
