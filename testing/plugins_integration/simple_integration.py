@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-import pytest
+import pytest 
 
 
 def test_foo():
