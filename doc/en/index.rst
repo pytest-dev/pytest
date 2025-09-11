@@ -1,4 +1,4 @@
-.. _features:
+.. _features: 
 
 .. sidebar:: **Next Open Trainings and Events**
 
