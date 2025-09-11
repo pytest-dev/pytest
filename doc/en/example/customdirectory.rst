@@ -1,5 +1,5 @@
 .. _`custom directory collectors`:
-
+ 
 Using a custom directory collector
 ====================================================
 
