@@ -1,4 +1,4 @@
-# PYTHON_ARGCOMPLETE_OK
+# PYTHON_ARGCOMPLETE_OK 
 """pytest: unit and functional testing with Python."""
 
 from __future__ import annotations
