@@ -5,7 +5,7 @@ from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 import pytest
-
+ 
 
 def test_simple_repr():
     assert saferepr(1) == "1"
