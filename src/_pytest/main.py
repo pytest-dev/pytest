@@ -859,6 +859,7 @@ class Session(nodes.Collector):
 
             argpath = collection_argument.path
             names = collection_argument.parts
+            parametrization = collection_argument.parametrization
             module_name = collection_argument.module_name
 
             # resolve_collection_argument() ensures this.
@@ -943,12 +944,18 @@ class Session(nodes.Collector):
 
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
-                        # TODO: Remove parametrized workaround once collection structure contains
-                        # parametrization.
-                        is_match = (
-                            node.name == matchparts[0]
-                            or node.name.split("[")[0] == matchparts[0]
-                        )
+                        if len(matchparts) == 1:
+                            # This the last part, one parametrization goes.
+                            if parametrization is not None:
+                                # A parametrized arg must match exactly.
+                                is_match = node.name == matchparts[0] + parametrization
+                            else:
+                                # A non-parameterized arg matches all parametrizations (if any).
+                                # TODO: Remove the hacky split once the collection structure
+                                # contains parametrization.
+                                is_match = node.name.split("[")[0] == matchparts[0]
+                        else:
+                            is_match = node.name == matchparts[0]
                     if is_match:
                         work.append((node, matchparts[1:]))
                         any_matched_in_collector = True
@@ -1024,6 +1031,7 @@ class CollectionArgument:
 
     path: Path
     parts: Sequence[str]
+    parametrization: str | None
     module_name: str | None
 
 
@@ -1052,7 +1060,7 @@ def resolve_collection_argument(
     When as_pypath is True, expects that the command-line argument actually contains
     module paths instead of file-system paths:
 
-        "pkg.tests.test_foo::TestClass::test_foo"
+        "pkg.tests.test_foo::TestClass::test_foo[a,b]"
 
     In which case we search sys.path for a matching module, and then return the *path* to the
     found module, which may look like this:
@@ -1060,6 +1068,7 @@ def resolve_collection_argument(
         CollectionArgument(
             path=Path("/home/u/myvenv/lib/site-packages/pkg/tests/test_foo.py"),
             parts=["TestClass", "test_foo"],
+            parametrization="[a,b]",
             module_name="pkg.tests.test_foo",
         )
 
@@ -1068,10 +1077,9 @@ def resolve_collection_argument(
     """
     base, squacket, rest = arg.partition("[")
     strpath, *parts = base.split("::")
-    if squacket:
-        if not parts:
-            raise UsageError(f"path cannot contain [] parametrization: {arg}")
-        parts[-1] = f"{parts[-1]}{squacket}{rest}"
+    if squacket and not parts:
+        raise UsageError(f"path cannot contain [] parametrization: {arg}")
+    parametrization = f"{squacket}{rest}" if squacket else None
     module_name = None
     if as_pypath:
         pyarg_strpath = search_pypath(
@@ -1099,5 +1107,6 @@ def resolve_collection_argument(
     return CollectionArgument(
         path=fspath,
         parts=parts,
+        parametrization=parametrization,
         module_name=module_name,
     )

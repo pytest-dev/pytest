@@ -125,6 +125,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[],
+            parametrization=None,
             module_name=None,
         )
         assert resolve_collection_argument(
@@ -132,6 +133,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[""],
+            parametrization=None,
             module_name=None,
         )
         assert resolve_collection_argument(
@@ -139,6 +141,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar"],
+            parametrization=None,
             module_name=None,
         )
         assert resolve_collection_argument(
@@ -146,6 +149,15 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar", ""],
+            parametrization=None,
+            module_name=None,
+        )
+        assert resolve_collection_argument(
+            invocation_path, "src/pkg/test.py::foo::bar[a,b,c]"
+        ) == CollectionArgument(
+            path=invocation_path / "src/pkg/test.py",
+            parts=["foo", "bar"],
+            parametrization="[a,b,c]",
             module_name=None,
         )
 
@@ -156,6 +168,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg",
             parts=[],
+            parametrization=None,
             module_name=None,
         )
 
@@ -181,6 +194,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=[],
+            parametrization=None,
             module_name="pkg.test",
         )
         assert resolve_collection_argument(
@@ -188,6 +202,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
             parts=["foo", "bar"],
+            parametrization=None,
             module_name="pkg.test",
         )
         assert resolve_collection_argument(
@@ -198,6 +213,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=invocation_path / "src/pkg",
             parts=[],
+            parametrization=None,
             module_name="pkg",
         )
 
@@ -216,7 +232,8 @@ class TestResolveCollectionArgument:
             invocation_path, "src/pkg/test.py::test[a::b]"
         ) == CollectionArgument(
             path=invocation_path / "src/pkg/test.py",
-            parts=["test[a::b]"],
+            parts=["test"],
+            parametrization="[a::b]",
             module_name=None,
         )
 
@@ -257,6 +274,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=Path(os.path.abspath("src")),
             parts=[],
+            parametrization=None,
             module_name=None,
         )
 
@@ -268,6 +286,7 @@ class TestResolveCollectionArgument:
         ) == CollectionArgument(
             path=Path(os.path.abspath("src")),
             parts=[],
+            parametrization=None,
             module_name=None,
         )
 
