@@ -1,5 +1,5 @@
 # mypy: disallow-untyped-defs
-"""
+""" 
 Script used to generate a Markdown file containing only the changelog entries of a specific pytest release, which
 is then published as a GitHub Release during deploy (see workflows/deploy.yml).
 
