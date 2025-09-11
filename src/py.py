@@ -3,7 +3,7 @@
 # (`py/__init__.py` has higher precedence)
 from __future__ import annotations
 
-import sys
+import sys 
 
 import _pytest._py.error as error
 import _pytest._py.path as path
