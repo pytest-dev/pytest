@@ -1,6 +1,6 @@
 Changing standard (Python) test discovery
 ===============================================
-
+ 
 Ignore paths during test collection
 -----------------------------------
 
