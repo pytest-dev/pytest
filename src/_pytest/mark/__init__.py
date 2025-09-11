@@ -1,5 +1,5 @@
 """Generic mechanism for marking and selecting python functions."""
-
+ 
 from __future__ import annotations
 
 import collections
