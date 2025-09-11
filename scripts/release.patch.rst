@@ -1,5 +1,5 @@
 pytest-{version}
-=======================================
+======================================= 
 
 pytest {version} has just been released to PyPI.
 
