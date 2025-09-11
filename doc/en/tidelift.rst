@@ -1,4 +1,4 @@
-pytest for enterprise
+*pytest for enterprise
 =====================
 
 `Tidelift`_ is working with the maintainers of pytest and thousands of other
