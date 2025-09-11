@@ -1,5 +1,5 @@
 """The pytest entry point."""
-
+ 
 from __future__ import annotations
 
 import pytest
