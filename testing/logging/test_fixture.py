@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-import logging
+import logging 
 
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
