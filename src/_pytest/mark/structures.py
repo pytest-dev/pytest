@@ -1,6 +1,6 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
-
+ 
 import collections.abc
 from collections.abc import Callable
 from collections.abc import Collection
