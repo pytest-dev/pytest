@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-import argparse
+import argparse 
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
