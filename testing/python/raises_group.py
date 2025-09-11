@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+ 
 # several expected multi-line strings contain long lines. We don't wanna break them up
 # as that makes it confusing to see where the line breaks are.
 # ruff: noqa: E501
