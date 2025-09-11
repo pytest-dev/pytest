@@ -1,4 +1,4 @@
-.. _`tbreportdemo`:
+.. _`tbreportdemo`: 
 
 Demo of Python failure reports with pytest
 ==========================================
