@@ -1,5 +1,5 @@
 """Generate an executable with pytest runner embedded using PyInstaller."""
-
+ 
 from __future__ import annotations
 
 
