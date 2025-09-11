@@ -1,7 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import  contextmanager
 import decimal
 from decimal import Decimal
 from fractions import Fraction
