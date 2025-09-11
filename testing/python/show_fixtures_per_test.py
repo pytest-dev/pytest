@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from _pytest.pytester import Pytester
-
+ 
 
 def test_no_items_should_not_show_output(pytester: Pytester) -> None:
     result = pytester.runpytest("--fixtures-per-test")
