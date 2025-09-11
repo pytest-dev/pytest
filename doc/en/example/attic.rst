@@ -1,4 +1,4 @@
-
+ 
 .. _`accept example`:
 
 example: specifying and selecting acceptance tests
