@@ -1,4 +1,4 @@
-History
+History 
 =======
 
 pytest has a long and interesting history. The `first commit
