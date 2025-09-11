@@ -1,6 +1,6 @@
 # mypy: allow-untyped-defs
 """Command line options, ini-file and conftest.py processing."""
-
+ 
 from __future__ import annotations
 
 import argparse
