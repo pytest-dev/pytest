@@ -1,6 +1,6 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
-
+ 
 import ast
 from bisect import bisect_right
 from collections.abc import Iterable
