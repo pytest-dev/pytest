@@ -983,8 +983,13 @@ def tmpfile(pytester: Pytester) -> Generator[BinaryIO]:
 def lsof_check():
     pid = os.getpid()
     try:
-        out = subprocess.check_output(("lsof", "-p", str(pid))).decode()
-    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError) as exc:
+        out = subprocess.check_output(("lsof", "-p", str(pid)), timeout=10).decode()
+    except (
+        OSError,
+        UnicodeDecodeError,
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+    ) as exc:
         # about UnicodeDecodeError, see note on pytester
         pytest.skip(f"could not run 'lsof' ({exc!r})")
     yield
