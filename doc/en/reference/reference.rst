@@ -1484,6 +1484,25 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    For more information please refer to :ref:`faulthandler`.
 
+
+.. confval:: faulthandler_exit_on_timeout
+
+   Exit the pytest process after the per-test timeout is reached by passing
+   `exit=True` to the :func:`faulthandler.dump_traceback_later` function. This
+   is particularly useful to avoid wasting CI resources for test suites that
+   are prone to putting the main Python interpreter into a deadlock state.
+
+   This option is set to 'false' by default.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        faulthandler_timeout=5
+        faulthandler_exit_on_timeout=true
+
+   For more information please refer to :ref:`faulthandler`.
+
 .. confval:: filterwarnings
 
 
@@ -2401,6 +2420,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       faulthandler_timeout (string):
                             Dump the traceback of all threads if a test takes
                             more than TIMEOUT seconds to finish
+      faulthandler_exit_on_timeout (bool):
+                            Exit the test process if a test takes more than
+                            faulthandler_timeout seconds to finish
       addopts (args):       Extra command line options
       minversion (string):  Minimally required pytest version
       pythonpath (paths):   Add paths to sys.path
