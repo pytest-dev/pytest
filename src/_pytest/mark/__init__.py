@@ -7,7 +7,6 @@ from collections.abc import Collection
 from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
 import dataclasses
-from typing import Optional
 from typing import TYPE_CHECKING
 
 from .expression import Expression
@@ -45,7 +44,7 @@ __all__ = [
 ]
 
 
-old_mark_config_key = StashKey[Optional[Config]]()
+old_mark_config_key = StashKey[Config | None]()
 
 
 def param(

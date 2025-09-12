@@ -292,7 +292,7 @@ def test_catch_unwrapped_exceptions() -> None:
     # if users want one of several exception types they need to use a RaisesExc
     # (which the error message suggests)
     with RaisesGroup(
-        RaisesExc(check=lambda e: isinstance(e, (SyntaxError, ValueError))),
+        RaisesExc(check=lambda e: isinstance(e, SyntaxError | ValueError)),
         allow_unwrapped=True,
     ):
         raise ValueError

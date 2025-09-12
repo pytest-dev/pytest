@@ -111,7 +111,7 @@ def tw_mock():
         def _write_source(self, lines, indents=()):
             if not indents:
                 indents = [""] * len(lines)
-            for indent, line in zip(indents, lines):
+            for indent, line in zip(indents, lines, strict=True):
                 self.line(indent + line)
 
         def line(self, line, **kw):

@@ -5,7 +5,7 @@ from collections.abc import Sequence
 import os
 from pathlib import Path
 import sys
-from typing import TYPE_CHECKING
+from typing import TypeAlias
 
 import iniconfig
 
@@ -16,14 +16,9 @@ from _pytest.pathlib import commonpath
 from _pytest.pathlib import safe_exists
 
 
-if TYPE_CHECKING:
-    from typing import Union
-
-    from typing_extensions import TypeAlias
-
-    # Even though TOML supports richer data types, all values are converted to str/list[str] during
-    # parsing to maintain compatibility with the rest of the configuration system.
-    ConfigDict: TypeAlias = dict[str, Union[str, list[str]]]
+# Even though TOML supports richer data types, all values are converted to str/list[str] during
+# parsing to maintain compatibility with the rest of the configuration system.
+ConfigDict: TypeAlias = dict[str, str | list[str]]
 
 
 def _parse_ini_config(path: Path) -> iniconfig.IniConfig:

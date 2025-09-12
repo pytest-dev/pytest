@@ -16,7 +16,7 @@ import pytest
 
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
+    from typing import Literal
 
 
 def test_real_func_loop_limit() -> None:
