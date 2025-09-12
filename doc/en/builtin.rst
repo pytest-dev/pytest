@@ -1,6 +1,6 @@
-:orphan: 
+:orphan:
 
-.. _`pytest helpers`: 
+.. _`pytest helpers`:
 
 Pytest API and builtin fixtures
 ================================================

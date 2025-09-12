@@ -82,4 +82,3 @@ If you run this without output capturing:
     .test_unit1 method called
     .
     4 passed in 0.12s
-

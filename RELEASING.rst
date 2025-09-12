@@ -175,4 +175,3 @@ Both automatic and manual processes described above follow the same steps from t
    * `Bluesky <https://bsky.app>`_
    * `Fosstodon <https://fosstodon.org>`_
    * `Twitter/X <https://x.com>`_
-

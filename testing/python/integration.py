@@ -1,4 +1,4 @@
-# mypy: allow-untyped-defs 
+# mypy: allow-untyped-defs
 from __future__ import annotations
 
 from _pytest._code import getfslineno

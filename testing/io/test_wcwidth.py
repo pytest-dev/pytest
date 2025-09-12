@@ -3,7 +3,7 @@ from __future__ import annotations
 from _pytest._io.wcwidth import wcswidth
 from _pytest._io.wcwidth import wcwidth
 import pytest
- 
+
 
 @pytest.mark.parametrize(
     ("c", "expected"),
