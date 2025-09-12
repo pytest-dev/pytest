@@ -236,6 +236,12 @@ class ApproxMapping(ApproxBase):
     def _repr_compare(self, other_side: Mapping[object, float]) -> list[str]:
         import math
 
+        if len(self.expected) != len(other_side):
+            return [
+                "Impossible to compare mappings with different sizes.",
+                f"Lengths: {len(self.expected)} and {len(other_side)}",
+            ]
+
         approx_side_as_map = {
             k: self._approx_scalar(v) for k, v in self.expected.items()
         }
