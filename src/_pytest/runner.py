@@ -127,23 +127,25 @@ def runtestprotocol(
         # This only happens if the item is re-run, as is done by
         # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
-    rep = call_and_report(item, "setup", log)
-    reports = [rep]
-    if rep.passed:
-        if item.config.getoption("setupshow", False):
-            show_test_item(item)
-        if not item.config.getoption("setuponly", False):
-            reports.append(call_and_report(item, "call", log))
-    # If the session is about to fail or stop, teardown everything - this is
-    # necessary to correctly report fixture teardown errors (see #11706)
-    if item.session.shouldfail or item.session.shouldstop:
-        nextitem = None
-    reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
-    # After all teardown hooks have been called
-    # want funcargs and request info to go away.
-    if hasrequest:
-        item._request = False  # type: ignore[attr-defined]
-        item.funcargs = None  # type: ignore[attr-defined]
+    try:
+        rep = call_and_report(item, "setup", log)
+        reports = [rep]
+        if rep.passed:
+            if item.config.getoption("setupshow", False):
+                show_test_item(item)
+            if not item.config.getoption("setuponly", False):
+                reports.append(call_and_report(item, "call", log))
+        # If the session is about to fail or stop, teardown everything - this is
+        # necessary to correctly report fixture teardown errors (see #11706)
+        if item.session.shouldfail or item.session.shouldstop:
+            nextitem = None
+        reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
+    finally:
+        # After all teardown hooks have been called (or an exception was reraised)
+        # want funcargs and request info to go away.
+        if hasrequest:
+            item._request = False  # type: ignore[attr-defined]
+            item.funcargs = None  # type: ignore[attr-defined]
     return reports
 
 
