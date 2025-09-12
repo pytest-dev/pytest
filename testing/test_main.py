@@ -220,6 +220,20 @@ class TestResolveCollectionArgument:
             module_name=None,
         )
 
+    @pytest.mark.parametrize(
+        "arg", ["x.py[a]", "x.py[a]::foo", "x/y.py[a]::foo::bar", "x.py[a]::foo[b]"]
+    )
+    def test_path_parametrization_not_allowed(
+        self, invocation_path: Path, arg: str
+    ) -> None:
+        with pytest.raises(
+            UsageError, match=r"path cannot contain \[\] parametrization"
+        ):
+            resolve_collection_argument(
+                invocation_path,
+                arg,
+            )
+
     def test_does_not_exist(self, invocation_path: Path) -> None:
         """Given a file/module that does not exist raises UsageError."""
         with pytest.raises(
