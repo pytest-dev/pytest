@@ -5,10 +5,13 @@ import os
 from pathlib import Path
 import sys
 import textwrap
+from typing import Any
+from typing import Callable
 
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
+from _pytest.fixtures import get_return_annotation
 from _pytest.fixtures import TopRequest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
@@ -3581,9 +3584,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
+                "tmp_path_factory* [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -- .../_pytest/tmpdir.py:*",
+                "tmp_path* -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3592,9 +3595,9 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines(
             [
-                "tmp_path_factory [[]session scope[]] -- .../_pytest/tmpdir.py:*",
+                "tmp_path_factory* [[]session scope[]] -- .../_pytest/tmpdir.py:*",
                 "*for the test session*",
-                "tmp_path -- .../_pytest/tmpdir.py:*",
+                "tmp_path* -- .../_pytest/tmpdir.py:*",
                 "*temporary directory*",
             ]
         )
@@ -3614,13 +3617,30 @@ class TestShowFixtures:
         result = pytester.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines(
             """
-            *tmp_path -- *
+            *tmp_path* -- *
             *fixtures defined from*
             *arg1 -- test_show_fixtures_testmodule.py:6*
             *hello world*
         """
         )
         result.stdout.no_fnmatch_line("*arg0*")
+
+    def test_show_fixtures_return_annotation(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+            @pytest.fixture
+            def six() -> int:
+                return 6
+        """
+        )
+        result = pytester.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines(
+            """
+            *fixtures defined from*
+            *six -> int -- test_show_fixtures_return_annotation.py:3*
+        """
+        )
 
     @pytest.mark.parametrize("testmod", [True, False])
     def test_show_fixtures_conftest(self, pytester: Pytester, testmod) -> None:
@@ -4561,6 +4581,53 @@ class TestScopeOrdering:
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=1)
+
+
+class TestGetReturnAnnotation:
+    def test_primitive_return_type(self):
+        def six() -> int:
+            return 6
+
+        assert get_return_annotation(six) == "int"
+
+    def test_compound_return_type(self):
+        def two_sixes() -> tuple[int, str]:
+            return (6, "six")
+
+        assert get_return_annotation(two_sixes) == "tuple[int, str]"
+
+    def test_callable_return_type(self):
+        def callable_return() -> Callable[..., Any]:
+            return self.test_compound_return_type
+
+        assert get_return_annotation(callable_return) == "Callable[..., Any]"
+
+    def test_no_annotation(self):
+        def no_annotation():
+            return 6
+
+        assert get_return_annotation(no_annotation) == ""
+
+    def test_none_return_type(self):
+        def none_return() -> None:
+            pass
+
+        assert get_return_annotation(none_return) == "None"
+
+    def test_custom_class_return_type(self):
+        class T:
+            pass
+
+        def class_return() -> T:
+            return T()
+
+        assert get_return_annotation(class_return) == "T"
+
+    def test_enum_return_type(self):
+        def enum_return() -> ExitCode:
+            return ExitCode(0)
+
+        assert get_return_annotation(enum_return) == "ExitCode"
 
 
 def test_call_fixture_function_error():
