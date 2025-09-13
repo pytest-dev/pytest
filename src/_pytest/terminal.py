@@ -295,6 +295,10 @@ def pytest_configure(config: Config) -> None:
 
         config.trace.root.setprocessor("pytest:config", mywriter)
 
+    if reporter.isatty():
+        plugin = TerminalProgressPlugin(reporter)
+        config.pluginmanager.register(plugin, "terminalprogress")
+
 
 def getreportopt(config: Config) -> str:
     reportchars: str = config.option.reportchars
@@ -1652,3 +1656,92 @@ def _get_raw_skip_reason(report: TestReport) -> str:
         elif reason == "Skipped":
             reason = ""
         return reason
+
+
+class TerminalProgressPlugin:
+    """Terminal progress reporting plugin using OSC 9;4 ANSI sequences.
+
+    Emits OSC 9;4 sequences to indicate test progress to terminal
+    tabs/windows/etc.
+
+    Not all terminal emulators support this feature.
+
+    Ref: https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+    """
+
+    def __init__(self, tr: TerminalReporter) -> None:
+        self._tr = tr
+        self._session: Session | None = None
+        self._has_failures = False
+
+    def _emit_progress(
+        self,
+        state: Literal["remove", "normal", "error", "indeterminate", "paused"],
+        progress: int | None = None,
+    ) -> None:
+        """Emit OSC 9;4 sequence for indicating progress to the terminal.
+
+        :param state:
+            Progress state to set.
+        :param progress:
+            Progress value 0-100. Required for "normal", optional for "error"
+            and "paused", otherwise ignored.
+        """
+        assert progress is None or 0 <= progress <= 100
+
+        # OSC 9;4 sequence: ESC ] 9 ; 4 ; state ; progress ST
+        # ST can be ESC \ or BEL. ESC \ seems better supported.
+        match state:
+            case "remove":
+                sequence = "\x1b]9;4;0;\x1b\\"
+            case "normal":
+                assert progress is not None
+                sequence = f"\x1b]9;4;1;{progress}\x1b\\"
+            case "error":
+                if progress is not None:
+                    sequence = f"\x1b]9;4;2;{progress}\x1b\\"
+                else:
+                    sequence = "\x1b]9;4;2;\x1b\\"
+            case "indeterminate":
+                sequence = "\x1b]9;4;3;\x1b\\"
+            case "paused":
+                if progress is not None:
+                    sequence = f"\x1b]9;4;4;{progress}\x1b\\"
+                else:
+                    sequence = "\x1b]9;4;4;\x1b\\"
+
+        self._tr.write_raw(sequence, flush=True)
+
+    @hookimpl
+    def pytest_sessionstart(self, session: Session) -> None:
+        self._session = session
+        # Show indeterminate progress during collection.
+        self._emit_progress("indeterminate")
+
+    @hookimpl
+    def pytest_collection_finish(self) -> None:
+        assert self._session is not None
+        if self._session.testscollected > 0:
+            # Switch from indeterminate to 0% progress.
+            self._emit_progress("normal", 0)
+
+    @hookimpl
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
+        if report.failed:
+            self._has_failures = True
+
+        # Let's consider the "call" phase for progress.
+        if report.when != "call":
+            return
+
+        # Calculate and emit progress.
+        assert self._session is not None
+        collected = self._session.testscollected
+        if collected > 0:
+            reported = self._tr.reported_progress
+            progress = min(reported * 100 // collected, 100)
+            self._emit_progress("error" if self._has_failures else "normal", progress)
+
+    @hookimpl
+    def pytest_sessionfinish(self) -> None:
+        self._emit_progress("remove")
