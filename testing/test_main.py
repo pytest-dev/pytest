@@ -284,6 +284,7 @@ class TestResolveCollectionArgument:
         assert "unrecognized arguments: --potato=yum" in result.stderr.str()
         assert "Note: The specified path(s) do not exist" in result.stderr.str()
 
+
 def test_module_full_path_without_drive(pytester: Pytester) -> None:
     """Collect and run test using full path except for the drive letter (#7628).
 

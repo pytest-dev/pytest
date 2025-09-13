@@ -444,12 +444,17 @@ class MyOptionParser(argparse.ArgumentParser):
         """Transform argparse error message into UsageError."""
         msg = f"{self.prog}: error: {message}"
         if "unrecognized arguments:" in message:
-            file_or_dir_args = getattr(self._parser, 'extra_info', {}).get('file_or_dir', [])
+            file_or_dir_args = getattr(self._parser, "extra_info", {}).get(
+                "file_or_dir", []
+            )
             if file_or_dir_args:
                 from pathlib import Path
-                missing_paths = [str(p) for p in file_or_dir_args if not Path(str(p)).exists()]
+
+                missing_paths = [
+                    str(p) for p in file_or_dir_args if not Path(str(p)).exists()
+                ]
                 if missing_paths:
-                    msg += ("\nNote: The specified path(s) do not exist, so custom CLI options from conftest.py may not be available.")
+                    msg += "\nNote: The specified path(s) do not exist, so custom CLI options from conftest.py may not be available."
 
         if hasattr(self._parser, "_config_source_hint"):
             msg = f"{msg} ({self._parser._config_source_hint})"
