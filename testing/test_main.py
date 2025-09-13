@@ -271,6 +271,18 @@ class TestResolveCollectionArgument:
             module_name=None,
         )
 
+    def test_custom_cli_arg_with_missing_path(pytester: Pytester):
+        """Test that a helpful error message is shown when a custom CLI argument is used with a non-existent path."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addoption("--potato", default="")
+            """
+        )
+        result = pytester.runpytest("file_does_not_exist.py", "--potato=yum")
+        assert result.ret != 0
+        assert "unrecognized arguments: --potato=yum" in result.stderr.str()
+        assert "Note: The specified path(s) do not exist" in result.stderr.str()
 
 def test_module_full_path_without_drive(pytester: Pytester) -> None:
     """Collect and run test using full path except for the drive letter (#7628).
