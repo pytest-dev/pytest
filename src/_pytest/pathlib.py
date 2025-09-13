@@ -348,7 +348,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
     entries = find_prefixed(root, prefix)
     entries, entries2 = itertools.tee(entries)
     numbers = map(parse_num, extract_suffixes(entries2, prefix))
-    for entry, number in zip(entries, numbers):
+    for entry, number in zip(entries, numbers, strict=True):
         if number <= max_delete:
             yield Path(entry)
 

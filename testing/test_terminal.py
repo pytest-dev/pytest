@@ -2677,7 +2677,7 @@ def test_full_sequence_print_with_vv(
         [
             "*short test summary info*",
             f"*{list(range(10))}*",
-            f"*{dict(zip(range(10), range(10)))}*",
+            f"*{dict(zip(range(10), range(10), strict=True))}*",
         ]
     )
 

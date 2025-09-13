@@ -429,7 +429,7 @@ class TestMetafunc:
 
     def test_idmaker_with_bytes_regex(self) -> None:
         result = IdMaker(
-            ("a"), [pytest.param(re.compile(b"foo"), 1.0)], None, None, None, None, None
+            ("a"), [pytest.param(re.compile(b"foo"))], None, None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["foo"]
 

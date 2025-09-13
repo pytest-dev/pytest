@@ -198,7 +198,8 @@ class TerminalWriter:
             indents = [""] * len(lines)
         source = "\n".join(lines)
         new_lines = self._highlight(source).splitlines()
-        for indent, new_line in zip(indents, new_lines):
+        # Would be better to strict=True but that fails some CI jobs.
+        for indent, new_line in zip(indents, new_lines, strict=False):
             self.line(indent + new_line)
 
     def _get_pygments_lexer(self, lexer: Literal["python", "diff"]) -> Lexer:

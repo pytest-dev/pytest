@@ -26,6 +26,17 @@ import types
 from typing import IO
 from typing import TYPE_CHECKING
 
+
+if sys.version_info >= (3, 12):
+    from importlib.resources.abc import TraversableResources
+else:
+    from importlib.abc import TraversableResources
+if sys.version_info < (3, 11):
+    from importlib.readers import FileReader
+else:
+    from importlib.resources.readers import FileReader
+
+
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
@@ -291,19 +302,8 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         with open(pathname, "rb") as f:
             return f.read()
 
-    if sys.version_info >= (3, 10):
-        if sys.version_info >= (3, 12):
-            from importlib.resources.abc import TraversableResources
-        else:
-            from importlib.abc import TraversableResources
-
-        def get_resource_reader(self, name: str) -> TraversableResources:
-            if sys.version_info < (3, 11):
-                from importlib.readers import FileReader
-            else:
-                from importlib.resources.readers import FileReader
-
-            return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))
+    def get_resource_reader(self, name: str) -> TraversableResources:
+        return FileReader(types.SimpleNamespace(path=self._rewritten_names[name]))  # type: ignore[arg-type]
 
 
 def _write_pyc_fp(
@@ -496,7 +496,7 @@ def _call_reprcompare(
     expls: Sequence[str],
     each_obj: Sequence[object],
 ) -> str:
-    for i, res, expl in zip(range(len(ops)), results, expls):
+    for i, res, expl in zip(range(len(ops)), results, expls, strict=True):
         try:
             done = not res
         except Exception:
@@ -729,21 +729,15 @@ class AssertionRewriter(ast.NodeVisitor):
         else:
             lineno = item.lineno
         # Now actually insert the special imports.
-        if sys.version_info >= (3, 10):
-            aliases = [
-                ast.alias("builtins", "@py_builtins", lineno=lineno, col_offset=0),
-                ast.alias(
-                    "_pytest.assertion.rewrite",
-                    "@pytest_ar",
-                    lineno=lineno,
-                    col_offset=0,
-                ),
-            ]
-        else:
-            aliases = [
-                ast.alias("builtins", "@py_builtins"),
-                ast.alias("_pytest.assertion.rewrite", "@pytest_ar"),
-            ]
+        aliases = [
+            ast.alias("builtins", "@py_builtins", lineno=lineno, col_offset=0),
+            ast.alias(
+                "_pytest.assertion.rewrite",
+                "@pytest_ar",
+                lineno=lineno,
+                col_offset=0,
+            ),
+        ]
         imports = [
             ast.Import([alias], lineno=lineno, col_offset=0) for alias in aliases
         ]
@@ -754,7 +748,7 @@ class AssertionRewriter(ast.NodeVisitor):
         nodes: list[ast.AST | Sentinel] = [mod]
         while nodes:
             node = nodes.pop()
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
                 self.scope = tuple((*self.scope, node))
                 nodes.append(_SCOPE_END_MARKER)
             if node == _SCOPE_END_MARKER:
@@ -1132,12 +1126,12 @@ class AssertionRewriter(ast.NodeVisitor):
         if isinstance(comp.left, ast.NamedExpr):
             self.variables_overwrite[self.scope][comp.left.target.id] = comp.left  # type:ignore[assignment]
         left_res, left_expl = self.visit(comp.left)
-        if isinstance(comp.left, (ast.Compare, ast.BoolOp)):
+        if isinstance(comp.left, ast.Compare | ast.BoolOp):
             left_expl = f"({left_expl})"
         res_variables = [self.variable() for i in range(len(comp.ops))]
         load_names: list[ast.expr] = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
-        it = zip(range(len(comp.ops)), comp.ops, comp.comparators)
+        it = zip(range(len(comp.ops)), comp.ops, comp.comparators, strict=True)
         expls: list[ast.expr] = []
         syms: list[ast.expr] = []
         results = [left_res]
@@ -1150,7 +1144,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 next_operand.target.id = self.variable()
                 self.variables_overwrite[self.scope][left_res.id] = next_operand  # type:ignore[assignment]
             next_res, next_expl = self.visit(next_operand)
-            if isinstance(next_operand, (ast.Compare, ast.BoolOp)):
+            if isinstance(next_operand, ast.Compare | ast.BoolOp):
                 next_expl = f"({next_expl})"
             results.append(next_res)
             sym = BINOP_MAP[op.__class__]

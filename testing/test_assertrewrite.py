@@ -132,7 +132,7 @@ class TestAssertionRewrite:
             if isinstance(node, ast.Import):
                 continue
             for n in [node, *ast.iter_child_nodes(node)]:
-                assert isinstance(n, (ast.stmt, ast.expr))
+                assert isinstance(n, ast.stmt | ast.expr)
                 for location in [
                     (n.lineno, n.col_offset),
                     (n.end_lineno, n.end_col_offset),
@@ -2263,10 +2263,6 @@ class TestPyCacheDir:
 
         assert get_cache_dir(Path(source)) == Path(expected)
 
-    @pytest.mark.skipif(
-        sys.version_info[:2] == (3, 9) and sys.platform.startswith("win"),
-        reason="#9298",
-    )
     def test_sys_pycache_prefix_integration(
         self, tmp_path, monkeypatch, pytester: Pytester
     ) -> None:

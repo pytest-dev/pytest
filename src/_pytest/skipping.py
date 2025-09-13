@@ -10,7 +10,6 @@ import os
 import platform
 import sys
 import traceback
-from typing import Optional
 
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -236,7 +235,7 @@ def evaluate_xfail_marks(item: Item) -> Xfail | None:
 
 
 # Saves the xfail mark evaluation. Can be refreshed during call if None.
-xfailed_key = StashKey[Optional[Xfail]]()
+xfailed_key = StashKey[Xfail | None]()
 
 
 @hookimpl(tryfirst=True)
@@ -285,7 +284,7 @@ def pytest_runtest_makereport(
             raises = xfailed.raises
             if raises is None or (
                 (
-                    isinstance(raises, (type, tuple))
+                    isinstance(raises, type | tuple)
                     and isinstance(call.excinfo.value, raises)
                 )
                 or (

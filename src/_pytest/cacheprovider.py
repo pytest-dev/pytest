@@ -256,7 +256,7 @@ class LFPluginCollWrapper:
         self, collector: nodes.Collector
     ) -> Generator[None, CollectReport, CollectReport]:
         res = yield
-        if isinstance(collector, (Session, Directory)):
+        if isinstance(collector, Session | Directory):
             # Sort any lf-paths to the beginning.
             lf_paths = self.lfplugin._last_failed_paths
 

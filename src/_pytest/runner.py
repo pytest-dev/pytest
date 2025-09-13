@@ -262,7 +262,7 @@ def check_interactive_exception(call: CallInfo[object], report: BaseReport) -> b
     if hasattr(report, "wasxfail"):
         # Exception was expected.
         return False
-    if isinstance(call.excinfo.value, (Skipped, bdb.BdbQuit)):
+    if isinstance(call.excinfo.value, Skipped | bdb.BdbQuit):
         # Special control flow exception.
         return False
     return True

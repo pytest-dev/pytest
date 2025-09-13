@@ -113,7 +113,7 @@ class ApproxBase:
 
 def _recursive_sequence_map(f, x):
     """Recursively map a function over a sequence of arbitrary depth"""
-    if isinstance(x, (list, tuple)):
+    if isinstance(x, list | tuple):
         seq_type = type(x)
         return seq_type(_recursive_sequence_map(f, xi) for xi in x)
     elif _is_sequence_like(x):
@@ -245,7 +245,7 @@ class ApproxMapping(ApproxBase):
         max_rel_diff = -math.inf
         different_ids = []
         for (approx_key, approx_value), other_value in zip(
-            approx_side_as_map.items(), other_side.values()
+            approx_side_as_map.items(), other_side.values(), strict=True
         ):
             if approx_value != other_value:
                 if approx_value.expected is not None and other_value is not None:
@@ -327,7 +327,7 @@ class ApproxSequenceLike(ApproxBase):
         max_rel_diff = -math.inf
         different_ids = []
         for i, (approx_value, other_value) in enumerate(
-            zip(approx_side_as_map, other_side)
+            zip(approx_side_as_map, other_side, strict=True)
         ):
             if approx_value != other_value:
                 try:
@@ -365,7 +365,7 @@ class ApproxSequenceLike(ApproxBase):
         return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
-        return zip(actual, self.expected)
+        return zip(actual, self.expected, strict=True)
 
     def _check_type(self) -> None:
         __tracebackhide__ = True
@@ -394,7 +394,7 @@ class ApproxScalar(ApproxBase):
         # handle complex numbers, e.g. (inf + 1j).
         if (
             isinstance(self.expected, bool)
-            or (not isinstance(self.expected, (Complex, Decimal)))
+            or (not isinstance(self.expected, Complex | Decimal))
             or math.isinf(abs(self.expected) or isinstance(self.expected, bool))
         ):
             return str(self.expected)
@@ -447,8 +447,8 @@ class ApproxScalar(ApproxBase):
         # __sub__, and __float__ are defined. Also, consider bool to be
         # non-numeric, even though it has the required arithmetic.
         if is_bool(self.expected) or not (
-            isinstance(self.expected, (Complex, Decimal))
-            and isinstance(actual, (Complex, Decimal))
+            isinstance(self.expected, Complex | Decimal)
+            and isinstance(actual, Complex | Decimal)
         ):
             return False
 
@@ -766,7 +766,7 @@ def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
         cls = ApproxNumpy
     elif _is_sequence_like(expected):
         cls = ApproxSequenceLike
-    elif isinstance(expected, Collection) and not isinstance(expected, (str, bytes)):
+    elif isinstance(expected, Collection) and not isinstance(expected, str | bytes):
         msg = f"pytest.approx() only supports ordered sequences, but got: {expected!r}"
         raise TypeError(msg)
     else:
@@ -779,7 +779,7 @@ def _is_sequence_like(expected: object) -> bool:
     return (
         hasattr(expected, "__getitem__")
         and isinstance(expected, Sized)
-        and not isinstance(expected, (str, bytes))
+        and not isinstance(expected, str | bytes)
     )
 
 

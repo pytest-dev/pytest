@@ -30,9 +30,8 @@ from typing import Generic
 from typing import Literal
 from typing import overload
 from typing import SupportsIndex
-from typing import TYPE_CHECKING
+from typing import TypeAlias
 from typing import TypeVar
-from typing import Union
 
 import pluggy
 
@@ -55,7 +54,7 @@ if sys.version_info < (3, 11):
 
 TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-EXCEPTION_OR_MORE = Union[type[BaseException], tuple[type[BaseException], ...]]
+EXCEPTION_OR_MORE = type[BaseException] | tuple[type[BaseException], ...]
 
 
 class Code:
@@ -469,7 +468,7 @@ def stringify_exception(
         notes = getattr(exc, "__notes__", [])
     except KeyError:
         # Workaround for https://github.com/python/cpython/issues/98778 on
-        # Python <= 3.9, and some 3.10 and 3.11 patch versions.
+        # some 3.10 and 3.11 patch versions.
         HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
         if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
             notes = []
@@ -853,15 +852,10 @@ class ExceptionInfo(Generic[E]):
         return self._group_contains(self.value, expected_exception, match, depth)
 
 
-if TYPE_CHECKING:
-    from typing_extensions import TypeAlias
-
-    # Type alias for the `tbfilter` setting:
-    # bool: If True, it should be filtered using Traceback.filter()
-    # callable: A callable that takes an ExceptionInfo and returns the filtered traceback.
-    TracebackFilter: TypeAlias = Union[
-        bool, Callable[[ExceptionInfo[BaseException]], Traceback]
-    ]
+# Type alias for the `tbfilter` setting:
+# bool: If True, it should be filtered using Traceback.filter()
+# callable: A callable that takes an ExceptionInfo and returns the filtered traceback.
+TracebackFilter: TypeAlias = bool | Callable[[ExceptionInfo[BaseException]], Traceback]
 
 
 @dataclasses.dataclass

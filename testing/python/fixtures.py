@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from itertools import zip_longest
 import os
 from pathlib import Path
 import sys
@@ -3043,7 +3044,7 @@ class TestFixtureMarker:
         ]
         import pprint
 
-        pprint.pprint(list(zip(values, expected)))
+        pprint.pprint(list(zip_longest(values, expected)))
         assert values == expected
 
     def test_parametrized_fixture_teardown_order(self, pytester: Pytester) -> None:

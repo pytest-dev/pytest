@@ -29,9 +29,9 @@ if TYPE_CHECKING:
 
     # for some reason Sphinx does not play well with 'from types import TracebackType'
     import types
+    from typing import TypeGuard
 
     from typing_extensions import ParamSpec
-    from typing_extensions import TypeGuard
     from typing_extensions import TypeVar
 
     P = ParamSpec("P")

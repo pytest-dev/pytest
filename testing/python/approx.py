@@ -77,7 +77,7 @@ def assert_approx_raises_regex(pytestconfig):
         )
 
         for i, (obtained_line, expected_line) in enumerate(
-            zip(obtained_message, expected_message)
+            zip(obtained_message, expected_message, strict=True)
         ):
             regex = re.compile(expected_line)
             assert regex.match(obtained_line) is not None, (

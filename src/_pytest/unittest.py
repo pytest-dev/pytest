@@ -14,7 +14,6 @@ import sys
 import traceback
 import types
 from typing import TYPE_CHECKING
-from typing import Union
 
 import _pytest._code
 from _pytest.compat import is_async_function
@@ -43,10 +42,10 @@ if TYPE_CHECKING:
     import twisted.trial.unittest
 
 
-_SysExcInfoType = Union[
-    tuple[type[BaseException], BaseException, types.TracebackType],
-    tuple[None, None, None],
-]
+_SysExcInfoType = (
+    tuple[type[BaseException], BaseException, types.TracebackType]
+    | tuple[None, None, None]
+)
 
 
 def pytest_pycollect_makeitem(
