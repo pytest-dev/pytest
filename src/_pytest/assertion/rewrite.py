@@ -1070,10 +1070,11 @@ class AssertionRewriter(ast.NodeVisitor):
             arg_expls.append(expl)
             new_args.append(res)
         for keyword in call.keywords:
-            if isinstance(
-                keyword.value, ast.Name
-            ) and keyword.value.id in self.variables_overwrite.get(self.scope, {}):
-                keyword.value = self.variables_overwrite[self.scope][keyword.value.id]  # type:ignore[assignment]
+            match keyword.value:
+                case ast.Name(id=id) if id in self.variables_overwrite.get(
+                    self.scope, {}
+                ):
+                    keyword.value = self.variables_overwrite[self.scope][id]  # type:ignore[assignment]
             res, expl = self.visit(keyword.value)
             new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
