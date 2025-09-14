@@ -508,6 +508,9 @@ class TerminalReporter:
     def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
         self._tw.write(content, flush=flush, **markup)
 
+    def write_raw(self, content: str, *, flush: bool = False) -> None:
+        self._tw.write_raw(content, flush=flush)
+
     def flush(self) -> None:
         self._tw.flush()
 
