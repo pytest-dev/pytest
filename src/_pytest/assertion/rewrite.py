@@ -1010,20 +1010,17 @@ class AssertionRewriter(ast.NodeVisitor):
                 # cond is set in a prior loop iteration below
                 self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa: F821
                 self.expl_stmts = fail_inner
-                # Check if the left operand is a ast.NamedExpr and the value has already been visited
-                if (
-                    isinstance(v, ast.Compare)
-                    and isinstance(v.left, ast.NamedExpr)
-                    and v.left.target.id
-                    in [
-                        ast_expr.id
-                        for ast_expr in boolop.values[:i]
-                        if hasattr(ast_expr, "id")
-                    ]
-                ):
-                    pytest_temp = self.variable()
-                    self.variables_overwrite[self.scope][v.left.target.id] = v.left  # type:ignore[assignment]
-                    v.left.target.id = pytest_temp
+                match v:
+                    # Check if the left operand is an ast.NamedExpr and the value has already been visited
+                    case ast.Compare(
+                        left=ast.NamedExpr(target=ast.Name(id=target_id))
+                    ) if target_id in [
+                        e.id for e in boolop.values[:i] if hasattr(e, "id")
+                    ]:
+                        pytest_temp = self.variable()
+                        self.variables_overwrite[self.scope][target_id] = v.left  # type:ignore[assignment]
+                        # mypy's false positive, we're checking that the 'target' attribute exists.
+                        v.left.target.id = pytest_temp  # type:ignore[attr-defined]
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
