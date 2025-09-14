@@ -703,24 +703,17 @@ class AssertionRewriter(ast.NodeVisitor):
             return
         pos = 0
         for item in mod.body:
-            if (
-                expect_docstring
-                and isinstance(item, ast.Expr)
-                and isinstance(item.value, ast.Constant)
-                and isinstance(item.value.value, str)
-            ):
-                doc = item.value.value
-                if self.is_rewrite_disabled(doc):
-                    return
-                expect_docstring = False
-            elif (
-                isinstance(item, ast.ImportFrom)
-                and item.level == 0
-                and item.module == "__future__"
-            ):
-                pass
-            else:
-                break
+            match item:
+                case ast.Expr(value=ast.Constant(value=str() as doc)) if (
+                    expect_docstring
+                ):
+                    if self.is_rewrite_disabled(doc):
+                        return
+                    expect_docstring = False
+                case ast.ImportFrom(level=0, module="__future__"):
+                    pass
+                case _:
+                    break
             pos += 1
         # Special case: for a decorated function, set the lineno to that of the
         # first decorator, not the `def`. Issue #4984.
