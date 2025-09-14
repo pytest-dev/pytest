@@ -1112,12 +1112,13 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_Compare(self, comp: ast.Compare) -> tuple[ast.expr, str]:
         self.push_format_context()
         # We first check if we have overwritten a variable in the previous assert
-        if isinstance(
-            comp.left, ast.Name
-        ) and comp.left.id in self.variables_overwrite.get(self.scope, {}):
-            comp.left = self.variables_overwrite[self.scope][comp.left.id]  # type:ignore[assignment]
-        if isinstance(comp.left, ast.NamedExpr):
-            self.variables_overwrite[self.scope][comp.left.target.id] = comp.left  # type:ignore[assignment]
+        match comp.left:
+            case ast.Name(id=name_id) if name_id in self.variables_overwrite.get(
+                self.scope, {}
+            ):
+                comp.left = self.variables_overwrite[self.scope][name_id]  # type: ignore[assignment]
+            case ast.NamedExpr(target=ast.Name(id=target_id)):
+                self.variables_overwrite[self.scope][target_id] = comp.left  # type: ignore[assignment]
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, ast.Compare | ast.BoolOp):
             left_expl = f"({left_expl})"
@@ -1129,13 +1130,14 @@ class AssertionRewriter(ast.NodeVisitor):
         syms: list[ast.expr] = []
         results = [left_res]
         for i, op, next_operand in it:
-            if (
-                isinstance(next_operand, ast.NamedExpr)
-                and isinstance(left_res, ast.Name)
-                and next_operand.target.id == left_res.id
-            ):
-                next_operand.target.id = self.variable()
-                self.variables_overwrite[self.scope][left_res.id] = next_operand  # type:ignore[assignment]
+            match (next_operand, left_res):
+                case (
+                    ast.NamedExpr(target=ast.Name(id=target_id)),
+                    ast.Name(id=name_id),
+                ) if target_id == name_id:
+                    next_operand.target.id = self.variable()
+                    self.variables_overwrite[self.scope][name_id] = next_operand  # type: ignore[assignment]
+
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, ast.Compare | ast.BoolOp):
                 next_expl = f"({next_expl})"
