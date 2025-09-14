@@ -454,6 +454,14 @@ class TerminalReporter:
     def showlongtestinfo(self) -> bool:
         return self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) > 0
 
+    @property
+    def reported_progress(self) -> int:
+        """The amount of items reported in the progress so far.
+
+        :meta private:
+        """
+        return len(self._progress_nodeids_reported)
+
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
         return char in self.reportchars
@@ -684,7 +692,7 @@ class TerminalReporter:
     @property
     def _is_last_item(self) -> bool:
         assert self._session is not None
-        return len(self._progress_nodeids_reported) == self._session.testscollected
+        return self.reported_progress == self._session.testscollected
 
     @hookimpl(wrapper=True)
     def pytest_runtestloop(self) -> Generator[None, object, object]:
@@ -694,7 +702,7 @@ class TerminalReporter:
         if (
             self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0
             and self._show_progress_info
-            and self._progress_nodeids_reported
+            and self.reported_progress
         ):
             self._write_progress_information_filling_space()
 
@@ -705,7 +713,7 @@ class TerminalReporter:
         collected = self._session.testscollected
         if self._show_progress_info == "count":
             if collected:
-                progress = len(self._progress_nodeids_reported)
+                progress = self.reported_progress
                 counter_format = f"{{:{len(str(collected))}d}}"
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(progress, collected)
@@ -742,7 +750,7 @@ class TerminalReporter:
                 )
             return ""
         if collected:
-            return f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
+            return f" [{self.reported_progress * 100 // collected:3d}%]"
         return " [100%]"
 
     def _write_progress_information_if_past_edge(self) -> None:
