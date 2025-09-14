@@ -131,7 +131,7 @@ def isdict(x: Any) -> bool:
 
 
 def isset(x: Any) -> bool:
-    return isinstance(x, (set, frozenset))
+    return isinstance(x, set | frozenset)
 
 
 def isnamedtuple(obj: Any) -> bool:

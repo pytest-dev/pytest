@@ -661,8 +661,7 @@ class TestPython:
         node = dom.get_first_by_tag("testsuite")
         node.assert_attr(failures=3, tests=3)
         tnodes = node.find_by_tag("testcase")
-        assert len(tnodes) == 3
-        for tnode, char in zip(tnodes, "<&'"):
+        for tnode, char in zip(tnodes, "<&'", strict=True):
             tnode.assert_attr(
                 classname="test_failure_escape", name=f"test_func[{char}]"
             )

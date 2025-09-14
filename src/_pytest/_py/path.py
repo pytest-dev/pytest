@@ -432,7 +432,7 @@ class LocalPath:
         """Return a string which is the relative part of the path
         to the given 'relpath'.
         """
-        if not isinstance(relpath, (str, LocalPath)):
+        if not isinstance(relpath, str | LocalPath):
             raise TypeError(f"{relpath!r}: not a string or path object")
         strrelpath = str(relpath)
         if strrelpath and strrelpath[-1] != self.sep:

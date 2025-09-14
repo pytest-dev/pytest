@@ -280,8 +280,7 @@ def test_warning_recorded_hook(pytester: Pytester) -> None:
         ("call warning", "runtest", "test_warning_recorded_hook.py::test_func"),
         ("teardown warning", "runtest", "test_warning_recorded_hook.py::test_func"),
     ]
-    assert len(collected) == len(expected)  # python < 3.10 zip(strict=True)
-    for collected_result, expected_result in zip(collected, expected):
+    for collected_result, expected_result in zip(collected, expected, strict=True):
         assert collected_result[0] == expected_result[0], str(collected)
         assert collected_result[1] == expected_result[1], str(collected)
         assert collected_result[2] == expected_result[2], str(collected)
