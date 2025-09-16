@@ -644,10 +644,9 @@ class TestInvocationVariants:
         ):
             pytest.main("-h")  # type: ignore[arg-type]
 
-    def test_invoke_with_path(self, pytester: Pytester, capsys) -> None:
+    def test_invoke_with_path(self, pytester: Pytester) -> None:
         retcode = pytest.main([str(pytester.path)])
         assert retcode == ExitCode.NO_TESTS_COLLECTED
-        out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, capsys) -> None:
         class MyPlugin:
@@ -655,7 +654,7 @@ class TestInvocationVariants:
                 parser.addoption("--myopt")
 
         pytest.main(["-h"], plugins=[MyPlugin()])
-        out, err = capsys.readouterr()
+        out, _err = capsys.readouterr()
         assert "--myopt" in out
 
     def test_pyargs_importerror(self, pytester: Pytester, monkeypatch) -> None:

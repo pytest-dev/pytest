@@ -12,10 +12,10 @@ import pytest
 
 def test_item_fspath(pytester: pytest.Pytester) -> None:
     pytester.makepyfile("def test_func(): pass")
-    items, hookrec = pytester.inline_genitems()
+    items, _hookrec = pytester.inline_genitems()
     assert len(items) == 1
     (item,) = items
-    items2, hookrec = pytester.inline_genitems(item.nodeid)
+    items2, _hookrec = pytester.inline_genitems(item.nodeid)
     (item2,) = items2
     assert item2.name == item.name
     assert item2.fspath == item.fspath

@@ -92,7 +92,7 @@ class TestMetafunc:
         with pytest.raises(pytest.Collector.CollectError):
             metafunc.parametrize("y", [5, 6])
 
-        with pytest.raises(TypeError, match="^ids must be a callable or an iterable$"):
+        with pytest.raises(TypeError, match=r"^ids must be a callable or an iterable$"):
             metafunc.parametrize("y", [5, 6], ids=42)  # type: ignore[arg-type]
 
     def test_parametrize_error_iterator(self) -> None:

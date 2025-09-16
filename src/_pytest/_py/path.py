@@ -652,7 +652,7 @@ class LocalPath:
         if not kw:
             obj.strpath = self.strpath
             return obj
-        drive, dirname, basename, purebasename, ext = self._getbyspec(
+        drive, dirname, _basename, purebasename, ext = self._getbyspec(
             "drive,dirname,basename,purebasename,ext"
         )
         if "basename" in kw:

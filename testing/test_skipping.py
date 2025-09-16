@@ -1304,7 +1304,7 @@ def test_xfail_item(pytester: Pytester) -> None:
     """
     )
     result = pytester.inline_run()
-    passed, skipped, failed = result.listoutcomes()
+    _passed, skipped, failed = result.listoutcomes()
     assert not failed
     xfailed = [r for r in skipped if hasattr(r, "wasxfail")]
     assert xfailed
@@ -1378,7 +1378,7 @@ def test_mark_xfail_item(pytester: Pytester) -> None:
     """
     )
     result = pytester.inline_run()
-    passed, skipped, failed = result.listoutcomes()
+    _passed, skipped, failed = result.listoutcomes()
     assert not failed
     xfailed = [r for r in skipped if hasattr(r, "wasxfail")]
     assert xfailed
@@ -1406,7 +1406,7 @@ def test_summary_list_after_errors(pytester: Pytester) -> None:
 def test_importorskip() -> None:
     with pytest.raises(
         pytest.skip.Exception,
-        match="^could not import 'doesnotexist': No module named .*",
+        match=r"^could not import 'doesnotexist': No module named .*",
     ):
         pytest.importorskip("doesnotexist")
 

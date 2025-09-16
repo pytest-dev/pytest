@@ -9,8 +9,9 @@ import time
 from unittest import mock
 import warnings
 
-from py import error
 from py.path import local
+
+from py import error
 
 import pytest
 

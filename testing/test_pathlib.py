@@ -1624,7 +1624,7 @@ class TestNamespacePackages:
                 return None
 
         # Setup directories without configuring sys.path.
-        models_py, algorithms_py = self.setup_directories(
+        models_py, _algorithms_py = self.setup_directories(
             tmp_path, monkeypatch=None, pytester=pytester
         )
         com_root_1 = tmp_path / "src/dist1/com"
