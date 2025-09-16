@@ -1273,10 +1273,10 @@ class TestReportInfo:
         )
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
-        path, lineno, msg = classcol.reportinfo()
+        _path, _lineno, _msg = classcol.reportinfo()
         func = next(iter(classcol.collect()))
         assert isinstance(func, Function)
-        path, lineno, msg = func.reportinfo()
+        _path, _lineno, _msg = func.reportinfo()
 
 
 def test_customized_python_discovery(pytester: Pytester) -> None:
@@ -1489,7 +1489,7 @@ def test_package_collection_init_given_as_argument(pytester: Pytester) -> None:
     Module, not the entire package.
     """
     p = pytester.copy_example("collect/package_init_given_as_arg")
-    items, hookrecorder = pytester.inline_genitems(p / "pkg" / "__init__.py")
+    items, _hookrecorder = pytester.inline_genitems(p / "pkg" / "__init__.py")
     assert len(items) == 1
     assert items[0].name == "test_init"
 

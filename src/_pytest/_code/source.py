@@ -103,7 +103,7 @@ class Source:
         which containing the given lineno."""
         if not (0 <= lineno < len(self)):
             raise IndexError("lineno out of range")
-        ast, start, end = getstatementrange_ast(lineno, self)
+        _ast, start, end = getstatementrange_ast(lineno, self)
         return start, end
 
     def deindent(self) -> Source:

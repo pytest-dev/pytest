@@ -33,24 +33,24 @@ class TestDoctests:
 
         for x in (pytester.path, checkfile):
             # print "checking that %s returns custom items" % (x,)
-            items, reprec = pytester.inline_genitems(x)
+            items, _reprec = pytester.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[0].parent, DoctestTextfile)
         # Empty file has no items.
-        items, reprec = pytester.inline_genitems(w)
+        items, _reprec = pytester.inline_genitems(w)
         assert len(items) == 0
 
     def test_collect_module_empty(self, pytester: Pytester):
         path = pytester.makepyfile(whatever="#")
         for p in (path, pytester.path):
-            items, reprec = pytester.inline_genitems(p, "--doctest-modules")
+            items, _reprec = pytester.inline_genitems(p, "--doctest-modules")
             assert len(items) == 0
 
     def test_collect_module_single_modulelevel_doctest(self, pytester: Pytester):
         path = pytester.makepyfile(whatever='""">>> pass"""')
         for p in (path, pytester.path):
-            items, reprec = pytester.inline_genitems(p, "--doctest-modules")
+            items, _reprec = pytester.inline_genitems(p, "--doctest-modules")
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[0].parent, DoctestModule)
@@ -64,7 +64,7 @@ class TestDoctests:
         """
         )
         for p in (path, pytester.path):
-            items, reprec = pytester.inline_genitems(p, "--doctest-modules")
+            items, _reprec = pytester.inline_genitems(p, "--doctest-modules")
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -97,7 +97,7 @@ class TestDoctests:
             },
         )
         for p in (path, pytester.path):
-            items, reprec = pytester.inline_genitems(p, "--doctest-modules")
+            items, _reprec = pytester.inline_genitems(p, "--doctest-modules")
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -840,7 +840,7 @@ class TestDoctests:
                 return 'c'
         """
         )
-        items, reprec = pytester.inline_genitems(p, "--doctest-modules")
+        items, _reprec = pytester.inline_genitems(p, "--doctest-modules")
         reportinfo = items[0].reportinfo()
         assert reportinfo[1] == 1
 
