@@ -704,7 +704,9 @@ class AssertionRewriter(ast.NodeVisitor):
         pos = 0
         for item in mod.body:
             match item:
-                case ast.Expr(value=ast.Constant(value=str() as doc)) if expect_docstring:
+                case ast.Expr(value=ast.Constant(value=str() as doc)) if (
+                    expect_docstring
+                ):
                     if self.is_rewrite_disabled(doc):
                         return
                     expect_docstring = False
