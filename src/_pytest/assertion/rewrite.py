@@ -1014,7 +1014,7 @@ class AssertionRewriter(ast.NodeVisitor):
                     # Check if the left operand is an ast.NamedExpr and the value has already been visited
                     case ast.Compare(left=ast.NamedExpr(target=ast.Name(id=target_id))):
                         if target_id in [
-                            e.id for e in boolop.values[:i] if isinstance(e, ast.Name)
+                            e.id for e in boolop.values[:i] if hasattr(e, "id")
                         ]:
                             pytest_temp = self.variable()
                             self.variables_overwrite[self.scope][target_id] = v.left  # type:ignore[assignment]
