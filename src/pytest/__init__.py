@@ -71,6 +71,7 @@ from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
+from _pytest.subtests import SubTests
 from _pytest.terminal import TerminalReporter
 from _pytest.terminal import TestShortLogReport
 from _pytest.tmpdir import TempPathFactory
@@ -148,6 +149,7 @@ __all__ = [
     "Session",
     "Stash",
     "StashKey",
+    "SubTests",
     "TempPathFactory",
     "TempdirFactory",
     "TerminalReporter",
