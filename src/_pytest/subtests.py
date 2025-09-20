@@ -21,14 +21,19 @@ from _pytest._code import ExceptionInfo
 from _pytest.capture import CaptureFixture
 from _pytest.capture import FDCapture
 from _pytest.capture import SysCapture
+from _pytest.config import Config
+from _pytest.config import hookimpl
+from _pytest.config import Parser
+from _pytest.fixtures import fixture
 from _pytest.fixtures import SubRequest
 from _pytest.logging import catching_logs
 from _pytest.logging import LogCaptureHandler
+from _pytest.nodes import Item
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
 from _pytest.unittest import TestCaseFunction
-import pytest
+from _pytest.warning_types import PytestDeprecationWarning
 
 
 if TYPE_CHECKING:
@@ -36,7 +41,7 @@ if TYPE_CHECKING:
     from typing import Literal
 
 
-def pytest_addoption(parser: pytest.Parser) -> None:
+def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("subtests")
     group.addoption(
         "--no-subtests-shortletter",
@@ -174,7 +179,7 @@ def _addSubTest(
                     self._originaladdSkip(testcase, reason)  # type: ignore[attr-defined]
 
 
-def pytest_configure(config: pytest.Config) -> None:
+def pytest_configure(config: Config) -> None:
     TestCaseFunction.addSubTest = _addSubTest  # type: ignore[attr-defined]
     TestCaseFunction.failfast = False  # type: ignore[attr-defined]
     # This condition is to prevent `TestCaseFunction._originaladdSkip` being assigned again in a subprocess from a
@@ -217,7 +222,7 @@ def pytest_unconfigure() -> None:
         del TestCaseFunction._originaladdSkip
 
 
-@pytest.fixture
+@fixture
 def subtests(request: SubRequest) -> Generator[SubTests, None, None]:
     """Provides subtests functionality."""
     capmam = request.node.config.pluginmanager.get_plugin("capturemanager")
@@ -235,7 +240,7 @@ class SubTests:
     request: SubRequest = attr.ib()
 
     @property
-    def item(self) -> pytest.Item:
+    def item(self) -> Item:
         return self.request.node
 
     def test(
@@ -414,7 +419,7 @@ def ignore_pytest_private_warning() -> Generator[None, None, None]:
         warnings.filterwarnings(
             "ignore",
             "A private pytest class or function was used.",
-            category=pytest.PytestDeprecationWarning,
+            category=PytestDeprecationWarning,
         )
         yield
 
@@ -424,7 +429,7 @@ class Captured:
     out = attr.ib(default="", type=str)
     err = attr.ib(default="", type=str)
 
-    def update_report(self, report: pytest.TestReport) -> None:
+    def update_report(self, report: TestReport) -> None:
         if self.out:
             report.sections.append(("Captured stdout call", self.out))
         if self.err:
@@ -435,16 +440,16 @@ class CapturedLogs:
     def __init__(self, handler: LogCaptureHandler) -> None:
         self._handler = handler
 
-    def update_report(self, report: pytest.TestReport) -> None:
+    def update_report(self, report: TestReport) -> None:
         report.sections.append(("Captured log call", self._handler.stream.getvalue()))
 
 
 class NullCapturedLogs:
-    def update_report(self, report: pytest.TestReport) -> None:
+    def update_report(self, report: TestReport) -> None:
         pass
 
 
-def pytest_report_to_serializable(report: pytest.TestReport) -> dict[str, Any] | None:
+def pytest_report_to_serializable(report: TestReport) -> dict[str, Any] | None:
     if isinstance(report, SubTestReport):
         return report._to_json()
     return None
@@ -456,10 +461,10 @@ def pytest_report_from_serializable(data: dict[str, Any]) -> SubTestReport | Non
     return None
 
 
-@pytest.hookimpl(tryfirst=True)
+@hookimpl(tryfirst=True)
 def pytest_report_teststatus(
-    report: pytest.TestReport,
-    config: pytest.Config,
+    report: TestReport,
+    config: Config,
 ) -> tuple[str, str, str | Mapping[str, bool]] | None:
     if report.when != "call" or not isinstance(report, SubTestReport):
         return None
