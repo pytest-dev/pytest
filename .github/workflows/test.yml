@@ -112,6 +112,7 @@ jobs:
             python: "3.10"
             os: windows-latest
             tox_env: "py310-pluggymain-pylib-xdist"
+            xfail: true
 
           - name: "windows-py310-xdist"
             python: "3.10"
@@ -132,6 +133,7 @@ jobs:
             python: "3.13"
             os: windows-latest
             tox_env: "py313"
+            xfail: true
 
           - name: "windows-py314"
             python: "3.14"
@@ -167,11 +169,13 @@ jobs:
             python: "3.10"
             os: ubuntu-latest
             tox_env: "py310-pluggymain-pylib-xdist"
+            xfail: true
 
           - name: "ubuntu-py310-freeze"
             python: "3.10"
             os: ubuntu-latest
             tox_env: "py310-freeze"
+            xfail: true
 
           - name: "ubuntu-py310-xdist"
             python: "3.10"
@@ -195,6 +199,7 @@ jobs:
             os: ubuntu-latest
             tox_env: "py313-pexpect"
             use_coverage: true
+            xfail: true
 
           - name: "ubuntu-py314"
             python: "3.14"
@@ -212,6 +217,7 @@ jobs:
             python: "3.10"
             os: macos-latest
             tox_env: "py310-xdist"
+            xfail: true
 
           - name: "macos-py312"
             python: "3.12"
@@ -222,6 +228,7 @@ jobs:
             python: "3.13"
             os: macos-latest
             tox_env: "py313-xdist"
+            xfail: true
 
           - name: "macos-py314"
             python: "3.14"
@@ -240,25 +247,7 @@ jobs:
             tox_env: "doctesting"
             use_coverage: true
 
-    continue-on-error: >-
-      ${{
-        contains(
-          fromJSON(
-            '[
-              "windows-py310-pluggy",
-              "windows-py313",
-              "ubuntu-py310-pluggy",
-              "ubuntu-py310-freeze",
-              "ubuntu-py313",
-              "macos-py310",
-              "macos-py313"
-            ]'
-          ),
-          matrix.name
-        )
-        && true
-        || false
-      }}
+    continue-on-error: ${{ matrix.xfail && true || false }}
 
     steps:
     - uses: actions/checkout@v5
