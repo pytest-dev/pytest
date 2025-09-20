@@ -1,0 +1,1 @@
+Restore pre-ExceptionGroup semantics for CallInfo.from_call: re-raise exceptions in reraise even when they appear inside a single-level ExceptionGroup. Nested groups remain out of scope of this fix and behave as before.
