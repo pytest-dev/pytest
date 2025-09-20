@@ -424,6 +424,33 @@ def test_option_precedence_mark(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["* 1 failed in*"])
 
 
+def test_accept_unknown_category(pytester: Pytester) -> None:
+    """Category types that can't be imported don't cause failure (#13732)."""
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            always:Failed to import filter module.*:pytest.PytestConfigWarning
+            ignore::foobar.Foobar
+    """
+    )
+    pytester.makepyfile(
+        """
+        def test():
+            pass
+    """
+    )
+    result = pytester.runpytest("-W", "ignore::bizbaz.Bizbaz")
+    result.stdout.fnmatch_lines(
+        [
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
+            "*PytestConfigWarning: Failed to import filter module 'foobar': ignore::foobar.Foobar",
+            "*PytestConfigWarning: Failed to import filter module 'bizbaz': ignore::bizbaz.Bizbaz",
+            "* 1 passed, * warning*",
+        ]
+    )
+
+
 class TestDeprecationWarningsByDefault:
     """
     Note: all pytest runs are executed in a subprocess so we don't inherit warning filters

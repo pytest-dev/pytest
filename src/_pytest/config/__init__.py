@@ -1965,6 +1965,8 @@ def parse_warning_filter(
         raise UsageError(error_template.format(error=str(e))) from None
     try:
         category: type[Warning] = _resolve_warning_category(category_)
+    except ImportError:
+        raise
     except Exception:
         exc_info = ExceptionInfo.from_current()
         exception_text = exc_info.getrepr(style="native")
@@ -2023,7 +2025,19 @@ def apply_warning_filters(
     # Filters should have this precedence: cmdline options, config.
     # Filters should be applied in the inverse order of precedence.
     for arg in config_filters:
-        warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
+        try:
+            warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
+        except ImportError as e:
+            warnings.warn(
+                f"Failed to import filter module '{e.name}': {arg}", PytestConfigWarning
+            )
+            continue
 
     for arg in cmdline_filters:
-        warnings.filterwarnings(*parse_warning_filter(arg, escape=True))
+        try:
+            warnings.filterwarnings(*parse_warning_filter(arg, escape=True))
+        except ImportError as e:
+            warnings.warn(
+                f"Failed to import filter module '{e.name}': {arg}", PytestConfigWarning
+            )
+            continue
