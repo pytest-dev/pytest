@@ -262,7 +262,7 @@ class TestResolveCollectionArgument:
 
         # ensure full paths given in the command-line without the drive letter resolve
         # to the full path correctly (#7628)
-        drive, full_path_without_drive = os.path.splitdrive(full_path)
+        _drive, full_path_without_drive = os.path.splitdrive(full_path)
         assert resolve_collection_argument(
             invocation_path, full_path_without_drive
         ) == CollectionArgument(
@@ -300,7 +300,7 @@ def test_module_full_path_without_drive(pytester: Pytester) -> None:
     fn = pytester.path.joinpath("project/tests/dummy_test.py")
     assert fn.is_file()
 
-    drive, path = os.path.splitdrive(str(fn))
+    _drive, path = os.path.splitdrive(str(fn))
 
     result = pytester.runpytest(path, "-v")
     result.stdout.fnmatch_lines(

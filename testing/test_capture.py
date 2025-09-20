@@ -76,7 +76,7 @@ class TestCaptureManager:
             assert outerr == ("", "")
             print("hello")
             capman.suspend_global_capture()
-            out, err = capman.read_global_capture()
+            out, _err = capman.read_global_capture()
             if method == "no":
                 assert old == (sys.stdout, sys.stderr, sys.stdin)
             else:
@@ -84,7 +84,7 @@ class TestCaptureManager:
             capman.resume_global_capture()
             print("hello")
             capman.suspend_global_capture()
-            out, err = capman.read_global_capture()
+            out, _err = capman.read_global_capture()
             if method != "no":
                 assert out == "hello\n"
             capman.stop_global_capturing()
@@ -563,7 +563,7 @@ class TestCaptureFixture:
     @pytest.mark.parametrize("nl", ("\n", "\r\n", "\r"))
     def test_cafd_preserves_newlines(self, capfd, nl) -> None:
         print("test", end=nl)
-        out, err = capfd.readouterr()
+        out, _err = capfd.readouterr()
         assert out.endswith(nl)
 
     def test_capfdbinary(self, pytester: Pytester) -> None:
@@ -1153,7 +1153,7 @@ class TestStdCapture:
     def test_capturing_readouterr_unicode(self) -> None:
         with self.getcapture() as cap:
             print("hxąć")
-            out, err = cap.readouterr()
+            out, _err = cap.readouterr()
         assert out == "hxąć\n"
 
     def test_reset_twice_error(self) -> None:
@@ -1185,8 +1185,8 @@ class TestStdCapture:
             print("cap1")
             with self.getcapture() as cap2:
                 print("cap2")
-                out2, err2 = cap2.readouterr()
-                out1, err1 = cap1.readouterr()
+                out2, _err2 = cap2.readouterr()
+                out1, _err1 = cap1.readouterr()
         assert out1 == "cap1\n"
         assert out2 == "cap2\n"
 
@@ -1231,8 +1231,8 @@ class TestTeeStdCapture(TestStdCapture):
             print("cap1")
             with self.getcapture() as cap2:
                 print("cap2")
-                out2, err2 = cap2.readouterr()
-                out1, err1 = cap1.readouterr()
+                out2, _err2 = cap2.readouterr()
+                out1, _err1 = cap1.readouterr()
         assert out1 == "cap1\ncap2\n"
         assert out2 == "cap2\n"
 

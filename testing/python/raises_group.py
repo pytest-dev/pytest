@@ -1325,6 +1325,16 @@ def test_annotated_group() -> None:
     with RaisesExc(BaseExceptionGroup[BaseException]):
         raise BaseExceptionGroup("", [KeyboardInterrupt()])
 
+    # assure AbstractRaises.is_baseexception is set properly
+    assert (
+        RaisesGroup(ExceptionGroup[Exception]).expected_type()
+        == "ExceptionGroup(ExceptionGroup)"
+    )
+    assert (
+        RaisesGroup(BaseExceptionGroup[BaseException]).expected_type()
+        == "BaseExceptionGroup(BaseExceptionGroup)"
+    )
+
 
 def test_tuples() -> None:
     # raises has historically supported one of several exceptions being raised
