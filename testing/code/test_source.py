@@ -210,7 +210,8 @@ class TestSourceParsing:
 
     def test_getstatementrange_with_syntaxerror_issue7(self) -> None:
         source = Source(":")
-        pytest.raises(SyntaxError, lambda: source.getstatementrange(0))
+        with pytest.raises(SyntaxError):
+            source.getstatementrange(0)
 
 
 def test_getstartingblock_singleline() -> None:
@@ -379,7 +380,8 @@ def test_code_of_object_instance_with_call() -> None:
     class A:
         pass
 
-    pytest.raises(TypeError, lambda: Source(A()))
+    with pytest.raises(TypeError):
+        Source(A())
 
     class WithCall:
         def __call__(self) -> None:
@@ -392,7 +394,8 @@ def test_code_of_object_instance_with_call() -> None:
         def __call__(self) -> None:
             pass
 
-    pytest.raises(TypeError, lambda: Code.from_function(Hello))
+    with pytest.raises(TypeError):
+        Code.from_function(Hello)
 
 
 def getstatement(lineno: int, source) -> Source:

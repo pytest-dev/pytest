@@ -51,7 +51,8 @@ class TestNewAPI:
         config = pytester.parseconfigure()
         assert config.cache is not None
         cache = config.cache
-        pytest.raises(TypeError, lambda: cache.set("key/name", cache))
+        with pytest.raises(TypeError):
+            cache.set("key/name", cache)
         config.cache.set("key/name", 0)
         config.cache._getvaluepath("key/name").write_bytes(b"123invalid")
         val = config.cache.get("key/name", -2)
@@ -143,7 +144,8 @@ class TestNewAPI:
                 val = cache.get("some/thing", None)
                 assert val is None
                 cache.set("some/thing", [1])
-                pytest.raises(TypeError, lambda: cache.get("some/thing"))
+                with pytest.raises(TypeError):
+                    cache.get("some/thing")
                 val = cache.get("some/thing", [])
                 assert val == [1]
         """

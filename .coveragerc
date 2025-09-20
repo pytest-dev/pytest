@@ -27,7 +27,7 @@ exclude_lines =
     ^\s*assert False(,|$)
     ^\s*assert_never\(
 
-    ^\s*if TYPE_CHECKING:
+    ^\s*(el)?if TYPE_CHECKING:
     ^\s*@overload( |$)
     ^\s*def .+: \.\.\.$
 

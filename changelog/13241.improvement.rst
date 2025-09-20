@@ -1,0 +1,2 @@
+:func:`pytest.raises`, :func:`pytest.warns` and :func:`pytest.deprecated_call` now uses :class:`ParamSpec` for the type hint to the (old and not recommended) callable overload, instead of :class:`Any`. This allows type checkers to raise errors when passing incorrect function parameters.
+``func`` can now also be passed as a kwarg, which the type hint previously showed as possible but didn't accept.

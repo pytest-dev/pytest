@@ -556,7 +556,8 @@ class TestParseIni:
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, pytester: Pytester) -> None:
         config = pytester.parseconfig()
-        pytest.raises(AssertionError, lambda: config.parse([]))
+        with pytest.raises(AssertionError):
+            config.parse([])
 
     def test_explicitly_specified_config_file_is_loaded(
         self, pytester: Pytester
@@ -647,7 +648,8 @@ class TestConfigAPI:
         config = pytester.parseconfig("--hello=this")
         for x in ("hello", "--hello", "-X"):
             assert config.getoption(x) == "this"
-        pytest.raises(ValueError, config.getoption, "qweqwe")
+        with pytest.raises(ValueError):
+            config.getoption("qweqwe")
 
         config_novalue = pytester.parseconfig()
         assert config_novalue.getoption("hello") is None
@@ -673,7 +675,8 @@ class TestConfigAPI:
 
     def test_config_getvalueorskip(self, pytester: Pytester) -> None:
         config = pytester.parseconfig()
-        pytest.raises(pytest.skip.Exception, config.getvalueorskip, "hello")
+        with pytest.raises(pytest.skip.Exception):
+            config.getvalueorskip("hello")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
 
@@ -721,7 +724,8 @@ class TestConfigAPI:
         config = pytester.parseconfig()
         val = config.getini("myname")
         assert val == "hello"
-        pytest.raises(ValueError, config.getini, "other")
+        with pytest.raises(ValueError):
+            config.getini("other")
 
     @pytest.mark.parametrize("config_type", ["ini", "pyproject"])
     def test_addini_paths(self, pytester: Pytester, config_type: str) -> None:
@@ -751,7 +755,8 @@ class TestConfigAPI:
         assert len(values) == 2
         assert values[0] == inipath.parent.joinpath("hello")
         assert values[1] == inipath.parent.joinpath("world/sub.py")
-        pytest.raises(ValueError, config.getini, "other")
+        with pytest.raises(ValueError):
+            config.getini("other")
 
     def make_conftest_for_args(self, pytester: Pytester) -> None:
         pytester.makeconftest(

@@ -724,8 +724,8 @@ class TestFunctional:
                 session.add_marker("mark1")
                 session.add_marker(pytest.mark.mark2)
                 session.add_marker(pytest.mark.mark3)
-                pytest.raises(ValueError, lambda:
-                        session.add_marker(10))
+                with pytest.raises(ValueError):
+                    session.add_marker(10)
         """
         )
         pytester.makepyfile(
