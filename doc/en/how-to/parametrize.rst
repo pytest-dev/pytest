@@ -194,6 +194,15 @@ To get all combinations of multiple parametrized arguments you can stack
 This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``,
 ``x=0/y=3``, and ``x=1/y=3`` exhausting parameters in the order of the decorators.
 
+.. warning::
+
+    Do not use a generator as the value argument for 
+    :ref:`pytest.mark.parametrize ref` when decorating a class or module:
+    the first test will consume the values of the generator and
+    subsequent tests will be skipped because the generator is empty.
+
+    Use a list or other iterable instead of a generator.
+
 .. _`pytest_generate_tests`:
 
 Basic ``pytest_generate_tests`` example
