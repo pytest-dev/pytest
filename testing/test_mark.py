@@ -228,7 +228,7 @@ def test_mark_option(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -276,7 +276,7 @@ def test_mark_option_with_kwargs(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -306,7 +306,7 @@ def test_mark_option_custom(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -341,7 +341,7 @@ def test_keyword_option_custom(
     """
     )
     rec = pytester.inline_run("-k", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -373,7 +373,7 @@ def test_keyword_option_parametrize(
     """
     )
     rec = pytester.inline_run("-k", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -388,7 +388,7 @@ def test_parametrize_with_module(pytester: Pytester) -> None:
     """
     )
     rec = pytester.inline_run()
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     expected_id = "test_func[" + pytest.__name__ + "]"
     assert passed[0].nodeid.split("::")[-1] == expected_id
 
@@ -537,7 +537,7 @@ class TestFunctional:
                         assert True
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         for item in items:
             print(item, item.keywords)
             assert [x for x in item.iter_markers() if x.name == "a"]
@@ -560,7 +560,7 @@ class TestFunctional:
                 def test_bar(self): pass
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b"), test_bar=("a",))
 
     def test_mark_should_not_pass_to_siebling_class(self, pytester: Pytester) -> None:
@@ -583,7 +583,7 @@ class TestFunctional:
 
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         base_item, sub_item, sub_item_other = items
         print(items, [x.nodeid for x in items])
         # new api segregates
@@ -611,7 +611,7 @@ class TestFunctional:
                 def test_bar(self): pass
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
 
     def test_mark_closest(self, pytester: Pytester) -> None:
@@ -630,7 +630,7 @@ class TestFunctional:
 
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         has_own, has_inherited = items
         has_own_marker = has_own.get_closest_marker("c")
         has_inherited_marker = has_inherited.get_closest_marker("c")
@@ -826,7 +826,7 @@ class TestKeywordSelection:
 
         def check(keyword, name):
             reprec = pytester.inline_run("-s", "-k", keyword, file_test)
-            passed, skipped, failed = reprec.listoutcomes()
+            _passed, _skipped, failed = reprec.listoutcomes()
             assert len(failed) == 1
             assert failed[0].nodeid.split("::")[-1] == name
             assert len(reprec.getcalls("pytest_deselected")) == 1
@@ -869,7 +869,7 @@ class TestKeywordSelection:
         )
         reprec = pytester.inline_run(p.parent, "-s", "-k", keyword)
         print("keyword", repr(keyword))
-        passed, skipped, failed = reprec.listoutcomes()
+        passed, _skipped, _failed = reprec.listoutcomes()
         assert len(passed) == 1
         assert passed[0].nodeid.endswith("test_2")
         dlist = reprec.getcalls("pytest_deselected")
@@ -885,7 +885,7 @@ class TestKeywordSelection:
         """
         )
         reprec = pytester.inline_run("-k", "mykeyword", p)
-        passed, skipped, failed = reprec.countoutcomes()
+        _passed, _skipped, failed = reprec.countoutcomes()
         assert failed == 1
 
     @pytest.mark.xfail

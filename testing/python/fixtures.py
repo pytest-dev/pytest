@@ -1150,7 +1150,7 @@ class TestRequestSessionScoped:
 
 class TestRequestMarking:
     def test_applymarker(self, pytester: Pytester) -> None:
-        item1, item2 = pytester.getitems(
+        item1, _item2 = pytester.getitems(
             """
             import pytest
 

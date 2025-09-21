@@ -188,7 +188,7 @@ class BaseReport:
             even in patch releases.
         """
         if self.location is not None:
-            fspath, lineno, domain = self.location
+            _fspath, _lineno, domain = self.location
             return domain
         return None
 
