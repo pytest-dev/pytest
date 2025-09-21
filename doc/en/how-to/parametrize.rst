@@ -196,7 +196,7 @@ This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``,
 
 .. warning::
 
-    Do not use a generator as the value argument for 
+    Do not use a generator as the value argument for
     :ref:`pytest.mark.parametrize ref` when decorating a class or module:
     the first test will consume the values of the generator and
     subsequent tests will be skipped because the generator is empty.
