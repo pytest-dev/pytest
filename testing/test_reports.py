@@ -434,6 +434,68 @@ class TestReportSerialization:
             loaded_report = TestReport._from_json(data)
             assert loaded_report.stop - loaded_report.start == approx(report.duration)
 
+    @pytest.mark.parametrize("duplicate", [False, True])
+    def test_exception_group_with_only_skips(self, pytester: Pytester, duplicate: bool):
+        """
+        Test that when an ExceptionGroup with only Skipped exceptions is raised in teardown,
+        it is reported as a single skipped test, not as an error.
+        This is a regression test for issue #13537.
+        """
+        reason = "A" if duplicate else "B"
+        pytester.makepyfile(
+            test_it=f"""
+            import pytest
+            @pytest.fixture
+            def fixA():
+                yield
+                pytest.skip(reason="A")
+            @pytest.fixture
+            def fixB():
+                yield
+                pytest.skip(reason="{reason}")
+            def test_skip(fixA, fixB):
+                assert True
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=1, skipped=1)
+        out = result.stdout.str()
+        # Both reasons should appear
+        assert "(A)" in out if duplicate else "(A; B)"
+        assert "ERROR at teardown" not in out
+
+    def test_exception_group_skips_use_item_location(self, pytester: Pytester):
+        """
+        Regression for #13537:
+        If any skip inside an ExceptionGroup has _use_item_location=True,
+        the report location should point to the test item, not the fixture teardown.
+        """
+        pytester.makepyfile(
+            test_it="""
+            import pytest
+            @pytest.fixture
+            def fix_item_loc():
+                yield
+                exc = pytest.skip.Exception("A")
+                exc._use_item_location = True
+                raise exc
+            @pytest.fixture
+            def fix_normal():
+                yield
+                raise pytest.skip.Exception("B")
+            def test_both(fix_item_loc, fix_normal):
+                assert True
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=1, skipped=1)
+
+        out = result.stdout.str()
+        # Both reasons should appear
+        assert "A" in out and "B" in out
+        # Crucially, the skip should be attributed to the test item, not teardown
+        assert "test_both" in out
+
 
 class TestHooks:
     """Test that the hooks are working correctly for plugins"""
