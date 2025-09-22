@@ -5794,3 +5794,46 @@ def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
+
+
+@pytest.mark.filterwarnings(
+    "default:cannot discover * due to being wrapped in decorators:pytest.PytestWarning"
+)
+def test_custom_decorated_fixture_warning(pytester: Pytester) -> None:
+    """Test that fixtures decorated with custom decorators using functools.wraps
+    generate a warning about not being discoverable.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+        import functools
+
+        def custom_deco(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        class TestClass:
+            @custom_deco
+            @pytest.fixture
+            def my_fixture(self):
+                return "fixture_value"
+
+            def test_fixture_usage(self, my_fixture):
+                assert my_fixture == "fixture_value"
+        """
+    )
+    result = pytester.runpytest_inprocess(
+        "-v", "-rw", "-W", "default::pytest.PytestWarning"
+    )
+
+    result.stdout.fnmatch_lines(
+        [
+            "*test_custom_decorated_fixture_warning.py:*: "
+            "PytestWarning: cannot discover my_fixture due to being wrapped in decorators*"
+        ]
+    )
+
+    result.stdout.fnmatch_lines(["*fixture 'my_fixture' not found*"])
+    result.assert_outcomes(errors=1)
