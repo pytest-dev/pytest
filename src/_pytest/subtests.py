@@ -4,13 +4,13 @@ from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterator
 from collections.abc import Mapping
+from contextlib import AbstractContextManager
 from contextlib import contextmanager
 from contextlib import ExitStack
 from contextlib import nullcontext
 import sys
 import time
 from typing import Any
-from typing import ContextManager
 from typing import TYPE_CHECKING
 from unittest import TestCase
 
@@ -23,12 +23,11 @@ from _pytest.capture import FDCapture
 from _pytest.capture import SysCapture
 from _pytest.config import Config
 from _pytest.config import hookimpl
-from _pytest.config import Parser
+from _pytest.config.argparsing import Parser
 from _pytest.fixtures import fixture
 from _pytest.fixtures import SubRequest
 from _pytest.logging import catching_logs
 from _pytest.logging import LogCaptureHandler
-from _pytest.nodes import Item
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
@@ -85,7 +84,7 @@ class SubTestReport(TestReport):  # type: ignore[misc]
             parts.append(f"({params_desc})")
         return " ".join(parts) or "(<subtest>)"
 
-    def _to_json(self) -> dict:
+    def _to_json(self) -> dict[str, Any]:
         data = super()._to_json()
         del data["context"]
         data["_report_type"] = "SubTestReport"
@@ -236,11 +235,11 @@ def subtests(request: SubRequest) -> Generator[SubTests, None, None]:
 @attr.s
 class SubTests:
     ihook: pluggy.HookRelay = attr.ib()
-    suspend_capture_ctx: Callable[[], ContextManager] = attr.ib()
+    suspend_capture_ctx: Callable[[], AbstractContextManager[None]] = attr.ib()
     request: SubRequest = attr.ib()
 
     @property
-    def item(self) -> Item:
+    def item(self) -> Any:
         return self.request.node
 
     def test(
@@ -282,7 +281,7 @@ class _SubTestContextManager:
     ihook: pluggy.HookRelay
     msg: str | None
     kwargs: dict[str, Any]
-    suspend_capture_ctx: Callable[[], ContextManager]
+    suspend_capture_ctx: Callable[[], AbstractContextManager[None]]
     request: SubRequest
 
     def __enter__(self) -> None:
@@ -302,8 +301,8 @@ class _SubTestContextManager:
 
     def __exit__(
         self,
-        exc_type: type[Exception] | None,
-        exc_val: Exception | None,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool:
         __tracebackhide__ = True
@@ -352,7 +351,7 @@ def make_call_info(
     stop: float,
     duration: float,
     when: Literal["collect", "setup", "call", "teardown"],
-) -> CallInfo:
+) -> CallInfo[Any]:
     return CallInfo(
         None,
         exc_info,
