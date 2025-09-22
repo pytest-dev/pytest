@@ -8,13 +8,13 @@ from contextlib import AbstractContextManager
 from contextlib import contextmanager
 from contextlib import ExitStack
 from contextlib import nullcontext
+import dataclasses
 import sys
 import time
 from typing import Any
 from typing import TYPE_CHECKING
 from unittest import TestCase
 
-import attr
 import pluggy
 
 from _pytest._code import ExceptionInfo
@@ -58,15 +58,15 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-@attr.s
+@dataclasses.dataclass
 class SubTestContext:
-    msg: str | None = attr.ib()
-    kwargs: dict[str, Any] = attr.ib()
+    msg: str | None
+    kwargs: dict[str, Any]
 
 
-@attr.s(init=False)
+@dataclasses.dataclass(init=False)
 class SubTestReport(TestReport):  # type: ignore[misc]
-    context: SubTestContext = attr.ib()
+    context: SubTestContext
 
     @property
     def head_line(self) -> str:
@@ -88,7 +88,7 @@ class SubTestReport(TestReport):  # type: ignore[misc]
         data = super()._to_json()
         del data["context"]
         data["_report_type"] = "SubTestReport"
-        data["_subtest.context"] = attr.asdict(self.context)
+        data["_subtest.context"] = dataclasses.asdict(self.context)
         return data
 
     @classmethod
@@ -232,11 +232,11 @@ def subtests(request: SubRequest) -> Generator[SubTests, None, None]:
     yield SubTests(request.node.ihook, suspend_capture_ctx, request)
 
 
-@attr.s
+@dataclasses.dataclass
 class SubTests:
-    ihook: pluggy.HookRelay = attr.ib()
-    suspend_capture_ctx: Callable[[], AbstractContextManager[None]] = attr.ib()
-    request: SubRequest = attr.ib()
+    ihook: pluggy.HookRelay
+    suspend_capture_ctx: Callable[[], AbstractContextManager[None]]
+    request: SubRequest
 
     @property
     def item(self) -> Any:
@@ -267,7 +267,7 @@ class SubTests:
         )
 
 
-@attr.s(auto_attribs=True)
+@dataclasses.dataclass
 class _SubTestContextManager:
     """
     Context manager for subtests, capturing exceptions raised inside the subtest scope and handling
@@ -423,10 +423,10 @@ def ignore_pytest_private_warning() -> Generator[None, None, None]:
         yield
 
 
-@attr.s
+@dataclasses.dataclass()
 class Captured:
-    out = attr.ib(default="", type=str)
-    err = attr.ib(default="", type=str)
+    out: str = ""
+    err: str = ""
 
     def update_report(self, report: TestReport) -> None:
         if self.out:
