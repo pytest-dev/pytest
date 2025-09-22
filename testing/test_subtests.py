@@ -12,9 +12,7 @@ IS_PY311 = sys.version_info[:2] >= (3, 11)
 
 @pytest.mark.parametrize("mode", ["normal", "xdist"])
 class TestFixture:
-    """
-    Tests for ``subtests`` fixture.
-    """
+    """Tests for ``subtests`` fixture."""
 
     @pytest.fixture
     def simple_script(self, pytester: pytest.Pytester) -> None:
@@ -39,7 +37,7 @@ class TestFixture:
         else:
             assert mode == "xdist"
             pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1")
+            result = pytester.runpytest("-n1", "-pxdist.plugin")
             expected_lines = ["1 worker [1 item]"]
 
         expected_lines += [
@@ -69,7 +67,7 @@ class TestFixture:
         else:
             assert mode == "xdist"
             pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1", "-v")
+            result = pytester.runpytest("-n1", "-v", "-pxdist.plugin")
             expected_lines = [
                 "1 worker [1 item]",
                 "*gw0*100%* test_simple_terminal_verbose.py::test_foo*",
@@ -106,7 +104,7 @@ class TestFixture:
         else:
             assert mode == "xdist"
             pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1")
+            result = pytester.runpytest("-n1", "-pxdist.plugin")
             expected_lines = ["1 worker [1 item]"]
         expected_lines += ["* 1 passed, 3 skipped, 2 subtests passed in *"]
         result.stdout.fnmatch_lines(expected_lines)
@@ -130,7 +128,7 @@ class TestFixture:
         else:
             assert mode == "xdist"
             pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1")
+            result = pytester.runpytest("-n1", "-pxdist.plugin")
             expected_lines = ["1 worker [1 item]"]
         expected_lines += ["* 1 passed, 2 subtests passed, 3 subtests xfailed in *"]
         result.stdout.fnmatch_lines(expected_lines)
@@ -152,7 +150,7 @@ class TestFixture:
         else:
             assert mode == "xdist"
             pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1")
+            result = pytester.runpytest("-n1", "-pxdist.plugin")
             expected_lines = ["1 worker [1 item]"]
         expected_lines += ["* 1 passed *"]
         result.stdout.fnmatch_lines(expected_lines)
@@ -215,9 +213,7 @@ class TestFixture:
 
 
 class TestSubTest:
-    """
-    Test Test.subTest functionality.
-    """
+    """Test.subTest functionality."""
 
     @pytest.fixture
     def simple_script(self, pytester: pytest.Pytester) -> Path:
@@ -264,11 +260,11 @@ class TestSubTest:
             else:
                 assert runner == "pytest-xdist"
                 pytest.importorskip("xdist")
-                result = pytester.runpytest(simple_script, "-n1")
+                result = pytester.runpytest(simple_script, "-n1", "-pxdist.plugin")
                 expected_lines = ["1 worker [1 item]"]
             result.stdout.fnmatch_lines(
-                expected_lines
-                + [
+                [
+                    *expected_lines,
                     "* T.test_foo [[]custom[]] (i=1) *",
                     "E  * AssertionError: 1 != 0",
                     "* T.test_foo [[]custom[]] (i=3) *",
@@ -310,7 +306,9 @@ class TestSubTest:
             else:
                 assert runner == "pytest-xdist"
                 pytest.importorskip("xdist")
-                result = pytester.runpytest(simple_script, "-n1", "-v")
+                result = pytester.runpytest(
+                    simple_script, "-n1", "-v", "-pxdist.plugin"
+                )
                 expected_lines = [
                     "1 worker [1 item]",
                     "*gw0*100%* SUBFAIL test_simple_terminal_verbose.py::T::test_foo*",
@@ -318,8 +316,8 @@ class TestSubTest:
                     "*gw0*100%* PASSED test_simple_terminal_verbose.py::T::test_foo*",
                 ]
             result.stdout.fnmatch_lines(
-                expected_lines
-                + [
+                [
+                    *expected_lines,
                     "* T.test_foo [[]custom[]] (i=1) *",
                     "E  * AssertionError: 1 != 0",
                     "* T.test_foo [[]custom[]] (i=3) *",
@@ -470,15 +468,19 @@ class TestSubTest:
             result = pytester.runpytest(p, "-v", "-rsf")
             result.stdout.re_match_lines(
                 [
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=0\) SUBSKIP \(skip subtest i=0\) .*",
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=3\) SUBSKIP \(skip subtest i=3\) .*",
+                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=0\) SUBSKIP"
+                    r" \(skip subtest i=0\) .*",
+                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=3\) SUBSKIP"
+                    r" \(skip subtest i=3\) .*",
                     r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=4\) SUBFAIL .*",
                     r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=9\) SUBFAIL .*",
                     "test_skip_with_failure.py::T::test_foo PASSED .*",
                     r"[custom message] (i=0) SUBSKIP [1] test_skip_with_failure.py:5: skip subtest i=0",
                     r"[custom message] (i=0) SUBSKIP [1] test_skip_with_failure.py:5: skip subtest i=3",
-                    r"[custom message] (i=4) SUBFAIL test_skip_with_failure.py::T::test_foo - AssertionError: assert 4 < 4",
-                    r"[custom message] (i=9) SUBFAIL test_skip_with_failure.py::T::test_foo - AssertionError: assert 9 < 4",
+                    r"[custom message] (i=4) SUBFAIL test_skip_with_failure.py::T::test_foo"
+                    r" - AssertionError: assert 4 < 4",
+                    r"[custom message] (i=9) SUBFAIL test_skip_with_failure.py::T::test_foo"
+                    r" - AssertionError: assert 9 < 4",
                     r".* 6 failed, 1 passed, 4 skipped in .*",
                 ]
             )
@@ -542,8 +544,10 @@ class TestSubTest:
                 [
                     r"test_skip_with_failure_and_non_subskip.py::T::test_foo \[custom message\] \(i=4\) SUBFAIL .*",
                     r"test_skip_with_failure_and_non_subskip.py::T::test_foo SKIPPED \(skip the test\)",
-                    r"\[custom message\] \(i=0\) SUBSKIP \[1\] test_skip_with_failure_and_non_subskip.py:5: skip subtest i=3",
-                    r"\[custom message\] \(i=0\) SUBSKIP \[1\] test_skip_with_failure_and_non_subskip.py:5: skip the test",
+                    r"\[custom message\] \(i=0\) SUBSKIP \[1\] test_skip_with_failure_and_non_subskip.py:5:"
+                    r" skip subtest i=3",
+                    r"\[custom message\] \(i=0\) SUBSKIP \[1\] test_skip_with_failure_and_non_subskip.py:5:"
+                    r" skip the test",
                     r"\[custom message\] \(i=4\) SUBFAIL test_skip_with_failure_and_non_subskip.py::T::test_foo",
                     r".* 6 failed, 5 skipped in .*",
                 ]
@@ -555,7 +559,8 @@ class TestSubTest:
                     [
                         r"test_skip_with_failure_and_non_subskip.py::T::test_foo \[custom message\] \(i=4\) SUBFAIL .*",
                         r"test_skip_with_failure_and_non_subskip.py::T::test_foo SKIPPED \(skip the test\).*",
-                        r"\[custom message\] \(i=3\) SUBSKIP test_skip_with_failure_and_non_subskip.py::T::test_foo - Skipped: skip subtest i=3",
+                        r"\[custom message\] \(i=3\) SUBSKIP test_skip_with_failure_and_non_subskip.py::T::test_foo"
+                        r" - Skipped: skip subtest i=3",
                         r"SKIPPED test_skip_with_failure_and_non_subskip.py::T::test_foo - Skipped: skip the test",
                         r"\[custom message\] \(i=4\) SUBFAIL test_skip_with_failure_and_non_subskip.py::T::test_foo",
                         r".* 6 failed, 5 skipped in .*",
@@ -748,9 +753,7 @@ class TestDebugging:
     """Check --pdb support for subtests fixture and TestCase.subTest."""
 
     class _FakePdb:
-        """
-        Fake debugger class implementation that tracks which methods were called on it.
-        """
+        """Fake debugger class implementation that tracks which methods were called on it."""
 
         quitting: bool = False
         calls: list[str] = []
@@ -813,9 +816,7 @@ class TestDebugging:
 
 
 def test_exitfirst(pytester: pytest.Pytester) -> None:
-    """
-    Validate that when passing --exitfirst the test exits after the first failed subtest.
-    """
+    """Validate that when passing --exitfirst the test exits after the first failed subtest."""
     pytester.makepyfile(
         """
         def test_foo(subtests):
