@@ -280,8 +280,7 @@ def test_warning_recorded_hook(pytester: Pytester) -> None:
         ("call warning", "runtest", "test_warning_recorded_hook.py::test_func"),
         ("teardown warning", "runtest", "test_warning_recorded_hook.py::test_func"),
     ]
-    assert len(collected) == len(expected)  # python < 3.10 zip(strict=True)
-    for collected_result, expected_result in zip(collected, expected):
+    for collected_result, expected_result in zip(collected, expected, strict=True):
         assert collected_result[0] == expected_result[0], str(collected)
         assert collected_result[1] == expected_result[1], str(collected)
         assert collected_result[2] == expected_result[2], str(collected)
@@ -423,6 +422,33 @@ def test_option_precedence_mark(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-W", "ignore")
     result.stdout.fnmatch_lines(["* 1 failed in*"])
+
+
+def test_accept_unknown_category(pytester: Pytester) -> None:
+    """Category types that can't be imported don't cause failure (#13732)."""
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            always:Failed to import filter module.*:pytest.PytestConfigWarning
+            ignore::foobar.Foobar
+    """
+    )
+    pytester.makepyfile(
+        """
+        def test():
+            pass
+    """
+    )
+    result = pytester.runpytest("-W", "ignore::bizbaz.Bizbaz")
+    result.stdout.fnmatch_lines(
+        [
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
+            "*PytestConfigWarning: Failed to import filter module 'foobar': ignore::foobar.Foobar",
+            "*PytestConfigWarning: Failed to import filter module 'bizbaz': ignore::bizbaz.Bizbaz",
+            "* 1 passed, * warning*",
+        ]
+    )
 
 
 class TestDeprecationWarningsByDefault:

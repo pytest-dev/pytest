@@ -1066,9 +1066,11 @@ def resolve_collection_argument(
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
     """
-    base, squacket, rest = str(arg).partition("[")
+    base, squacket, rest = arg.partition("[")
     strpath, *parts = base.split("::")
-    if parts:
+    if squacket:
+        if not parts:
+            raise UsageError(f"path cannot contain [] parametrization: {arg}")
         parts[-1] = f"{parts[-1]}{squacket}{rest}"
     module_name = None
     if as_pypath:

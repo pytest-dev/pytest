@@ -436,7 +436,7 @@ class TestPytestPluginManagerBootstrapping:
         # Handles -p without following arg (when used without argparse).
         pytestpm.consider_preparse(["-p"])
 
-        with pytest.raises(UsageError, match="^plugin main cannot be disabled$"):
+        with pytest.raises(UsageError, match=r"^plugin main cannot be disabled$"):
             pytestpm.consider_preparse(["-p", "no:main"])
 
     def test_plugin_prevent_register(self, pytestpm: PytestPluginManager) -> None:

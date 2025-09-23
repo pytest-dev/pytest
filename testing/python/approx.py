@@ -77,7 +77,7 @@ def assert_approx_raises_regex(pytestconfig):
         )
 
         for i, (obtained_line, expected_line) in enumerate(
-            zip(obtained_message, expected_message)
+            zip(obtained_message, expected_message, strict=True)
         ):
             regex = re.compile(expected_line)
             assert regex.match(obtained_line) is not None, (
@@ -738,6 +738,17 @@ class TestApprox:
                 r"  Max relative difference: inf",
                 r"  Index \| Obtained\s+\| Expected   ",
                 rf"  foo   | {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
+    def test_dict_differing_lengths(self, assert_approx_raises_regex):
+        assert_approx_raises_regex(
+            {"a": 0},
+            {"a": 0, "b": 1},
+            [
+                "  ",
+                r"  Impossible to compare mappings with different sizes\.",
+                r"  Lengths: 2 and 1",
             ],
         )
 

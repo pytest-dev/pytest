@@ -799,7 +799,7 @@ def test_pytester_makefile_dot_prefixes_extension_with_warning(
 ) -> None:
     with pytest.raises(
         ValueError,
-        match="pytester.makefile expects a file extension, try .foo.bar instead of foo.bar",
+        match=r"pytester\.makefile expects a file extension, try \.foo\.bar instead of foo\.bar",
     ):
         pytester.makefile("foo.bar", "")
 

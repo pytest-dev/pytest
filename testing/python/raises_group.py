@@ -292,7 +292,7 @@ def test_catch_unwrapped_exceptions() -> None:
     # if users want one of several exception types they need to use a RaisesExc
     # (which the error message suggests)
     with RaisesGroup(
-        RaisesExc(check=lambda e: isinstance(e, (SyntaxError, ValueError))),
+        RaisesExc(check=lambda e: isinstance(e, SyntaxError | ValueError)),
         allow_unwrapped=True,
     ):
         raise ValueError
@@ -1324,6 +1324,16 @@ def test_annotated_group() -> None:
         )
     with RaisesExc(BaseExceptionGroup[BaseException]):
         raise BaseExceptionGroup("", [KeyboardInterrupt()])
+
+    # assure AbstractRaises.is_baseexception is set properly
+    assert (
+        RaisesGroup(ExceptionGroup[Exception]).expected_type()
+        == "ExceptionGroup(ExceptionGroup)"
+    )
+    assert (
+        RaisesGroup(BaseExceptionGroup[BaseException]).expected_type()
+        == "BaseExceptionGroup(BaseExceptionGroup)"
+    )
 
 
 def test_tuples() -> None:

@@ -66,7 +66,7 @@ class SessionTests:
                 pytest.raises(ValueError, int, "3")
         """
         )
-        passed, skipped, failed = reprec.listoutcomes()
+        _passed, _skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message  # type: ignore[union-attr]
         assert "DID NOT RAISE" in out
