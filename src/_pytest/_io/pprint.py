@@ -62,7 +62,11 @@ class PrettyPrinter:
         indent: int = 4,
         width: int = 80,
         depth: int | None = None,
+<<<<<<< HEAD
         sort_dicts: bool = False,
+=======
+        sort_dicts: bool = True,
+>>>>>>> 004825824a612277d452488b01af76ce33bb85d9
     ) -> None:
         """Handle pretty printing operations onto a stream using a set of
         configured parameters.
