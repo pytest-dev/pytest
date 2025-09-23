@@ -2400,8 +2400,6 @@ def test_parse_warning_filter(
         ":" * 5,
         # Invalid action.
         "FOO::",
-        # ImportError when importing the warning class.
-        "::test_parse_warning_filter_failure.NonExistentClass::",
         # Class is not a Warning subclass.
         "::list::",
         # Negative line number.

@@ -29,9 +29,9 @@ if TYPE_CHECKING:
 
     # for some reason Sphinx does not play well with 'from types import TracebackType'
     import types
+    from typing import TypeGuard
 
     from typing_extensions import ParamSpec
-    from typing_extensions import TypeGuard
     from typing_extensions import TypeVar
 
     P = ParamSpec("P")
@@ -452,12 +452,12 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                 issubclass(origin_exc, BaseExceptionGroup)
                 and exc_type in (BaseException, Any)
             ):
-                if not isinstance(exc, Exception):
+                if not issubclass(origin_exc, ExceptionGroup):
                     self.is_baseexception = True
                 return cast(type[BaseExcT_1], origin_exc)
             else:
                 raise ValueError(
-                    f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseExeption]` "
+                    f"Only `ExceptionGroup[Exception]` or `BaseExceptionGroup[BaseException]` "
                     f"are accepted as generic types but got `{exc}`. "
                     f"As `raises` will catch all instances of the specified group regardless of the "
                     f"generic argument specific nested exceptions has to be checked "
@@ -465,9 +465,9 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                 )
         # unclear if the Type/ValueError distinction is even helpful here
         msg = f"expected exception must be {expected}, not "
-        if isinstance(exc, type):
+        if isinstance(exc, type):  # type: ignore[unreachable]
             raise ValueError(msg + f"{exc.__name__!r}")
-        if isinstance(exc, BaseException):
+        if isinstance(exc, BaseException):  # type: ignore[unreachable]
             raise TypeError(msg + f"an exception instance ({type(exc).__name__})")
         raise TypeError(msg + repr(type(exc).__name__))
 
@@ -559,7 +559,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         The type is checked with :func:`isinstance`, and does not need to be an exact match.
         If that is wanted you can use the ``check`` parameter.
 
-    :kwparam str | Pattern[str] match
+    :kwparam str | Pattern[str] match:
         A regex to match.
 
     :kwparam Callable[[BaseException], bool] check:

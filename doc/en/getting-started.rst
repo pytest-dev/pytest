@@ -9,8 +9,6 @@ Get Started
 Install ``pytest``
 ----------------------------------------
 
-``pytest`` requires: Python 3.8+ or PyPy3.
-
 1. Run the following command in your command line:
 
 .. code-block:: bash
@@ -22,7 +20,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 8.4.1
+    pytest 8.4.2
 
 .. _`simpletest`:
 

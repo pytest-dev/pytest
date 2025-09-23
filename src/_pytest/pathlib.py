@@ -348,7 +348,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
     entries = find_prefixed(root, prefix)
     entries, entries2 = itertools.tee(entries)
     numbers = map(parse_num, extract_suffixes(entries2, prefix))
-    for entry, number in zip(entries, numbers):
+    for entry, number in zip(entries, numbers, strict=True):
         if number <= max_delete:
             yield Path(entry)
 
@@ -1053,3 +1053,11 @@ def safe_exists(p: Path) -> bool:
         # ValueError: stat: path too long for Windows
         # OSError: [WinError 123] The filename, directory name, or volume label syntax is incorrect
         return False
+
+
+def samefile_nofollow(p1: Path, p2: Path) -> bool:
+    """Test whether two paths reference the same actual file or directory.
+
+    Unlike Path.samefile(), does not resolve symlinks.
+    """
+    return os.path.samestat(p1.lstat(), p2.lstat())

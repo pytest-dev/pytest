@@ -1422,7 +1422,6 @@ class Pytester:
                 stdin=stdin,
                 stdout=f1,
                 stderr=f2,
-                close_fds=(sys.platform != "win32"),
             )
             if popen.stdin is not None:
                 popen.stdin.close()
@@ -1443,6 +1442,8 @@ class Pytester:
                     ret = popen.wait(timeout)
                 except subprocess.TimeoutExpired:
                     handle_timeout()
+            f1.flush()
+            f2.flush()
 
         with p1.open(encoding="utf8") as f1, p2.open(encoding="utf8") as f2:
             out = f1.read().splitlines()

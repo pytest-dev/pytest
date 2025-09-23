@@ -263,7 +263,7 @@ class TestTraceback_f_g_h:
         def reraise_me() -> None:
             import sys
 
-            exc, val, tb = sys.exc_info()
+            _exc, val, tb = sys.exc_info()
             assert val is not None
             raise val.with_traceback(tb)
 

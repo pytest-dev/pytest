@@ -220,6 +220,20 @@ class TestResolveCollectionArgument:
             module_name=None,
         )
 
+    @pytest.mark.parametrize(
+        "arg", ["x.py[a]", "x.py[a]::foo", "x/y.py[a]::foo::bar", "x.py[a]::foo[b]"]
+    )
+    def test_path_parametrization_not_allowed(
+        self, invocation_path: Path, arg: str
+    ) -> None:
+        with pytest.raises(
+            UsageError, match=r"path cannot contain \[\] parametrization"
+        ):
+            resolve_collection_argument(
+                invocation_path,
+                arg,
+            )
+
     def test_does_not_exist(self, invocation_path: Path) -> None:
         """Given a file/module that does not exist raises UsageError."""
         with pytest.raises(
@@ -248,7 +262,7 @@ class TestResolveCollectionArgument:
 
         # ensure full paths given in the command-line without the drive letter resolve
         # to the full path correctly (#7628)
-        drive, full_path_without_drive = os.path.splitdrive(full_path)
+        _drive, full_path_without_drive = os.path.splitdrive(full_path)
         assert resolve_collection_argument(
             invocation_path, full_path_without_drive
         ) == CollectionArgument(
@@ -286,7 +300,7 @@ def test_module_full_path_without_drive(pytester: Pytester) -> None:
     fn = pytester.path.joinpath("project/tests/dummy_test.py")
     assert fn.is_file()
 
-    drive, path = os.path.splitdrive(str(fn))
+    _drive, path = os.path.splitdrive(str(fn))
 
     result = pytester.runpytest(path, "-v")
     result.stdout.fnmatch_lines(

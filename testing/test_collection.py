@@ -243,20 +243,20 @@ class TestCollectFS:
 
         # executing from rootdir only tests from `testpaths` directories
         # are collected
-        items, reprec = pytester.inline_genitems("-v")
+        items, _reprec = pytester.inline_genitems("-v")
         assert [x.name for x in items] == ["test_b", "test_c"]
 
         # check that explicitly passing directories in the command-line
         # collects the tests
         for dirname in ("a", "b", "c"):
-            items, reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
+            items, _reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
             assert [x.name for x in items] == [f"test_{dirname}"]
 
         # changing cwd to each subdirectory and running pytest without
         # arguments collects the tests in that directory normally
         for dirname in ("a", "b", "c"):
             monkeypatch.chdir(pytester.path.joinpath(dirname))
-            items, reprec = pytester.inline_genitems()
+            items, _reprec = pytester.inline_genitems()
             assert [x.name for x in items] == [f"test_{dirname}"]
 
     def test_missing_permissions_on_unselected_directory_doesnt_crash(
@@ -640,10 +640,10 @@ class TestSession:
 
     def test_serialization_byid(self, pytester: Pytester) -> None:
         pytester.makepyfile("def test_func(): pass")
-        items, hookrec = pytester.inline_genitems()
+        items, _hookrec = pytester.inline_genitems()
         assert len(items) == 1
         (item,) = items
-        items2, hookrec = pytester.inline_genitems(item.nodeid)
+        items2, _hookrec = pytester.inline_genitems(item.nodeid)
         (item2,) = items2
         assert item2.name == item.name
         assert item2.path == item.path
@@ -673,7 +673,7 @@ class TestSession:
             def test_param(i): ...
             """
         )
-        items, hookrec = pytester.inline_genitems(f"{p}::test_param")
+        items, _hookrec = pytester.inline_genitems(f"{p}::test_param")
         assert len(items) == 3
         assert [item.nodeid for item in items] == [
             "test_collect_parametrized_order.py::test_param[0]",
@@ -732,7 +732,7 @@ class Test_genitems:
         """
         )
         shutil.copy(p, p.parent / (p.stem + "2" + ".py"))
-        items, reprec = pytester.inline_genitems(p.parent)
+        items, _reprec = pytester.inline_genitems(p.parent)
         assert len(items) == 4
         for numi, i in enumerate(items):
             for numj, j in enumerate(items):
@@ -758,7 +758,7 @@ class Test_genitems:
                     pass
         """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         assert len(items) == 4
         assert items[0].name == "testone"
         assert items[1].name == "testmethod_one"
@@ -786,7 +786,7 @@ class Test_genitems:
                     pass
             """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         ids = [x.getmodpath() for x in items]  # type: ignore[attr-defined]
         assert ids == ["TestCase.test_classmethod"]
 
@@ -811,7 +811,7 @@ class Test_genitems:
                     pass
         """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         ids = [x.getmodpath() for x in items]  # type: ignore[attr-defined]
         assert ids == ["MyTestSuite.x_test", "TestCase.test_y"]
 
@@ -1778,6 +1778,41 @@ def test_collect_short_file_windows(pytester: Pytester) -> None:
     test_file.write_text("def test(): pass", encoding="UTF-8")
     result = pytester.runpytest(short_path)
     assert result.parseoutcomes() == {"passed": 1}
+
+
+def test_collect_short_file_windows_multi_level_symlink(
+    pytester: Pytester,
+    request: FixtureRequest,
+) -> None:
+    """Regression test for multi-level Windows short-path comparison with
+    symlinks.
+
+    Previously, when matching collection arguments against collected nodes on
+    Windows, the short path fallback resolved symlinks. With a chain a -> b ->
+    target, comparing 'a' against 'b' would incorrectly succeed because both
+    resolved to 'target', which could cause incorrect matching or duplicate
+    collection.
+    """
+    # Prepare target directory with a test file.
+    short_path = Path(tempfile.mkdtemp())
+    request.addfinalizer(lambda: shutil.rmtree(short_path, ignore_errors=True))
+    target = short_path / "target"
+    target.mkdir()
+    (target / "test_chain.py").write_text("def test_chain(): pass", encoding="UTF-8")
+
+    # Create multi-level symlink chain: a -> b -> target.
+    b = short_path / "b"
+    a = short_path / "a"
+    symlink_or_skip(target, b, target_is_directory=True)
+    symlink_or_skip(b, a, target_is_directory=True)
+
+    # Collect via the first symlink; should find exactly one test.
+    result = pytester.runpytest(a)
+    result.assert_outcomes(passed=1)
+
+    # Collect via the intermediate symlink; also exactly one test.
+    result = pytester.runpytest(b)
+    result.assert_outcomes(passed=1)
 
 
 def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:

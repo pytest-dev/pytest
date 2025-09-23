@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import os
 import sys
 
 from _pytest.pytester import Pytester
@@ -71,11 +72,18 @@ def test_disabled(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+@pytest.mark.keep_ci_var
 @pytest.mark.parametrize(
     "enabled",
     [
         pytest.param(
-            True, marks=pytest.mark.skip(reason="sometimes crashes on CI (#7022)")
+            True,
+            marks=pytest.mark.skipif(
+                "CI" in os.environ
+                and sys.platform == "linux"
+                and sys.version_info >= (3, 14),
+                reason="sometimes crashes on CI because of truncated outputs (#7022)",
+            ),
         ),
         False,
     ],

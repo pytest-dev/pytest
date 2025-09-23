@@ -399,7 +399,7 @@ def getstatement(lineno: int, source) -> Source:
     from _pytest._code.source import getstatementrange_ast
 
     src = Source(source)
-    ast, start, end = getstatementrange_ast(lineno, src)
+    _ast, start, end = getstatementrange_ast(lineno, src)
     return src[start:end]
 
 
@@ -418,7 +418,7 @@ def test_comment_and_no_newline_at_end() -> None:
             "# vim: filetype=pyopencl:fdm=marker",
         ]
     )
-    ast, start, end = getstatementrange_ast(1, source)
+    _ast, _start, end = getstatementrange_ast(1, source)
     assert end == 2
 
 

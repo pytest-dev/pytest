@@ -64,7 +64,7 @@ these values:
 
   * Test modules can't import each other.
   * Testing utility modules in the tests directories (for example a ``tests.helpers`` module containing test-related functions/classes)
-    are not importable. The recommendation in this case it to place testing utility modules together with the application/library
+    are not importable. The recommendation in this case is to place testing utility modules together with the application/library
     code, for example ``app.testing.helpers``.
 
     Important: by "test utility modules", we mean functions/classes which are imported by

@@ -240,6 +240,13 @@ command line option and the parametrization of our test function:
         if "stringinput" in metafunc.fixturenames:
             metafunc.parametrize("stringinput", metafunc.config.getoption("stringinput"))
 
+.. note::
+
+    The :hook:`pytest_generate_tests` hook can also be implemented directly in a test
+    module or inside a test class; unlike other hooks, pytest will discover it there
+    as well. Other hooks must live in a :ref:`conftest.py <localplugin>` or a plugin.
+    See :ref:`writinghooks`.
+
 If we now pass two stringinput values, our test will run twice:
 
 .. code-block:: pytest
