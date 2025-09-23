@@ -531,9 +531,7 @@ def _compare_eq_dict(
         )
         explanation.extend(
             highlighter(
-                pprint.pformat(
-                    {k: left[k] for k in left if k in extra_left}
-                )
+                pprint.pformat({k: left[k] for k in left if k in extra_left})
             ).splitlines()
         )
     extra_right = set_right - set_left
@@ -544,9 +542,7 @@ def _compare_eq_dict(
         )
         explanation.extend(
             highlighter(
-                pprint.pformat(
-                    {k: right[k] for k in right if k in extra_right}
-                )
+                pprint.pformat({k: right[k] for k in right if k in extra_right})
             ).splitlines()
         )
     return explanation
