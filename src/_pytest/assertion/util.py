@@ -348,8 +348,8 @@ def _compare_eq_iterable(
     # dynamic import to speedup pytest
     import difflib
 
-    left_formatting = PrettyPrinter(sort_dicts=False).pformat(left).splitlines()
-    right_formatting = PrettyPrinter(sort_dicts=False).pformat(right).splitlines()
+    left_formatting = PrettyPrinter().pformat(left).splitlines()
+    right_formatting = PrettyPrinter().pformat(right).splitlines()
 
     explanation = ["", "Full diff:"]
     # "right" is the expected base against which we compare "left",
@@ -511,7 +511,7 @@ def _compare_eq_dict(
     elif same:
         explanation += ["Common items:"]
         # Common items are displayed in the order of the left dict
-        explanation += highlighter(pprint.pformat(same, sort_dicts=False)).splitlines()
+        explanation += highlighter(pprint.pformat(same)).splitlines()
     diff = {k for k in common if left[k] != right[k]}
     if diff:
         explanation += ["Differing items:"]
@@ -532,7 +532,7 @@ def _compare_eq_dict(
         explanation.extend(
             highlighter(
                 pprint.pformat(
-                    {k: left[k] for k in left if k in extra_left}, sort_dicts=False
+                    {k: left[k] for k in left if k in extra_left}
                 )
             ).splitlines()
         )
@@ -545,7 +545,7 @@ def _compare_eq_dict(
         explanation.extend(
             highlighter(
                 pprint.pformat(
-                    {k: right[k] for k in right if k in extra_right}, sort_dicts=False
+                    {k: right[k] for k in right if k in extra_right}
                 )
             ).splitlines()
         )
