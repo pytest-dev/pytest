@@ -1271,7 +1271,9 @@ class FixtureFunctionDefinition:
     def __repr__(self) -> str:
         return f"<pytest_fixture({self._fixture_function})>"
 
-    def __get__(self, instance, owner=None):
+    def __get__(
+        self, instance: object, owner: type | None = None
+    ) -> FixtureFunctionDefinition:
         """Behave like a method if the function it was applied to was a method."""
         return FixtureFunctionDefinition(
             function=self._fixture_function,
@@ -1765,6 +1767,35 @@ class FixtureManager:
         if autouse:
             self._nodeid_autousenames.setdefault(nodeid or "", []).append(name)
 
+    def _check_for_wrapped_fixture(
+        self, holder: object, name: str, obj: object, nodeid: str | None
+    ) -> None:
+        """Check if an object might be a fixture wrapped in decorators and warn if so."""
+        # Only check objects that are not None and not already FixtureFunctionDefinition
+        if obj is None:
+            return
+        try:
+            maybe_def = get_real_func(obj)
+        except Exception:
+            warnings.warn(
+                f"could not get real function for fixture {name} on {holder}",
+                stacklevel=2,
+            )
+        else:
+            if isinstance(maybe_def, FixtureFunctionDefinition):
+                fixture_func = maybe_def._get_wrapped_function()
+                self._issue_fixture_wrapped_warning(name, nodeid, fixture_func)
+
+    def _issue_fixture_wrapped_warning(
+        self, fixture_name: str, nodeid: str | None, fixture_func: Any
+    ) -> None:
+        """Issue a warning about a fixture that cannot be discovered due to decorators."""
+        from _pytest.warning_types import PytestWarning
+        from _pytest.warning_types import warn_explicit_for
+
+        msg = f"cannot discover {fixture_name} due to being wrapped in decorators"
+        warn_explicit_for(fixture_func, PytestWarning(msg))
+
     @overload
     def parsefactories(
         self,
@@ -1845,6 +1876,9 @@ class FixtureManager:
                     ids=marker.ids,
                     autouse=marker.autouse,
                 )
+            else:
+                # Check if this might be a wrapped fixture that we can't discover
+                self._check_for_wrapped_fixture(holderobj, name, obj_ub, nodeid)
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node

@@ -1,0 +1,2 @@
+Issue a warning when fixtures are wrapped with a decorator, as that excludes
+them from being discovered safely by pytest.
