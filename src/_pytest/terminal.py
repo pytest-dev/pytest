@@ -295,6 +295,10 @@ def pytest_configure(config: Config) -> None:
 
         config.trace.root.setprocessor("pytest:config", mywriter)
 
+    if reporter.isatty():
+        plugin = TerminalProgressPlugin(reporter)
+        config.pluginmanager.register(plugin, "terminalprogress")
+
 
 def getreportopt(config: Config) -> str:
     reportchars: str = config.option.reportchars
@@ -454,6 +458,14 @@ class TerminalReporter:
     def showlongtestinfo(self) -> bool:
         return self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) > 0
 
+    @property
+    def reported_progress(self) -> int:
+        """The amount of items reported in the progress so far.
+
+        :meta private:
+        """
+        return len(self._progress_nodeids_reported)
+
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
         return char in self.reportchars
@@ -507,6 +519,9 @@ class TerminalReporter:
 
     def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
         self._tw.write(content, flush=flush, **markup)
+
+    def write_raw(self, content: str, *, flush: bool = False) -> None:
+        self._tw.write_raw(content, flush=flush)
 
     def flush(self) -> None:
         self._tw.flush()
@@ -681,7 +696,7 @@ class TerminalReporter:
     @property
     def _is_last_item(self) -> bool:
         assert self._session is not None
-        return len(self._progress_nodeids_reported) == self._session.testscollected
+        return self.reported_progress == self._session.testscollected
 
     @hookimpl(wrapper=True)
     def pytest_runtestloop(self) -> Generator[None, object, object]:
@@ -691,7 +706,7 @@ class TerminalReporter:
         if (
             self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0
             and self._show_progress_info
-            and self._progress_nodeids_reported
+            and self.reported_progress
         ):
             self._write_progress_information_filling_space()
 
@@ -702,7 +717,7 @@ class TerminalReporter:
         collected = self._session.testscollected
         if self._show_progress_info == "count":
             if collected:
-                progress = len(self._progress_nodeids_reported)
+                progress = self.reported_progress
                 counter_format = f"{{:{len(str(collected))}d}}"
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(progress, collected)
@@ -739,7 +754,7 @@ class TerminalReporter:
                 )
             return ""
         if collected:
-            return f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
+            return f" [{self.reported_progress * 100 // collected:3d}%]"
         return " [100%]"
 
     def _write_progress_information_if_past_edge(self) -> None:
@@ -1641,3 +1656,92 @@ def _get_raw_skip_reason(report: TestReport) -> str:
         elif reason == "Skipped":
             reason = ""
         return reason
+
+
+class TerminalProgressPlugin:
+    """Terminal progress reporting plugin using OSC 9;4 ANSI sequences.
+
+    Emits OSC 9;4 sequences to indicate test progress to terminal
+    tabs/windows/etc.
+
+    Not all terminal emulators support this feature.
+
+    Ref: https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+    """
+
+    def __init__(self, tr: TerminalReporter) -> None:
+        self._tr = tr
+        self._session: Session | None = None
+        self._has_failures = False
+
+    def _emit_progress(
+        self,
+        state: Literal["remove", "normal", "error", "indeterminate", "paused"],
+        progress: int | None = None,
+    ) -> None:
+        """Emit OSC 9;4 sequence for indicating progress to the terminal.
+
+        :param state:
+            Progress state to set.
+        :param progress:
+            Progress value 0-100. Required for "normal", optional for "error"
+            and "paused", otherwise ignored.
+        """
+        assert progress is None or 0 <= progress <= 100
+
+        # OSC 9;4 sequence: ESC ] 9 ; 4 ; state ; progress ST
+        # ST can be ESC \ or BEL. ESC \ seems better supported.
+        match state:
+            case "remove":
+                sequence = "\x1b]9;4;0;\x1b\\"
+            case "normal":
+                assert progress is not None
+                sequence = f"\x1b]9;4;1;{progress}\x1b\\"
+            case "error":
+                if progress is not None:
+                    sequence = f"\x1b]9;4;2;{progress}\x1b\\"
+                else:
+                    sequence = "\x1b]9;4;2;\x1b\\"
+            case "indeterminate":
+                sequence = "\x1b]9;4;3;\x1b\\"
+            case "paused":
+                if progress is not None:
+                    sequence = f"\x1b]9;4;4;{progress}\x1b\\"
+                else:
+                    sequence = "\x1b]9;4;4;\x1b\\"
+
+        self._tr.write_raw(sequence, flush=True)
+
+    @hookimpl
+    def pytest_sessionstart(self, session: Session) -> None:
+        self._session = session
+        # Show indeterminate progress during collection.
+        self._emit_progress("indeterminate")
+
+    @hookimpl
+    def pytest_collection_finish(self) -> None:
+        assert self._session is not None
+        if self._session.testscollected > 0:
+            # Switch from indeterminate to 0% progress.
+            self._emit_progress("normal", 0)
+
+    @hookimpl
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
+        if report.failed:
+            self._has_failures = True
+
+        # Let's consider the "call" phase for progress.
+        if report.when != "call":
+            return
+
+        # Calculate and emit progress.
+        assert self._session is not None
+        collected = self._session.testscollected
+        if collected > 0:
+            reported = self._tr.reported_progress
+            progress = min(reported * 100 // collected, 100)
+            self._emit_progress("error" if self._has_failures else "normal", progress)
+
+    @hookimpl
+    def pytest_sessionfinish(self) -> None:
+        self._emit_progress("remove")
