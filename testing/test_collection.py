@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from pathlib import PurePath
 import pprint
+import re
 import shutil
 import sys
 import tempfile
@@ -2702,3 +2703,73 @@ class TestOverlappingCollectionArguments:
             ],
             consecutive=True,
         )
+
+
+class TestRequireUniqueParamsetIds:
+    CASES = [
+        ("[(1, 1), (1, 1)]", {"1-1": [0, 1]}),
+        ("[(1, 1), (1, 2), (1, 1)]", {"1-1": [0, 2]}),
+        ("[(1, 1), (2, 2), (1, 1)]", {"1-1": [0, 2]}),
+        ("[(1, 1), (2, 2), (1, 2), (2, 1), (1, 1)]", {"1-1": [0, 4]}),
+    ]
+
+    @staticmethod
+    def _make_testfile(pytester: Pytester, parametrize_args: str) -> None:
+        pytester.makepyfile(
+            f"""
+            import pytest
+
+            @pytest.mark.parametrize('y, x', {parametrize_args})
+            def test1(y, x):
+                pass
+            """
+        )
+
+    @staticmethod
+    def _fnmatch_escape_repr(obj) -> str:
+        return re.sub(r"[*?[\]]", (lambda m: f"[{m.group()}]"), repr(obj))
+
+    def _assert_duplicate_msg(self, result, expected_indices):
+        # Collection errors usually go to stdout; fall back to stderr just in case.
+        stream = result.stdout
+        stream.fnmatch_lines(
+            [
+                "E*Because --require-unique-paramset-ids given, pytest won't",
+                "E*attempt to generate unique IDs for parameter sets.",
+                "E*argument names: [[]'y', 'x'[]]",
+                "E*function name: test1",
+                "E*test name: *::test1",
+                f"E*duplicates: {self._fnmatch_escape_repr(expected_indices)}",
+            ]
+        )
+        assert result.ret != 0
+
+    @pytest.mark.parametrize("parametrize_args, expected_indices", CASES)
+    def test_cli_enables(self, pytester: Pytester, parametrize_args, expected_indices):
+        self._make_testfile(pytester, parametrize_args)
+        result = pytester.runpytest("--require-unique-paramset-ids")
+        self._assert_duplicate_msg(result, expected_indices)
+
+    @pytest.mark.parametrize("parametrize_args, expected_indices", CASES)
+    def test_ini_enables(self, pytester: Pytester, parametrize_args, expected_indices):
+        pytester.makeini(
+            """
+            [pytest]
+            require_unique_paramset_ids = true
+            """
+        )
+        self._make_testfile(pytester, parametrize_args)
+        result = pytester.runpytest()
+        self._assert_duplicate_msg(result, expected_indices)
+
+    def test_cli_overrides_ini_false(self, pytester: Pytester):
+        """CLI True should override ini False."""
+        pytester.makeini(
+            """
+            [pytest]
+            require_unique_paramset_ids = false
+            """
+        )
+        self._make_testfile(pytester, "[(1,1), (1,1)]")
+        result = pytester.runpytest("--require-unique-paramset-ids")
+        self._assert_duplicate_msg(result, {"1-1": [0, 1]})
