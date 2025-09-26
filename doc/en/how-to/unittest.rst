@@ -22,16 +22,13 @@ their ``test`` methods in ``test_*.py`` or ``*_test.py`` files.
 
 Almost all ``unittest`` features are supported:
 
-* ``@unittest.skip`` style decorators;
-* ``setUp/tearDown``;
-* ``setUpClass/tearDownClass``;
-* ``setUpModule/tearDownModule``;
+* :func:`unittest.skip`/:func:`unittest.skipIf` style decorators
+* :meth:`unittest.TestCase.setUp`/:meth:`unittest.TestCase.tearDown`
+* :meth:`unittest.TestCase.setUpClass`/:meth:`unittest.TestCase.tearDownClass`
+* :func:`unittest.setUpModule`/:func:`unittest.tearDownModule`
+* :meth:`unittest.TestCase.subTest` (since version ``9.0``)
 
-.. _`pytest-subtests`: https://github.com/pytest-dev/pytest-subtests
 .. _`load_tests protocol`: https://docs.python.org/3/library/unittest.html#load-tests-protocol
-
-Additionally, :ref:`subtests <python:subtests>` are supported by the
-`pytest-subtests`_ plugin.
 
 Up to this point pytest does not have support for the following features:
 
