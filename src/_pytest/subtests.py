@@ -232,15 +232,24 @@ def subtests(request: SubRequest) -> Generator[SubTests, None, None]:
     yield SubTests(request.node.ihook, suspend_capture_ctx, request)
 
 
-@dataclasses.dataclass
+# Note: cannot use a dataclass here because Sphinx insists on showing up the __init__ method in the documentation,
+# even if we explicitly use :exclude-members: __init__.
 class SubTests:
-    ihook: pluggy.HookRelay
-    suspend_capture_ctx: Callable[[], AbstractContextManager[None]]
-    request: SubRequest
+    """Subtests fixture, enables declaring subtests inside test functions via the :meth:`test` method."""
+
+    def __init__(
+        self,
+        ihook: pluggy.HookRelay,
+        suspend_capture_ctx: Callable[[], AbstractContextManager[None]],
+        request: SubRequest,
+    ) -> None:
+        self._ihook = ihook
+        self._suspend_capture_ctx = suspend_capture_ctx
+        self._request = request
 
     @property
     def item(self) -> Any:
-        return self.request.node
+        return self._request.node
 
     def test(
         self,
@@ -248,22 +257,31 @@ class SubTests:
         **kwargs: Any,
     ) -> _SubTestContextManager:
         """
-        Context manager for subtests, capturing exceptions raised inside the subtest scope and handling
-        them through the pytest machinery.
+        Context manager for subtests, capturing exceptions raised inside the subtest scope and
+        reporting assertion failures and errors individually.
 
-        Usage:
+        Usage
+        -----
 
         .. code-block:: python
 
-            with subtests.test(msg="subtest"):
-                assert 1 == 1
+            def test(subtests):
+                for i in range(5):
+                    with subtests.test(msg="custom message", i=i):
+                        assert i % 2 == 0
+
+        :param msg:
+            If given, the message will be shown in the test report in case of subtest failure.
+
+        :param kwargs:
+            Arbitrary values that are also added to the subtest report.
         """
         return _SubTestContextManager(
-            self.ihook,
+            self._ihook,
             msg,
             kwargs,
-            request=self.request,
-            suspend_capture_ctx=self.suspend_capture_ctx,
+            request=self._request,
+            suspend_capture_ctx=self._suspend_capture_ctx,
         )
 
 
