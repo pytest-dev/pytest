@@ -1,0 +1,21 @@
+**Support for subtests** has been added.
+
+:ref:`subtests <subtests>` are an alternative to parametrization, useful in situations where test setup is expensive or the parametrization values are not all known at collection time.
+
+**Example**
+
+.. code-block:: python
+
+    def test(subtests):
+        for i in range(5):
+            with subtests.test(msg="custom message", i=i):
+                assert i % 2 == 0
+
+
+Each assert failure or error is caught by the context manager and reported individually.
+
+In addition, :meth:`unittest.TestCase.subTest` is now also supported.
+
+.. note::
+
+    This feature is experimental and will likely evolve in future releases. By that we mean that we might change how subtests are reported on failure, but the functionality and how to use it are stable.
