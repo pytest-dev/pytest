@@ -352,14 +352,14 @@ class TestSubTest:
             result = pytester.runpython(p)
             result.stderr.fnmatch_lines(["Ran 1 test in *", "OK (skipped=3)"])
         else:
-            pytest.xfail("Not producing the expected results (#5)")
+            pytest.xfail("Not producing the expected results (#13756)")
             result = pytester.runpytest(p)  # type:ignore[unreachable]
             result.stdout.fnmatch_lines(
                 ["collected 1 item", "* 3 skipped, 1 passed in *"]
             )
 
     @pytest.mark.parametrize("runner", ["unittest", "pytest-normal", "pytest-xdist"])
-    @pytest.mark.xfail(reason="Not producing the expected results (#5)")
+    @pytest.mark.xfail(reason="Not producing the expected results (#13756)")
     def test_xfail(
         self,
         pytester: pytest.Pytester,
@@ -485,7 +485,7 @@ class TestSubTest:
                 ]
             )
         else:
-            pytest.xfail("Not producing the expected results (#5)")
+            pytest.xfail("Not producing the expected results (#13756)")
             result = pytester.runpytest(p)  # type:ignore[unreachable]
             result.stdout.fnmatch_lines(
                 ["collected 1 item", "* 3 skipped, 1 passed in *"]
@@ -567,7 +567,7 @@ class TestSubTest:
                     ]
                 )
         else:
-            pytest.xfail("Not producing the expected results (#5)")
+            pytest.xfail("Not producing the expected results (#13756)")
             result = pytester.runpytest(p)  # type:ignore[unreachable]
             result.stdout.fnmatch_lines(
                 ["collected 1 item", "* 3 skipped, 1 passed in *"]
