@@ -2063,6 +2063,30 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         xfail_strict = True
 
+.. confval:: require_unique_paramset_ids
+
+    When passed, this flag causes pytest to raise an exception upon detection of non-unique parameter set IDs,
+    rather than attempting to generate them automatically.
+
+    Can be overridden by `--require-unique-paramset-ids`.
+
+    .. code-block:: ini
+
+          [pytest]
+          require_unique_paramset_ids = True
+
+    .. code-block:: python
+
+        import pytest
+
+
+        @pytest.mark.parametrize("x", [1, 2], ids=["a", "a"])
+        def test_example(x):
+            assert x in (1, 2)
+
+    will raise an exception due to the duplicate IDs "a".
+    when normal pytest behavior would be to handle this by generating unique IDs like "a-0", "a-1".
+
 
 .. _`command-line-flags`:
 
@@ -2220,6 +2244,11 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --doctest-continue-on-failure
                             For a given doctest, continue to run after the first
                             failure
+      --require-unique-paramset-ids
+                            If pytest collects test ids with non-unique names, raise an
+                            error rather than handling it.
+                            Useful if you collect in one process,
+                            and then execute tests in independent workers.
 
     test session debugging and configuration:
       -c, --config-file FILE

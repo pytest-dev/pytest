@@ -1,0 +1,4 @@
+Added the ``--require-unique-paramset-ids`` flag to pytest.
+
+When passed, this flag causes pytest to raise an exception upon detection of non-unique parameter set IDs,
+rather than attempting to generate them automatically.
