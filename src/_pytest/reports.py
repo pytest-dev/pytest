@@ -251,7 +251,6 @@ def _report_unserialization_failure(
     raise RuntimeError(stream.getvalue())
 
 
-@final
 class TestReport(BaseReport):
     """Basic test report object (also used for setup and teardown calls if
     they fail).

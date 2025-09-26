@@ -69,6 +69,9 @@ KNOWN_TYPES = (
     "xpassed",
     "warnings",
     "error",
+    "subtests passed",
+    "subtests failed",
+    "subtests skipped",
 )
 
 _REPORTCHARS_DEFAULT = "fE"
@@ -1579,6 +1582,8 @@ _color_for_type = {
     "error": "red",
     "warnings": "yellow",
     "passed": "green",
+    "subtests passed": "green",
+    "subtests failed": "red",
 }
 _color_for_type_default = "yellow"
 
