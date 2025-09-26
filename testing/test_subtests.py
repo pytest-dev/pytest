@@ -398,7 +398,7 @@ class TestSubTest:
         monkeypatch: pytest.MonkeyPatch,
         runner: Literal["pytest-normal"],
     ) -> None:
-        """Regression test for #173."""
+        """Regression test for pytest-dev/pytest-subtests#173."""
         monkeypatch.setenv("COLUMNS", "200")
         p = pytester.makepyfile(
             """

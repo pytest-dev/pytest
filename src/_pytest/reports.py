@@ -302,7 +302,6 @@ def _format_exception_group_all_skipped_longrepr(
     return longrepr
 
 
-@final
 class TestReport(BaseReport):
     """Basic test report object (also used for setup and teardown calls if
     they fail).

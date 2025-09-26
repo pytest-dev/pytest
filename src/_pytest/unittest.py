@@ -13,9 +13,13 @@ import inspect
 import sys
 import traceback
 import types
+from typing import Any
 from typing import TYPE_CHECKING
+from unittest import TestCase
 
 import _pytest._code
+from _pytest._code import ExceptionInfo
+from _pytest.compat import assert_never
 from _pytest.compat import is_async_function
 from _pytest.config import hookimpl
 from _pytest.fixtures import FixtureRequest
@@ -30,12 +34,17 @@ from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
 from _pytest.runner import CallInfo
+from _pytest.runner import check_interactive_exception
+from _pytest.subtests import make_call_info
+from _pytest.subtests import SubTestContext
+from _pytest.subtests import SubTestReport
 
 
 if sys.version_info[:2] < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 if TYPE_CHECKING:
+    from types import TracebackType
     import unittest
 
     import twisted.trial.unittest
@@ -200,6 +209,7 @@ class UnitTestCase(Class):
 
 class TestCaseFunction(Function):
     nofuncargs = True
+    failfast = False
     _excinfo: list[_pytest._code.ExceptionInfo[BaseException]] | None = None
 
     def _getinstance(self):
@@ -277,11 +287,42 @@ class TestCaseFunction(Function):
     ) -> None:
         self._addexcinfo(rawexcinfo)
 
-    def addSkip(self, testcase: unittest.TestCase, reason: str) -> None:
-        try:
-            raise skip.Exception(reason, _use_item_location=True)
-        except skip.Exception:
-            self._addexcinfo(sys.exc_info())
+    def addSkip(
+        self, testcase: unittest.TestCase, reason: str, *, handle_subtests: bool = True
+    ) -> None:
+        from unittest.case import _SubTest  # type: ignore[attr-defined]
+
+        def add_skip() -> None:
+            try:
+                raise skip.Exception(reason, _use_item_location=True)
+            except skip.Exception:
+                self._addexcinfo(sys.exc_info())
+
+        if not handle_subtests:
+            add_skip()
+            return
+
+        if isinstance(testcase, _SubTest):
+            add_skip()
+            if self._excinfo is not None:
+                exc_info = self._excinfo[-1]
+                self.addSubTest(testcase.test_case, testcase, exc_info)
+        else:
+            # For python < 3.11: the non-subtest skips have to be added by `add_skip` only after all subtest
+            # failures are processed by `_addSubTest`: `self.instance._outcome` has no attribute
+            # `skipped/errors` anymore.
+            # We also need to check if `self.instance._outcome` is `None` (this happens if the test
+            # class/method is decorated with `unittest.skip`, see pytest-dev/pytest-subtests#173).
+            if sys.version_info < (3, 11) and self.instance._outcome is not None:
+                subtest_errors = [
+                    x
+                    for x, y in self.instance._outcome.errors
+                    if isinstance(x, _SubTest) and y is not None
+                ]
+                if len(subtest_errors) == 0:
+                    add_skip()
+            else:
+                add_skip()
 
     def addExpectedFailure(
         self,
@@ -360,6 +401,64 @@ class TestCaseFunction(Function):
         if not ntraceback:
             ntraceback = traceback
         return ntraceback
+
+    def addSubTest(
+        self,
+        test_case: Any,
+        test: TestCase,
+        exc_info: ExceptionInfo[BaseException]
+        | tuple[type[BaseException], BaseException, TracebackType]
+        | None,
+    ) -> None:
+        exception_info: ExceptionInfo[BaseException] | None
+        match exc_info:
+            case tuple():
+                exception_info = ExceptionInfo(exc_info, _ispytest=True)
+            case ExceptionInfo() | None:
+                exception_info = exc_info
+            case unreachable:
+                assert_never(unreachable)
+
+        call_info = make_call_info(
+            exception_info,
+            start=0,
+            stop=0,
+            duration=0,
+            when="call",
+        )
+        msg = test._message if isinstance(test._message, str) else None  # type: ignore[attr-defined]
+        report = self.ihook.pytest_runtest_makereport(item=self, call=call_info)
+        sub_report = SubTestReport._from_test_report(report)
+        sub_report.context = SubTestContext(msg, dict(test.params))  # type: ignore[attr-defined]
+        self.ihook.pytest_runtest_logreport(report=sub_report)
+        if check_interactive_exception(call_info, sub_report):
+            self.ihook.pytest_exception_interact(
+                node=self, call=call_info, report=sub_report
+            )
+
+        # For python < 3.11: add non-subtest skips once all subtest failures are processed by # `_addSubTest`.
+        if sys.version_info < (3, 11):
+            from unittest.case import _SubTest  # type: ignore[attr-defined]
+
+            non_subtest_skip = [
+                (x, y)
+                for x, y in self.instance._outcome.skipped
+                if not isinstance(x, _SubTest)
+            ]
+            subtest_errors = [
+                (x, y)
+                for x, y in self.instance._outcome.errors
+                if isinstance(x, _SubTest) and y is not None
+            ]
+            # Check if we have non-subtest skips: if there are also sub failures, non-subtest skips are not treated in
+            # `_addSubTest` and have to be added using `add_skip` after all subtest failures are processed.
+            if len(non_subtest_skip) > 0 and len(subtest_errors) > 0:
+                # Make sure we have processed the last subtest failure
+                last_subset_error = subtest_errors[-1]
+                if exc_info is last_subset_error[-1]:
+                    # Add non-subtest skips (as they could not be treated in `_addSkip`)
+                    for testcase, reason in non_subtest_skip:
+                        self.addSkip(testcase, reason, handle_subtests=False)
 
 
 @hookimpl(tryfirst=True)
