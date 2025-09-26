@@ -572,6 +572,19 @@ The ``request`` fixture is a special fixture providing information of the reques
     :members:
 
 
+.. fixture:: subtests
+
+subtests
+~~~~~~~~
+
+The ``subtests`` fixture enables declaring subtests inside test functions.
+
+**Tutorial**: :ref:`subtests`
+
+.. autoclass:: pytest.SubTests()
+    :members:
+
+
 .. fixture:: testdir
 
 testdir

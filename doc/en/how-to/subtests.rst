@@ -1,0 +1,88 @@
+.. _subtests:
+
+How to use subtests
+===================
+
+.. versionadded:: 9.0
+
+.. note::
+
+    This feature is experimental. Its behavior, particularly how failures are reported, may evolve in future releases. However, the core functionality and usage are considered stable.
+
+pytest allows for grouping assertions within a normal test, known as *subtests*.
+
+Subtests are an alternative to parametrization, particularly useful when test setup is expensive or when the exact parametrization values are not known at collection time.
+
+
+.. code-block:: python
+
+    # content of test_subtest.py
+
+
+    def test(subtests):
+        for i in range(5):
+            with subtests.test(msg="custom message", i=i):
+                assert i % 2 == 0
+
+Each assertion failure or error is caught by the context manager and reported individually:
+
+.. code-block:: pytest
+
+    $ pytest -q test_subtest.py
+
+
+Note that it is possible to use ``subtests`` multiple times in the same test, or even mix and match with normal assertions
+outside the ``subtests.test`` block:
+
+.. code-block:: python
+
+    def test(subtests):
+        for i in range(5):
+            with subtests.test(msg="stage 1", i=i):
+                assert i % 2 == 0
+
+        assert func() == 10
+
+        for i in range(10, 20):
+            with subtests.test(msg="stage 2", i=i):
+                assert i % 2 == 0
+
+.. note::
+
+    See :ref:`parametrize` for an alternative to subtests.
+
+
+Typing
+------
+
+:class:`pytest.SubTests` is exported so it can be used in type annotations:
+
+.. code-block:: python
+
+    def test(subtests: pytest.SubTests) -> None: ...
+
+.. _parametrize_vs_subtests:
+
+Parametrization vs Subtests
+---------------------------
+
+While :ref:`traditional pytest parametrization <parametrize>` and ``subtests`` are similar, they have important differences and use cases.
+
+
+Parametrization
+~~~~~~~~~~~~~~~
+
+* Happens at collection time.
+* Generates individual tests.
+* Parametrized tests can be referenced from the command line.
+* Plays well with plugins that handle test execution, such as ``--last-failed``.
+* Ideal for decision table testing.
+
+Subtests
+~~~~~~~~
+
+* Happen during test execution.
+* Are not known at collection time.
+* Can be generated dynamically.
+* Cannot be referenced individually from the command line.
+* Plugins that handle test execution cannot target individual subtests.
