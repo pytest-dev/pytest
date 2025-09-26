@@ -2031,3 +2031,36 @@ def test_namespace_packages(pytester: Pytester, import_mode: str):
             "      <Function test_module3>",
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "parametrize_args, expected_indexs",
+    [
+        ("[(1, 1), (1, 1)]", "{'1-1': [[]0, 1[]]}"),
+        ("[(1, 1), (1, 2), (1, 1)]", "{'1-1': [[]0, 2[]]}"),
+        ("[(1, 1), (2, 2), (1, 1)]", "{'1-1': [[]0, 2[]]}"),
+        ("[(1, 1), (2, 2), (1, 2), (2, 1), (1, 1)]", "{'1-1': [[]0, 4[]]}"),
+    ],
+)
+def test_option_parametrize_require_unique_paramset_ids(
+    pytester: Pytester, parametrize_args, expected_indexs
+) -> None:
+    pytester.makepyfile(
+        f"""
+        import pytest
+        @pytest.mark.parametrize('y, x', {parametrize_args})
+        def test1(y, x):
+            pass
+    """
+    )
+    result = pytester.runpytest("--require-unique-paramset-ids")
+    result.stdout.fnmatch_lines(
+        [
+            "E*Because: require_unique_parameterset_ids is set, pytest won't",
+            "E*attempt to generate unique IDs for parameter sets.",
+            "E*argument names: [[]'y', 'x'[]]",
+            "E*function name: test1",
+            "E*test name: test_option_parametrize_require_unique_paramset_ids.py::test1",
+            f"E*duplicates: {expected_indexs!s}",
+        ]
+    )

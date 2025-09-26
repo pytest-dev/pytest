@@ -2220,6 +2220,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --doctest-continue-on-failure
                             For a given doctest, continue to run after the first
                             failure
+      --require-unique-paramset-ids
+                            If pytest generates non-unique parameter ids, raise an
+                            error rather than fixing this.  Useful if you collect in one
+                            process, and then execute tests in independent workers.
 
     test session debugging and configuration:
       -c, --config-file FILE

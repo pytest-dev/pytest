@@ -90,6 +90,13 @@ def pytest_addoption(parser: Parser) -> None:
         action="store_true",
         help="(Deprecated) alias to --strict-markers",
     )
+    group.addoption(
+        "--require-unique-paramset-ids",
+        action="store_true",
+        default=False,
+        help="Causes pytest to raise an exception upon detection of non-unique parameter set IDs,"
+        "rather than attempting to generate them automatically.",
+    )
 
     group = parser.getgroup("pytest-warnings")
     group.addoption(
