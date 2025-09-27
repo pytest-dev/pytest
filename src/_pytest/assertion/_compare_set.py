@@ -75,3 +75,12 @@ def _compare_lte_set(
     verbose: int = 0,
 ) -> list[str]:
     return _set_one_sided_diff("left", left, right, highlighter)
+
+
+SetComparisonFunction = dict[
+    str,
+    Callable[
+        [AbstractSet[Any], AbstractSet[Any], _HighlightFunc, int],
+        list[str],
+    ],
+]

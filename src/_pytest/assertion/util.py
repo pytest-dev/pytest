@@ -24,6 +24,7 @@ from _pytest.assertion._compare_set import _compare_gt_set
 from _pytest.assertion._compare_set import _compare_gte_set
 from _pytest.assertion._compare_set import _compare_lt_set
 from _pytest.assertion._compare_set import _compare_lte_set
+from _pytest.assertion._compare_set import SetComparisonFunction
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.config import Config
 
@@ -203,30 +204,28 @@ def assertrepr_compare(
 
     summary = f"{left_repr} {op} {right_repr}"
     highlighter = config.get_terminal_writer()._highlight
-
-    explanation = None
+    explanation: list[str] | None
     try:
-        if op == "==":
-            explanation = _compare_eq_any(left, right, highlighter, verbose)
-        elif op == "not in":
-            if istext(left) and istext(right):
+        match (left, op, right):
+            case (_, "==", _):
+                explanation = _compare_eq_any(left, right, highlighter, verbose)
+            case (str(), "not in", str()):
                 explanation = _notin_text(left, right, verbose)
-        elif op == "!=":
-            if isset(left) and isset(right):
-                explanation = ["Both sets are equal"]
-        elif op == ">=":
-            if isset(left) and isset(right):
-                explanation = _compare_gte_set(left, right, highlighter, verbose)
-        elif op == "<=":
-            if isset(left) and isset(right):
-                explanation = _compare_lte_set(left, right, highlighter, verbose)
-        elif op == ">":
-            if isset(left) and isset(right):
-                explanation = _compare_gt_set(left, right, highlighter, verbose)
-        elif op == "<":
-            if isset(left) and isset(right):
-                explanation = _compare_lt_set(left, right, highlighter, verbose)
-
+            case (
+                set() | frozenset(),
+                "!=" | ">=" | "<=" | ">" | "<",
+                set() | frozenset(),
+            ):
+                set_compare_func: SetComparisonFunction = {
+                    "!=": lambda *a, **kw: ["Both sets are equal"],
+                    ">=": _compare_gte_set,
+                    "<=": _compare_lte_set,
+                    ">": _compare_gt_set,
+                    "<": _compare_lt_set,
+                }
+                explanation = set_compare_func[op](left, right, highlighter, verbose)
+            case _:
+                explanation = None
     except outcomes.Exit:
         raise
     except Exception:
