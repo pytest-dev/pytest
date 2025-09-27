@@ -1552,7 +1552,9 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
-class TestIssue10743:
+class TestAssertionRewriteWalrusOperator:
+    """See #10743"""
+
     def test_assertion_walrus_operator(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -1718,6 +1720,22 @@ class TestIssue10743:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+    def test_assertion_namedexpr_compare_left_overwrite(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_namedexpr_compare_left_overwrite():
+                a = "Hello"
+                b = "World"
+                c = "Test"
+                assert (a := b) == c and (a := "Test") == "Test"
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*assert ('World' == 'Test'*"])
 
 
 class TestIssue11028:
