@@ -50,6 +50,7 @@ from _pytest.compat import safe_isclass
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
@@ -902,6 +903,25 @@ class IdMaker:
         resolved_ids = list(self._resolve_ids())
         # All IDs must be unique!
         if len(resolved_ids) != len(set(resolved_ids)):
+            if self.config and self.config.cache._config.getoption(
+                "require_unique_paramset_ids"
+            ):
+                duplicate_indexs = defaultdict(list)
+                for i, val in enumerate(resolved_ids):
+                    duplicate_indexs[val].append(i)
+
+                # Keep only duplicates
+                duplicates = {k: v for k, v in duplicate_indexs.items() if len(v) > 1}
+                raise UsageError(f"""
+                    Because: require_unique_parameterset_ids is set, pytest won't
+                    attempt to generate unique IDs for parameter sets.
+                    argument values: {self.parametersets}
+                    argument names: {self.argnames}
+                    function name: {self.func_name}
+                    test name: {self.nodeid}
+                    resolved (with non-unique) IDs: {resolved_ids}
+                    duplicates: {duplicates}
+                    """)
             # Record the number of occurrences of each ID.
             id_counts = Counter(resolved_ids)
             # Map the ID to its next suffix.
