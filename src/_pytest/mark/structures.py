@@ -407,12 +407,22 @@ def get_unpacked_marks(
     obj: object | type,
     *,
     consider_mro: bool = True,
+    config: Config | None = None,
 ) -> list[Mark]:
     """Obtain the unpacked marks that are stored on an object.
 
     If obj is a class and consider_mro is true, return marks applied to
     this class and all of its super-classes in MRO order. If consider_mro
     is false, only return marks applied directly to this class.
+
+    If a pytest Config is provided, the ordering of multiple
+    @pytest.mark.parametrize decorators can be controlled via the
+    parametrize_order ini option:
+    - application (default): honors the natural application order of
+      decorators (bottom-to-top in Python).
+    - declaration: reverses the order of consecutive parametrize
+      marks so they are applied in the order they are written in the
+      source code (top-to-bottom).
     """
     if isinstance(obj, type):
         if not consider_mro:
@@ -433,7 +443,15 @@ def get_unpacked_marks(
             mark_list = mark_attribute
         else:
             mark_list = [mark_attribute]
-    return list(normalize_mark_list(mark_list))
+
+    unpacked = list(normalize_mark_list(mark_list))
+
+    if config and config.getini("parametrize_order") == "declaration":
+        parametrize_marks = [m for m in unpacked if m.name == "parametrize"]
+        other_marks = [m for m in unpacked if m.name != "parametrize"]
+        unpacked = parametrize_marks[::-1] + other_marks
+
+    return unpacked
 
 
 def normalize_mark_list(

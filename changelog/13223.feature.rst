@@ -1,0 +1,3 @@
+Add `parametrize_order` config option to control the order of multiple parametrize marks.
+
+By default, stacked `@pytest.mark.parametrize` decorators are applied in application order (from bottom to top). With this new config option set to `declaration`, they are applied in the order they are declared in the source code, which can make test case generation more intuitive.
