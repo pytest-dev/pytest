@@ -59,7 +59,7 @@ def test_marked_class_run_twice(pytester: Pytester) -> None:
     """
     )
     file_name = os.path.basename(py_file)
-    rec = pytester.inline_run(file_name, file_name)
+    rec = pytester.inline_run("--keep-duplicates", file_name, file_name)
     rec.assertoutcome(passed=6)
 
 

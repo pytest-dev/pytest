@@ -1467,7 +1467,7 @@ def test_runs_twice(pytester: Pytester, run_and_parse: RunAndParse) -> None:
     """
     )
 
-    result, dom = run_and_parse(f, f)
+    result, dom = run_and_parse("--keep-duplicates", f, f)
     result.stdout.no_fnmatch_line("*INTERNALERROR*")
     first, second = (x["classname"] for x in dom.find_by_tag("testcase"))
     assert first == second
