@@ -281,7 +281,9 @@ class PyobjMixin(nodes.Node):
             # XXX evil hack
             # used to avoid Function marker duplication
             if self._ALLOW_MARKERS:
-                self.own_markers.extend(get_unpacked_marks(self.obj))
+                self.own_markers.extend(
+                    get_unpacked_marks(self.obj, config=self.config)
+                )
                 # This assumes that `obj` is called before there is a chance
                 # to add custom keys to `self.keywords`, so no fear of overriding.
                 self.keywords.update((mark.name, mark) for mark in self.own_markers)
@@ -1598,7 +1600,7 @@ class Function(PyobjMixin, nodes.Item):
         # Note: when FunctionDefinition is introduced, we should change ``originalname``
         # to a readonly property that returns FunctionDefinition.name.
 
-        self.own_markers.extend(get_unpacked_marks(self.obj))
+        self.own_markers.extend(get_unpacked_marks(self.obj, config=self.config))
         if callspec:
             self.callspec = callspec
             self.own_markers.extend(callspec.marks)

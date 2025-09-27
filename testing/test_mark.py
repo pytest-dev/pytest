@@ -1291,3 +1291,39 @@ def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=8)
+
+
+def test_stacked_parametrize_order_declaration(pytester: Pytester):
+    """Check that stacked parametrize marks works in the order that are declared (instead of the one that are applied
+    if the parametrize_order has been set to declaration in the pytest.ini file.
+    Test for #13223.
+    """
+    pytester.makeini(
+        """
+        [pytest]
+        parametrize_order = declaration
+        """
+    )
+    test_file = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("x", ["a1", "a2"])
+        @pytest.mark.parametrize("y", ["b1", "b2"])
+        def test_permutations(x, y):
+            assert True
+        """
+    )
+    reprec = pytester.inline_run(test_file)
+
+    node_ids = []
+    for item in reprec.listoutcomes()[0]:
+        node_ids.append(item.nodeid.rsplit("::", 1)[-1])
+    print(node_ids)
+
+    assert node_ids == [
+        "test_permutations[a1-b1]",
+        "test_permutations[a1-b2]",
+        "test_permutations[a2-b1]",
+        "test_permutations[a2-b2]",
+    ]
