@@ -1264,12 +1264,12 @@ class Config:
             type="args",
             default=[],
         )
+        self._override_ini = ns.override_ini or ()
         self._parser.addini(
             "parametrize_order",
             "Order for stacked parametrize marks: 'application' (default) or 'declaration'",
             default="application",
         )
-        self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args: Sequence[str]) -> None:
         """Install the PEP 302 import hook if using assertion rewriting.
