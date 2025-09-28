@@ -20,11 +20,7 @@ from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.assertion._compare_set import _compare_eq_set
-from _pytest.assertion._compare_set import _compare_gt_set
-from _pytest.assertion._compare_set import _compare_gte_set
-from _pytest.assertion._compare_set import _compare_lt_set
-from _pytest.assertion._compare_set import _compare_lte_set
-from _pytest.assertion._compare_set import SetComparisonFunction
+from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.config import Config
 
@@ -216,14 +212,9 @@ def assertrepr_compare(
                 "!=" | ">=" | "<=" | ">" | "<",
                 set() | frozenset(),
             ):
-                set_compare_func: SetComparisonFunction = {
-                    "!=": lambda *a, **kw: ["Both sets are equal"],
-                    ">=": _compare_gte_set,
-                    "<=": _compare_lte_set,
-                    ">": _compare_gt_set,
-                    "<": _compare_lt_set,
-                }
-                explanation = set_compare_func[op](left, right, highlighter, verbose)
+                explanation = SET_COMPARISON_FUNCTIONS[op](
+                    left, right, highlighter, verbose
+                )
             case _:
                 explanation = None
     except outcomes.Exit:
