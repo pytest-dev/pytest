@@ -8,11 +8,9 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sequence
-from collections.abc import Set as AbstractSet
 import dataclasses
 import pprint
 from typing import Literal
-from typing import Protocol
 from typing import TypeGuard
 from unicodedata import normalize
 
@@ -21,6 +19,12 @@ import _pytest._code
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
+from _pytest.assertion._compare_set import _compare_eq_set
+from _pytest.assertion._compare_set import _compare_gt_set
+from _pytest.assertion._compare_set import _compare_gte_set
+from _pytest.assertion._compare_set import _compare_lt_set
+from _pytest.assertion._compare_set import _compare_lte_set
+from _pytest.assertion._typing import _HighlightFunc
 from _pytest.compat import assert_never
 from _pytest.compat import running_on_ci
 from _pytest.config import Config
@@ -48,11 +52,6 @@ ASSERTION_TEXT_DIFF_STYLE_CHOICES = (
     ASSERTION_TEXT_DIFF_STYLE_NDIFF,
     ASSERTION_TEXT_DIFF_STYLE_BLOCK,
 )
-
-
-class _HighlightFunc(Protocol):
-    def __call__(self, source: str, lexer: Literal["diff", "python"] = "python") -> str:
-        """Apply highlighting to the given source."""
 
 
 def dummy_highlighter(source: str, lexer: Literal["diff", "python"] = "python") -> str:
@@ -504,75 +503,6 @@ def _compare_eq_sequence(
             explanation += [
                 f"{dir_with_more} contains {len_diff} more items, first extra item: {highlighter(extra)}"
             ]
-    return explanation
-
-
-def _compare_eq_set(
-    left: AbstractSet[object],
-    right: AbstractSet[object],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    explanation = []
-    explanation.extend(_set_one_sided_diff("left", left, right, highlighter))
-    explanation.extend(_set_one_sided_diff("right", right, left, highlighter))
-    return explanation
-
-
-def _compare_gt_set(
-    left: AbstractSet[object],
-    right: AbstractSet[object],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    explanation = _compare_gte_set(left, right, highlighter)
-    if not explanation:
-        return ["Both sets are equal"]
-    return explanation
-
-
-def _compare_lt_set(
-    left: AbstractSet[object],
-    right: AbstractSet[object],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    explanation = _compare_lte_set(left, right, highlighter)
-    if not explanation:
-        return ["Both sets are equal"]
-    return explanation
-
-
-def _compare_gte_set(
-    left: AbstractSet[object],
-    right: AbstractSet[object],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    return _set_one_sided_diff("right", right, left, highlighter)
-
-
-def _compare_lte_set(
-    left: AbstractSet[object],
-    right: AbstractSet[object],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    return _set_one_sided_diff("left", left, right, highlighter)
-
-
-def _set_one_sided_diff(
-    posn: str,
-    set1: AbstractSet[object],
-    set2: AbstractSet[object],
-    highlighter: _HighlightFunc,
-) -> list[str]:
-    explanation = []
-    diff = set1 - set2
-    if diff:
-        explanation.append(f"Extra items in the {posn} set:")
-        for item in diff:
-            explanation.append(highlighter(saferepr(item)))
     return explanation
 
 
