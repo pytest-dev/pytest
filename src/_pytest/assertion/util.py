@@ -20,10 +20,7 @@ from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.assertion._compare_set import _compare_eq_set
-from _pytest.assertion._compare_set import _compare_gt_set
-from _pytest.assertion._compare_set import _compare_gte_set
-from _pytest.assertion._compare_set import _compare_lt_set
-from _pytest.assertion._compare_set import _compare_lte_set
+from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.compat import assert_never
 from _pytest.compat import running_on_ci
@@ -247,21 +244,11 @@ def assertrepr_compare(
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
-        elif op == "!=":
+        elif op in {"!=", ">=", "<=", ">", "<"}:
             if isset(left) and isset(right):
-                explanation = ["Both sets are equal"]
-        elif op == ">=":
-            if isset(left) and isset(right):
-                explanation = _compare_gte_set(left, right, highlighter, verbose)
-        elif op == "<=":
-            if isset(left) and isset(right):
-                explanation = _compare_lte_set(left, right, highlighter, verbose)
-        elif op == ">":
-            if isset(left) and isset(right):
-                explanation = _compare_gt_set(left, right, highlighter, verbose)
-        elif op == "<":
-            if isset(left) and isset(right):
-                explanation = _compare_lt_set(left, right, highlighter, verbose)
+                explanation = SET_COMPARISON_FUNCTIONS[op](
+                    left, right, highlighter, verbose
+                )
 
     except outcomes.Exit:
         raise

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from collections.abc import Set as AbstractSet
+from typing import TypeAlias
 
 from _pytest._io.saferepr import saferepr
 from _pytest.assertion._typing import _HighlightFunc
@@ -74,3 +75,20 @@ def _compare_lte_set(
     verbose: int = 0,
 ) -> list[str]:
     return _set_one_sided_diff("left", left, right, highlighter)
+
+
+SetComparisonFunction: TypeAlias = Callable[
+    [AbstractSet[object], AbstractSet[object], _HighlightFunc, int],
+    list[str],
+]
+
+SET_COMPARISON_FUNCTIONS: dict[str, SetComparisonFunction] = {
+    # == can't be done here without a prior refactor because there's an additional
+    # explanation for iterable in _compare_eq_any
+    # "==": _compare_eq_set,
+    "!=": lambda *a, **kw: ["Both sets are equal"],
+    ">=": _compare_gte_set,
+    "<=": _compare_lte_set,
+    ">": _compare_gt_set,
+    "<": _compare_lt_set,
+}
