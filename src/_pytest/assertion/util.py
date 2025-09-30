@@ -8,12 +8,10 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sequence
-from collections.abc import Set as AbstractSet
 import os
 import pprint
 from typing import Any
 from typing import Literal
-from typing import Protocol
 from unicodedata import normalize
 
 from _pytest import outcomes
@@ -21,6 +19,9 @@ import _pytest._code
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
+from _pytest.assertion._compare_set import _compare_eq_set
+from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
+from _pytest.assertion._typing import _HighlightFunc
 from _pytest.config import Config
 
 
@@ -36,11 +37,6 @@ _assertion_pass: Callable[[int, str, str], None] | None = None
 
 # Config object which is assigned during pytest_runtest_protocol.
 _config: Config | None = None
-
-
-class _HighlightFunc(Protocol):
-    def __call__(self, source: str, lexer: Literal["diff", "python"] = "python") -> str:
-        """Apply highlighting to the given source."""
 
 
 def dummy_highlighter(source: str, lexer: Literal["diff", "python"] = "python") -> str:
@@ -204,30 +200,23 @@ def assertrepr_compare(
 
     summary = f"{left_repr} {op} {right_repr}"
     highlighter = config.get_terminal_writer()._highlight
-
-    explanation = None
+    explanation: list[str] | None
     try:
-        if op == "==":
-            explanation = _compare_eq_any(left, right, highlighter, verbose)
-        elif op == "not in":
-            if istext(left) and istext(right):
+        match (left, op, right):
+            case (_, "==", _):
+                explanation = _compare_eq_any(left, right, highlighter, verbose)
+            case (str(), "not in", str()):
                 explanation = _notin_text(left, right, verbose)
-        elif op == "!=":
-            if isset(left) and isset(right):
-                explanation = ["Both sets are equal"]
-        elif op == ">=":
-            if isset(left) and isset(right):
-                explanation = _compare_gte_set(left, right, highlighter, verbose)
-        elif op == "<=":
-            if isset(left) and isset(right):
-                explanation = _compare_lte_set(left, right, highlighter, verbose)
-        elif op == ">":
-            if isset(left) and isset(right):
-                explanation = _compare_gt_set(left, right, highlighter, verbose)
-        elif op == "<":
-            if isset(left) and isset(right):
-                explanation = _compare_lt_set(left, right, highlighter, verbose)
-
+            case (
+                set() | frozenset(),
+                "!=" | ">=" | "<=" | ">" | "<",
+                set() | frozenset(),
+            ):
+                explanation = SET_COMPARISON_FUNCTIONS[op](
+                    left, right, highlighter, verbose
+                )
+            case _:
+                explanation = None
     except outcomes.Exit:
         raise
     except Exception:
@@ -423,75 +412,6 @@ def _compare_eq_sequence(
             explanation += [
                 f"{dir_with_more} contains {len_diff} more items, first extra item: {highlighter(extra)}"
             ]
-    return explanation
-
-
-def _compare_eq_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    explanation = []
-    explanation.extend(_set_one_sided_diff("left", left, right, highlighter))
-    explanation.extend(_set_one_sided_diff("right", right, left, highlighter))
-    return explanation
-
-
-def _compare_gt_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    explanation = _compare_gte_set(left, right, highlighter)
-    if not explanation:
-        return ["Both sets are equal"]
-    return explanation
-
-
-def _compare_lt_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    explanation = _compare_lte_set(left, right, highlighter)
-    if not explanation:
-        return ["Both sets are equal"]
-    return explanation
-
-
-def _compare_gte_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    return _set_one_sided_diff("right", right, left, highlighter)
-
-
-def _compare_lte_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    return _set_one_sided_diff("left", left, right, highlighter)
-
-
-def _set_one_sided_diff(
-    posn: str,
-    set1: AbstractSet[Any],
-    set2: AbstractSet[Any],
-    highlighter: _HighlightFunc,
-) -> list[str]:
-    explanation = []
-    diff = set1 - set2
-    if diff:
-        explanation.append(f"Extra items in the {posn} set:")
-        for item in diff:
-            explanation.append(highlighter(saferepr(item)))
     return explanation
 
 
