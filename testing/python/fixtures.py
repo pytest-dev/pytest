@@ -1,13 +1,13 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Callable
 from itertools import zip_longest
 import os
 from pathlib import Path
 import sys
 import textwrap
 from typing import Any
-from typing import Callable
 
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
