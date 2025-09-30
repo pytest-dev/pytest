@@ -10,7 +10,7 @@ import sys
 import tempfile
 import textwrap
 
-from _pytest.assertion.util import running_on_ci
+from _pytest.compat import running_on_ci
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
