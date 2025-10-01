@@ -60,7 +60,7 @@ def get_empty_parameterset_mark(
 
     argslisting = ", ".join(argnames)
 
-    fs, lineno = getfslineno(func)
+    _fs, lineno = getfslineno(func)
     reason = f"got empty parameter set for ({argslisting})"
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ("", None, "skip"):

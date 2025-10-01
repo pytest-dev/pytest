@@ -10,7 +10,7 @@ import sys
 import tempfile
 import textwrap
 
-from _pytest.assertion.util import running_on_ci
+from _pytest.compat import running_on_ci
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
@@ -243,20 +243,20 @@ class TestCollectFS:
 
         # executing from rootdir only tests from `testpaths` directories
         # are collected
-        items, reprec = pytester.inline_genitems("-v")
+        items, _reprec = pytester.inline_genitems("-v")
         assert [x.name for x in items] == ["test_b", "test_c"]
 
         # check that explicitly passing directories in the command-line
         # collects the tests
         for dirname in ("a", "b", "c"):
-            items, reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
+            items, _reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
             assert [x.name for x in items] == [f"test_{dirname}"]
 
         # changing cwd to each subdirectory and running pytest without
         # arguments collects the tests in that directory normally
         for dirname in ("a", "b", "c"):
             monkeypatch.chdir(pytester.path.joinpath(dirname))
-            items, reprec = pytester.inline_genitems()
+            items, _reprec = pytester.inline_genitems()
             assert [x.name for x in items] == [f"test_{dirname}"]
 
     def test_missing_permissions_on_unselected_directory_doesnt_crash(
@@ -640,10 +640,10 @@ class TestSession:
 
     def test_serialization_byid(self, pytester: Pytester) -> None:
         pytester.makepyfile("def test_func(): pass")
-        items, hookrec = pytester.inline_genitems()
+        items, _hookrec = pytester.inline_genitems()
         assert len(items) == 1
         (item,) = items
-        items2, hookrec = pytester.inline_genitems(item.nodeid)
+        items2, _hookrec = pytester.inline_genitems(item.nodeid)
         (item2,) = items2
         assert item2.name == item.name
         assert item2.path == item.path
@@ -673,7 +673,7 @@ class TestSession:
             def test_param(i): ...
             """
         )
-        items, hookrec = pytester.inline_genitems(f"{p}::test_param")
+        items, _hookrec = pytester.inline_genitems(f"{p}::test_param")
         assert len(items) == 3
         assert [item.nodeid for item in items] == [
             "test_collect_parametrized_order.py::test_param[0]",
@@ -732,7 +732,7 @@ class Test_genitems:
         """
         )
         shutil.copy(p, p.parent / (p.stem + "2" + ".py"))
-        items, reprec = pytester.inline_genitems(p.parent)
+        items, _reprec = pytester.inline_genitems(p.parent)
         assert len(items) == 4
         for numi, i in enumerate(items):
             for numj, j in enumerate(items):
@@ -758,7 +758,7 @@ class Test_genitems:
                     pass
         """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         assert len(items) == 4
         assert items[0].name == "testone"
         assert items[1].name == "testmethod_one"
@@ -786,7 +786,7 @@ class Test_genitems:
                     pass
             """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         ids = [x.getmodpath() for x in items]  # type: ignore[attr-defined]
         assert ids == ["TestCase.test_classmethod"]
 
@@ -811,7 +811,7 @@ class Test_genitems:
                     pass
         """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         ids = [x.getmodpath() for x in items]  # type: ignore[attr-defined]
         assert ids == ["MyTestSuite.x_test", "TestCase.test_y"]
 

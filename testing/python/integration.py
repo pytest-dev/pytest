@@ -21,8 +21,8 @@ def test_wrapped_getfslineno() -> None:
     def wrapped_func(x, y, z):
         pass
 
-    fs, lineno = getfslineno(wrapped_func)
-    fs2, lineno2 = getfslineno(wrap)
+    _fs, lineno = getfslineno(wrapped_func)
+    _fs2, lineno2 = getfslineno(wrap)
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
 
