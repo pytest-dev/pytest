@@ -1,5 +1,5 @@
 # mypy: allow-untyped-defs
-"""Python version compatibility code."""
+"""Python version compatibility code and random general utilities."""
 
 from __future__ import annotations
 
@@ -278,39 +278,12 @@ def get_user_id() -> int | None:
         return uid if uid != ERROR else None
 
 
-# Perform exhaustiveness checking.
-#
-# Consider this example:
-#
-#     MyUnion = Union[int, str]
-#
-#     def handle(x: MyUnion) -> int {
-#         if isinstance(x, int):
-#             return 1
-#         elif isinstance(x, str):
-#             return 2
-#         else:
-#             raise Exception('unreachable')
-#
-# Now suppose we add a new variant:
-#
-#     MyUnion = Union[int, str, bytes]
-#
-# After doing this, we must remember ourselves to go and update the handle
-# function to handle the new variant.
-#
-# With `assert_never` we can do better:
-#
-#     // raise Exception('unreachable')
-#     return assert_never(x)
-#
-# Now, if we forget to handle the new variant, the type-checker will emit a
-# compile-time error, instead of the runtime error we would have gotten
-# previously.
-#
-# This also work for Enums (if you use `is` to compare) and Literals.
-def assert_never(value: NoReturn) -> NoReturn:
-    assert False, f"Unhandled value: {value} ({type(value).__name__})"
+if sys.version_info >= (3, 11):
+    from typing import assert_never
+else:
+
+    def assert_never(value: NoReturn) -> NoReturn:
+        assert False, f"Unhandled value: {value} ({type(value).__name__})"
 
 
 class CallableBool:
@@ -331,3 +304,10 @@ class CallableBool:
 
     def __call__(self) -> bool:
         return self._value
+
+
+def running_on_ci() -> bool:
+    """Check if we're currently running on a CI system."""
+    # Only enable CI mode if one of these env variables is defined and non-empty.
+    env_vars = ["CI", "BUILD_NUMBER"]
+    return any(os.environ.get(var) for var in env_vars)

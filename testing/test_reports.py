@@ -317,8 +317,8 @@ class TestReportSerialization:
             assert longrepr.sections == [("title", "contents", "=")]
             assert len(longrepr.chain) == 2
             entry1, entry2 = longrepr.chain
-            tb1, fileloc1, desc1 = entry1
-            tb2, fileloc2, desc2 = entry2
+            tb1, _fileloc1, desc1 = entry1
+            tb2, _fileloc2, desc2 = entry2
 
             assert "ValueError('value error')" in str(tb1)
             assert "RuntimeError('runtime error')" in str(tb2)
@@ -375,8 +375,8 @@ class TestReportSerialization:
             assert isinstance(longrepr, ExceptionChainRepr)
             assert len(longrepr.chain) == 2
             entry1, entry2 = longrepr.chain
-            tb1, fileloc1, desc1 = entry1
-            tb2, fileloc2, desc2 = entry2
+            tb1, fileloc1, _desc1 = entry1
+            tb2, fileloc2, _desc2 = entry2
 
             assert "RemoteTraceback" in str(tb1)
             assert "ValueError: value error" in str(tb2)

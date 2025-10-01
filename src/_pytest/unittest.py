@@ -30,7 +30,6 @@ from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
 from _pytest.runner import CallInfo
-import pytest
 
 
 if sys.version_info[:2] < (3, 11):
@@ -141,7 +140,7 @@ class UnitTestCase(Class):
             cls = request.cls
             if _is_skipped(cls):
                 reason = cls.__unittest_skip_why__
-                raise pytest.skip.Exception(reason, _use_item_location=True)
+                raise skip.Exception(reason, _use_item_location=True)
             if setup is not None:
                 try:
                     setup()
@@ -182,7 +181,7 @@ class UnitTestCase(Class):
             self = request.instance
             if _is_skipped(self):
                 reason = self.__unittest_skip_why__
-                raise pytest.skip.Exception(reason, _use_item_location=True)
+                raise skip.Exception(reason, _use_item_location=True)
             if setup is not None:
                 setup(self, request.function)
             yield
@@ -280,7 +279,7 @@ class TestCaseFunction(Function):
 
     def addSkip(self, testcase: unittest.TestCase, reason: str) -> None:
         try:
-            raise pytest.skip.Exception(reason, _use_item_location=True)
+            raise skip.Exception(reason, _use_item_location=True)
         except skip.Exception:
             self._addexcinfo(sys.exc_info())
 

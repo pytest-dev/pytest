@@ -567,6 +567,11 @@ class TestAssert_reprcompare:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["E         Full diff:"])
 
+        # Setting CI to empty string is same as having it undefined
+        monkeypatch.setenv("CI", "")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["E         Use -v to get more diff"])
+
         monkeypatch.delenv("CI", raising=False)
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["E         Use -v to get more diff"])
@@ -1464,6 +1469,17 @@ class TestTruncateExplanation:
 
         result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(["* 6*"])
+
+        # Setting CI to empty string is same as having it undefined
+        monkeypatch.setenv("CI", "")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*+ 1*",
+                "*+ 3*",
+                f"*truncated ({expected_truncated_lines} lines hidden)*use*-vv*",
+            ]
+        )
 
         monkeypatch.setenv("CI", "1")
         result = pytester.runpytest()

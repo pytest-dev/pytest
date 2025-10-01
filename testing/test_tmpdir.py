@@ -386,7 +386,7 @@ class TestNumberedDir:
         d = tmp_path.joinpath("test")
         d.mkdir()
         lockfile = create_cleanup_lock(d)
-        with pytest.raises(OSError, match="cannot create lockfile in .*"):
+        with pytest.raises(OSError, match=r"cannot create lockfile in .*"):
             create_cleanup_lock(d)
 
         lockfile.unlink()
