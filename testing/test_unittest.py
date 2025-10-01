@@ -1325,8 +1325,10 @@ def test_async_support(pytester: Pytester) -> None:
 def test_asynctest_support(pytester: Pytester) -> None:
     """Check asynctest support (#7110)"""
     import sys
+
     if sys.version_info >= (3, 11):
         import pytest
+
         pytest.skip("asynctest is not compatible with Python 3.11+")
     pytest.importorskip("asynctest")
 
