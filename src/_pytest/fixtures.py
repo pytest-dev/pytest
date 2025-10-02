@@ -18,6 +18,7 @@ import functools
 import inspect
 import os
 from pathlib import Path
+import re
 import sys
 import types
 from typing import Any
@@ -2016,20 +2017,13 @@ def _showfixtures_main(config: Config, session: Session) -> None:
 
 
 def get_return_annotation(fixture_func: Callable[..., Any]) -> str:
-    try:
-        sig = signature(fixture_func)
-        annotation = sig.return_annotation
-        if annotation is not sig.empty:
-            if type(annotation) == type(None):
-                return "None"
-            if isinstance(annotation, str):
-                return annotation
-            if annotation.__module__ == "typing":
-                return str(annotation).replace("typing.", "")
-            return str(annotation.__name__)
-    except (ValueError, TypeError):
-        pass
-    return ""
+    pattern = re.compile(r'\b(?:(?:<[^>]+>|[A-Za-z_]\w*)\.)+([A-Za-z_]\w*)\b')
+
+    sig = str(signature(fixture_func))
+    sig_parts = sig.split(" -> ")
+    if len(sig_parts) < 2:
+        return ""
+    return pattern.sub(r'\1', sig_parts[-1])
 
 
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
