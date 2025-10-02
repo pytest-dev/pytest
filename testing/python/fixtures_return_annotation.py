@@ -1,3 +1,4 @@
+# mypy: allow-untyped-defs
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -55,7 +56,7 @@ class TestGetReturnAnnotation:
         assert get_return_annotation(enum_return) == "ExitCode"
 
     def test_with_arg_annotations(self):
-        def with_args(a: Callable[[], None], b: list) -> range:
+        def with_args(a: Callable[[], None], b: str) -> range:
             return range(2)
 
         assert get_return_annotation(with_args) == "range"
