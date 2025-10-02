@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 from typing import Any
 
@@ -59,7 +61,7 @@ class TestGetReturnAnnotation:
         assert get_return_annotation(with_args) == "range"
 
     def test_invalid_return_type(self):
-        def bad_annotation() -> 6: # type: ignore
+        def bad_annotation() -> 6:  # type: ignore
             return 6
 
         assert get_return_annotation(bad_annotation) == "6"
