@@ -277,11 +277,15 @@ jobs:
     - name: Test without coverage
       if: "! matrix.use_coverage"
       shell: bash
+      env:
+        JUNIT_XML_PATH: junit-${{ matrix.name }}.xml
       run: tox run -e ${{ matrix.tox_env }} --installpkg `find dist/*.tar.gz`
 
     - name: Test with coverage
       if: "matrix.use_coverage"
       shell: bash
+      env:
+        JUNIT_XML_PATH: junit-${{ matrix.name }}.xml
       run: tox run -e ${{ matrix.tox_env }}-coverage --installpkg `find dist/*.tar.gz`
 
     - name: Upload coverage to Codecov
@@ -290,6 +294,13 @@ jobs:
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
+        verbose: true
+
+    - name: Upload JUnit report to Codecov
+      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
+      with:
+        fail_ci_if_error: false
+        files: junit-${{ matrix.name }}.xml
         verbose: true
 
   check:  # This job does nothing and is only used for the branch protection
