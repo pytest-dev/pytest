@@ -2017,13 +2017,13 @@ def _showfixtures_main(config: Config, session: Session) -> None:
 
 
 def get_return_annotation(fixture_func: Callable[..., Any]) -> str:
-    pattern = re.compile(r'\b(?:(?:<[^>]+>|[A-Za-z_]\w*)\.)+([A-Za-z_]\w*)\b')
+    pattern = re.compile(r"\b(?:(?:<[^>]+>|[A-Za-z_]\w*)\.)+([A-Za-z_]\w*)\b")
 
     sig = str(signature(fixture_func))
     sig_parts = sig.split(" -> ")
     if len(sig_parts) < 2:
         return ""
-    return pattern.sub(r'\1', sig_parts[-1])
+    return pattern.sub(r"\1", sig_parts[-1])
 
 
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
