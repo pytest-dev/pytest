@@ -301,6 +301,7 @@ jobs:
       with:
         fail_ci_if_error: false
         files: junit-${{ matrix.name }}.xml
+        report_type: test_results
         verbose: true
 
   check:  # This job does nothing and is only used for the branch protection
