@@ -1,6 +1,5 @@
 # mypy: allow-untyped-defs
-from __future__ import annotations
-
+# ruff: noqa: FA100
 from collections.abc import Callable
 from typing import Any
 
@@ -60,6 +59,12 @@ class TestGetReturnAnnotation:
             return range(2)
 
         assert get_return_annotation(with_args) == "range"
+
+    def test_string_return_annotation(self):
+        def string_return_annotation() -> "int":
+            return 6
+
+        assert get_return_annotation(string_return_annotation) == "int"
 
     def test_invalid_return_type(self):
         def bad_annotation() -> 6:  # type: ignore
