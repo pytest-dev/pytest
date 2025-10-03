@@ -1324,7 +1324,7 @@ def test_warning_on_sync_test_async_fixture(pytester: Pytester) -> None:
                     pass
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wdefault::pytest.PytestRemovedIn9Warning")
     result.stdout.fnmatch_lines(
         [
             "*== warnings summary ==*",
@@ -1354,7 +1354,7 @@ def test_warning_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
                 ...
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wdefault::pytest.PytestRemovedIn9Warning")
     result.stdout.fnmatch_lines(
         [
             "*== warnings summary ==*",
@@ -1388,7 +1388,7 @@ def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
                     pass
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-Wdefault::pytest.PytestRemovedIn9Warning")
     result.stdout.fnmatch_lines(
         [
             "*== warnings summary ==*",
