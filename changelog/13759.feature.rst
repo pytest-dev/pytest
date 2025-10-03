@@ -1,0 +1,3 @@
+Added public API function `pytest.match_markexpr` to match marker expressions against a set of markers or a pytest Item.
+This function is useful for plugins and test code that need to evaluate marker expressions without relying on internal APIs.
+Insuring that the public API is properly tested and documented.

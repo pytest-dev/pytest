@@ -757,3 +757,28 @@ or to select both "event" and "interface" tests:
     FAILED test_module.py::test_interface_complex - assert 0
     FAILED test_module.py::test_event_simple - assert 0
     ===================== 3 failed, 1 deselected in 0.12s ======================
+
+.. _match_markexpr:
+
+Checking expression matches against markers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Evaluate a marker expression against a pytest Item or a set of marker names.
+.. versionadded:: 8.4
+
+.. code-block:: python
+
+    import pytest
+
+
+    def test_example():
+        item = ...  # some pytest Item
+        assert pytest.match_markexpr("smoke and not slow", item)
+
+
+    def test_example2():
+        marks = ["smoke", "fast"]
+        assert pytest.match_markexpr("smoke and not slow", marks)
+
+This function is useful for plugins and test code that need to evaluate marker expressions
+without relying on internal APIs.

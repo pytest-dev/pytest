@@ -41,6 +41,7 @@ __all__ = [
     "MarkGenerator",
     "ParameterSet",
     "get_empty_parameterset_mark",
+    "match_markexpr",
 ]
 
 
@@ -298,3 +299,42 @@ def pytest_configure(config: Config) -> None:
 
 def pytest_unconfigure(config: Config) -> None:
     MARK_GEN._config = config.stash.get(old_mark_config_key, None)
+
+
+def match_markexpr(expr: str, mark: str | Iterable[str] | object) -> bool:
+    """
+    Match a marker expression against a marker name, an iterable of marker names,
+    or an Item-like object.
+
+    :param expr:
+        The marker expression to evaluate.
+    :param mark:
+        A marker name string, an iterable of marker names, or an Item-like object.
+    :return:
+        True if the expression matches, False otherwise.
+    :raises UsageError:
+        If the target type is unsupported.
+
+    """
+    try:
+        compiled = Expression.compile(expr)
+    except ParseError as e:
+        raise e
+
+    # Build an iterable of Mark objects for the matcher
+    if isinstance(mark, object) and hasattr(mark, "iter_markers"):
+        markers_iter = mark.iter_markers()
+    elif isinstance(mark, str):
+        markers_iter = (Mark(mark, (), {}, _ispytest=True),)
+    elif isinstance(mark, Iterable) and not isinstance(mark, (str, bytes, bytearray)):
+        markers_iter = (Mark(name, (), {}, _ispytest=True) for name in mark)
+
+    else:
+        raise UsageError(
+            "target must be an Item-like object, a marker name string, "
+            "or an iterable of marker names"
+        )
+
+    # MarkMatcher is defined in this module (_pytest.mark)
+    matcher = MarkMatcher.from_markers(markers_iter)
+    return compiled.evaluate(matcher)
