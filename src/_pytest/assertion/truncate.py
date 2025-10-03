@@ -6,7 +6,7 @@ terminal lines, unless running with an assertions verbosity level of at least 2 
 
 from __future__ import annotations
 
-from _pytest.assertion import util
+from _pytest.compat import running_on_ci
 from _pytest.config import Config
 from _pytest.nodes import Item
 
@@ -43,7 +43,7 @@ def _get_truncation_parameters(item: Item) -> tuple[bool, int, int]:
 
     verbose = item.config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
 
-    should_truncate = verbose < 2 and not util.running_on_ci()
+    should_truncate = verbose < 2 and not running_on_ci()
     should_truncate = should_truncate and (max_lines > 0 or max_chars > 0)
 
     return should_truncate, max_lines, max_chars

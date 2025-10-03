@@ -79,7 +79,7 @@ def test_disabled(pytester: Pytester) -> None:
         pytest.param(
             True,
             marks=pytest.mark.skipif(
-                "CI" in os.environ
+                bool(os.environ.get("CI"))
                 and sys.platform == "linux"
                 and sys.version_info >= (3, 14),
                 reason="sometimes crashes on CI because of truncated outputs (#7022)",

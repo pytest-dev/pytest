@@ -17,8 +17,7 @@ adapt some of its behaviours.
 How CI is detected
 ------------------
 
-Pytest knows it is in a CI environment when either one of these environment variables are set,
-regardless of their value:
+Pytest knows it is in a CI environment when either one of these environment variables are set to a non-empty value:
 
 * `CI`: used by many CI systems.
 * `BUILD_NUMBER`: used by Jenkins.

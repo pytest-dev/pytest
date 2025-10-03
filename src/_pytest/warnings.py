@@ -41,8 +41,7 @@ def catch_warnings_for_item(
             warnings.filterwarnings("always", category=DeprecationWarning)
             warnings.filterwarnings("always", category=PendingDeprecationWarning)
 
-        # To be enabled in pytest 9.0.0.
-        # warnings.filterwarnings("error", category=pytest.PytestRemovedIn9Warning)
+        warnings.filterwarnings("error", category=pytest.PytestRemovedIn9Warning)
 
         apply_warning_filters(config_filters, cmdline_filters)
 

@@ -10,7 +10,10 @@ import sys
 import textwrap
 from types import SimpleNamespace
 from typing import cast
+from typing import Literal
 from typing import NamedTuple
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import pluggy
 
@@ -30,6 +33,7 @@ from _pytest.terminal import _get_line_with_reprcrash_message
 from _pytest.terminal import _get_raw_skip_reason
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import getreportopt
+from _pytest.terminal import TerminalProgressPlugin
 from _pytest.terminal import TerminalReporter
 import pytest
 
@@ -3297,3 +3301,116 @@ class TestNodeIDHandling:
                 r".*test_foo.py::test_x\[a::b/\] .*FAILED.*",
             ]
         )
+
+
+class TestTerminalProgressPlugin:
+    """Tests for the TerminalProgressPlugin."""
+
+    @pytest.fixture
+    def mock_file(self) -> StringIO:
+        return StringIO()
+
+    @pytest.fixture
+    def mock_tr(self, mock_file: StringIO) -> pytest.TerminalReporter:
+        tr = Mock(spec=pytest.TerminalReporter)
+
+        def write_raw(s: str, *, flush: bool = False) -> None:
+            mock_file.write(s)
+
+        tr.write_raw = write_raw
+        tr._progress_nodeids_reported = set()
+        return tr
+
+    def test_plugin_registration(self, pytester: pytest.Pytester) -> None:
+        """Test that the plugin is registered correctly on TTY output."""
+        # The plugin module should be registered as a default plugin.
+        with patch.object(sys.stdout, "isatty", return_value=True):
+            config = pytester.parseconfigure()
+            plugin = config.pluginmanager.get_plugin("terminalprogress")
+            assert plugin is not None
+
+    def test_disabled_for_non_tty(self, pytester: pytest.Pytester) -> None:
+        """Test that plugin is disabled for non-TTY output."""
+        with patch.object(sys.stdout, "isatty", return_value=False):
+            config = pytester.parseconfigure()
+            plugin = config.pluginmanager.get_plugin("terminalprogress")
+            assert plugin is None
+
+    @pytest.mark.parametrize(
+        ["state", "progress", "expected"],
+        [
+            ("indeterminate", None, "\x1b]9;4;3;\x1b\\"),
+            ("normal", 50, "\x1b]9;4;1;50\x1b\\"),
+            ("error", 75, "\x1b]9;4;2;75\x1b\\"),
+            ("paused", None, "\x1b]9;4;4;\x1b\\"),
+            ("paused", 80, "\x1b]9;4;4;80\x1b\\"),
+            ("remove", None, "\x1b]9;4;0;\x1b\\"),
+        ],
+    )
+    def test_emit_progress_sequences(
+        self,
+        mock_file: StringIO,
+        mock_tr: pytest.TerminalReporter,
+        state: Literal["remove", "normal", "error", "indeterminate", "paused"],
+        progress: int | None,
+        expected: str,
+    ) -> None:
+        """Test that progress sequences are emitted correctly."""
+        plugin = TerminalProgressPlugin(mock_tr)
+        plugin._emit_progress(state, progress)
+        assert expected in mock_file.getvalue()
+
+    def test_session_lifecycle(
+        self, mock_file: StringIO, mock_tr: pytest.TerminalReporter
+    ) -> None:
+        """Test progress updates during session lifecycle."""
+        plugin = TerminalProgressPlugin(mock_tr)
+
+        session = Mock(spec=pytest.Session)
+        session.testscollected = 3
+
+        # Session start - should emit indeterminate progress.
+        plugin.pytest_sessionstart(session)
+        assert "\x1b]9;4;3;\x1b\\" in mock_file.getvalue()
+        mock_file.truncate(0)
+        mock_file.seek(0)
+
+        # Collection finish - should emit 0% progress.
+        plugin.pytest_collection_finish()
+        assert "\x1b]9;4;1;0\x1b\\" in mock_file.getvalue()
+        mock_file.truncate(0)
+        mock_file.seek(0)
+
+        # First test - 33% progress.
+        report1 = pytest.TestReport(
+            nodeid="test_1",
+            location=("test.py", 0, "test_1"),
+            when="call",
+            outcome="passed",
+            keywords={},
+            longrepr=None,
+        )
+        mock_tr.reported_progress = 1  # type: ignore[misc]
+        plugin.pytest_runtest_logreport(report1)
+        assert "\x1b]9;4;1;33\x1b\\" in mock_file.getvalue()
+        mock_file.truncate(0)
+        mock_file.seek(0)
+
+        # Second test with failure - 66% in error state.
+        report2 = pytest.TestReport(
+            nodeid="test_2",
+            location=("test.py", 1, "test_2"),
+            when="call",
+            outcome="failed",
+            keywords={},
+            longrepr=None,
+        )
+        mock_tr.reported_progress = 2  # type: ignore[misc]
+        plugin.pytest_runtest_logreport(report2)
+        assert "\x1b]9;4;2;66\x1b\\" in mock_file.getvalue()
+        mock_file.truncate(0)
+        mock_file.seek(0)
+
+        # Session finish - should remove progress.
+        plugin.pytest_sessionfinish()
+        assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
