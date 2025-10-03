@@ -1645,9 +1645,18 @@ class FixtureManager:
                 fixturedefs = self.getfixturedefs(argname, parentnode)
                 if fixturedefs:
                     arg2fixturedefs[argname] = fixturedefs
-                    for arg in fixturedefs[-1].argnames:
-                        if arg not in fixturenames_closure:
-                            fixturenames_closure.append(arg)
+
+                    # Add dependencies from this fixture.
+                    # If it overrides a fixture with the same name and requests
+                    # it, also add dependencies from the overridden fixtures in
+                    # the chain. See also similar dealing in _get_active_fixturedef().
+                    for fixturedef in reversed(fixturedefs):  # pragma: no cover
+                        for arg in fixturedef.argnames:
+                            if arg not in fixturenames_closure:
+                                fixturenames_closure.append(arg)
+                        if argname not in fixturedef.argnames:
+                            # Overrides, but doesn't request super.
+                            break
 
         def sort_by_scope(arg_name: str) -> Scope:
             try:

@@ -27,8 +27,7 @@ DEPRECATED_EXTERNAL_PLUGINS = {
 }
 
 
-# This can be* removed pytest 8, but it's harmless and common, so no rush to remove.
-# * If you're in the future: "could have been".
+# This could have been removed pytest 8, but it's harmless and common, so no rush to remove.
 YIELD_FIXTURE = PytestDeprecationWarning(
     "@pytest.yield_fixture is deprecated.\n"
     "Use @pytest.fixture instead; they are the same."

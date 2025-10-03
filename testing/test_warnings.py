@@ -562,7 +562,8 @@ class TestDeprecationWarningsByDefault:
         )
 
 
-@pytest.mark.skip("not relevant until pytest 9.0")
+# In 9.1, uncomment below and change RemovedIn9 -> RemovedIn10.
+# @pytest.mark.skip("not relevant until pytest 10.0")
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
 def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> None:
     """This ensures that PytestRemovedInXWarnings raised by pytest are turned into errors.
