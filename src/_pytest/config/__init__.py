@@ -149,11 +149,17 @@ def main(
 
     :returns: An exit code.
     """
+    # Handle a single `--version` argument early to avoid starting up the entire pytest infrastructure.
+    new_args = sys.argv[1:] if args is None else args
+    if isinstance(new_args, Sequence) and new_args.count("--version") == 1:
+        sys.stdout.write(f"pytest {__version__}\n")
+        return ExitCode.OK
+
     old_pytest_version = os.environ.get("PYTEST_VERSION")
     try:
         os.environ["PYTEST_VERSION"] = __version__
         try:
-            config = _prepareconfig(args, plugins)
+            config = _prepareconfig(new_args, plugins)
         except ConftestImportFailure as e:
             exc_info = ExceptionInfo.from_exception(e.cause)
             tw = TerminalWriter(sys.stderr)
@@ -317,12 +323,10 @@ def get_plugin_manager() -> PytestPluginManager:
 
 
 def _prepareconfig(
-    args: list[str] | os.PathLike[str] | None = None,
+    args: list[str] | os.PathLike[str],
     plugins: Sequence[str | _PluggyPlugin] | None = None,
 ) -> Config:
-    if args is None:
-        args = sys.argv[1:]
-    elif isinstance(args, os.PathLike):
+    if isinstance(args, os.PathLike):
         args = [os.fspath(args)]
     elif not isinstance(args, list):
         msg = (  # type:ignore[unreachable]
@@ -1145,13 +1149,15 @@ class Config:
         try:
             self.parse(args)
         except UsageError:
-            # Handle --version and --help here in a minimal fashion.
+            # Handle `--version --version` and `--help` here in a minimal fashion.
             # This gets done via helpconfig normally, but its
             # pytest_cmdline_main is not called in case of errors.
             if getattr(self.option, "version", False) or "--version" in args:
-                from _pytest.helpconfig import showversion
+                from _pytest.helpconfig import show_version_verbose
 
-                showversion(self)
+                # Note that `--version` (single argument) is handled early by `Config.main()`, so the only
+                # way we are reaching this point is via `--version --version`.
+                show_version_verbose(self)
             elif (
                 getattr(self.option, "help", False) or "--help" in args or "-h" in args
             ):
