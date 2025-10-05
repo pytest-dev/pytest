@@ -6,7 +6,7 @@ import sys
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from typing import Callable
+from collections.abc import Callable
 from venv.lib64.python3.site_packages.external_lib import external_lib
 
 from src.main import func
