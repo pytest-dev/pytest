@@ -77,7 +77,7 @@ def assert_approx_raises_regex(pytestconfig):
         )
 
         for i, (obtained_line, expected_line) in enumerate(
-            zip(obtained_message, expected_message)
+            zip(obtained_message, expected_message, strict=True)
         ):
             regex = re.compile(expected_line)
             assert regex.match(obtained_line) is not None, (
@@ -741,6 +741,17 @@ class TestApprox:
             ],
         )
 
+    def test_dict_differing_lengths(self, assert_approx_raises_regex):
+        assert_approx_raises_regex(
+            {"a": 0},
+            {"a": 0, "b": 1},
+            [
+                "  ",
+                r"  Impossible to compare mappings with different sizes\.",
+                r"  Lengths: 2 and 1",
+            ],
+        )
+
     def test_numpy_array(self):
         np = pytest.importorskip("numpy")
 
@@ -1085,10 +1096,10 @@ class TestRecursiveSequenceMap:
         ]
 
     def test_map_over_mixed_sequence(self):
-        assert _recursive_sequence_map(sqrt, [4, (25, 64), [(49)]]) == [
+        assert _recursive_sequence_map(sqrt, [4, (25, 64), [49]]) == [
             2,
             (5, 8),
-            [(7)],
+            [7],
         ]
 
     def test_map_over_sequence_like(self):

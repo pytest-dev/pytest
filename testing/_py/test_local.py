@@ -9,8 +9,9 @@ import time
 from unittest import mock
 import warnings
 
-from py import error
 from py.path import local
+
+from py import error
 
 import pytest
 
@@ -18,8 +19,7 @@ import pytest
 @contextlib.contextmanager
 def ignore_encoding_warning():
     with warnings.catch_warnings():
-        if sys.version_info >= (3, 10):
-            warnings.simplefilter("ignore", EncodingWarning)  # noqa: F821
+        warnings.simplefilter("ignore", EncodingWarning)
         yield
 
 

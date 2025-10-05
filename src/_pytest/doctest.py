@@ -324,7 +324,7 @@ class DoctestItem(Item):
             Sequence[doctest.DocTestFailure | doctest.UnexpectedException] | None
         ) = None
         if isinstance(
-            excinfo.value, (doctest.DocTestFailure, doctest.UnexpectedException)
+            excinfo.value, doctest.DocTestFailure | doctest.UnexpectedException
         ):
             failures = [excinfo.value]
         elif isinstance(excinfo.value, MultipleDoctestFailures):
@@ -530,24 +530,6 @@ class DoctestModule(Module):
                         source_lines,
                     )
 
-            if sys.version_info < (3, 10):
-
-                def _find(
-                    self, tests, obj, name, module, source_lines, globs, seen
-                ) -> None:
-                    """Override _find to work around issue in stdlib.
-
-                    https://github.com/pytest-dev/pytest/issues/3456
-                    https://github.com/python/cpython/issues/69718
-                    """
-                    if _is_mocked(obj):
-                        return  # pragma: no cover
-                    with _patch_unwrap_mock_aware():
-                        # Type ignored because this is a private function.
-                        super()._find(  # type:ignore[misc]
-                            tests, obj, name, module, source_lines, globs, seen
-                        )
-
             if sys.version_info < (3, 13):
 
                 def _from_module(self, module, object):
@@ -657,7 +639,7 @@ def _init_checker_class() -> type[doctest.OutputChecker]:
             if len(wants) != len(gots):
                 return got
             offset = 0
-            for w, g in zip(wants, gots):
+            for w, g in zip(wants, gots, strict=True):
                 fraction: str | None = w.group("fraction")
                 exponent: str | None = w.group("exponent1")
                 if exponent is None:

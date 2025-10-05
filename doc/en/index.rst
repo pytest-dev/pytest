@@ -2,7 +2,6 @@
 
 .. sidebar:: **Next Open Trainings and Events**
 
-    - `Testen mit pytest <https://www.letsboot.ch/kurs/pytest>`_ (German), via `Letsboot <https://www.letsboot.ch/>`_ (3 day in-depth training), **October 29th -- 31st**, Zurich (CH)
     - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 3th -- 5th 2026**, Leipzig (DE) / Remote
 
     Also see :doc:`previous talks and blogposts <talks>`
@@ -45,8 +44,6 @@ pytest: helps you write better programs
 The ``pytest`` framework makes it easy to write small, readable tests, and can
 scale to support complex functional testing for applications and libraries.
 
-
-``pytest`` requires: Python 3.8+ or PyPy3.
 
 **PyPI package name**: :pypi:`pytest`
 
@@ -104,7 +101,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) test suites out of the box
 
-- Python 3.8+ or PyPy 3
+- Python 3.10+ or PyPy 3
 
 - Rich plugin architecture, with over 1300+ :ref:`external plugins <plugin-list>` and thriving community
 

@@ -280,8 +280,7 @@ def test_warning_recorded_hook(pytester: Pytester) -> None:
         ("call warning", "runtest", "test_warning_recorded_hook.py::test_func"),
         ("teardown warning", "runtest", "test_warning_recorded_hook.py::test_func"),
     ]
-    assert len(collected) == len(expected)  # python < 3.10 zip(strict=True)
-    for collected_result, expected_result in zip(collected, expected):
+    for collected_result, expected_result in zip(collected, expected, strict=True):
         assert collected_result[0] == expected_result[0], str(collected)
         assert collected_result[1] == expected_result[1], str(collected)
         assert collected_result[2] == expected_result[2], str(collected)
@@ -425,6 +424,33 @@ def test_option_precedence_mark(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["* 1 failed in*"])
 
 
+def test_accept_unknown_category(pytester: Pytester) -> None:
+    """Category types that can't be imported don't cause failure (#13732)."""
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            always:Failed to import filter module.*:pytest.PytestConfigWarning
+            ignore::foobar.Foobar
+    """
+    )
+    pytester.makepyfile(
+        """
+        def test():
+            pass
+    """
+    )
+    result = pytester.runpytest("-W", "ignore::bizbaz.Bizbaz")
+    result.stdout.fnmatch_lines(
+        [
+            f"*== {WARNINGS_SUMMARY_HEADER} ==*",
+            "*PytestConfigWarning: Failed to import filter module 'foobar': ignore::foobar.Foobar",
+            "*PytestConfigWarning: Failed to import filter module 'bizbaz': ignore::bizbaz.Bizbaz",
+            "* 1 passed, * warning*",
+        ]
+    )
+
+
 class TestDeprecationWarningsByDefault:
     """
     Note: all pytest runs are executed in a subprocess so we don't inherit warning filters
@@ -536,7 +562,8 @@ class TestDeprecationWarningsByDefault:
         )
 
 
-@pytest.mark.skip("not relevant until pytest 9.0")
+# In 9.1, uncomment below and change RemovedIn9 -> RemovedIn10.
+# @pytest.mark.skip("not relevant until pytest 10.0")
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
 def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> None:
     """This ensures that PytestRemovedInXWarnings raised by pytest are turned into errors.

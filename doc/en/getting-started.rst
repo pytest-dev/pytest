@@ -9,8 +9,6 @@ Get Started
 Install ``pytest``
 ----------------------------------------
 
-``pytest`` requires: Python 3.8+ or PyPy3.
-
 1. Run the following command in your command line:
 
 .. code-block:: bash
@@ -22,7 +20,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 8.4.1
+    pytest 8.4.2
 
 .. _`simpletest`:
 
@@ -75,7 +73,7 @@ The ``[100%]`` refers to the overall progress of running all test cases. After i
 Run multiple tests
 ----------------------------------------------------------
 
-``pytest`` will run all files of the form test_*.py or \*_test.py in the current directory and its subdirectories. More generally, it follows :ref:`standard test discovery rules <test discovery>`.
+``pytest`` will run all files of the form ``test_*.py`` or ``*_test.py`` in the current directory and its subdirectories. More generally, it follows :ref:`standard test discovery rules <test discovery>`.
 
 
 Assert that a certain exception is raised

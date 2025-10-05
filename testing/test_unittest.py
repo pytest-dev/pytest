@@ -1322,10 +1322,12 @@ def test_async_support(pytester: Pytester) -> None:
     reprec.assertoutcome(failed=1, passed=2)
 
 
+@pytest.mark.skipif(
+    sys.version_info >= (3, 11), reason="asynctest is not compatible with Python 3.11+"
+)
 def test_asynctest_support(pytester: Pytester) -> None:
     """Check asynctest support (#7110)"""
     pytest.importorskip("asynctest")
-
     pytester.copy_example("unittest/test_unittest_asynctest.py")
     reprec = pytester.inline_run()
     reprec.assertoutcome(failed=1, passed=2)
@@ -1374,7 +1376,7 @@ def test_do_class_cleanups_on_success(pytester: Pytester) -> None:
     """
     )
     reprec = pytester.inline_run(testpath)
-    passed, skipped, failed = reprec.countoutcomes()
+    passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 0
     assert passed == 3
 
@@ -1398,7 +1400,7 @@ def test_do_class_cleanups_on_setupclass_failure(pytester: Pytester) -> None:
     """
     )
     reprec = pytester.inline_run(testpath)
-    passed, skipped, failed = reprec.countoutcomes()
+    passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 1
     assert passed == 1
 
@@ -1426,7 +1428,7 @@ def test_do_class_cleanups_on_teardownclass_failure(pytester: Pytester) -> None:
     """
     )
     reprec = pytester.inline_run(testpath)
-    passed, skipped, failed = reprec.countoutcomes()
+    passed, _skipped, _failed = reprec.countoutcomes()
     assert passed == 3
 
 
@@ -1449,7 +1451,7 @@ def test_do_cleanups_on_success(pytester: Pytester) -> None:
     """
     )
     reprec = pytester.inline_run(testpath)
-    passed, skipped, failed = reprec.countoutcomes()
+    passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 0
     assert passed == 3
 
@@ -1474,7 +1476,7 @@ def test_do_cleanups_on_setup_failure(pytester: Pytester) -> None:
     """
     )
     reprec = pytester.inline_run(testpath)
-    passed, skipped, failed = reprec.countoutcomes()
+    passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 2
     assert passed == 1
 
@@ -1500,7 +1502,7 @@ def test_do_cleanups_on_teardown_failure(pytester: Pytester) -> None:
     """
     )
     reprec = pytester.inline_run(testpath)
-    passed, skipped, failed = reprec.countoutcomes()
+    passed, _skipped, failed = reprec.countoutcomes()
     assert failed == 2
     assert passed == 1
 
@@ -1614,7 +1616,7 @@ def test_traceback_pruning(pytester: Pytester) -> None:
         """
     )
     reprec = pytester.inline_run()
-    passed, skipped, failed = reprec.countoutcomes()
+    passed, _skipped, failed = reprec.countoutcomes()
     assert passed == 1
     assert failed == 1
     assert reprec.ret == 1

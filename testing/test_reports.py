@@ -101,8 +101,7 @@ class TestReportSerialization:
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
-        assert len(rep_entries) == len(a_entries)  # python < 3.10 zip(strict=True)
-        for a_entry, rep_entry in zip(a_entries, rep_entries):
+        for a_entry, rep_entry in zip(a_entries, rep_entries, strict=True):
             assert isinstance(rep_entry, ReprEntry)
             assert rep_entry.reprfileloc is not None
             assert rep_entry.reprfuncargs is not None
@@ -146,8 +145,7 @@ class TestReportSerialization:
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
-        assert len(rep_entries) == len(a_entries)  # python < 3.10 zip(strict=True)
-        for rep_entry, a_entry in zip(rep_entries, a_entries):
+        for rep_entry, a_entry in zip(rep_entries, a_entries, strict=True):
             assert isinstance(rep_entry, ReprEntryNative)
             assert rep_entry.lines == a_entry.lines
 
@@ -319,8 +317,8 @@ class TestReportSerialization:
             assert longrepr.sections == [("title", "contents", "=")]
             assert len(longrepr.chain) == 2
             entry1, entry2 = longrepr.chain
-            tb1, fileloc1, desc1 = entry1
-            tb2, fileloc2, desc2 = entry2
+            tb1, _fileloc1, desc1 = entry1
+            tb2, _fileloc2, desc2 = entry2
 
             assert "ValueError('value error')" in str(tb1)
             assert "RuntimeError('runtime error')" in str(tb2)
@@ -377,8 +375,8 @@ class TestReportSerialization:
             assert isinstance(longrepr, ExceptionChainRepr)
             assert len(longrepr.chain) == 2
             entry1, entry2 = longrepr.chain
-            tb1, fileloc1, desc1 = entry1
-            tb2, fileloc2, desc2 = entry2
+            tb1, fileloc1, _desc1 = entry1
+            tb2, fileloc2, _desc2 = entry2
 
             assert "RemoteTraceback" in str(tb1)
             assert "ValueError: value error" in str(tb2)

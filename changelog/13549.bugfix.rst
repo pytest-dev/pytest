@@ -1,3 +1,0 @@
-No longer evaluate type annotations in Python ``3.14`` when inspecting function signatures.
-
-This prevents crashes during module collection when modules do not explicitly use ``from __future__ import annotations`` and import types for annotations within a ``if TYPE_CHECKING:`` block.

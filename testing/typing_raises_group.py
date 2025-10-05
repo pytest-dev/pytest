@@ -1,8 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 import sys
-from typing import Callable
-from typing import Union
 
 from typing_extensions import assert_type
 
@@ -160,10 +159,7 @@ def check_nested_raisesgroups_contextmanager() -> None:
     assert_type(
         excinfo.value.exceptions[0],
         # this union is because of how typeshed defines .exceptions
-        Union[
-            ExceptionGroup[ValueError],
-            ExceptionGroup[ExceptionGroup[ValueError]],
-        ],
+        ExceptionGroup[ValueError] | ExceptionGroup[ExceptionGroup[ValueError]],
     )
 
 
@@ -240,8 +236,5 @@ def check_check_typing() -> None:
     # `BaseExceptiongroup` should perhaps be `ExceptionGroup`, but close enough
     assert_type(
         RaisesGroup(ValueError).check,
-        Union[
-            Callable[[BaseExceptionGroup[ValueError]], bool],
-            None,
-        ],
+        Callable[[BaseExceptionGroup[ValueError]], bool] | None,
     )

@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from itertools import zip_longest
 import os
 from pathlib import Path
 import sys
@@ -1149,7 +1150,7 @@ class TestRequestSessionScoped:
 
 class TestRequestMarking:
     def test_applymarker(self, pytester: Pytester) -> None:
-        item1, item2 = pytester.getitems(
+        item1, _item2 = pytester.getitems(
             """
             import pytest
 
@@ -3043,7 +3044,7 @@ class TestFixtureMarker:
         ]
         import pprint
 
-        pprint.pprint(list(zip(values, expected)))
+        pprint.pprint(list(zip_longest(values, expected)))
         assert values == expected
 
     def test_parametrized_fixture_teardown_order(self, pytester: Pytester) -> None:
@@ -5067,4 +5068,133 @@ def test_collect_positional_only(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_closure_with_overrides(pytester: Pytester) -> None:
+    """Test that an item's static fixture closure properly includes transitive
+    dependencies through overridden fixtures (#13773)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def app(db): pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Overrides conftest-level `app` and requests it.
+        @pytest.fixture
+        def app(app): pass
+
+        class TestClass:
+            # Overrides module-level `app` and requests it.
+            @pytest.fixture
+            def app(self, app): pass
+
+            def test_something(self, request, app):
+                # Both dynamic and static fixture closures should include 'db'.
+                assert 'db' in request.fixturenames
+                assert 'db' in request.node.fixturenames
+                # No dynamic dependencies, should be equal.
+                assert set(request.fixturenames) == set(request.node.fixturenames)
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.xfail(reason="not currently handled correctly")
+def test_fixture_closure_with_overrides_and_intermediary(pytester: Pytester) -> None:
+    """Test that an item's static fixture closure properly includes transitive
+    dependencies through overridden fixtures (#13773).
+
+    A more complicated case than test_fixture_closure_with_overrides, adds an
+    intermediary so the override chain is not direct.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def app(db): pass
+
+        @pytest.fixture
+        def intermediate(app): pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Overrides conftest-level `app` and requests it.
+        @pytest.fixture
+        def app(intermediate): pass
+
+        class TestClass:
+            # Overrides module-level `app` and requests it.
+            @pytest.fixture
+            def app(self, app): pass
+
+            def test_something(self, request, app):
+                # Both dynamic and static fixture closures should include 'db'.
+                assert 'db' in request.fixturenames
+                assert 'db' in request.node.fixturenames
+                # No dynamic dependencies, should be equal.
+                assert set(request.fixturenames) == set(request.node.fixturenames)
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_closure_with_broken_override_chain(pytester: Pytester) -> None:
+    """Test that an item's static fixture closure properly includes transitive
+    dependencies through overridden fixtures (#13773).
+
+    A more complicated case than test_fixture_closure_with_overrides, one of the
+    fixtures in the chain doesn't call its super, so it shouldn't be included.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def app(db): pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Overrides conftest-level `app` and *doesn't* request it.
+        @pytest.fixture
+        def app(): pass
+
+        class TestClass:
+            # Overrides module-level `app` and requests it.
+            @pytest.fixture
+            def app(self, app): pass
+
+            def test_something(self, request, app):
+                # Both dynamic and static fixture closures should include 'db'.
+                assert 'db' not in request.fixturenames
+                assert 'db' not in request.node.fixturenames
+                # No dynamic dependencies, should be equal.
+                assert set(request.fixturenames) == set(request.node.fixturenames)
+        """
+    )
+    result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)

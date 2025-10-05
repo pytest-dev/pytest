@@ -26,11 +26,9 @@ from typing import Final
 from typing import final
 from typing import Generic
 from typing import NoReturn
-from typing import Optional
 from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
-from typing import Union
 import warnings
 
 import _pytest
@@ -88,26 +86,24 @@ FixtureValue = TypeVar("FixtureValue")
 # The type of the fixture function (type variable).
 FixtureFunction = TypeVar("FixtureFunction", bound=Callable[..., object])
 # The type of a fixture function (type alias generic in fixture value).
-_FixtureFunc = Union[
-    Callable[..., FixtureValue], Callable[..., Generator[FixtureValue]]
-]
+_FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValue]]
 # The type of FixtureDef.cached_result (type alias generic in fixture value).
-_FixtureCachedResult = Union[
+_FixtureCachedResult = (
     tuple[
         # The result.
         FixtureValue,
         # Cache key.
         object,
         None,
-    ],
-    tuple[
+    ]
+    | tuple[
         None,
         # Cache key.
         object,
         # The exception and the original traceback.
-        tuple[BaseException, Optional[types.TracebackType]],
-    ],
-]
+        tuple[BaseException, types.TracebackType | None],
+    ]
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -1649,9 +1645,18 @@ class FixtureManager:
                 fixturedefs = self.getfixturedefs(argname, parentnode)
                 if fixturedefs:
                     arg2fixturedefs[argname] = fixturedefs
-                    for arg in fixturedefs[-1].argnames:
-                        if arg not in fixturenames_closure:
-                            fixturenames_closure.append(arg)
+
+                    # Add dependencies from this fixture.
+                    # If it overrides a fixture with the same name and requests
+                    # it, also add dependencies from the overridden fixtures in
+                    # the chain. See also similar dealing in _get_active_fixturedef().
+                    for fixturedef in reversed(fixturedefs):  # pragma: no cover
+                        for arg in fixturedef.argnames:
+                            if arg not in fixturenames_closure:
+                                fixturenames_closure.append(arg)
+                        if argname not in fixturedef.argnames:
+                            # Overrides, but doesn't request super.
+                            break
 
         def sort_by_scope(arg_name: str) -> Scope:
             try:

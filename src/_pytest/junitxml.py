@@ -674,8 +674,11 @@ class LogXML:
             testsuites.append(suite_node)
             logfile.write(ET.tostring(testsuites, encoding="unicode"))
 
-    def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
-        terminalreporter.write_sep("-", f"generated xml file: {self.logfile}")
+    def pytest_terminal_summary(
+        self, terminalreporter: TerminalReporter, config: pytest.Config
+    ) -> None:
+        if config.get_verbosity() >= 0:
+            terminalreporter.write_sep("-", f"generated xml file: {self.logfile}")
 
     def add_global_property(self, name: str, value: object) -> None:
         __tracebackhide__ = True

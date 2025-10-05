@@ -1165,11 +1165,11 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to ``BUILD_NUMBER`` variable. See also :ref:`ci-pipelines`.
+When set to a non-empty value, pytest acknowledges that is running in a CI process. See also :ref:`ci-pipelines`.
 
 .. envvar:: BUILD_NUMBER
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to CI variable. See also :ref:`ci-pipelines`.
+When set to a non-empty value, pytest acknowledges that is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
 
 .. envvar:: PYTEST_ADDOPTS
 
@@ -2408,7 +2408,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Plugins that must be present for pytest to run
 
     Environment variables:
-      CI                       When set (regardless of value), pytest knows it is running in a CI process and does not truncate summary info
+      CI                       When set to a non-empty value, pytest knows it is running in a CI process and does not truncate summary info
       BUILD_NUMBER             Equivalent to CI
       PYTEST_ADDOPTS           Extra command line options
       PYTEST_PLUGINS           Comma-separated plugins to load during startup

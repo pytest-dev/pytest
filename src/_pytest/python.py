@@ -210,7 +210,7 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Module:
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
 ) -> None | nodes.Item | nodes.Collector | list[nodes.Item | nodes.Collector]:
-    assert isinstance(collector, (Class, Module)), type(collector)
+    assert isinstance(collector, Class | Module), type(collector)
     # Nothing was collected elsewhere, let's do it here.
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
@@ -358,7 +358,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
 
     def istestfunction(self, obj: object, name: str) -> bool:
         if self.funcnamefilter(name) or self.isnosetest(obj):
-            if isinstance(obj, (staticmethod, classmethod)):
+            if isinstance(obj, staticmethod | classmethod):
                 # staticmethods and classmethods need to be unwrapped.
                 obj = safe_getattr(obj, "__func__", False)
             return callable(obj) and fixtures.getfixturemarker(obj) is None
@@ -944,7 +944,9 @@ class IdMaker:
                 # ID not provided - generate it.
                 yield "-".join(
                     self._idval(val, argname, idx)
-                    for val, argname in zip(parameterset.values, self.argnames)
+                    for val, argname in zip(
+                        parameterset.values, self.argnames, strict=True
+                    )
                 )
 
     def _idval(self, val: object, argname: str, idx: int) -> str:
@@ -989,9 +991,9 @@ class IdMaker:
     def _idval_from_value(self, val: object) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet from its value,
         if the value type is supported."""
-        if isinstance(val, (str, bytes)):
+        if isinstance(val, str | bytes):
             return _ascii_escaped_by_config(val, self.config)
-        elif val is None or isinstance(val, (float, int, bool, complex)):
+        elif val is None or isinstance(val, float | int | bool | complex):
             return str(val)
         elif isinstance(val, re.Pattern):
             return ascii_escaped(val.pattern)
@@ -1079,7 +1081,7 @@ class CallSpec2:
         params = self.params.copy()
         indices = self.indices.copy()
         arg2scope = dict(self._arg2scope)
-        for arg, val in zip(argnames, valset):
+        for arg, val in zip(argnames, valset, strict=True):
             if arg in params:
                 raise nodes.Collector.CollectError(
                     f"{nodeid}: duplicate parametrization of {arg!r}"
@@ -1336,7 +1338,7 @@ class Metafunc:
         newcalls = []
         for callspec in self._calls or [CallSpec2()]:
             for param_index, (param_id, param_set) in enumerate(
-                zip(ids, parametersets)
+                zip(ids, parametersets, strict=True)
             ):
                 newcallspec = callspec.setmulti(
                     argnames=argnames,

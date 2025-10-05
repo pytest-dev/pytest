@@ -134,7 +134,7 @@ class TestAssertionRewrite:
             if isinstance(node, ast.Import):
                 continue
             for n in [node, *ast.iter_child_nodes(node)]:
-                assert isinstance(n, (ast.stmt, ast.expr))
+                assert isinstance(n, ast.stmt | ast.expr)
                 for location in [
                     (n.lineno, n.col_offset),
                     (n.end_lineno, n.end_col_offset),
@@ -1585,7 +1585,9 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
-class TestIssue10743:
+class TestAssertionRewriteWalrusOperator:
+    """See #10743"""
+
     def test_assertion_walrus_operator(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -1751,6 +1753,22 @@ class TestIssue10743:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+    def test_assertion_namedexpr_compare_left_overwrite(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_namedexpr_compare_left_overwrite():
+                a = "Hello"
+                b = "World"
+                c = "Test"
+                assert (a := b) == c and (a := "Test") == "Test"
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*assert ('World' == 'Test'*"])
 
 
 class TestIssue11028:
@@ -2322,10 +2340,6 @@ class TestPyCacheDir:
 
         assert get_cache_dir(Path(source)) == Path(expected)
 
-    @pytest.mark.skipif(
-        sys.version_info[:2] == (3, 9) and sys.platform.startswith("win"),
-        reason="#9298",
-    )
     def test_sys_pycache_prefix_integration(
         self, tmp_path, monkeypatch, pytester: Pytester
     ) -> None:

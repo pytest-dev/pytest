@@ -24,7 +24,7 @@ authors = [
     { name = "Florian Bruhin" },
     { name = "Others (See AUTHORS)" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
@@ -33,7 +33,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -86,10 +85,10 @@ write_to = "src/_pytest/_version.py"
 
 [tool.black]
 # See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#t-target-version
-target-version = [ "py39", "py310", "py311", "py312", "py313" ]
+target-version = [ "py310", "py311", "py312", "py313" ]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 88
 src = [
     "src",
@@ -428,6 +427,9 @@ markers = [
     "slow",
     # experimental mark for all tests using pexpect
     "uses_pexpect",
+    # Disables the `remove_ci_env_var` autouse fixture on a given test that
+    # actually inspects whether the CI environment variable is set.
+    "keep_ci_var",
 ]
 
 [tool.towncrier]
@@ -517,7 +519,7 @@ files = [
 mypy_path = [
     "src",
 ]
-python_version = "3.9"
+python_version = "3.10"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true
@@ -540,7 +542,7 @@ include = [
 extraPaths = [
     "src",
 ]
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 typeCheckingMode = "basic"
 reportMissingImports = "none"
 reportMissingModuleSource = "none"

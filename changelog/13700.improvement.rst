@@ -1,0 +1,1 @@
+`--junitxml`  no longer prints the `generated xml file` summary at the end of the pytest session when `--quiet` is given.

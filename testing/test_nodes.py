@@ -24,10 +24,10 @@ def test_node_direct_construction_deprecated() -> None:
     with pytest.raises(
         OutcomeException,
         match=(
-            "Direct construction of _pytest.nodes.Node has been deprecated, please "
-            "use _pytest.nodes.Node.from_parent.\nSee "
-            "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
-            " for more details."
+            r"Direct construction of _pytest\.nodes\.Node has been deprecated, please "
+            r"use _pytest\.nodes\.Node\.from_parent.\nSee "
+            r"https://docs\.pytest\.org/en/stable/deprecations\.html#node-construction-changed-to-node-from-parent"
+            r" for more details\."
         ),
     ):
         nodes.Node(None, session=None)  # type: ignore[arg-type]
