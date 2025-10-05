@@ -55,6 +55,8 @@ You can run all of the tests within ``tests/`` *except* for ``tests/foobar/test_
 by invoking ``pytest`` with ``--deselect tests/foobar/test_foobar_01.py::test_a``.
 ``pytest`` allows multiple ``--deselect`` options.
 
+.. _duplicate-paths:
+
 Keeping duplicate paths specified from command line
 ----------------------------------------------------
 
@@ -77,18 +79,6 @@ Example:
 .. code-block:: pytest
 
     pytest --keep-duplicates path_a path_a
-
-    ...
-    collected 2 items
-    ...
-
-As the collector just works on directories, if you specify twice a single test file, ``pytest`` will
-still collect it twice, no matter if the ``--keep-duplicates`` is not specified.
-Example:
-
-.. code-block:: pytest
-
-    pytest test_a.py test_a.py
 
     ...
     collected 2 items
