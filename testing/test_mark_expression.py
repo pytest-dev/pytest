@@ -3,7 +3,6 @@ from __future__ import annotations
 from _pytest.mark import MarkMatcher
 from _pytest.mark.expression import Expression
 from _pytest.mark.expression import ExpressionMatcher
-from _pytest.mark.expression import ParseError
 import pytest
 
 
@@ -84,7 +83,7 @@ def test_backslash_not_treated_specially() -> None:
 
     assert evaluate(r"\nfoo\n", matcher)
     assert not evaluate(r"foo", matcher)
-    with pytest.raises(ParseError):
+    with pytest.raises(SyntaxError):
         evaluate("\nfoo\n", matcher)
 
 
@@ -137,10 +136,10 @@ def test_backslash_not_treated_specially() -> None:
     ),
 )
 def test_syntax_errors(expr: str, column: int, message: str) -> None:
-    with pytest.raises(ParseError) as excinfo:
+    with pytest.raises(SyntaxError) as excinfo:
         evaluate(expr, lambda ident, /, **kwargs: True)
-    assert excinfo.value.column == column
-    assert excinfo.value.message == message
+    assert excinfo.value.offset == column
+    assert excinfo.value.msg == message
 
 
 @pytest.mark.parametrize(
@@ -204,7 +203,7 @@ def test_valid_idents(ident: str) -> None:
     ),
 )
 def test_invalid_idents(ident: str) -> None:
-    with pytest.raises(ParseError):
+    with pytest.raises(SyntaxError):
         evaluate(ident, lambda ident, /, **kwargs: True)
 
 
@@ -241,7 +240,7 @@ def test_invalid_idents(ident: str) -> None:
 def test_invalid_kwarg_name_or_value(
     expr: str, expected_error_msg: str, mark_matcher: MarkMatcher
 ) -> None:
-    with pytest.raises(ParseError, match=expected_error_msg):
+    with pytest.raises(SyntaxError, match=expected_error_msg):
         assert evaluate(expr, mark_matcher)
 
 

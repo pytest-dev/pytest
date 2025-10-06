@@ -41,8 +41,11 @@ from typing import Protocol
 
 __all__ = [
     "Expression",
-    "ParseError",
+    "ExpressionMatcher",
 ]
+
+
+FILE_NAME: Final = "<pytest match expression>"
 
 
 class TokenType(enum.Enum):
@@ -66,25 +69,11 @@ class Token:
     pos: int
 
 
-class ParseError(Exception):
-    """The :class:`Expression` contains invalid syntax.
-
-    :param column: The column in the line where the error occurred (1-based).
-    :param message: A description of the error.
-    """
-
-    def __init__(self, column: int, message: str) -> None:
-        self.column = column
-        self.message = message
-
-    def __str__(self) -> str:
-        return f"at column {self.column}: {self.message}"
-
-
 class Scanner:
-    __slots__ = ("current", "tokens")
+    __slots__ = ("current", "input", "tokens")
 
     def __init__(self, input: str) -> None:
+        self.input = input
         self.tokens = self.lex(input)
         self.current = next(self.tokens)
 
@@ -108,15 +97,15 @@ class Scanner:
             elif (quote_char := input[pos]) in ("'", '"'):
                 end_quote_pos = input.find(quote_char, pos + 1)
                 if end_quote_pos == -1:
-                    raise ParseError(
-                        pos + 1,
+                    raise SyntaxError(
                         f'closing quote "{quote_char}" is missing',
+                        (FILE_NAME, 1, pos + 1, input),
                     )
                 value = input[pos : end_quote_pos + 1]
                 if (backslash_pos := input.find("\\")) != -1:
-                    raise ParseError(
-                        backslash_pos + 1,
+                    raise SyntaxError(
                         r'escaping with "\" not supported in marker expression',
+                        (FILE_NAME, 1, backslash_pos + 1, input),
                     )
                 yield Token(TokenType.STRING, value, pos)
                 pos += len(value)
@@ -134,9 +123,9 @@ class Scanner:
                         yield Token(TokenType.IDENT, value, pos)
                     pos += len(value)
                 else:
-                    raise ParseError(
-                        pos + 1,
+                    raise SyntaxError(
                         f'unexpected character "{input[pos]}"',
+                        (FILE_NAME, 1, pos + 1, input),
                     )
         yield Token(TokenType.EOF, "", pos)
 
@@ -159,12 +148,12 @@ class Scanner:
         return None
 
     def reject(self, expected: Sequence[TokenType]) -> NoReturn:
-        raise ParseError(
-            self.current.pos + 1,
+        raise SyntaxError(
             "expected {}; got {}".format(
                 " OR ".join(type.value for type in expected),
                 self.current.type.value,
             ),
+            (FILE_NAME, 1, self.current.pos + 1, self.input),
         )
 
 
@@ -225,14 +214,14 @@ BUILTIN_MATCHERS = {"True": True, "False": False, "None": None}
 def single_kwarg(s: Scanner) -> ast.keyword:
     keyword_name = s.accept(TokenType.IDENT, reject=True)
     if not keyword_name.value.isidentifier():
-        raise ParseError(
-            keyword_name.pos + 1,
+        raise SyntaxError(
             f"not a valid python identifier {keyword_name.value}",
+            (FILE_NAME, 1, keyword_name.pos + 1, s.input),
         )
     if keyword.iskeyword(keyword_name.value):
-        raise ParseError(
-            keyword_name.pos + 1,
+        raise SyntaxError(
             f"unexpected reserved python keyword `{keyword_name.value}`",
+            (FILE_NAME, 1, keyword_name.pos + 1, s.input),
         )
     s.accept(TokenType.EQUAL, reject=True)
 
@@ -247,9 +236,9 @@ def single_kwarg(s: Scanner) -> ast.keyword:
         elif value_token.value in BUILTIN_MATCHERS:
             value = BUILTIN_MATCHERS[value_token.value]
         else:
-            raise ParseError(
-                value_token.pos + 1,
+            raise SyntaxError(
                 f'unexpected character/s "{value_token.value}"',
+                (FILE_NAME, 1, value_token.pos + 1, s.input),
             )
 
     ret = ast.keyword(keyword_name.value, ast.Constant(value))
@@ -338,7 +327,7 @@ class Expression:
 
         :param input: The input expression - one line.
 
-        :raises ParseError: If the expression is malformed.
+        :raises SyntaxError: If the expression is malformed.
         """
         astexpr = expression(Scanner(input))
         code = compile(
