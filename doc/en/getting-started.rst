@@ -202,23 +202,21 @@ Note that attributes added at class level are *class attributes*, so they will b
 Compare floating-point values with pytest.approx
 --------------------------------------------------------------
 
-.. note::
+``pytest`` also provides a number of utilities to make writing tests easier.
+For example, you can use :func:`pytest.approx` to compare floating-point
+values that may have small rounding errors:
 
-    ``pytest`` also provides a number of utilities to make writing tests easier.
-    For example, you can use :func:`pytest.approx` to compare floating-point
-    values that may have small rounding errors:
+.. code-block:: python
 
-    .. code-block:: python
-
-        # content of test_approx.py
-        import pytest
+    # content of test_approx.py
+    import pytest
 
 
-        def test_sum():
-            assert (0.1 + 0.2) == pytest.approx(0.3)
+    def test_sum():
+        assert (0.1 + 0.2) == pytest.approx(0.3)
 
-    This avoids the need for manual tolerance checks or using
-    ``math.isclose`` and works with scalars, lists, and NumPy arrays.
+This avoids the need for manual tolerance checks or using
+``math.isclose`` and works with scalars, lists, and NumPy arrays.
 
 
 Request a unique temporary directory for functional tests
