@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import cast
-
 from _pytest.mark import MarkMatcher
 from _pytest.mark.expression import Expression
 from _pytest.mark.expression import MatcherCall
@@ -10,15 +7,15 @@ from _pytest.mark.expression import ParseError
 import pytest
 
 
-def evaluate(input: str, matcher: Callable[[str], bool]) -> bool:
-    return Expression.compile(input).evaluate(cast(MatcherCall, matcher))
+def evaluate(input: str, matcher: MatcherCall) -> bool:
+    return Expression.compile(input).evaluate(matcher)
 
 
 def test_empty_is_false() -> None:
-    assert not evaluate("", lambda ident: False)
-    assert not evaluate("", lambda ident: True)
-    assert not evaluate("   ", lambda ident: False)
-    assert not evaluate("\t", lambda ident: False)
+    assert not evaluate("", lambda ident, /, **kwargs: False)
+    assert not evaluate("", lambda ident, /, **kwargs: True)
+    assert not evaluate("   ", lambda ident, /, **kwargs: False)
+    assert not evaluate("\t", lambda ident, /, **kwargs: False)
 
 
 @pytest.mark.parametrize(
@@ -51,7 +48,9 @@ def test_empty_is_false() -> None:
     ),
 )
 def test_basic(expr: str, expected: bool) -> None:
-    matcher = {"true": True, "false": False}.__getitem__
+    def matcher(name: str, /, **kwargs: str | int | bool | None) -> bool:
+        return {"true": True, "false": False}[name]
+
     assert evaluate(expr, matcher) is expected
 
 
@@ -67,7 +66,9 @@ def test_basic(expr: str, expected: bool) -> None:
     ),
 )
 def test_syntax_oddities(expr: str, expected: bool) -> None:
-    matcher = {"true": True, "false": False}.__getitem__
+    def matcher(name: str, /, **kwargs: str | int | bool | None) -> bool:
+        return {"true": True, "false": False}[name]
+
     assert evaluate(expr, matcher) is expected
 
 
@@ -77,7 +78,9 @@ def test_backslash_not_treated_specially() -> None:
     user will never need to insert a literal newline, only \n (two chars). So
     mark expressions themselves do not support escaping, instead they treat
     backslashes as regular identifier characters."""
-    matcher = {r"\nfoo\n"}.__contains__
+
+    def matcher(name: str, /, **kwargs: str | int | bool | None) -> bool:
+        return {r"\nfoo\n"}.__contains__(name)
 
     assert evaluate(r"\nfoo\n", matcher)
     assert not evaluate(r"foo", matcher)
@@ -135,7 +138,7 @@ def test_backslash_not_treated_specially() -> None:
 )
 def test_syntax_errors(expr: str, column: int, message: str) -> None:
     with pytest.raises(ParseError) as excinfo:
-        evaluate(expr, lambda ident: True)
+        evaluate(expr, lambda ident, /, **kwargs: True)
     assert excinfo.value.column == column
     assert excinfo.value.message == message
 
@@ -172,7 +175,10 @@ def test_syntax_errors(expr: str, column: int, message: str) -> None:
     ),
 )
 def test_valid_idents(ident: str) -> None:
-    assert evaluate(ident, {ident: True}.__getitem__)
+    def matcher(name: str, /, **kwargs: str | int | bool | None) -> bool:
+        return name == ident
+
+    assert evaluate(ident, matcher)
 
 
 @pytest.mark.parametrize(
@@ -199,7 +205,7 @@ def test_valid_idents(ident: str) -> None:
 )
 def test_invalid_idents(ident: str) -> None:
     with pytest.raises(ParseError):
-        evaluate(ident, lambda ident: True)
+        evaluate(ident, lambda ident, /, **kwargs: True)
 
 
 @pytest.mark.parametrize(
