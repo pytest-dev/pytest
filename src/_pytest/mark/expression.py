@@ -16,8 +16,8 @@ The semantics are:
 
 - Empty expression evaluates to False.
 - ident evaluates to True or False according to a provided matcher function.
-- or/and/not evaluate according to the usual boolean semantics.
 - ident with parentheses and keyword arguments evaluates to True or False according to a provided matcher function.
+- or/and/not evaluate according to the usual boolean semantics.
 """
 
 from __future__ import annotations
@@ -31,6 +31,8 @@ import enum
 import keyword
 import re
 import types
+from typing import Final
+from typing import final
 from typing import Literal
 from typing import NoReturn
 from typing import overload
@@ -65,7 +67,7 @@ class Token:
 
 
 class ParseError(Exception):
-    """The expression contains invalid syntax.
+    """The :class:`Expression` contains invalid syntax.
 
     :param column: The column in the line where the error occurred (1-based).
     :param message: A description of the error.
@@ -261,13 +263,36 @@ def all_kwargs(s: Scanner) -> list[ast.keyword]:
     return ret
 
 
-class MatcherCall(Protocol):
+class ExpressionMatcher(Protocol):
+    """A callable which, given an identifier and optional kwargs, should return
+    whether it matches in an :class:`Expression` evaluation.
+
+    Should be prepared to handle arbitrary strings as input.
+
+    If no kwargs are provided, the expression of the form `foo`.
+    If kwargs are provided, the expression is of the form `foo(1, b=True, "s")`.
+
+    If the expression is not supported (e.g. don't want to accept the kwargs
+    syntax variant), should raise :class:`~pytest.UsageError`.
+
+    Example::
+
+        def matcher(name: str, /, **kwargs: str | int | bool | None) -> bool:
+            # Match `cat`.
+            if name == "cat" and not kwargs:
+                return True
+            # Match `dog(barks=True)`.
+            if name == "dog" and kwargs == {"barks": False}:
+                return True
+            return False
+    """
+
     def __call__(self, name: str, /, **kwargs: str | int | bool | None) -> bool: ...
 
 
 @dataclasses.dataclass
 class MatcherNameAdapter:
-    matcher: MatcherCall
+    matcher: ExpressionMatcher
     name: str
 
     def __bool__(self) -> bool:
@@ -280,7 +305,7 @@ class MatcherNameAdapter:
 class MatcherAdapter(Mapping[str, MatcherNameAdapter]):
     """Adapts a matcher function to a locals mapping as required by eval()."""
 
-    def __init__(self, matcher: MatcherCall) -> None:
+    def __init__(self, matcher: ExpressionMatcher) -> None:
         self.matcher = matcher
 
     def __getitem__(self, key: str) -> MatcherNameAdapter:
@@ -293,39 +318,47 @@ class MatcherAdapter(Mapping[str, MatcherNameAdapter]):
         raise NotImplementedError()
 
 
+@final
 class Expression:
     """A compiled match expression as used by -k and -m.
 
     The expression can be evaluated against different matchers.
     """
 
-    __slots__ = ("code",)
+    __slots__ = ("_code", "input")
 
-    def __init__(self, code: types.CodeType) -> None:
-        self.code = code
+    def __init__(self, input: str, code: types.CodeType) -> None:
+        #: The original input line, as a string.
+        self.input: Final = input
+        self._code: Final = code
 
     @classmethod
     def compile(cls, input: str) -> Expression:
         """Compile a match expression.
 
         :param input: The input expression - one line.
+
+        :raises ParseError: If the expression is malformed.
         """
         astexpr = expression(Scanner(input))
-        code: types.CodeType = compile(
+        code = compile(
             astexpr,
             filename="<pytest match expression>",
             mode="eval",
         )
-        return Expression(code)
+        return Expression(input, code)
 
-    def evaluate(self, matcher: MatcherCall) -> bool:
+    def evaluate(self, matcher: ExpressionMatcher) -> bool:
         """Evaluate the match expression.
 
         :param matcher:
-            Given an identifier, should return whether it matches or not.
-            Should be prepared to handle arbitrary strings as input.
+            A callback which determines whether an identifier matches or not.
+            See the :class:`ExpressionMatcher` protocol for details and example.
 
         :returns: Whether the expression matches or not.
+
+        :raises UsageError:
+            If the matcher doesn't support the expression. Cannot happen if the
+            matcher supports all expressions.
         """
-        ret: bool = bool(eval(self.code, {"__builtins__": {}}, MatcherAdapter(matcher)))
-        return ret
+        return bool(eval(self._code, {"__builtins__": {}}, MatcherAdapter(matcher)))

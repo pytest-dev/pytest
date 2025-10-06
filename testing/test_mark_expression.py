@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from _pytest.mark import MarkMatcher
 from _pytest.mark.expression import Expression
-from _pytest.mark.expression import MatcherCall
+from _pytest.mark.expression import ExpressionMatcher
 from _pytest.mark.expression import ParseError
 import pytest
 
 
-def evaluate(input: str, matcher: MatcherCall) -> bool:
+def evaluate(input: str, matcher: ExpressionMatcher) -> bool:
     return Expression.compile(input).evaluate(matcher)
 
 
@@ -211,6 +211,7 @@ def test_invalid_idents(ident: str) -> None:
 @pytest.mark.parametrize(
     "expr, expected_error_msg",
     (
+        ("mark()", "expected identifier; got right parenthesis"),
         ("mark(True=False)", "unexpected reserved python keyword `True`"),
         ("mark(def=False)", "unexpected reserved python keyword `def`"),
         ("mark(class=False)", "unexpected reserved python keyword `class`"),
