@@ -5198,3 +5198,110 @@ def test_fixture_closure_with_broken_override_chain(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
+
+
+def test_fixture_closure_handles_circular_dependencies(pytester: Pytester) -> None:
+    """Test that getfixtureclosure properly handles circular dependencies.
+
+    The test will error in the runtest phase due to the fixture loop,
+    but the closure computation still completes.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Direct circular dependency.
+        @pytest.fixture
+        def fix_a(fix_b): pass
+
+        @pytest.fixture
+        def fix_b(fix_a): pass
+
+        # Indirect circular dependency through multiple fixtures.
+        @pytest.fixture
+        def fix_x(fix_y): pass
+
+        @pytest.fixture
+        def fix_y(fix_z): pass
+
+        @pytest.fixture
+        def fix_z(fix_x): pass
+
+        def test_circular_deps(fix_a, fix_x):
+            pass
+        """
+    )
+    items, _hookrec = pytester.inline_genitems()
+    assert isinstance(items[0], Function)
+    assert items[0].fixturenames == ["fix_a", "fix_x", "fix_b", "fix_y", "fix_z"]
+
+
+def test_fixture_closure_handles_diamond_dependencies(pytester: Pytester) -> None:
+    """Test that getfixtureclosure properly handles diamond dependencies."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def user(db): pass
+
+        @pytest.fixture
+        def session(db): pass
+
+        @pytest.fixture
+        def app(user, session): pass
+
+        def test_diamond_deps(request, app):
+            assert request.node.fixturenames == ["request", "app", "user", "session", "db"]
+            assert request.fixturenames == ["request", "app", "user", "session", "db"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.xfail(reason="not currently handled correctly")
+def test_fixture_closure_with_complex_override_and_shared_deps(
+    pytester: Pytester,
+) -> None:
+    """Test that shared dependencies in override chains are processed only once."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def cache(): pass
+
+        @pytest.fixture
+        def settings(): pass
+
+        @pytest.fixture
+        def app(db, cache, settings): pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Override app, but also directly use cache and settings.
+        # This creates multiple paths to the same fixtures.
+        @pytest.fixture
+        def app(app, cache, settings): pass
+
+        class TestClass:
+            # Another override that uses both app and cache.
+            @pytest.fixture
+            def app(self, app, cache): pass
+
+            def test_shared_deps(self, request, app):
+                assert request.node.fixturenames == ["request", "app", "db", "cache", "settings"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
