@@ -1634,29 +1634,44 @@ class FixtureManager:
         fixturenames_closure = list(initialnames)
 
         arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]] = {}
-        lastlen = -1
-        while lastlen != len(fixturenames_closure):
-            lastlen = len(fixturenames_closure)
-            for argname in fixturenames_closure:
-                if argname in ignore_args:
-                    continue
-                if argname in arg2fixturedefs:
-                    continue
-                fixturedefs = self.getfixturedefs(argname, parentnode)
-                if fixturedefs:
-                    arg2fixturedefs[argname] = fixturedefs
 
-                    # Add dependencies from this fixture.
-                    # If it overrides a fixture with the same name and requests
-                    # it, also add dependencies from the overridden fixtures in
-                    # the chain. See also similar dealing in _get_active_fixturedef().
-                    for fixturedef in reversed(fixturedefs):  # pragma: no cover
-                        for arg in fixturedef.argnames:
-                            if arg not in fixturenames_closure:
-                                fixturenames_closure.append(arg)
-                        if argname not in fixturedef.argnames:
-                            # Overrides, but doesn't request super.
-                            break
+        # Track the index for each fixture name in the simulated stack.
+        # Needed for handling override chains correctly, similar to _get_active_fixturedef.
+        # Using negative indices: -1 is the most specific (last), -2 is second to last, etc.
+        current_indices: dict[str, int] = {}
+
+        def process_argname(argname: str) -> None:
+            # Optimization: already processed this argname.
+            if current_indices.get(argname) == -1:
+                return
+
+            if argname not in fixturenames_closure:
+                fixturenames_closure.append(argname)
+
+            if argname in ignore_args:
+                return
+
+            fixturedefs = arg2fixturedefs.get(argname)
+            if not fixturedefs:
+                fixturedefs = self.getfixturedefs(argname, parentnode)
+                if not fixturedefs:
+                    # Fixture not defined or not visible (will error during runtest).
+                    return
+                arg2fixturedefs[argname] = fixturedefs
+
+            index = current_indices.get(argname, -1)
+            if -index > len(fixturedefs):
+                # Exhausted the override chain (will error during runtest).
+                return
+            fixturedef = fixturedefs[index]
+
+            current_indices[argname] = index - 1
+            for dep in fixturedef.argnames:
+                process_argname(dep)
+            current_indices[argname] = index
+
+        for name in initialnames:
+            process_argname(name)
 
         def sort_by_scope(arg_name: str) -> Scope:
             try:

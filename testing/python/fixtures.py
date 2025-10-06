@@ -5110,7 +5110,6 @@ def test_fixture_closure_with_overrides(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(reason="not currently handled correctly")
 def test_fixture_closure_with_overrides_and_intermediary(pytester: Pytester) -> None:
     """Test that an item's static fixture closure properly includes transitive
     dependencies through overridden fixtures (#13773).
@@ -5255,15 +5254,14 @@ def test_fixture_closure_handles_diamond_dependencies(pytester: Pytester) -> Non
         def app(user, session): pass
 
         def test_diamond_deps(request, app):
-            assert request.node.fixturenames == ["request", "app", "user", "session", "db"]
-            assert request.fixturenames == ["request", "app", "user", "session", "db"]
+            assert request.node.fixturenames == ["request", "app", "user", "db", "session"]
+            assert request.fixturenames == ["request", "app", "user", "db", "session"]
         """
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(reason="not currently handled correctly")
 def test_fixture_closure_with_complex_override_and_shared_deps(
     pytester: Pytester,
 ) -> None:
@@ -5301,6 +5299,32 @@ def test_fixture_closure_with_complex_override_and_shared_deps(
 
             def test_shared_deps(self, request, app):
                 assert request.node.fixturenames == ["request", "app", "db", "cache", "settings"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_closure_with_parametrize_ignore(pytester: Pytester) -> None:
+    """Test that getfixtureclosure properly handles parametrization argnames
+    which override a fixture."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def fix1(fix2): pass
+
+        @pytest.fixture
+        def fix2(fix3): pass
+
+        @pytest.fixture
+        def fix3(): pass
+
+        @pytest.mark.parametrize('fix2', ['2'])
+        def test_it(request, fix1):
+            assert request.node.fixturenames == ["request", "fix1", "fix2"]
+            assert request.fixturenames == ["request", "fix1", "fix2"]
         """
     )
     result = pytester.runpytest("-v")
