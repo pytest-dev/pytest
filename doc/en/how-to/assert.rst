@@ -91,8 +91,7 @@ errors are common. Instead of using ``assert abs(a - b) < tol`` or
 ``pytest.approx`` works with scalars, lists, dictionaries, and NumPy arrays.
 It also supports comparisons involving NaNs.
 
-See :ref:`approx` for details.
-
+See :func:`pytest.approx` for details.
 
 Assertions about expected exceptions
 ------------------------------------------
