@@ -1,0 +1,3 @@
+Having both ``pytest.ini`` and ``pyproject.toml`` will now print a warning to make it clearer to the user that the former takes precedence over the latter.
+
+-- by :user:`sgaist`

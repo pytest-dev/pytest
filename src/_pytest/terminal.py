@@ -879,7 +879,14 @@ class TerminalReporter:
         result = [f"rootdir: {config.rootpath}"]
 
         if config.inipath:
-            result.append("configfile: " + bestrelpath(config.rootpath, config.inipath))
+            warning = ""
+            if config.inipath.name in ["pytest.ini", ".pytest.ini"]:
+                pyproject = config.rootpath / "pyproject.toml"
+                if pyproject.exists():
+                    warning = " (WARNING: ignoring pytest config in pyproject.toml!)"
+            result.append(
+                "configfile: " + bestrelpath(config.rootpath, config.inipath) + warning
+            )
 
         if config.args_source == Config.ArgsSource.TESTPATHS:
             testpaths: list[str] = config.getini("testpaths")
