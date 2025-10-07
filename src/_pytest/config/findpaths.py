@@ -117,7 +117,7 @@ def locate_config(
                     ini_config = load_config_dict_from_file(p)
                     if ini_config is not None:
                         should_warn = False
-                        if p.name in ["pytest.ini", ".pytest.ini"]:
+                        if ".ini" in p.suffixes:
                             pyproject = base / "pyproject.toml"
                             if pyproject.is_file():
                                 should_warn = (
