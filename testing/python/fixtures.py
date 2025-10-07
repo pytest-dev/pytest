@@ -5071,6 +5071,42 @@ def test_collect_positional_only(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_parametrization_dependency_pruning(pytester: Pytester) -> None:
+    """Test that when a fixture is dynamically shadowed by parameterization, it
+    is properly pruned and not executed."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+
+        # This fixture should never run because shadowed_fixture is parametrized.
+        @pytest.fixture
+        def boom():
+            raise RuntimeError("BOOM!")
+
+
+        # This fixture is shadowed by metafunc.parametrize in pytest_generate_tests.
+        @pytest.fixture
+        def shadowed_fixture(boom):
+            return "fixture_value"
+
+
+        # Dynamically parametrize shadowed_fixture, replacing the fixture with direct values.
+        def pytest_generate_tests(metafunc):
+            if "shadowed_fixture" in metafunc.fixturenames:
+                metafunc.parametrize("shadowed_fixture", ["param1", "param2"])
+
+
+        # This test should receive shadowed_fixture as a parametrized value, and
+        # boom should not explode.
+        def test_shadowed(shadowed_fixture):
+            assert shadowed_fixture in ["param1", "param2"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_fixture_closure_with_overrides(pytester: Pytester) -> None:
     """Test that an item's static fixture closure properly includes transitive
     dependencies through overridden fixtures (#13773)."""
