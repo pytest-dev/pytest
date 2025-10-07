@@ -91,7 +91,7 @@ def load_config_dict_from_file(
 def locate_config(
     invocation_dir: Path,
     args: Iterable[Path],
-) -> tuple[Path | None, Path | None, ConfigDict]:
+) -> tuple[Path | None, Path | None, ConfigDict, bool]:
     """Search in the list of arguments for a valid ini-file for pytest,
     and return a tuple of (rootdir, inifile, cfg-dict)."""
     config_names = [
@@ -105,6 +105,7 @@ def locate_config(
     if not args:
         args = [invocation_dir]
     found_pyproject_toml: Path | None = None
+
     for arg in args:
         argpath = absolutepath(arg)
         for base in (argpath, *argpath.parents):
@@ -115,10 +116,17 @@ def locate_config(
                         found_pyproject_toml = p
                     ini_config = load_config_dict_from_file(p)
                     if ini_config is not None:
-                        return base, p, ini_config
+                        should_warn = False
+                        if p.name in ["pytest.ini", ".pytest.ini"]:
+                            pyproject = base / "pyproject.toml"
+                            if pyproject.is_file():
+                                should_warn = (
+                                    load_config_dict_from_file(pyproject) is not None
+                                )
+                        return base, p, ini_config, should_warn
     if found_pyproject_toml is not None:
-        return found_pyproject_toml.parent, found_pyproject_toml, {}
-    return None, None, {}
+        return found_pyproject_toml.parent, found_pyproject_toml, {}, False
+    return None, None, {}, False
 
 
 def get_common_ancestor(
@@ -178,7 +186,7 @@ def determine_setup(
     args: Sequence[str],
     rootdir_cmd_arg: str | None,
     invocation_dir: Path,
-) -> tuple[Path, Path | None, ConfigDict]:
+) -> tuple[Path, Path | None, ConfigDict, bool]:
     """Determine the rootdir, inifile and ini configuration values from the
     command line arguments.
 
@@ -193,6 +201,7 @@ def determine_setup(
     """
     rootdir = None
     dirs = get_dirs_from_args(args)
+    should_warn = False
     if inifile:
         inipath_ = absolutepath(inifile)
         inipath: Path | None = inipath_
@@ -201,7 +210,9 @@ def determine_setup(
             rootdir = inipath_.parent
     else:
         ancestor = get_common_ancestor(invocation_dir, dirs)
-        rootdir, inipath, inicfg = locate_config(invocation_dir, [ancestor])
+        rootdir, inipath, inicfg, should_warn = locate_config(
+            invocation_dir, [ancestor]
+        )
         if rootdir is None and rootdir_cmd_arg is None:
             for possible_rootdir in (ancestor, *ancestor.parents):
                 if (possible_rootdir / "setup.py").is_file():
@@ -209,7 +220,7 @@ def determine_setup(
                     break
             else:
                 if dirs != [ancestor]:
-                    rootdir, inipath, inicfg = locate_config(invocation_dir, dirs)
+                    rootdir, inipath, inicfg, _ = locate_config(invocation_dir, dirs)
                 if rootdir is None:
                     rootdir = get_common_ancestor(
                         invocation_dir, [invocation_dir, ancestor]
@@ -223,7 +234,7 @@ def determine_setup(
                 f"Directory '{rootdir}' not found. Check your '--rootdir' option."
             )
     assert rootdir is not None
-    return rootdir, inipath, inicfg or {}
+    return rootdir, inipath, inicfg or {}, should_warn
 
 
 def is_fs_root(p: Path) -> bool:

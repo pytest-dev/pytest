@@ -1107,6 +1107,14 @@ class Config:
         """
         return self._inipath
 
+    @property
+    def should_warn(self) -> bool:
+        """Whether a warning should be emitted for the configuration.
+
+        .. versionadded:: 8.6
+        """
+        return self._should_warn
+
     def add_cleanup(self, func: Callable[[], None]) -> None:
         """Add a function to be called when the config object gets out of
         use (usually coinciding with pytest_unconfigure).
@@ -1242,7 +1250,7 @@ class Config:
         ns, unknown_args = self._parser.parse_known_and_unknown_args(
             args, namespace=copy.copy(self.option)
         )
-        rootpath, inipath, inicfg = determine_setup(
+        rootpath, inipath, inicfg, should_warn = determine_setup(
             inifile=ns.inifilename,
             args=ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
@@ -1250,6 +1258,7 @@ class Config:
         )
         self._rootpath = rootpath
         self._inipath = inipath
+        self._should_warn = should_warn
         self.inicfg = inicfg
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)

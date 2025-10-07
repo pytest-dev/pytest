@@ -880,10 +880,8 @@ class TerminalReporter:
 
         if config.inipath:
             warning = ""
-            if config.inipath.name in ["pytest.ini", ".pytest.ini"]:
-                pyproject = config.rootpath / "pyproject.toml"
-                if pyproject.exists():
-                    warning = " (WARNING: ignoring pytest config in pyproject.toml!)"
+            if config.should_warn:
+                warning = " (WARNING: ignoring pytest config in pyproject.toml!)"
             result.append(
                 "configfile: " + bestrelpath(config.rootpath, config.inipath) + warning
             )

@@ -2914,6 +2914,27 @@ def test_warning_when_init_trumps_pyproject_toml(
     )
 
 
+def test_no_warning_when_init_but_pyproject_toml_has_no_entry(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini",
+        ]
+    )
+
+
 def test_no_warning_on_terminal_with_a_single_config_file(
     pytester: Pytester, monkeypatch: MonkeyPatch
 ) -> None:
