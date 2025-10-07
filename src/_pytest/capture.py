@@ -1049,14 +1049,20 @@ def capteesys(request: SubRequest) -> Generator[CaptureFixture[str]]:
             assert captured.out == "hello\n"
     """
     capman: CaptureManager = request.config.pluginmanager.getplugin("capturemanager")
-    capture_fixture = CaptureFixture(
-        SysCapture, request, config=dict(tee=True), _ispytest=True
-    )
-    capman.set_fixture(capture_fixture)
-    capture_fixture._start()
-    yield capture_fixture
-    capture_fixture.close()
-    capman.unset_fixture()
+    if capman.is_globally_capturing():
+        capture_fixture = CaptureFixture(
+            SysCapture, request, config=dict(tee=True), _ispytest=True
+        )
+        capman.set_fixture(capture_fixture)
+        capture_fixture._start()
+        yield capture_fixture
+        capture_fixture.close()
+        capman.unset_fixture()
+    else:
+        # capteesys does nothing when global capturing is disabled.
+        # This is so that the "tee" part of cap-tee-sys is not
+        # implemented without the "cap" part.
+        yield CaptureFixture(SysCapture, request, _ispytest=True)
 
 
 @fixture
