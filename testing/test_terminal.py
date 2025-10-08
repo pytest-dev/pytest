@@ -2914,6 +2914,38 @@ def test_warning_when_init_trumps_pyproject_toml(
     )
 
 
+def test_warning_when_init_trumps_multiple_files(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    pytester.makeini(
+        """
+        # tox.ini
+        [pytest]
+        minversion = 6.0
+        addopts = -ra -q
+        testpaths =
+            tests
+            integration
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml, tox.ini!)",
+        ]
+    )
+
+
 def test_no_warning_when_init_but_pyproject_toml_has_no_entry(
     pytester: Pytester, monkeypatch: MonkeyPatch
 ) -> None:
