@@ -337,33 +337,6 @@ class FuncFixtureInfo:
     # sequence is ordered from furthest to closes to the function.
     name2fixturedefs: dict[str, Sequence[FixtureDef[Any]]]
 
-    def prune_dependency_tree(self) -> None:
-        """Recompute names_closure from initialnames and name2fixturedefs.
-
-        Can only reduce names_closure, which means that the new closure will
-        always be a subset of the old one. The order is preserved.
-
-        This method is needed because direct parametrization may shadow some
-        of the fixtures that were included in the originally built dependency
-        tree. In this way the dependency tree can get pruned, and the closure
-        of argnames may get reduced.
-        """
-        closure: set[str] = set()
-        working_set = set(self.initialnames)
-        while working_set:
-            argname = working_set.pop()
-            # Argname may be something not included in the original names_closure,
-            # in which case we ignore it. This currently happens with pseudo
-            # FixtureDefs which wrap 'get_direct_param_fixture_func(request)'.
-            # So they introduce the new dependency 'request' which might have
-            # been missing in the original tree (closure).
-            if argname not in closure and argname in self.names_closure:
-                closure.add(argname)
-                if argname in self.name2fixturedefs:
-                    working_set.update(self.name2fixturedefs[argname][-1].argnames)
-
-        self.names_closure[:] = sorted(closure, key=self.names_closure.index)
-
 
 class FixtureRequest(abc.ABC):
     """The type of the ``request`` fixture.
@@ -968,7 +941,6 @@ def _eval_scope_callable(
     return result
 
 
-@final
 class FixtureDef(Generic[FixtureValue]):
     """A container for a fixture definition.
 
@@ -1134,6 +1106,26 @@ class FixtureDef(Generic[FixtureValue]):
 
     def __repr__(self) -> str:
         return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
+
+
+class IdentityFixtureDef(FixtureDef[FixtureValue]):
+    def __init__(
+        self,
+        config: Config,
+        argname: str,
+        scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] | None,
+        *,
+        _ispytest: bool = False,
+    ):
+        super().__init__(
+            config,
+            "",
+            argname,
+            lambda request: request.param,
+            scope,
+            None,
+            _ispytest=_ispytest,
+        )
 
 
 def resolve_fixture_function(
@@ -1567,10 +1559,11 @@ class FixtureManager:
         initialnames = deduplicate_names(autousenames, usefixturesnames, argnames)
 
         direct_parametrize_args = _get_direct_parametrize_args(node)
-
-        names_closure, arg2fixturedefs = self.getfixtureclosure(
+        arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]] = {}
+        names_closure = self.getfixtureclosure(
             parentnode=node,
             initialnames=initialnames,
+            arg2fixturedefs=arg2fixturedefs,
             ignore_args=direct_parametrize_args,
         )
 
@@ -1622,30 +1615,32 @@ class FixtureManager:
         self,
         parentnode: nodes.Node,
         initialnames: tuple[str, ...],
+        arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]],
         ignore_args: AbstractSet[str],
-    ) -> tuple[list[str], dict[str, Sequence[FixtureDef[Any]]]]:
+    ) -> list[str]:
         # Collect the closure of all fixtures, starting with the given
-        # fixturenames as the initial set.  As we have to visit all
-        # factory definitions anyway, we also return an arg2fixturedefs
-        # mapping so that the caller can reuse it and does not have
-        # to re-discover fixturedefs again for each fixturename
+        # initialnames containing function arguments, `usefixture` markers
+        # and `autouse` fixtures as the initial set.  As we have to visit all
+        # factory definitions anyway, we also populate arg2fixturedefs mapping
+        # for the args missing therein so that the caller can reuse it and does
+        # not have to re-discover fixturedefs again for each fixturename
         # (discovering matching fixtures for a given name/node is expensive).
 
         fixturenames_closure = list(initialnames)
 
-        arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]] = {}
         lastlen = -1
         while lastlen != len(fixturenames_closure):
             lastlen = len(fixturenames_closure)
             for argname in fixturenames_closure:
                 if argname in ignore_args:
                     continue
-                if argname in arg2fixturedefs:
-                    continue
-                fixturedefs = self.getfixturedefs(argname, parentnode)
-                if fixturedefs:
-                    arg2fixturedefs[argname] = fixturedefs
-
+                if argname not in arg2fixturedefs:
+                    fixturedefs = self.getfixturedefs(argname, parentnode)
+                    if fixturedefs:
+                        arg2fixturedefs[argname] = fixturedefs
+                else:
+                    fixturedefs = arg2fixturedefs[argname]
+                if fixturedefs and not isinstance(fixturedefs[-1], IdentityFixtureDef):
                     # Add dependencies from this fixture.
                     # If it overrides a fixture with the same name and requests
                     # it, also add dependencies from the overridden fixtures in
@@ -1667,7 +1662,7 @@ class FixtureManager:
                 return fixturedefs[-1]._scope
 
         fixturenames_closure.sort(key=sort_by_scope, reverse=True)
-        return fixturenames_closure, arg2fixturedefs
+        return fixturenames_closure
 
     def pytest_generate_tests(self, metafunc: Metafunc) -> None:
         """Generate new tests based on parametrized fixtures used by the given metafunc"""

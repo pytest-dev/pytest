@@ -51,10 +51,10 @@ from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.fixtures import FixtureDef
-from _pytest.fixtures import FixtureRequest
+from _pytest.fixtures import _get_direct_parametrize_args
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
+from _pytest.fixtures import IdentityFixtureDef
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import _HiddenParam
@@ -448,8 +448,6 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
         fixtureinfo = definition._fixtureinfo
 
-        # pytest_generate_tests impls call metafunc.parametrize() which fills
-        # metafunc._calls, the outcome of the hook.
         metafunc = Metafunc(
             definition=definition,
             fixtureinfo=fixtureinfo,
@@ -458,24 +456,34 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
             module=module,
             _ispytest=True,
         )
-        methods = []
+
+        def prune_dependency_tree_if_test_is_directly_parametrized(
+            metafunc: Metafunc,
+        ) -> None:
+            # Direct (those with `indirect=False`) parametrizations taking place in
+            # module/class-specific `pytest_generate_tests` hooks, a.k.a dynamic direct
+            # parametrizations using `metafunc.parametrize`, may have shadowed some
+            # fixtures, making some fixtures no longer reachable. Update the dependency
+            # tree to reflect what the item really needs.
+            # Note that direct parametrizations using `@pytest.mark.parametrize` have
+            # already been considered into making the closure using the `ignore_args`
+            # arg to `getfixtureclosure`.
+            if metafunc._has_direct_parametrization:
+                metafunc._update_dependency_tree()
+
+        methods = [prune_dependency_tree_if_test_is_directly_parametrized]
         if hasattr(module, "pytest_generate_tests"):
             methods.append(module.pytest_generate_tests)
         if cls is not None and hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
+
+        # pytest_generate_tests impls call metafunc.parametrize() which fills
+        # metafunc._calls, the outcome of the hook.
         self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
 
         if not metafunc._calls:
             yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
         else:
-            metafunc._recompute_direct_params_indices()
-            # Direct parametrizations taking place in module/class-specific
-            # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
-            # we update what the function really needs a.k.a its fixture closure. Note that
-            # direct parametrizations using `@pytest.mark.parametrize` have already been considered
-            # into making the closure using `ignore_args` arg to `getfixtureclosure`.
-            fixtureinfo.prune_dependency_tree()
-
             for callspec in metafunc._calls:
                 subname = f"{name}[{callspec.id}]" if callspec._idlist else name
                 yield Function.from_parent(
@@ -1108,12 +1116,8 @@ class CallSpec2:
         return "-".join(self._idlist)
 
 
-def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
-    return request.param
-
-
 # Used for storing pseudo fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[dict[str, FixtureDef[Any]]]()
+name2pseudofixturedef_key = StashKey[dict[str, IdentityFixtureDef[Any]]]()
 
 
 @final
@@ -1161,6 +1165,9 @@ class Metafunc:
         self._calls: list[CallSpec2] = []
 
         self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
+
+        # Whether it's ever been directly parametrized, i.e. with `indirect=False`.
+        self._has_direct_parametrization = False
 
     def parametrize(
         self,
@@ -1308,24 +1315,21 @@ class Metafunc:
                     node = collector.session
                 else:
                     assert False, f"Unhandled missing scope: {scope}"
-            default: dict[str, FixtureDef[Any]] = {}
+            default: dict[str, IdentityFixtureDef[Any]] = {}
             name2pseudofixturedef = node.stash.setdefault(
                 name2pseudofixturedef_key, default
             )
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
+            self._has_direct_parametrization = True
             if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
                 fixturedef = name2pseudofixturedef[argname]
             else:
-                fixturedef = FixtureDef(
-                    config=self.config,
-                    baseid="",
+                fixturedef = IdentityFixtureDef(
+                    config=self.definition.config,
                     argname=argname,
-                    func=get_direct_param_fixture_func,
                     scope=scope_,
-                    params=None,
-                    ids=None,
                     _ispytest=True,
                 )
                 if name2pseudofixturedef is not None:
@@ -1485,11 +1489,17 @@ class Metafunc:
                         pytrace=False,
                     )
 
-    def _recompute_direct_params_indices(self) -> None:
-        for argname, param_type in self._params_directness.items():
-            if param_type == "direct":
-                for i, callspec in enumerate(self._calls):
-                    callspec.indices[argname] = i
+    def _update_dependency_tree(self) -> None:
+        definition = self.definition
+        assert definition.parent is not None
+        fm = definition.parent.session._fixturemanager
+        fixture_closure = fm.getfixtureclosure(
+            parentnode=definition,
+            initialnames=definition._fixtureinfo.initialnames,
+            arg2fixturedefs=definition._fixtureinfo.name2fixturedefs,
+            ignore_args=_get_direct_parametrize_args(definition),
+        )
+        definition._fixtureinfo.names_closure[:] = fixture_closure
 
 
 def _find_parametrized_scope(
