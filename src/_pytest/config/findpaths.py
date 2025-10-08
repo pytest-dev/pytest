@@ -105,7 +105,7 @@ def locate_config(
     if not args:
         args = [invocation_dir]
     found_pyproject_toml: Path | None = None
-    ignored_files: list[str] = []
+    ignored_config_files: list[str] = []
 
     for arg in args:
         argpath = absolutepath(arg)
@@ -123,8 +123,8 @@ def locate_config(
                                 p2 = base / remainder
                                 if p2.is_file():
                                     if load_config_dict_from_file(p2) is not None:
-                                        ignored_files.append(remainder)
-                        return base, p, ini_config, ignored_files
+                                        ignored_config_files.append(remainder)
+                        return base, p, ini_config, ignored_config_files
     if found_pyproject_toml is not None:
         return found_pyproject_toml.parent, found_pyproject_toml, {}, []
     return None, None, {}, []
@@ -202,7 +202,7 @@ def determine_setup(
     """
     rootdir = None
     dirs = get_dirs_from_args(args)
-    ignored_files: list[str] = []
+    ignored_config_files: list[str] = []
 
     if inifile:
         inipath_ = absolutepath(inifile)
@@ -212,7 +212,7 @@ def determine_setup(
             rootdir = inipath_.parent
     else:
         ancestor = get_common_ancestor(invocation_dir, dirs)
-        rootdir, inipath, inicfg, ignored_files = locate_config(
+        rootdir, inipath, inicfg, ignored_config_files = locate_config(
             invocation_dir, [ancestor]
         )
         if rootdir is None and rootdir_cmd_arg is None:
@@ -236,7 +236,7 @@ def determine_setup(
                 f"Directory '{rootdir}' not found. Check your '--rootdir' option."
             )
     assert rootdir is not None
-    return rootdir, inipath, inicfg or {}, ignored_files
+    return rootdir, inipath, inicfg or {}, ignored_config_files
 
 
 def is_fs_root(p: Path) -> bool:

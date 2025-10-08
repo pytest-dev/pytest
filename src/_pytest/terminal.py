@@ -880,8 +880,8 @@ class TerminalReporter:
 
         if config.inipath:
             warning = ""
-            if config._ignored_files:
-                warning = f" (WARNING: ignoring pytest config in {', '.join(config._ignored_files)}!)"
+            if config._ignored_config_files:
+                warning = f" (WARNING: ignoring pytest config in {', '.join(config._ignored_config_files)}!)"
             result.append(
                 "configfile: " + bestrelpath(config.rootpath, config.inipath) + warning
             )
