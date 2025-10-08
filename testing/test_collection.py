@@ -1871,7 +1871,8 @@ def test_do_not_collect_symlink_siblings(
     """
     # Use tmp_path because it creates a symlink with the name "current" next to the directory it creates.
     symlink_path = tmp_path.parent / (tmp_path.name[:-1] + "current")
-    assert symlink_path.is_symlink() is True
+    if not symlink_path.is_symlink():  # pragma: no cover
+        pytest.skip("Symlinks not supported in this environment")
 
     # Create test file.
     tmp_path.joinpath("test_foo.py").write_text("def test(): pass", encoding="UTF-8")
