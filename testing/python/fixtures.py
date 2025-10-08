@@ -750,7 +750,7 @@ class TestRequestBasic:
             """
             import sys
             import pytest
-            from _pytest.fixtures import PseudoFixtureDef
+            from _pytest.fixtures import RequestFixtureDef
             import gc
 
             @pytest.fixture(autouse=True)
@@ -763,7 +763,7 @@ class TestRequestBasic:
 
                 try:
                     gc.collect()
-                    leaked = [x for _ in gc.garbage if isinstance(_, PseudoFixtureDef)]
+                    leaked = [x for _ in gc.garbage if isinstance(_, RequestFixtureDef)]
                     assert leaked == []
                 finally:
                     gc.set_debug(original)
