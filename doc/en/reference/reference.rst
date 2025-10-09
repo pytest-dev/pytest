@@ -1165,11 +1165,11 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to ``BUILD_NUMBER`` variable. See also :ref:`ci-pipelines`.
+When set to a non-empty value, pytest acknowledges that is running in a CI process. See also :ref:`ci-pipelines`.
 
 .. envvar:: BUILD_NUMBER
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to CI variable. See also :ref:`ci-pipelines`.
+When set to a non-empty value, pytest acknowledges that is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
 
 .. envvar:: PYTEST_ADDOPTS
 
@@ -1481,6 +1481,25 @@ passed multiple times. The expected format is ``name=value``. For example::
         # content of pytest.ini
         [pytest]
         faulthandler_timeout=5
+
+   For more information please refer to :ref:`faulthandler`.
+
+
+.. confval:: faulthandler_exit_on_timeout
+
+   Exit the pytest process after the per-test timeout is reached by passing
+   `exit=True` to the :func:`faulthandler.dump_traceback_later` function. This
+   is particularly useful to avoid wasting CI resources for test suites that
+   are prone to putting the main Python interpreter into a deadlock state.
+
+   This option is set to 'false' by default.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        faulthandler_timeout=5
+        faulthandler_exit_on_timeout=true
 
    For more information please refer to :ref:`faulthandler`.
 
@@ -2401,6 +2420,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       faulthandler_timeout (string):
                             Dump the traceback of all threads if a test takes
                             more than TIMEOUT seconds to finish
+      faulthandler_exit_on_timeout (bool):
+                            Exit the test process if a test takes more than
+                            faulthandler_timeout seconds to finish
       addopts (args):       Extra command line options
       minversion (string):  Minimally required pytest version
       pythonpath (paths):   Add paths to sys.path
@@ -2408,7 +2430,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Plugins that must be present for pytest to run
 
     Environment variables:
-      CI                       When set (regardless of value), pytest knows it is running in a CI process and does not truncate summary info
+      CI                       When set to a non-empty value, pytest knows it is running in a CI process and does not truncate summary info
       BUILD_NUMBER             Equivalent to CI
       PYTEST_ADDOPTS           Extra command line options
       PYTEST_PLUGINS           Comma-separated plugins to load during startup

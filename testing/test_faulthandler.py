@@ -79,7 +79,7 @@ def test_disabled(pytester: Pytester) -> None:
         pytest.param(
             True,
             marks=pytest.mark.skipif(
-                "CI" in os.environ
+                bool(os.environ.get("CI"))
                 and sys.platform == "linux"
                 and sys.version_info >= (3, 14),
                 reason="sometimes crashes on CI because of truncated outputs (#7022)",
@@ -116,6 +116,43 @@ def test_timeout(pytester: Pytester, enabled: bool) -> None:
         assert tb_output not in result.stderr.str()
     result.stdout.fnmatch_lines(["*1 passed*"])
     assert result.ret == 0
+
+
+@pytest.mark.keep_ci_var
+@pytest.mark.skipif(
+    "CI" in os.environ and sys.platform == "linux" and sys.version_info >= (3, 14),
+    reason="sometimes crashes on CI because of truncated outputs (#7022)",
+)
+@pytest.mark.parametrize("exit_on_timeout", [True, False])
+def test_timeout_and_exit(pytester: Pytester, exit_on_timeout: bool) -> None:
+    """Test option to force exit pytest process after a certain timeout."""
+    pytester.makepyfile(
+        """
+    import os, time
+    def test_long_sleep_and_raise():
+        time.sleep(1 if "CI" in os.environ else 0.1)
+        raise AssertionError(
+            "This test should have been interrupted before reaching this point."
+        )
+    """
+    )
+    pytester.makeini(
+        f"""
+        [pytest]
+        faulthandler_timeout = 0.01
+        faulthandler_exit_on_timeout = {"true" if exit_on_timeout else "false"}
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    tb_output = "most recent call first"
+    result.stderr.fnmatch_lines([f"*{tb_output}*"])
+    if exit_on_timeout:
+        result.stdout.no_fnmatch_line("*1 failed*")
+        result.stdout.no_fnmatch_line("*AssertionError*")
+    else:
+        result.stdout.fnmatch_lines(["*1 failed*"])
+        result.stdout.fnmatch_lines(["*AssertionError*"])
+    assert result.ret == 1
 
 
 @pytest.mark.parametrize("hook_name", ["pytest_enter_pdb", "pytest_exception_interact"])

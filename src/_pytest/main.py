@@ -781,14 +781,25 @@ class Session(nodes.Collector):
         try:
             initialpaths: list[Path] = []
             initialpaths_with_parents: list[Path] = []
-            for arg in args:
-                collection_argument = resolve_collection_argument(
+
+            collection_args = [
+                resolve_collection_argument(
                     self.config.invocation_params.dir,
                     arg,
+                    i,
                     as_pypath=self.config.option.pyargs,
                     consider_namespace_packages=consider_namespace_packages,
                 )
-                self._initial_parts.append(collection_argument)
+                for i, arg in enumerate(args)
+            ]
+
+            if not self.config.getoption("keepduplicates"):
+                # Normalize the collection arguments -- remove duplicates and overlaps.
+                self._initial_parts = normalize_collection_arguments(collection_args)
+            else:
+                self._initial_parts = collection_args
+
+            for collection_argument in self._initial_parts:
                 initialpaths.append(collection_argument.path)
                 initialpaths_with_parents.append(collection_argument.path)
                 initialpaths_with_parents.extend(collection_argument.path.parents)
@@ -859,6 +870,7 @@ class Session(nodes.Collector):
 
             argpath = collection_argument.path
             names = collection_argument.parts
+            parametrization = collection_argument.parametrization
             module_name = collection_argument.module_name
 
             # resolve_collection_argument() ensures this.
@@ -943,12 +955,18 @@ class Session(nodes.Collector):
 
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
-                        # TODO: Remove parametrized workaround once collection structure contains
-                        # parametrization.
-                        is_match = (
-                            node.name == matchparts[0]
-                            or node.name.split("[")[0] == matchparts[0]
-                        )
+                        if len(matchparts) == 1:
+                            # This the last part, one parametrization goes.
+                            if parametrization is not None:
+                                # A parametrized arg must match exactly.
+                                is_match = node.name == matchparts[0] + parametrization
+                            else:
+                                # A non-parameterized arg matches all parametrizations (if any).
+                                # TODO: Remove the hacky split once the collection structure
+                                # contains parametrization.
+                                is_match = node.name.split("[")[0] == matchparts[0]
+                        else:
+                            is_match = node.name == matchparts[0]
                     if is_match:
                         work.append((node, matchparts[1:]))
                         any_matched_in_collector = True
@@ -969,12 +987,9 @@ class Session(nodes.Collector):
             yield node
         else:
             assert isinstance(node, nodes.Collector)
-            keepduplicates = self.config.getoption("keepduplicates")
             # For backward compat, dedup only applies to files.
-            handle_dupes = not (keepduplicates and isinstance(node, nodes.File))
+            handle_dupes = not isinstance(node, nodes.File)
             rep, duplicate = self._collect_one_node(node, handle_dupes)
-            if duplicate and not keepduplicates:
-                return
             if rep.passed:
                 for subnode in rep.result:
                     yield from self.genitems(subnode)
@@ -1024,12 +1039,15 @@ class CollectionArgument:
 
     path: Path
     parts: Sequence[str]
+    parametrization: str | None
     module_name: str | None
+    original_index: int
 
 
 def resolve_collection_argument(
     invocation_path: Path,
     arg: str,
+    arg_index: int,
     *,
     as_pypath: bool = False,
     consider_namespace_packages: bool = False,
@@ -1052,7 +1070,7 @@ def resolve_collection_argument(
     When as_pypath is True, expects that the command-line argument actually contains
     module paths instead of file-system paths:
 
-        "pkg.tests.test_foo::TestClass::test_foo"
+        "pkg.tests.test_foo::TestClass::test_foo[a,b]"
 
     In which case we search sys.path for a matching module, and then return the *path* to the
     found module, which may look like this:
@@ -1060,6 +1078,7 @@ def resolve_collection_argument(
         CollectionArgument(
             path=Path("/home/u/myvenv/lib/site-packages/pkg/tests/test_foo.py"),
             parts=["TestClass", "test_foo"],
+            parametrization="[a,b]",
             module_name="pkg.tests.test_foo",
         )
 
@@ -1068,10 +1087,9 @@ def resolve_collection_argument(
     """
     base, squacket, rest = arg.partition("[")
     strpath, *parts = base.split("::")
-    if squacket:
-        if not parts:
-            raise UsageError(f"path cannot contain [] parametrization: {arg}")
-        parts[-1] = f"{parts[-1]}{squacket}{rest}"
+    if squacket and not parts:
+        raise UsageError(f"path cannot contain [] parametrization: {arg}")
+    parametrization = f"{squacket}{rest}" if squacket else None
     module_name = None
     if as_pypath:
         pyarg_strpath = search_pypath(
@@ -1099,5 +1117,59 @@ def resolve_collection_argument(
     return CollectionArgument(
         path=fspath,
         parts=parts,
+        parametrization=parametrization,
         module_name=module_name,
+        original_index=arg_index,
     )
+
+
+def is_collection_argument_subsumed_by(
+    arg: CollectionArgument, by: CollectionArgument
+) -> bool:
+    """Check if `arg` is subsumed (contained) by `by`."""
+    # First check path subsumption.
+    if by.path != arg.path:
+        # `by` subsumes `arg` if `by` is a parent directory of `arg` and has no
+        # parts (collects everything in that directory).
+        if not by.parts:
+            return arg.path.is_relative_to(by.path)
+        return False
+    # Paths are equal, check parts.
+    # For example: ("TestClass",) is a prefix of ("TestClass", "test_method").
+    if len(by.parts) > len(arg.parts) or arg.parts[: len(by.parts)] != by.parts:
+        return False
+    # Paths and parts are equal, check parametrization.
+    # A `by` without parametrization (None) matches everything, e.g.
+    # `pytest x.py::test_it` matches `x.py::test_it[0]`. Otherwise must be
+    # exactly equal.
+    if by.parametrization is not None and by.parametrization != arg.parametrization:
+        return False
+    return True
+
+
+def normalize_collection_arguments(
+    collection_args: Sequence[CollectionArgument],
+) -> list[CollectionArgument]:
+    """Normalize collection arguments to eliminate overlapping paths and parts.
+
+    Detects when collection arguments overlap in either paths or parts and only
+    keeps the shorter prefix, or the earliest argument if duplicate, preserving
+    order. The result is prefix-free.
+    """
+    # A quadratic algorithm is not acceptable since large inputs are possible.
+    # So this uses an O(n*log(n)) algorithm which takes advantage of the
+    # property that after sorting, a collection argument will immediately
+    # precede collection arguments it subsumes. An O(n) algorithm is not worth
+    # it.
+    collection_args_sorted = sorted(
+        collection_args,
+        key=lambda arg: (arg.path, arg.parts, arg.parametrization or ""),
+    )
+    normalized: list[CollectionArgument] = []
+    last_kept = None
+    for arg in collection_args_sorted:
+        if last_kept is None or not is_collection_argument_subsumed_by(arg, last_kept):
+            normalized.append(arg)
+            last_kept = arg
+    normalized.sort(key=lambda arg: arg.original_index)
+    return normalized
