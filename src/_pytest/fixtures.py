@@ -82,7 +82,7 @@ if TYPE_CHECKING:
 
 
 # The value of the fixture -- return/yield of the fixture function (type variable).
-FixtureValue = TypeVar("FixtureValue")
+FixtureValue = TypeVar("FixtureValue", covariant=True)
 # The type of the fixture function (type variable).
 FixtureFunction = TypeVar("FixtureFunction", bound=Callable[..., object])
 # The type of a fixture function (type alias generic in fixture value).
@@ -104,12 +104,6 @@ _FixtureCachedResult = (
         tuple[BaseException, types.TracebackType | None],
     ]
 )
-
-
-@dataclasses.dataclass(frozen=True)
-class PseudoFixtureDef(Generic[FixtureValue]):
-    cached_result: _FixtureCachedResult[FixtureValue]
-    _scope: Scope
 
 
 def pytest_sessionstart(session: Session) -> None:
@@ -420,7 +414,7 @@ class FixtureRequest(abc.ABC):
     @abc.abstractmethod
     def _check_scope(
         self,
-        requested_fixturedef: FixtureDef[object] | PseudoFixtureDef[object],
+        requested_fixturedef: FixtureDef[object],
         requested_scope: Scope,
     ) -> None:
         raise NotImplementedError()
@@ -559,12 +553,9 @@ class FixtureRequest(abc.ABC):
             yield current
             current = current._parent_request
 
-    def _get_active_fixturedef(
-        self, argname: str
-    ) -> FixtureDef[object] | PseudoFixtureDef[object]:
+    def _get_active_fixturedef(self, argname: str) -> FixtureDef[object]:
         if argname == "request":
-            cached_result = (self, [0], None)
-            return PseudoFixtureDef(cached_result, Scope.Function)
+            return RequestFixtureDef(self)
 
         # If we already finished computing a fixture by this name in this item,
         # return it.
@@ -696,7 +687,7 @@ class TopRequest(FixtureRequest):
 
     def _check_scope(
         self,
-        requested_fixturedef: FixtureDef[object] | PseudoFixtureDef[object],
+        requested_fixturedef: FixtureDef[object],
         requested_scope: Scope,
     ) -> None:
         # TopRequest always has function scope so always valid.
@@ -775,11 +766,9 @@ class SubRequest(FixtureRequest):
 
     def _check_scope(
         self,
-        requested_fixturedef: FixtureDef[object] | PseudoFixtureDef[object],
+        requested_fixturedef: FixtureDef[object],
         requested_scope: Scope,
     ) -> None:
-        if isinstance(requested_fixturedef, PseudoFixtureDef):
-            return
         if self._scope > requested_scope:
             # Try to report something helpful.
             argname = requested_fixturedef.argname
@@ -968,7 +957,6 @@ def _eval_scope_callable(
     return result
 
 
-@final
 class FixtureDef(Generic[FixtureValue]):
     """A container for a fixture definition.
 
@@ -1083,8 +1071,7 @@ class FixtureDef(Generic[FixtureValue]):
             # down first. This is generally handled by SetupState, but still currently
             # needed when this fixture is not parametrized but depends on a parametrized
             # fixture.
-            if not isinstance(fixturedef, PseudoFixtureDef):
-                requested_fixtures_that_should_finalize_us.append(fixturedef)
+            requested_fixtures_that_should_finalize_us.append(fixturedef)
 
         # Check for (and return) cached value/exception.
         if self.cached_result is not None:
@@ -1134,6 +1121,28 @@ class FixtureDef(Generic[FixtureValue]):
 
     def __repr__(self) -> str:
         return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
+
+
+class RequestFixtureDef(FixtureDef[FixtureRequest]):
+    """A custom FixtureDef for the special "request" fixture.
+
+    A new one is generated on-demand whenever "request" is requested.
+    """
+
+    def __init__(self, request: FixtureRequest) -> None:
+        super().__init__(
+            config=request.config,
+            baseid=None,
+            argname="request",
+            func=lambda: request,
+            scope=Scope.Function,
+            params=None,
+            _ispytest=True,
+        )
+        self.cached_result = (request, [0], None)
+
+    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
+        pass
 
 
 def resolve_fixture_function(
