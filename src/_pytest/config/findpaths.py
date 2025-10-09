@@ -91,9 +91,11 @@ def load_config_dict_from_file(
 def locate_config(
     invocation_dir: Path,
     args: Iterable[Path],
-) -> tuple[Path | None, Path | None, ConfigDict, list[str]]:
+) -> tuple[Path | None, Path | None, ConfigDict, Sequence[str]]:
     """Search in the list of arguments for a valid ini-file for pytest,
-    and return a tuple of (rootdir, inifile, cfg-dict)."""
+    and return a tuple of (rootdir, inifile, cfg-dict, ignored-config-files), where 
+    ignored-config-files is a list of config basenames found that contain
+    pytest configuration but were ignored."""
     config_names = [
         "pytest.ini",
         ".pytest.ini",
@@ -118,12 +120,10 @@ def locate_config(
                     ini_config = load_config_dict_from_file(p)
                     if ini_config is not None:
                         index = config_names.index(config_name)
-                        if index < len(config_names) - 1:
-                            for remainder in config_names[index + 1 :]:
-                                p2 = base / remainder
-                                if p2.is_file():
-                                    if load_config_dict_from_file(p2) is not None:
-                                        ignored_config_files.append(remainder)
+                        for remainder in config_names[index + 1 :]:
+                            p2 = base / remainder
+                            if p2.is_file() and load_config_dict_from_file(p2) is not None:
+                                ignored_config_files.append(remainder)
                         return base, p, ini_config, ignored_config_files
     if found_pyproject_toml is not None:
         return found_pyproject_toml.parent, found_pyproject_toml, {}, []
