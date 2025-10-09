@@ -1,0 +1,2 @@
+Improve option conflict detection to prevent silently overriding built-in options
+like ``--keyword``.
