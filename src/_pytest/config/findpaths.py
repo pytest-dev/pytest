@@ -190,7 +190,7 @@ def determine_setup(
     args: Sequence[str],
     rootdir_cmd_arg: str | None,
     invocation_dir: Path,
-) -> tuple[Path, Path | None, ConfigDict, list[str]]:
+) -> tuple[Path, Path | None, ConfigDict, Sequence[str]]:
     """Determine the rootdir, inifile and ini configuration values from the
     command line arguments.
 
@@ -205,7 +205,7 @@ def determine_setup(
     """
     rootdir = None
     dirs = get_dirs_from_args(args)
-    ignored_config_files: list[str] = []
+    ignored_config_files: Sequence[str] = []
 
     if inifile:
         inipath_ = absolutepath(inifile)
