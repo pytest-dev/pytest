@@ -138,10 +138,10 @@ class TestFixture:
     ) -> None:
         pytester.makepyfile(
             """
-            from pytest import SubTests
+            from pytest import Subtests
 
-            def test_typing_exported(subtests: SubTests) -> None:
-                assert isinstance(subtests, SubTests)
+            def test_typing_exported(subtests: Subtests) -> None:
+                assert isinstance(subtests, Subtests)
             """
         )
         if mode == "normal":
@@ -212,8 +212,33 @@ class TestFixture:
         )
 
 
-class TestSubTest:
-    """Test.subTest functionality."""
+def test_subtests_and_parametrization(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("x", [0, 1])
+        def test_foo(subtests, x):
+            for i in range(3):
+                with subtests.test(msg="custom", i=i):
+                    assert i % 2 == 0
+            assert x == 0
+    """
+    )
+    result = pytester.runpytest("-v", "--no-subtests-reports")
+    result.stdout.fnmatch_lines(
+        [
+            "test_subtests_and_parametrization.py::test_foo[[]0[]] [[]custom[]] (i=1) SUBFAIL*[[] 50%[]]",
+            "test_subtests_and_parametrization.py::test_foo[[]0[]] PASSED              *[[] 50%[]]",
+            "test_subtests_and_parametrization.py::test_foo[[]1[]] [[]custom[]] (i=1) SUBFAIL *[[]100%[]]",
+            "test_subtests_and_parametrization.py::test_foo[[]1[]] FAILED              *[[]100%[]]",
+            "* 3 failed, 1 passed in *",
+        ]
+    )
+
+
+class TestUnittestSubTest:
+    """Test unittest.TestCase.subTest functionality."""
 
     @pytest.fixture
     def simple_script(self, pytester: pytest.Pytester) -> Path:
