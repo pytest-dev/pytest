@@ -11,7 +11,7 @@ How to use subtests
 
 pytest allows for grouping assertions within a normal test, known as *subtests*.
 
-Subtests are an alternative to parametrization, particularly useful when test setup is expensive or when the exact parametrization values are not known at collection time.
+Subtests are an alternative to parametrization, particularly useful when the exact parametrization values are not known at collection time.
 
 
 .. code-block:: python
@@ -55,11 +55,11 @@ outside the ``subtests.test`` block:
 Typing
 ------
 
-:class:`pytest.SubTests` is exported so it can be used in type annotations:
+:class:`pytest.Subtests` is exported so it can be used in type annotations:
 
 .. code-block:: python
 
-    def test(subtests: pytest.SubTests) -> None: ...
+    def test(subtests: pytest.Subtests) -> None: ...
 
 .. _parametrize_vs_subtests:
 

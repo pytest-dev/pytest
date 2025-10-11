@@ -1,7 +1,8 @@
+"""Builtin plugin that adds subtests support."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
-from collections.abc import Generator
 from collections.abc import Iterator
 from collections.abc import Mapping
 from contextlib import AbstractContextManager
@@ -10,7 +11,9 @@ from contextlib import ExitStack
 from contextlib import nullcontext
 import dataclasses
 import time
+from types import TracebackType
 from typing import Any
+from typing import Literal
 from typing import TYPE_CHECKING
 
 import pluggy
@@ -22,6 +25,7 @@ from _pytest.capture import SysCapture
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import SubRequest
 from _pytest.logging import catching_logs
@@ -32,8 +36,7 @@ from _pytest.runner import check_interactive_exception
 
 
 if TYPE_CHECKING:
-    from types import TracebackType
-    from typing import Literal
+    from typing_extensions import Self
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -54,24 +57,31 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-@dataclasses.dataclass
-class SubTestContext:
-    """The values passed to SubTests.test() that are included in the test report."""
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class SubtestContext:
+    """The values passed to Subtests.test() that are included in the test report."""
 
     msg: str | None
-    kwargs: dict[str, Any]
+    kwargs: Mapping[str, Any]
+
+    def _to_json(self) -> dict[str, Any]:
+        return dataclasses.asdict(self)
+
+    @classmethod
+    def _from_json(cls, d: dict[str, Any]) -> Self:
+        return cls(msg=d["msg"], kwargs=d["kwargs"])
 
 
 @dataclasses.dataclass(init=False)
-class SubTestReport(TestReport):
-    context: SubTestContext
+class SubtestReport(TestReport):
+    context: SubtestContext
 
     @property
     def head_line(self) -> str:
         _, _, domain = self.location
-        return f"{domain} {self.sub_test_description()}"
+        return f"{domain} {self._sub_test_description()}"
 
-    def sub_test_description(self) -> str:
+    def _sub_test_description(self) -> str:
         parts = []
         if isinstance(self.context.msg, str):
             parts.append(f"[{self.context.msg}]")
@@ -86,37 +96,34 @@ class SubTestReport(TestReport):
         data = super()._to_json()
         del data["context"]
         data["_report_type"] = "SubTestReport"
-        data["_subtest.context"] = dataclasses.asdict(self.context)
+        data["_subtest.context"] = self.context._to_json()
         return data
 
     @classmethod
-    def _from_json(cls, reportdict: dict[str, Any]) -> SubTestReport:
+    def _from_json(cls, reportdict: dict[str, Any]) -> SubtestReport:
         report = super()._from_json(reportdict)
-        context_data = reportdict["_subtest.context"]
-        report.context = SubTestContext(
-            msg=context_data["msg"], kwargs=context_data["kwargs"]
-        )
+        report.context = SubtestContext._from_json(reportdict["_subtest.context"])
         return report
 
     @classmethod
-    def _from_test_report(cls, test_report: TestReport) -> SubTestReport:
+    def _from_test_report(cls, test_report: TestReport) -> SubtestReport:
         return super()._from_json(test_report._to_json())
 
 
 @fixture
-def subtests(request: SubRequest) -> Generator[SubTests, None, None]:
+def subtests(request: SubRequest) -> Subtests:
     """Provides subtests functionality."""
     capmam = request.node.config.pluginmanager.get_plugin("capturemanager")
     if capmam is not None:
         suspend_capture_ctx = capmam.global_and_fixture_disabled
     else:
         suspend_capture_ctx = nullcontext
-    yield SubTests(request.node.ihook, suspend_capture_ctx, request)
+    return Subtests(request.node.ihook, suspend_capture_ctx, request, _ispytest=True)
 
 
 # Note: cannot use a dataclass here because Sphinx insists on showing up the __init__ method in the documentation,
 # even if we explicitly use :exclude-members: __init__.
-class SubTests:
+class Subtests:
     """Subtests fixture, enables declaring subtests inside test functions via the :meth:`test` method."""
 
     def __init__(
@@ -124,7 +131,10 @@ class SubTests:
         ihook: pluggy.HookRelay,
         suspend_capture_ctx: Callable[[], AbstractContextManager[None]],
         request: SubRequest,
+        *,
+        _ispytest: bool = False,
     ) -> None:
+        check_ispytest(_ispytest)
         self._ihook = ihook
         self._suspend_capture_ctx = suspend_capture_ctx
         self._request = request
@@ -169,7 +179,7 @@ class _SubTestContextManager:
     Context manager for subtests, capturing exceptions raised inside the subtest scope and handling
     them through the pytest machinery.
 
-    Note: initially this logic was implemented directly in SubTests.test() as a @contextmanager, however
+    Note: initially this logic was implemented directly in Subtests.test() as a @contextmanager, however
     it is not possible to control the output fully when exiting from it due to an exception when
     in --exitfirst mode, so this was refactored into an explicit context manager class (pytest-dev/pytest-subtests#134).
     """
@@ -220,8 +230,8 @@ class _SubTestContextManager:
         report = self.ihook.pytest_runtest_makereport(
             item=self.request.node, call=call_info
         )
-        sub_report = SubTestReport._from_test_report(report)
-        sub_report.context = SubTestContext(self.msg, self.kwargs.copy())
+        sub_report = SubtestReport._from_test_report(report)
+        sub_report.context = SubtestContext(msg=self.msg, kwargs=self.kwargs.copy())
 
         self._captured_output.update_report(sub_report)
         self._captured_logs.update_report(sub_report)
@@ -330,14 +340,14 @@ class NullCapturedLogs:
 
 
 def pytest_report_to_serializable(report: TestReport) -> dict[str, Any] | None:
-    if isinstance(report, SubTestReport):
+    if isinstance(report, SubtestReport):
         return report._to_json()
     return None
 
 
-def pytest_report_from_serializable(data: dict[str, Any]) -> SubTestReport | None:
+def pytest_report_from_serializable(data: dict[str, Any]) -> SubtestReport | None:
     if data.get("_report_type") == "SubTestReport":
-        return SubTestReport._from_json(data)
+        return SubtestReport._from_json(data)
     return None
 
 
@@ -346,11 +356,11 @@ def pytest_report_teststatus(
     report: TestReport,
     config: Config,
 ) -> tuple[str, str, str | Mapping[str, bool]] | None:
-    if report.when != "call" or not isinstance(report, SubTestReport):
+    if report.when != "call" or not isinstance(report, SubtestReport):
         return None
 
     outcome = report.outcome
-    description = report.sub_test_description()
+    description = report._sub_test_description()
     no_output = ("", "", "")
 
     if hasattr(report, "wasxfail"):

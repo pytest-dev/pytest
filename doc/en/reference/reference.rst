@@ -581,7 +581,7 @@ The ``subtests`` fixture enables declaring subtests inside test functions.
 
 **Tutorial**: :ref:`subtests`
 
-.. autoclass:: pytest.SubTests()
+.. autoclass:: pytest.Subtests()
     :members:
 
 
