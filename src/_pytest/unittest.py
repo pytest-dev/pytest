@@ -36,8 +36,8 @@ from _pytest.python import Module
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
 from _pytest.subtests import make_call_info
-from _pytest.subtests import SubTestContext
-from _pytest.subtests import SubTestReport
+from _pytest.subtests import SubtestContext
+from _pytest.subtests import SubtestReport
 
 
 if sys.version_info[:2] < (3, 11):
@@ -428,8 +428,8 @@ class TestCaseFunction(Function):
         )
         msg = test._message if isinstance(test._message, str) else None  # type: ignore[attr-defined]
         report = self.ihook.pytest_runtest_makereport(item=self, call=call_info)
-        sub_report = SubTestReport._from_test_report(report)
-        sub_report.context = SubTestContext(msg, dict(test.params))  # type: ignore[attr-defined]
+        sub_report = SubtestReport._from_test_report(report)
+        sub_report.context = SubtestContext(msg=msg, kwargs=dict(test.params))  # type: ignore[attr-defined]
         self.ihook.pytest_runtest_logreport(report=sub_report)
         if check_interactive_exception(call_info, sub_report):
             self.ihook.pytest_exception_interact(
