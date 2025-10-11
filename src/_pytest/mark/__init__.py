@@ -10,7 +10,6 @@ import dataclasses
 from typing import TYPE_CHECKING
 
 from .expression import Expression
-from .expression import ParseError
 from .structures import _HiddenParam
 from .structures import EMPTY_PARAMETERSET_OPTION
 from .structures import get_empty_parameterset_mark
@@ -275,8 +274,10 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
 def _parse_expression(expr: str, exc_message: str) -> Expression:
     try:
         return Expression.compile(expr)
-    except ParseError as e:
-        raise UsageError(f"{exc_message}: {expr}: {e}") from None
+    except SyntaxError as e:
+        raise UsageError(
+            f"{exc_message}: {e.text}: at column {e.offset}: {e.msg}"
+        ) from None
 
 
 def pytest_collection_modifyitems(items: list[Item], config: Config) -> None:

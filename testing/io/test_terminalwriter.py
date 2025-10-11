@@ -224,6 +224,7 @@ def test_NO_COLOR_and_FORCE_COLOR(
 
 
 def test_empty_NO_COLOR_and_FORCE_COLOR_ignored(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("TERM", "xterm-256color")
     monkeypatch.setitem(os.environ, "NO_COLOR", "")
     monkeypatch.setitem(os.environ, "FORCE_COLOR", "")
     assert_color(True, True)
