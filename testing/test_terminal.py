@@ -2893,6 +2893,100 @@ def test_format_trimmed() -> None:
     assert _format_trimmed(" ({}) ", msg, len(msg) + 3) == " (unconditional ...) "
 
 
+def test_warning_when_init_trumps_pyproject_toml(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)",
+        ]
+    )
+
+
+def test_warning_when_init_trumps_multiple_files(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    pytester.makeini(
+        """
+        # tox.ini
+        [pytest]
+        minversion = 6.0
+        addopts = -ra -q
+        testpaths =
+            tests
+            integration
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml, tox.ini!)",
+        ]
+    )
+
+
+def test_no_warning_when_init_but_pyproject_toml_has_no_entry(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini",
+        ]
+    )
+
+
+def test_no_warning_on_terminal_with_a_single_config_file(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pyproject.toml",
+        ]
+    )
+
+
 class TestFineGrainedTestCase:
     DEFAULT_FILE_CONTENTS = """
             import pytest

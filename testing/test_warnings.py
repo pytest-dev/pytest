@@ -440,7 +440,7 @@ def test_accept_unknown_category(pytester: Pytester) -> None:
             pass
     """
     )
-    result = pytester.runpytest("-W", "ignore::bizbaz.Bizbaz")
+    result = pytester.runpytest_subprocess("-W", "ignore::bizbaz.Bizbaz")
     result.stdout.fnmatch_lines(
         [
             f"*== {WARNINGS_SUMMARY_HEADER} ==*",

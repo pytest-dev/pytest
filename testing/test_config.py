@@ -56,7 +56,7 @@ class TestParseIni:
             ),
             encoding="utf-8",
         )
-        _, _, cfg = locate_config(Path.cwd(), [sub])
+        _, _, cfg, _ = locate_config(Path.cwd(), [sub])
         assert cfg["name"] == "value"
         config = pytester.parseconfigure(str(sub))
         assert config.inicfg["name"] == "value"
@@ -1635,7 +1635,7 @@ class TestRootdir:
         b = a / "b"
         b.mkdir()
         for args in ([str(tmp_path)], [str(a)], [str(b)]):
-            rootpath, parsed_inipath, _ = determine_setup(
+            rootpath, parsed_inipath, *_ = determine_setup(
                 inifile=None,
                 args=args,
                 rootdir_cmd_arg=None,
@@ -1643,7 +1643,7 @@ class TestRootdir:
             )
             assert rootpath == tmp_path
             assert parsed_inipath == inipath
-        rootpath, parsed_inipath, ini_config = determine_setup(
+        rootpath, parsed_inipath, ini_config, _ = determine_setup(
             inifile=None,
             args=[str(b), str(a)],
             rootdir_cmd_arg=None,
@@ -1660,7 +1660,7 @@ class TestRootdir:
         a = tmp_path / "a"
         a.mkdir()
         (a / name).touch()
-        rootpath, parsed_inipath, _ = determine_setup(
+        rootpath, parsed_inipath, *_ = determine_setup(
             inifile=None,
             args=[str(a)],
             rootdir_cmd_arg=None,
@@ -1674,7 +1674,7 @@ class TestRootdir:
         a.mkdir()
         (a / "setup.cfg").touch()
         (tmp_path / "setup.py").touch()
-        rootpath, inipath, inicfg = determine_setup(
+        rootpath, inipath, inicfg, _ = determine_setup(
             inifile=None,
             args=[str(a)],
             rootdir_cmd_arg=None,
@@ -1686,7 +1686,7 @@ class TestRootdir:
 
     def test_nothing(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.chdir(tmp_path)
-        rootpath, inipath, inicfg = determine_setup(
+        rootpath, inipath, inicfg, _ = determine_setup(
             inifile=None,
             args=[str(tmp_path)],
             rootdir_cmd_arg=None,
@@ -1713,7 +1713,7 @@ class TestRootdir:
         p = tmp_path / name
         p.touch()
         p.write_text(contents, encoding="utf-8")
-        rootpath, inipath, ini_config = determine_setup(
+        rootpath, inipath, ini_config, _ = determine_setup(
             inifile=str(p),
             args=[str(tmp_path)],
             rootdir_cmd_arg=None,
@@ -1761,7 +1761,7 @@ class TestRootdir:
         a.mkdir()
         b = tmp_path / "b"
         b.mkdir()
-        rootpath, inifile, _ = determine_setup(
+        rootpath, inifile, *_ = determine_setup(
             inifile=None,
             args=[str(a), str(b)],
             rootdir_cmd_arg=None,
@@ -1777,7 +1777,7 @@ class TestRootdir:
         b.mkdir()
         inipath = a / "pytest.ini"
         inipath.touch()
-        rootpath, parsed_inipath, _ = determine_setup(
+        rootpath, parsed_inipath, *_ = determine_setup(
             inifile=None,
             args=[str(a), str(b)],
             rootdir_cmd_arg=None,
@@ -1791,7 +1791,7 @@ class TestRootdir:
         self, dirs: Sequence[str], tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
         monkeypatch.chdir(tmp_path)
-        rootpath, inipath, _ = determine_setup(
+        rootpath, inipath, *_ = determine_setup(
             inifile=None,
             args=dirs,
             rootdir_cmd_arg=None,
@@ -1807,7 +1807,7 @@ class TestRootdir:
         a.mkdir()
         (a / "exists").touch()
         monkeypatch.chdir(tmp_path)
-        rootpath, inipath, _ = determine_setup(
+        rootpath, inipath, *_ = determine_setup(
             inifile=None,
             args=["a/exist"],
             rootdir_cmd_arg=None,
@@ -1826,7 +1826,7 @@ class TestRootdir:
         (tmp_path / "myproject" / "tests").mkdir()
         monkeypatch.chdir(tmp_path / "myproject")
 
-        rootpath, inipath, _ = determine_setup(
+        rootpath, inipath, *_ = determine_setup(
             inifile=None,
             args=["tests/"],
             rootdir_cmd_arg=None,
