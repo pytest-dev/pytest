@@ -50,6 +50,7 @@ from _pytest.compat import safe_isclass
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
@@ -902,6 +903,23 @@ class IdMaker:
         resolved_ids = list(self._resolve_ids())
         # All IDs must be unique!
         if len(resolved_ids) != len(set(resolved_ids)):
+            if self._require_unique_ids_enabled():
+                duplicate_indexs = defaultdict(list)
+                for i, val in enumerate(resolved_ids):
+                    duplicate_indexs[val].append(i)
+
+                # Keep only duplicates
+                duplicates = {k: v for k, v in duplicate_indexs.items() if len(v) > 1}
+                raise UsageError(f"""
+                    Because --require-unique-paramset-ids given, pytest won't
+                    attempt to generate unique IDs for parameter sets.
+                    argument values: {self.parametersets}
+                    argument names: {self.argnames}
+                    function name: {self.func_name}
+                    test name: {self.nodeid}
+                    resolved (with non-unique) IDs: {resolved_ids}
+                    duplicates: {duplicates}
+                    """)
             # Record the number of occurrences of each ID.
             id_counts = Counter(resolved_ids)
             # Map the ID to its next suffix.
@@ -924,6 +942,14 @@ class IdMaker:
             f"Internal error: {resolved_ids=}"
         )
         return resolved_ids
+
+    def _require_unique_ids_enabled(self) -> bool:
+        if self.config:
+            cli_value = self.config.getoption("require_unique_paramset_ids")
+            if cli_value:
+                return bool(cli_value)
+            return bool(self.config.getini("require_unique_paramset_ids"))
+        return False
 
     def _resolve_ids(self) -> Iterable[str | _HiddenParam]:
         """Resolve IDs for all ParameterSets (may contain duplicates)."""
