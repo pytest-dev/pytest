@@ -91,3 +91,31 @@ enforce this validation in your project by adding ``--strict-markers`` to ``addo
     markers =
         slow: marks tests as slow (deselect with '-m "not slow"')
         serial
+
+
+Check if marks match an expression without test collection
+----------------------------------------------------------
+
+You can check if a set of marks or a pytest Item matches a marker expression
+using the public API function :func:`pytest.match_markexpr`.
+
+.. code-block:: python
+
+    import pytest
+
+
+    def test_example():
+        item = ...  # some pytest Item
+        assert pytest.match_markexpr("smoke and not slow", item)
+
+
+    def test_example2():
+        marks = ["smoke", "fast"]
+        assert pytest.match_markexpr("smoke and not slow", marks)
+
+
+    def test_example3(requests):
+        assert not pytest.match_markexpr("smoke and not slow", requests.node)
+
+This function is useful for plugins and test code that need to evaluate marker expressions
+without relying on internal APIs.
