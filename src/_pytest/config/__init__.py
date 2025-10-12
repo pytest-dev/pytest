@@ -110,6 +110,8 @@ class ExitCode(enum.IntEnum):
     #: pytest couldn't find tests.
     NO_TESTS_COLLECTED = 5
 
+    __module__ = "pytest"
+
 
 class ConftestImportFailure(Exception):
     def __init__(
