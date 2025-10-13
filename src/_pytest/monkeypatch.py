@@ -8,6 +8,7 @@ from collections.abc import Mapping
 from collections.abc import MutableMapping
 from contextlib import contextmanager
 import os
+from pathlib import Path
 import re
 import sys
 from typing import Any
@@ -16,6 +17,7 @@ from typing import overload
 from typing import TypeVar
 import warnings
 
+from _pytest.deprecated import MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES
 from _pytest.fixtures import fixture
 from _pytest.warning_types import PytestWarning
 
@@ -346,7 +348,25 @@ class MonkeyPatch:
         # https://github.com/pypa/setuptools/blob/d8b901bc/docs/pkg_resources.txt#L162-L171
         # this is only needed when pkg_resources was already loaded by the namespace package
         if "pkg_resources" in sys.modules:
+            import pkg_resources
             from pkg_resources import fixup_namespace_packages
+
+            # Only issue deprecation warning if this call would actually have an
+            # effect for this specific path.
+            if (
+                hasattr(pkg_resources, "_namespace_packages")
+                and pkg_resources._namespace_packages
+            ):
+                path_obj = Path(str(path))
+                for ns_pkg in pkg_resources._namespace_packages:
+                    if ns_pkg is None:
+                        continue
+                    ns_pkg_path = path_obj / ns_pkg.replace(".", os.sep)
+                    if ns_pkg_path.is_dir():
+                        warnings.warn(
+                            MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES, stacklevel=2
+                        )
+                        break
 
             fixup_namespace_packages(str(path))
 

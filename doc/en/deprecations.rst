@@ -15,6 +15,41 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _monkeypatch-fixup-namespace-packages:
+
+``monkeypatch.syspath_prepend`` with legacy namespace packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.0
+
+When using :meth:`monkeypatch.syspath_prepend() <pytest.MonkeyPatch.syspath_prepend>`,
+pytest automatically calls ``pkg_resources.fixup_namespace_packages()`` if ``pkg_resources`` is imported.
+This is only needed for legacy namespace packages that use ``pkg_resources.declare_namespace()``.
+
+Legacy namespace packages are deprecated in favor of native namespace packages (:pep:`420`).
+If you are using ``pkg_resources.declare_namespace()`` in your ``__init__.py`` files,
+you should migrate to native namespace packages by removing the ``__init__.py`` files from your namespace packages.
+
+This deprecation warning will only be issued when:
+
+1. ``pkg_resources`` is imported, and
+2. The specific path being prepended contains a declared namespace package (via ``pkg_resources.declare_namespace()``)
+
+To fix this warning, convert your legacy namespace packages to native namespace packages:
+
+**Legacy namespace package** (deprecated):
+
+.. code-block:: python
+
+    # mypkg/__init__.py
+    __import__("pkg_resources").declare_namespace(__name__)
+
+**Native namespace package** (recommended):
+
+Simply remove the ``__init__.py`` file entirely.
+Python 3.3+ natively supports namespace packages without ``__init__.py``.
+
+
 .. _sync-test-async-fixture:
 
 sync test depending on async fixture
