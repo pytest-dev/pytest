@@ -269,7 +269,6 @@ default_plugins = (
     "junitxml",
     "doctest",
     "cacheprovider",
-    "freeze_support",
     "setuponly",
     "setupplan",
     "stepwise",
