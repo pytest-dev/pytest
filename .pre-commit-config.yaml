@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.13.3"
+  rev: "v0.14.0"
   hooks:
     - id: ruff-check
       args: ["--fix"]
@@ -66,13 +66,13 @@ repos:
         # Manual because passing pyright is a work in progress.
         stages: [manual]
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "v2.7.0"
+  rev: "v2.10.0"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.20.0
+    rev: v3.21.0
     hooks:
     -   id: pyupgrade
         args:
