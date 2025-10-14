@@ -23,6 +23,8 @@ class StashKey(Generic[T]):
     .. versionadded:: 7.0
     """
 
+    __module__ = "pytest"
+
     __slots__ = ()
 
 
@@ -66,6 +68,8 @@ class Stash:
 
     .. versionadded:: 7.0
     """
+
+    __module__ = "pytest"
 
     __slots__ = ("_storage",)
 

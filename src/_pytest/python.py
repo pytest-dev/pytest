@@ -547,6 +547,8 @@ def importtestmodule(
 class Module(nodes.File, PyCollector):
     """Collector for test classes and functions in a Python module."""
 
+    __module__ = "pytest"
+
     def _getobj(self):
         return importtestmodule(self.path, self.config)
 
@@ -642,6 +644,8 @@ class Package(nodes.Directory):
         Now inherits from :class:`~pytest.Directory`.
     """
 
+    __module__ = "pytest"
+
     def __init__(
         self,
         fspath: LEGACY_PATH | None,
@@ -735,6 +739,8 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | N
 
 class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
+
+    __module__ = "pytest"
 
     @classmethod
     def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
@@ -1124,6 +1130,8 @@ class Metafunc:
     test configuration or values specified in the class or module where a
     test function is defined.
     """
+
+    __module__ = "pytest"
 
     def __init__(
         self,
@@ -1565,6 +1573,8 @@ class Function(PyobjMixin, nodes.Item):
         for example when it contains decorations like those added by parametrization
         (``my_func[my_param]``).
     """
+
+    __module__ = "pytest"
 
     # Disable since functions handle it themselves.
     _ALLOW_MARKERS = False

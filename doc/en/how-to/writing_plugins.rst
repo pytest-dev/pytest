@@ -456,5 +456,4 @@ in our ``pytest.ini`` to tell pytest where to look for example files.
     ============================ 2 passed in 0.12s =============================
 
 For more information about the result object that ``runpytest()`` returns, and
-the methods that it provides please check out the :py:class:`RunResult
-<_pytest.pytester.RunResult>` documentation.
+the methods that it provides please check out the :class:`~pytest.RunResult` documentation.

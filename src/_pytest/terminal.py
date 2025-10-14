@@ -372,6 +372,8 @@ class WarningReport:
 
 @final
 class TerminalReporter:
+    __module__ = "pytest"
+
     def __init__(self, config: Config, file: TextIO | None = None) -> None:
         import _pytest.config
 

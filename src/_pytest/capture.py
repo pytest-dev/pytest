@@ -917,6 +917,8 @@ class CaptureFixture(Generic[AnyStr]):
     """Object returned by the :fixture:`capsys`, :fixture:`capsysbinary`,
     :fixture:`capfd` and :fixture:`capfdbinary` fixtures."""
 
+    __module__ = "pytest"
+
     def __init__(
         self,
         captureclass: type[CaptureBase[AnyStr]],

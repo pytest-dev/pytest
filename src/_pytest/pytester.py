@@ -231,6 +231,8 @@ class RecordedHookCall:
         assert calls[0].item is an_item
     """
 
+    __module__ = "pytest"
+
     def __init__(self, name: str, kwargs) -> None:
         self.__dict__.update(kwargs)
         self._name = name
@@ -254,6 +256,8 @@ class HookRecorder:
     This wraps all the hook calls in the plugin manager, recording each call
     before propagating the normal calls.
     """
+
+    __module__ = "pytest"
 
     def __init__(
         self, pluginmanager: PytestPluginManager, *, _ispytest: bool = False
@@ -518,6 +522,8 @@ rex_outcome = re.compile(r"(\d+) (\w+)")
 class RunResult:
     """The result of running a command from :class:`~pytest.Pytester`."""
 
+    __module__ = "pytest"
+
     def __init__(
         self,
         ret: int | ExitCode,
@@ -654,6 +660,8 @@ class Pytester:
     It attempts to isolate the test run from external factors as much as possible, modifying
     the current working directory to :attr:`path` and environment variables during initialization.
     """
+
+    __module__ = "pytest"
 
     __test__ = False
 
@@ -1221,7 +1229,7 @@ class Pytester:
         """Return a new pytest :class:`pytest.Config` instance from given
         commandline args.
 
-        This invokes the pytest bootstrapping code in _pytest.config to create a
+        This invokes the pytest bootstrapping code to create a
         new :py:class:`pytest.PytestPluginManager` and call the
         :hook:`pytest_cmdline_parse` hook to create a new :class:`pytest.Config`
         instance.
@@ -1564,6 +1572,8 @@ class LineMatcher:
     The constructor takes a list of lines without their trailing newlines, i.e.
     ``text.splitlines()``.
     """
+
+    __module__ = "pytest"
 
     def __init__(self, lines: list[str]) -> None:
         self.lines = lines

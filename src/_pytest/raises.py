@@ -580,6 +580,8 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             ...
     """
 
+    __module__ = "pytest"
+
     # Trio bundled hypothesis monkeypatching, we will probably instead assume that
     # hypothesis will handle that in their pytest plugin by the time this is released.
     # Alternatively we could add a version of get_pretty_function_description ourselves
@@ -842,6 +844,8 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         If installed and imported (in e.g. ``conftest.py``), the ``hypothesis`` library will
         monkeypatch this output to provide shorter & more readable repr's.
     """
+
+    __module__ = "pytest"
 
     # allow_unwrapped=True requires: singular exception, exception not being
     # RaisesGroup instance, match is None, check is None

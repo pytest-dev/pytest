@@ -259,6 +259,8 @@ class TestReport(BaseReport):
     Reports can contain arbitrary extra attributes.
     """
 
+    __module__ = "pytest"
+
     __test__ = False
 
     # Defined by skipping plugin.
@@ -402,6 +404,8 @@ class CollectReport(BaseReport):
 
     Reports can contain arbitrary extra attributes.
     """
+
+    __module__ = "pytest"
 
     when = "collect"
 

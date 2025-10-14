@@ -506,6 +506,8 @@ class Dir(nodes.Directory):
         collectors.
     """
 
+    __module__ = "pytest"
+
     @classmethod
     def from_parent(  # type: ignore[override]
         cls,
@@ -551,6 +553,8 @@ class Session(nodes.Collector):
 
     ``Session`` collects the initial paths given as arguments to pytest.
     """
+
+    __module__ = "pytest"
 
     Interrupted = Interrupted
     Failed = Failed

@@ -366,6 +366,8 @@ class FixtureRequest(abc.ABC):
     ``param`` attribute in case the fixture is parametrized.
     """
 
+    __module__ = "pytest"
+
     def __init__(
         self,
         pyfuncitem: Function,
@@ -801,6 +803,8 @@ class SubRequest(FixtureRequest):
 class FixtureLookupError(LookupError):
     """Could not return a requested fixture (missing or invalid)."""
 
+    __module__ = "pytest"
+
     def __init__(
         self, argname: str | None, request: FixtureRequest, msg: str | None = None
     ) -> None:
@@ -963,6 +967,8 @@ class FixtureDef(Generic[FixtureValue]):
     Note: At this time, only explicitly documented fields and methods are
     considered public stable API.
     """
+
+    __module__ = "pytest"
 
     def __init__(
         self,

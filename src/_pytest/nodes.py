@@ -126,8 +126,8 @@ class NodeMeta(abc.ABCMeta):
 
 
 class Node(abc.ABC, metaclass=NodeMeta):
-    r"""Base class of :class:`Collector` and :class:`Item`, the components of
-    the test collection tree.
+    r"""Base class of :class:`~pytest.Collector` and :class:`~pytest.Item`,
+    the components of the test collection tree.
 
     ``Collector``\'s are the internal nodes of the tree, and ``Item``\'s are the
     leaf nodes.
@@ -503,6 +503,8 @@ class Collector(Node, abc.ABC):
     the collection tree.
     """
 
+    __module__ = "pytest"
+
     class CollectError(Exception):
         """An error during collection, contains a custom message."""
 
@@ -633,6 +635,8 @@ class File(FSCollector, abc.ABC):
     :ref:`non-python tests`.
     """
 
+    __module__ = "pytest"
+
 
 class Directory(FSCollector, abc.ABC):
     """Base class for collecting files from a directory.
@@ -651,12 +655,16 @@ class Directory(FSCollector, abc.ABC):
     :ref:`custom directory collectors`.
     """
 
+    __module__ = "pytest"
+
 
 class Item(Node, abc.ABC):
     """Base class of all test invocation items.
 
     Note that for a single function there might be multiple test invocation items.
     """
+
+    __module__ = "pytest"
 
     nextitem = None
 

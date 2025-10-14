@@ -546,6 +546,8 @@ class MarkGenerator:
     applies a 'slowtest' :class:`Mark` on ``test_function``.
     """
 
+    __module__ = "pytest"
+
     # See TYPE_CHECKING above.
     if TYPE_CHECKING:
         skip: _SkipMarkDecorator

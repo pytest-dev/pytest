@@ -249,6 +249,8 @@ def _get_runner(
 
 
 class DoctestItem(Item):
+    __module__ = "pytest"
+
     def __init__(
         self,
         name: str,

@@ -406,7 +406,7 @@ The :fixture:`recwarn` fixture will record warnings for the whole function:
         assert w.lineno
 
 Both the :fixture:`recwarn` fixture and the :func:`pytest.warns` context manager return the same interface for recorded
-warnings: a :class:`~_pytest.recwarn.WarningsRecorder` instance. To view the recorded warnings, you can
+warnings: a :class:`~pytest.WarningsRecorder` instance. To view the recorded warnings, you can
 iterate over this instance, call ``len`` on it to get the number of recorded
 warnings, or index into it to get a particular recorded warning.
 

@@ -404,6 +404,8 @@ class LogCaptureHandler(logging_StreamHandler):
 class LogCaptureFixture:
     """Provides access and control of log capturing."""
 
+    __module__ = "pytest"
+
     def __init__(self, item: nodes.Node, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
         self._item = item

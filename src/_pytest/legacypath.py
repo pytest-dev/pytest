@@ -47,6 +47,8 @@ class Testdir:
     to `legacy_path` objects as necessary.
     """
 
+    __module__ = "pytest"
+
     __test__ = False
 
     CLOSE_STDIN: Final = Pytester.CLOSE_STDIN

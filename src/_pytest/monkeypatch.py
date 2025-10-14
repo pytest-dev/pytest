@@ -129,6 +129,8 @@ class MonkeyPatch:
         :meth:`undo` explicitly.
     """
 
+    __module__ = "pytest"
+
     def __init__(self) -> None:
         self._setattr: list[tuple[object, str, object]] = []
         self._setitem: list[tuple[Mapping[Any, Any], object, object]] = []

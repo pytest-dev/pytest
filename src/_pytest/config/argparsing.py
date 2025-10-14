@@ -36,6 +36,8 @@ class Parser:
         there's an error processing the command line arguments.
     """
 
+    __module__ = "pytest"
+
     prog: str | None = None
 
     def __init__(
@@ -369,6 +371,8 @@ class Argument:
 
 class OptionGroup:
     """A group of options shown in its own section."""
+
+    __module__ = "pytest"
 
     def __init__(
         self,

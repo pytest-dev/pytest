@@ -32,7 +32,7 @@ T = TypeVar("T")
 
 @fixture
 def recwarn() -> Generator[WarningsRecorder]:
-    """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
+    """Return a :class:`~pytest.WarningsRecorder` instance that records all warnings emitted by test functions.
 
     See :ref:`warnings` for information on warning categories.
     """
@@ -179,6 +179,8 @@ class WarningsRecorder(warnings.catch_warnings):
         differently; see :ref:`ensuring_function_triggers`.
 
     """
+
+    __module__ = "pytest"
 
     def __init__(self, *, _ispytest: bool = False) -> None:
         check_ispytest(_ispytest)
