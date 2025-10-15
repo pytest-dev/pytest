@@ -1,21 +1,18 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-from contextlib import contextmanager
 import decimal
+import operator
+import re
+from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
-from math import inf
-from math import nan
-from math import sqrt
-import operator
-from operator import eq
-from operator import ne
-import re
+from math import inf, nan, sqrt
+from operator import eq, ne
 
+import pytest
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
-import pytest
 from pytest import approx
 
 
