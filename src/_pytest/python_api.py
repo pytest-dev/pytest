@@ -242,6 +242,12 @@ class ApproxMapping(ApproxBase):
                 f"Lengths: {len(self.expected)} and {len(other_side)}",
             ]
 
+        if set(self.expected.keys()) != set(other_side.keys()):
+            return [
+                "comparison failed.",
+                f"Mappings has different keys: expected {self.expected.keys()} but got {other_side.keys()}",
+            ]
+
         approx_side_as_map = {
             k: self._approx_scalar(v) for k, v in self.expected.items()
         }
