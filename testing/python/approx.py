@@ -1059,6 +1059,17 @@ class TestApprox:
         ):
             assert actual == approx(expected)
 
+    def test_approx_on_unordered_mapping_with_mismatch(self) -> None:
+        """https://github.com/pytest-dev/pytest/pull/12445"""
+        expected = {"a": 1, "c": 3}
+        actual = {"c": 5, "a": 1}
+
+        with pytest.raises(
+            AssertionError,
+            match="Mismatched elements: 1 / 2:\n  Max absolute difference: 2\n",
+        ):
+            assert expected == approx(actual)
+
 
 class MyVec3:  # incomplete
     """sequence like"""
