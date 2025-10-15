@@ -1051,8 +1051,8 @@ class TestApprox:
 
     def test_approx_dicts_with_mismatch_on_keys(self) -> None:
         """https://github.com/pytest-dev/pytest/issues/13816"""
-        expected = {"a": 1, "c": 3}
-        actual = {"a": 1, "b": 3}
+        expected = {"a": 1, "b": 3}
+        actual = {"a": 1, "c": 3}
 
         with pytest.raises(
             AssertionError,
@@ -1061,7 +1061,7 @@ class TestApprox:
                 "expected dict_keys(['a', 'b']) but got dict_keys(['a', 'c'])"
             ),
         ):
-            assert expected == approx(actual)
+            assert actual == approx(expected)
 
 
 class MyVec3:  # incomplete
