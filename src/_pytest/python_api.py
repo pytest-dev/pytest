@@ -242,6 +242,17 @@ class ApproxMapping(ApproxBase):
                 f"Lengths: {len(self.expected)} and {len(other_side)}",
             ]
 
+        # Check if keys match
+        expected_keys = set(self.expected.keys())
+        other_keys = set(other_side.keys())
+        if expected_keys != other_keys:
+            expected_only = expected_keys - other_keys
+            other_only = other_keys - expected_keys
+            msg = ["Dictionaries have different keys."]
+            if expected_only or other_only:
+                msg.append(f"Expected keys: {sorted(expected_keys)}, Actual keys: {sorted(other_keys)}")
+            return msg
+
         approx_side_as_map = {
             k: self._approx_scalar(v) for k, v in self.expected.items()
         }
