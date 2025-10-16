@@ -250,7 +250,9 @@ class ApproxMapping(ApproxBase):
             other_only = other_keys - expected_keys
             msg = ["Dictionaries have different keys."]
             if expected_only or other_only:
-                msg.append(f"Expected keys: {sorted(expected_keys)}, Actual keys: {sorted(other_keys)}")
+                msg.append(
+                    f"Expected keys: {sorted(expected_keys)}, Actual keys: {sorted(other_keys)}"
+                )
             return msg
 
         approx_side_as_map = {
