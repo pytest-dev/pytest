@@ -1,6 +1,4 @@
-"""
-Test case for issue #13817: AttributeError with invalid flag in pytest_addoption
-"""
+"""Test case for issue #13817: AttributeError with invalid flag in pytest_addoption."""
 
 from __future__ import annotations
 
