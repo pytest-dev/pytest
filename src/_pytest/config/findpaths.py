@@ -5,6 +5,7 @@ from collections.abc import Sequence
 import os
 from pathlib import Path
 import sys
+import tempfile
 from typing import TypeAlias
 
 import iniconfig
@@ -184,6 +185,27 @@ def get_dirs_from_args(args: Iterable[str]) -> list[Path]:
 CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
 
 
+def _is_system_temp_or_parent(path: Path) -> bool:
+    """Check if path is the system temp directory.
+
+    This prevents pytest from treating /tmp as a valid rootdir when
+    a /tmp/setup.py file exists on the system.
+
+    Args:
+        path: The path to check
+
+    Returns:
+        True if path is the system temp directory, False otherwise
+    """
+    try:
+        system_temp = Path(tempfile.gettempdir()).resolve()
+        path = path.resolve()
+        # Skip exact matches with the system temp directory
+        return path == system_temp
+    except (OSError, RuntimeError):
+        # If we can't resolve paths, play it safe and don't skip
+        return False
+
 def determine_setup(
     *,
     inifile: str | None,
@@ -220,6 +242,9 @@ def determine_setup(
         )
         if rootdir is None and rootdir_cmd_arg is None:
             for possible_rootdir in (ancestor, *ancestor.parents):
+                # Skip system temp directories to avoid false positives (issue #13822)
+                if _is_system_temp_or_parent(possible_rootdir):
+                    continue
                 if (possible_rootdir / "setup.py").is_file():
                     rootdir = possible_rootdir
                     break
