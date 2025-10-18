@@ -35,7 +35,6 @@ from _pytest.python import Function
 from _pytest.python import Module
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
-from _pytest.subtests import make_call_info
 from _pytest.subtests import SubtestContext
 from _pytest.subtests import SubtestReport
 
@@ -419,17 +418,21 @@ class TestCaseFunction(Function):
             case unreachable:
                 assert_never(unreachable)
 
-        call_info = make_call_info(
+        call_info = CallInfo[None](
+            None,
             exception_info,
             start=0,
             stop=0,
             duration=0,
             when="call",
+            _ispytest=True,
         )
         msg = test._message if isinstance(test._message, str) else None  # type: ignore[attr-defined]
         report = self.ihook.pytest_runtest_makereport(item=self, call=call_info)
-        sub_report = SubtestReport._from_test_report(report)
-        sub_report.context = SubtestContext(msg=msg, kwargs=dict(test.params))  # type: ignore[attr-defined]
+        sub_report = SubtestReport._from_test_report(
+            report,
+            SubtestContext(msg=msg, kwargs=dict(test.params)),  # type: ignore[attr-defined]
+        )
         self.ihook.pytest_runtest_logreport(report=sub_report)
         if check_interactive_exception(call_info, sub_report):
             self.ihook.pytest_exception_interact(

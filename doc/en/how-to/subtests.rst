@@ -16,13 +16,15 @@ Subtests are an alternative to parametrization, particularly useful when the exa
 
 .. code-block:: python
 
-    # content of test_subtest.py
+    def contains_docstring(p: Path) -> bool:
+        """Return True if the given Python file contains a top-level docstring."""
+        ...
 
 
-    def test(subtests):
-        for i in range(5):
-            with subtests.test(msg="custom message", i=i):
-                assert i % 2 == 0
+    def test_py_files_contain_docstring(subtests: pytest.Subtests) -> None:
+        for path in Path.cwd().glob("*.py"):
+            with subtests.test(path=str(path)):
+                assert contains_docstring(path)
 
 Each assertion failure or error is caught by the context manager and reported individually:
 
@@ -38,13 +40,13 @@ outside the ``subtests.test`` block:
 
     def test(subtests):
         for i in range(5):
-            with subtests.test(msg="stage 1", i=i):
+            with subtests.test("stage 1", i=i):
                 assert i % 2 == 0
 
         assert func() == 10
 
         for i in range(10, 20):
-            with subtests.test(msg="stage 2", i=i):
+            with subtests.test("stage 2", i=i):
                 assert i % 2 == 0
 
 .. note::

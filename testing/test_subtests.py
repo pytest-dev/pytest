@@ -220,7 +220,7 @@ def test_subtests_and_parametrization(pytester: pytest.Pytester) -> None:
         @pytest.mark.parametrize("x", [0, 1])
         def test_foo(subtests, x):
             for i in range(3):
-                with subtests.test(msg="custom", i=i):
+                with subtests.test("custom", i=i):
                     assert i % 2 == 0
             assert x == 0
     """

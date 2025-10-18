@@ -6,13 +6,18 @@
 
 .. code-block:: python
 
-    def test(subtests):
-        for i in range(5):
-            with subtests.test(msg="custom message", i=i):
-                assert i % 2 == 0
+    def contains_docstring(p: Path) -> bool:
+        """Return True if the given Python file contains a top-level docstring."""
+        ...
 
 
-Each assert failure or error is caught by the context manager and reported individually.
+    def test_py_files_contain_docstring(subtests: pytest.Subtests) -> None:
+        for path in Path.cwd().glob("*.py"):
+            with subtests.test(path=str(path)):
+                assert contains_docstring(path)
+
+
+Each assert failure or error is caught by the context manager and reported individually, giving a clear picture of all files that are missing a docstring.
 
 In addition, :meth:`unittest.TestCase.subTest` is now also supported.
 
