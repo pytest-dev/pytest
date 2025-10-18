@@ -1,12 +1,12 @@
 """
 Test case for issue #13817: AttributeError with invalid flag in pytest_addoption
 """
-
 from __future__ import annotations
+
+import pytest
 
 from _pytest.config.argparsing import ArgumentError
 from _pytest.config.argparsing import Parser
-import pytest
 
 
 # Suppress warning about using private pytest API (we're testing pytest itself)
@@ -14,7 +14,7 @@ import pytest
 class TestArgumentReprFix:
     """Test that Argument.__repr__ handles missing dest attribute."""
 
-    def test_invalid_option_without_dashes(self):
+    def test_invalid_option_without_dashes(self) -> None:
         """Test that invalid option names produce helpful error messages."""
         parser = Parser()
 
@@ -30,7 +30,7 @@ class TestArgumentReprFix:
         assert "AttributeError" not in error_message
         assert "has no attribute 'dest'" not in error_message
 
-    def test_invalid_short_option(self):
+    def test_invalid_short_option(self) -> None:
         """Test that invalid short option names produce helpful error messages."""
         parser = Parser()
 
@@ -44,7 +44,7 @@ class TestArgumentReprFix:
             or "invalid short option string" in error_message
         )
 
-    def test_valid_option_works(self):
+    def test_valid_option_works(self) -> None:
         """Test that valid options still work correctly."""
         parser = Parser()
         parser.addoption("--shuffle", action="store_true", help="Shuffle tests")
