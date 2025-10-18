@@ -73,7 +73,6 @@ jobs:
             python: "3.10"
             os: ubuntu-latest
             tox_env: "py310"
-            use_coverage: true
 
           - name: "macos-py310"
             python: "3.10"
@@ -107,27 +106,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install tox coverage
 
-    - name: Test without coverage
-      if: "! matrix.use_coverage"
+    - name: Test
       shell: bash
       run: tox -c tox-uv.ini run -e ${{ matrix.tox_env }} --installpkg `find dist/*.tar.gz`
-
-    - name: Test with coverage
-      if: "matrix.use_coverage"
-      shell: bash
-      run: tox -c tox-uv.ini run -e ${{ matrix.tox_env }}-coverage --installpkg `find dist/*.tar.gz`
-
-    - name: Generate coverage report
-      if: "matrix.use_coverage"
-      run: python -m coverage xml
-
-    - name: Upload coverage to Codecov
-      if: "matrix.use_coverage"
-      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
-      with:
-        fail_ci_if_error: false
-        files: ./coverage.xml
-        verbose: true
 
   check:  # This job does nothing and is only used for the branch protection
     if: always()
