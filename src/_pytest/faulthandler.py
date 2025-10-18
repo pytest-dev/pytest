@@ -16,11 +16,18 @@ fault_handler_stderr_fd_key = StashKey[int]()
 
 
 def pytest_addoption(parser: Parser) -> None:
-    help = (
+    help_timeout = (
         "Dump the traceback of all threads if a test takes "
         "more than TIMEOUT seconds to finish"
     )
-    parser.addini("faulthandler_timeout", help, default=0.0)
+    help_exit_on_timeout = (
+        "Exit the test process if a test takes more than "
+        "faulthandler_timeout seconds to finish"
+    )
+    parser.addini("faulthandler_timeout", help_timeout, default=0.0)
+    parser.addini(
+        "faulthandler_exit_on_timeout", help_exit_on_timeout, type="bool", default=False
+    )
 
 
 def pytest_configure(config: Config) -> None:
@@ -72,14 +79,21 @@ def get_timeout_config_value(config: Config) -> float:
     return float(config.getini("faulthandler_timeout") or 0.0)
 
 
+def get_exit_on_timeout_config_value(config: Config) -> bool:
+    exit_on_timeout = config.getini("faulthandler_exit_on_timeout")
+    assert isinstance(exit_on_timeout, bool)
+    return exit_on_timeout
+
+
 @pytest.hookimpl(wrapper=True, trylast=True)
 def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
     timeout = get_timeout_config_value(item.config)
+    exit_on_timeout = get_exit_on_timeout_config_value(item.config)
     if timeout > 0:
         import faulthandler
 
         stderr = item.config.stash[fault_handler_stderr_fd_key]
-        faulthandler.dump_traceback_later(timeout, file=stderr)
+        faulthandler.dump_traceback_later(timeout, file=stderr, exit=exit_on_timeout)
         try:
             return (yield)
         finally:

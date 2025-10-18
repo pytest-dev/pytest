@@ -140,28 +140,28 @@ def pytest_cmdline_parse() -> Generator[None, Config, Config]:
     return config
 
 
-def showversion(config: Config) -> None:
-    if config.option.version > 1:
-        sys.stdout.write(
-            f"This is pytest version {pytest.__version__}, imported from {pytest.__file__}\n"
-        )
-        plugininfo = getpluginversioninfo(config)
-        if plugininfo:
-            for line in plugininfo:
-                sys.stdout.write(line + "\n")
-    else:
-        sys.stdout.write(f"pytest {pytest.__version__}\n")
+def show_version_verbose(config: Config) -> None:
+    """Show verbose pytest version installation, including plugins."""
+    sys.stdout.write(
+        f"This is pytest version {pytest.__version__}, imported from {pytest.__file__}\n"
+    )
+    plugininfo = getpluginversioninfo(config)
+    if plugininfo:
+        for line in plugininfo:
+            sys.stdout.write(line + "\n")
 
 
 def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
-    if config.option.version > 0:
-        showversion(config)
-        return 0
+    # Note: a single `--version` argument is handled directly by `Config.main()` to avoid starting up the entire
+    # pytest infrastructure just to display the version (#13574).
+    if config.option.version > 1:
+        show_version_verbose(config)
+        return ExitCode.OK
     elif config.option.help:
         config._do_configure()
         showhelp(config)
         config._ensure_unconfigure()
-        return 0
+        return ExitCode.OK
     return None
 
 

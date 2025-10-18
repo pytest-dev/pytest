@@ -7,8 +7,7 @@ from pathlib import Path
 import re
 import sys
 import textwrap
-
-import setuptools
+import warnings
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -430,14 +429,16 @@ def test_context_classmethod() -> None:
     assert A.x == 1
 
 
-@pytest.mark.filterwarnings(r"ignore:.*\bpkg_resources\b:DeprecationWarning")
-@pytest.mark.skipif(
-    int(setuptools.__version__.split(".")[0]) >= 80,
-    reason="modern setuptools removing pkg_resources",
+@pytest.mark.filterwarnings(
+    r"ignore:.*\bpkg_resources\b:DeprecationWarning",
+    r"ignore:.*\bpkg_resources\b:UserWarning",
 )
 def test_syspath_prepend_with_namespace_packages(
     pytester: Pytester, monkeypatch: MonkeyPatch
 ) -> None:
+    # Needs to be in sys.modules.
+    pytest.importorskip("pkg_resources")
+
     for dirname in "hello", "world":
         d = pytester.mkdir(dirname)
         ns = d.joinpath("ns_pkg")
@@ -451,7 +452,9 @@ def test_syspath_prepend_with_namespace_packages(
             f"def check(): return {dirname!r}", encoding="utf-8"
         )
 
+    # First call should not warn - namespace package not registered yet.
     monkeypatch.syspath_prepend("hello")
+    # This registers ns_pkg as a namespace package.
     import ns_pkg.hello
 
     assert ns_pkg.hello.check() == "hello"
@@ -460,13 +463,19 @@ def test_syspath_prepend_with_namespace_packages(
         import ns_pkg.world
 
     # Prepending should call fixup_namespace_packages.
-    monkeypatch.syspath_prepend("world")
+    # This call should warn - ns_pkg is now registered and "world" contains it
+    with pytest.warns(pytest.PytestRemovedIn10Warning, match="legacy namespace"):
+        monkeypatch.syspath_prepend("world")
     import ns_pkg.world
 
     assert ns_pkg.world.check() == "world"
 
     # Should invalidate caches via importlib.invalidate_caches.
+    # Should not warn for path without namespace packages.
     modules_tmpdir = pytester.mkdir("modules_tmpdir")
-    monkeypatch.syspath_prepend(str(modules_tmpdir))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        monkeypatch.syspath_prepend(str(modules_tmpdir))
+
     modules_tmpdir.joinpath("main_app.py").write_text("app = True", encoding="utf-8")
     from main_app import app  # noqa: F401
