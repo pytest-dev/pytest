@@ -1,0 +1,144 @@
+name: test uv
+
+on:
+  push:
+    branches:
+      - main
+      - "[0-9]+.[0-9]+.x"
+      - "test-me-*"
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
+
+  pull_request:
+    branches:
+      - main
+      - "[0-9]+.[0-9]+.x"
+    types:
+    - opened  # default
+    - synchronize  # default
+    - reopened  # default
+    - ready_for_review  # used in PRs created from the release workflow
+
+  workflow_dispatch:  # allows manual triggering of the workflow
+
+env:
+  PYTEST_ADDOPTS: "--color=yes"
+
+# Cancel running jobs for the same workflow and branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Set permissions at the job level.
+permissions: {}
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Build and Check Package
+      uses: hynek/build-and-inspect-python-package@efb823f52190ad02594531168b7a2d5790e66516
+
+  build:
+    needs: [package]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [
+          "windows-py310",
+
+          "ubuntu-py310",
+
+          "macos-py310",
+        ]
+
+        include:
+          - name: "windows-py310"
+            python: "3.10"
+            os: windows-latest
+            tox_env: "py310"
+
+          - name: "ubuntu-py310"
+            python: "3.10"
+            os: ubuntu-latest
+            tox_env: "py310"
+            use_coverage: true
+
+          - name: "macos-py310"
+            python: "3.10"
+            os: macos-latest
+            tox_env: "py310"
+            xfail: true
+
+    continue-on-error: ${{ matrix.xfail && true || false }}
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Download Package
+      uses: actions/download-artifact@v5
+      with:
+        name: Packages
+        path: dist
+
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python }}
+        check-latest: true
+        allow-prereleases: true
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox coverage
+
+    - name: Test without coverage
+      if: "! matrix.use_coverage"
+      shell: bash
+      run: tox -c tox-uv.ini run -e ${{ matrix.tox_env }} --installpkg `find dist/*.tar.gz`
+
+    - name: Test with coverage
+      if: "matrix.use_coverage"
+      shell: bash
+      run: tox -c tox-uv.ini run -e ${{ matrix.tox_env }}-coverage --installpkg `find dist/*.tar.gz`
+
+    - name: Generate coverage report
+      if: "matrix.use_coverage"
+      run: python -m coverage xml
+
+    - name: Upload coverage to Codecov
+      if: "matrix.use_coverage"
+      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
+      with:
+        fail_ci_if_error: false
+        files: ./coverage.xml
+        verbose: true
+
+  check:  # This job does nothing and is only used for the branch protection
+    if: always()
+
+    needs:
+    - build
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@2765efec08f0fd63e83ad900f5fd75646be69ff6
+      with:
+        jobs: ${{ toJSON(needs) }}
