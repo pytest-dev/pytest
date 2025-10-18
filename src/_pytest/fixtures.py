@@ -1782,9 +1782,19 @@ class FixtureManager:
             return None
 
         current = obj
-        seen = {id(current)}  # Track objects to detect loops
+        seen = set()  # Track object IDs to detect loops
+        max_depth = 100  # Prevent infinite loops even if ID tracking fails
 
-        while current is not None:
+        for _ in range(max_depth):
+            if current is None:
+                break
+
+            # Check for wrapper loops by object identity
+            current_id = id(current)
+            if current_id in seen:
+                return None
+            seen.add(current_id)
+
             # Check if current is a FixtureFunctionDefinition
             # Use try/except to handle objects with problematic __class__ properties
             try:
@@ -1794,16 +1804,12 @@ class FixtureManager:
                 # Can't check isinstance - probably a proxy object
                 return None
 
-            # Try to get the next wrapped object
+            # Try to get the next wrapped object using safe_getattr to handle
+            # "evil objects" that raise on attribute access (see issue #214)
             wrapped = safe_getattr(current, "__wrapped__", None)
             if wrapped is None:
                 break
 
-            # Check for wrapper loops (like in mock.call)
-            if id(wrapped) in seen:
-                return None
-
-            seen.add(id(wrapped))
             current = wrapped
 
         return None
