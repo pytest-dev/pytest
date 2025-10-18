@@ -1,12 +1,12 @@
 """
 Test case for issue #13817: AttributeError with invalid flag in pytest_addoption
 """
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from _pytest.config.argparsing import ArgumentError
 from _pytest.config.argparsing import Parser
+import pytest
 
 
 # Suppress warning about using private pytest API (we're testing pytest itself)
