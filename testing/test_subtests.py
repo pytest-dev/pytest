@@ -43,7 +43,8 @@ class TestFixture:
         expected_lines += [
             "* test_foo [[]custom[]] (i=1) *",
             "* test_foo [[]custom[]] (i=3) *",
-            "* 2 failed, 1 passed, 3 subtests passed in *",
+            "Contains 2 failed subtests",
+            "* 3 failed, 3 subtests passed in *",
         ]
         result.stdout.fnmatch_lines(expected_lines)
 
@@ -57,12 +58,12 @@ class TestFixture:
             result = pytester.runpytest("-v")
             expected_lines = [
                 "*collected 1 item",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=0) SUBPASS *100%*",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=1) SUBFAIL *100%*",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=2) SUBPASS *100%*",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=3) SUBFAIL *100%*",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=4) SUBPASS *100%*",
-                "test_simple_terminal_verbose.py::test_foo PASSED *100%*",
+                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=0) SUBPASSED *100%*",
+                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=1) SUBFAILED *100%*",
+                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=2) SUBPASSED *100%*",
+                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=3) SUBFAILED *100%*",
+                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=4) SUBPASSED *100%*",
+                "test_simple_terminal_verbose.py::test_foo FAILED *100%*",
             ]
         else:
             assert mode == "xdist"
@@ -81,7 +82,7 @@ class TestFixture:
         expected_lines += [
             "* test_foo [[]custom[]] (i=1) *",
             "* test_foo [[]custom[]] (i=3) *",
-            "* 2 failed, 1 passed, 3 subtests passed in *",
+            "* 3 failed, 3 subtests passed in *",
         ]
         result.stdout.fnmatch_lines(expected_lines)
 
@@ -173,7 +174,7 @@ class TestFixture:
         result.stdout.fnmatch_lines(
             [
                 "*collected 1 item*",
-                "test_no_subtests_reports.py::test_foo * (i=0) SUBPASS*",
+                "test_no_subtests_reports.py::test_foo * (i=0) SUBPASSED*",
                 "*test_no_subtests_reports.py::test_foo PASSED*",
                 "* 1 passed, 5 subtests passed in*",
             ]
@@ -188,7 +189,7 @@ class TestFixture:
                 "* 1 passed in*",
             ]
         )
-        result.stdout.no_fnmatch_line("*SUBPASS*")
+        result.stdout.no_fnmatch_line("*SUBPASSED*")
 
         # Rewrite the test file so the tests fail. Even with the flag, failed subtests are still reported.
         pytester.makepyfile(
@@ -205,9 +206,9 @@ class TestFixture:
         result.stdout.fnmatch_lines(
             [
                 "*collected 1 item*",
-                "test_no_subtests_reports.py::test_foo * (i=0) SUBFAIL*",
-                "*test_no_subtests_reports.py::test_foo PASSED*",
-                "* 5 failed, 1 passed in*",
+                "test_no_subtests_reports.py::test_foo * (i=0) SUBFAILED*",
+                "*test_no_subtests_reports.py::test_foo FAILED*",
+                "* 6 failed in*",
             ]
         )
 
@@ -228,11 +229,80 @@ def test_subtests_and_parametrization(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("-v", "--no-subtests-reports")
     result.stdout.fnmatch_lines(
         [
-            "test_subtests_and_parametrization.py::test_foo[[]0[]] [[]custom[]] (i=1) SUBFAIL*[[] 50%[]]",
-            "test_subtests_and_parametrization.py::test_foo[[]0[]] PASSED              *[[] 50%[]]",
-            "test_subtests_and_parametrization.py::test_foo[[]1[]] [[]custom[]] (i=1) SUBFAIL *[[]100%[]]",
+            "test_subtests_and_parametrization.py::test_foo[[]0[]] [[]custom[]] (i=1) SUBFAILED*[[] 50%[]]",
+            "test_subtests_and_parametrization.py::test_foo[[]0[]] FAILED              *[[] 50%[]]",
+            "test_subtests_and_parametrization.py::test_foo[[]1[]] [[]custom[]] (i=1) SUBFAILED *[[]100%[]]",
             "test_subtests_and_parametrization.py::test_foo[[]1[]] FAILED              *[[]100%[]]",
-            "* 3 failed, 1 passed in *",
+            "Contains 1 failed subtest",
+            "* 4 failed in *",
+        ]
+    )
+
+
+def test_subtests_fail_top_level_test(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test_foo(subtests):
+            for i in range(3):
+                with subtests.test("custom", i=i):
+                    assert i % 2 == 0
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "* 2 failed, 2 subtests passed in *",
+        ]
+    )
+
+
+def test_subtests_do_not_overwrite_top_level_failure(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test_foo(subtests):
+            for i in range(3):
+                with subtests.test("custom", i=i):
+                    assert i % 2 == 0
+            assert False, "top-level failure"
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*AssertionError: top-level failure",
+            "* 2 failed, 2 subtests passed in *",
+        ]
+    )
+
+
+@pytest.mark.parametrize("flag", ["--last-failed", "--stepwise"])
+def test_subtests_last_failed_step_wise(pytester: pytest.Pytester, flag: str) -> None:
+    """Check that --last-failed and --step-wise correctly rerun tests with failed subtests."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test_foo(subtests):
+            for i in range(3):
+                with subtests.test("custom", i=i):
+                    assert i % 2 == 0
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "* 2 failed, 2 subtests passed in *",
+        ]
+    )
+
+    result = pytester.runpytest("-v", flag)
+    result.stdout.fnmatch_lines(
+        [
+            "* 2 failed, 2 subtests passed in *",
         ]
     )
 
@@ -324,8 +394,8 @@ class TestUnittestSubTest:
                 result = pytester.runpytest(simple_script, "-v")
                 expected_lines = [
                     "*collected 1 item",
-                    "test_simple_terminal_verbose.py::T::test_foo [[]custom[]] (i=1) SUBFAIL *100%*",
-                    "test_simple_terminal_verbose.py::T::test_foo [[]custom[]] (i=3) SUBFAIL *100%*",
+                    "test_simple_terminal_verbose.py::T::test_foo [[]custom[]] (i=1) SUBFAILED *100%*",
+                    "test_simple_terminal_verbose.py::T::test_foo [[]custom[]] (i=3) SUBFAILED *100%*",
                     "test_simple_terminal_verbose.py::T::test_foo PASSED *100%*",
                 ]
             else:
@@ -336,8 +406,8 @@ class TestUnittestSubTest:
                 )
                 expected_lines = [
                     "1 worker [1 item]",
-                    "*gw0*100%* SUBFAIL test_simple_terminal_verbose.py::T::test_foo*",
-                    "*gw0*100%* SUBFAIL test_simple_terminal_verbose.py::T::test_foo*",
+                    "*gw0*100%* SUBFAILED test_simple_terminal_verbose.py::T::test_foo*",
+                    "*gw0*100%* SUBFAILED test_simple_terminal_verbose.py::T::test_foo*",
                     "*gw0*100%* PASSED test_simple_terminal_verbose.py::T::test_foo*",
                 ]
             result.stdout.fnmatch_lines(
@@ -493,18 +563,18 @@ class TestUnittestSubTest:
             result = pytester.runpytest(p, "-v", "-rsf")
             result.stdout.re_match_lines(
                 [
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=0\) SUBSKIP"
+                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=0\) SUBSKIPPED"
                     r" \(skip subtest i=0\) .*",
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=3\) SUBSKIP"
+                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=3\) SUBSKIPPED"
                     r" \(skip subtest i=3\) .*",
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=4\) SUBFAIL .*",
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=9\) SUBFAIL .*",
+                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=4\) SUBFAILED .*",
+                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=9\) SUBFAILED .*",
                     "test_skip_with_failure.py::T::test_foo PASSED .*",
-                    r"[custom message] (i=0) SUBSKIP [1] test_skip_with_failure.py:5: skip subtest i=0",
-                    r"[custom message] (i=0) SUBSKIP [1] test_skip_with_failure.py:5: skip subtest i=3",
-                    r"[custom message] (i=4) SUBFAIL test_skip_with_failure.py::T::test_foo"
+                    r"[custom message] (i=0) SUBSKIPPED [1] test_skip_with_failure.py:5: skip subtest i=0",
+                    r"[custom message] (i=0) SUBSKIPPED [1] test_skip_with_failure.py:5: skip subtest i=3",
+                    r"[custom message] (i=4) SUBFAILED test_skip_with_failure.py::T::test_foo"
                     r" - AssertionError: assert 4 < 4",
-                    r"[custom message] (i=9) SUBFAIL test_skip_with_failure.py::T::test_foo"
+                    r"[custom message] (i=9) SUBFAILED test_skip_with_failure.py::T::test_foo"
                     r" - AssertionError: assert 9 < 4",
                     r".* 6 failed, 1 passed, 4 skipped in .*",
                 ]
@@ -567,13 +637,13 @@ class TestUnittestSubTest:
             # The `(i=0)` is not correct but it's given by pytest `TerminalReporter` without `--no-fold-skipped`
             result.stdout.re_match_lines(
                 [
-                    r"test_skip_with_failure_and_non_subskip.py::T::test_foo \[custom message\] \(i=4\) SUBFAIL .*",
+                    r"test_skip_with_failure_and_non_subskip.py::T::test_foo \[custom message\] \(i=4\) SUBFAILED .*",
                     r"test_skip_with_failure_and_non_subskip.py::T::test_foo SKIPPED \(skip the test\)",
-                    r"\[custom message\] \(i=0\) SUBSKIP \[1\] test_skip_with_failure_and_non_subskip.py:5:"
+                    r"\[custom message\] \(i=0\) SUBSKIPPED \[1\] test_skip_with_failure_and_non_subskip.py:5:"
                     r" skip subtest i=3",
-                    r"\[custom message\] \(i=0\) SUBSKIP \[1\] test_skip_with_failure_and_non_subskip.py:5:"
+                    r"\[custom message\] \(i=0\) SUBSKIPPED \[1\] test_skip_with_failure_and_non_subskip.py:5:"
                     r" skip the test",
-                    r"\[custom message\] \(i=4\) SUBFAIL test_skip_with_failure_and_non_subskip.py::T::test_foo",
+                    r"\[custom message\] \(i=4\) SUBFAILED test_skip_with_failure_and_non_subskip.py::T::test_foo",
                     r".* 6 failed, 5 skipped in .*",
                 ]
             )
@@ -582,12 +652,12 @@ class TestUnittestSubTest:
                 result = pytester.runpytest(p, "-v", "--no-fold-skipped", "-rsf")
                 result.stdout.re_match_lines(
                     [
-                        r"test_skip_with_failure_and_non_subskip.py::T::test_foo \[custom message\] \(i=4\) SUBFAIL .*",
+                        r"test_skip_with_failure_and_non_subskip.py::T::test_foo \[custom message\] \(i=4\) SUBFAILED .*",  # noqa: E501
                         r"test_skip_with_failure_and_non_subskip.py::T::test_foo SKIPPED \(skip the test\).*",
-                        r"\[custom message\] \(i=3\) SUBSKIP test_skip_with_failure_and_non_subskip.py::T::test_foo"
+                        r"\[custom message\] \(i=3\) SUBSKIPPED test_skip_with_failure_and_non_subskip.py::T::test_foo"
                         r" - Skipped: skip subtest i=3",
                         r"SKIPPED test_skip_with_failure_and_non_subskip.py::T::test_foo - Skipped: skip the test",
-                        r"\[custom message\] \(i=4\) SUBFAIL test_skip_with_failure_and_non_subskip.py::T::test_foo",
+                        r"\[custom message\] \(i=4\) SUBFAILED test_skip_with_failure_and_non_subskip.py::T::test_foo",
                         r".* 6 failed, 5 skipped in .*",
                     ]
                 )
@@ -768,7 +838,7 @@ class TestLogging:
         result = pytester.runpytest("-p no:logging")
         result.stdout.fnmatch_lines(
             [
-                "*1 passed*",
+                "*2 failed, 1 subtests passed in*",
             ]
         )
         result.stdout.no_fnmatch_line("*root:test_no_logging.py*log line*")
@@ -856,7 +926,7 @@ def test_exitfirst(pytester: pytest.Pytester) -> None:
     assert result.parseoutcomes()["failed"] == 2
     result.stdout.fnmatch_lines(
         [
-            "*[[]sub1[]] SUBFAIL test_exitfirst.py::test_foo - assert False*",
+            "*[[]sub1[]] SUBFAILED test_exitfirst.py::test_foo - assert False*",
             "FAILED test_exitfirst.py::test_foo - assert False",
             "* stopping after 2 failures*",
         ],
