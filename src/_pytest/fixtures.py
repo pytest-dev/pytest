@@ -1767,24 +1767,63 @@ class FixtureManager:
         if autouse:
             self._nodeid_autousenames.setdefault(nodeid or "", []).append(name)
 
+    def _find_wrapped_fixture_def(
+        self, obj: object
+    ) -> FixtureFunctionDefinition | None:
+        """Walk through wrapper chain to find a FixtureFunctionDefinition.
+
+        Returns the FixtureFunctionDefinition if found in the wrapper chain,
+        None otherwise. Handles loops and special objects safely.
+        """
+        from _pytest.compat import safe_getattr
+
+        # Skip mock objects (they have _mock_name attribute)
+        if safe_getattr(obj, "_mock_name", None) is not None:
+            return None
+
+        current = obj
+        seen = {id(current)}  # Track objects to detect loops
+
+        while current is not None:
+            # Check if current is a FixtureFunctionDefinition
+            # Use try/except to handle objects with problematic __class__ properties
+            try:
+                if isinstance(current, FixtureFunctionDefinition):
+                    return current
+            except Exception:
+                # Can't check isinstance - probably a proxy object
+                return None
+
+            # Try to get the next wrapped object
+            wrapped = safe_getattr(current, "__wrapped__", None)
+            if wrapped is None:
+                break
+
+            # Check for wrapper loops (like in mock.call)
+            if id(wrapped) in seen:
+                return None
+
+            seen.add(id(wrapped))
+            current = wrapped
+
+        return None
+
     def _check_for_wrapped_fixture(
         self, holder: object, name: str, obj: object, nodeid: str | None
     ) -> None:
         """Check if an object might be a fixture wrapped in decorators and warn if so."""
-        # Only check objects that are not None and not already FixtureFunctionDefinition
+        # Only check objects that are not None
         if obj is None:
             return
-        try:
-            maybe_def = get_real_func(obj)
-        except Exception:
-            warnings.warn(
-                f"could not get real function for fixture {name} on {holder}",
-                stacklevel=2,
-            )
-        else:
-            if isinstance(maybe_def, FixtureFunctionDefinition):
-                fixture_func = maybe_def._get_wrapped_function()
-                self._issue_fixture_wrapped_warning(name, nodeid, fixture_func)
+
+        # Try to find a FixtureFunctionDefinition in the wrapper chain
+        fixture_def = self._find_wrapped_fixture_def(obj)
+
+        # If we found a fixture definition and it's not the top-level object,
+        # it means the fixture is wrapped in decorators
+        if fixture_def is not None and fixture_def is not obj:
+            fixture_func = fixture_def._get_wrapped_function()
+            self._issue_fixture_wrapped_warning(name, nodeid, fixture_func)
 
     def _issue_fixture_wrapped_warning(
         self, fixture_name: str, nodeid: str | None, fixture_func: Any
