@@ -13,12 +13,12 @@ import dataclasses
 import time
 from types import TracebackType
 from typing import Any
-from typing import Literal
 from typing import TYPE_CHECKING
 
 import pluggy
 
 from _pytest._code import ExceptionInfo
+from _pytest._io.saferepr import saferepr
 from _pytest.capture import CaptureFixture
 from _pytest.capture import FDCapture
 from _pytest.capture import SysCapture
@@ -83,11 +83,11 @@ class SubtestReport(TestReport):
 
     def _sub_test_description(self) -> str:
         parts = []
-        if isinstance(self.context.msg, str):
+        if self.context.msg is not None:
             parts.append(f"[{self.context.msg}]")
         if self.context.kwargs:
             params_desc = ", ".join(
-                f"{k}={v!r}" for (k, v) in sorted(self.context.kwargs.items())
+                f"{k}={saferepr(v)}" for (k, v) in self.context.kwargs.items()
             )
             parts.append(f"({params_desc})")
         return " ".join(parts) or "(<subtest>)"
@@ -106,8 +106,12 @@ class SubtestReport(TestReport):
         return report
 
     @classmethod
-    def _from_test_report(cls, test_report: TestReport) -> SubtestReport:
-        return super()._from_json(test_report._to_json())
+    def _from_test_report(
+        cls, test_report: TestReport, context: SubtestContext
+    ) -> Self:
+        result = super()._from_json(test_report._to_json())
+        result.context = context
+        return result
 
 
 @fixture
@@ -121,8 +125,6 @@ def subtests(request: SubRequest) -> Subtests:
     return Subtests(request.node.ihook, suspend_capture_ctx, request, _ispytest=True)
 
 
-# Note: cannot use a dataclass here because Sphinx insists on showing up the __init__ method in the documentation,
-# even if we explicitly use :exclude-members: __init__.
 class Subtests:
     """Subtests fixture, enables declaring subtests inside test functions via the :meth:`test` method."""
 
@@ -178,11 +180,12 @@ class _SubTestContextManager:
     """
     Context manager for subtests, capturing exceptions raised inside the subtest scope and handling
     them through the pytest machinery.
-
-    Note: initially this logic was implemented directly in Subtests.test() as a @contextmanager, however
-    it is not possible to control the output fully when exiting from it due to an exception when
-    in --exitfirst mode, so this was refactored into an explicit context manager class (pytest-dev/pytest-subtests#134).
     """
+
+    # Note: initially the logic for this context manager was implemented directly
+    # in Subtests.test() as a @contextmanager, however, it is not possible to control the output fully when
+    # exiting from it due to an exception when in `--exitfirst` mode, so this was refactored into an
+    # explicit context manager class (pytest-dev/pytest-subtests#134).
 
     ihook: pluggy.HookRelay
     msg: str | None
@@ -224,14 +227,21 @@ class _SubTestContextManager:
         duration = precise_stop - self._precise_start
         stop = time.time()
 
-        call_info = make_call_info(
-            exc_info, start=self._start, stop=stop, duration=duration, when="call"
+        call_info = CallInfo[None](
+            None,
+            exc_info,
+            start=self._start,
+            stop=stop,
+            duration=duration,
+            when="call",
+            _ispytest=True,
         )
         report = self.ihook.pytest_runtest_makereport(
             item=self.request.node, call=call_info
         )
-        sub_report = SubtestReport._from_test_report(report)
-        sub_report.context = SubtestContext(msg=self.msg, kwargs=self.kwargs.copy())
+        sub_report = SubtestReport._from_test_report(
+            report, SubtestContext(msg=self.msg, kwargs=self.kwargs.copy())
+        )
 
         self._captured_output.update_report(sub_report)
         self._captured_logs.update_report(sub_report)
@@ -248,25 +258,6 @@ class _SubTestContextManager:
             if self.request.session.shouldfail:
                 return False
         return True
-
-
-def make_call_info(
-    exc_info: ExceptionInfo[BaseException] | None,
-    *,
-    start: float,
-    stop: float,
-    duration: float,
-    when: Literal["collect", "setup", "call", "teardown"],
-) -> CallInfo[Any]:
-    return CallInfo(
-        None,
-        exc_info,
-        start=start,
-        stop=stop,
-        duration=duration,
-        when=when,
-        _ispytest=True,
-    )
 
 
 @contextmanager
