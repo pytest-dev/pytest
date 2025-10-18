@@ -50,3 +50,16 @@ class TestArgumentReprFix:
         options = parser._anonymous.options
         assert len(options) > 0
         assert "--shuffle" in options[0].names()
+
+    def test_repr_with_dest_set(self) -> None:
+        """Test that __repr__ works correctly when dest is set."""
+        parser = Parser()
+        parser.addoption("--valid-option", dest="valid_dest", help="A valid option")
+
+        # Get the argument object and check its repr
+        option = parser._anonymous.options[0]
+        repr_str = repr(option)
+
+        # Should contain the dest
+        assert "dest: 'valid_dest'" in repr_str
+        assert "<not set>" not in repr_str
