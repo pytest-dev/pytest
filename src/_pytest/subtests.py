@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterator
 from collections.abc import Mapping
@@ -13,6 +14,7 @@ import dataclasses
 import time
 from types import TracebackType
 from typing import Any
+from typing import ClassVar
 from typing import TYPE_CHECKING
 
 import pluggy
@@ -172,6 +174,9 @@ class Subtests:
             kwargs,
             request=self._request,
             suspend_capture_ctx=self._suspend_capture_ctx,
+            reporter=self._request.config.pluginmanager.getplugin(
+                SubtestsReporterPlugin.NAME
+            ),
         )
 
 
@@ -192,6 +197,7 @@ class _SubTestContextManager:
     kwargs: dict[str, Any]
     suspend_capture_ctx: Callable[[], AbstractContextManager[None]]
     request: SubRequest
+    reporter: SubtestsReporterPlugin
 
     def __enter__(self) -> None:
         __tracebackhide__ = True
@@ -242,6 +248,9 @@ class _SubTestContextManager:
         sub_report = SubtestReport._from_test_report(
             report, SubtestContext(msg=self.msg, kwargs=self.kwargs.copy())
         )
+
+        if sub_report.failed:
+            self.reporter.contains_failed_subtests[self.request.node.nodeid] += 1
 
         self._captured_output.update_report(sub_report)
         self._captured_logs.update_report(sub_report)
@@ -322,7 +331,9 @@ class CapturedLogs:
     handler: LogCaptureHandler
 
     def update_report(self, report: TestReport) -> None:
-        report.sections.append(("Captured log call", self.handler.stream.getvalue()))
+        captured_log = self.handler.stream.getvalue()
+        if captured_log:
+            report.sections.append(("Captured log call", captured_log))
 
 
 class NullCapturedLogs:
@@ -342,47 +353,79 @@ def pytest_report_from_serializable(data: dict[str, Any]) -> SubtestReport | Non
     return None
 
 
-@hookimpl(tryfirst=True)
-def pytest_report_teststatus(
-    report: TestReport,
-    config: Config,
-) -> tuple[str, str, str | Mapping[str, bool]] | None:
-    if report.when != "call" or not isinstance(report, SubtestReport):
-        return None
+def pytest_configure(config: Config) -> None:
+    config.pluginmanager.register(SubtestsReporterPlugin(), SubtestsReporterPlugin.NAME)
 
-    outcome = report.outcome
-    description = report._sub_test_description()
-    no_output = ("", "", "")
 
-    if hasattr(report, "wasxfail"):
-        if config.option.no_subtests_reports and outcome != "skipped":
-            return no_output
-        elif outcome == "skipped":
-            category = "xfailed"
-            short = "y"  # x letter is used for regular xfail, y for subtest xfail
-            status = "SUBXFAIL"
-        elif outcome == "passed":
-            category = "xpassed"
-            short = "Y"  # X letter is used for regular xpass, Y for subtest xpass
-            status = "SUBXPASS"
-        else:
-            # This should not normally happen, unless some plugin is setting wasxfail without
-            # the correct outcome. Pytest expects the call outcome to be either skipped or passed in case of xfail.
-            # Let's pass this report to the next hook.
+@dataclasses.dataclass()
+class SubtestsReporterPlugin:
+    NAME: ClassVar[str] = "subtests-reporter"
+
+    # Tracks node-ids -> number of failed subtests.
+    contains_failed_subtests: defaultdict[str, int] = dataclasses.field(
+        default_factory=lambda: defaultdict(lambda: 0)
+    )
+
+    def __hash__(self) -> int:
+        return id(self)
+
+    @hookimpl(tryfirst=True)
+    def pytest_report_teststatus(
+        self,
+        report: TestReport,
+        config: Config,
+    ) -> tuple[str, str, str | Mapping[str, bool]] | None:
+        if report.when != "call":
             return None
-        short = "" if config.option.no_subtests_shortletter else short
-        return f"subtests {category}", short, f"{description} {status}"
 
-    if config.option.no_subtests_reports and outcome != "failed":
-        return no_output
-    elif report.passed:
-        short = "" if config.option.no_subtests_shortletter else ","
-        return f"subtests {outcome}", short, f"{description} SUBPASS"
-    elif report.skipped:
-        short = "" if config.option.no_subtests_shortletter else "-"
-        return outcome, short, f"{description} SUBSKIP"
-    elif outcome == "failed":
-        short = "" if config.option.no_subtests_shortletter else "u"
-        return outcome, short, f"{description} SUBFAIL"
+        if isinstance(report, SubtestReport):
+            outcome = report.outcome
+            description = report._sub_test_description()
+            no_output = ("", "", "")
 
-    return None
+            if hasattr(report, "wasxfail"):
+                if config.option.no_subtests_reports and outcome != "skipped":
+                    return no_output
+                elif outcome == "skipped":
+                    category = "xfailed"
+                    short = (
+                        "y"  # x letter is used for regular xfail, y for subtest xfail
+                    )
+                    status = "SUBXFAIL"
+                elif outcome == "passed":
+                    category = "xpassed"
+                    short = (
+                        "Y"  # X letter is used for regular xpass, Y for subtest xpass
+                    )
+                    status = "SUBXPASS"
+                else:
+                    # This should not normally happen, unless some plugin is setting wasxfail without
+                    # the correct outcome. Pytest expects the call outcome to be either skipped or
+                    # passed in case of xfail.
+                    # Let's pass this report to the next hook.
+                    return None
+                short = "" if config.option.no_subtests_shortletter else short
+                return f"subtests {category}", short, f"{description} {status}"
+
+            if config.option.no_subtests_reports and outcome != "failed":
+                return no_output
+            elif report.passed:
+                short = "" if config.option.no_subtests_shortletter else ","
+                return f"subtests {outcome}", short, f"{description} SUBPASSED"
+            elif report.skipped:
+                short = "" if config.option.no_subtests_shortletter else "-"
+                return outcome, short, f"{description} SUBSKIPPED"
+            elif outcome == "failed":
+                short = "" if config.option.no_subtests_shortletter else "u"
+                return outcome, short, f"{description} SUBFAILED"
+        else:
+            # Top-level test, fail it it contains failed subtests and it has passed.
+            if (
+                report.passed
+                and (count := self.contains_failed_subtests.get(report.nodeid, 0)) > 0
+            ):
+                report.outcome = "failed"
+                suffix = "s" if count > 1 else ""
+                report.longrepr = f"Contains {count} failed subtest{suffix}"
+
+        return None
