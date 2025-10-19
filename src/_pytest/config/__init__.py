@@ -1461,7 +1461,8 @@ class Config:
     def _checkversion(self) -> None:
         import pytest
 
-        minver = self.inicfg.get("minversion", None)
+        minver_ini_value = self.inicfg.get("minversion", None)
+        minver = minver_ini_value.value if minver_ini_value is not None else None
         if minver:
             # Imported lazily to improve start-up time.
             from packaging.version import Version
@@ -1519,9 +1520,9 @@ class Config:
 
         self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)
 
-    def _get_unknown_ini_keys(self) -> list[str]:
-        parser_inicfg = self._parser._inidict
-        return [name for name in self.inicfg if name not in parser_inicfg]
+    def _get_unknown_ini_keys(self) -> set[str]:
+        known_keys = self._parser._inidict.keys() | self._parser._ini_aliases.keys()
+        return self.inicfg.keys() - known_keys
 
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
@@ -1621,10 +1622,11 @@ class Config:
         :func:`parser.addini <pytest.Parser.addini>` call (usually from a
         plugin), a ValueError is raised.
         """
+        canonical_name = self._parser._ini_aliases.get(name, name)
         try:
-            return self._inicache[name]
+            return self._inicache[canonical_name]
         except KeyError:
-            self._inicache[name] = val = self._getini(name)
+            self._inicache[canonical_name] = val = self._getini(canonical_name)
             return val
 
     # Meant for easy monkeypatching by legacypath plugin.
@@ -1636,14 +1638,32 @@ class Config:
         raise ValueError(msg)  # pragma: no cover
 
     def _getini(self, name: str):
+        # If this is an alias, resolve to canonical name.
+        canonical_name = self._parser._ini_aliases.get(name, name)
+
         try:
-            _description, type, default = self._parser._inidict[name]
+            _description, type, default = self._parser._inidict[canonical_name]
         except KeyError as e:
             raise ValueError(f"unknown configuration value: {name!r}") from e
-        try:
-            value = self.inicfg[name]
-        except KeyError:
+
+        # Collect all possible values (canonical name + aliases) from inicfg.
+        # Each candidate is (IniValue, is_canonical).
+        candidates = []
+        if canonical_name in self.inicfg:
+            candidates.append((self.inicfg[canonical_name], True))
+        for alias, target in self._parser._ini_aliases.items():
+            if target == canonical_name and alias in self.inicfg:
+                candidates.append((self.inicfg[alias], False))
+
+        if not candidates:
             return default
+
+        # Pick the best candidate based on precedence:
+        # 1. CLI override takes precedence over file, then
+        # 2. Canonical name takes precedence over alias.
+        ini_value = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
+        value = ini_value.value
+
         # Coerce the values based on types.
         #
         # Note: some coercions are only required if we are reading from .ini files, because

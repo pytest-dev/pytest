@@ -52,6 +52,8 @@ class Parser:
         self._usage = usage
         self._inidict: dict[str, tuple[str, str | None, Any]] = {}
         self._ininames: list[str] = []
+        # Maps alias -> canonical name.
+        self._ini_aliases: dict[str, str] = {}
         self.extra_info: dict[str, Any] = {}
 
     def processoption(self, option: Argument) -> None:
@@ -179,6 +181,8 @@ class Parser:
         ]
         | None = None,
         default: Any = NOT_SET,
+        *,
+        aliases: Sequence[str] = (),
     ) -> None:
         """Register an ini-file option.
 
@@ -213,6 +217,12 @@ class Parser:
             Defaults to ``string`` if ``None`` or not passed.
         :param default:
             Default value if no ini-file option exists but is queried.
+        :param aliases:
+            Additional names by which this option can be referenced.
+            Aliases resolve to the canonical name.
+
+            .. versionadded:: 9.0
+                The ``aliases`` parameter.
 
         The value of ini-variables can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
@@ -233,6 +243,13 @@ class Parser:
 
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
+
+        for alias in aliases:
+            if alias in self._inidict:
+                raise ValueError(f"alias {alias!r} conflicts with existing ini option")
+            if (already := self._ini_aliases.get(alias)) is not None:
+                raise ValueError(f"{alias!r} is already an alias of {already!r}")
+            self._ini_aliases[alias] = name
 
 
 def get_ini_default_for_type(
