@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import tempfile
 from textwrap import dedent
 
 from _pytest.config import UsageError
+from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import get_dirs_from_args
 from _pytest.config.findpaths import is_fs_root
@@ -154,3 +156,71 @@ def test_get_dirs_from_args(tmp_path):
 )
 def test_is_fs_root(path: Path, expected: bool) -> None:
     assert is_fs_root(Path(path)) is expected
+
+
+class TestDetermineSetup:
+    def test_ignore_setup_py_in_temp_dir(self, tmp_path: Path) -> None:
+        """Test that setup.py in the temp directory is ignored for rootdir detection.
+        
+        This addresses issue #13822 where a setup.py file in /tmp would cause
+        pytest to incorrectly identify /tmp as the rootdir.
+        """
+        # Check if /tmp/setup.py exists (it should for this test to be meaningful)
+        real_temp_dir = Path(tempfile.gettempdir())
+        temp_setup_file = real_temp_dir / "setup.py"
+        temp_setup_existed = temp_setup_file.exists()
+        
+        # Ensure setup.py exists in temp directory for the test
+        if not temp_setup_existed:
+            temp_setup_file.write_text("# temp setup.py for test")
+        
+        try:
+            # Create a project directory that would be inside temp hierarchy
+            # Simulate a pytest temp directory structure 
+            project_dir = tmp_path / "project"
+            project_dir.mkdir()
+            
+            test_file = project_dir / "test_example.py"
+            test_file.write_text("def test_example(): pass")
+            
+            # Test case: running pytest from a directory that could traverse up to /tmp
+            # If our fix is working, it should NOT use /tmp as rootdir even though 
+            # /tmp/setup.py exists
+            rootdir, inipath, inicfg, ignored = determine_setup(
+                inifile=None,
+                args=[str(test_file)],
+                rootdir_cmd_arg=None,
+                invocation_dir=project_dir,
+            )
+            
+            # The rootdir should not be the temp directory, even if setup.py exists there
+            assert rootdir != real_temp_dir
+            # Should default to the project directory or its parent
+            assert rootdir in (project_dir, project_dir.parent)
+            
+        finally:
+            # Clean up the temp setup.py if we created it
+            if not temp_setup_existed and temp_setup_file.exists():
+                temp_setup_file.unlink()
+    
+    def test_normal_setup_py_detection_still_works(self, tmp_path: Path) -> None:
+        """Test that normal setup.py detection still works after our fix."""
+        # Create a project with setup.py
+        project_dir = tmp_path / "my_project"
+        project_dir.mkdir()
+        
+        setup_file = project_dir / "setup.py" 
+        setup_file.write_text("from setuptools import setup; setup()")
+        
+        test_file = project_dir / "test_example.py"
+        test_file.write_text("def test_example(): pass")
+        
+        # Test that setup.py is still found normally
+        rootdir, inipath, inicfg, ignored = determine_setup(
+            inifile=None,
+            args=[str(test_file)],
+            rootdir_cmd_arg=None,
+            invocation_dir=project_dir,
+        )
+        
+        assert rootdir == project_dir

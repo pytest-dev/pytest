@@ -5,6 +5,7 @@ from collections.abc import Sequence
 import os
 from pathlib import Path
 import sys
+import tempfile
 from typing import TypeAlias
 
 import iniconfig
@@ -221,6 +222,15 @@ def determine_setup(
         if rootdir is None and rootdir_cmd_arg is None:
             for possible_rootdir in (ancestor, *ancestor.parents):
                 if (possible_rootdir / "setup.py").is_file():
+                    # Skip setup.py in temp directory to avoid false positives
+                    # (see issue #13822)
+                    try:
+                        temp_dir = Path(tempfile.gettempdir()).resolve()
+                        if possible_rootdir.resolve() == temp_dir:
+                            continue
+                    except (OSError, ValueError):
+                        # If we can't resolve paths, continue with normal behavior
+                        pass
                     rootdir = possible_rootdir
                     break
             else:
