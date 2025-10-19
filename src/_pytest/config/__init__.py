@@ -1083,7 +1083,6 @@ class Config:
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
         self._inicache: dict[str, Any] = {}
-        self._override_ini: Sequence[str] = ()
         self._opt2dest: dict[str, str] = {}
         self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
@@ -1251,6 +1250,7 @@ class Config:
         )
         rootpath, inipath, inicfg, ignored_config_files = determine_setup(
             inifile=ns.inifilename,
+            override_ini=ns.override_ini,
             args=ns.file_or_dir + unknown_args,
             rootdir_cmd_arg=ns.rootdir or None,
             invocation_dir=self.invocation_params.dir,
@@ -1272,7 +1272,6 @@ class Config:
             type="args",
             default=[],
         )
-        self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args: Sequence[str]) -> None:
         """Install the PEP 302 import hook if using assertion rewriting.
@@ -1641,14 +1640,10 @@ class Config:
             _description, type, default = self._parser._inidict[name]
         except KeyError as e:
             raise ValueError(f"unknown configuration value: {name!r}") from e
-        override_value = self._get_override_ini_value(name)
-        if override_value is None:
-            try:
-                value = self.inicfg[name]
-            except KeyError:
-                return default
-        else:
-            value = override_value
+        try:
+            value = self.inicfg[name]
+        except KeyError:
+            return default
         # Coerce the values based on types.
         #
         # Note: some coercions are only required if we are reading from .ini files, because
@@ -1718,23 +1713,6 @@ class Config:
                 relroot = absolutepath(modpath / relroot)
             values.append(relroot)
         return values
-
-    def _get_override_ini_value(self, name: str) -> str | None:
-        value = None
-        # override_ini is a list of "ini=value" options.
-        # Always use the last item if multiple values are set for same ini-name,
-        # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2.
-        for ini_config in self._override_ini:
-            try:
-                key, user_ini_value = ini_config.split("=", 1)
-            except ValueError as e:
-                raise UsageError(
-                    f"-o/--override-ini expects option=value style (got: {ini_config!r})."
-                ) from e
-            else:
-                if key == name:
-                    value = user_ini_value
-        return value
 
     def getoption(self, name: str, default: Any = notset, skip: bool = False):
         """Return command line option value.

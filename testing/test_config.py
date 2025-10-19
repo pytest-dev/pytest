@@ -1631,6 +1631,7 @@ class TestRootdir:
         for args in ([str(tmp_path)], [str(a)], [str(b)]):
             rootpath, parsed_inipath, *_ = determine_setup(
                 inifile=None,
+                override_ini=None,
                 args=args,
                 rootdir_cmd_arg=None,
                 invocation_dir=Path.cwd(),
@@ -1639,6 +1640,7 @@ class TestRootdir:
             assert parsed_inipath == inipath
         rootpath, parsed_inipath, ini_config, _ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=[str(b), str(a)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1656,6 +1658,7 @@ class TestRootdir:
         (a / name).touch()
         rootpath, parsed_inipath, *_ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=[str(a)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1670,6 +1673,7 @@ class TestRootdir:
         (tmp_path / "setup.py").touch()
         rootpath, inipath, inicfg, _ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=[str(a)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1682,6 +1686,7 @@ class TestRootdir:
         monkeypatch.chdir(tmp_path)
         rootpath, inipath, inicfg, _ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=[str(tmp_path)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1709,6 +1714,7 @@ class TestRootdir:
         p.write_text(contents, encoding="utf-8")
         rootpath, inipath, ini_config, _ = determine_setup(
             inifile=str(p),
+            override_ini=None,
             args=[str(tmp_path)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1728,6 +1734,7 @@ class TestRootdir:
         # No config file is explicitly given: rootdir is determined to be cwd.
         rootpath, found_inipath, *_ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=[str(tests_dir)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1740,6 +1747,7 @@ class TestRootdir:
         inipath.touch()
         rootpath, found_inipath, *_ = determine_setup(
             inifile=str(inipath),
+            override_ini=None,
             args=[str(tests_dir)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1757,6 +1765,7 @@ class TestRootdir:
         b.mkdir()
         rootpath, inifile, *_ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=[str(a), str(b)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1773,6 +1782,7 @@ class TestRootdir:
         inipath.touch()
         rootpath, parsed_inipath, *_ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=[str(a), str(b)],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1787,6 +1797,7 @@ class TestRootdir:
         monkeypatch.chdir(tmp_path)
         rootpath, inipath, *_ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=dirs,
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1803,6 +1814,7 @@ class TestRootdir:
         monkeypatch.chdir(tmp_path)
         rootpath, inipath, *_ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=["a/exist"],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1822,6 +1834,7 @@ class TestRootdir:
 
         rootpath, inipath, *_ = determine_setup(
             inifile=None,
+            override_ini=None,
             args=["tests/"],
             rootdir_cmd_arg=None,
             invocation_dir=Path.cwd(),
@@ -1978,7 +1991,7 @@ class TestOverrideIniArgs:
         monkeypatch.setenv("PYTEST_ADDOPTS", f"-o cache_dir={cache_dir}")
         config = _config_for_test
         config._preparse([], addopts=True)
-        assert config._override_ini == [f"cache_dir={cache_dir}"]
+        assert config.inicfg.get("cache_dir") == cache_dir
 
     def test_addopts_from_env_not_concatenated(
         self, monkeypatch: MonkeyPatch, _config_for_test
@@ -2016,7 +2029,7 @@ class TestOverrideIniArgs:
         """Check that -o no longer swallows all options after it (#3103)"""
         config = _config_for_test
         config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])
-        assert config._override_ini == ["cache_dir=/cache"]
+        assert config.inicfg.get("cache_dir") == "/cache"
 
     def test_multiple_override_ini_options(self, pytester: Pytester) -> None:
         """Ensure a file path following a '-o' option does not generate an error (#3103)"""
