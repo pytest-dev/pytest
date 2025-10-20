@@ -359,10 +359,7 @@ class Argument:
             args += ["_short_opts: " + repr(self._short_opts)]
         if self._long_opts:
             args += ["_long_opts: " + repr(self._long_opts)]
-        if hasattr(self, "dest"):
-            args += ["dest: " + repr(self.dest)]
-        else:
-            args += ["dest: <not set>"]
+        args += ["dest: " + repr(getattr(self, "dest", NOT_SET))]
         if hasattr(self, "type"):
             args += ["type: " + repr(self.type)]
         if hasattr(self, "default"):
