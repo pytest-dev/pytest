@@ -1830,6 +1830,42 @@ class TestRootdir:
         assert rootpath == tmp_path / "myproject"
         assert inipath == tmp_path / "myproject" / "setup.cfg"
 
+    def test_tmp_setup_py_does_not_affect_rootdir(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Regression test for issue #13822.
+
+        Ensure that setup.py in the system temp directory doesn't
+        affect rootdir detection.
+        """
+        # Create a fake project structure
+        project = tmp_path / "my_project"
+        project.mkdir()
+        test_dir = project / "tests"
+        test_dir.mkdir()
+
+        # Create project's own setup.py
+        (project / "setup.py").write_text("# project setup", "utf-8")
+
+        # Monkeypatch tempfile.gettempdir() to simulate /tmp/setup.py existing
+        fake_temp = tmp_path / "fake_tmp"
+        fake_temp.mkdir()
+        (fake_temp / "setup.py").write_text("# tmp setup", "utf-8")
+
+        monkeypatch.setattr("tempfile.gettempdir", lambda: str(fake_temp))
+        monkeypatch.chdir(test_dir)
+
+        rootpath, inipath, *_ = determine_setup(
+            inifile=None,
+            args=[str(test_dir)],
+            rootdir_cmd_arg=None,
+            invocation_dir=test_dir,
+        )
+
+        # Rootpath should be project, not fake temp
+        assert rootpath == project
+        assert rootpath != fake_temp
+
 
 class TestOverrideIniArgs:
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
