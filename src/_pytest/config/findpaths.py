@@ -206,6 +206,7 @@ def _is_system_temp_or_parent(path: Path) -> bool:
         # If we can't resolve paths, play it safe and don't skip
         return False
 
+
 def determine_setup(
     *,
     inifile: str | None,
