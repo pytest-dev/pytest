@@ -1831,7 +1831,7 @@ class TestRootdir:
         assert inipath == tmp_path / "myproject" / "setup.cfg"
 
     def test_tmp_setup_py_does_not_affect_rootdir(
-            self, tmp_path: Path, monkeypatch: MonkeyPatch
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
         """Regression test for issue #13822.
 
