@@ -690,7 +690,7 @@ class TestXFail:
         pytester.makeini(
             f"""
             [pytest]
-            xfail_strict = {strict_val}
+            strict_xfail = {strict_val}
         """
         )
         p = pytester.makepyfile(
@@ -1178,7 +1178,7 @@ def test_default_markers(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*skipif(condition, ..., [*], reason=...)*skip*",
-            "*xfail(condition, ..., [*], reason=..., run=True, raises=None, strict=xfail_strict)*expected failure*",
+            "*xfail(condition, ..., [*], reason=..., run=True, raises=None, strict=strict_xfail)*expected failure*",
         ]
     )
 

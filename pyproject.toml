@@ -378,7 +378,7 @@ norecursedirs = [
     "build",
     "dist",
 ]
-xfail_strict = true
+strict_xfail = true
 strict_parametrization_ids = true
 filterwarnings = [
     "error",
