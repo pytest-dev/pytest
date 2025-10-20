@@ -1774,25 +1774,21 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: markers
 
-    When the ``--strict-markers`` or ``--strict`` command-line arguments are used,
+    When the :confval:`strict_markers` configuration option is set,
     only known markers - defined in code by core pytest or some plugin - are allowed.
 
     You can list additional markers in this setting to add them to the whitelist,
-    in which case you probably want to add ``--strict-markers`` to ``addopts``
+    in which case you probably want to set :confval:`strict_markers` to ``True``
     to avoid future regressions:
 
     .. code-block:: ini
 
         [pytest]
-        addopts = --strict-markers
+        strict_markers = True
         markers =
             slow
             serial
 
-    .. note::
-        The use of ``--strict-markers`` is highly preferred. ``--strict`` was kept for
-        backward compatibility only and may be confusing for others as it only applies to
-        markers and not to other options.
 
 .. confval:: minversion
 
@@ -2085,6 +2081,27 @@ passed multiple times. The expected format is ``name=value``. For example::
     .. versionchanged:: 9.0
         Renamed from ``xfail_strict`` to ``strict_xfail``.
         ``xfail_strict`` is accepted as an alias for ``strict_xfail``.
+
+
+.. confval:: strict_config
+
+    If set to ``True``, any warnings encountered while parsing the ``pytest`` section of the configuration file will raise errors.
+
+    .. code-block:: ini
+
+        [pytest]
+        strict_config = True
+
+
+.. confval:: strict_markers
+
+    If set to ``True``, markers not registered in the ``markers`` section of the configuration file will raise errors.
+
+    .. code-block:: ini
+
+        [pytest]
+        strict_markers = True
+
 
 .. confval:: strict_parametrization_ids
 

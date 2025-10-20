@@ -1515,7 +1515,8 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
-        if self.known_args_namespace.strict_config:
+        strict_config = self.getini("strict_config")
+        if strict_config:
             raise UsageError(message)
 
         self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)

@@ -32,6 +32,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
+from _pytest.config.argparsing import OverrideIniAction
 from _pytest.config.argparsing import Parser
 from _pytest.config.compat import PathAwareHookProxy
 from _pytest.outcomes import exit
@@ -75,20 +76,36 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group.addoption(
         "--strict-config",
-        action="store_true",
-        help="Any warnings encountered while parsing the `pytest` section of the "
-        "configuration file raise errors",
+        action=OverrideIniAction,
+        ini_option="strict_config",
+        ini_value="true",
+        help="Enables the strict_config option",
     )
     group.addoption(
         "--strict-markers",
-        action="store_true",
-        help="Markers not registered in the `markers` section of the configuration "
-        "file raise errors",
+        action=OverrideIniAction,
+        ini_option="strict_markers",
+        ini_value="true",
+        help="Enables the strict_markers option",
     )
     group.addoption(
         "--strict",
         action="store_true",
         help="(Deprecated) alias to --strict-markers",
+    )
+    parser.addini(
+        "strict_config",
+        "Any warnings encountered while parsing the `pytest` section of the "
+        "configuration file raise errors",
+        type="bool",
+        default=False,
+    )
+    parser.addini(
+        "strict_markers",
+        "Markers not registered in the `markers` section of the configuration "
+        "file raise errors",
+        type="bool",
+        default=False,
     )
 
     group = parser.getgroup("pytest-warnings")
