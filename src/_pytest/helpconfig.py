@@ -103,7 +103,7 @@ def pytest_addoption(parser: Parser) -> None:
         dest="override_ini",
         action="append",
         help='Override ini option with "option=value" style, '
-        "e.g. `-o xfail_strict=True -o cache_dir=cache`.",
+        "e.g. `-o strict_xfail=True -o cache_dir=cache`.",
     )
 
 

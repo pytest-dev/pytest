@@ -331,12 +331,12 @@ You can change this by setting the ``strict`` keyword-only parameter to ``True``
 This will make ``XPASS`` ("unexpectedly passing") results from this test to fail the test suite.
 
 You can change the default value of the ``strict`` parameter using the
-``xfail_strict`` ini option:
+``strict_xfail`` ini option:
 
 .. code-block:: ini
 
     [pytest]
-    xfail_strict=true
+    strict_xfail=true
 
 
 Ignoring xfail

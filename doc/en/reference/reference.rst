@@ -261,7 +261,7 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=xfail_strict)
+.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=strict_xfail)
 
     :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
@@ -286,7 +286,7 @@ Marks a test function as *expected to fail*.
           that are always failing and there should be a clear indication if they unexpectedly start to pass (for example
           a new release of a library fixes a known bug).
 
-        Defaults to :confval:`xfail_strict`, which is ``False`` by default.
+        Defaults to :confval:`strict_xfail`, which is ``False`` by default.
 
 
 Custom marks
@@ -2070,7 +2070,7 @@ passed multiple times. The expected format is ``name=value``. For example::
     "auto" can be used to explicitly use the global verbosity level.
 
 
-.. confval:: xfail_strict
+.. confval:: strict_xfail
 
     If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
     test suite.
@@ -2080,7 +2080,11 @@ passed multiple times. The expected format is ``name=value``. For example::
     .. code-block:: ini
 
         [pytest]
-        xfail_strict = True
+        strict_xfail = True
+
+    .. versionchanged:: 9.0
+        Renamed from ``xfail_strict`` to ``strict_xfail``.
+        ``xfail_strict`` is accepted as an alias for ``strict_xfail``.
 
 .. confval:: strict_parametrization_ids
 
