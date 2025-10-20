@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 from pathlib import Path
 from pathlib import PurePath
@@ -2702,3 +2703,94 @@ class TestOverlappingCollectionArguments:
             ],
             consecutive=True,
         )
+
+
+@pytest.mark.parametrize(
+    ["x_y", "expected_duplicates"],
+    [
+        (
+            [(1, 1), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (1, 2), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (2, 2), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (2, 2), (1, 2), (2, 1), (1, 1), (2, 1)],
+            ["1-1", "2-1"],
+        ),
+    ],
+)
+def test_strict_parametrization_ids(
+    pytester: Pytester,
+    x_y: Sequence[tuple[int, int]],
+    expected_duplicates: Sequence[str],
+) -> None:
+    pytester.makeini(
+        """
+        [pytest]
+        strict_parametrization_ids = true
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.mark.parametrize(["x", "y"], {x_y})
+        def test1(x, y):
+            pass
+        """
+    )
+
+    result = pytester.runpytest()
+
+    assert result.ret == ExitCode.INTERRUPTED
+    expected_parametersets = ", ".join(str(list(p)) for p in x_y)
+    expected_ids = ", ".join(f"{x}-{y}" for x, y in x_y)
+    result.stdout.fnmatch_lines(
+        [
+            "Duplicate parametrization IDs detected*",
+            "",
+            "Test name:      *::test1",
+            "Parameters:     x, y",
+            f"Parameter sets: {expected_parametersets}",
+            f"IDs:            {expected_ids}",
+            f"Duplicates:     {', '.join(expected_duplicates)}",
+            "",
+            "You can fix this problem using *",
+        ]
+    )
+
+
+def test_strict_parametrization_ids_with_hidden_param(pytester: Pytester) -> None:
+    pytester.makeini(
+        """
+        [pytest]
+        strict_parametrization_ids = true
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize(["x"], ["a", pytest.param("a", id=pytest.HIDDEN_PARAM), "a"])
+        def test1(x):
+            pass
+        """
+    )
+
+    result = pytester.runpytest()
+
+    assert result.ret == ExitCode.INTERRUPTED
+    result.stdout.fnmatch_lines(
+        [
+            "Duplicate parametrization IDs detected*",
+            "IDs:            a, <hidden>, a",
+            "Duplicates:     a",
+        ]
+    )

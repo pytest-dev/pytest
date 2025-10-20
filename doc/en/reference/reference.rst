@@ -2082,6 +2082,44 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         xfail_strict = True
 
+.. confval:: strict_parametrization_ids
+
+    If set, pytest emits an error if it detects non-unique parameter set IDs.
+
+    If not set (the default), pytest automatically handles this by adding `0`, `1`, ... to duplicate IDs,
+    making them unique.
+
+    .. code-block:: ini
+
+          [pytest]
+          strict_parametrization_ids = True
+
+    For example,
+
+    .. code-block:: python
+
+        import pytest
+
+
+        @pytest.mark.parametrize("letter", ["a", "a"])
+        def test_letter_is_ascii(letter):
+            assert letter.isascii()
+
+    will emit an error because both cases (parameter sets) have the same auto-generated ID "a".
+
+    To fix the error, if you decide to keep the duplicates, explicitly assign unique IDs:
+
+    .. code-block:: python
+
+        import pytest
+
+
+        @pytest.mark.parametrize("letter", ["a", "a"], ids=["a0", "a1"])
+        def test_letter_is_ascii(letter):
+            assert letter.isascii()
+
+    See :func:`parametrize <pytest.Metafunc.parametrize>` and :func:`pytest.param` for other ways to set IDs.
+
 
 .. _`command-line-flags`:
 
