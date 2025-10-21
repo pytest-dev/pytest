@@ -1596,7 +1596,14 @@ class Broken:
 
 
 @pytest.mark.parametrize(  # pragma: no branch (lambdas are not called)
-    "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
+    "stop",
+    [
+        None,
+        pytest.param(_is_mocked, id="is_mocked"),
+        pytest.param(lambda f: None, id="lambda_none"),
+        pytest.param(lambda f: False, id="lambda_false"),
+        pytest.param(lambda f: True, id="lambda_true"),
+    ],
 )
 def test_warning_on_unwrap_of_broken_object(
     stop: Callable[[object], object] | None,

@@ -21,7 +21,6 @@ def test_empty_is_false() -> None:
     ("expr", "expected"),
     (
         ("true", True),
-        ("true", True),
         ("false", False),
         ("not true", False),
         ("not false", True),
