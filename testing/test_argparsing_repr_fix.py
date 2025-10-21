@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from _pytest.config.argparsing import ArgumentError
-from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 import pytest
 
