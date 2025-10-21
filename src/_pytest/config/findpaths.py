@@ -181,12 +181,35 @@ def get_dirs_from_args(args: Iterable[str]) -> list[Path]:
     return [get_dir_from_path(path) for path in possible_paths if safe_exists(path)]
 
 
+def parse_override_ini(override_ini: Sequence[str] | None) -> dict[str, str]:
+    """Parse the -o/--override-ini command line arguments and return the overrides.
+
+    :raises UsageError:
+        If one of the values is malformed.
+    """
+    overrides = {}
+    # override_ini is a list of "ini=value" options.
+    # Always use the last item if multiple values are set for same ini-name,
+    # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2.
+    for ini_config in override_ini or ():
+        try:
+            key, user_ini_value = ini_config.split("=", 1)
+        except ValueError as e:
+            raise UsageError(
+                f"-o/--override-ini expects option=value style (got: {ini_config!r})."
+            ) from e
+        else:
+            overrides[key] = user_ini_value
+    return overrides
+
+
 CFG_PYTEST_SECTION = "[pytest] section in {filename} files is no longer supported, change to [tool:pytest] instead."
 
 
 def determine_setup(
     *,
     inifile: str | None,
+    override_ini: Sequence[str] | None,
     args: Sequence[str],
     rootdir_cmd_arg: str | None,
     invocation_dir: Path,
@@ -196,12 +219,16 @@ def determine_setup(
 
     :param inifile:
         The `--inifile` command line argument, if given.
+    :param override_ini:
+        The -o/--override-ini command line arguments, if given.
     :param args:
         The free command line arguments.
     :param rootdir_cmd_arg:
         The `--rootdir` command line argument, if given.
     :param invocation_dir:
         The working directory when pytest was invoked.
+
+    :raises UsageError:
     """
     rootdir = None
     dirs = get_dirs_from_args(args)
@@ -238,8 +265,12 @@ def determine_setup(
             raise UsageError(
                 f"Directory '{rootdir}' not found. Check your '--rootdir' option."
             )
+
+    ini_overrides = parse_override_ini(override_ini)
+    inicfg.update(ini_overrides)
+
     assert rootdir is not None
-    return rootdir, inipath, inicfg or {}, ignored_config_files
+    return rootdir, inipath, inicfg, ignored_config_files
 
 
 def is_fs_root(p: Path) -> bool:
