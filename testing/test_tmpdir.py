@@ -367,6 +367,7 @@ def test_get_user(monkeypatch):
     assert get_user() is None
 
 
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="win only")
 def test_get_user_handles_oserror(monkeypatch):
     """Test that get_user() returns None when getpass.getuser() raises OSError.
     
@@ -374,12 +375,10 @@ def test_get_user_handles_oserror(monkeypatch):
     OSError when no username environment variables (LOGNAME, USER, LNAME,
     USERNAME) are set on Windows (#11874).
     """
-    import getpass
-
-    def mock_getuser():
-        raise OSError("No username set in the environment")
-
-    monkeypatch.setattr(getpass, "getuser", mock_getuser)
+    monkeypatch.delenv("LOGNAME", raising=False)
+    monkeypatch.delenv("USER", raising=False)
+    monkeypatch.delenv("LNAME", raising=False)
+    monkeypatch.delenv("USERNAME", raising=False)
     assert get_user() is None
 
 
