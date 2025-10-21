@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from _pytest.config.argparsing import ArgumentError
+from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 import pytest
 
@@ -62,4 +63,4 @@ class TestArgumentReprFix:
 
         # Should contain the dest
         assert "dest: 'valid_dest'" in repr_str
-        assert "<not set>" not in repr_str
+        assert "NOT_SET" not in repr_str
