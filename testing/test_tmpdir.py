@@ -367,6 +367,22 @@ def test_get_user(monkeypatch):
     assert get_user() is None
 
 
+def test_get_user_handles_oserror(monkeypatch):
+    """Test that get_user() returns None when getpass.getuser() raises OSError.
+    
+    This handles the Python 3.13+ behavior where getpass.getuser() raises
+    OSError when no username environment variables (LOGNAME, USER, LNAME,
+    USERNAME) are set on Windows (#11874).
+    """
+    import getpass
+
+    def mock_getuser():
+        raise OSError("No username set in the environment")
+
+    monkeypatch.setattr(getpass, "getuser", mock_getuser)
+    assert get_user() is None
+
+
 class TestNumberedDir:
     PREFIX = "fun-"
 
