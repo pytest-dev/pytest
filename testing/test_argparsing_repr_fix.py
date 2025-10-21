@@ -1,8 +1,8 @@
 """Test case for issue #13817: AttributeError with invalid flag in pytest_addoption."""
-
 from __future__ import annotations
 
 from _pytest.config.argparsing import ArgumentError
+from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 import pytest
 
@@ -63,3 +63,17 @@ class TestArgumentReprFix:
         # Should contain the dest
         assert "dest: 'valid_dest'" in repr_str
         assert "NOT_SET" not in repr_str
+
+    def test_repr_without_dest(self) -> None:
+        """Test that __repr__ works when dest is not set due to error."""
+        from _pytest.config.argparsing import Argument
+
+        # Create an Argument that will fail during initialization
+        # This triggers the code path where dest is not set
+        try:
+            Argument("invalid")  # No dashes, will fail
+        except ArgumentError as exc:
+            # The repr was called during error creation
+            # Verify it contains NOT_SET representation
+            assert "dest:" in str(exc)
+            assert "NOT_SET" in str(exc) or "<notset>" in str(exc)
