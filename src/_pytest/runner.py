@@ -208,7 +208,13 @@ def _update_current_test_var(
         value = value.replace("\x00", "(null)")
         os.environ[var_name] = value
     else:
-        os.environ.pop(var_name)
+        # under multithreading, this may have already been popped by another thread.
+        # Note that os.environ inherits from MutableMapping and therefore .pop(var_name, None)
+        # is not atomic or thread-safe, unlike e.g. popping from a builtin dict.
+        try:
+            os.environ.pop(var_name)
+        except KeyError:
+            pass
 
 
 def pytest_report_teststatus(report: BaseReport) -> tuple[str, str, str] | None:
