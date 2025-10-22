@@ -25,6 +25,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
+from _pytest.config.findpaths import IniValue
 from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
@@ -57,9 +58,9 @@ class TestParseIni:
             encoding="utf-8",
         )
         _, _, cfg, _ = locate_config(Path.cwd(), [sub])
-        assert cfg["name"] == "value"
+        assert cfg["name"] == IniValue("value", "file")
         config = pytester.parseconfigure(str(sub))
-        assert config.inicfg["name"] == "value"
+        assert config.inicfg["name"] == IniValue("value", "file")
 
     def test_setupcfg_uses_toolpytest_with_pytest(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test(): pass")
@@ -1005,6 +1006,166 @@ class TestConfigAPI:
         value = config.getini("no_type")
         assert value == ""
 
+    def test_addini_with_aliases(self, pytester: Pytester) -> None:
+        """Test that ini options can have aliases."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("new_name", "my option", aliases=["old_name"])
+            """
+        )
+        pytester.makeini(
+            """
+            [pytest]
+            old_name = hello
+            """
+        )
+        config = pytester.parseconfig()
+        # Should be able to access via canonical name.
+        assert config.getini("new_name") == "hello"
+        # Should also be able to access via alias.
+        assert config.getini("old_name") == "hello"
+
+    def test_addini_aliases_with_canonical_in_file(self, pytester: Pytester) -> None:
+        """Test that canonical name takes precedence over alias in ini file."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("new_name", "my option", aliases=["old_name"])
+            """
+        )
+        pytester.makeini(
+            """
+            [pytest]
+            old_name = from_alias
+            new_name = from_canonical
+            """
+        )
+        config = pytester.parseconfig()
+        # Canonical name should take precedence.
+        assert config.getini("new_name") == "from_canonical"
+        assert config.getini("old_name") == "from_canonical"
+
+    def test_addini_aliases_multiple(self, pytester: Pytester) -> None:
+        """Test that ini option can have multiple aliases."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("current_name", "my option", aliases=["old_name", "legacy_name"])
+            """
+        )
+        pytester.makeini(
+            """
+            [pytest]
+            old_name = value1
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.getini("current_name") == "value1"
+        assert config.getini("old_name") == "value1"
+        assert config.getini("legacy_name") == "value1"
+
+    def test_addini_aliases_with_override_of_old(self, pytester: Pytester) -> None:
+        """Test that aliases work with --override-ini -- ini sets old."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("new_name", "my option", aliases=["old_name"])
+            """
+        )
+        pytester.makeini(
+            """
+            [pytest]
+            old_name = from_file
+            """
+        )
+        # Override using alias.
+        config = pytester.parseconfig("-o", "old_name=overridden")
+        assert config.getini("new_name") == "overridden"
+        assert config.getini("old_name") == "overridden"
+
+        # Override using canonical name.
+        config = pytester.parseconfig("-o", "new_name=overridden2")
+        assert config.getini("new_name") == "overridden2"
+
+    def test_addini_aliases_with_override_of_new(self, pytester: Pytester) -> None:
+        """Test that aliases work with --override-ini -- ini sets new."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("new_name", "my option", aliases=["old_name"])
+            """
+        )
+        pytester.makeini(
+            """
+            [pytest]
+            new_name = from_file
+            """
+        )
+        # Override using alias.
+        config = pytester.parseconfig("-o", "old_name=overridden")
+        assert config.getini("new_name") == "overridden"
+        assert config.getini("old_name") == "overridden"
+
+        # Override using canonical name.
+        config = pytester.parseconfig("-o", "new_name=overridden2")
+        assert config.getini("new_name") == "overridden2"
+
+    def test_addini_aliases_with_types(self, pytester: Pytester) -> None:
+        """Test that aliases work with different types."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("mylist", "list option", type="linelist", aliases=["oldlist"])
+                parser.addini("mybool", "bool option", type="bool", aliases=["oldbool"])
+            """
+        )
+        pytester.makeini(
+            """
+            [pytest]
+            oldlist = line1
+                line2
+            oldbool = true
+        """
+        )
+        config = pytester.parseconfig()
+        assert config.getini("mylist") == ["line1", "line2"]
+        assert config.getini("oldlist") == ["line1", "line2"]
+        assert config.getini("mybool") is True
+        assert config.getini("oldbool") is True
+
+    def test_addini_aliases_conflict_error(self, pytester: Pytester) -> None:
+        """Test that registering an alias that conflicts with an existing option raises an error."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("existing", "first option")
+
+                try:
+                    parser.addini("new_option", "second option", aliases=["existing"])
+                except ValueError as e:
+                    assert "alias 'existing' conflicts with existing ini option" in str(e)
+                else:
+                    assert False, "Should have raised ValueError"
+            """
+        )
+        pytester.parseconfig()
+
+    def test_addini_aliases_duplicate_error(self, pytester: Pytester) -> None:
+        """Test that registering the same alias twice raises an error."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("option1", "first option", aliases=["shared_alias"])
+                try:
+                    parser.addini("option2", "second option", aliases=["shared_alias"])
+                    raise AssertionError("Should have raised ValueError")
+                except ValueError as e:
+                    assert "'shared_alias' is already an alias of 'option1'" in str(e)
+            """
+        )
+        pytester.parseconfig()
+
     @pytest.mark.parametrize(
         "type, expected",
         [
@@ -1153,7 +1314,7 @@ class TestConfigFromdictargs:
 
         # this indicates this is the file used for getting configuration values
         assert config.inipath == inipath
-        assert config.inicfg.get("name") == "value"
+        assert config.inicfg.get("name") == IniValue("value", "file")
         assert config.inicfg.get("should_not_be_set") is None
 
 
@@ -1647,7 +1808,7 @@ class TestRootdir:
         )
         assert rootpath == tmp_path
         assert parsed_inipath == inipath
-        assert ini_config == {"x": "10"}
+        assert ini_config["x"] == IniValue("10", "file")
 
     @pytest.mark.parametrize("name", ["setup.cfg", "tox.ini"])
     def test_pytestini_overrides_empty_other(self, tmp_path: Path, name: str) -> None:
@@ -1721,7 +1882,7 @@ class TestRootdir:
         )
         assert rootpath == tmp_path
         assert inipath == p
-        assert ini_config == {"x": "10"}
+        assert ini_config["x"] == IniValue("10", "file")
 
     def test_explicit_config_file_sets_rootdir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -1991,7 +2152,7 @@ class TestOverrideIniArgs:
         monkeypatch.setenv("PYTEST_ADDOPTS", f"-o cache_dir={cache_dir}")
         config = _config_for_test
         config._preparse([], addopts=True)
-        assert config.inicfg.get("cache_dir") == cache_dir
+        assert config.inicfg.get("cache_dir") == IniValue(cache_dir, "override")
 
     def test_addopts_from_env_not_concatenated(
         self, monkeypatch: MonkeyPatch, _config_for_test
@@ -2029,7 +2190,7 @@ class TestOverrideIniArgs:
         """Check that -o no longer swallows all options after it (#3103)"""
         config = _config_for_test
         config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])
-        assert config.inicfg.get("cache_dir") == "/cache"
+        assert config.inicfg.get("cache_dir") == IniValue("/cache", "override")
 
     def test_multiple_override_ini_options(self, pytester: Pytester) -> None:
         """Ensure a file path following a '-o' option does not generate an error (#3103)"""

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import Sequence
+from dataclasses import dataclass
 import os
 from pathlib import Path
 import sys
+from typing import Literal
 from typing import TypeAlias
 
 import iniconfig
@@ -16,9 +18,23 @@ from _pytest.pathlib import commonpath
 from _pytest.pathlib import safe_exists
 
 
-# Even though TOML supports richer data types, all values are converted to str/list[str] during
-# parsing to maintain compatibility with the rest of the configuration system.
-ConfigDict: TypeAlias = dict[str, str | list[str]]
+@dataclass(frozen=True)
+class IniValue:
+    """Represents an ini configuration value with its origin.
+
+    This allows tracking whether a value came from a configuration file
+    or from a CLI override (--override-ini), which is important for
+    determining precedence when dealing with ini option aliases.
+    """
+
+    # Even though TOML supports richer data types, all values are converted to
+    # str/list[str] during parsing to maintain compatibility with the rest of
+    # the configuration system.
+    value: str | list[str]
+    origin: Literal["file", "override"]
+
+
+ConfigDict: TypeAlias = dict[str, IniValue]
 
 
 def _parse_ini_config(path: Path) -> iniconfig.IniConfig:
@@ -45,7 +61,7 @@ def load_config_dict_from_file(
         iniconfig = _parse_ini_config(filepath)
 
         if "pytest" in iniconfig:
-            return dict(iniconfig["pytest"].items())
+            return {k: IniValue(v, "file") for k, v in iniconfig["pytest"].items()}
         else:
             # "pytest.ini" files are always the source of configuration, even if empty.
             if filepath.name == "pytest.ini":
@@ -56,7 +72,7 @@ def load_config_dict_from_file(
         iniconfig = _parse_ini_config(filepath)
 
         if "tool:pytest" in iniconfig.sections:
-            return dict(iniconfig["tool:pytest"].items())
+            return {k: IniValue(v, "file") for k, v in iniconfig["tool:pytest"].items()}
         elif "pytest" in iniconfig.sections:
             # If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that
             # plain "[pytest]" sections in setup.cfg files is no longer supported (#3086).
@@ -83,7 +99,7 @@ def load_config_dict_from_file(
             def make_scalar(v: object) -> str | list[str]:
                 return v if isinstance(v, list) else str(v)
 
-            return {k: make_scalar(v) for k, v in result.items()}
+            return {k: IniValue(make_scalar(v), "file") for k, v in result.items()}
 
     return None
 
@@ -181,7 +197,7 @@ def get_dirs_from_args(args: Iterable[str]) -> list[Path]:
     return [get_dir_from_path(path) for path in possible_paths if safe_exists(path)]
 
 
-def parse_override_ini(override_ini: Sequence[str] | None) -> dict[str, str]:
+def parse_override_ini(override_ini: Sequence[str] | None) -> ConfigDict:
     """Parse the -o/--override-ini command line arguments and return the overrides.
 
     :raises UsageError:
@@ -199,7 +215,7 @@ def parse_override_ini(override_ini: Sequence[str] | None) -> dict[str, str]:
                 f"-o/--override-ini expects option=value style (got: {ini_config!r})."
             ) from e
         else:
-            overrides[key] = user_ini_value
+            overrides[key] = IniValue(user_ini_value, "override")
     return overrides
 
 
