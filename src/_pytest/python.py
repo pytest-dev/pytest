@@ -21,6 +21,7 @@ import itertools
 import os
 from pathlib import Path
 import re
+import textwrap
 import types
 from typing import Any
 from typing import final
@@ -106,6 +107,12 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Disable string escape non-ASCII characters, might cause unwanted "
         "side effects(use at your own risk)",
+    )
+    parser.addini(
+        "strict_parametrization_ids",
+        type="bool",
+        default=False,
+        help="Emit an error if non-unique parameter set IDs are detected",
     )
 
 
@@ -878,8 +885,8 @@ class IdMaker:
     # Optionally, explicit IDs for ParameterSets by index.
     ids: Sequence[object | None] | None
     # Optionally, the pytest config.
-    # Used for controlling ASCII escaping, and for calling the
-    # :hook:`pytest_make_parametrize_id` hook.
+    # Used for controlling ASCII escaping, determining parametrization ID
+    # strictness, and for calling the :hook:`pytest_make_parametrize_id` hook.
     config: Config | None
     # Optionally, the ID of the node being parametrized.
     # Used only for clearer error messages.
@@ -891,6 +898,9 @@ class IdMaker:
     def make_unique_parameterset_ids(self) -> list[str | _HiddenParam]:
         """Make a unique identifier for each ParameterSet, that may be used to
         identify the parametrization in a node ID.
+
+        If strict_parametrization_ids is enabled, and duplicates are detected,
+        raises CollectError. Otherwise makes the IDs unique as follows:
 
         Format is <prm_1_token>-...-<prm_n_token>[counter], where prm_x_token is
         - user-provided id, if given
@@ -904,6 +914,33 @@ class IdMaker:
         if len(resolved_ids) != len(set(resolved_ids)):
             # Record the number of occurrences of each ID.
             id_counts = Counter(resolved_ids)
+
+            if self._strict_parametrization_ids_enabled():
+                parameters = ", ".join(self.argnames)
+                parametersets = ", ".join(
+                    [saferepr(list(param.values)) for param in self.parametersets]
+                )
+                ids = ", ".join(
+                    id if id is not HIDDEN_PARAM else "<hidden>" for id in resolved_ids
+                )
+                duplicates = ", ".join(
+                    id if id is not HIDDEN_PARAM else "<hidden>"
+                    for id, count in id_counts.items()
+                    if count > 1
+                )
+                msg = textwrap.dedent(f"""
+                    Duplicate parametrization IDs detected, but strict_parametrization_ids is set.
+
+                    Test name:      {self.nodeid}
+                    Parameters:     {parameters}
+                    Parameter sets: {parametersets}
+                    IDs:            {ids}
+                    Duplicates:     {duplicates}
+
+                    You can fix this problem using `@pytest.mark.parametrize(..., ids=...)` or `pytest.param(..., id=...)`.
+                """).strip()  # noqa: E501
+                raise nodes.Collector.CollectError(msg)
+
             # Map the ID to its next suffix.
             id_suffixes: dict[str, int] = defaultdict(int)
             # Suffix non-unique IDs to make them unique.
@@ -924,6 +961,11 @@ class IdMaker:
             f"Internal error: {resolved_ids=}"
         )
         return resolved_ids
+
+    def _strict_parametrization_ids_enabled(self) -> bool:
+        if self.config:
+            return bool(self.config.getini("strict_parametrization_ids"))
+        return False
 
     def _resolve_ids(self) -> Iterable[str | _HiddenParam]:
         """Resolve IDs for all ParameterSets (may contain duplicates)."""
