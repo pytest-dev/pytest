@@ -964,7 +964,10 @@ class IdMaker:
 
     def _strict_parametrization_ids_enabled(self) -> bool:
         if self.config:
-            return bool(self.config.getini("strict_parametrization_ids"))
+            if self.config.hasini("strict_parametrization_ids"):
+                return bool(self.config.getini("strict_parametrization_ids"))
+            else:
+                return bool(self.config.getini("strict"))
         return False
 
     def _resolve_ids(self) -> Iterable[str | _HiddenParam]:

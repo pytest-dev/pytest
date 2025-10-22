@@ -214,7 +214,12 @@ def evaluate_xfail_marks(item: Item) -> Xfail | None:
     """Evaluate xfail marks on item, returning Xfail if triggered."""
     for mark in item.iter_markers(name="xfail"):
         run = mark.kwargs.get("run", True)
-        strict = mark.kwargs.get("strict", item.config.getini("strict_xfail"))
+        if "strict" in mark.kwargs:
+            strict = mark.kwargs["strict"]
+        elif item.config.hasini("strict_xfail"):
+            strict = item.config.getini("strict_xfail")
+        else:
+            strict = item.config.getini("strict")
         raises = mark.kwargs.get("raises", None)
         if "condition" not in mark.kwargs:
             conditions = mark.args

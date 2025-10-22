@@ -90,8 +90,10 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group.addoption(
         "--strict",
-        action="store_true",
-        help="(Deprecated) alias to --strict-markers",
+        action=OverrideIniAction,
+        ini_option="strict",
+        ini_value="true",
+        help="Enables the strict option",
     )
     parser.addini(
         "strict_config",
@@ -104,6 +106,13 @@ def pytest_addoption(parser: Parser) -> None:
         "strict_markers",
         "Markers not registered in the `markers` section of the configuration "
         "file raise errors",
+        type="bool",
+        default=False,
+    )
+    parser.addini(
+        "strict",
+        "Enables all strictness options, currently: "
+        "strict_config, strict_markers, strict_xfail, strict_parametrization_ids",
         type="bool",
         default=False,
     )

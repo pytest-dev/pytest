@@ -378,10 +378,7 @@ norecursedirs = [
     "build",
     "dist",
 ]
-strict_xfail = true
-strict_parametrization_ids = true
-strict_markers = true
-strict_config = true
+strict = true
 filterwarnings = [
     "error",
     "default:Using or importing the ABCs:DeprecationWarning:unittest2.*",

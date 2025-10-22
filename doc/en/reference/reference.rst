@@ -2066,6 +2066,32 @@ passed multiple times. The expected format is ``name=value``. For example::
     "auto" can be used to explicitly use the global verbosity level.
 
 
+.. confval:: strict
+
+    If set to ``True``, enables all strictness options:
+
+    * :confval:`strict_config`
+    * :confval:`strict_markers`
+    * :confval:`strict_xfail`
+    * :confval:`strict_parametrization_ids`
+
+    Plugins may also enable their own strictness options.
+
+    If you explicitly set an individual strictness option, it takes precedence over ``strict``.
+
+    .. note::
+        If new strictness options are added to pytest in the future, they will also be enabled by ``strict``.
+        We therefore only recommend using this option when using a locked version of pytest,
+        or if you want to proactively adopt new strictness options as they are added.
+
+    .. code-block:: ini
+
+        [pytest]
+        strict = True
+
+    .. versionadded:: 9.0
+
+
 .. confval:: strict_xfail
 
     If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
@@ -2077,6 +2103,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         [pytest]
         strict_xfail = True
+
+    You can also enable this option via the :confval:`strict` option.
 
     .. versionchanged:: 9.0
         Renamed from ``xfail_strict`` to ``strict_xfail``.
@@ -2092,6 +2120,8 @@ passed multiple times. The expected format is ``name=value``. For example::
         [pytest]
         strict_config = True
 
+    You can also enable this option via the :confval:`strict` option.
+
 
 .. confval:: strict_markers
 
@@ -2101,6 +2131,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         [pytest]
         strict_markers = True
+
+    You can also enable this option via the :confval:`strict` option.
 
 
 .. confval:: strict_parametrization_ids
@@ -2114,6 +2146,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
           [pytest]
           strict_parametrization_ids = True
+
+    You can also enable this option via the :confval:`strict` option.
 
     For example,
 

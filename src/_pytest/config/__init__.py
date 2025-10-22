@@ -1515,7 +1515,11 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
-        strict_config = self.getini("strict_config")
+        if self.hasini("strict_config"):
+            strict_config = self.getini("strict_config")
+        else:
+            strict_config = self.getini("strict")
+
         if strict_config:
             raise UsageError(message)
 

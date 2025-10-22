@@ -184,7 +184,7 @@ def test_mark_on_pseudo_function(pytester: Pytester) -> None:
 
 
 @pytest.mark.parametrize(
-    "option_name", ["--strict-markers", "--strict", "strict_markers"]
+    "option_name", ["--strict-markers", "--strict", "strict_markers", "strict"]
 )
 def test_strict_prohibits_unregistered_markers(
     pytester: Pytester, option_name: str
@@ -197,11 +197,11 @@ def test_strict_prohibits_unregistered_markers(
             pass
     """
     )
-    if option_name == "strict_markers":
+    if option_name in ("strict_markers", "strict"):
         pytester.makeini(
-            """
+            f"""
             [pytest]
-            strict_markers = true
+            {option_name} = true
             """
         )
         result = pytester.runpytest()
