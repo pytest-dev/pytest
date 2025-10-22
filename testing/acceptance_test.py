@@ -1643,13 +1643,9 @@ def test_stop_iteration_runtest_protocol(pytester: Pytester) -> None:
     assert result.ret == ExitCode.TESTS_FAILED
     result.assert_outcomes(failed=1, passed=1, errors=2)
 
-    result.stdout.fnmatch_lines(
-        [
-            "=* short test summary info =*",
-            "=* 1 failed, 1 passed, 2 errors in * =*",
-        ]
-    )
-
+    # uv managed python versions do not raise the same exception with regard to
+    # StopIteration.
+    # See PEP-0479
     runtime_errors = {
         "FAILED test_it.py::test_fail_call - RuntimeError: generator raised StopIteration",
         "ERROR test_it.py::test_fail_setup - RuntimeError: generator raised StopIteration",
