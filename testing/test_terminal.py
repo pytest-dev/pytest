@@ -2191,7 +2191,7 @@ class TestProgressOutputStyle:
                 [
                     r"test_axfail.py {yellow}x{reset}{green} \s+ \[  4%\]{reset}",
                     r"test_bar.py ({green}\.{reset}){{10}}{green} \s+ \[ 52%\]{reset}",
-                    r"test_foo.py ({green}\.{reset}){{5}}{yellow} \s+ \[ 76%\]{reset}",
+                    r"test_foo.py ({yellow}\.{reset}){{5}}{yellow} \s+ \[ 76%\]{reset}",
                     r"test_foobar.py ({red}F{reset}){{5}}{red} \s+ \[100%\]{reset}",
                 ]
             )
@@ -2204,6 +2204,179 @@ class TestProgressOutputStyle:
                 [
                     r"test_axfail.py {yellow}x{reset}{yellow} \s+ \[100%\]{reset}",
                     r"^{yellow}=+ ({yellow}{bold}|{bold}{yellow})1 xfailed{reset}{yellow} in ",
+                ]
+            )
+        )
+
+    def test_verbose_colored_warnings(
+        self, pytester: Pytester, monkeypatch, color_mapping
+    ) -> None:
+        """Test that verbose mode shows yellow PASSED for tests with warnings."""
+        monkeypatch.setenv("PY_COLORS", "1")
+        pytester.makepyfile(
+            test_warning="""
+                import warnings
+                def test_with_warning():
+                    warnings.warn("test warning", DeprecationWarning)
+
+                def test_without_warning():
+                    pass
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.stdout.re_match_lines(
+            color_mapping.format_for_rematch(
+                [
+                    r"test_warning.py::test_with_warning {yellow}PASSED{reset}{green} \s+ \[ 50%\]{reset}",
+                    r"test_warning.py::test_without_warning {green}PASSED{reset}{yellow} \s+ \[100%\]{reset}",
+                ]
+            )
+        )
+
+    def test_verbose_colored_warnings_xdist(
+        self, pytester: Pytester, monkeypatch, color_mapping
+    ) -> None:
+        """Test that warning coloring works correctly with pytest-xdist parallel execution."""
+        pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        monkeypatch.setenv("PY_COLORS", "1")
+        pytester.makepyfile(
+            test_warning_xdist="""
+                import warnings
+                def test_with_warning_1():
+                    warnings.warn("warning in test 1", DeprecationWarning)
+                    pass
+
+                def test_with_warning_2():
+                    warnings.warn("warning in test 2", DeprecationWarning)
+                    pass
+
+                def test_without_warning():
+                    pass
+            """
+        )
+
+        output = pytester.runpytest("-v", "-n2")
+        # xdist outputs in random order, and uses format:
+        # [gw#][cyan] [%] [reset][color]STATUS[reset] test_name
+        # Note: \x1b[36m is cyan, which isn't in color_mapping
+        output.stdout.re_match_lines_random(
+            color_mapping.format_for_rematch(
+                [
+                    r"\[gw\d\]\x1b\[36m \[\s*\d+%\] {reset}{yellow}PASSED{reset} "
+                    r"test_warning_xdist.py::test_with_warning_1",
+                    r"\[gw\d\]\x1b\[36m \[\s*\d+%\] {reset}{yellow}PASSED{reset} "
+                    r"test_warning_xdist.py::test_with_warning_2",
+                    r"\[gw\d\]\x1b\[36m \[\s*\d+%\] {reset}{green}PASSED{reset} "
+                    r"test_warning_xdist.py::test_without_warning",
+                ]
+            )
+        )
+
+    def test_failed_test_with_warnings_shows_red(
+        self, pytester: Pytester, monkeypatch, color_mapping
+    ) -> None:
+        """Test that failed tests with warnings show RED, not yellow."""
+        monkeypatch.setenv("PY_COLORS", "1")
+        pytester.makepyfile(
+            test_failed_warning="""
+                import warnings
+                def test_fails_with_warning():
+                    warnings.warn("This will fail", DeprecationWarning)
+                    assert False, "Expected failure"
+
+                def test_passes_with_warning():
+                    warnings.warn("This passes", DeprecationWarning)
+                    assert True
+            """
+        )
+        result = pytester.runpytest("-v")
+        # Failed test should be RED even though it has warnings
+        result.stdout.re_match_lines(
+            color_mapping.format_for_rematch(
+                [
+                    r"test_failed_warning.py::test_fails_with_warning {red}FAILED{reset}",
+                    r"test_failed_warning.py::test_passes_with_warning {yellow}PASSED{reset}",
+                ]
+            )
+        )
+
+    def test_non_verbose_mode_with_warnings(
+        self, pytester: Pytester, monkeypatch, color_mapping
+    ) -> None:
+        """Test that non-verbose mode (dot output) works correctly with warnings."""
+        monkeypatch.setenv("PY_COLORS", "1")
+        pytester.makepyfile(
+            test_dots="""
+                import warnings
+                def test_with_warning():
+                    warnings.warn("warning", DeprecationWarning)
+                    pass
+
+                def test_without_warning():
+                    pass
+            """
+        )
+        result = pytester.runpytest()  # No -v flag
+        # Should show dots, yellow for warning, green for clean pass
+        result.stdout.re_match_lines(
+            color_mapping.format_for_rematch(
+                [
+                    r"test_dots.py {yellow}\.{reset}{green}\.{reset}",
+                ]
+            )
+        )
+
+    def test_multiple_warnings_single_test(
+        self, pytester: Pytester, monkeypatch, color_mapping
+    ) -> None:
+        """Test that tests with multiple warnings still show yellow."""
+        monkeypatch.setenv("PY_COLORS", "1")
+        pytester.makepyfile(
+            test_multi="""
+                import warnings
+                def test_multiple_warnings():
+                    warnings.warn("warning 1", DeprecationWarning)
+                    warnings.warn("warning 2", DeprecationWarning)
+                    warnings.warn("warning 3", DeprecationWarning)
+                    pass
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.stdout.re_match_lines(
+            color_mapping.format_for_rematch(
+                [
+                    r"test_multi.py::test_multiple_warnings {yellow}PASSED{reset}",
+                ]
+            )
+        )
+
+    def test_warning_with_filterwarnings_mark(
+        self, pytester: Pytester, monkeypatch, color_mapping
+    ) -> None:
+        """Test that warnings with filterwarnings mark still show yellow."""
+        monkeypatch.setenv("PY_COLORS", "1")
+        pytester.makepyfile(
+            test_marked="""
+                import warnings
+                import pytest
+
+                @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+                def test_with_ignored_warning():
+                    warnings.warn("ignored warning", DeprecationWarning)
+                    pass
+
+                def test_with_visible_warning():
+                    warnings.warn("visible warning", DeprecationWarning)
+                    pass
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.stdout.re_match_lines(
+            color_mapping.format_for_rematch(
+                [
+                    r"test_marked.py::test_with_ignored_warning {green}PASSED{reset}",
+                    r"test_marked.py::test_with_visible_warning {yellow}PASSED{reset}",
                 ]
             )
         )

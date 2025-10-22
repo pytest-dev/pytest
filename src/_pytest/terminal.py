@@ -1377,6 +1377,9 @@ class TerminalReporter:
         stats = self.stats
         if "failed" in stats or "error" in stats:
             main_color = "red"
+        elif self.showlongtestinfo and not self._is_last_item:
+            # In verbose mode, keep progress green while tests are running
+            main_color = "green"
         elif "warnings" in stats or "xpassed" in stats or unknown_type_seen:
             main_color = "yellow"
         elif "passed" in stats or not self._is_last_item:

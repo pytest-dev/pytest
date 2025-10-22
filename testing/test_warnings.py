@@ -888,3 +888,86 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
         else []
     )
     result.stdout.fnmatch_lines([*expected_extra, "*1 passed*"])
+
+
+def test_warning_tracking_for_yellow_coloring(pytester: Pytester) -> None:
+    """Test that warnings set has_warnings attribute on reports for yellow markup."""
+    pytester.makepyfile(
+        """
+        import warnings
+        def test_with_warning():
+            warnings.warn("test warning", DeprecationWarning)
+            assert True
+
+        def test_without_warning():
+            assert True
+    """
+    )
+
+    # Use inline_run to verify the has_warnings attribute is set correctly
+    reprec = pytester.inline_run()
+
+    # Get all call phase reports
+    reports = reprec.getreports("pytest_runtest_logreport")
+    call_reports = [r for r in reports if r.when == "call"]
+
+    # Find the reports for each test
+    test_with_warning_report = None
+    test_without_warning_report = None
+    for report in call_reports:
+        if "test_with_warning" in report.nodeid:
+            test_with_warning_report = report
+        elif "test_without_warning" in report.nodeid:
+            test_without_warning_report = report
+
+    # Verify test_with_warning has the has_warnings attribute set
+    assert test_with_warning_report is not None, (
+        "Expected to find test_with_warning report"
+    )
+    assert hasattr(test_with_warning_report, "has_warnings"), (
+        "Expected test_with_warning report to have has_warnings attribute"
+    )
+    assert test_with_warning_report.has_warnings is True, (
+        "Expected has_warnings to be True for test with warnings"
+    )
+
+    # Verify test_without_warning does NOT have the has_warnings attribute
+    assert test_without_warning_report is not None, (
+        "Expected to find test_without_warning report"
+    )
+    assert not hasattr(test_without_warning_report, "has_warnings"), (
+        "Did not expect test_without_warning report to have has_warnings attribute"
+    )
+
+
+def test_warning_stash_storage(pytester: Pytester) -> None:
+    """Test that warning log is stored in item.stash during test execution."""
+    pytester.makepyfile(
+        """
+        import warnings
+
+        def test_with_warning():
+            warnings.warn("test warning", DeprecationWarning)
+            pass
+    """
+    )
+
+    # Use a plugin to capture the item and check the stash
+    captured_item = []
+
+    class StashChecker:
+        def pytest_runtest_call(self, item):
+            captured_item.append(item)
+
+    pytester.inline_run(plugins=[StashChecker()])
+
+    assert len(captured_item) == 1
+    item = captured_item[0]
+
+    # Check that the warning log was stored in the stash
+    from _pytest.warnings import warning_captured_log_key
+
+    warning_log = item.stash.get(warning_captured_log_key, None)
+    assert warning_log is not None, "Expected warning log to be stored in item.stash"
+    assert len(warning_log) > 0, "Expected at least one warning in the log"
+    assert "test warning" in str(warning_log[0].message)
