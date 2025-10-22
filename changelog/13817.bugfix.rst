@@ -1,0 +1,1 @@
+Fixed ``AttributeError`` in ``Argument.__repr__`` when ``dest`` attribute is not set, which occurred when displaying error messages for invalid option names. The error now shows a helpful message instead of masking the original validation error.
