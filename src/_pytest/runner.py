@@ -213,7 +213,7 @@ def _update_current_test_var(
         # is not atomic or thread-safe, unlike e.g. popping from a builtin dict.
         try:
             os.environ.pop(var_name)
-        except KeyError:
+        except KeyError:  # pragma: no cover # can be removed when #13768 is farther along
             pass
 
 
