@@ -295,6 +295,76 @@ jobs:
         files: ./coverage.xml
         verbose: true
 
+  build-uv:
+    needs: [package]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [
+          "windows-py310",
+
+          "ubuntu-py310",
+
+          "macos-py310",
+        ]
+
+        include:
+          - name: "windows-py310"
+            python: "3.10"
+            os: windows-latest
+            tox_env: "py310"
+
+          - name: "ubuntu-py310"
+            python: "3.10"
+            os: ubuntu-latest
+            tox_env: "py310"
+
+          - name: "macos-py310"
+            python: "3.10"
+            os: macos-latest
+            tox_env: "py310"
+            xfail: true
+
+    continue-on-error: ${{ matrix.xfail && true || false }}
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Download Package
+      uses: actions/download-artifact@v5
+      with:
+        name: Packages
+        path: dist
+
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python }}
+        check-latest: true
+        allow-prereleases: true
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox>=4 tox-uv>=1 coverage
+
+    - name: Test
+      shell: bash
+      env:
+        UV_RESOLUTION: lowest-direct
+        UV_PYTHON_PREFERENCE: only-managed
+      run: tox run -e ${{ matrix.tox_env }} --installpkg `find dist/*.tar.gz`
+
+
   check:  # This job does nothing and is only used for the branch protection
     if: always()
 
