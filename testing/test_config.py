@@ -1228,6 +1228,67 @@ class TestConfigAPI:
     def test_iter_rewritable_modules(self, names, expected) -> None:
         assert list(_iter_rewritable_modules(names)) == expected
 
+    def test_hasini(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("myopt", "my option", default="default_value")
+                parser.addini("another", "another option", default="another_default")
+                parser.addini("aliased_opt", "option with alias", default="alias_default", aliases=["old_alias"])
+                parser.addini("no_default", "option without explicit default")
+            """
+        )
+
+        # Option defined in ini file.
+        pytester.makeini(
+            """
+            [pytest]
+            myopt = from_file
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.hasini("myopt") is True
+        assert config.hasini("another") is False
+
+        # Option set via --override-ini.
+        config = pytester.parseconfig("-o", "another=overridden")
+        assert config.hasini("myopt") is True
+        assert config.hasini("another") is True
+
+        # Option with no explicit value.
+        assert config.hasini("no_default") is False
+
+        # Option set via alias in ini file.
+        pytester.makeini(
+            """
+            [pytest]
+            old_alias = set_via_alias
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.hasini("aliased_opt") is True
+        assert config.hasini("old_alias") is True
+
+        # Using canonical name when alias is set.
+        pytester.makeini(
+            """
+            [pytest]
+            aliased_opt = set_via_canonical
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.hasini("aliased_opt") is True
+        assert config.hasini("old_alias") is True
+
+        # Override via alias.
+        config = pytester.parseconfig("-o", "old_alias=override_via_alias")
+        assert config.hasini("aliased_opt") is True
+        assert config.hasini("old_alias") is True
+
+        # Unknown configuration value should raise ValueError.
+        with pytest.raises(ValueError, match="unknown configuration value"):
+            config.hasini("unknown_option")
+
     def test_add_cleanup(self, pytester: Pytester) -> None:
         config = Config.fromdictargs({}, [])
         config._do_configure()
