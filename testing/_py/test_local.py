@@ -462,7 +462,7 @@ class CommonFSTests:
 
     def test_fspath_open(self, path1):
         f = path1.join("samplefile")
-        stream = open(f)
+        stream = open(f, encoding="utf-8")
         stream.close()
 
     def test_fspath_fsencode(self, path1):
