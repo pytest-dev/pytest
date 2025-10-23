@@ -931,3 +931,23 @@ def test_exitfirst(pytester: pytest.Pytester) -> None:
         consecutive=True,
     )
     result.stdout.no_fnmatch_line("*sub2*")  # sub2 not executed.
+
+
+def test_do_not_swallow_pytest_exit(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        def test(subtests):
+            with subtests.test():
+                pytest.exit()
+
+        def test2(): pass
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.stdout.fnmatch_lines(
+        [
+            "* _pytest.outcomes.Exit *",
+            "* 1 failed in *",
+        ]
+    )

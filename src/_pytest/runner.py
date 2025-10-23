@@ -16,6 +16,7 @@ from typing import Literal
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
+from .config import Config
 from .reports import BaseReport
 from .reports import CollectErrorRepr
 from .reports import CollectReport
@@ -239,11 +240,11 @@ def call_and_report(
         runtest_hook = ihook.pytest_runtest_teardown
     else:
         assert False, f"Unhandled runtest hook case: {when}"
-    reraise: tuple[type[BaseException], ...] = (Exit,)
-    if not item.config.getoption("usepdb", False):
-        reraise += (KeyboardInterrupt,)
+
     call = CallInfo.from_call(
-        lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+        lambda: runtest_hook(item=item, **kwds),
+        when=when,
+        reraise=get_reraise_exceptions(item.config),
     )
     report: TestReport = ihook.pytest_runtest_makereport(item=item, call=call)
     if log:
@@ -251,6 +252,14 @@ def call_and_report(
     if check_interactive_exception(call, report):
         ihook.pytest_exception_interact(node=item, call=call, report=report)
     return report
+
+
+def get_reraise_exceptions(config: Config) -> tuple[type[BaseException], ...]:
+    """Return exception types that should not be suppressed in general."""
+    reraise: tuple[type[BaseException], ...] = (Exit,)
+    if not config.getoption("usepdb", False):
+        reraise += (KeyboardInterrupt,)
+    return reraise
 
 
 def check_interactive_exception(call: CallInfo[object], report: BaseReport) -> bool:

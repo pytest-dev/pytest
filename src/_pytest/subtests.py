@@ -34,6 +34,7 @@ from _pytest.logging import LogCaptureHandler
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
+from _pytest.runner import get_reraise_exceptions
 from _pytest.stash import StashKey
 
 
@@ -276,6 +277,8 @@ class _SubTestContextManager:
             )
 
         if exc_val is not None:
+            if isinstance(exc_val, get_reraise_exceptions(self.config)):
+                return False
             if self.request.session.shouldfail:
                 return False
         return True
