@@ -429,9 +429,11 @@ class TestCaseFunction(Function):
         )
         msg = test._message if isinstance(test._message, str) else None  # type: ignore[attr-defined]
         report = self.ihook.pytest_runtest_makereport(item=self, call=call_info)
-        sub_report = SubtestReport._from_test_report(
+        sub_report = SubtestReport._new(
             report,
             SubtestContext(msg=msg, kwargs=dict(test.params)),  # type: ignore[attr-defined]
+            captured_output=None,
+            captured_logs=None,
         )
         self.ihook.pytest_runtest_logreport(report=sub_report)
         if check_interactive_exception(call_info, sub_report):

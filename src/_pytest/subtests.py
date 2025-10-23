@@ -108,11 +108,25 @@ class SubtestReport(TestReport):
         return report
 
     @classmethod
-    def _from_test_report(
-        cls, test_report: TestReport, context: SubtestContext
+    def _new(
+        cls,
+        test_report: TestReport,
+        context: SubtestContext,
+        captured_output: Captured | None,
+        captured_logs: CapturedLogs | None,
     ) -> Self:
         result = super()._from_json(test_report._to_json())
         result.context = context
+
+        if captured_output:
+            if captured_output.out:
+                result.sections.append(("Captured stdout call", captured_output.out))
+            if captured_output.err:
+                result.sections.append(("Captured stderr call", captured_output.err))
+
+        if captured_logs and (log := captured_logs.handler.stream.getvalue()):
+            result.sections.append(("Captured log call", log))
+
         return result
 
 
@@ -242,16 +256,16 @@ class _SubTestContextManager:
         report = self.ihook.pytest_runtest_makereport(
             item=self.request.node, call=call_info
         )
-        sub_report = SubtestReport._from_test_report(
-            report, SubtestContext(msg=self.msg, kwargs=self.kwargs)
+        sub_report = SubtestReport._new(
+            report,
+            SubtestContext(msg=self.msg, kwargs=self.kwargs),
+            captured_output=self._captured_output,
+            captured_logs=self._captured_logs,
         )
 
         if sub_report.failed:
             failed_subtests = self.config.stash[failed_subtests_key]
             failed_subtests[self.request.node.nodeid] += 1
-
-        self._captured_output.update_report(sub_report)
-        self._captured_logs.update_report(sub_report)
 
         with self.suspend_capture_ctx():
             self.ihook.pytest_runtest_logreport(report=sub_report)
@@ -299,10 +313,10 @@ def capturing_output(request: SubRequest) -> Iterator[Captured]:
 @contextmanager
 def capturing_logs(
     request: SubRequest,
-) -> Iterator[CapturedLogs | NullCapturedLogs]:
+) -> Iterator[CapturedLogs | None]:
     logging_plugin = request.config.pluginmanager.getplugin("logging-plugin")
     if logging_plugin is None:
-        yield NullCapturedLogs()
+        yield None
     else:
         handler = LogCaptureHandler()
         handler.setFormatter(logging_plugin.formatter)
@@ -317,26 +331,10 @@ class Captured:
     out: str = ""
     err: str = ""
 
-    def update_report(self, report: TestReport) -> None:
-        if self.out:
-            report.sections.append(("Captured stdout call", self.out))
-        if self.err:
-            report.sections.append(("Captured stderr call", self.err))
-
 
 @dataclasses.dataclass
 class CapturedLogs:
     handler: LogCaptureHandler
-
-    def update_report(self, report: TestReport) -> None:
-        captured_log = self.handler.stream.getvalue()
-        if captured_log:
-            report.sections.append(("Captured log call", captured_log))
-
-
-class NullCapturedLogs:
-    def update_report(self, report: TestReport) -> None:
-        pass
 
 
 def pytest_report_to_serializable(report: TestReport) -> dict[str, Any] | None:
