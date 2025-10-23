@@ -33,9 +33,9 @@ Each assertion failure or error is caught by the context manager and reported in
 
 In the output above:
 
+* Subtest failures are reported as ``SUBFAILED``.
 * Each subtest is reported with the ``,`` character.
 * Subtests are reported first and the "top-level" test is reported at the end on its own.
-* Subtest failures are reported as ``SUBFAILED``.
 
 Note that it is possible to use ``subtests`` multiple times in the same test, or even mix and match with normal assertions
 outside the ``subtests.test`` block:
@@ -93,3 +93,10 @@ Subtests
 * Cannot be referenced individually from the command line.
 * Plugins that handle test execution cannot target individual subtests.
 * An assertion failure inside a subtest does not interrupt the test, letting users see all failures in the same report.
+
+
+.. note::
+
+    This feature was originally implemented as a separate plugin in `pytest-subtests <https://github.com/pytest-dev/pytest-subtests>`__, but since ``9.0`` has been merged into the core.
+
+    The core implementation should be compatible to the plugin implementation, except it does not contain custom command-line options to control subtest output.
