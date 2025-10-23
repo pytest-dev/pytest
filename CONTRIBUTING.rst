@@ -203,7 +203,7 @@ Short version
 
 #. Write a ``changelog`` entry: ``changelog/2574.bugfix.rst``, use issue id number
    and one of ``feature``, ``improvement``, ``bugfix``, ``doc``, ``deprecation``,
-   ``breaking``, ``vendor`` or ``trivial`` for the issue type.
+   ``breaking``, or ``vendor`` for the issue type.
 
 
 #. Unless your change is a trivial or a documentation fix (e.g., a typo or reword of a small section) please
@@ -305,8 +305,8 @@ Here is a simple overview, with pytest-specific bits:
 
 #. Create a new changelog entry in ``changelog``. The file should be named ``<issueid>.<type>.rst``,
    where *issueid* is the number of the issue related to the change and *type* is one of
-   ``feature``, ``improvement``, ``bugfix``, ``doc``, ``deprecation``, ``breaking``, ``vendor``
-   or ``trivial``. You may skip creating the changelog entry if the change doesn't affect the
+   ``feature``, ``improvement``, ``bugfix``, ``doc``, ``deprecation``, ``breaking``, or ``vendor``.
+   You may skip creating the changelog entry if the change doesn't affect the
    documented behaviour of pytest.
 
 #. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
