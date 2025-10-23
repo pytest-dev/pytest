@@ -355,13 +355,16 @@ class TestParseIni:
         result = pytester.runpytest()
         result.stdout.no_fnmatch_line("*PytestConfigWarning*")
 
-    def test_strict_config_ini_option(self, pytester: Pytester) -> None:
-        """Test that strict_config ini option works."""
+    @pytest.mark.parametrize("option_name", ["strict_config", "strict"])
+    def test_strict_config_ini_option(
+        self, pytester: Pytester, option_name: str
+    ) -> None:
+        """Test that strict_config and strict ini options enable strict config checking."""
         pytester.makeini(
-            """
+            f"""
             [pytest]
             unknown_option = 1
-            strict_config = True
+            {option_name} = True
             """
         )
         result = pytester.runpytest()
