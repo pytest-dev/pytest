@@ -975,3 +975,29 @@ def test_do_not_swallow_pytest_exit(pytester: pytest.Pytester) -> None:
             "* 1 failed in *",
         ]
     )
+
+
+def test_nested(pytester: pytest.Pytester) -> None:
+    """
+    Currently we do nothing special with nested subtests.
+
+    This test only sediments how they work now, we might reconsider adding some kind of nesting support in the future.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+        def test(subtests):
+            with subtests.test("a"):
+                with subtests.test("b"):
+                    assert False, "b failed"
+                assert False, "a failed"
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.stdout.fnmatch_lines(
+        [
+            "[b] SUBFAILED test_nested.py::test - AssertionError: b failed",
+            "[a] SUBFAILED test_nested.py::test - AssertionError: a failed",
+            "* 3 failed in *",
+        ]
+    )
