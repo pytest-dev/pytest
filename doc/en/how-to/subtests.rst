@@ -35,7 +35,7 @@ In the output above:
 
 * Each subtest is reported with the ``,`` character.
 * Subtests are reported first and the "top-level" test is reported at the end on its own.
-* Subtest failures are reported as ``SUBFAIL``.
+* Subtest failures are reported as ``SUBFAILED``.
 
 Note that it is possible to use ``subtests`` multiple times in the same test, or even mix and match with normal assertions
 outside the ``subtests.test`` block:

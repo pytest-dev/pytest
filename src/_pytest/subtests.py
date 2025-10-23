@@ -159,7 +159,7 @@ class Subtests:
 
             def test(subtests):
                 for i in range(5):
-                    with subtests.test(msg="custom message", i=i):
+                    with subtests.test("custom message", i=i):
                         assert i % 2 == 0
 
         :param msg:
@@ -273,13 +273,13 @@ class _SubTestContextManager:
 def capturing_output(request: SubRequest) -> Iterator[Captured]:
     option = request.config.getoption("capture", None)
 
-    # capsys or capfd are active, subtest should not capture.
     capman = request.config.pluginmanager.getplugin("capturemanager")
-    capture_fixture_active = getattr(capman, "_capture_fixture", None)
-
-    if option == "sys" and not capture_fixture_active:
+    if getattr(capman, "_capture_fixture", None):
+        # capsys or capfd are active, subtest should not capture.
+        fixture = None
+    elif option == "sys":
         fixture = CaptureFixture(SysCapture, request, _ispytest=True)
-    elif option == "fd" and not capture_fixture_active:
+    elif option == "fd":
         fixture = CaptureFixture(FDCapture, request, _ispytest=True)
     else:
         fixture = None

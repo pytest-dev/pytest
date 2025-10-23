@@ -563,10 +563,8 @@ class TestUnittestSubTest:
             result = pytester.runpytest(p, "-v", "-rsf")
             result.stdout.re_match_lines(
                 [
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=0\) SUBSKIPPED"
-                    r" \(skip subtest i=0\) .*",
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=3\) SUBSKIPPED"
-                    r" \(skip subtest i=3\) .*",
+                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=0\) SUBSKIPPED \(skip subtest i=0\) .*",  # noqa: E501
+                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=3\) SUBSKIPPED \(skip subtest i=3\) .*",  # noqa: E501
                     r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=4\) SUBFAILED .*",
                     r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=9\) SUBFAILED .*",
                     "test_skip_with_failure.py::T::test_foo PASSED .*",
