@@ -21,6 +21,8 @@ Each assert failure or error is caught by the context manager and reported indiv
 
 In addition, :meth:`unittest.TestCase.subTest` is now also supported.
 
+This feature was originally implemented as a separate plugin in `pytest-subtests <https://github.com/pytest-dev/pytest-subtests>`__, but since then has been merged into the core.
+
 .. note::
 
     This feature is experimental and will likely evolve in future releases. By that we mean that we might change how subtests are reported on failure, but the functionality and how to use it are stable.
