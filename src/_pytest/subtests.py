@@ -219,13 +219,12 @@ class _SubTestContextManager:
         exc_tb: TracebackType | None,
     ) -> bool:
         __tracebackhide__ = True
-        try:
-            if exc_val is not None:
-                exc_info = ExceptionInfo.from_exception(exc_val)
-            else:
-                exc_info = None
-        finally:
-            self._exit_stack.close()
+        if exc_val is not None:
+            exc_info = ExceptionInfo.from_exception(exc_val)
+        else:
+            exc_info = None
+
+        self._exit_stack.close()
 
         precise_stop = time.perf_counter()
         duration = precise_stop - self._precise_start
@@ -244,7 +243,7 @@ class _SubTestContextManager:
             item=self.request.node, call=call_info
         )
         sub_report = SubtestReport._from_test_report(
-            report, SubtestContext(msg=self.msg, kwargs=self.kwargs.copy())
+            report, SubtestContext(msg=self.msg, kwargs=self.kwargs)
         )
 
         if sub_report.failed:
