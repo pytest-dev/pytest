@@ -769,15 +769,17 @@ class TestLogging:
                 with subtests.test("sub1"):
                     print("sub1 stdout")
                     logging.info("sub1 logging")
+                    logging.debug("sub1 logging debug")
 
                 with subtests.test("sub2"):
                     print("sub2 stdout")
                     logging.info("sub2 logging")
+                    logging.debug("sub2 logging debug")
                     assert False
             """
         )
 
-    def test_capturing(self, pytester: pytest.Pytester) -> None:
+    def test_capturing_info(self, pytester: pytest.Pytester) -> None:
         self.create_file(pytester)
         result = pytester.runpytest("--log-level=INFO")
         result.stdout.fnmatch_lines(
@@ -786,7 +788,29 @@ class TestLogging:
                 "*-- Captured stdout call --*",
                 "sub2 stdout",
                 "*-- Captured log call ---*",
-                "INFO     root:test_capturing.py:12 sub2 logging",
+                "INFO     * before",
+                "INFO     * sub1 logging",
+                "INFO     * sub2 logging",
+                "*== short test summary info ==*",
+            ]
+        )
+        result.stdout.no_fnmatch_line("sub1 logging debug")
+        result.stdout.no_fnmatch_line("sub2 logging debug")
+
+    def test_capturing_debug(self, pytester: pytest.Pytester) -> None:
+        self.create_file(pytester)
+        result = pytester.runpytest("--log-level=DEBUG")
+        result.stdout.fnmatch_lines(
+            [
+                "*___ test_foo [[]sub2[]] __*",
+                "*-- Captured stdout call --*",
+                "sub2 stdout",
+                "*-- Captured log call ---*",
+                "INFO     * before",
+                "INFO     * sub1 logging",
+                "DEBUG    * sub1 logging debug",
+                "INFO     * sub2 logging",
+                "DEBUG    * sub2 logging debug",
                 "*== short test summary info ==*",
             ]
         )

@@ -31,6 +31,7 @@ from _pytest.fixtures import fixture
 from _pytest.fixtures import SubRequest
 from _pytest.logging import catching_logs
 from _pytest.logging import LogCaptureHandler
+from _pytest.logging import LoggingPlugin
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
@@ -317,7 +318,9 @@ def capturing_output(request: SubRequest) -> Iterator[Captured]:
 def capturing_logs(
     request: SubRequest,
 ) -> Iterator[CapturedLogs | None]:
-    logging_plugin = request.config.pluginmanager.getplugin("logging-plugin")
+    logging_plugin: LoggingPlugin | None = request.config.pluginmanager.getplugin(
+        "logging-plugin"
+    )
     if logging_plugin is None:
         yield None
     else:
@@ -325,7 +328,7 @@ def capturing_logs(
         handler.setFormatter(logging_plugin.formatter)
 
         captured_logs = CapturedLogs(handler)
-        with catching_logs(handler):
+        with catching_logs(handler, level=logging_plugin.log_level):
             yield captured_logs
 
 
