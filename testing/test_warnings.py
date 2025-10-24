@@ -382,7 +382,7 @@ def test_hide_pytest_internal_warnings(
 def test_option_precedence_cmdline_over_ini(
     pytester: Pytester, ignore_on_cmdline
 ) -> None:
-    """Filters defined in the command-line should take precedence over filters in ini files (#3946)."""
+    """Filters defined in the command-line should take precedence over filters in config files (#3946)."""
     pytester.makeini(
         """
         [pytest]

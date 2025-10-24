@@ -383,7 +383,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
 
     def _matches_prefix_or_glob_option(self, option_name: str, name: str) -> bool:
         """Check if the given name matches the prefix or glob-pattern defined
-        in ini configuration."""
+        in configuration."""
         for option in self.config.getini(option_name):
             if name.startswith(option):
                 return True

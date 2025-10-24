@@ -1520,7 +1520,7 @@ class FixtureManager:
     relevant for a particular function. An initial list of fixtures is
     assembled like this:
 
-    - ini-defined usefixtures
+    - config-defined usefixtures
     - autouse-marked fixtures along the collection chain up from the function
     - usefixtures markers at module/class/function level
     - test function funcargs

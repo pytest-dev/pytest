@@ -940,7 +940,7 @@ class TestTerminalFunctional:
         pytester.path.joinpath("tests").mkdir()
         pytester.path.joinpath("gui").mkdir()
 
-        # no ini file
+        # no configuration file
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["rootdir: *test_header0"])
 

@@ -333,10 +333,12 @@ This will make ``XPASS`` ("unexpectedly passing") results from this test to fail
 You can change the default value of the ``strict`` parameter using the
 ``strict_xfail`` ini option:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    strict_xfail=true
+    .. code-block:: ini
+
+        [pytest]
+        strict_xfail = true
 
 
 Ignoring xfail

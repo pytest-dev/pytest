@@ -4,8 +4,7 @@ Configuration
 Command line options and configuration file settings
 -----------------------------------------------------------------
 
-You can get help on command line options and values in INI-style
-configurations files by using the general help option:
+You can get help on command line and configuration options by using the general help option:
 
 .. code-block:: bash
 
@@ -31,15 +30,17 @@ pytest.ini
 
 Alternatively, the hidden version ``.pytest.ini`` can be used.
 
-.. code-block:: ini
+.. tab:: ini
 
-    # pytest.ini or .pytest.ini
-    [pytest]
-    minversion = 6.0
-    addopts = -ra -q
-    testpaths =
-        tests
-        integration
+    .. code-block:: ini
+
+        # pytest.ini or .pytest.ini
+        [pytest]
+        minversion = 6.0
+        addopts = -ra -q
+        testpaths =
+            tests
+            integration
 
 
 pyproject.toml
@@ -47,28 +48,20 @@ pyproject.toml
 
 .. versionadded:: 6.0
 
-``pyproject.toml`` are considered for configuration when they contain a ``tool.pytest.ini_options`` table.
+``pyproject.toml`` files are supported for configuration.
 
-.. code-block:: toml
+.. tab:: ini
 
-    # pyproject.toml
-    [tool.pytest.ini_options]
-    minversion = "6.0"
-    addopts = "-ra -q"
-    testpaths = [
-        "tests",
-        "integration",
-    ]
+    .. code-block:: toml
 
-.. note::
-
-    One might wonder why ``[tool.pytest.ini_options]`` instead of ``[tool.pytest]`` as is the
-    case with other tools.
-
-    The reason is that the pytest team intends to fully utilize the rich TOML data format
-    for configuration in the future, reserving the ``[tool.pytest]`` table for that.
-    The ``ini_options`` table is being used, for now, as a bridge between the existing
-    ``.ini`` configuration system and the future configuration format.
+        # pyproject.toml
+        [tool.pytest.ini_options]
+        minversion = "6.0"
+        addopts = "-ra -q"
+        testpaths = [
+            "tests",
+            "integration",
+        ]
 
 tox.ini
 ~~~~~~~
@@ -76,15 +69,17 @@ tox.ini
 ``tox.ini`` files are the configuration files of the `tox <https://tox.readthedocs.io>`__ project,
 and can also be used to hold pytest configuration if they have a ``[pytest]`` section.
 
-.. code-block:: ini
+.. tab:: ini
 
-    # tox.ini
-    [pytest]
-    minversion = 6.0
-    addopts = -ra -q
-    testpaths =
-        tests
-        integration
+    .. code-block:: ini
+
+        # tox.ini
+        [pytest]
+        minversion = 6.0
+        addopts = -ra -q
+        testpaths =
+            tests
+            integration
 
 
 setup.cfg
@@ -93,15 +88,17 @@ setup.cfg
 ``setup.cfg`` files are general purpose configuration files, used originally by ``distutils`` (now deprecated) and :std:doc:`setuptools <setuptools:userguide/declarative_config>`, and can also be used to hold pytest configuration
 if they have a ``[tool:pytest]`` section.
 
-.. code-block:: ini
+.. tab:: ini
 
-    # setup.cfg
-    [tool:pytest]
-    minversion = 6.0
-    addopts = -ra -q
-    testpaths =
-        tests
-        integration
+    .. code-block:: ini
+
+        # setup.cfg
+        [tool:pytest]
+        minversion = 6.0
+        addopts = -ra -q
+        testpaths =
+            tests
+            integration
 
 .. warning::
 
@@ -138,7 +135,7 @@ influence how modules are imported. See :ref:`pythonpath` for more details.
 
 The ``--rootdir=path`` command-line option can be used to force a specific directory.
 Note that contrary to other command-line options, ``--rootdir`` cannot be used with
-:confval:`addopts` inside ``pytest.ini`` because the ``rootdir`` is used to *find* ``pytest.ini``
+:confval:`addopts` inside a configuration file because the ``rootdir`` is used to *find* the configuration file
 already.
 
 Finding the ``rootdir``

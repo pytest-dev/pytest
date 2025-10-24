@@ -239,13 +239,14 @@ Registering markers
 
 Registering markers for your test suite is simple:
 
-.. code-block:: ini
+.. tab:: ini
 
-    # content of pytest.ini
-    [pytest]
-    markers =
-        webtest: mark a test as a webtest.
-        slow: mark test as slow.
+    .. code-block:: ini
+
+        [pytest]
+        markers =
+            webtest: mark a test as a webtest.
+            slow: mark test as slow.
 
 Multiple custom markers can be registered, by defining each one in its own line, as shown in above example.
 

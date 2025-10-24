@@ -654,7 +654,7 @@ class TestConftestVisibility:
 def test_search_conftest_up_to_inifile(
     pytester: Pytester, confcutdir: str, passed: int, error: int
 ) -> None:
-    """Test that conftest files are detected only up to an ini file, unless
+    """Test that conftest files are detected only up to a configuration file, unless
     an explicit --confcutdir option is given.
     """
     root = pytester.path

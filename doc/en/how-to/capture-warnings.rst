@@ -80,30 +80,20 @@ as an error:
     FAILED test_show_warnings.py::test_one - UserWarning: api v1, should use ...
     1 failed in 0.12s
 
-The same option can be set in the ``pytest.ini`` or ``pyproject.toml`` file using the
-``filterwarnings`` ini option. For example, the configuration below will ignore all
+The same option can be set in the configuration file using the
+:confval:`filterwarnings` configuration option. For example, the configuration below will ignore all
 user warnings and specific deprecation warnings matching a regex, but will transform
 all other warnings into errors.
 
-.. code-block:: ini
+.. tab:: ini
 
-    # pytest.ini
-    [pytest]
-    filterwarnings =
-        error
-        ignore::UserWarning
-        ignore:function ham\(\) is deprecated:DeprecationWarning
+    .. code-block:: ini
 
-.. code-block:: toml
-
-    # pyproject.toml
-    [tool.pytest.ini_options]
-    filterwarnings = [
-        "error",
-        "ignore::UserWarning",
-        # note the use of single quote below to denote "raw" strings in TOML
-        'ignore:function ham\(\) is deprecated:DeprecationWarning',
-    ]
+        [pytest]
+        filterwarnings =
+            error
+            ignore::UserWarning
+            ignore:function ham\(\) is deprecated:DeprecationWarning
 
 
 When a warning matches more than one option in the list, the action for the last matching option
@@ -112,7 +102,7 @@ is performed.
 
 .. note::
 
-    The ``-W`` flag and the ``filterwarnings`` ini option use warning filters that are
+    The ``-W`` flag and the :confval:`filterwarnings` configuration option use warning filters that are
     similar in structure, but each configuration option interprets its filter
     differently. For example, *message* in ``filterwarnings`` is a string containing a
     regular expression that the start of the warning message must match,
@@ -169,7 +159,7 @@ You can specify multiple filters with separate decorators:
 
 
 Filters applied using a mark take precedence over filters passed on the command line or configured
-by the :confval:`filterwarnings` ini option.
+by the :confval:`filterwarnings` configuration option.
 
 You may apply a filter to all tests of a class by using the :ref:`filterwarnings <pytest.mark.filterwarnings ref>` mark as a class
 decorator or to all tests in a module by setting the :globalvar:`pytestmark` variable:
@@ -202,7 +192,9 @@ warning summary entirely from the test run output.
 Disabling warning capture entirely
 ----------------------------------
 
-This plugin is enabled by default but can be disabled entirely in your ``pytest.ini`` file with:
+This plugin is enabled by default but can be disabled entirely in your configuration file with:
+
+.. tab:: ini
 
     .. code-block:: ini
 
@@ -227,16 +219,18 @@ However, in the specific case where users capture any type of warnings in their 
 no warning will be displayed at all.
 
 Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over
-(such as third-party libraries), in which case you might use the warning filters options (ini or marks) to ignore
+(such as third-party libraries), in which case you might use the warning filters options (configuration or marks) to ignore
 those warnings.
 
 For example:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    filterwarnings =
-        ignore:.*U.*mode is deprecated:DeprecationWarning
+    .. code-block:: ini
+
+        [pytest]
+        filterwarnings =
+            ignore:.*U.*mode is deprecated:DeprecationWarning
 
 
 This will ignore all warnings of type ``DeprecationWarning`` where the start of the message matches

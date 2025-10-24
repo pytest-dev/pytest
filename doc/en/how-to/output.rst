@@ -558,13 +558,15 @@ Modifying truncation limits
 .. versionadded: 8.4
 
 Default truncation limits are 8 lines or 640 characters, whichever comes first.
-To set custom truncation limits you can use following ``pytest.ini`` file options:
+To set custom truncation limits you can use the following configuration file options:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    truncation_limit_lines = 10
-    truncation_limit_chars = 90
+    .. code-block:: ini
+
+        [pytest]
+        truncation_limit_lines = 10
+        truncation_limit_chars = 90
 
 That will cause pytest to truncate the assertions to 10 lines or 90 characters, whichever comes first.
 
@@ -588,10 +590,12 @@ to create an XML file at ``path``.
 
 To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    junit_suite_name = my_suite
+    .. code-block:: ini
+
+        [pytest]
+        junit_suite_name = my_suite
 
 .. versionadded:: 4.0
 
@@ -602,10 +606,12 @@ should report total test execution times, including setup and teardown
 It is the default pytest behavior. To report just call durations
 instead, configure the ``junit_duration_report`` option like this:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    junit_duration_report = call
+    .. code-block:: ini
+
+        [pytest]
+        junit_duration_report = call
 
 .. _record_property example:
 

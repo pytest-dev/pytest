@@ -34,24 +34,16 @@ See :ref:`mark examples` for examples which also serve as documentation.
 Registering marks
 -----------------
 
-You can register custom marks in your ``pytest.ini`` file like this:
+You can register custom marks in your configuration file like this:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    markers =
-        slow: marks tests as slow (deselect with '-m "not slow"')
-        serial
+    .. code-block:: ini
 
-or in your ``pyproject.toml`` file like this:
-
-.. code-block:: toml
-
-    [tool.pytest.ini_options]
-    markers = [
-        "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-        "serial",
-    ]
+        [pytest]
+        markers =
+            slow: marks tests as slow (deselect with '-m "not slow"')
+            serial
 
 Note that everything past the ``:`` after the mark name is an optional description.
 
@@ -77,17 +69,19 @@ Raising errors on unknown marks
 Unregistered marks applied with the ``@pytest.mark.name_of_the_mark`` decorator
 will always emit a warning in order to avoid silently doing something
 surprising due to mistyped names. As described in the previous section, you can disable
-the warning for custom marks by registering them in your ``pytest.ini`` file or
+the warning for custom marks by registering them in your configuration file or
 using a custom ``pytest_configure`` hook.
 
-When the :confval:`strict_markers` ini option is set, any unknown marks applied
+When the :confval:`strict_markers` configuration option is set, any unknown marks applied
 with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error. You can
 enforce this validation in your project by setting :confval:`strict_markers` in your configuration:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    strict_markers = True
-    markers =
-        slow: marks tests as slow (deselect with '-m "not slow"')
-        serial
+    .. code-block:: ini
+
+        [pytest]
+        strict_markers = true
+        markers =
+            slow: marks tests as slow (deselect with '-m "not slow"')
+            serial
