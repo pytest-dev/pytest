@@ -148,11 +148,18 @@ pytest.warns
     :with:
 
 pytest.freeze_includes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 **Tutorial**: :ref:`freezing-pytest`
 
 .. autofunction:: pytest.freeze_includes
+
+pytest.match_markexpr
+~~~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`match_markexpr`
+
+.. autofunction:: pytest.match_markexpr
 
 .. _`marks ref`:
 
@@ -287,6 +294,7 @@ Marks a test function as *expected to fail*.
           a new release of a library fixes a known bug).
 
         Defaults to :confval:`xfail_strict`, which is ``False`` by default.
+
 
 
 Custom marks
