@@ -845,6 +845,13 @@ XML file supports it.
 
 To use the new format, update your configuration file:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        junit_family = "xunit2"
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -854,6 +861,13 @@ To use the new format, update your configuration file:
 
 If you discover that your tooling does not support the new format, and want to keep using the
 legacy version, set the option to ``legacy`` instead:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        junit_family = "legacy"
 
 .. tab:: ini
 

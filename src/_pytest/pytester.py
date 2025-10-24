@@ -837,6 +837,16 @@ class Pytester:
         """
         return self.makefile(".ini", tox=source)
 
+    def maketoml(self, source: str) -> Path:
+        """Write a pytest.toml file.
+
+        :param source: The contents.
+        :returns: The pytest.toml file.
+
+        .. versionadded:: 9.0
+        """
+        return self.makefile(".toml", pytest=source)
+
     def getinicfg(self, source: str) -> SectionWrapper:
         """Return the pytest section from the tox.ini config file."""
         p = self.makeini(source)

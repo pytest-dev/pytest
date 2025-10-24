@@ -1001,6 +1001,13 @@ def pytest_assertion_pass(item: Item, lineno: int, orig: str, expl: str) -> None
     This hook must be explicitly enabled by the ``enable_assertion_pass_hook``
     ini-file option:
 
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            enable_assertion_pass_hook = true
+
     .. tab:: ini
 
         .. code-block:: ini
