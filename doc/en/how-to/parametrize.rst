@@ -88,12 +88,14 @@ them in turn:
     for the parametrization because it has several downsides.
     If however you would like to use unicode strings in parametrization
     and see them in the terminal as is (non-escaped), use this option
-    in your ``pytest.ini``:
+    in your configuration file:
 
-    .. code-block:: ini
+    .. tab:: ini
 
-        [pytest]
-        disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+        .. code-block:: ini
+
+            [pytest]
+            disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 
     Keep in mind however that this might cause unwanted side effects and
     even bugs depending on the OS used and plugins currently installed,

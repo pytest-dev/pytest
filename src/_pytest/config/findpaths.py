@@ -21,19 +21,21 @@ from _pytest.pathlib import safe_exists
 
 @dataclass(frozen=True)
 class ConfigValue:
-    """Represents a configuration value with its origin.
+    """Represents a configuration value with its origin and parsing mode.
 
     This allows tracking whether a value came from a configuration file
     or from a CLI override (--override-ini), which is important for
     determining precedence when dealing with ini option aliases.
+
+    The mode tracks the parsing mode/data model used for the value:
+    - "ini": from INI files or [tool.pytest.ini_options], where the only
+      supported value types are `str` or `list[str]`.
     """
 
-    # Even though TOML supports richer data types, all values are converted to
-    # str/list[str] during parsing to maintain compatibility with the rest of
-    # the configuration system.
-    value: str | list[str]
+    value: object
     _: KW_ONLY
     origin: Literal["file", "override"]
+    mode: Literal["ini"]
 
 
 ConfigDict: TypeAlias = dict[str, ConfigValue]
@@ -64,7 +66,8 @@ def load_config_dict_from_file(
 
         if "pytest" in iniconfig:
             return {
-                k: ConfigValue(v, origin="file") for k, v in iniconfig["pytest"].items()
+                k: ConfigValue(v, origin="file", mode="ini")
+                for k, v in iniconfig["pytest"].items()
             }
         else:
             # "pytest.ini" files are always the source of configuration, even if empty.
@@ -77,7 +80,7 @@ def load_config_dict_from_file(
 
         if "tool:pytest" in iniconfig.sections:
             return {
-                k: ConfigValue(v, origin="file")
+                k: ConfigValue(v, origin="file", mode="ini")
                 for k, v in iniconfig["tool:pytest"].items()
             }
         elif "pytest" in iniconfig.sections:
@@ -107,7 +110,8 @@ def load_config_dict_from_file(
                 return v if isinstance(v, list) else str(v)
 
             return {
-                k: ConfigValue(make_scalar(v), origin="file") for k, v in result.items()
+                k: ConfigValue(make_scalar(v), origin="file", mode="ini")
+                for k, v in result.items()
             }
 
     return None
@@ -224,7 +228,7 @@ def parse_override_ini(override_ini: Sequence[str] | None) -> ConfigDict:
                 f"-o/--override-ini expects option=value style (got: {ini_config!r})."
             ) from e
         else:
-            overrides[key] = ConfigValue(user_ini_value, origin="override")
+            overrides[key] = ConfigValue(user_ini_value, origin="override", mode="ini")
     return overrides
 
 

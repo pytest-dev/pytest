@@ -47,13 +47,15 @@ Shows failed tests like so:
     text going to stderr
     ==================== 2 failed in 0.02 seconds =====================
 
-These options can also be customized through ``pytest.ini`` file:
+These options can also be customized through a configuration file:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    log_format = %(asctime)s %(levelname)s %(message)s
-    log_date_format = %Y-%m-%d %H:%M:%S
+    .. code-block:: ini
+
+        [pytest]
+        log_format = %(asctime)s %(levelname)s %(message)s
+        log_date_format = %Y-%m-%d %H:%M:%S
 
 Specific loggers can be disabled via ``--log-disable={logger_name}``.
 This argument can be passed multiple times:
@@ -266,12 +268,14 @@ This feature was introduced as a drop-in replacement for the
 with each other. The backward compatibility API with ``pytest-capturelog``
 has been dropped when this feature was introduced, so if for that reason you
 still need ``pytest-catchlog`` you can disable the internal feature by
-adding to your ``pytest.ini``:
+adding to your configuration file:
 
-.. code-block:: ini
+.. tab:: ini
 
-   [pytest]
-       addopts=-p no:logging
+    .. code-block:: ini
+
+        [pytest]
+        addopts = -p no:logging
 
 
 .. _log_changes_3_4:
@@ -296,10 +300,12 @@ made in ``3.4`` after community feedback:
 If you want to partially restore the logging behavior of version ``3.3``, you can add this options to your ``ini``
 file:
 
-.. code-block:: ini
+.. tab:: ini
 
-    [pytest]
-    log_cli=true
-    log_level=NOTSET
+    .. code-block:: ini
+
+        [pytest]
+        log_cli = true
+        log_level = NOTSET
 
 More details about the discussion that lead to this changes can be read in :issue:`3013`.

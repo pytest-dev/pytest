@@ -52,6 +52,7 @@ from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
+from _pytest.compat import assert_never
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
@@ -1626,8 +1627,9 @@ class Config:
         try:
             return self._inicache[canonical_name]
         except KeyError:
-            self._inicache[canonical_name] = val = self._getini(canonical_name)
-            return val
+            pass
+        self._inicache[canonical_name] = val = self._getini(canonical_name)
+        return val
 
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.
@@ -1663,22 +1665,42 @@ class Config:
         # 2. Canonical name takes precedence over alias.
         selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
         value = selected.value
+        mode = selected.mode
 
-        # Coerce the values based on types.
-        #
-        # Note: some coercions are only required if we are reading from .ini files, because
-        # the file format doesn't contain type information, but when reading from toml we will
-        # get either str or list of str values (see _parse_ini_config_from_pyproject_toml).
-        # For example:
+        if mode == "ini":
+            # In ini mode, values are always str | list[str].
+            assert isinstance(value, (str, list))
+            return self._getini_ini(name, canonical_name, type, value, default)
+        else:
+            assert_never(mode)
+
+    def _getini_ini(
+        self,
+        name: str,
+        canonical_name: str,
+        type: str,
+        value: str | list[str],
+        default: Any,
+    ):
+        """Handle config values read in INI mode.
+
+        In INI mode, values are stored as str or list[str] only, and coerced
+        from string based on the registered type.
+        """
+        # Note: some coercions are only required if we are reading from .ini
+        # files, because the file format doesn't contain type information, but
+        # when reading from toml (in ini mode) we will get either str or list of
+        # str values (see load_config_dict_from_file). For example:
         #
         #   ini:
         #     a_line_list = "tests acceptance"
-        #   in this case, we need to split the string to obtain a list of strings.
         #
-        #   toml:
+        # in this case, we need to split the string to obtain a list of strings.
+        #
+        #   toml (ini mode):
         #     a_line_list = ["tests", "acceptance"]
-        #   in this case, we already have a list ready to use.
         #
+        # in this case, we already have a list ready to use.
         if type == "paths":
             dp = (
                 self.inipath.parent
@@ -1787,11 +1809,12 @@ class Config:
 
         Example:
 
-        .. code-block:: ini
+        .. tab:: ini
 
-            # content of pytest.ini
-            [pytest]
-            verbosity_assertions = 2
+            .. code-block:: ini
+
+                [pytest]
+                verbosity_assertions = 2
 
         .. code-block:: console
 

@@ -58,9 +58,9 @@ class TestParseIni:
             encoding="utf-8",
         )
         _, _, cfg, _ = locate_config(Path.cwd(), [sub])
-        assert cfg["name"] == ConfigValue("value", origin="file")
+        assert cfg["name"] == ConfigValue("value", origin="file", mode="ini")
         config = pytester.parseconfigure(str(sub))
-        assert config.inicfg["name"] == ConfigValue("value", origin="file")
+        assert config.inicfg["name"] == ConfigValue("value", origin="file", mode="ini")
 
     def test_setupcfg_uses_toolpytest_with_pytest(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test(): pass")
@@ -1314,7 +1314,9 @@ class TestConfigFromdictargs:
 
         # this indicates this is the file used for getting configuration values
         assert config.inipath == inipath
-        assert config.inicfg.get("name") == ConfigValue("value", origin="file")
+        assert config.inicfg.get("name") == ConfigValue(
+            "value", origin="file", mode="ini"
+        )
         assert config.inicfg.get("should_not_be_set") is None
 
 
@@ -1808,7 +1810,7 @@ class TestRootdir:
         )
         assert rootpath == tmp_path
         assert parsed_inipath == inipath
-        assert ini_config["x"] == ConfigValue("10", origin="file")
+        assert ini_config["x"] == ConfigValue("10", origin="file", mode="ini")
 
     @pytest.mark.parametrize("name", ["setup.cfg", "tox.ini"])
     def test_pytestini_overrides_empty_other(self, tmp_path: Path, name: str) -> None:
@@ -1882,7 +1884,7 @@ class TestRootdir:
         )
         assert rootpath == tmp_path
         assert inipath == p
-        assert ini_config["x"] == ConfigValue("10", origin="file")
+        assert ini_config["x"] == ConfigValue("10", origin="file", mode="ini")
 
     def test_explicit_config_file_sets_rootdir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -2153,7 +2155,7 @@ class TestOverrideIniArgs:
         config = _config_for_test
         config._preparse([], addopts=True)
         assert config.inicfg.get("cache_dir") == ConfigValue(
-            cache_dir, origin="override"
+            cache_dir, origin="override", mode="ini"
         )
 
     def test_addopts_from_env_not_concatenated(
@@ -2193,7 +2195,7 @@ class TestOverrideIniArgs:
         config = _config_for_test
         config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])
         assert config.inicfg.get("cache_dir") == ConfigValue(
-            "/cache", origin="override"
+            "/cache", origin="override", mode="ini"
         )
 
     def test_multiple_override_ini_options(self, pytester: Pytester) -> None:
