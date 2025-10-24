@@ -207,10 +207,9 @@ class CommonFSTests:
         assert "sampledir" in lst
         assert path1.sep.join(["sampledir", "otherfile"]) not in lst
 
-    @pytest.mark.parametrize("fil", ["*dir"])
-    def test_visit_filterfunc_is_string(self, path1, fil):
+    def test_visit_filterfunc_is_string(self, path1):
         lst = []
-        for i in path1.visit(fil):
+        for i in path1.visit("*dir"):
             lst.append(i.relto(path1))
         assert len(lst), 2  # noqa: PLC1802,RUF040
         assert "sampledir" in lst
