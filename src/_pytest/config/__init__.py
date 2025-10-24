@@ -1647,7 +1647,7 @@ class Config:
             raise ValueError(f"unknown configuration value: {name!r}") from e
 
         # Collect all possible values (canonical name + aliases) from inicfg.
-        # Each candidate is (IniValue, is_canonical).
+        # Each candidate is (ConfigValue, is_canonical).
         candidates = []
         if canonical_name in self.inicfg:
             candidates.append((self.inicfg[canonical_name], True))
@@ -1661,8 +1661,8 @@ class Config:
         # Pick the best candidate based on precedence:
         # 1. CLI override takes precedence over file, then
         # 2. Canonical name takes precedence over alias.
-        ini_value = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
-        value = ini_value.value
+        selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
+        value = selected.value
 
         # Coerce the values based on types.
         #

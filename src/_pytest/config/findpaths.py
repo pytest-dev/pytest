@@ -19,8 +19,8 @@ from _pytest.pathlib import safe_exists
 
 
 @dataclass(frozen=True)
-class IniValue:
-    """Represents an ini configuration value with its origin.
+class ConfigValue:
+    """Represents a configuration value with its origin.
 
     This allows tracking whether a value came from a configuration file
     or from a CLI override (--override-ini), which is important for
@@ -34,7 +34,7 @@ class IniValue:
     origin: Literal["file", "override"]
 
 
-ConfigDict: TypeAlias = dict[str, IniValue]
+ConfigDict: TypeAlias = dict[str, ConfigValue]
 
 
 def _parse_ini_config(path: Path) -> iniconfig.IniConfig:
@@ -61,7 +61,7 @@ def load_config_dict_from_file(
         iniconfig = _parse_ini_config(filepath)
 
         if "pytest" in iniconfig:
-            return {k: IniValue(v, "file") for k, v in iniconfig["pytest"].items()}
+            return {k: ConfigValue(v, "file") for k, v in iniconfig["pytest"].items()}
         else:
             # "pytest.ini" files are always the source of configuration, even if empty.
             if filepath.name == "pytest.ini":
@@ -72,7 +72,9 @@ def load_config_dict_from_file(
         iniconfig = _parse_ini_config(filepath)
 
         if "tool:pytest" in iniconfig.sections:
-            return {k: IniValue(v, "file") for k, v in iniconfig["tool:pytest"].items()}
+            return {
+                k: ConfigValue(v, "file") for k, v in iniconfig["tool:pytest"].items()
+            }
         elif "pytest" in iniconfig.sections:
             # If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that
             # plain "[pytest]" sections in setup.cfg files is no longer supported (#3086).
@@ -99,7 +101,7 @@ def load_config_dict_from_file(
             def make_scalar(v: object) -> str | list[str]:
                 return v if isinstance(v, list) else str(v)
 
-            return {k: IniValue(make_scalar(v), "file") for k, v in result.items()}
+            return {k: ConfigValue(make_scalar(v), "file") for k, v in result.items()}
 
     return None
 
@@ -215,7 +217,7 @@ def parse_override_ini(override_ini: Sequence[str] | None) -> ConfigDict:
                 f"-o/--override-ini expects option=value style (got: {ini_config!r})."
             ) from e
         else:
-            overrides[key] = IniValue(user_ini_value, "override")
+            overrides[key] = ConfigValue(user_ini_value, "override")
     return overrides
 
 
