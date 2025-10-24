@@ -1,0 +1,1 @@
+Fix bug in which ExceptionGroup with only Skipped exceptions in teardown was not handled correctly and showed as error.
