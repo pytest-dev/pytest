@@ -177,7 +177,7 @@ def showhelp(config: Config) -> None:
     tw.line()
     tw.line(
         "[pytest] configuration options in the first "
-        "pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
+        "pytest.toml|pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
     )
     tw.line()
 

@@ -122,6 +122,13 @@ plugin will not work.
 If you want to unconditionally disable a plugin for a project, you can add
 this option to your configuration file:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["-p", "no:NAME"]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -152,6 +159,13 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 .. code-block:: bash
 
    pytest --disable-plugin-autoload -p NAME,NAME2
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--disable-plugin-autoload", "-p", "NAME", "-p", "NAME2"]
 
 .. tab:: ini
 

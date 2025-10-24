@@ -73,7 +73,7 @@ class TestLoadConfigDictFromFile:
             load_config_dict_from_file(fn)
 
     def test_custom_toml_file(self, tmp_path: Path) -> None:
-        """.toml files without [tool.pytest.ini_options] are not considered for configuration."""
+        """.toml files without [tool.pytest] are not considered for configuration."""
         fn = tmp_path / "myconfig.toml"
         fn.write_text(
             dedent(
@@ -110,6 +110,63 @@ class TestLoadConfigDictFromFile:
             "name": ConfigValue("foo", origin="file", mode="ini"),
             "heterogeneous_array": ConfigValue([1, "str"], origin="file", mode="ini"),
         }
+
+    def test_native_toml_config(self, tmp_path: Path) -> None:
+        """[tool.pytest] sections with native types are parsed correctly without coercion."""
+        fn = tmp_path / "pyproject.toml"
+        fn.write_text(
+            dedent(
+                """
+                [tool.pytest]
+                minversion = "7.0"
+                xfail_strict = true
+                testpaths = ["tests", "integration"]
+                python_files = ["test_*.py", "*_test.py"]
+                verbosity_assertions = 2
+                maxfail = 5
+                timeout = 300.5
+                """
+            ),
+            encoding="utf-8",
+        )
+        result = load_config_dict_from_file(fn)
+        assert result == {
+            "minversion": ConfigValue("7.0", origin="file", mode="toml"),
+            "xfail_strict": ConfigValue(True, origin="file", mode="toml"),
+            "testpaths": ConfigValue(
+                ["tests", "integration"], origin="file", mode="toml"
+            ),
+            "python_files": ConfigValue(
+                ["test_*.py", "*_test.py"], origin="file", mode="toml"
+            ),
+            "verbosity_assertions": ConfigValue(2, origin="file", mode="toml"),
+            "maxfail": ConfigValue(5, origin="file", mode="toml"),
+            "timeout": ConfigValue(300.5, origin="file", mode="toml"),
+        }
+
+    def test_native_and_ini_conflict(self, tmp_path: Path) -> None:
+        """Using both [tool.pytest] and [tool.pytest.ini_options] should raise an error."""
+        fn = tmp_path / "pyproject.toml"
+        fn.write_text(
+            dedent(
+                """
+            [tool.pytest]
+            xfail_strict = true
+
+            [tool.pytest.ini_options]
+            minversion = "7.0"
+            """
+            ),
+            encoding="utf-8",
+        )
+        with pytest.raises(UsageError, match="Cannot use both"):
+            load_config_dict_from_file(fn)
+
+    def test_invalid_suffix(self, tmp_path: Path) -> None:
+        """A file with an unknown suffix is ignored."""
+        fn = tmp_path / "pytest.config"
+        fn.write_text("", encoding="utf-8")
+        assert load_config_dict_from_file(fn) is None
 
 
 class TestCommonAncestor:

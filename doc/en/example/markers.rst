@@ -239,6 +239,13 @@ Registering markers
 
 Registering markers for your test suite is simple:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        markers = ["webtest: mark a test as a webtest.", "slow: mark test as slow."]
+
 .. tab:: ini
 
     .. code-block:: ini

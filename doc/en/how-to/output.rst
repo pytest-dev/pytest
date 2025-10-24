@@ -560,6 +560,14 @@ Modifying truncation limits
 Default truncation limits are 8 lines or 640 characters, whichever comes first.
 To set custom truncation limits you can use the following configuration file options:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        truncation_limit_lines = 10
+        truncation_limit_chars = 90
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -590,6 +598,13 @@ to create an XML file at ``path``.
 
 To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        junit_suite_name = "my_suite"
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -605,6 +620,13 @@ should report total test execution times, including setup and teardown
 <https://www.ibm.com/support/knowledgecenter/en/SSQ2R2_14.1.0/com.ibm.rsar.analysis.codereview.cobol.doc/topics/cac_useresults_junit.html>`_).
 It is the default pytest behavior. To report just call durations
 instead, configure the ``junit_duration_report`` option like this:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        junit_duration_report = "call"
 
 .. tab:: ini
 

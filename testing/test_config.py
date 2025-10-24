@@ -132,6 +132,20 @@ class TestParseIni:
         config = pytester.parseconfig()
         assert config.getini("minversion") == "3.36"
 
+    @pytest.mark.parametrize("name", ["pytest.toml", ".pytest.toml"])
+    def test_toml_config_names(self, pytester: Pytester, name: str) -> None:
+        pytester.path.joinpath(name).write_text(
+            textwrap.dedent(
+                """
+            [pytest]
+            minversion = "3.36"
+        """
+            ),
+            encoding="utf-8",
+        )
+        config = pytester.parseconfig()
+        assert config.getini("minversion") == "3.36"
+
     def test_pyproject_toml(self, pytester: Pytester) -> None:
         pyproject_toml = pytester.makepyprojecttoml(
             """
@@ -151,7 +165,7 @@ class TestParseIni:
 
     def test_empty_pyproject_toml_found_many(self, pytester: Pytester) -> None:
         """
-        In case we find multiple pyproject.toml files in our search, without a [tool.pytest.ini_options]
+        In case we find multiple pyproject.toml files in our search, without a [tool.pytest]
         table and without finding other candidates, the closest to where we started wins.
         """
         pytester.makefile(
@@ -165,9 +179,88 @@ class TestParseIni:
         config = pytester.parseconfig(pytester.path / "foo/bar")
         assert config.inipath == pytester.path / "foo/bar/pyproject.toml"
 
+    def test_pytest_toml(self, pytester: Pytester) -> None:
+        pytest_toml = pytester.path.joinpath("pytest.toml")
+        pytest_toml = pytester.maketoml(
+            """
+            [pytest]
+            minversion = "1.0"
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.inipath == pytest_toml
+        assert config.getini("minversion") == "1.0"
+
+    @pytest.mark.parametrize("name", ["pytest.toml", ".pytest.toml"])
+    def test_empty_pytest_toml(self, pytester: Pytester, name: str) -> None:
+        """An empty pytest.toml is considered as config if no other option is found."""
+        pytest_toml = pytester.path / name
+        pytest_toml.write_text("", encoding="utf-8")
+        config = pytester.parseconfig()
+        assert config.inipath == pytest_toml
+
+    def test_pytest_toml_trumps_pyproject_toml(self, pytester: Pytester) -> None:
+        """A pytest.toml always takes precedence over a pyproject.toml file."""
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            minversion = "1.0"
+            """
+        )
+        pytest_toml = pytester.maketoml(
+            """
+            [pytest]
+            minversion = "2.0"
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.inipath == pytest_toml
+        assert config.getini("minversion") == "2.0"
+
+    def test_pytest_toml_trumps_pytest_ini(self, pytester: Pytester) -> None:
+        """A pytest.toml always takes precedence over a pytest.ini file."""
+        pytester.makeini(
+            """
+            [pytest]
+            minversion = 1.0
+            """,
+        )
+        pytest_toml = pytester.maketoml(
+            """
+            [pytest]
+            minversion = "2.0"
+            """,
+        )
+        config = pytester.parseconfig()
+        assert config.inipath == pytest_toml
+        assert config.getini("minversion") == "2.0"
+
+    def test_dot_pytest_toml_trumps_pytest_ini(self, pytester: Pytester) -> None:
+        """A .pytest.toml always takes precedence over a pytest.ini file."""
+        pytester.makeini(
+            """
+            [pytest]
+            minversion = 1.0
+            """,
+        )
+        pytest_toml = pytester.maketoml(
+            """
+            [pytest]
+            minversion = "2.0"
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.inipath == pytest_toml
+        assert config.getini("minversion") == "2.0"
+
     def test_pytest_ini_trumps_pyproject_toml(self, pytester: Pytester) -> None:
         """A pytest.ini always take precedence over a pyproject.toml file."""
-        pytester.makepyprojecttoml("[tool.pytest.ini_options]")
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            minversion = "1.0"
+            """
+        )
         pytest_ini = pytester.makefile(".ini", pytest="")
         config = pytester.parseconfig()
         assert config.inipath == pytest_ini
@@ -212,6 +305,17 @@ class TestParseIni:
         result = pytester.runpytest()
         assert result.ret != 0
         result.stderr.fnmatch_lines("ERROR: *pyproject.toml: Invalid statement*")
+
+    def test_pytest_toml_parse_error(self, pytester: Pytester) -> None:
+        pytester.path.joinpath("pytest.toml").write_text(
+            """
+            \\"
+            """,
+            encoding="utf-8",
+        )
+        result = pytester.runpytest()
+        assert result.ret != 0
+        result.stderr.fnmatch_lines("ERROR: *pytest.toml: Invalid statement*")
 
     def test_confcutdir_default_without_configfile(self, pytester: Pytester) -> None:
         # If --confcutdir is not specified, and there is no configfile, default
@@ -2729,3 +2833,169 @@ class TestVerbosity:
             config.get_verbosity(TestVerbosity.SOME_OUTPUT_TYPE)
             == TestVerbosity.SOME_OUTPUT_VERBOSITY_LEVEL
         )
+
+
+class TestNativeTomlConfig:
+    """Test native TOML configuration parsing."""
+
+    def test_values(self, pytester: Pytester) -> None:
+        """Test that values are parsed as expected in TOML mode."""
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            test_bool = true
+            test_int = 5
+            test_float = 30.5
+            test_args = ["tests", "integration"]
+            test_paths = ["src", "lib"]
+            """
+        )
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("test_bool", "Test boolean config", type="bool", default=False)
+                parser.addini("test_int", "Test integer config", type="int", default=0)
+                parser.addini("test_float", "Test float config", type="float", default=0.0)
+                parser.addini("test_args", "Test args config", type="args")
+                parser.addini("test_paths", "Test paths config", type="paths")
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.getini("test_bool") is True
+        assert config.getini("test_int") == 5
+        assert config.getini("test_float") == 30.5
+        assert config.getini("test_args") == ["tests", "integration"]
+        paths = config.getini("test_paths")
+        assert len(paths) == 2
+        # Paths should be resolved relative to pyproject.toml location.
+        assert all(isinstance(p, Path) for p in paths)
+
+    def test_override_with_list(self, pytester: Pytester) -> None:
+        """Test that -o overrides work with INI-style list syntax even when
+        config uses TOML mode."""
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            test_override_list = ["tests"]
+            """
+        )
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("test_override_list", "Test override list", type="args")
+            """
+        )
+        # -o uses INI mode, so uses space-separated syntax.
+        config = pytester.parseconfig("-o", "test_override_list=tests integration")
+        assert config.getini("test_override_list") == ["tests", "integration"]
+
+    def test_conflict_between_native_and_ini_options(self, pytester: Pytester) -> None:
+        """Test that using both [tool.pytest] and [tool.pytest.ini_options] fails."""
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            test_conflict_1 = true
+
+            [tool.pytest.ini_options]
+            test_conflict_2 = true
+            """,
+        )
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("test_conflict_1", "Test conflict config 1", type="bool")
+                parser.addini("test_conflict_2", "Test conflict config 2", type="bool")
+            """
+        )
+        with pytest.raises(UsageError, match="Cannot use both"):
+            pytester.parseconfig()
+
+    def test_type_errors(self, pytester: Pytester) -> None:
+        """Test all possible TypeError cases in getini."""
+        pytester.maketoml(
+            """
+            [pytest]
+            paths_not_list = "should_be_list"
+            paths_list_with_int = [1, 2]
+
+            args_not_list = 123
+            args_list_with_int = ["valid", 456]
+
+            linelist_not_list = true
+            linelist_list_with_bool = ["valid", false]
+
+            bool_not_bool = "true"
+
+            int_not_int = "123"
+            int_is_bool = true
+
+            float_not_float = "3.14"
+            float_is_bool = false
+
+            string_not_string = 123
+            """
+        )
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("paths_not_list", "test", type="paths")
+                parser.addini("paths_list_with_int", "test", type="paths")
+                parser.addini("args_not_list", "test", type="args")
+                parser.addini("args_list_with_int", "test", type="args")
+                parser.addini("linelist_not_list", "test", type="linelist")
+                parser.addini("linelist_list_with_bool", "test", type="linelist")
+                parser.addini("bool_not_bool", "test", type="bool")
+                parser.addini("int_not_int", "test", type="int")
+                parser.addini("int_is_bool", "test", type="int")
+                parser.addini("float_not_float", "test", type="float")
+                parser.addini("float_is_bool", "test", type="float")
+                parser.addini("string_not_string", "test", type="string")
+            """
+        )
+        config = pytester.parseconfig()
+
+        with pytest.raises(
+            TypeError, match=r"expects a list for type 'paths'.*got str"
+        ):
+            config.getini("paths_not_list")
+
+        with pytest.raises(
+            TypeError, match=r"expects a list of strings.*item at index 0 is int"
+        ):
+            config.getini("paths_list_with_int")
+
+        with pytest.raises(TypeError, match=r"expects a list for type 'args'.*got int"):
+            config.getini("args_not_list")
+
+        with pytest.raises(
+            TypeError, match=r"expects a list of strings.*item at index 1 is int"
+        ):
+            config.getini("args_list_with_int")
+
+        with pytest.raises(
+            TypeError, match=r"expects a list for type 'linelist'.*got bool"
+        ):
+            config.getini("linelist_not_list")
+
+        with pytest.raises(
+            TypeError, match=r"expects a list of strings.*item at index 1 is bool"
+        ):
+            config.getini("linelist_list_with_bool")
+
+        with pytest.raises(TypeError, match=r"expects a bool.*got str"):
+            config.getini("bool_not_bool")
+
+        with pytest.raises(TypeError, match=r"expects an int.*got str"):
+            config.getini("int_not_int")
+
+        with pytest.raises(TypeError, match=r"expects an int.*got bool"):
+            config.getini("int_is_bool")
+
+        with pytest.raises(TypeError, match=r"expects a float.*got str"):
+            config.getini("float_not_float")
+
+        with pytest.raises(TypeError, match=r"expects a float.*got bool"):
+            config.getini("float_is_bool")
+
+        with pytest.raises(TypeError, match=r"expects a string.*got int"):
+            config.getini("string_not_string")

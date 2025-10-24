@@ -49,6 +49,14 @@ Shows failed tests like so:
 
 These options can also be customized through a configuration file:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        log_format = "%(asctime)s %(levelname)s %(message)s"
+        log_date_format = "%Y-%m-%d %H:%M:%S"
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -270,6 +278,13 @@ has been dropped when this feature was introduced, so if for that reason you
 still need ``pytest-catchlog`` you can disable the internal feature by
 adding to your configuration file:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["-p", "no:logging"]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -299,6 +314,14 @@ made in ``3.4`` after community feedback:
 
 If you want to partially restore the logging behavior of version ``3.3``, you can add this options to your configuration
 file:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        log_cli = true
+        log_level = "NOTSET"
 
 .. tab:: ini
 

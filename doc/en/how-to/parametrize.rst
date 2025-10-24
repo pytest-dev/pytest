@@ -90,6 +90,13 @@ them in turn:
     and see them in the terminal as is (non-escaped), use this option
     in your configuration file:
 
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
+
     .. tab:: ini
 
         .. code-block:: ini

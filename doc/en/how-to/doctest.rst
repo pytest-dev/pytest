@@ -70,6 +70,13 @@ and functions, including from test modules:
 You can make these changes permanent in your project by
 putting them into a configuration file like this:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--doctest-modules"]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -84,6 +91,13 @@ Encoding
 The default encoding is **UTF-8**, but you can specify the encoding
 that will be used for those doctest files using the
 :confval:`doctest_encoding` configuration option:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        doctest_encoding = "latin1"
 
 .. tab:: ini
 
@@ -103,6 +117,13 @@ configuration file.
 
 For example, to make pytest ignore trailing whitespaces and ignore
 lengthy exception stack traces you can just write:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL"]
 
 .. tab:: ini
 

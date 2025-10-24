@@ -85,6 +85,18 @@ The same option can be set in the configuration file using the
 user warnings and specific deprecation warnings matching a regex, but will transform
 all other warnings into errors.
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        filterwarnings = [
+            "error",
+            "ignore::UserWarning",
+            # note the use of single quote below to denote "raw" strings in TOML
+            'ignore:function ham\(\) is deprecated:DeprecationWarning',
+        ]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -194,6 +206,13 @@ Disabling warning capture entirely
 
 This plugin is enabled by default but can be disabled entirely in your configuration file with:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["-p", "no:warnings"]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -223,6 +242,15 @@ Sometimes it is useful to hide some specific deprecation warnings that happen in
 those warnings.
 
 For example:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        filterwarnings = [
+            'ignore:.*U.*mode is deprecated:DeprecationWarning',
+        ]
 
 .. tab:: ini
 

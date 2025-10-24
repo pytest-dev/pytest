@@ -90,6 +90,13 @@ Changing directory recursion
 
 You can set the :confval:`norecursedirs` option in a configuration file:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        norecursedirs = [".svn", "_build", "tmp*"]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -108,6 +115,16 @@ You can configure different naming conventions by setting
 the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` in your :ref:`configuration file <config file formats>`.
 Here is an example:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        # Example 1: have pytest look for "check" instead of "test"
+        [pytest]
+        python_files = ["check_*.py"]
+        python_classes = ["Check"]
+        python_functions = ["*_check"]
 
 .. tab:: ini
 
@@ -154,6 +171,14 @@ The test collection would look like this:
 
 You can check for multiple glob patterns by adding a space between the patterns:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        # Example 2: have pytest look for files with "test" and "example"
+        [pytest]
+        python_files = ["test_*.py", "example_*.py"]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -183,6 +208,13 @@ example if you have unittest2 installed you can type:
 which would run the respective test module.  Like with
 other options, through a configuration file and the :confval:`addopts` option you
 can make this change more permanently:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--pyargs"]
 
 .. tab:: ini
 
@@ -227,6 +259,13 @@ Customizing test collection
 .. regendoc:wipe
 
 You can easily instruct ``pytest`` to discover tests from every Python file:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        python_files = ["*.py"]
 
 .. tab:: ini
 

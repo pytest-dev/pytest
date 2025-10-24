@@ -36,6 +36,16 @@ Registering marks
 
 You can register custom marks in your configuration file like this:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        markers = [
+            "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+            "serial",
+        ]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -75,6 +85,17 @@ using a custom ``pytest_configure`` hook.
 When the :confval:`strict_markers` configuration option is set, any unknown marks applied
 with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error. You can
 enforce this validation in your project by setting :confval:`strict_markers` in your configuration:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--strict-markers"]
+        markers = [
+            "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+            "serial",
+        ]
 
 .. tab:: ini
 

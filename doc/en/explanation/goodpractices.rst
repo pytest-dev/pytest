@@ -96,6 +96,13 @@ For new projects, we recommend to use ``importlib`` :ref:`import mode <import-mo
 (see which-import-mode_ for a detailed explanation).
 To this end, add the following to your configuration file:
 
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--import-mode=importlib"]
+
 .. tab:: ini
 
     .. code-block:: ini
@@ -127,6 +134,13 @@ which are better explained in this excellent `blog post`_ by Ionel Cristian Măr
 
     or in a permanent manner by using the :confval:`pythonpath` configuration variable and adding the
     following to your configuration file:
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            pythonpath = ["src"]
 
     .. tab:: ini
 
