@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 from dataclasses import dataclass
+from dataclasses import KW_ONLY
 import os
 from pathlib import Path
 import sys
@@ -31,6 +32,7 @@ class ConfigValue:
     # str/list[str] during parsing to maintain compatibility with the rest of
     # the configuration system.
     value: str | list[str]
+    _: KW_ONLY
     origin: Literal["file", "override"]
 
 
@@ -61,7 +63,9 @@ def load_config_dict_from_file(
         iniconfig = _parse_ini_config(filepath)
 
         if "pytest" in iniconfig:
-            return {k: ConfigValue(v, "file") for k, v in iniconfig["pytest"].items()}
+            return {
+                k: ConfigValue(v, origin="file") for k, v in iniconfig["pytest"].items()
+            }
         else:
             # "pytest.ini" files are always the source of configuration, even if empty.
             if filepath.name == "pytest.ini":
@@ -73,7 +77,8 @@ def load_config_dict_from_file(
 
         if "tool:pytest" in iniconfig.sections:
             return {
-                k: ConfigValue(v, "file") for k, v in iniconfig["tool:pytest"].items()
+                k: ConfigValue(v, origin="file")
+                for k, v in iniconfig["tool:pytest"].items()
             }
         elif "pytest" in iniconfig.sections:
             # If a setup.cfg contains a "[pytest]" section, we raise a failure to indicate users that
@@ -101,7 +106,9 @@ def load_config_dict_from_file(
             def make_scalar(v: object) -> str | list[str]:
                 return v if isinstance(v, list) else str(v)
 
-            return {k: ConfigValue(make_scalar(v), "file") for k, v in result.items()}
+            return {
+                k: ConfigValue(make_scalar(v), origin="file") for k, v in result.items()
+            }
 
     return None
 
@@ -217,7 +224,7 @@ def parse_override_ini(override_ini: Sequence[str] | None) -> ConfigDict:
                 f"-o/--override-ini expects option=value style (got: {ini_config!r})."
             ) from e
         else:
-            overrides[key] = ConfigValue(user_ini_value, "override")
+            overrides[key] = ConfigValue(user_ini_value, origin="override")
     return overrides
 
 
