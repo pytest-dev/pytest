@@ -44,20 +44,13 @@ if TYPE_CHECKING:
 
 
 def pytest_addoption(parser: Parser) -> None:
-    group = parser.getgroup("subtests")
-    group.addoption(
-        "--no-subtests-shortletter",
-        action="store_true",
-        dest="no_subtests_shortletter",
-        default=False,
-        help="Disables subtest output 'dots' in non-verbose mode (EXPERIMENTAL)",
-    )
-    group.addoption(
-        "--no-subtests-reports",
-        action="store_true",
-        dest="no_subtests_reports",
-        default=False,
-        help="Disables subtest output unless it's a failed subtest (EXPERIMENTAL)",
+    Config._add_verbosity_ini(
+        parser,
+        Config.VERBOSITY_SUBTESTS,
+        help=(
+            "Specify verbosity level for subtests. "
+            "Higher levels will generate output for passed subtests. Failed subtests are always reported."
+        ),
     )
 
 
@@ -372,14 +365,14 @@ def pytest_report_teststatus(
     if report.when != "call":
         return None
 
+    quiet = config.get_verbosity(Config.VERBOSITY_SUBTESTS) == 0
     if isinstance(report, SubtestReport):
         outcome = report.outcome
         description = report._sub_test_description()
-        no_output = ("", "", "")
 
         if hasattr(report, "wasxfail"):
-            if config.option.no_subtests_reports and outcome != "skipped":
-                return no_output
+            if quiet:
+                return "", "", ""
             elif outcome == "skipped":
                 category = "xfailed"
                 short = "y"  # x letter is used for regular xfail, y for subtest xfail
@@ -394,26 +387,28 @@ def pytest_report_teststatus(
                 # passed in case of xfail.
                 # Let's pass this report to the next hook.
                 return None
-            short = "" if config.option.no_subtests_shortletter else short
-            return f"subtests {category}", short, f"{description} {status}"
+            return category, short, f"{status}{description}"
 
-        if config.option.no_subtests_reports and outcome != "failed":
-            return no_output
-        elif report.passed:
-            short = "" if config.option.no_subtests_shortletter else ","
-            return f"subtests {outcome}", short, f"{description} SUBPASSED"
-        elif report.skipped:
-            short = "" if config.option.no_subtests_shortletter else "-"
-            return outcome, short, f"{description} SUBSKIPPED"
-        elif outcome == "failed":
-            short = "" if config.option.no_subtests_shortletter else "u"
-            return outcome, short, f"{description} SUBFAILED"
+        if report.failed:
+            return outcome, "u", f"SUBFAILED{description}"
+        else:
+            if report.passed:
+                if quiet:
+                    return "", "", ""
+                else:
+                    return f"subtests {outcome}", "u", f"SUBPASSED{description}"
+            elif report.skipped:
+                if quiet:
+                    return "", "", ""
+                else:
+                    return outcome, "-", f"SUBSKIPPED{description}"
+
     else:
         failed_subtests_count = config.stash[failed_subtests_key][report.nodeid]
-        # Top-level test, fail it it contains failed subtests and it has passed.
+        # Top-level test, fail if it contains failed subtests and it has passed.
         if report.passed and failed_subtests_count > 0:
             report.outcome = "failed"
             suffix = "s" if failed_subtests_count > 1 else ""
-            report.longrepr = f"Contains {failed_subtests_count} failed subtest{suffix}"
+            report.longrepr = f"contains {failed_subtests_count} failed subtest{suffix}"
 
     return None

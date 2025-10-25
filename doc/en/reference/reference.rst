@@ -2613,8 +2613,26 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             verbosity_assertions = 2
 
-    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
-    "auto" can be used to explicitly use the global verbosity level.
+    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    ``"auto"`` can be used to explicitly use the global verbosity level.
+
+
+.. confval:: verbosity_subtests
+
+    Set the verbosity level specifically for **passed** subtests.
+
+    .. code-block:: ini
+
+        [pytest]
+        verbosity_subtests = 1
+
+    A value of ``1`` or higher will show output for **passed** subtests (**failed** subtests are always reported).
+    Passed subtests output can be suppressed with the value ``0``, which overwrites the ``-v`` command-line option.
+
+    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    ``"auto"`` can be used to explicitly use the global verbosity level.
+
+    See also: :ref:`subtests`.
 
 
 .. confval:: verbosity_test_cases
@@ -2635,8 +2653,8 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             verbosity_test_cases = 2
 
-    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
-    "auto" can be used to explicitly use the global verbosity level.
+    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
 .. _`command-line-flags`:

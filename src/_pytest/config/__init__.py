@@ -1879,6 +1879,9 @@ class Config:
     VERBOSITY_ASSERTIONS: Final = "assertions"
     #: Verbosity type for test case execution (see :confval:`verbosity_test_cases`).
     VERBOSITY_TEST_CASES: Final = "test_cases"
+    #: Verbosity type for failed subtests (see :confval:`verbosity_subtests`).
+    VERBOSITY_SUBTESTS: Final = "subtests"
+
     _VERBOSITY_INI_DEFAULT: Final = "auto"
 
     def get_verbosity(self, verbosity_type: str | None = None) -> int:
