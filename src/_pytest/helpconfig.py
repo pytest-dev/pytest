@@ -184,10 +184,8 @@ def showhelp(config: Config) -> None:
     columns = tw.fullwidth  # costly call
     indent_len = 24  # based on argparse's max_help_position=24
     indent = " " * indent_len
-    for name in config._parser._ininames:
+    for name in config._parser._inidict:
         help, type, _default = config._parser._inidict[name]
-        if type is None:
-            type = "string"
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         spec = f"{name} ({type}):"

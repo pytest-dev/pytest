@@ -23,9 +23,9 @@ from _pytest.config import parse_warning_filter
 from _pytest.config.argparsing import get_ini_default_for_type
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
+from _pytest.config.findpaths import ConfigValue
 from _pytest.config.findpaths import determine_setup
 from _pytest.config.findpaths import get_common_ancestor
-from _pytest.config.findpaths import IniValue
 from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
@@ -58,9 +58,9 @@ class TestParseIni:
             encoding="utf-8",
         )
         _, _, cfg, _ = locate_config(Path.cwd(), [sub])
-        assert cfg["name"] == IniValue("value", "file")
+        assert cfg["name"] == ConfigValue("value", origin="file")
         config = pytester.parseconfigure(str(sub))
-        assert config.inicfg["name"] == IniValue("value", "file")
+        assert config.inicfg["name"] == ConfigValue("value", origin="file")
 
     def test_setupcfg_uses_toolpytest_with_pytest(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test(): pass")
@@ -1314,7 +1314,7 @@ class TestConfigFromdictargs:
 
         # this indicates this is the file used for getting configuration values
         assert config.inipath == inipath
-        assert config.inicfg.get("name") == IniValue("value", "file")
+        assert config.inicfg.get("name") == ConfigValue("value", origin="file")
         assert config.inicfg.get("should_not_be_set") is None
 
 
@@ -1808,7 +1808,7 @@ class TestRootdir:
         )
         assert rootpath == tmp_path
         assert parsed_inipath == inipath
-        assert ini_config["x"] == IniValue("10", "file")
+        assert ini_config["x"] == ConfigValue("10", origin="file")
 
     @pytest.mark.parametrize("name", ["setup.cfg", "tox.ini"])
     def test_pytestini_overrides_empty_other(self, tmp_path: Path, name: str) -> None:
@@ -1882,7 +1882,7 @@ class TestRootdir:
         )
         assert rootpath == tmp_path
         assert inipath == p
-        assert ini_config["x"] == IniValue("10", "file")
+        assert ini_config["x"] == ConfigValue("10", origin="file")
 
     def test_explicit_config_file_sets_rootdir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -2152,7 +2152,9 @@ class TestOverrideIniArgs:
         monkeypatch.setenv("PYTEST_ADDOPTS", f"-o cache_dir={cache_dir}")
         config = _config_for_test
         config._preparse([], addopts=True)
-        assert config.inicfg.get("cache_dir") == IniValue(cache_dir, "override")
+        assert config.inicfg.get("cache_dir") == ConfigValue(
+            cache_dir, origin="override"
+        )
 
     def test_addopts_from_env_not_concatenated(
         self, monkeypatch: MonkeyPatch, _config_for_test
@@ -2190,7 +2192,9 @@ class TestOverrideIniArgs:
         """Check that -o no longer swallows all options after it (#3103)"""
         config = _config_for_test
         config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])
-        assert config.inicfg.get("cache_dir") == IniValue("/cache", "override")
+        assert config.inicfg.get("cache_dir") == ConfigValue(
+            "/cache", origin="override"
+        )
 
     def test_multiple_override_ini_options(self, pytester: Pytester) -> None:
         """Ensure a file path following a '-o' option does not generate an error (#3103)"""

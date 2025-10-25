@@ -6,9 +6,9 @@ from pathlib import Path
 from textwrap import dedent
 
 from _pytest.config import UsageError
+from _pytest.config.findpaths import ConfigValue
 from _pytest.config.findpaths import get_common_ancestor
 from _pytest.config.findpaths import get_dirs_from_args
-from _pytest.config.findpaths import IniValue
 from _pytest.config.findpaths import is_fs_root
 from _pytest.config.findpaths import load_config_dict_from_file
 import pytest
@@ -25,13 +25,13 @@ class TestLoadConfigDictFromFile:
         """[pytest] section in pytest.ini files is read correctly"""
         fn = tmp_path / "pytest.ini"
         fn.write_text("[pytest]\nx=1", encoding="utf-8")
-        assert load_config_dict_from_file(fn) == {"x": IniValue("1", "file")}
+        assert load_config_dict_from_file(fn) == {"x": ConfigValue("1", origin="file")}
 
     def test_custom_ini(self, tmp_path: Path) -> None:
         """[pytest] section in any .ini file is read correctly"""
         fn = tmp_path / "custom.ini"
         fn.write_text("[pytest]\nx=1", encoding="utf-8")
-        assert load_config_dict_from_file(fn) == {"x": IniValue("1", "file")}
+        assert load_config_dict_from_file(fn) == {"x": ConfigValue("1", origin="file")}
 
     def test_custom_ini_without_section(self, tmp_path: Path) -> None:
         """Custom .ini files without [pytest] section are not considered for configuration"""
@@ -49,7 +49,7 @@ class TestLoadConfigDictFromFile:
         """Custom .cfg files with [tool:pytest] section are read correctly"""
         fn = tmp_path / "custom.cfg"
         fn.write_text("[tool:pytest]\nx=1", encoding="utf-8")
-        assert load_config_dict_from_file(fn) == {"x": IniValue("1", "file")}
+        assert load_config_dict_from_file(fn) == {"x": ConfigValue("1", origin="file")}
 
     def test_unsupported_pytest_section_in_cfg_file(self, tmp_path: Path) -> None:
         """.cfg files with [pytest] section are no longer supported and should fail to alert users"""
@@ -97,11 +97,11 @@ class TestLoadConfigDictFromFile:
             encoding="utf-8",
         )
         assert load_config_dict_from_file(fn) == {
-            "x": IniValue("1", "file"),
-            "y": IniValue("20.0", "file"),
-            "values": IniValue(["tests", "integration"], "file"),
-            "name": IniValue("foo", "file"),
-            "heterogeneous_array": IniValue([1, "str"], "file"),  # type: ignore[list-item]
+            "x": ConfigValue("1", origin="file"),
+            "y": ConfigValue("20.0", origin="file"),
+            "values": ConfigValue(["tests", "integration"], origin="file"),
+            "name": ConfigValue("foo", origin="file"),
+            "heterogeneous_array": ConfigValue([1, "str"], origin="file"),  # type: ignore[list-item]
         }
 
 
