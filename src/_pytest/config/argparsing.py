@@ -51,7 +51,6 @@ class Parser:
         self._processopt = processopt
         self._usage = usage
         self._inidict: dict[str, tuple[str, str, Any]] = {}
-        self._ininames: list[str] = []
         # Maps alias -> canonical name.
         self._ini_aliases: dict[str, str] = {}
         self.extra_info: dict[str, Any] = {}
@@ -244,7 +243,6 @@ class Parser:
             default = get_ini_default_for_type(type)
 
         self._inidict[name] = (help, type, default)
-        self._ininames.append(name)
 
         for alias in aliases:
             if alias in self._inidict:
