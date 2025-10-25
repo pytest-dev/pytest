@@ -1,0 +1,7 @@
+Added :confval:`strict_xfail` as an alias to the ``xfail_strict`` option,
+:confval:`strict_config` as an alias to the ``--strict-config`` flag,
+and :confval:`strict_markers` as an alias to the ``--strict-markers`` flag.
+This makes all strictness options consistently have configuration options with the prefix ``strict_``.
+
+Added :meth:`Config.hasini() <pytest.Config.hasini>` method to check whether a configuration option has been explicitly set (via configuration file or ``--override-ini``),
+as opposed to just using its default value.

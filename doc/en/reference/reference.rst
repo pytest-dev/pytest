@@ -261,7 +261,7 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=xfail_strict)
+.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=strict_xfail)
 
     :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
@@ -286,7 +286,7 @@ Marks a test function as *expected to fail*.
           that are always failing and there should be a clear indication if they unexpectedly start to pass (for example
           a new release of a library fixes a known bug).
 
-        Defaults to :confval:`xfail_strict`, which is ``False`` by default.
+        Defaults to :confval:`strict_xfail`, which is ``False`` by default.
 
 
 Custom marks
@@ -1774,25 +1774,21 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: markers
 
-    When the ``--strict-markers`` or ``--strict`` command-line arguments are used,
+    When the :confval:`strict_markers` configuration option is set,
     only known markers - defined in code by core pytest or some plugin - are allowed.
 
     You can list additional markers in this setting to add them to the whitelist,
-    in which case you probably want to add ``--strict-markers`` to ``addopts``
+    in which case you probably want to set :confval:`strict_markers` to ``True``
     to avoid future regressions:
 
     .. code-block:: ini
 
         [pytest]
-        addopts = --strict-markers
+        strict_markers = True
         markers =
             slow
             serial
 
-    .. note::
-        The use of ``--strict-markers`` is highly preferred. ``--strict`` was kept for
-        backward compatibility only and may be confusing for others as it only applies to
-        markers and not to other options.
 
 .. confval:: minversion
 
@@ -2070,7 +2066,33 @@ passed multiple times. The expected format is ``name=value``. For example::
     "auto" can be used to explicitly use the global verbosity level.
 
 
-.. confval:: xfail_strict
+.. confval:: strict
+
+    If set to ``True``, enables all strictness options:
+
+    * :confval:`strict_config`
+    * :confval:`strict_markers`
+    * :confval:`strict_xfail`
+    * :confval:`strict_parametrization_ids`
+
+    Plugins may also enable their own strictness options.
+
+    If you explicitly set an individual strictness option, it takes precedence over ``strict``.
+
+    .. note::
+        If new strictness options are added to pytest in the future, they will also be enabled by ``strict``.
+        We therefore only recommend using this option when using a locked version of pytest,
+        or if you want to proactively adopt new strictness options as they are added.
+
+    .. code-block:: ini
+
+        [pytest]
+        strict = True
+
+    .. versionadded:: 9.0
+
+
+.. confval:: strict_xfail
 
     If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
     test suite.
@@ -2080,7 +2102,38 @@ passed multiple times. The expected format is ``name=value``. For example::
     .. code-block:: ini
 
         [pytest]
-        xfail_strict = True
+        strict_xfail = True
+
+    You can also enable this option via the :confval:`strict` option.
+
+    .. versionchanged:: 9.0
+        Renamed from ``xfail_strict`` to ``strict_xfail``.
+        ``xfail_strict`` is accepted as an alias for ``strict_xfail``.
+
+
+.. confval:: strict_config
+
+    If set to ``True``, any warnings encountered while parsing the ``pytest`` section of the configuration file will raise errors.
+
+    .. code-block:: ini
+
+        [pytest]
+        strict_config = True
+
+    You can also enable this option via the :confval:`strict` option.
+
+
+.. confval:: strict_markers
+
+    If set to ``True``, markers not registered in the ``markers`` section of the configuration file will raise errors.
+
+    .. code-block:: ini
+
+        [pytest]
+        strict_markers = True
+
+    You can also enable this option via the :confval:`strict` option.
+
 
 .. confval:: strict_parametrization_ids
 
@@ -2093,6 +2146,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
           [pytest]
           strict_parametrization_ids = True
+
+    You can also enable this option via the :confval:`strict` option.
 
     For example,
 

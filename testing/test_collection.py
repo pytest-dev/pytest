@@ -2726,15 +2726,17 @@ class TestOverlappingCollectionArguments:
         ),
     ],
 )
+@pytest.mark.parametrize("option_name", ["strict_parametrization_ids", "strict"])
 def test_strict_parametrization_ids(
     pytester: Pytester,
     x_y: Sequence[tuple[int, int]],
     expected_duplicates: Sequence[str],
+    option_name: str,
 ) -> None:
     pytester.makeini(
-        """
+        f"""
         [pytest]
-        strict_parametrization_ids = true
+        {option_name} = true
         """
     )
     pytester.makepyfile(

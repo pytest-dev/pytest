@@ -286,8 +286,7 @@ For an example on how to add and work with markers from a plugin, see
 
     * Asking for existing markers via ``pytest --markers`` gives good output
 
-    * Typos in function markers are treated as an error if you use
-      the ``--strict-markers`` option.
+    * Typos in function markers are treated as an error if you use the :confval:`strict_markers` configuration option.
 
 .. _`scoped-marking`:
 

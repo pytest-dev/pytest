@@ -1515,7 +1515,12 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
-        if self.known_args_namespace.strict_config:
+        if self.hasini("strict_config"):
+            strict_config = self.getini("strict_config")
+        else:
+            strict_config = self.getini("strict")
+
+        if strict_config:
             raise UsageError(message)
 
         self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)
@@ -1628,6 +1633,36 @@ class Config:
         except KeyError:
             self._inicache[canonical_name] = val = self._getini(canonical_name)
             return val
+
+    def hasini(self, name: str) -> bool:
+        """Return whether the configuration value was explicitly defined.
+
+        Returns ``True`` if the configuration option was explicitly set
+        either in an :ref:`ini file <configfiles>` or via command-line
+        override (``--override-ini``). Returns ``False`` if only the
+        default value would be used.
+
+        This can be used to distinguish between a value being explicitly set
+        to its default versus not being set at all.
+
+        If the specified name hasn't been registered through a prior
+        :func:`parser.addini <pytest.Parser.addini>` call (usually from a
+        plugin), a ValueError is raised.
+
+        .. versionadded:: 9.0
+        """
+        canonical_name = self._parser._ini_aliases.get(name, name)
+
+        if canonical_name not in self._parser._inidict:
+            raise ValueError(f"unknown configuration value: {name!r}")
+
+        if canonical_name in self.inicfg:
+            return True
+        for alias, target in self._parser._ini_aliases.items():
+            if target == canonical_name and alias in self.inicfg:
+                return True
+
+        return False
 
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.

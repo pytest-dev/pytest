@@ -589,18 +589,20 @@ removed in pytest 8 (deprecated since pytest 2.4.0):
 - ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
 
 
-The ``--strict`` command-line option
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``--strict`` command-line option (reintroduced)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 6.2
-.. versionremoved:: 8.0
+.. versionchanged:: 9.0
 
-The ``--strict`` command-line option has been deprecated in favor of ``--strict-markers``, which
+The ``--strict`` command-line option had been deprecated in favor of ``--strict-markers``, which
 better conveys what the option does.
 
-We have plans to maybe in the future to reintroduce ``--strict`` and make it an encompassing
-flag for all strictness related options (``--strict-markers`` and ``--strict-config``
-at the moment, more might be introduced in the future).
+In version 8.1, we accidentally un-deprecated ``--strict``.
+
+In version 9.0, we changed ``--strict`` to make it set the new :confval:`strict`
+configuration option. It now enables all strictness related options (including
+:confval:`strict_markers`).
 
 
 .. _cmdline-preparse-deprecated:

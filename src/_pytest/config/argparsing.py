@@ -547,3 +547,40 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         for line in text.splitlines():
             lines.extend(textwrap.wrap(line.strip(), width))
         return lines
+
+
+class OverrideIniAction(argparse.Action):
+    """Custom argparse action that makes a CLI flag equivalent to overriding an
+    option, in addition to behaving like `store_true`.
+
+    This can simplify things since code only needs to inspect the ini option
+    and not consider the CLI flag.
+    """
+
+    def __init__(
+        self,
+        option_strings: Sequence[str],
+        dest: str,
+        nargs: int | str | None = None,
+        *args,
+        ini_option: str,
+        ini_value: str,
+        **kwargs,
+    ) -> None:
+        super().__init__(option_strings, dest, 0, *args, **kwargs)
+        self.ini_option = ini_option
+        self.ini_value = ini_value
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        *args,
+        **kwargs,
+    ) -> None:
+        setattr(namespace, self.dest, True)
+        current_overrides = getattr(namespace, "override_ini", None)
+        if current_overrides is None:
+            current_overrides = []
+        current_overrides.append(f"{self.ini_option}={self.ini_value}")
+        setattr(namespace, "override_ini", current_overrides)
