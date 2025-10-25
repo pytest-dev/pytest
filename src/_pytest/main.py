@@ -16,6 +16,8 @@ import importlib.util
 import os
 from pathlib import Path
 import sys
+import threading
+from threading import Thread
 from typing import final
 from typing import Literal
 from typing import overload
@@ -581,6 +583,8 @@ class Session(nodes.Collector):
         self._initial_parts: list[CollectionArgument] = []
         self._collection_cache: dict[nodes.Collector, CollectReport] = {}
         self.items: list[nodes.Item] = []
+        # track the thread in which each item started execution in
+        self._item_to_thread: dict[nodes.Item, Thread] = {}
 
         self._bestrelpathcache: dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
@@ -642,6 +646,22 @@ class Session(nodes.Collector):
         .. versionadded:: 7.0.0
         """
         return self.config.invocation_params.dir
+
+    def _readable_thread_id(self, thread: Thread) -> int:
+        # Returns a 0-indexed id of `thread`, corresponding to the order in
+        # which we saw that thread start executing tests. The main thread always
+        # has value 0, so non-main threads start at 1, even if the first thread
+        # we saw was a non-main thread, or even if we never saw the main thread
+        # execute tests.
+
+        # relying on item_to_thread to be sorted for stable ordering
+        threads = list(self._item_to_thread.values())
+        assert thread in threads
+
+        if thread is threading.main_thread():
+            return 0
+
+        return threads.index(thread) + 1
 
     def _node_location_to_relpath(self, node_path: Path) -> str:
         # bestrelpath is a quite slow function.
