@@ -353,9 +353,9 @@ ignore = "W009"
 indent = 4
 max_supported_python = "3.14"
 
-[tool.pytest.ini_options]
+[tool.pytest]
 minversion = "2.0"
-addopts = "-rfEX -p pytester --strict-markers"
+addopts = [ "-rfEX", "-p", "pytester", "--strict-markers" ]
 python_files = [
     "test_*.py",
     "*_test.py",

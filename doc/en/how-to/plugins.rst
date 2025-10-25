@@ -120,12 +120,21 @@ This means that any subsequent try to activate/load the named
 plugin will not work.
 
 If you want to unconditionally disable a plugin for a project, you can add
-this option to your ``pytest.ini`` file:
+this option to your configuration file:
 
-.. code-block:: ini
+.. tab:: toml
 
-      [pytest]
-      addopts = -p no:NAME
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["-p", "no:NAME"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = -p no:NAME
 
 Alternatively to disable it only in certain environments (for example in a
 CI server), you can set ``PYTEST_ADDOPTS`` environment variable to
@@ -151,10 +160,19 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 
    pytest --disable-plugin-autoload -p NAME,NAME2
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    addopts =
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--disable-plugin-autoload", "-p", "NAME", "-p", "NAME2"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts =
             --disable-plugin-autoload
             -p NAME
             -p NAME2

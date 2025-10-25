@@ -94,14 +94,21 @@ This has the following benefits:
 
 For new projects, we recommend to use ``importlib`` :ref:`import mode <import-modes>`
 (see which-import-mode_ for a detailed explanation).
-To this end, add the following to your ``pyproject.toml``:
+To this end, add the following to your configuration file:
 
-.. code-block:: toml
+.. tab:: toml
 
-    [tool.pytest.ini_options]
-    addopts = [
-        "--import-mode=importlib",
-    ]
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--import-mode=importlib"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = --import-mode=importlib
 
 .. _src-layout:
 
@@ -126,12 +133,21 @@ which are better explained in this excellent `blog post`_ by Ionel Cristian Măr
        PYTHONPATH=src pytest
 
     or in a permanent manner by using the :confval:`pythonpath` configuration variable and adding the
-    following to your ``pyproject.toml``:
+    following to your configuration file:
 
-    .. code-block:: toml
+    .. tab:: toml
 
-        [tool.pytest.ini_options]
-        pythonpath = "src"
+        .. code-block:: toml
+
+            [pytest]
+            pythonpath = ["src"]
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            pythonpath = src
 
 .. note::
 

@@ -80,30 +80,32 @@ as an error:
     FAILED test_show_warnings.py::test_one - UserWarning: api v1, should use ...
     1 failed in 0.12s
 
-The same option can be set in the ``pytest.ini`` or ``pyproject.toml`` file using the
+The same option can be set in the configuration file using the
 ``filterwarnings`` ini option. For example, the configuration below will ignore all
 user warnings and specific deprecation warnings matching a regex, but will transform
 all other warnings into errors.
 
-.. code-block:: ini
+.. tab:: toml
 
-    # pytest.ini
-    [pytest]
-    filterwarnings =
-        error
-        ignore::UserWarning
-        ignore:function ham\(\) is deprecated:DeprecationWarning
+    .. code-block:: toml
 
-.. code-block:: toml
+        [pytest]
+        filterwarnings = [
+            "error",
+            "ignore::UserWarning",
+            # note the use of single quote below to denote "raw" strings in TOML
+            'ignore:function ham\(\) is deprecated:DeprecationWarning',
+        ]
 
-    # pyproject.toml
-    [tool.pytest.ini_options]
-    filterwarnings = [
-        "error",
-        "ignore::UserWarning",
-        # note the use of single quote below to denote "raw" strings in TOML
-        'ignore:function ham\(\) is deprecated:DeprecationWarning',
-    ]
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        filterwarnings =
+            error
+            ignore::UserWarning
+            ignore:function ham\(\) is deprecated:DeprecationWarning
 
 
 When a warning matches more than one option in the list, the action for the last matching option
@@ -202,7 +204,16 @@ warning summary entirely from the test run output.
 Disabling warning capture entirely
 ----------------------------------
 
-This plugin is enabled by default but can be disabled entirely in your ``pytest.ini`` file with:
+This plugin is enabled by default but can be disabled entirely in your configuration file with:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["-p", "no:warnings"]
+
+.. tab:: ini
 
     .. code-block:: ini
 
@@ -232,11 +243,22 @@ those warnings.
 
 For example:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    filterwarnings =
-        ignore:.*U.*mode is deprecated:DeprecationWarning
+    .. code-block:: toml
+
+        [pytest]
+        filterwarnings = [
+            'ignore:.*U.*mode is deprecated:DeprecationWarning',
+        ]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        filterwarnings =
+            ignore:.*U.*mode is deprecated:DeprecationWarning
 
 
 This will ignore all warnings of type ``DeprecationWarning`` where the start of the message matches

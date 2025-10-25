@@ -1307,7 +1307,7 @@ To see each file format in details, see :ref:`config file formats`.
     Usage of ``setup.cfg`` is not recommended except for very simple use cases. ``.cfg``
     files use a different parser than ``pytest.ini`` and ``tox.ini`` which might cause hard to track
     down problems.
-    When possible, it is recommended to use the latter files, or ``pyproject.toml``, to hold your pytest configuration.
+    When possible, it is recommended to use the latter files, or ``pytest.toml`` or ``pyproject.toml``, to hold your pytest configuration.
 
 Configuration options may be overwritten in the command-line by using ``-o/--override-ini``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
@@ -1318,13 +1318,21 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: addopts
 
    Add the specified ``OPTS`` to the set of command line arguments as if they
-   had been specified by the user. Example: if you have this ini file content:
+   had been specified by the user. Example: if you have this configuration file content:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
+       .. code-block:: toml
+
+            [pytest]
+            addopts = ["--maxfail=2", "-rf"]  # exit after 2 failures, report fail info
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
    issuing ``pytest test_hello.py`` actually means:
 
@@ -1351,10 +1359,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    Setting this to ``false`` will make pytest collect classes/functions from test
    files **only** if they are defined in that file (as opposed to imported there).
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        collect_imported_tests = false
+       .. code-block:: toml
+
+            [pytest]
+            collect_imported_tests = false
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            collect_imported_tests = false
 
    Default: ``true``
 
@@ -1404,11 +1421,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    The default is ``progress``, but you can fallback to ``classic`` if you prefer or
    the new mode is causing unexpected problems:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        console_output_style = classic
+       .. code-block:: toml
+
+            [pytest]
+            console_output_style = "classic"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            console_output_style = classic
 
 
 .. confval:: disable_test_id_escaping_and_forfeit_all_rights_to_community_support
@@ -1419,12 +1444,21 @@ passed multiple times. The expected format is ``name=value``. For example::
    for the parametrization because it has several downsides.
    If however you would like to use unicode strings in parametrization
    and see them in the terminal as is (non-escaped), use this option
-   in your ``pytest.ini``:
+   in your configuration file:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-       [pytest]
-       disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+       .. code-block:: toml
+
+           [pytest]
+           disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+           [pytest]
+           disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 
    Keep in mind however that this might cause unwanted side effects and
    even bugs depending on the OS used and plugins currently installed,
@@ -1458,11 +1492,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     * ``xfail`` marks tests with an empty parameterset as xfail(run=False)
     * ``fail_at_collect`` raises an exception if parametrize collects an empty parameter set
 
-    .. code-block:: ini
+    .. tab:: toml
 
-      # content of pytest.ini
-      [pytest]
-      empty_parameter_set_mark = xfail
+        .. code-block:: toml
+
+            [pytest]
+            empty_parameter_set_mark = "xfail"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            empty_parameter_set_mark = xfail
 
     .. note::
 
@@ -1476,11 +1518,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    fixture setup and teardown). Implemented using the :func:`faulthandler.dump_traceback_later` function,
    so all caveats there apply.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        faulthandler_timeout=5
+       .. code-block:: toml
+
+            [pytest]
+            faulthandler_timeout = 5
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            faulthandler_timeout = 5
 
    For more information please refer to :ref:`faulthandler`.
 
@@ -1494,12 +1544,21 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    This option is set to 'false' by default.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        faulthandler_timeout=5
-        faulthandler_exit_on_timeout=true
+       .. code-block:: toml
+
+            [pytest]
+            faulthandler_timeout = 5
+            faulthandler_exit_on_timeout = true
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            faulthandler_timeout = 5
+            faulthandler_exit_on_timeout = true
 
    For more information please refer to :ref:`faulthandler`.
 
@@ -1511,13 +1570,21 @@ passed multiple times. The expected format is ``name=value``. For example::
    warnings. By default all warnings emitted during the test session
    will be displayed in a summary at the end of the test session.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        filterwarnings =
-            error
-            ignore::DeprecationWarning
+       .. code-block:: toml
+
+            [pytest]
+            filterwarnings = ["error", "ignore::DeprecationWarning"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            filterwarnings =
+                error
+                ignore::DeprecationWarning
 
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
@@ -1532,10 +1599,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     * ``total`` (the default): duration times reported include setup, call, and teardown times.
     * ``call``: duration times reported include only call times, excluding setup and teardown.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_duration_report = call
+        .. code-block:: toml
+
+            [pytest]
+            junit_duration_report = "call"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_duration_report = call
 
 
 .. confval:: junit_family
@@ -1549,10 +1625,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     * ``xunit1`` (or ``legacy``): produces old style output, compatible with the xunit 1.0 format.
     * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__, which should be more compatible with latest Jenkins versions.  **This is the default**.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_family = xunit2
+        .. code-block:: toml
+
+            [pytest]
+            junit_family = "xunit2"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_family = xunit2
 
 
 .. confval:: junit_logging
@@ -1570,10 +1655,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     * ``all``: write captured ``logging``, ``stdout`` and ``stderr`` contents.
     * ``no`` (the default): no captured output is written.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_logging = system-out
+        .. code-block:: toml
+
+            [pytest]
+            junit_logging = "system-out"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_logging = system-out
 
 
 .. confval:: junit_log_passing_tests
@@ -1583,20 +1677,38 @@ passed multiple times. The expected format is ``name=value``. For example::
     If ``junit_logging != "no"``, configures if the captured output should be written
     to the JUnit XML file for **passing** tests. Default is ``True``.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_log_passing_tests = False
+        .. code-block:: toml
+
+            [pytest]
+            junit_log_passing_tests = false
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_log_passing_tests = False
 
 
 .. confval:: junit_suite_name
 
     To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_suite_name = my_suite
+        .. code-block:: toml
+
+            [pytest]
+            junit_suite_name = "my_suite"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_suite_name = my_suite
 
 .. confval:: log_auto_indent
 
@@ -1611,10 +1723,19 @@ passed multiple times. The expected format is ``name=value``. For example::
         * False or "Off" or 0 - Do not auto-indent multiline log messages (the default behavior)
         * [positive integer] - auto-indent multiline log messages by [value] spaces
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_auto_indent = False
+        .. code-block:: toml
+
+            [pytest]
+            log_auto_indent = false
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_auto_indent = false
 
     Supports passing kwarg ``extra={"auto_indent": [value]}`` to
     calls to ``logging.log()`` to specify auto-indentation behavior for
@@ -1626,10 +1747,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     Enable log display during test run (also known as :ref:`"live logging" <live_logs>`).
     The default is ``False``.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_cli = True
+        .. code-block:: toml
+
+            [pytest]
+            log_cli = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_cli = true
 
 .. confval:: log_cli_date_format
 
@@ -1637,10 +1767,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for live logging.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_cli_date_format = %Y-%m-%d %H:%M:%S
+        .. code-block:: toml
+
+            [pytest]
+            log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_cli_date_format = %Y-%m-%d %H:%M:%S
 
     For more information, see :ref:`live_logs`.
 
@@ -1650,10 +1789,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Sets a :py:mod:`logging`-compatible string used to format live logging messages.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_cli_format = %(asctime)s %(levelname)s %(message)s
+        .. code-block:: toml
+
+            [pytest]
+            log_cli_format = "%(asctime)s %(levelname)s %(message)s"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_cli_format = %(asctime)s %(levelname)s %(message)s
 
     For more information, see :ref:`live_logs`.
 
@@ -1665,10 +1813,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     Sets the minimum log message level that should be captured for live logging. The integer value or
     the names of the levels can be used.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_cli_level = INFO
+        .. code-block:: toml
+
+            [pytest]
+            log_cli_level = "INFO"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_cli_level = INFO
 
     For more information, see :ref:`live_logs`.
 
@@ -1679,10 +1836,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for logging capture.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_date_format = %Y-%m-%d %H:%M:%S
+        .. code-block:: toml
+
+            [pytest]
+            log_date_format = "%Y-%m-%d %H:%M:%S"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_date_format = %Y-%m-%d %H:%M:%S
 
     For more information, see :ref:`logging`.
 
@@ -1694,10 +1860,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     Sets a file name relative to the current working directory where log messages should be written to, in addition
     to the other logging facilities that are active.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_file = logs/pytest-logs.txt
+        .. code-block:: toml
+
+            [pytest]
+            log_file = "logs/pytest-logs.txt"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file = logs/pytest-logs.txt
 
     For more information, see :ref:`logging`.
 
@@ -1708,10 +1883,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for the logging file.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_file_date_format = %Y-%m-%d %H:%M:%S
+        .. code-block:: toml
+
+            [pytest]
+            log_file_date_format = "%Y-%m-%d %H:%M:%S"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_date_format = %Y-%m-%d %H:%M:%S
 
     For more information, see :ref:`logging`.
 
@@ -1721,10 +1905,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Sets a :py:mod:`logging`-compatible string used to format logging messages redirected to the logging file.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_file_format = %(asctime)s %(levelname)s %(message)s
+        .. code-block:: toml
+
+            [pytest]
+            log_file_format = "%(asctime)s %(levelname)s %(message)s"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_format = %(asctime)s %(levelname)s %(message)s
 
     For more information, see :ref:`logging`.
 
@@ -1735,10 +1928,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     Sets the minimum log message level that should be captured for the logging file. The integer value or
     the names of the levels can be used.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_file_level = INFO
+        .. code-block:: toml
+
+            [pytest]
+            log_file_level = "INFO"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_level = INFO
 
     For more information, see :ref:`logging`.
 
@@ -1749,10 +1951,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Sets a :py:mod:`logging`-compatible string used to format captured logging messages.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_format = %(asctime)s %(levelname)s %(message)s
+        .. code-block:: toml
+
+            [pytest]
+            log_format = "%(asctime)s %(levelname)s %(message)s"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_format = %(asctime)s %(levelname)s %(message)s
 
     For more information, see :ref:`logging`.
 
@@ -1764,10 +1975,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     Sets the minimum log message level that should be captured for logging capture. The integer value or
     the names of the levels can be used.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_level = INFO
+        .. code-block:: toml
+
+            [pytest]
+            log_level = "INFO"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_level = INFO
 
     For more information, see :ref:`logging`.
 
@@ -1781,13 +2001,23 @@ passed multiple times. The expected format is ``name=value``. For example::
     in which case you probably want to add ``--strict-markers`` to ``addopts``
     to avoid future regressions:
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        addopts = --strict-markers
-        markers =
-            slow
-            serial
+        .. code-block:: toml
+
+            [pytest]
+            addopts = ["--strict-markers"]
+            markers = ["slow", "serial"]
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            addopts = --strict-markers
+            markers =
+                slow
+                serial
 
     .. note::
         The use of ``--strict-markers`` is highly preferred. ``--strict`` was kept for
@@ -1798,11 +2028,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    Specifies a minimal pytest version required for running tests.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        minversion = 3.0  # will fail if we run with pytest-2.8
+       .. code-block:: toml
+
+            [pytest]
+            minversion = 3.0  # will fail if we run with pytest-2.8
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            minversion = 3.0  # will fail if we run with pytest-2.8
 
 
 .. confval:: norecursedirs
@@ -1822,10 +2060,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    Setting a ``norecursedirs`` replaces the default.  Here is an example of
    how to avoid certain directories:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        norecursedirs = .svn _build tmp*
+       .. code-block:: toml
+
+            [pytest]
+            norecursedirs = [".svn", "_build", "tmp*"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            norecursedirs = .svn _build tmp*
 
    This would tell ``pytest`` to not look into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
@@ -1848,10 +2095,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    class prefixed with ``Test`` as a test collection.  Here is an example of how
    to collect tests from classes that end in ``Suite``:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        python_classes = *Suite
+       .. code-block:: toml
+
+            [pytest]
+            python_classes = ["*Suite"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            python_classes = *Suite
 
    Note that ``unittest.TestCase`` derived classes are always collected
    regardless of this option, as ``unittest``'s own collection framework is used
@@ -1864,20 +2120,29 @@ passed multiple times. The expected format is ``name=value``. For example::
    are considered as test modules. Search for multiple glob patterns by
    adding a space between patterns:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        python_files = test_*.py check_*.py example_*.py
+       .. code-block:: toml
 
-   Or one per line:
+            [pytest]
+            python_files = ["test_*.py", "check_*.py", "example_*.py"]
 
-   .. code-block:: ini
+   .. tab:: ini
 
-        [pytest]
-        python_files =
-            test_*.py
-            check_*.py
-            example_*.py
+       .. code-block:: ini
+
+            [pytest]
+            python_files = test_*.py check_*.py example_*.py
+
+       Or one per line:
+
+       .. code-block:: ini
+
+            [pytest]
+            python_files =
+                test_*.py
+                check_*.py
+                example_*.py
 
    By default, files matching ``test_*.py`` and ``*_test.py`` will be considered
    test modules.
@@ -1891,10 +2156,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    function prefixed with ``test`` as a test.  Here is an example of how
    to collect test functions and methods that end in ``_test``:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        python_functions = *_test
+       .. code-block:: toml
+
+            [pytest]
+            python_functions = ["*_test"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            python_functions = *_test
 
    Note that this has no effect on methods that live on a ``unittest.TestCase``
    derived class, as ``unittest``'s own collection framework is used
@@ -1912,10 +2186,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    Paths are relative to the :ref:`rootdir <rootdir>` directory.
    Directories remain in path for the duration of the test session.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        pythonpath = src1 src2
+       .. code-block:: toml
+
+            [pytest]
+            pythonpath = ["src1", "src2"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            pythonpath = src1 src2
 
 
 .. confval:: required_plugins
@@ -1925,10 +2208,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    their name. Whitespace between different version specifiers is not allowed.
    If any one of the plugins is not found, emit an error.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-       [pytest]
-       required_plugins = pytest-django>=3.0.0,<4.0.0 pytest-html pytest-xdist>=1.0.0
+       .. code-block:: toml
+
+           [pytest]
+           required_plugins = ["pytest-django>=3.0.0,<4.0.0", "pytest-html", "pytest-xdist>=1.0.0"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+           [pytest]
+           required_plugins = pytest-django>=3.0.0,<4.0.0 pytest-html pytest-xdist>=1.0.0
 
 
 .. confval:: testpaths
@@ -1942,10 +2234,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    Useful when all project tests are in a known location to speed up
    test collection and to avoid picking up undesired tests by accident.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        testpaths = testing doc
+       .. code-block:: toml
+
+            [pytest]
+            testpaths = ["testing", "doc"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            testpaths = testing doc
 
    This configuration means that executing:
 
@@ -1964,10 +2265,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    How many sessions should we keep the `tmp_path` directories,
    according to `tmp_path_retention_policy`.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        tmp_path_retention_count = 3
+       .. code-block:: toml
+
+            [pytest]
+            tmp_path_retention_count = 3
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            tmp_path_retention_count = 3
 
    Default: ``3``
 
@@ -1983,10 +2293,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     * `failed`: retains directories only for tests with outcome `error` or `failed`.
     * `none`: directories are always removed after each test ends, regardless of the outcome.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        tmp_path_retention_policy = all
+       .. code-block:: toml
+
+            [pytest]
+            tmp_path_retention_policy = "all"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            tmp_path_retention_policy = all
 
    Default: ``all``
 
@@ -1997,10 +2316,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    Setting value to ``0`` disables the character limit for truncation.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-       [pytest]
-       truncation_limit_chars = 640
+       .. code-block:: toml
+
+            [pytest]
+            truncation_limit_chars = 640
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            truncation_limit_chars = 640
 
    pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
 
@@ -2017,10 +2345,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    Setting value to ``0`` disables the lines limit for truncation.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-       [pytest]
-       truncation_limit_lines = 8
+       .. code-block:: toml
+
+            [pytest]
+            truncation_limit_lines = 8
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            truncation_limit_lines = 8
 
    pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
 
@@ -2037,21 +2374,39 @@ passed multiple times. The expected format is ``name=value``. For example::
     the ``@pytest.mark.usefixtures`` marker to all test functions.
 
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        usefixtures =
-            clean_db
+        .. code-block:: toml
+
+            [pytest]
+            usefixtures = ["clean_db"]
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            usefixtures =
+                clean_db
 
 
 .. confval:: verbosity_assertions
 
     Set a verbosity level specifically for assertion related output, overriding the application wide level.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        verbosity_assertions = 2
+        .. code-block:: toml
+
+            [pytest]
+            verbosity_assertions = 2
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            verbosity_assertions = 2
 
     Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
     "auto" can be used to explicitly use the global verbosity level.
@@ -2061,10 +2416,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Set a verbosity level specifically for test case execution related output, overriding the application wide level.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        verbosity_test_cases = 2
+        .. code-block:: toml
+
+            [pytest]
+            verbosity_test_cases = 2
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            verbosity_test_cases = 2
 
     Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
     "auto" can be used to explicitly use the global verbosity level.
@@ -2077,10 +2441,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     For more information, see :ref:`xfail strict tutorial`.
 
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        xfail_strict = True
+        .. code-block:: toml
+
+            [pytest]
+            xfail_strict = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            xfail_strict = true
 
 .. confval:: strict_parametrization_ids
 
@@ -2089,10 +2462,19 @@ passed multiple times. The expected format is ``name=value``. For example::
     If not set (the default), pytest automatically handles this by adding `0`, `1`, ... to duplicate IDs,
     making them unique.
 
-    .. code-block:: ini
+    .. tab:: toml
+
+        .. code-block:: toml
 
           [pytest]
-          strict_parametrization_ids = True
+          strict_parametrization_ids = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+          [pytest]
+          strict_parametrization_ids = true
 
     For example,
 

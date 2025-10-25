@@ -1001,10 +1001,19 @@ def pytest_assertion_pass(item: Item, lineno: int, orig: str, expl: str) -> None
     This hook must be explicitly enabled by the ``enable_assertion_pass_hook``
     ini-file option:
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        enable_assertion_pass_hook=true
+        .. code-block:: toml
+
+            [pytest]
+            enable_assertion_pass_hook = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            enable_assertion_pass_hook = true
 
     You need to **clean the .pyc** files in your project directory and interpreter libraries
     when enabling this option, as assertions will require to be re-written.
