@@ -186,8 +186,6 @@ def showhelp(config: Config) -> None:
     indent = " " * indent_len
     for name in config._parser._ininames:
         help, type, _default = config._parser._inidict[name]
-        if type is None:
-            type = "string"
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         spec = f"{name} ({type}):"

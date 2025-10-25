@@ -50,7 +50,7 @@ class Parser:
         self._groups: list[OptionGroup] = []
         self._processopt = processopt
         self._usage = usage
-        self._inidict: dict[str, tuple[str, str | None, Any]] = {}
+        self._inidict: dict[str, tuple[str, str, Any]] = {}
         self._ininames: list[str] = []
         # Maps alias -> canonical name.
         self._ini_aliases: dict[str, str] = {}
@@ -238,6 +238,8 @@ class Parser:
             "int",
             "float",
         )
+        if type is None:
+            type = "string"
         if default is NOT_SET:
             default = get_ini_default_for_type(type)
 
@@ -255,16 +257,13 @@ class Parser:
 def get_ini_default_for_type(
     type: Literal[
         "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
-    ]
-    | None,
+    ],
 ) -> Any:
     """
     Used by addini to get the default value for a given ini-option type, when
     default is not supplied.
     """
-    if type is None:
-        return ""
-    elif type in ("paths", "pathlist", "args", "linelist"):
+    if type in ("paths", "pathlist", "args", "linelist"):
         return []
     elif type == "bool":
         return False

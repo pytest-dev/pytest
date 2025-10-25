@@ -1710,8 +1710,6 @@ class Config:
                     f"Expected a float string for option {name} of type float, but got: {value!r}"
                 ) from None
             return float(value)
-        elif type is None:
-            return value
         else:
             return self._getini_unknown_type(name, type, value)
 
