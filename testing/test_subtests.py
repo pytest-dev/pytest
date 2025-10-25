@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 from typing import Literal
 
@@ -10,210 +9,282 @@ import pytest
 IS_PY311 = sys.version_info[:2] >= (3, 11)
 
 
-@pytest.mark.parametrize("mode", ["normal", "xdist"])
-class TestFixture:
-    """Tests for ``subtests`` fixture."""
-
-    @pytest.fixture
-    def simple_script(self, pytester: pytest.Pytester) -> None:
-        pytester.makepyfile(
-            """
-            def test_foo(subtests):
-                for i in range(5):
-                    with subtests.test(msg="custom", i=i):
-                        assert i % 2 == 0
+def test_failures(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("COLUMNS", "120")
+    pytester.makepyfile(
         """
-        )
+        def test_foo(subtests):
+            with subtests.test("foo subtest"):
+                assert False, "foo subtest failure"
 
-    def test_simple_terminal_normal(
-        self,
-        simple_script: None,
-        pytester: pytest.Pytester,
-        mode: Literal["normal", "xdist"],
-    ) -> None:
-        if mode == "normal":
-            result = pytester.runpytest()
-            expected_lines = ["collected 1 item"]
-        else:
-            assert mode == "xdist"
-            pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1", "-pxdist.plugin")
-            expected_lines = ["1 worker [1 item]"]
+        def test_bar(subtests):
+            with subtests.test("bar subtest"):
+                assert False, "bar subtest failure"
+            assert False, "test_bar also failed"
 
-        expected_lines += [
-            "* test_foo [[]custom[]] (i=1) *",
-            "* test_foo [[]custom[]] (i=3) *",
-            "Contains 2 failed subtests",
-            "* 3 failed, 3 subtests passed in *",
+        def test_zaz(subtests):
+            with subtests.test("zaz subtest"):
+                pass
+        """
+    )
+    summary_lines = [
+        "*=== FAILURES ===*",
+        #
+        "*___ test_foo [[]foo subtest[]] ___*",
+        "*AssertionError: foo subtest failure",
+        #
+        "*___ test_foo ___*",
+        "contains 1 failed subtest",
+        #
+        "*___ test_bar [[]bar subtest[]] ___*",
+        "*AssertionError: bar subtest failure",
+        #
+        "*___ test_bar ___*",
+        "*AssertionError: test_bar also failed",
+        #
+        "*=== short test summary info ===*",
+        "SUBFAILED[[]foo subtest[]] test_*.py::test_foo - AssertionError*",
+        "FAILED test_*.py::test_foo - contains 1 failed subtest",
+        "SUBFAILED[[]bar subtest[]] test_*.py::test_bar - AssertionError*",
+        "FAILED test_*.py::test_bar - AssertionError*",
+    ]
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "test_*.py uFuF.    *     [[]100%[]]",
+            *summary_lines,
+            "* 4 failed, 1 passed in *",
         ]
-        result.stdout.fnmatch_lines(expected_lines)
+    )
 
-    def test_simple_terminal_verbose(
-        self,
-        simple_script: None,
-        pytester: pytest.Pytester,
-        mode: Literal["normal", "xdist"],
-    ) -> None:
-        if mode == "normal":
-            result = pytester.runpytest("-v")
-            expected_lines = [
-                "*collected 1 item",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=0) SUBPASSED *100%*",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=1) SUBFAILED *100%*",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=2) SUBPASSED *100%*",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=3) SUBFAILED *100%*",
-                "test_simple_terminal_verbose.py::test_foo [[]custom[]] (i=4) SUBPASSED *100%*",
-                "test_simple_terminal_verbose.py::test_foo FAILED *100%*",
-            ]
-        else:
-            assert mode == "xdist"
-            pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1", "-v", "-pxdist.plugin")
-            expected_lines = [
-                "1 worker [1 item]",
-                "*gw0*100%* test_simple_terminal_verbose.py::test_foo*",
-                "*gw0*100%* test_simple_terminal_verbose.py::test_foo*",
-                "*gw0*100%* test_simple_terminal_verbose.py::test_foo*",
-                "*gw0*100%* test_simple_terminal_verbose.py::test_foo*",
-                "*gw0*100%* test_simple_terminal_verbose.py::test_foo*",
-                "*gw0*100%* test_simple_terminal_verbose.py::test_foo*",
-            ]
-
-        expected_lines += [
-            "* test_foo [[]custom[]] (i=1) *",
-            "* test_foo [[]custom[]] (i=3) *",
-            "* 3 failed, 3 subtests passed in *",
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "test_*.py::test_foo SUBFAILED[[]foo subtest[]]    *     [[] 33%[]]",
+            "test_*.py::test_foo FAILED                        *     [[] 33%[]]",
+            "test_*.py::test_bar SUBFAILED[[]bar subtest[]]    *     [[] 66%[]]",
+            "test_*.py::test_bar FAILED                        *     [[] 66%[]]",
+            "test_*.py::test_zaz SUBPASSED[[]zaz subtest[]]    *     [[]100%[]]",
+            "test_*.py::test_zaz PASSED                        *     [[]100%[]]",
+            *summary_lines,
+            "* 4 failed, 1 passed, 1 subtests passed in *",
         ]
-        result.stdout.fnmatch_lines(expected_lines)
-
-    def test_skip(
-        self, pytester: pytest.Pytester, mode: Literal["normal", "xdist"]
-    ) -> None:
-        pytester.makepyfile(
-            """
-            import pytest
-            def test_foo(subtests):
-                for i in range(5):
-                    with subtests.test(msg="custom", i=i):
-                        if i % 2 == 0:
-                            pytest.skip('even number')
+    )
+    pytester.makeini(
         """
-        )
-        if mode == "normal":
-            result = pytester.runpytest()
-            expected_lines = ["collected 1 item"]
-        else:
-            assert mode == "xdist"
-            pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1", "-pxdist.plugin")
-            expected_lines = ["1 worker [1 item]"]
-        expected_lines += ["* 1 passed, 3 skipped, 2 subtests passed in *"]
-        result.stdout.fnmatch_lines(expected_lines)
-
-    def test_xfail(
-        self, pytester: pytest.Pytester, mode: Literal["normal", "xdist"]
-    ) -> None:
-        pytester.makepyfile(
-            """
-            import pytest
-            def test_foo(subtests):
-                for i in range(5):
-                    with subtests.test(msg="custom", i=i):
-                        if i % 2 == 0:
-                            pytest.xfail('even number')
+        [pytest]
+        verbosity_subtests = 0
         """
-        )
-        if mode == "normal":
-            result = pytester.runpytest()
-            expected_lines = ["collected 1 item"]
-        else:
-            assert mode == "xdist"
-            pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1", "-pxdist.plugin")
-            expected_lines = ["1 worker [1 item]"]
-        expected_lines += ["* 1 passed, 2 subtests passed, 3 subtests xfailed in *"]
-        result.stdout.fnmatch_lines(expected_lines)
+    )
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "test_*.py::test_foo SUBFAILED[[]foo subtest[]]    *     [[] 33%[]]",
+            "test_*.py::test_foo FAILED                        *     [[] 33%[]]",
+            "test_*.py::test_bar SUBFAILED[[]bar subtest[]]    *     [[] 66%[]]",
+            "test_*.py::test_bar FAILED                        *     [[] 66%[]]",
+            "test_*.py::test_zaz PASSED                        *     [[]100%[]]",
+            *summary_lines,
+            "* 4 failed, 1 passed in *",
+        ]
+    )
+    result.stdout.no_fnmatch_line("test_*.py::test_zaz SUBPASSED[[]zaz subtest[]]*")
 
-    def test_typing_exported(
-        self, pytester: pytest.Pytester, mode: Literal["normal", "xdist"]
-    ) -> None:
-        pytester.makepyfile(
-            """
-            from pytest import Subtests
 
-            def test_typing_exported(subtests: Subtests) -> None:
-                assert isinstance(subtests, Subtests)
-            """
-        )
-        if mode == "normal":
-            result = pytester.runpytest()
-            expected_lines = ["collected 1 item"]
-        else:
-            assert mode == "xdist"
-            pytest.importorskip("xdist")
-            result = pytester.runpytest("-n1", "-pxdist.plugin")
-            expected_lines = ["1 worker [1 item]"]
-        expected_lines += ["* 1 passed *"]
-        result.stdout.fnmatch_lines(expected_lines)
-
-    def test_no_subtests_reports(
-        self, pytester: pytest.Pytester, mode: Literal["normal", "xdist"]
-    ) -> None:
-        pytester.makepyfile(
-            """
-            import pytest
-
-            def test_foo(subtests):
-                for i in range(5):
-                    with subtests.test(msg="custom", i=i):
-                        pass
+def test_passes(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("COLUMNS", "120")
+    pytester.makepyfile(
         """
-        )
-        # Without `--no-subtests-reports`, subtests are reported normally.
-        result = pytester.runpytest("-v")
-        result.stdout.fnmatch_lines(
-            [
-                "*collected 1 item*",
-                "test_no_subtests_reports.py::test_foo * (i=0) SUBPASSED*",
-                "*test_no_subtests_reports.py::test_foo PASSED*",
-                "* 1 passed, 5 subtests passed in*",
-            ]
-        )
+        def test_foo(subtests):
+            with subtests.test("foo subtest"):
+                pass
 
-        # With `--no-subtests-reports`, passing subtests are no longer reported.
-        result = pytester.runpytest("-v", "--no-subtests-reports")
-        result.stdout.fnmatch_lines(
-            [
-                "*collected 1 item*",
-                "*test_no_subtests_reports.py::test_foo PASSED*",
-                "* 1 passed in*",
-            ]
-        )
-        result.stdout.no_fnmatch_line("*SUBPASSED*")
-
-        # Rewrite the test file so the tests fail. Even with the flag, failed subtests are still reported.
-        pytester.makepyfile(
-            """
-            import pytest
-
-            def test_foo(subtests):
-                for i in range(5):
-                    with subtests.test(msg="custom", i=i):
-                        assert False
+        def test_bar(subtests):
+            with subtests.test("bar subtest"):
+                pass
         """
-        )
-        result = pytester.runpytest("-v", "--no-subtests-reports")
-        result.stdout.fnmatch_lines(
-            [
-                "*collected 1 item*",
-                "test_no_subtests_reports.py::test_foo * (i=0) SUBFAILED*",
-                "*test_no_subtests_reports.py::test_foo FAILED*",
-                "* 6 failed in*",
-            ]
-        )
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "test_*.py ..    *     [[]100%[]]",
+            "* 2 passed in *",
+        ]
+    )
+
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*.py::test_foo SUBPASSED[[]foo subtest[]]      * [[] 50%[]]",
+            "*.py::test_foo PASSED                          * [[] 50%[]]",
+            "*.py::test_bar SUBPASSED[[]bar subtest[]]      * [[]100%[]]",
+            "*.py::test_bar PASSED                          * [[]100%[]]",
+            "* 2 passed, 2 subtests passed in *",
+        ]
+    )
+
+    pytester.makeini(
+        """
+        [pytest]
+        verbosity_subtests = 0
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*.py::test_foo PASSED                          * [[] 50%[]]",
+            "*.py::test_bar PASSED                          * [[]100%[]]",
+            "* 2 passed in *",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*.py::test_foo SUBPASSED[[]foo subtest[]]*")
+    result.stdout.no_fnmatch_line("*.py::test_bar SUBPASSED[[]bar subtest[]]*")
 
 
-def test_subtests_and_parametrization(pytester: pytest.Pytester) -> None:
+def test_skip(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("COLUMNS", "120")
+    pytester.makepyfile(
+        """
+        import pytest
+        def test_foo(subtests):
+            with subtests.test("foo subtest"):
+                pytest.skip("skip foo subtest")
+
+        def test_bar(subtests):
+            with subtests.test("bar subtest"):
+                pytest.skip("skip bar subtest")
+            pytest.skip("skip test_bar")
+        """
+    )
+    result = pytester.runpytest("-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "test_*.py .s    *     [[]100%[]]",
+            "*=== short test summary info ===*",
+            "SKIPPED [[]1[]] test_skip.py:9: skip test_bar",
+            "* 1 passed, 1 skipped in *",
+        ]
+    )
+
+    result = pytester.runpytest("-v", "-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "*.py::test_foo SUBSKIPPED[[]foo subtest[]] (skip foo subtest)  * [[] 50%[]]",
+            "*.py::test_foo PASSED                                          * [[] 50%[]]",
+            "*.py::test_bar SUBSKIPPED[[]bar subtest[]] (skip bar subtest)  * [[]100%[]]",
+            "*.py::test_bar SKIPPED (skip test_bar)                         * [[]100%[]]",
+            "*=== short test summary info ===*",
+            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip foo subtest",
+            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip bar subtest",
+            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip test_bar",
+            "* 1 passed, 3 skipped in *",
+        ]
+    )
+
+    pytester.makeini(
+        """
+        [pytest]
+        verbosity_subtests = 0
+        """
+    )
+    result = pytester.runpytest("-v", "-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "*.py::test_foo PASSED                          * [[] 50%[]]",
+            "*.py::test_bar SKIPPED (skip test_bar)         * [[]100%[]]",
+            "*=== short test summary info ===*",
+            "* 1 passed, 1 skipped in *",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*.py::test_foo SUBPASSED[[]foo subtest[]]*")
+    result.stdout.no_fnmatch_line("*.py::test_bar SUBPASSED[[]bar subtest[]]*")
+    result.stdout.no_fnmatch_line(
+        "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip foo subtest"
+    )
+    result.stdout.no_fnmatch_line(
+        "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip test_bar"
+    )
+
+
+def test_xfail(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("COLUMNS", "120")
+    pytester.makepyfile(
+        """
+        import pytest
+        def test_foo(subtests):
+            with subtests.test("foo subtest"):
+                pytest.xfail("xfail foo subtest")
+
+        def test_bar(subtests):
+            with subtests.test("bar subtest"):
+                pytest.xfail("xfail bar subtest")
+            pytest.xfail("xfail test_bar")
+        """
+    )
+    result = pytester.runpytest("-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "test_*.py .x    *     [[]100%[]]",
+            "*=== short test summary info ===*",
+            "* 1 passed, 1 xfailed in *",
+        ]
+    )
+
+    result = pytester.runpytest("-v", "-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "*.py::test_foo SUBXFAIL[[]foo subtest[]] (xfail foo subtest)    * [[] 50%[]]",
+            "*.py::test_foo PASSED                                           * [[] 50%[]]",
+            "*.py::test_bar SUBXFAIL[[]bar subtest[]] (xfail bar subtest)    * [[]100%[]]",
+            "*.py::test_bar XFAIL (xfail test_bar)                           * [[]100%[]]",
+            "*=== short test summary info ===*",
+            "SUBXFAIL[[]foo subtest[]] *.py::test_foo - xfail foo subtest",
+            "SUBXFAIL[[]bar subtest[]] *.py::test_bar - xfail bar subtest",
+            "XFAIL *.py::test_bar - xfail test_bar",
+            "* 1 passed, 3 xfailed in *",
+        ]
+    )
+
+    pytester.makeini(
+        """
+        [pytest]
+        verbosity_subtests = 0
+        """
+    )
+    result = pytester.runpytest("-v", "-ra")
+    result.stdout.fnmatch_lines(
+        [
+            "*.py::test_foo PASSED                          * [[] 50%[]]",
+            "*.py::test_bar XFAIL (xfail test_bar)         * [[]100%[]]",
+            "*=== short test summary info ===*",
+            "* 1 passed, 1 xfailed in *",
+        ]
+    )
+    result.stdout.no_fnmatch_line(
+        "SUBXFAIL[[]foo subtest[]] *.py::test_foo - xfail foo subtest"
+    )
+    result.stdout.no_fnmatch_line(
+        "SUBXFAIL[[]bar subtest[]] *.py::test_bar - xfail bar subtest"
+    )
+
+
+def test_typing_exported(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        """
+        from pytest import Subtests
+
+        def test_typing_exported(subtests: Subtests) -> None:
+            assert isinstance(subtests, Subtests)
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+def test_subtests_and_parametrization(
+    pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("COLUMNS", "120")
     pytester.makepyfile(
         """
         import pytest
@@ -226,14 +297,32 @@ def test_subtests_and_parametrization(pytester: pytest.Pytester) -> None:
             assert x == 0
     """
     )
-    result = pytester.runpytest("-v", "--no-subtests-reports")
+    result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "test_subtests_and_parametrization.py::test_foo[[]0[]] [[]custom[]] (i=1) SUBFAILED*[[] 50%[]]",
-            "test_subtests_and_parametrization.py::test_foo[[]0[]] FAILED              *[[] 50%[]]",
-            "test_subtests_and_parametrization.py::test_foo[[]1[]] [[]custom[]] (i=1) SUBFAILED *[[]100%[]]",
-            "test_subtests_and_parametrization.py::test_foo[[]1[]] FAILED              *[[]100%[]]",
-            "Contains 1 failed subtest",
+            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i=1) *[[] 50%[]]",
+            "*.py::test_foo[[]0[]] FAILED                      *[[] 50%[]]",
+            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
+            "*.py::test_foo[[]1[]] FAILED                      *[[]100%[]]",
+            "contains 1 failed subtest",
+            "* 4 failed, 4 subtests passed in *",
+        ]
+    )
+
+    pytester.makeini(
+        """
+        [pytest]
+        verbosity_subtests = 0
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i=1) *[[] 50%[]]",
+            "*.py::test_foo[[]0[]] FAILED                      *[[] 50%[]]",
+            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
+            "*.py::test_foo[[]1[]] FAILED                      *[[]100%[]]",
+            "contains 1 failed subtest",
             "* 4 failed in *",
         ]
     )
@@ -310,124 +399,70 @@ def test_subtests_last_failed_step_wise(pytester: pytest.Pytester, flag: str) ->
 class TestUnittestSubTest:
     """Test unittest.TestCase.subTest functionality."""
 
-    @pytest.fixture
-    def simple_script(self, pytester: pytest.Pytester) -> Path:
-        return pytester.makepyfile(
+    def test_failures(
+        self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
             """
-            from unittest import TestCase, main
+            from unittest import TestCase
 
             class T(TestCase):
-
                 def test_foo(self):
-                    for i in range(5):
-                        with self.subTest(msg="custom", i=i):
-                            self.assertEqual(i % 2, 0)
+                    with self.subTest("foo subtest"):
+                        assert False, "foo subtest failure"
 
-            if __name__ == '__main__':
-                main()
-        """
+                def test_bar(self):
+                    with self.subTest("bar subtest"):
+                        assert False, "bar subtest failure"
+                    assert False, "test_bar also failed"
+
+                def test_zaz(self):
+                    with self.subTest("zaz subtest"):
+                        pass
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "* 3 failed, 2 passed in *",
+            ]
         )
 
-    @pytest.mark.parametrize("runner", ["unittest", "pytest-normal", "pytest-xdist"])
-    def test_simple_terminal_normal(
-        self,
-        simple_script: Path,
-        pytester: pytest.Pytester,
-        runner: Literal["unittest", "pytest-normal", "pytest-xdist"],
+    def test_passes(
+        self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        suffix = ".test_foo" if IS_PY311 else ""
-        if runner == "unittest":
-            result = pytester.run(sys.executable, simple_script)
-            result.stderr.fnmatch_lines(
-                [
-                    f"FAIL: test_foo (__main__.T{suffix}) [custom] (i=1)",
-                    "AssertionError: 1 != 0",
-                    f"FAIL: test_foo (__main__.T{suffix}) [custom] (i=3)",
-                    "AssertionError: 1 != 0",
-                    "Ran 1 test in *",
-                    "FAILED (failures=2)",
-                ]
-            )
-        else:
-            if runner == "pytest-normal":
-                result = pytester.runpytest(simple_script)
-                expected_lines = ["collected 1 item"]
-            else:
-                assert runner == "pytest-xdist"
-                pytest.importorskip("xdist")
-                result = pytester.runpytest(simple_script, "-n1", "-pxdist.plugin")
-                expected_lines = ["1 worker [1 item]"]
-            result.stdout.fnmatch_lines(
-                [
-                    *expected_lines,
-                    "* T.test_foo [[]custom[]] (i=1) *",
-                    "E  * AssertionError: 1 != 0",
-                    "* T.test_foo [[]custom[]] (i=3) *",
-                    "E  * AssertionError: 1 != 0",
-                    "* 2 failed, 1 passed, 3 subtests passed in *",
-                ]
-            )
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
+            """
+            from unittest import TestCase
 
-    @pytest.mark.parametrize("runner", ["unittest", "pytest-normal", "pytest-xdist"])
-    def test_simple_terminal_verbose(
-        self,
-        simple_script: Path,
-        pytester: pytest.Pytester,
-        runner: Literal["unittest", "pytest-normal", "pytest-xdist"],
-    ) -> None:
-        suffix = ".test_foo" if IS_PY311 else ""
-        if runner == "unittest":
-            result = pytester.run(sys.executable, simple_script, "-v")
-            result.stderr.fnmatch_lines(
-                [
-                    f"test_foo (__main__.T{suffix}) ... ",
-                    f"FAIL: test_foo (__main__.T{suffix}) [custom] (i=1)",
-                    "AssertionError: 1 != 0",
-                    f"FAIL: test_foo (__main__.T{suffix}) [custom] (i=3)",
-                    "AssertionError: 1 != 0",
-                    "Ran 1 test in *",
-                    "FAILED (failures=2)",
-                ]
-            )
-        else:
-            if runner == "pytest-normal":
-                result = pytester.runpytest(simple_script, "-v")
-                expected_lines = [
-                    "*collected 1 item",
-                    "test_simple_terminal_verbose.py::T::test_foo [[]custom[]] (i=1) SUBFAILED *100%*",
-                    "test_simple_terminal_verbose.py::T::test_foo [[]custom[]] (i=3) SUBFAILED *100%*",
-                    "test_simple_terminal_verbose.py::T::test_foo PASSED *100%*",
-                ]
-            else:
-                assert runner == "pytest-xdist"
-                pytest.importorskip("xdist")
-                result = pytester.runpytest(
-                    simple_script, "-n1", "-v", "-pxdist.plugin"
-                )
-                expected_lines = [
-                    "1 worker [1 item]",
-                    "*gw0*100%* SUBFAILED test_simple_terminal_verbose.py::T::test_foo*",
-                    "*gw0*100%* SUBFAILED test_simple_terminal_verbose.py::T::test_foo*",
-                    "*gw0*100%* PASSED test_simple_terminal_verbose.py::T::test_foo*",
-                ]
-            result.stdout.fnmatch_lines(
-                [
-                    *expected_lines,
-                    "* T.test_foo [[]custom[]] (i=1) *",
-                    "E  * AssertionError: 1 != 0",
-                    "* T.test_foo [[]custom[]] (i=3) *",
-                    "E  * AssertionError: 1 != 0",
-                    "* 2 failed, 1 passed, 3 subtests passed in *",
-                ]
-            )
+            class T(TestCase):
+                def test_foo(self):
+                    with self.subTest("foo subtest"):
+                        pass
 
-    @pytest.mark.parametrize("runner", ["unittest", "pytest-normal", "pytest-xdist"])
+                def test_bar(self):
+                    with self.subTest("bar subtest"):
+                        pass
+
+                def test_zaz(self):
+                    with self.subTest("zaz subtest"):
+                        pass
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "* 3 passed in *",
+            ]
+        )
+
     def test_skip(
         self,
         pytester: pytest.Pytester,
-        runner: Literal["unittest", "pytest-normal", "pytest-xdist"],
     ) -> None:
-        p = pytester.makepyfile(
+        pytester.makepyfile(
             """
             from unittest import TestCase, main
 
@@ -438,32 +473,20 @@ class TestUnittestSubTest:
                         with self.subTest(msg="custom", i=i):
                             if i % 2 == 0:
                                 self.skipTest('even number')
-
-            if __name__ == '__main__':
-                main()
         """
         )
-        if runner == "unittest":
-            result = pytester.runpython(p)
-            result.stderr.fnmatch_lines(["Ran 1 test in *", "OK (skipped=3)"])
-        else:
-            pytest.xfail("Not producing the expected results (#13756)")
-            result = pytester.runpytest(p)  # type:ignore[unreachable]
-            result.stdout.fnmatch_lines(
-                ["collected 1 item", "* 3 skipped, 1 passed in *"]
-            )
+        # This output might change #13756.
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["* 1 passed in *"])
 
-    @pytest.mark.parametrize("runner", ["unittest", "pytest-normal", "pytest-xdist"])
-    @pytest.mark.xfail(reason="Not producing the expected results (#13756)")
     def test_xfail(
         self,
         pytester: pytest.Pytester,
-        runner: Literal["unittest", "pytest-normal", "pytest-xdist"],
     ) -> None:
-        p = pytester.makepyfile(
+        pytester.makepyfile(
             """
             import pytest
-            from unittest import expectedFailure, TestCase, main
+            from unittest import expectedFailure, TestCase
 
             class T(TestCase):
                 @expectedFailure
@@ -477,218 +500,121 @@ class TestUnittestSubTest:
                 main()
         """
         )
-        if runner == "unittest":
-            result = pytester.runpython(p)
-            result.stderr.fnmatch_lines(["Ran 1 test in *", "OK (expected failures=3)"])
-        else:
-            result = pytester.runpytest(p)
-            result.stdout.fnmatch_lines(
-                ["collected 1 item", "* 3 xfailed, 1 passed in *"]
-            )
+        # This output might change #13756.
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["* 1 xfailed in *"])
 
-    @pytest.mark.parametrize("runner", ["pytest-normal"])
     def test_only_original_skip_is_called(
         self,
         pytester: pytest.Pytester,
         monkeypatch: pytest.MonkeyPatch,
-        runner: Literal["pytest-normal"],
     ) -> None:
         """Regression test for pytest-dev/pytest-subtests#173."""
-        monkeypatch.setenv("COLUMNS", "200")
-        p = pytester.makepyfile(
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
             """
             import unittest
-            from unittest import TestCase, main
+            from unittest import TestCase
 
             @unittest.skip("skip this test")
             class T(unittest.TestCase):
                 def test_foo(self):
                     assert 1 == 2
-
-            if __name__ == '__main__':
-                main()
         """
         )
-        result = pytester.runpytest(p, "-v", "-rsf")
+        result = pytester.runpytest("-v", "-rsf")
         result.stdout.fnmatch_lines(
             ["SKIPPED [1] test_only_original_skip_is_called.py:6: skip this test"]
         )
 
-    @pytest.mark.parametrize("runner", ["unittest", "pytest-normal", "pytest-xdist"])
     def test_skip_with_failure(
         self,
         pytester: pytest.Pytester,
         monkeypatch: pytest.MonkeyPatch,
-        runner: Literal["unittest", "pytest-normal", "pytest-xdist"],
     ) -> None:
-        monkeypatch.setenv("COLUMNS", "200")
-        p = pytester.makepyfile(
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
             """
             import pytest
-            from unittest import expectedFailure, TestCase, main
+            from unittest import TestCase
 
             class T(TestCase):
                 def test_foo(self):
-                    for i in range(10):
-                        with self.subTest("custom message", i=i):
-                            if i < 4:
-                                self.skipTest(f"skip subtest i={i}")
-                            assert i < 4
-
-            if __name__ == '__main__':
-                main()
-        """
-        )
-        if runner == "unittest":
-            result = pytester.runpython(p)
-            if sys.version_info < (3, 11):
-                result.stderr.re_match_lines(
-                    [
-                        r"FAIL: test_foo \(__main__\.T\) \[custom message\] \(i=4\).*",
-                        r"FAIL: test_foo \(__main__\.T\) \[custom message\] \(i=9\).*",
-                        r"Ran 1 test in .*",
-                        r"FAILED \(failures=6, skipped=4\)",
-                    ]
-                )
-            else:
-                result.stderr.re_match_lines(
-                    [
-                        r"FAIL: test_foo \(__main__\.T\.test_foo\) \[custom message\] \(i=4\).*",
-                        r"FAIL: test_foo \(__main__\.T\.test_foo\) \[custom message\] \(i=9\).*",
-                        r"Ran 1 test in .*",
-                        r"FAILED \(failures=6, skipped=4\)",
-                    ]
-                )
-        elif runner == "pytest-normal":
-            result = pytester.runpytest(p, "-v", "-rsf")
-            result.stdout.re_match_lines(
-                [
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=0\) SUBSKIPPED \(skip subtest i=0\) .*",  # noqa: E501
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=3\) SUBSKIPPED \(skip subtest i=3\) .*",  # noqa: E501
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=4\) SUBFAILED .*",
-                    r"test_skip_with_failure.py::T::test_foo \[custom message\] \(i=9\) SUBFAILED .*",
-                    "test_skip_with_failure.py::T::test_foo PASSED .*",
-                    r"[custom message] (i=0) SUBSKIPPED [1] test_skip_with_failure.py:5: skip subtest i=0",
-                    r"[custom message] (i=0) SUBSKIPPED [1] test_skip_with_failure.py:5: skip subtest i=3",
-                    r"[custom message] (i=4) SUBFAILED test_skip_with_failure.py::T::test_foo"
-                    r" - AssertionError: assert 4 < 4",
-                    r"[custom message] (i=9) SUBFAILED test_skip_with_failure.py::T::test_foo"
-                    r" - AssertionError: assert 9 < 4",
-                    r".* 6 failed, 1 passed, 4 skipped in .*",
-                ]
-            )
-        else:
-            pytest.xfail("Not producing the expected results (#13756)")
-            result = pytester.runpytest(p)  # type:ignore[unreachable]
-            result.stdout.fnmatch_lines(
-                ["collected 1 item", "* 3 skipped, 1 passed in *"]
-            )
-
-    @pytest.mark.parametrize("runner", ["unittest", "pytest-normal", "pytest-xdist"])
-    def test_skip_with_failure_and_non_subskip(
-        self,
-        pytester: pytest.Pytester,
-        monkeypatch: pytest.MonkeyPatch,
-        runner: Literal["unittest", "pytest-normal", "pytest-xdist"],
-    ) -> None:
-        monkeypatch.setenv("COLUMNS", "200")
-        p = pytester.makepyfile(
+                    with self.subTest("subtest 1"):
+                        self.skipTest(f"skip subtest 1")
+                    with self.subTest("subtest 2"):
+                        assert False, "fail subtest 2"
             """
-            import pytest
-            from unittest import expectedFailure, TestCase, main
-
-            class T(TestCase):
-                def test_foo(self):
-                    for i in range(10):
-                        with self.subTest("custom message", i=i):
-                            if i < 4:
-                                self.skipTest(f"skip subtest i={i}")
-                            assert i < 4
-                    self.skipTest(f"skip the test")
-
-            if __name__ == '__main__':
-                main()
-        """
         )
-        if runner == "unittest":
-            result = pytester.runpython(p)
-            if sys.version_info < (3, 11):
-                result.stderr.re_match_lines(
-                    [
-                        r"FAIL: test_foo \(__main__\.T\) \[custom message\] \(i=4\).*",
-                        r"FAIL: test_foo \(__main__\.T\) \[custom message\] \(i=9\).*",
-                        r"Ran 1 test in .*",
-                        r"FAILED \(failures=6, skipped=5\)",
-                    ]
-                )
-            else:
-                result.stderr.re_match_lines(
-                    [
-                        r"FAIL: test_foo \(__main__\.T\.test_foo\) \[custom message\] \(i=4\).*",
-                        r"FAIL: test_foo \(__main__\.T\.test_foo\) \[custom message\] \(i=9\).*",
-                        r"Ran 1 test in .*",
-                        r"FAILED \(failures=6, skipped=5\)",
-                    ]
-                )
-        elif runner == "pytest-normal":
-            result = pytester.runpytest(p, "-v", "-rsf")
-            # The `(i=0)` is not correct but it's given by pytest `TerminalReporter` without `--no-fold-skipped`
-            result.stdout.re_match_lines(
-                [
-                    r"test_skip_with_failure_and_non_subskip.py::T::test_foo \[custom message\] \(i=4\) SUBFAILED .*",
-                    r"test_skip_with_failure_and_non_subskip.py::T::test_foo SKIPPED \(skip the test\)",
-                    r"\[custom message\] \(i=0\) SUBSKIPPED \[1\] test_skip_with_failure_and_non_subskip.py:5:"
-                    r" skip subtest i=3",
-                    r"\[custom message\] \(i=0\) SUBSKIPPED \[1\] test_skip_with_failure_and_non_subskip.py:5:"
-                    r" skip the test",
-                    r"\[custom message\] \(i=4\) SUBFAILED test_skip_with_failure_and_non_subskip.py::T::test_foo",
-                    r".* 6 failed, 5 skipped in .*",
-                ]
-            )
-            # Check with `--no-fold-skipped` (which gives the correct information).
-            if sys.version_info >= (3, 10) and pytest.version_tuple[:2] >= (8, 3):
-                result = pytester.runpytest(p, "-v", "--no-fold-skipped", "-rsf")
-                result.stdout.re_match_lines(
-                    [
-                        r"test_skip_with_failure_and_non_subskip.py::T::test_foo \[custom message\] \(i=4\) SUBFAILED .*",  # noqa: E501
-                        r"test_skip_with_failure_and_non_subskip.py::T::test_foo SKIPPED \(skip the test\).*",
-                        r"\[custom message\] \(i=3\) SUBSKIPPED test_skip_with_failure_and_non_subskip.py::T::test_foo"
-                        r" - Skipped: skip subtest i=3",
-                        r"SKIPPED test_skip_with_failure_and_non_subskip.py::T::test_foo - Skipped: skip the test",
-                        r"\[custom message\] \(i=4\) SUBFAILED test_skip_with_failure_and_non_subskip.py::T::test_foo",
-                        r".* 6 failed, 5 skipped in .*",
-                    ]
-                )
-        else:
-            pytest.xfail("Not producing the expected results (#13756)")
-            result = pytester.runpytest(p)  # type:ignore[unreachable]
-            result.stdout.fnmatch_lines(
-                ["collected 1 item", "* 3 skipped, 1 passed in *"]
-            )
+
+        result = pytester.runpytest("-ra")
+        result.stdout.fnmatch_lines(
+            [
+                "*.py u.                                                           *            [[]100%[]]",
+                "*=== short test summary info ===*",
+                "SUBFAILED[[]subtest 2[]] *.py::T::test_foo - AssertionError: fail subtest 2",
+                "* 1 failed, 1 passed in *",
+            ]
+        )
+
+        result = pytester.runpytest("-v", "-ra")
+        result.stdout.fnmatch_lines(
+            [
+                "*.py::T::test_foo SUBSKIPPED[[]subtest 1[]] (skip subtest 1)      *            [[]100%[]]",
+                "*.py::T::test_foo SUBFAILED[[]subtest 2[]]                        *            [[]100%[]]",
+                "*.py::T::test_foo PASSED                                          *            [[]100%[]]",
+                "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py:*: skip subtest 1",
+                "SUBFAILED[[]subtest 2[]] *.py::T::test_foo - AssertionError: fail subtest 2",
+                "* 1 failed, 1 passed, 1 skipped in *",
+            ]
+        )
+
+        pytester.makeini(
+            """
+            [pytest]
+            verbosity_subtests = 0
+            """
+        )
+        result = pytester.runpytest("-v", "-ra")
+        result.stdout.fnmatch_lines(
+            [
+                "*.py::T::test_foo SUBFAILED[[]subtest 2[]]                        *            [[]100%[]]",
+                "*.py::T::test_foo PASSED                                          *            [[]100%[]]",
+                "*=== short test summary info ===*",
+                r"SUBFAILED[[]subtest 2[]] *.py::T::test_foo - AssertionError: fail subtest 2",
+                r"* 1 failed, 1 passed in *",
+            ]
+        )
+        result.stdout.no_fnmatch_line(
+            "*.py::T::test_foo SUBSKIPPED[[]subtest 1[]] (skip subtest 1) * [[]100%[]]"
+        )
+        result.stdout.no_fnmatch_line(
+            "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py:*: skip subtest 1"
+        )
 
 
 class TestCapture:
     def create_file(self, pytester: pytest.Pytester) -> None:
         pytester.makepyfile(
             """
-                    import sys
-                    def test(subtests):
-                        print()
-                        print('start test')
+            import sys
+            def test(subtests):
+                print()
+                print('start test')
 
-                        with subtests.test(i='A'):
-                            print("hello stdout A")
-                            print("hello stderr A", file=sys.stderr)
-                            assert 0
+                with subtests.test(i='A'):
+                    print("hello stdout A")
+                    print("hello stderr A", file=sys.stderr)
+                    assert 0
 
-                        with subtests.test(i='B'):
-                            print("hello stdout B")
-                            print("hello stderr B", file=sys.stderr)
-                            assert 0
+                with subtests.test(i='B'):
+                    print("hello stdout B")
+                    print("hello stderr B", file=sys.stderr)
+                    assert 0
 
-                        print('end test')
-                        assert 0
-                """
+                print('end test')
+                assert 0
+        """
         )
 
     def test_capturing(self, pytester: pytest.Pytester) -> None:
@@ -860,7 +786,7 @@ class TestLogging:
         result = pytester.runpytest("-p no:logging")
         result.stdout.fnmatch_lines(
             [
-                "*2 failed, 1 subtests passed in*",
+                "*2 failed in*",
             ]
         )
         result.stdout.no_fnmatch_line("*root:test_no_logging.py*log line*")
@@ -948,8 +874,8 @@ def test_exitfirst(pytester: pytest.Pytester) -> None:
     assert result.parseoutcomes()["failed"] == 2
     result.stdout.fnmatch_lines(
         [
-            "*[[]sub1[]] SUBFAILED test_exitfirst.py::test_foo - assert False*",
-            "FAILED test_exitfirst.py::test_foo - assert False",
+            "SUBFAILED*[[]sub1[]] *.py::test_foo - assert False*",
+            "FAILED *.py::test_foo - assert False",
             "* stopping after 2 failures*",
         ],
         consecutive=True,
@@ -996,8 +922,8 @@ def test_nested(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest_subprocess()
     result.stdout.fnmatch_lines(
         [
-            "[b] SUBFAILED test_nested.py::test - AssertionError: b failed",
-            "[a] SUBFAILED test_nested.py::test - AssertionError: a failed",
+            "SUBFAILED[b] test_nested.py::test - AssertionError: b failed",
+            "SUBFAILED[a] test_nested.py::test - AssertionError: a failed",
             "* 3 failed in *",
         ]
     )
