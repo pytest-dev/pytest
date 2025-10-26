@@ -230,7 +230,7 @@ option names are:
 * ``log_file_date_format``
 
 You can call ``set_log_path()`` to customize the log_file path dynamically. This functionality
-is considered **experimental**. Note that ``set_log_path()`` respects the ``log_file_mode`` option.
+is considered **experimental**. Note that ``set_log_path()`` respects the :confval:`log_file_mode` option.
 
 .. _log_colors:
 

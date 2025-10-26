@@ -1470,6 +1470,19 @@ passed multiple times. The expected format is ``name=value``. For example::
       as this is considered less error prone, see :issue:`3155` for more details.
 
 
+.. confval:: enable_assertion_pass_hook
+
+   Enables the :hook:`pytest_assertion_pass` hook.
+   Make sure to delete any previously generated ``.pyc`` cache files.
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            enable_assertion_pass_hook = true
+
+
 .. confval:: faulthandler_timeout
 
    Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
@@ -1698,6 +1711,21 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         [pytest]
         log_file = logs/pytest-logs.txt
+
+    For more information, see :ref:`logging`.
+
+
+.. confval:: log_file_mode
+
+    Sets the mode that the logging file is opened with.
+    The options are ``"w"`` to recreate the file (the default) or ``"a"`` to append to the file.
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_mode = a
 
     For more information, see :ref:`logging`.
 
