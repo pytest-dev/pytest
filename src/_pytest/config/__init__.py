@@ -65,8 +65,15 @@ from _pytest.pathlib import ImportMode
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
+from _pytest.stash import StashKey
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
+
+
+# File descriptor for stdout, duplicated before capture starts.
+# This allows the terminal reporter to bypass pytest's output capture (#8973).
+# The FD is duplicated early in _prepareconfig before any capture can start.
+stdout_fd_dup_key = StashKey[int]()
 
 
 if TYPE_CHECKING:
@@ -327,6 +334,18 @@ def _prepareconfig(
     args: list[str] | os.PathLike[str],
     plugins: Sequence[str | _PluggyPlugin] | None = None,
 ) -> Config:
+    # Duplicate stdout early, before any capture can start.
+    # This allows the terminal reporter to write to the real terminal
+    # even when output capture is active (#8973).
+    try:
+        stdout_fd = sys.stdout.fileno()
+        dup_stdout_fd = os.dup(stdout_fd)
+    except (AttributeError, OSError):
+        # If stdout doesn't have a fileno (e.g., in some test environments),
+        # we can't dup it. This is fine, the terminal reporter will use the
+        # regular stdout in that case.
+        dup_stdout_fd = None
+
     if isinstance(args, os.PathLike):
         args = [os.fspath(args)]
     elif not isinstance(args, list):
@@ -336,6 +355,12 @@ def _prepareconfig(
         raise TypeError(msg.format(args, type(args)))
 
     initial_config = get_config(args, plugins)
+
+    # Store the dup'd stdout FD in the config stash
+    if dup_stdout_fd is not None:
+        initial_config.stash[stdout_fd_dup_key] = dup_stdout_fd
+        # Register cleanup to close the dup'd FD
+        initial_config.add_cleanup(lambda: os.close(dup_stdout_fd))
     pluginmanager = initial_config.pluginmanager
     try:
         if plugins:
