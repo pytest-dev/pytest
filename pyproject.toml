@@ -355,7 +355,7 @@ max_supported_python = "3.14"
 
 [tool.pytest.ini_options]
 minversion = "2.0"
-addopts = "-rfEX -p pytester --strict-markers"
+addopts = "-rfEX -p pytester"
 python_files = [
     "test_*.py",
     "*_test.py",
@@ -378,8 +378,7 @@ norecursedirs = [
     "build",
     "dist",
 ]
-xfail_strict = true
-strict_parametrization_ids = true
+strict = true
 filterwarnings = [
     "error",
     "default:Using or importing the ABCs:DeprecationWarning:unittest2.*",

@@ -80,14 +80,14 @@ surprising due to mistyped names. As described in the previous section, you can 
 the warning for custom marks by registering them in your ``pytest.ini`` file or
 using a custom ``pytest_configure`` hook.
 
-When the ``--strict-markers`` command-line flag is passed, any unknown marks applied
+When the :confval:`strict_markers` ini option is set, any unknown marks applied
 with the ``@pytest.mark.name_of_the_mark`` decorator will trigger an error. You can
-enforce this validation in your project by adding ``--strict-markers`` to ``addopts``:
+enforce this validation in your project by setting :confval:`strict_markers` in your configuration:
 
 .. code-block:: ini
 
     [pytest]
-    addopts = --strict-markers
+    strict_markers = True
     markers =
         slow: marks tests as slow (deselect with '-m "not slow"')
         serial

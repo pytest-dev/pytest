@@ -24,6 +24,7 @@ import re
 import textwrap
 import types
 from typing import Any
+from typing import cast
 from typing import final
 from typing import Literal
 from typing import NoReturn
@@ -111,7 +112,8 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "strict_parametrization_ids",
         type="bool",
-        default=False,
+        # None => fallback to `strict`.
+        default=None,
         help="Emit an error if non-unique parameter set IDs are detected",
     )
 
@@ -963,9 +965,12 @@ class IdMaker:
         return resolved_ids
 
     def _strict_parametrization_ids_enabled(self) -> bool:
-        if self.config:
-            return bool(self.config.getini("strict_parametrization_ids"))
-        return False
+        if self.config is None:
+            return False
+        strict_parametrization_ids = self.config.getini("strict_parametrization_ids")
+        if strict_parametrization_ids is None:
+            strict_parametrization_ids = self.config.getini("strict")
+        return cast(bool, strict_parametrization_ids)
 
     def _resolve_ids(self) -> Iterable[str | _HiddenParam]:
         """Resolve IDs for all ParameterSets (may contain duplicates)."""
