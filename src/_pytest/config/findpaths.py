@@ -68,7 +68,7 @@ def load_config_dict_from_file(
             }
         else:
             # "pytest.ini" files are always the source of configuration, even if empty.
-            if filepath.name == "pytest.ini":
+            if filepath.name in {"pytest.ini", ".pytest.ini"}:
                 return {}
 
     # '.cfg' files are considered if they contain a "[tool:pytest]" section.

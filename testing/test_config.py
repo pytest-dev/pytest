@@ -1826,13 +1826,16 @@ class TestRootdir:
         assert parsed_inipath == inipath
         assert ini_config["x"] == ConfigValue("10", origin="file")
 
-    @pytest.mark.parametrize("name", ["setup.cfg", "tox.ini"])
-    def test_pytestini_overrides_empty_other(self, tmp_path: Path, name: str) -> None:
-        inipath = tmp_path / "pytest.ini"
+    @pytest.mark.parametrize("pytest_ini", ["pytest.ini", ".pytest.ini"])
+    @pytest.mark.parametrize("other", ["setup.cfg", "tox.ini"])
+    def test_pytestini_overrides_empty_other(
+        self, tmp_path: Path, pytest_ini: str, other: str
+    ) -> None:
+        inipath = tmp_path / pytest_ini
         inipath.touch()
         a = tmp_path / "a"
         a.mkdir()
-        (a / name).touch()
+        (a / other).touch()
         rootpath, parsed_inipath, *_ = determine_setup(
             inifile=None,
             override_ini=None,

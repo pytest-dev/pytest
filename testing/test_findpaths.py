@@ -15,9 +15,10 @@ import pytest
 
 
 class TestLoadConfigDictFromFile:
-    def test_empty_pytest_ini(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize("filename", ["pytest.ini", ".pytest.ini"])
+    def test_empty_pytest_ini(self, tmp_path: Path, filename: str) -> None:
         """pytest.ini files are always considered for configuration, even if empty"""
-        fn = tmp_path / "pytest.ini"
+        fn = tmp_path / filename
         fn.write_text("", encoding="utf-8")
         assert load_config_dict_from_file(fn) == {}
 
