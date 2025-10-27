@@ -329,3 +329,75 @@ A list of the lints detected by flake8-pytest-style can be found on its `PyPI pa
 .. note::
 
     flake8-pytest-style is not an official pytest project. Some of the rules enforce certain style choices, such as using `@pytest.fixture()` over `@pytest.fixture`, but you can configure the plugin to fit your preferred style.
+
+.. _`strict mode`:
+
+Using pytest's strict mode
+--------------------------
+
+.. versionadded:: 9.0
+
+Pytest contains a set of configuration options that make it more strict.
+The options are off by default for compatibility or other reasons,
+but you should enable them if you can.
+
+You can enable all of the strictness options at once by setting the :confval:`strict` configuration option:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        strict = true
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        strict = true
+
+See the :confval:`strict` documentation for the options it enables and their effect.
+
+If pytest adds new strictness options in the future, they will also be enabled in strict mode.
+Therefore, you should only enable strict mode if you use a pinned/locked version of pytest,
+or if you want to proactively adopt new strictness options as they are added.
+If you don't want to automatically pick up new options, you can enable options individually::
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        strict_config = true
+        strict_markers = true
+        strict_parametrization_ids = true
+        strict_xfail = true
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        strict_config = true
+        strict_markers = true
+        strict_parametrization_ids = true
+        strict_xfail = true
+
+If you want to use strict mode but having trouble with a specific option, you can turn it off individually::
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        strict = true
+        strict_parametrization_ids = false
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        strict = true
+        strict_parametrization_ids = false

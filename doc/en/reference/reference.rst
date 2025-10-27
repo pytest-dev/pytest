@@ -2474,7 +2474,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: strict
 
-    If set to ``true``, enables all strictness options:
+    If set to ``true``, enable "strict mode", which enables the following options:
 
     * :confval:`strict_config`
     * :confval:`strict_markers`
@@ -2486,8 +2486,8 @@ passed multiple times. The expected format is ``name=value``. For example::
     If you explicitly set an individual strictness option, it takes precedence over ``strict``.
 
     .. note::
-        If new strictness options are added to pytest in the future, they will also be enabled by ``strict``.
-        We therefore only recommend using this option when using a locked version of pytest,
+        If pytest adds new strictness options in the future, they will also be enabled in strict mode.
+        Therefore, you should only enable strict mode if you use a pinned/locked version of pytest,
         or if you want to proactively adopt new strictness options as they are added.
 
     .. tab:: toml
@@ -2495,7 +2495,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         .. code-block:: toml
 
             [pytest]
-            xfail_strict = true
+            strict = true
 
     .. tab:: ini
 
