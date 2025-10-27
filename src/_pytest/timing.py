@@ -84,6 +84,7 @@ class MockTiming:
         return self._current_time
 
     def patch(self, monkeypatch: MonkeyPatch) -> None:
+        # pylint: disable-next=import-self
         from _pytest import timing  # noqa: PLW0406
 
         monkeypatch.setattr(timing, "sleep", self.sleep)
