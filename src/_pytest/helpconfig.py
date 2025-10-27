@@ -102,7 +102,7 @@ def pytest_addoption(parser: Parser) -> None:
         "--override-ini",
         dest="override_ini",
         action="append",
-        help='Override ini option with "option=value" style, '
+        help='Override configuration option with "option=value" style, '
         "e.g. `-o strict_xfail=True -o cache_dir=cache`.",
     )
 
@@ -176,8 +176,8 @@ def showhelp(config: Config) -> None:
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first "
-        "pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
+        "[pytest] configuration options in the first "
+        "pytest.toml|pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
     )
     tw.line()
 

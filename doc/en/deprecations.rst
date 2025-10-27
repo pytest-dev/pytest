@@ -845,20 +845,38 @@ that manipulate this type of file (for example, Jenkins, Azure Pipelines, etc.).
 Users are recommended to try the new ``xunit2`` format and see if their tooling that consumes the JUnit
 XML file supports it.
 
-To use the new format, update your ``pytest.ini``:
+To use the new format, update your configuration file:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    junit_family=xunit2
+    .. code-block:: toml
+
+        [pytest]
+        junit_family = "xunit2"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_family = xunit2
 
 If you discover that your tooling does not support the new format, and want to keep using the
 legacy version, set the option to ``legacy`` instead:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    junit_family=legacy
+    .. code-block:: toml
+
+        [pytest]
+        junit_family = "legacy"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_family = legacy
 
 By using ``legacy`` you will keep using the legacy/xunit1 format when upgrading to
 pytest 6.0, where the default format will be ``xunit2``.

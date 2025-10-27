@@ -1353,7 +1353,7 @@ def test_collect_pyargs_with_testpaths(
 
 
 def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
-    """The testpaths ini option should load conftests in those paths as 'initial' (#10987)."""
+    """The testpaths config option should load conftests in those paths as 'initial' (#10987)."""
     p = pytester.mkdir("some_path")
     p.joinpath("conftest.py").write_text(
         textwrap.dedent(

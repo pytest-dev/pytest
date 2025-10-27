@@ -34,6 +34,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinx_removed_in",
+    "sphinx_inline_tabs",
     "sphinxcontrib_trio",
     "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
     "sphinx_issues",  # implements `:issue:`, `:pr:` and other GH-related roles

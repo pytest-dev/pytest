@@ -1,9 +1,10 @@
 # mypy: allow-untyped-defs
-"""Command line options, ini-file and conftest.py processing."""
+"""Command line options, config-file and conftest.py processing."""
 
 from __future__ import annotations
 
 import argparse
+import builtins
 import collections.abc
 from collections.abc import Callable
 from collections.abc import Generator
@@ -52,6 +53,7 @@ from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
+from _pytest.compat import assert_never
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
@@ -993,7 +995,7 @@ class Config:
         .. note::
 
             Note that the environment variable ``PYTEST_ADDOPTS`` and the ``addopts``
-            ini option are handled by pytest, not being included in the ``args`` attribute.
+            configuration option are handled by pytest, not being included in the ``args`` attribute.
 
             Plugins accessing ``InvocationParams`` must be aware of that.
         """
@@ -1451,8 +1453,8 @@ class Config:
 
     @hookimpl(wrapper=True)
     def pytest_collection(self) -> Generator[None, object, object]:
-        # Validate invalid ini keys after collection is done so we take in account
-        # options added by late-loading conftest files.
+        # Validate invalid configuration keys after collection is done so we
+        # take in account options added by late-loading conftest files.
         try:
             return (yield)
         finally:
@@ -1588,7 +1590,7 @@ class Config:
             )
 
     def addinivalue_line(self, name: str, line: str) -> None:
-        """Add a line to an ini-file option. The option must have been
+        """Add a line to a configuration option. The option must have been
         declared but might not yet be set in which case the line becomes
         the first line in its value."""
         x = self.getini(name)
@@ -1596,11 +1598,11 @@ class Config:
         x.append(line)  # modifies the cached list inline
 
     def getini(self, name: str) -> Any:
-        """Return configuration value from an :ref:`ini file <configfiles>`.
+        """Return configuration value the an :ref:`configuration file <configfiles>`.
 
-        If a configuration value is not defined in an
-        :ref:`ini file <configfiles>`, then the ``default`` value provided while
-        registering the configuration through
+        If a configuration value is not defined in a
+        :ref:`configuration file <configfiles>`, then the ``default`` value
+        provided while registering the configuration through
         :func:`parser.addini <pytest.Parser.addini>` will be returned.
         Please note that you can even provide ``None`` as a valid
         default value.
@@ -1629,8 +1631,9 @@ class Config:
         try:
             return self._inicache[canonical_name]
         except KeyError:
-            self._inicache[canonical_name] = val = self._getini(canonical_name)
-            return val
+            pass
+        self._inicache[canonical_name] = val = self._getini(canonical_name)
+        return val
 
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.
@@ -1666,22 +1669,44 @@ class Config:
         # 2. Canonical name takes precedence over alias.
         selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
         value = selected.value
+        mode = selected.mode
 
-        # Coerce the values based on types.
-        #
-        # Note: some coercions are only required if we are reading from .ini files, because
-        # the file format doesn't contain type information, but when reading from toml we will
-        # get either str or list of str values (see _parse_ini_config_from_pyproject_toml).
-        # For example:
+        if mode == "ini":
+            # In ini mode, values are always str | list[str].
+            assert isinstance(value, (str, list))
+            return self._getini_ini(name, canonical_name, type, value, default)
+        elif mode == "toml":
+            return self._getini_toml(name, canonical_name, type, value, default)
+        else:
+            assert_never(mode)
+
+    def _getini_ini(
+        self,
+        name: str,
+        canonical_name: str,
+        type: str,
+        value: str | list[str],
+        default: Any,
+    ):
+        """Handle config values read in INI mode.
+
+        In INI mode, values are stored as str or list[str] only, and coerced
+        from string based on the registered type.
+        """
+        # Note: some coercions are only required if we are reading from .ini
+        # files, because the file format doesn't contain type information, but
+        # when reading from toml (in ini mode) we will get either str or list of
+        # str values (see load_config_dict_from_file). For example:
         #
         #   ini:
         #     a_line_list = "tests acceptance"
-        #   in this case, we need to split the string to obtain a list of strings.
         #
-        #   toml:
+        # in this case, we need to split the string to obtain a list of strings.
+        #
+        #   toml (ini mode):
         #     a_line_list = ["tests", "acceptance"]
-        #   in this case, we already have a list ready to use.
         #
+        # in this case, we already have a list ready to use.
         if type == "paths":
             dp = (
                 self.inipath.parent
@@ -1713,6 +1738,90 @@ class Config:
                     f"Expected a float string for option {name} of type float, but got: {value!r}"
                 ) from None
             return float(value)
+        else:
+            return self._getini_unknown_type(name, type, value)
+
+    def _getini_toml(
+        self,
+        name: str,
+        canonical_name: str,
+        type: str,
+        value: object,
+        default: Any,
+    ):
+        """Handle TOML config values with strict type validation and no coercion.
+
+        In TOML mode, values already have native types from TOML parsing.
+        We validate types match expectations exactly, including list items.
+        """
+        value_type = builtins.type(value).__name__
+        if type == "paths":
+            # Expect a list of strings.
+            if not isinstance(value, list):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a list for type 'paths', "
+                    f"got {value_type}: {value!r}"
+                )
+            for i, item in enumerate(value):
+                if not isinstance(item, str):
+                    item_type = builtins.type(item).__name__
+                    raise TypeError(
+                        f"{self.inipath}: config option '{name}' expects a list of strings, "
+                        f"but item at index {i} is {item_type}: {item!r}"
+                    )
+            dp = (
+                self.inipath.parent
+                if self.inipath is not None
+                else self.invocation_params.dir
+            )
+            return [dp / x for x in value]
+        elif type in {"args", "linelist"}:
+            # Expect a list of strings.
+            if not isinstance(value, list):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a list for type '{type}', "
+                    f"got {value_type}: {value!r}"
+                )
+            for i, item in enumerate(value):
+                if not isinstance(item, str):
+                    item_type = builtins.type(item).__name__
+                    raise TypeError(
+                        f"{self.inipath}: config option '{name}' expects a list of strings, "
+                        f"but item at index {i} is {item_type}: {item!r}"
+                    )
+            return list(value)
+        elif type == "bool":
+            # Expect a boolean.
+            if not isinstance(value, bool):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a bool, "
+                    f"got {value_type}: {value!r}"
+                )
+            return value
+        elif type == "int":
+            # Expect an integer (but not bool, which is a subclass of int).
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects an int, "
+                    f"got {value_type}: {value!r}"
+                )
+            return value
+        elif type == "float":
+            # Expect a float or integer only.
+            if not isinstance(value, (float, int)) or isinstance(value, bool):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a float, "
+                    f"got {value_type}: {value!r}"
+                )
+            return value
+        elif type == "string":
+            # Expect a string.
+            if not isinstance(value, str):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a string, "
+                    f"got {value_type}: {value!r}"
+                )
+            return value
         else:
             return self._getini_unknown_type(name, type, value)
 
@@ -1790,11 +1899,19 @@ class Config:
 
         Example:
 
-        .. code-block:: ini
+        .. tab:: toml
 
-            # content of pytest.ini
-            [pytest]
-            verbosity_assertions = 2
+            .. code-block:: toml
+
+                [tool.pytest]
+                verbosity_assertions = 2
+
+        .. tab:: ini
+
+            .. code-block:: ini
+
+                [pytest]
+                verbosity_assertions = 2
 
         .. code-block:: console
 
@@ -1828,7 +1945,7 @@ class Config:
     def _add_verbosity_ini(parser: Parser, verbosity_type: str, help: str) -> None:
         """Add a output verbosity configuration option for the given output type.
 
-        :param parser: Parser for command line arguments and ini-file values.
+        :param parser: Parser for command line arguments and config-file values.
         :param verbosity_type: Fine-grained verbosity category.
         :param help: Description of the output this type controls.
 

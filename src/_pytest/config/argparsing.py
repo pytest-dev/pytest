@@ -30,7 +30,7 @@ NOT_SET = NotSet()
 
 @final
 class Parser:
-    """Parser for command line arguments and ini-file values.
+    """Parser for command line arguments and config-file values.
 
     :ivar extra_info: Dict of generic param -> value to display in case
         there's an error processing the command line arguments.
@@ -183,12 +183,12 @@ class Parser:
         *,
         aliases: Sequence[str] = (),
     ) -> None:
-        """Register an ini-file option.
+        """Register a configuration file option.
 
         :param name:
-            Name of the ini-variable.
+            Name of the configuration.
         :param type:
-            Type of the variable. Can be:
+            Type of the configuration. Can be:
 
                 * ``string``: a string
                 * ``bool``: a boolean
@@ -203,19 +203,19 @@ class Parser:
 
                     The ``float`` and ``int`` types.
 
-            For ``paths`` and ``pathlist`` types, they are considered relative to the ini-file.
-            In case the execution is happening without an ini-file defined,
+            For ``paths`` and ``pathlist`` types, they are considered relative to the config-file.
+            In case the execution is happening without a config-file defined,
             they will be considered relative to the current working directory (for example with ``--override-ini``).
 
             .. versionadded:: 7.0
                 The ``paths`` variable type.
 
             .. versionadded:: 8.1
-                Use the current working directory to resolve ``paths`` and ``pathlist`` in the absence of an ini-file.
+                Use the current working directory to resolve ``paths`` and ``pathlist`` in the absence of a config-file.
 
             Defaults to ``string`` if ``None`` or not passed.
         :param default:
-            Default value if no ini-file option exists but is queried.
+            Default value if no config-file option exists but is queried.
         :param aliases:
             Additional names by which this option can be referenced.
             Aliases resolve to the canonical name.
@@ -223,7 +223,7 @@ class Parser:
             .. versionadded:: 9.0
                 The ``aliases`` parameter.
 
-        The value of ini-variables can be retrieved via a call to
+        The value of configuration keys can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
         assert type in (
@@ -246,7 +246,9 @@ class Parser:
 
         for alias in aliases:
             if alias in self._inidict:
-                raise ValueError(f"alias {alias!r} conflicts with existing ini option")
+                raise ValueError(
+                    f"alias {alias!r} conflicts with existing configuration option"
+                )
             if (already := self._ini_aliases.get(alias)) is not None:
                 raise ValueError(f"{alias!r} is already an alias of {already!r}")
             self._ini_aliases[alias] = name
@@ -258,7 +260,7 @@ def get_ini_default_for_type(
     ],
 ) -> Any:
     """
-    Used by addini to get the default value for a given ini-option type, when
+    Used by addini to get the default value for a given config option type, when
     default is not supplied.
     """
     if type in ("paths", "pathlist", "args", "linelist"):
@@ -553,7 +555,7 @@ class OverrideIniAction(argparse.Action):
     """Custom argparse action that makes a CLI flag equivalent to overriding an
     option, in addition to behaving like `store_true`.
 
-    This can simplify things since code only needs to inspect the ini option
+    This can simplify things since code only needs to inspect the config option
     and not consider the CLI flag.
     """
 
