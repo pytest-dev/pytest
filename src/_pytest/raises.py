@@ -518,9 +518,7 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             diff = _diff_text(self.rawmatch, stringified_exception, dummy_highlighter)
             self._fail_reason = ("\n" if diff[0][0] == "-" else "") + "\n".join(diff)
             return False
-
-        # I don't love "Regex"+"Input" vs something like "expected regex"+"exception message"
-        # when they're similar it's not always obvious which is which
+            
         self._fail_reason = (
             f"Regex pattern did not match{maybe_specify_type}.\n"
             f"  Expected regex: {_match_pattern(self.match)!r}\n"
