@@ -2622,7 +2622,7 @@ passed multiple times. The expected format is ``name=value``. For example::
     Set the verbosity level specifically for **passed** subtests.
 
     .. tab:: toml
-    
+
         .. code-block:: toml
 
             [pytest]
