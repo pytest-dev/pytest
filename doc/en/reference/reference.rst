@@ -2621,10 +2621,19 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Set the verbosity level specifically for **passed** subtests.
 
-    .. code-block:: ini
+    .. tab:: toml
+    
+        .. code-block:: toml
 
-        [pytest]
-        verbosity_subtests = 1
+            [pytest]
+            verbosity_subtests = 1
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            verbosity_subtests = 1
 
     A value of ``1`` or higher will show output for **passed** subtests (**failed** subtests are always reported).
     Passed subtests output can be suppressed with the value ``0``, which overwrites the ``-v`` command-line option.
