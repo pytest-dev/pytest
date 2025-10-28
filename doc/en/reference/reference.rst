@@ -1532,29 +1532,6 @@ passed multiple times. The expected format is ``name=value``. For example::
             enable_assertion_pass_hook = true
 
 
-.. confval:: faulthandler_timeout
-
-   Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
-   fixture setup and teardown). Implemented using the :func:`faulthandler.dump_traceback_later` function,
-   so all caveats there apply.
-
-   .. tab:: toml
-
-       .. code-block:: toml
-
-            [pytest]
-            faulthandler_timeout = 5
-
-   .. tab:: ini
-
-       .. code-block:: ini
-
-            [pytest]
-            faulthandler_timeout = 5
-
-   For more information please refer to :ref:`faulthandler`.
-
-
 .. confval:: faulthandler_exit_on_timeout
 
    Exit the pytest process after the per-test timeout is reached by passing
@@ -1580,6 +1557,29 @@ passed multiple times. The expected format is ``name=value``. For example::
             faulthandler_timeout = 5
             faulthandler_exit_on_timeout = true
 
+
+
+.. confval:: faulthandler_timeout
+
+   Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
+   fixture setup and teardown). Implemented using the :func:`faulthandler.dump_traceback_later` function,
+   so all caveats there apply.
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+            [pytest]
+            faulthandler_timeout = 5
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            faulthandler_timeout = 5
+
+   For more information please refer to :ref:`faulthandler`.
    For more information please refer to :ref:`faulthandler`.
 
 .. confval:: filterwarnings
@@ -1660,6 +1660,28 @@ passed multiple times. The expected format is ``name=value``. For example::
             junit_family = xunit2
 
 
+.. confval:: junit_log_passing_tests
+
+    .. versionadded:: 4.6
+
+    If ``junit_logging != "no"``, configures if the captured output should be written
+    to the JUnit XML file for **passing** tests. Default is ``True``.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            junit_log_passing_tests = false
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_log_passing_tests = False
+
+
 .. confval:: junit_logging
 
     .. versionadded:: 3.5
@@ -1688,28 +1710,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             junit_logging = system-out
-
-
-.. confval:: junit_log_passing_tests
-
-    .. versionadded:: 4.6
-
-    If ``junit_logging != "no"``, configures if the captured output should be written
-    to the JUnit XML file for **passing** tests. Default is ``True``.
-
-    .. tab:: toml
-
-        .. code-block:: toml
-
-            [pytest]
-            junit_log_passing_tests = false
-
-    .. tab:: ini
-
-        .. code-block:: ini
-
-            [pytest]
-            junit_log_passing_tests = False
 
 
 .. confval:: junit_suite_name
@@ -1897,28 +1897,6 @@ passed multiple times. The expected format is ``name=value``. For example::
     For more information, see :ref:`logging`.
 
 
-.. confval:: log_file_mode
-
-    Sets the mode that the logging file is opened with.
-    The options are ``"w"`` to recreate the file (the default) or ``"a"`` to append to the file.
-
-    .. tab:: toml
-
-        .. code-block:: toml
-
-            [pytest]
-            log_file_mode = "a"
-
-    .. tab:: ini
-
-        .. code-block:: ini
-
-            [pytest]
-            log_file_mode = a
-
-    For more information, see :ref:`logging`.
-
-
 .. confval:: log_file_date_format
 
 
@@ -1983,6 +1961,28 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_file_level = INFO
+
+    For more information, see :ref:`logging`.
+
+
+.. confval:: log_file_mode
+
+    Sets the mode that the logging file is opened with.
+    The options are ``"w"`` to recreate the file (the default) or ``"a"`` to append to the file.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            log_file_mode = "a"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_mode = a
 
     For more information, see :ref:`logging`.
 
@@ -2261,6 +2261,160 @@ passed multiple times. The expected format is ``name=value``. For example::
            required_plugins = pytest-django>=3.0.0,<4.0.0 pytest-html pytest-xdist>=1.0.0
 
 
+.. confval:: strict
+
+    If set to ``true``, enable "strict mode", which enables the following options:
+
+    * :confval:`strict_config`
+    * :confval:`strict_markers`
+    * :confval:`strict_parametrization_ids`
+    * :confval:`strict_xfail`
+
+    Plugins may also enable their own strictness options.
+
+    If you explicitly set an individual strictness option, it takes precedence over ``strict``.
+
+    .. note::
+        If pytest adds new strictness options in the future, they will also be enabled in strict mode.
+        Therefore, you should only enable strict mode if you use a pinned/locked version of pytest,
+        or if you want to proactively adopt new strictness options as they are added.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict = true
+
+    .. versionadded:: 9.0
+
+
+.. confval:: strict_config
+
+    If set to ``true``, any warnings encountered while parsing the ``pytest`` section of the configuration file will raise errors.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict_config = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_config = true
+
+    You can also enable this option via the :confval:`strict` option.
+
+
+.. confval:: strict_markers
+
+    If set to ``true``, markers not registered in the ``markers`` section of the configuration file will raise errors.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict_markers = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_markers = true
+
+    You can also enable this option via the :confval:`strict` option.
+
+
+.. confval:: strict_parametrization_ids
+
+    If set to ``true``, pytest emits an error if it detects non-unique parameter set IDs.
+
+    If not set (the default), pytest automatically handles this by adding `0`, `1`, ... to duplicate IDs,
+    making them unique.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict_parametrization_ids = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_parametrization_ids = true
+
+    You can also enable this option via the :confval:`strict` option.
+
+    For example,
+
+    .. code-block:: python
+
+        import pytest
+
+
+        @pytest.mark.parametrize("letter", ["a", "a"])
+        def test_letter_is_ascii(letter):
+            assert letter.isascii()
+
+    will emit an error because both cases (parameter sets) have the same auto-generated ID "a".
+
+    To fix the error, if you decide to keep the duplicates, explicitly assign unique IDs:
+
+    .. code-block:: python
+
+        import pytest
+
+
+        @pytest.mark.parametrize("letter", ["a", "a"], ids=["a0", "a1"])
+        def test_letter_is_ascii(letter):
+            assert letter.isascii()
+
+    See :func:`parametrize <pytest.Metafunc.parametrize>` and :func:`pytest.param` for other ways to set IDs.
+
+
+.. confval:: strict_xfail
+
+    If set to ``true``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
+    test suite.
+    For more information, see :ref:`xfail strict tutorial`.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict_xfail = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_xfail = true
+
+    You can also enable this option via the :confval:`strict` option.
+
+    .. versionchanged:: 9.0
+        Renamed from ``xfail_strict`` to ``strict_xfail``.
+        ``xfail_strict`` is accepted as an alias for ``strict_xfail``.
+
+
 .. confval:: testpaths
 
    Sets list of directories that should be searched for tests when
@@ -2470,159 +2624,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
     "auto" can be used to explicitly use the global verbosity level.
-
-
-.. confval:: strict
-
-    If set to ``true``, enable "strict mode", which enables the following options:
-
-    * :confval:`strict_config`
-    * :confval:`strict_markers`
-    * :confval:`strict_xfail`
-    * :confval:`strict_parametrization_ids`
-
-    Plugins may also enable their own strictness options.
-
-    If you explicitly set an individual strictness option, it takes precedence over ``strict``.
-
-    .. note::
-        If pytest adds new strictness options in the future, they will also be enabled in strict mode.
-        Therefore, you should only enable strict mode if you use a pinned/locked version of pytest,
-        or if you want to proactively adopt new strictness options as they are added.
-
-    .. tab:: toml
-
-        .. code-block:: toml
-
-            [pytest]
-            strict = true
-
-    .. tab:: ini
-
-        .. code-block:: ini
-
-            [pytest]
-            strict = true
-
-    .. versionadded:: 9.0
-
-
-.. confval:: strict_xfail
-
-    If set to ``true``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
-    test suite.
-    For more information, see :ref:`xfail strict tutorial`.
-
-    .. tab:: toml
-
-        .. code-block:: toml
-
-            [pytest]
-            strict_xfail = true
-
-    .. tab:: ini
-
-        .. code-block:: ini
-
-            [pytest]
-            strict_xfail = true
-
-    You can also enable this option via the :confval:`strict` option.
-
-    .. versionchanged:: 9.0
-        Renamed from ``xfail_strict`` to ``strict_xfail``.
-        ``xfail_strict`` is accepted as an alias for ``strict_xfail``.
-
-
-.. confval:: strict_config
-
-    If set to ``true``, any warnings encountered while parsing the ``pytest`` section of the configuration file will raise errors.
-
-    .. tab:: toml
-
-        .. code-block:: toml
-
-            [pytest]
-            strict_config = true
-
-    .. tab:: ini
-
-        .. code-block:: ini
-
-            [pytest]
-            strict_config = true
-
-    You can also enable this option via the :confval:`strict` option.
-
-
-.. confval:: strict_markers
-
-    If set to ``true``, markers not registered in the ``markers`` section of the configuration file will raise errors.
-
-    .. tab:: toml
-
-        .. code-block:: toml
-
-            [pytest]
-            strict_markers = true
-
-    .. tab:: ini
-
-        .. code-block:: ini
-
-            [pytest]
-            strict_markers = true
-
-    You can also enable this option via the :confval:`strict` option.
-
-.. confval:: strict_parametrization_ids
-
-    If set to ``true``, pytest emits an error if it detects non-unique parameter set IDs.
-
-    If not set (the default), pytest automatically handles this by adding `0`, `1`, ... to duplicate IDs,
-    making them unique.
-
-    .. tab:: toml
-
-        .. code-block:: toml
-
-            [pytest]
-            strict_parametrization_ids = true
-
-    .. tab:: ini
-
-        .. code-block:: ini
-
-            [pytest]
-            strict_parametrization_ids = true
-
-    You can also enable this option via the :confval:`strict` option.
-
-    For example,
-
-    .. code-block:: python
-
-        import pytest
-
-
-        @pytest.mark.parametrize("letter", ["a", "a"])
-        def test_letter_is_ascii(letter):
-            assert letter.isascii()
-
-    will emit an error because both cases (parameter sets) have the same auto-generated ID "a".
-
-    To fix the error, if you decide to keep the duplicates, explicitly assign unique IDs:
-
-    .. code-block:: python
-
-        import pytest
-
-
-        @pytest.mark.parametrize("letter", ["a", "a"], ids=["a0", "a1"])
-        def test_letter_is_ascii(letter):
-            assert letter.isascii()
-
-    See :func:`parametrize <pytest.Metafunc.parametrize>` and :func:`pytest.param` for other ways to set IDs.
 
 
 .. _`command-line-flags`:
