@@ -1541,16 +1541,16 @@ class Config:
             args = self._parser.parse_setoption(
                 args, self.option, namespace=self.option
             )
-            self.args, self.args_source = self._decide_args(
-                args=args,
-                pyargs=self.known_args_namespace.pyargs,
-                testpaths=self.getini("testpaths"),
-                invocation_dir=self.invocation_params.dir,
-                rootpath=self.rootpath,
-                warn=True,
-            )
         except PrintHelp:
-            pass
+            return
+        self.args, self.args_source = self._decide_args(
+            args=args,
+            pyargs=self.known_args_namespace.pyargs,
+            testpaths=self.getini("testpaths"),
+            invocation_dir=self.invocation_params.dir,
+            rootpath=self.rootpath,
+            warn=True,
+        )
 
     def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
         """Issue and handle a warning during the "configure" stage.
