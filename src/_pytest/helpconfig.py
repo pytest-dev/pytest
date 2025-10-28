@@ -13,8 +13,8 @@ from typing import Any
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
-from _pytest.config.argparsing import MyOptionParser
 from _pytest.config.argparsing import Parser
+from _pytest.config.argparsing import PytestArgumentParser
 from _pytest.terminal import TerminalReporter
 import pytest
 
@@ -51,7 +51,7 @@ class HelpAction(argparse.Action):
         setattr(namespace, self.dest, self.const)
 
         # We should only skip the rest of the parsing after preparse is done.
-        assert isinstance(parser, MyOptionParser)
+        assert isinstance(parser, PytestArgumentParser)
         if getattr(parser._parser, "after_preparse", False):
             raise PrintHelp
 

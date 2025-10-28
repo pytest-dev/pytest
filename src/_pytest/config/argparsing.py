@@ -115,10 +115,10 @@ class Parser:
         strargs = [os.fspath(x) for x in args]
         return self.optparser.parse_args(strargs, namespace=namespace)
 
-    def _getparser(self) -> MyOptionParser:
+    def _getparser(self) -> PytestArgumentParser:
         from _pytest._argcomplete import filescompleter
 
-        optparser = MyOptionParser(self, self.extra_info, prog=self.prog)
+        optparser = PytestArgumentParser(self, self.extra_info, prog=self.prog)
         groups = [*self._groups, self._anonymous]
         for group in groups:
             if group.options:
@@ -437,7 +437,7 @@ class OptionGroup:
         self.options.append(option)
 
 
-class MyOptionParser(argparse.ArgumentParser):
+class PytestArgumentParser(argparse.ArgumentParser):
     def __init__(
         self,
         parser: Parser,
