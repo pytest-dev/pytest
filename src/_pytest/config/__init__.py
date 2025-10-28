@@ -1246,35 +1246,6 @@ class Config:
             ),
         )
 
-    def _initini(self, args: Sequence[str]) -> None:
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(
-            args, namespace=copy.copy(self.option)
-        )
-        rootpath, inipath, inicfg, ignored_config_files = determine_setup(
-            inifile=ns.inifilename,
-            override_ini=ns.override_ini,
-            args=ns.file_or_dir + unknown_args,
-            rootdir_cmd_arg=ns.rootdir or None,
-            invocation_dir=self.invocation_params.dir,
-        )
-        self._rootpath = rootpath
-        self._inipath = inipath
-        self._ignored_config_files = ignored_config_files
-        self.inicfg = inicfg
-        self._parser.extra_info["rootdir"] = str(self.rootpath)
-        self._parser.extra_info["inifile"] = str(self.inipath)
-        self._parser.addini("addopts", "Extra command line options", "args")
-        self._parser.addini("minversion", "Minimally required pytest version")
-        self._parser.addini(
-            "pythonpath", type="paths", help="Add paths to sys.path", default=[]
-        )
-        self._parser.addini(
-            "required_plugins",
-            "Plugins that must be present for pytest to run",
-            type="args",
-            default=[],
-        )
-
     def _consider_importhook(self, args: Sequence[str]) -> None:
         """Install the PEP 302 import hook if using assertion rewriting.
 
@@ -1399,7 +1370,35 @@ class Config:
                     self._validate_args(shlex.split(env_addopts), "via PYTEST_ADDOPTS")
                     + args
                 )
-        self._initini(args)
+
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(
+            args, namespace=copy.copy(self.option)
+        )
+        rootpath, inipath, inicfg, ignored_config_files = determine_setup(
+            inifile=ns.inifilename,
+            override_ini=ns.override_ini,
+            args=ns.file_or_dir + unknown_args,
+            rootdir_cmd_arg=ns.rootdir or None,
+            invocation_dir=self.invocation_params.dir,
+        )
+        self._rootpath = rootpath
+        self._inipath = inipath
+        self._ignored_config_files = ignored_config_files
+        self.inicfg = inicfg
+        self._parser.extra_info["rootdir"] = str(self.rootpath)
+        self._parser.extra_info["inifile"] = str(self.inipath)
+        self._parser.addini("addopts", "Extra command line options", "args")
+        self._parser.addini("minversion", "Minimally required pytest version")
+        self._parser.addini(
+            "pythonpath", type="paths", help="Add paths to sys.path", default=[]
+        )
+        self._parser.addini(
+            "required_plugins",
+            "Plugins that must be present for pytest to run",
+            type="args",
+            default=[],
+        )
+
         if addopts:
             args[:] = (
                 self._validate_args(self.getini("addopts"), "via addopts config") + args
