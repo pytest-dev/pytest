@@ -34,7 +34,6 @@ Each assertion failure or error is caught by the context manager and reported in
 In the output above:
 
 * Subtest failures are reported as ``SUBFAILED``.
-* Each subtest is reported with the ``,`` character.
 * Subtests are reported first and the "top-level" test is reported at the end on its own.
 
 Note that it is possible to use ``subtests`` multiple times in the same test, or even mix and match with normal assertions
@@ -56,6 +55,14 @@ outside the ``subtests.test`` block:
 .. note::
 
     See :ref:`parametrize` for an alternative to subtests.
+
+
+Verbosity
+---------
+
+By default, only **subtest failures** are shown. Higher verbosity levels (``-v``) will also show progress output for **passed** subtests.
+
+It is possible to control the verbosity of subtests by setting :confval:`verbosity_subtests`.
 
 
 Typing
