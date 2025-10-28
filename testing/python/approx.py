@@ -5,6 +5,8 @@ from contextlib import contextmanager
 import decimal
 from decimal import Decimal
 from fractions import Fraction
+from math import inf
+from math import nan
 from math import sqrt
 import operator
 from operator import eq
@@ -14,9 +16,6 @@ from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
 import pytest
 from pytest import approx
-
-
-inf, nan = float("inf"), float("nan")
 
 
 @pytest.fixture
