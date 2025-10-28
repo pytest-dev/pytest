@@ -101,7 +101,7 @@ class ParameterSet(NamedTuple):
             ],
         )
         # ParameterSet(values=(1, 2, 3), marks=(), id=None)
-        # ParameterSet(values=(2, 2, 3), marks=(), id="everything")
+        # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
     """
 
     values: Sequence[object | NotSetType]
