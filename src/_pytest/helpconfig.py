@@ -3,20 +3,23 @@
 
 from __future__ import annotations
 
-from argparse import Action
+import argparse
 from collections.abc import Generator
+from collections.abc import Sequence
 import os
 import sys
+from typing import Any
 
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
+from _pytest.config.argparsing import MyOptionParser
 from _pytest.config.argparsing import Parser
 from _pytest.terminal import TerminalReporter
 import pytest
 
 
-class HelpAction(Action):
+class HelpAction(argparse.Action):
     """An argparse Action that will raise an exception in order to skip the
     rest of the argument parsing when --help is passed.
 
@@ -26,20 +29,29 @@ class HelpAction(Action):
     implemented by raising SystemExit.
     """
 
-    def __init__(self, option_strings, dest=None, default=False, help=None):
+    def __init__(
+        self, option_strings: Sequence[str], dest: str, *, help: str | None = None
+    ) -> None:
         super().__init__(
             option_strings=option_strings,
             dest=dest,
-            const=True,
-            default=default,
             nargs=0,
+            const=True,
+            default=False,
             help=help,
         )
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
         setattr(namespace, self.dest, self.const)
 
         # We should only skip the rest of the parsing after preparse is done.
+        assert isinstance(parser, MyOptionParser)
         if getattr(parser._parser, "after_preparse", False):
             raise PrintHelp
 
