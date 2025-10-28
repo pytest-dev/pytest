@@ -524,7 +524,7 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
         self._fail_reason = (
             f"Regex pattern did not match{maybe_specify_type}.\n"
             f"  Expected regex: {_match_pattern(self.match)!r}\n"
-            f"  Actual message: {stringified_exception!r}"
+            f"  Actual exception message: {stringified_exception!r}"
         )
         if _match_pattern(self.match) == stringified_exception:
             self._fail_reason += "\n Did you mean to `re.escape()` the regex?"
