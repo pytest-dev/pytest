@@ -54,6 +54,7 @@ class Parser:
         # Maps alias -> canonical name.
         self._ini_aliases: dict[str, str] = {}
         self.extra_info: dict[str, Any] = {}
+        self._config_source_hint: str | None = None
 
     def processoption(self, option: Argument) -> None:
         if self._processopt:
@@ -460,7 +461,7 @@ class MyOptionParser(argparse.ArgumentParser):
         """Transform argparse error message into UsageError."""
         msg = f"{self.prog}: error: {message}"
 
-        if hasattr(self._parser, "_config_source_hint"):
+        if self._parser._config_source_hint is not None:
             msg = f"{msg} ({self._parser._config_source_hint})"
 
         raise UsageError(self.format_usage() + msg)
