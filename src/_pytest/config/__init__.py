@@ -10,6 +10,7 @@ from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
+from collections.abc import Mapping
 from collections.abc import Sequence
 import contextlib
 import copy
@@ -290,23 +291,21 @@ builtin_plugins = {
 
 
 def get_config(
-    args: list[str] | None = None,
+    args: Iterable[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
 ) -> Config:
     # Subsequent calls to main will create a fresh instance.
     pluginmanager = PytestPluginManager()
-    config = Config(
-        pluginmanager,
-        invocation_params=Config.InvocationParams(
-            args=args or (),
-            plugins=plugins,
-            dir=pathlib.Path.cwd(),
-        ),
+    invocation_params = Config.InvocationParams(
+        args=args or (),
+        plugins=plugins,
+        dir=pathlib.Path.cwd(),
     )
+    config = Config(pluginmanager, invocation_params=invocation_params)
 
-    if args is not None:
+    if invocation_params.args:
         # Handle any "-p no:plugin" args.
-        pluginmanager.consider_preparse(args, exclude_only=True)
+        pluginmanager.consider_preparse(invocation_params.args, exclude_only=True)
 
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
@@ -1202,7 +1201,7 @@ class Config:
         return nodeid
 
     @classmethod
-    def fromdictargs(cls, option_dict, args) -> Config:
+    def fromdictargs(cls, option_dict: Mapping[str, Any], args: list[str]) -> Config:
         """Constructor usable for subprocesses."""
         config = get_config(args)
         config.option.__dict__.update(option_dict)

@@ -1425,7 +1425,7 @@ class TestConfigFromdictargs:
         )
         with MonkeyPatch.context() as mp:
             mp.chdir(cwd)
-            config = Config.fromdictargs(option_dict, ())
+            config = Config.fromdictargs(option_dict, [])
             inipath = absolutepath(inifilename)
 
         assert config.args == [str(cwd)]
