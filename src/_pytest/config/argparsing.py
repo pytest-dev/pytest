@@ -111,7 +111,7 @@ class Parser:
         self.optparser = self._getparser()
         try_argcomplete(self.optparser)
         strargs = [os.fspath(x) for x in args]
-        return self.optparser.parse_args(strargs, namespace=namespace)
+        return self.optparser.parse_intermixed_args(strargs, namespace=namespace)
 
     def _getparser(self) -> PytestArgumentParser:
         from _pytest._argcomplete import filescompleter
@@ -450,20 +450,6 @@ class PytestArgumentParser(argparse.ArgumentParser):
                 f"  {k}: {v}" for k, v in sorted(self.extra_info.items())
             )
         raise UsageError(self.format_usage() + msg)
-
-    # Type ignored because typeshed has a very complex type in the superclass.
-    def parse_args(  # type: ignore
-        self,
-        args: Sequence[str] | None = None,
-        namespace: argparse.Namespace | None = None,
-    ) -> argparse.Namespace:
-        """Allow splitting of positional arguments."""
-        parsed, unrecognized = self.parse_known_args(args, namespace)
-        for arg in unrecognized:
-            if arg.startswith("-"):
-                self.error("unrecognized arguments: " + " ".join(unrecognized))
-        getattr(parsed, FILE_OR_DIR).extend(unrecognized)
-        return parsed
 
 
 class DropShorterLongHelpFormatter(argparse.HelpFormatter):
