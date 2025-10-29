@@ -320,9 +320,7 @@ class Argument:
 
     def attrs(self) -> Mapping[str, Any]:
         # Update any attributes set by processopt.
-        attrs = "default dest help".split()
-        attrs.append(self.dest)
-        for attr in attrs:
+        for attr in ("default", "dest", "help", self.dest):
             try:
                 self._attrs[attr] = getattr(self, attr)
             except AttributeError:
