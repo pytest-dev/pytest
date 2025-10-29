@@ -101,6 +101,7 @@ class FastFilesCompleter:
 
 if os.environ.get("_ARGCOMPLETE"):
     try:
+        import argcomplete
         import argcomplete.completers
     except ImportError:
         sys.exit(-1)
