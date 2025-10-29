@@ -257,9 +257,6 @@ def showhelp(config: Config) -> None:
         tw.line("warning : " + warningreport.message, red=True)
 
 
-conftest_options = [("pytest_plugins", "list of plugin names to load")]
-
-
 def getpluginversioninfo(config: Config) -> list[str]:
     lines = []
     plugininfo = config.pluginmanager.list_plugin_distinfo()
