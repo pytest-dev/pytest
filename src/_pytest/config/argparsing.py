@@ -7,7 +7,6 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 import os
 from typing import Any
-from typing import cast
 from typing import final
 from typing import Literal
 from typing import NoReturn
@@ -133,17 +132,6 @@ class Parser:
         # Type ignored because typeshed doesn't know about argcomplete.
         file_or_dir_arg.completer = filescompleter  # type: ignore
         return optparser
-
-    def parse_setoption(
-        self,
-        args: Sequence[str | os.PathLike[str]],
-        option: argparse.Namespace,
-        namespace: argparse.Namespace | None = None,
-    ) -> list[str]:
-        parsedoption = self.parse(args, namespace=namespace)
-        for name, value in parsedoption.__dict__.items():
-            setattr(option, name, value)
-        return cast(list[str], getattr(parsedoption, FILE_OR_DIR))
 
     def parse_known_args(
         self,

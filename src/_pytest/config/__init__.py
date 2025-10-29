@@ -56,6 +56,7 @@ from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.config.argparsing import Argument
+from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
@@ -1538,13 +1539,11 @@ class Config:
         self._preparse(args, addopts=addopts)
         self._parser.after_preparse = True  # type: ignore
         try:
-            args = self._parser.parse_setoption(
-                args, self.option, namespace=self.option
-            )
+            parsed = self._parser.parse(args, namespace=self.option)
         except PrintHelp:
             return
         self.args, self.args_source = self._decide_args(
-            args=args,
+            args=getattr(parsed, FILE_OR_DIR),
             pyargs=self.known_args_namespace.pyargs,
             testpaths=self.getini("testpaths"),
             invocation_dir=self.invocation_params.dir,
