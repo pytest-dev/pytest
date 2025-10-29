@@ -1120,7 +1120,9 @@ def test_raisesexc() -> None:
     # currently RaisesGroup says "Raised exception did not match" but RaisesExc doesn't...
     with pytest.raises(
         AssertionError,
-        match=wrap_escape("Regex pattern did not match.\n  Expected regex: 'foo'\n  Actual message: 'bar'"),
+        match=wrap_escape(
+            "Regex pattern did not match.\n  Expected regex: 'foo'\n  Actual message: 'bar'"
+        ),
     ):
         with RaisesExc(TypeError, match="foo"):
             raise TypeError("bar")
