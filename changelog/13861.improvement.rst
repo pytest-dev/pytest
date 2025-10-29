@@ -1,0 +1,2 @@
+Better sentence structure in a test's expected error message. Previously, the error message would be "expected exception must be <expected>, but got <actual>". Now, it is "Expected <expected>, but got <actual>".
+This PR addresses the TODO comment in `testing/python/raises_group.py:49` and widens the scope to all expected error messages in both `testing/python/raises.py` and `testing/python/raises_group.py`.
