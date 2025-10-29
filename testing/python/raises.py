@@ -289,7 +289,10 @@ class TestRaises:
             with pytest.raises(AssertionError, match="'foo"):
                 raise AssertionError("'bar")
         (msg,) = excinfo.value.args
-        assert msg == '''Regex pattern did not match.\n  Expected regex: "'foo"\n  Actual message: "'bar"'''
+        assert (
+            msg
+            == '''Regex pattern did not match.\n  Expected regex: "'foo"\n  Actual message: "'bar"'''
+        )
 
     def test_match_failure_exact_string_message(self):
         message = "Oh here is a message with (42) numbers in parameters"
