@@ -382,8 +382,8 @@ def test_match() -> None:
     with (
         fails_raises_group(
             "Regex pattern did not match the `ExceptionGroup()`.\n"
-            " Regex: 'foo'\n"
-            " Input: 'bar'"
+            "  Expected regex: 'foo'\n"
+            "  Actual message: 'bar'"
         ),
         RaisesGroup(ValueError, match="foo"),
     ):
@@ -396,8 +396,8 @@ def test_match() -> None:
     with (
         fails_raises_group(
             "Regex pattern did not match the `ExceptionGroup()`.\n"
-            " Regex: 'foo'\n"
-            " Input: 'bar'\n"
+            "  Expected regex: 'foo'\n"
+            "  Actual message: 'bar'\n"
             " but matched the expected `ValueError`.\n"
             " You might want `RaisesGroup(RaisesExc(ValueError, match='foo'))`"
         ),
@@ -570,8 +570,8 @@ def test_assert_message() -> None:
             "  ExceptionGroup('', [RuntimeError()]):\n"
             "    RaisesGroup(ValueError): `RuntimeError()` is not an instance of `ValueError`\n"
             "    RaisesGroup(ValueError, match='a'): Regex pattern did not match the `ExceptionGroup()`.\n"
-            "     Regex: 'a'\n"
-            "     Input: ''\n"
+            "      Expected regex: 'a'\n"
+            "      Actual message: ''\n"
             "  RuntimeError():\n"
             "    RaisesGroup(ValueError): `RuntimeError()` is not an exception group\n"
             "    RaisesGroup(ValueError, match='a'): `RuntimeError()` is not an exception group",
@@ -634,8 +634,8 @@ def test_assert_message() -> None:
         fails_raises_group(
             # TODO: did not match Exceptiongroup('h(ell)o', ...) ?
             "Raised exception group did not match: Regex pattern did not match the `ExceptionGroup()`.\n"
-            " Regex: 'h(ell)o'\n"
-            " Input: 'h(ell)o'\n"
+            "  Expected regex: 'h(ell)o'\n"
+            "  Actual message: 'h(ell)o'\n"
             " Did you mean to `re.escape()` the regex?",
             add_prefix=False,  # to see the full structure
         ),
@@ -645,8 +645,8 @@ def test_assert_message() -> None:
     with (
         fails_raises_group(
             "RaisesExc(match='h(ell)o'): Regex pattern did not match.\n"
-            " Regex: 'h(ell)o'\n"
-            " Input: 'h(ell)o'\n"
+            "  Expected regex: 'h(ell)o'\n"
+            "  Actual message: 'h(ell)o'\n"
             " Did you mean to `re.escape()` the regex?",
         ),
         RaisesGroup(RaisesExc(match="h(ell)o")),
@@ -799,8 +799,8 @@ def test_suggestion_on_nested_and_brief_error() -> None:
             "The following raised exceptions did not find a match\n"
             "  ExceptionGroup('^hello', [Exception()]):\n"
             "    RaisesGroup(Exception, match='^hello'): Regex pattern did not match the `ExceptionGroup()`.\n"
-            "     Regex: '^hello'\n"
-            "     Input: '^hello'\n"
+            "      Expected regex: '^hello'\n"
+            "      Actual message: '^hello'\n"
             "     Did you mean to `re.escape()` the regex?\n"
             "    Unexpected nested `ExceptionGroup()`, expected `ValueError`"
         ),
@@ -830,8 +830,8 @@ def test_assert_message_nested() -> None:
             "    RaisesGroup(ValueError): `TypeError()` is not an instance of `ValueError`\n"
             "    RaisesGroup(RaisesGroup(ValueError)): RaisesGroup(ValueError): `TypeError()` is not an exception group\n"
             "    RaisesGroup(RaisesExc(TypeError, match='foo')): RaisesExc(TypeError, match='foo'): Regex pattern did not match.\n"
-            "     Regex: 'foo'\n"
-            "     Input: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n"
+            "      Expected regex: 'foo'\n"
+            "      Actual message: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n"
             "    RaisesGroup(TypeError, ValueError): 1 matched exception. Too few exceptions raised, found no match for: [ValueError]\n"
             "  ExceptionGroup('Exceptions from Trio nursery', [TypeError('cccccccccccccccccccccccccccccc'), TypeError('dddddddddddddddddddddddddddddd')]):\n"
             "    RaisesGroup(ValueError): \n"
@@ -856,12 +856,12 @@ def test_assert_message_nested() -> None:
             "      The following raised exceptions did not find a match\n"
             "        TypeError('cccccccccccccccccccccccccccccc'):\n"
             "          RaisesExc(TypeError, match='foo'): Regex pattern did not match.\n"
-            "           Regex: 'foo'\n"
-            "           Input: 'cccccccccccccccccccccccccccccc'\n"
+            "            Expected regex: 'foo'\n"
+            "            Actual message: 'cccccccccccccccccccccccccccccc'\n"
             "        TypeError('dddddddddddddddddddddddddddddd'):\n"
             "          RaisesExc(TypeError, match='foo'): Regex pattern did not match.\n"
-            "           Regex: 'foo'\n"
-            "           Input: 'dddddddddddddddddddddddddddddd'\n"
+            "            Expected regex: 'foo'\n"
+            "            Actual message: 'dddddddddddddddddddddddddddddd'\n"
             "    RaisesGroup(TypeError, ValueError): \n"
             "      1 matched exception. \n"
             "      The following expected exceptions did not find a match:\n"
@@ -945,8 +945,8 @@ def test_misordering_example() -> None:
             "    It matches `ValueError` which was paired with `ValueError('foo')`\n"
             "    It matches `ValueError` which was paired with `ValueError('foo')`\n"
             "    RaisesExc(ValueError, match='foo'): Regex pattern did not match.\n"
-            "     Regex: 'foo'\n"
-            "     Input: 'bar'\n"
+            "      Expected regex: 'foo'\n"
+            "      Actual message: 'bar'\n"
             "There exist a possible match when attempting an exhaustive check, but RaisesGroup uses a greedy algorithm. Please make your expected exceptions more stringent with `RaisesExc` etc so the greedy algorithm can function."
         ),
         RaisesGroup(
@@ -1036,34 +1036,34 @@ def test_identity_oopsies() -> None:
             "The following raised exceptions did not find a match\n"
             "  ValueError('foo'):\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'\n"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'\n"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'\n"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'\n"
             "  ValueError('foo'):\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'\n"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'\n"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'\n"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'\n"
             "  ValueError('foo'):\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'\n"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'\n"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'\n"
             "    RaisesExc(match='bar'): Regex pattern did not match.\n"
-            "     Regex: 'bar'\n"
-            "     Input: 'foo'"
+            "      Expected regex: 'bar'\n"
+            "      Actual message: 'foo'"
         ),
         RaisesGroup(m, m, m),
     ):
@@ -1120,7 +1120,7 @@ def test_raisesexc() -> None:
     # currently RaisesGroup says "Raised exception did not match" but RaisesExc doesn't...
     with pytest.raises(
         AssertionError,
-        match=wrap_escape("Regex pattern did not match.\n Regex: 'foo'\n Input: 'bar'"),
+        match=wrap_escape("Regex pattern did not match.\n  Expected regex: 'foo'\n  Actual message: 'bar'"),
     ):
         with RaisesExc(TypeError, match="foo"):
             raise TypeError("bar")
@@ -1132,8 +1132,8 @@ def test_raisesexc_match() -> None:
     with (
         fails_raises_group(
             "RaisesExc(ValueError, match='foo'): Regex pattern did not match.\n"
-            " Regex: 'foo'\n"
-            " Input: 'bar'"
+            "  Expected regex: 'foo'\n"
+            "  Actual message: 'bar'"
         ),
         RaisesGroup(RaisesExc(ValueError, match="foo")),
     ):
@@ -1145,8 +1145,8 @@ def test_raisesexc_match() -> None:
     with (
         fails_raises_group(
             "RaisesExc(match='foo'): Regex pattern did not match.\n"
-            " Regex: 'foo'\n"
-            " Input: 'bar'"
+            "  Expected regex: 'foo'\n"
+            "  Actual message: 'bar'"
         ),
         RaisesGroup(RaisesExc(match="foo")),
     ):
