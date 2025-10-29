@@ -443,8 +443,8 @@ def test_match_raises_error(pytester: Pytester) -> None:
 
     match = [
         r"E .* AssertionError: Regex pattern did not match.",
-        r"E .* Regex: '\[123\]\+'",
-        r"E .* Input: 'division by zero'",
+        r"E   Expected regex: '\[123\]\+'",
+        r"E   Actual message: 'division by zero'",
     ]
     result.stdout.re_match_lines(match)
     result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
