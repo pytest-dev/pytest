@@ -239,6 +239,9 @@ def showhelp(config: Config) -> None:
         ("PYTEST_PLUGINS", "Comma-separated plugins to load during startup"),
         ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "Set to disable plugin auto-loading"),
         ("PYTEST_DEBUG", "Set to enable debug tracing of pytest's internals"),
+        ("PYTEST_DEBUG_TEMPROOT", "Override the system temporary directory"),
+        ("PYTEST_THEME", "The Pygments style to use for code output"),
+        ("PYTEST_THEME_MODE", "Set the PYTEST_THEME to be either 'dark' or 'light'"),
     ]
     for name, help in vars:
         tw.line(f"  {name:<24} {help}")
