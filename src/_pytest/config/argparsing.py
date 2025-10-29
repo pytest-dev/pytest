@@ -446,10 +446,12 @@ class PytestArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         """Transform argparse error message into UsageError."""
         msg = f"{self.prog}: error: {message}"
-
         if self._parser._config_source_hint is not None:
             msg = f"{msg} ({self._parser._config_source_hint})"
-
+        if self.extra_info:
+            msg += "\n" + "\n".join(
+                f"  {k}: {v}" for k, v in sorted(self.extra_info.items())
+            )
         raise UsageError(self.format_usage() + msg)
 
     # Type ignored because typeshed has a very complex type in the superclass.
@@ -462,10 +464,7 @@ class PytestArgumentParser(argparse.ArgumentParser):
         parsed, unrecognized = self.parse_known_args(args, namespace)
         for arg in unrecognized:
             if arg.startswith("-"):
-                lines = ["unrecognized arguments: " + " ".join(unrecognized)]
-                for k, v in sorted(self.extra_info.items()):
-                    lines.append(f"  {k}: {v}")
-                self.error("\n".join(lines))
+                self.error("unrecognized arguments: " + " ".join(unrecognized))
         getattr(parsed, FILE_OR_DIR).extend(unrecognized)
         return parsed
 
