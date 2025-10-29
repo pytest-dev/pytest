@@ -1077,9 +1077,7 @@ def test_raisesexc() -> None:
         RaisesExc()  # type: ignore[call-overload]
     with pytest.raises(
         ValueError,
-        match=wrap_escape(
-            "Expected a BaseException type, but got 'object'"
-        ),
+        match=wrap_escape("Expected a BaseException type, but got 'object'"),
     ):
         RaisesExc(object)  # type: ignore[type-var]
 
