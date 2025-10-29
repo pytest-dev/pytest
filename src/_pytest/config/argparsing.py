@@ -460,16 +460,13 @@ class PytestArgumentParser(argparse.ArgumentParser):
     ) -> argparse.Namespace:
         """Allow splitting of positional arguments."""
         parsed, unrecognized = self.parse_known_args(args, namespace)
-        if unrecognized:
-            for arg in unrecognized:
-                if arg and arg[0] == "-":
-                    lines = [
-                        "unrecognized arguments: {}".format(" ".join(unrecognized))
-                    ]
-                    for k, v in sorted(self.extra_info.items()):
-                        lines.append(f"  {k}: {v}")
-                    self.error("\n".join(lines))
-            getattr(parsed, FILE_OR_DIR).extend(unrecognized)
+        for arg in unrecognized:
+            if arg.startswith("-"):
+                lines = ["unrecognized arguments: " + " ".join(unrecognized)]
+                for k, v in sorted(self.extra_info.items()):
+                    lines.append(f"  {k}: {v}")
+                self.error("\n".join(lines))
+        getattr(parsed, FILE_OR_DIR).extend(unrecognized)
         return parsed
 
 
