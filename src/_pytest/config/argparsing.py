@@ -53,7 +53,6 @@ class Parser:
         # Maps alias -> canonical name.
         self._ini_aliases: dict[str, str] = {}
         self.extra_info: dict[str, Any] = {}
-        self._config_source_hint: str | None = None
 
     def processoption(self, option: Argument) -> None:
         if self._processopt:
@@ -446,8 +445,6 @@ class PytestArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         """Transform argparse error message into UsageError."""
         msg = f"{self.prog}: error: {message}"
-        if self._parser._config_source_hint is not None:
-            msg = f"{msg} ({self._parser._config_source_hint})"
         if self.extra_info:
             msg += "\n" + "\n".join(
                 f"  {k}: {v}" for k, v in sorted(self.extra_info.items())

@@ -1307,13 +1307,13 @@ class Config:
 
     def _validate_args(self, args: list[str], via: str) -> list[str]:
         """Validate known args."""
-        self._parser._config_source_hint = via
+        self._parser.extra_info["config source"] = via
         try:
             self._parser.parse_known_and_unknown_args(
                 args, namespace=copy.copy(self.option)
             )
         finally:
-            self._parser._config_source_hint = None
+            self._parser.extra_info.pop("config source", None)
 
         return args
 
