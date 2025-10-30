@@ -1157,7 +1157,7 @@ class Config:
             elif (
                 getattr(self.option, "help", False) or "--help" in args or "-h" in args
             ):
-                self._parser._getparser().print_help()
+                self._parser.optparser.print_help()
                 sys.stdout.write(
                     "\nNOTE: displaying only minimal help due to UsageError.\n\n"
                 )

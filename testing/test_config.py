@@ -2304,10 +2304,9 @@ class TestOverrideIniArgs:
         """
         )
         result = pytester.runpytest("cache_dir=ignored")
-        config = pytester._request.config
         result.stderr.fnmatch_lines(
             [
-                f"{config._parser.optparser.prog}: error: argument -o/--override-ini: expected one argument",
+                "*: error: argument -o/--override-ini: expected one argument",
                 "  config source: via addopts config",
             ]
         )
@@ -2410,8 +2409,7 @@ def test_help_and_version_after_argument_error(pytester: Pytester) -> None:
     result.stderr.fnmatch_lines(
         [
             "ERROR: usage: *",
-            f"{pytester._request.config._parser.optparser.prog}: error: "
-            f"argument --invalid-option-should-allow-for-help: expected one argument",
+            "*: error: argument --invalid-option-should-allow-for-help: expected one argument",
         ]
     )
     # Does not display full/default help.
