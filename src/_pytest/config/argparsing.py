@@ -149,11 +149,11 @@ class Parser:
         namespace: argparse.Namespace | None = None,
     ) -> tuple[argparse.Namespace, list[str]]:
         """Parse the known arguments at this point, and also return the
-        remaining unknown arguments.
+        remaining unknown flag arguments.
 
         :returns:
             A tuple containing an argparse namespace object for the known
-            arguments, and a list of the unknown arguments.
+            arguments, and a list of unknown flag arguments.
         """
         optparser = self._getparser()
         strargs = [os.fspath(x) for x in args]

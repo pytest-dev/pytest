@@ -1253,7 +1253,7 @@ class Config:
         and find all the installed plugins to mark them for rewriting
         by the importhook.
         """
-        ns, _unknown_args = self._parser.parse_known_and_unknown_args(args)
+        ns = self._parser.parse_known_args(args)
         mode = getattr(ns, "assertmode", "plain")
 
         disable_autoload = getattr(ns, "disable_plugin_autoload", False) or bool(
@@ -1371,13 +1371,11 @@ class Config:
                     + args
                 )
 
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(
-            args, namespace=copy.copy(self.option)
-        )
+        ns = self._parser.parse_known_args(args, namespace=copy.copy(self.option))
         rootpath, inipath, inicfg, ignored_config_files = determine_setup(
             inifile=ns.inifilename,
             override_ini=ns.override_ini,
-            args=ns.file_or_dir + unknown_args,
+            args=ns.file_or_dir,
             rootdir_cmd_arg=ns.rootdir or None,
             invocation_dir=self.invocation_params.dir,
         )
