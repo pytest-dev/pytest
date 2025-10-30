@@ -12,8 +12,8 @@ from typing import final
 from typing import Literal
 from typing import NoReturn
 
+from .exceptions import UsageError
 import _pytest._io
-from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
 
 

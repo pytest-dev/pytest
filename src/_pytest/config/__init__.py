@@ -1041,9 +1041,6 @@ class Config:
         *,
         invocation_params: InvocationParams | None = None,
     ) -> None:
-        from .argparsing import FILE_OR_DIR
-        from .argparsing import Parser
-
         if invocation_params is None:
             invocation_params = self.InvocationParams(
                 args=(), plugins=None, dir=pathlib.Path.cwd()
@@ -1061,9 +1058,8 @@ class Config:
         :type: InvocationParams
         """
 
-        _a = FILE_OR_DIR
         self._parser = Parser(
-            usage=f"%(prog)s [options] [{_a}] [{_a}] [...]",
+            usage=f"%(prog)s [options] [{FILE_OR_DIR}] [{FILE_OR_DIR}] [...]",
             processopt=self._processopt,
             _ispytest=True,
         )
