@@ -1539,12 +1539,12 @@ class Config:
         self._preparse(args, addopts=addopts)
         self._parser.after_preparse = True  # type: ignore
         try:
-            parsed = self._parser.parse(args, namespace=self.option)
+            self._parser.parse(args, namespace=self.option)
         except PrintHelp:
             return
         self.args, self.args_source = self._decide_args(
-            args=getattr(parsed, FILE_OR_DIR),
-            pyargs=self.known_args_namespace.pyargs,
+            args=getattr(self.option, FILE_OR_DIR),
+            pyargs=self.option.pyargs,
             testpaths=self.getini("testpaths"),
             invocation_dir=self.invocation_params.dir,
             rootpath=self.rootpath,
