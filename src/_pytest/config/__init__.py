@@ -1246,19 +1246,18 @@ class Config:
             ),
         )
 
-    def _consider_importhook(self, args: Sequence[str]) -> None:
+    def _consider_importhook(self) -> None:
         """Install the PEP 302 import hook if using assertion rewriting.
 
         Needs to parse the --assert=<mode> option from the commandline
         and find all the installed plugins to mark them for rewriting
         by the importhook.
         """
-        ns = self._parser.parse_known_args(args)
-        mode = getattr(ns, "assertmode", "plain")
+        mode = getattr(self.known_args_namespace, "assertmode", "plain")
 
-        disable_autoload = getattr(ns, "disable_plugin_autoload", False) or bool(
-            os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
-        )
+        disable_autoload = getattr(
+            self.known_args_namespace, "disable_plugin_autoload", False
+        ) or bool(os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD"))
         if mode == "rewrite":
             import _pytest.assertion
 
@@ -1406,7 +1405,7 @@ class Config:
             args, namespace=copy.copy(self.option)
         )
         self._checkversion()
-        self._consider_importhook(args)
+        self._consider_importhook()
         self._configure_python_path()
         self.pluginmanager.consider_preparse(args, exclude_only=False)
         if (
