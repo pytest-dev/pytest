@@ -142,17 +142,17 @@ class TestParser:
         parser.parse_known_args([Path(".")])
         parser.addoption("--hello", action="store_true")
         ns = parser.parse_known_args(["x", "--y", "--hello", "this"])
-        assert ns.hello
-        assert ns.file_or_dir == ["x"]
+        assert ns.hello is True
+        assert ns.file_or_dir == ["x", "this"]
 
     def test_parse_known_and_unknown_args(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", action="store_true")
         ns, unknown = parser.parse_known_and_unknown_args(
             ["x", "--y", "--hello", "this"]
         )
-        assert ns.hello
-        assert ns.file_or_dir == ["x"]
-        assert unknown == ["--y", "this"]
+        assert ns.hello is True
+        assert ns.file_or_dir == ["x", "this"]
+        assert unknown == ["--y"]
 
     def test_parse_will_set_default(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", dest="hello", default="x", action="store")

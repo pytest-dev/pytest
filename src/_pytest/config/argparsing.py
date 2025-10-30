@@ -6,6 +6,7 @@ from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
 import os
+import sys
 from typing import Any
 from typing import final
 from typing import Literal
@@ -164,7 +165,17 @@ class Parser:
         """
         optparser = self._getparser()
         strargs = [os.fspath(x) for x in args]
-        return optparser.parse_known_args(strargs, namespace=namespace)
+        if sys.version_info < (3, 12):
+            # Older argparse have a bugged parse_known_intermixed_args.
+            namespace, unknown = self.optparser.parse_known_args(strargs, namespace)
+            assert namespace is not None
+            file_or_dir = getattr(namespace, FILE_OR_DIR)
+            unknown_flags: list[str] = []
+            for arg in unknown:
+                (unknown_flags if arg.startswith("-") else file_or_dir).append(arg)
+            return namespace, unknown_flags
+        else:
+            return optparser.parse_known_intermixed_args(strargs, namespace)
 
     def addini(
         self,
