@@ -101,18 +101,6 @@ class Parser:
         """
         self._anonymous.addoption(*opts, **attrs)
 
-    def parse(
-        self,
-        args: Sequence[str | os.PathLike[str]],
-        namespace: argparse.Namespace | None = None,
-    ) -> argparse.Namespace:
-        from _pytest._argcomplete import try_argcomplete
-
-        self.optparser = self._getparser()
-        try_argcomplete(self.optparser)
-        strargs = [os.fspath(x) for x in args]
-        return self.optparser.parse_intermixed_args(strargs, namespace=namespace)
-
     def _getparser(self) -> PytestArgumentParser:
         from _pytest._argcomplete import filescompleter
 
@@ -131,6 +119,25 @@ class Parser:
         # Type ignored because typeshed doesn't know about argcomplete.
         file_or_dir_arg.completer = filescompleter  # type: ignore
         return optparser
+
+    def parse(
+        self,
+        args: Sequence[str | os.PathLike[str]],
+        namespace: argparse.Namespace | None = None,
+    ) -> argparse.Namespace:
+        """Parse the arguments.
+
+        Unlike ``parse_known_args`` and ``parse_known_and_unknown_args``,
+        raises UsageError on unknown flags.
+
+        :meta private:
+        """
+        from _pytest._argcomplete import try_argcomplete
+
+        self.optparser = self._getparser()
+        try_argcomplete(self.optparser)
+        strargs = [os.fspath(x) for x in args]
+        return self.optparser.parse_intermixed_args(strargs, namespace=namespace)
 
     def parse_known_args(
         self,
