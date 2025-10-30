@@ -1425,7 +1425,7 @@ class TestConfigFromdictargs:
         )
         with MonkeyPatch.context() as mp:
             mp.chdir(cwd)
-            config = Config.fromdictargs(option_dict, ())
+            config = Config.fromdictargs(option_dict, [])
             inipath = absolutepath(inifilename)
 
         assert config.args == [str(cwd)]
@@ -2290,9 +2290,10 @@ class TestOverrideIniArgs:
         with pytest.raises(UsageError) as excinfo:
             config._preparse(["cache_dir=ignored"], addopts=True)
         assert (
-            "error: argument -o/--override-ini: expected one argument (via PYTEST_ADDOPTS)"
+            "error: argument -o/--override-ini: expected one argument"
             in excinfo.value.args[0]
         )
+        assert "via PYTEST_ADDOPTS" in excinfo.value.args[0]
 
     def test_addopts_from_ini_not_concatenated(self, pytester: Pytester) -> None:
         """`addopts` from configuration should not take values from normal args (#4265)."""
@@ -2303,10 +2304,11 @@ class TestOverrideIniArgs:
         """
         )
         result = pytester.runpytest("cache_dir=ignored")
+        config = pytester._request.config
         result.stderr.fnmatch_lines(
             [
-                f"{pytester._request.config._parser.optparser.prog}: error: "
-                f"argument -o/--override-ini: expected one argument (via addopts config)"
+                f"{config._parser.optparser.prog}: error: argument -o/--override-ini: expected one argument",
+                "  config source: via addopts config",
             ]
         )
         assert result.ret == _pytest.config.ExitCode.USAGE_ERROR

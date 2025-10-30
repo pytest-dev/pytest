@@ -7,7 +7,6 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 import os
 from typing import Any
-from typing import cast
 from typing import final
 from typing import Literal
 from typing import NoReturn
@@ -112,12 +111,12 @@ class Parser:
         self.optparser = self._getparser()
         try_argcomplete(self.optparser)
         strargs = [os.fspath(x) for x in args]
-        return self.optparser.parse_args(strargs, namespace=namespace)
+        return self.optparser.parse_intermixed_args(strargs, namespace=namespace)
 
-    def _getparser(self) -> MyOptionParser:
+    def _getparser(self) -> PytestArgumentParser:
         from _pytest._argcomplete import filescompleter
 
-        optparser = MyOptionParser(self, self.extra_info, prog=self.prog)
+        optparser = PytestArgumentParser(self, self.extra_info, prog=self.prog)
         groups = [*self._groups, self._anonymous]
         for group in groups:
             if group.options:
@@ -132,17 +131,6 @@ class Parser:
         # Type ignored because typeshed doesn't know about argcomplete.
         file_or_dir_arg.completer = filescompleter  # type: ignore
         return optparser
-
-    def parse_setoption(
-        self,
-        args: Sequence[str | os.PathLike[str]],
-        option: argparse.Namespace,
-        namespace: argparse.Namespace | None = None,
-    ) -> list[str]:
-        parsedoption = self.parse(args, namespace=namespace)
-        for name, value in parsedoption.__dict__.items():
-            setattr(option, name, value)
-        return cast(list[str], getattr(parsedoption, FILE_OR_DIR))
 
     def parse_known_args(
         self,
@@ -331,9 +319,7 @@ class Argument:
 
     def attrs(self) -> Mapping[str, Any]:
         # Update any attributes set by processopt.
-        attrs = "default dest help".split()
-        attrs.append(self.dest)
-        for attr in attrs:
+        for attr in ("default", "dest", "help", self.dest):
             try:
                 self._attrs[attr] = getattr(self, attr)
             except AttributeError:
@@ -436,7 +422,7 @@ class OptionGroup:
         self.options.append(option)
 
 
-class MyOptionParser(argparse.ArgumentParser):
+class PytestArgumentParser(argparse.ArgumentParser):
     def __init__(
         self,
         parser: Parser,
@@ -459,31 +445,11 @@ class MyOptionParser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         """Transform argparse error message into UsageError."""
         msg = f"{self.prog}: error: {message}"
-
-        if hasattr(self._parser, "_config_source_hint"):
-            msg = f"{msg} ({self._parser._config_source_hint})"
-
+        if self.extra_info:
+            msg += "\n" + "\n".join(
+                f"  {k}: {v}" for k, v in sorted(self.extra_info.items())
+            )
         raise UsageError(self.format_usage() + msg)
-
-    # Type ignored because typeshed has a very complex type in the superclass.
-    def parse_args(  # type: ignore
-        self,
-        args: Sequence[str] | None = None,
-        namespace: argparse.Namespace | None = None,
-    ) -> argparse.Namespace:
-        """Allow splitting of positional arguments."""
-        parsed, unrecognized = self.parse_known_args(args, namespace)
-        if unrecognized:
-            for arg in unrecognized:
-                if arg and arg[0] == "-":
-                    lines = [
-                        "unrecognized arguments: {}".format(" ".join(unrecognized))
-                    ]
-                    for k, v in sorted(self.extra_info.items()):
-                        lines.append(f"  {k}: {v}")
-                    self.error("\n".join(lines))
-            getattr(parsed, FILE_OR_DIR).extend(unrecognized)
-        return parsed
 
 
 class DropShorterLongHelpFormatter(argparse.HelpFormatter):

@@ -10,6 +10,7 @@ from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
+from collections.abc import Mapping
 from collections.abc import Sequence
 import contextlib
 import copy
@@ -55,6 +56,7 @@ from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.config.argparsing import Argument
+from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
@@ -290,23 +292,21 @@ builtin_plugins = {
 
 
 def get_config(
-    args: list[str] | None = None,
+    args: Iterable[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
 ) -> Config:
     # Subsequent calls to main will create a fresh instance.
     pluginmanager = PytestPluginManager()
-    config = Config(
-        pluginmanager,
-        invocation_params=Config.InvocationParams(
-            args=args or (),
-            plugins=plugins,
-            dir=pathlib.Path.cwd(),
-        ),
+    invocation_params = Config.InvocationParams(
+        args=args or (),
+        plugins=plugins,
+        dir=pathlib.Path.cwd(),
     )
+    config = Config(pluginmanager, invocation_params=invocation_params)
 
-    if args is not None:
+    if invocation_params.args:
         # Handle any "-p no:plugin" args.
-        pluginmanager.consider_preparse(args, exclude_only=True)
+        pluginmanager.consider_preparse(invocation_params.args, exclude_only=True)
 
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
@@ -1202,7 +1202,7 @@ class Config:
         return nodeid
 
     @classmethod
-    def fromdictargs(cls, option_dict, args) -> Config:
+    def fromdictargs(cls, option_dict: Mapping[str, Any], args: list[str]) -> Config:
         """Constructor usable for subprocesses."""
         config = get_config(args)
         config.option.__dict__.update(option_dict)
@@ -1244,35 +1244,6 @@ class Config:
             consider_namespace_packages=early_config.getini(
                 "consider_namespace_packages"
             ),
-        )
-
-    def _initini(self, args: Sequence[str]) -> None:
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(
-            args, namespace=copy.copy(self.option)
-        )
-        rootpath, inipath, inicfg, ignored_config_files = determine_setup(
-            inifile=ns.inifilename,
-            override_ini=ns.override_ini,
-            args=ns.file_or_dir + unknown_args,
-            rootdir_cmd_arg=ns.rootdir or None,
-            invocation_dir=self.invocation_params.dir,
-        )
-        self._rootpath = rootpath
-        self._inipath = inipath
-        self._ignored_config_files = ignored_config_files
-        self.inicfg = inicfg
-        self._parser.extra_info["rootdir"] = str(self.rootpath)
-        self._parser.extra_info["inifile"] = str(self.inipath)
-        self._parser.addini("addopts", "Extra command line options", "args")
-        self._parser.addini("minversion", "Minimally required pytest version")
-        self._parser.addini(
-            "pythonpath", type="paths", help="Add paths to sys.path", default=[]
-        )
-        self._parser.addini(
-            "required_plugins",
-            "Plugins that must be present for pytest to run",
-            type="args",
-            default=[],
         )
 
     def _consider_importhook(self, args: Sequence[str]) -> None:
@@ -1336,13 +1307,13 @@ class Config:
 
     def _validate_args(self, args: list[str], via: str) -> list[str]:
         """Validate known args."""
-        self._parser._config_source_hint = via  # type: ignore
+        self._parser.extra_info["config source"] = via
         try:
             self._parser.parse_known_and_unknown_args(
                 args, namespace=copy.copy(self.option)
             )
         finally:
-            del self._parser._config_source_hint  # type: ignore
+            self._parser.extra_info.pop("config source", None)
 
         return args
 
@@ -1399,7 +1370,35 @@ class Config:
                     self._validate_args(shlex.split(env_addopts), "via PYTEST_ADDOPTS")
                     + args
                 )
-        self._initini(args)
+
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(
+            args, namespace=copy.copy(self.option)
+        )
+        rootpath, inipath, inicfg, ignored_config_files = determine_setup(
+            inifile=ns.inifilename,
+            override_ini=ns.override_ini,
+            args=ns.file_or_dir + unknown_args,
+            rootdir_cmd_arg=ns.rootdir or None,
+            invocation_dir=self.invocation_params.dir,
+        )
+        self._rootpath = rootpath
+        self._inipath = inipath
+        self._ignored_config_files = ignored_config_files
+        self.inicfg = inicfg
+        self._parser.extra_info["rootdir"] = str(self.rootpath)
+        self._parser.extra_info["inifile"] = str(self.inipath)
+        self._parser.addini("addopts", "Extra command line options", "args")
+        self._parser.addini("minversion", "Minimally required pytest version")
+        self._parser.addini(
+            "pythonpath", type="paths", help="Add paths to sys.path", default=[]
+        )
+        self._parser.addini(
+            "required_plugins",
+            "Plugins that must be present for pytest to run",
+            type="args",
+            default=[],
+        )
+
         if addopts:
             args[:] = (
                 self._validate_args(self.getini("addopts"), "via addopts config") + args
@@ -1540,19 +1539,17 @@ class Config:
         self._preparse(args, addopts=addopts)
         self._parser.after_preparse = True  # type: ignore
         try:
-            args = self._parser.parse_setoption(
-                args, self.option, namespace=self.option
-            )
-            self.args, self.args_source = self._decide_args(
-                args=args,
-                pyargs=self.known_args_namespace.pyargs,
-                testpaths=self.getini("testpaths"),
-                invocation_dir=self.invocation_params.dir,
-                rootpath=self.rootpath,
-                warn=True,
-            )
+            parsed = self._parser.parse(args, namespace=self.option)
         except PrintHelp:
-            pass
+            return
+        self.args, self.args_source = self._decide_args(
+            args=getattr(parsed, FILE_OR_DIR),
+            pyargs=self.known_args_namespace.pyargs,
+            testpaths=self.getini("testpaths"),
+            invocation_dir=self.invocation_params.dir,
+            rootpath=self.rootpath,
+            warn=True,
+        )
 
     def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
         """Issue and handle a warning during the "configure" stage.
