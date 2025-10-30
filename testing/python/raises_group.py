@@ -1110,9 +1110,7 @@ def test_raisesexc() -> None:
     with pytest.raises(
         # FIXME: do we want repr(type) or type.__name__ ?
         Failed,
-        match=wrap_escape(
-            "DID NOT RAISE any of (ValueError, TypeError)"
-        ),
+        match=wrap_escape("DID NOT RAISE any of (ValueError, TypeError)"),
     ):
         with RaisesExc((ValueError, TypeError)):
             ...
