@@ -1005,7 +1005,7 @@ class Config:
         plugins: Sequence[str | _PluggyPlugin] | None
         """Extra plugins, might be `None`."""
         dir: pathlib.Path
-        """The directory from which :func:`pytest.main` was invoked. :type: pathlib.Path"""
+        """The directory from which :func:`pytest.main` was invoked."""
 
         def __init__(
             self,
@@ -1098,8 +1098,6 @@ class Config:
     @property
     def rootpath(self) -> pathlib.Path:
         """The path to the :ref:`rootdir <rootdir>`.
-
-        :type: pathlib.Path
 
         .. versionadded:: 6.1
         """
