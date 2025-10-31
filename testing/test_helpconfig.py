@@ -83,6 +83,14 @@ def test_empty_help_param(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(lines, consecutive=True)
 
 
+def test_parse_known_args_doesnt_quit_on_help(pytester: Pytester) -> None:
+    """`parse_known_args` shouldn't exit on `--help`, unlike `parse`."""
+    config = pytester.parseconfig()
+    # Doesn't raise or exit!
+    config._parser.parse_known_args(["--help"])
+    config._parser.parse_known_and_unknown_args(["--help"])
+
+
 def test_hookvalidation_unknown(pytester: Pytester) -> None:
     pytester.makeconftest(
         """

@@ -1528,7 +1528,6 @@ class Config:
             kwargs=dict(pluginmanager=self.pluginmanager)
         )
         self._preparse(args, addopts=addopts)
-        self._parser.after_preparse = True  # type: ignore
         try:
             self._parser.parse(args, namespace=self.option)
         except PrintHelp:
