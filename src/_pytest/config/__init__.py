@@ -142,6 +142,29 @@ def filter_traceback_for_conftest_import_failure(
     return filter_traceback(entry) and "importlib" not in str(entry.path).split(os.sep)
 
 
+def print_conftest_import_error(e: ConftestImportFailure, file: TextIO) -> None:
+    exc_info = ExceptionInfo.from_exception(e.cause)
+    tw = TerminalWriter(file)
+    tw.line(f"ImportError while loading conftest '{e.path}'.", red=True)
+    exc_info.traceback = exc_info.traceback.filter(
+        filter_traceback_for_conftest_import_failure
+    )
+    exc_repr = (
+        exc_info.getrepr(style="short", chain=False)
+        if exc_info.traceback
+        else exc_info.exconly()
+    )
+    formatted_tb = str(exc_repr)
+    for line in formatted_tb.splitlines():
+        tw.line(line.rstrip(), red=True)
+
+
+def print_usage_error(e: UsageError, file: TextIO) -> None:
+    tw = TerminalWriter(file)
+    for msg in e.args:
+        tw.line(f"ERROR: {msg}\n", red=True)
+
+
 def main(
     args: list[str] | os.PathLike[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
@@ -167,34 +190,19 @@ def main(
         try:
             config = _prepareconfig(new_args, plugins)
         except ConftestImportFailure as e:
-            exc_info = ExceptionInfo.from_exception(e.cause)
-            tw = TerminalWriter(sys.stderr)
-            tw.line(f"ImportError while loading conftest '{e.path}'.", red=True)
-            exc_info.traceback = exc_info.traceback.filter(
-                filter_traceback_for_conftest_import_failure
-            )
-            exc_repr = (
-                exc_info.getrepr(style="short", chain=False)
-                if exc_info.traceback
-                else exc_info.exconly()
-            )
-            formatted_tb = str(exc_repr)
-            for line in formatted_tb.splitlines():
-                tw.line(line.rstrip(), red=True)
+            print_conftest_import_error(e, file=sys.stderr)
             return ExitCode.USAGE_ERROR
-        else:
+
+        try:
+            ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
             try:
-                ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
-                try:
-                    return ExitCode(ret)
-                except ValueError:
-                    return ret
-            finally:
-                config._ensure_unconfigure()
+                return ExitCode(ret)
+            except ValueError:
+                return ret
+        finally:
+            config._ensure_unconfigure()
     except UsageError as e:
-        tw = TerminalWriter(sys.stderr)
-        for msg in e.args:
-            tw.line(f"ERROR: {msg}\n", red=True)
+        print_usage_error(e, file=sys.stderr)
         return ExitCode.USAGE_ERROR
     finally:
         if old_pytest_version is None:
