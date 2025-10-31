@@ -14,19 +14,21 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import Parser
-from _pytest.config.argparsing import PytestArgumentParser
 from _pytest.terminal import TerminalReporter
 import pytest
 
 
 class HelpAction(argparse.Action):
-    """An argparse Action that will raise an exception in order to skip the
-    rest of the argument parsing when --help is passed.
+    """An argparse Action that will raise a PrintHelp exception in order to skip
+    the rest of the argument parsing when --help is passed.
 
-    This prevents argparse from quitting due to missing required arguments
-    when any are defined, for example by ``pytest_addoption``.
-    This is similar to the way that the builtin argparse --help option is
-    implemented by raising SystemExit.
+    This prevents argparse from raising UsageError when `--help` is used along
+    with missing required arguments when any are defined, for example by
+    ``pytest_addoption``. This is similar to the way that the builtin argparse
+    --help option is implemented by raising SystemExit.
+
+    To opt in to this behavior, the parse caller must set
+    `namespace._raise_print_help = True`. Otherwise it just sets the option.
     """
 
     def __init__(
@@ -50,9 +52,7 @@ class HelpAction(argparse.Action):
     ) -> None:
         setattr(namespace, self.dest, self.const)
 
-        # We should only skip the rest of the parsing after preparse is done.
-        assert isinstance(parser, PytestArgumentParser)
-        if getattr(parser._parser, "after_preparse", False):
+        if getattr(namespace, "_raise_print_help", False):
             raise PrintHelp
 
 

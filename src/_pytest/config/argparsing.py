@@ -130,7 +130,7 @@ class Parser:
         """Parse the arguments.
 
         Unlike ``parse_known_args`` and ``parse_known_and_unknown_args``,
-        raises UsageError on unknown flags.
+        raises PrintHelp on `--help` and UsageError on unknown flags
 
         :meta private:
         """
@@ -138,7 +138,13 @@ class Parser:
 
         try_argcomplete(self.optparser)
         strargs = [os.fspath(x) for x in args]
-        return self.optparser.parse_intermixed_args(strargs, namespace=namespace)
+        if namespace is None:
+            namespace = argparse.Namespace()
+        try:
+            namespace._raise_print_help = True
+            return self.optparser.parse_intermixed_args(strargs, namespace=namespace)
+        finally:
+            del namespace._raise_print_help
 
     def parse_known_args(
         self,
