@@ -907,7 +907,7 @@ class TestLiterals:
     def test_allow_unicode(self, pytester, config_mode):
         """Test that doctests which output unicode work in all python versions
         tested by pytest when the ALLOW_UNICODE option is used (either in
-        the ini file or by an inline comment).
+        the configuration file or by an inline comment).
         """
         if config_mode == "ini":
             pytester.makeini(
@@ -942,7 +942,7 @@ class TestLiterals:
     def test_allow_bytes(self, pytester, config_mode):
         """Test that doctests which output bytes work in all python versions
         tested by pytest when the ALLOW_BYTES option is used (either in
-        the ini file or by an inline comment)(#1287).
+        the configuration file or by an inline comment)(#1287).
         """
         if config_mode == "ini":
             pytester.makeini(

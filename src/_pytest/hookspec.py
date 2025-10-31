@@ -98,13 +98,13 @@ def pytest_plugin_registered(
 
 @hookspec(historic=True)
 def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None:
-    """Register argparse-style options and ini-style config values,
+    """Register argparse-style options and config-style config values,
     called once at the beginning of a test run.
 
     :param parser:
         To add command line options, call
         :py:func:`parser.addoption(...) <pytest.Parser.addoption>`.
-        To add ini-file values call :py:func:`parser.addini(...)
+        To add config-file values call :py:func:`parser.addini(...)
         <pytest.Parser.addini>`.
 
     :param pluginmanager:
@@ -119,7 +119,7 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> None
       retrieve the value of a command line option.
 
     - :py:func:`config.getini(name) <pytest.Config.getini>` to retrieve
-      a value read from an ini-style file.
+      a value read from a configuration file.
 
     The config object is passed around on many internal objects via the ``.config``
     attribute or can be retrieved as the ``pytestconfig`` fixture.
@@ -998,13 +998,22 @@ def pytest_assertion_pass(item: Item, lineno: int, orig: str, expl: str) -> None
     and the pytest introspected assertion information is available in the
     `expl` string.
 
-    This hook must be explicitly enabled by the ``enable_assertion_pass_hook``
-    ini-file option:
+    This hook must be explicitly enabled by the :confval:`enable_assertion_pass_hook`
+    configuration option:
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        enable_assertion_pass_hook=true
+        .. code-block:: toml
+
+            [pytest]
+            enable_assertion_pass_hook = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            enable_assertion_pass_hook = true
 
     You need to **clean the .pyc** files in your project directory and interpreter libraries
     when enabling this option, as assertions will require to be re-written.

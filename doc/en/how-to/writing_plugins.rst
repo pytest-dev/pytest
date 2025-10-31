@@ -420,13 +420,21 @@ before running pytest on it. This way we can abstract the tested logic to separa
 which is especially useful for longer tests and/or longer ``conftest.py`` files.
 
 Note that for ``pytester.copy_example`` to work we need to set `pytester_example_dir`
-in our ``pytest.ini`` to tell pytest where to look for example files.
+in our configuration file to tell pytest where to look for example files.
 
-.. code-block:: ini
+.. tab:: toml
 
-  # content of pytest.ini
-  [pytest]
-  pytester_example_dir = .
+    .. code-block:: toml
+
+        [pytest]
+        pytester_example_dir = "."
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        pytester_example_dir = .
 
 
 .. code-block:: python

@@ -1,14 +1,16 @@
 # mypy: allow-untyped-defs
-"""Command line options, ini-file and conftest.py processing."""
+"""Command line options, config-file and conftest.py processing."""
 
 from __future__ import annotations
 
 import argparse
+import builtins
 import collections.abc
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
+from collections.abc import Mapping
 from collections.abc import Sequence
 import contextlib
 import copy
@@ -52,7 +54,9 @@ from _pytest._code import ExceptionInfo
 from _pytest._code import filter_traceback
 from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
+from _pytest.compat import assert_never
 from _pytest.config.argparsing import Argument
+from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
@@ -288,23 +292,21 @@ builtin_plugins = {
 
 
 def get_config(
-    args: list[str] | None = None,
+    args: Iterable[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
 ) -> Config:
     # Subsequent calls to main will create a fresh instance.
     pluginmanager = PytestPluginManager()
-    config = Config(
-        pluginmanager,
-        invocation_params=Config.InvocationParams(
-            args=args or (),
-            plugins=plugins,
-            dir=pathlib.Path.cwd(),
-        ),
+    invocation_params = Config.InvocationParams(
+        args=args or (),
+        plugins=plugins,
+        dir=pathlib.Path.cwd(),
     )
+    config = Config(pluginmanager, invocation_params=invocation_params)
 
-    if args is not None:
+    if invocation_params.args:
         # Handle any "-p no:plugin" args.
-        pluginmanager.consider_preparse(args, exclude_only=True)
+        pluginmanager.consider_preparse(invocation_params.args, exclude_only=True)
 
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
@@ -993,7 +995,7 @@ class Config:
         .. note::
 
             Note that the environment variable ``PYTEST_ADDOPTS`` and the ``addopts``
-            ini option are handled by pytest, not being included in the ``args`` attribute.
+            configuration option are handled by pytest, not being included in the ``args`` attribute.
 
             Plugins accessing ``InvocationParams`` must be aware of that.
         """
@@ -1200,7 +1202,7 @@ class Config:
         return nodeid
 
     @classmethod
-    def fromdictargs(cls, option_dict, args) -> Config:
+    def fromdictargs(cls, option_dict: Mapping[str, Any], args: list[str]) -> Config:
         """Constructor usable for subprocesses."""
         config = get_config(args)
         config.option.__dict__.update(option_dict)
@@ -1242,35 +1244,6 @@ class Config:
             consider_namespace_packages=early_config.getini(
                 "consider_namespace_packages"
             ),
-        )
-
-    def _initini(self, args: Sequence[str]) -> None:
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(
-            args, namespace=copy.copy(self.option)
-        )
-        rootpath, inipath, inicfg, ignored_config_files = determine_setup(
-            inifile=ns.inifilename,
-            override_ini=ns.override_ini,
-            args=ns.file_or_dir + unknown_args,
-            rootdir_cmd_arg=ns.rootdir or None,
-            invocation_dir=self.invocation_params.dir,
-        )
-        self._rootpath = rootpath
-        self._inipath = inipath
-        self._ignored_config_files = ignored_config_files
-        self.inicfg = inicfg
-        self._parser.extra_info["rootdir"] = str(self.rootpath)
-        self._parser.extra_info["inifile"] = str(self.inipath)
-        self._parser.addini("addopts", "Extra command line options", "args")
-        self._parser.addini("minversion", "Minimally required pytest version")
-        self._parser.addini(
-            "pythonpath", type="paths", help="Add paths to sys.path", default=[]
-        )
-        self._parser.addini(
-            "required_plugins",
-            "Plugins that must be present for pytest to run",
-            type="args",
-            default=[],
         )
 
     def _consider_importhook(self, args: Sequence[str]) -> None:
@@ -1334,13 +1307,13 @@ class Config:
 
     def _validate_args(self, args: list[str], via: str) -> list[str]:
         """Validate known args."""
-        self._parser._config_source_hint = via  # type: ignore
+        self._parser.extra_info["config source"] = via
         try:
             self._parser.parse_known_and_unknown_args(
                 args, namespace=copy.copy(self.option)
             )
         finally:
-            del self._parser._config_source_hint  # type: ignore
+            self._parser.extra_info.pop("config source", None)
 
         return args
 
@@ -1397,7 +1370,35 @@ class Config:
                     self._validate_args(shlex.split(env_addopts), "via PYTEST_ADDOPTS")
                     + args
                 )
-        self._initini(args)
+
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(
+            args, namespace=copy.copy(self.option)
+        )
+        rootpath, inipath, inicfg, ignored_config_files = determine_setup(
+            inifile=ns.inifilename,
+            override_ini=ns.override_ini,
+            args=ns.file_or_dir + unknown_args,
+            rootdir_cmd_arg=ns.rootdir or None,
+            invocation_dir=self.invocation_params.dir,
+        )
+        self._rootpath = rootpath
+        self._inipath = inipath
+        self._ignored_config_files = ignored_config_files
+        self.inicfg = inicfg
+        self._parser.extra_info["rootdir"] = str(self.rootpath)
+        self._parser.extra_info["inifile"] = str(self.inipath)
+        self._parser.addini("addopts", "Extra command line options", "args")
+        self._parser.addini("minversion", "Minimally required pytest version")
+        self._parser.addini(
+            "pythonpath", type="paths", help="Add paths to sys.path", default=[]
+        )
+        self._parser.addini(
+            "required_plugins",
+            "Plugins that must be present for pytest to run",
+            type="args",
+            default=[],
+        )
+
         if addopts:
             args[:] = (
                 self._validate_args(self.getini("addopts"), "via addopts config") + args
@@ -1451,8 +1452,8 @@ class Config:
 
     @hookimpl(wrapper=True)
     def pytest_collection(self) -> Generator[None, object, object]:
-        # Validate invalid ini keys after collection is done so we take in account
-        # options added by late-loading conftest files.
+        # Validate invalid configuration keys after collection is done so we
+        # take in account options added by late-loading conftest files.
         try:
             return (yield)
         finally:
@@ -1515,7 +1516,10 @@ class Config:
             )
 
     def _warn_or_fail_if_strict(self, message: str) -> None:
-        if self.known_args_namespace.strict_config:
+        strict_config = self.getini("strict_config")
+        if strict_config is None:
+            strict_config = self.getini("strict")
+        if strict_config:
             raise UsageError(message)
 
         self.issue_config_time_warning(PytestConfigWarning(message), stacklevel=3)
@@ -1535,19 +1539,17 @@ class Config:
         self._preparse(args, addopts=addopts)
         self._parser.after_preparse = True  # type: ignore
         try:
-            args = self._parser.parse_setoption(
-                args, self.option, namespace=self.option
-            )
-            self.args, self.args_source = self._decide_args(
-                args=args,
-                pyargs=self.known_args_namespace.pyargs,
-                testpaths=self.getini("testpaths"),
-                invocation_dir=self.invocation_params.dir,
-                rootpath=self.rootpath,
-                warn=True,
-            )
+            parsed = self._parser.parse(args, namespace=self.option)
         except PrintHelp:
-            pass
+            return
+        self.args, self.args_source = self._decide_args(
+            args=getattr(parsed, FILE_OR_DIR),
+            pyargs=self.known_args_namespace.pyargs,
+            testpaths=self.getini("testpaths"),
+            invocation_dir=self.invocation_params.dir,
+            rootpath=self.rootpath,
+            warn=True,
+        )
 
     def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
         """Issue and handle a warning during the "configure" stage.
@@ -1585,7 +1587,7 @@ class Config:
             )
 
     def addinivalue_line(self, name: str, line: str) -> None:
-        """Add a line to an ini-file option. The option must have been
+        """Add a line to a configuration option. The option must have been
         declared but might not yet be set in which case the line becomes
         the first line in its value."""
         x = self.getini(name)
@@ -1593,11 +1595,11 @@ class Config:
         x.append(line)  # modifies the cached list inline
 
     def getini(self, name: str) -> Any:
-        """Return configuration value from an :ref:`ini file <configfiles>`.
+        """Return configuration value the an :ref:`configuration file <configfiles>`.
 
-        If a configuration value is not defined in an
-        :ref:`ini file <configfiles>`, then the ``default`` value provided while
-        registering the configuration through
+        If a configuration value is not defined in a
+        :ref:`configuration file <configfiles>`, then the ``default`` value
+        provided while registering the configuration through
         :func:`parser.addini <pytest.Parser.addini>` will be returned.
         Please note that you can even provide ``None`` as a valid
         default value.
@@ -1626,8 +1628,9 @@ class Config:
         try:
             return self._inicache[canonical_name]
         except KeyError:
-            self._inicache[canonical_name] = val = self._getini(canonical_name)
-            return val
+            pass
+        self._inicache[canonical_name] = val = self._getini(canonical_name)
+        return val
 
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.
@@ -1647,7 +1650,7 @@ class Config:
             raise ValueError(f"unknown configuration value: {name!r}") from e
 
         # Collect all possible values (canonical name + aliases) from inicfg.
-        # Each candidate is (IniValue, is_canonical).
+        # Each candidate is (ConfigValue, is_canonical).
         candidates = []
         if canonical_name in self.inicfg:
             candidates.append((self.inicfg[canonical_name], True))
@@ -1661,24 +1664,46 @@ class Config:
         # Pick the best candidate based on precedence:
         # 1. CLI override takes precedence over file, then
         # 2. Canonical name takes precedence over alias.
-        ini_value = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
-        value = ini_value.value
+        selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
+        value = selected.value
+        mode = selected.mode
 
-        # Coerce the values based on types.
-        #
-        # Note: some coercions are only required if we are reading from .ini files, because
-        # the file format doesn't contain type information, but when reading from toml we will
-        # get either str or list of str values (see _parse_ini_config_from_pyproject_toml).
-        # For example:
+        if mode == "ini":
+            # In ini mode, values are always str | list[str].
+            assert isinstance(value, (str, list))
+            return self._getini_ini(name, canonical_name, type, value, default)
+        elif mode == "toml":
+            return self._getini_toml(name, canonical_name, type, value, default)
+        else:
+            assert_never(mode)
+
+    def _getini_ini(
+        self,
+        name: str,
+        canonical_name: str,
+        type: str,
+        value: str | list[str],
+        default: Any,
+    ):
+        """Handle config values read in INI mode.
+
+        In INI mode, values are stored as str or list[str] only, and coerced
+        from string based on the registered type.
+        """
+        # Note: some coercions are only required if we are reading from .ini
+        # files, because the file format doesn't contain type information, but
+        # when reading from toml (in ini mode) we will get either str or list of
+        # str values (see load_config_dict_from_file). For example:
         #
         #   ini:
         #     a_line_list = "tests acceptance"
-        #   in this case, we need to split the string to obtain a list of strings.
         #
-        #   toml:
+        # in this case, we need to split the string to obtain a list of strings.
+        #
+        #   toml (ini mode):
         #     a_line_list = ["tests", "acceptance"]
-        #   in this case, we already have a list ready to use.
         #
+        # in this case, we already have a list ready to use.
         if type == "paths":
             dp = (
                 self.inipath.parent
@@ -1710,7 +1735,89 @@ class Config:
                     f"Expected a float string for option {name} of type float, but got: {value!r}"
                 ) from None
             return float(value)
-        elif type is None:
+        else:
+            return self._getini_unknown_type(name, type, value)
+
+    def _getini_toml(
+        self,
+        name: str,
+        canonical_name: str,
+        type: str,
+        value: object,
+        default: Any,
+    ):
+        """Handle TOML config values with strict type validation and no coercion.
+
+        In TOML mode, values already have native types from TOML parsing.
+        We validate types match expectations exactly, including list items.
+        """
+        value_type = builtins.type(value).__name__
+        if type == "paths":
+            # Expect a list of strings.
+            if not isinstance(value, list):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a list for type 'paths', "
+                    f"got {value_type}: {value!r}"
+                )
+            for i, item in enumerate(value):
+                if not isinstance(item, str):
+                    item_type = builtins.type(item).__name__
+                    raise TypeError(
+                        f"{self.inipath}: config option '{name}' expects a list of strings, "
+                        f"but item at index {i} is {item_type}: {item!r}"
+                    )
+            dp = (
+                self.inipath.parent
+                if self.inipath is not None
+                else self.invocation_params.dir
+            )
+            return [dp / x for x in value]
+        elif type in {"args", "linelist"}:
+            # Expect a list of strings.
+            if not isinstance(value, list):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a list for type '{type}', "
+                    f"got {value_type}: {value!r}"
+                )
+            for i, item in enumerate(value):
+                if not isinstance(item, str):
+                    item_type = builtins.type(item).__name__
+                    raise TypeError(
+                        f"{self.inipath}: config option '{name}' expects a list of strings, "
+                        f"but item at index {i} is {item_type}: {item!r}"
+                    )
+            return list(value)
+        elif type == "bool":
+            # Expect a boolean.
+            if not isinstance(value, bool):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a bool, "
+                    f"got {value_type}: {value!r}"
+                )
+            return value
+        elif type == "int":
+            # Expect an integer (but not bool, which is a subclass of int).
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects an int, "
+                    f"got {value_type}: {value!r}"
+                )
+            return value
+        elif type == "float":
+            # Expect a float or integer only.
+            if not isinstance(value, (float, int)) or isinstance(value, bool):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a float, "
+                    f"got {value_type}: {value!r}"
+                )
+            return value
+        elif type == "string":
+            # Expect a string.
+            if not isinstance(value, str):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a string, "
+                    f"got {value_type}: {value!r}"
+                )
             return value
         else:
             return self._getini_unknown_type(name, type, value)
@@ -1789,11 +1896,19 @@ class Config:
 
         Example:
 
-        .. code-block:: ini
+        .. tab:: toml
 
-            # content of pytest.ini
-            [pytest]
-            verbosity_assertions = 2
+            .. code-block:: toml
+
+                [tool.pytest]
+                verbosity_assertions = 2
+
+        .. tab:: ini
+
+            .. code-block:: ini
+
+                [pytest]
+                verbosity_assertions = 2
 
         .. code-block:: console
 
@@ -1827,7 +1942,7 @@ class Config:
     def _add_verbosity_ini(parser: Parser, verbosity_type: str, help: str) -> None:
         """Add a output verbosity configuration option for the given output type.
 
-        :param parser: Parser for command line arguments and ini-file values.
+        :param parser: Parser for command line arguments and config-file values.
         :param verbosity_type: Fine-grained verbosity category.
         :param help: Description of the output this type controls.
 

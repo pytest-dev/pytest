@@ -434,6 +434,83 @@ class TestReportSerialization:
             loaded_report = TestReport._from_json(data)
             assert loaded_report.stop - loaded_report.start == approx(report.duration)
 
+    @pytest.mark.parametrize(
+        "first_skip_reason, second_skip_reason, skip_reason_output",
+        [("A", "B", "(A; B)"), ("A", "A", "(A)")],
+    )
+    def test_exception_group_with_only_skips(
+        self,
+        pytester: Pytester,
+        first_skip_reason: str,
+        second_skip_reason: str,
+        skip_reason_output: str,
+    ):
+        """
+        Test that when an ExceptionGroup with only Skipped exceptions is raised in teardown,
+        it is reported as a single skipped test, not as an error.
+        This is a regression test for issue #13537.
+        """
+        pytester.makepyfile(
+            test_it=f"""
+            import pytest
+            @pytest.fixture
+            def fixA():
+                yield
+                pytest.skip(reason="{first_skip_reason}")
+            @pytest.fixture
+            def fixB():
+                yield
+                pytest.skip(reason="{second_skip_reason}")
+            def test_skip(fixA, fixB):
+                assert True
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=1, skipped=1)
+        out = result.stdout.str()
+        assert skip_reason_output in out
+        assert "ERROR at teardown" not in out
+
+    @pytest.mark.parametrize(
+        "use_item_location, skip_file_location",
+        [(True, "test_it.py"), (False, "runner.py")],
+    )
+    def test_exception_group_skips_use_item_location(
+        self, pytester: Pytester, use_item_location: bool, skip_file_location: str
+    ):
+        """
+        Regression for #13537:
+        If any skip inside an ExceptionGroup has _use_item_location=True,
+        the report location should point to the test item, not the fixture teardown.
+        """
+        pytester.makepyfile(
+            test_it=f"""
+            import pytest
+            @pytest.fixture
+            def fix_item1():
+                yield
+                exc = pytest.skip.Exception("A")
+                exc._use_item_location = True
+                raise exc
+            @pytest.fixture
+            def fix_item2():
+                yield
+                exc = pytest.skip.Exception("B")
+                exc._use_item_location = {use_item_location}
+                raise exc
+            def test_both(fix_item1, fix_item2):
+                assert True
+            """
+        )
+        result = pytester.runpytest("-rs")
+        result.assert_outcomes(passed=1, skipped=1)
+
+        out = result.stdout.str()
+        # Both reasons should appear
+        assert "A" and "B" in out
+        # Crucially, the skip should be attributed to the test item, not teardown
+        assert skip_file_location in out
+
 
 class TestHooks:
     """Test that the hooks are working correctly for plugins"""

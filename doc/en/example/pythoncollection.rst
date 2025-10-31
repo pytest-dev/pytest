@@ -88,13 +88,21 @@ Example:
 Changing directory recursion
 -----------------------------------------------------
 
-You can set the :confval:`norecursedirs` option in an ini-file, for example your ``pytest.ini`` in the project root directory:
+You can set the :confval:`norecursedirs` option in a configuration file:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # content of pytest.ini
-    [pytest]
-    norecursedirs = .svn _build tmp*
+    .. code-block:: toml
+
+        [pytest]
+        norecursedirs = [".svn", "_build", "tmp*"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        norecursedirs = .svn _build tmp*
 
 This would tell ``pytest`` to not recurse into typical subversion or sphinx-build directories or into any ``tmp`` prefixed directory.
 
@@ -108,14 +116,25 @@ the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` in your :ref:`configuration file <config file formats>`.
 Here is an example:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # content of pytest.ini
-    # Example 1: have pytest look for "check" instead of "test"
-    [pytest]
-    python_files = check_*.py
-    python_classes = Check
-    python_functions = *_check
+    .. code-block:: toml
+
+        # Example 1: have pytest look for "check" instead of "test"
+        [pytest]
+        python_files = ["check_*.py"]
+        python_classes = ["Check"]
+        python_functions = ["*_check"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        # Example 1: have pytest look for "check" instead of "test"
+        [pytest]
+        python_files = check_*.py
+        python_classes = Check
+        python_functions = *_check
 
 This would make ``pytest`` look for tests in files that match the ``check_*
 .py`` glob-pattern, ``Check`` prefixes in classes, and functions and methods
@@ -152,12 +171,21 @@ The test collection would look like this:
 
 You can check for multiple glob patterns by adding a space between the patterns:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # Example 2: have pytest look for files with "test" and "example"
-    # content of pytest.ini
-    [pytest]
-    python_files = test_*.py example_*.py
+    .. code-block:: toml
+
+        # Example 2: have pytest look for files with "test" and "example"
+        [pytest]
+        python_files = ["test_*.py", "example_*.py"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        # Example 2: have pytest look for files with "test" and "example"
+        [pytest]
+        python_files = test_*.py example_*.py
 
 .. note::
 
@@ -178,14 +206,22 @@ example if you have unittest2 installed you can type:
     pytest --pyargs unittest2.test.test_skipping -q
 
 which would run the respective test module.  Like with
-other options, through an ini-file and the :confval:`addopts` option you
+other options, through a configuration file and the :confval:`addopts` option you
 can make this change more permanently:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # content of pytest.ini
-    [pytest]
-    addopts = --pyargs
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--pyargs"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = --pyargs
 
 Now a simple invocation of ``pytest NAME`` will check
 if NAME exists as an importable package/module and otherwise
@@ -224,11 +260,19 @@ Customizing test collection
 
 You can easily instruct ``pytest`` to discover tests from every Python file:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # content of pytest.ini
-    [pytest]
-    python_files = *.py
+    .. code-block:: toml
+
+        [pytest]
+        python_files = ["*.py"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        python_files = *.py
 
 However, many projects will have a ``setup.py`` which they don't want to be
 imported. Moreover, there may files only importable by a specific python

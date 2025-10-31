@@ -3,20 +3,23 @@
 
 from __future__ import annotations
 
-from argparse import Action
+import argparse
 from collections.abc import Generator
+from collections.abc import Sequence
 import os
 import sys
+from typing import Any
 
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
 from _pytest.config.argparsing import Parser
+from _pytest.config.argparsing import PytestArgumentParser
 from _pytest.terminal import TerminalReporter
 import pytest
 
 
-class HelpAction(Action):
+class HelpAction(argparse.Action):
     """An argparse Action that will raise an exception in order to skip the
     rest of the argument parsing when --help is passed.
 
@@ -26,20 +29,29 @@ class HelpAction(Action):
     implemented by raising SystemExit.
     """
 
-    def __init__(self, option_strings, dest=None, default=False, help=None):
+    def __init__(
+        self, option_strings: Sequence[str], dest: str, *, help: str | None = None
+    ) -> None:
         super().__init__(
             option_strings=option_strings,
             dest=dest,
-            const=True,
-            default=default,
             nargs=0,
+            const=True,
+            default=False,
             help=help,
         )
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
         setattr(namespace, self.dest, self.const)
 
         # We should only skip the rest of the parsing after preparse is done.
+        assert isinstance(parser, PytestArgumentParser)
         if getattr(parser._parser, "after_preparse", False):
             raise PrintHelp
 
@@ -102,8 +114,8 @@ def pytest_addoption(parser: Parser) -> None:
         "--override-ini",
         dest="override_ini",
         action="append",
-        help='Override ini option with "option=value" style, '
-        "e.g. `-o xfail_strict=True -o cache_dir=cache`.",
+        help='Override configuration option with "option=value" style, '
+        "e.g. `-o strict_xfail=True -o cache_dir=cache`.",
     )
 
 
@@ -176,18 +188,16 @@ def showhelp(config: Config) -> None:
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first "
-        "pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
+        "[pytest] configuration options in the first "
+        "pytest.toml|pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
     )
     tw.line()
 
     columns = tw.fullwidth  # costly call
     indent_len = 24  # based on argparse's max_help_position=24
     indent = " " * indent_len
-    for name in config._parser._ininames:
+    for name in config._parser._inidict:
         help, type, _default = config._parser._inidict[name]
-        if type is None:
-            type = "string"
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         spec = f"{name} ({type}):"
@@ -245,9 +255,6 @@ def showhelp(config: Config) -> None:
 
     for warningreport in reporter.stats.get("warnings", []):
         tw.line("warning : " + warningreport.message, red=True)
-
-
-conftest_options = [("pytest_plugins", "list of plugin names to load")]
 
 
 def getpluginversioninfo(config: Config) -> list[str]:

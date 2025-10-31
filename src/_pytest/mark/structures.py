@@ -101,7 +101,7 @@ class ParameterSet(NamedTuple):
             ],
         )
         # ParameterSet(values=(1, 2, 3), marks=(), id=None)
-        # ParameterSet(values=(2, 2, 3), marks=(), id="everything")
+        # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
     """
 
     values: Sequence[object | NotSetType]
@@ -580,16 +580,19 @@ class MarkGenerator:
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.
             if name not in self._markers:
-                if self._config.option.strict_markers or self._config.option.strict:
-                    fail(
-                        f"{name!r} not found in `markers` configuration option",
-                        pytrace=False,
-                    )
-
                 # Raise a specific error for common misspellings of "parametrize".
                 if name in ["parameterize", "parametrise", "parameterise"]:
                     __tracebackhide__ = True
                     fail(f"Unknown '{name}' mark, did you mean 'parametrize'?")
+
+                strict_markers = self._config.getini("strict_markers")
+                if strict_markers is None:
+                    strict_markers = self._config.getini("strict")
+                if strict_markers:
+                    fail(
+                        f"{name!r} not found in `markers` configuration option",
+                        pytrace=False,
+                    )
 
                 warnings.warn(
                     f"Unknown pytest.mark.{name} - is this a typo?  You can register "
