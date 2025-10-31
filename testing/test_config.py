@@ -2276,7 +2276,7 @@ class TestOverrideIniArgs:
         cache_dir = ".custom_cache"
         monkeypatch.setenv("PYTEST_ADDOPTS", f"-o cache_dir={cache_dir}")
         config = _config_for_test
-        config._preparse([], addopts=True)
+        config.parse([], addopts=True)
         assert config.inicfg.get("cache_dir") == ConfigValue(
             cache_dir, origin="override", mode="ini"
         )
@@ -2288,7 +2288,7 @@ class TestOverrideIniArgs:
         monkeypatch.setenv("PYTEST_ADDOPTS", "-o")
         config = _config_for_test
         with pytest.raises(UsageError) as excinfo:
-            config._preparse(["cache_dir=ignored"], addopts=True)
+            config.parse(["cache_dir=ignored"], addopts=True)
         assert (
             "error: argument -o/--override-ini: expected one argument"
             in excinfo.value.args[0]
@@ -2317,7 +2317,7 @@ class TestOverrideIniArgs:
     ) -> None:
         """Check that -o no longer swallows all options after it (#3103)"""
         config = _config_for_test
-        config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])
+        config.parse(["-o", "cache_dir=/cache", "/some/test/path"])
         assert config.inicfg.get("cache_dir") == ConfigValue(
             "/cache", origin="override", mode="ini"
         )
