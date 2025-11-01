@@ -335,12 +335,6 @@ class Argument:
         return self._short_opts + self._long_opts
 
     def attrs(self) -> Mapping[str, Any]:
-        # Update any attributes set by processopt.
-        for attr in ("default", "dest", "help", self.dest):
-            try:
-                self._attrs[attr] = getattr(self, attr)
-            except AttributeError:
-                pass
         return self._attrs
 
     def _set_opt_strings(self, opts: Sequence[str]) -> None:

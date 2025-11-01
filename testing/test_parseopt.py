@@ -63,14 +63,6 @@ class TestParser:
         )
         assert argument.type is str
 
-    def test_argument_processopt(self) -> None:
-        argument = parseopt.Argument("-t", type=int)
-        argument.default = 42
-        argument.dest = "abc"
-        res = argument.attrs()
-        assert res["default"] == 42
-        assert res["dest"] == "abc"
-
     def test_group_add_and_get(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("hello")
         assert group.name == "hello"
@@ -190,24 +182,6 @@ class TestParser:
         assert getattr(args, parseopt.FILE_OR_DIR) == ["4", "2"]
         assert args.R is True
         assert args.S is False
-
-    def test_parse_defaultgetter(self) -> None:
-        def defaultget(option):
-            if not hasattr(option, "type"):
-                return
-            if option.type is int:
-                option.default = 42
-            elif option.type is str:
-                option.default = "world"
-
-        parser = parseopt.Parser(processopt=defaultget, _ispytest=True)
-        parser.addoption("--this", dest="this", type=int, action="store")
-        parser.addoption("--hello", dest="hello", type=str, action="store")
-        parser.addoption("--no", dest="no", action="store_true")
-        option = parser.parse([])
-        assert option.hello == "world"
-        assert option.this == 42
-        assert option.no is False
 
     def test_drop_short_helper(self) -> None:
         parser = argparse.ArgumentParser(
