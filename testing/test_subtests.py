@@ -479,6 +479,31 @@ class TestUnittestSubTest:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
+    def test_non_subtest_skip(
+        self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
+            """
+            from unittest import TestCase, main
+
+            class T(TestCase):
+
+                def test_foo(self):
+                    with self.subTest(msg="subtest"):
+                        assert False, "failed subtest"
+                    self.skipTest('non-subtest skip')
+        """
+        )
+        # This output might change #13756.
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "SUBFAILED[[]subtest[]] test_non_subtest_skip.py::T::test_foo*",
+                "* 1 failed, 1 skipped in *",
+            ]
+        )
+
     def test_xfail(
         self,
         pytester: pytest.Pytester,
