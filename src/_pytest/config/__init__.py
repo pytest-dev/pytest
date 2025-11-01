@@ -1083,7 +1083,6 @@ class Config:
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook: pluggy.HookRelay = PathAwareHookProxy(self.pluginmanager.hook)  # type: ignore[assignment]
         self._inicache: dict[str, Any] = {}
-        self._opt2dest: dict[str, str] = {}
         self._cleanup_stack = contextlib.ExitStack()
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
@@ -1208,9 +1207,6 @@ class Config:
         return config
 
     def _processopt(self, opt: Argument) -> None:
-        for name in opt.names():
-            self._opt2dest[name] = opt.dest
-
         if not hasattr(self.option, opt.dest):
             setattr(self.option, opt.dest, opt.default)
 
@@ -1842,7 +1838,7 @@ class Config:
         :param skip: If ``True``, raise :func:`pytest.skip` if option is undeclared or has a ``None`` value.
             Note that even if ``True``, if a default was specified it will be returned instead of a skip.
         """
-        name = self._opt2dest.get(name, name)
+        name = self._parser._opt2dest.get(name, name)
         try:
             val = getattr(self.option, name)
             if val is None and skip:

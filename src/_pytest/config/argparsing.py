@@ -48,6 +48,8 @@ class Parser:
             anonymous_arggroup, "_anonymous", self, _ispytest=True
         )
         self._groups = [self._anonymous]
+        # Maps option strings -> dest, e.g. "-V" and "--version" to "version".
+        self._opt2dest: dict[str, str] = {}
         file_or_dir_arg = self.optparser.add_argument(FILE_OR_DIR, nargs="*")
         file_or_dir_arg.completer = filescompleter  # type: ignore
 
@@ -368,6 +370,8 @@ class OptionGroup:
         option = Argument(action)
         self.options.append(option)
         if self.parser:
+            for name in option.names():
+                self.parser._opt2dest[name] = option.dest
             self.parser.processoption(option)
 
 
