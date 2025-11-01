@@ -69,6 +69,9 @@ KNOWN_TYPES = (
     "xpassed",
     "warnings",
     "error",
+    "subtests passed",
+    "subtests failed",
+    "subtests skipped",
 )
 
 _REPORTCHARS_DEFAULT = "fE"
@@ -1524,9 +1527,13 @@ def _get_line_with_reprcrash_message(
     line = f"{word} {node}"
     line_width = wcswidth(line)
 
+    msg: str | None
     try:
-        # Type ignored intentionally -- possible AttributeError expected.
-        msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr]
+        if isinstance(rep.longrepr, str):
+            msg = rep.longrepr
+        else:
+            # Type ignored intentionally -- possible AttributeError expected.
+            msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr]
     except AttributeError:
         pass
     else:
@@ -1579,6 +1586,8 @@ _color_for_type = {
     "error": "red",
     "warnings": "yellow",
     "passed": "green",
+    "subtests passed": "green",
+    "subtests failed": "red",
 }
 _color_for_type_default = "yellow"
 

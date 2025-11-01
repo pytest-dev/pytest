@@ -20,6 +20,11 @@ pytest enables test parametrization at several levels:
 * `pytest_generate_tests`_ allows one to define custom parametrization
   schemes or extensions.
 
+
+.. note::
+
+    See :ref:`subtests` for an alternative to parametrization.
+
 .. _parametrizemark:
 .. _`@pytest.mark.parametrize`:
 
@@ -202,6 +207,7 @@ To get all combinations of multiple parametrized arguments you can stack
 
 This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``,
 ``x=0/y=3``, and ``x=1/y=3`` exhausting parameters in the order of the decorators.
+
 
 .. _`pytest_generate_tests`:
 
