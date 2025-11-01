@@ -55,6 +55,7 @@ from _pytest._code import filter_traceback
 from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
+from _pytest.compat import NOTSET
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
@@ -905,14 +906,6 @@ def _get_plugin_specs_as_list(
     raise UsageError(
         f"Plugins may be specified as a sequence or a ','-separated string of plugin names. Got: {specs!r}"
     )
-
-
-class Notset:
-    def __repr__(self):
-        return "<NOTSET>"
-
-
-notset = Notset()
 
 
 def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
@@ -1840,7 +1833,7 @@ class Config:
             values.append(relroot)
         return values
 
-    def getoption(self, name: str, default: Any = notset, skip: bool = False):
+    def getoption(self, name: str, default: Any = NOTSET, skip: bool = False):
         """Return command line option value.
 
         :param name: Name of the option. You may also specify
@@ -1857,7 +1850,7 @@ class Config:
                 raise AttributeError(name)
             return val
         except AttributeError as e:
-            if default is not notset:
+            if default is not NOTSET:
                 return default
             if skip:
                 import pytest

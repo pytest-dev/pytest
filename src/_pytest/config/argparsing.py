@@ -15,18 +15,11 @@ from typing import NoReturn
 
 from .exceptions import UsageError
 import _pytest._io
+from _pytest.compat import NOTSET
 from _pytest.deprecated import check_ispytest
 
 
 FILE_OR_DIR = "file_or_dir"
-
-
-class NotSet:
-    def __repr__(self) -> str:
-        return "<notset>"
-
-
-NOT_SET = NotSet()
 
 
 @final
@@ -191,7 +184,7 @@ class Parser:
             "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
         ]
         | None = None,
-        default: Any = NOT_SET,
+        default: Any = NOTSET,
         *,
         aliases: Sequence[str] = (),
     ) -> None:
@@ -251,7 +244,7 @@ class Parser:
         )
         if type is None:
             type = "string"
-        if default is NOT_SET:
+        if default is NOTSET:
             default = get_ini_default_for_type(type)
 
         self._inidict[name] = (help, type, default)
