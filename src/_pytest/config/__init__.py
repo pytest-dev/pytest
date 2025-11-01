@@ -1208,12 +1208,11 @@ class Config:
         return config
 
     def _processopt(self, opt: Argument) -> None:
-        for name in opt._short_opts + opt._long_opts:
+        for name in opt.names():
             self._opt2dest[name] = opt.dest
 
-        if hasattr(opt, "default"):
-            if not hasattr(self.option, opt.dest):
-                setattr(self.option, opt.dest, opt.default)
+        if not hasattr(self.option, opt.dest):
+            setattr(self.option, opt.dest, opt.default)
 
     @hookimpl(trylast=True)
     def pytest_load_initial_conftests(self, early_config: Config) -> None:
