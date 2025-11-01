@@ -8,6 +8,7 @@ from collections.abc import Callable
 import dataclasses
 import os
 import sys
+import threading
 import types
 from typing import cast
 from typing import final
@@ -128,6 +129,7 @@ def runtestprotocol(
         # This only happens if the item is re-run, as is done by
         # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
+    item.session._item_to_thread[item] = threading.current_thread()
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
@@ -202,7 +204,14 @@ def _update_current_test_var(
 
     If ``when`` is None, delete ``PYTEST_CURRENT_TEST`` from the environment.
     """
+    thread = item.session._item_to_thread[item]
+    readable_id = item.session._readable_thread_id(thread)
+    # main thread (aka humanid == 0) gets the plain var. Other threads
+    # append their id.
     var_name = "PYTEST_CURRENT_TEST"
+    if readable_id != 0:
+        var_name += f"_THREAD_{readable_id}"
+
     if when:
         value = f"{item.nodeid} ({when})"
         # don't allow null bytes on environment variables (see #2644, #2957)
