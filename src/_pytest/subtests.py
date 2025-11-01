@@ -129,10 +129,9 @@ class SubtestReport(TestReport):
 def subtests(request: SubRequest) -> Subtests:
     """Provides subtests functionality."""
     capmam = request.node.config.pluginmanager.get_plugin("capturemanager")
-    if capmam is not None:
-        suspend_capture_ctx = capmam.global_and_fixture_disabled
-    else:
-        suspend_capture_ctx = nullcontext
+    suspend_capture_ctx = (
+        capmam.global_and_fixture_disabled if capmam is not None else nullcontext
+    )
     return Subtests(request.node.ihook, suspend_capture_ctx, request, _ispytest=True)
 
 
@@ -377,11 +376,9 @@ def pytest_report_teststatus(
                 category = "xfailed"
                 short = "y"  # x letter is used for regular xfail, y for subtest xfail
                 status = "SUBXFAIL"
-            elif outcome == "passed":
-                category = "xpassed"
-                short = "Y"  # X letter is used for regular xpass, Y for subtest xpass
-                status = "SUBXPASS"
-            else:
+            # outcome == "passed" in an xfail is only possible via a @pytest.mark.xfail mark, which
+            # is not applicable to a subtest, which only handles pytest.xfail().
+            else:  # pragma: no cover
                 # This should not normally happen, unless some plugin is setting wasxfail without
                 # the correct outcome. Pytest expects the call outcome to be either skipped or
                 # passed in case of xfail.

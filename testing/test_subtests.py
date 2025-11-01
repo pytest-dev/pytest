@@ -3,6 +3,8 @@ from __future__ import annotations
 import sys
 from typing import Literal
 
+from _pytest.subtests import SubtestContext
+from _pytest.subtests import SubtestReport
 import pytest
 
 
@@ -642,9 +644,10 @@ class TestCapture:
         """
         )
 
-    def test_capturing(self, pytester: pytest.Pytester) -> None:
+    @pytest.mark.parametrize("mode", ["fd", "sys"])
+    def test_capturing(self, pytester: pytest.Pytester, mode: str) -> None:
         self.create_file(pytester)
-        result = pytester.runpytest()
+        result = pytester.runpytest(f"--capture={mode}")
         result.stdout.fnmatch_lines(
             [
                 "*__ test (i='A') __*",
@@ -952,3 +955,23 @@ def test_nested(pytester: pytest.Pytester) -> None:
             "* 3 failed in *",
         ]
     )
+
+
+def test_serialization() -> None:
+    from _pytest.subtests import pytest_report_from_serializable
+    from _pytest.subtests import pytest_report_to_serializable
+
+    report = SubtestReport(
+        "test_foo::test_foo",
+        ("test_foo.py", 12, ""),
+        keywords={},
+        outcome="passed",
+        when="call",
+        longrepr=None,
+        context=SubtestContext(msg="custom message", kwargs=dict(i=10)),
+    )
+    data = pytest_report_to_serializable(report)
+    assert data is not None
+    new_report = pytest_report_from_serializable(data)
+    assert new_report is not None
+    assert new_report.context == SubtestContext(msg="custom message", kwargs=dict(i=10))
