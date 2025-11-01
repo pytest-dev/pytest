@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 import os
 import sys
+import textwrap
 from typing import Any
 from typing import final
 from typing import Literal
@@ -533,8 +534,6 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
 
         This allows to have explicit line breaks in the help text.
         """
-        import textwrap
-
         lines = []
         for line in text.splitlines():
             lines.extend(textwrap.wrap(line.strip(), width))
