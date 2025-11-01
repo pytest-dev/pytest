@@ -2276,7 +2276,7 @@ class TestOverrideIniArgs:
         cache_dir = ".custom_cache"
         monkeypatch.setenv("PYTEST_ADDOPTS", f"-o cache_dir={cache_dir}")
         config = _config_for_test
-        config._preparse([], addopts=True)
+        config.parse([], addopts=True)
         assert config.inicfg.get("cache_dir") == ConfigValue(
             cache_dir, origin="override", mode="ini"
         )
@@ -2288,7 +2288,7 @@ class TestOverrideIniArgs:
         monkeypatch.setenv("PYTEST_ADDOPTS", "-o")
         config = _config_for_test
         with pytest.raises(UsageError) as excinfo:
-            config._preparse(["cache_dir=ignored"], addopts=True)
+            config.parse(["cache_dir=ignored"], addopts=True)
         assert (
             "error: argument -o/--override-ini: expected one argument"
             in excinfo.value.args[0]
@@ -2304,10 +2304,9 @@ class TestOverrideIniArgs:
         """
         )
         result = pytester.runpytest("cache_dir=ignored")
-        config = pytester._request.config
         result.stderr.fnmatch_lines(
             [
-                f"{config._parser.optparser.prog}: error: argument -o/--override-ini: expected one argument",
+                "*: error: argument -o/--override-ini: expected one argument",
                 "  config source: via addopts config",
             ]
         )
@@ -2318,7 +2317,7 @@ class TestOverrideIniArgs:
     ) -> None:
         """Check that -o no longer swallows all options after it (#3103)"""
         config = _config_for_test
-        config._preparse(["-o", "cache_dir=/cache", "/some/test/path"])
+        config.parse(["-o", "cache_dir=/cache", "/some/test/path"])
         assert config.inicfg.get("cache_dir") == ConfigValue(
             "/cache", origin="override", mode="ini"
         )
@@ -2410,8 +2409,7 @@ def test_help_and_version_after_argument_error(pytester: Pytester) -> None:
     result.stderr.fnmatch_lines(
         [
             "ERROR: usage: *",
-            f"{pytester._request.config._parser.optparser.prog}: error: "
-            f"argument --invalid-option-should-allow-for-help: expected one argument",
+            "*: error: argument --invalid-option-should-allow-for-help: expected one argument",
         ]
     )
     # Does not display full/default help.

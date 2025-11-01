@@ -742,10 +742,8 @@ class TestStackLevel:
         assert func == "<module>"  # the above conftest.py
         assert lineno == 4
 
-    def test_issue4445_preparse(self, pytester: Pytester, capwarn) -> None:
-        """#4445: Make sure the warning points to a reasonable location
-        See origin of _issue_warning_captured at: _pytest.config.__init__.py:910
-        """
+    def test_issue4445_initial_conftest(self, pytester: Pytester, capwarn) -> None:
+        """#4445: Make sure the warning points to a reasonable location."""
         pytester.makeconftest(
             """
             import nothing
@@ -761,7 +759,7 @@ class TestStackLevel:
 
         assert "could not load initial conftests" in str(warning.message)
         assert f"config{os.sep}__init__.py" in file
-        assert func == "_preparse"
+        assert func == "parse"
 
     @pytest.mark.filterwarnings("default")
     def test_conftest_warning_captured(self, pytester: Pytester) -> None:

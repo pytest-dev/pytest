@@ -56,7 +56,7 @@ if TYPE_CHECKING:
 
 
 def pytest_addoption(parser: Parser) -> None:
-    group = parser.getgroup("general", "Running and selection options")
+    group = parser.getgroup("general")
     group._addoption(  # private to use reserved lower-case short option
         "-x",
         "--exitfirst",
