@@ -42,7 +42,7 @@ class Parser:
 
         self._processopt = processopt
         self.extra_info: dict[str, Any] = {}
-        self.optparser = PytestArgumentParser(self, usage, self.extra_info)
+        self.optparser = PytestArgumentParser(usage, self.extra_info)
         anonymous_arggroup = self.optparser.add_argument_group("Custom options")
         self._anonymous = OptionGroup(
             anonymous_arggroup, "_anonymous", self, _ispytest=True
@@ -378,11 +378,9 @@ class OptionGroup:
 class PytestArgumentParser(argparse.ArgumentParser):
     def __init__(
         self,
-        parser: Parser,
         usage: str | None,
         extra_info: dict[str, str],
     ) -> None:
-        self._parser = parser
         super().__init__(
             usage=usage,
             add_help=False,
