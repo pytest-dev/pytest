@@ -1598,7 +1598,6 @@ class TestGenericReporting:
             """
         )
         result = pytester.runpytest("--tb=line")
-        bn = p.name
         result.stdout.fnmatch_lines(["*- Captured stdout call -*"])
         s = result.stdout.str()
         assert output_to_capture in s
