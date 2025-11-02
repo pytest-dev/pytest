@@ -65,7 +65,7 @@ def option(request):
     return request.param
 
 
-@pytest.mark.parametrize("
+@pytest.mark.parametrize(
     "input,expected",
     [
         ([DistInfo(project_name="test", version=1)], ["test-1"]),
