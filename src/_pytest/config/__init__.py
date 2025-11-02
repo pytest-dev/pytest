@@ -1427,6 +1427,10 @@ class Config:
             args, namespace=copy.copy(self.known_args_namespace)
         )
 
+        # Deduplicate pythonwarnings to fix duplicate -W entries
+        warnings = getattr(self.known_args_namespace, "pythonwarnings", [])
+        self.known_args_namespace.pythonwarnings = list(dict.fromkeys(warnings)
+
         self._validate_plugins()
         self._warn_about_skipped_plugins()
 
