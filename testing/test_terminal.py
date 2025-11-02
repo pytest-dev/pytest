@@ -1586,7 +1586,7 @@ class TestGenericReporting:
                 assert "FAILURES" not in s
                 assert "--calling--" not in s
                 assert "IndexError" not in s
-                
+
     def test_tb_line_show_capture(self, pytester: Pytester, option) -> None:
         output_to_capture = "help! let me out!"
         p = pytester.makepyfile(
