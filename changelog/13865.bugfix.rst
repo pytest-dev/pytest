@@ -1,0 +1,1 @@
+Add calls to `stdout` test report when the `--tb` option is set to `line`.
