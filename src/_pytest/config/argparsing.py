@@ -448,7 +448,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
                 return_list.append(option.replace(" ", "=", 1))
         return ", ".join(return_list)
 
-    def _split_lines(self, text, width):
+    def _split_lines(self, text: str, width: int) -> list[str]:
         """Wrap lines after splitting on original newlines.
 
         This allows to have explicit line breaks in the help text.
