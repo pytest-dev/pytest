@@ -1370,16 +1370,10 @@ class Config:
     def _checkversion(self) -> None:
         import pytest
 
-        minver_ini_value = self.inicfg.get("minversion", None)
-        minver = minver_ini_value.value if minver_ini_value is not None else None
+        minver = self.getini("minversion")
         if minver:
             # Imported lazily to improve start-up time.
             from packaging.version import Version
-
-            if not isinstance(minver, str):
-                raise pytest.UsageError(
-                    f"{self.inipath}: 'minversion' must be a single value"
-                )
 
             if Version(minver) > Version(pytest.__version__):
                 raise pytest.UsageError(
