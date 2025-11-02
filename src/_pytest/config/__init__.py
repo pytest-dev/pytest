@@ -18,6 +18,7 @@ import dataclasses
 import enum
 from functools import lru_cache
 import glob
+import importlib
 import importlib.metadata
 import inspect
 import os
@@ -874,7 +875,13 @@ class PytestPluginManager(PluginManager):
                 return
 
         try:
-            __import__(importspec)
+            if sys.version_info >= (3, 11):
+                mod = importlib.import_module(importspec)
+            else:
+                # On Python 3.10, import_module breaks
+                # testing/test_config.py::test_disable_plugin_autoload.
+                __import__(importspec)
+                mod = sys.modules[importspec]
         except ImportError as e:
             raise ImportError(
                 f'Error importing plugin "{modname}": {e.args[0]}'
@@ -883,7 +890,6 @@ class PytestPluginManager(PluginManager):
         except Skipped as e:
             self.skipped_plugins.append((modname, e.msg or ""))
         else:
-            mod = sys.modules[importspec]
             self.register(mod, modname)
 
 
@@ -2122,7 +2128,7 @@ def _resolve_warning_category(category: str) -> type[Warning]:
         klass = category
     else:
         module, _, klass = category.rpartition(".")
-        m = __import__(module, None, None, [klass])
+        m = importlib.import_module(module)
     cat = getattr(m, klass)
     if not issubclass(cat, Warning):
         raise UsageError(f"{cat} is not a Warning subclass")

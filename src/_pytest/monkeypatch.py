@@ -7,6 +7,7 @@ from collections.abc import Generator
 from collections.abc import Mapping
 from collections.abc import MutableMapping
 from contextlib import contextmanager
+import importlib
 import os
 from pathlib import Path
 import re
@@ -66,7 +67,7 @@ def resolve(name: str) -> object:
     parts = name.split(".")
 
     used = parts.pop(0)
-    found: object = __import__(used)
+    found: object = importlib.import_module(used)
     for part in parts:
         used += "." + part
         try:
@@ -78,7 +79,7 @@ def resolve(name: str) -> object:
         # We use explicit un-nesting of the handling block in order
         # to avoid nested exceptions.
         try:
-            __import__(used)
+            importlib.import_module(used)
         except ImportError as ex:
             expected = str(ex).split()[-1]
             if expected == used:
