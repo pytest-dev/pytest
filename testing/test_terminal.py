@@ -1586,6 +1586,22 @@ class TestGenericReporting:
                 assert "FAILURES" not in s
                 assert "--calling--" not in s
                 assert "IndexError" not in s
+                
+    def test_tb_line_show_capture(self, pytester: Pytester, option) -> None:
+        output_to_capture = "help! let me out!"
+        p = pytester.makepyfile(
+            f"""
+            import pytest
+            def test_fail():
+                print('{output_to_capture}')
+                assert False
+            """
+        )
+        result = pytester.runpytest("--tb=line")
+        bn = p.name
+        result.stdout.fnmatch_lines(["*- Captured stdout call -*"])
+        s = result.stdout.str()
+        assert output_to_capture in s
 
     def test_tb_crashline(self, pytester: Pytester, option) -> None:
         p = pytester.makepyfile(
