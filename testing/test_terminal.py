@@ -65,7 +65,7 @@ def option(request):
     return request.param
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize("
     "input,expected",
     [
         ([DistInfo(project_name="test", version=1)], ["test-1"]),
@@ -1589,7 +1589,7 @@ class TestGenericReporting:
 
     def test_tb_line_show_capture(self, pytester: Pytester, option) -> None:
         output_to_capture = "help! let me out!"
-        p = pytester.makepyfile(
+        pytester.makepyfile(
             f"""
             import pytest
             def test_fail():
