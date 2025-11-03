@@ -1598,9 +1598,10 @@ class TestGenericReporting:
             """
         )
         result = pytester.runpytest("--tb=line")
-        result.stdout.fnmatch_lines(["*- Captured stdout call -*"])
-        s = result.stdout.str()
-        assert output_to_capture in s
+        result.stdout.fnmatch_lines([
+            "*- Captured stdout call -*",
+            output_to_capture
+        ])
 
     def test_tb_crashline(self, pytester: Pytester, option) -> None:
         p = pytester.makepyfile(
