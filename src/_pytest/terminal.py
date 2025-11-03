@@ -1188,6 +1188,7 @@ class TerminalReporter:
                 if style == "line":
                     for rep in reports:
                         line = self._getcrashline(rep)
+                        self._outrep_summary(rep)
                         self.write_line(line)
                 else:
                     for rep in reports:
