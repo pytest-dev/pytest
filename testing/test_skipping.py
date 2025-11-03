@@ -684,13 +684,14 @@ class TestXFail:
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict_val", ["true", "false"])
+    @pytest.mark.parametrize("option_name", ["strict_xfail", "strict"])
     def test_strict_xfail_default_from_file(
-        self, pytester: Pytester, strict_val
+        self, pytester: Pytester, strict_val: str, option_name: str
     ) -> None:
         pytester.makeini(
             f"""
             [pytest]
-            xfail_strict = {strict_val}
+            {option_name} = {strict_val}
         """
         )
         p = pytester.makepyfile(
@@ -1178,7 +1179,7 @@ def test_default_markers(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*skipif(condition, ..., [*], reason=...)*skip*",
-            "*xfail(condition, ..., [*], reason=..., run=True, raises=None, strict=xfail_strict)*expected failure*",
+            "*xfail(condition, ..., [*], reason=..., run=True, raises=None, strict=strict_xfail)*expected failure*",
         ]
     )
 

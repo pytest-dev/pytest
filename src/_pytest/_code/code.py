@@ -772,7 +772,11 @@ class ExceptionInfo(Generic[E]):
         """
         __tracebackhide__ = True
         value = stringify_exception(self.value)
-        msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
+        msg = (
+            f"Regex pattern did not match.\n"
+            f"  Expected regex: {regexp!r}\n"
+            f"  Actual message: {value!r}"
+        )
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
         assert re.search(regexp, value), msg

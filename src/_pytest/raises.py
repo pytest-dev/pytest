@@ -464,11 +464,11 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                     f"with `RaisesGroup`."
                 )
         # unclear if the Type/ValueError distinction is even helpful here
-        msg = f"expected exception must be {expected}, not "
+        msg = f"Expected {expected}, but got "
         if isinstance(exc, type):  # type: ignore[unreachable]
             raise ValueError(msg + f"{exc.__name__!r}")
         if isinstance(exc, BaseException):  # type: ignore[unreachable]
-            raise TypeError(msg + f"an exception instance ({type(exc).__name__})")
+            raise TypeError(msg + f"an exception instance: {type(exc).__name__}")
         raise TypeError(msg + repr(type(exc).__name__))
 
     @property
@@ -519,12 +519,10 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             self._fail_reason = ("\n" if diff[0][0] == "-" else "") + "\n".join(diff)
             return False
 
-        # I don't love "Regex"+"Input" vs something like "expected regex"+"exception message"
-        # when they're similar it's not always obvious which is which
         self._fail_reason = (
             f"Regex pattern did not match{maybe_specify_type}.\n"
-            f" Regex: {_match_pattern(self.match)!r}\n"
-            f" Input: {stringified_exception!r}"
+            f"  Expected regex: {_match_pattern(self.match)!r}\n"
+            f"  Actual message: {stringified_exception!r}"
         )
         if _match_pattern(self.match) == stringified_exception:
             self._fail_reason += "\n Did you mean to `re.escape()` the regex?"
@@ -1038,7 +1036,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             return exc
         elif isinstance(exc, tuple):
             raise TypeError(
-                f"expected exception must be {expected}, not {type(exc).__name__!r}.\n"
+                f"Expected {expected}, but got {type(exc).__name__!r}.\n"
                 "RaisesGroup does not support tuples of exception types when expecting one of "
                 "several possible exception types like RaisesExc.\n"
                 "If you meant to expect a group with multiple exceptions, list them as separate arguments."

@@ -37,11 +37,13 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
     parser.addini(
-        "xfail_strict",
+        "strict_xfail",
         "Default for the strict parameter of xfail "
-        "markers when not given explicitly (default: False)",
-        default=False,
+        "markers when not given explicitly (default: False) (alias: xfail_strict)",
         type="bool",
+        # None => fallback to `strict`.
+        default=None,
+        aliases=["xfail_strict"],
     )
 
 
@@ -74,7 +76,7 @@ def pytest_configure(config: Config) -> None:
     )
     config.addinivalue_line(
         "markers",
-        "xfail(condition, ..., *, reason=..., run=True, raises=None, strict=xfail_strict): "
+        "xfail(condition, ..., *, reason=..., run=True, raises=None, strict=strict_xfail): "
         "mark the test function as an expected failure if any of the conditions "
         "evaluate to True. Optionally specify a reason for better reporting "
         "and run=False if you don't even want to execute the test function. "
@@ -213,7 +215,11 @@ def evaluate_xfail_marks(item: Item) -> Xfail | None:
     """Evaluate xfail marks on item, returning Xfail if triggered."""
     for mark in item.iter_markers(name="xfail"):
         run = mark.kwargs.get("run", True)
-        strict = mark.kwargs.get("strict", item.config.getini("xfail_strict"))
+        strict = mark.kwargs.get("strict")
+        if strict is None:
+            strict = item.config.getini("strict_xfail")
+        if strict is None:
+            strict = item.config.getini("strict")
         raises = mark.kwargs.get("raises", None)
         if "condition" not in mark.kwargs:
             conditions = mark.args

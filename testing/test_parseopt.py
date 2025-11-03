@@ -158,19 +158,16 @@ class TestParser:
         parser.addoption("--hello", dest="hello", default="x", action="store")
         option = parser.parse([])
         assert option.hello == "x"
-        del option.hello
-        parser.parse_setoption([], option)
-        assert option.hello == "x"
 
-    def test_parse_setoption(self, parser: parseopt.Parser) -> None:
+    def test_parse_set_options(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", dest="hello", action="store")
         parser.addoption("--world", dest="world", default=42)
 
         option = argparse.Namespace()
-        args = parser.parse_setoption(["--hello", "world"], option)
+        parser.parse(["--hello", "world"], option)
         assert option.hello == "world"
         assert option.world == 42
-        assert not args
+        assert getattr(option, parseopt.FILE_OR_DIR) == []
 
     def test_parse_special_destination(self, parser: parseopt.Parser) -> None:
         parser.addoption("--ultimate-answer", type=int)

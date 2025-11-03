@@ -1353,7 +1353,7 @@ def test_collect_pyargs_with_testpaths(
 
 
 def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
-    """The testpaths ini option should load conftests in those paths as 'initial' (#10987)."""
+    """The testpaths config option should load conftests in those paths as 'initial' (#10987)."""
     p = pytester.mkdir("some_path")
     p.joinpath("conftest.py").write_text(
         textwrap.dedent(
@@ -2726,15 +2726,17 @@ class TestOverlappingCollectionArguments:
         ),
     ],
 )
+@pytest.mark.parametrize("option_name", ["strict_parametrization_ids", "strict"])
 def test_strict_parametrization_ids(
     pytester: Pytester,
     x_y: Sequence[tuple[int, int]],
     expected_duplicates: Sequence[str],
+    option_name: str,
 ) -> None:
     pytester.makeini(
-        """
+        f"""
         [pytest]
-        strict_parametrization_ids = true
+        {option_name} = true
         """
     )
     pytester.makepyfile(

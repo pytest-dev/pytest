@@ -68,13 +68,21 @@ and functions, including from test modules:
     ============================ 2 passed in 0.12s =============================
 
 You can make these changes permanent in your project by
-putting them into a pytest.ini file like this:
+putting them into a configuration file like this:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # content of pytest.ini
-    [pytest]
-    addopts = --doctest-modules
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--doctest-modules"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = --doctest-modules
 
 
 Encoding
@@ -82,13 +90,21 @@ Encoding
 
 The default encoding is **UTF-8**, but you can specify the encoding
 that will be used for those doctest files using the
-``doctest_encoding`` ini option:
+:confval:`doctest_encoding` configuration option:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # content of pytest.ini
-    [pytest]
-    doctest_encoding = latin1
+    .. code-block:: toml
+
+        [pytest]
+        doctest_encoding = "latin1"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        doctest_encoding = latin1
 
 .. _using doctest options:
 
@@ -102,10 +118,19 @@ configuration file.
 For example, to make pytest ignore trailing whitespaces and ignore
 lengthy exception stack traces you can just write:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    doctest_optionflags = NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
+    .. code-block:: toml
+
+        [pytest]
+        doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        doctest_optionflags = NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
 
 Alternatively, options can be enabled by an inline comment in the doc test
 itself:

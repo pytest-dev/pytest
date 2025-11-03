@@ -20,6 +20,11 @@ pytest enables test parametrization at several levels:
 * `pytest_generate_tests`_ allows one to define custom parametrization
   schemes or extensions.
 
+
+.. note::
+
+    See :ref:`subtests` for an alternative to parametrization.
+
 .. _parametrizemark:
 .. _`@pytest.mark.parametrize`:
 
@@ -88,12 +93,21 @@ them in turn:
     for the parametrization because it has several downsides.
     If however you would like to use unicode strings in parametrization
     and see them in the terminal as is (non-escaped), use this option
-    in your ``pytest.ini``:
+    in your configuration file:
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+        .. code-block:: toml
+
+            [pytest]
+            disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 
     Keep in mind however that this might cause unwanted side effects and
     even bugs depending on the OS used and plugins currently installed,
@@ -193,6 +207,7 @@ To get all combinations of multiple parametrized arguments you can stack
 
 This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``,
 ``x=0/y=3``, and ``x=1/y=3`` exhausting parameters in the order of the decorators.
+
 
 .. _`pytest_generate_tests`:
 

@@ -25,6 +25,7 @@ DEPRECATED_EXTERNAL_PLUGINS = {
     "pytest_catchlog",
     "pytest_capturelog",
     "pytest_faulthandler",
+    "pytest_subtests",
 }
 
 

@@ -47,13 +47,23 @@ Shows failed tests like so:
     text going to stderr
     ==================== 2 failed in 0.02 seconds =====================
 
-These options can also be customized through ``pytest.ini`` file:
+These options can also be customized through a configuration file:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    log_format = %(asctime)s %(levelname)s %(message)s
-    log_date_format = %Y-%m-%d %H:%M:%S
+    .. code-block:: toml
+
+        [pytest]
+        log_format = "%(asctime)s %(levelname)s %(message)s"
+        log_date_format = "%Y-%m-%d %H:%M:%S"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        log_format = %(asctime)s %(levelname)s %(message)s
+        log_date_format = %Y-%m-%d %H:%M:%S
 
 Specific loggers can be disabled via ``--log-disable={logger_name}``.
 This argument can be passed multiple times:
@@ -198,12 +208,12 @@ Additionally, you can also specify ``--log-cli-format`` and
 ``--log-date-format`` if not provided, but are applied only to the console
 logging handler.
 
-All of the CLI log options can also be set in the configuration INI file. The
+All of the CLI log options can also be set in the configuration file. The
 option names are:
 
-* ``log_cli_level``
-* ``log_cli_format``
-* ``log_cli_date_format``
+* :confval:`log_cli_level`
+* :confval:`log_cli_format`
+* :confval:`log_cli_date_format`
 
 If you need to record the whole test suite logging calls to a file, you can pass
 ``--log-file=/path/to/log/file``. This log file is opened in write mode by default which
@@ -220,17 +230,17 @@ Additionally, you can also specify ``--log-file-format`` and
 ``--log-file-date-format`` which are equal to ``--log-format`` and
 ``--log-date-format`` but are applied to the log file logging handler.
 
-All of the log file options can also be set in the configuration INI file. The
+All of the log file options can also be set in the configuration file. The
 option names are:
 
-* ``log_file``
-* ``log_file_mode``
-* ``log_file_level``
-* ``log_file_format``
-* ``log_file_date_format``
+* :confval:`log_file`
+* :confval:`log_file_mode`
+* :confval:`log_file_level`
+* :confval:`log_file_format`
+* :confval:`log_file_date_format`
 
 You can call ``set_log_path()`` to customize the log_file path dynamically. This functionality
-is considered **experimental**. Note that ``set_log_path()`` respects the ``log_file_mode`` option.
+is considered **experimental**. Note that ``set_log_path()`` respects the :confval:`log_file_mode` option.
 
 .. _log_colors:
 
@@ -266,12 +276,21 @@ This feature was introduced as a drop-in replacement for the
 with each other. The backward compatibility API with ``pytest-capturelog``
 has been dropped when this feature was introduced, so if for that reason you
 still need ``pytest-catchlog`` you can disable the internal feature by
-adding to your ``pytest.ini``:
+adding to your configuration file:
 
-.. code-block:: ini
+.. tab:: toml
 
-   [pytest]
-       addopts=-p no:logging
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["-p", "no:logging"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = -p no:logging
 
 
 .. _log_changes_3_4:
@@ -293,13 +312,23 @@ made in ``3.4`` after community feedback:
 * :ref:`Live Logs <live_logs>` are now sent to ``sys.stdout`` and no longer require the ``-s`` command-line option
   to work.
 
-If you want to partially restore the logging behavior of version ``3.3``, you can add this options to your ``ini``
+If you want to partially restore the logging behavior of version ``3.3``, you can add this options to your configuration
 file:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    log_cli=true
-    log_level=NOTSET
+    .. code-block:: toml
+
+        [pytest]
+        log_cli = true
+        log_level = "NOTSET"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        log_cli = true
+        log_level = NOTSET
 
 More details about the discussion that lead to this changes can be read in :issue:`3013`.

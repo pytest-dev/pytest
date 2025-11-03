@@ -239,13 +239,21 @@ Registering markers
 
 Registering markers for your test suite is simple:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # content of pytest.ini
-    [pytest]
-    markers =
-        webtest: mark a test as a webtest.
-        slow: mark test as slow.
+    .. code-block:: toml
+
+        [pytest]
+        markers = ["webtest: mark a test as a webtest.", "slow: mark test as slow."]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        markers =
+            webtest: mark a test as a webtest.
+            slow: mark test as slow.
 
 Multiple custom markers can be registered, by defining each one in its own line, as shown in above example.
 
@@ -286,8 +294,7 @@ For an example on how to add and work with markers from a plugin, see
 
     * Asking for existing markers via ``pytest --markers`` gives good output
 
-    * Typos in function markers are treated as an error if you use
-      the ``--strict-markers`` option.
+    * Typos in function markers are treated as an error if you use the :confval:`strict_markers` configuration option.
 
 .. _`scoped-marking`:
 
