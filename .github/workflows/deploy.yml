@@ -61,7 +61,6 @@ jobs:
       env:
         VERSION: ${{ github.event.inputs.version }}
       run: |
-        sudo apt-get install pandoc
         tox -e generate-gh-release-notes -- "$VERSION" gh-release-notes.md
 
     - name: Upload release notes
