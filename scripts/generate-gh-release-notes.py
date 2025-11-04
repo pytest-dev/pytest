@@ -43,7 +43,7 @@ def extract_changelog_entries_for(version: str) -> str:
 
 def convert_rst_to_md(text: str) -> str:
     result = pypandoc.convert_text(
-        text, "md", format="rst", extra_args=["--wrap=preserve"]
+        text, "gfm", format="rst", extra_args=["--wrap=preserve"]
     )
     assert isinstance(result, str), repr(result)
     return result
