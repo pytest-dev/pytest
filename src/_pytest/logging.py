@@ -513,7 +513,7 @@ class LogCaptureFixture:
 
         if isinstance(level, str):
             # Try to translate the level string to an int for `logging.disable()`
-            level = logging.getLevelName(level)
+            level = logging.getLevelName(level)  # type: ignore[deprecated]
 
         if not isinstance(level, int):
             # The level provided was not valid, so just un-disable all logging.
