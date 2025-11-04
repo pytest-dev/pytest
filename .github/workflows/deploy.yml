@@ -70,7 +70,7 @@ jobs:
         path: gh-release-notes.md
         retention-days: 1
 
-  deploy:
+  publish-to-pypi:
     if: github.repository == 'pytest-dev/pytest'
     # Need generate-gh-release-notes only for ordering.
     # Don't want to release to PyPI if generating GitHub release notes fails.
@@ -80,12 +80,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       id-token: write
-      contents: write
     steps:
-    - uses: actions/checkout@v5
-      with:
-        persist-credentials: true
-
     - name: Download Package
       uses: actions/download-artifact@v6
       with:
@@ -97,6 +92,18 @@ jobs:
       with:
         attestations: true
 
+  push-tag:
+    needs: [publish-to-pypi]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: true
+
     - name: Push tag
       env:
           VERSION: ${{ github.event.inputs.version }}
@@ -107,7 +114,7 @@ jobs:
         git push origin "$VERSION"
 
   create-github-release:
-    needs: [generate-gh-release-notes, deploy]
+    needs: [push-tag, generate-gh-release-notes]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

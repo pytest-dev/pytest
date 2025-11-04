@@ -133,7 +133,7 @@ Releasing
 
 Both automatic and manual processes described above follow the same steps from this point onward.
 
-#. After all tests pass and the PR has been approved, trigger the ``deploy`` job
+#. After all tests pass and the PR has been approved, trigger the ``deploy`` workflow
    in https://github.com/pytest-dev/pytest/actions/workflows/deploy.yml, using the ``release-MAJOR.MINOR.PATCH`` branch
    as source.
 
