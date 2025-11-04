@@ -1845,12 +1845,15 @@ class Config:
     def getoption(self, name: str, default: Any = notset, skip: bool = False):
         """Return command line option value.
 
-        :param name: Name of the option. You may also specify
-            the literal ``--OPT`` option instead of the "dest" option name.
-        :param default: Fallback value if no option of that name is **declared** via :hook:`pytest_addoption`.
-            Note this parameter will be ignored when the option is **declared** even if the option's value is ``None``.
-        :param skip: If ``True``, raise :func:`pytest.skip` if option is undeclared or has a ``None`` value.
-            Note that even if ``True``, if a default was specified it will be returned instead of a skip.
+        :param name:
+            Name of the option. You may also specify the literal ``--OPT`` option instead of the "dest" option name.
+        :param default:
+            Fallback value if the option is not available.
+            Ignored when the option has been declared (even if its value is ``None``), unless ``skip=True``.
+        :param skip:
+            If ``True``, call :func:`pytest.skip` if the option is undeclared or ``None``.
+            Note that when ``skip=True`` and the ``default`` parameter is provided (even ``None``),
+            the default value is returned instead of skipping.
         """
         name = self._opt2dest.get(name, name)
         try:
