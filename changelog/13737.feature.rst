@@ -1,4 +1,0 @@
-Added the :confval:`strict_parametrization_ids` configuration option.
-
-When set, pytest emits an error if it detects non-unique parameter set IDs,
-rather than automatically making the IDs unique by adding `0`, `1`, ... to them.

@@ -1,3 +1,0 @@
-Having pytest configuration spread over more than one file (for example having both a ``pytest.ini`` file and ``pyproject.toml`` with a ``[tool.pytest.ini_options]`` table) will now print a warning to make it clearer to the user that only one of them is actually used.
-
--- by :user:`sgaist`
