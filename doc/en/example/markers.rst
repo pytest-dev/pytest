@@ -243,6 +243,7 @@ Registering markers for your test suite is simple:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         markers = ["webtest: mark a test as a webtest.", "slow: mark test as slow."]
 

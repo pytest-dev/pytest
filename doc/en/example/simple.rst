@@ -15,6 +15,7 @@ progress output, you can write it into a configuration file:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         addopts = ["-ra", "-q"]
 

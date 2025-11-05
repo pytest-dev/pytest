@@ -1742,6 +1742,7 @@ into a configuration file:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         usefixtures = ["cleandir"]
 

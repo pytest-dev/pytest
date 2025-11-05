@@ -1337,6 +1337,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
        .. code-block:: toml
 
+            # content of pytest.toml
             [pytest]
             addopts = ["--maxfail=2", "-rf"]  # exit after 2 failures, report fail info
 

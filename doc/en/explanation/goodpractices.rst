@@ -100,6 +100,7 @@ To this end, add the following to your configuration file:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         addopts = ["--import-mode=importlib"]
 

@@ -74,6 +74,7 @@ putting them into a configuration file like this:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         addopts = ["--doctest-modules"]
 

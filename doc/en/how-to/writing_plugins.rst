@@ -426,6 +426,7 @@ in our configuration file to tell pytest where to look for example files.
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         pytester_example_dir = "."
 

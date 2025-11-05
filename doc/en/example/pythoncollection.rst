@@ -94,6 +94,7 @@ You can set the :confval:`norecursedirs` option in a configuration file:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         norecursedirs = [".svn", "_build", "tmp*"]
 
@@ -120,6 +121,7 @@ Here is an example:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         # Example 1: have pytest look for "check" instead of "test"
         [pytest]
         python_files = ["check_*.py"]
@@ -175,6 +177,7 @@ You can check for multiple glob patterns by adding a space between the patterns:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         # Example 2: have pytest look for files with "test" and "example"
         [pytest]
         python_files = ["test_*.py", "example_*.py"]
@@ -213,6 +216,7 @@ can make this change more permanently:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         addopts = ["--pyargs"]
 
@@ -264,6 +268,7 @@ You can easily instruct ``pytest`` to discover tests from every Python file:
 
     .. code-block:: toml
 
+        # content of pytest.toml
         [pytest]
         python_files = ["*.py"]
 
