@@ -394,6 +394,8 @@ class PytestArgumentParser(argparse.ArgumentParser):
 
     def error(self, message: str) -> NoReturn:
         """Transform argparse error message into UsageError."""
+        # TODO(py313): Replace with `exit_on_error=False`. Note that while it
+        # was added in Python 3.9, it was broken until 3.13 (cpython#121018).
         msg = f"{self.prog}: error: {message}"
         if self.extra_info:
             msg += "\n" + "\n".join(
