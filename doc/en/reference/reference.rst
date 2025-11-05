@@ -1333,20 +1333,11 @@ passed multiple times. The expected format is ``name=value``. For example::
    Add the specified ``OPTS`` to the set of command line arguments as if they
    had been specified by the user. Example: if you have this configuration file content:
 
-   .. tab:: toml
+   .. code-block:: toml
 
-       .. code-block:: toml
-
-            # content of pytest.toml
-            [pytest]
-            addopts = ["--maxfail=2", "-rf"]  # exit after 2 failures, report fail info
-
-   .. tab:: ini
-
-       .. code-block:: ini
-
-            [pytest]
-            addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
+        # content of pytest.toml
+        [pytest]
+        addopts = ["--maxfail=2", "-rf"]  # exit after 2 failures, report fail info
 
    issuing ``pytest test_hello.py`` actually means:
 

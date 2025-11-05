@@ -96,20 +96,11 @@ For new projects, we recommend to use ``importlib`` :ref:`import mode <import-mo
 (see which-import-mode_ for a detailed explanation).
 To this end, add the following to your configuration file:
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        # content of pytest.toml
-        [pytest]
-        addopts = ["--import-mode=importlib"]
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        addopts = --import-mode=importlib
+    # content of pytest.toml
+    [pytest]
+    addopts = ["--import-mode=importlib"]
 
 .. _src-layout:
 

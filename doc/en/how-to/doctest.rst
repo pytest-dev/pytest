@@ -70,21 +70,11 @@ and functions, including from test modules:
 You can make these changes permanent in your project by
 putting them into a configuration file like this:
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        # content of pytest.toml
-        [pytest]
-        addopts = ["--doctest-modules"]
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        addopts = --doctest-modules
-
+    # content of pytest.toml
+    [pytest]
+    addopts = ["--doctest-modules"]
 
 Encoding
 --------

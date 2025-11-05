@@ -1738,21 +1738,11 @@ and you may specify fixture usage at the test module level using :globalvar:`pyt
 It is also possible to put fixtures required by all tests in your project
 into a configuration file:
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        # content of pytest.toml
-        [pytest]
-        usefixtures = ["cleandir"]
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        usefixtures = cleandir
-
+    # content of pytest.toml
+    [pytest]
+    usefixtures = ["cleandir"]
 
 .. warning::
 

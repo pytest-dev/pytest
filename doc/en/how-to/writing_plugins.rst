@@ -422,20 +422,11 @@ which is especially useful for longer tests and/or longer ``conftest.py`` files.
 Note that for ``pytester.copy_example`` to work we need to set `pytester_example_dir`
 in our configuration file to tell pytest where to look for example files.
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        # content of pytest.toml
-        [pytest]
-        pytester_example_dir = "."
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        pytester_example_dir = .
+    # content of pytest.toml
+    [pytest]
+    pytester_example_dir = "."
 
 
 .. code-block:: python
