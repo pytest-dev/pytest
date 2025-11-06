@@ -367,9 +367,7 @@ class TestRaises:
     def test_expected_exception_is_not_a_baseexception(self) -> None:
         with pytest.raises(
             TypeError,
-            match=wrap_escape(
-                "expected exception must be a BaseException type, not 'str'"
-            ),
+            match=wrap_escape("Expected a BaseException type, but got 'str'"),
         ):
             with pytest.raises("hello"):  # type: ignore[call-overload]
                 pass  # pragma: no cover
@@ -380,7 +378,7 @@ class TestRaises:
         with pytest.raises(
             ValueError,
             match=wrap_escape(
-                "expected exception must be a BaseException type, not 'NotAnException'"
+                "Expected a BaseException type, but got 'NotAnException'"
             ),
         ):
             with pytest.raises(NotAnException):  # type: ignore[type-var]
@@ -388,9 +386,7 @@ class TestRaises:
 
         with pytest.raises(
             TypeError,
-            match=wrap_escape(
-                "expected exception must be a BaseException type, not 'str'"
-            ),
+            match=wrap_escape("Expected a BaseException type, but got 'str'"),
         ):
             with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
                 pass  # pragma: no cover

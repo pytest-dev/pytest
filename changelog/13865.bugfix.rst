@@ -1,0 +1,1 @@
+Fixed `--show-capture` with `--tb=line`.

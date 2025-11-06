@@ -28,9 +28,10 @@ class TestParser:
 
     def test_custom_prog(self, parser: parseopt.Parser) -> None:
         """Custom prog can be set for `argparse.ArgumentParser`."""
-        assert parser._getparser().prog == argparse.ArgumentParser().prog
+        assert parser.optparser.prog == argparse.ArgumentParser().prog
         parser.prog = "custom-prog"
-        assert parser._getparser().prog == "custom-prog"
+        assert parser.prog == "custom-prog"
+        assert parser.optparser.prog == "custom-prog"
 
     def test_argument(self) -> None:
         with pytest.raises(parseopt.ArgumentError):
@@ -71,14 +72,12 @@ class TestParser:
         assert res["dest"] == "abc"
 
     def test_group_add_and_get(self, parser: parseopt.Parser) -> None:
-        group = parser.getgroup("hello", description="desc")
+        group = parser.getgroup("hello")
         assert group.name == "hello"
-        assert group.description == "desc"
 
     def test_getgroup_simple(self, parser: parseopt.Parser) -> None:
-        group = parser.getgroup("hello", description="desc")
+        group = parser.getgroup("hello")
         assert group.name == "hello"
-        assert group.description == "desc"
         group2 = parser.getgroup("hello")
         assert group2 is group
 
@@ -88,16 +87,20 @@ class TestParser:
         parser.getgroup("3", after="1")
         groups = parser._groups
         groups_names = [x.name for x in groups]
-        assert groups_names == list("132")
+        assert groups_names == ["_anonymous", "1", "3", "2"]
 
     def test_group_addoption(self) -> None:
-        group = parseopt.OptionGroup("hello", _ispytest=True)
+        optparser = argparse.ArgumentParser()
+        arggroup = optparser.add_argument_group("hello")
+        group = parseopt.OptionGroup(arggroup, "hello", None, _ispytest=True)
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
         assert isinstance(group.options[0], parseopt.Argument)
 
     def test_group_addoption_conflict(self) -> None:
-        group = parseopt.OptionGroup("hello again", _ispytest=True)
+        optparser = argparse.ArgumentParser()
+        arggroup = optparser.add_argument_group("hello again")
+        group = parseopt.OptionGroup(arggroup, "hello again", None, _ispytest=True)
         group.addoption("--option1", "--option-1", action="store_true")
         with pytest.raises(ValueError) as err:
             group.addoption("--option1", "--option-one", action="store_true")
@@ -142,17 +145,17 @@ class TestParser:
         parser.parse_known_args([Path(".")])
         parser.addoption("--hello", action="store_true")
         ns = parser.parse_known_args(["x", "--y", "--hello", "this"])
-        assert ns.hello
-        assert ns.file_or_dir == ["x"]
+        assert ns.hello is True
+        assert ns.file_or_dir == ["x", "this"]
 
     def test_parse_known_and_unknown_args(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", action="store_true")
         ns, unknown = parser.parse_known_and_unknown_args(
             ["x", "--y", "--hello", "this"]
         )
-        assert ns.hello
-        assert ns.file_or_dir == ["x"]
-        assert unknown == ["--y", "this"]
+        assert ns.hello is True
+        assert ns.file_or_dir == ["x", "this"]
+        assert unknown == ["--y"]
 
     def test_parse_will_set_default(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", dest="hello", default="x", action="store")

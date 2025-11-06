@@ -11,6 +11,7 @@ from math import sqrt
 import operator
 from operator import eq
 from operator import ne
+import re
 
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
@@ -1046,6 +1047,20 @@ class TestApprox:
 
         assert b == pytest.approx(a, abs=2)
         assert b != pytest.approx(a, abs=0.5)
+
+    def test_approx_dicts_with_mismatch_on_keys(self) -> None:
+        """https://github.com/pytest-dev/pytest/issues/13816"""
+        expected = {"a": 1, "b": 3}
+        actual = {"a": 1, "c": 3}
+
+        with pytest.raises(
+            AssertionError,
+            match=re.escape(
+                "comparison failed.\n  Mappings has different keys: "
+                "expected dict_keys(['a', 'b']) but got dict_keys(['a', 'c'])"
+            ),
+        ):
+            assert actual == approx(expected)
 
 
 class MyVec3:  # incomplete

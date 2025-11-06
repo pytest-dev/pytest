@@ -6,13 +6,14 @@ from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
 import os
+import sys
 from typing import Any
 from typing import final
 from typing import Literal
 from typing import NoReturn
 
+from .exceptions import UsageError
 import _pytest._io
-from _pytest.config.exceptions import UsageError
 from _pytest.deprecated import check_ispytest
 
 
@@ -35,8 +36,6 @@ class Parser:
         there's an error processing the command line arguments.
     """
 
-    prog: str | None = None
-
     def __init__(
         self,
         usage: str | None = None,
@@ -45,14 +44,31 @@ class Parser:
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
-        self._anonymous = OptionGroup("Custom options", parser=self, _ispytest=True)
-        self._groups: list[OptionGroup] = []
+
+        from _pytest._argcomplete import filescompleter
+
         self._processopt = processopt
-        self._usage = usage
+        self.extra_info: dict[str, Any] = {}
+        self.optparser = PytestArgumentParser(self, usage, self.extra_info)
+        anonymous_arggroup = self.optparser.add_argument_group("Custom options")
+        self._anonymous = OptionGroup(
+            anonymous_arggroup, "_anonymous", self, _ispytest=True
+        )
+        self._groups = [self._anonymous]
+        file_or_dir_arg = self.optparser.add_argument(FILE_OR_DIR, nargs="*")
+        file_or_dir_arg.completer = filescompleter  # type: ignore
+
         self._inidict: dict[str, tuple[str, str, Any]] = {}
         # Maps alias -> canonical name.
         self._ini_aliases: dict[str, str] = {}
-        self.extra_info: dict[str, Any] = {}
+
+    @property
+    def prog(self) -> str:
+        return self.optparser.prog
+
+    @prog.setter
+    def prog(self, value: str) -> None:
+        self.optparser.prog = value
 
     def processoption(self, option: Argument) -> None:
         if self._processopt:
@@ -77,12 +93,17 @@ class Parser:
         for group in self._groups:
             if group.name == name:
                 return group
-        group = OptionGroup(name, description, parser=self, _ispytest=True)
+
+        arggroup = self.optparser.add_argument_group(description or name)
+        group = OptionGroup(arggroup, name, self, _ispytest=True)
         i = 0
         for i, grp in enumerate(self._groups):
             if grp.name == after:
                 break
         self._groups.insert(i + 1, group)
+        # argparse doesn't provide a way to control `--help` order, so must
+        # access its internals ☹.
+        self.optparser._action_groups.insert(i + 1, self.optparser._action_groups.pop())
         return group
 
     def addoption(self, *opts: str, **attrs: Any) -> None:
@@ -106,31 +127,24 @@ class Parser:
         args: Sequence[str | os.PathLike[str]],
         namespace: argparse.Namespace | None = None,
     ) -> argparse.Namespace:
+        """Parse the arguments.
+
+        Unlike ``parse_known_args`` and ``parse_known_and_unknown_args``,
+        raises PrintHelp on `--help` and UsageError on unknown flags
+
+        :meta private:
+        """
         from _pytest._argcomplete import try_argcomplete
 
-        self.optparser = self._getparser()
         try_argcomplete(self.optparser)
         strargs = [os.fspath(x) for x in args]
-        return self.optparser.parse_intermixed_args(strargs, namespace=namespace)
-
-    def _getparser(self) -> PytestArgumentParser:
-        from _pytest._argcomplete import filescompleter
-
-        optparser = PytestArgumentParser(self, self.extra_info, prog=self.prog)
-        groups = [*self._groups, self._anonymous]
-        for group in groups:
-            if group.options:
-                desc = group.description or group.name
-                arggroup = optparser.add_argument_group(desc)
-                for option in group.options:
-                    n = option.names()
-                    a = option.attrs()
-                    arggroup.add_argument(*n, **a)
-        file_or_dir_arg = optparser.add_argument(FILE_OR_DIR, nargs="*")
-        # bash like autocompletion for dirs (appending '/')
-        # Type ignored because typeshed doesn't know about argcomplete.
-        file_or_dir_arg.completer = filescompleter  # type: ignore
-        return optparser
+        if namespace is None:
+            namespace = argparse.Namespace()
+        try:
+            namespace._raise_print_help = True
+            return self.optparser.parse_intermixed_args(strargs, namespace=namespace)
+        finally:
+            del namespace._raise_print_help
 
     def parse_known_args(
         self,
@@ -149,15 +163,24 @@ class Parser:
         namespace: argparse.Namespace | None = None,
     ) -> tuple[argparse.Namespace, list[str]]:
         """Parse the known arguments at this point, and also return the
-        remaining unknown arguments.
+        remaining unknown flag arguments.
 
         :returns:
             A tuple containing an argparse namespace object for the known
-            arguments, and a list of the unknown arguments.
+            arguments, and a list of unknown flag arguments.
         """
-        optparser = self._getparser()
         strargs = [os.fspath(x) for x in args]
-        return optparser.parse_known_args(strargs, namespace=namespace)
+        if sys.version_info < (3, 12):
+            # Older argparse have a bugged parse_known_intermixed_args.
+            namespace, unknown = self.optparser.parse_known_args(strargs, namespace)
+            assert namespace is not None
+            file_or_dir = getattr(namespace, FILE_OR_DIR)
+            unknown_flags: list[str] = []
+            for arg in unknown:
+                (unknown_flags if arg.startswith("-") else file_or_dir).append(arg)
+            return namespace, unknown_flags
+        else:
+            return self.optparser.parse_known_intermixed_args(strargs, namespace)
 
     def addini(
         self,
@@ -374,15 +397,14 @@ class OptionGroup:
 
     def __init__(
         self,
+        arggroup: argparse._ArgumentGroup,
         name: str,
-        description: str = "",
-        parser: Parser | None = None,
-        *,
+        parser: Parser | None,
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
+        self._arggroup = arggroup
         self.name = name
-        self.description = description
         self.options: list[Argument] = []
         self.parser = parser
 
@@ -417,8 +439,11 @@ class OptionGroup:
             for opt in option._short_opts:
                 if opt[0] == "-" and opt[1].islower():
                     raise ValueError("lowercase shortoptions reserved")
+
         if self.parser:
             self.parser.processoption(option)
+
+        self._arggroup.add_argument(*option.names(), **option.attrs())
         self.options.append(option)
 
 
@@ -426,13 +451,12 @@ class PytestArgumentParser(argparse.ArgumentParser):
     def __init__(
         self,
         parser: Parser,
-        extra_info: dict[str, Any] | None = None,
-        prog: str | None = None,
+        usage: str | None,
+        extra_info: dict[str, str],
     ) -> None:
         self._parser = parser
         super().__init__(
-            prog=prog,
-            usage=parser._usage,
+            usage=usage,
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,
             allow_abbrev=False,
@@ -440,7 +464,7 @@ class PytestArgumentParser(argparse.ArgumentParser):
         )
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user.
-        self.extra_info = extra_info if extra_info else {}
+        self.extra_info = extra_info
 
     def error(self, message: str) -> NoReturn:
         """Transform argparse error message into UsageError."""
