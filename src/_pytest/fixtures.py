@@ -1967,8 +1967,15 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
         tw.sep("-", f"fixtures used by {item.name}")
         # TODO: Fix this type ignore.
         tw.sep("-", f"({get_best_relpath(item.function)})")  # type: ignore[attr-defined]
+
+        # Exclude parametrize pseudo-fixtures.
+        parametrize_args = _get_direct_parametrize_args(item)
+
         # dict key not used in loop but needed for sorting.
-        for _, fixturedefs in sorted(info.name2fixturedefs.items()):
+        for argname, fixturedefs in sorted(info.name2fixturedefs.items()):
+            # Skip parametrize arguments - they are not real fixtures.
+            if argname in parametrize_args:
+                continue
             assert fixturedefs is not None
             if not fixturedefs:
                 continue

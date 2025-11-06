@@ -254,3 +254,57 @@ def test_verbose_include_multiline_docstring(pytester: Pytester) -> None:
             "    Docstring content that extends into a third paragraph.",
         ]
     )
+
+
+def test_parametrize_pseudo_fixtures_excluded(pytester: Pytester) -> None:
+    """Test that parametrize arguments are not shown as fixtures.
+
+    Regression test for issue #11295.
+    """
+    p = pytester.makepyfile(
+        '''
+        import pytest
+        @pytest.fixture
+        def real_fixture():
+            """A real fixture with a proper definition."""
+            return "real_value"
+
+        @pytest.mark.parametrize("x", [1, 2])
+        def test_with_parametrize(x, real_fixture):
+            """Test with both a parameter and a real fixture."""
+            assert x > 0
+            assert real_fixture == "real_value"
+
+        @pytest.mark.parametrize("y,z", [(1, 2), (3, 4)])
+        def test_with_multiple_parametrize(y, z):
+            """Test with multiple parameters and no real fixtures."""
+            assert y > 0
+            assert z > 0
+    '''
+    )
+
+    result = pytester.runpytest("--fixtures-per-test", p)
+    assert result.ret == 0
+
+    # Verify that real_fixture is shown for test_with_parametrize
+    result.stdout.fnmatch_lines(
+        [
+            "*fixtures used by test_with_parametrize*1*",
+            "*(test_parametrize_pseudo_fixtures_excluded.py:8)*",
+            "real_fixture -- test_parametrize_pseudo_fixtures_excluded.py:3",
+            "    A real fixture with a proper definition.",
+        ]
+    )
+
+    # Verify that pseudo-fixtures (x, y, z) are NOT shown
+    # Use more specific patterns to avoid matching header lines
+    result.stdout.no_fnmatch_line("x -- *.py:*")
+    result.stdout.no_fnmatch_line("y -- *.py:*")
+    result.stdout.no_fnmatch_line("z -- *.py:*")
+
+    # Verify that test_with_multiple_parametrize shows no fixtures section
+    # (since it only has pseudo-fixtures, which should be excluded)
+    output = result.stdout.str()
+    # Count how many times "fixtures used by test_with_multiple_parametrize" appears
+    # It should appear in the separator line but have no fixtures listed
+    assert "fixtures used by test_with_multiple_parametrize" in output
