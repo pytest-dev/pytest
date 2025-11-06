@@ -216,6 +216,7 @@ def getstatementrange_ast(
             pass
 
     # The end might still point to a comment or empty line, correct it.
+    end = min(end, len(source.lines))
     while end:
         line = source.lines[end - 1].lstrip()
         if line.startswith("#") or not line:
