@@ -4914,7 +4914,8 @@ def test_scoped_fixture_caching_exception(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest()
-    assert result.ret == 0
+    # Fixture setup failures are reported as errors, not xfails
+    assert result.ret == 1  # Errors from fixture setup failures
 
 
 def test_scoped_fixture_teardown_order(pytester: Pytester) -> None:

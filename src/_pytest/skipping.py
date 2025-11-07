@@ -287,21 +287,27 @@ def pytest_runtest_makereport(
         rep.outcome = "skipped"
     elif not rep.skipped and xfailed:
         if call.excinfo:
-            raises = xfailed.raises
-            if raises is None or (
-                (
-                    isinstance(raises, type | tuple)
-                    and isinstance(call.excinfo.value, raises)
-                )
-                or (
-                    isinstance(raises, AbstractRaises)
-                    and raises.matches(call.excinfo.value)
-                )
-            ):
-                rep.outcome = "skipped"
-                rep.wasxfail = xfailed.reason
-            else:
-                rep.outcome = "failed"
+            # Only apply xfail handling to the "call" phase.
+            # Setup and teardown failures should be reported as errors,
+            # not as expected failures, even if the test is marked xfail.
+            # This ensures that fixture teardown exceptions (e.g., from
+            # session-scoped fixtures) are properly reported as errors.
+            if call.when == "call":
+                raises = xfailed.raises
+                if raises is None or (
+                    (
+                        isinstance(raises, type | tuple)
+                        and isinstance(call.excinfo.value, raises)
+                    )
+                    or (
+                        isinstance(raises, AbstractRaises)
+                        and raises.matches(call.excinfo.value)
+                    )
+                ):
+                    rep.outcome = "skipped"
+                    rep.wasxfail = xfailed.reason
+                else:
+                    rep.outcome = "failed"
         elif call.when == "call":
             if xfailed.strict:
                 rep.outcome = "failed"
