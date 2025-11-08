@@ -663,8 +663,8 @@ def test_patched_compile() -> None:
 
     # fmt: off
     def patched_compile2(_, *args, **kwargs):
-# first line of this function must not start with spaces
-# LINES must be equal to number of lines of this function
+    # first line of this function must not start with spaces
+    # LINES must be equal to number of lines of this function
         LINES = 4
         return compile("\ndef a():\n" + "\n" * LINES + "    pass", *args, **kwargs)
     # fmt: on
