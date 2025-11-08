@@ -1247,6 +1247,12 @@ class Metafunc:
             N-tuples, where each tuple-element specifies a value for its
             respective argname.
 
+            .. versionchanged:: 9.1
+
+                Passing a non-:class:`~collections.abc.Collection` iterable
+                (such as a generator or iterator) is deprecated. See
+                :ref:`parametrize-iterators` for details.
+
         :param indirect:
             A list of arguments' names (subset of argnames) or a boolean.
             If True the list contains all names from the argnames. Each
