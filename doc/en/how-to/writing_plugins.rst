@@ -448,7 +448,7 @@ in our configuration file to tell pytest where to look for example files.
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 2 items
 
     test_example.py ..                                                   [100%]
