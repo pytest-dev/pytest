@@ -11,20 +11,11 @@ every time you use ``pytest``.  For example, if you always want to see
 detailed info on skipped and xfailed tests, as well as have terser "dot"
 progress output, you can write it into a configuration file:
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        [pytest]
-        addopts = ["-ra", "-q"]
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        addopts = -ra -q
-
+    # content of pytest.toml
+    [pytest]
+    addopts = ["-ra", "-q"]
 
 Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
 line options while the environment is in use:
