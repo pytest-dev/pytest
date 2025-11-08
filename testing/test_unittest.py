@@ -1322,8 +1322,13 @@ def test_async_support(pytester: Pytester) -> None:
     reprec.assertoutcome(failed=1, passed=2)
 
 
+
+import sys
+import pytest
+
 @pytest.mark.skipif(
-    sys.version_info >= (3, 11), reason="asynctest is not compatible with Python 3.11+"
+    sys.version_info >= (3, 11),
+    reason="asynctest relies on asyncio.coroutine, removed in Python 3.11+",
 )
 def test_asynctest_support(pytester: Pytester) -> None:
     """Check asynctest support (#7110)"""
