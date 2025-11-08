@@ -1322,9 +1322,8 @@ def test_async_support(pytester: Pytester) -> None:
     reprec.assertoutcome(failed=1, passed=2)
 
 
-
-import sys
 import pytest
+
 
 @pytest.mark.skipif(
     sys.version_info >= (3, 11),
