@@ -1,2 +1,0 @@
-Previously, pytest would assume it was running in a CI/CD environment if either of the environment variables `$CI` or `$BUILD_NUMBER` was defined;
-now, CI mode is only activated if at least one of those variables is defined and set to a *non-empty* value.

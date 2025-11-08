@@ -139,10 +139,10 @@ The test collection would look like this:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 2 items
 
-    <Dir pythoncollection.rst-210>
+    <Dir pythoncollection.rst-211>
       <Module check_myapp.py>
         <Class CheckMyApp>
           <Function simple_check>
@@ -202,10 +202,10 @@ You can always peek at the collection tree without running tests like this:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 3 items
 
-    <Dir pythoncollection.rst-210>
+    <Dir pythoncollection.rst-211>
       <Dir CWD>
         <Module pythoncollection.py>
           <Function test_function>
@@ -286,7 +286,7 @@ file will be left out:
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 0 items
 
     ======================= no tests collected in 0.12s ========================

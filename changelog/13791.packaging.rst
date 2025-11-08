@@ -1,2 +1,0 @@
-Minimum requirements on ``iniconfig`` and ``packaging`` were bumped
-to ``1.0.1`` and ``22.0.0``, respectively.
