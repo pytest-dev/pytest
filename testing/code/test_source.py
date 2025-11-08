@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import textwrap
 from typing import Any
+from unittest.mock import patch
 
 from _pytest._code import Code
 from _pytest._code import Frame
@@ -647,3 +648,26 @@ def test_getstartingblock_multiline() -> None:
     # fmt: on
     values = [i for i in x.source.lines if i.strip()]
     assert len(values) == 4
+
+
+def test_patched_compile() -> None:
+    # ensure Source doesn't break
+    # when compile() modifies code dynamically
+    from builtins import compile
+
+    def patched_compile1(_, *args, **kwargs):
+        return compile("", *args, **kwargs)
+
+    with patch("builtins.compile", new=patched_compile1):
+        Source(patched_compile1).getstatement(1)
+
+    # fmt: off
+    def patched_compile2(_, *args, **kwargs):
+# first line of this function must not start with spaces
+# LINES must be equal to number of lines of this function
+        LINES = 4
+        return compile("\ndef a():\n" + "\n" * LINES + "    pass", *args, **kwargs)
+    # fmt: on
+
+    with patch("builtins.compile", new=patched_compile2):
+        Source(patched_compile2).getstatement(1)
