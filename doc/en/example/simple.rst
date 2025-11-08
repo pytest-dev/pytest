@@ -166,6 +166,8 @@ Now we'll get feedback on a bad argument:
     $ pytest -q --cmdopt=type3
     ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
     pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from type1, type2)
+      inifile: None
+      rootdir: /home/sweet/project
 
 
 If you need to provide more detailed error messages, you can use the
@@ -726,7 +728,7 @@ We can run this:
     file /home/sweet/project/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
     /home/sweet/project/b/test_error.py:1

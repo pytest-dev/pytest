@@ -1,1 +1,0 @@
-Better sentence structure in a test's expected error message. Previously, the error message would be "expected exception must be <expected>, but got <actual>". Now, it is "Expected <expected>, but got <actual>".

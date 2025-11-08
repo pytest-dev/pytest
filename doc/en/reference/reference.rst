@@ -2692,11 +2692,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --markers             show markers (builtin, plugin and per-project ones).
       -x, --exitfirst       Exit instantly on first error or failed test
       --maxfail=num         Exit after first num failures or errors
-      --strict-config       Any warnings encountered while parsing the `pytest`
-                            section of the configuration file raise errors
-      --strict-markers      Markers not registered in the `markers` section of
-                            the configuration file raise errors
-      --strict              (Deprecated) alias to --strict-markers
+      --strict-config       Enables the strict_config option
+      --strict-markers      Enables the strict_markers option
+      --strict              Enables the strict option
       --fixtures, --funcargs
                             Show available fixtures, sorted by plugin appearance
                             (fixtures with leading '_' are only shown with '-v')
@@ -2845,8 +2843,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             file. This file is opened with 'w' and truncated as
                             a result, care advised. Default: pytestdebug.log.
       -o, --override-ini OVERRIDE_INI
-                            Override ini option with "option=value" style, e.g.
-                            `-o xfail_strict=True -o cache_dir=cache`.
+                            Override configuration option with "option=value"
+                            style, e.g. `-o strict_xfail=True -o
+                            cache_dir=cache`.
       --assert=MODE         Control assertion debugging tools.
                             'plain' performs no assertion debugging.
                             'rewrite' (the default) rewrites assert statements
@@ -2888,11 +2887,19 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Disable a logger by name. Can be passed multiple
                             times.
 
-    [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
+    [pytest] configuration options in the first pytest.toml|pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
       markers (linelist):   Register new markers for test functions
       empty_parameter_set_mark (string):
                             Default marker for empty parametersets
+      strict_config (bool): Any warnings encountered while parsing the `pytest`
+                            section of the configuration file raise errors
+      strict_markers (bool):
+                            Markers not registered in the `markers` section of
+                            the configuration file raise errors
+      strict (bool):        Enables all strictness options, currently:
+                            strict_config, strict_markers, strict_xfail,
+                            strict_parametrization_ids
       filterwarnings (linelist):
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after
@@ -2919,6 +2926,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       disable_test_id_escaping_and_forfeit_all_rights_to_community_support (bool):
                             Disable string escape non-ASCII characters, might
                             cause unwanted side effects(use at your own risk)
+      strict_parametrization_ids (bool):
+                            Emit an error if non-unique parameter set IDs are
+                            detected
       console_output_style (string):
                             Console output: "classic", or with additional
                             progress information ("progress" (percentage) |
@@ -2929,8 +2939,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             overriding the main level. Higher levels will
                             provide more detailed information about each test
                             case executed.
-      xfail_strict (bool):  Default for the strict parameter of xfail markers
-                            when not given explicitly (default: False)
+      strict_xfail (bool):  Default for the strict parameter of xfail markers
+                            when not given explicitly (default: False) (alias:
+                            xfail_strict)
       tmp_path_retention_count (string):
                             How many sessions should we keep the `tmp_path`
                             directories, according to
@@ -2998,6 +3009,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
       faulthandler_exit_on_timeout (bool):
                             Exit the test process if a test takes more than
                             faulthandler_timeout seconds to finish
+      verbosity_subtests (string):
+                            Specify verbosity level for subtests. Higher levels
+                            will generate output for passed subtests. Failed
+                            subtests are always reported.
       addopts (args):       Extra command line options
       minversion (string):  Minimally required pytest version
       pythonpath (paths):   Add paths to sys.path
@@ -3011,6 +3026,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       PYTEST_PLUGINS           Comma-separated plugins to load during startup
       PYTEST_DISABLE_PLUGIN_AUTOLOAD Set to disable plugin auto-loading
       PYTEST_DEBUG             Set to enable debug tracing of pytest's internals
+      PYTEST_DEBUG_TEMPROOT    Override the system temporary directory
+      PYTEST_THEME             The Pygments style to use for code output
+      PYTEST_THEME_MODE        Set the PYTEST_THEME to be either 'dark' or 'light'
 
 
     to see available markers type: pytest --markers
