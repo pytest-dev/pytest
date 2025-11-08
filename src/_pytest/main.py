@@ -34,7 +34,6 @@ from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
 from _pytest.config.argparsing import OverrideIniAction
 from _pytest.config.argparsing import Parser
-from _pytest.config.compat import PathAwareHookProxy
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -727,7 +726,7 @@ class Session(nodes.Collector):
         proxy: pluggy.HookRelay
         if remove_mods:
             # One or more conftests are not in use at this path.
-            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))  # type: ignore[arg-type,assignment]
+            proxy = FSHookProxy(pm, remove_mods)  # type: ignore[assignment]
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook
