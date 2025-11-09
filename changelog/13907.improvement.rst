@@ -1,0 +1,1 @@
+Added a new attribute to the Callspec2 class with the stringified (either automatically or with an explicit `ids` parameter) ID of parametrization values.
