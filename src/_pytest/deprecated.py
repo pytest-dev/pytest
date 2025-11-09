@@ -56,11 +56,6 @@ HOOK_LEGACY_MARKING = UnformattedWarning(
     "#configuring-hook-specs-impls-using-markers",
 )
 
-MARKED_FIXTURE = PytestRemovedIn9Warning(
-    "Marks applied to fixtures have no effect\n"
-    "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
-)
-
 MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES = PytestRemovedIn10Warning(
     "monkeypatch.syspath_prepend() called with pkg_resources legacy namespace packages detected.\n"
     "Legacy namespace packages (using pkg_resources.declare_namespace) are deprecated.\n"
