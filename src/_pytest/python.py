@@ -1113,6 +1113,8 @@ class CallSpec2:
     _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
     # Marks which will be applied to the item.
     marks: list[Mark] = dataclasses.field(default_factory=list)
+    # Parametrization mapping for each argname to an ID.
+    ids: dict[str | tuple[str, ...], str] = dataclasses.field(default_factory=dict)
 
     def setmulti(
         self,
@@ -1142,6 +1144,14 @@ class CallSpec2:
             _arg2scope=arg2scope,
             _idlist=self._idlist if id is HIDDEN_PARAM else [*self._idlist, id],
             marks=[*self.marks, *normalize_mark_list(marks)],
+            ids=self.ids
+            if id is HIDDEN_PARAM
+            else {
+                **self.ids,
+                _argnames[0]
+                if len(_argnames := tuple(argnames)) == 1
+                else _argnames: id,
+            },
         )
 
     def getparam(self, name: str) -> object:
