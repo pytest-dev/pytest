@@ -1520,14 +1520,16 @@ class Metafunc:
                             # Check if fixture function accepts 'request' parameter
                             try:
                                 sig = inspect.signature(fixdef.func)
-                                if 'request' in sig.parameters:
+                                if "request" in sig.parameters:
                                     should_be_indirect = True
                                     break
                             except (ValueError, TypeError):
                                 # If we can't inspect, don't auto-detect
                                 pass
 
-                    arg_directness[argname] = "indirect" if should_be_indirect else "direct"
+                    arg_directness[argname] = (
+                        "indirect" if should_be_indirect else "direct"
+                    )
         elif isinstance(indirect, Sequence):
             arg_directness = dict.fromkeys(argnames, "direct")
             for arg in indirect:

@@ -5388,10 +5388,12 @@ class TestDirectFixtureParametrization:
         )
         result = pytester.runpytest("-v")
         result.assert_outcomes(passed=2)
-        result.stdout.fnmatch_lines([
-            "*test_greeting*Alice*PASSED*",
-            "*test_greeting*Bob*PASSED*",
-        ])
+        result.stdout.fnmatch_lines(
+            [
+                "*test_greeting*Alice*PASSED*",
+                "*test_greeting*Bob*PASSED*",
+            ]
+        )
 
     def test_direct_fixture_parametrization_with_multiple_params(
         self, pytester: Pytester
@@ -5560,9 +5562,7 @@ class TestDirectFixtureParametrization:
         result = pytester.runpytest("-v")
         result.assert_outcomes(passed=1)
 
-    def test_direct_fixture_parametrization_with_ids(
-        self, pytester: Pytester
-    ) -> None:
+    def test_direct_fixture_parametrization_with_ids(self, pytester: Pytester) -> None:
         """Test that custom ids work with auto-detected fixtures."""
         pytester.makepyfile(
             """
@@ -5579,11 +5579,13 @@ class TestDirectFixtureParametrization:
         )
         result = pytester.runpytest("-v")
         result.assert_outcomes(passed=3)
-        result.stdout.fnmatch_lines([
-            "*test_with_ids*one*PASSED*",
-            "*test_with_ids*two*PASSED*",
-            "*test_with_ids*three*PASSED*",
-        ])
+        result.stdout.fnmatch_lines(
+            [
+                "*test_with_ids*one*PASSED*",
+                "*test_with_ids*two*PASSED*",
+                "*test_with_ids*three*PASSED*",
+            ]
+        )
 
     def test_direct_fixture_parametrization_multiple_fixtures(
         self, pytester: Pytester
