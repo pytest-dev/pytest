@@ -1,1 +1,0 @@
-Fixed a misleading assertion failure message when using :func:`pytest.approx` on mappings with differing lengths.
