@@ -11,7 +11,6 @@ import functools
 import sys
 import types
 from typing import Any
-import unittest
 
 from _pytest import outcomes
 from _pytest._code import ExceptionInfo
@@ -296,7 +295,8 @@ class PdbInvoke:
             sys.stdout.write(err)
         assert call.excinfo is not None
 
-        if not isinstance(call.excinfo.value, unittest.SkipTest):
+        unittest = sys.modules.get("unittest")
+        if unittest is None or not isinstance(call.excinfo.value, unittest.SkipTest):
             _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
