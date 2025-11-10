@@ -737,6 +737,11 @@ class TestXFail:
 
 class TestXFailwithSetupTeardown:
     def test_failing_setup_issue9(self, pytester: Pytester) -> None:
+        """Setup failures should be reported as errors, not xfails.
+
+        Even if a test is marked xfail, if the setup fails, that's an
+        infrastructure error, not an expected test failure.
+        """
         pytester.makepyfile(
             """
             import pytest
@@ -749,9 +754,14 @@ class TestXFailwithSetupTeardown:
         """
         )
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*1 xfail*"])
+        result.stdout.fnmatch_lines(["*1 error*"])
 
     def test_failing_teardown_issue9(self, pytester: Pytester) -> None:
+        """Teardown failures should be reported as errors, not xfails.
+
+        Even if a test is marked xfail, if the teardown fails, that's an
+        infrastructure error, not an expected test failure.
+        """
         pytester.makepyfile(
             """
             import pytest
@@ -764,7 +774,7 @@ class TestXFailwithSetupTeardown:
         """
         )
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*1 xfail*"])
+        result.stdout.fnmatch_lines(["*1 error*"])
 
 
 class TestSkip:
@@ -1185,6 +1195,11 @@ def test_default_markers(pytester: Pytester) -> None:
 
 
 def test_xfail_test_setup_exception(pytester: Pytester) -> None:
+    """Setup exceptions should be reported as errors, not xfails.
+
+    Even if a test is marked xfail, if setup fails (via pytest_runtest_setup hook),
+    that's an infrastructure error, not an expected test failure.
+    """
     pytester.makeconftest(
         """
             def pytest_runtest_setup():
@@ -1200,9 +1215,9 @@ def test_xfail_test_setup_exception(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest(p)
-    assert result.ret == 0
-    assert "xfailed" in result.stdout.str()
-    result.stdout.no_fnmatch_line("*xpassed*")
+    assert result.ret == 1  # Should fail due to error
+    assert "error" in result.stdout.str()
+    result.stdout.no_fnmatch_line("*xfailed*")
 
 
 def test_imperativeskip_on_xfail_test(pytester: Pytester) -> None:
@@ -1489,3 +1504,35 @@ def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines("*_pytest.outcomes.Exit: foo*")
+
+
+def test_session_fixture_teardown_exception_with_xfail(pytester: Pytester) -> None:
+    """Test that session fixture teardown exceptions are reported as errors,
+    not as duplicate xfails, even when the last test is marked xfail.
+
+    Regression test for issue #8375.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(autouse=True, scope='session')
+        def failme():
+            yield
+            raise RuntimeError('cleanup fails for some reason')
+
+        def test_ok():
+            assert True
+
+        @pytest.mark.xfail()
+        def test_expected_failure():
+            assert False
+        """
+    )
+    result = pytester.runpytest("-q")
+    result.stdout.fnmatch_lines([
+        "*1 passed, 1 xfailed, 1 error*",
+    ])
+    # Make sure we don't have duplicate xfails (would be "2 xfailed" before the fix)
+    assert "2 xfailed" not in result.stdout.str()
+    assert "1 xfailed" in result.stdout.str()
