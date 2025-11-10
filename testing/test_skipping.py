@@ -1530,9 +1530,11 @@ def test_session_fixture_teardown_exception_with_xfail(pytester: Pytester) -> No
         """
     )
     result = pytester.runpytest("-q")
-    result.stdout.fnmatch_lines([
-        "*1 passed, 1 xfailed, 1 error*",
-    ])
+    result.stdout.fnmatch_lines(
+        [
+            "*1 passed, 1 xfailed, 1 error*",
+        ]
+    )
     # Make sure we don't have duplicate xfails (would be "2 xfailed" before the fix)
     assert "2 xfailed" not in result.stdout.str()
     assert "1 xfailed" in result.stdout.str()
