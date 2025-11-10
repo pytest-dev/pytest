@@ -1,5 +1,0 @@
-Added support for ini option aliases via the ``aliases`` parameter in :meth:`Parser.addini() <pytest.Parser.addini>`.
-
-Plugins can now register alternative names for ini options,
-allowing for more flexibility in configuration naming and supporting backward compatibility when renaming options.
-The canonical name always takes precedence if both the canonical name and an alias are specified in the configuration file.

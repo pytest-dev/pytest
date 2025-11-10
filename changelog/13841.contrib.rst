@@ -1,1 +1,0 @@
-``tox>=4`` is now required when contributing to pytest.

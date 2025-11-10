@@ -22,7 +22,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collected 0 items
-    cache -- .../_pytest/cacheprovider.py:555
+    cache -- .../_pytest/cacheprovider.py:566
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
@@ -128,7 +128,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capfdbinary.readouterr()
                 assert captured.out == b"hello\n"
 
-    doctest_namespace [session scope] -- .../_pytest/doctest.py:740
+    doctest_namespace [session scope] -- .../_pytest/doctest.py:722
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 
@@ -142,7 +142,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         For more details: :ref:`doctest_namespace`.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1425
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1431
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 
@@ -225,7 +225,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         * caplog.record_tuples   -> list of (logger_name, level, message) tuples
         * caplog.clear()         -> clear captured records and formatted log output string
 
-    monkeypatch -- .../_pytest/monkeypatch.py:31
+    monkeypatch -- .../_pytest/monkeypatch.py:33
         A convenient fixture for monkey-patching.
 
         The fixture provides these methods to modify objects, dictionaries, or
@@ -253,6 +253,9 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
         See :ref:`warnings` for information on warning categories.
+
+    subtests -- .../_pytest/subtests.py:129
+        Provides subtests functionality.
 
     tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:240
         Return a :class:`pytest.TempPathFactory` instance for the test session.
