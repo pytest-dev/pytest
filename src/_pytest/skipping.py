@@ -286,7 +286,7 @@ def pytest_runtest_makereport(
         rep.wasxfail = call.excinfo.value.msg
         rep.outcome = "skipped"
     elif not rep.skipped and xfailed:
-        if call.excinfo:
+        if call.excinfo and call.when == "call":
             # Only apply xfail handling to the "call" phase.
             # Setup and teardown failures should be reported as errors,
             # not as expected failures, even if the test is marked xfail.
