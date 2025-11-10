@@ -294,10 +294,7 @@ class PdbInvoke:
             sys.stdout.write(out)
             sys.stdout.write(err)
         assert call.excinfo is not None
-
-        unittest = sys.modules.get("unittest")
-        if unittest is None or not isinstance(call.excinfo.value, unittest.SkipTest):
-            _enter_pdb(node, call.excinfo, report)
+        _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
         exc_or_tb = _postmortem_exc_or_tb(excinfo)
