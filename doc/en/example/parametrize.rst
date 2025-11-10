@@ -424,6 +424,55 @@ The result of this test will be successful:
 
 .. regendoc:wipe
 
+Automatic fixture detection
+---------------------------------------------------
+
+.. versionadded:: 8.4
+
+Starting with pytest 8.4, when you use ``@pytest.mark.parametrize`` with a parameter name that matches a fixture
+designed for parametrization (i.e., a fixture that has a ``request`` parameter or ``params`` defined),
+pytest automatically treats it as indirect, eliminating the need to explicitly specify ``indirect=True``.
+
+.. code-block:: python
+
+    # content of test_auto_indirect.py
+
+    import pytest
+
+
+    @pytest.fixture
+    def greeting(request):
+        return f"Hello, {request.param}"
+
+
+    # No need for indirect=True - automatically detected
+    @pytest.mark.parametrize("greeting", ["Alice", "Bob"])
+    def test_greeting(greeting):
+        assert greeting in ["Hello, Alice", "Hello, Bob"]
+
+This automatic detection only applies to fixtures that are designed to receive parameters via ``request.param``.
+If you have a fixture with the same name as your parameter but want to use direct parametrization instead,
+you can still do so by defining a fixture without the ``request`` parameter:
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.fixture
+    def value():
+        return "fixture_value"
+
+
+    # This will pass the value directly to the test, shadowing the fixture
+    @pytest.mark.parametrize("value", [1, 2, 3])
+    def test_direct(value):
+        assert value in [1, 2, 3]
+
+For backward compatibility, explicitly specifying ``indirect=True`` or ``indirect=[...]`` continues to work as before.
+
+.. regendoc:wipe
+
 Parametrizing test methods through per-class configuration
 --------------------------------------------------------------
 

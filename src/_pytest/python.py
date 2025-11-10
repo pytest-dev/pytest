@@ -1482,9 +1482,47 @@ class Metafunc:
         """
         arg_directness: dict[str, Literal["indirect", "direct"]]
         if isinstance(indirect, bool):
-            arg_directness = dict.fromkeys(
-                argnames, "indirect" if indirect else "direct"
-            )
+            if indirect:
+                # indirect=True: all params are indirect
+                arg_directness = dict.fromkeys(argnames, "indirect")
+            else:
+                # indirect=False (default): auto-detect fixtures that are designed to be parametrized
+                arg_directness = {}
+                fm = self.definition.session._fixturemanager
+                for argname in argnames:
+                    # Check if argname matches a fixture that's designed to be parametrized
+                    should_be_indirect = False
+
+                    # Check local fixtures first
+                    if argname in self._arg2fixturedefs:
+                        fixdefs = self._arg2fixturedefs[argname]
+                    elif argname in fm._arg2fixturedefs:
+                        fixdefs = fm._arg2fixturedefs[argname]
+                    else:
+                        fixdefs = None
+
+                    if fixdefs:
+                        # Check if any of the fixture definitions indicates it's designed for parametrization
+                        # A fixture is considered parametrizable if:
+                        # 1. It has the 'request' parameter in its signature, OR
+                        # 2. It has params defined
+                        for fixdef in fixdefs:
+                            # Check if fixture has params defined
+                            if fixdef.params is not None:
+                                should_be_indirect = True
+                                break
+                            # Check if fixture function accepts 'request' parameter
+                            import inspect
+                            try:
+                                sig = inspect.signature(fixdef.func)
+                                if 'request' in sig.parameters:
+                                    should_be_indirect = True
+                                    break
+                            except (ValueError, TypeError):
+                                # If we can't inspect, don't auto-detect
+                                pass
+
+                    arg_directness[argname] = "indirect" if should_be_indirect else "direct"
         elif isinstance(indirect, Sequence):
             arg_directness = dict.fromkeys(argnames, "direct")
             for arg in indirect:

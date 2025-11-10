@@ -1,0 +1,7 @@
+Pytest now automatically detects and applies indirect parametrization for fixtures designed to receive parameters via ``request.param``.
+
+When using ``@pytest.mark.parametrize`` with a parameter name that matches a fixture with a ``request`` parameter or ``params`` defined,
+the fixture will be automatically treated as indirect, eliminating the need to explicitly specify ``indirect=True``.
+
+This makes fixture parametrization more intuitive while maintaining backward compatibility with existing code. Fixtures without
+a ``request`` parameter can still be shadowed by direct parametrization as before.

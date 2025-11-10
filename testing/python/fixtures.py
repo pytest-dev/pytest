@@ -5365,3 +5365,271 @@ def test_fixture_closure_with_parametrize_ignore(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
+
+
+class TestDirectFixtureParametrization:
+    """Tests for automatic fixture detection in parametrize (issue #10561)."""
+
+    def test_direct_fixture_parametrization_basic(self, pytester: Pytester) -> None:
+        """Test that fixtures are automatically parametrized without indirect=True."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def greet(request):
+                return f"Hello, {request.param}"
+
+            @pytest.mark.parametrize("greet", ["Alice", "Bob"])
+            def test_greeting(greet):
+                assert greet.startswith("Hello,")
+                assert greet in ["Hello, Alice", "Hello, Bob"]
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=2)
+        result.stdout.fnmatch_lines([
+            "*test_greeting*Alice*PASSED*",
+            "*test_greeting*Bob*PASSED*",
+        ])
+
+    def test_direct_fixture_parametrization_with_multiple_params(
+        self, pytester: Pytester
+    ) -> None:
+        """Test multiple parameter values with auto-detected fixture."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def value(request):
+                return request.param * 2
+
+            @pytest.mark.parametrize("value", [1, 2, 3, 4])
+            def test_doubled(value):
+                assert value in [2, 4, 6, 8]
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=4)
+
+    def test_direct_fixture_parametrization_mixed_with_direct_params(
+        self, pytester: Pytester
+    ) -> None:
+        """Test mixing auto-detected fixtures with direct parameters."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def multiplier(request):
+                return request.param
+
+            @pytest.mark.parametrize("multiplier,value", [(2, 3), (3, 4)])
+            def test_multiply(multiplier, value):
+                result = multiplier * value
+                assert result in [6, 12]
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=2)
+
+    def test_direct_fixture_parametrization_backward_compat_indirect_true(
+        self, pytester: Pytester
+    ) -> None:
+        """Test backward compatibility: indirect=True still works."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def greet(request):
+                return f"Hello, {request.param}"
+
+            @pytest.mark.parametrize("greet", ["Alice", "Bob"], indirect=True)
+            def test_greeting(greet):
+                assert greet.startswith("Hello,")
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=2)
+
+    def test_direct_fixture_parametrization_backward_compat_indirect_list(
+        self, pytester: Pytester
+    ) -> None:
+        """Test backward compatibility: indirect=['fixture'] still works."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def x(request):
+                return request.param * 3
+
+            @pytest.mark.parametrize("x,y", [("a", "b"), ("c", "d")], indirect=["x"])
+            def test_it(x, y):
+                assert len(x) == 3
+                assert len(y) == 1
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=2)
+
+    def test_direct_fixture_parametrization_no_fixture_direct_param(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that params without matching fixtures are still direct."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("value", [1, 2, 3])
+            def test_direct(value):
+                assert value in [1, 2, 3]
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=3)
+
+    def test_direct_fixture_parametrization_nested_fixtures(
+        self, pytester: Pytester
+    ) -> None:
+        """Test auto-detection with nested fixture dependencies."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def base(request):
+                return request.param
+
+            @pytest.fixture
+            def derived(base):
+                return f"derived_{base}"
+
+            @pytest.mark.parametrize("base", ["a", "b"])
+            def test_nested(derived):
+                assert derived in ["derived_a", "derived_b"]
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=2)
+
+    def test_direct_fixture_parametrization_with_scope(
+        self, pytester: Pytester
+    ) -> None:
+        """Test auto-detection works with scoped fixtures."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="module")
+            def config(request):
+                return {"mode": request.param}
+
+            @pytest.mark.parametrize("config", ["dev", "prod"])
+            def test_config1(config):
+                assert config["mode"] in ["dev", "prod"]
+
+            @pytest.mark.parametrize("config", ["dev", "prod"])
+            def test_config2(config):
+                assert "mode" in config
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=4)
+
+    def test_direct_fixture_parametrization_error_message(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that error messages are clear when fixture param is missing."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def needs_param(request):
+                # This will fail if request.param doesn't exist
+                return request.param
+
+            @pytest.mark.parametrize("needs_param", [None])
+            def test_with_none(needs_param):
+                assert needs_param is None
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=1)
+
+    def test_direct_fixture_parametrization_with_ids(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that custom ids work with auto-detected fixtures."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def value(request):
+                return request.param
+
+            @pytest.mark.parametrize("value", [1, 2, 3], ids=["one", "two", "three"])
+            def test_with_ids(value):
+                assert value in [1, 2, 3]
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=3)
+        result.stdout.fnmatch_lines([
+            "*test_with_ids*one*PASSED*",
+            "*test_with_ids*two*PASSED*",
+            "*test_with_ids*three*PASSED*",
+        ])
+
+    def test_direct_fixture_parametrization_multiple_fixtures(
+        self, pytester: Pytester
+    ) -> None:
+        """Test parametrizing multiple fixtures at once."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def x(request):
+                return request.param
+
+            @pytest.fixture
+            def y(request):
+                return request.param
+
+            @pytest.mark.parametrize("x,y", [(1, 2), (3, 4)])
+            def test_both(x, y):
+                assert (x, y) in [(1, 2), (3, 4)]
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=2)
+
+    def test_direct_fixture_parametrization_class_scope(
+        self, pytester: Pytester
+    ) -> None:
+        """Test auto-detection works with class-scoped fixtures."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            class TestClass:
+                @pytest.fixture(scope="class")
+                def resource(self, request):
+                    return f"resource_{request.param}"
+
+                @pytest.mark.parametrize("resource", ["A", "B"])
+                def test_one(self, resource):
+                    assert resource.startswith("resource_")
+
+                @pytest.mark.parametrize("resource", ["A", "B"])
+                def test_two(self, resource):
+                    assert resource in ["resource_A", "resource_B"]
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=4)
