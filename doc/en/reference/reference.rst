@@ -2596,7 +2596,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         .. code-block:: toml
 
             [pytest]
-            verbosity_assertions = 2
+            verbosity_assertions = "2"
 
     .. tab:: ini
 
@@ -2618,7 +2618,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         .. code-block:: toml
 
             [pytest]
-            verbosity_subtests = 1
+            verbosity_subtests = "1"
 
     .. tab:: ini
 
@@ -2645,7 +2645,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         .. code-block:: toml
 
             [pytest]
-            verbosity_test_cases = 2
+            verbosity_test_cases = "2"
 
     .. tab:: ini
 
