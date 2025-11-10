@@ -1512,7 +1512,6 @@ class Metafunc:
                                 should_be_indirect = True
                                 break
                             # Check if fixture function accepts 'request' parameter
-                            import inspect
                             try:
                                 sig = inspect.signature(fixdef.func)
                                 if 'request' in sig.parameters:
