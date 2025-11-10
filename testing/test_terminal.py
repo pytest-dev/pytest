@@ -3443,6 +3443,17 @@ class TestTerminalProgressPlugin:
             plugin = config.pluginmanager.get_plugin("terminalprogress")
             assert plugin is None
 
+    def test_disabled_for_iterm2(self, pytester: pytest.Pytester, monkeypatch) -> None:
+        """Should not register the plugin on iTerm2 terminal since it interprets
+        OSC 9;4 as desktop notifications, not progress (#13896)."""
+        monkeypatch.setenv(
+            "ITERM_SESSION_ID", "w0t1p0:3DB6DF06-FE11-40C3-9A66-9E10A193A632"
+        )
+        with patch.object(sys.stdout, "isatty", return_value=True):
+            config = pytester.parseconfigure()
+            plugin = config.pluginmanager.get_plugin("terminalprogress")
+            assert plugin is None
+
     @pytest.mark.parametrize(
         ["state", "progress", "expected"],
         [
