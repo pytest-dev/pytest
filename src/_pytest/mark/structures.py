@@ -21,11 +21,13 @@ from typing import TypeVar
 import warnings
 
 from .._code import getfslineno
+from ..compat import deprecated
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
+from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
 from _pytest.outcomes import fail
 from _pytest.raises import AbstractRaises
 from _pytest.scope import _ScopeName
@@ -193,6 +195,15 @@ class ParameterSet(NamedTuple):
         config: Config,
         nodeid: str,
     ) -> tuple[Sequence[str], list[ParameterSet]]:
+        if not isinstance(argvalues, Collection):
+            warnings.warn(
+                PARAMETRIZE_NON_COLLECTION_ITERABLE.format(
+                    nodeid=nodeid,
+                    type_name=type(argvalues).__name__,
+                ),
+                stacklevel=3,
+            )
+
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -508,7 +519,25 @@ if TYPE_CHECKING:
         ) -> MarkDecorator: ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
-        def __call__(  # type: ignore[override]
+        @overload  # type: ignore[override,no-overload-impl]
+        def __call__(
+            self,
+            argnames: str | Sequence[str],
+            argvalues: Collection[ParameterSet | Sequence[object] | object],
+            *,
+            indirect: bool | Sequence[str] = ...,
+            ids: Iterable[None | str | float | int | bool]
+            | Callable[[Any], object | None]
+            | None = ...,
+            scope: _ScopeName | None = ...,
+        ) -> MarkDecorator: ...
+
+        @overload
+        @deprecated(
+            "Passing a non-Collection iterable to the 'argvalues' parameter of @pytest.mark.parametrize is deprecated. "
+            "Convert argvalues to a list or tuple.",
+        )
+        def __call__(
             self,
             argnames: str | Sequence[str],
             argvalues: Iterable[ParameterSet | Sequence[object] | object],

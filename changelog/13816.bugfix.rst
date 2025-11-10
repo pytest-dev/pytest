@@ -1,1 +1,0 @@
-Fixed :func:`pytest.approx` which now returns a clearer error message when comparing mappings with different keys.

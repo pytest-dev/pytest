@@ -120,6 +120,11 @@ jobs:
     permissions:
       contents: write
     steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: true
+
     - name: Download Package
       uses: actions/download-artifact@v6
       with:
