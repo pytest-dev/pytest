@@ -15,6 +15,7 @@ repos:
   rev: v1.16.3
   hooks:
     - id: zizmor
+      args: ["--fix"]
 -   repo: https://github.com/adamchainz/blacken-docs
     rev: 1.20.0
     hooks:
