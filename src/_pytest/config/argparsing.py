@@ -170,7 +170,7 @@ class Parser:
             arguments, and a list of unknown flag arguments.
         """
         strargs = [os.fspath(x) for x in args]
-        if sys.version_info < (3, 12):
+        if sys.version_info < (3, 12, 8) or (3, 13) <= sys.version_info < (3, 13, 1):
             # Older argparse have a bugged parse_known_intermixed_args.
             namespace, unknown = self.optparser.parse_known_args(strargs, namespace)
             assert namespace is not None
