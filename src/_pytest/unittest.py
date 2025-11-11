@@ -476,6 +476,14 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
             except AttributeError:
                 pass
 
+    # Convert unittest.SkipTest to pytest.skip.
+    # This covers explicit `raise unittest.SkipTest`.
+    unittest = sys.modules.get("unittest")
+    if unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest):
+        excinfo = call.excinfo
+        call2 = CallInfo[None].from_call(lambda: skip(str(excinfo.value)), call.when)
+        call.excinfo = call2.excinfo
+
 
 def _is_skipped(obj) -> bool:
     """Return True if the given object has been marked with @unittest.skip."""
