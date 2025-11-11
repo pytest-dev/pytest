@@ -1,0 +1,1 @@
+Added a new CLI options reference page to the documentation, organizing commonly used command-line flags by functionality for easier discovery.
