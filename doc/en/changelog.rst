@@ -31,6 +31,24 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 9.0.1 (2025-11-11)
+=========================
+
+Bug fixes
+---------
+
+- `#13895 <https://github.com/pytest-dev/pytest/issues/13895>`_: Restore support for skipping tests via ``raise unittest.SkipTest``.
+
+
+- `#13896 <https://github.com/pytest-dev/pytest/issues/13896>`_: The terminal progress plugin added in pytest 9.0 is now automatically disabled when iTerm2 is detected, it generated desktop notifications instead of the desired functionality.
+
+
+- `#13904 <https://github.com/pytest-dev/pytest/issues/13904>`_: Fixed the TOML type of the verbosity settings in the API reference from number to string.
+
+
+- `#13910 <https://github.com/pytest-dev/pytest/issues/13910>`_: Fixed `UserWarning: Do not expect file_or_dir` on some earlier Python 3.12 and 3.13 point versions.
+
+
 pytest 9.0.0 (2025-11-05)
 =========================
 

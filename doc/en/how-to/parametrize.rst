@@ -57,7 +57,7 @@ them in turn:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 3 items
 
@@ -76,7 +76,8 @@ them in turn:
 
     test_expectation.py:6: AssertionError
     ========================= short test summary info ==========================
-    FAILED test_expectation.py::test_eval[6*9-42] - AssertionError: assert 54...
+    FAILED test_expectation.py::test_eval[6*9-42] - AssertionError: assert 54 == 42
+     +  where 54 = eval('6*9')
     ======================= 1 failed, 2 passed in 0.12s ========================
 
 .. note::
@@ -177,7 +178,7 @@ Let's run this:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 3 items
 
@@ -290,6 +291,8 @@ Let's also run with a stringinput that will lead to a failing test:
     test_strings.py:4: AssertionError
     ========================= short test summary info ==========================
     FAILED test_strings.py::test_valid_string[!] - AssertionError: assert False
+     +  where False = <built-in method isalpha of str object at 0xdeadbeef0001>()
+     +    where <built-in method isalpha of str object at 0xdeadbeef0001> = '!'.isalpha
     1 failed in 0.12s
 
 As expected our test function fails.

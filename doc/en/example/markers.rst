@@ -47,7 +47,7 @@ You can then restrict a test run to only run tests marked with ``webtest``:
 
     $ pytest -v -m webtest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 4 items / 3 deselected / 1 selected
@@ -62,7 +62,7 @@ Or the inverse, running all tests except the webtest ones:
 
     $ pytest -v -m "not webtest"
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 4 items / 1 deselected / 3 selected
@@ -82,7 +82,7 @@ keyword arguments, e.g. to run only tests marked with ``device`` and the specifi
 
     $ pytest -v -m "device(serial='123')"
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 4 items / 3 deselected / 1 selected
@@ -106,7 +106,7 @@ tests based on their module, class, method, or function name:
 
     $ pytest -v test_server.py::TestClass::test_method
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 1 item
@@ -121,7 +121,7 @@ You can also select on the class:
 
     $ pytest -v test_server.py::TestClass
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 1 item
@@ -136,7 +136,7 @@ Or select multiple nodes:
 
     $ pytest -v test_server.py::TestClass test_server.py::test_send_http
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 2 items
@@ -180,7 +180,7 @@ The expression matching is now case-insensitive.
 
     $ pytest -v -k http  # running with the above defined example module
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 4 items / 3 deselected / 1 selected
@@ -195,7 +195,7 @@ And you can also run all tests except the ones that match the keyword:
 
     $ pytest -k "not send_http" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 4 items / 1 deselected / 3 selected
@@ -212,7 +212,7 @@ Or to select "http" and "quick" tests:
 
     $ pytest -k "http or quick" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 4 items / 2 deselected / 2 selected
@@ -418,7 +418,7 @@ the test needs:
 
     $ pytest -E stage2
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -432,7 +432,7 @@ and here is one that specifies exactly the environment needed:
 
     $ pytest -E stage1
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -625,7 +625,7 @@ then you will see two tests skipped and two executed tests as expected:
 
     $ pytest -rs # this option reports skip reasons
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 4 items
 
@@ -641,7 +641,7 @@ Note that if you specify a platform via the marker-command line option like this
 
     $ pytest -m linux
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 4 items / 3 deselected / 1 selected
 
@@ -704,7 +704,7 @@ We can now use the ``-m option`` to select one set:
 
     $ pytest -m interface --tb=short
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 4 items / 2 deselected / 2 selected
 
@@ -730,7 +730,7 @@ or to select both "event" and "interface" tests:
 
     $ pytest -m "interface or event" --tb=short
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 4 items / 1 deselected / 3 selected
 
