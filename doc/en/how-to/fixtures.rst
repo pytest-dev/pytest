@@ -1423,7 +1423,7 @@ Running the above tests results in the following test IDs being used:
    rootdir: /home/sweet/project
    collected 12 items
 
-   <Dir fixtures.rst-230>
+   <Dir fixtures.rst-231>
      <Module test_anothersmtp.py>
        <Function test_showhelo[smtp.gmail.com]>
        <Function test_showhelo[mail.python.org]>
@@ -1738,20 +1738,11 @@ and you may specify fixture usage at the test module level using :globalvar:`pyt
 It is also possible to put fixtures required by all tests in your project
 into a configuration file:
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        [pytest]
-        usefixtures = ["cleandir"]
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        usefixtures = cleandir
-
+    # content of pytest.toml
+    [pytest]
+    usefixtures = ["cleandir"]
 
 .. warning::
 

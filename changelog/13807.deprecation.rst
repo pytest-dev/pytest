@@ -1,3 +1,0 @@
-:meth:`monkeypatch.syspath_prepend() <pytest.MonkeyPatch.syspath_prepend>` now issues a deprecation warning when the prepended path contains legacy namespace packages (those using ``pkg_resources.declare_namespace()``).
-Users should migrate to native namespace packages (:pep:`420`).
-See :ref:`monkeypatch-fixup-namespace-packages` for details.

@@ -1,4 +1,0 @@
-Added :confval:`strict_xfail` as an alias to the ``xfail_strict`` option,
-:confval:`strict_config` as an alias to the ``--strict-config`` flag,
-and :confval:`strict_markers` as an alias to the ``--strict-markers`` flag.
-This makes all strictness options consistently have configuration options with the prefix ``strict_``.

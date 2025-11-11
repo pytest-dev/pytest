@@ -1123,6 +1123,24 @@ class TestMetafunc:
         """
         )
 
+    def test_parametrize_iterator_deprecation(self) -> None:
+        """Test that using iterators for argvalues raises a deprecation warning."""
+
+        def func(x: int) -> None:
+            raise NotImplementedError()
+
+        def data_generator() -> Iterator[int]:
+            yield 1
+            yield 2
+
+        metafunc = self.Metafunc(func)
+
+        with pytest.warns(
+            pytest.PytestRemovedIn10Warning,
+            match=r"Passing a non-Collection iterable to parametrize is deprecated",
+        ):
+            metafunc.parametrize("x", data_generator())
+
 
 class TestMetafuncFunctional:
     def test_attributes(self, pytester: Pytester) -> None:
@@ -1679,6 +1697,65 @@ class TestMetafuncFunctional:
                 "*test_1*",
                 "*test_2*",
                 "*test_3*",
+            ]
+        )
+
+    def test_parametrize_generator_multiple_runs(self, pytester: Pytester) -> None:
+        """Test that generators in parametrize work with multiple pytest.main() (deprecated)."""
+        testfile = pytester.makepyfile(
+            """
+            import pytest
+
+            def data_generator():
+                yield 1
+                yield 2
+
+            @pytest.mark.parametrize("bar", data_generator())
+            def test_foo(bar):
+                pass
+
+            if __name__ == '__main__':
+                args = ["-q", "--collect-only"]
+                pytest.main(args)  # First run - should work with warning
+                pytest.main(args)  # Second run - should also work with warning
+            """
+        )
+        result = pytester.run(sys.executable, "-Wdefault", testfile)
+        # Should see the deprecation warnings.
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn10Warning: Passing a non-Collection iterable*",
+                "*PytestRemovedIn10Warning: Passing a non-Collection iterable*",
+            ]
+        )
+
+    def test_parametrize_iterator_class_multiple_tests(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that iterators in parametrize on a class get exhausted (deprecated)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("n", iter(range(2)))
+            class Test:
+                def test_1(self, n):
+                    pass
+
+                def test_2(self, n):
+                    pass
+            """
+        )
+        result = pytester.runpytest("-v", "-Wdefault")
+        # Iterator gets exhausted after first test, second test gets no parameters.
+        # This is deprecated.
+        result.assert_outcomes(passed=2, skipped=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*test_parametrize_iterator_class_multiple_tests.py::Test::test_1[[]0] PASSED*",
+                "*test_parametrize_iterator_class_multiple_tests.py::Test::test_1[[]1] PASSED*",
+                "*test_parametrize_iterator_class_multiple_tests.py::Test::test_2[[]NOTSET] SKIPPED*",
+                "*PytestRemovedIn10Warning: Passing a non-Collection iterable*",
             ]
         )
 

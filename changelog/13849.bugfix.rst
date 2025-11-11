@@ -1,2 +1,0 @@
-Hidden ``.pytest.ini`` files are now picked up as the config file even if empty.
-This was an inconsistency with non-hidden ``pytest.ini``.

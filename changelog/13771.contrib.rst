@@ -1,1 +1,0 @@
-Skip `test_do_not_collect_symlink_siblings` on Windows environments without symlink support to avoid false negatives.

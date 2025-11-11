@@ -1,1 +1,0 @@
-Flush `stdout` and `stderr` in `Pytester.run` to avoid truncated outputs in `test_faulthandler.py::test_timeout` on CI -- by :user:`ogrisel`.

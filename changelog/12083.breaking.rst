@@ -1,9 +1,0 @@
-Fixed a bug where an invocation such as `pytest a/ a/b` would cause only tests from `a/b` to run, and not other tests under `a/`.
-
-The fix entails a few breaking changes to how such overlapping arguments and duplicates are handled:
-
-1. `pytest a/b a/` or `pytest a/ a/b` are equivalent to `pytest a`; if an argument overlaps another arguments, only the prefix remains.
-
-2. `pytest x.py x.py` is equivalent to `pytest x.py`; previously such an invocation was taken as an explicit request to run the tests from the file twice.
-
-If you rely on these behaviors, consider using :ref:`--keep-duplicates <duplicate-paths>`, which retains its existing behavior (including the bug).

@@ -29,7 +29,37 @@ Each assertion failure or error is caught by the context manager and reported in
 .. code-block:: pytest
 
     $ pytest -q test_subtest.py
+    uuuuuF                                                               [100%]
+    ================================= FAILURES =================================
+    _______________________ test [custom message] (i=1) ________________________
 
+    subtests = <_pytest.subtests.Subtests object at 0xdeadbeef0001>
+
+        def test(subtests):
+            for i in range(5):
+                with subtests.test(msg="custom message", i=i):
+    >               assert i % 2 == 0
+    E               assert (1 % 2) == 0
+
+    test_subtest.py:6: AssertionError
+    _______________________ test [custom message] (i=3) ________________________
+
+    subtests = <_pytest.subtests.Subtests object at 0xdeadbeef0001>
+
+        def test(subtests):
+            for i in range(5):
+                with subtests.test(msg="custom message", i=i):
+    >               assert i % 2 == 0
+    E               assert (3 % 2) == 0
+
+    test_subtest.py:6: AssertionError
+    ___________________________________ test ___________________________________
+    contains 2 failed subtests
+    ========================= short test summary info ==========================
+    SUBFAILED[custom message] (i=1) test_subtest.py::test - assert (1 % 2) == 0
+    SUBFAILED[custom message] (i=3) test_subtest.py::test - assert (3 % 2) == 0
+    FAILED test_subtest.py::test - contains 2 failed subtests
+    3 failed, 3 subtests passed in 0.12s
 
 In the output above:
 

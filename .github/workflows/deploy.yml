@@ -64,7 +64,7 @@ jobs:
         tox -e generate-gh-release-notes -- "$VERSION" gh-release-notes.md
 
     - name: Upload release notes
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: release-notes
         path: gh-release-notes.md
@@ -120,6 +120,11 @@ jobs:
     permissions:
       contents: write
     steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: true
+
     - name: Download Package
       uses: actions/download-artifact@v6
       with:

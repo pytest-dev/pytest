@@ -1094,6 +1094,49 @@ def test_usefixtures_marker_on_unittest(base, pytester: Pytester) -> None:
     result.assert_outcomes(passed=2)
 
 
+def test_skip_setup_class(pytester: Pytester) -> None:
+    """Skipping tests in a class by raising unittest.SkipTest in `setUpClass` (#13985)."""
+    pytester.makepyfile(
+        """
+        import unittest
+
+        class Test(unittest.TestCase):
+
+            @classmethod
+            def setUpClass(cls):
+                raise unittest.SkipTest('Skipping setupclass')
+
+            def test_foo(self):
+                assert False
+
+            def test_bar(self):
+                assert False
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(skipped=2)
+
+
+def test_unittest_skip_function(pytester: Pytester) -> None:
+    """
+    Ensure raising an explicit unittest.SkipTest skips standard pytest functions.
+
+    Support for this is debatable -- technically we only support unittest.SkipTest in TestCase subclasses,
+    but stating this support here in this test because users currently expect this to work,
+    so if we ever break it we at least know we are breaking this use case (#13985).
+    """
+    pytester.makepyfile(
+        """
+        import unittest
+
+        def test_foo():
+            raise unittest.SkipTest('Skipping test_foo')
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(skipped=1)
+
+
 def test_testcase_handles_init_exceptions(pytester: Pytester) -> None:
     """
     Regression test to make sure exceptions in the __init__ method are bubbled up correctly.

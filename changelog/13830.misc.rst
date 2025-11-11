@@ -1,1 +1,0 @@
-Configuration overrides (``-o``/``--override-ini``) are now processed during startup rather than during :func:`config.getini() <pytest.Config.getini>`.
