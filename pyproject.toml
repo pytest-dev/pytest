@@ -445,6 +445,7 @@ include = [
 ]
 parallel = true
 branch = true
+patch = [ "subprocess" ]
 
 [tool.coverage.paths]
 source = [
