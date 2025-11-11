@@ -29,7 +29,7 @@ you will see the return value of the function call:
 
     $ pytest test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -46,6 +46,7 @@ you will see the return value of the function call:
     test_assert1.py:6: AssertionError
     ========================= short test summary info ==========================
     FAILED test_assert1.py::test_function - assert 3 == 4
+     +  where 3 = f()
     ============================ 1 failed in 0.12s =============================
 
 ``pytest`` has support for showing the values of the most common subexpressions
@@ -404,7 +405,7 @@ if you run this module:
 
     $ pytest test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -423,11 +424,33 @@ if you run this module:
     E         '1'
     E         Extra items in the right set:
     E         '5'
-    E         Use -v to get more diff
+    E
+    E         Full diff:
+    E           {
+    E               '0',
+    E         +     '1',
+    E               '3',
+    E         -     '5',
+    E               '8',
+    E           }
 
     test_assert2.py:4: AssertionError
     ========================= short test summary info ==========================
-    FAILED test_assert2.py::test_set_comparison - AssertionError: assert {'0'...
+    FAILED test_assert2.py::test_set_comparison - AssertionError: assert {'0', '1', '3', '8'} == {'0', '3', '5', '8'}
+
+      Extra items in the left set:
+      '1'
+      Extra items in the right set:
+      '5'
+
+      Full diff:
+        {
+            '0',
+      +     '1',
+            '3',
+      -     '5',
+            '8',
+        }
     ============================ 1 failed in 0.12s =============================
 
 Special comparisons are done for a number of cases:
@@ -501,6 +524,7 @@ the conftest file:
    test_foocompare.py:12: AssertionError
    ========================= short test summary info ==========================
    FAILED test_foocompare.py::test_compare - assert Comparing Foo instances:
+        vals: 1 != 2
    1 failed in 0.12s
 
 .. _`return-not-none`:

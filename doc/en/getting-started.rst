@@ -20,7 +20,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 9.0.0
+    pytest 9.0.1
 
 .. _`simpletest`:
 
@@ -45,7 +45,7 @@ The test
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -62,6 +62,7 @@ The test
     test_sample.py:6: AssertionError
     ========================= short test summary info ==========================
     FAILED test_sample.py::test_answer - assert 4 == 5
+     +  where 4 = func(3)
     ============================ 1 failed in 0.12s =============================
 
 The ``[100%]`` refers to the overall progress of running all test cases. After it finishes, pytest then shows a failure report because ``func(3)`` does not return ``5``.
@@ -148,6 +149,7 @@ Once you develop multiple tests, you may want to group them into a class. pytest
     test_class.py:8: AssertionError
     ========================= short test summary info ==========================
     FAILED test_class.py::TestClass::test_two - AssertionError: assert False
+     +  where False = hasattr('hello', 'check')
     1 failed, 1 passed in 0.12s
 
 The first test passed and the second failed. You can easily see the intermediate values in the assertion to help you understand the reason for the failure.
@@ -195,6 +197,7 @@ This is outlined below:
     test_class_demo.py:9: AssertionError
     ========================= short test summary info ==========================
     FAILED test_class_demo.py::TestClassDemoInstance::test_two - assert 0 == 1
+     +  where 0 = <test_class_demo.TestClassDemoInstance object at 0xdeadbeef0002>.value
     1 failed, 1 passed in 0.12s
 
 Note that attributes added at class level are *class attributes*, so they will be shared between tests.

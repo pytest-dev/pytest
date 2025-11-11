@@ -1,1 +1,0 @@
-Fixed the TOML type of the verbosity settings in the API reference from number to string.
