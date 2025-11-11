@@ -91,9 +91,9 @@ all other warnings into errors.
 
         [pytest]
         filterwarnings = [
-            "error",
-            "ignore::UserWarning",
-            # note the use of single quote below to denote "raw" strings in TOML
+            'error',
+            'ignore::UserWarning',
+            # Note the use of single quote below to denote "raw" strings in TOML.
             'ignore:function ham\(\) is deprecated:DeprecationWarning',
         ]
 

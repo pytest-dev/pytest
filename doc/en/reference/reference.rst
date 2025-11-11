@@ -186,7 +186,7 @@ Add warning filters to marked test items.
 
         .. code-block:: python
 
-            @pytest.mark.filterwarnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
+            @pytest.mark.filterwarnings(r"ignore:.*usage will be deprecated.*:DeprecationWarning")
             def test_foo(): ...
 
 
@@ -1587,9 +1587,8 @@ passed multiple times. The expected format is ``name=value``. For example::
    For more information please refer to :ref:`faulthandler`.
    For more information please refer to :ref:`faulthandler`.
 
+
 .. confval:: filterwarnings
-
-
 
    Sets a list of filters and actions that should be taken for matched
    warnings. By default all warnings emitted during the test session
@@ -1600,7 +1599,12 @@ passed multiple times. The expected format is ``name=value``. For example::
        .. code-block:: toml
 
             [pytest]
-            filterwarnings = ["error", "ignore::DeprecationWarning"]
+            filterwarnings = [
+                'error',
+                'ignore::DeprecationWarning',
+                # Note the use of single quote below to denote "raw" strings in TOML.
+                'ignore:function ham\(\) should not be used:UserWarning',
+            ]
 
    .. tab:: ini
 
@@ -1610,6 +1614,7 @@ passed multiple times. The expected format is ``name=value``. For example::
             filterwarnings =
                 error
                 ignore::DeprecationWarning
+                ignore:function ham\(\) should not be used:UserWarning
 
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
