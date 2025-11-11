@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from beta_cyclic.bridge import summon_beta
 
 

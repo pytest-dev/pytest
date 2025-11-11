@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from alpha_cyclic.core import make_alpha
 
 

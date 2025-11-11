@@ -1,9 +1,17 @@
 [build-system]
-requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+requires = [ "setuptools" ]
 
 [project]
 name = "alpha-cyclic"
 version = "0.0.1"
 description = "Toy package that depends on beta-cyclic to demonstrate circular imports."
-dependencies = ["beta-cyclic"]
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [ "beta-cyclic" ]
