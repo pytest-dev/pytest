@@ -354,7 +354,7 @@ See the :confval:`strict` documentation for the options it enables and their eff
 If pytest adds new strictness options in the future, they will also be enabled in strict mode.
 Therefore, you should only enable strict mode if you use a pinned/locked version of pytest,
 or if you want to proactively adopt new strictness options as they are added.
-If you don't want to automatically pick up new options, you can enable options individually::
+If you don't want to automatically pick up new options, you can enable options individually:
 
 .. tab:: toml
 
@@ -376,7 +376,7 @@ If you don't want to automatically pick up new options, you can enable options i
         strict_parametrization_ids = true
         strict_xfail = true
 
-If you want to use strict mode but having trouble with a specific option, you can turn it off individually::
+If you want to use strict mode but having trouble with a specific option, you can turn it off individually:
 
 .. tab:: toml
 
