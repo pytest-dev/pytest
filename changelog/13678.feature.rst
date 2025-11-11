@@ -1,3 +1,0 @@
-Added a new `faulthandler_exit_on_timeout` ini option set to "false" by default to let `faulthandler` interrupt the `pytest` process after a timeout in case of deadlock -- by :user:`ogrisel`.
-
-Previously, a `faulthandler` timeout would only dump the traceback of all threads to stderr, but would not interrupt the `pytest` process.

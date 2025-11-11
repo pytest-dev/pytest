@@ -1,7 +1,0 @@
-The single argument ``--version`` no longer loads the entire plugin infrastructure, making it faster and more reliable when displaying only the pytest version.
-
-Passing ``--version`` twice (e.g., ``pytest --version --version``) retains the original behavior, showing both the pytest version and plugin information.
-
-.. note::
-
-    Since ``--version`` is now processed early, it only takes effect when passed directly via the command line. It will not work if set through other mechanisms, such as :envvar:`PYTEST_ADDOPTS` or :confval:`addopts`.
