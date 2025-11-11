@@ -12,6 +12,7 @@ Core pytest functionality
    :maxdepth: 1
 
    usage
+   cli-options
    assert
    fixtures
    mark
