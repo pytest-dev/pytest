@@ -9,7 +9,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
     assertion $ pytest failure_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project/assertion
     collected 44 items
 
@@ -146,9 +146,14 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E           1
     E           1
     E           1
-    E           1...
-    E
-    E         ...Full output truncated (7 lines hidden), use '-vv' to show
+    E           1
+    E           1
+    E         - b2
+    E         + a2
+    E           2
+    E           2
+    E           2
+    E           2
 
     failure_demo.py:62: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_list _________________
@@ -160,7 +165,16 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       assert [0, 1, 2] == [0, 1, 3]
     E
     E         At index 2 diff: 2 != 3
-    E         Use -v to get more diff
+    E
+    E         Full diff:
+    E           [
+    E               0,
+    E               1,
+    E         -     3,
+    E         ?     ^
+    E         +     2,
+    E         ?     ^
+    E           ]
 
     failure_demo.py:65: AssertionError
     ______________ TestSpecialisedExplanations.test_eq_list_long _______________
@@ -174,7 +188,214 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       assert [0, 0, 0, 0, 0, 0, ...] == [0, 0, 0, 0, 0, 0, ...]
     E
     E         At index 100 diff: 1 != 2
-    E         Use -v to get more diff
+    E
+    E         Full diff:
+    E           [
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E               0,
+    E         -     2,
+    E         ?     ^
+    E         +     1,
+    E         ?     ^
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E               3,
+    E           ]
 
     failure_demo.py:70: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_dict _________________
@@ -192,7 +413,19 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E         {'c': 0}
     E         Right contains 1 more item:
     E         {'d': 0}
-    E         Use -v to get more diff
+    E
+    E         Full diff:
+    E           {
+    E               'a': 0,
+    E         -     'b': 2,
+    E         ?          ^
+    E         +     'b': 1,
+    E         ?          ^
+    E         -     'd': 0,
+    E         ?      ^
+    E         +     'c': 0,
+    E         ?      ^
+    E           }
 
     failure_demo.py:73: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_set __________________
@@ -210,7 +443,20 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E         Extra items in the right set:
     E         20
     E         21
-    E         Use -v to get more diff
+    E
+    E         Full diff:
+    E           {
+    E               0,
+    E         -     20,
+    E         ?     ^
+    E         +     10,
+    E         ?     ^
+    E         -     21,
+    E         ?     ^
+    E         +     11,
+    E         ?     ^
+    E         +     12,
+    E           }
 
     failure_demo.py:76: AssertionError
     _____________ TestSpecialisedExplanations.test_eq_longer_list ______________
@@ -222,7 +468,13 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E       assert [1, 2] == [1, 2, 3]
     E
     E         Right contains one more item: 3
-    E         Use -v to get more diff
+    E
+    E         Full diff:
+    E           [
+    E               1,
+    E               2,
+    E         -     3,
+    E           ]
 
     failure_demo.py:79: AssertionError
     _________________ TestSpecialisedExplanations.test_in_list _________________
@@ -679,46 +931,424 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     ========================= short test summary info ==========================
     FAILED failure_demo.py::test_generative[3-6] - assert (3 * 2) < 6
     FAILED failure_demo.py::TestFailing::test_simple - assert 42 == 43
+     +  where 42 = <function TestFailing.test_simple.<locals>.f at 0xdeadbeef0002>()
+     +  and   43 = <function TestFailing.test_simple.<locals>.g at 0xdeadbeef0003>()
     FAILED failure_demo.py::TestFailing::test_simple_multiline - assert 42 == 54
     FAILED failure_demo.py::TestFailing::test_not - assert not 42
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_text - Asser...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_similar_text
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_multiline_text
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_long_text - ...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_long_text_multiline
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_list - asser...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_list_long - ...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_dict - Asser...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_set - assert...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_longer_list
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_in_list - asser...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_multiline
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single_long
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single_long_term
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_dataclass - ...
-    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_attrs - Asse...
+     +  where 42 = <function TestFailing.test_not.<locals>.f at 0xdeadbeef0006>()
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_text - AssertionError: assert 'spam' == 'eggs'
+
+      - eggs
+      + spam
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_similar_text - AssertionError: assert 'foo 1 bar' == 'foo 2 bar'
+
+      - foo 2 bar
+      ?     ^
+      + foo 1 bar
+      ?     ^
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_multiline_text - AssertionError: assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
+
+        foo
+      - eggs
+      + spam
+        bar
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_long_text - AssertionError: assert '111111111111...2222222222222' == '111111111111...2222222222222'
+
+      Skipping 90 identical leading characters in diff, use -v to show
+      Skipping 91 identical trailing characters in diff, use -v to show
+      - 1111111111b222222222
+      ?           ^
+      + 1111111111a222222222
+      ?           ^
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_long_text_multiline - AssertionError: assert '1\n1\n1\n1\n...n2\n2\n2\n2\n' == '1\n1\n1\n1\n...n2\n2\n2\n2\n'
+
+      Skipping 190 identical leading characters in diff, use -v to show
+      Skipping 191 identical trailing characters in diff, use -v to show
+        1
+        1
+        1
+        1
+        1
+      - b2
+      + a2
+        2
+        2
+        2
+        2
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_list - assert [0, 1, 2] == [0, 1, 3]
+
+      At index 2 diff: 2 != 3
+
+      Full diff:
+        [
+            0,
+            1,
+      -     3,
+      ?     ^
+      +     2,
+      ?     ^
+        ]
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_list_long - assert [0, 0, 0, 0, 0, 0, ...] == [0, 0, 0, 0, 0, 0, ...]
+
+      At index 100 diff: 1 != 2
+
+      Full diff:
+        [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+      -     2,
+      ?     ^
+      +     1,
+      ?     ^
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+            3,
+        ]
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_dict - AssertionError: assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
+
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'b': 1} != {'b': 2}
+      Left contains 1 more item:
+      {'c': 0}
+      Right contains 1 more item:
+      {'d': 0}
+
+      Full diff:
+        {
+            'a': 0,
+      -     'b': 2,
+      ?          ^
+      +     'b': 1,
+      ?          ^
+      -     'd': 0,
+      ?      ^
+      +     'c': 0,
+      ?      ^
+        }
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_set - assert {0, 10, 11, 12} == {0, 20, 21}
+
+      Extra items in the left set:
+      10
+      11
+      12
+      Extra items in the right set:
+      20
+      21
+
+      Full diff:
+        {
+            0,
+      -     20,
+      ?     ^
+      +     10,
+      ?     ^
+      -     21,
+      ?     ^
+      +     11,
+      ?     ^
+      +     12,
+        }
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_longer_list - assert [1, 2] == [1, 2, 3]
+
+      Right contains one more item: 3
+
+      Full diff:
+        [
+            1,
+            2,
+      -     3,
+        ]
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_in_list - assert 1 in [0, 2, 3, 4, 5]
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_multiline - AssertionError: assert 'foo' not in 'some multil...nand a\ntail'
+
+      'foo' is contained here:
+        some multiline
+        text
+        which
+        includes foo
+      ?          +++
+        and a
+        tail
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single - AssertionError: assert 'foo' not in 'single foo line'
+
+      'foo' is contained here:
+        single foo line
+      ?        +++
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single_long - AssertionError: assert 'foo' not in 'head head h...l tail tail '
+
+      'foo' is contained here:
+        head head foo tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail
+      ?           +++
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_not_in_text_single_long_term - AssertionError: assert 'fffffffffff...ffffffffffff' not in 'head head h...l tail tail '
+
+      'ffffffffffffffffff...fffffffffffffffffff' is contained here:
+        head head fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffftail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail
+      ?           ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_dataclass - AssertionError: assert TestSpecialis...oo(a=1, b='b') == TestSpecialis...oo(a=1, b='c')
+
+      Omitting 1 identical items, use -vv to show
+      Differing attributes:
+      ['b']
+
+      Drill down into differing attribute b:
+        b: 'b' != 'c'
+        - c
+        + b
+    FAILED failure_demo.py::TestSpecialisedExplanations::test_eq_attrs - AssertionError: assert Foo(a=1, b='b') == Foo(a=1, b='c')
+
+      Omitting 1 identical items, use -vv to show
+      Differing attributes:
+      ['b']
+
+      Drill down into differing attribute b:
+        b: 'b' != 'c'
+        - c
+        + b
     FAILED failure_demo.py::test_attribute - assert 1 == 2
-    FAILED failure_demo.py::test_attribute_instance - AssertionError: assert ...
-    FAILED failure_demo.py::test_attribute_failure - Exception: Failed to get...
-    FAILED failure_demo.py::test_attribute_multiple - AssertionError: assert ...
-    FAILED failure_demo.py::TestRaises::test_raises - ValueError: invalid lit...
-    FAILED failure_demo.py::TestRaises::test_raises_doesnt - Failed: DID NOT ...
+     +  where 1 = <failure_demo.test_attribute.<locals>.Foo object at 0xdeadbeef0018>.b
+    FAILED failure_demo.py::test_attribute_instance - AssertionError: assert 1 == 2
+     +  where 1 = <failure_demo.test_attribute_instance.<locals>.Foo object at 0xdeadbeef0019>.b
+     +    where <failure_demo.test_attribute_instance.<locals>.Foo object at 0xdeadbeef0019> = <class 'failure_demo.test_attribute_instance.<locals>.Foo'>()
+    FAILED failure_demo.py::test_attribute_failure - Exception: Failed to get attrib
+    FAILED failure_demo.py::test_attribute_multiple - AssertionError: assert 1 == 2
+     +  where 1 = <failure_demo.test_attribute_multiple.<locals>.Foo object at 0xdeadbeef001b>.b
+     +    where <failure_demo.test_attribute_multiple.<locals>.Foo object at 0xdeadbeef001b> = <class 'failure_demo.test_attribute_multiple.<locals>.Foo'>()
+     +  and   2 = <failure_demo.test_attribute_multiple.<locals>.Bar object at 0xdeadbeef001c>.b
+     +    where <failure_demo.test_attribute_multiple.<locals>.Bar object at 0xdeadbeef001c> = <class 'failure_demo.test_attribute_multiple.<locals>.Bar'>()
+    FAILED failure_demo.py::TestRaises::test_raises - ValueError: invalid literal for int() with base 10: 'qwe'
+    FAILED failure_demo.py::TestRaises::test_raises_doesnt - Failed: DID NOT RAISE <class 'OSError'>
     FAILED failure_demo.py::TestRaises::test_raise - ValueError: demo error
-    FAILED failure_demo.py::TestRaises::test_tupleerror - ValueError: not eno...
-    FAILED failure_demo.py::TestRaises::test_reinterpret_fails_with_print_for_the_fun_of_it
-    FAILED failure_demo.py::TestRaises::test_some_error - NameError: name 'na...
+    FAILED failure_demo.py::TestRaises::test_tupleerror - ValueError: not enough values to unpack (expected 2, got 1)
+    FAILED failure_demo.py::TestRaises::test_reinterpret_fails_with_print_for_the_fun_of_it - TypeError: cannot unpack non-iterable int object
+    FAILED failure_demo.py::TestRaises::test_some_error - NameError: name 'namenotexi' is not defined
     FAILED failure_demo.py::test_dynamic_compile_shows_nicely - AssertionError
     FAILED failure_demo.py::TestMoreErrors::test_complex_error - assert 44 == 43
-    FAILED failure_demo.py::TestMoreErrors::test_z1_unpack_error - ValueError...
-    FAILED failure_demo.py::TestMoreErrors::test_z2_type_error - TypeError: c...
-    FAILED failure_demo.py::TestMoreErrors::test_startswith - AssertionError:...
-    FAILED failure_demo.py::TestMoreErrors::test_startswith_nested - Assertio...
+    FAILED failure_demo.py::TestMoreErrors::test_z1_unpack_error - ValueError: not enough values to unpack (expected 2, got 0)
+    FAILED failure_demo.py::TestMoreErrors::test_z2_type_error - TypeError: cannot unpack non-iterable int object
+    FAILED failure_demo.py::TestMoreErrors::test_startswith - AssertionError: assert False
+     +  where False = <built-in method startswith of str object at 0xdeadbeef0027>('456')
+     +    where <built-in method startswith of str object at 0xdeadbeef0027> = '123'.startswith
+    FAILED failure_demo.py::TestMoreErrors::test_startswith_nested - AssertionError: assert False
+     +  where False = <built-in method startswith of str object at 0xdeadbeef0027>('456')
+     +    where <built-in method startswith of str object at 0xdeadbeef0027> = '123'.startswith
+     +      where '123' = <function TestMoreErrors.test_startswith_nested.<locals>.f at 0xdeadbeef0029>()
+     +    and   '456' = <function TestMoreErrors.test_startswith_nested.<locals>.g at 0xdeadbeef002a>()
     FAILED failure_demo.py::TestMoreErrors::test_global_func - assert False
+     +  where False = isinstance(43, float)
+     +    where 43 = globf(42)
     FAILED failure_demo.py::TestMoreErrors::test_instance - assert 42 != 42
+     +  where 42 = <failure_demo.TestMoreErrors object at 0xdeadbeef002c>.x
     FAILED failure_demo.py::TestMoreErrors::test_compare - assert 11 < 5
+     +  where 11 = globf(10)
     FAILED failure_demo.py::TestMoreErrors::test_try_finally - assert 1 == 0
-    FAILED failure_demo.py::TestCustomAssertMsg::test_single_line - Assertion...
-    FAILED failure_demo.py::TestCustomAssertMsg::test_multiline - AssertionEr...
-    FAILED failure_demo.py::TestCustomAssertMsg::test_custom_repr - Assertion...
+    FAILED failure_demo.py::TestCustomAssertMsg::test_single_line - AssertionError: A.a appears not to be b
+    assert 1 == 2
+     +  where 1 = <class 'failure_demo.TestCustomAssertMsg.test_single_line.<locals>.A'>.a
+    FAILED failure_demo.py::TestCustomAssertMsg::test_multiline - AssertionError: A.a appears not to be b
+      or does not appear to be b
+      one of those
+    assert 1 == 2
+     +  where 1 = <class 'failure_demo.TestCustomAssertMsg.test_multiline.<locals>.A'>.a
+    FAILED failure_demo.py::TestCustomAssertMsg::test_custom_repr - AssertionError: This is JSON
+      {
+        'foo': 'bar'
+      }
+    assert 1 == 2
+     +  where 1 = This is JSON\n{\n  'foo': 'bar'\n}.a
     ============================ 44 failed in 0.12s ============================

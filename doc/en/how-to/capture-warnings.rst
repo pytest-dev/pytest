@@ -28,7 +28,7 @@ Running pytest now produces this output:
 
     $ pytest test_show_warnings.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -77,7 +77,7 @@ as an error:
 
     test_show_warnings.py:5: UserWarning
     ========================= short test summary info ==========================
-    FAILED test_show_warnings.py::test_one - UserWarning: api v1, should use ...
+    FAILED test_show_warnings.py::test_one - UserWarning: api v1, should use functions from v2
     1 failed in 0.12s
 
 The same option can be set in the configuration file using the

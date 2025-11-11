@@ -102,7 +102,18 @@ Executing pytest normally gives us this output (we are skipping the header to fo
     E       AssertionError: assert ['banana', 'a...elon', 'kiwi'] == ['banana', 'a...elon', 'kiwi']
     E
     E         At index 2 diff: 'grapes' != 'orange'
-    E         Use -v to get more diff
+    E
+    E         Full diff:
+    E           [
+    E               'banana',
+    E               'apple',
+    E         -     'orange',
+    E         ?      ^  ^^
+    E         +     'grapes',
+    E         ?      ^  ^ +
+    E               'melon',
+    E               'kiwi',
+    E           ]
 
     test_verbosity_example.py:8: AssertionError
     ____________________________ test_numbers_fail _____________________________
@@ -118,7 +129,23 @@ Executing pytest normally gives us this output (we are skipping the header to fo
     E         {'1': 1, '2': 2, '3': 3, '4': 4}
     E         Right contains 4 more items:
     E         {'10': 10, '20': 20, '30': 30, '40': 40}
-    E         Use -v to get more diff
+    E
+    E         Full diff:
+    E           {
+    E               '0': 0,
+    E         -     '10': 10,
+    E         ?       -    -
+    E         +     '1': 1,
+    E         -     '20': 20,
+    E         ?       -    -
+    E         +     '2': 2,
+    E         -     '30': 30,
+    E         ?       -    -
+    E         +     '3': 3,
+    E         -     '40': 40,
+    E         ?       -    -
+    E         +     '4': 4,
+    E           }
 
     test_verbosity_example.py:14: AssertionError
     ___________________________ test_long_text_fail ____________________________
@@ -130,9 +157,46 @@ Executing pytest normally gives us this output (we are skipping the header to fo
 
     test_verbosity_example.py:19: AssertionError
     ========================= short test summary info ==========================
-    FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
-    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
-    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
+    FAILED test_verbosity_example.py::test_words_fail - AssertionError: assert ['banana', 'a...elon', 'kiwi'] == ['banana', 'a...elon', 'kiwi']
+
+      At index 2 diff: 'grapes' != 'orange'
+
+      Full diff:
+        [
+            'banana',
+            'apple',
+      -     'orange',
+      ?      ^  ^^
+      +     'grapes',
+      ?      ^  ^ +
+            'melon',
+            'kiwi',
+        ]
+    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: assert {'0': 0, '1':..., '3': 3, ...} == {'0': 0, '10'...'30': 30, ...}
+
+      Omitting 1 identical items, use -vv to show
+      Left contains 4 more items:
+      {'1': 1, '2': 2, '3': 3, '4': 4}
+      Right contains 4 more items:
+      {'10': 10, '20': 20, '30': 30, '40': 40}
+
+      Full diff:
+        {
+            '0': 0,
+      -     '10': 10,
+      ?       -    -
+      +     '1': 1,
+      -     '20': 20,
+      ?       -    -
+      +     '2': 2,
+      -     '30': 30,
+      ?       -    -
+      +     '3': 3,
+      -     '40': 40,
+      ?       -    -
+      +     '4': 4,
+        }
+    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ips... sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
     ======================= 3 failed, 1 passed in 0.12s ========================
 
 Notice that:
@@ -170,9 +234,14 @@ Now we can increase pytest's verbosity:
     E         Full diff:
     E           [
     E               'banana',
-    E               'apple',...
-    E
-    E         ...Full output truncated (7 lines hidden), use '-vv' to show
+    E               'apple',
+    E         -     'orange',
+    E         ?      ^  ^^
+    E         +     'grapes',
+    E         ?      ^  ^ +
+    E               'melon',
+    E               'kiwi',
+    E           ]
 
     test_verbosity_example.py:8: AssertionError
     ____________________________ test_numbers_fail _____________________________
@@ -188,9 +257,23 @@ Now we can increase pytest's verbosity:
     E         {'1': 1, '2': 2, '3': 3, '4': 4}
     E         Right contains 4 more items:
     E         {'10': 10, '20': 20, '30': 30, '40': 40}
-    E         ...
     E
-    E         ...Full output truncated (16 lines hidden), use '-vv' to show
+    E         Full diff:
+    E           {
+    E               '0': 0,
+    E         -     '10': 10,
+    E         ?       -    -
+    E         +     '1': 1,
+    E         -     '20': 20,
+    E         ?       -    -
+    E         +     '2': 2,
+    E         -     '30': 30,
+    E         ?       -    -
+    E         +     '3': 3,
+    E         -     '40': 40,
+    E         ?       -    -
+    E         +     '4': 4,
+    E           }
 
     test_verbosity_example.py:14: AssertionError
     ___________________________ test_long_text_fail ____________________________
@@ -202,9 +285,46 @@ Now we can increase pytest's verbosity:
 
     test_verbosity_example.py:19: AssertionError
     ========================= short test summary info ==========================
-    FAILED test_verbosity_example.py::test_words_fail - AssertionError: asser...
-    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: ass...
-    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: a...
+    FAILED test_verbosity_example.py::test_words_fail - AssertionError: assert ['banana', 'a...elon', 'kiwi'] == ['banana', 'a...elon', 'kiwi']
+
+      At index 2 diff: 'grapes' != 'orange'
+
+      Full diff:
+        [
+            'banana',
+            'apple',
+      -     'orange',
+      ?      ^  ^^
+      +     'grapes',
+      ?      ^  ^ +
+            'melon',
+            'kiwi',
+        ]
+    FAILED test_verbosity_example.py::test_numbers_fail - AssertionError: assert {'0': 0, '1':..., '3': 3, ...} == {'0': 0, '10'...'30': 30, ...}
+
+      Omitting 1 identical items, use -vv to show
+      Left contains 4 more items:
+      {'1': 1, '2': 2, '3': 3, '4': 4}
+      Right contains 4 more items:
+      {'10': 10, '20': 20, '30': 30, '40': 40}
+
+      Full diff:
+        {
+            '0': 0,
+      -     '10': 10,
+      ?       -    -
+      +     '1': 1,
+      -     '20': 20,
+      ?       -    -
+      +     '2': 2,
+      -     '30': 30,
+      ?       -    -
+      +     '3': 3,
+      -     '40': 40,
+      ?       -    -
+      +     '4': 4,
+        }
+    FAILED test_verbosity_example.py::test_long_text_fail - AssertionError: assert 'hello world' in 'Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet Lorem ipsum dolor sit amet '
     ======================= 3 failed, 1 passed in 0.12s ========================
 
 Notice now that:
@@ -421,7 +541,7 @@ Example:
 
     $ pytest -ra
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
@@ -478,7 +598,7 @@ More than one character can be used, so for example to only see failed and skipp
 
     $ pytest -rfs
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
@@ -513,7 +633,7 @@ captured output:
 
     $ pytest -rpP
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
