@@ -85,7 +85,7 @@ repos:
     -   id: pylint
         name: pylint
         entry: pylint
-        language: system
+        language: unsupported
         types: [python]
         args: ["-rn", "-sn", "--fail-on=I", "--enable-all-extentions"]
         require_serial: true
