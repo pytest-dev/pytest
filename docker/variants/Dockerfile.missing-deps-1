@@ -1,0 +1,35 @@
+# syntax=docker/dockerfile:1
+FROM python:3.11-slim
+
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv "$VIRTUAL_ENV"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY . /app
+
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install \
+        colorama \
+        iniconfig \
+        packaging \
+        pluggy<2,>=1.5 \
+        pygments \
+        argcomplete \
+        attrs \
+        hypothesis \
+        requests \
+        xmlschema \
+        PyYAML \
+        pexpect \
+        pytest-xdist \
+        coverage \
+    && pip install -e .
+
+CMD ["pytest", "testing"]

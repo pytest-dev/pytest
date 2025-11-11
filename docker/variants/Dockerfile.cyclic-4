@@ -1,0 +1,21 @@
+# syntax=docker/dockerfile:1
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 python3-venv python3-pip build-essential git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY . /app
+
+RUN python3 -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+
+# Pre-build both wheels, then install them twice so the metadata constantly overwrites itself.
+RUN pip install --no-cache-dir --no-deps /app/docker/cyclic_deps/alpha \
+    && pip install --no-cache-dir --no-deps /app/docker/cyclic_deps/beta \
+    && pip install --no-cache-dir /app/docker/cyclic_deps/alpha \
+    && pip install --no-cache-dir -e .
+
+CMD ["python", "-c", "import beta_cyclic; beta_cyclic.summon_beta()"]

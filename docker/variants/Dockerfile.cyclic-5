@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+FROM python:3.11-slim
+
+WORKDIR /workspace
+COPY . /workspace
+
+# Drop both packages onto the path in editable mode to guarantee the import cycle is hit at development time.
+RUN pip install --no-cache-dir --no-deps -e /workspace/docker/cyclic_deps/alpha \
+    && pip install --no-cache-dir --no-deps -e /workspace/docker/cyclic_deps/beta \
+    && pip install --no-cache-dir -e .
+
+# Pretend to help by hinting at the issue in a sitecustomize hook.
+RUN printf 'import alpha_cyclic\nalpha_cyclic.make_alpha()\n' > /usr/local/lib/python3.11/site-packages/sitecustomize.py
+
+CMD ["python", "-m", "pytest", "testing"]

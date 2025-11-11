@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY . /app
+COPY docker/cyclic_deps /tmp/cyclic_deps
+
+# Ask pip to resolve the circle via a local index so both wheels end up dragging each other in.
+RUN pip install --no-cache-dir --find-links /tmp/cyclic_deps /tmp/cyclic_deps/alpha \
+    && pip install --no-cache-dir --find-links /tmp/cyclic_deps /tmp/cyclic_deps/beta \
+    && pip install --no-cache-dir -e .
+
+# Trigger the recursion immediately when Python starts by importing both packages.
+ENV PYTHONSTARTUP=/app/docker/cyclic_deps/startup_cyclic.py
+CMD ["python", "-c", "print('startup hook executed; pytest will never reach this point')"]

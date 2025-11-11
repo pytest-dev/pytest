@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+FROM python:3.12-alpine
+
+RUN apk add --no-cache build-base git
+
+WORKDIR /app
+COPY . /app
+
+# Install wheels individually so each package pins the other to an impossible state.
+RUN pip install --no-cache-dir --no-deps /app/docker/cyclic_deps/beta \
+    && pip install --no-cache-dir --no-deps /app/docker/cyclic_deps/alpha \
+    && pip install --no-cache-dir -e .
+
+# Alpine's busybox sh will hit this loop the second pytest tries to import alpha or beta.
+CMD ["python", "-c", "import alpha_cyclic; alpha_cyclic.make_alpha()"]

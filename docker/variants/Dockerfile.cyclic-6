@@ -1,0 +1,20 @@
+# syntax=docker/dockerfile:1
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 python3-pip python3-venv build-essential git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /srv/pytest
+COPY . /srv/pytest
+
+RUN python3 -m venv /opt/env
+ENV PATH="/opt/env/bin:$PATH"
+
+# Manufacture a wheelhouse and install everything from there so the resolver keeps chasing its own tail.
+RUN python -m pip wheel --no-deps -w /tmp/wheels /srv/pytest/docker/cyclic_deps/alpha /srv/pytest/docker/cyclic_deps/beta \
+    && python -m pip install --no-cache-dir --no-deps /tmp/wheels/*.whl \
+    && python -m pip install --no-cache-dir -e .
+
+CMD ["python", "-c", "import alpha_cyclic, beta_cyclic; print(alpha_cyclic.make_alpha())"]

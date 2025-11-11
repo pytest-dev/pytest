@@ -1,0 +1,11 @@
+FROM alpine:3.19
+
+RUN apk add --no-cache python3 py3-pip
+
+WORKDIR /app
+COPY . /app
+
+RUN python3 -m pip install pytest \
+    && python3 -m pip install -e .
+
+CMD ["python3", "-m", "pytest", "testing"]

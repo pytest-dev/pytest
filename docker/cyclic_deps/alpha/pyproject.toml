@@ -1,0 +1,9 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alpha-cyclic"
+version = "0.0.1"
+description = "Toy package that depends on beta-cyclic to demonstrate circular imports."
+dependencies = ["beta-cyclic"]
