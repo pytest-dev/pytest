@@ -120,11 +120,6 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-        persist-credentials: true
-
     - name: Download Package
       uses: actions/download-artifact@v6
       with:
@@ -140,6 +135,7 @@ jobs:
     - name: Publish GitHub Release
       env:
         VERSION: ${{ github.event.inputs.version }}
+        GH_REPO: ${{ github.repository }}
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh release create --notes-file gh-release-notes.md --verify-tag "$VERSION" dist/*
