@@ -964,7 +964,7 @@ class TestImportLibMode:
         )
 
         # unit test
-        __import__(name)  # import standard library
+        importlib.import_module(name)  # import standard library
 
         import_path(  # import user files
             file_path,

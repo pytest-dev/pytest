@@ -64,7 +64,7 @@ jobs:
         tox -e generate-gh-release-notes -- "$VERSION" gh-release-notes.md
 
     - name: Upload release notes
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: release-notes
         path: gh-release-notes.md
@@ -135,6 +135,7 @@ jobs:
     - name: Publish GitHub Release
       env:
         VERSION: ${{ github.event.inputs.version }}
+        GH_REPO: ${{ github.repository }}
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh release create --notes-file gh-release-notes.md --verify-tag "$VERSION" dist/*

@@ -8,10 +8,10 @@ import argparse
 from collections.abc import Callable
 from collections.abc import Generator
 import functools
+import importlib
 import sys
 import types
 from typing import Any
-import unittest
 
 from _pytest import outcomes
 from _pytest._code import ExceptionInfo
@@ -123,8 +123,7 @@ class pytestPDB:
             modname, classname = usepdb_cls
 
             try:
-                __import__(modname)
-                mod = sys.modules[modname]
+                mod = importlib.import_module(modname)
 
                 # Handle --pdbcls=pdb:pdb.Pdb (useful e.g. with pdbpp).
                 parts = classname.split(".")
@@ -295,9 +294,7 @@ class PdbInvoke:
             sys.stdout.write(out)
             sys.stdout.write(err)
         assert call.excinfo is not None
-
-        if not isinstance(call.excinfo.value, unittest.SkipTest):
-            _enter_pdb(node, call.excinfo, report)
+        _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
         exc_or_tb = _postmortem_exc_or_tb(excinfo)

@@ -5,18 +5,16 @@ import enum
 from functools import cached_property
 from functools import partial
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import Literal
+import warnings
 
 from _pytest.compat import assert_never
+from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
 import pytest
-
-
-if TYPE_CHECKING:
-    from typing import Literal
 
 
 def test_real_func_loop_limit() -> None:
@@ -192,3 +190,15 @@ def test_assert_never_literal() -> None:
         pass
     else:
         assert_never(x)
+
+
+def test_deprecated() -> None:
+    # This test is mostly for coverage.
+
+    @deprecated("This is deprecated!")
+    def old_way() -> str:
+        return "human intelligence"
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        assert old_way() == "human intelligence"  # type: ignore[deprecated]
