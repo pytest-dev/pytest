@@ -1,3 +1,4 @@
+minimum_pre_commit_version: "4.4.0"
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: "v0.14.4"
@@ -86,7 +87,7 @@ repos:
     -   id: pylint
         name: pylint
         entry: pylint
-        language: system
+        language: unsupported
         types: [python]
         args: ["-rn", "-sn", "--fail-on=I", "--enable-all-extentions"]
         require_serial: true
