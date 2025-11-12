@@ -285,12 +285,31 @@ and use pytest_addoption as follows:
            default=default_value,
        )
 
-The conftest.py that is using myplugin would simply define the hook as follows:
+Another plugin (installed via setuptools entry points, or via the ``-p`` command-line
+option) could then define the hook implementation to provide the default value:
 
 .. code-block:: python
 
+    # contents of third_party_plugin.py
+
     def pytest_config_file_default_value():
         return "config.yaml"
+
+.. note::
+
+    **Hook implementations in conftest.py files are not available during**
+    ``pytest_addoption()``. This is because conftest.py files are discovered
+    and loaded *after* plugins are loaded and initialized (including the execution
+    of their ``pytest_addoption()`` hooks). See :ref:`pluginorder` for the plugin
+    discovery order.
+
+    Only hook implementations from plugins that are loaded earlier will be available
+    during ``pytest_addoption()``. These include:
+
+    * builtin plugins
+    * plugins explicitly loaded with ``-p`` on the command line
+    * installed third-party plugins (via setuptools entry points)
+    * plugins specified via the ``PYTEST_PLUGINS`` environment variable
 
 
 Optionally using hooks from 3rd party plugins
