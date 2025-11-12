@@ -16,7 +16,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     env:
-      SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.event.inputs.version }}
+      SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST: ${{ github.event.inputs.version }}
     timeout-minutes: 10
 
     # Required by attest-build-provenance-github.
