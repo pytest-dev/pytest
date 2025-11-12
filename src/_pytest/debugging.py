@@ -8,6 +8,7 @@ import argparse
 from collections.abc import Callable
 from collections.abc import Generator
 import functools
+import importlib
 import sys
 import types
 from typing import Any
@@ -122,8 +123,7 @@ class pytestPDB:
             modname, classname = usepdb_cls
 
             try:
-                __import__(modname)
-                mod = sys.modules[modname]
+                mod = importlib.import_module(modname)
 
                 # Handle --pdbcls=pdb:pdb.Pdb (useful e.g. with pdbpp).
                 parts = classname.split(".")

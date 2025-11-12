@@ -19,11 +19,11 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from _pytest.compat import NOTSET
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
-from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
 
@@ -247,7 +247,7 @@ class MarkMatcher:
             return False
 
         for mark in matches:  # pylint: disable=consider-using-any-or-all
-            if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
+            if all(mark.kwargs.get(k, NOTSET) == v for k, v in kwargs.items()):
                 return True
         return False
 

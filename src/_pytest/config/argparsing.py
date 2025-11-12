@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
-from collections.abc import Mapping
 from collections.abc import Sequence
 import os
 import sys
+import textwrap
 from typing import Any
 from typing import final
 from typing import Literal
@@ -14,18 +14,11 @@ from typing import NoReturn
 
 from .exceptions import UsageError
 import _pytest._io
+from _pytest.compat import NOTSET
 from _pytest.deprecated import check_ispytest
 
 
 FILE_OR_DIR = "file_or_dir"
-
-
-class NotSet:
-    def __repr__(self) -> str:
-        return "<notset>"
-
-
-NOT_SET = NotSet()
 
 
 @final
@@ -49,12 +42,14 @@ class Parser:
 
         self._processopt = processopt
         self.extra_info: dict[str, Any] = {}
-        self.optparser = PytestArgumentParser(self, usage, self.extra_info)
+        self.optparser = PytestArgumentParser(usage, self.extra_info)
         anonymous_arggroup = self.optparser.add_argument_group("Custom options")
         self._anonymous = OptionGroup(
             anonymous_arggroup, "_anonymous", self, _ispytest=True
         )
         self._groups = [self._anonymous]
+        # Maps option strings -> dest, e.g. "-V" and "--version" to "version".
+        self._opt2dest: dict[str, str] = {}
         file_or_dir_arg = self.optparser.add_argument(FILE_OR_DIR, nargs="*")
         file_or_dir_arg.completer = filescompleter  # type: ignore
 
@@ -190,7 +185,7 @@ class Parser:
             "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
         ]
         | None = None,
-        default: Any = NOT_SET,
+        default: Any = NOTSET,
         *,
         aliases: Sequence[str] = (),
     ) -> None:
@@ -250,7 +245,7 @@ class Parser:
         )
         if type is None:
             type = "string"
-        if default is NOT_SET:
+        if default is NOTSET:
             default = get_ini_default_for_type(type)
 
         self._inidict[name] = (help, type, default)
@@ -286,109 +281,37 @@ def get_ini_default_for_type(
         return ""
 
 
-class ArgumentError(Exception):
-    """Raised if an Argument instance is created with invalid or
-    inconsistent arguments."""
-
-    def __init__(self, msg: str, option: Argument | str) -> None:
-        self.msg = msg
-        self.option_id = str(option)
-
-    def __str__(self) -> str:
-        if self.option_id:
-            return f"option {self.option_id}: {self.msg}"
-        else:
-            return self.msg
-
-
 class Argument:
-    """Class that mimics the necessary behaviour of optparse.Option.
+    """An option defined in an OptionGroup."""
 
-    It's currently a least effort implementation and ignoring choices
-    and integer prefixes.
+    def __init__(self, action: argparse.Action) -> None:
+        self._action = action
 
-    https://docs.python.org/3/library/optparse.html#optparse-standard-option-types
-    """
+    def attrs(self) -> dict[str, Any]:
+        return self._action.__dict__
 
-    def __init__(self, *names: str, **attrs: Any) -> None:
-        """Store params in private vars for use in add_argument."""
-        self._attrs = attrs
-        self._short_opts: list[str] = []
-        self._long_opts: list[str] = []
-        try:
-            self.type = attrs["type"]
-        except KeyError:
-            pass
-        try:
-            # Attribute existence is tested in Config._processopt.
-            self.default = attrs["default"]
-        except KeyError:
-            pass
-        self._set_opt_strings(names)
-        dest: str | None = attrs.get("dest")
-        if dest:
-            self.dest = dest
-        elif self._long_opts:
-            self.dest = self._long_opts[0][2:].replace("-", "_")
-        else:
-            try:
-                self.dest = self._short_opts[0][1:]
-            except IndexError as e:
-                self.dest = "???"  # Needed for the error repr.
-                raise ArgumentError("need a long or short option", self) from e
+    def names(self) -> Sequence[str]:
+        return self._action.option_strings
 
-    def names(self) -> list[str]:
-        return self._short_opts + self._long_opts
+    @property
+    def dest(self) -> str:
+        return self._action.dest
 
-    def attrs(self) -> Mapping[str, Any]:
-        # Update any attributes set by processopt.
-        for attr in ("default", "dest", "help", self.dest):
-            try:
-                self._attrs[attr] = getattr(self, attr)
-            except AttributeError:
-                pass
-        return self._attrs
+    @property
+    def default(self) -> Any:
+        return self._action.default
 
-    def _set_opt_strings(self, opts: Sequence[str]) -> None:
-        """Directly from optparse.
-
-        Might not be necessary as this is passed to argparse later on.
-        """
-        for opt in opts:
-            if len(opt) < 2:
-                raise ArgumentError(
-                    f"invalid option string {opt!r}: "
-                    "must be at least two characters long",
-                    self,
-                )
-            elif len(opt) == 2:
-                if not (opt[0] == "-" and opt[1] != "-"):
-                    raise ArgumentError(
-                        f"invalid short option string {opt!r}: "
-                        "must be of the form -x, (x any non-dash char)",
-                        self,
-                    )
-                self._short_opts.append(opt)
-            else:
-                if not (opt[0:2] == "--" and opt[2] != "-"):
-                    raise ArgumentError(
-                        f"invalid long option string {opt!r}: "
-                        "must start with --, followed by non-dash",
-                        self,
-                    )
-                self._long_opts.append(opt)
+    @property
+    def type(self) -> Any | None:
+        return self._action.type
 
     def __repr__(self) -> str:
         args: list[str] = []
-        if self._short_opts:
-            args += ["_short_opts: " + repr(self._short_opts)]
-        if self._long_opts:
-            args += ["_long_opts: " + repr(self._long_opts)]
+        args += ["opts: " + repr(self.names())]
         args += ["dest: " + repr(self.dest)]
-        if hasattr(self, "type"):
+        if self._action.type:
             args += ["type: " + repr(self.type)]
-        if hasattr(self, "default"):
-            args += ["default: " + repr(self.default)]
+        args += ["default: " + repr(self.default)]
         return "Argument({})".format(", ".join(args))
 
 
@@ -418,6 +341,7 @@ class OptionGroup:
 
         :param opts:
             Option names, can be short or long options.
+            Note that lower-case short options (e.g. `-x`) are reserved.
         :param attrs:
             Same attributes as the argparse library's :meth:`add_argument()
             <argparse.ArgumentParser.add_argument>` function accepts.
@@ -427,34 +351,36 @@ class OptionGroup:
         )
         if conflict:
             raise ValueError(f"option names {conflict} already added")
-        option = Argument(*opts, **attrs)
-        self._addoption_instance(option, shortupper=False)
+        self._addoption_inner(opts, attrs, allow_reserved=False)
 
     def _addoption(self, *opts: str, **attrs: Any) -> None:
-        option = Argument(*opts, **attrs)
-        self._addoption_instance(option, shortupper=True)
+        """Like addoption(), but also allows registering short lower case options (e.g. -x),
+        which are reserved for pytest core."""
+        self._addoption_inner(opts, attrs, allow_reserved=True)
 
-    def _addoption_instance(self, option: Argument, shortupper: bool = False) -> None:
-        if not shortupper:
-            for opt in option._short_opts:
-                if opt[0] == "-" and opt[1].islower():
-                    raise ValueError("lowercase shortoptions reserved")
+    def _addoption_inner(
+        self, opts: tuple[str, ...], attrs: dict[str, Any], allow_reserved: bool
+    ) -> None:
+        if not allow_reserved:
+            for opt in opts:
+                if len(opt) >= 2 and opt[0] == "-" and opt[1].islower():
+                    raise ValueError("lowercase short options are reserved")
 
-        if self.parser:
-            self.parser.processoption(option)
-
-        self._arggroup.add_argument(*option.names(), **option.attrs())
+        action = self._arggroup.add_argument(*opts, **attrs)
+        option = Argument(action)
         self.options.append(option)
+        if self.parser:
+            for name in option.names():
+                self.parser._opt2dest[name] = option.dest
+            self.parser.processoption(option)
 
 
 class PytestArgumentParser(argparse.ArgumentParser):
     def __init__(
         self,
-        parser: Parser,
         usage: str | None,
         extra_info: dict[str, str],
     ) -> None:
-        self._parser = parser
         super().__init__(
             usage=usage,
             add_help=False,
@@ -468,6 +394,8 @@ class PytestArgumentParser(argparse.ArgumentParser):
 
     def error(self, message: str) -> NoReturn:
         """Transform argparse error message into UsageError."""
+        # TODO(py313): Replace with `exit_on_error=False`. Note that while it
+        # was added in Python 3.9, it was broken until 3.13 (cpython#121018).
         msg = f"{self.prog}: error: {message}"
         if self.extra_info:
             msg += "\n" + "\n".join(
@@ -481,7 +409,6 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
 
     - Collapse **long** options that are the same except for extra hyphens.
     - Shortcut if there are only two options and one of them is a short one.
-    - Cache result on the action object as this is called at least 2 times.
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -494,23 +421,18 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         orgstr = super()._format_action_invocation(action)
         if orgstr and orgstr[0] != "-":  # only optional arguments
             return orgstr
-        res: str | None = getattr(action, "_formatted_action_invocation", None)
-        if res:
-            return res
         options = orgstr.split(", ")
         if len(options) == 2 and (len(options[0]) == 2 or len(options[1]) == 2):
             # a shortcut for '-h, --help' or '--abc', '-a'
-            action._formatted_action_invocation = orgstr  # type: ignore
             return orgstr
         return_list = []
         short_long: dict[str, str] = {}
         for option in options:
             if len(option) == 2 or option[2] == " ":
                 continue
-            if not option.startswith("--"):
-                raise ArgumentError(
-                    f'long optional argument without "--": [{option}]', option
-                )
+            assert option.startswith("--"), (
+                f'long optional argument without "--": [{option}]'
+            )
             xxoption = option[2:]
             shortened = xxoption.replace("-", "")
             if shortened not in short_long or len(short_long[shortened]) < len(
@@ -524,17 +446,13 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
                 return_list.append(option)
             if option[2:] == short_long.get(option.replace("-", "")):
                 return_list.append(option.replace(" ", "=", 1))
-        formatted_action_invocation = ", ".join(return_list)
-        action._formatted_action_invocation = formatted_action_invocation  # type: ignore
-        return formatted_action_invocation
+        return ", ".join(return_list)
 
-    def _split_lines(self, text, width):
+    def _split_lines(self, text: str, width: int) -> list[str]:
         """Wrap lines after splitting on original newlines.
 
         This allows to have explicit line breaks in the help text.
         """
-        import textwrap
-
         lines = []
         for line in text.splitlines():
             lines.extend(textwrap.wrap(line.strip(), width))

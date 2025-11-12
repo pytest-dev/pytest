@@ -600,8 +600,7 @@ class TestParseIni:
             group: str = "pytest11"
 
             def load(self):
-                __import__(self.module)
-                return sys.modules[self.module]
+                return importlib.import_module(self.module)
 
         entry_points = [
             DummyEntryPoint("myplugin1", "myplugin1_module"),
