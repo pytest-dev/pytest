@@ -15,6 +15,43 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _config-inicfg:
+
+``config.inicfg``
+~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.0
+
+The private ``config.inicfg`` attribute is deprecated.
+Use :meth:`config.getini() <pytest.Config.getini>` to access configuration values instead.
+
+``config.inicfg`` was never documented and it should have had a ``_`` prefix from the start.
+Pytest performs caching, transformation and aliasing on configuration options which make direct access to the raw ``config.inicfg`` untenable.
+
+**Reading configuration values:**
+
+Instead of accessing ``config.inicfg`` directly, use :meth:`config.getini() <pytest.Config.getini>`:
+
+.. code-block:: python
+
+    # Deprecated
+    value = config.inicfg["some_option"]
+
+    # Use this instead
+    value = config.getini("some_option")
+
+**Setting configuration values:**
+
+Setting or deleting configuration values after initialization is not supported.
+If you need to override configuration values, use the ``-o`` command line option:
+
+.. code-block:: bash
+
+    pytest -o some_option=value
+
+or set them in your configuration file instead.
+
+
 .. _parametrize-iterators:
 
 Non-Collection iterables in ``@pytest.mark.parametrize``

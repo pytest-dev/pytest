@@ -59,6 +59,7 @@ from _pytest._code import filter_traceback
 from _pytest._code.code import TracebackStyle
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
+from _pytest.compat import deprecated
 from _pytest.compat import NOTSET
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import FILE_OR_DIR
@@ -1126,9 +1127,23 @@ class Config:
         self.args_source = Config.ArgsSource.ARGS
         self.args: list[str] = []
 
-    @property
-    def inicfg(self) -> _DeprecatedInicfgProxy:
-        return _DeprecatedInicfgProxy(self)
+    if TYPE_CHECKING:
+
+        @deprecated(
+            "config.inicfg is deprecated, use config.getini() to access configuration values instead.",
+        )
+        @property
+        def inicfg(self) -> _DeprecatedInicfgProxy:
+            raise NotImplementedError()
+    else:
+
+        @property
+        def inicfg(self) -> _DeprecatedInicfgProxy:
+            warnings.warn(
+                _pytest.deprecated.CONFIG_INICFG,
+                stacklevel=2,
+            )
+            return _DeprecatedInicfgProxy(self)
 
     @property
     def rootpath(self) -> pathlib.Path:

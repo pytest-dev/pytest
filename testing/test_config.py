@@ -30,6 +30,7 @@ from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestDeprecationWarning
 import pytest
 
 
@@ -3001,10 +3002,10 @@ class TestNativeTomlConfig:
 
 
 class TestInicfgDeprecation:
-    """Tests for the upcoming deprecation of config.inicfg."""
+    """Tests for the deprecation of config.inicfg."""
 
     def test_inicfg_deprecated(self, pytester: Pytester) -> None:
-        """Test that accessing config.inicfg issues a deprecation warning (not yet)."""
+        """Test that accessing config.inicfg issues a deprecation warning."""
         pytester.makeini(
             """
             [pytest]
@@ -3013,7 +3014,10 @@ class TestInicfgDeprecation:
         )
         config = pytester.parseconfig()
 
-        inicfg = config.inicfg
+        with pytest.warns(
+            PytestDeprecationWarning, match=r"config\.inicfg is deprecated"
+        ):
+            inicfg = config.inicfg  # type: ignore[deprecated]
 
         assert config.getini("minversion") == "3.0"
         assert inicfg["minversion"] == "3.0"
