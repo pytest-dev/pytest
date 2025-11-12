@@ -1,1 +1,0 @@
-Fixed `UserWarning: Do not expect file_or_dir` on some earlier Python 3.12 and 3.13 point versions.

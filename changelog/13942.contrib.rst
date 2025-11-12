@@ -1,3 +1,0 @@
-The CI/CD part of the release automation is now capable of
-creating GitHub Releases without having a Git checkout on
-disk -- by :user:`bluetech` and :user:`webknjaz`.
