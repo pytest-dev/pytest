@@ -292,6 +292,7 @@ option) could then define the hook implementation to provide the default value:
 
     # contents of third_party_plugin.py
 
+
     def pytest_config_file_default_value():
         return "config.yaml"
 
