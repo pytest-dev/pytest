@@ -1,0 +1,1 @@
+Fixed the TOML type of the :confval:`tmp_path_retention_count` settings in the API reference from number to string.
