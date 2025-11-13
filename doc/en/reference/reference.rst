@@ -2460,14 +2460,14 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: tmp_path_retention_count
 
    How many sessions should we keep the `tmp_path` directories,
-   according to `tmp_path_retention_policy`.
+   according to :confval:`tmp_path_retention_policy`.
 
    .. tab:: toml
 
        .. code-block:: toml
 
             [pytest]
-            tmp_path_retention_count = 3
+            tmp_path_retention_count = "3"
 
    .. tab:: ini
 
