@@ -298,19 +298,25 @@ option) could then define the hook implementation to provide the default value:
 
 .. note::
 
-    **Hook implementations in conftest.py files are not available during**
-    ``pytest_addoption()``. This is because conftest.py files are discovered
-    and loaded *after* plugins are loaded and initialized (including the execution
-    of their ``pytest_addoption()`` hooks). See :ref:`pluginorder` for the plugin
-    discovery order.
+    **Hook implementations in conftest.py files are not available to other plugins during**
+    **their** ``pytest_addoption()`` **execution**. This is because conftest.py files are
+    discovered and loaded *after* builtin plugins, third-party plugins, and command-line
+    plugins have already been initialized (including the execution of their
+    ``pytest_addoption()`` hooks).
 
-    Only hook implementations from plugins that are loaded earlier will be available
-    during ``pytest_addoption()``. These include:
+    However, :ref:`initial conftest files <pluginorder>` themselves *can* implement
+    ``pytest_addoption()`` to add their own command-line options. When an initial conftest
+    is loaded, its ``pytest_addoption()`` hook will be called immediately.
+
+    During a plugin's ``pytest_addoption()`` execution, only hook implementations from
+    plugins that were loaded earlier will be available. These include:
 
     * builtin plugins
     * plugins explicitly loaded with ``-p`` on the command line
     * installed third-party plugins (via setuptools entry points)
     * plugins specified via the ``PYTEST_PLUGINS`` environment variable
+
+    See :ref:`pluginorder` for the complete plugin discovery order.
 
 
 Optionally using hooks from 3rd party plugins
