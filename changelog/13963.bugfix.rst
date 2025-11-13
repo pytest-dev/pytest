@@ -1,0 +1,3 @@
+Fixed subtests running with `pytest-xdist <https://github.com/pytest-dev/pytest>`__ when their contexts contain non-standard objects.
+
+Fixes `pytest-dev/pytest-xdist#1273 <https://github.com/pytest-dev/pytest-xdist/issues/1273>`__.
