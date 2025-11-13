@@ -11,6 +11,7 @@ from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Mapping
+from collections.abc import MutableMapping
 from collections.abc import Sequence
 import contextlib
 import copy
@@ -47,6 +48,7 @@ from pluggy import PluginManager
 from .compat import PathAwareHookProxy
 from .exceptions import PrintHelp as PrintHelp
 from .exceptions import UsageError as UsageError
+from .findpaths import ConfigValue
 from .findpaths import determine_setup
 from _pytest import __version__
 import _pytest._code
@@ -980,6 +982,30 @@ def _iter_rewritable_modules(package_files: Iterable[str]) -> Iterator[str]:
             yield from _iter_rewritable_modules(new_package_files)
 
 
+class _DeprecatedInicfgProxy(MutableMapping[str, Any]):
+    """Compatibility proxy for the deprecated Config.inicfg."""
+
+    __slots__ = ("_config",)
+
+    def __init__(self, config: Config) -> None:
+        self._config = config
+
+    def __getitem__(self, key: str) -> Any:
+        return self._config._inicfg[key].value
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self._config._inicfg[key] = ConfigValue(value, origin="override", mode="toml")
+
+    def __delitem__(self, key: str) -> None:
+        del self._config._inicfg[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._config._inicfg)
+
+    def __len__(self) -> int:
+        return len(self._config._inicfg)
+
+
 @final
 class Config:
     """Access to configuration values, pluginmanager and plugin hooks.
@@ -1099,6 +1125,10 @@ class Config:
         )
         self.args_source = Config.ArgsSource.ARGS
         self.args: list[str] = []
+
+    @property
+    def inicfg(self) -> _DeprecatedInicfgProxy:
+        return _DeprecatedInicfgProxy(self)
 
     @property
     def rootpath(self) -> pathlib.Path:
@@ -1376,7 +1406,7 @@ class Config:
     def _checkversion(self) -> None:
         import pytest
 
-        minver_ini_value = self.inicfg.get("minversion", None)
+        minver_ini_value = self._inicfg.get("minversion", None)
         minver = minver_ini_value.value if minver_ini_value is not None else None
         if minver:
             # Imported lazily to improve start-up time.
@@ -1440,7 +1470,7 @@ class Config:
 
     def _get_unknown_ini_keys(self) -> set[str]:
         known_keys = self._parser._inidict.keys() | self._parser._ini_aliases.keys()
-        return self.inicfg.keys() - known_keys
+        return self._inicfg.keys() - known_keys
 
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
@@ -1471,7 +1501,7 @@ class Config:
         self._rootpath = rootpath
         self._inipath = inipath
         self._ignored_config_files = ignored_config_files
-        self.inicfg = inicfg
+        self._inicfg = inicfg
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)
 
@@ -1648,14 +1678,14 @@ class Config:
         except KeyError as e:
             raise ValueError(f"unknown configuration value: {name!r}") from e
 
-        # Collect all possible values (canonical name + aliases) from inicfg.
+        # Collect all possible values (canonical name + aliases) from _inicfg.
         # Each candidate is (ConfigValue, is_canonical).
         candidates = []
-        if canonical_name in self.inicfg:
-            candidates.append((self.inicfg[canonical_name], True))
+        if canonical_name in self._inicfg:
+            candidates.append((self._inicfg[canonical_name], True))
         for alias, target in self._parser._ini_aliases.items():
-            if target == canonical_name and alias in self.inicfg:
-                candidates.append((self.inicfg[alias], False))
+            if target == canonical_name and alias in self._inicfg:
+                candidates.append((self._inicfg[alias], False))
 
         if not candidates:
             return default
