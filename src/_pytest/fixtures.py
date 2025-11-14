@@ -56,7 +56,6 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
-from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
@@ -1695,25 +1694,12 @@ class FixtureManager:
 
     def pytest_generate_tests(self, metafunc: Metafunc) -> None:
         """Generate new tests based on parametrized fixtures used by the given metafunc"""
-
-        def get_parametrize_mark_argnames(mark: Mark) -> Sequence[str]:
-            args, _ = ParameterSet._parse_parametrize_args(*mark.args, **mark.kwargs)
-            return args
-
         for argname in metafunc.fixturenames:
             # Get the FixtureDefs for the argname.
             fixture_defs = metafunc._arg2fixturedefs.get(argname)
             if not fixture_defs:
                 # Will raise FixtureLookupError at setup time if not parametrized somewhere
                 # else (e.g @pytest.mark.parametrize)
-                continue
-
-            # If the test itself parametrizes using this argname, give it
-            # precedence.
-            if any(
-                argname in get_parametrize_mark_argnames(mark)
-                for mark in metafunc.definition.iter_markers("parametrize")
-            ):
                 continue
 
             # In the common case we only look at the fixture def with the
