@@ -1,0 +1,1 @@
+Improved the readability of "DID NOT RAISE" error messages by using the exception type's name instead of its `repr`.
