@@ -1,0 +1,1 @@
+The terminal progress feature added in pytest 9.0.0 has been removed due to compatibility issues with some terminal emulators.
