@@ -289,7 +289,33 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
-    reporter = TerminalReporter(config, sys.stdout)
+    import io
+
+    from _pytest.config import stdout_fd_dup_key
+
+    # Use the early-duped stdout FD if available, to bypass output capture (#8973)
+    stdout_file = sys.stdout
+    if stdout_fd_dup_key in config.stash:
+        try:
+            dup_fd = config.stash[stdout_fd_dup_key]
+            # Open the dup'd FD with closefd=False (owned by config)
+            # Use line buffering for better performance while ensuring visibility
+            stdout_file = open(
+                dup_fd,
+                mode="w",
+                encoding=getattr(sys.stdout, "encoding", "utf-8"),
+                errors=getattr(sys.stdout, "errors", "replace"),
+                newline=None,
+                buffering=1,  # Line buffering
+                closefd=False,
+            )
+            # Enable write_through to ensure writes bypass the buffer
+            stdout_file.reconfigure(write_through=True)
+        except (AttributeError, OSError, io.UnsupportedOperation):
+            # Fall back to regular stdout if wrapping fails
+            pass
+
+    reporter = TerminalReporter(config, stdout_file)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
 
@@ -405,6 +431,8 @@ class TerminalReporter:
         self.hasmarkup = self._tw.hasmarkup
         # isatty should be a method but was wrongly implemented as a boolean.
         # We use CallableBool here to support both.
+        # When file is from a dup'd FD, check the file's isatty().
+        # This ensures we get the correct value even when tests patch sys.stdout.isatty
         self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[str] = set()
         self._timing_nodeids_reported: set[str] = set()
