@@ -1696,11 +1696,7 @@ class FixtureManager:
         """Generate new tests based on parametrized fixtures used by the given metafunc"""
         for argname in metafunc.fixturenames:
             # Get the FixtureDefs for the argname.
-            fixture_defs = metafunc._arg2fixturedefs.get(argname)
-            if not fixture_defs:
-                # Will raise FixtureLookupError at setup time if not parametrized somewhere
-                # else (e.g @pytest.mark.parametrize)
-                continue
+            fixture_defs = metafunc._arg2fixturedefs.get(argname, ())
 
             # In the common case we only look at the fixture def with the
             # closest scope (last in the list). But if the fixture overrides
