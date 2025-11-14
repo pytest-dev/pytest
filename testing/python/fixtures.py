@@ -590,6 +590,40 @@ class TestFillFixtures:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*2 passed*"])
 
+    @pytest.mark.xfail(reason="not handled currently")
+    def test_override_parametrized_fixture_via_transitive_fixture(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that overriding a parametrized fixture works even the super
+        fixture is requested only transitively.
+
+        Regression test for #7737.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=[1, 2])
+            def foo(request):
+                return request.param
+
+            @pytest.fixture
+            def bar(foo):
+                return foo
+
+            class TestIt:
+                @pytest.fixture
+                def foo(self, bar):
+                    return bar * 2
+
+                def test_it(self, foo):
+                    pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=2)
+
     def test_autouse_fixture_plugin(self, pytester: Pytester) -> None:
         # A fixture from a plugin has no baseid set, which screwed up
         # the autouse fixture handling.

@@ -1715,6 +1715,10 @@ class FixtureManager:
                     break
 
                 # Not requesting the overridden super fixture, stop.
+                #
+                # TODO: Handle the case where the super-fixture is transitively
+                # requested (see #7737 and the xfail'd test
+                # test_override_parametrized_fixture_via_transitive_fixture).
                 if argname not in fixturedef.argnames:
                     break
 
