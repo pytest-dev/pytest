@@ -1090,6 +1090,50 @@ def test_parameterset_for_parametrize_bad_markname(pytester: Pytester) -> None:
         test_parameterset_for_parametrize_marks(pytester, "bad")
 
 
+def test_parametrization_callspec_ids(pytester: Pytester):
+    pytester.makepyfile(
+        """
+import pytest
+
+class CustomClass:
+    pass
+
+def custom_function():
+    return None
+
+all_ids = [
+    {("tuple_one", "tuple_two"): "t1a-t2a", "id_function": "11", "id_explicit": "one", "name": "first"},
+    {("tuple_one", "tuple_two"): "t1a-t2a", "id_function": "11", "id_explicit": "one", "name": "2"},
+    {("tuple_one", "tuple_two"): "t1a-t2a", "id_function": "11", "id_explicit": "one", "name": "3.5"},
+    {("tuple_one", "tuple_two"): "t1a-t2a", "id_function": "11", "id_explicit": "one", "name": "True"},
+    {("tuple_one", "tuple_two"): "t1a-t2a", "id_function": "11", "id_explicit": "one", "name": "<lambda>"},
+    {("tuple_one", "tuple_two"): "t1a-t2a", "id_function": "11", "id_explicit": "one", "name": "CustomClass"},
+    {("tuple_one", "tuple_two"): "t1a-t2a", "id_function": "11", "id_explicit": "one", "name": "custom_function"},
+    {("tuple_one", "tuple_two"): "t1b-t2b", "id_function": "11", "id_explicit": "one", "name": "first"},
+    {("tuple_one", "tuple_two"): "t1b-t2b", "id_function": "11", "id_explicit": "one", "name": "2"},
+    {("tuple_one", "tuple_two"): "t1b-t2b", "id_function": "11", "id_explicit": "one", "name": "3.5"},
+    {("tuple_one", "tuple_two"): "t1b-t2b", "id_function": "11", "id_explicit": "one", "name": "True"},
+    {("tuple_one", "tuple_two"): "t1b-t2b", "id_function": "11", "id_explicit": "one", "name": "<lambda>"},
+    {("tuple_one", "tuple_two"): "t1b-t2b", "id_function": "11", "id_explicit": "one", "name": "CustomClass"},
+    {("tuple_one", "tuple_two"): "t1b-t2b", "id_function": "11", "id_explicit": "one", "name": "custom_function"}
+]
+
+@pytest.mark.parametrize("name", ("first", 2, 3.5, True, lambda k: k, CustomClass, custom_function))
+@pytest.mark.parametrize("id_explicit", (1,), ids=("one",))
+@pytest.mark.parametrize("id_function", (1,), ids=lambda k: f"{k}{k}")
+@pytest.mark.parametrize(("tuple_one", "tuple_two"), (("t1a", "t2a"), ("t1b", "t2b")))
+def test_more(name, id_explicit, id_function, tuple_one, tuple_two, request):
+    ids = request.node.callspec.ids
+    assert ids in all_ids
+"""
+    )
+
+    reprec = pytester.inline_run()
+    passed, skipped, failed = reprec.countoutcomes()
+    assert passed == 14
+    assert skipped == failed == 0
+
+
 def test_mark_expressions_no_smear(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
