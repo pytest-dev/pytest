@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from enum import Enum
 import sys
 from typing import Literal
 
+from _pytest._io.saferepr import saferepr
 from _pytest.subtests import SubtestContext
 from _pytest.subtests import SubtestReport
 import pytest
@@ -958,8 +960,12 @@ def test_nested(pytester: pytest.Pytester) -> None:
 
 
 def test_serialization() -> None:
+    """Ensure subtest's kwargs are serialized using `saferepr` (pytest-dev/pytest-xdist#1273)."""
     from _pytest.subtests import pytest_report_from_serializable
     from _pytest.subtests import pytest_report_to_serializable
+
+    class MyEnum(Enum):
+        A = "A"
 
     report = SubtestReport(
         "test_foo::test_foo",
@@ -968,10 +974,38 @@ def test_serialization() -> None:
         outcome="passed",
         when="call",
         longrepr=None,
-        context=SubtestContext(msg="custom message", kwargs=dict(i=10)),
+        context=SubtestContext(msg="custom message", kwargs=dict(i=10, a=MyEnum.A)),
     )
     data = pytest_report_to_serializable(report)
     assert data is not None
     new_report = pytest_report_from_serializable(data)
     assert new_report is not None
-    assert new_report.context == SubtestContext(msg="custom message", kwargs=dict(i=10))
+    assert new_report.context == SubtestContext(
+        msg="custom message", kwargs=dict(i=saferepr(10), a=saferepr(MyEnum.A))
+    )
+
+
+def test_serialization_xdist(pytester: pytest.Pytester) -> None:
+    """Regression test for pytest-dev/pytest-xdist#1273."""
+    pytest.importorskip("xdist")
+    pytester.makepyfile(
+        """
+        from enum import Enum
+        import unittest
+
+        class MyEnum(Enum):
+            A = "A"
+
+        def test(subtests):
+            with subtests.test(a=MyEnum.A):
+                pass
+
+        class T(unittest.TestCase):
+
+            def test(self):
+                with self.subTest(a=MyEnum.A):
+                    pass
+        """
+    )
+    result = pytester.runpytest("-n1", "-pxdist.plugin")
+    result.assert_outcomes(passed=2)

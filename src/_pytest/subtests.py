@@ -62,7 +62,10 @@ class SubtestContext:
     kwargs: Mapping[str, Any]
 
     def _to_json(self) -> dict[str, Any]:
-        return dataclasses.asdict(self)
+        result = dataclasses.asdict(self)
+        # Brute-force the returned kwargs dict to be JSON serializable (pytest-dev/pytest-xdist#1273).
+        result["kwargs"] = {k: saferepr(v) for (k, v) in result["kwargs"].items()}
+        return result
 
     @classmethod
     def _from_json(cls, d: dict[str, Any]) -> Self:
