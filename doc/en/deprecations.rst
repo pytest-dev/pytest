@@ -334,33 +334,6 @@ Changed ``hookwrapper`` attributes:
 * ``historic``
 
 
-.. _legacy-path-hooks-deprecated:
-
-``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
-
-*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
-*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
-*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
-*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
-*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
-
-The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
-
-.. note::
-    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
-    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
-    being ``path``) is **the opposite** of the situation for hooks (the old
-    argument being ``path``).
-
-    This is an unfortunate artifact due to historical reasons, which should be
-    resolved in future versions as we slowly get rid of the :pypi:`py`
-    dependency (see :issue:`9283` for a longer discussion).
-
 Directly constructing internal classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -431,23 +404,6 @@ conflicts (such as :class:`pytest.File` now taking ``path`` instead of
 ``fspath``, as :ref:`outlined above <node-ctor-fspath-deprecation>`), a
 deprecation warning is now raised.
 
-Applying a mark to a fixture function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.4
-
-Applying a mark to a fixture function never had any effect, but it is a common user error.
-
-.. code-block:: python
-
-    @pytest.mark.usefixtures("clean_database")
-    @pytest.fixture
-    def user() -> User: ...
-
-Users expected in this case that the ``usefixtures`` mark would have its intended effect of using the ``clean_database`` fixture when ``user`` was invoked, when in fact it has no effect at all.
-
-Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
-
 
 The ``yield_fixture`` function/decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -466,6 +422,52 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+Applying a mark to a fixture function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.4
+.. versionremoved:: 9.0
+
+Applying a mark to a fixture function never had any effect, but it is a common user error.
+
+.. code-block:: python
+
+    @pytest.mark.usefixtures("clean_database")
+    @pytest.fixture
+    def user() -> User: ...
+
+Users expected in this case that the ``usefixtures`` mark would have its intended effect of using the ``clean_database`` fixture when ``user`` was invoked, when in fact it has no effect at all.
+
+Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
+
+.. _legacy-path-hooks-deprecated:
+
+``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+.. versionremoved:: 9.0
+
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
+
+*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
+*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
+*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
+*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
+*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
+
+The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
+
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
+    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
+    being ``path``) is **the opposite** of the situation for hooks (the old
+    argument being ``path``).
+
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
 
 .. _yield tests deprecated:
 

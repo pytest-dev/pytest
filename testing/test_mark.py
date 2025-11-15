@@ -1302,3 +1302,45 @@ def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=8)
+
+
+def test_fixture_disallow_on_marked_functions() -> None:
+    """Test that applying @pytest.fixture to a marked function errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.fixture
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
+
+
+def test_fixture_disallow_marks_on_fixtures() -> None:
+    """Test that applying a mark to a fixture errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        @pytest.fixture
+        def foo():
+            raise NotImplementedError()
+
+
+def test_fixture_disallowed_between_marks() -> None:
+    """Test that applying a mark to a fixture errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.fixture
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
