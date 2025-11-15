@@ -460,6 +460,30 @@ class TestUnittestSubTest:
             ]
         )
 
+    def test_passes_many_subtests(
+        self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # see https://github.com/pytest-dev/pytest/issues/13965
+
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
+            """
+            from unittest import TestCase
+
+            class T(TestCase):
+                def test_foo(self):
+                    for _ in range(1000 * 100):
+                        with self.subTest():
+                            pass
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "* 1 passed in *",
+            ]
+        )
+
     def test_skip(
         self,
         pytester: pytest.Pytester,
