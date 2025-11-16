@@ -1,0 +1,3 @@
+The terminal progress feature added in pytest 9.0.0 has been disabled by default, except on Windows, due to compatibility issues with some terminal emulators.
+
+You may enable it again by passing ``-p terminalprogress``. We may enable it by default again once compatibility improves in the future.

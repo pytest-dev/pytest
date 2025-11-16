@@ -303,6 +303,7 @@ builtin_plugins = {
     *default_plugins,
     "pytester",
     "pytester_assertions",
+    "terminalprogress",
 }
 
 

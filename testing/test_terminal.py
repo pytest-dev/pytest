@@ -3428,30 +3428,35 @@ class TestTerminalProgressPlugin:
         tr._progress_nodeids_reported = set()
         return tr
 
-    def test_plugin_registration(self, pytester: pytest.Pytester) -> None:
-        """Test that the plugin is registered correctly on TTY output."""
+    @pytest.mark.skipif(sys.platform != "win32", reason="#13896")
+    def test_plugin_registration_enabled_by_default(
+        self, pytester: pytest.Pytester
+    ) -> None:
+        """Test that the plugin registration is enabled by default.
+
+        Currently only on Windows (#13896).
+        """
         # The plugin module should be registered as a default plugin.
         with patch.object(sys.stdout, "isatty", return_value=True):
             config = pytester.parseconfigure()
             plugin = config.pluginmanager.get_plugin("terminalprogress")
             assert plugin is not None
 
+    def test_plugin_registred_on_all_platforms_when_explicitly_requested(
+        self, pytester: pytest.Pytester
+    ) -> None:
+        """Test that the plugin is registered on any platform if explicitly requested."""
+        # The plugin module should be registered as a default plugin.
+        with patch.object(sys.stdout, "isatty", return_value=True):
+            config = pytester.parseconfigure("-p", "terminalprogress")
+            plugin = config.pluginmanager.get_plugin("terminalprogress")
+            assert plugin is not None
+
     def test_disabled_for_non_tty(self, pytester: pytest.Pytester) -> None:
         """Test that plugin is disabled for non-TTY output."""
         with patch.object(sys.stdout, "isatty", return_value=False):
-            config = pytester.parseconfigure()
-            plugin = config.pluginmanager.get_plugin("terminalprogress")
-            assert plugin is None
-
-    def test_disabled_for_iterm2(self, pytester: pytest.Pytester, monkeypatch) -> None:
-        """Should not register the plugin on iTerm2 terminal since it interprets
-        OSC 9;4 as desktop notifications, not progress (#13896)."""
-        monkeypatch.setenv(
-            "ITERM_SESSION_ID", "w0t1p0:3DB6DF06-FE11-40C3-9A66-9E10A193A632"
-        )
-        with patch.object(sys.stdout, "isatty", return_value=True):
-            config = pytester.parseconfigure()
-            plugin = config.pluginmanager.get_plugin("terminalprogress")
+            config = pytester.parseconfigure("-p", "terminalprogress")
+            plugin = config.pluginmanager.get_plugin("terminalprogress-plugin")
             assert plugin is None
 
     @pytest.mark.parametrize(
