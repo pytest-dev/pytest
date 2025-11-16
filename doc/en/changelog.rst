@@ -326,7 +326,7 @@ Bug fixes
 - `#13865 <https://github.com/pytest-dev/pytest/issues/13865>`_: Fixed `--show-capture` with `--tb=line`.
 
 
-- `#13522 <https://github.com/pytest-dev/pytest/issues/13522>`_: Fixed :fixture:`pytester` in subprocess mode ignored all :attr`pytester.plugins <pytest.Pytester.plugins>` except the first.
+- `#13522 <https://github.com/pytest-dev/pytest/issues/13522>`_: Fixed :fixture:`pytester` in subprocess mode ignored all :attr:`pytester.plugins <pytest.Pytester.plugins>` except the first.
 
   Fixed :fixture:`pytester` in subprocess mode silently ignored non-str :attr:`pytester.plugins <pytest.Pytester.plugins>`.
   Now it errors instead.
