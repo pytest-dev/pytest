@@ -2674,8 +2674,6 @@ This section documents all command-line options provided by pytest's core plugin
 
     External plugins may add their own command-line options. This reference documents only the options from pytest's core plugins. To see all available options including those from installed plugins, run ``pytest --help``.
 
-For usage examples and common patterns, see :ref:`cli-options` in the How-to guides.
-
 Test Selection
 ~~~~~~~~~~~~~~
 
@@ -2831,7 +2829,7 @@ Fixtures
 
 .. optionval:: --setup-only
 
-    Only setup fixtures, do not execute tests. See :ref:`how-to/fixtures`.
+    Only setup fixtures, do not execute tests. See :ref:`how-to-fixtures`.
 
 .. optionval:: --setup-show
 
