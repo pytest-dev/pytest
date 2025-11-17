@@ -2971,7 +2971,7 @@ Output and Reporting
 
 .. optionval:: --code-highlight
 
-    Whether code should be highlighted (only if :optionval:`--color` is also enabled). Default: ``yes``.
+    Whether code should be highlighted (only if :optionval:`--color=color` is also enabled). Default: ``yes``.
 
 .. optionval:: --pastebin=mode
 
@@ -3180,7 +3180,7 @@ Plugin and Extension Management
 
 .. optionval:: --disable-plugin-autoload
 
-    Disable plugin auto-loading through entry point packaging metadata. Only plugins explicitly specified in :optionval:`-p` or env var :envvar:`PYTEST_PLUGINS` will be loaded.
+    Disable plugin auto-loading through entry point packaging metadata. Only plugins explicitly specified in :optionval:`-p name` or env var :envvar:`PYTEST_PLUGINS` will be loaded.
 
 Version and Help
 ~~~~~~~~~~~~~~~~
