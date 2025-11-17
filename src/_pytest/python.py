@@ -870,7 +870,6 @@ class IdMaker:
     __slots__ = (
         "argnames",
         "config",
-        "func_name",
         "idfn",
         "ids",
         "nodeid",
@@ -893,9 +892,6 @@ class IdMaker:
     # Optionally, the ID of the node being parametrized.
     # Used only for clearer error messages.
     nodeid: str | None
-    # Optionally, the ID of the function being parametrized.
-    # Used only for clearer error messages.
-    func_name: str | None
 
     def make_unique_parameterset_ids(self) -> list[str | _HiddenParam]:
         """Make a unique identifier for each ParameterSet, that may be used to
@@ -1083,9 +1079,7 @@ class IdMaker:
         )
 
     def _make_error_prefix(self) -> str:
-        if self.func_name is not None:
-            return f"In {self.func_name}: "
-        elif self.nodeid is not None:
+        if self.nodeid is not None:
             return f"In {self.nodeid}: "
         else:
             return ""
@@ -1435,7 +1429,7 @@ class Metafunc:
             ids_ = None
         else:
             idfn = None
-            ids_ = self._validate_ids(ids, parametersets, self.function.__name__)
+            ids_ = self._validate_ids(ids, parametersets)
         id_maker = IdMaker(
             argnames,
             parametersets,
@@ -1443,7 +1437,6 @@ class Metafunc:
             ids_,
             self.config,
             nodeid=nodeid,
-            func_name=self.function.__name__,
         )
         return id_maker.make_unique_parameterset_ids()
 
@@ -1451,7 +1444,6 @@ class Metafunc:
         self,
         ids: Iterable[object | None],
         parametersets: Sequence[ParameterSet],
-        func_name: str,
     ) -> list[object | None]:
         try:
             num_ids = len(ids)  # type: ignore[arg-type]
@@ -1464,8 +1456,11 @@ class Metafunc:
 
         # num_ids == 0 is a special case: https://github.com/pytest-dev/pytest/issues/1849
         if num_ids != len(parametersets) and num_ids != 0:
-            msg = "In {}: {} parameter sets specified, with different number of ids: {}"
-            fail(msg.format(func_name, len(parametersets), num_ids), pytrace=False)
+            nodeid = self.definition.nodeid
+            fail(
+                f"In {nodeid}: {len(parametersets)} parameter sets specified, with different number of ids: {num_ids}",
+                pytrace=False,
+            )
 
         return list(itertools.islice(ids, num_ids))
 
@@ -1486,6 +1481,7 @@ class Metafunc:
         :returns
             A dict mapping each arg name to either "indirect" or "direct".
         """
+        nodeid = self.definition.nodeid
         arg_directness: dict[str, Literal["indirect", "direct"]]
         if isinstance(indirect, bool):
             arg_directness = dict.fromkeys(
@@ -1496,14 +1492,13 @@ class Metafunc:
             for arg in indirect:
                 if arg not in argnames:
                     fail(
-                        f"In {self.function.__name__}: indirect fixture '{arg}' doesn't exist",
+                        f"In {nodeid}: indirect fixture '{arg}' doesn't exist",
                         pytrace=False,
                     )
                 arg_directness[arg] = "indirect"
         else:
             fail(
-                f"In {self.function.__name__}: expected Sequence or boolean"
-                f" for indirect, got {type(indirect).__name__}",
+                f"In {nodeid}: expected Sequence or boolean for indirect, got {type(indirect).__name__}",
                 pytrace=False,
             )
         return arg_directness
@@ -1520,12 +1515,12 @@ class Metafunc:
         :raises ValueError: If validation fails.
         """
         default_arg_names = set(get_default_arg_names(self.function))
-        func_name = self.function.__name__
+        nodeid = self.definition.nodeid
         for arg in argnames:
             if arg not in self.fixturenames:
                 if arg in default_arg_names:
                     fail(
-                        f"In {func_name}: function already takes an argument '{arg}' with a default value",
+                        f"In {nodeid}: function already takes an argument '{arg}' with a default value",
                         pytrace=False,
                     )
                 else:
@@ -1534,7 +1529,7 @@ class Metafunc:
                     else:
                         name = "fixture" if indirect else "argument"
                     fail(
-                        f"In {func_name}: function uses no {name} '{arg}'",
+                        f"In {nodeid}: function uses no {name} '{arg}'",
                         pytrace=False,
                     )
 
