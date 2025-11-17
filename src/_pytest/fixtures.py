@@ -1523,11 +1523,16 @@ def _get_direct_parametrize_args(node: nodes.Node) -> set[str]:
     """
     parametrize_argnames: set[str] = set()
     for marker in node.iter_markers(name="parametrize"):
-        if not marker.kwargs.get("indirect", False):
-            p_argnames, _ = ParameterSet._parse_parametrize_args(
-                *marker.args, **marker.kwargs
-            )
-            parametrize_argnames.update(p_argnames)
+        indirect = marker.kwargs.get("indirect", False)
+        p_argnames, _ = ParameterSet._parse_parametrize_args(
+            *marker.args, **marker.kwargs
+        )
+        p_directness = _resolve_args_directness(p_argnames, indirect, node.nodeid)
+        parametrize_argnames.update(
+            argname
+            for argname, directness in p_directness.items()
+            if directness == "direct"
+        )
     return parametrize_argnames
 
 
