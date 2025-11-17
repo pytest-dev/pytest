@@ -2668,7 +2668,539 @@ passed multiple times. The expected format is ``name=value``. For example::
 Command-line Flags
 ------------------
 
-All the command-line flags can be obtained by running ``pytest --help``::
+This section documents all command-line options provided by pytest's core plugins.
+
+.. note::
+
+    External plugins may add their own command-line options. This reference documents only the options from pytest's core plugins. To see all available options including those from installed plugins, run ``pytest --help``.
+
+For usage examples and common patterns, see :ref:`cli-options` in the How-to guides.
+
+Test Selection
+~~~~~~~~~~~~~~
+
+.. optionval:: -k EXPRESSION
+
+    Only run tests which match the given substring expression. An expression is a Python evaluable expression where all names are substring-matched against test names and their parent classes.
+
+    Examples::
+
+        pytest -k "test_method or test_other"  # matches names containing 'test_method' OR 'test_other'
+        pytest -k "not test_method"            # matches names NOT containing 'test_method'
+        pytest -k "not test_method and not test_other"  # excludes both
+
+    The matching is case-insensitive. Keywords are also matched to classes and functions containing extra names in their ``extra_keyword_matches`` set.
+
+.. optionval:: -m MARKEXPR
+
+    Only run tests matching given mark expression. Supports ``and``, ``or``, and ``not`` operators.
+
+    Examples::
+
+        pytest -m slow                  # run tests marked with @pytest.mark.slow
+        pytest -m "not slow"            # run tests NOT marked slow
+        pytest -m "mark1 and not mark2" # run tests marked mark1 but not mark2
+
+    See :ref:`mark` for more information on markers.
+
+.. optionval:: --markers
+
+    Show all available markers (builtin, plugin, and per-project markers defined in configuration).
+
+Test Execution Control
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. optionval:: -x
+.. optionval:: --exitfirst
+
+    Exit instantly on first error or failed test.
+
+.. optionval:: --maxfail=num
+
+    Exit after first ``num`` failures or errors. Useful for CI environments where you want to fail fast but see a few failures.
+
+.. optionval:: --lf
+.. optionval:: --last-failed
+
+    Rerun only the tests that failed at the last run. If no tests failed (or no cached data exists), all tests are run. See also :confval:`cache_dir` and :ref:`cache`.
+
+.. optionval:: --ff
+.. optionval:: --failed-first
+
+    Run all tests, but run the last failures first. This may re-order tests and thus lead to repeated fixture setup/teardown.
+
+.. optionval:: --nf
+.. optionval:: --new-first
+
+    Run tests from new files first, then the rest of the tests sorted by file modification time.
+
+.. optionval:: --sw
+.. optionval:: --stepwise
+
+    Exit on test failure and continue from last failing test next time. Useful for fixing multiple test failures one at a time.
+
+.. optionval:: --sw-skip
+.. optionval:: --stepwise-skip
+
+    Ignore the first failing test but stop on the next failing test. Implicitly enables :optionval:`--stepwise`.
+
+.. optionval:: --sw-reset
+.. optionval:: --stepwise-reset
+
+    Resets stepwise state, restarting the stepwise workflow. Implicitly enables :optionval:`--stepwise`.
+
+.. optionval:: --lfnf
+.. optionval:: --last-failed-no-failures
+
+    With :optionval:`--lf`, determines whether to execute tests when there are no previously known failures or when no cached ``lastfailed`` data was found.
+
+    * ``all`` (default): runs the full test suite again
+    * ``none``: just emits a message about no known failures and exits successfully
+
+.. optionval:: --runxfail
+
+    Report the results of xfail tests as if they were not marked. Useful for debugging xfailed tests. See :ref:`xfail`.
+
+Collection
+~~~~~~~~~~
+
+.. optionval:: --collect-only
+.. optionval:: --co
+
+    Only collect tests, don't execute them. Shows which tests would be collected and run.
+
+.. optionval:: --pyargs
+
+    Try to interpret all arguments as Python packages. Useful for running tests of installed packages::
+
+        pytest --pyargs pkg.testing
+
+.. optionval:: --ignore=path
+
+    Ignore path during collection (multi-allowed). Can be specified multiple times.
+
+.. optionval:: --ignore-glob=path
+
+    Ignore path pattern during collection (multi-allowed). Supports glob patterns.
+
+.. optionval:: --deselect=nodeid_prefix
+
+    Deselect item (via node id prefix) during collection (multi-allowed).
+
+.. optionval:: --confcutdir=dir
+
+    Only load ``conftest.py`` files relative to specified directory.
+
+.. optionval:: --noconftest
+
+    Don't load any ``conftest.py`` files.
+
+.. optionval:: --keep-duplicates
+
+    Keep duplicate tests. By default, pytest removes duplicate test items.
+
+.. optionval:: --collect-in-virtualenv
+
+    Don't ignore tests in a local virtualenv directory. By default, pytest skips tests in virtualenv directories.
+
+.. optionval:: --continue-on-collection-errors
+
+    Force test execution even if collection errors occur.
+
+.. optionval:: --import-mode
+
+    Prepend/append to sys.path when importing test modules and conftest files.
+
+    * ``prepend`` (default): prepend to sys.path
+    * ``append``: append to sys.path
+    * ``importlib``: use importlib to import test modules
+
+    See :ref:`pythonpath` for more information.
+
+Fixtures
+~~~~~~~~
+
+.. optionval:: --fixtures
+.. optionval:: --funcargs
+
+    Show available fixtures, sorted by plugin appearance. Fixtures with leading ``_`` are only shown with :optionval:`-v`.
+
+.. optionval:: --fixtures-per-test
+
+    Show fixtures per test.
+
+.. optionval:: --setup-only
+
+    Only setup fixtures, do not execute tests. See :ref:`how-to/fixtures`.
+
+.. optionval:: --setup-show
+
+    Show setup of fixtures while executing tests.
+
+.. optionval:: --setup-plan
+
+    Show what fixtures and tests would be executed but don't execute anything.
+
+Debugging
+~~~~~~~~~
+
+.. optionval:: --pdb
+
+    Start the interactive Python debugger on errors or KeyboardInterrupt. See :ref:`pdb-option`.
+
+.. optionval:: --pdbcls=modulename:classname
+
+    Specify a custom interactive Python debugger for use with :optionval:`--pdb`.
+
+    Example::
+
+        pytest --pdbcls=IPython.terminal.debugger:TerminalPdb
+
+.. optionval:: --trace
+
+    Immediately break when running each test.
+
+.. optionval:: --full-trace
+
+    Don't cut any tracebacks (default is to cut).
+
+.. optionval:: --debug
+
+    Store internal tracing debug information in this log file. This file is opened with ``'w'`` and truncated as a result, care advised. Default: ``pytestdebug.log``.
+
+.. optionval:: --trace-config
+
+    Trace considerations of conftest.py files.
+
+Output and Reporting
+~~~~~~~~~~~~~~~~~~~~
+
+.. optionval:: -v
+.. optionval:: --verbose
+
+    Increase verbosity. Can be specified multiple times (e.g., ``-vv``) for even more verbose output.
+
+.. optionval:: -q
+.. optionval:: --quiet
+
+    Decrease verbosity.
+
+.. optionval:: --verbosity=VERBOSE
+
+    Set verbosity level explicitly. Default: 0.
+
+.. optionval:: -r chars
+
+    Show extra test summary info as specified by chars:
+
+    * ``f``: failed
+    * ``E``: error
+    * ``s``: skipped
+    * ``x``: xfailed
+    * ``X``: xpassed
+    * ``p``: passed
+    * ``P``: passed with output
+    * ``a``: all except passed (p/P)
+    * ``A``: all
+    * ``w``: warnings (enabled by default)
+    * ``N``: resets the list
+
+    Default: ``'fE'``
+
+    Examples::
+
+        pytest -rA           # show all outcomes
+        pytest -rfE          # show only failed and errors (default)
+        pytest -rfs          # show failed and skipped
+
+.. optionval:: --no-header
+
+    Disable header.
+
+.. optionval:: --no-summary
+
+    Disable summary.
+
+.. optionval:: --no-fold-skipped
+
+    Do not fold skipped tests in short summary.
+
+.. optionval:: --force-short-summary
+
+    Force condensed summary output regardless of verbosity level.
+
+.. optionval:: -l
+.. optionval:: --showlocals
+
+    Show locals in tracebacks (disabled by default).
+
+.. optionval:: --no-showlocals
+
+    Hide locals in tracebacks (negate :optionval:`--showlocals` passed through addopts).
+
+.. optionval:: --tb=style
+
+    Traceback print mode:
+
+    * ``auto``: intelligent traceback formatting (default)
+    * ``long``: exhaustive, informative traceback formatting
+    * ``short``: shorter traceback format
+    * ``line``: only the failing line
+    * ``native``: Python's standard traceback
+    * ``no``: no traceback
+
+.. optionval:: --xfail-tb
+
+    Show tracebacks for xfail (as long as ``--tb != no``).
+
+.. optionval:: --show-capture
+
+    Controls how captured stdout/stderr/log is shown on failed tests.
+
+    * ``no``: don't show captured output
+    * ``stdout``: show captured stdout
+    * ``stderr``: show captured stderr
+    * ``log``: show captured logging
+    * ``all`` (default): show all captured output
+
+.. optionval:: --color=color
+
+    Color terminal output:
+
+    * ``yes``: always use color
+    * ``no``: never use color
+    * ``auto`` (default): use color if terminal supports it
+
+.. optionval:: --code-highlight
+
+    Whether code should be highlighted (only if :optionval:`--color` is also enabled). Default: ``yes``.
+
+.. optionval:: --pastebin=mode
+
+    Send failed|all info to bpaste.net pastebin service.
+
+.. optionval:: --durations=N
+
+    Show N slowest setup/test durations (N=0 for all). See :ref:`durations`.
+
+.. optionval:: --durations-min=N
+
+    Minimal duration in seconds for inclusion in slowest list. Default: 0.005 (or 0.0 if ``-vv`` is given).
+
+Output Capture
+~~~~~~~~~~~~~~
+
+.. optionval:: --capture=method
+
+    Per-test capturing method:
+
+    * ``fd``: capture at file descriptor level (default)
+    * ``sys``: capture at sys level
+    * ``no``: don't capture output
+    * ``tee-sys``: capture but also show output on terminal
+
+    See :ref:`captures`.
+
+.. optionval:: -s
+
+    Shortcut for ``--capture=no``.
+
+JUnit XML
+~~~~~~~~~
+
+.. optionval:: --junitxml=path
+.. optionval:: --junit-xml=path
+
+    Create junit-xml style report file at given path.
+
+.. optionval:: --junitprefix=str
+.. optionval:: --junit-prefix=str
+
+    Prepend prefix to classnames in junit-xml output.
+
+Cache
+~~~~~
+
+.. optionval:: --cache-show
+
+    Show cache contents, don't perform collection or tests. Optional argument: glob (default: ``'*'``).
+
+.. optionval:: --cache-clear
+
+    Remove all cache contents at start of test run. See :ref:`cache`.
+
+Warnings
+~~~~~~~~
+
+.. optionval:: --disable-warnings
+.. optionval:: --disable-pytest-warnings
+
+    Disable warnings summary.
+
+.. optionval:: -W PYTHONWARNINGS
+.. optionval:: --pythonwarnings=PYTHONWARNINGS
+
+    Set which warnings to report, see ``-W`` option of Python itself. Can be specified multiple times.
+
+Doctest
+~~~~~~~
+
+.. optionval:: --doctest-modules
+
+    Run doctests in all .py modules.
+
+.. optionval:: --doctest-report
+
+    Choose another output format for diffs on doctest failure:
+
+    * ``none``
+    * ``cdiff``
+    * ``ndiff``
+    * ``udiff``
+    * ``only_first_failure``
+
+.. optionval:: --doctest-glob=pat
+
+    Doctests file matching pattern, default: ``test*.txt``.
+
+.. optionval:: --doctest-ignore-import-errors
+
+    Ignore doctest collection errors.
+
+.. optionval:: --doctest-continue-on-failure
+
+    For a given doctest, continue to run after the first failure.
+
+Configuration
+~~~~~~~~~~~~~
+
+.. optionval:: -c FILE
+.. optionval:: --config-file=FILE
+
+    Load configuration from ``FILE`` instead of trying to locate one of the implicit configuration files.
+
+.. optionval:: --rootdir=ROOTDIR
+
+    Define root directory for tests. Can be relative path: ``'root_dir'``, ``'./root_dir'``, ``'root_dir/another_dir/'``; absolute path: ``'/home/user/root_dir'``; path with variables: ``'$HOME/root_dir'``.
+
+.. optionval:: --basetemp=dir
+
+    Base temporary directory for this test run. (Warning: this directory is removed if it exists.)
+
+.. optionval:: -o OVERRIDE_INI
+.. optionval:: --override-ini=OVERRIDE_INI
+
+    Override configuration option with ``option=value`` style. Can be specified multiple times.
+
+    Example::
+
+        pytest -o strict_xfail=True -o cache_dir=cache
+
+.. optionval:: --strict-config
+
+    Enables the :confval:`strict_config` option.
+
+.. optionval:: --strict-markers
+
+    Enables the :confval:`strict_markers` option.
+
+.. optionval:: --strict
+
+    Enables the :confval:`strict` option (which enables all strictness options).
+
+.. optionval:: --assert=MODE
+
+    Control assertion debugging tools:
+
+    * ``plain``: performs no assertion debugging
+    * ``rewrite`` (default): rewrites assert statements in test modules on import to provide assert expression information
+
+Logging
+~~~~~~~
+
+.. optionval:: --log-level=LEVEL
+
+    Level of messages to catch/display. Not set by default, so it depends on the root/parent log handler's effective level, where it is ``WARNING`` by default.
+
+.. optionval:: --log-format=LOG_FORMAT
+
+    Log format used by the logging module.
+
+.. optionval:: --log-date-format=LOG_DATE_FORMAT
+
+    Log date format used by the logging module.
+
+.. optionval:: --log-cli-level=LOG_CLI_LEVEL
+
+    CLI logging level. See :ref:`live_logs`.
+
+.. optionval:: --log-cli-format=LOG_CLI_FORMAT
+
+    Log format used by the logging module for CLI output.
+
+.. optionval:: --log-cli-date-format=LOG_CLI_DATE_FORMAT
+
+    Log date format used by the logging module for CLI output.
+
+.. optionval:: --log-file=LOG_FILE
+
+    Path to a file when logging will be written to.
+
+.. optionval:: --log-file-mode
+
+    Log file open mode:
+
+    * ``w`` (default): recreate the file
+    * ``a``: append to the file
+
+.. optionval:: --log-file-level=LOG_FILE_LEVEL
+
+    Log file logging level.
+
+.. optionval:: --log-file-format=LOG_FILE_FORMAT
+
+    Log format used by the logging module for the log file.
+
+.. optionval:: --log-file-date-format=LOG_FILE_DATE_FORMAT
+
+    Log date format used by the logging module for the log file.
+
+.. optionval:: --log-auto-indent=LOG_AUTO_INDENT
+
+    Auto-indent multiline messages passed to the logging module. Accepts ``true|on``, ``false|off`` or an integer.
+
+.. optionval:: --log-disable=LOGGER_DISABLE
+
+    Disable a logger by name. Can be passed multiple times.
+
+Plugin and Extension Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. optionval:: -p name
+
+    Early-load given plugin module name or entry point (multi-allowed). To avoid loading of plugins, use the ``no:`` prefix, e.g. ``no:doctest``. See also :optionval:`--disable-plugin-autoload`.
+
+.. optionval:: --disable-plugin-autoload
+
+    Disable plugin auto-loading through entry point packaging metadata. Only plugins explicitly specified in :optionval:`-p` or env var :envvar:`PYTEST_PLUGINS` will be loaded.
+
+Version and Help
+~~~~~~~~~~~~~~~~
+
+.. optionval:: -V
+.. optionval:: --version
+
+    Display pytest version and information about plugins. When given twice, also display information about plugins.
+
+.. optionval:: -h
+.. optionval:: --help
+
+    Show help message and configuration info.
+
+Complete Help Output
+~~~~~~~~~~~~~~~~~~~~
+
+All the command-line flags can also be obtained by running ``pytest --help``::
 
     $ pytest --help
     usage: pytest [options] [file_or_dir] [file_or_dir] [...]

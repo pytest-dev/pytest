@@ -1,1 +1,1 @@
-Added a new CLI options reference page to the documentation, organizing commonly used command-line flags by functionality for easier discovery.
+Added comprehensive CLI options reference documentation in the reference section, documenting all command-line flags with detailed descriptions and examples. Added a new :rst:role:`optionval` role for cross-referencing CLI options throughout the documentation.
