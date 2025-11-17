@@ -53,6 +53,7 @@ from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
@@ -1327,7 +1328,9 @@ class Metafunc:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
         # Calculate directness.
-        arg_directness = self._resolve_args_directness(argnames, indirect)
+        arg_directness = _resolve_args_directness(
+            argnames, indirect, self.definition.nodeid
+        )
         self._params_directness.update(arg_directness)
 
         # Add direct parametrizations as fixturedefs to arg2fixturedefs by
@@ -1463,45 +1466,6 @@ class Metafunc:
             )
 
         return list(itertools.islice(ids, num_ids))
-
-    def _resolve_args_directness(
-        self,
-        argnames: Sequence[str],
-        indirect: bool | Sequence[str],
-    ) -> dict[str, Literal["indirect", "direct"]]:
-        """Resolve if each parametrized argument must be considered an indirect
-        parameter to a fixture of the same name, or a direct parameter to the
-        parametrized function, based on the ``indirect`` parameter of the
-        parametrized() call.
-
-        :param argnames:
-            List of argument names passed to ``parametrize()``.
-        :param indirect:
-            Same as the ``indirect`` parameter of ``parametrize()``.
-        :returns
-            A dict mapping each arg name to either "indirect" or "direct".
-        """
-        nodeid = self.definition.nodeid
-        arg_directness: dict[str, Literal["indirect", "direct"]]
-        if isinstance(indirect, bool):
-            arg_directness = dict.fromkeys(
-                argnames, "indirect" if indirect else "direct"
-            )
-        elif isinstance(indirect, Sequence):
-            arg_directness = dict.fromkeys(argnames, "direct")
-            for arg in indirect:
-                if arg not in argnames:
-                    fail(
-                        f"In {nodeid}: indirect fixture '{arg}' doesn't exist",
-                        pytrace=False,
-                    )
-                arg_directness[arg] = "indirect"
-        else:
-            fail(
-                f"In {nodeid}: expected Sequence or boolean for indirect, got {type(indirect).__name__}",
-                pytrace=False,
-            )
-        return arg_directness
 
     def _validate_if_using_arg_names(
         self,
