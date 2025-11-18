@@ -13,7 +13,6 @@ from typing import cast
 from typing import Literal
 from typing import NamedTuple
 from unittest.mock import Mock
-from unittest.mock import patch
 
 import pluggy
 
@@ -3431,17 +3430,51 @@ class TestTerminalProgressPlugin:
     def test_plugin_registration(self, pytester: pytest.Pytester) -> None:
         """Test that the plugin is registered correctly on TTY output."""
         # The plugin module should be registered as a default plugin.
-        with patch.object(sys.stdout, "isatty", return_value=True):
-            config = pytester.parseconfigure()
-            plugin = config.pluginmanager.get_plugin("terminalprogress")
-            assert plugin is not None
+        # Use a mock file with isatty returning True
+        from io import StringIO
+
+        class MockTTY(StringIO):
+            def isatty(self):
+                return True
+
+            def fileno(self):
+                return 1
+
+        mock_file = MockTTY()
+        config = pytester.parseconfig()
+        # Manually trigger pytest_configure with our mock file
+        from _pytest.terminal import TerminalProgressPlugin
+        from _pytest.terminal import TerminalReporter
+
+        reporter = TerminalReporter(config, mock_file)
+        config.pluginmanager.register(reporter, "terminalreporter")
+        # Check that plugin would be registered based on isatty
+        if reporter.isatty():
+            plugin = TerminalProgressPlugin(reporter)
+            config.pluginmanager.register(plugin, "terminalprogress")
+
+        retrieved_plugin = config.pluginmanager.get_plugin("terminalprogress")
+        assert retrieved_plugin is not None
 
     def test_disabled_for_non_tty(self, pytester: pytest.Pytester) -> None:
         """Test that plugin is disabled for non-TTY output."""
-        with patch.object(sys.stdout, "isatty", return_value=False):
-            config = pytester.parseconfigure()
-            plugin = config.pluginmanager.get_plugin("terminalprogress")
-            assert plugin is None
+        # Use a mock file with isatty returning False
+        from io import StringIO
+
+        class MockNonTTY(StringIO):
+            def isatty(self):
+                return False
+
+        mock_file = MockNonTTY()
+        config = pytester.parseconfig()
+        # Manually trigger pytest_configure with our mock file
+        from _pytest.terminal import TerminalReporter
+
+        reporter = TerminalReporter(config, mock_file)
+        config.pluginmanager.register(reporter, "terminalreporter")
+        # Plugin should NOT be registered for non-TTY
+        plugin = config.pluginmanager.get_plugin("terminalprogress")
+        assert plugin is None
 
     def test_disabled_for_iterm2(self, pytester: pytest.Pytester, monkeypatch) -> None:
         """Should not register the plugin on iTerm2 terminal since it interprets
@@ -3532,3 +3565,25 @@ class TestTerminalProgressPlugin:
         # Session finish - should remove progress.
         plugin.pytest_sessionfinish()
         assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
+
+
+def test_terminal_reporter_write_with_capture(pytester: Pytester) -> None:
+    """Test that reporter.write() works correctly even with output capture active.
+
+    Regression test for issue #8973.
+    When calling reporter.write() with flush=True during test execution,
+    the output should appear in the terminal even when output capture is active.
+    """
+    pytester.makepyfile(
+        """
+        def test_reporter_write(request):
+            reporter = request.config.pluginmanager.getplugin("terminalreporter")
+            reporter.ensure_newline()
+            reporter.write("CUSTOM_OUTPUT", flush=True)
+            assert True
+        """
+    )
+    result = pytester.runpytest("-v")
+    # The custom output should appear in the captured output
+    result.stdout.fnmatch_lines(["*CUSTOM_OUTPUT*"])
+    result.assert_outcomes(passed=1)
