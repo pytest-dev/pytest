@@ -30,7 +30,7 @@ then you can just invoke ``pytest`` directly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -58,7 +58,7 @@ and functions, including from test modules:
 
     $ pytest --doctest-modules
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -70,20 +70,11 @@ and functions, including from test modules:
 You can make these changes permanent in your project by
 putting them into a configuration file like this:
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        [pytest]
-        addopts = ["--doctest-modules"]
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        addopts = --doctest-modules
-
+    # content of pytest.toml
+    [pytest]
+    addopts = ["--doctest-modules"]
 
 Encoding
 --------

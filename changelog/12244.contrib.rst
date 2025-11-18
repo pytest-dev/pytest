@@ -1,1 +1,0 @@
-Fixed self-test failures when `TERM=dumb`.

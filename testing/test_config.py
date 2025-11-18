@@ -30,6 +30,7 @@ from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestDeprecationWarning
 import pytest
 
 
@@ -60,7 +61,7 @@ class TestParseIni:
         _, _, cfg, _ = locate_config(Path.cwd(), [sub])
         assert cfg["name"] == ConfigValue("value", origin="file", mode="ini")
         config = pytester.parseconfigure(str(sub))
-        assert config.inicfg["name"] == ConfigValue("value", origin="file", mode="ini")
+        assert config._inicfg["name"] == ConfigValue("value", origin="file", mode="ini")
 
     def test_setupcfg_uses_toolpytest_with_pytest(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile("def test(): pass")
@@ -600,8 +601,7 @@ class TestParseIni:
             group: str = "pytest11"
 
             def load(self):
-                __import__(self.module)
-                return sys.modules[self.module]
+                return importlib.import_module(self.module)
 
         entry_points = [
             DummyEntryPoint("myplugin1", "myplugin1_module"),
@@ -1434,10 +1434,10 @@ class TestConfigFromdictargs:
 
         # this indicates this is the file used for getting configuration values
         assert config.inipath == inipath
-        assert config.inicfg.get("name") == ConfigValue(
+        assert config._inicfg.get("name") == ConfigValue(
             "value", origin="file", mode="ini"
         )
-        assert config.inicfg.get("should_not_be_set") is None
+        assert config._inicfg.get("should_not_be_set") is None
 
 
 def test_options_on_small_file_do_not_blow_up(pytester: Pytester) -> None:
@@ -2277,7 +2277,7 @@ class TestOverrideIniArgs:
         monkeypatch.setenv("PYTEST_ADDOPTS", f"-o cache_dir={cache_dir}")
         config = _config_for_test
         config.parse([], addopts=True)
-        assert config.inicfg.get("cache_dir") == ConfigValue(
+        assert config._inicfg.get("cache_dir") == ConfigValue(
             cache_dir, origin="override", mode="ini"
         )
 
@@ -2318,7 +2318,7 @@ class TestOverrideIniArgs:
         """Check that -o no longer swallows all options after it (#3103)"""
         config = _config_for_test
         config.parse(["-o", "cache_dir=/cache", "/some/test/path"])
-        assert config.inicfg.get("cache_dir") == ConfigValue(
+        assert config._inicfg.get("cache_dir") == ConfigValue(
             "/cache", origin="override", mode="ini"
         )
 
@@ -2999,3 +2999,48 @@ class TestNativeTomlConfig:
 
         with pytest.raises(TypeError, match=r"expects a string.*got int"):
             config.getini("string_not_string")
+
+
+class TestInicfgDeprecation:
+    """Tests for the deprecation of config.inicfg."""
+
+    def test_inicfg_deprecated(self, pytester: Pytester) -> None:
+        """Test that accessing config.inicfg issues a deprecation warning."""
+        pytester.makeini(
+            """
+            [pytest]
+            minversion = 3.0
+            """
+        )
+        config = pytester.parseconfig()
+
+        with pytest.warns(
+            PytestDeprecationWarning, match=r"config\.inicfg is deprecated"
+        ):
+            inicfg = config.inicfg  # type: ignore[deprecated]
+
+        assert config.getini("minversion") == "3.0"
+        assert inicfg["minversion"] == "3.0"
+        assert inicfg.get("minversion") == "3.0"
+        del inicfg["minversion"]
+        inicfg["minversion"] = "4.0"
+        assert list(inicfg.keys()) == ["minversion"]
+        assert list(inicfg.items()) == [("minversion", "4.0")]
+        assert len(inicfg) == 1
+
+    def test_issue_13946_setting_bool_no_longer_crashes(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #13946 - setting inicfg doesn't cause a crash."""
+        pytester.makepyfile(
+            """
+            def pytest_configure(config):
+                config.inicfg["xfail_strict"] = True
+
+            def test():
+                pass
+            """
+        )
+
+        result = pytester.runpytest()
+        assert result.ret == 0

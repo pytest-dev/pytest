@@ -3,6 +3,7 @@ functions creating them."""
 
 from __future__ import annotations
 
+import importlib
 import sys
 from typing import Any
 from typing import ClassVar
@@ -268,7 +269,7 @@ def importorskip(
         warnings.simplefilter("ignore")
 
         try:
-            __import__(modname)
+            importlib.import_module(modname)
         except exc_type as exc:
             # Do not raise or issue warnings inside the catch_warnings() block.
             if reason is None:

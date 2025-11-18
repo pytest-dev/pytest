@@ -58,3 +58,10 @@ def check_raises_is_a_context_manager(val: bool) -> None:
 def check_testreport_attributes(report: TestReport) -> None:
     assert_type(report.when, Literal["setup", "call", "teardown"])
     assert_type(report.location, tuple[str, int | None, str])
+
+
+# Test @pytest.mark.parametrize iterator argvalues deprecation.
+# Will be complain about unused type ignore if doesn't work.
+@pytest.mark.parametrize("x", iter(range(10)))  # type: ignore[deprecated]
+def test_it(x: int) -> None:
+    pass

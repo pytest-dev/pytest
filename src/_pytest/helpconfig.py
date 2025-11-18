@@ -59,8 +59,8 @@ class HelpAction(argparse.Action):
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("debugconfig")
     group.addoption(
-        "--version",
         "-V",
+        "--version",
         action="count",
         default=0,
         dest="version",

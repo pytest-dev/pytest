@@ -734,12 +734,8 @@ class TestLocalPath(CommonFSTests):
     def test_setmtime(self):
         import tempfile
 
-        try:
-            fd, name = tempfile.mkstemp()
-            os.close(fd)
-        except AttributeError:
-            name = tempfile.mktemp()
-            open(name, "w").close()
+        fd, name = tempfile.mkstemp()
+        os.close(fd)
         try:
             # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
             mtime = int(time.time()) - 100
