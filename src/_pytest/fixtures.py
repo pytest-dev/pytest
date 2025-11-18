@@ -56,7 +56,6 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
-from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
@@ -346,11 +345,6 @@ class FuncFixtureInfo:
         working_set = set(self.initialnames)
         while working_set:
             argname = working_set.pop()
-            # Argname may be something not included in the original names_closure,
-            # in which case we ignore it. This currently happens with pseudo
-            # FixtureDefs which wrap 'get_direct_param_fixture_func(request)'.
-            # So they introduce the new dependency 'request' which might have
-            # been missing in the original tree (closure).
             if argname not in closure and argname in self.names_closure:
                 closure.add(argname)
                 if argname in self.name2fixturedefs:
@@ -1695,26 +1689,9 @@ class FixtureManager:
 
     def pytest_generate_tests(self, metafunc: Metafunc) -> None:
         """Generate new tests based on parametrized fixtures used by the given metafunc"""
-
-        def get_parametrize_mark_argnames(mark: Mark) -> Sequence[str]:
-            args, _ = ParameterSet._parse_parametrize_args(*mark.args, **mark.kwargs)
-            return args
-
         for argname in metafunc.fixturenames:
             # Get the FixtureDefs for the argname.
-            fixture_defs = metafunc._arg2fixturedefs.get(argname)
-            if not fixture_defs:
-                # Will raise FixtureLookupError at setup time if not parametrized somewhere
-                # else (e.g @pytest.mark.parametrize)
-                continue
-
-            # If the test itself parametrizes using this argname, give it
-            # precedence.
-            if any(
-                argname in get_parametrize_mark_argnames(mark)
-                for mark in metafunc.definition.iter_markers("parametrize")
-            ):
-                continue
+            fixture_defs = metafunc._arg2fixturedefs.get(argname, ())
 
             # In the common case we only look at the fixture def with the
             # closest scope (last in the list). But if the fixture overrides
@@ -1733,6 +1710,10 @@ class FixtureManager:
                     break
 
                 # Not requesting the overridden super fixture, stop.
+                #
+                # TODO: Handle the case where the super-fixture is transitively
+                # requested (see #7737 and the xfail'd test
+                # test_override_parametrized_fixture_via_transitive_fixture).
                 if argname not in fixturedef.argnames:
                     break
 

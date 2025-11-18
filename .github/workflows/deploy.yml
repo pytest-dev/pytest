@@ -16,7 +16,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     env:
-      SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.event.inputs.version }}
+      SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST: ${{ github.event.inputs.version }}
     timeout-minutes: 10
 
     # Required by attest-build-provenance-github.
@@ -35,20 +35,52 @@ jobs:
       with:
         attest-build-provenance-github: 'true'
 
-  deploy:
-    if: github.repository == 'pytest-dev/pytest'
+  generate-gh-release-notes:
     needs: [package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.13"
+
+    - name: Install tox
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox
+
+    - name: Generate release notes
+      env:
+        VERSION: ${{ github.event.inputs.version }}
+      run: |
+        tox -e generate-gh-release-notes -- "$VERSION" gh-release-notes.md
+
+    - name: Upload release notes
+      uses: actions/upload-artifact@v5
+      with:
+        name: release-notes
+        path: gh-release-notes.md
+        retention-days: 1
+
+  publish-to-pypi:
+    if: github.repository == 'pytest-dev/pytest'
+    # Need generate-gh-release-notes only for ordering.
+    # Don't want to release to PyPI if generating GitHub release notes fails.
+    needs: [package, generate-gh-release-notes]
     runs-on: ubuntu-latest
     environment: deploy
     timeout-minutes: 30
     permissions:
       id-token: write
-      contents: write
     steps:
-    - uses: actions/checkout@v5
-      with:
-        persist-credentials: true
-
     - name: Download Package
       uses: actions/download-artifact@v6
       with:
@@ -60,6 +92,18 @@ jobs:
       with:
         attestations: true
 
+  push-tag:
+    needs: [publish-to-pypi]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        persist-credentials: true
+
     - name: Push tag
       env:
           VERSION: ${{ github.event.inputs.version }}
@@ -69,48 +113,29 @@ jobs:
         git tag --annotate --message=v"$VERSION" "$VERSION" ${{ github.sha }}
         git push origin "$VERSION"
 
-  release-notes:
-
-    # todo: generate the content in the build  job
-    #       the goal being of using a github action script to push the release data
-    #       after success instead of creating a complete python/tox env
-    needs: [deploy]
+  create-github-release:
+    needs: [push-tag, generate-gh-release-notes]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-        persist-credentials: false
-
     - name: Download Package
       uses: actions/download-artifact@v6
       with:
         name: Packages
         path: dist
 
-    - name: Set up Python
-      uses: actions/setup-python@v6
+    - name: Download release notes
+      uses: actions/download-artifact@v6
       with:
-        python-version: "3.11"
-
-    - name: Install tox
-      run: |
-        python -m pip install --upgrade pip
-        pip install --upgrade tox
-
-    - name: Generate release notes
-      env:
-        VERSION: ${{ github.event.inputs.version }}
-      run: |
-        sudo apt-get install pandoc
-        tox -e generate-gh-release-notes -- "$VERSION" scripts/latest-release-notes.md
+        name: release-notes
+        path: .
 
     - name: Publish GitHub Release
       env:
         VERSION: ${{ github.event.inputs.version }}
+        GH_REPO: ${{ github.repository }}
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh release create --notes-file scripts/latest-release-notes.md --verify-tag "$VERSION" dist/*
+        gh release create --notes-file gh-release-notes.md --verify-tag "$VERSION" dist/*

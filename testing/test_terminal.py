@@ -1587,6 +1587,19 @@ class TestGenericReporting:
                 assert "--calling--" not in s
                 assert "IndexError" not in s
 
+    def test_tb_line_show_capture(self, pytester: Pytester, option) -> None:
+        output_to_capture = "help! let me out!"
+        pytester.makepyfile(
+            f"""
+            import pytest
+            def test_fail():
+                print('{output_to_capture}')
+                assert False
+            """
+        )
+        result = pytester.runpytest("--tb=line")
+        result.stdout.fnmatch_lines(["*- Captured stdout call -*", output_to_capture])
+
     def test_tb_crashline(self, pytester: Pytester, option) -> None:
         p = pytester.makepyfile(
             """
@@ -3426,6 +3439,17 @@ class TestTerminalProgressPlugin:
     def test_disabled_for_non_tty(self, pytester: pytest.Pytester) -> None:
         """Test that plugin is disabled for non-TTY output."""
         with patch.object(sys.stdout, "isatty", return_value=False):
+            config = pytester.parseconfigure()
+            plugin = config.pluginmanager.get_plugin("terminalprogress")
+            assert plugin is None
+
+    def test_disabled_for_iterm2(self, pytester: pytest.Pytester, monkeypatch) -> None:
+        """Should not register the plugin on iTerm2 terminal since it interprets
+        OSC 9;4 as desktop notifications, not progress (#13896)."""
+        monkeypatch.setenv(
+            "ITERM_SESSION_ID", "w0t1p0:3DB6DF06-FE11-40C3-9A66-9E10A193A632"
+        )
+        with patch.object(sys.stdout, "isatty", return_value=True):
             config = pytester.parseconfigure()
             plugin = config.pluginmanager.get_plugin("terminalprogress")
             assert plugin is None

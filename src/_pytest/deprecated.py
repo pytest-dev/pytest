@@ -75,6 +75,19 @@ MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES = PytestRemovedIn10Warning(
     "See https://docs.pytest.org/en/stable/deprecations.html#monkeypatch-fixup-namespace-packages"
 )
 
+PARAMETRIZE_NON_COLLECTION_ITERABLE = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "Passing a non-Collection iterable to parametrize is deprecated.\n"
+    "Test: {nodeid}, argvalues type: {type_name}\n"
+    "Please convert to a list or tuple.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#parametrize-iterators",
+)
+
+CONFIG_INICFG = PytestRemovedIn10Warning(
+    "config.inicfg is deprecated, use config.getini() to access configuration values instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#config-inicfg"
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):

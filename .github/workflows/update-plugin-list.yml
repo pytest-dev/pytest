@@ -28,8 +28,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
-          cache: pip
+          python-version: "3.13"
 
       - name: requests-cache
         uses: actions/cache@v4
@@ -38,13 +37,13 @@ jobs:
           key: plugins-http-cache-${{ github.run_id }} # Can use time based key as well
           restore-keys: plugins-http-cache-
 
-      - name: Install dependencies
+      - name: Install tox
         run: |
           python -m pip install --upgrade pip
-          pip install packaging requests tabulate[widechars] tqdm requests-cache platformdirs
+          pip install tox
 
       - name: Update Plugin List
-        run: python scripts/update-plugin-list.py
+        run: tox -e update-plugin-list
 
       - name: Create Pull Request
         id: pr

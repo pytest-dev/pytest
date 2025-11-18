@@ -28,57 +28,58 @@ class TestParser:
 
     def test_custom_prog(self, parser: parseopt.Parser) -> None:
         """Custom prog can be set for `argparse.ArgumentParser`."""
-        assert parser._getparser().prog == argparse.ArgumentParser().prog
+        assert parser.optparser.prog == argparse.ArgumentParser().prog
         parser.prog = "custom-prog"
-        assert parser._getparser().prog == "custom-prog"
+        assert parser.prog == "custom-prog"
+        assert parser.optparser.prog == "custom-prog"
 
     def test_argument(self) -> None:
-        with pytest.raises(parseopt.ArgumentError):
-            # need a short or long option
-            argument = parseopt.Argument()
-        argument = parseopt.Argument("-t")
-        assert argument._short_opts == ["-t"]
-        assert argument._long_opts == []
-        assert argument.dest == "t"
-        argument = parseopt.Argument("-t", "--test")
-        assert argument._short_opts == ["-t"]
-        assert argument._long_opts == ["--test"]
-        assert argument.dest == "test"
-        argument = parseopt.Argument("-t", "--test", dest="abc")
+        parser = argparse.ArgumentParser()
+
+        action = parser.add_argument("-a")
+        argument = parseopt.Argument(action)
+        assert argument.names() == ["-a"]
+        assert argument.dest == "a"
+
+        action = parser.add_argument("-b", "--boop")
+        argument = parseopt.Argument(action)
+        assert argument.names() == ["-b", "--boop"]
+        assert argument.dest == "boop"
+
+        action = parser.add_argument("-c", "--coop", dest="abc")
+        argument = parseopt.Argument(action)
         assert argument.dest == "abc"
-        assert str(argument) == (
-            "Argument(_short_opts: ['-t'], _long_opts: ['--test'], dest: 'abc')"
+        assert (
+            str(argument)
+            == "Argument(opts: ['-c', '--coop'], dest: 'abc', default: None)"
         )
 
     def test_argument_type(self) -> None:
-        argument = parseopt.Argument("-t", dest="abc", type=int)
+        parser = argparse.ArgumentParser()
+
+        action = parser.add_argument("-a", dest="aa", type=int)
+        argument = parseopt.Argument(action)
         assert argument.type is int
-        argument = parseopt.Argument("-t", dest="abc", type=str)
-        assert argument.type is str
-        argument = parseopt.Argument("-t", dest="abc", type=float)
-        assert argument.type is float
-        argument = parseopt.Argument(
-            "-t", dest="abc", type=str, choices=["red", "blue"]
-        )
+
+        action = parser.add_argument("-b", dest="bb", type=str)
+        argument = parseopt.Argument(action)
         assert argument.type is str
 
-    def test_argument_processopt(self) -> None:
-        argument = parseopt.Argument("-t", type=int)
-        argument.default = 42
-        argument.dest = "abc"
-        res = argument.attrs()
-        assert res["default"] == 42
-        assert res["dest"] == "abc"
+        action = parser.add_argument("-c", dest="cc", type=float)
+        argument = parseopt.Argument(action)
+        assert argument.type is float
+
+        action = parser.add_argument("-d", dest="dd", type=str, choices=["red", "blue"])
+        argument = parseopt.Argument(action)
+        assert argument.type is str
 
     def test_group_add_and_get(self, parser: parseopt.Parser) -> None:
-        group = parser.getgroup("hello", description="desc")
+        group = parser.getgroup("hello")
         assert group.name == "hello"
-        assert group.description == "desc"
 
     def test_getgroup_simple(self, parser: parseopt.Parser) -> None:
-        group = parser.getgroup("hello", description="desc")
+        group = parser.getgroup("hello")
         assert group.name == "hello"
-        assert group.description == "desc"
         group2 = parser.getgroup("hello")
         assert group2 is group
 
@@ -88,16 +89,20 @@ class TestParser:
         parser.getgroup("3", after="1")
         groups = parser._groups
         groups_names = [x.name for x in groups]
-        assert groups_names == list("132")
+        assert groups_names == ["_anonymous", "1", "3", "2"]
 
     def test_group_addoption(self) -> None:
-        group = parseopt.OptionGroup("hello", _ispytest=True)
+        optparser = argparse.ArgumentParser()
+        arggroup = optparser.add_argument_group("hello")
+        group = parseopt.OptionGroup(arggroup, "hello", None, _ispytest=True)
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
         assert isinstance(group.options[0], parseopt.Argument)
 
     def test_group_addoption_conflict(self) -> None:
-        group = parseopt.OptionGroup("hello again", _ispytest=True)
+        optparser = argparse.ArgumentParser()
+        arggroup = optparser.add_argument_group("hello again")
+        group = parseopt.OptionGroup(arggroup, "hello again", None, _ispytest=True)
         group.addoption("--option1", "--option-1", action="store_true")
         with pytest.raises(ValueError) as err:
             group.addoption("--option1", "--option-one", action="store_true")
@@ -142,17 +147,17 @@ class TestParser:
         parser.parse_known_args([Path(".")])
         parser.addoption("--hello", action="store_true")
         ns = parser.parse_known_args(["x", "--y", "--hello", "this"])
-        assert ns.hello
-        assert ns.file_or_dir == ["x"]
+        assert ns.hello is True
+        assert ns.file_or_dir == ["x", "this"]
 
     def test_parse_known_and_unknown_args(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", action="store_true")
         ns, unknown = parser.parse_known_and_unknown_args(
             ["x", "--y", "--hello", "this"]
         )
-        assert ns.hello
-        assert ns.file_or_dir == ["x"]
-        assert unknown == ["--y", "this"]
+        assert ns.hello is True
+        assert ns.file_or_dir == ["x", "this"]
+        assert unknown == ["--y"]
 
     def test_parse_will_set_default(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", dest="hello", default="x", action="store")
@@ -187,24 +192,6 @@ class TestParser:
         assert getattr(args, parseopt.FILE_OR_DIR) == ["4", "2"]
         assert args.R is True
         assert args.S is False
-
-    def test_parse_defaultgetter(self) -> None:
-        def defaultget(option):
-            if not hasattr(option, "type"):
-                return
-            if option.type is int:
-                option.default = 42
-            elif option.type is str:
-                option.default = "world"
-
-        parser = parseopt.Parser(processopt=defaultget, _ispytest=True)
-        parser.addoption("--this", dest="this", type=int, action="store")
-        parser.addoption("--hello", dest="hello", type=str, action="store")
-        parser.addoption("--no", dest="no", action="store_true")
-        option = parser.parse([])
-        assert option.hello == "world"
-        assert option.this == 42
-        assert option.no is False
 
     def test_drop_short_helper(self) -> None:
         parser = argparse.ArgumentParser(

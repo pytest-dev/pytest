@@ -129,9 +129,9 @@ class TestGeneralUsage:
             group: str = "pytest11"
 
             def load(self):
-                __import__(self.module)
+                mod = importlib.import_module(self.module)
                 loaded.append(self.name)
-                return sys.modules[self.module]
+                return mod
 
         entry_points = [
             DummyEntryPoint("myplugin1", "mytestplugin1_module"),

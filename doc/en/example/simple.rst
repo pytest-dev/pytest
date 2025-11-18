@@ -11,20 +11,11 @@ every time you use ``pytest``.  For example, if you always want to see
 detailed info on skipped and xfailed tests, as well as have terser "dot"
 progress output, you can write it into a configuration file:
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        [pytest]
-        addopts = ["-ra", "-q"]
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        addopts = -ra -q
-
+    # content of pytest.toml
+    [pytest]
+    addopts = ["-ra", "-q"]
 
 Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
 line options while the environment is in use:
@@ -175,6 +166,8 @@ Now we'll get feedback on a bad argument:
     $ pytest -q --cmdopt=type3
     ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
     pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from type1, type2)
+      inifile: None
+      rootdir: /home/sweet/project
 
 
 If you need to provide more detailed error messages, you can use the
@@ -242,7 +235,7 @@ directory with the above conftest.py:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 0 items
 
@@ -306,7 +299,7 @@ and when running it will see a skipped "slow" test:
 
     $ pytest -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -322,7 +315,7 @@ Or run it including the ``slow`` marked test:
 
     $ pytest --runslow
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -451,7 +444,7 @@ which will add the string to the test header accordingly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     project deps: mylib-1.1
     rootdir: /home/sweet/project
     collected 0 items
@@ -479,7 +472,7 @@ which will add info only when run with "--v":
 
     $ pytest -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     info1: did you know that ...
     did you?
@@ -494,7 +487,7 @@ and nothing when run plainly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 0 items
 
@@ -533,7 +526,7 @@ Now we can profile which test functions execute the slowest:
 
     $ pytest --durations=3
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 3 items
 
@@ -639,7 +632,7 @@ If we run this:
 
     $ pytest -rx
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 4 items
 
@@ -721,7 +714,7 @@ We can run this:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 7 items
 
@@ -735,7 +728,7 @@ We can run this:
     file /home/sweet/project/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
     /home/sweet/project/b/test_error.py:1
@@ -843,7 +836,7 @@ and run them:
 
     $ pytest test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -954,7 +947,7 @@ and run it:
 
     $ pytest -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 3 items
 

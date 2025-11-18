@@ -422,19 +422,11 @@ which is especially useful for longer tests and/or longer ``conftest.py`` files.
 Note that for ``pytester.copy_example`` to work we need to set `pytester_example_dir`
 in our configuration file to tell pytest where to look for example files.
 
-.. tab:: toml
+.. code-block:: toml
 
-    .. code-block:: toml
-
-        [pytest]
-        pytester_example_dir = "."
-
-.. tab:: ini
-
-    .. code-block:: ini
-
-        [pytest]
-        pytester_example_dir = .
+    # content of pytest.toml
+    [pytest]
+    pytester_example_dir = "."
 
 
 .. code-block:: python
@@ -454,9 +446,9 @@ in our configuration file to tell pytest where to look for example files.
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 2 items
 
     test_example.py ..                                                   [100%]

@@ -1,1 +1,0 @@
-Previously, when filtering warnings, pytest would fail if the filter referenced a class that could not be imported. Now, this only outputs a message indicating the problem.

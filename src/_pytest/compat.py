@@ -15,6 +15,7 @@ import sys
 from typing import Any
 from typing import Final
 from typing import NoReturn
+from typing import TYPE_CHECKING
 
 import py
 
@@ -309,5 +310,20 @@ class CallableBool:
 def running_on_ci() -> bool:
     """Check if we're currently running on a CI system."""
     # Only enable CI mode if one of these env variables is defined and non-empty.
+    # Note: review `regendoc` tox env in case this list is changed.
     env_vars = ["CI", "BUILD_NUMBER"]
     return any(os.environ.get(var) for var in env_vars)
+
+
+if sys.version_info >= (3, 13):
+    from warnings import deprecated as deprecated
+else:
+    if TYPE_CHECKING:
+        from typing_extensions import deprecated as deprecated
+    else:
+
+        def deprecated(msg, /, *, category=None, stacklevel=1):
+            def decorator(func):
+                return func
+
+            return decorator

@@ -133,7 +133,7 @@ Releasing
 
 Both automatic and manual processes described above follow the same steps from this point onward.
 
-#. After all tests pass and the PR has been approved, trigger the ``deploy`` job
+#. After all tests pass and the PR has been approved, trigger the ``deploy`` workflow
    in https://github.com/pytest-dev/pytest/actions/workflows/deploy.yml, using the ``release-MAJOR.MINOR.PATCH`` branch
    as source.
 
@@ -145,6 +145,10 @@ Both automatic and manual processes described above follow the same steps from t
    and tag the repository.
 
 #. Merge the PR. **Make sure it's not squash-merged**, so that the tagged commit ends up in the main branch.
+
+#. For major and minor releases (or the first prerelease of it),
+   in the `ReadTheDocs admin page <https://app.readthedocs.org/projects/pytest/>`__, click "Add Version" on the top right,
+   choose the new branch, then set the new version as active.
 
 #. Cherry-pick the CHANGELOG / announce files to the ``main`` branch::
 
