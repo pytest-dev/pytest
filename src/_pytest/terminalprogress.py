@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+import os
+
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.terminal import TerminalProgressPlugin
@@ -23,6 +25,6 @@ def pytest_configure(config: Config) -> None:
         "terminalreporter"
     )
 
-    if reporter is not None and reporter.isatty():
+    if reporter is not None and reporter.isatty() and os.environ.get("TERM") != "dumb":
         plugin = TerminalProgressPlugin(reporter)
         config.pluginmanager.register(plugin, name="terminalprogress-plugin")

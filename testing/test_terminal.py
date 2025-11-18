@@ -3460,6 +3460,16 @@ class TestTerminalProgressPlugin:
         plugin = config.pluginmanager.get_plugin("terminalprogress-plugin")
         assert plugin is None
 
+    def test_disabled_for_dumb_terminal(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that plugin is disabled when TERM=dumb."""
+        monkeypatch.setenv("TERM", "dumb")
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+        config = pytester.parseconfigure("-p", "terminalprogress")
+        plugin = config.pluginmanager.get_plugin("terminalprogress-plugin")
+        assert plugin is None
+
     @pytest.mark.parametrize(
         ["state", "progress", "expected"],
         [
