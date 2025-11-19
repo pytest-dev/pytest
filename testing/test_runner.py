@@ -1077,6 +1077,76 @@ def test_current_test_env_var(pytester: Pytester, monkeypatch: MonkeyPatch) -> N
     assert "PYTEST_CURRENT_TEST" not in os.environ
 
 
+def test_current_test_env_var_thread_safety() -> None:
+    """Test thread-local PYTEST_CURRENT_TEST in multi-threaded scenarios."""
+    import threading
+
+    from _pytest.runner import _current_test_local
+    from _pytest.runner import _update_current_test_var
+
+    class MockItem:
+        def __init__(self, nodeid: str):
+            self.nodeid = nodeid
+
+    results = {}
+    errors = []
+
+    def worker(thread_id: int):
+        try:
+            item = MockItem(f"test_file_{thread_id}.py::test_func_{thread_id}")
+            expected = f"test_file_{thread_id}.py::test_func_{thread_id} (call)"
+            _update_current_test_var(item, "call")  # type: ignore[arg-type]
+            assert os.environ["PYTEST_CURRENT_TEST"] == expected
+
+            env_value = os.environ.get("PYTEST_CURRENT_TEST")
+            local_value = getattr(_current_test_local, "value", None)
+
+            if local_value != expected:
+                errors.append(
+                    f"Thread {thread_id}: local expected {expected!r}, got {local_value!r}"
+                )
+            if env_value is None:
+                errors.append(f"Thread {thread_id}: os.environ not set")
+            elif expected not in env_value:
+                errors.append(f"Thread {thread_id}: expected substring in env_value")
+
+            results[thread_id] = local_value
+            _update_current_test_var(item, None)  # type: ignore[arg-type]
+        except Exception as e:
+            errors.append(f"Thread {thread_id} exception: {e}")
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(10)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert not errors, "\n".join(errors)
+    assert len(results) == 10
+    for i in range(10):
+        assert f"test_func_{i} (call)" in results[i]  # type: ignore[operator]
+    assert "PYTEST_CURRENT_TEST" not in os.environ
+
+
+def test_current_test_env_var_cleanup() -> None:
+    """Test that thread-local and os.environ are cleaned up."""
+    from _pytest.runner import _current_test_local
+    from _pytest.runner import _update_current_test_var
+
+    class MockItem:
+        def __init__(self):
+            self.nodeid = "test_module.py::test_func"
+
+    item = MockItem()
+    _update_current_test_var(item, "call")  # type: ignore[arg-type]
+    assert hasattr(_current_test_local, "value")
+    assert os.environ["PYTEST_CURRENT_TEST"] == "test_module.py::test_func (call)"
+
+    _update_current_test_var(item, None)  # type: ignore[arg-type]
+    assert not hasattr(_current_test_local, "value")
+    assert "PYTEST_CURRENT_TEST" not in os.environ
+
+
 class TestReportContents:
     """Test user-level API of ``TestReport`` objects."""
 

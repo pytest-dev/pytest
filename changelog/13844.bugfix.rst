@@ -1,0 +1,2 @@
+Fixed :envvar:`PYTEST_CURRENT_TEST` to work correctly in multi-threaded test execution (:issue:`13844`).
+The environment variable now uses thread-local storage, ensuring each thread sees its own current test.

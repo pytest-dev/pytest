@@ -8,6 +8,7 @@ from collections.abc import Callable
 import dataclasses
 import os
 import sys
+import threading
 import types
 from typing import cast
 from typing import final
@@ -195,6 +196,9 @@ def pytest_runtest_teardown(item: Item, nextitem: Item | None) -> None:
     _update_current_test_var(item, None)
 
 
+_current_test_local = threading.local()
+
+
 def _update_current_test_var(
     item: Item, when: Literal["setup", "call", "teardown"] | None
 ) -> None:
@@ -202,14 +206,15 @@ def _update_current_test_var(
 
     If ``when`` is None, delete ``PYTEST_CURRENT_TEST`` from the environment.
     """
-    var_name = "PYTEST_CURRENT_TEST"
     if when:
         value = f"{item.nodeid} ({when})"
-        # don't allow null bytes on environment variables (see #2644, #2957)
         value = value.replace("\x00", "(null)")
-        os.environ[var_name] = value
+        _current_test_local.value = value
+        os.environ["PYTEST_CURRENT_TEST"] = value
     else:
-        os.environ.pop(var_name)
+        if hasattr(_current_test_local, "value"):
+            del _current_test_local.value
+        os.environ.pop("PYTEST_CURRENT_TEST", None)
 
 
 def pytest_report_teststatus(report: BaseReport) -> tuple[str, str, str] | None:
