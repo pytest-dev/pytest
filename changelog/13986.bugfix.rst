@@ -1,0 +1,6 @@
+Show subtests failures separate from normal test failures in the final test summary.
+
+Subtest failures are now reported separately as "subtests failed" instead of being counted as regular "failed" tests, providing clearer statistics.
+
+For example, a test with 3 subtests where 1 fails and 2 pass now shows:
+``1 failed, 2 subtests passed, 1 subtests failed`` instead of ``2 failed, 2 subtests passed``.

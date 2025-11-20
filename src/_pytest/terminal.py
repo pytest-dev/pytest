@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Mapping
@@ -1167,6 +1168,35 @@ class TerminalReporter:
         style = self.config.option.tbstyle
         self.summary_failures_combined("failed", "FAILURES", style=style)
 
+    def _add_subtests_to_failed_reports(
+        self, failed_reports: list[BaseReport]
+    ) -> list[BaseReport]:
+        """Combine failed reports with subtest failed reports, ordering main tests before subtests.
+
+        For each test nodeid, the main test failure is shown before subtest failures.
+        """
+        subtest_failed_reports = self.getreports("subtests failed")
+        subtest_reports_by_nodeid: dict[str, list[BaseReport]] = defaultdict(list)
+        for rep in subtest_failed_reports:
+            subtest_reports_by_nodeid[rep.nodeid].append(rep)
+
+        ordered_reports: list[BaseReport] = []
+        seen_nodeids: set[str] = set()
+
+        for rep in failed_reports:
+            nodeid = rep.nodeid
+            ordered_reports.append(rep)
+            if nodeid not in seen_nodeids:
+                seen_nodeids.add(nodeid)
+                if nodeid in subtest_reports_by_nodeid:
+                    ordered_reports.extend(subtest_reports_by_nodeid[nodeid])
+
+        for nodeid, subtests in subtest_reports_by_nodeid.items():
+            if nodeid not in seen_nodeids:
+                ordered_reports.extend(subtests)
+
+        return ordered_reports
+
     def summary_xfailures(self) -> None:
         show_tb = self.config.option.xfail_tb
         style = self.config.option.tbstyle if show_tb else "no"
@@ -1183,6 +1213,10 @@ class TerminalReporter:
         if style != "no":
             if not needed_opt or self.hasopt(needed_opt):
                 reports: list[BaseReport] = self.getreports(which_reports)
+
+                if which_reports == "failed":
+                    reports = self._add_subtests_to_failed_reports(reports)
+
                 if not reports:
                     return
                 self.write_sep("=", sep_title)
@@ -1272,6 +1306,9 @@ class TerminalReporter:
             if not failed:
                 return
             config = self.config
+            # For failed reports, also include subtests failed reports
+            if stat == "failed":
+                failed = self._add_subtests_to_failed_reports(failed)
             for rep in failed:
                 color = _color_for_type.get(stat, _color_for_type_default)
                 line = _get_line_with_reprcrash_message(
@@ -1380,7 +1417,7 @@ class TerminalReporter:
 
     def _determine_main_color(self, unknown_type_seen: bool) -> str:
         stats = self.stats
-        if "failed" in stats or "error" in stats:
+        if "failed" in stats or "error" in stats or "subtests failed" in stats:
             main_color = "red"
         elif "warnings" in stats or "xpassed" in stats or unknown_type_seen:
             main_color = "yellow"

@@ -220,6 +220,30 @@ class _SubTestContextManager:
             capturing_logs(self.request)
         )
 
+    def _log_parent_test_report(
+        self, stop: float, duration: float, sub_report: SubtestReport
+    ) -> None:
+        """Log the parent test report before propagating Exit exception.
+
+        This ensures the parent test is marked as failed if it contains
+        failed subtests, so both the parent test and subtest failures
+        are counted in the summary.
+        """
+        parent_call_info = CallInfo[None](
+            None,
+            None,
+            start=self._start,
+            stop=stop,
+            duration=duration,
+            when="call",
+            _ispytest=True,
+        )
+        parent_report = self.ihook.pytest_runtest_makereport(
+            item=self.request.node, call=parent_call_info
+        )
+        with self.suspend_capture_ctx():
+            self.ihook.pytest_runtest_logreport(report=parent_report)
+
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
@@ -271,6 +295,8 @@ class _SubTestContextManager:
 
         if exc_val is not None:
             if isinstance(exc_val, get_reraise_exceptions(self.config)):
+                if sub_report.failed:
+                    self._log_parent_test_report(stop, duration, sub_report)
                 return False
             if self.request.session.shouldfail:
                 return False
@@ -387,7 +413,7 @@ def pytest_report_teststatus(
             return category, short, f"{status}{description}"
 
         if report.failed:
-            return outcome, "u", f"SUBFAILED{description}"
+            return "subtests failed", "u", f"SUBFAILED{description}"
         else:
             if report.passed:
                 if quiet:
