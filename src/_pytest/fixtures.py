@@ -25,6 +25,7 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import Generic
+from typing import Literal
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -1472,6 +1473,45 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     return None
 
 
+def _resolve_args_directness(
+    argnames: Sequence[str],
+    indirect: bool | Sequence[str],
+    nodeid: str,
+) -> dict[str, Literal["indirect", "direct"]]:
+    """Resolve if each parametrized argument must be considered an indirect
+    parameter to a fixture of the same name, or a direct parameter to the
+    parametrized function, based on the ``indirect`` parameter of the
+    parametrize() call.
+
+    :param argnames:
+        List of argument names passed to ``parametrize()``.
+    :param indirect:
+        Same as the ``indirect`` parameter of ``parametrize()``.
+    :param nodeid:
+        Node ID to which the parametrization is applied.
+    :returns:
+        A dict mapping each arg name to either "indirect" or "direct".
+    """
+    arg_directness: dict[str, Literal["indirect", "direct"]]
+    if isinstance(indirect, bool):
+        arg_directness = dict.fromkeys(argnames, "indirect" if indirect else "direct")
+    elif isinstance(indirect, Sequence):
+        arg_directness = dict.fromkeys(argnames, "direct")
+        for arg in indirect:
+            if arg not in argnames:
+                fail(
+                    f"In {nodeid}: indirect fixture '{arg}' doesn't exist",
+                    pytrace=False,
+                )
+            arg_directness[arg] = "indirect"
+    else:
+        fail(
+            f"In {nodeid}: expected Sequence or boolean for indirect, got {type(indirect).__name__}",
+            pytrace=False,
+        )
+    return arg_directness
+
+
 def _get_direct_parametrize_args(node: nodes.Node) -> set[str]:
     """Return all direct parametrization arguments of a node, so we don't
     mistake them for fixtures.
@@ -1483,11 +1523,16 @@ def _get_direct_parametrize_args(node: nodes.Node) -> set[str]:
     """
     parametrize_argnames: set[str] = set()
     for marker in node.iter_markers(name="parametrize"):
-        if not marker.kwargs.get("indirect", False):
-            p_argnames, _ = ParameterSet._parse_parametrize_args(
-                *marker.args, **marker.kwargs
-            )
-            parametrize_argnames.update(p_argnames)
+        indirect = marker.kwargs.get("indirect", False)
+        p_argnames, _ = ParameterSet._parse_parametrize_args(
+            *marker.args, **marker.kwargs
+        )
+        p_directness = _resolve_args_directness(p_argnames, indirect, node.nodeid)
+        parametrize_argnames.update(
+            argname
+            for argname, directness in p_directness.items()
+            if directness == "direct"
+        )
     return parametrize_argnames
 
 
