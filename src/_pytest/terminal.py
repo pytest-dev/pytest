@@ -16,7 +16,6 @@ import dataclasses
 import datetime
 from functools import partial
 import inspect
-import os
 from pathlib import Path
 import platform
 import sys
@@ -299,16 +298,10 @@ def pytest_configure(config: Config) -> None:
 
         config.trace.root.setprocessor("pytest:config", mywriter)
 
-    if reporter.isatty():
-        # Some terminals interpret OSC 9;4 as desktop notification,
-        # skip on those we know (#13896).
-        should_skip_terminal_progress = (
-            # iTerm2 (reported on version 3.6.5).
-            "ITERM_SESSION_ID" in os.environ
-        )
-        if not should_skip_terminal_progress:
-            plugin = TerminalProgressPlugin(reporter)
-            config.pluginmanager.register(plugin, "terminalprogress")
+    # See terminalprogress.py.
+    # On Windows it's safe to load by default.
+    if sys.platform == "win32":
+        config.pluginmanager.import_plugin("terminalprogress")
 
 
 def getreportopt(config: Config) -> str:
