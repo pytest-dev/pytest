@@ -178,6 +178,10 @@ New features
 
 
 - `#13072 <https://github.com/pytest-dev/pytest/issues/13072>`_: Added support for displaying test session **progress in the terminal tab** using the `OSC 9;4; <https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC>`_ ANSI sequence.
+
+  **Note**: *This feature has been disabled by default in version 9.0.2, except on Windows, due to compatibility issues with some terminal emulators.
+  You may enable it again by passing* ``-p terminalprogress``. *We may enable it by default again once compatibility improves in the future.*
+
   When pytest runs in a supported terminal emulator like ConEmu, Gnome Terminal, Ptyxis, Windows Terminal, Kitty or Ghostty,
   you'll see the progress in the terminal tab or window,
   allowing you to monitor pytest's progress at a glance.
