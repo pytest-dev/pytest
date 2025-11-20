@@ -446,6 +446,9 @@ include = [
 parallel = true
 branch = true
 patch = [ "subprocess" ]
+# The sysmon core (default since Python 3.14) is much slower.
+# Perhaps: https://github.com/coveragepy/coveragepy/issues/2082
+core = "ctrace"
 
 [tool.coverage.paths]
 source = [
