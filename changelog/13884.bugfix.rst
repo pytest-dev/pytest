@@ -1,0 +1,1 @@
+Fixed rare internal IndexError caused by `builtins.compile` being overriden in client code.
