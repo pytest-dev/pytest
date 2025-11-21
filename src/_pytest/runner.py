@@ -354,10 +354,26 @@ class CallInfo(Generic[TResult]):
         instant = timing.Instant()
         try:
             result: TResult | None = func()
-        except BaseException:
+        except BaseException as caught:
             excinfo = ExceptionInfo.from_current()
-            if reraise is not None and isinstance(excinfo.value, reraise):
-                raise
+            val = excinfo.value
+
+            if reraise is not None:
+                reraise_types = (
+                    (reraise,) if not isinstance(reraise, tuple) else reraise
+                )
+
+                # ExceptionGroup-aware path: check if any of the direct children
+                # is an instance of the `reraise` parameter, and reraise the exception
+                # accordingly (#13650).
+                if isinstance(val, BaseExceptionGroup):
+                    for child in val.exceptions:
+                        if isinstance(child, reraise_types):
+                            raise child from caught
+                # Not an exception group, check if we need to reraise it.
+                elif isinstance(val, reraise_types):
+                    raise
+
             result = None
         duration = instant.elapsed()
         return cls(
