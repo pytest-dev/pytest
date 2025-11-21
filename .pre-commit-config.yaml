@@ -1,7 +1,7 @@
 minimum_pre_commit_version: "4.4.0"
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.14.4"
+  rev: "v0.14.5"
   hooks:
     - id: ruff-check
       args: ["--fix"]

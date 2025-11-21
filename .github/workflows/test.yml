@@ -139,6 +139,7 @@ jobs:
             python: "3.14"
             os: windows-latest
             tox_env: "py314"
+            use_coverage: true
 
           # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
           - name: "ubuntu-py310-unittest-asynctest"
