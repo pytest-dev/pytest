@@ -2356,7 +2356,14 @@ class TestOverrideIniArgs:
             }
         )
         result = pytester.runpytest("--override-ini", "pythonpath=src")
-        assert result.parseoutcomes() == {"passed": 1}
+        result.assert_outcomes(passed=1)
+
+    def test_override_ini_invalid_option(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("--override-ini", "doesnotexist=true")
+        result.stdout.fnmatch_lines([
+            "=*= warnings summary =*=",
+            "*PytestConfigWarning:*Unknown config option: doesnotexist",
+        ])
 
 
 def test_help_via_addopts(pytester: Pytester) -> None:
