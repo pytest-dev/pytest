@@ -54,7 +54,6 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
@@ -1231,7 +1230,10 @@ class FixtureFunctionMarker:
             )
 
         if hasattr(function, "pytestmark"):
-            warnings.warn(MARKED_FIXTURE, stacklevel=2)
+            fail(
+                "Marks cannot be applied to fixtures.\n"
+                "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
+            )
 
         fixture_definition = FixtureFunctionDefinition(
             function=function, fixture_function_marker=self, _ispytest=True

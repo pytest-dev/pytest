@@ -39,13 +39,6 @@ YIELD_FIXTURE = PytestDeprecationWarning(
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
 
-HOOK_LEGACY_PATH_ARG = UnformattedWarning(
-    PytestRemovedIn9Warning,
-    "The ({pylib_path_arg}: py.path.local) argument is deprecated, please use ({pathlib_path_arg}: pathlib.Path)\n"
-    "see https://docs.pytest.org/en/latest/deprecations.html"
-    "#py-path-local-arguments-for-hooks-replaced-with-pathlib-path",
-)
-
 NODE_CTOR_FSPATH_ARG = UnformattedWarning(
     PytestRemovedIn9Warning,
     "The (fspath: py.path.local) argument to {node_type_name} is deprecated. "
@@ -61,11 +54,6 @@ HOOK_LEGACY_MARKING = UnformattedWarning(
     " to configure the hooks.\n"
     " See https://docs.pytest.org/en/latest/deprecations.html"
     "#configuring-hook-specs-impls-using-markers",
-)
-
-MARKED_FIXTURE = PytestRemovedIn9Warning(
-    "Marks applied to fixtures have no effect\n"
-    "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
 )
 
 MONKEYPATCH_LEGACY_NAMESPACE_PACKAGES = PytestRemovedIn10Warning(

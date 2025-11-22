@@ -13,8 +13,6 @@ from typing import TYPE_CHECKING
 
 from pluggy import HookspecMarker
 
-from .deprecated import HOOK_LEGACY_PATH_ARG
-
 
 if TYPE_CHECKING:
     import pdb
@@ -23,7 +21,6 @@ if TYPE_CHECKING:
 
     from _pytest._code.code import ExceptionInfo
     from _pytest._code.code import ExceptionRepr
-    from _pytest.compat import LEGACY_PATH
     from _pytest.config import _PluggyPlugin
     from _pytest.config import Config
     from _pytest.config import ExitCode
@@ -302,17 +299,8 @@ def pytest_collection_finish(session: Session) -> None:
     """
 
 
-@hookspec(
-    firstresult=True,
-    warn_on_impl_args={
-        "path": HOOK_LEGACY_PATH_ARG.format(
-            pylib_path_arg="path", pathlib_path_arg="collection_path"
-        ),
-    },
-)
-def pytest_ignore_collect(
-    collection_path: Path, path: LEGACY_PATH, config: Config
-) -> bool | None:
+@hookspec(firstresult=True)
+def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
     """Return ``True`` to ignore this path for collection.
 
     Return ``None`` to let other plugins ignore the path for collection.
@@ -333,7 +321,7 @@ def pytest_ignore_collect(
     .. versionchanged:: 7.0.0
         The ``collection_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter. The ``path`` parameter
-        has been deprecated.
+        has been deprecated and removed in pytest 9.0.0.
 
     Use in conftest plugins
     =======================
@@ -375,16 +363,7 @@ def pytest_collect_directory(path: Path, parent: Collector) -> Collector | None:
     """
 
 
-@hookspec(
-    warn_on_impl_args={
-        "path": HOOK_LEGACY_PATH_ARG.format(
-            pylib_path_arg="path", pathlib_path_arg="file_path"
-        ),
-    },
-)
-def pytest_collect_file(
-    file_path: Path, path: LEGACY_PATH, parent: Collector
-) -> Collector | None:
+def pytest_collect_file(file_path: Path, parent: Collector) -> Collector | None:
     """Create a :class:`~pytest.Collector` for the given path, or None if not relevant.
 
     For best results, the returned collector should be a subclass of
@@ -399,7 +378,7 @@ def pytest_collect_file(
     .. versionchanged:: 7.0.0
         The ``file_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``path`` parameter. The ``path`` parameter
-        has been deprecated.
+        has been deprecated and removed in pytest 9.0.0.
 
     Use in conftest plugins
     =======================
@@ -501,17 +480,8 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport | None:
 # -------------------------------------------------------------------------
 
 
-@hookspec(
-    firstresult=True,
-    warn_on_impl_args={
-        "path": HOOK_LEGACY_PATH_ARG.format(
-            pylib_path_arg="path", pathlib_path_arg="module_path"
-        ),
-    },
-)
-def pytest_pycollect_makemodule(
-    module_path: Path, path: LEGACY_PATH, parent
-) -> Module | None:
+@hookspec(firstresult=True)
+def pytest_pycollect_makemodule(module_path: Path, parent) -> Module | None:
     """Return a :class:`pytest.Module` collector or None for the given path.
 
     This hook will be called for each matching test module path.
@@ -526,9 +496,8 @@ def pytest_pycollect_makemodule(
 
     .. versionchanged:: 7.0.0
         The ``module_path`` parameter was added as a :class:`pathlib.Path`
-        equivalent of the ``path`` parameter.
-
-        The ``path`` parameter has been deprecated in favor of ``fspath``.
+        equivalent of the ``path`` parameter. The ``path`` parameter has been
+        deprecated in favor of ``module_path`` and removed in pytest 9.0.0.
 
     Use in conftest plugins
     =======================
@@ -1036,16 +1005,7 @@ def pytest_assertion_pass(item: Item, lineno: int, orig: str, expl: str) -> None
 # -------------------------------------------------------------------------
 
 
-@hookspec(
-    warn_on_impl_args={
-        "startdir": HOOK_LEGACY_PATH_ARG.format(
-            pylib_path_arg="startdir", pathlib_path_arg="start_path"
-        ),
-    },
-)
-def pytest_report_header(  # type:ignore[empty-body]
-    config: Config, start_path: Path, startdir: LEGACY_PATH
-) -> str | list[str]:
+def pytest_report_header(config: Config, start_path: Path) -> str | list[str]:  # type: ignore[empty-body]
     """Return a string or list of strings to be displayed as header info for terminal reporting.
 
     :param config: The pytest config object.
@@ -1063,7 +1023,7 @@ def pytest_report_header(  # type:ignore[empty-body]
     .. versionchanged:: 7.0.0
         The ``start_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``startdir`` parameter. The ``startdir`` parameter
-        has been deprecated.
+        has been deprecated and removed in pytest 9.0.0.
 
     Use in conftest plugins
     =======================
@@ -1072,17 +1032,9 @@ def pytest_report_header(  # type:ignore[empty-body]
     """
 
 
-@hookspec(
-    warn_on_impl_args={
-        "startdir": HOOK_LEGACY_PATH_ARG.format(
-            pylib_path_arg="startdir", pathlib_path_arg="start_path"
-        ),
-    },
-)
-def pytest_report_collectionfinish(  # type:ignore[empty-body]
+def pytest_report_collectionfinish(  # type: ignore[empty-body]
     config: Config,
     start_path: Path,
-    startdir: LEGACY_PATH,
     items: Sequence[Item],
 ) -> str | list[str]:
     """Return a string or list of strings to be displayed after collection
@@ -1108,7 +1060,7 @@ def pytest_report_collectionfinish(  # type:ignore[empty-body]
     .. versionchanged:: 7.0.0
         The ``start_path`` parameter was added as a :class:`pathlib.Path`
         equivalent of the ``startdir`` parameter. The ``startdir`` parameter
-        has been deprecated.
+        has been deprecated and removed in pytest 9.0.0.
 
     Use in conftest plugins
     =======================
