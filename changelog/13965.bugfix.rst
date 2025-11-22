@@ -1,0 +1,1 @@
+Fixed quadratic-time behavior when handling ``unittest`` subtests in Python 3.10.
