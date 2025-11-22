@@ -225,6 +225,10 @@ class TestCaseFunction(Function):
         # A bound method to be called during teardown() if set (see 'runtest()').
         self._explicit_tearDown: Callable[[], None] | None = None
         super().setup()
+        if sys.version_info < (3, 11):
+            # A cache of the subTest errors and non-subtest skips in self._outcome.
+            # Compute and cache these lists once, instead of computing them again and again for each subtest (#13965).
+            self._cached_errors_and_skips: tuple[list[Any], list[Any]] | None = None
 
     def teardown(self) -> None:
         if self._explicit_tearDown is not None:
@@ -313,11 +317,7 @@ class TestCaseFunction(Function):
             # We also need to check if `self.instance._outcome` is `None` (this happens if the test
             # class/method is decorated with `unittest.skip`, see pytest-dev/pytest-subtests#173).
             if sys.version_info < (3, 11) and self.instance._outcome is not None:
-                subtest_errors = [
-                    x
-                    for x, y in self.instance._outcome.errors
-                    if isinstance(x, _SubTest) and y is not None
-                ]
+                subtest_errors, _ = self._obtain_errors_and_skips()
                 if len(subtest_errors) == 0:
                     add_skip()
             else:
@@ -443,18 +443,8 @@ class TestCaseFunction(Function):
 
         # For python < 3.11: add non-subtest skips once all subtest failures are processed by # `_addSubTest`.
         if sys.version_info < (3, 11):
-            from unittest.case import _SubTest  # type: ignore[attr-defined]
+            subtest_errors, non_subtest_skip = self._obtain_errors_and_skips()
 
-            non_subtest_skip = [
-                (x, y)
-                for x, y in self.instance._outcome.skipped
-                if not isinstance(x, _SubTest)
-            ]
-            subtest_errors = [
-                (x, y)
-                for x, y in self.instance._outcome.errors
-                if isinstance(x, _SubTest) and y is not None
-            ]
             # Check if we have non-subtest skips: if there are also sub failures, non-subtest skips are not treated in
             # `_addSubTest` and have to be added using `add_skip` after all subtest failures are processed.
             if len(non_subtest_skip) > 0 and len(subtest_errors) > 0:
@@ -464,6 +454,30 @@ class TestCaseFunction(Function):
                     # Add non-subtest skips (as they could not be treated in `_addSkip`)
                     for testcase, reason in non_subtest_skip:
                         self.addSkip(testcase, reason, handle_subtests=False)
+
+    def _obtain_errors_and_skips(self) -> tuple[list[Any], list[Any]]:
+        """Compute or obtain the cached values for subtest errors and non-subtest skips."""
+        from unittest.case import _SubTest  # type: ignore[attr-defined]
+
+        assert sys.version_info < (3, 11), (
+            "This workaround only should be used in Python 3.10"
+        )
+        if self._cached_errors_and_skips is not None:
+            return self._cached_errors_and_skips
+
+        subtest_errors = [
+            (x, y)
+            for x, y in self.instance._outcome.errors
+            if isinstance(x, _SubTest) and y is not None
+        ]
+
+        non_subtest_skips = [
+            (x, y)
+            for x, y in self.instance._outcome.skipped
+            if not isinstance(x, _SubTest)
+        ]
+        self._cached_errors_and_skips = (subtest_errors, non_subtest_skips)
+        return subtest_errors, non_subtest_skips
 
 
 @hookimpl(tryfirst=True)
