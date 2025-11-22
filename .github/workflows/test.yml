@@ -278,14 +278,14 @@ jobs:
       if: "! matrix.use_coverage"
       shell: bash
       env:
-        JUNIT_XML_PATH: junit-${{ matrix.name }}.xml
+        _PYTEST_TOX_POSARGS_JUNIT: --junitxml=junit-${{ matrix.name }}.xml
       run: tox run -e ${{ matrix.tox_env }} --installpkg `find dist/*.tar.gz`
 
     - name: Test with coverage
       if: "matrix.use_coverage"
       shell: bash
       env:
-        JUNIT_XML_PATH: junit-${{ matrix.name }}.xml
+        _PYTEST_TOX_POSARGS_JUNIT: --junitxml=junit-${{ matrix.name }}.xml
       run: tox run -e ${{ matrix.tox_env }}-coverage --installpkg `find dist/*.tar.gz`
 
     - name: Upload coverage to Codecov
