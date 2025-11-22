@@ -1,3 +1,3 @@
-Fixed subtests running with `pytest-xdist <https://github.com/pytest-dev/pytest>`__ when their contexts contain non-standard objects.
+Fixed subtests running with `pytest-xdist <https://github.com/pytest-dev/pytest>`__ when their contexts contain objects that are not JSON-serializable.
 
 Fixes `pytest-dev/pytest-xdist#1273 <https://github.com/pytest-dev/pytest-xdist/issues/1273>`__.

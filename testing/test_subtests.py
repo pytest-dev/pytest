@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+import json
 import sys
 from typing import Literal
 
@@ -978,14 +979,16 @@ def test_serialization() -> None:
     )
     data = pytest_report_to_serializable(report)
     assert data is not None
+    # Ensure the report is actually serializable to JSON.
+    _ = json.dumps(data)
     new_report = pytest_report_from_serializable(data)
     assert new_report is not None
     assert new_report.context == SubtestContext(
-        msg="custom message", kwargs=dict(i=saferepr(10), a=saferepr(MyEnum.A))
+        msg="custom message", kwargs=dict(i=10, a=saferepr(MyEnum.A))
     )
 
 
-def test_serialization_xdist(pytester: pytest.Pytester) -> None:
+def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no cover
     """Regression test for pytest-dev/pytest-xdist#1273."""
     pytest.importorskip("xdist")
     pytester.makepyfile(
