@@ -387,7 +387,7 @@ def pytest_report_teststatus(
             return category, short, f"{status}{description}"
 
         if report.failed:
-            return outcome, "u", f"SUBFAILED{description}"
+            return "subtests failed", "u", f"SUBFAILED{description}"
         else:
             if report.passed:
                 if quiet:

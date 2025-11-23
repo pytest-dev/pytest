@@ -55,7 +55,7 @@ def test_failures(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) ->
         [
             "test_*.py uFuF.    *     [[]100%[]]",
             *summary_lines,
-            "* 4 failed, 1 passed in *",
+            "* 2 failed, 1 passed, 2 subtests failed in *",
         ]
     )
 
@@ -69,7 +69,7 @@ def test_failures(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) ->
             "test_*.py::test_zaz SUBPASSED[[]zaz subtest[]]    *     [[]100%[]]",
             "test_*.py::test_zaz PASSED                        *     [[]100%[]]",
             *summary_lines,
-            "* 4 failed, 1 passed, 1 subtests passed in *",
+            "* 2 failed, 1 passed, 1 subtests passed, 2 subtests failed in *",
         ]
     )
     pytester.makeini(
@@ -87,7 +87,7 @@ def test_failures(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) ->
             "test_*.py::test_bar FAILED                        *     [[] 66%[]]",
             "test_*.py::test_zaz PASSED                        *     [[]100%[]]",
             *summary_lines,
-            "* 4 failed, 1 passed in *",
+            "* 2 failed, 2 subtests failed, 1 passed in *",
         ]
     )
     result.stdout.no_fnmatch_line("test_*.py::test_zaz SUBPASSED[[]zaz subtest[]]*")
@@ -307,7 +307,7 @@ def test_subtests_and_parametrization(
             "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
             "*.py::test_foo[[]1[]] FAILED                      *[[]100%[]]",
             "contains 1 failed subtest",
-            "* 4 failed, 4 subtests passed in *",
+            "* 2 failed, 4 subtests passed, 2 subtests failed in *",
         ]
     )
 
@@ -325,7 +325,7 @@ def test_subtests_and_parametrization(
             "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
             "*.py::test_foo[[]1[]] FAILED                      *[[]100%[]]",
             "contains 1 failed subtest",
-            "* 4 failed in *",
+            "* 2 failed, 2 subtests failed in *",
         ]
     )
 
@@ -344,7 +344,7 @@ def test_subtests_fail_top_level_test(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "* 2 failed, 2 subtests passed in *",
+            "* 1 failed, 2 subtests passed, 1 subtests failed in *",
         ]
     )
 
@@ -365,7 +365,7 @@ def test_subtests_do_not_overwrite_top_level_failure(pytester: pytest.Pytester) 
     result.stdout.fnmatch_lines(
         [
             "*AssertionError: top-level failure",
-            "* 2 failed, 2 subtests passed in *",
+            "* 1 failed, 2 subtests passed, 1 subtests failed in *",
         ]
     )
 
@@ -386,14 +386,14 @@ def test_subtests_last_failed_step_wise(pytester: pytest.Pytester, flag: str) ->
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "* 2 failed, 2 subtests passed in *",
+            "* 1 failed, 2 subtests passed, 1 subtests failed in *",
         ]
     )
 
     result = pytester.runpytest("-v", flag)
     result.stdout.fnmatch_lines(
         [
-            "* 2 failed, 2 subtests passed in *",
+            "* 1 failed, 2 subtests passed, 1 subtests failed in *",
         ]
     )
 
@@ -427,7 +427,7 @@ class TestUnittestSubTest:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "* 3 failed, 2 passed in *",
+                "* 1 failed, 2 passed, 1 subtests passed, 2 subtests failed in *",
             ]
         )
 
@@ -578,9 +578,7 @@ class TestUnittestSubTest:
         result.stdout.fnmatch_lines(
             [
                 "*.py u.                                                           *            [[]100%[]]",
-                "*=== short test summary info ===*",
-                "SUBFAILED[[]subtest 2[]] *.py::T::test_foo - AssertionError: fail subtest 2",
-                "* 1 failed, 1 passed in *",
+                "* 1 passed, 1 subtests failed in *",
             ]
         )
 
@@ -590,9 +588,9 @@ class TestUnittestSubTest:
                 "*.py::T::test_foo SUBSKIPPED[[]subtest 1[]] (skip subtest 1)      *            [[]100%[]]",
                 "*.py::T::test_foo SUBFAILED[[]subtest 2[]]                        *            [[]100%[]]",
                 "*.py::T::test_foo PASSED                                          *            [[]100%[]]",
+                "*=== short test summary info ===*",
                 "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py:*: skip subtest 1",
-                "SUBFAILED[[]subtest 2[]] *.py::T::test_foo - AssertionError: fail subtest 2",
-                "* 1 failed, 1 passed, 1 skipped in *",
+                "* 1 passed, 1 skipped, 1 subtests failed in *",
             ]
         )
 
@@ -607,9 +605,7 @@ class TestUnittestSubTest:
             [
                 "*.py::T::test_foo SUBFAILED[[]subtest 2[]]                        *            [[]100%[]]",
                 "*.py::T::test_foo PASSED                                          *            [[]100%[]]",
-                "*=== short test summary info ===*",
-                r"SUBFAILED[[]subtest 2[]] *.py::T::test_foo - AssertionError: fail subtest 2",
-                r"* 1 failed, 1 passed in *",
+                "* 1 passed, 1 subtests failed in *",
             ]
         )
         result.stdout.no_fnmatch_line(
@@ -814,7 +810,7 @@ class TestLogging:
         result = pytester.runpytest("-p no:logging")
         result.stdout.fnmatch_lines(
             [
-                "*2 failed in*",
+                "*1 failed, 1 subtests failed in*",
             ]
         )
         result.stdout.no_fnmatch_line("*root:test_no_logging.py*log line*")
@@ -899,12 +895,15 @@ def test_exitfirst(pytester: pytest.Pytester) -> None:
         """
     )
     result = pytester.runpytest("--exitfirst")
-    assert result.parseoutcomes()["failed"] == 2
+    outcomes = result.parseoutcomes()
+    assert outcomes["failed"] == 1
+    assert outcomes["subtests failed"] == 1
     result.stdout.fnmatch_lines(
         [
-            "SUBFAILED*[[]sub1[]] *.py::test_foo - assert False*",
+            "*=== short test summary info ===*",
             "FAILED *.py::test_foo - assert False",
-            "* stopping after 2 failures*",
+            "*stopping after 2 failures*",
+            "*1 failed, 1 subtests failed*",
         ],
         consecutive=True,
     )

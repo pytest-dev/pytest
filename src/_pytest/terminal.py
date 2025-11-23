@@ -1380,7 +1380,7 @@ class TerminalReporter:
 
     def _determine_main_color(self, unknown_type_seen: bool) -> str:
         stats = self.stats
-        if "failed" in stats or "error" in stats:
+        if "failed" in stats or "error" in stats or "subtests failed" in stats:
             main_color = "red"
         elif "warnings" in stats or "xpassed" in stats or unknown_type_seen:
             main_color = "yellow"
