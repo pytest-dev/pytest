@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from contextlib import ExitStack
 from contextlib import nullcontext
 import dataclasses
+import json
 import time
 from types import TracebackType
 from typing import Any
@@ -62,7 +63,21 @@ class SubtestContext:
     kwargs: Mapping[str, Any]
 
     def _to_json(self) -> dict[str, Any]:
-        return dataclasses.asdict(self)
+        result = dataclasses.asdict(self)
+
+        # Best-effort to convert the kwargs values to JSON (pytest-dev/pytest-xdist#1273).
+        # If they can be converted, we return as it is, otherwise we return its saferepr because it seems
+        # this is the best we can do at this point.
+        def convert(x: Any) -> Any:
+            try:
+                json.dumps(x)
+            except TypeError:
+                return saferepr(x)
+            else:
+                return x
+
+        result["kwargs"] = {k: convert(v) for (k, v) in result["kwargs"].items()}
+        return result
 
     @classmethod
     def _from_json(cls, d: dict[str, Any]) -> Self:
