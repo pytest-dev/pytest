@@ -2677,7 +2677,9 @@ This section documents all command-line options provided by pytest's core plugin
 Test Selection
 ~~~~~~~~~~~~~~
 
-.. optionval:: -k EXPRESSION
+.. optionval:: -k
+
+    ``-k EXPRESSION``
 
     Only run tests which match the given substring expression. An expression is a Python evaluable expression where all names are substring-matched against test names and their parent classes.
 
@@ -2689,7 +2691,9 @@ Test Selection
 
     The matching is case-insensitive. Keywords are also matched to classes and functions containing extra names in their ``extra_keyword_matches`` set.
 
-.. optionval:: -m MARKEXPR
+.. optionval:: -m
+
+    ``-m MARKEXPR``
 
     Only run tests matching given mark expression. Supports ``and``, ``or``, and ``not`` operators.
 
@@ -2708,49 +2712,59 @@ Test Selection
 Test Execution Control
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. optionval:: -x
 .. optionval:: --exitfirst
+
+    ``-x, --exitfirst``
 
     Exit instantly on first error or failed test.
 
-.. optionval:: --maxfail=num
+.. optionval:: --maxfail
+
+    ``--maxfail=NUM``
 
     Exit after first ``num`` failures or errors. Useful for CI environments where you want to fail fast but see a few failures.
 
-.. optionval:: --lf
 .. optionval:: --last-failed
+
+    ``--lf, --last-failed``
 
     Rerun only the tests that failed at the last run. If no tests failed (or no cached data exists), all tests are run. See also :confval:`cache_dir` and :ref:`cache`.
 
-.. optionval:: --ff
 .. optionval:: --failed-first
+
+    ``--ff, --failed-first``
 
     Run all tests, but run the last failures first. This may re-order tests and thus lead to repeated fixture setup/teardown.
 
-.. optionval:: --nf
 .. optionval:: --new-first
+
+    ``--nf, --new-first``
 
     Run tests from new files first, then the rest of the tests sorted by file modification time.
 
-.. optionval:: --sw
 .. optionval:: --stepwise
+
+    ``--sw, --stepwise``
 
     Exit on test failure and continue from last failing test next time. Useful for fixing multiple test failures one at a time.
 
-.. optionval:: --sw-skip
 .. optionval:: --stepwise-skip
+
+    ``--sw-skip, --stepwise-skip``
 
     Ignore the first failing test but stop on the next failing test. Implicitly enables :optionval:`--stepwise`.
 
-.. optionval:: --sw-reset
 .. optionval:: --stepwise-reset
+
+    ``--sw-reset, --stepwise-reset``
 
     Resets stepwise state, restarting the stepwise workflow. Implicitly enables :optionval:`--stepwise`.
 
-.. optionval:: --lfnf
 .. optionval:: --last-failed-no-failures
 
-    With :optionval:`--lf`, determines whether to execute tests when there are no previously known failures or when no cached ``lastfailed`` data was found.
+    ``--lfnf, --last-failed-no-failures``
+
+    With :optionval:`--last-failed`, determines whether to execute tests when there are no previously known failures or when no cached ``lastfailed`` data was found.
 
     * ``all`` (default): runs the full test suite again
     * ``none``: just emits a message about no known failures and exits successfully
@@ -2763,7 +2777,8 @@ Collection
 ~~~~~~~~~~
 
 .. optionval:: --collect-only
-.. optionval:: --co
+
+    ``--collect-only, --co``
 
     Only collect tests, don't execute them. Shows which tests would be collected and run.
 
@@ -2773,19 +2788,27 @@ Collection
 
         pytest --pyargs pkg.testing
 
-.. optionval:: --ignore=path
+.. optionval:: --ignore
+
+    ``--ignore=PATH``
 
     Ignore path during collection (multi-allowed). Can be specified multiple times.
 
-.. optionval:: --ignore-glob=path
+.. optionval:: --ignore-glob
+
+    ``--ignore-glob=PATTERN``
 
     Ignore path pattern during collection (multi-allowed). Supports glob patterns.
 
-.. optionval:: --deselect=nodeid_prefix
+.. optionval:: --deselect
+
+    ``--deselect=NODEID_PREFIX``
 
     Deselect item (via node id prefix) during collection (multi-allowed).
 
-.. optionval:: --confcutdir=dir
+.. optionval:: --confcutdir
+
+    ``--confcutdir=DIR``
 
     Only load ``conftest.py`` files relative to specified directory.
 
@@ -2819,9 +2842,10 @@ Fixtures
 ~~~~~~~~
 
 .. optionval:: --fixtures
-.. optionval:: --funcargs
 
-    Show available fixtures, sorted by plugin appearance. Fixtures with leading ``_`` are only shown with :optionval:`-v`.
+    ``--fixtures, --funcargs``
+
+    Show available fixtures, sorted by plugin appearance. Fixtures with leading ``_`` are only shown with :optionval:`--verbose`.
 
 .. optionval:: --fixtures-per-test
 
@@ -2846,7 +2870,9 @@ Debugging
 
     Start the interactive Python debugger on errors or KeyboardInterrupt. See :ref:`pdb-option`.
 
-.. optionval:: --pdbcls=modulename:classname
+.. optionval:: --pdbcls
+
+    ``--pdbcls=MODULENAME:CLASSNAME``
 
     Specify a custom interactive Python debugger for use with :optionval:`--pdb`.
 
@@ -2873,21 +2899,27 @@ Debugging
 Output and Reporting
 ~~~~~~~~~~~~~~~~~~~~
 
-.. optionval:: -v
 .. optionval:: --verbose
+
+    ``-v, --verbose``
 
     Increase verbosity. Can be specified multiple times (e.g., ``-vv``) for even more verbose output.
 
-.. optionval:: -q
 .. optionval:: --quiet
+
+    ``-q, --quiet``
 
     Decrease verbosity.
 
-.. optionval:: --verbosity=VERBOSE
+.. optionval:: --verbosity
+
+    ``--verbosity=NUM``
 
     Set verbosity level explicitly. Default: 0.
 
-.. optionval:: -r chars
+.. optionval:: -r
+
+    ``-r CHARS``
 
     Show extra test summary info as specified by chars:
 
@@ -2927,8 +2959,9 @@ Output and Reporting
 
     Force condensed summary output regardless of verbosity level.
 
-.. optionval:: -l
 .. optionval:: --showlocals
+
+    ``-l, --showlocals``
 
     Show locals in tracebacks (disabled by default).
 
@@ -2936,7 +2969,9 @@ Output and Reporting
 
     Hide locals in tracebacks (negate :optionval:`--showlocals` passed through addopts).
 
-.. optionval:: --tb=style
+.. optionval:: --tb
+
+    ``--tb=STYLE``
 
     Traceback print mode:
 
@@ -2961,7 +2996,9 @@ Output and Reporting
     * ``log``: show captured logging
     * ``all`` (default): show all captured output
 
-.. optionval:: --color=color
+.. optionval:: --color
+
+    ``--color=WHEN``
 
     Color terminal output:
 
@@ -2971,24 +3008,32 @@ Output and Reporting
 
 .. optionval:: --code-highlight
 
-    Whether code should be highlighted (only if :optionval:`--color=color` is also enabled). Default: ``yes``.
+    Whether code should be highlighted (only if :optionval:`--color` is also enabled). Default: ``yes``.
 
-.. optionval:: --pastebin=mode
+.. optionval:: --pastebin
+
+    ``--pastebin=MODE``
 
     Send failed|all info to bpaste.net pastebin service.
 
-.. optionval:: --durations=N
+.. optionval:: --durations
+
+    ``--durations=NUM``
 
     Show N slowest setup/test durations (N=0 for all). See :ref:`durations`.
 
-.. optionval:: --durations-min=N
+.. optionval:: --durations-min
+
+    ``--durations-min=NUM``
 
     Minimal duration in seconds for inclusion in slowest list. Default: 0.005 (or 0.0 if ``-vv`` is given).
 
 Output Capture
 ~~~~~~~~~~~~~~
 
-.. optionval:: --capture=method
+.. optionval:: --capture
+
+    ``--capture=METHOD``
 
     Per-test capturing method:
 
@@ -3006,13 +3051,15 @@ Output Capture
 JUnit XML
 ~~~~~~~~~
 
-.. optionval:: --junitxml=path
-.. optionval:: --junit-xml=path
+.. optionval:: --junitxml
+
+    ``--junitxml=PATH, --junit-xml=PATH``
 
     Create junit-xml style report file at given path.
 
-.. optionval:: --junitprefix=str
-.. optionval:: --junit-prefix=str
+.. optionval:: --junitprefix
+
+    ``--junitprefix=STR, --junit-prefix=STR``
 
     Prepend prefix to classnames in junit-xml output.
 
@@ -3031,12 +3078,14 @@ Warnings
 ~~~~~~~~
 
 .. optionval:: --disable-warnings
-.. optionval:: --disable-pytest-warnings
+
+    ``--disable-warnings, --disable-pytest-warnings``
 
     Disable warnings summary.
 
-.. optionval:: -W PYTHONWARNINGS
-.. optionval:: --pythonwarnings=PYTHONWARNINGS
+.. optionval:: --pythonwarnings
+
+    ``-W WARNING, --pythonwarnings=WARNING``
 
     Set which warnings to report, see ``-W`` option of Python itself. Can be specified multiple times.
 
@@ -3057,7 +3106,9 @@ Doctest
     * ``udiff``
     * ``only_first_failure``
 
-.. optionval:: --doctest-glob=pat
+.. optionval:: --doctest-glob
+
+    ``--doctest-glob=PATTERN``
 
     Doctests file matching pattern, default: ``test*.txt``.
 
@@ -3072,21 +3123,27 @@ Doctest
 Configuration
 ~~~~~~~~~~~~~
 
-.. optionval:: -c FILE
-.. optionval:: --config-file=FILE
+.. optionval:: --config-file
+
+    ``-c FILE, --config-file=FILE``
 
     Load configuration from ``FILE`` instead of trying to locate one of the implicit configuration files.
 
-.. optionval:: --rootdir=ROOTDIR
+.. optionval:: --rootdir
+
+    ``--rootdir=ROOTDIR``
 
     Define root directory for tests. Can be relative path: ``'root_dir'``, ``'./root_dir'``, ``'root_dir/another_dir/'``; absolute path: ``'/home/user/root_dir'``; path with variables: ``'$HOME/root_dir'``.
 
-.. optionval:: --basetemp=dir
+.. optionval:: --basetemp
+
+    ``--basetemp=DIR``
 
     Base temporary directory for this test run. (Warning: this directory is removed if it exists.)
 
-.. optionval:: -o OVERRIDE_INI
-.. optionval:: --override-ini=OVERRIDE_INI
+.. optionval:: --override-ini
+
+    ``-o OPTION=VALUE, --override-ini=OPTION=VALUE``
 
     Override configuration option with ``option=value`` style. Can be specified multiple times.
 
@@ -3106,7 +3163,9 @@ Configuration
 
     Enables the :confval:`strict` option (which enables all strictness options).
 
-.. optionval:: --assert=MODE
+.. optionval:: --assert
+
+    ``--assert=MODE``
 
     Control assertion debugging tools:
 
@@ -3116,31 +3175,45 @@ Configuration
 Logging
 ~~~~~~~
 
-.. optionval:: --log-level=LEVEL
+.. optionval:: --log-level
+
+    ``--log-level=LEVEL``
 
     Level of messages to catch/display. Not set by default, so it depends on the root/parent log handler's effective level, where it is ``WARNING`` by default.
 
-.. optionval:: --log-format=LOG_FORMAT
+.. optionval:: --log-format
+
+    ``--log-format=FORMAT``
 
     Log format used by the logging module.
 
-.. optionval:: --log-date-format=LOG_DATE_FORMAT
+.. optionval:: --log-date-format
+
+    ``--log-date-format=FORMAT``
 
     Log date format used by the logging module.
 
-.. optionval:: --log-cli-level=LOG_CLI_LEVEL
+.. optionval:: --log-cli-level
+
+    ``--log-cli-level=LEVEL``
 
     CLI logging level. See :ref:`live_logs`.
 
-.. optionval:: --log-cli-format=LOG_CLI_FORMAT
+.. optionval:: --log-cli-format
+
+    ``--log-cli-format=FORMAT``
 
     Log format used by the logging module for CLI output.
 
-.. optionval:: --log-cli-date-format=LOG_CLI_DATE_FORMAT
+.. optionval:: --log-cli-date-format
+
+    ``--log-cli-date-format=FORMAT``
 
     Log date format used by the logging module for CLI output.
 
-.. optionval:: --log-file=LOG_FILE
+.. optionval:: --log-file
+
+    ``--log-file=PATH``
 
     Path to a file when logging will be written to.
 
@@ -3151,47 +3224,61 @@ Logging
     * ``w`` (default): recreate the file
     * ``a``: append to the file
 
-.. optionval:: --log-file-level=LOG_FILE_LEVEL
+.. optionval:: --log-file-level
+
+    ``--log-file-level=LEVEL``
 
     Log file logging level.
 
-.. optionval:: --log-file-format=LOG_FILE_FORMAT
+.. optionval:: --log-file-format
+
+    ``--log-file-format=FORMAT``
 
     Log format used by the logging module for the log file.
 
-.. optionval:: --log-file-date-format=LOG_FILE_DATE_FORMAT
+.. optionval:: --log-file-date-format
+
+    ``--log-file-date-format=FORMAT``
 
     Log date format used by the logging module for the log file.
 
-.. optionval:: --log-auto-indent=LOG_AUTO_INDENT
+.. optionval:: --log-auto-indent
+
+    ``--log-auto-indent=VALUE``
 
     Auto-indent multiline messages passed to the logging module. Accepts ``true|on``, ``false|off`` or an integer.
 
-.. optionval:: --log-disable=LOGGER_DISABLE
+.. optionval:: --log-disable
+
+    ``--log-disable=LOGGER``
 
     Disable a logger by name. Can be passed multiple times.
 
 Plugin and Extension Management
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. optionval:: -p name
+.. optionval:: -p
+
+    ``-p NAME``
 
     Early-load given plugin module name or entry point (multi-allowed). To avoid loading of plugins, use the ``no:`` prefix, e.g. ``no:doctest``. See also :optionval:`--disable-plugin-autoload`.
 
 .. optionval:: --disable-plugin-autoload
 
-    Disable plugin auto-loading through entry point packaging metadata. Only plugins explicitly specified in :optionval:`-p name` or env var :envvar:`PYTEST_PLUGINS` will be loaded.
+    Disable plugin auto-loading through entry point packaging metadata. Only plugins explicitly specified in :optionval:`-p` or env var :envvar:`PYTEST_PLUGINS` will be loaded.
 
 Version and Help
 ~~~~~~~~~~~~~~~~
 
-.. optionval:: -V
 .. optionval:: --version
+
+    ``-V, --version``
 
     Display pytest version and information about plugins. When given twice, also display information about plugins.
 
-.. optionval:: -h
 .. optionval:: --help
+
+    ``-h, --help``
 
     Show help message and configuration info.
 
