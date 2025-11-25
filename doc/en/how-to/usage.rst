@@ -4,7 +4,7 @@
 How to invoke pytest
 ==========================================
 
-..  seealso:: :ref:`Complete pytest command-line flag reference <command-line-flags>`
+..  seealso:: :ref:`Complete pytest command-line flags reference <command-line-flags>`
 
 In general, pytest is invoked with the command ``pytest`` (see below for :ref:`other ways to invoke pytest
 <invoke-other>`). This will execute all tests in all files whose names follow the form ``test_*.py`` or ``\*_test.py``

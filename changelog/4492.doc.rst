@@ -1,1 +1,1 @@
-Added comprehensive CLI options reference documentation in the reference section, documenting all command-line flags with detailed descriptions and examples. Added a new ``:optionval:`` role for cross-referencing CLI options throughout the documentation.
+The API Reference now contains cross-reference-able documentation of :ref:`pytest's command-line flags <command-line-flags>`.

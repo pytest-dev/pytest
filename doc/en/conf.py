@@ -293,13 +293,6 @@ def setup(app: sphinx.application.Sphinx) -> None:
         indextemplate="pair: %s; global variable interpreted by pytest",
     )
 
-    app.add_object_type(
-        "optionval",
-        "optionval",
-        objname="command-line option",
-        indextemplate="pair: %s; command-line option",
-    )
-
     app.add_crossref_type(
         directivename="hook",
         rolename="hook",
