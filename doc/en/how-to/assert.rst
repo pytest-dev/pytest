@@ -599,4 +599,4 @@ If this is the case you have two options:
 * Disable rewriting for a specific module by adding the string
   ``PYTEST_DONT_REWRITE`` to its docstring.
 
-* Disable rewriting for all modules by using ``--assert=plain``.
+* Disable rewriting for all modules by using :option:`--assert=plain`.

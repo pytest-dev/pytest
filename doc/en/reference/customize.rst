@@ -173,7 +173,7 @@ Here's a summary what ``pytest`` uses ``rootdir`` for:
 ``rootdir`` is **NOT** used to modify ``sys.path``/``PYTHONPATH`` or
 influence how modules are imported. See :ref:`pythonpath` for more details.
 
-The ``--rootdir=path`` command-line option can be used to force a specific directory.
+The :option:`--rootdir=path` command-line option can be used to force a specific directory.
 Note that contrary to other command-line options, ``--rootdir`` cannot be used with
 :confval:`addopts` inside a configuration file because the ``rootdir`` is used to *find* the configuration file
 already.
@@ -183,7 +183,7 @@ Finding the ``rootdir``
 
 Here is the algorithm which finds the rootdir from ``args``:
 
-- If ``-c`` is passed in the command-line, use that as configuration file, and its directory as ``rootdir``.
+- If :option:`-c` is passed in the command-line, use that as configuration file, and its directory as ``rootdir``.
 
 - Determine the common ancestor directory for the specified ``args`` that are
   recognised as paths that exist in the file system. If no such paths are
