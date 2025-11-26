@@ -231,7 +231,7 @@ You can easily instruct ``pytest`` to discover tests from every Python file:
     python_files = ["*.py"]
 
 However, many projects will have a ``setup.py`` which they don't want to be
-imported. Moreover, there may files only importable by a specific python
+imported. Moreover, there may be files only importable by a specific python
 version. For such cases you can dynamically define files to be ignored by
 listing them in a ``conftest.py`` file:
 
