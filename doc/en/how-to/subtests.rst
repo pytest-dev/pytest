@@ -90,7 +90,7 @@ outside the ``subtests.test`` block:
 Verbosity
 ---------
 
-By default, only **subtest failures** are shown. Higher verbosity levels (``-v``) will also show progress output for **passed** subtests.
+By default, only **subtest failures** are shown. Higher verbosity levels (:option:`-v`) will also show progress output for **passed** subtests.
 
 It is possible to control the verbosity of subtests by setting :confval:`verbosity_subtests`.
 
@@ -118,7 +118,7 @@ Parametrization
 * Happens at collection time.
 * Generates individual tests.
 * Parametrized tests can be referenced from the command line.
-* Plays well with plugins that handle test execution, such as ``--last-failed``.
+* Plays well with plugins that handle test execution, such as :option:`--last-failed`.
 * Ideal for decision table testing.
 
 Subtests

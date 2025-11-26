@@ -155,7 +155,7 @@ Managing loading of plugins
 Early loading plugins
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-You can early-load plugins (internal and external) explicitly in the command-line with the ``-p`` option::
+You can early-load plugins (internal and external) explicitly in the command-line with the :option:`-p` option::
 
     pytest -p mypluginmodule
 
@@ -171,7 +171,7 @@ The option receives a ``name`` parameter, which can be:
 Disabling plugins
 ~~~~~~~~~~~~~~~~~~
 
-To disable loading specific plugins at invocation time, use the ``-p`` option
+To disable loading specific plugins at invocation time, use the :option:`-p` option
 together with the prefix ``no:``.
 
 Example: to disable loading the plugin ``doctest``, which is responsible for

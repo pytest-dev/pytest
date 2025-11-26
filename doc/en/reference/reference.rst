@@ -1212,7 +1212,7 @@ as discussed in :ref:`temporary directory location and retention`.
 
 When set, disables plugin auto-loading through :std:doc:`entry point packaging
 metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
-explicitly specified in :envvar:`PYTEST_PLUGINS` or with ``-p`` will be loaded.
+explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
 See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
@@ -1223,7 +1223,7 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
 
-See also ``-p``.
+See also :option:`-p`.
 
 .. envvar:: PYTEST_THEME
 
@@ -1406,7 +1406,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    when collecting Python modules. Default is ``False``.
 
    Set to ``True`` if the package you are testing is part of a namespace package.
-   Namespace packages are also supported as ``--pyargs`` target.
+   Namespace packages are also supported as :option:`--pyargs` target.
 
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
@@ -1744,7 +1744,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Allow selective auto-indentation of multiline log messages.
 
-    Supports command line option ``--log-auto-indent [value]``
+    Supports command line option :option:`--log-auto-indent=[value]`
     and config option ``log_auto_indent = [value]`` to set the
     auto-indentation behavior for all logging.
 
@@ -2128,7 +2128,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    Additionally, ``pytest`` will attempt to intelligently identify and ignore
    a virtualenv.  Any directory deemed to be the root of a virtual environment
    will not be considered during test collection unless
-   ``--collect-in-virtualenv`` is given.  Note also that ``norecursedirs``
+   :option:`--collect-in-virtualenv` is given.  Note also that ``norecursedirs``
    takes precedence over ``--collect-in-virtualenv``; e.g. if you intend to
    run tests in a virtualenv with a base directory that matches ``'.*'`` you
    *must* override ``norecursedirs`` in addition to using the
@@ -2610,7 +2610,7 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             verbosity_assertions = 2
 
-    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
     ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
@@ -2633,9 +2633,9 @@ passed multiple times. The expected format is ``name=value``. For example::
             verbosity_subtests = 1
 
     A value of ``1`` or higher will show output for **passed** subtests (**failed** subtests are always reported).
-    Passed subtests output can be suppressed with the value ``0``, which overwrites the ``-v`` command-line option.
+    Passed subtests output can be suppressed with the value ``0``, which overwrites the :option:`-v` command-line option.
 
-    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
     ``"auto"`` can be used to explicitly use the global verbosity level.
 
     See also: :ref:`subtests`.
@@ -2659,7 +2659,7 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             verbosity_test_cases = 2
 
-    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
     ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
@@ -2961,7 +2961,7 @@ Output and Reporting
 
 .. option:: --xfail-tb
 
-    Show tracebacks for xfail (as long as ``--tb != no``).
+    Show tracebacks for xfail (as long as :option:`--tb` != ``no``).
 
 .. option:: --show-capture
 
@@ -3276,7 +3276,7 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
       --lfnf, --last-failed-no-failures={all,none}
-                            With ``--lf``, determines whether to execute tests
+                            With :option:`--lf`, determines whether to execute tests
                             when there are no previously (known) failures or
                             when no cached ``lastfailed`` data was found.
                             ``all`` (the default) runs the full test suite

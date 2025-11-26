@@ -43,7 +43,7 @@ The actual command line executed is:
     pytest -ra -q -v -m slow
 
 Note that as usual for other command-line applications, in case of conflicting options the last one wins, so the example
-above will show verbose output because ``-v`` overwrites ``-q``.
+above will show verbose output because :option:`-v` overwrites :option:`-q`.
 
 
 .. _request example:
@@ -353,7 +353,7 @@ Example:
 
 The ``__tracebackhide__`` setting influences ``pytest`` showing
 of tracebacks: the ``checkconfig`` function will not be shown
-unless the ``--full-trace`` command line option is specified.
+unless the :option:`--full-trace` command line option is specified.
 Let's run our little function:
 
 .. code-block:: pytest
@@ -998,7 +998,7 @@ information.
 
 
 Sometimes a test session might get stuck and there might be no easy way to figure out
-which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console
+which test got stuck, for example if pytest was run in quiet mode (:option:`-q`) or you don't have access to the console
 output. This is particularly a problem if the problem happens only sporadically, the famous "flaky" kind of tests.
 
 ``pytest`` sets the :envvar:`PYTEST_CURRENT_TEST` environment variable when running tests, which can be inspected

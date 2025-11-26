@@ -1368,9 +1368,9 @@ different server string is expected than what arrived.
 pytest will build a string that is the test ID for each fixture value
 in a parametrized fixture, e.g. ``test_ehlo[smtp.gmail.com]`` and
 ``test_ehlo[mail.python.org]`` in the above examples.  These IDs can
-be used with ``-k`` to select specific cases to run, and they will
+be used with :option:`-k` to select specific cases to run, and they will
 also identify the specific case when one is failing.  Running pytest
-with ``--collect-only`` will show the generated IDs.
+with :option:`--collect-only` will show the generated IDs.
 
 Numbers, strings, booleans and ``None`` will have their usual string
 representation used in the test ID. For other objects, pytest will
