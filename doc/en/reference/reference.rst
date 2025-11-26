@@ -2693,6 +2693,8 @@ Test Selection
     The matching is case-insensitive.
     Keywords are also matched to classes and functions containing extra names in their ``extra_keyword_matches`` set.
 
+    See :ref:`select-tests` for more information and examples.
+
 .. option:: -m MARKEXPR
 
     Only run tests matching given mark expression.
@@ -2741,6 +2743,8 @@ Test Execution Control
 
     Exit on test failure and continue from last failing test next time.
     Useful for fixing multiple test failures one at a time.
+
+    See :ref:`cache stepwise` for more information.
 
 .. option:: --stepwise-skip, --sw-skip
 
@@ -2870,9 +2874,13 @@ Debugging
 
     Immediately break when running each test.
 
+    See :ref:`trace-option` for more information.
+
 .. option:: --full-trace
 
     Don't cut any tracebacks (default is to cut).
+
+    See :ref:`how-to-modifying-python-tb-printing` for more information.
 
 .. option:: --debug, --debug=DEBUG_FILE_NAME
 
@@ -2891,6 +2899,8 @@ Output and Reporting
 
     Increase verbosity.
     Can be specified multiple times (e.g., ``-vv``) for even more verbose output.
+
+    See :ref:`pytest.fine_grained_verbosity` for fine-grained control over verbosity.
 
 .. option:: -q, --quiet
 
@@ -2923,6 +2933,8 @@ Output and Reporting
         pytest -rA           # show all outcomes
         pytest -rfE          # show only failed and errors (default)
         pytest -rfs          # show failed and skipped
+
+    See :ref:`pytest.detailed_failed_tests_usage` for more information.
 
 .. option:: --no-header
 
@@ -2958,6 +2970,8 @@ Output and Reporting
     * ``line``: only the failing line
     * ``native``: Python's standard traceback
     * ``no``: no traceback
+
+    See :ref:`how-to-modifying-python-tb-printing` for examples.
 
 .. option:: --xfail-tb
 
@@ -3061,6 +3075,8 @@ Doctest
 
     Run doctests in all .py modules.
 
+    See :ref:`doctest` for more information on using doctests with pytest.
+
 .. option:: --doctest-report
 
     Choose another output format for diffs on doctest failure:
@@ -3101,6 +3117,8 @@ Configuration
     Base temporary directory for this test run.
     Warning: this directory is removed if it exists.
 
+    See :ref:`temporary directory location and retention` for more information.
+
 .. option:: -o OPTION=VALUE, --override-ini=OPTION=VALUE
 
     Override configuration option with ``option=value`` style.
@@ -3131,6 +3149,8 @@ Configuration
 
 Logging
 ~~~~~~~
+
+See :ref:`logging` for a guide on using these flags.
 
 .. option:: --log-level=LEVEL
 
