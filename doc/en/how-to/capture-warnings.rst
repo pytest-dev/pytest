@@ -198,7 +198,7 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
 Disabling warnings summary
 --------------------------
 
-Although not recommended, you can use the ``--disable-warnings`` command-line option to suppress the
+Although not recommended, you can use the :option:`--disable-warnings` command-line option to suppress the
 warning summary entirely from the test run output.
 
 Disabling warning capture entirely

@@ -12,7 +12,7 @@ For information on plugin hooks and objects, see :ref:`plugins`.
 
 For information on the ``pytest.mark`` mechanism, see :ref:`mark`.
 
-For information about fixtures, see :ref:`fixtures`. To see a complete list of available fixtures (add ``-v`` to also see fixtures with leading ``_``), type :
+For information about fixtures, see :ref:`fixtures`. To see a complete list of available fixtures (add :option:`-v` to also see fixtures with leading ``_``), type :
 
 .. code-block:: pytest
 
@@ -53,7 +53,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
     capteesys -- .../_pytest/capture.py:1028
         Enable simultaneous text capturing and pass-through of writes
-        to ``sys.stdout`` and ``sys.stderr`` as defined by ``--capture=``.
+        to ``sys.stdout`` and ``sys.stderr`` as defined by :option:`--capture`.
 
 
         The captured output is made available via ``capteesys.readouterr()`` method
@@ -61,7 +61,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         ``out`` and ``err`` will be ``text`` objects.
 
         The output is also passed-through, allowing it to be "live-printed",
-        reported, or both as defined by ``--capture=``.
+        reported, or both as defined by :option:`--capture`.
 
         Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 

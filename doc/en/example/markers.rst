@@ -167,9 +167,9 @@ Using ``-k expr`` to select tests based on their name
 
 .. versionadded:: 2.0/2.3.4
 
-You can use the ``-k`` command line option to specify an expression
+You can use the :option:`-k` command line option to specify an expression
 which implements a substring match on the test names instead of the
-exact match on markers that ``-m`` provides.  This makes it easy to
+exact match on markers that :option:`-m` provides.  This makes it easy to
 select tests based on their names:
 
 .. versionchanged:: 5.4
@@ -225,7 +225,7 @@ Or to select "http" and "quick" tests:
 You can use ``and``, ``or``, ``not`` and parentheses.
 
 
-In addition to the test's name, ``-k`` also matches the names of the test's parents (usually, the name of the file and class it's in),
+In addition to the test's name, :option:`-k` also matches the names of the test's parents (usually, the name of the file and class it's in),
 attributes set on the test function, markers applied to it or its parents and any :attr:`extra keywords <_pytest.nodes.Node.extra_keyword_matches>`
 explicitly added to it or its parents.
 
@@ -440,7 +440,7 @@ and here is one that specifies exactly the environment needed:
 
     ============================ 1 passed in 0.12s =============================
 
-The ``--markers`` option always gives you a list of available markers:
+The :option:`--markers` option always gives you a list of available markers:
 
 .. code-block:: pytest
 
@@ -658,7 +658,7 @@ Automatically adding markers based on test names
 
 If you have a test suite where test function names indicate a certain
 type of test, you can implement a hook that automatically defines
-markers so that you can use the ``-m`` option with it. Let's look
+markers so that you can use the :option:`-m` option with it. Let's look
 at this test module:
 
 .. code-block:: python

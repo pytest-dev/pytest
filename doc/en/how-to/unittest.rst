@@ -42,7 +42,7 @@ in most cases without having to modify existing code:
 
 * Obtain :ref:`more informative tracebacks <tbreportdemo>`;
 * :ref:`stdout and stderr <captures>` capturing;
-* :ref:`Test selection options <select-tests>` using ``-k`` and ``-m`` flags;
+* :ref:`Test selection options <select-tests>` using :option:`-k` and :option:`-m` flags;
 * :ref:`maxfail`;
 * :ref:`--pdb <pdb-option>` command-line option for debugging on test failures
   (see :ref:`note <pdb-unittest-note>` below);
