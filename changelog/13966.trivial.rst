@@ -1,1 +1,0 @@
-Fixed broken contact references in CONTRIBUTING.rst.
