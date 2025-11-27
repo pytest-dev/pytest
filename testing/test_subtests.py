@@ -5,7 +5,6 @@ import json
 import sys
 from typing import Literal
 
-from _pytest._io.saferepr import saferepr
 from _pytest.subtests import SubtestContext
 from _pytest.subtests import SubtestReport
 import pytest
@@ -960,13 +959,16 @@ def test_nested(pytester: pytest.Pytester) -> None:
     )
 
 
+class MyEnum(Enum):
+    """Used in test_serialization, needs to be declared at the module level to be pickled."""
+
+    A = "A"
+
+
 def test_serialization() -> None:
     """Ensure subtest's kwargs are serialized using `saferepr` (pytest-dev/pytest-xdist#1273)."""
     from _pytest.subtests import pytest_report_from_serializable
     from _pytest.subtests import pytest_report_to_serializable
-
-    class MyEnum(Enum):
-        A = "A"
 
     report = SubtestReport(
         "test_foo::test_foo",
@@ -984,7 +986,7 @@ def test_serialization() -> None:
     new_report = pytest_report_from_serializable(data)
     assert new_report is not None
     assert new_report.context == SubtestContext(
-        msg="custom message", kwargs=dict(i=10, a=saferepr(MyEnum.A))
+        msg="custom message", kwargs=dict(i=10, a=MyEnum.A)
     )
 
 
@@ -1010,5 +1012,6 @@ def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no c
                     pass
         """
     )
+    pytester.syspathinsert()
     result = pytester.runpytest("-n1", "-pxdist.plugin")
     result.assert_outcomes(passed=2)
