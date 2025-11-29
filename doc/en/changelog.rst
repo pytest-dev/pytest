@@ -266,6 +266,9 @@ Removals and backward incompatible breaking changes
   now, CI mode is only activated if at least one of those variables is defined and set to a *non-empty* value.
 
 
+- The non-public ``config.args`` attribute used to be able to contain ``pathlib.Path`` instances; now it can only contain strings.
+
+
 - `#13779 <https://github.com/pytest-dev/pytest/issues/13779>`_: **PytestRemovedIn9Warning deprecation warnings are now errors by default.**
 
   Following our plan to remove deprecated features with as little disruption as
