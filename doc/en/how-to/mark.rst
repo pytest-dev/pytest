@@ -21,7 +21,7 @@ Here are some of the builtin markers:
 
 It's easy to create custom markers or to apply markers
 to whole test classes or modules. Those markers can be used by plugins, and also
-are commonly used to :ref:`select tests <mark run>` on the command-line with the ``-m`` option.
+are commonly used to :ref:`select tests <mark run>` on the command-line with the :option:`-m` option.
 
 See :ref:`mark examples` for examples which also serve as documentation.
 

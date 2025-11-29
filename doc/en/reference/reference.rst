@@ -1212,7 +1212,7 @@ as discussed in :ref:`temporary directory location and retention`.
 
 When set, disables plugin auto-loading through :std:doc:`entry point packaging
 metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
-explicitly specified in :envvar:`PYTEST_PLUGINS` or with ``-p`` will be loaded.
+explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
 See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
@@ -1223,7 +1223,7 @@ Contains comma-separated list of modules that should be loaded as plugins:
 
     export PYTEST_PLUGINS=mymodule.plugin,xdist
 
-See also ``-p``.
+See also :option:`-p`.
 
 .. envvar:: PYTEST_THEME
 
@@ -1406,7 +1406,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    when collecting Python modules. Default is ``False``.
 
    Set to ``True`` if the package you are testing is part of a namespace package.
-   Namespace packages are also supported as ``--pyargs`` target.
+   Namespace packages are also supported as :option:`--pyargs` target.
 
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
@@ -1739,7 +1739,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Allow selective auto-indentation of multiline log messages.
 
-    Supports command line option ``--log-auto-indent [value]``
+    Supports command line option :option:`--log-auto-indent=[value]`
     and config option ``log_auto_indent = [value]`` to set the
     auto-indentation behavior for all logging.
 
@@ -2123,7 +2123,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    Additionally, ``pytest`` will attempt to intelligently identify and ignore
    a virtualenv.  Any directory deemed to be the root of a virtual environment
    will not be considered during test collection unless
-   ``--collect-in-virtualenv`` is given.  Note also that ``norecursedirs``
+   :option:`--collect-in-virtualenv` is given.  Note also that ``norecursedirs``
    takes precedence over ``--collect-in-virtualenv``; e.g. if you intend to
    run tests in a virtualenv with a base directory that matches ``'.*'`` you
    *must* override ``norecursedirs`` in addition to using the
@@ -2605,7 +2605,7 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             verbosity_assertions = 2
 
-    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
     ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
@@ -2628,9 +2628,9 @@ passed multiple times. The expected format is ``name=value``. For example::
             verbosity_subtests = 1
 
     A value of ``1`` or higher will show output for **passed** subtests (**failed** subtests are always reported).
-    Passed subtests output can be suppressed with the value ``0``, which overwrites the ``-v`` command-line option.
+    Passed subtests output can be suppressed with the value ``0``, which overwrites the :option:`-v` command-line option.
 
-    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
     ``"auto"`` can be used to explicitly use the global verbosity level.
 
     See also: :ref:`subtests`.
@@ -2654,7 +2654,7 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             verbosity_test_cases = 2
 
-    If not set, defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
+    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
     ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
@@ -2663,7 +2663,576 @@ passed multiple times. The expected format is ``name=value``. For example::
 Command-line Flags
 ------------------
 
-All the command-line flags can be obtained by running ``pytest --help``::
+This section documents all command-line options provided by pytest's core plugins.
+
+.. note::
+
+    External plugins can add their own command-line options.
+    This reference documents only the options from pytest's core plugins.
+    To see all available options including those from installed plugins, run ``pytest --help``.
+
+Test Selection
+~~~~~~~~~~~~~~
+
+.. option:: -k EXPRESSION
+
+    Only run tests which match the given substring expression.
+    An expression is a Python evaluable expression where all names are substring-matched against test names and their parent classes.
+
+    Examples::
+
+        pytest -k "test_method or test_other"  # matches names containing 'test_method' OR 'test_other'
+        pytest -k "not test_method"            # matches names NOT containing 'test_method'
+        pytest -k "not test_method and not test_other"  # excludes both
+
+    The matching is case-insensitive.
+    Keywords are also matched to classes and functions containing extra names in their ``extra_keyword_matches`` set.
+
+    See :ref:`select-tests` for more information and examples.
+
+.. option:: -m MARKEXPR
+
+    Only run tests matching given mark expression.
+    Supports ``and``, ``or``, and ``not`` operators.
+
+    Examples::
+
+        pytest -m slow                  # run tests marked with @pytest.mark.slow
+        pytest -m "not slow"            # run tests NOT marked slow
+        pytest -m "mark1 and not mark2" # run tests marked mark1 but not mark2
+
+    See :ref:`mark` for more information on markers.
+
+.. option:: --markers
+
+    Show all available markers (builtin, plugin, and per-project markers defined in configuration).
+
+Test Execution Control
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. option:: -x, --exitfirst
+
+    Exit instantly on first error or failed test.
+
+.. option:: --maxfail=NUM
+
+    Exit after first ``num`` failures or errors.
+    Useful for CI environments where you want to fail fast but see a few failures.
+
+.. option:: --last-failed, --lf
+
+    Rerun only the tests that failed at the last run.
+    If no tests failed (or no cached data exists), all tests are run.
+    See also :confval:`cache_dir` and :ref:`cache`.
+
+.. option:: --failed-first, --ff
+
+    Run all tests, but run the last failures first.
+    This may re-order tests and thus lead to repeated fixture setup/teardown.
+
+.. option:: --new-first, --nf
+
+    Run tests from new files first, then the rest of the tests sorted by file modification time.
+
+.. option:: --stepwise, --sw
+
+    Exit on test failure and continue from last failing test next time.
+    Useful for fixing multiple test failures one at a time.
+
+    See :ref:`cache stepwise` for more information.
+
+.. option:: --stepwise-skip, --sw-skip
+
+    Ignore the first failing test but stop on the next failing test.
+    Implicitly enables :option:`--stepwise`.
+
+.. option:: --stepwise-reset, --sw-reset
+
+    Resets stepwise state, restarting the stepwise workflow.
+    Implicitly enables :option:`--stepwise`.
+
+.. option:: --last-failed-no-failures, --lfnf
+
+    With :option:`--last-failed`, determines whether to execute tests when there are no previously known failures or when no cached ``lastfailed`` data was found.
+
+    * ``all`` (default): runs the full test suite again
+    * ``none``: just emits a message about no known failures and exits successfully
+
+.. option:: --runxfail
+
+    Report the results of xfail tests as if they were not marked.
+    Useful for debugging xfailed tests.
+    See :ref:`xfail`.
+
+Collection
+~~~~~~~~~~
+
+.. option:: --collect-only, --co
+
+    Only collect tests, don't execute them.
+    Shows which tests would be collected and run.
+
+.. option:: --pyargs
+
+    Try to interpret all arguments as Python packages.
+    Useful for running tests of installed packages::
+
+        pytest --pyargs pkg.testing
+
+.. option:: --ignore=PATH
+
+    Ignore path during collection (multi-allowed).
+    Can be specified multiple times.
+
+.. option:: --ignore-glob=PATTERN
+
+    Ignore path pattern during collection (multi-allowed).
+    Supports glob patterns.
+
+.. option:: --deselect=NODEID_PREFIX
+
+    Deselect item (via node id prefix) during collection (multi-allowed).
+
+.. option:: --confcutdir=DIR
+
+    Only load ``conftest.py`` files relative to specified directory.
+
+.. option:: --noconftest
+
+    Don't load any ``conftest.py`` files.
+
+.. option:: --keep-duplicates
+
+    Keep duplicate tests. By default, pytest removes duplicate test items.
+
+.. option:: --collect-in-virtualenv
+
+    Don't ignore tests in a local virtualenv directory.
+    By default, pytest skips tests in virtualenv directories.
+
+.. option:: --continue-on-collection-errors
+
+    Force test execution even if collection errors occur.
+
+.. option:: --import-mode
+
+    Prepend/append to sys.path when importing test modules and conftest files.
+
+    * ``prepend`` (default): prepend to sys.path
+    * ``append``: append to sys.path
+    * ``importlib``: use importlib to import test modules
+
+    See :ref:`pythonpath` for more information.
+
+Fixtures
+~~~~~~~~
+
+.. option:: --fixtures, --funcargs
+
+    Show available fixtures, sorted by plugin appearance.
+    Fixtures with leading ``_`` are only shown with :option:`--verbose`.
+
+.. option:: --fixtures-per-test
+
+    Show fixtures per test.
+
+.. option:: --setup-only
+
+    Only setup fixtures, do not execute tests.
+    See :ref:`how-to-fixtures`.
+
+.. option:: --setup-show
+
+    Show setup of fixtures while executing tests.
+
+.. option:: --setup-plan
+
+    Show what fixtures and tests would be executed but don't execute anything.
+
+Debugging
+~~~~~~~~~
+
+.. option:: --pdb
+
+    Start the interactive Python debugger on errors or KeyboardInterrupt.
+    See :ref:`pdb-option`.
+
+.. option:: --pdbcls=MODULENAME:CLASSNAME
+
+    Specify a custom interactive Python debugger for use with :option:`--pdb`.
+
+    Example::
+
+        pytest --pdbcls=IPython.terminal.debugger:TerminalPdb
+
+.. option:: --trace
+
+    Immediately break when running each test.
+
+    See :ref:`trace-option` for more information.
+
+.. option:: --full-trace
+
+    Don't cut any tracebacks (default is to cut).
+
+    See :ref:`how-to-modifying-python-tb-printing` for more information.
+
+.. option:: --debug, --debug=DEBUG_FILE_NAME
+
+    Store internal tracing debug information in this log file.
+    This file is opened with ``'w'`` and truncated as a result, care advised.
+    Default file name if not specified: ``pytestdebug.log``.
+
+.. option:: --trace-config
+
+    Trace considerations of conftest.py files.
+
+Output and Reporting
+~~~~~~~~~~~~~~~~~~~~
+
+.. option:: -v, --verbose
+
+    Increase verbosity.
+    Can be specified multiple times (e.g., ``-vv``) for even more verbose output.
+
+    See :ref:`pytest.fine_grained_verbosity` for fine-grained control over verbosity.
+
+.. option:: -q, --quiet
+
+    Decrease verbosity.
+
+.. option:: --verbosity=NUM
+
+    Set verbosity level explicitly. Default: 0.
+
+.. option:: -r CHARS
+
+    Show extra test summary info as specified by chars:
+
+    * ``f``: failed
+    * ``E``: error
+    * ``s``: skipped
+    * ``x``: xfailed
+    * ``X``: xpassed
+    * ``p``: passed
+    * ``P``: passed with output
+    * ``a``: all except passed (p/P)
+    * ``A``: all
+    * ``w``: warnings (enabled by default)
+    * ``N``: resets the list
+
+    Default: ``'fE'``
+
+    Examples::
+
+        pytest -rA           # show all outcomes
+        pytest -rfE          # show only failed and errors (default)
+        pytest -rfs          # show failed and skipped
+
+    See :ref:`pytest.detailed_failed_tests_usage` for more information.
+
+.. option:: --no-header
+
+    Disable header.
+
+.. option:: --no-summary
+
+    Disable summary.
+
+.. option:: --no-fold-skipped
+
+    Do not fold skipped tests in short summary.
+
+.. option:: --force-short-summary
+
+    Force condensed summary output regardless of verbosity level.
+
+.. option:: -l, --showlocals
+
+    Show locals in tracebacks (disabled by default).
+
+.. option:: --no-showlocals
+
+    Hide locals in tracebacks (negate :option:`--showlocals` passed through addopts).
+
+.. option:: --tb=STYLE
+
+    Traceback print mode:
+
+    * ``auto``: intelligent traceback formatting (default)
+    * ``long``: exhaustive, informative traceback formatting
+    * ``short``: shorter traceback format
+    * ``line``: only the failing line
+    * ``native``: Python's standard traceback
+    * ``no``: no traceback
+
+    See :ref:`how-to-modifying-python-tb-printing` for examples.
+
+.. option:: --xfail-tb
+
+    Show tracebacks for xfail (as long as :option:`--tb` != ``no``).
+
+.. option:: --show-capture
+
+    Controls how captured stdout/stderr/log is shown on failed tests.
+
+    * ``no``: don't show captured output
+    * ``stdout``: show captured stdout
+    * ``stderr``: show captured stderr
+    * ``log``: show captured logging
+    * ``all`` (default): show all captured output
+
+.. option:: --color=WHEN
+
+    Color terminal output:
+
+    * ``yes``: always use color
+    * ``no``: never use color
+    * ``auto`` (default): use color if terminal supports it
+
+.. option:: --code-highlight={yes,no}
+
+    Whether code should be highlighted (only if :option:`--color` is also enabled).
+    Default: ``yes``.
+
+.. option:: --pastebin=MODE
+
+    Send failed|all info to bpaste.net pastebin service.
+
+.. option:: --durations=NUM
+
+    Show N slowest setup/test durations (N=0 for all).
+    See :ref:`durations`.
+
+.. option:: --durations-min=NUM
+
+    Minimal duration in seconds for inclusion in slowest list.
+    Default: 0.005 (or 0.0 if ``-vv`` is given).
+
+Output Capture
+~~~~~~~~~~~~~~
+
+.. option:: --capture=METHOD
+
+    Per-test capturing method:
+
+    * ``fd``: capture at file descriptor level (default)
+    * ``sys``: capture at sys level
+    * ``no``: don't capture output
+    * ``tee-sys``: capture but also show output on terminal
+
+    See :ref:`captures`.
+
+.. option:: -s
+
+    Shortcut for :option:`--capture=no`.
+
+JUnit XML
+~~~~~~~~~
+
+.. option:: --junit-xml=PATH, --junitxml=PATH
+
+    Create junit-xml style report file at given path.
+
+.. option:: --junit-prefix=STR, --junitprefix=STR
+
+    Prepend prefix to classnames in junit-xml output.
+
+Cache
+~~~~~
+
+.. option:: --cache-show[=PATTERN]
+
+    Show cache contents, don't perform collection or tests.
+    Default glob pattern: ``'*'``.
+
+.. option:: --cache-clear
+
+    Remove all cache contents at start of test run.
+    See :ref:`cache`.
+
+Warnings
+~~~~~~~~
+
+.. option:: --disable-pytest-warnings, --disable-warnings
+
+    Disable warnings summary.
+
+.. option:: -W WARNING, --pythonwarnings=WARNING
+
+    Set which warnings to report, see ``-W`` option of Python itself.
+    Can be specified multiple times.
+
+Doctest
+~~~~~~~
+
+.. option:: --doctest-modules
+
+    Run doctests in all .py modules.
+
+    See :ref:`doctest` for more information on using doctests with pytest.
+
+.. option:: --doctest-report
+
+    Choose another output format for diffs on doctest failure:
+
+    * ``none``
+    * ``cdiff``
+    * ``ndiff``
+    * ``udiff``
+    * ``only_first_failure``
+
+.. option:: --doctest-glob=PATTERN
+
+    Doctests file matching pattern.
+    Default: ``test*.txt``.
+
+.. option:: --doctest-ignore-import-errors
+
+    Ignore doctest collection errors.
+
+.. option:: --doctest-continue-on-failure
+
+    For a given doctest, continue to run after the first failure.
+
+Configuration
+~~~~~~~~~~~~~
+
+.. option:: -c FILE, --config-file=FILE
+
+    Load configuration from ``FILE`` instead of trying to locate one of the implicit configuration files.
+
+.. option:: --rootdir=ROOTDIR
+
+    Define root directory for tests.
+    Can be relative path: ``'root_dir'``, ``'./root_dir'``, ``'root_dir/another_dir/'``; absolute path: ``'/home/user/root_dir'``; path with variables: ``'$HOME/root_dir'``.
+
+.. option:: --basetemp=DIR
+
+    Base temporary directory for this test run.
+    Warning: this directory is removed if it exists.
+
+    See :ref:`temporary directory location and retention` for more information.
+
+.. option:: -o OPTION=VALUE, --override-ini=OPTION=VALUE
+
+    Override configuration option with ``option=value`` style.
+    Can be specified multiple times.
+
+    Example::
+
+        pytest -o strict_xfail=true -o cache_dir=cache
+
+.. option:: --strict-config
+
+    Enables the :confval:`strict_config` option.
+
+.. option:: --strict-markers
+
+    Enables the :confval:`strict_markers` option.
+
+.. option:: --strict
+
+    Enables the :confval:`strict` option (which enables all strictness options).
+
+.. option:: --assert=MODE
+
+    Control assertion debugging tools:
+
+    * ``plain``: performs no assertion debugging
+    * ``rewrite`` (default): rewrites assert statements in test modules on import to provide assert expression information
+
+Logging
+~~~~~~~
+
+See :ref:`logging` for a guide on using these flags.
+
+.. option:: --log-level=LEVEL
+
+    Level of messages to catch/display.
+    Not set by default, so it depends on the root/parent log handler's effective level, where it is ``WARNING`` by default.
+
+.. option:: --log-format=FORMAT
+
+    Log format used by the logging module.
+
+.. option:: --log-date-format=FORMAT
+
+    Log date format used by the logging module.
+
+.. option:: --log-cli-level=LEVEL
+
+    CLI logging level. See :ref:`live_logs`.
+
+.. option:: --log-cli-format=FORMAT
+
+    Log format used by the logging module for CLI output.
+
+.. option:: --log-cli-date-format=FORMAT
+
+    Log date format used by the logging module for CLI output.
+
+.. option:: --log-file=PATH
+
+    Path to a file when logging will be written to.
+
+.. option:: --log-file-mode
+
+    Log file open mode:
+
+    * ``w`` (default): recreate the file
+    * ``a``: append to the file
+
+.. option:: --log-file-level=LEVEL
+
+    Log file logging level.
+
+.. option:: --log-file-format=FORMAT
+
+    Log format used by the logging module for the log file.
+
+.. option:: --log-file-date-format=FORMAT
+
+    Log date format used by the logging module for the log file.
+
+.. option:: --log-auto-indent=VALUE
+
+    Auto-indent multiline messages passed to the logging module.
+    Accepts ``true|on``, ``false|off`` or an integer.
+
+.. option:: --log-disable=LOGGER
+
+    Disable a logger by name. Can be passed multiple times.
+
+Plugin and Extension Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. option:: -p NAME
+
+    Early-load given plugin module name or entry point (multi-allowed).
+    To avoid loading of plugins, use the ``no:`` prefix, e.g. ``no:doctest``.
+    See also :option:`--disable-plugin-autoload`.
+
+.. option:: --disable-plugin-autoload
+
+    Disable plugin auto-loading through entry point packaging metadata.
+    Only plugins explicitly specified in :option:`-p` or env var :envvar:`PYTEST_PLUGINS` will be loaded.
+
+Version and Help
+~~~~~~~~~~~~~~~~
+
+.. option:: -V, --version
+
+    Display pytest version and information about plugins. When given twice, also display information about plugins.
+
+.. option:: -h, --help
+
+    Show help message and configuration info.
+
+Complete Help Output
+~~~~~~~~~~~~~~~~~~~~
+
+All the command-line flags can also be obtained by running ``pytest --help``::
 
     $ pytest --help
     usage: pytest [options] [file_or_dir] [file_or_dir] [...]
@@ -2722,7 +3291,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
       --lfnf, --last-failed-no-failures={all,none}
-                            With ``--lf``, determines whether to execute tests
+                            With :option:`--lf`, determines whether to execute tests
                             when there are no previously (known) failures or
                             when no cached ``lastfailed`` data was found.
                             ``all`` (the default) runs the full test suite

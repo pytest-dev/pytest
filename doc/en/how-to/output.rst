@@ -30,8 +30,8 @@ Examples for modifying traceback printing:
     pytest --tb=native  # Python standard library formatting
     pytest --tb=no      # no traceback at all
 
-The ``--full-trace`` causes very long traces to be printed on error (longer
-than ``--tb=long``). It also ensures that a stack trace is printed on
+The :option:`--full-trace` causes very long traces to be printed on error (longer
+than :option:`--tb=long`). It also ensures that a stack trace is printed on
 **KeyboardInterrupt** (Ctrl+C).
 This is very useful if the tests are taking too long and you interrupt them
 with Ctrl+C to find out where the tests are *hanging*. By default no output
@@ -52,8 +52,8 @@ Examples for modifying printing verbosity:
     pytest -vv              # more verbose, display more details from the test output
     pytest -vvv             # not a standard , but may be used for even more detail in certain setups
 
-The ``-v`` flag controls the verbosity of pytest output in various aspects: test session progress, assertion
-details when tests fail, fixtures details with ``--fixtures``, etc.
+The :option:`-v` flag controls the verbosity of pytest output in various aspects: test session progress, assertion
+details when tests fail, fixtures details with :option:`--fixtures`, etc.
 
 .. regendoc:wipe
 
@@ -372,7 +372,7 @@ test inside the file gets its own line in the output.
 Producing a detailed summary report
 --------------------------------------------------
 
-The ``-r`` flag can be used to display a "short test summary info" at the end of the test session,
+The :option:`-r` flag can be used to display a "short test summary info" at the end of the test session,
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
 
 It defaults to ``fE`` to list failures and errors.
@@ -453,7 +453,7 @@ Example:
     FAILED test_example.py::test_fail - assert 0
     == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
 
-The ``-r`` options accepts a number of characters after it, with ``a`` used
+The :option:`-r` options accepts a number of characters after it, with ``a`` used
 above meaning "all except passes".
 
 Here is the full list of available characters that can be used:
@@ -547,7 +547,7 @@ captured output:
 .. note::
 
     By default, parametrized variants of skipped tests are grouped together if
-    they share the same skip reason. You can use ``--no-fold-skipped`` to print each skipped test separately.
+    they share the same skip reason. You can use :option:`--no-fold-skipped` to print each skipped test separately.
 
 
 .. _truncation-params:
@@ -822,7 +822,7 @@ Sending test report to an online pastebin service
 
 This will submit test run information to a remote Paste service and
 provide a URL for each failure.  You may select tests as usual or add
-for example ``-x`` if you only want to send one particular failure.
+for example :option:`-x` if you only want to send one particular failure.
 
 **Creating a URL for a whole test session log**:
 

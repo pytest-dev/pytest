@@ -11,7 +11,7 @@ Import modes
 pytest as a testing framework needs to import test modules and ``conftest.py`` files for execution.
 
 Importing files in Python is a non-trivial process, so aspects of the
-import process can be controlled through the ``--import-mode`` command-line flag, which can assume
+import process can be controlled through the :option:`--import-mode` command-line flag, which can assume
 these values:
 
 .. _`import-mode-prepend`:
@@ -44,7 +44,7 @@ these values:
         pkg_under_test/
 
   the tests will run against the installed version
-  of ``pkg_under_test`` when ``--import-mode=append`` is used whereas
+  of ``pkg_under_test`` when :option:`--import-mode=append` is used whereas
   with ``prepend``, they would pick up the local version. This kind of confusion is why
   we advocate for using :ref:`src-layouts <src-layout>`.
 

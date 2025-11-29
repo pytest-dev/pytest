@@ -295,7 +295,7 @@ the plugin manager like this:
     plugin = config.pluginmanager.get_plugin("name_of_plugin")
 
 If you want to look at the names of existing plugins, use
-the ``--trace-config`` option.
+the :option:`--trace-config` option.
 
 
 .. _registering-markers:
