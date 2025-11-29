@@ -1,1 +1,0 @@
-Fixed broken :ref: links in CONTRIBUTING.rst.
