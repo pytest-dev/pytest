@@ -26,10 +26,10 @@ Subtests are an alternative to parametrization, particularly useful when the exa
 
 Each assertion failure or error is caught by the context manager and reported individually:
 
-.. code-block:: pytest
+.. code-block:: console
 
     $ pytest -q test_subtest.py
-    uuuuuF                                                               [100%]
+    u u u u uF                                                           [100%]
     ================================= FAILURES =================================
     _______________________ test [custom message] (i=1) ________________________
 
@@ -60,14 +60,6 @@ Each assertion failure or error is caught by the context manager and reported in
     SUBFAILED[custom message] (i=3) test_subtest.py::test - assert (3 % 2) == 0
     FAILED test_subtest.py::test - contains 2 failed subtests
     3 failed, 3 subtests passed in 0.12s
-
-In the output above:
-
-* Subtest failures are reported as ``SUBFAILED``.
-* Subtests are reported first and the "top-level" test is reported at the end on its own.
-
-Note that it is possible to use ``subtests`` multiple times in the same test, or even mix and match with normal assertions
-outside the ``subtests.test`` block:
 
 .. code-block:: python
 
