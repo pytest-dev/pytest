@@ -49,7 +49,7 @@ Look through the `GitHub issues for bugs <https://github.com/pytest-dev/pytest/l
 See also the `"good first issue" issues <https://github.com/pytest-dev/pytest/labels/good%20first%20issue>`_
 that are friendly to new contributors.
 
-:ref:`Talk <contact>` to developers to find out how you can fix specific bugs. To indicate that you are going
+`Talk to developers <https://docs.pytest.org/en/stable/contact.html>`_ to find out how you can fix specific bugs. To indicate that you are going
 to work on a particular issue, add a comment to that effect on the specific issue.
 
 Don't forget to check the issue trackers of your favourite plugins, too!
@@ -61,7 +61,7 @@ Implement features
 
 Look through the `GitHub issues for enhancements <https://github.com/pytest-dev/pytest/labels/type:%20enhancement>`_.
 
-:ref:`Talk <contact>` to developers to find out how you can implement specific
+`Talk to developers <https://docs.pytest.org/en/stable/contact.html>`_ to find out how you can implement specific
 features.
 
 Write documentation
