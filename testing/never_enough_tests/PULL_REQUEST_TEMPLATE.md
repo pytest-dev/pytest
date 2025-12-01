@@ -15,11 +15,11 @@
 <!-- Paste the output of your test run -->
 ```bash
 # Run: ./venv/bin/pytest testing/never_enough_tests/ -n 4 -v
-# 
+#
 # Results:
-# Tests passed: 
-# Tests failed: 
-# Execution time: 
+# Tests passed:
+# Tests failed:
+# Execution time:
 ```
 
 ## Checklist

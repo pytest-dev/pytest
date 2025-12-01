@@ -2,11 +2,11 @@
 
 ##############################################################################
 # Makefile: Build System for C++ Components
-# 
+#
 # Purpose:
 # Compile all C++ boundary testing and fuzzing components with proper
 # optimization and error checking.
-# 
+#
 # Usage:
 #   make              # Build all components
 #   make clean        # Remove build artifacts

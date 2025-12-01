@@ -304,24 +304,24 @@ jobs:
       matrix:
         python-version: [3.8, 3.9, '3.10', 3.11]
         mode: [normal, chaos, parallel]
-    
+
     steps:
     - uses: actions/checkout@v2
-    
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    
+
     - name: Install dependencies
       run: |
         pip install pytest pytest-xdist pytest-random-order
-    
+
     - name: Build C++ components
       run: |
         cd cpp_components
         make all
-    
+
     - name: Run tests
       run: |
         ./scripts/never_enough_tests.sh --mode ${{ matrix.mode }} --seed 42

@@ -23,6 +23,7 @@ def test_chaos_execution(iteration, chaos_config):
     random.seed(chaos_config["seed"] + iteration)
     # ... test logic
 
+
 # BAD: Non-reproducible randomness
 def test_chaos_bad():
     random.seed()  # No way to reproduce
@@ -35,10 +36,10 @@ Document WHY the test exists and WHAT boundary it explores:
 def test_extreme_parametrization():
     """
     Tests pytest's ability to handle 1000+ parametrized test cases.
-    
+
     Boundary: Validates test collection and memory management with
     extreme parametrization, exposing potential O(n²) algorithms.
-    
+
     Expected: Should complete in <30s on modern hardware.
     """
 ```
@@ -50,10 +51,10 @@ Tests should handle resource constraints gracefully:
 def test_memory_stress(chaos_config):
     """Test memory allocation patterns."""
     stress_factor = chaos_config["stress_factor"]
-    
+
     # Cap at reasonable maximum
     size = min(int(1000000 * stress_factor), 100000000)
-    
+
     try:
         data = bytearray(size)
         # ... test logic
@@ -71,6 +72,7 @@ def temp_resources(tmp_path):
     resources = create_resources(tmp_path)
     yield resources
     cleanup(resources)  # Guaranteed cleanup
+
 
 # BAD: Pollutes global state
 def test_bad():
@@ -125,30 +127,32 @@ def create_fixture(name: str, scope: str = "function") -> pytest.fixture:
     """Create a dynamic fixture."""
     pass
 
+
 # Docstrings (Google style)
 def complex_function(param1: int, param2: str) -> dict:
     """
     Short description.
-    
+
     Longer explanation of what this function does and why it exists.
-    
+
     Args:
         param1: Description of param1
         param2: Description of param2
-    
+
     Returns:
         Dictionary containing results
-    
+
     Raises:
         ValueError: When param1 is negative
     """
     pass
 
+
 # Clear variable names
 def test_fixture_scope_interaction():
     # GOOD
     session_scoped_counter = 0
-    
+
     # BAD
     x = 0
 ```
@@ -166,7 +170,7 @@ class ResourceManager {
 public:
     ResourceManager(size_t size) : data_(new char[size]) {}
     ~ResourceManager() { delete[] data_; }
-    
+
 private:
     char* data_;
 };
@@ -329,12 +333,13 @@ All contributions will be reviewed for:
 ```python
 def create_fixture_factory(depth: int):
     """Factory for creating nested fixtures programmatically."""
-    
+
     def fixture_func(*args):
         return {"depth": depth, "dependencies": len(args)}
-    
+
     fixture_func.__name__ = f"dynamic_fixture_depth_{depth}"
     return pytest.fixture(scope="function")(fixture_func)
+
 
 # Generate fixtures dynamically
 for i in range(10):
@@ -346,12 +351,8 @@ for i in range(10):
 ```python
 def pytest_configure(config):
     """Register custom markers."""
-    config.addinivalue_line(
-        "markers", "boundary: Tests boundary conditions"
-    )
-    config.addinivalue_line(
-        "markers", "chaos: Tests requiring chaos mode"
-    )
+    config.addinivalue_line("markers", "boundary: Tests boundary conditions")
+    config.addinivalue_line("markers", "chaos: Tests requiring chaos mode")
 ```
 
 ### Hooks for Chaos Injection

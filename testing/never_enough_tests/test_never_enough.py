@@ -21,18 +21,17 @@ Usage:
     pytest test_never_enough.py --chaos-mode  # enables randomization
 """
 
+from __future__ import annotations
+
 import gc
 import hashlib
-import itertools
 import os
+from pathlib import Path
 import random
 import subprocess
 import sys
 import threading
 import time
-from contextlib import contextmanager
-from pathlib import Path
-from typing import Any, Iterator, List
 
 import pytest
 
@@ -41,34 +40,35 @@ import pytest
 # CHAOS MODE CONFIGURATION
 # ============================================================================
 
+
 def pytest_addoption(parser):
     """Add custom command-line options for chaos mode."""
     parser.addoption(
         "--chaos-mode",
         action="store_true",
         default=False,
-        help="Enable chaos mode: randomize execution, inject delays, stress resources"
+        help="Enable chaos mode: randomize execution, inject delays, stress resources",
     )
     parser.addoption(
         "--chaos-seed",
         action="store",
         default=None,
         type=int,
-        help="Seed for reproducible chaos (default: random)"
+        help="Seed for reproducible chaos (default: random)",
     )
     parser.addoption(
         "--max-depth",
         action="store",
         default=10,
         type=int,
-        help="Maximum recursion depth for nested fixtures"
+        help="Maximum recursion depth for nested fixtures",
     )
     parser.addoption(
         "--stress-factor",
         action="store",
         default=1.0,
         type=float,
-        help="Multiplier for stress test intensity (1.0 = normal, 10.0 = extreme)"
+        help="Multiplier for stress test intensity (1.0 = normal, 10.0 = extreme)",
     )
 
 
@@ -78,9 +78,9 @@ def chaos_config(request):
     seed = request.config.getoption("--chaos-seed")
     if seed is None:
         seed = int(time.time())
-    
+
     random.seed(seed)
-    
+
     return {
         "enabled": request.config.getoption("--chaos-mode"),
         "seed": seed,
@@ -92,6 +92,7 @@ def chaos_config(request):
 # ============================================================================
 # EXTREME FIXTURE CHAINS: Testing Deep Dependencies
 # ============================================================================
+
 
 @pytest.fixture(scope="function")
 def base_fixture():
@@ -166,11 +167,13 @@ def diamond_fixture_merge(diamond_fixture_a, diamond_fixture_b):
 # DYNAMIC FIXTURE GENERATION: Testing Fixture Factory Patterns
 # ============================================================================
 
-def fixture_factory(name: str, dependencies: List[str], scope: str = "function"):
+
+def fixture_factory(name: str, dependencies: list[str], scope: str = "function"):
     """
     Factory for dynamically creating fixtures.
     Tests pytest's ability to handle programmatically generated fixtures.
     """
+
     def _fixture(*args, **kwargs):
         result = {
             "name": name,
@@ -179,7 +182,7 @@ def fixture_factory(name: str, dependencies: List[str], scope: str = "function")
             "kwargs_count": len(kwargs),
         }
         return result
-    
+
     _fixture.__name__ = name
     return pytest.fixture(scope=scope)(_fixture)
 
@@ -193,6 +196,7 @@ for i in range(10):
 # ============================================================================
 # EXTREME PARAMETRIZATION: Stress Testing Test Generation
 # ============================================================================
+
 
 @pytest.mark.parametrize("iteration", range(100))
 def test_parametrize_stress_100(iteration):
@@ -208,21 +212,25 @@ def test_parametrize_cartesian_400(x, y):
     assert x * y >= 0
 
 
-@pytest.mark.parametrize("a,b,c", [
-    (i, j, k)
-    for i in range(10)
-    for j in range(10)
-    for k in range(10)
-])
+@pytest.mark.parametrize(
+    "a,b,c", [(i, j, k) for i in range(10) for j in range(10) for k in range(10)]
+)
 def test_parametrize_triple_1000(a, b, c):
     """1000 test cases from triple nested parametrize."""
     assert a + b + c >= 0
 
 
-@pytest.mark.parametrize("data", [
-    {"id": i, "value": random.randint(0, 1000000), "hash": hashlib.sha256(str(i).encode()).hexdigest()}
-    for i in range(50)
-])
+@pytest.mark.parametrize(
+    "data",
+    [
+        {
+            "id": i,
+            "value": random.randint(0, 1000000),
+            "hash": hashlib.sha256(str(i).encode()).hexdigest(),
+        }
+        for i in range(50)
+    ],
+)
 def test_parametrize_complex_objects(data):
     """50 test cases with complex dictionary objects."""
     assert "id" in data
@@ -235,6 +243,7 @@ def test_parametrize_complex_objects(data):
 # RECURSIVE FIXTURE PATTERNS: Testing Pytest Limits
 # ============================================================================
 
+
 @pytest.fixture(scope="function")
 def recursive_counter():
     """Shared counter for recursive tests."""
@@ -246,17 +255,18 @@ def create_recursive_test(depth: int, max_depth: int):
     Generate recursive test functions.
     Tests pytest's ability to handle deeply nested test generation.
     """
+
     def test_func(recursive_counter):
         recursive_counter["count"] += 1
         recursive_counter["max_depth"] = max(recursive_counter["max_depth"], depth)
-        
+
         if depth < max_depth:
             # Simulate recursive behavior
             inner_result = {"depth": depth + 1}
             assert inner_result["depth"] > depth
-        
+
         assert depth >= 0
-    
+
     test_func.__name__ = f"test_recursive_depth_{depth}"
     return test_func
 
@@ -270,6 +280,7 @@ for depth in range(20):
 # ============================================================================
 # FIXTURE SCOPE BOUNDARY TESTING
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def session_fixture():
@@ -301,14 +312,14 @@ def function_fixture(class_fixture):
 
 class TestScopeBoundaries:
     """Test class to validate fixture scope boundaries."""
-    
+
     def test_scope_chain_1(self, function_fixture):
         """Validate fixture scope chain - test 1."""
         assert "function_id" in function_fixture
         assert "class" in function_fixture
         assert "module" in function_fixture["class"]
         assert "session" in function_fixture["class"]["module"]
-    
+
     def test_scope_chain_2(self, function_fixture):
         """Validate fixture scope chain - test 2."""
         assert "function_id" in function_fixture
@@ -319,6 +330,7 @@ class TestScopeBoundaries:
 # ============================================================================
 # RESOURCE STRESS TESTING: Memory, Threads, Files
 # ============================================================================
+
 
 @pytest.fixture(scope="function")
 def memory_stress_fixture(chaos_config):
@@ -341,24 +353,24 @@ def thread_stress_fixture(chaos_config):
     """Fixture that spawns multiple threads."""
     stress_factor = int(chaos_config["stress_factor"])
     thread_count = min(10 * stress_factor, 50)  # Cap at 50 threads
-    
+
     results = []
     threads = []
-    
+
     def worker(thread_id):
         time.sleep(0.001)
         results.append(thread_id)
-    
+
     for i in range(thread_count):
         t = threading.Thread(target=worker, args=(i,))
         threads.append(t)
         t.start()
-    
+
     yield threads
-    
+
     for t in threads:
         t.join(timeout=5.0)
-    
+
     assert len(results) == thread_count
 
 
@@ -372,15 +384,15 @@ def file_stress_fixture(tmp_path, chaos_config):
     """Fixture that creates many temporary files."""
     stress_factor = int(chaos_config["stress_factor"])
     file_count = min(100 * stress_factor, 500)  # Cap at 500 files
-    
+
     files = []
     for i in range(file_count):
         f = tmp_path / f"stress_file_{i}.txt"
         f.write_text(f"Content {i}\n" * 100)
         files.append(f)
-    
+
     yield files
-    
+
     # Cleanup handled by tmp_path fixture
 
 
@@ -394,6 +406,7 @@ def test_file_stress(file_stress_fixture):
 # CROSS-LANGUAGE BOUNDARY TESTING: C++ Integration
 # ============================================================================
 
+
 @pytest.fixture(scope="session")
 def cpp_boundary_tester(tmp_path_factory):
     """
@@ -401,26 +414,30 @@ def cpp_boundary_tester(tmp_path_factory):
     Tests cross-language integration and subprocess handling.
     """
     cpp_dir = Path(__file__).parent / "cpp_components"
-    
+
     # Check if C++ components exist
     boundary_cpp = cpp_dir / "boundary_tester.cpp"
     if not boundary_cpp.exists():
         pytest.skip("C++ components not available")
-    
+
     # Compile C++ boundary tester
     build_dir = tmp_path_factory.mktemp("cpp_build")
     executable = build_dir / "boundary_tester"
-    
+
     try:
         subprocess.run(
             ["g++", "-std=c++17", "-O2", str(boundary_cpp), "-o", str(executable)],
             check=True,
             capture_output=True,
-            timeout=30
+            timeout=30,
         )
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+    except (
+        subprocess.CalledProcessError,
+        FileNotFoundError,
+        subprocess.TimeoutExpired,
+    ):
         pytest.skip("C++ compiler not available or compilation failed")
-    
+
     yield executable
 
 
@@ -428,9 +445,10 @@ def test_cpp_boundary_integer_overflow(cpp_boundary_tester):
     """Test C++ integer overflow boundary conditions."""
     result = subprocess.run(
         [str(cpp_boundary_tester), "int_overflow"],
+        check=False,
         capture_output=True,
         text=True,
-        timeout=5
+        timeout=5,
     )
     assert result.returncode == 0
     assert "OVERFLOW" in result.stdout or "PASS" in result.stdout
@@ -440,9 +458,10 @@ def test_cpp_boundary_null_pointer(cpp_boundary_tester):
     """Test C++ null pointer handling."""
     result = subprocess.run(
         [str(cpp_boundary_tester), "null_pointer"],
+        check=False,
         capture_output=True,
         text=True,
-        timeout=5
+        timeout=5,
     )
     # Should handle gracefully or return specific error code
     assert result.returncode in [0, 1, 2]
@@ -452,9 +471,10 @@ def test_cpp_boundary_memory_allocation(cpp_boundary_tester):
     """Test C++ extreme memory allocation patterns."""
     result = subprocess.run(
         [str(cpp_boundary_tester), "memory_stress"],
+        check=False,
         capture_output=True,
         text=True,
-        timeout=10
+        timeout=10,
     )
     assert result.returncode in [0, 1]  # May fail gracefully on OOM
 
@@ -464,9 +484,10 @@ def test_cpp_boundary_buffer_sizes(cpp_boundary_tester, payload_size):
     """Test C++ buffer handling with various sizes."""
     result = subprocess.run(
         [str(cpp_boundary_tester), "buffer_test", str(payload_size)],
+        check=False,
         capture_output=True,
         text=True,
-        timeout=10
+        timeout=10,
     )
     assert result.returncode == 0
 
@@ -474,6 +495,7 @@ def test_cpp_boundary_buffer_sizes(cpp_boundary_tester, payload_size):
 # ============================================================================
 # CHAOS MODE: Randomized, Non-Deterministic Testing
 # ============================================================================
+
 
 @pytest.fixture(scope="function")
 def chaos_injector(chaos_config):
@@ -484,18 +506,18 @@ def chaos_injector(chaos_config):
     if not chaos_config["enabled"]:
         yield None
         return
-    
+
     # Random delay (0-100ms)
     if random.random() < 0.3:
         time.sleep(random.uniform(0, 0.1))
-    
+
     # Random environment mutation
     chaos_env_var = f"CHAOS_{random.randint(0, 1000)}"
     old_value = os.environ.get(chaos_env_var)
     os.environ[chaos_env_var] = str(random.randint(0, 1000000))
-    
+
     yield {"env_var": chaos_env_var}
-    
+
     # Cleanup
     if old_value is None:
         os.environ.pop(chaos_env_var, None)
@@ -511,18 +533,18 @@ def test_chaos_mode_execution(chaos_iteration, chaos_injector, chaos_config):
     """
     if not chaos_config["enabled"]:
         pytest.skip("Chaos mode not enabled (use --chaos-mode)")
-    
+
     # Random assertions
     random_value = random.randint(0, 1000000)
     assert random_value >= 0
-    
+
     # Random operations
     operations = [
         lambda: sum(range(random.randint(0, 1000))),
         lambda: hashlib.sha256(str(random.random()).encode()).hexdigest(),
         lambda: [i**2 for i in range(random.randint(0, 100))],
     ]
-    
+
     operation = random.choice(operations)
     result = operation()
     assert result is not None
@@ -531,6 +553,7 @@ def test_chaos_mode_execution(chaos_iteration, chaos_injector, chaos_config):
 # ============================================================================
 # FIXTURE TEARDOWN STRESS TESTING
 # ============================================================================
+
 
 @pytest.fixture(scope="function")
 def fixture_with_complex_teardown():
@@ -543,20 +566,20 @@ def fixture_with_complex_teardown():
         "threads": [],
         "data": bytearray(1000000),
     }
-    
+
     yield resources
-    
+
     # Complex teardown
     for handle in resources.get("file_handles", []):
         try:
             handle.close()
         except Exception:
             pass
-    
+
     for thread in resources.get("threads", []):
         if thread.is_alive():
             thread.join(timeout=1.0)
-    
+
     del resources["data"]
     gc.collect()
 
@@ -571,36 +594,44 @@ def test_fixture_teardown_stress(fixture_with_complex_teardown):
 # EDGE CASE TESTS: Boundary Conditions
 # ============================================================================
 
-@pytest.mark.parametrize("edge_value", [
-    0,
-    -1,
-    1,
-    sys.maxsize,
-    -sys.maxsize - 1,
-    float('inf'),
-    float('-inf'),
-    float('nan'),
-])
+
+@pytest.mark.parametrize(
+    "edge_value",
+    [
+        0,
+        -1,
+        1,
+        sys.maxsize,
+        -sys.maxsize - 1,
+        float("inf"),
+        float("-inf"),
+        float("nan"),
+    ],
+)
 def test_numeric_edge_cases(edge_value):
     """Test numeric boundary conditions."""
     if isinstance(edge_value, int):
         assert edge_value == edge_value
     elif isinstance(edge_value, float):
         import math
+
         if math.isnan(edge_value):
             assert math.isnan(edge_value)
         elif math.isinf(edge_value):
             assert math.isinf(edge_value)
 
 
-@pytest.mark.parametrize("string_value", [
-    "",
-    " ",
-    "\n",
-    "\x00",
-    "a" * 1000000,  # 1MB string
-    "🚀" * 10000,   # Unicode stress
-])
+@pytest.mark.parametrize(
+    "string_value",
+    [
+        "",
+        " ",
+        "\n",
+        "\x00",
+        "a" * 1000000,  # 1MB string
+        "🚀" * 10000,  # Unicode stress
+    ],
+)
 def test_string_edge_cases(string_value):
     """Test string boundary conditions."""
     assert isinstance(string_value, str)
@@ -610,6 +641,7 @@ def test_string_edge_cases(string_value):
 # ============================================================================
 # MARKER AND COLLECTION STRESS TESTING
 # ============================================================================
+
 
 @pytest.mark.slow
 @pytest.mark.stress
@@ -624,14 +656,15 @@ def test_multiple_markers(x):
 # FIXTURE AUTOUSE PATTERNS
 # ============================================================================
 
+
 @pytest.fixture(autouse=True)
 def auto_fixture_tracker(request):
     """Auto-use fixture to track test execution."""
     test_name = request.node.name
     start_time = time.time()
-    
+
     yield
-    
+
     duration = time.time() - start_time
     # Could log or collect metrics here
     assert duration >= 0
@@ -640,6 +673,7 @@ def auto_fixture_tracker(request):
 # ============================================================================
 # SUMMARY TEST: Validates Complete Test Suite Execution
 # ============================================================================
+
 
 def test_suite_integrity():
     """

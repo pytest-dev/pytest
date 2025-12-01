@@ -163,14 +163,14 @@ log_success "pytest found: $(pytest --version)"
 
 if [ "$BUILD_CPP" = true ]; then
     log_section "Building C++ Components"
-    
+
     if [ ! -d "$CPP_DIR" ]; then
         log_error "C++ components directory not found: $CPP_DIR"
         exit 1
     fi
-    
+
     cd "$CPP_DIR"
-    
+
     if [ -f "Makefile" ]; then
         log_info "Building with Make..."
         make clean
@@ -179,18 +179,18 @@ if [ "$BUILD_CPP" = true ]; then
     else
         log_info "Building C++ components manually..."
         mkdir -p build
-        
+
         if [ -f "boundary_tester.cpp" ]; then
             g++ -std=c++17 -O2 -Wall boundary_tester.cpp -o build/boundary_tester
             log_success "Built boundary_tester"
         fi
-        
+
         if [ -f "fuzzer.cpp" ]; then
             g++ -std=c++17 -O2 -Wall fuzzer.cpp -o build/fuzzer
             log_success "Built fuzzer"
         fi
     fi
-    
+
     cd "$TEST_DIR"
 fi
 
@@ -200,17 +200,17 @@ fi
 
 setup_chaos_environment() {
     log_info "Setting up chaos environment..."
-    
+
     # Random environment mutations
     export CHAOS_MODE_ACTIVE=1
     export CHAOS_TIMESTAMP=$(date +%s)
     export CHAOS_RANDOM_VALUE=$RANDOM
-    
+
     # Inject random variables
     for i in {1..10}; do
         export "CHAOS_VAR_$i"=$RANDOM
     done
-    
+
     log_success "Chaos environment configured"
 }
 
@@ -220,7 +220,7 @@ setup_chaos_environment() {
 
 run_normal_mode() {
     log_section "Running Normal Mode"
-    
+
     pytest "$TEST_DIR/test_never_enough.py" \
         --verbose \
         --tb=short \
@@ -231,9 +231,9 @@ run_normal_mode() {
 
 run_chaos_mode() {
     log_section "Running Chaos Mode"
-    
+
     setup_chaos_environment
-    
+
     pytest "$TEST_DIR/test_never_enough.py" \
         --chaos-mode \
         --verbose \
@@ -248,14 +248,14 @@ run_chaos_mode() {
 
 run_parallel_mode() {
     log_section "Running Parallel Mode"
-    
+
     # Check for pytest-xdist
     if ! pytest --co -q --collect-only -p no:terminal 2>&1 | grep -q "xdist"; then
         log_warning "pytest-xdist not available, falling back to sequential"
         run_normal_mode
         return
     fi
-    
+
     pytest "$TEST_DIR/test_never_enough.py" \
         -n "$WORKERS" \
         --verbose \
@@ -267,9 +267,9 @@ run_parallel_mode() {
 
 run_extreme_mode() {
     log_section "Running Extreme Mode"
-    
+
     setup_chaos_environment
-    
+
     # Maximum chaos: parallel + random order + chaos mode
     pytest "$TEST_DIR/test_never_enough.py" \
         --chaos-mode \
@@ -284,13 +284,13 @@ run_extreme_mode() {
         ${SEED:+--chaos-seed="$SEED"} \
         ${SEED:+--random-order-seed="$SEED"} \
         || true  # Don't exit on failure in extreme mode
-    
+
     log_warning "Extreme mode completed (failures expected under stress)"
 }
 
 run_marker_filtering() {
     log_section "Running Marker-Based Filtering Tests"
-    
+
     # Test different marker combinations
     for marker in "slow" "stress" "boundary"; do
         log_info "Testing with marker: $marker"
@@ -305,20 +305,20 @@ run_marker_filtering() {
 
 run_coverage_analysis() {
     log_section "Running Coverage Analysis"
-    
+
     if ! command -v coverage &> /dev/null; then
         log_warning "coverage not installed, skipping coverage analysis"
         return
     fi
-    
+
     coverage run -m pytest "$TEST_DIR/test_never_enough.py" \
         --verbose \
         --tb=short \
         --stress-factor=0.5  # Reduced stress for coverage
-    
+
     coverage report -m
     coverage html
-    
+
     log_success "Coverage report generated in htmlcov/"
 }
 
@@ -328,7 +328,7 @@ run_coverage_analysis() {
 
 main() {
     local exit_code=0
-    
+
     case "$MODE" in
         normal)
             run_normal_mode
@@ -369,7 +369,7 @@ main() {
             exit 1
             ;;
     esac
-    
+
     # Cleanup
     if [ "$CLEANUP" = true ]; then
         log_info "Cleaning up temporary files..."
@@ -377,15 +377,15 @@ main() {
         find "$TEST_DIR" -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
         find "$TEST_DIR" -type f -name "*.pyc" -delete 2>/dev/null || true
     fi
-    
+
     log_section "Test Suite Execution Complete"
-    
+
     if [ $exit_code -eq 0 ]; then
         log_success "All tests passed!"
     else
         log_warning "Some tests failed (exit code: $exit_code)"
     fi
-    
+
     return $exit_code
 }
 

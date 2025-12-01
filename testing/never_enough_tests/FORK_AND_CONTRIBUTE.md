@@ -208,9 +208,9 @@ git push origin feature/never-enough-tests-stress-suite --force-with-lease
 
 ## Current Status
 
-**Branch**: `feature/never-enough-tests-stress-suite`  
-**Files Added**: 16 files, 3,720+ lines  
-**Test Count**: 1,660 tests  
+**Branch**: `feature/never-enough-tests-stress-suite`
+**Files Added**: 16 files, 3,720+ lines
+**Test Count**: 1,660 tests
 **Last Validated**: pytest 9.1.0.dev107+g8fb7815f1
 
 ## Common Issues
