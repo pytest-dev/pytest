@@ -20,21 +20,34 @@
 
 Real-world CI/CD environments are chaotic: parallel workers, resource constraints, random ordering, flaky infrastructure. This suite simulates that chaos to expose bugs that only appear under stress, ensuring pytest remains resilient.
 
+## 🚀 Quick Contribution Setup
+
+Want to contribute this suite to pytest? See **[FORK_AND_CONTRIBUTE.md](FORK_AND_CONTRIBUTE.md)** for complete step-by-step instructions on:
+- Forking the pytest repository
+- Setting up your development environment
+- Running tests and validating changes
+- Creating and submitting a pull request
+
 ## Project Structure
 
 ```
 never_enough_tests/
-├── test_never_enough.py         # Main Python test module
+├── test_never_enough.py         # Main Python test module (1,660+ tests)
+├── test_advanced_patterns.py    # Advanced testing patterns
 ├── cpp_components/               # C++ boundary testing components
 │   ├── boundary_tester.cpp       # Integer overflow, memory, buffer tests
 │   ├── fuzzer.cpp                # Input fuzzing generator
+│   ├── boundary_tester           # Compiled binary
 │   └── Makefile                  # Build system
 ├── scripts/                      # Orchestration scripts
 │   ├── never_enough_tests.sh     # Main test runner
 │   ├── chaos_runner.sh           # Advanced chaos orchestration
 │   └── benchmark_runner.sh       # Performance benchmarking
 ├── README.md                     # This file
-└── CONTRIBUTING.md               # Contribution guidelines
+├── CONTRIBUTING.md               # Contribution guidelines
+├── FORK_AND_CONTRIBUTE.md        # Complete fork & PR setup guide
+├── RESULTS.md                    # Latest test results & findings
+└── requirements.txt              # Python dependencies
 ```
 
 ## Installation
