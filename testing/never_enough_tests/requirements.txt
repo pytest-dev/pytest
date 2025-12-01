@@ -1,0 +1,24 @@
+# Never Enough Tests Requirements
+#
+# Core dependencies for the Never Enough Tests suite
+# Install with: pip install -r requirements.txt
+
+# Core testing framework
+pytest>=7.0.0
+pytest-xdist>=2.5.0          # Parallel execution
+pytest-random-order>=1.1.0   # Randomized test ordering
+pytest-timeout>=2.1.0        # Test timeouts
+
+# Optional but recommended
+pytest-cov>=4.0.0           # Coverage analysis
+pytest-benchmark>=4.0.0     # Performance benchmarking
+pytest-asyncio>=0.21.0      # Async test support
+pytest-mock>=3.10.0         # Mocking utilities
+
+# Development tools
+black>=23.0.0               # Code formatting
+flake8>=6.0.0              # Linting
+mypy>=1.0.0                # Type checking
+
+# Additional utilities
+psutil>=5.9.0              # System and process utilities (for monitoring)
