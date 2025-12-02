@@ -101,7 +101,7 @@ class TestParseIni:
         self, pytester: Pytester, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
         """Test that --report-chars is parsed correctly."""
-        monkeypatch.setenv("PYTEST_ADDOPTS", '--report-chars=fE')
+        monkeypatch.setenv("PYTEST_ADDOPTS", "--report-chars=fE")
         config = pytester.parseconfig(tmp_path)
         assert config.option.reportchars == "fE"
 
