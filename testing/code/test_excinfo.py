@@ -1897,7 +1897,7 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
 
 
 @pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
-@pytest.mark.parametrize("group", (True, False))
+@pytest.mark.parametrize("group", (True, False), ids=("group", "bare"))
 def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> None:
     """Regression test for #10903."""
     pytester.makepyfile(
