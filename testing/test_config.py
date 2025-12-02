@@ -97,6 +97,14 @@ class TestParseIni:
         assert config.option.tbstyle == "short"
         assert config.option.verbose
 
+    def test_report_chars_long_option(
+        self, pytester: Pytester, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that --report-chars is parsed correctly."""
+        monkeypatch.setenv("PYTEST_ADDOPTS", '--report-chars=fE')
+        config = pytester.parseconfig(tmp_path)
+        assert config.option.reportchars == "fE"
+
     def test_tox_ini_wrong_version(self, pytester: Pytester) -> None:
         pytester.makefile(
             ".ini",
