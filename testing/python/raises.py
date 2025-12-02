@@ -407,3 +407,26 @@ class TestRaises:
                 code=404, msg="Not Found", fp=io.BytesIO(), hdrs=Message(), url=""
             )
         exc_info.value.close()  # avoid a resource warning
+
+    def test_raises_match_compiled_regex(self) -> None:
+        """Test that compiled regex patterns work with pytest.raises."""
+        # Test with a compiled pattern that matches
+        pattern = re.compile(r"with base \d+")
+        with pytest.raises(ValueError, match=pattern):
+            int("asdf")
+
+        # Test with a compiled pattern that doesn't match
+        pattern_nomatch = re.compile(r"with base 16")
+        expr = (
+            "Regex pattern did not match.\n"
+            f"  Expected regex: {pattern_nomatch.pattern!r}\n"
+            f"  Actual message: \"invalid literal for int() with base 10: 'asdf'\""
+        )
+        with pytest.raises(AssertionError, match="^" + re.escape(expr) + "$"):
+            with pytest.raises(ValueError, match=pattern_nomatch):
+                int("asdf", base=10)
+
+        # Test compiled pattern with flags
+        pattern_with_flags = re.compile(r"INVALID LITERAL", re.IGNORECASE)
+        with pytest.raises(ValueError, match=pattern_with_flags):
+            int("asdf")
