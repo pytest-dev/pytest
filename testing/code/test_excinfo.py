@@ -1902,6 +1902,9 @@ def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> No
     """Regression test for #10903."""
     pytester.makepyfile(
         f"""
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
         def test():
             __tracebackhide__ = True
             raise {'ExceptionGroup("", [ValueError("bar")])' if group else 'ValueError("bar")'}
