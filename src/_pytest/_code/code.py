@@ -1193,9 +1193,15 @@ class FormattedExcinfo:
                         format_exception(
                             type(excinfo.value),
                             excinfo.value,
-                            traceback[0]._rawentry,
+                            traceback[0]._rawentry if traceback else None,
                         )
                     )
+                    if not traceback:
+                        reprtraceback.extraline = (
+                            "All traceback entries are hidden. "
+                            "Pass `--full-trace` to see hidden and internal frames."
+                        )
+
                 else:
                     reprtraceback = self.repr_traceback(excinfo_)
                 reprcrash = excinfo_._getreprcrash()

@@ -1897,19 +1897,23 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
 
 
 @pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
-def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
+@pytest.mark.parametrize("group", (True, False), ids=("group", "bare"))
+def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> None:
     """Regression test for #10903."""
     pytester.makepyfile(
-        """
+        f"""
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
         def test():
             __tracebackhide__ = True
-            1 / 0
+            raise {'ExceptionGroup("", [ValueError("bar")])' if group else 'ValueError("bar")'}
     """
     )
     result = pytester.runpytest("--tb", tbstyle)
     assert result.ret == 1
     if tbstyle != "line":
-        result.stdout.fnmatch_lines(["*ZeroDivisionError: division by zero"])
+        result.stdout.fnmatch_lines(["*ValueError: bar"])
     if tbstyle not in ("line", "native"):
         result.stdout.fnmatch_lines(["All traceback entries are hidden.*"])
 
