@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from contextlib import ExitStack
 from contextlib import nullcontext
 import dataclasses
+import pickle
 import time
 from types import TracebackType
 from typing import Any
@@ -62,11 +63,16 @@ class SubtestContext:
     kwargs: Mapping[str, Any]
 
     def _to_json(self) -> dict[str, Any]:
-        return dataclasses.asdict(self)
+        result = dataclasses.asdict(self)
+        # Use protocol 0 because it is human-readable and guaranteed to be not-binary.
+        protocol = 0
+        data = pickle.dumps(result["kwargs"], protocol=protocol)
+        result["kwargs"] = data.decode("UTF-8")
+        return result
 
     @classmethod
     def _from_json(cls, d: dict[str, Any]) -> Self:
-        return cls(msg=d["msg"], kwargs=d["kwargs"])
+        return cls(msg=d["msg"], kwargs=pickle.loads(d["kwargs"].encode("UTF-8")))
 
 
 @dataclasses.dataclass(init=False)
