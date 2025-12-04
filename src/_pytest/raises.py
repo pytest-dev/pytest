@@ -704,10 +704,11 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         if exc_type is None:
             if not self.expected_exceptions:
                 fail("DID NOT RAISE any exception")
-            if len(self.expected_exceptions) > 1:
-                fail(f"DID NOT RAISE any of {self.expected_exceptions!r}")
-
-            fail(f"DID NOT RAISE {self.expected_exceptions[0]!r}")
+            if len(self.expected_exceptions) == 1:
+                fail(f"DID NOT RAISE {self.expected_exceptions[0].__name__}")
+            else:
+                names = ", ".join(f"{x.__name__}" for x in self.expected_exceptions)
+                fail(f"DID NOT RAISE any of ({names})")
 
         assert self.excinfo is not None, (
             "Internal error - should have been constructed in __enter__"
