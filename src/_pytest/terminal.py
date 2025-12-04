@@ -189,6 +189,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group._addoption(  # private to use reserved lower-case short option
         "-r",
+        "--report-chars",
         action="store",
         dest="reportchars",
         default=_REPORTCHARS_DEFAULT,
