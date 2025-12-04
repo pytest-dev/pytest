@@ -1,0 +1,1 @@
+automated uploading JUnit reports to codecov in the test workflow with codecov GitHub Action
