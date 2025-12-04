@@ -1,0 +1,1 @@
+Sphinx>=7.4 is now required to build the documentation.
