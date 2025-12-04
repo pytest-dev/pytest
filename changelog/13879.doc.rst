@@ -1,0 +1,9 @@
+Clarified `pytest/Config.getoption` docstring to make the exceptional behavior of `default` with `skip=True` explicit.
+
+The previous docstring implied:
+
+- The `default` parameter is ignored when the option is declared.
+
+But actual behavior is:
+
+- The `default` is **not ignored** even if the option is declared, when `skip=True` and the option has `None` value.
