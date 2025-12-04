@@ -97,29 +97,20 @@ class TestParseIni:
         assert config.option.tbstyle == "short"
         assert config.option.verbose
 
-    @pytest.mark.parametrize(
-        "opts, expected",
-        [
-            ("-rfE", "fE"),
-            ("--report-chars=fE", "fE"),
-            ("-rA", "A"),
-            ("--report-chars=A", "A"),
-            ("-rfs", "fs"),
-            ("--report-chars=fs", "fs"),
-        ],
-    )
+    @pytest.mark.parametrize("flag", ("-r", "--report-chars="))
+    @pytest.mark.parametrize("value", ("fE", "A", "fs"))
     def test_report_chars_option(
         self,
         pytester: Pytester,
         tmp_path: Path,
         monkeypatch: MonkeyPatch,
-        opts: str,
-        expected: str,
+        flag: str,
+        value: str,
     ) -> None:
         """Test that -r/--report-chars is parsed correctly."""
-        monkeypatch.setenv("PYTEST_ADDOPTS", opts)
+        monkeypatch.setenv("PYTEST_ADDOPTS", flag + value)
         config = pytester.parseconfig(tmp_path)
-        assert config.option.reportchars == expected
+        assert config.option.reportchars == value
 
     def test_tox_ini_wrong_version(self, pytester: Pytester) -> None:
         pytester.makefile(
