@@ -1,3 +1,0 @@
-The private ``config.inicfg`` attribute was changed in a breaking manner in pytest 9.0.0.
-Due to its usage in the ecosystem, it is now restored to working order using a compatibility shim.
-It will be deprecated in pytest 9.1 and removed in pytest 10.
