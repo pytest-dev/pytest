@@ -142,7 +142,7 @@ The test collection would look like this:
     configfile: pytest.toml
     collected 2 items
 
-    <Dir pythoncollection.rst-212>
+    <Dir pythoncollection.rst-213>
       <Module check_myapp.py>
         <Class CheckMyApp>
           <Function simple_check>
@@ -205,7 +205,7 @@ You can always peek at the collection tree without running tests like this:
     configfile: pytest.toml
     collected 3 items
 
-    <Dir pythoncollection.rst-212>
+    <Dir pythoncollection.rst-213>
       <Dir CWD>
         <Module pythoncollection.py>
           <Function test_function>

@@ -53,7 +53,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
     capteesys -- .../_pytest/capture.py:1028
         Enable simultaneous text capturing and pass-through of writes
-        to ``sys.stdout`` and ``sys.stderr`` as defined by :option:`--capture`.
+        to ``sys.stdout`` and ``sys.stderr`` as defined by ``--capture=``.
 
 
         The captured output is made available via ``capteesys.readouterr()`` method
@@ -61,7 +61,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         ``out`` and ``err`` will be ``text`` objects.
 
         The output is also passed-through, allowing it to be "live-printed",
-        reported, or both as defined by :option:`--capture`.
+        reported, or both as defined by ``--capture=``.
 
         Returns an instance of :class:`CaptureFixture[str] <pytest.CaptureFixture>`.
 
@@ -257,10 +257,10 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     subtests -- .../_pytest/subtests.py:129
         Provides subtests functionality.
 
-    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:240
+    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:243
         Return a :class:`pytest.TempPathFactory` instance for the test session.
 
-    tmp_path -- .../_pytest/tmpdir.py:255
+    tmp_path -- .../_pytest/tmpdir.py:258
         Return a temporary directory (as :class:`pathlib.Path` object)
         which is unique to each test function invocation.
         The temporary directory is created as a subdirectory
