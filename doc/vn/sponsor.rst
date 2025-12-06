@@ -1,12 +1,12 @@
 Tài trợ
 =======
 
-pytest được duy trì bởi một nhóm tình nguyện viên từ khắp nơi trên thế giới trong thời gian rảnh rỗi của họ. 
-Chúng tôi làm việc trên pytest vì chúng tôi yêu dự án và sử dụng nó hàng ngày trong công việc, 
-thì việc được bồi thường bằng tiền khi có thể là rất đáng hoan nghênh để bù đắp cho thời gian xa bạn bè, 
+pytest được duy trì bởi một nhóm tình nguyện viên từ khắp nơi trên thế giới trong thời gian rảnh rỗi của họ.
+Chúng tôi làm việc trên pytest vì chúng tôi yêu dự án và sử dụng nó hàng ngày trong công việc,
+thì việc được bồi thường bằng tiền khi có thể là rất đáng hoan nghênh để bù đắp cho thời gian xa bạn bè,
 gia đình và thời gian cá nhân.
 
-Tiền cũng được dùng để tài trợ các sự kiện lập trình địa phương, hàng hóa (ví dụ: nhãn dán để phát tại các hội nghị) 
+Tiền cũng được dùng để tài trợ các sự kiện lập trình địa phương, hàng hóa (ví dụ: nhãn dán để phát tại các hội nghị)
 và cứ vài năm lại có một sự kiện lập trình lớn với sự tham gia của tất cả các thành viên.
 
 OpenCollective
