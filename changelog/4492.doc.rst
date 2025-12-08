@@ -1,1 +1,0 @@
-The API Reference now contains cross-reference-able documentation of :ref:`pytest's command-line flags <command-line-flags>`.

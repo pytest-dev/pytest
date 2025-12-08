@@ -3296,7 +3296,7 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
       --lfnf, --last-failed-no-failures={all,none}
-                            With :option:`--lf`, determines whether to execute tests
+                            With ``--lf``, determines whether to execute tests
                             when there are no previously (known) failures or
                             when no cached ``lastfailed`` data was found.
                             ``all`` (the default) runs the full test suite

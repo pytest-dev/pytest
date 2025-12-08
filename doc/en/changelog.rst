@@ -31,6 +31,37 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 9.0.2 (2025-12-06)
+=========================
+
+Bug fixes
+---------
+
+- `#13896 <https://github.com/pytest-dev/pytest/issues/13896>`_: The terminal progress feature added in pytest 9.0.0 has been disabled by default, except on Windows, due to compatibility issues with some terminal emulators.
+
+  You may enable it again by passing ``-p terminalprogress``. We may enable it by default again once compatibility improves in the future.
+
+  Additionally, when the environment variable ``TERM`` is ``dumb``, the escape codes are no longer emitted, even if the plugin is enabled.
+
+
+- `#13904 <https://github.com/pytest-dev/pytest/issues/13904>`_: Fixed the TOML type of the :confval:`tmp_path_retention_count` settings in the API reference from number to string.
+
+
+- `#13946 <https://github.com/pytest-dev/pytest/issues/13946>`_: The private ``config.inicfg`` attribute was changed in a breaking manner in pytest 9.0.0.
+  Due to its usage in the ecosystem, it is now restored to working order using a compatibility shim.
+  It will be deprecated in pytest 9.1 and removed in pytest 10.
+
+
+- `#13965 <https://github.com/pytest-dev/pytest/issues/13965>`_: Fixed quadratic-time behavior when handling ``unittest`` subtests in Python 3.10.
+
+
+
+Improved documentation
+----------------------
+
+- `#4492 <https://github.com/pytest-dev/pytest/issues/4492>`_: The API Reference now contains cross-reference-able documentation of :ref:`pytest's command-line flags <command-line-flags>`.
+
+
 pytest 9.0.1 (2025-11-12)
 =========================
 
@@ -264,6 +295,9 @@ Removals and backward incompatible breaking changes
 
 - `#13766 <https://github.com/pytest-dev/pytest/issues/13766>`_: Previously, pytest would assume it was running in a CI/CD environment if either of the environment variables `$CI` or `$BUILD_NUMBER` was defined;
   now, CI mode is only activated if at least one of those variables is defined and set to a *non-empty* value.
+
+
+- The non-public ``config.args`` attribute used to be able to contain ``pathlib.Path`` instances; now it can only contain strings.
 
 
 - `#13779 <https://github.com/pytest-dev/pytest/issues/13779>`_: **PytestRemovedIn9Warning deprecation warnings are now errors by default.**
