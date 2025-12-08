@@ -2910,7 +2910,7 @@ Output and Reporting
 
     Set verbosity level explicitly. Default: 0.
 
-.. option:: -r CHARS
+.. option:: -r CHARS, --report-chars=CHARS
 
     Show extra test summary info as specified by chars:
 
