@@ -286,8 +286,8 @@ Ensuring code triggers a deprecation warning
 --------------------------------------------
 
 You can also use :func:`pytest.deprecated_call` for checking
-that a certain function call triggers a ``DeprecationWarning`` or
-``PendingDeprecationWarning``:
+that a certain function call triggers a ``DeprecationWarning``, ``PendingDeprecationWarning`` or
+``FutureWarning``:
 
 .. code-block:: python
 
