@@ -20,7 +20,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 9.0.1
+    pytest 9.0.2
 
 .. _`simpletest`:
 
@@ -262,7 +262,7 @@ Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the c
 
     pytest --fixtures   # shows builtin and custom fixtures
 
-Note that this command omits fixtures with leading ``_`` unless the ``-v`` option is added.
+Note that this command omits fixtures with leading ``_`` unless the :option:`-v` option is added.
 
 Continue reading
 -------------------------------------

@@ -11,7 +11,7 @@ can change the pattern by issuing:
 
     pytest --doctest-glob="*.rst"
 
-on the command line. ``--doctest-glob`` can be given multiple times in the command-line.
+on the command line. :option:`--doctest-glob` can be given multiple times in the command-line.
 
 If you then have a text file like this:
 
@@ -39,7 +39,7 @@ then you can just invoke ``pytest`` directly:
     ============================ 1 passed in 0.12s =============================
 
 By default, pytest will collect ``test*.txt`` files looking for doctest directives, but you
-can pass additional globs using the ``--doctest-glob`` option (multi-allowed).
+can pass additional globs using the :option:`--doctest-glob` option (multi-allowed).
 
 In addition to text files, you can also execute doctests directly from docstrings of your classes
 and functions, including from test modules:

@@ -65,7 +65,7 @@ These options can also be customized through a configuration file:
         log_format = %(asctime)s %(levelname)s %(message)s
         log_date_format = %Y-%m-%d %H:%M:%S
 
-Specific loggers can be disabled via ``--log-disable={logger_name}``.
+Specific loggers can be disabled via :option:`--log-disable={logger_name}`.
 This argument can be passed multiple times:
 
 .. code-block:: bash
@@ -199,13 +199,13 @@ By setting the :confval:`log_cli` configuration option to ``true``, pytest will 
 logging records as they are emitted directly into the console.
 
 You can specify the logging level for which log records with equal or higher
-level are printed to the console by passing ``--log-cli-level``. This setting
+level are printed to the console by passing :option:`--log-cli-level`. This setting
 accepts the logging level names or numeric values as seen in
 :ref:`logging's documentation <python:levels>`.
 
-Additionally, you can also specify ``--log-cli-format`` and
-``--log-cli-date-format`` which mirror and default to ``--log-format`` and
-``--log-date-format`` if not provided, but are applied only to the console
+Additionally, you can also specify :option:`--log-cli-format` and
+:option:`--log-cli-date-format` which mirror and default to :option:`--log-format` and
+:option:`--log-date-format` if not provided, but are applied only to the console
 logging handler.
 
 All of the CLI log options can also be set in the configuration file. The
@@ -216,19 +216,19 @@ option names are:
 * :confval:`log_cli_date_format`
 
 If you need to record the whole test suite logging calls to a file, you can pass
-``--log-file=/path/to/log/file``. This log file is opened in write mode by default which
+:option:`--log-file=/path/to/log/file`. This log file is opened in write mode by default which
 means that it will be overwritten at each run tests session.
-If you'd like the file opened in append mode instead, then you can pass ``--log-file-mode=a``.
+If you'd like the file opened in append mode instead, then you can pass :option:`--log-file-mode=a`.
 Note that relative paths for the log-file location, whether passed on the CLI or declared in a
 config file, are always resolved relative to the current working directory.
 
 You can also specify the logging level for the log file by passing
-``--log-file-level``. This setting accepts the logging level names or numeric
+:option:`--log-file-level`. This setting accepts the logging level names or numeric
 values as seen in :ref:`logging's documentation <python:levels>`.
 
-Additionally, you can also specify ``--log-file-format`` and
-``--log-file-date-format`` which are equal to ``--log-format`` and
-``--log-date-format`` but are applied to the log file logging handler.
+Additionally, you can also specify :option:`--log-file-format` and
+:option:`--log-file-date-format` which are equal to ``--log-format`` and
+:option:`--log-date-format` but are applied to the log file logging handler.
 
 All of the log file options can also be set in the configuration file. The
 option names are:
@@ -302,14 +302,14 @@ This feature was introduced in ``3.3`` and some **incompatible changes** have be
 made in ``3.4`` after community feedback:
 
 * Log levels are no longer changed unless explicitly requested by the :confval:`log_level` configuration
-  or ``--log-level`` command-line options. This allows users to configure logger objects themselves.
+  or :option:`--log-level` command-line options. This allows users to configure logger objects themselves.
   Setting :confval:`log_level` will set the level that is captured globally so if a specific test requires
   a lower level than this, use the ``caplog.set_level()`` functionality otherwise that test will be prone to
   failure.
 * :ref:`Live Logs <live_logs>` is now disabled by default and can be enabled setting the
   :confval:`log_cli` configuration option to ``true``. When enabled, the verbosity is increased so logging for each
   test is visible.
-* :ref:`Live Logs <live_logs>` are now sent to ``sys.stdout`` and no longer require the ``-s`` command-line option
+* :ref:`Live Logs <live_logs>` are now sent to ``sys.stdout`` and no longer require the :option:`-s` command-line option
   to work.
 
 If you want to partially restore the logging behavior of version ``3.3``, you can add this options to your configuration

@@ -13,11 +13,11 @@ Usage
 The plugin provides two command line options to rerun failures from the
 last ``pytest`` invocation:
 
-* ``--lf``, ``--last-failed`` - to only re-run the failures.
-* ``--ff``, ``--failed-first`` - to run the failures first and then the rest of
+* :option:`--lf, --last-failed <--lf>` - to only re-run the failures.
+* :option:`--ff, --failed-first <--ff>` - to run the failures first and then the rest of
   the tests.
 
-For cleanup (usually not needed), a ``--cache-clear`` option allows to remove
+For cleanup (usually not needed), a :option:`--cache-clear` option allows to remove
 all cross-session cache contents ahead of a test run.
 
 Other plugins may access the `config.cache`_ object to set/get
@@ -80,7 +80,7 @@ If you run this for the first time you will see two failures:
     FAILED test_50.py::test_num[25] - Failed: bad luck
     2 failed, 48 passed in 0.12s
 
-If you then run it with ``--lf``:
+If you then run it with :option:`--lf`:
 
 .. code-block:: pytest
 
@@ -124,7 +124,7 @@ If you then run it with ``--lf``:
 You have run only the two failing tests from the last run, while the 48 passing
 tests have not been run ("deselected").
 
-Now, if you run with the ``--ff`` option, all tests will be run but the first
+Now, if you run with the :option:`--ff` option, all tests will be run but the first
 previous failures will be executed first (as can be seen from the series
 of ``FF`` and dots):
 
@@ -169,14 +169,14 @@ of ``FF`` and dots):
 
 .. _`config.cache`:
 
-New ``--nf``, ``--new-first`` options: run new tests first followed by the rest
+New :option:`--nf, --new-first <--nf>` option: run new tests first followed by the rest
 of the tests, in both cases tests are also sorted by the file modified time,
 with more recent files coming first.
 
 Behavior when no tests failed in the last run
 ---------------------------------------------
 
-The ``--lfnf/--last-failed-no-failures`` option governs the behavior of ``--last-failed``.
+The :option:`--lfnf, --last-failed-no-failures <--lfnf>` option governs the behavior of :option:`--last-failed`.
 Determines whether to execute tests when there are no previously (known)
 failures or when no cached ``lastfailed`` data was found.
 
@@ -275,7 +275,7 @@ Inspecting Cache content
 ------------------------
 
 You can always peek at the content of the cache using the
-``--cache-show`` command line option:
+:option:`--cache-show` command line option:
 
 .. code-block:: pytest
 
@@ -294,7 +294,7 @@ You can always peek at the content of the cache using the
 
     ========================== no tests ran in 0.12s ===========================
 
-``--cache-show`` takes an optional argument to specify a glob pattern for
+:option:`--cache-show` takes an optional argument to specify a glob pattern for
 filtering:
 
 .. code-block:: pytest
@@ -314,7 +314,7 @@ Clearing Cache content
 ----------------------
 
 You can instruct pytest to clear all cache files and values
-by adding the ``--cache-clear`` option like this:
+by adding the :option:`--cache-clear` option like this:
 
 .. code-block:: bash
 
@@ -330,4 +330,4 @@ than speed.
 Stepwise
 --------
 
-As an alternative to ``--lf -x``, especially for cases where you expect a large part of the test suite will fail, ``--sw``, ``--stepwise`` allows you to fix them one at a time. The test suite will run until the first failure and then stop. At the next invocation, tests will continue from the last failing test and then run until the next failing test. You may use the ``--stepwise-skip`` option to ignore one failing test and stop the test execution on the second failing test instead. This is useful if you get stuck on a failing test and just want to ignore it until later.  Providing ``--stepwise-skip`` will also enable ``--stepwise`` implicitly.
+As an alternative to :option:`--lf` :option:`-x`, especially for cases where you expect a large part of the test suite will fail, :option:`--sw, --stepwise <--sw>` allows you to fix them one at a time. The test suite will run until the first failure and then stop. At the next invocation, tests will continue from the last failing test and then run until the next failing test. You may use the :option:`--stepwise-skip` option to ignore one failing test and stop the test execution on the second failing test instead. This is useful if you get stuck on a failing test and just want to ignore it until later.  Providing ``--stepwise-skip`` will also enable ``--stepwise`` implicitly.

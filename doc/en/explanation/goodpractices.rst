@@ -170,7 +170,7 @@ want to distribute them along with your application:
             test_view.py
             ...
 
-In this scheme, it is easy to run your tests using the ``--pyargs`` option:
+In this scheme, it is easy to run your tests using the :option:`--pyargs` option:
 
 .. code-block:: bash
 
@@ -217,7 +217,7 @@ Note that this layout also works in conjunction with the ``src`` layout mentione
     from each other and thus deriving a canonical import name helps
     to avoid surprises such as a test module getting imported twice.
 
-    With ``--import-mode=importlib`` things are less convoluted because
+    With :option:`--import-mode=importlib` things are less convoluted because
     pytest doesn't need to change ``sys.path``, making things much less
     surprising.
 

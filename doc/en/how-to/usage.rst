@@ -4,7 +4,7 @@
 How to invoke pytest
 ==========================================
 
-..  seealso:: :ref:`Complete pytest command-line flag reference <command-line-flags>`
+..  seealso:: :ref:`Complete pytest command-line flags reference <command-line-flags>`
 
 In general, pytest is invoked with the command ``pytest`` (see below for :ref:`other ways to invoke pytest
 <invoke-other>`). This will execute all tests in all files whose names follow the form ``test_*.py`` or ``\*_test.py``
@@ -155,7 +155,7 @@ Managing loading of plugins
 Early loading plugins
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-You can early-load plugins (internal and external) explicitly in the command-line with the ``-p`` option::
+You can early-load plugins (internal and external) explicitly in the command-line with the :option:`-p` option::
 
     pytest -p mypluginmodule
 
@@ -171,7 +171,7 @@ The option receives a ``name`` parameter, which can be:
 Disabling plugins
 ~~~~~~~~~~~~~~~~~~
 
-To disable loading specific plugins at invocation time, use the ``-p`` option
+To disable loading specific plugins at invocation time, use the :option:`-p` option
 together with the prefix ``no:``.
 
 Example: to disable loading the plugin ``doctest``, which is responsible for

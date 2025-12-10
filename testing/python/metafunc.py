@@ -119,7 +119,7 @@ class TestMetafunc:
         with pytest.raises(
             fail.Exception,
             match=(
-                r"In func: ids contains unsupported value Exc\(from_gen\) \(type: <class .*Exc'>\) at index 2. "
+                r"In mock::nodeid: ids contains unsupported value Exc\(from_gen\) \(type: <class .*Exc'>\) at index 2. "
                 r"Supported types are: .*"
             ),
         ):
@@ -300,7 +300,7 @@ class TestMetafunc:
         deadline=400.0
     )  # very close to std deadline and CI boxes are not reliable in CPU power
     def test_idval_hypothesis(self, value) -> None:
-        escaped = IdMaker([], [], None, None, None, None, None)._idval(value, "a", 6)
+        escaped = IdMaker([], [], None, None, None, None)._idval(value, "a", 6)
         assert isinstance(escaped, str)
         escaped.encode("ascii")
 
@@ -323,8 +323,7 @@ class TestMetafunc:
         ]
         for val, expected in values:
             assert (
-                IdMaker([], [], None, None, None, None, None)._idval(val, "a", 6)
-                == expected
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
     def test_unicode_idval_with_config(self) -> None:
@@ -353,7 +352,7 @@ class TestMetafunc:
             ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for val, config, expected in values:
-            actual = IdMaker([], [], None, None, config, None, None)._idval(val, "a", 6)
+            actual = IdMaker([], [], None, None, config, None)._idval(val, "a", 6)
             assert actual == expected
 
     def test_bytes_idval(self) -> None:
@@ -367,8 +366,7 @@ class TestMetafunc:
         ]
         for val, expected in values:
             assert (
-                IdMaker([], [], None, None, None, None, None)._idval(val, "a", 6)
-                == expected
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
     def test_class_or_function_idval(self) -> None:
@@ -384,8 +382,7 @@ class TestMetafunc:
         values = [(TestClass, "TestClass"), (test_function, "test_function")]
         for val, expected in values:
             assert (
-                IdMaker([], [], None, None, None, None, None)._idval(val, "a", 6)
-                == expected
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
     def test_notset_idval(self) -> None:
@@ -394,16 +391,13 @@ class TestMetafunc:
 
         Regression test for #7686.
         """
-        assert (
-            IdMaker([], [], None, None, None, None, None)._idval(NOTSET, "a", 0) == "a0"
-        )
+        assert IdMaker([], [], None, None, None, None)._idval(NOTSET, "a", 0) == "a0"
 
     def test_idmaker_autoname(self) -> None:
         """#250"""
         result = IdMaker(
             ("a", "b"),
             [pytest.param("string", 1.0), pytest.param("st-ring", 2.0)],
-            None,
             None,
             None,
             None,
@@ -418,18 +412,17 @@ class TestMetafunc:
             None,
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["a0-1.0", "a1-b1"]
         # unicode mixing, issue250
         result = IdMaker(
-            ("a", "b"), [pytest.param({}, b"\xc3\xb4")], None, None, None, None, None
+            ("a", "b"), [pytest.param({}, b"\xc3\xb4")], None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["a0-\\xc3\\xb4"]
 
     def test_idmaker_with_bytes_regex(self) -> None:
         result = IdMaker(
-            ("a"), [pytest.param(re.compile(b"foo"))], None, None, None, None, None
+            ("a"), [pytest.param(re.compile(b"foo"))], None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["foo"]
 
@@ -451,7 +444,6 @@ class TestMetafunc:
                 pytest.param(b"\xc3\xb4", "other"),
                 pytest.param(1.0j, -2.0j),
             ],
-            None,
             None,
             None,
             None,
@@ -488,7 +480,6 @@ class TestMetafunc:
             None,
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4", "\\t-5", "\\t-6"]
 
@@ -503,7 +494,6 @@ class TestMetafunc:
             None,
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["hello \\x00", "hello \\x05"]
 
@@ -511,7 +501,7 @@ class TestMetafunc:
         enum = pytest.importorskip("enum")
         e = enum.Enum("Foo", "one, two")
         result = IdMaker(
-            ("a", "b"), [pytest.param(e.one, e.two)], None, None, None, None, None
+            ("a", "b"), [pytest.param(e.one, e.two)], None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["Foo.one-Foo.two"]
 
@@ -534,7 +524,6 @@ class TestMetafunc:
             None,
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["10.0-IndexError()", "20-KeyError()", "three-b2"]
 
@@ -552,7 +541,6 @@ class TestMetafunc:
                 pytest.param("three", [1, 2, 3]),
             ],
             ids,
-            None,
             None,
             None,
             None,
@@ -593,7 +581,6 @@ class TestMetafunc:
                 None,
                 config,
                 None,
-                None,
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
@@ -625,7 +612,7 @@ class TestMetafunc:
         ]
         for config, expected in values:
             result = IdMaker(
-                ("a",), [pytest.param("string")], None, ["ação"], config, None, None
+                ("a",), [pytest.param("string")], None, ["ação"], config, None
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
@@ -656,14 +643,13 @@ class TestMetafunc:
                 None,
                 config,
                 None,
-                None,
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
     def test_idmaker_duplicated_empty_str(self) -> None:
         """Regression test for empty strings parametrized more than once (#11563)."""
         result = IdMaker(
-            ("a",), [pytest.param(""), pytest.param("")], None, None, None, None, None
+            ("a",), [pytest.param(""), pytest.param("")], None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["0", "1"]
 
@@ -728,7 +714,6 @@ class TestMetafunc:
             ["a", None],
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["a", "3-4"]
 
@@ -740,7 +725,6 @@ class TestMetafunc:
             ["a", None],
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["me", "you"]
 
@@ -750,7 +734,6 @@ class TestMetafunc:
             list(map(pytest.param, [1, 2, 3, 4, 5])),
             None,
             ["a", "a", "b", "c", "b"],
-            None,
             None,
             None,
         ).make_unique_parameterset_ids()
@@ -811,7 +794,7 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         with pytest.raises(
             fail.Exception,
-            match="In func: expected Sequence or boolean for indirect, got dict",
+            match="In mock::nodeid: expected Sequence or boolean for indirect, got dict",
         ):
             metafunc.parametrize("x, y", [("a", "b")], indirect={})  # type: ignore[arg-type]
 
@@ -1431,7 +1414,8 @@ class TestMetafuncFunctional:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "In test_ids_numbers: ids contains unsupported value OSError() (type: <class 'OSError'>) at index 2. "
+                "In test_parametrized_ids_invalid_type.py::test_ids_numbers: ids contains unsupported value "
+                "OSError() (type: <class 'OSError'>) at index 2. "
                 "Supported types are: str, bytes, int, float, complex, bool, enum, regex or anything with a __name__."
             ]
         )
@@ -2303,8 +2287,8 @@ class TestHiddenParam:
                 "",
                 "*= ERRORS =*",
                 "*_ ERROR collecting test_multiple_hidden_param_is_forbidden.py _*",
-                "E   Failed: In test_func: multiple instances of HIDDEN_PARAM cannot be used "
-                "in the same parametrize call, because the tests names need to be unique.",
+                "E   Failed: In test_multiple_hidden_param_is_forbidden.py::test_func: multiple instances of "
+                "HIDDEN_PARAM cannot be used in the same parametrize call, because the tests names need to be unique.",
                 "*! Interrupted: 1 error during collection !*",
                 "*= no tests collected, 1 error in *",
             ]
@@ -2318,10 +2302,14 @@ class TestHiddenParam:
             [pytest.HIDDEN_PARAM, pytest.HIDDEN_PARAM],
             None,
             "some_node_id",
-            None,
         )
         expected = "In some_node_id: multiple instances of HIDDEN_PARAM"
         with pytest.raises(Failed, match=expected):
+            id_maker.make_unique_parameterset_ids()
+
+    def test_idmaker_error_without_nodeid(self) -> None:
+        id_maker = IdMaker(["a"], [pytest.param("a")], None, [object()], None, None)
+        with pytest.raises(Failed, match="ids contains unsupported value"):
             id_maker.make_unique_parameterset_ids()
 
     def test_multiple_parametrize(self, pytester: Pytester) -> None:

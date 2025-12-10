@@ -26,7 +26,6 @@ from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
 from _pytest.outcomes import fail
 from _pytest.raises import AbstractRaises
@@ -409,7 +408,7 @@ class MarkDecorator:
             if isinstance(func, staticmethod | classmethod):
                 unwrapped_func = func.__func__
             if len(args) == 1 and (istestfunc(unwrapped_func) or is_class):
-                store_mark(unwrapped_func, self.mark, stacklevel=3)
+                store_mark(unwrapped_func, self.mark)
                 return func
         return self.with_args(*args, **kwargs)
 
@@ -464,7 +463,7 @@ def normalize_mark_list(
         yield mark_obj
 
 
-def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
+def store_mark(obj, mark: Mark) -> None:
     """Store a Mark on an object.
 
     This is used to implement the Mark declarations/decorators correctly.
@@ -474,7 +473,10 @@ def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
     from ..fixtures import getfixturemarker
 
     if getfixturemarker(obj) is not None:
-        warnings.warn(MARKED_FIXTURE, stacklevel=stacklevel)
+        fail(
+            "Marks cannot be applied to fixtures.\n"
+            "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
+        )
 
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.

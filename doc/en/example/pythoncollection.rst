@@ -5,7 +5,7 @@ Ignore paths during test collection
 -----------------------------------
 
 You can easily ignore certain test directories and modules during collection
-by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
+by passing the :option:`--ignore=path` option on the cli. ``pytest`` allows multiple
 ``--ignore`` options. Example:
 
 .. code-block:: text
@@ -43,16 +43,16 @@ you will see that ``pytest`` only collects test-modules, which do not match the 
 
     ========================= 5 passed in 0.02 seconds =========================
 
-The ``--ignore-glob`` option allows to ignore test file paths based on Unix shell-style wildcards.
-If you want to exclude test-modules that end with ``_01.py``, execute ``pytest`` with ``--ignore-glob='*_01.py'``.
+The :option:`--ignore-glob` option allows to ignore test file paths based on Unix shell-style wildcards.
+If you want to exclude test-modules that end with ``_01.py``, execute ``pytest`` with :option:`--ignore-glob='*_01.py'`.
 
 Deselect tests during test collection
 -------------------------------------
 
-Tests can individually be deselected during collection by passing the ``--deselect=item`` option.
+Tests can individually be deselected during collection by passing the :option:`--deselect=item` option.
 For example, say ``tests/foobar/test_foobar_01.py`` contains ``test_a`` and ``test_b``.
 You can run all of the tests within ``tests/`` *except* for ``tests/foobar/test_foobar_01.py::test_a``
-by invoking ``pytest`` with ``--deselect tests/foobar/test_foobar_01.py::test_a``.
+by invoking ``pytest`` with ``--deselect=tests/foobar/test_foobar_01.py::test_a``.
 ``pytest`` allows multiple ``--deselect`` options.
 
 .. _duplicate-paths:
@@ -73,7 +73,7 @@ Example:
 
 Just collect tests once.
 
-To collect duplicate tests, use the ``--keep-duplicates`` option on the cli.
+To collect duplicate tests, use the :option:`--keep-duplicates` option on the cli.
 Example:
 
 .. code-block:: pytest
@@ -142,7 +142,7 @@ The test collection would look like this:
     configfile: pytest.toml
     collected 2 items
 
-    <Dir pythoncollection.rst-212>
+    <Dir pythoncollection.rst-213>
       <Module check_myapp.py>
         <Class CheckMyApp>
           <Function simple_check>
@@ -168,7 +168,7 @@ You can check for multiple glob patterns by adding a space between the patterns:
 Interpreting cmdline arguments as Python packages
 -----------------------------------------------------
 
-You can use the ``--pyargs`` option to make ``pytest`` try
+You can use the :option:`--pyargs` option to make ``pytest`` try
 interpreting arguments as python package names, deriving
 their file system path and then running the test. For
 example if you have unittest2 installed you can type:
@@ -205,7 +205,7 @@ You can always peek at the collection tree without running tests like this:
     configfile: pytest.toml
     collected 3 items
 
-    <Dir pythoncollection.rst-212>
+    <Dir pythoncollection.rst-213>
       <Dir CWD>
         <Module pythoncollection.py>
           <Function test_function>
@@ -231,7 +231,7 @@ You can easily instruct ``pytest`` to discover tests from every Python file:
     python_files = ["*.py"]
 
 However, many projects will have a ``setup.py`` which they don't want to be
-imported. Moreover, there may files only importable by a specific python
+imported. Moreover, there may be files only importable by a specific python
 version. For such cases you can dynamically define files to be ignored by
 listing them in a ``conftest.py`` file:
 

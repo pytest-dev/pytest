@@ -37,7 +37,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
         persist-credentials: false
@@ -139,6 +139,7 @@ jobs:
             python: "3.14"
             os: windows-latest
             tox_env: "py314"
+            use_coverage: true
 
           # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
           - name: "ubuntu-py310-unittest-asynctest"
@@ -250,7 +251,7 @@ jobs:
     continue-on-error: ${{ matrix.xfail && true || false }}
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
         persist-credentials: false

@@ -353,7 +353,7 @@ failed_subtests_key = StashKey[defaultdict[str, int]]()
 
 
 def pytest_configure(config: Config) -> None:
-    config.stash[failed_subtests_key] = defaultdict(lambda: 0)
+    config.stash[failed_subtests_key] = defaultdict(int)
 
 
 @hookimpl(tryfirst=True)

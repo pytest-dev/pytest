@@ -25,6 +25,7 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import Generic
+from typing import Literal
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -53,7 +54,6 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import MARKED_FIXTURE
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
@@ -66,7 +66,6 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
-from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestWarning
 
 
@@ -1178,18 +1177,11 @@ def pytest_fixture_setup(
         fixturefunc
     ):
         auto_str = " with autouse=True" if fixturedef._autouse else ""
-
-        warnings.warn(
-            PytestRemovedIn9Warning(
-                f"{request.node.name!r} requested an async fixture "
-                f"{request.fixturename!r}{auto_str}, with no plugin or hook that "
-                "handled it. This is usually an error, as pytest does not natively "
-                "support it. "
-                "This will turn into an error in pytest 9.\n"
-                "See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture"
-            ),
-            # no stacklevel will point at users code, so we just point here
-            stacklevel=1,
+        fail(
+            f"{request.node.name!r} requested an async fixture {request.fixturename!r}{auto_str}, "
+            "with no plugin or hook that handled it. This is an error, as pytest does not natively support it.\n"
+            "See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+            pytrace=False,
         )
 
     try:
@@ -1230,7 +1222,10 @@ class FixtureFunctionMarker:
             )
 
         if hasattr(function, "pytestmark"):
-            warnings.warn(MARKED_FIXTURE, stacklevel=2)
+            fail(
+                "Marks cannot be applied to fixtures.\n"
+                "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
+            )
 
         fixture_definition = FixtureFunctionDefinition(
             function=function, fixture_function_marker=self, _ispytest=True
@@ -1472,6 +1467,45 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     return None
 
 
+def _resolve_args_directness(
+    argnames: Sequence[str],
+    indirect: bool | Sequence[str],
+    nodeid: str,
+) -> dict[str, Literal["indirect", "direct"]]:
+    """Resolve if each parametrized argument must be considered an indirect
+    parameter to a fixture of the same name, or a direct parameter to the
+    parametrized function, based on the ``indirect`` parameter of the
+    parametrize() call.
+
+    :param argnames:
+        List of argument names passed to ``parametrize()``.
+    :param indirect:
+        Same as the ``indirect`` parameter of ``parametrize()``.
+    :param nodeid:
+        Node ID to which the parametrization is applied.
+    :returns:
+        A dict mapping each arg name to either "indirect" or "direct".
+    """
+    arg_directness: dict[str, Literal["indirect", "direct"]]
+    if isinstance(indirect, bool):
+        arg_directness = dict.fromkeys(argnames, "indirect" if indirect else "direct")
+    elif isinstance(indirect, Sequence):
+        arg_directness = dict.fromkeys(argnames, "direct")
+        for arg in indirect:
+            if arg not in argnames:
+                fail(
+                    f"In {nodeid}: indirect fixture '{arg}' doesn't exist",
+                    pytrace=False,
+                )
+            arg_directness[arg] = "indirect"
+    else:
+        fail(
+            f"In {nodeid}: expected Sequence or boolean for indirect, got {type(indirect).__name__}",
+            pytrace=False,
+        )
+    return arg_directness
+
+
 def _get_direct_parametrize_args(node: nodes.Node) -> set[str]:
     """Return all direct parametrization arguments of a node, so we don't
     mistake them for fixtures.
@@ -1483,11 +1517,16 @@ def _get_direct_parametrize_args(node: nodes.Node) -> set[str]:
     """
     parametrize_argnames: set[str] = set()
     for marker in node.iter_markers(name="parametrize"):
-        if not marker.kwargs.get("indirect", False):
-            p_argnames, _ = ParameterSet._parse_parametrize_args(
-                *marker.args, **marker.kwargs
-            )
-            parametrize_argnames.update(p_argnames)
+        indirect = marker.kwargs.get("indirect", False)
+        p_argnames, _ = ParameterSet._parse_parametrize_args(
+            *marker.args, **marker.kwargs
+        )
+        p_directness = _resolve_args_directness(p_argnames, indirect, node.nodeid)
+        parametrize_argnames.update(
+            argname
+            for argname, directness in p_directness.items()
+            if directness == "direct"
+        )
     return parametrize_argnames
 
 

@@ -524,6 +524,42 @@ class TestFunction:
         rec = pytester.inline_run()
         rec.assertoutcome(passed=1)
 
+    def test_parametrize_overrides_parametrized_fixture_with_unrelated_indirect(
+        self, pytester: Pytester
+    ) -> None:
+        """Test parametrization when parameter overrides existing parametrized fixture with same name,
+        and there is an unrelated indirect param.
+
+        Regression test for #13974.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=["a", "b"])
+            def target(request):
+                return request.param
+
+            @pytest.fixture
+            def val(request):
+                return int(request.param)
+
+            @pytest.mark.parametrize(
+                ["val", "target"],
+                [
+                    ("1", 1),
+                    ("2", 2),
+                ],
+                indirect=["val"],
+            )
+            def test(val, target):
+                assert val == target
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+        result.assert_outcomes(passed=2)
+
     def test_parametrize_overrides_indirect_dependency_fixture(
         self, pytester: Pytester
     ) -> None:

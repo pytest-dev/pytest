@@ -83,9 +83,9 @@ Different options for test IDs
 ------------------------------------
 
 pytest will build a string that is the test ID for each set of values in a
-parametrized test. These IDs can be used with ``-k`` to select specific cases
+parametrized test. These IDs can be used with :option:`-k` to select specific cases
 to run, and they will also identify the specific case when one is failing.
-Running pytest with ``--collect-only`` will show the generated IDs.
+Running pytest with :option:`--collect-only` will show the generated IDs.
 
 Numbers, strings, booleans and None will have their usual string representation
 used in the test ID. For other objects, pytest will make a string based on
@@ -162,7 +162,7 @@ objects, they are still using the default pytest representation:
     rootdir: /home/sweet/project
     collected 8 items
 
-    <Dir parametrize.rst-211>
+    <Dir parametrize.rst-212>
       <Module test_time.py>
         <Function test_timedistance_v0[a0-b0-expected0]>
         <Function test_timedistance_v0[a1-b1-expected1]>
@@ -239,7 +239,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     rootdir: /home/sweet/project
     collected 4 items
 
-    <Dir parametrize.rst-211>
+    <Dir parametrize.rst-212>
       <Module test_scenarios.py>
         <Class TestSampleWithScenarios>
           <Function test_demo1[basic]>
@@ -318,7 +318,7 @@ Let's first see how it looks like at collection time:
     rootdir: /home/sweet/project
     collected 2 items
 
-    <Dir parametrize.rst-211>
+    <Dir parametrize.rst-212>
       <Module test_backends.py>
         <Function test_db_initialized[d1]>
         <Function test_db_initialized[d2]>

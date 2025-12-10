@@ -148,76 +148,6 @@ Simply remove the ``__init__.py`` file entirely.
 Python 3.3+ natively supports namespace packages without ``__init__.py``.
 
 
-.. _sync-test-async-fixture:
-
-sync test depending on async fixture
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 8.4
-
-Pytest has for a long time given an error when encountering an asynchronous test function, prompting the user to install
-a plugin that can handle it. It has not given any errors if you have an asynchronous fixture that's depended on by a
-synchronous test. If the fixture was an async function you did get an "unawaited coroutine" warning, but for async yield fixtures you didn't even get that.
-This is a problem even if you do have a plugin installed for handling async tests, as they may require
-special decorators for async fixtures to be handled, and some may not robustly handle if a user accidentally requests an
-async fixture from their sync tests. Fixture values being cached can make this even more unintuitive, where everything will
-"work" if the fixture is first requested by an async test, and then requested by a synchronous test.
-
-Unfortunately there is no 100% reliable method of identifying when a user has made a mistake, versus when they expect an
-unawaited object from their fixture that they will handle on their own. To suppress this warning
-when you in fact did intend to handle this you can wrap your async fixture in a synchronous fixture:
-
-.. code-block:: python
-
-    import asyncio
-    import pytest
-
-
-    @pytest.fixture
-    async def unawaited_fixture():
-        return 1
-
-
-    def test_foo(unawaited_fixture):
-        assert 1 == asyncio.run(unawaited_fixture)
-
-should be changed to
-
-
-.. code-block:: python
-
-    import asyncio
-    import pytest
-
-
-    @pytest.fixture
-    def unawaited_fixture():
-        async def inner_fixture():
-            return 1
-
-        return inner_fixture()
-
-
-    def test_foo(unawaited_fixture):
-        assert 1 == asyncio.run(unawaited_fixture)
-
-
-You can also make use of `pytest_fixture_setup` to handle the coroutine/asyncgen before pytest sees it - this is the way current async pytest plugins handle it.
-
-If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file
-containing both synchronous tests and the fixture, they will receive this warning.
-Unless you're using a plugin that specifically handles async fixtures
-with synchronous tests, we strongly recommend against this practice.
-It can lead to unpredictable behavior (with larger scopes, it may appear to "work" if an async
-test is the first to request the fixture, due to value caching) and will generate
-unawaited-coroutine runtime warnings (but only for non-yield fixtures).
-Additionally, it creates ambiguity for other developers about whether the fixture is intended to perform
-setup for synchronous tests.
-
-The `anyio pytest plugin <https://anyio.readthedocs.io/en/stable/testing.html>`_ supports
-synchronous tests with async fixtures, though certain limitations apply.
-
-
 .. _import-or-skip-import-error:
 
 ``pytest.importorskip`` default behavior regarding :class:`ImportError`
@@ -334,33 +264,6 @@ Changed ``hookwrapper`` attributes:
 * ``historic``
 
 
-.. _legacy-path-hooks-deprecated:
-
-``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
-
-*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
-*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
-*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
-*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
-*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
-
-The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
-
-.. note::
-    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
-    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
-    being ``path``) is **the opposite** of the situation for hooks (the old
-    argument being ``path``).
-
-    This is an unfortunate artifact due to historical reasons, which should be
-    resolved in future versions as we slowly get rid of the :pypi:`py`
-    dependency (see :issue:`9283` for a longer discussion).
-
 Directly constructing internal classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -431,23 +334,6 @@ conflicts (such as :class:`pytest.File` now taking ``path`` instead of
 ``fspath``, as :ref:`outlined above <node-ctor-fspath-deprecation>`), a
 deprecation warning is now raised.
 
-Applying a mark to a fixture function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.4
-
-Applying a mark to a fixture function never had any effect, but it is a common user error.
-
-.. code-block:: python
-
-    @pytest.mark.usefixtures("clean_database")
-    @pytest.fixture
-    def user() -> User: ...
-
-Users expected in this case that the ``usefixtures`` mark would have its intended effect of using the ``clean_database`` fixture when ``user`` was invoked, when in fact it has no effect at all.
-
-Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
-
 
 The ``yield_fixture`` function/decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -466,6 +352,124 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+.. _sync-test-async-fixture:
+
+sync test depending on async fixture
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.4
+.. versionremoved:: 9.0
+
+Pytest has for a long time given an error when encountering an asynchronous test function, prompting the user to install
+a plugin that can handle it. It has not given any errors if you have an asynchronous fixture that's depended on by a
+synchronous test. If the fixture was an async function you did get an "unawaited coroutine" warning, but for async yield fixtures you didn't even get that.
+This is a problem even if you do have a plugin installed for handling async tests, as they may require
+special decorators for async fixtures to be handled, and some may not robustly handle if a user accidentally requests an
+async fixture from their sync tests. Fixture values being cached can make this even more unintuitive, where everything will
+"work" if the fixture is first requested by an async test, and then requested by a synchronous test.
+
+Unfortunately there is no 100% reliable method of identifying when a user has made a mistake, versus when they expect an
+unawaited object from their fixture that they will handle on their own. To suppress this warning
+when you in fact did intend to handle this you can wrap your async fixture in a synchronous fixture:
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+
+    @pytest.fixture
+    async def unawaited_fixture():
+        return 1
+
+
+    def test_foo(unawaited_fixture):
+        assert 1 == asyncio.run(unawaited_fixture)
+
+should be changed to
+
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+
+    @pytest.fixture
+    def unawaited_fixture():
+        async def inner_fixture():
+            return 1
+
+        return inner_fixture()
+
+
+    def test_foo(unawaited_fixture):
+        assert 1 == asyncio.run(unawaited_fixture)
+
+
+You can also make use of `pytest_fixture_setup` to handle the coroutine/asyncgen before pytest sees it - this is the way current async pytest plugins handle it.
+
+If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file
+containing both synchronous tests and the fixture, they will receive this warning.
+Unless you're using a plugin that specifically handles async fixtures
+with synchronous tests, we strongly recommend against this practice.
+It can lead to unpredictable behavior (with larger scopes, it may appear to "work" if an async
+test is the first to request the fixture, due to value caching) and will generate
+unawaited-coroutine runtime warnings (but only for non-yield fixtures).
+Additionally, it creates ambiguity for other developers about whether the fixture is intended to perform
+setup for synchronous tests.
+
+The `anyio pytest plugin <https://anyio.readthedocs.io/en/stable/testing.html>`_ supports
+synchronous tests with async fixtures, though certain limitations apply.
+
+
+
+Applying a mark to a fixture function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.4
+.. versionremoved:: 9.0
+
+Applying a mark to a fixture function never had any effect, but it is a common user error.
+
+.. code-block:: python
+
+    @pytest.mark.usefixtures("clean_database")
+    @pytest.fixture
+    def user() -> User: ...
+
+Users expected in this case that the ``usefixtures`` mark would have its intended effect of using the ``clean_database`` fixture when ``user`` was invoked, when in fact it has no effect at all.
+
+Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
+
+.. _legacy-path-hooks-deprecated:
+
+``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+.. versionremoved:: 9.0
+
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
+
+*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
+*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
+*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
+*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
+*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
+
+The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
+
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
+    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
+    being ``path``) is **the opposite** of the situation for hooks (the old
+    argument being ``path``).
+
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
 
 .. _yield tests deprecated:
 
