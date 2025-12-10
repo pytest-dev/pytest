@@ -707,7 +707,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
             if len(self.expected_exceptions) == 1:
                 fail(f"DID NOT RAISE {self.expected_exceptions[0].__name__}")
             else:
-                names = ", ".join(f"{x.__name__}" for x in self.expected_exceptions)
+                names = ", ".join(x.__name__ for x in self.expected_exceptions)
                 fail(f"DID NOT RAISE any of ({names})")
 
         assert self.excinfo is not None, (
