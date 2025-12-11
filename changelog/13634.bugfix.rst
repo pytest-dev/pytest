@@ -1,0 +1,5 @@
+Blocking a ``conftest.py`` file using the ``-p no:`` option is now explicitly disallowed.
+
+Previously this resulted in an internal assertion failure during plugin loading.
+
+Pytest now raises a clear ``UsageError`` explaining that conftest files are not plugins and cannot be disabled via ``-p``.
