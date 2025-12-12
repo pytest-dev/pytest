@@ -510,8 +510,9 @@ def _config_for_test() -> Generator[Config]:
 
 # Regex to match the session duration string in the summary: "74.34s".
 rex_session_duration = re.compile(r"\d+\.\d\ds")
-# Regex to match all the counts and phrases in the summary line: "34 passed, 111 skipped".
-rex_outcome = re.compile(r"(\d+) (\w+)")
+# Regex to match all the counts and phrases in the summary line:
+# "34 passed, 111 skipped, 3 subtests passed, 1 subtests failed".
+rex_outcome = re.compile(r"(\d+) ([\w\s]+?)(?=,| in|$)")
 
 
 @final
@@ -578,7 +579,7 @@ class RunResult:
         for line in reversed(lines):
             if rex_session_duration.search(line):
                 outcomes = rex_outcome.findall(line)
-                ret = {noun: int(count) for (count, noun) in outcomes}
+                ret = {noun.strip(): int(count) for (count, noun) in outcomes}
                 break
         else:
             raise ValueError("Pytest terminal summary report not found")
@@ -586,6 +587,9 @@ class RunResult:
         to_plural = {
             "warning": "warnings",
             "error": "errors",
+            "subtest failed": "subtests failed",
+            "subtest passed": "subtests passed",
+            "subtest skipped": "subtests skipped",
         }
         return {to_plural.get(k, k): v for k, v in ret.items()}
 
