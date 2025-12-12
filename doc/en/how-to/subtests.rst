@@ -29,8 +29,11 @@ Each assertion failure or error is caught by the context manager and reported in
 .. code-block:: pytest
 
     $ pytest -q test_subtest.py
-    uuuuuF                                                               [100%]
-    ================================= FAILURES =================================
+    uuUuUF                                                                [100%]
+
+Note that passed subtests are shown in green while failed subtests are shown in red when color output is enabled.
+
+================================= FAILURES =================================
     _______________________ test [custom message] (i=1) ________________________
 
     subtests = <_pytest.subtests.Subtests object at 0xdeadbeef0001>
