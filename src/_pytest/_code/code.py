@@ -1187,15 +1187,59 @@ class FormattedExcinfo:
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 reprtraceback: ReprTraceback | ReprTracebackNative
                 if isinstance(e, BaseExceptionGroup):
-                    # don't filter any sub-exceptions since they shouldn't have any internal frames
                     traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
-                    reprtraceback = ReprTracebackNative(
-                        format_exception(
-                            type(excinfo.value),
-                            excinfo.value,
-                            traceback[0]._rawentry if traceback else None,
+
+                    patched: list[tuple[BaseException, TracebackType | None]] = []
+
+                    def patch_group(group: BaseExceptionGroup[BaseException]) -> None:
+                        for sub in group.exceptions:
+                            if isinstance(sub, BaseExceptionGroup):
+                                patch_group(sub)
+                                continue
+                            patched.append((sub, sub.__traceback__))
+                            try:
+                                sub_excinfo = ExceptionInfo.from_exception(sub)
+                            except Exception:
+                                sub.__traceback__ = None
+                                continue
+                            sub_tb = filter_excinfo_traceback(self.tbfilter, sub_excinfo)
+                            if sub_tb:
+                                # Ensure the last frame's tb_next is None
+                                sub_tb[-1]._rawentry.tb_next = None
+                                # Link the filtered frames together
+                                for i in range(len(sub_tb) - 1):
+                                    sub_tb[i]._rawentry.tb_next = sub_tb[i + 1]._rawentry
+                                sub.__traceback__ = sub_tb[0]._rawentry
+                            else:
+                                sub.__traceback__ = None
+
+                    old_group_tb = e.__traceback__
+                    try:
+                        # Build a filtered traceback chain for the group
+                        if traceback:
+                            # First, ensure the last frame's tb_next is None to prevent
+                            # format_exception from walking into hidden frames
+                            traceback[-1]._rawentry.tb_next = None
+                            # Then link the filtered frames together
+                            for i in range(len(traceback) - 1):
+                                traceback[i]._rawentry.tb_next = traceback[i + 1]._rawentry
+                            e.__traceback__ = traceback[0]._rawentry
+                        else:
+                            e.__traceback__ = None
+                        
+                        patch_group(e)
+                        reprtraceback = ReprTracebackNative(
+                            format_exception(
+                                type(excinfo.value),
+                                excinfo.value,
+                                e.__traceback__,
+                            )
                         )
-                    )
+                    finally:
+                        e.__traceback__ = old_group_tb
+                        for sub, old_tb in patched:
+                            sub.__traceback__ = old_tb
+
                     if not traceback:
                         reprtraceback.extraline = (
                             "All traceback entries are hidden. "
