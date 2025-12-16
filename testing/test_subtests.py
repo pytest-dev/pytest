@@ -5,6 +5,7 @@ import json
 import sys
 from typing import Literal
 
+from _pytest._io.saferepr import saferepr
 from _pytest.subtests import SubtestContext
 from _pytest.subtests import SubtestReport
 import pytest
@@ -304,10 +305,10 @@ def test_subtests_and_parametrization(
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i=1) *[[] 50%[]]",
-            "*.py::test_foo[[]0[]] FAILED                      *[[] 50%[]]",
-            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
-            "*.py::test_foo[[]1[]] FAILED                      *[[]100%[]]",
+            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i='1') *[[] 50%[]]",
+            "*.py::test_foo[[]0[]] FAILED                        *[[] 50%[]]",
+            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i='1') *[[]100%[]]",
+            "*.py::test_foo[[]1[]] FAILED                        *[[]100%[]]",
             "contains 1 failed subtest",
             "* 4 failed, 4 subtests passed in *",
         ]
@@ -322,10 +323,10 @@ def test_subtests_and_parametrization(
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i=1) *[[] 50%[]]",
-            "*.py::test_foo[[]0[]] FAILED                      *[[] 50%[]]",
-            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
-            "*.py::test_foo[[]1[]] FAILED                      *[[]100%[]]",
+            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i='1') *[[] 50%[]]",
+            "*.py::test_foo[[]0[]] FAILED                        *[[] 50%[]]",
+            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i='1') *[[]100%[]]",
+            "*.py::test_foo[[]1[]] FAILED                        *[[]100%[]]",
             "contains 1 failed subtest",
             "* 4 failed in *",
         ]
@@ -652,12 +653,12 @@ class TestCapture:
         result = pytester.runpytest(f"--capture={mode}")
         result.stdout.fnmatch_lines(
             [
-                "*__ test (i='A') __*",
+                "*__ test (i=\"'A'\") __*",
                 "*Captured stdout call*",
                 "hello stdout A",
                 "*Captured stderr call*",
                 "hello stderr A",
-                "*__ test (i='B') __*",
+                "*__ test (i=\"'B'\") __*",
                 "*Captured stdout call*",
                 "hello stdout B",
                 "*Captured stderr call*",
@@ -678,8 +679,8 @@ class TestCapture:
                 "hello stdout A",
                 "uhello stdout B",
                 "uend test",
-                "*__ test (i='A') __*",
-                "*__ test (i='B') __*",
+                "*__ test (i=\"'A'\") __*",
+                "*__ test (i=\"'B'\") __*",
                 "*__ test __*",
             ]
         )
@@ -986,7 +987,7 @@ def test_serialization() -> None:
     new_report = pytest_report_from_serializable(data)
     assert new_report is not None
     assert new_report.context == SubtestContext(
-        msg="custom message", kwargs=dict(i=10, a=MyEnum.A)
+        msg="custom message", kwargs=dict(i=saferepr(10), a=saferepr(MyEnum.A))
     )
 
 
