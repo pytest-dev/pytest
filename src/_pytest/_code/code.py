@@ -1202,13 +1202,17 @@ class FormattedExcinfo:
                             except Exception:
                                 sub.__traceback__ = None
                                 continue
-                            sub_tb = filter_excinfo_traceback(self.tbfilter, sub_excinfo)
+                            sub_tb = filter_excinfo_traceback(
+                                self.tbfilter, sub_excinfo
+                            )
                             if sub_tb:
                                 # Ensure the last frame's tb_next is None
                                 sub_tb[-1]._rawentry.tb_next = None
                                 # Link the filtered frames together
                                 for i in range(len(sub_tb) - 1):
-                                    sub_tb[i]._rawentry.tb_next = sub_tb[i + 1]._rawentry
+                                    sub_tb[i]._rawentry.tb_next = sub_tb[
+                                        i + 1
+                                    ]._rawentry
                                 sub.__traceback__ = sub_tb[0]._rawentry
                             else:
                                 sub.__traceback__ = None
@@ -1222,11 +1226,13 @@ class FormattedExcinfo:
                             traceback[-1]._rawentry.tb_next = None
                             # Then link the filtered frames together
                             for i in range(len(traceback) - 1):
-                                traceback[i]._rawentry.tb_next = traceback[i + 1]._rawentry
+                                traceback[i]._rawentry.tb_next = traceback[
+                                    i + 1
+                                ]._rawentry
                             e.__traceback__ = traceback[0]._rawentry
                         else:
                             e.__traceback__ = None
-                        
+
                         patch_group(e)
                         reprtraceback = ReprTracebackNative(
                             format_exception(
