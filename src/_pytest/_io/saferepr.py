@@ -54,8 +54,8 @@ class SafeRepr(reprlib.Repr):
         self.maxsize = maxsize
         self.use_ascii = use_ascii
 
-    def repr_dict(self, x: dict, level: int) -> str:
-        return dict.__repr__(x)
+    def repr_dict(self, x: Mapping[Any, Any], level: int) -> str:
+        return dict.__repr__(x)  # type: ignore[arg-type]
 
     def repr(self, x: object) -> str:
         try:
