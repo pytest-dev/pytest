@@ -1,0 +1,1 @@
+Pytest setting :ref:`PYTEST_CURRENT_TEST <pytest current test env>` internally is now thread-safe.
