@@ -109,6 +109,8 @@ of the failing function and hide the other one:
     FAILED test_module.py::test_func2 - assert False
     ======================= 1 failed, 1 passed in 0.12s ========================
 
+.. _accessing-captured-output:
+
 Accessing captured output from a test function
 ---------------------------------------------------
 
