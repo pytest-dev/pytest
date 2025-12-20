@@ -1,0 +1,5 @@
+Preserve dictionary insertion order in assertion failure output.
+
+Previously, pytest displayed dictionaries in sorted key order in assertion
+failure messages. This change ensures dictionaries are shown in their original
+insertion order, matching Python’s dict semantics.
