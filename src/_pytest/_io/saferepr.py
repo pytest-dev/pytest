@@ -53,9 +53,12 @@ class SafeRepr(reprlib.Repr):
         self.maxstring = maxsize if maxsize is not None else 1_000_000_000
         self.maxsize = maxsize
         self.use_ascii = use_ascii
+	
+
 
     def repr_dict(self, x: dict, level: int) -> str:
         return dict.__repr__(x)
+    
 
     def repr(self, x: object) -> str:
         try:
