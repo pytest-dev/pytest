@@ -29,7 +29,7 @@ def _ellipsize(s: str, maxsize: int) -> str:
     if len(s) > maxsize:
         i = max(0, (maxsize - 3) // 2)
         j = max(0, maxsize - 3 - i)
-        return s[:i] + "..." + s[len(s) - j :]
+        return s[:i] + "..." + s[len(s) - j:]
     return s
 
 
@@ -53,6 +53,9 @@ class SafeRepr(reprlib.Repr):
         self.maxstring = maxsize if maxsize is not None else 1_000_000_000
         self.maxsize = maxsize
         self.use_ascii = use_ascii
+
+    def repr_dict(self, x: dict, level: int) -> str:
+        return dict.__repr__(x)
 
     def repr(self, x: object) -> str:
         try:

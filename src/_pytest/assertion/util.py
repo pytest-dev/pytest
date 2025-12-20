@@ -217,16 +217,20 @@ def assertrepr_compare(
                 explanation = ["Both sets are equal"]
         elif op == ">=":
             if isset(left) and isset(right):
-                explanation = _compare_gte_set(left, right, highlighter, verbose)
+                explanation = _compare_gte_set(
+                    left, right, highlighter, verbose)
         elif op == "<=":
             if isset(left) and isset(right):
-                explanation = _compare_lte_set(left, right, highlighter, verbose)
+                explanation = _compare_lte_set(
+                    left, right, highlighter, verbose)
         elif op == ">":
             if isset(left) and isset(right):
-                explanation = _compare_gt_set(left, right, highlighter, verbose)
+                explanation = _compare_gt_set(
+                    left, right, highlighter, verbose)
         elif op == "<":
             if isset(left) and isset(right):
-                explanation = _compare_lt_set(left, right, highlighter, verbose)
+                explanation = _compare_lt_set(
+                    left, right, highlighter, verbose)
 
     except outcomes.Exit:
         raise
@@ -269,7 +273,8 @@ def _compare_eq_any(
             # used in older code bases before dataclasses/attrs were available.
             explanation = _compare_eq_cls(left, right, highlighter, verbose)
         elif issequence(left) and issequence(right):
-            explanation = _compare_eq_sequence(left, right, highlighter, verbose)
+            explanation = _compare_eq_sequence(
+                left, right, highlighter, verbose)
         elif isset(left) and isset(right):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
         elif isdict(left) and isdict(right):
@@ -387,8 +392,8 @@ def _compare_eq_sequence(
                 # 102
                 # >>> s[0:1]
                 # b'f'
-                left_value = left[i : i + 1]
-                right_value = right[i : i + 1]
+                left_value = left[i: i + 1]
+                right_value = right[i: i + 1]
             else:
                 left_value = left[i]
                 right_value = right[i]
@@ -510,7 +515,7 @@ def _compare_eq_dict(
         explanation += [f"Omitting {len(same)} identical items, use -vv to show"]
     elif same:
         explanation += ["Common items:"]
-        explanation += highlighter(pprint.pformat(same)).splitlines()
+        explanation += highlighter(PrettyPrinter().pformat(same)).splitlines()
     diff = {k for k in common if left[k] != right[k]}
     if diff:
         explanation += ["Differing items:"]
@@ -527,7 +532,8 @@ def _compare_eq_dict(
             f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
         )
         explanation.extend(
-            highlighter(pprint.pformat({k: left[k] for k in extra_left})).splitlines()
+            highlighter(PrettyPrinter().pformat(
+                {k: left[k] for k in extra_left})).splitlines()
         )
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
@@ -536,7 +542,8 @@ def _compare_eq_dict(
             f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
         )
         explanation.extend(
-            highlighter(pprint.pformat({k: right[k] for k in extra_right})).splitlines()
+            highlighter(PrettyPrinter().pformat(
+                {k: right[k] for k in extra_right})).splitlines()
         )
     return explanation
 
@@ -553,7 +560,8 @@ def _compare_eq_cls(
         fields_to_check = [info.name for info in all_fields if info.compare]
     elif isattrs(left):
         all_fields = left.__attrs_attrs__
-        fields_to_check = [field.name for field in all_fields if getattr(field, "eq")]
+        fields_to_check = [
+            field.name for field in all_fields if getattr(field, "eq")]
     elif isnamedtuple(left):
         fields_to_check = left._fields
     else:
@@ -572,13 +580,14 @@ def _compare_eq_cls(
     if same or diff:
         explanation += [""]
     if same and verbose < 2:
-        explanation.append(f"Omitting {len(same)} identical items, use -vv to show")
+        explanation.append(
+            f"Omitting {len(same)} identical items, use -vv to show")
     elif same:
         explanation += ["Matching attributes:"]
-        explanation += highlighter(pprint.pformat(same)).splitlines()
+        explanation += highlighter(PrettyPrinter().pformat(same)).splitlines()
     if diff:
         explanation += ["Differing attributes:"]
-        explanation += highlighter(pprint.pformat(diff)).splitlines()
+        explanation += highlighter(PrettyPrinter().pformat(diff)).splitlines()
         for field in diff:
             field_left = getattr(left, field)
             field_right = getattr(right, field)
@@ -599,7 +608,7 @@ def _compare_eq_cls(
 def _notin_text(term: str, text: str, verbose: int = 0) -> list[str]:
     index = text.find(term)
     head = text[:index]
-    tail = text[index + len(term) :]
+    tail = text[index + len(term):]
     correct_text = head + tail
     diff = _diff_text(text, correct_text, dummy_highlighter, verbose)
     newdiff = [f"{saferepr(term, maxsize=42)} is contained here:"]
