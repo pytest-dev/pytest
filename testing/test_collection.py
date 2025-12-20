@@ -250,8 +250,7 @@ class TestCollectFS:
         # check that explicitly passing directories in the command-line
         # collects the tests
         for dirname in ("a", "b", "c"):
-            items, _reprec = pytester.inline_genitems(
-                tmp_path.joinpath(dirname))
+            items, _reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
             assert [x.name for x in items] == [f"test_{dirname}"]
 
         # changing cwd to each subdirectory and running pytest without
@@ -375,10 +374,8 @@ class TestCustomConftests:
         """
         )
         sub = pytester.mkdir("xy123")
-        ensure_file(
-            sub / "test_hello.py").write_text("syntax error", encoding="utf-8")
-        sub.joinpath("conftest.py").write_text(
-            "syntax error", encoding="utf-8")
+        ensure_file(sub / "test_hello.py").write_text("syntax error", encoding="utf-8")
+        sub.joinpath("conftest.py").write_text("syntax error", encoding="utf-8")
         pytester.makepyfile("def test_hello(): pass")
         pytester.makepyfile(test_one="syntax error")
         result = pytester.runpytest("--fulltrace")
@@ -541,13 +538,11 @@ class TestSession:
                 ("pytest_collectstart", "collector.path == p"),
                 ("pytest_make_collect_report", "collector.path == p"),
                 ("pytest_pycollect_makeitem", "name == 'test_func'"),
-                ("pytest_collectreport",
-                 "report.result[0].name == 'test_func'"),
+                ("pytest_collectreport", "report.result[0].name == 'test_func'"),
             ]
         )
         # ensure we are reporting the collection of the single test item (#2464)
-        assert [x.name for x in self.get_reported_items(hookrec)] == [
-            "test_func"]
+        assert [x.name for x in self.get_reported_items(hookrec)] == ["test_func"]
 
     def test_collect_protocol_method(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -565,8 +560,7 @@ class TestSession:
             newid = items[0].nodeid
             assert newid == normid
             # ensure we are reporting the collection of the single test item (#2464)
-            assert [x.name for x in self.get_reported_items(hookrec)] == [
-                "test_method"]
+            assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
 
     def test_collect_custom_nodes_multi_id(self, pytester: Pytester) -> None:
         p = pytester.makepyfile("def test_func(): pass")
@@ -669,8 +663,7 @@ class TestSession:
         (item,) = items
         assert item.nodeid.endswith("TestClass::test_method")
         # ensure we are reporting the collection of the single test item (#2464)
-        assert [x.name for x in self.get_reported_items(hookrec)] == [
-            "test_method"]
+        assert [x.name for x in self.get_reported_items(hookrec)] == ["test_method"]
 
     def test_collect_parametrized_order(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -1139,8 +1132,7 @@ def test_continue_on_collection_errors_maxfail(pytester: Pytester) -> None:
     res = pytester.runpytest("--continue-on-collection-errors", "--maxfail=3")
     assert res.ret == 1
 
-    res.stdout.fnmatch_lines(
-        ["collected 2 items / 2 errors", "*1 failed, 2 errors*"])
+    res.stdout.fnmatch_lines(["collected 2 items / 2 errors", "*1 failed, 2 errors*"])
 
 
 def test_fixture_scope_sibling_conftests(pytester: Pytester) -> None:
@@ -1425,8 +1417,7 @@ def test_collect_symlink_file_arg(pytester: Pytester) -> None:
     symlink = pytester.path.joinpath("symlink.py")
     symlink_or_skip(real, symlink)
     result = pytester.runpytest("-v", symlink)
-    result.stdout.fnmatch_lines(
-        ["symlink.py::test_nodeid PASSED*", "*1 passed in*"])
+    result.stdout.fnmatch_lines(["symlink.py::test_nodeid PASSED*", "*1 passed in*"])
     assert result.ret == 0
 
 
@@ -1532,12 +1523,10 @@ def test_collect_pkg_init_only(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*no tests ran in*"])
 
     result = pytester.runpytest("-v", init)
-    result.stdout.fnmatch_lines(
-        ["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
+    result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
 
     result = pytester.runpytest("-v", "-o", "python_files=*.py", subdir)
-    result.stdout.fnmatch_lines(
-        ["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
+    result.stdout.fnmatch_lines(["sub/__init__.py::test_init PASSED*", "*1 passed in*"])
 
 
 @pytest.mark.parametrize("use_pkg", (True, False))
@@ -1546,8 +1535,7 @@ def test_collect_sub_with_symlinks(use_pkg: bool, pytester: Pytester) -> None:
     sub = pytester.mkdir("sub")
     if use_pkg:
         sub.joinpath("__init__.py").touch()
-    sub.joinpath("test_file.py").write_text(
-        "def test_file(): pass", encoding="utf-8")
+    sub.joinpath("test_file.py").write_text("def test_file(): pass", encoding="utf-8")
 
     # Create a broken symlink.
     symlink_or_skip("test_doesnotexist.py", sub.joinpath("test_broken.py"))
@@ -1635,8 +1623,7 @@ def test_class_from_parent(request: FixtureRequest) -> None:
         def from_parent(cls, parent, *, name, x):  # type: ignore[override]
             return super().from_parent(parent=parent, name=name, x=x)
 
-    collector = MyCollector.from_parent(
-        parent=request.session, name="foo", x=10)
+    collector = MyCollector.from_parent(parent=request.session, name="foo", x=10)
     assert collector.x == 10
 
 
@@ -1850,8 +1837,7 @@ def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) ->
         }
     )
 
-    result = pytester.runpytest(
-        "--pyargs", "--collect-only", "pkg.sub.test_it")
+    result = pytester.runpytest("--pyargs", "--collect-only", "pkg.sub.test_it")
     assert result.ret == ExitCode.OK
     result.stdout.fnmatch_lines(
         [
@@ -1866,8 +1852,7 @@ def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) ->
     # Now with an unrelated rootdir with unrelated files.
     monkeypatch.chdir(tempfile.gettempdir())
 
-    result = pytester.runpytest(
-        "--pyargs", "--collect-only", "pkg.sub.test_it")
+    result = pytester.runpytest("--pyargs", "--collect-only", "pkg.sub.test_it")
     assert result.ret == ExitCode.OK
     result.stdout.fnmatch_lines(
         [
@@ -1895,8 +1880,7 @@ def test_do_not_collect_symlink_siblings(
         pytest.skip("Symlinks not supported in this environment")
 
     # Create test file.
-    tmp_path.joinpath("test_foo.py").write_text(
-        "def test(): pass", encoding="UTF-8")
+    tmp_path.joinpath("test_foo.py").write_text("def test(): pass", encoding="UTF-8")
 
     # Ensure we collect it only once if we pass the tmp_path.
     result = pytester.runpytest(tmp_path, "-sv")
@@ -2032,8 +2016,7 @@ def test_namespace_packages(pytester: Pytester, import_mode: str):
     )
 
     # should also work when called against a more specific subpackage/module
-    result = pytester.runpytest(
-        "--collect-only", "--pyargs", "pkg.subpkg_namespace")
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg.subpkg_namespace")
     result.stdout.fnmatch_lines(
         [
             "collected 1 item",
@@ -2044,8 +2027,7 @@ def test_namespace_packages(pytester: Pytester, import_mode: str):
         ]
     )
 
-    result = pytester.runpytest(
-        "--collect-only", "--pyargs", "pkg.subpkg_regular")
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg.subpkg_regular")
     result.stdout.fnmatch_lines(
         [
             "collected 1 item",
@@ -2166,8 +2148,7 @@ class TestOverlappingCollectionArguments:
             }
         )
 
-        result = pytester.runpytest(
-            "--collect-only", "--keep-duplicates", "a", "a/b")
+        result = pytester.runpytest("--collect-only", "--keep-duplicates", "a", "a/b")
 
         result.stdout.fnmatch_lines(
             [
@@ -2261,8 +2242,7 @@ class TestOverlappingCollectionArguments:
             }
         )
 
-        result = pytester.runpytest(
-            "--collect-only", "b", "a", "b/test_b.py::test_b")
+        result = pytester.runpytest("--collect-only", "b", "a", "b/test_b.py::test_b")
 
         result.stdout.fnmatch_lines(
             [
@@ -2632,8 +2612,7 @@ class TestOverlappingCollectionArguments:
             consecutive=True,
         )
 
-        result = pytester.runpytest_inprocess(
-            "--collect-only", "top2/", "top2/")
+        result = pytester.runpytest_inprocess("--collect-only", "top2/", "top2/")
         result.stdout.fnmatch_lines(
             [
                 "<Dir *>",
