@@ -1,6 +1,4 @@
 from __future__ import annotations
-from typing import Any, Mapping
-
 
 import pprint
 import reprlib
@@ -31,7 +29,7 @@ def _ellipsize(s: str, maxsize: int) -> str:
     if len(s) > maxsize:
         i = max(0, (maxsize - 3) // 2)
         j = max(0, maxsize - 3 - i)
-        return s[:i] + "..." + s[len(s) - j:]
+        return s[:i] + "..." + s[len(s) - j :]
     return s
 
 
