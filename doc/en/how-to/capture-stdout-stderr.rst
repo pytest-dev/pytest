@@ -129,6 +129,17 @@ Here is an example test function that performs some output related checks:
         captured = capsys.readouterr()
         assert captured.out == "next\n"
 
+
+.. note::
+
+   When a capture fixture such as :fixture:`capsys` or :fixture:`capfd` is used,
+   it takes precedence over the global capturing configuration set via
+   command-line options such as ``-s`` or ``--capture=no``.
+
+   This means that output produced within a test using a capture fixture will
+   still be captured and available via ``readouterr()``, even if global capturing
+   is disabled.
+
 The ``readouterr()`` call snapshots the output so far -
 and capturing will be continued.  After the test
 function finishes the original streams will
