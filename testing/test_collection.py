@@ -769,17 +769,17 @@ class Test_genitems:
 
         # let's also test getmodpath here
         assert items[0].getmodpath() == "testone"  # type: ignore[attr-defined]
-        # type: ignore[attr-defined]
-        assert items[1].getmodpath() == "TestX.testmethod_one"
-        # type: ignore[attr-defined]
-        assert items[2].getmodpath() == "TestY.testmethod_one"
+        
+        assert items[1].getmodpath() == "TestX.testmethod_one" # type: ignore[attr-defined]
+       
+        assert items[2].getmodpath() == "TestY.testmethod_one"  # type: ignore[attr-defined]
 
         # PR #6202: Fix incorrect result of getmodpath method. (Resolves issue #6189)
-        # type: ignore[attr-defined]
-        assert items[3].getmodpath() == "TestY.testmethod_two[.[]"
+        
+        assert items[3].getmodpath() == "TestY.testmethod_two[.[]"  # type: ignore[attr-defined]
 
-        # type: ignore[attr-defined]
-        s = items[0].getmodpath(stopatmodule=False)
+        
+        s = items[0].getmodpath(stopatmodule=False)  # type: ignore[attr-defined]
         assert s.endswith("test_example_items1.testone")
         print(s)
 
