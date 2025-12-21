@@ -707,7 +707,7 @@ class TestAssert_reprcompare:
             "  {",
             "      'env': {",
             "          'sub': {",
-            "              'long_a': {!r},".format(long_a),
+            f"              'long_a': {long_a!r},",
             "              'sub1': {",
             "                  'long_a': 'substring that gets wrapped substring that gets wrapped '",
             "                  'substring that gets wrapped ',",

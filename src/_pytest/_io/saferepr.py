@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Any, Mapping
 
+from collections.abc import Mapping
 import pprint
 import reprlib
+from typing import Any
 
 
 def _try_repr_or_str(obj: object) -> str:
@@ -30,7 +31,7 @@ def _ellipsize(s: str, maxsize: int) -> str:
     if len(s) > maxsize:
         i = max(0, (maxsize - 3) // 2)
         j = max(0, maxsize - 3 - i)
-        return s[:i] + "..." + s[len(s) - j:]
+        return s[:i] + "..." + s[len(s) - j :]
     return s
 
 
