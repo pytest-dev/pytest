@@ -1,1 +1,1 @@
-Moved collection-reporting hooks in the API reference under the Collection hooks section.
+Moved collection-reporting hooks in the API reference from “Reporting hooks” to the “Collection hooks” section.
