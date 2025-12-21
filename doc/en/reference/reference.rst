@@ -757,6 +757,19 @@ items, delete or otherwise amend the test items:
     If this hook is implemented in ``conftest.py`` files, it always receives all collected items, not only those
     under the ``conftest.py`` where it is implemented.
 
+Hooks for reporting about collection:
+
+.. hook:: pytest_collectstart
+.. autofunction:: pytest_collectstart
+.. hook:: pytest_make_collect_report
+.. autofunction:: pytest_make_collect_report
+.. hook:: pytest_itemcollected
+.. autofunction:: pytest_itemcollected
+.. hook:: pytest_collectreport
+.. autofunction:: pytest_collectreport
+.. hook:: pytest_deselected
+.. autofunction:: pytest_deselected
+
 .. autofunction:: pytest_collection_finish
 
 Test running (runtest) hooks
@@ -795,16 +808,6 @@ Reporting hooks
 
 Session related reporting hooks:
 
-.. hook:: pytest_collectstart
-.. autofunction:: pytest_collectstart
-.. hook:: pytest_make_collect_report
-.. autofunction:: pytest_make_collect_report
-.. hook:: pytest_itemcollected
-.. autofunction:: pytest_itemcollected
-.. hook:: pytest_collectreport
-.. autofunction:: pytest_collectreport
-.. hook:: pytest_deselected
-.. autofunction:: pytest_deselected
 .. hook:: pytest_report_header
 .. autofunction:: pytest_report_header
 .. hook:: pytest_report_collectionfinish
