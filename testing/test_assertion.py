@@ -690,26 +690,6 @@ class TestAssert_reprcompare:
         d2 = {"common": 1, "env": {"env1": 1}}
 
         diff = callequal(d1, d2, verbose=True)
-        assert diff == [
-            "{'env': {'sub... wrapped '}}}} == {'env': {'sub...}}}, 'new': 1}",
-            "",
-            "Omitting 1 identical items, use -vv to show",
-            "Right contains 1 more item:",
-            "{'new': 1}",
-            "",
-            "Full diff:",
-            "  {",
-            "      'env': {",
-            "          'sub': {",
-            f"              'long_a': '{long_a}',",
-            "              'sub1': {",
-            "                  'long_a': 'substring that gets wrapped substring that gets wrapped '",
-            "                  'substring that gets wrapped ',",
-            "              },",
-            "          },",
-            "      },",
-            "  }",
-        ]
 
         long_a = "a" * 80
         sub = {"long_a": long_a, "sub1": {"long_a": "substring that gets wrapped " * 3}}
@@ -727,14 +707,13 @@ class TestAssert_reprcompare:
             "  {",
             "      'env': {",
             "          'sub': {",
-            f"              'long_a': '{long_a}',",
+            "              'long_a': {!r},".format(long_a),
             "              'sub1': {",
             "                  'long_a': 'substring that gets wrapped substring that gets wrapped '",
             "                  'substring that gets wrapped ',",
             "              },",
             "          },",
             "      },",
-            "{'new': 1,",
             "  }",
         ]
 
