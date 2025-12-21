@@ -57,7 +57,7 @@ class SafeRepr(reprlib.Repr):
         self.use_ascii = use_ascii
 
     def repr_dict(self, x: Mapping[Any, Any], level: int) -> str:
-        return dict.__repr__(x)  # type: ignore[arg-type]
+        return dict.__repr__(x)
 
     def repr(self, x: object) -> str:
         try:
