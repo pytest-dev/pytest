@@ -395,8 +395,7 @@ class TestImportHookInstallation:
 
     def test_register_assert_rewrite_checks_types(self) -> None:
         with pytest.raises(TypeError):
-            pytest.register_assert_rewrite(
-                ["pytest_tests_internal_non_existing"])  # type: ignore
+            pytest.register_assert_rewrite(["pytest_tests_internal_non_existing"])  # type: ignore
         pytest.register_assert_rewrite(
             "pytest_tests_internal_non_existing", "pytest_tests_internal_non_existing2"
         )
@@ -565,8 +564,7 @@ class TestAssert_reprcompare:
         assert expl[-1] == "Use -v to get more diff"
         verbose_expl = callequal(left, right, verbose=1)
         assert verbose_expl is not None
-        assert "\n".join(verbose_expl).endswith(
-            textwrap.dedent(expected).strip())
+        assert "\n".join(verbose_expl).endswith(textwrap.dedent(expected).strip())
 
     def test_iterable_quiet(self) -> None:
         expl = callequal([1, 2], [10, 2], verbose=-1)
@@ -731,7 +729,7 @@ class TestAssert_reprcompare:
             "  {",
             "      'env': {",
             "          'sub': {",
-            "              'long_a': {!r},".format(long_a),
+            f"              'long_a': {long_a!r},",
             "              'sub1': {",
             "                  'long_a': 'substring that gets wrapped substring that gets wrapped '",
             "                  'substring that gets wrapped ',",
@@ -1015,8 +1013,7 @@ class TestAssert_reprcompare_dataclass:
         )
 
     def test_recursive_dataclasses(self, pytester: Pytester) -> None:
-        p = pytester.copy_example(
-            "dataclasses/test_compare_recursive_dataclasses.py")
+        p = pytester.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
         result = pytester.runpytest(p)
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.fnmatch_lines(
@@ -1034,8 +1031,7 @@ class TestAssert_reprcompare_dataclass:
         )
 
     def test_recursive_dataclasses_verbose(self, pytester: Pytester) -> None:
-        p = pytester.copy_example(
-            "dataclasses/test_compare_recursive_dataclasses.py")
+        p = pytester.copy_example("dataclasses/test_compare_recursive_dataclasses.py")
         result = pytester.runpytest(p, "-vv")
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.fnmatch_lines(
@@ -1065,8 +1061,7 @@ class TestAssert_reprcompare_dataclass:
         )
 
     def test_dataclasses_verbose(self, pytester: Pytester) -> None:
-        p = pytester.copy_example(
-            "dataclasses/test_compare_dataclasses_verbose.py")
+        p = pytester.copy_example("dataclasses/test_compare_dataclasses_verbose.py")
         result = pytester.runpytest(p, "-vv")
         result.assert_outcomes(failed=1, passed=0)
         result.stdout.fnmatch_lines(
@@ -1318,14 +1313,12 @@ class TestFormatExplanation:
 
     def test_fmt_and(self) -> None:
         expl = "\n".join(["assert 1", "{1 = foo", "} == 2", "{2 = bar", "}"])
-        res = "\n".join(
-            ["assert 1 == 2", " +  where 1 = foo", " +  and   2 = bar"])
+        res = "\n".join(["assert 1 == 2", " +  where 1 = foo", " +  and   2 = bar"])
         assert util.format_explanation(expl) == res
 
     def test_fmt_where_nested(self) -> None:
         expl = "\n".join(["assert 1", "{1 = foo", "{foo = bar", "}", "} == 2"])
-        res = "\n".join(
-            ["assert 1 == 2", " +  where 1 = foo", " +    where foo = bar"])
+        res = "\n".join(["assert 1 == 2", " +  where 1 = foo", " +    where foo = bar"])
         assert util.format_explanation(expl) == res
 
     def test_fmt_newline(self) -> None:
@@ -1390,20 +1383,17 @@ class TestTruncateExplanation:
 
     def test_doesnt_truncate_when_input_is_empty_list(self) -> None:
         expl: list[str] = []
-        result = truncate._truncate_explanation(
-            expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
         assert result == expl
 
     def test_doesnt_truncate_at_when_input_is_5_lines_and_LT_max_chars(self) -> None:
         expl = ["a" * 100 for x in range(5)]
-        result = truncate._truncate_explanation(
-            expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result == expl
 
     def test_truncates_at_8_lines_when_given_list_of_empty_strings(self) -> None:
         expl = ["" for x in range(50)]
-        result = truncate._truncate_explanation(
-            expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
         assert len(result) != len(expl)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
@@ -1415,8 +1405,7 @@ class TestTruncateExplanation:
     def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self) -> None:
         total_lines = 100
         expl = ["a" for x in range(total_lines)]
-        result = truncate._truncate_explanation(
-            expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1427,8 +1416,7 @@ class TestTruncateExplanation:
     def test_truncates_at_8_lines_when_there_is_one_line_to_remove(self) -> None:
         """The number of line in the result is 9, the same number as if we truncated."""
         expl = ["a" for x in range(9)]
-        result = truncate._truncate_explanation(
-            expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result == expl
         assert "truncated" not in result[-1]
 
@@ -1437,8 +1425,7 @@ class TestTruncateExplanation:
     ) -> None:
         line = "a" * 10
         expl = [line, line]
-        result = truncate._truncate_explanation(
-            expl, max_lines=10, max_chars=10)
+        result = truncate._truncate_explanation(expl, max_lines=10, max_chars=10)
         assert result == [line, line]
 
     def test_truncates_edgecase_when_truncation_message_makes_the_result_longer_for_lines(
@@ -1446,14 +1433,12 @@ class TestTruncateExplanation:
     ) -> None:
         line = "a" * 10
         expl = [line, line]
-        result = truncate._truncate_explanation(
-            expl, max_lines=1, max_chars=100)
+        result = truncate._truncate_explanation(expl, max_lines=1, max_chars=100)
         assert result == [line, line]
 
     def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self) -> None:
         expl = [chr(97 + x) * 80 for x in range(16)]
-        result = truncate._truncate_explanation(
-            expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result != expl
         assert len(result) == 16 - 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1463,8 +1448,7 @@ class TestTruncateExplanation:
 
     def test_truncates_at_4_lines_when_first_4_lines_are_GT_max_chars(self) -> None:
         expl = ["a" * 250 for x in range(10)]
-        result = truncate._truncate_explanation(
-            expl, max_lines=8, max_chars=999)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=999)
         assert result != expl
         assert len(result) == 4 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1474,8 +1458,7 @@ class TestTruncateExplanation:
 
     def test_truncates_at_1_line_when_first_line_is_GT_max_chars(self) -> None:
         expl = ["a" * 250 for x in range(1000)]
-        result = truncate._truncate_explanation(
-            expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
         assert result != expl
         assert len(result) == 1 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1717,14 +1700,12 @@ class TestSetAssertions:
 def test_assertrepr_loaded_per_dir(pytester: Pytester) -> None:
     pytester.makepyfile(test_base=["def test_base(): assert 1 == 2"])
     a = pytester.mkdir("a")
-    a.joinpath("test_a.py").write_text(
-        "def test_a(): assert 1 == 2", encoding="utf-8")
+    a.joinpath("test_a.py").write_text("def test_a(): assert 1 == 2", encoding="utf-8")
     a.joinpath("conftest.py").write_text(
         'def pytest_assertrepr_compare(): return ["summary a"]', encoding="utf-8"
     )
     b = pytester.mkdir("b")
-    b.joinpath("test_b.py").write_text(
-        "def test_b(): assert 1 == 2", encoding="utf-8")
+    b.joinpath("test_b.py").write_text("def test_b(): assert 1 == 2", encoding="utf-8")
     b.joinpath("conftest.py").write_text(
         'def pytest_assertrepr_compare(): return ["summary b"]', encoding="utf-8"
     )
@@ -2016,8 +1997,7 @@ def test_raise_assertion_error_raising_repr(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    result.stdout.fnmatch_lines(
-        ["E       AssertionError: <exception str() failed>"])
+    result.stdout.fnmatch_lines(["E       AssertionError: <exception str() failed>"])
 
 
 def test_issue_1944(pytester: Pytester) -> None:
