@@ -82,7 +82,7 @@ jobs:
       id-token: write
     steps:
     - name: Download Package
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: Packages
         path: dist
@@ -121,13 +121,13 @@ jobs:
       contents: write
     steps:
     - name: Download Package
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: Packages
         path: dist
 
     - name: Download release notes
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: release-notes
         path: .
