@@ -2198,3 +2198,36 @@ def test_full_output_vvv(pytester: Pytester) -> None:
         ]
     )
     result.stdout.no_fnmatch_line(expected_non_vvv_arg_line)
+
+import re
+
+def test_dict_extra_items_preserve_insertion_order(pytester):
+    pytester.makepyfile(
+        test_order="""
+        def test_order():
+            a = {
+                "first": 1,
+                "second": 2,
+            }
+            assert a == {}
+        """
+    )
+
+    result = pytester.runpytest()
+
+    stdout = result.stdout.str()
+    stdout = re.sub(r"\x1b\[[0-9;]*m", "", stdout)
+
+    assert "Left contains 2 more items:" in stdout
+
+    dict_line = next(
+        line for line in stdout.splitlines()
+        if "{" in line and "}" in line and "first" in line
+    )
+
+    first = dict_line.find("first")
+    second = dict_line.find("second")
+
+    assert first != -1 and second != -1
+    assert first < second
+

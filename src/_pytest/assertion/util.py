@@ -520,7 +520,7 @@ def _compare_eq_dict(
                 + " != "
                 + highlighter(saferepr({k: right[k]}))
             ]
-    extra_left = set_left - set_right
+    extra_left = [k for k in left if k not in right]
     len_extra_left = len(extra_left)
     if len_extra_left:
         explanation.append(
@@ -529,7 +529,7 @@ def _compare_eq_dict(
         explanation.extend(
             highlighter(pprint.pformat({k: left[k] for k in extra_left})).splitlines()
         )
-    extra_right = set_right - set_left
+    extra_right = [k for k in right if k not in left]
     len_extra_right = len(extra_right)
     if len_extra_right:
         explanation.append(
