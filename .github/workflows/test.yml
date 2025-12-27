@@ -257,7 +257,7 @@ jobs:
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: Packages
         path: dist
