@@ -1526,9 +1526,10 @@ def _find_parametrized_scope(
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
         used_scopes = [
-            fixturedef[-1]._scope
-            for name, fixturedef in fixturedefs.items()
-            if name in argnames
+            fixturedefs[name][-1] ._scope     # correction part
+            for name in argnames
+            if name in fixturedefs
+
         ]
         # Takes the most narrow scope from used fixtures.
         return min(used_scopes, default=Scope.Function)
