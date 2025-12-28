@@ -131,8 +131,6 @@ Here is an example test function that performs some output related checks:
         captured = capsys.readouterr()
         assert captured.out == "next\n"
 
-
-
 The ``readouterr()`` call snapshots the output so far -
 and capturing will be continued.  After the test
 function finishes the original streams will
