@@ -54,6 +54,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import CLASS_FIXTURE_INSTANCE_METHOD
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
@@ -1148,6 +1149,16 @@ def resolve_fixture_function(
     # request.instance so that code working with "fixturedef" behaves
     # as expected.
     instance = request.instance
+
+    if fixturedef._scope is Scope.Class:
+        # Check if fixture is an instance method (bound to instance, not class)
+        if hasattr(fixturefunc, "__self__"):
+            bound_to = fixturefunc.__self__
+            # classmethod: bound_to is the class itself (a type)
+            # instance method: bound_to is an instance (not a type)
+            if not isinstance(bound_to, type):
+                warnings.warn(CLASS_FIXTURE_INSTANCE_METHOD, stacklevel=2)
+
     if instance is not None:
         # Handle the case where fixture is defined not in a test class, but some other class
         # (for example a plugin class with a fixture), see #2270.
