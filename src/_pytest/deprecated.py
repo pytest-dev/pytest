@@ -35,6 +35,14 @@ YIELD_FIXTURE = PytestDeprecationWarning(
     "Use @pytest.fixture instead; they are the same."
 )
 
+CLASS_FIXTURE_INSTANCE_METHOD = PytestRemovedIn10Warning(
+    "Class-scoped fixture defined as instance method is deprecated.\n"
+    "Instance attributes set in this fixture will NOT be visible to test methods,\n"
+    "as each test gets a new instance while the fixture runs only once per class.\n"
+    "Use @classmethod decorator and set attributes on cls instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#class-scoped-fixture-as-instance-method"
+)
+
 # This deprecation is never really meant to be removed.
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
