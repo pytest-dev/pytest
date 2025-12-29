@@ -1148,6 +1148,10 @@ def resolve_fixture_function(
     # request.instance so that code working with "fixturedef" behaves
     # as expected.
     instance = request.instance
+
+    if instance is None and fixturedef._scope is Scope.Class:
+        instance = getattr(request._pyfuncitem, "instance", None)
+
     if instance is not None:
         # Handle the case where fixture is defined not in a test class, but some other class
         # (for example a plugin class with a fixture), see #2270.
