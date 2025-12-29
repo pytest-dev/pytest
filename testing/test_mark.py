@@ -18,7 +18,7 @@ class TestMark:
     @pytest.mark.parametrize("attr", ["mark", "param"])
     def test_pytest_exists_in_namespace_all(self, attr: str) -> None:
         module = sys.modules["pytest"]
-        assert attr in module.__all__
+        assert attr in module.__all__, f"{attr!r} missing from pytest.__all__"
 
     def test_pytest_mark_notcallable(self) -> None:
         mark = MarkGenerator(_ispytest=True)
