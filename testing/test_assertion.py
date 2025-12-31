@@ -2199,7 +2199,9 @@ def test_full_output_vvv(pytester: Pytester) -> None:
     )
     result.stdout.no_fnmatch_line(expected_non_vvv_arg_line)
 
+
 import re
+
 
 def test_dict_extra_items_preserve_insertion_order(pytester):
     pytester.makepyfile(
@@ -2221,7 +2223,8 @@ def test_dict_extra_items_preserve_insertion_order(pytester):
     assert "Left contains 2 more items:" in stdout
 
     dict_line = next(
-        line for line in stdout.splitlines()
+        line
+        for line in stdout.splitlines()
         if "{" in line and "}" in line and "first" in line
     )
 
@@ -2230,4 +2233,3 @@ def test_dict_extra_items_preserve_insertion_order(pytester):
 
     assert first != -1 and second != -1
     assert first < second
-
