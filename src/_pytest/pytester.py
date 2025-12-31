@@ -862,7 +862,7 @@ class Pytester:
         """
         return self.makefile(".toml", pyproject=source)
 
-    def makepyfile(self, *args: str, **kwargs: str) -> Path:
+    def makepyfile(self, *args: str | bytes, **kwargs: str | bytes) -> Path:
         r"""Shortcut for .makefile() with a .py extension.
 
         Defaults to the test name with a '.py' extension, e.g test_foobar.py, overwriting
@@ -882,7 +882,7 @@ class Pytester:
         """
         return self._makefile(".py", args, kwargs)
 
-    def maketxtfile(self, *args: str, **kwargs: str) -> Path:
+    def maketxtfile(self, *args: str | bytes, **kwargs: str | bytes) -> Path:
         r"""Shortcut for .makefile() with a .txt extension.
 
         Defaults to the test name with a '.txt' extension, e.g test_foobar.txt, overwriting
