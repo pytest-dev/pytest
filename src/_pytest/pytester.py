@@ -645,7 +645,9 @@ class SysPathsSnapshot:
     def restore(self) -> None:
         sys.path[:], sys.meta_path[:] = self.__saved
 
+
 _FileContent = tuple[str | bytes, ...] | list[str | bytes] | str | bytes
+
 
 @final
 class Pytester:
