@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+import re
 import sys
 import textwrap
 from typing import Any
@@ -2198,9 +2199,6 @@ def test_full_output_vvv(pytester: Pytester) -> None:
         ]
     )
     result.stdout.no_fnmatch_line(expected_non_vvv_arg_line)
-
-
-import re
 
 
 def test_dict_extra_items_preserve_insertion_order(pytester):
