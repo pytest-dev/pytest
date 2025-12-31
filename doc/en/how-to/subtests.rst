@@ -30,6 +30,10 @@ Each assertion failure or error is caught by the context manager and reported in
 
     $ pytest -q test_subtest.py
     uuuuuF                                                               [100%]
+
+#Note that in the output above, passing subtests are shown in green, while
+failing subtests are shown in red.
+
     ================================= FAILURES =================================
     _______________________ test [custom message] (i=1) ________________________
 
