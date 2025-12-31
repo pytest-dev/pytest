@@ -10,6 +10,7 @@ import collections.abc
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
 import contextlib
 from fnmatch import fnmatch
@@ -756,7 +757,7 @@ class Pytester:
         self,
         ext: str,
         lines: Sequence[Any | bytes],
-        files: dict[str, str | bytes],
+        files: Mapping[str, str | bytes],
         encoding: str = "utf-8",
     ) -> Path:
         items = list(files.items())
