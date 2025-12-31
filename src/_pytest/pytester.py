@@ -756,7 +756,7 @@ class Pytester:
         self,
         ext: str,
         lines: Sequence[Any | bytes],
-        files: dict[str, str],
+        files: dict[str, str | bytes],
         encoding: str = "utf-8",
     ) -> Path:
         items = list(files.items())
