@@ -109,6 +109,8 @@ of the failing function and hide the other one:
     FAILED test_module.py::test_func2 - assert False
     ======================= 1 failed, 1 passed in 0.12s ========================
 
+.. _accessing-captured-output:
+
 Accessing captured output from a test function
 ---------------------------------------------------
 
@@ -162,3 +164,13 @@ as a context manager, disabling capture inside the ``with`` block:
         with capsys.disabled():
             print("output not captured, going directly to sys.stdout")
         print("this output is also captured")
+
+.. note::
+
+   When a capture fixture such as :fixture:`capsys` or :fixture:`capfd` is used,
+   it takes precedence over the global capturing configuration set via
+   command-line options such as ``-s`` or ``--capture=no``.
+
+   This means that output produced within a test using a capture fixture will
+   still be captured and available via ``readouterr()``, even if global capturing
+   is disabled.
