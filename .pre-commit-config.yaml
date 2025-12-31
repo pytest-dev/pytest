@@ -1,7 +1,7 @@
 minimum_pre_commit_version: "4.4.0"
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.14.9"
+  rev: "v0.14.10"
   hooks:
     - id: ruff-check
       args: ["--fix"]
@@ -13,7 +13,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
 - repo: https://github.com/woodruffw/zizmor-pre-commit
-  rev: v1.18.0
+  rev: v1.19.0
   hooks:
     - id: zizmor
       args: ["--fix"]

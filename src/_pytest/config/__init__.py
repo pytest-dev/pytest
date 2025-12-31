@@ -816,6 +816,12 @@ class PytestPluginManager(PluginManager):
             if name in essential_plugins:
                 raise UsageError(f"plugin {name} cannot be disabled")
 
+            if name.endswith("conftest.py"):
+                raise UsageError(
+                    f"Blocking conftest files using -p is not supported: -p no:{name}\n"
+                    "conftest.py files are not plugins and cannot be disabled via -p.\n"
+                )
+
             # PR #4304: remove stepwise if cacheprovider is blocked.
             if name == "cacheprovider":
                 self.set_blocked("stepwise")
