@@ -645,6 +645,7 @@ class SysPathsSnapshot:
     def restore(self) -> None:
         sys.path[:], sys.meta_path[:] = self.__saved
 
+_FileContent = tuple[str | bytes, ...] | list[str | bytes] | str | bytes
 
 @final
 class Pytester:
@@ -757,7 +758,7 @@ class Pytester:
         self,
         ext: str,
         lines: Sequence[Any | bytes],
-        files: Mapping[str, str | bytes],
+        files: Mapping[str, _FileContent],
         encoding: str = "utf-8",
     ) -> Path:
         items = list(files.items())
@@ -863,7 +864,7 @@ class Pytester:
         """
         return self.makefile(".toml", pyproject=source)
 
-    def makepyfile(self, *args: str | bytes, **kwargs: str | bytes) -> Path:
+    def makepyfile(self, *args: _FileContent, **kwargs: _FileContent) -> Path:
         r"""Shortcut for .makefile() with a .py extension.
 
         Defaults to the test name with a '.py' extension, e.g test_foobar.py, overwriting
@@ -883,7 +884,7 @@ class Pytester:
         """
         return self._makefile(".py", args, kwargs)
 
-    def maketxtfile(self, *args: str | bytes, **kwargs: str | bytes) -> Path:
+    def maketxtfile(self, *args: _FileContent, **kwargs: _FileContent) -> Path:
         r"""Shortcut for .makefile() with a .txt extension.
 
         Defaults to the test name with a '.txt' extension, e.g test_foobar.txt, overwriting
