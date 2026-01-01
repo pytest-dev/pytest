@@ -83,6 +83,24 @@ merge_family(families["xunit1"], families["_base_legacy"])
 families["xunit2"] = families["_base"]
 
 
+class _ReportOutput:
+    def __init__(self, report: TestReport, stdout: str, stderr: str, log: str) -> None:
+        self.capstdout = stdout
+        self.capstderr = stderr
+        self.caplog = log
+        self.passed = report.passed
+
+
+class _CapturedOutput:
+    def __init__(self) -> None:
+        self.out = ""
+        self.err = ""
+        self.log = ""
+        self.last_out = ""
+        self.last_err = ""
+        self.last_log = ""
+
+
 class _NodeReporter:
     def __init__(self, nodeid: str | TestReport, xml: LogXML) -> None:
         self.id = nodeid
@@ -156,7 +174,7 @@ class _NodeReporter:
         node.text = bin_xml_escape(data)
         self.append(node)
 
-    def write_captured_output(self, report: TestReport) -> None:
+    def write_captured_output(self, report: TestReport | _ReportOutput) -> None:
         if not self.xml.log_passing_tests and report.passed:
             return
 
@@ -182,7 +200,9 @@ class _NodeReporter:
     def _prepare_content(self, content: str, header: str) -> str:
         return "\n".join([header.center(80, "-"), content, ""])
 
-    def _write_content(self, report: TestReport, content: str, jheader: str) -> None:
+    def _write_content(
+        self, report: TestReport | _ReportOutput, content: str, jheader: str
+    ) -> None:
         tag = ET.Element(jheader)
         tag.text = bin_xml_escape(content)
         self.append(tag)
@@ -484,10 +504,39 @@ class LogXML:
         # List of reports that failed on call but teardown is pending.
         self.open_reports: list[TestReport] = []
         self.cnt_double_fail_tests = 0
+        self._captured_output: dict[tuple[str, object], _CapturedOutput] = {}
 
         # Replaces convenience family with real family.
         if self.family == "legacy":
             self.family = "xunit1"
+
+    def _report_key(self, report: TestReport) -> tuple[str, object]:
+        # Nodeid is stable across phases; avoid xdist-only worker_id/item_index,
+        # and include the worker node when present to disambiguate.
+        return report.nodeid, getattr(report, "node", None)
+
+    @staticmethod
+    def _diff_captured_output(previous: str, current: str) -> str:
+        if not current:
+            return ""
+        if current.startswith(previous):
+            return current[len(previous) :]
+        return current
+
+    def _update_captured_output(self, report: TestReport) -> _CapturedOutput:
+        key = self._report_key(report)
+        captured = self._captured_output.setdefault(key, _CapturedOutput())
+        captured.out += self._diff_captured_output(captured.last_out, report.capstdout)
+        captured.err += self._diff_captured_output(captured.last_err, report.capstderr)
+        captured.log += self._diff_captured_output(captured.last_log, report.caplog)
+        captured.last_out = report.capstdout
+        captured.last_err = report.capstderr
+        captured.last_log = report.caplog
+        return captured
+
+    def _report_output(self, report: TestReport) -> _ReportOutput:
+        captured = self._update_captured_output(report)
+        return _ReportOutput(report, captured.out, captured.err, captured.log)
 
     def finalize(self, report: TestReport) -> None:
         nodeid = getattr(report, "nodeid", report)
@@ -552,24 +601,19 @@ class LogXML:
             -> teardown node1
         """
         close_report = None
+        report_output = self._report_output(report)
         if report.passed:
             if report.when == "call":  # ignore setup/teardown
                 reporter = self._opentestcase(report)
                 reporter.append_pass(report)
         elif report.failed:
             if report.when == "teardown":
-                # The following vars are needed when xdist plugin is used.
-                report_wid = getattr(report, "worker_id", None)
-                report_ii = getattr(report, "item_index", None)
+                report_key = self._report_key(report)
                 close_report = next(
                     (
                         rep
                         for rep in self.open_reports
-                        if (
-                            rep.nodeid == report.nodeid
-                            and getattr(rep, "item_index", None) == report_ii
-                            and getattr(rep, "worker_id", None) == report_wid
-                        )
+                        if self._report_key(rep) == report_key
                     ),
                     None,
                 )
@@ -584,7 +628,7 @@ class LogXML:
                 reporter.append_failure(report)
                 self.open_reports.append(report)
                 if not self.log_passing_tests:
-                    reporter.write_captured_output(report)
+                    reporter.write_captured_output(report_output)
             else:
                 reporter.append_error(report)
         elif report.skipped:
@@ -593,25 +637,21 @@ class LogXML:
         self.update_testcase_duration(report)
         if report.when == "teardown":
             reporter = self._opentestcase(report)
-            reporter.write_captured_output(report)
+            reporter.write_captured_output(report_output)
 
             self.finalize(report)
-            report_wid = getattr(report, "worker_id", None)
-            report_ii = getattr(report, "item_index", None)
+            report_key = self._report_key(report)
             close_report = next(
                 (
                     rep
                     for rep in self.open_reports
-                    if (
-                        rep.nodeid == report.nodeid
-                        and getattr(rep, "item_index", None) == report_ii
-                        and getattr(rep, "worker_id", None) == report_wid
-                    )
+                    if self._report_key(rep) == report_key
                 ),
                 None,
             )
             if close_report:
                 self.open_reports.remove(close_report)
+            self._captured_output.pop(report_key, None)
 
     def update_testcase_duration(self, report: TestReport) -> None:
         """Accumulate total duration for nodeid from given report and update
