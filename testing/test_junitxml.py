@@ -8,8 +8,8 @@ import platform
 from typing import Any
 from typing import cast
 from typing import TYPE_CHECKING
-import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import xml.etree.ElementTree as ET
 
 import xmlschema
 
