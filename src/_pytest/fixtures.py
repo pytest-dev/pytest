@@ -1890,10 +1890,8 @@ class FixtureManager:
         # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
         if not safe_isclass(holderobj) and not isinstance(holderobj, types.ModuleType):
             holderobj_tp: object = type(holderobj)
-            is_class_instance = True
         else:
             holderobj_tp = holderobj
-            is_class_instance = False
 
         self._holderobjseen.add(holderobj)
         for name in dir(holderobj):
