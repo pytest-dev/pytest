@@ -1862,9 +1862,12 @@ class FixtureManager:
             assert isinstance(node_or_obj.nodeid, str)
             nodeid = node_or_obj.nodeid
             from _pytest.python import Class
+
             if isinstance(node_or_obj, Class):
                 class_node = node_or_obj
-                current_class = holderobj if safe_isclass(holderobj) else type(holderobj)
+                current_class = (
+                    holderobj if safe_isclass(holderobj) else type(holderobj)
+                )
             else:
                 class_node = None
                 current_class = None
