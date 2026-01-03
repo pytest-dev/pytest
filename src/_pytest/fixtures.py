@@ -1860,8 +1860,13 @@ class FixtureManager:
                 current_class = None
             else:
                 from _pytest.python import Class
+
                 if isinstance(class_node, Class):
-                    current_class = class_node.obj if safe_isclass(class_node.obj) else type(class_node.obj)
+                    current_class = (
+                        class_node.obj
+                        if safe_isclass(class_node.obj)
+                        else type(class_node.obj)
+                    )
                 else:
                     current_class = None
         else:
