@@ -4911,6 +4911,43 @@ def test_scoped_fixture_caching(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_inherited_class_scoped_fixture_issue_14011(pytester: Pytester) -> None:
+    """Test for issue #14011: class-scoped fixtures in base classes are visible to all inheriting classes."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            @pytest.fixture(scope="class")
+            def fix(self, request):
+                # Use request.cls to access the test class
+                request.cls.setup_called = True
+                yield
+                request.cls.teardown_called = True
+
+        @pytest.mark.usefixtures("fix")
+        class Test1(Base):
+            def setup_method(self):
+                self.setup_called = False
+                self.teardown_called = False
+
+            def test_a(self):
+                assert self.setup_called is True
+
+        @pytest.mark.usefixtures("fix")
+        class Test2(Base):
+            def setup_method(self):
+                self.setup_called = False
+                self.teardown_called = False
+
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_scoped_fixture_caching_exception(pytester: Pytester) -> None:
     """Make sure setup & finalization is only run once for scoped fixture, with a cached exception."""
     pytester.makepyfile(
