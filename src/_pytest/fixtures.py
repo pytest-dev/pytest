@@ -1830,6 +1830,7 @@ class FixtureManager:
         self,
         node_or_obj: object,
         nodeid: str | None,
+        class_node: nodes.Node | None = None,
     ) -> None:
         raise NotImplementedError()
 
@@ -1837,6 +1838,7 @@ class FixtureManager:
         self,
         node_or_obj: nodes.Node | object,
         nodeid: str | NotSetType | None = NOTSET,
+        class_node: nodes.Node | None = None,
     ) -> None:
         """Collect fixtures from a collection node or object.
 
@@ -1854,8 +1856,14 @@ class FixtureManager:
         """
         if nodeid is not NOTSET:
             holderobj = node_or_obj
-            class_node = None
-            current_class = None
+            if class_node is None:
+                current_class = None
+            else:
+                from _pytest.python import Class
+                if isinstance(class_node, Class):
+                    current_class = class_node.obj if safe_isclass(class_node.obj) else type(class_node.obj)
+                else:
+                    current_class = None
         else:
             assert isinstance(node_or_obj, nodes.Node)
             holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]

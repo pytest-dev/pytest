@@ -779,7 +779,7 @@ class Class(PyCollector):
         self._register_setup_class_fixture()
         self._register_setup_method_fixture()
 
-        self.session._fixturemanager.parsefactories(self)
+        self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid, class_node=self)
 
         return super().collect()
 
