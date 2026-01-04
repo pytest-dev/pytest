@@ -5100,6 +5100,45 @@ def test_inherited_class_scoped_fixture_mro_traversal(pytester: Pytester) -> Non
     result.assert_outcomes(passed=2)
 
 
+def test_inherited_class_scoped_fixture_same_module_multiple_classes(
+    pytester: Pytester,
+) -> None:
+    """Test that base class fixtures work correctly when multiple test classes inherit in the same module."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class BaseFixture:
+            @pytest.fixture(scope="class")
+            def shared_fixture(self, request):
+                request.cls.shared_value = "from_base"
+                yield
+                request.cls.cleaned_up = True
+
+        @pytest.mark.usefixtures("shared_fixture")
+        class TestClass1(BaseFixture):
+            cleaned_up = False
+
+            def test_one(self):
+                assert self.shared_value == "from_base"
+
+        @pytest.mark.usefixtures("shared_fixture")
+        class TestClass2(BaseFixture):
+            cleaned_up = False
+
+            def test_two(self):
+                assert self.shared_value == "from_base"
+
+        def test_cleanup():
+            # Verify both classes had their fixtures cleaned up
+            assert TestClass1.cleaned_up is True
+            assert TestClass2.cleaned_up is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)
+
+
 def test_scoped_fixture_caching_exception(pytester: Pytester) -> None:
     """Make sure setup & finalization is only run once for scoped fixture, with a cached exception."""
     pytester.makepyfile(
