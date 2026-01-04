@@ -757,6 +757,7 @@ items, delete or otherwise amend the test items:
     If this hook is implemented in ``conftest.py`` files, it always receives all collected items, not only those
     under the ``conftest.py`` where it is implemented.
 
+.. hook:: pytest_collection_finish
 .. autofunction:: pytest_collection_finish
 
 Test running (runtest) hooks
