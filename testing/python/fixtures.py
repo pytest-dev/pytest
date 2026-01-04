@@ -5292,17 +5292,48 @@ def test_call_spec_getparam_keyerror(pytester: Pytester) -> None:
         _idlist=("x",),
         marks=[],
     )
-
-    # Test that getting an existing param works
+    
+    # Test that getting an existing param works (covers line 1146)
     assert callspec.getparam("x") == 1
-
-    # Test that getting a non-existent param raises ValueError
+    
+    # Test that getting a non-existent param raises ValueError (covers lines 1147-1148)
     with pytest.raises(ValueError, match="y"):
         callspec.getparam("y")
 
 
+def test_hasinit_and_hasnew_functions() -> None:
+    """Test hasinit and hasnew helper functions directly."""
+    from _pytest.python import hasinit, hasnew
+
+    # Test hasinit - class with custom __init__ (covers lines 856-857)
+    class WithInit:
+        def __init__(self):
+            pass
+
+    assert hasinit(WithInit) is True
+
+    # Test hasinit - class without custom __init__ (covers line 858)
+    class WithoutInit:
+        pass
+
+    assert hasinit(WithoutInit) is False
+
+    # Test hasnew - class with custom __new__ (covers lines 863-864)
+    class WithNew:
+        def __new__(cls):
+            return super().__new__(cls)
+
+    assert hasnew(WithNew) is True
+
+    # Test hasnew - class without custom __new__ (covers line 865)
+    class WithoutNew:
+        pass
+
+    assert hasnew(WithoutNew) is False
+
+
 def test_function_getinstance_non_class_parent(pytester: Pytester) -> None:
-    """Test that Function._getinstance returns None when parent is not a Class."""
+    """Test that Function._getinstance returns None when parent is not a Class (covers line 1669)."""
     pytester.makepyfile(
         """
         def test_function():
@@ -5311,6 +5342,35 @@ def test_function_getinstance_non_class_parent(pytester: Pytester) -> None:
             assert True
         """
     )
+    # Get the function item and directly call _getinstance to ensure coverage
+    items, _ = pytester.inline_genitems(pytester.path / "test_function_getinstance_non_class_parent.py")
+    assert len(items) == 1
+    item = items[0]
+    # Directly call _getinstance to cover line 1669
+    instance = item._getinstance()  # type: ignore[attr-defined]
+    assert instance is None
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_function_getinstance_with_class_parent(pytester: Pytester) -> None:
+    """Test that Function._getinstance returns instance when parent is a Class (covers line 1665)."""
+    pytester.makepyfile(
+        """
+        class TestClass:
+            def test_method(self):
+                # This is a class method, so _getinstance should return an instance
+                assert True
+        """
+    )
+    # Get the function item and directly call _getinstance to ensure coverage
+    items, _ = pytester.inline_genitems(pytester.path / "test_function_getinstance_with_class_parent.py")
+    assert len(items) == 1
+    item = items[0]
+    # Directly call _getinstance to cover line 1665
+    instance = item._getinstance()  # type: ignore[attr-defined]
+    assert instance is not None
+    assert isinstance(instance, item.parent.obj)  # type: ignore[attr-defined]
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
@@ -5323,36 +5383,70 @@ def test_function_pyfuncitem_property(pytester: Pytester) -> None:
             assert True
         """
     )
+    # Get the function item and directly access _pyfuncitem to cover line 1683
+    items, _ = pytester.inline_genitems(pytester.path / "test_function_pyfuncitem_property.py")
+    assert len(items) == 1
+    item = items[0]
+    # Directly access the property to ensure coverage
+    assert item._pyfuncitem is item  # type: ignore[attr-defined]
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
-    # The property is accessed internally during test execution
 
 
 def test_function_traceback_filter(pytester: Pytester) -> None:
-    """Test that Function._traceback_filter works correctly."""
+    """Test that Function._traceback_filter works correctly (covers lines 1693, 1719)."""
     pytester.makepyfile(
         """
         def test_with_error():
             raise ValueError("test error")
         """
     )
-    result = pytester.runpytest()
+    # Run without --fulltrace to ensure _traceback_filter is called (covers line 1693)
+    result = pytester.runpytest("--tb=short")
     result.assert_outcomes(failed=1)
     # The traceback filter is used when formatting errors
 
 
-def test_function_definition_runtest_error(pytester: Pytester) -> None:
-    """Test that FunctionDefinition.runtest raises RuntimeError."""
+def test_function_traceback_filter_with_fulltrace(pytester: Pytester) -> None:
+    """Test that Function._traceback_filter returns early with --fulltrace (covers line 1719)."""
     pytester.makepyfile(
         """
-        def some_function():
-            # This is a function definition, not a test
-            pass
+        def test_with_error():
+            raise ValueError("test error")
         """
     )
-    # FunctionDefinition should not be collected as a test
-    result = pytester.runpytest()
-    result.assert_outcomes(passed=0)
+    # Run with --fulltrace to cover the early return path (line 1719)
+    result = pytester.runpytest("--fulltrace", "--tb=short")
+    result.assert_outcomes(failed=1)
+
+
+def test_function_definition_runtest_error(pytester: Pytester) -> None:
+    """Test that FunctionDefinition.runtest raises RuntimeError (covers line 1737)."""
+    from _pytest.python import FunctionDefinition
+    from _pytest.python import Metafunc
+
+    def dummy_func():
+        pass
+
+    # Create FunctionDefinition through Metafunc (which uses FunctionDefinition internally)
+    # This is how FunctionDefinition is actually used in pytest
+    modcol = pytester.getmodulecol("")
+    metafunc = Metafunc.from_parent(
+        parent=modcol,
+        definition=FunctionDefinition._create(
+            obj=dummy_func,
+            parent=modcol,
+            _ispytest=True,
+        ),
+        fixtureinfo=modcol.session._fixturemanager.getfixtureinfo(
+            modcol, dummy_func, None
+        ),
+        _ispytest=True,
+    )
+    
+    # Directly call runtest on the definition to cover line 1737
+    with pytest.raises(RuntimeError, match="function definitions are not supposed to be run as tests"):
+        metafunc.definition.runtest()
 
 
 def test_getmodpath_with_includemodule(pytester: Pytester) -> None:
