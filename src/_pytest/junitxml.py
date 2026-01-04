@@ -84,11 +84,14 @@ families["xunit2"] = families["_base"]
 
 
 class _ReportOutput:
-    def __init__(self, report: TestReport, stdout: str, stderr: str, log: str) -> None:
+    def __init__(
+        self, report: TestReport, stdout: str, stderr: str, log: str, stream_id: int
+    ) -> None:
         self.capstdout = stdout
         self.capstderr = stderr
         self.caplog = log
         self.passed = report.passed
+        self.stream_id = stream_id
 
 
 class _CapturedOutput:
@@ -99,6 +102,13 @@ class _CapturedOutput:
         self.last_out = ""
         self.last_err = ""
         self.last_log = ""
+
+
+class _OutputState:
+    def __init__(self) -> None:
+        self.current: _CapturedOutput | None = None
+        self.current_id: int | None = None
+        self.next_id = 0
 
 
 class _NodeReporter:
@@ -501,17 +511,18 @@ class LogXML:
         self.node_reporters_ordered: list[_NodeReporter] = []
         self.global_properties: list[tuple[str, str]] = []
 
-        # List of reports that failed on call but teardown is pending.
-        self.open_reports: list[TestReport] = []
+        # Reports that failed on call but teardown is pending.
+        self.open_reports: dict[tuple[tuple[str, object], int], TestReport] = {}
         self.cnt_double_fail_tests = 0
-        self._captured_output: dict[tuple[str, object], _CapturedOutput] = {}
+        self._output_state: dict[tuple[str, object], _OutputState] = {}
+        self._ambiguous_output: set[tuple[str, object]] = set()
 
         # Replaces convenience family with real family.
         if self.family == "legacy":
             self.family = "xunit1"
 
     def _report_key(self, report: TestReport) -> tuple[str, object]:
-        # Nodeid is stable across phases; avoid xdist-only worker_id/item_index,
+        # Nodeid is not guaranteed unique; avoid xdist-only worker_id/item_index,
         # and include the worker node when present to disambiguate.
         return report.nodeid, getattr(report, "node", None)
 
@@ -523,20 +534,59 @@ class LogXML:
             return current[len(previous) :]
         return current
 
-    def _update_captured_output(self, report: TestReport) -> _CapturedOutput:
+    def _mark_output_ambiguous(self, key: tuple[str, object]) -> None:
+        self._ambiguous_output.add(key)
+        self._output_state.pop(key, None)
+        for report_key in list(self.open_reports):
+            if report_key[0] == key:
+                del self.open_reports[report_key]
+
+    def _current_output_stream(
+        self, report: TestReport
+    ) -> tuple[_CapturedOutput, int] | None:
         key = self._report_key(report)
-        captured = self._captured_output.setdefault(key, _CapturedOutput())
+        if key in self._ambiguous_output:
+            return None
+        state = self._output_state.setdefault(key, _OutputState())
+        if report.when == "setup":
+            if state.current is not None:
+                self._mark_output_ambiguous(key)
+                return None
+            state.current = _CapturedOutput()
+            state.current_id = state.next_id
+            state.next_id += 1
+        elif state.current is None:
+            state.current = _CapturedOutput()
+            state.current_id = state.next_id
+            state.next_id += 1
+        assert state.current is not None
+        assert state.current_id is not None
+        return state.current, state.current_id
+
+    def _finish_output_stream(self, report: TestReport) -> None:
+        if report.when != "teardown":
+            return
+        key = self._report_key(report)
+        if key in self._ambiguous_output:
+            return
+        state = self._output_state.get(key)
+        if state is None:
+            return
+        state.current = None
+        state.current_id = None
+
+    def _report_output(self, report: TestReport) -> _ReportOutput | None:
+        stream = self._current_output_stream(report)
+        if stream is None:
+            return None
+        captured, stream_id = stream
         captured.out += self._diff_captured_output(captured.last_out, report.capstdout)
         captured.err += self._diff_captured_output(captured.last_err, report.capstderr)
         captured.log += self._diff_captured_output(captured.last_log, report.caplog)
         captured.last_out = report.capstdout
         captured.last_err = report.capstderr
         captured.last_log = report.caplog
-        return captured
-
-    def _report_output(self, report: TestReport) -> _ReportOutput:
-        captured = self._update_captured_output(report)
-        return _ReportOutput(report, captured.out, captured.err, captured.log)
+        return _ReportOutput(report, captured.out, captured.err, captured.log, stream_id)
 
     def finalize(self, report: TestReport) -> None:
         nodeid = getattr(report, "nodeid", report)
@@ -608,16 +658,14 @@ class LogXML:
                 reporter.append_pass(report)
         elif report.failed:
             if report.when == "teardown":
-                report_key = self._report_key(report)
-                close_report = next(
-                    (
-                        rep
-                        for rep in self.open_reports
-                        if self._report_key(rep) == report_key
-                    ),
-                    None,
-                )
-                if close_report:
+                if report_output is not None:
+                    report_key = self._report_key(report)
+                    close_report = self.open_reports.pop(
+                        (report_key, report_output.stream_id), None
+                    )
+                else:
+                    close_report = None
+                if close_report is not None:
                     # We need to open new testcase in case we have failure in
                     # call and error in teardown in order to follow junit
                     # schema.
@@ -626,9 +674,12 @@ class LogXML:
             reporter = self._opentestcase(report)
             if report.when == "call":
                 reporter.append_failure(report)
-                self.open_reports.append(report)
+                if report_output is not None:
+                    report_key = self._report_key(report)
+                    self.open_reports[(report_key, report_output.stream_id)] = report
                 if not self.log_passing_tests:
-                    reporter.write_captured_output(report_output)
+                    if report_output is not None:
+                        reporter.write_captured_output(report_output)
             else:
                 reporter.append_error(report)
         elif report.skipped:
@@ -637,21 +688,14 @@ class LogXML:
         self.update_testcase_duration(report)
         if report.when == "teardown":
             reporter = self._opentestcase(report)
-            reporter.write_captured_output(report_output)
+            if report_output is not None:
+                reporter.write_captured_output(report_output)
 
             self.finalize(report)
-            report_key = self._report_key(report)
-            close_report = next(
-                (
-                    rep
-                    for rep in self.open_reports
-                    if self._report_key(rep) == report_key
-                ),
-                None,
-            )
-            if close_report:
-                self.open_reports.remove(close_report)
-            self._captured_output.pop(report_key, None)
+            if report_output is not None:
+                report_key = self._report_key(report)
+                self.open_reports.pop((report_key, report_output.stream_id), None)
+            self._finish_output_stream(report)
 
     def update_testcase_duration(self, report: TestReport) -> None:
         """Accumulate total duration for nodeid from given report and update
