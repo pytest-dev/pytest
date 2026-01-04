@@ -5292,10 +5292,10 @@ def test_call_spec_getparam_keyerror(pytester: Pytester) -> None:
         _idlist=("x",),
         marks=[],
     )
-    
+
     # Test that getting an existing param works (covers line 1146)
     assert callspec.getparam("x") == 1
-    
+
     # Test that getting a non-existent param raises ValueError (covers lines 1147-1148)
     with pytest.raises(ValueError, match="y"):
         callspec.getparam("y")
@@ -5303,7 +5303,8 @@ def test_call_spec_getparam_keyerror(pytester: Pytester) -> None:
 
 def test_hasinit_and_hasnew_functions() -> None:
     """Test hasinit and hasnew helper functions directly."""
-    from _pytest.python import hasinit, hasnew
+    from _pytest.python import hasinit
+    from _pytest.python import hasnew
 
     # Test hasinit - class with custom __init__ (covers lines 856-857)
     class WithInit:
@@ -5343,7 +5344,9 @@ def test_function_getinstance_non_class_parent(pytester: Pytester) -> None:
         """
     )
     # Get the function item and directly call _getinstance to ensure coverage
-    items, _ = pytester.inline_genitems(pytester.path / "test_function_getinstance_non_class_parent.py")
+    items, _ = pytester.inline_genitems(
+        pytester.path / "test_function_getinstance_non_class_parent.py"
+    )
     assert len(items) == 1
     item = items[0]
     # Directly call _getinstance to cover line 1669
@@ -5364,7 +5367,9 @@ def test_function_getinstance_with_class_parent(pytester: Pytester) -> None:
         """
     )
     # Get the function item and directly call _getinstance to ensure coverage
-    items, _ = pytester.inline_genitems(pytester.path / "test_function_getinstance_with_class_parent.py")
+    items, _ = pytester.inline_genitems(
+        pytester.path / "test_function_getinstance_with_class_parent.py"
+    )
     assert len(items) == 1
     item = items[0]
     # Directly call _getinstance to cover line 1665
@@ -5384,7 +5389,9 @@ def test_function_pyfuncitem_property(pytester: Pytester) -> None:
         """
     )
     # Get the function item and directly access _pyfuncitem to cover line 1683
-    items, _ = pytester.inline_genitems(pytester.path / "test_function_pyfuncitem_property.py")
+    items, _ = pytester.inline_genitems(
+        pytester.path / "test_function_pyfuncitem_property.py"
+    )
     assert len(items) == 1
     item = items[0]
     # Directly access the property to ensure coverage
@@ -5443,9 +5450,11 @@ def test_function_definition_runtest_error(pytester: Pytester) -> None:
         ),
         _ispytest=True,
     )
-    
+
     # Directly call runtest on the definition to cover line 1737
-    with pytest.raises(RuntimeError, match="function definitions are not supposed to be run as tests"):
+    with pytest.raises(
+        RuntimeError, match="function definitions are not supposed to be run as tests"
+    ):
         metafunc.definition.runtest()
 
 
