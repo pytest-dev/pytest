@@ -5000,62 +5000,6 @@ def test_inherited_class_scoped_fixture_multiple_inheritance(
     result.assert_outcomes(passed=2)
 
 
-def test_inherited_class_scoped_fixture_not_in_base_class(pytester: Pytester) -> None:
-    """Test that class-scoped fixtures defined in the current class are not affected by base class logic."""
-    pytester.makepyfile(
-        """
-        import pytest
-
-        class Base:
-            pass
-
-        class Test1(Base):
-            @pytest.fixture(scope="class")
-            def fix(self, request):
-                request.cls.setup_called = True
-                yield
-
-            @pytest.mark.usefixtures("fix")
-            def test_a(self):
-                assert self.setup_called is True
-        """
-    )
-    result = pytester.runpytest()
-    result.assert_outcomes(passed=1)
-
-
-def test_inherited_class_scoped_fixture_multiple_inheritance(
-    pytester: Pytester,
-) -> None:
-    """Test class-scoped fixtures with multiple inheritance levels."""
-    pytester.makepyfile(
-        """
-        import pytest
-
-        class GrandBase:
-            @pytest.fixture(scope="class")
-            def fix(self, request):
-                request.cls.setup_called = True
-                yield
-
-        class Base(GrandBase):
-            pass
-
-        @pytest.mark.usefixtures("fix")
-        class Test1(Base):
-            def test_a(self):
-                assert self.setup_called is True
-
-        @pytest.mark.usefixtures("fix")
-        class Test2(Base):
-            def test_a(self):
-                assert self.setup_called is True
-        """
-    )
-    result = pytester.runpytest()
-    result.assert_outcomes(passed=2)
-
-
 def test_inherited_function_scoped_fixture_not_affected(pytester: Pytester) -> None:
     """Test that function-scoped fixtures in base classes are not affected by the class-scope logic."""
     pytester.makepyfile(
@@ -5077,6 +5021,41 @@ def test_inherited_function_scoped_fixture_not_affected(pytester: Pytester) -> N
         class Test2(Base):
             def test_a(self):
                 assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_class_scoped_fixture_with_override(pytester: Pytester) -> None:
+    """Test that class-scoped fixtures can be overridden in subclasses while base class fixtures still work."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            @pytest.fixture(scope="class")
+            def base_fix(self, request):
+                request.cls.base_setup = True
+                yield
+
+        class Test1(Base):
+            @pytest.fixture(scope="class")
+            def base_fix(self, request):
+                # Override the base fixture
+                request.cls.overridden = True
+                yield
+
+            @pytest.mark.usefixtures("base_fix")
+            def test_a(self):
+                assert self.overridden is True
+                assert not hasattr(self, 'base_setup')
+
+        @pytest.mark.usefixtures("base_fix")
+        class Test2(Base):
+            # Use base class fixture
+            def test_a(self):
+                assert self.base_setup is True
         """
     )
     result = pytester.runpytest()
