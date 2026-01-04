@@ -5292,10 +5292,10 @@ def test_call_spec_getparam_keyerror(pytester: Pytester) -> None:
         _idlist=("x",),
         marks=[],
     )
-    
+
     # Test that getting an existing param works
     assert callspec.getparam("x") == 1
-    
+
     # Test that getting a non-existent param raises ValueError
     with pytest.raises(ValueError, match="y"):
         callspec.getparam("y")
@@ -5365,7 +5365,9 @@ def test_getmodpath_with_includemodule(pytester: Pytester) -> None:
         """
     )
     # Get the items and test getmodpath with includemodule=True
-    items, _ = pytester.inline_genitems(pytester.path / "test_getmodpath_with_includemodule.py")
+    items, _ = pytester.inline_genitems(
+        pytester.path / "test_getmodpath_with_includemodule.py"
+    )
     assert len(items) == 1
     item = items[0]
     # Test getmodpath with includemodule=True to cover lines 319-320
@@ -5384,7 +5386,7 @@ def test_collection_ignore_directory(pytester: Pytester) -> None:
     (ignored_dir / "test_something.py").write_text(
         "def test_ignored(): pass", encoding="utf-8"
     )
-    
+
     # Create a conftest that ignores the directory
     pytester.makeconftest(
         """
@@ -5394,7 +5396,7 @@ def test_collection_ignore_directory(pytester: Pytester) -> None:
             return None
         """
     )
-    
+
     # Create a test file in the main directory
     pytester.makepyfile(
         """
@@ -5402,7 +5404,7 @@ def test_collection_ignore_directory(pytester: Pytester) -> None:
             assert True
         """
     )
-    
+
     result = pytester.runpytest()
     # Only the non-ignored test should run
     result.assert_outcomes(passed=1)
@@ -5413,7 +5415,7 @@ def test_collection_ignore_file(pytester: Pytester) -> None:
     # Create a file that should be ignored
     ignored_file = pytester.path / "test_ignored.py"
     ignored_file.write_text("def test_ignored(): pass", encoding="utf-8")
-    
+
     # Create a conftest that ignores the file
     pytester.makeconftest(
         """
@@ -5423,7 +5425,7 @@ def test_collection_ignore_file(pytester: Pytester) -> None:
             return None
         """
     )
-    
+
     # Create a test file that should not be ignored
     pytester.makepyfile(
         """
@@ -5431,7 +5433,7 @@ def test_collection_ignore_file(pytester: Pytester) -> None:
             assert True
         """
     )
-    
+
     result = pytester.runpytest()
     # Only the non-ignored test should run
     result.assert_outcomes(passed=1)
