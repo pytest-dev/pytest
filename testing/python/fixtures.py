@@ -5062,6 +5062,44 @@ def test_inherited_class_scoped_fixture_with_override(pytester: Pytester) -> Non
     result.assert_outcomes(passed=2)
 
 
+def test_inherited_class_scoped_fixture_mro_traversal(pytester: Pytester) -> None:
+    """Test that MRO traversal correctly finds fixtures in base classes at different levels."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Level1:
+            @pytest.fixture(scope="class")
+            def level1_fix(self, request):
+                request.cls.level1 = True
+                yield
+
+        class Level2(Level1):
+            @pytest.fixture(scope="class")
+            def level2_fix(self, request):
+                request.cls.level2 = True
+                yield
+
+        class Level3(Level2):
+            pass
+
+        @pytest.mark.usefixtures("level1_fix", "level2_fix")
+        class Test1(Level3):
+            def test_a(self):
+                assert self.level1 is True
+                assert self.level2 is True
+
+        @pytest.mark.usefixtures("level1_fix")
+        class Test2(Level3):
+            def test_b(self):
+                assert self.level1 is True
+                assert not hasattr(self, 'level2')
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
 def test_scoped_fixture_caching_exception(pytester: Pytester) -> None:
     """Make sure setup & finalization is only run once for scoped fixture, with a cached exception."""
     pytester.makepyfile(
