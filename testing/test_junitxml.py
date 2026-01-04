@@ -1865,6 +1865,91 @@ def test_interlaced_reports_capture_output(
         assert (expected in system_err_text) is expect_err
 
 
+def test_interlaced_reports_nodeid_collision(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+        from _pytest.runner import call_and_report
+
+        _reports = []
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_runtest_protocol(item, nextitem):
+            item.ihook.pytest_runtest_logstart(
+                nodeid=item.nodeid, location=item.location
+            )
+            reports = [call_and_report(item, "setup", log=False)]
+            if reports[0].passed:
+                reports.append(call_and_report(item, "call", log=False))
+            reports.append(
+                call_and_report(item, "teardown", log=False, nextitem=nextitem)
+            )
+            item.ihook.pytest_runtest_logfinish(
+                nodeid=item.nodeid, location=item.location
+            )
+
+            _reports.append(reports)
+            if nextitem is not None:
+                return True
+
+            ihook = item.ihook
+            for reports in _reports:
+                ihook.pytest_runtest_logreport(report=reports[0])
+            for reports in _reports:
+                if len(reports) == 3:
+                    ihook.pytest_runtest_logreport(report=reports[1])
+            for reports in reversed(_reports):
+                ihook.pytest_runtest_logreport(report=reports[-1])
+            return True
+
+        @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+        def pytest_runtest_logreport(report):
+            if report.when in ("setup", "call", "teardown"):
+                report.nodeid = "collided::nodeid"
+                sections = []
+                for name, content in report.sections:
+                    if name.startswith("Captured "):
+                        if name.endswith(f" {report.when}"):
+                            sections.append((name, content))
+                    else:
+                        sections.append((name, content))
+                report.sections = sections
+            yield
+        """
+    )
+    pytester.makepyfile(
+        """
+        import sys
+        import pytest
+
+        @pytest.fixture
+        def setup_output(request):
+            print(f"SETUP_STDOUT_{request.node.name}")
+            sys.stderr.write(f"SETUP_STDERR_{request.node.name}\\n")
+
+        def test_one(setup_output):
+            print("CALL_STDOUT_test_one")
+            sys.stderr.write("CALL_STDERR_test_one\\n")
+
+        def test_two(setup_output):
+            print("CALL_STDOUT_test_two")
+            sys.stderr.write("CALL_STDERR_test_two\\n")
+        """
+    )
+
+    xml_path = pytester.path.joinpath("junit.xml")
+    result = pytester.runpytest(
+        f"--junitxml={xml_path}",
+        "--override-ini=junit_family=xunit1",
+        "--override-ini=junit_logging=all",
+    )
+    assert result.ret == 0
+
+    root = ET.parse(xml_path).getroot()
+    assert not list(root.iter("system-out"))
+    assert not list(root.iter("system-err"))
+
+
 @parametrize_families
 def test_logging_passing_tests_disabled_does_not_log_test_output(
     pytester: Pytester, run_and_parse: RunAndParse, xunit_family: str
