@@ -4927,19 +4927,150 @@ def test_inherited_class_scoped_fixture_issue_14011(pytester: Pytester) -> None:
 
         @pytest.mark.usefixtures("fix")
         class Test1(Base):
-            def setup_method(self):
-                self.setup_called = False
-                self.teardown_called = False
+            setup_called = False
 
             def test_a(self):
                 assert self.setup_called is True
 
         @pytest.mark.usefixtures("fix")
         class Test2(Base):
-            def setup_method(self):
-                self.setup_called = False
-                self.teardown_called = False
+            setup_called = False
 
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_class_scoped_fixture_not_in_base_class(pytester: Pytester) -> None:
+    """Test that class-scoped fixtures defined in the current class are not affected by base class logic."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            pass
+
+        class Test1(Base):
+            @pytest.fixture(scope="class")
+            def fix(self, request):
+                request.cls.setup_called = True
+                yield
+
+            @pytest.mark.usefixtures("fix")
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_inherited_class_scoped_fixture_multiple_inheritance(pytester: Pytester) -> None:
+    """Test class-scoped fixtures with multiple inheritance levels."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class GrandBase:
+            @pytest.fixture(scope="class")
+            def fix(self, request):
+                request.cls.setup_called = True
+                yield
+
+        class Base(GrandBase):
+            pass
+
+        @pytest.mark.usefixtures("fix")
+        class Test1(Base):
+            def test_a(self):
+                assert self.setup_called is True
+
+        @pytest.mark.usefixtures("fix")
+        class Test2(Base):
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_class_scoped_fixture_not_in_base_class(pytester: Pytester) -> None:
+    """Test that class-scoped fixtures defined in the current class are not affected by base class logic."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            pass
+
+        class Test1(Base):
+            @pytest.fixture(scope="class")
+            def fix(self, request):
+                request.cls.setup_called = True
+                yield
+
+            @pytest.mark.usefixtures("fix")
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_inherited_class_scoped_fixture_multiple_inheritance(pytester: Pytester) -> None:
+    """Test class-scoped fixtures with multiple inheritance levels."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class GrandBase:
+            @pytest.fixture(scope="class")
+            def fix(self, request):
+                request.cls.setup_called = True
+                yield
+
+        class Base(GrandBase):
+            pass
+
+        @pytest.mark.usefixtures("fix")
+        class Test1(Base):
+            def test_a(self):
+                assert self.setup_called is True
+
+        @pytest.mark.usefixtures("fix")
+        class Test2(Base):
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_function_scoped_fixture_not_affected(pytester: Pytester) -> None:
+    """Test that function-scoped fixtures in base classes are not affected by the class-scope logic."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            @pytest.fixture(scope="function")
+            def fix(self, request):
+                request.instance.setup_called = True
+                yield
+
+        @pytest.mark.usefixtures("fix")
+        class Test1(Base):
+            def test_a(self):
+                assert self.setup_called is True
+
+        @pytest.mark.usefixtures("fix")
+        class Test2(Base):
             def test_a(self):
                 assert self.setup_called is True
         """
