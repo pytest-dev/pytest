@@ -586,7 +586,9 @@ class LogXML:
         captured.last_out = report.capstdout
         captured.last_err = report.capstderr
         captured.last_log = report.caplog
-        return _ReportOutput(report, captured.out, captured.err, captured.log, stream_id)
+        return _ReportOutput(
+            report, captured.out, captured.err, captured.log, stream_id
+        )
 
     def finalize(self, report: TestReport) -> None:
         nodeid = getattr(report, "nodeid", report)
