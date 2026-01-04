@@ -4968,7 +4968,9 @@ def test_inherited_class_scoped_fixture_not_in_base_class(pytester: Pytester) ->
     result.assert_outcomes(passed=1)
 
 
-def test_inherited_class_scoped_fixture_multiple_inheritance(pytester: Pytester) -> None:
+def test_inherited_class_scoped_fixture_multiple_inheritance(
+    pytester: Pytester,
+) -> None:
     """Test class-scoped fixtures with multiple inheritance levels."""
     pytester.makepyfile(
         """
@@ -5022,7 +5024,9 @@ def test_inherited_class_scoped_fixture_not_in_base_class(pytester: Pytester) ->
     result.assert_outcomes(passed=1)
 
 
-def test_inherited_class_scoped_fixture_multiple_inheritance(pytester: Pytester) -> None:
+def test_inherited_class_scoped_fixture_multiple_inheritance(
+    pytester: Pytester,
+) -> None:
     """Test class-scoped fixtures with multiple inheritance levels."""
     pytester.makepyfile(
         """

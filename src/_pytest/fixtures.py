@@ -1917,11 +1917,15 @@ class FixtureManager:
                     # Check if fixture is defined in a base class (not in current class)
                     if name not in current_class.__dict__:
                         # Check MRO to see if it's in a base class
-                        for base in current_class.__mro__[1:]:  # Skip current_class itself
+                        for base in current_class.__mro__[
+                            1:
+                        ]:  # Skip current_class itself
                             if name in base.__dict__:
                                 # Fixture is in a base class, use module nodeid for visibility
                                 if class_node is not None:
-                                    module_node = class_node.getparent(_pytest.python.Module)
+                                    module_node = class_node.getparent(
+                                        _pytest.python.Module
+                                    )
                                     if module_node is not None:
                                         fixture_nodeid = module_node.nodeid
                                 break
