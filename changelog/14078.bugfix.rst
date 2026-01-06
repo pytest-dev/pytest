@@ -1,0 +1,1 @@
+Fix JUnit XML output to include captured stdout/stderr from setup and call phases when reports are interlaced without xdist metadata.
