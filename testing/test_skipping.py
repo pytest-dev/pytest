@@ -1492,8 +1492,9 @@ def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
 
 
 class TestMarkXFailWithFailAndXFail:
-
-    def test_marked_xfail_with_reason_pytest_fail_with_reason(self, pytester: Pytester) -> None:
+    def test_marked_xfail_with_reason_pytest_fail_with_reason(
+        self, pytester: Pytester
+    ) -> None:
         item = pytester.getitem(
             """
             import pytest
@@ -1508,7 +1509,9 @@ class TestMarkXFailWithFailAndXFail:
         assert callreport.skipped
         assert callreport.wasxfail == "reason mark.xfail"
 
-    def test_marked_xfail_with_reason_pytest_fail_without_reason(self, pytester: Pytester) -> None:
+    def test_marked_xfail_with_reason_pytest_fail_without_reason(
+        self, pytester: Pytester
+    ) -> None:
         item = pytester.getitem(
             """
             import pytest
@@ -1523,7 +1526,9 @@ class TestMarkXFailWithFailAndXFail:
         assert callreport.skipped
         assert callreport.wasxfail == "reason mark.xfail"
 
-    def test_marked_xfail_without_reason_pytest_fail_with_reason(self, pytester: Pytester) -> None:
+    def test_marked_xfail_without_reason_pytest_fail_with_reason(
+        self, pytester: Pytester
+    ) -> None:
         item = pytester.getitem(
             """
             import pytest
@@ -1538,7 +1543,9 @@ class TestMarkXFailWithFailAndXFail:
         assert callreport.skipped
         assert callreport.wasxfail == "reason pytest.fail"
 
-    def test_marked_xfail_without_reason_pytest_fail_without_reason(self, pytester: Pytester) -> None:
+    def test_marked_xfail_without_reason_pytest_fail_without_reason(
+        self, pytester: Pytester
+    ) -> None:
         item = pytester.getitem(
             """
             import pytest
@@ -1553,7 +1560,9 @@ class TestMarkXFailWithFailAndXFail:
         assert callreport.skipped
         assert callreport.wasxfail == ""
 
-    def test_marked_xfail_with_reason_pytest_xfail_with_reason(self, pytester: Pytester) -> None:
+    def test_marked_xfail_with_reason_pytest_xfail_with_reason(
+        self, pytester: Pytester
+    ) -> None:
         item = pytester.getitem(
             """
             import pytest
@@ -1568,7 +1577,9 @@ class TestMarkXFailWithFailAndXFail:
         assert callreport.skipped
         assert callreport.wasxfail == "reason mark.xfail"
 
-    def test_marked_xfail_with_reason_pytest_xfail_without_reason(self, pytester: Pytester) -> None:
+    def test_marked_xfail_with_reason_pytest_xfail_without_reason(
+        self, pytester: Pytester
+    ) -> None:
         item = pytester.getitem(
             """
             import pytest
@@ -1583,7 +1594,9 @@ class TestMarkXFailWithFailAndXFail:
         assert callreport.skipped
         assert callreport.wasxfail == "reason mark.xfail"
 
-    def test_marked_xfail_without_reason_pytest_xfail_with_reason(self, pytester: Pytester) -> None:
+    def test_marked_xfail_without_reason_pytest_xfail_with_reason(
+        self, pytester: Pytester
+    ) -> None:
         item = pytester.getitem(
             """
             import pytest
@@ -1598,7 +1611,9 @@ class TestMarkXFailWithFailAndXFail:
         assert callreport.skipped
         assert callreport.wasxfail == "reason pytest.xfail"
 
-    def test_marked_xfail_without_reason_pytest_xfail_without_reason(self, pytester: Pytester) -> None:
+    def test_marked_xfail_without_reason_pytest_xfail_without_reason(
+        self, pytester: Pytester
+    ) -> None:
         item = pytester.getitem(
             """
             import pytest
