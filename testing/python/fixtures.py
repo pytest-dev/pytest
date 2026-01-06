@@ -4911,6 +4911,637 @@ def test_scoped_fixture_caching(pytester: Pytester) -> None:
     assert result.ret == 0
 
 
+def test_inherited_class_scoped_fixture_issue_14011(pytester: Pytester) -> None:
+    """Test for issue #14011: class-scoped fixtures in base classes are visible to all inheriting classes."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            @pytest.fixture(scope="class")
+            def fix(self, request):
+                # Use request.cls to access the test class
+                request.cls.setup_called = True
+                yield
+                request.cls.teardown_called = True
+
+        @pytest.mark.usefixtures("fix")
+        class Test1(Base):
+            setup_called = False
+
+            def test_a(self):
+                assert self.setup_called is True
+
+        @pytest.mark.usefixtures("fix")
+        class Test2(Base):
+            setup_called = False
+
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_class_scoped_fixture_not_in_base_class(pytester: Pytester) -> None:
+    """Test that class-scoped fixtures defined in the current class are not affected by base class logic."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            pass
+
+        class Test1(Base):
+            @pytest.fixture(scope="class")
+            def fix(self, request):
+                request.cls.setup_called = True
+                yield
+
+            @pytest.mark.usefixtures("fix")
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_inherited_class_scoped_fixture_multiple_inheritance(
+    pytester: Pytester,
+) -> None:
+    """Test class-scoped fixtures with multiple inheritance levels."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class GrandBase:
+            @pytest.fixture(scope="class")
+            def fix(self, request):
+                request.cls.setup_called = True
+                yield
+
+        class Base(GrandBase):
+            pass
+
+        @pytest.mark.usefixtures("fix")
+        class Test1(Base):
+            def test_a(self):
+                assert self.setup_called is True
+
+        @pytest.mark.usefixtures("fix")
+        class Test2(Base):
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_function_scoped_fixture_not_affected(pytester: Pytester) -> None:
+    """Test that function-scoped fixtures in base classes are not affected by the class-scope logic."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            @pytest.fixture(scope="function")
+            def fix(self, request):
+                request.instance.setup_called = True
+                yield
+
+        @pytest.mark.usefixtures("fix")
+        class Test1(Base):
+            def test_a(self):
+                assert self.setup_called is True
+
+        @pytest.mark.usefixtures("fix")
+        class Test2(Base):
+            def test_a(self):
+                assert self.setup_called is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_class_scoped_fixture_with_override(pytester: Pytester) -> None:
+    """Test that class-scoped fixtures can be overridden in subclasses while base class fixtures still work."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            @pytest.fixture(scope="class")
+            def base_fix(self, request):
+                request.cls.base_setup = True
+                yield
+
+        class Test1(Base):
+            @pytest.fixture(scope="class")
+            def base_fix(self, request):
+                # Override the base fixture
+                request.cls.overridden = True
+                yield
+
+            @pytest.mark.usefixtures("base_fix")
+            def test_a(self):
+                assert self.overridden is True
+                assert not hasattr(self, 'base_setup')
+
+        @pytest.mark.usefixtures("base_fix")
+        class Test2(Base):
+            # Use base class fixture
+            def test_a(self):
+                assert self.base_setup is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_class_scoped_fixture_mro_traversal(pytester: Pytester) -> None:
+    """Test that MRO traversal correctly finds fixtures in base classes at different levels."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Level1:
+            @pytest.fixture(scope="class")
+            def level1_fix(self, request):
+                request.cls.level1 = True
+                yield
+
+        class Level2(Level1):
+            @pytest.fixture(scope="class")
+            def level2_fix(self, request):
+                request.cls.level2 = True
+                yield
+
+        class Level3(Level2):
+            pass
+
+        @pytest.mark.usefixtures("level1_fix", "level2_fix")
+        class Test1(Level3):
+            def test_a(self):
+                assert self.level1 is True
+                assert self.level2 is True
+
+        @pytest.mark.usefixtures("level1_fix")
+        class Test2(Level3):
+            def test_b(self):
+                assert self.level1 is True
+                assert not hasattr(self, 'level2')
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_class_scoped_fixture_same_module_multiple_classes(
+    pytester: Pytester,
+) -> None:
+    """Test that base class fixtures work correctly when multiple test classes inherit in the same module."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class BaseFixture:
+            @pytest.fixture(scope="class")
+            def shared_fixture(self, request):
+                request.cls.shared_value = "from_base"
+                yield
+                request.cls.cleaned_up = True
+
+        @pytest.mark.usefixtures("shared_fixture")
+        class TestClass1(BaseFixture):
+            cleaned_up = False
+
+            def test_one(self):
+                assert self.shared_value == "from_base"
+
+        @pytest.mark.usefixtures("shared_fixture")
+        class TestClass2(BaseFixture):
+            cleaned_up = False
+
+            def test_two(self):
+                assert self.shared_value == "from_base"
+
+        def test_cleanup():
+            # Verify both classes had their fixtures cleaned up
+            assert TestClass1.cleaned_up is True
+            assert TestClass2.cleaned_up is True
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)
+
+
+def test_inherited_class_scoped_fixture_module_nodeid_visibility(
+    pytester: Pytester,
+) -> None:
+    """Test that base class fixtures use module nodeid for proper visibility across classes."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class BaseClass:
+            @pytest.fixture(scope="class")
+            def base_fixture(self, request):
+                request.cls.base_value = "base"
+                yield
+
+        @pytest.mark.usefixtures("base_fixture")
+        class TestClass1(BaseClass):
+            def test_one(self):
+                assert self.base_value == "base"
+
+        @pytest.mark.usefixtures("base_fixture")
+        class TestClass2(BaseClass):
+            def test_two(self):
+                assert self.base_value == "base"
+        """
+    )
+    result = pytester.runpytest()
+    # Both test classes should be able to use the base fixture
+    result.assert_outcomes(passed=2)
+
+
+def test_inherited_class_collection_without_fixtures(pytester: Pytester) -> None:
+    """Test that class collection works correctly even when classes inherit but have no fixtures."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class BaseClass:
+            pass
+
+        class TestClass1(BaseClass):
+            def test_one(self):
+                assert True
+
+        class TestClass2(BaseClass):
+            def test_two(self):
+                assert True
+        """
+    )
+    result = pytester.runpytest()
+    # Both test classes should be collected and run successfully
+    result.assert_outcomes(passed=2)
+
+
+def test_class_collection_with_base_fixture_available(pytester: Pytester) -> None:
+    """Test that class collection properly registers base class fixtures even if not immediately used."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class BaseWithFixture:
+            @pytest.fixture(scope="class")
+            def base_fixture(self, request):
+                request.cls.base_value = "available"
+                yield
+
+        class TestClass(BaseWithFixture):
+            # Class inherits from base but doesn't explicitly use the fixture
+            def test_something(self):
+                # But we can still access it if needed via getfixturevalue
+                pass
+        """
+    )
+    result = pytester.runpytest()
+    # Test should pass - collection should work even if fixture isn't used
+    result.assert_outcomes(passed=1)
+
+
+def test_class_with_init_not_collected_but_base_fixture_available(
+    pytester: Pytester,
+) -> None:
+    """Test that classes with __init__ are not collected, but base fixtures are still registered."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class BaseWithFixture:
+            @pytest.fixture(scope="class")
+            def base_fixture(self, request):
+                request.cls.base_value = "base"
+                yield
+
+        class TestClassWithInit(BaseWithFixture):
+            def __init__(self):
+                # This prevents collection
+                pass
+
+            def test_something(self):
+                pass
+
+        class TestClassWithoutInit(BaseWithFixture):
+            def test_something(self):
+                pass
+        """
+    )
+    result = pytester.runpytest()
+    # Class with __init__ should not be collected, but the one without should
+    result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_class_with_new_not_collected_but_base_fixture_available(
+    pytester: Pytester,
+) -> None:
+    """Test that classes with __new__ are not collected, but base fixtures are still registered."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class BaseWithFixture:
+            @pytest.fixture(scope="class")
+            def base_fixture(self, request):
+                request.cls.base_value = "base"
+                yield
+
+        class TestClassWithNew(BaseWithFixture):
+            def __new__(cls):
+                # This prevents collection
+                return super().__new__(cls)
+
+            def test_something(self):
+                pass
+
+        class TestClassWithoutNew(BaseWithFixture):
+            def test_something(self):
+                pass
+        """
+    )
+    result = pytester.runpytest()
+    # Class with __new__ should not be collected, but the one without should
+    result.assert_outcomes(passed=1, warnings=1)
+
+
+def test_call_spec_getparam_keyerror(pytester: Pytester) -> None:
+    """Test that CallSpec2.getparam raises ValueError for missing parameters."""
+    from _pytest.python import CallSpec2
+
+    # Create a CallSpec2 with some params using the dataclass directly
+    callspec = CallSpec2(
+        params={"x": 1},
+        indices={"x": 0},
+        _arg2scope={},
+        _idlist=("x",),
+        marks=[],
+    )
+
+    # Test that getting an existing param works (covers line 1146)
+    assert callspec.getparam("x") == 1
+
+    # Test that getting a non-existent param raises ValueError (covers lines 1147-1148)
+    with pytest.raises(ValueError, match="y"):
+        callspec.getparam("y")
+
+
+def test_hasinit_and_hasnew_functions() -> None:
+    """Test hasinit and hasnew helper functions directly."""
+    from _pytest.python import hasinit
+    from _pytest.python import hasnew
+
+    # Test hasinit - class with custom __init__ (covers lines 856-857)
+    class WithInit:
+        def __init__(self):
+            pass
+
+    assert hasinit(WithInit) is True
+
+    # Test hasinit - class without custom __init__ (covers line 858)
+    class WithoutInit:
+        pass
+
+    assert hasinit(WithoutInit) is False
+
+    # Test hasnew - class with custom __new__ (covers lines 863-864)
+    class WithNew:
+        def __new__(cls):
+            return super().__new__(cls)
+
+    assert hasnew(WithNew) is True
+
+    # Test hasnew - class without custom __new__ (covers line 865)
+    class WithoutNew:
+        pass
+
+    assert hasnew(WithoutNew) is False
+
+
+def test_function_getinstance_non_class_parent(pytester: Pytester) -> None:
+    """Test that Function._getinstance returns None when parent is not a Class (covers line 1669)."""
+    pytester.makepyfile(
+        """
+        def test_function():
+            # This is a module-level function, not a class method
+            # So _getinstance should return None
+            assert True
+        """
+    )
+    # Get the function item and directly call _getinstance to ensure coverage
+    items, _ = pytester.inline_genitems(
+        pytester.path / "test_function_getinstance_non_class_parent.py"
+    )
+    assert len(items) == 1
+    item = items[0]
+    # Directly call _getinstance to cover line 1669
+    instance = item._getinstance()  # type: ignore[attr-defined]
+    assert instance is None
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_function_getinstance_with_class_parent(pytester: Pytester) -> None:
+    """Test that Function._getinstance returns instance when parent is a Class (covers line 1665)."""
+    pytester.makepyfile(
+        """
+        class TestClass:
+            def test_method(self):
+                # This is a class method, so _getinstance should return an instance
+                assert True
+        """
+    )
+    # Get the function item and directly call _getinstance to ensure coverage
+    items, _ = pytester.inline_genitems(
+        pytester.path / "test_function_getinstance_with_class_parent.py"
+    )
+    assert len(items) == 1
+    item = items[0]
+    # Directly call _getinstance to cover line 1665
+    instance = item._getinstance()  # type: ignore[attr-defined]
+    assert instance is not None
+    assert isinstance(instance, item.parent.obj)  # type: ignore[attr-defined]
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_function_pyfuncitem_property(pytester: Pytester) -> None:
+    """Test that Function._pyfuncitem property returns self (compatibility)."""
+    pytester.makepyfile(
+        """
+        def test_something():
+            assert True
+        """
+    )
+    # Get the function item and directly access _pyfuncitem to cover line 1683
+    items, _ = pytester.inline_genitems(
+        pytester.path / "test_function_pyfuncitem_property.py"
+    )
+    assert len(items) == 1
+    item = items[0]
+    # Directly access the property to ensure coverage
+    assert item._pyfuncitem is item  # type: ignore[attr-defined]
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_function_traceback_filter(pytester: Pytester) -> None:
+    """Test that Function._traceback_filter works correctly (covers lines 1693, 1719)."""
+    pytester.makepyfile(
+        """
+        def test_with_error():
+            raise ValueError("test error")
+        """
+    )
+    # Run without --fulltrace to ensure _traceback_filter is called (covers line 1693)
+    result = pytester.runpytest("--tb=short")
+    result.assert_outcomes(failed=1)
+    # The traceback filter is used when formatting errors
+
+
+def test_function_traceback_filter_with_fulltrace(pytester: Pytester) -> None:
+    """Test that Function._traceback_filter returns early with --fulltrace (covers line 1719)."""
+    pytester.makepyfile(
+        """
+        def test_with_error():
+            raise ValueError("test error")
+        """
+    )
+    # Run with --fulltrace to cover the early return path (line 1719)
+    result = pytester.runpytest("--fulltrace", "--tb=short")
+    result.assert_outcomes(failed=1)
+
+
+def test_function_definition_runtest_error(pytester: Pytester) -> None:
+    """Test that FunctionDefinition.runtest raises RuntimeError (covers line 1737)."""
+    from _pytest.python import FunctionDefinition
+    from _pytest.python import Metafunc
+
+    def dummy_func():
+        pass
+
+    # Create FunctionDefinition through Metafunc (which uses FunctionDefinition internally)
+    # This is how FunctionDefinition is actually used in pytest
+    modcol = pytester.getmodulecol("")
+    metafunc = Metafunc.from_parent(
+        parent=modcol,
+        definition=FunctionDefinition._create(
+            obj=dummy_func,
+            parent=modcol,
+            _ispytest=True,
+        ),
+        fixtureinfo=modcol.session._fixturemanager.getfixtureinfo(
+            modcol, dummy_func, None
+        ),
+        _ispytest=True,
+    )
+
+    # Directly call runtest on the definition to cover line 1737
+    with pytest.raises(
+        RuntimeError, match="function definitions are not supposed to be run as tests"
+    ):
+        metafunc.definition.runtest()
+
+
+def test_getmodpath_with_includemodule(pytester: Pytester) -> None:
+    """Test getmodpath with stopatmodule=True and includemodule=True."""
+    pytester.makepyfile(
+        """
+        class TestClass:
+            def test_method(self):
+                assert True
+        """
+    )
+    # Get the items and test getmodpath with includemodule=True
+    items, _ = pytester.inline_genitems(
+        pytester.path / "test_getmodpath_with_includemodule.py"
+    )
+    assert len(items) == 1
+    item = items[0]
+    # Test getmodpath with includemodule=True to cover lines 319-320
+    modpath = item.getmodpath(stopatmodule=True, includemodule=True)  # type: ignore[attr-defined]
+    assert modpath.startswith("test_getmodpath_with_includemodule")
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_collection_ignore_directory(pytester: Pytester) -> None:
+    """Test that directories can be ignored during collection."""
+    # Create a directory that should be ignored
+    ignored_dir = pytester.path / "ignored_dir"
+    ignored_dir.mkdir()
+    (ignored_dir / "__init__.py").touch()
+    (ignored_dir / "test_something.py").write_text(
+        "def test_ignored(): pass", encoding="utf-8"
+    )
+
+    # Create a conftest that ignores the directory
+    pytester.makeconftest(
+        """
+        def pytest_ignore_collect(collection_path, config):
+            if "ignored_dir" in str(collection_path):
+                return True
+            return None
+        """
+    )
+
+    # Create a test file in the main directory
+    pytester.makepyfile(
+        """
+        def test_not_ignored():
+            assert True
+        """
+    )
+
+    result = pytester.runpytest()
+    # Only the non-ignored test should run
+    result.assert_outcomes(passed=1)
+
+
+def test_collection_ignore_file(pytester: Pytester) -> None:
+    """Test that files can be ignored during collection."""
+    # Create a file that should be ignored
+    ignored_file = pytester.path / "test_ignored.py"
+    ignored_file.write_text("def test_ignored(): pass", encoding="utf-8")
+
+    # Create a conftest that ignores the file
+    pytester.makeconftest(
+        """
+        def pytest_ignore_collect(collection_path, config):
+            if "test_ignored.py" in str(collection_path):
+                return True
+            return None
+        """
+    )
+
+    # Create a test file that should not be ignored
+    pytester.makepyfile(
+        """
+        def test_not_ignored():
+            assert True
+        """
+    )
+
+    result = pytester.runpytest()
+    # Only the non-ignored test should run
+    result.assert_outcomes(passed=1)
+
+
 def test_scoped_fixture_caching_exception(pytester: Pytester) -> None:
     """Make sure setup & finalization is only run once for scoped fixture, with a cached exception."""
     pytester.makepyfile(

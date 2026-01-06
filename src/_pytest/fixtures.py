@@ -1830,6 +1830,7 @@ class FixtureManager:
         self,
         node_or_obj: object,
         nodeid: str | None,
+        class_node: nodes.Node | None = None,
     ) -> None:
         raise NotImplementedError()
 
@@ -1837,6 +1838,7 @@ class FixtureManager:
         self,
         node_or_obj: nodes.Node | object,
         nodeid: str | NotSetType | None = NOTSET,
+        class_node: nodes.Node | None = None,
     ) -> None:
         """Collect fixtures from a collection node or object.
 
@@ -1854,11 +1856,32 @@ class FixtureManager:
         """
         if nodeid is not NOTSET:
             holderobj = node_or_obj
+            if class_node is not None:
+                from _pytest.python import Class
+
+                if isinstance(class_node, Class):
+                    # Get the class from the class node, not from holderobj
+                    # because holderobj might be an instance
+                    current_class = class_node.obj
+                else:
+                    current_class = None
+            else:
+                current_class = None
         else:
             assert isinstance(node_or_obj, nodes.Node)
             holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]
             assert isinstance(node_or_obj.nodeid, str)
             nodeid = node_or_obj.nodeid
+            from _pytest.python import Class
+
+            if isinstance(node_or_obj, Class):
+                class_node = node_or_obj
+                current_class = (
+                    holderobj if safe_isclass(holderobj) else type(holderobj)
+                )
+            else:
+                class_node = None
+                current_class = None
         if holderobj in self._holderobjseen:
             return
 
@@ -1889,9 +1912,27 @@ class FixtureManager:
 
                 func = obj._get_wrapped_function()
 
+                fixture_nodeid = nodeid
+                if current_class is not None and marker.scope == "class":
+                    # Check if fixture is defined in a base class (not in current class)
+                    if name not in current_class.__dict__:
+                        # Check MRO to see if it's in a base class
+                        for base in current_class.__mro__[
+                            1:
+                        ]:  # Skip current_class itself
+                            if name in base.__dict__:
+                                # Fixture is in a base class, use module nodeid for visibility
+                                if class_node is not None:
+                                    module_node = class_node.getparent(
+                                        _pytest.python.Module
+                                    )
+                                    if module_node is not None:
+                                        fixture_nodeid = module_node.nodeid
+                                break
+
                 self._register_fixture(
                     name=fixture_name,
-                    nodeid=nodeid,
+                    nodeid=fixture_nodeid,
                     func=func,
                     scope=marker.scope,
                     params=marker.params,
