@@ -129,7 +129,7 @@ class TestImportHookInstallation:
             [
                 ">       r.assertoutcome(passed=1)",
                 "E       AssertionError: ([[][]], [[][]], [[]<TestReport *>[]])*",
-                "E       assert {'failed': 1,... 'skipped': 0} == {'failed': 0,... 'skipped': 0}",
+                "E       assert {'passed': 0,...*'failed': 1} == {'passed': 1,...*'failed': 0}",
                 "E         Omitting 1 identical items, use -vv to show",
                 "E         Differing items:",
                 "E         Use -v to get more diff",

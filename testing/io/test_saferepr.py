@@ -192,3 +192,31 @@ def test_saferepr_unlimited_exc():
     assert saferepr_unlimited(A()).startswith(
         "<[ValueError(42) raised in repr()] A object at 0x"
     )
+
+
+def test_saferepr_dict_preserves_insertion_order():
+    d = {"b": 1, "a": 2}
+    assert saferepr(d, maxsize=None) == "{'b': 1, 'a': 2}"
+
+
+def test_saferepr_dict_truncation_preserves_insertion_order():
+    from _pytest._io.saferepr import SafeRepr
+
+    d = {"b": 1, "a": 2}
+    s = SafeRepr(maxsize=None)
+    s.maxdict = 1
+    assert s.repr(d) == "{'b': 1, ...}"
+
+
+def test_saferepr_dict_fillvalue_when_level_is_zero():
+    from _pytest._io.saferepr import SafeRepr
+
+    s = SafeRepr(maxsize=None)
+    assert s.repr_dict({"a": 1}, level=0) == "{...}"
+
+
+def test_saferepr_dict_empty():
+    from _pytest._io.saferepr import SafeRepr
+
+    s = SafeRepr(maxsize=None)
+    assert s.repr_dict({}, level=1) == "{}"
