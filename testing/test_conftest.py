@@ -779,3 +779,111 @@ def test_required_option_help(pytester: Pytester) -> None:
     result = pytester.runpytest("-h", x)
     result.stdout.no_fnmatch_line("*argument --xyz is required*")
     assert "general:" in result.stdout.str()
+
+
+def test_conftest_fixture_scoping_with_testpaths_outside_rootdir(
+    pytester: Pytester,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Conftest fixtures should be properly scoped when testpaths points outside rootdir.
+
+    Regression test for #14004.
+
+    When testpaths in config points to a directory outside the rootdir using
+    a relative path like '../tests/sdk', conftest.py fixture scoping should
+    work correctly. Fixtures from nested conftest.py files should NOT leak to
+    sibling directories.
+    """
+    # Create directory structure:
+    # pytester.path/
+    # ├── sdk/
+    # │   └── pyproject.toml  (rootdir, with testpaths = ["../tests/sdk"])
+    # └── tests/
+    #     └── sdk/
+    #         ├── conftest.py  (defines outer_fixture)
+    #         ├── test_outer.py
+    #         └── inner/
+    #             ├── conftest.py  (defines inner_fixture)
+    #             └── test_inner.py
+    sdk = pytester.path / "sdk"
+    sdk.mkdir()
+    tests_sdk = pytester.path / "tests" / "sdk"
+    tests_sdk.mkdir(parents=True)
+    inner = tests_sdk / "inner"
+    inner.mkdir()
+
+    # Create pyproject.toml in sdk/ pointing to ../tests/sdk
+    sdk.joinpath("pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [project]
+            name = "sdk"
+            version = "0.1.0"
+
+            [tool.pytest.ini_options]
+            testpaths = ["../tests/sdk"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Create outer conftest with autouse fixture
+    tests_sdk.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def outer_fixture(request):
+                request.node.outer_fixture_called = True
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Create inner conftest with autouse fixture - this should ONLY apply to inner/
+    inner.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def inner_fixture(request):
+                request.node.inner_fixture_called = True
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Create test in outer directory - should NOT have inner_fixture
+    tests_sdk.joinpath("test_outer.py").write_text(
+        textwrap.dedent(
+            """\
+            def test_outer(request):
+                assert hasattr(request.node, 'outer_fixture_called'), "outer_fixture should be called"
+                assert not hasattr(request.node, 'inner_fixture_called'), (
+                    "inner_fixture should NOT be called for outer test"
+                )
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Create test in inner directory - should have both fixtures
+    inner.joinpath("test_inner.py").write_text(
+        textwrap.dedent(
+            """\
+            def test_inner(request):
+                assert hasattr(request.node, 'outer_fixture_called'), "outer_fixture should be called"
+                assert hasattr(request.node, 'inner_fixture_called'), "inner_fixture should be called for inner test"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Run pytest from sdk/ directory (where pyproject.toml is)
+    monkeypatch.chdir(sdk)
+    result = pytester.runpytest("--tb=short")
+
+    # Both tests should pass - inner_fixture should not leak to test_outer
+    result.assert_outcomes(passed=2)

@@ -1632,7 +1632,11 @@ class FixtureManager:
             try:
                 nodeid = str(conftestpath.parent.relative_to(self.config.rootpath))
             except ValueError:
-                nodeid = ""
+                # Conftest is outside rootpath. Try to find it relative to one
+                # of the initial paths (e.g. from testpaths config). This ensures
+                # proper fixture scoping when testpaths points outside rootdir.
+                # See issue #14004.
+                nodeid = self._get_nodeid_for_path_outside_rootpath(conftestpath.parent)
             if nodeid == ".":
                 nodeid = ""
             if os.sep != nodes.SEP:
@@ -1641,6 +1645,31 @@ class FixtureManager:
             nodeid = None
 
         self.parsefactories(plugin, nodeid)
+
+    def _get_nodeid_for_path_outside_rootpath(self, path: Path) -> str:
+        """Get nodeid for a path outside rootpath using config.args.
+
+        This is similar to how FSCollector uses _check_initialpaths_for_relpath,
+        but works with config.args since session._initialpaths is not available
+        when this is called (during plugin registration).
+
+        :param path: The path to compute the nodeid for.
+        :returns: The computed nodeid, or "" if path is not under any arg path.
+        """
+        # config.args contains the initial paths (from command line or testpaths)
+        # resolved relative to invocation_dir
+        invocation_dir = self.config.invocation_params.dir
+        for arg in self.config.args:
+            # Remove node-id syntax (::) if present
+            arg_path_str = arg.split("::")[0] if "::" in arg else arg
+            arg_path = absolutepath(invocation_dir / arg_path_str)
+            if path == arg_path:
+                return ""
+            try:
+                return str(path.relative_to(arg_path))
+            except ValueError:
+                continue
+        return ""
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to node."""
