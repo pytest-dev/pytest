@@ -1,0 +1,5 @@
+Fixed conftest.py fixture scoping when ``testpaths`` points outside ``rootdir``.
+
+Nodeids for paths outside ``rootdir`` are now computed more meaningfully:
+paths in site-packages use a ``site://`` prefix, nearby paths use relative
+paths with ``..`` components, and far-away paths use absolute paths.
