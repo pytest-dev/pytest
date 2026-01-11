@@ -546,6 +546,11 @@ class FixtureRequest(abc.ABC):
             yield current
             current = current._parent_request
 
+    def _account_dependency(self, fixturedef: FixtureDef[object]) -> None:
+        if isinstance(self, SubRequest):
+            assert self._fixturedef._requested_fixtures is not None
+            self._fixturedef._requested_fixtures[fixturedef] = None
+
     def _get_active_fixturedef(self, argname: str) -> FixtureDef[object]:
         if argname == "request":
             return RequestFixtureDef(self)
@@ -555,8 +560,14 @@ class FixtureRequest(abc.ABC):
         fixturedef = self._fixture_defs.get(argname)
         if fixturedef is not None:
             self._check_scope(fixturedef, fixturedef._scope)
+            self._account_dependency(fixturedef)
             return fixturedef
 
+        fixturedef = self._find_fixturedef(argname)
+        self._execute_fixturedef(fixturedef)
+        return fixturedef
+
+    def _find_fixturedef(self, argname: str) -> FixtureDef[object]:
         # Find the appropriate fixturedef.
         fixturedefs = self._arg2fixturedefs.get(argname, None)
         if fixturedefs is None:
@@ -589,8 +600,12 @@ class FixtureRequest(abc.ABC):
         # If already consumed all of the available levels, fail.
         if -index > len(fixturedefs):
             raise FixtureLookupError(argname, self)
-        fixturedef = fixturedefs[index]
+        return fixturedefs[index]
 
+    def _execute_fixturedef(
+        self, fixturedef: FixtureDef[object], *, only_maintain_cache: bool = False
+    ) -> None:
+        argname = fixturedef.argname
         # Prepare a SubRequest object for calling the fixture.
         try:
             callspec = self._pyfuncitem.callspec
@@ -616,11 +631,15 @@ class FixtureRequest(abc.ABC):
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
 
+        if only_maintain_cache:
+            fixturedef._maintain_cache(subrequest)
+            return
+
+        self._account_dependency(fixturedef)
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
 
         self._fixture_defs[argname] = fixturedef
-        return fixturedef
 
     def _check_fixturedef_without_param(self, fixturedef: FixtureDef[object]) -> None:
         """Check that this request is allowed to execute this fixturedef without
@@ -636,7 +655,7 @@ class FixtureRequest(abc.ABC):
             )
             fail(msg, pytrace=False)
         if has_params:
-            frame = inspect.stack()[3]
+            frame = inspect.stack()[4]
             frameinfo = inspect.getframeinfo(frame[0])
             source_path = absolutepath(frameinfo.filename)
             source_lineno = frameinfo.lineno
@@ -950,6 +969,22 @@ def _eval_scope_callable(
     return result
 
 
+def _get_cached_value(
+    cached_result: _FixtureCachedResult[FixtureValue],
+) -> FixtureValue:
+    if cached_result[2] is not None:
+        exc, exc_tb = cached_result[2]
+        raise exc.with_traceback(exc_tb)
+    else:
+        return cached_result[0]
+
+
+def _mypy_disable_narrowing(
+    cached_result: _FixtureCachedResult[FixtureValue] | None,
+) -> _FixtureCachedResult[FixtureValue] | None:
+    return cached_result
+
+
 class FixtureDef(Generic[FixtureValue]):
     """A container for a fixture definition.
 
@@ -1015,6 +1050,9 @@ class FixtureDef(Generic[FixtureValue]):
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
+        # Tracks dependencies discovered during the current execution.
+        # Using dict for a stable order.
+        self._requested_fixtures: dict[FixtureDef[Any], None] | None = None
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1042,59 +1080,68 @@ class FixtureDef(Generic[FixtureValue]):
         # which will keep instances alive.
         self.cached_result = None
         self._finalizers.clear()
+        self._requested_fixtures = None
         if len(exceptions) == 1:
             raise exceptions[0]
         elif len(exceptions) > 1:
             msg = f'errors while tearing down fixture "{self.argname}" of {node}'
             raise BaseExceptionGroup(msg, exceptions[::-1])
 
-    def execute(self, request: SubRequest) -> FixtureValue:
-        """Return the value of this fixture, executing it if not cached."""
-        # Ensure that the dependent fixtures requested by this fixture are loaded.
+    def _maintain_cache(self, request: SubRequest) -> None:
+        """Call finish() if param changes."""
+        if self.cached_result is None:
+            return
+
+        assert self._requested_fixtures is not None
+        # Ensure that the dependent fixtures requested by this fixture are checked.
         # This needs to be done before checking if we have a cached value, since
         # if a dependent fixture has their cache invalidated, e.g. due to
         # parametrization, they finalize themselves and fixtures depending on it
-        # (which will likely include this fixture) setting `self.cached_result = None`.
-        # See #4871
-        requested_fixtures_that_should_finalize_us = []
-        for argname in self.argnames:
-            fixturedef = request._get_active_fixturedef(argname)
-            # Saves requested fixtures in a list so we later can add our finalizer
-            # to them, ensuring that if a requested fixture gets torn down we get torn
-            # down first. This is generally handled by SetupState, but still currently
-            # needed when this fixture is not parametrized but depends on a parametrized
-            # fixture.
-            requested_fixtures_that_should_finalize_us.append(fixturedef)
+        # (which will include this fixture)
+        # setting `self.cached_result = None`. See #4871
+        for fixturedef in self._requested_fixtures:
+            if request._fixture_defs.get(fixturedef.argname) is fixturedef:
+                # This dependency has already been computed in this item.
+                continue
+            if request._find_fixturedef(fixturedef.argname) is not fixturedef:
+                # This item should use a different fixturedef than was cached. (#14095)
+                self.finish(request)
+                return
+            request._execute_fixturedef(fixturedef, only_maintain_cache=True)
+            if _mypy_disable_narrowing(self.cached_result) is None:
+                # Do not finalize more fixtures than necessary.
+                return
 
-        # Check for (and return) cached value/exception.
-        if self.cached_result is not None:
-            request_cache_key = self.cache_key(request)
-            cache_key = self.cached_result[1]
-            try:
-                # Attempt to make a normal == check: this might fail for objects
-                # which do not implement the standard comparison (like numpy arrays -- #6497).
-                cache_hit = bool(request_cache_key == cache_key)
-            except (ValueError, RuntimeError):
-                # If the comparison raises, use 'is' as fallback.
-                cache_hit = request_cache_key is cache_key
+        request_cache_key = self.cache_key(request)
+        cache_key = self.cached_result[1]
+        try:
+            # Attempt to make a normal == check: this might fail for objects
+            # which do not implement the standard comparison (like numpy arrays -- #6497).
+            cache_hit = bool(request_cache_key == cache_key)
+        except (ValueError, RuntimeError):
+            # If the comparison raises, use 'is' as fallback.
+            cache_hit = request_cache_key is cache_key
 
-            if cache_hit:
-                if self.cached_result[2] is not None:
-                    exc, exc_tb = self.cached_result[2]
-                    raise exc.with_traceback(exc_tb)
-                else:
-                    return self.cached_result[0]
+        if not cache_hit:
             # We have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one.
             self.finish(request)
-            assert self.cached_result is None
 
-        # Add finalizer to requested fixtures we saved previously.
-        # We make sure to do this after checking for cached value to avoid
-        # adding our finalizer multiple times. (#12135)
-        finalizer = functools.partial(self.finish, request=request)
-        for parent_fixture in requested_fixtures_that_should_finalize_us:
-            parent_fixture.addfinalizer(finalizer)
+    def execute(self, request: SubRequest) -> FixtureValue:
+        """Return the value of this fixture, executing it if not cached."""
+        self._maintain_cache(request)
+        if self.cached_result is not None:
+            return _get_cached_value(self.cached_result)
+
+        # _get_active_fixturedef calls fill our _requested_fixtures
+        # so we later can add our finalizer to them, ensuring that
+        # if a requested fixture gets torn down we get torn down first.
+        self._requested_fixtures = {}
+
+        # Execute fixtures from argnames here to make sure that analytics
+        # in pytest_fixture_setup only handle the body of the current fixture.
+        for argname in self.argnames:
+            request._get_active_fixturedef(argname)
 
         ihook = request.node.ihook
         try:
@@ -1105,7 +1152,13 @@ class FixtureDef(Generic[FixtureValue]):
             )
         finally:
             # Schedule our finalizer, even if the setup failed.
+            finalizer = functools.partial(self.finish, request=request)
             request.node.addfinalizer(finalizer)
+            # Add finalizer to requested fixtures.
+            # We make sure to do this after checking for cached value to avoid
+            # adding our finalizer multiple times. (#12135)
+            for parent_fixture in self._requested_fixtures:
+                parent_fixture.addfinalizer(finalizer)
 
         return result
 
