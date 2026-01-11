@@ -18,7 +18,7 @@ The current pytest version, as a string::
 
     >>> import pytest
     >>> pytest.__version__
-    '7.0.0'
+    '9.0.2'
 
 .. _`hidden-param`:
 
@@ -2544,7 +2544,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: truncation_limit_lines
 
-   Controls maximum number of linesto truncate assertion message contents.
+   Controls maximum number of lines to truncate assertion message contents.
 
    Setting value to ``0`` disables the lines limit for truncation.
 
