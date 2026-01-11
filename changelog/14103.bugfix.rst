@@ -1,0 +1,1 @@
+Fixtures are now rebuilt when param changes for a fixture they depend on, if the dependency is via ``request.getfixturevalue()``.
