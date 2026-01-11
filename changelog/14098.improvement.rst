@@ -1,0 +1,3 @@
+Added :func:`nodes.norm_sep` helper to normalize path separators to forward slashes for nodeid compatibility.
+
+This handles both native OS separators and Windows backslashes in cross-platform data.
