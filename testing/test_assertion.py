@@ -1394,6 +1394,17 @@ class TestTruncateExplanation:
         assert result == expl
         assert "truncated" not in result[-1]
 
+    def test_truncates_full_line_because_of_max_chars(self) -> None:
+        """A line is fully truncated because of the max_chars value."""
+        expl = ["a" * 10, "b" * 71]
+        result = truncate._truncate_explanation(expl, max_lines=10, max_chars=10)
+        assert result == [
+            "a" * 10,
+            "...",
+            "",
+            "...Full output truncated (1 line hidden), use '-vv' to show",
+        ]
+
     def test_truncates_edgecase_when_truncation_message_makes_the_result_longer_for_chars(
         self,
     ) -> None:

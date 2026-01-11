@@ -88,29 +88,23 @@ def _truncate_explanation(
         truncated_explanation = input_lines[:max_lines]
     else:
         truncated_explanation = input_lines
-    truncated_char = True
     # We reevaluate the need to truncate chars following removal of some lines
-    if len("".join(truncated_explanation)) > tolerable_max_chars and max_chars > 0:
+    need_to_truncate_char = (
+        70 < tolerable_max_chars < sum(len(e) for e in truncated_explanation)
+    )
+    if need_to_truncate_char:
         truncated_explanation = _truncate_by_char_count(
             truncated_explanation, max_chars
         )
-    else:
-        truncated_char = False
 
     if truncated_explanation == input_lines:
         # No truncation happened, so we do not need to add any explanations
         return truncated_explanation
 
-    truncated_line_count = len(input_lines) - len(truncated_explanation)
-    if truncated_explanation[-1]:
-        # Add ellipsis and take into account part-truncated final line
-        truncated_explanation[-1] = truncated_explanation[-1] + "..."
-        if truncated_char:
-            # It's possible that we did not remove any char from this line
-            truncated_line_count += 1
-    else:
-        # Add proper ellipsis when we were able to fit a full line exactly
-        truncated_explanation[-1] = "..."
+    truncated_explanation[-1] = truncated_explanation[-1] + "..."
+    truncated_line_count = (
+        len(input_lines) - len(truncated_explanation) + int(need_to_truncate_char)
+    )
     return [
         *truncated_explanation,
         "",
