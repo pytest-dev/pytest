@@ -553,12 +553,10 @@ an ``incremental`` marker which is to be used on classes:
 
     # content of conftest.py
 
-    from typing import Dict, Tuple
-
     import pytest
 
     # store history of failures per test class name and per index in parametrize (if parametrize used)
-    _test_failed_incremental: Dict[str, Dict[Tuple[int, ...], str]] = {}
+    _test_failed_incremental: dict[str, dict[tuple[int, ...], str]] = {}
 
 
     def pytest_runtest_makereport(item, call):
@@ -883,11 +881,10 @@ here is a little example implemented via a local plugin:
 .. code-block:: python
 
     # content of conftest.py
-    from typing import Dict
     import pytest
     from pytest import StashKey, CollectReport
 
-    phase_report_key = StashKey[Dict[str, CollectReport]]()
+    phase_report_key = StashKey[dict[str, CollectReport]]()
 
 
     @pytest.hookimpl(wrapper=True, tryfirst=True)
