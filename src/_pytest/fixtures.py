@@ -1672,8 +1672,15 @@ class FixtureManager:
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to node."""
+        seen_nodeids: set[str] = set()
         for parentnode in node.listchain():
-            basenames = self._nodeid_autousenames.get(parentnode.nodeid)
+            nodeid = parentnode.nodeid
+            # Avoid yielding duplicates when multiple nodes share the same nodeid
+            # (e.g., Session and root Directory both have nodeid "").
+            if nodeid in seen_nodeids:
+                continue
+            seen_nodeids.add(nodeid)
+            basenames = self._nodeid_autousenames.get(nodeid)
             if basenames:
                 yield from basenames
 
