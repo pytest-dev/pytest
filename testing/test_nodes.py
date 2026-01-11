@@ -264,7 +264,8 @@ class TestNodeidPrefixComputation:
         )
 
         # Should use absolute path since it's more than 2 levels up
-        assert result == str(far_away)
+        # Nodeids always use forward slashes regardless of OS
+        assert result == nodes.norm_sep(far_away)
 
     def test_compute_nodeid_rootpath_itself(self, tmp_path: Path) -> None:
         """Test nodeid computation for rootpath itself returns empty string."""

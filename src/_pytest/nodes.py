@@ -52,6 +52,20 @@ if TYPE_CHECKING:
 
 SEP = "/"
 
+
+def norm_sep(path: str | os.PathLike[str]) -> str:
+    """Normalize path separators to forward slashes for nodeid compatibility.
+
+    Replaces backslashes with forward slashes. This handles both Windows native
+    paths and cross-platform data (e.g., Windows paths in serialized test reports
+    when running on Linux).
+
+    :param path: A path string or PathLike object.
+    :returns: String with all backslashes replaced by forward slashes.
+    """
+    return os.fspath(path).replace("\\", SEP)
+
+
 tracebackcutdir = Path(_pytest.__file__).parent
 
 
@@ -649,21 +663,20 @@ def compute_nodeid_prefix_for_path(
         result = str(rel)
         if result == ".":
             return ""
-        return result.replace(os.sep, SEP)
+        return norm_sep(result)
     except ValueError:
         pass
 
     # 2. Try relative to initial_paths
     nodeid = _check_initialpaths_for_relpath(initial_paths, path)
     if nodeid is not None:
-        return nodeid.replace(os.sep, SEP) if nodeid else ""
+        return norm_sep(nodeid) if nodeid else ""
 
     # 3. Check if path is in site-packages
     site_info = _path_in_site_packages(path, site_packages)
     if site_info is not None:
         _sp_dir, rel_path = site_info
-        result = f"site://{rel_path}"
-        return result.replace(os.sep, SEP)
+        return f"site://{norm_sep(rel_path)}"
 
     # 4. Try relative to invocation_dir if "close by" (i.e., not too many ".." components)
     rel_from_invocation = bestrelpath(invocation_dir, path)
@@ -675,10 +688,10 @@ def compute_nodeid_prefix_for_path(
     # - At most 2 ".." components (close to invocation dir)
     # - bestrelpath actually produced a relative path (not the absolute path unchanged)
     if up_count <= 2 and rel_from_invocation != str(path):
-        return rel_from_invocation.replace(os.sep, SEP)
+        return norm_sep(rel_from_invocation)
 
     # 5. Fall back to absolute path
-    return str(path).replace(os.sep, SEP)
+    return norm_sep(path)
 
 
 class FSCollector(Collector, abc.ABC):
@@ -713,7 +726,7 @@ class FSCollector(Collector, abc.ABC):
                     pass
                 else:
                     name = str(rel)
-                name = name.replace(os.sep, SEP)
+                name = norm_sep(name)
         self.path = path
 
         if session is None:
