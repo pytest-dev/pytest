@@ -66,8 +66,6 @@ def _truncate_explanation(
     When this function is launched we know max_lines > 0 or max_chars > 0
     because _get_truncation_parameters was called first.
     """
-    # Check if truncation required
-    input_char_count = sum(len(line) for line in input_lines)
     # The length of the truncation explanation depends on the number of lines
     # removed but is at least 68 characters:
     # The real value is
@@ -82,11 +80,11 @@ def _truncate_explanation(
     tolerable_max_chars = (
         max_chars + 70  # 64 + 1 (for plural) + 2 (for '99') + 3 for '...'
     )
-    # The truncation explanation add two lines to the output
-    tolerable_max_lines = max_lines + 2
     if (
-        len(input_lines) <= tolerable_max_lines
-        and input_char_count <= tolerable_max_chars
+        # The truncation explanation add two lines to the output
+        max_lines == 0 or len(input_lines) <= max_lines + 2
+    ) and (
+        max_chars == 0 or sum(len(line) for line in input_lines) <= tolerable_max_chars
     ):
         return input_lines
     # Truncate first to max_lines, and then truncate to max_chars if necessary
@@ -103,11 +101,6 @@ def _truncate_explanation(
         truncated_explanation = _truncate_by_char_count(
             truncated_explanation, max_chars
         )
-
-    if truncated_explanation == input_lines:
-        # No truncation happened, so we do not need to add any explanations
-        return truncated_explanation
-
     # Something was truncated, adding '...' at the end to show that
     truncated_explanation[-1] += "..."
     truncated_line_count = (
