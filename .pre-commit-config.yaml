@@ -1,7 +1,7 @@
 minimum_pre_commit_version: "4.4.0"
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.14.10"
+  rev: "v0.14.11"
   hooks:
     - id: ruff-check
       args: ["--fix"]
@@ -13,7 +13,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
 - repo: https://github.com/woodruffw/zizmor-pre-commit
-  rev: v1.19.0
+  rev: v1.20.0
   hooks:
     - id: zizmor
       args: ["--fix", "--no-progress"]
@@ -50,7 +50,7 @@ repos:
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 -   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.407
+    rev: v1.1.408
     hooks:
     -   id: pyright
         files: ^(src/|scripts/)
