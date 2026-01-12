@@ -67,6 +67,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
+from _pytest.stash import StashKey
 from _pytest.warning_types import PytestWarning
 
 
@@ -75,8 +76,6 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
-    from _pytest.nodes import Item
-    from _pytest.nodes import Node
     from _pytest.python import CallSpec2
     from _pytest.python import Function
     from _pytest.python import Metafunc
@@ -424,7 +423,7 @@ class FixtureRequest(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def node(self) -> Node:
+    def node(self):
         """Underlying collection node (depends on current request scope)."""
         raise NotImplementedError()
 
@@ -700,7 +699,7 @@ class TopRequest(FixtureRequest):
         pass
 
     @property
-    def node(self) -> Node:
+    def node(self):
         return self._pyfuncitem
 
     def __repr__(self) -> str:
@@ -753,7 +752,7 @@ class SubRequest(FixtureRequest):
         return self._scope_field
 
     @property
-    def node(self) -> Node:
+    def node(self):
         scope = self._scope
         if scope is Scope.Function:
             # This might also be a non-function Item despite its attribute name.
@@ -973,6 +972,21 @@ def _get_cached_value(
         return cached_result[0]
 
 
+_item_index = StashKey[int]()
+
+
+def _get_item_index(item: nodes.Item) -> int:
+    if (index := item.stash.get(_item_index, None)) is not None:
+        return index
+
+    for index, session_item in enumerate(item.session.items):
+        session_item.stash[_item_index] = index
+
+    index = item.stash.get(_item_index, None)
+    assert index is not None, f"Item {item.nodeid} is not inside its session"
+    return index
+
+
 class FixtureDef(Generic[FixtureValue]):
     """A container for a fixture definition.
 
@@ -1147,7 +1161,7 @@ class FixtureDef(Generic[FixtureValue]):
 
         node = request.node
         session = request.session
-        current_item_index = session._current_item_index
+        current_item_index = _get_item_index(request._pyfuncitem)
         assert current_item_index is not None
 
         for nextitem in itertools.islice(session.items, current_item_index + 1, None):
@@ -1188,7 +1202,7 @@ class FixtureDef(Generic[FixtureValue]):
     def cache_key(self, request: SubRequest) -> object:
         return getattr(request, "param", None)
 
-    def _cache_key_internal(self, item: Item) -> object:
+    def _cache_key_internal(self, item: nodes.Item) -> object:
         callspec: CallSpec2 | None = getattr(item, "callspec", None)
         if callspec is not None and self.argname in callspec.params:
             return callspec.params[self.argname]
