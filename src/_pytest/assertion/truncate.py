@@ -107,12 +107,8 @@ def _truncate_explanation(
         # No truncation happened, so we do not need to add any explanations
         return truncated_explanation
 
-    if truncated_explanation[-1]:
-        # Add ellipsis and take into account part-truncated final line
-        truncated_explanation[-1] = truncated_explanation[-1] + "..."
-    else:
-        # Add proper ellipsis when we were able to fit a full line exactly
-        truncated_explanation[-1] = "..."
+    # Something was truncated, adding '...' at the end to show that
+    truncated_explanation[-1] += "..."
     truncated_line_count = (
         len(input_lines) - len(truncated_explanation) + int(truncated_char)
     )
