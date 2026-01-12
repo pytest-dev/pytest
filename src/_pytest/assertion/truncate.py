@@ -67,7 +67,7 @@ def _truncate_explanation(
     because _get_truncation_parameters was called first.
     """
     # Check if truncation required
-    input_char_count = len("".join(input_lines))
+    input_char_count = sum(len(line) for line in input_lines)
     # The length of the truncation explanation depends on the number of lines
     # removed but is at least 68 characters:
     # The real value is
@@ -96,7 +96,8 @@ def _truncate_explanation(
         truncated_explanation = input_lines
     # We reevaluate the need to truncate chars following removal of some lines
     need_to_truncate_char = (
-        max_chars > 0 and len("".join(truncated_explanation)) > tolerable_max_chars
+        max_chars > 0
+        and sum(len(e) for e in truncated_explanation) > tolerable_max_chars
     )
     if need_to_truncate_char:
         truncated_explanation = _truncate_by_char_count(
