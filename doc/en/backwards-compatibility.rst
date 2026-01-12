@@ -83,9 +83,10 @@ Released pytest versions support all Python versions that are actively maintaine
 ==============  ===================
 pytest version  min. Python version
 ==============  ===================
-8.4+            3.9+
-8.0+            3.8+
-7.1+            3.7+
+9.0+            3.10+
+8.4             3.9+
+8.0 - 8.3       3.8+
+7.1 - 7.4       3.7+
 6.2 - 7.0       3.6+
 5.0 - 6.1       3.5+
 3.3 - 4.6       2.7, 3.4+
