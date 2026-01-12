@@ -496,7 +496,7 @@ if TYPE_CHECKING:
         @overload
         def __call__(
             self,
-            condition: str | bool = False,
+            condition: str | bool = True,
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
