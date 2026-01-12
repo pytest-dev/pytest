@@ -1280,6 +1280,8 @@ class Pytester:
         items = self.getitems(source)
         for item in items:
             if item.name == funcname:
+                # HACK: keep item.session._setupstate.setup(item) working.
+                item.session._current_item_index = 0
                 return item
         assert 0, f"{funcname!r} item not found in module:\n{source}\nitems: {items}"
 

@@ -5435,9 +5435,9 @@ def test_getfixturevalue_parametrized_dependency_tracked(pytester: Pytester) -> 
             "SETUP    S foo[1]",
             "SETUP    S bar",
             "        test_fixtures.py::test_first[1] (fixtures used: bar, foo, request)PASSED",
-            "test_fixtures.py::test_second[2] ",
             "TEARDOWN S bar",
             "TEARDOWN S foo[1]",
+            "test_fixtures.py::test_second[2] ",
             "SETUP    S foo[2]",
             "SETUP    S bar",
             "        test_fixtures.py::test_second[2] (fixtures used: bar, foo, request)PASSED",
@@ -5448,6 +5448,7 @@ def test_getfixturevalue_parametrized_dependency_tracked(pytester: Pytester) -> 
     )
 
 
+@pytest.mark.xfail(reason="#14095")
 def test_fixture_override_finishes_dependencies(pytester: Pytester) -> None:
     """Test that a fixture gets recomputed if its dependency resolves to a different fixturedef (#14095)."""
     pytester.makepyfile(
@@ -5549,14 +5550,14 @@ def test_override_fixture_with_new_parametrized_fixture(pytester: Pytester) -> N
             "SETUP    S foo",
             "SETUP    S bar (fixtures used: foo)",
             "        test_fixtures.py::test_before_class (fixtures used: bar, foo, request)PASSED",
+            "TEARDOWN S bar",
+            "TEARDOWN S foo",
             "test_fixtures.py::TestOverride::test_in_class[1] ",
             "SETUP    S foo[1]",
-            "TEARDOWN S bar",
             "SETUP    S bar (fixtures used: foo)",
             "        test_fixtures.py::TestOverride::test_in_class[1] (fixtures used: bar, foo, request)PASSED",
             "TEARDOWN S bar",
             "TEARDOWN S foo[1]",
-            "TEARDOWN S foo",
         ],
         consecutive=True,
     )

@@ -392,6 +392,7 @@ def pytest_runtestloop(session: Session) -> bool:
 
     for i, item in enumerate(session.items):
         nextitem = session.items[i + 1] if i + 1 < len(session.items) else None
+        session._current_item_index = i
         item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
         if session.shouldfail:
             raise session.Failed(session.shouldfail)
@@ -608,6 +609,7 @@ class Session(nodes.Collector):
         self._initial_parts: list[CollectionArgument] = []
         self._collection_cache: dict[nodes.Collector, CollectReport] = {}
         self.items: list[nodes.Item] = []
+        self._current_item_index: int | None = None
 
         self._bestrelpathcache: dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
