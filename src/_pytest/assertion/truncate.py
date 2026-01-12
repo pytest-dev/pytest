@@ -59,6 +59,12 @@ def _truncate_explanation(
     Truncates to either max_lines, or max_chars - whichever the input reaches
     first, taking the truncation explanation into account. The remaining lines
     will be replaced by a usage message.
+
+    If max_chars=0, no truncation by character count is performed.
+    If max_lines=0, no truncation by line count is performed.
+
+    When this function is launched we know max_lines > 0 or max_chars > 0
+    because _get_truncation_parameters was called first.
     """
     # Check if truncation required
     input_char_count = len("".join(input_lines))
