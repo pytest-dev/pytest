@@ -94,14 +94,14 @@ def _truncate_explanation(
         truncated_explanation = input_lines[:max_lines]
     else:
         truncated_explanation = input_lines
-    truncated_char = True
     # We reevaluate the need to truncate chars following removal of some lines
-    if len("".join(truncated_explanation)) > tolerable_max_chars and max_chars > 0:
+    need_to_truncate_char = (
+        max_chars > 0 and len("".join(truncated_explanation)) > tolerable_max_chars
+    )
+    if need_to_truncate_char:
         truncated_explanation = _truncate_by_char_count(
             truncated_explanation, max_chars
         )
-    else:
-        truncated_char = False
 
     if truncated_explanation == input_lines:
         # No truncation happened, so we do not need to add any explanations
@@ -110,7 +110,7 @@ def _truncate_explanation(
     # Something was truncated, adding '...' at the end to show that
     truncated_explanation[-1] += "..."
     truncated_line_count = (
-        len(input_lines) - len(truncated_explanation) + int(truncated_char)
+        len(input_lines) - len(truncated_explanation) + int(need_to_truncate_char)
     )
     return [
         *truncated_explanation,
