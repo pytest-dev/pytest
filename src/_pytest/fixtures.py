@@ -1993,8 +1993,17 @@ class FixtureManager:
                 yield fixturedef
 
     def _teardown_stale_fixtures(self, item: nodes.Item) -> None:
+        exceptions: list[BaseException] = []
         for fixturedef in list(self._active_parametrized_fixturedefs):
-            fixturedef._finish_if_param_changed(item)
+            try:
+                fixturedef._finish_if_param_changed(item)
+            except BaseException as e:
+                exceptions.append(e)
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        elif len(exceptions) > 1:
+            msg = f'errors while tearing down fixtures for "{item.nodeid}"'
+            raise BaseExceptionGroup(msg, exceptions[::-1])
 
     def _on_parametrized_fixture_setup(self, fixturedef: FixtureDef[Any]) -> None:
         self._active_parametrized_fixturedefs.add(fixturedef)
