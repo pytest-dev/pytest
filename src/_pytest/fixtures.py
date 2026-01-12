@@ -16,7 +16,6 @@ from collections.abc import Set as AbstractSet
 import dataclasses
 import functools
 import inspect
-import itertools
 import os
 from pathlib import Path
 import sys
@@ -67,7 +66,6 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
-from _pytest.stash import StashKey
 from _pytest.warning_types import PytestWarning
 
 
@@ -972,21 +970,6 @@ def _get_cached_value(
         return cached_result[0]
 
 
-_item_index = StashKey[int]()
-
-
-def _get_item_index(item: nodes.Item) -> int:
-    if (index := item.stash.get(_item_index, None)) is not None:
-        return index
-
-    for index, session_item in enumerate(item.session.items):
-        session_item.stash[_item_index] = index
-
-    index = item.stash.get(_item_index, None)
-    assert index is not None, f"Item {item.nodeid} is not inside its session"
-    return index
-
-
 class FixtureDef(Generic[FixtureValue]):
     """A container for a fixture definition.
 
@@ -1055,7 +1038,7 @@ class FixtureDef(Generic[FixtureValue]):
         # ID of the latest cache computation. Prevents finalizing a more recent
         # evaluation of the fixture than expected.
         self._cache_epoch: int = 0
-        # SubRequest to use in finish for the current cached result.
+        # SubRequest used during setup of the current result.
         self._cached_request: SubRequest | None = None
         # Tracks dependencies discovered during the current execution.
         # Filled by FixtureRequest.
@@ -1091,6 +1074,7 @@ class FixtureDef(Generic[FixtureValue]):
         self.cached_result = None
         self._finalizers.clear()
         self._cache_epoch += 1
+        request._fixturemanager._on_parametrized_fixture_finished(self)
         self._cached_request = None
         if len(exceptions) == 1:
             raise exceptions[0]
@@ -1102,9 +1086,6 @@ class FixtureDef(Generic[FixtureValue]):
         """Return the value of this fixture, executing it if not cached."""
         if self.cached_result is not None:
             self._check_cache_hit(request, self.cached_result[1])
-            if self._should_finalize_in_current_item(request):
-                finalizer = self._make_finalizer(request)
-                request._pyfuncitem.addfinalizer(finalizer)
             return _get_cached_value(self.cached_result)
 
         self._requested_fixtures = {}
@@ -1122,9 +1103,9 @@ class FixtureDef(Generic[FixtureValue]):
             )
         finally:
             # Schedule our finalizer, even if the setup failed.
-            finalizer = self._make_finalizer(request)
-            if self._should_finalize_in_current_item(request):
-                request._pyfuncitem.addfinalizer(finalizer)
+            self._cached_request = request
+            finalizer = self._make_finalizer()
+            request._fixturemanager._on_parametrized_fixture_setup(self)
             request.node.addfinalizer(finalizer)
             # Add finalizer to requested fixtures.
             # We make sure to do this after checking for cached value to avoid
@@ -1144,8 +1125,7 @@ class FixtureDef(Generic[FixtureValue]):
             cache_hit = new_cache_key is old_cache_key
         return cache_hit
 
-    def _make_finalizer(self, request: SubRequest) -> Callable[[], object]:
-        self._cached_request = request
+    def _make_finalizer(self) -> Callable[[], object]:
         cache_epoch = self._cache_epoch
 
         def finalizer() -> None:
@@ -1155,29 +1135,14 @@ class FixtureDef(Generic[FixtureValue]):
 
         return finalizer
 
-    def _should_finalize_in_current_item(self, request: SubRequest) -> bool:
+    def _finish_if_param_changed(self, item: nodes.Item) -> None:
         if self.cached_result is None:
-            return False
-
-        node = request.node
-        session = request.session
-        current_item_index = _get_item_index(request._pyfuncitem)
-        assert current_item_index is not None
-
-        for nextitem in itertools.islice(session.items, current_item_index + 1, None):
-            if node not in nextitem.iter_parents():
-                break
-            fixtureinfo: FuncFixtureInfo = getattr(nextitem, "_fixtureinfo")
-            if self not in fixtureinfo.name2fixturedefs.get(self.argname, ()):
-                continue
-            # Found the next item that uses the fixture. Should finalize in current
-            # item if the cache should not be kept for the next item.
-            old_cache_key = self.cached_result[1]
-            new_cache_key = self._cache_key_internal(nextitem)
-            return not self._is_cache_hit(old_cache_key, new_cache_key)
-
-        # It is enough to finish the fixture at the level of request.node.
-        return False
+            return
+        assert self._cached_request is not None
+        old_cache_key = self.cached_result[1]
+        new_cache_key = self._cache_key_internal(item)
+        if not self._is_cache_hit(old_cache_key, new_cache_key):
+            self.finish(self._cached_request)
 
     def _check_cache_hit(self, request: SubRequest, old_cache_key: object) -> None:
         new_cache_key = self.cache_key(request)
@@ -1187,15 +1152,18 @@ class FixtureDef(Generic[FixtureValue]):
         item = request._pyfuncitem
         location = getlocation(self.func, item.config.rootpath)
         msg = (
-            "The requested fixture has no parameter defined for test:\n"
+            "Parameter for the requested fixture changed unexpectedly in test:\n"
             f"    {item.nodeid}\n\n"
             f"Requested fixture '{self.argname}' defined in:\n"
             f"{location}\n\n"
-            f"A previous test provided param={old_cache_key!r}, but the current test "
-            "both requested the fixture dynamically via 'getfixturevalue' and did not "
-            "provide a parameter for the fixture, which is not allowed. "
-            f"Please make fixture '{self.argname}' statically reachable "
-            "from the current test, e.g. by adding it as an argument to the test."
+            f"Previous parameter value: {old_cache_key!r}\n"
+            f"New parameter value:      {new_cache_key!r}\n\n"
+            f"This could happen because the current test requested the previously "
+            "parametrized fixture dynamically via 'getfixturevalue' and did not "
+            "provide a parameter for the fixture.\n"
+            "Either provide a parameter for the fixture, or make fixture "
+            f"'{self.argname}' statically reachable from the current test, "
+            "e.g. by adding it as an argument to the test function."
         )
         fail(msg, pytrace=False)
 
@@ -1676,6 +1644,7 @@ class FixtureManager:
         self._nodeid_autousenames: Final[dict[str, list[str]]] = {
             "": self.config.getini("usefixtures"),
         }
+        self._active_parametrized_fixturedefs: Final[set[FixtureDef[Any]]] = set()
         session.config.pluginmanager.register(self, "funcmanage")
 
     def getfixtureinfo(
@@ -2022,6 +1991,16 @@ class FixtureManager:
         for fixturedef in fixturedefs:
             if fixturedef.baseid in parentnodeids:
                 yield fixturedef
+
+    def _teardown_stale_fixtures(self, item: nodes.Item) -> None:
+        for fixturedef in list(self._active_parametrized_fixturedefs):
+            fixturedef._finish_if_param_changed(item)
+
+    def _on_parametrized_fixture_setup(self, fixturedef: FixtureDef[Any]) -> None:
+        self._active_parametrized_fixturedefs.add(fixturedef)
+
+    def _on_parametrized_fixture_finished(self, fixturedef: FixtureDef[Any]) -> None:
+        self._active_parametrized_fixturedefs.remove(fixturedef)
 
 
 def show_fixtures_per_test(config: Config) -> int | ExitCode:

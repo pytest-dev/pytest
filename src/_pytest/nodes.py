@@ -770,3 +770,6 @@ class Item(Node, abc.ABC):
         relfspath = self.session._node_location_to_relpath(path)
         assert type(location[2]) is str
         return (relfspath, location[1], location[2])
+
+    def _teardown_stale_fixtures(self) -> None:
+        pass

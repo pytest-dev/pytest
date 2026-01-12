@@ -558,6 +558,11 @@ class SetupState:
                     fin()
                 except TEST_OUTCOME as e:
                     these_exceptions.append(e)
+            if isinstance(nextitem, Item):
+                try:
+                    nextitem._teardown_stale_fixtures()
+                except BaseException as e:
+                    exceptions.append(e)
 
             if len(these_exceptions) == 1:
                 exceptions.extend(these_exceptions)

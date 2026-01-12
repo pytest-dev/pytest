@@ -1040,7 +1040,6 @@ class Pytester:
         result: list[Item] = []
         for colitem in colitems:
             result.extend(session.genitems(colitem))
-        session.items.extend(result)
         return result
 
     def runitem(self, source: str) -> Any:
