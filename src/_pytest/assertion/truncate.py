@@ -80,18 +80,14 @@ def _truncate_explanation(
     tolerable_max_chars = (
         max_chars + 70  # 64 + 1 (for plural) + 2 (for '99') + 3 for '...'
     )
-    if (
-        # The truncation explanation add two lines to the output
-        max_lines == 0 or len(input_lines) <= max_lines + 2
-    ) and (
-        max_chars == 0 or sum(len(line) for line in input_lines) <= tolerable_max_chars
-    ):
-        return input_lines
-    # Truncate first to max_lines, and then truncate to max_chars if necessary
-    if max_lines > 0:
-        truncated_explanation = input_lines[:max_lines]
-    else:
+    # The truncation explanation add two lines to the output
+    if max_lines == 0 or len(input_lines) <= max_lines + 2:
+        if max_chars == 0 or sum(len(s) for s in input_lines) <= tolerable_max_chars:
+            return input_lines
         truncated_explanation = input_lines
+    else:
+        # Truncate first to max_lines, and then truncate to max_chars if necessary
+        truncated_explanation = input_lines[:max_lines]
     # We reevaluate the need to truncate chars following removal of some lines
     need_to_truncate_char = (
         max_chars > 0
