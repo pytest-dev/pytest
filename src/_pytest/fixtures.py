@@ -389,6 +389,9 @@ class FixtureRequest(abc.ABC):
         # - In the future we might consider using a generic for the param type, but
         #   for now just using Any.
         self.param: Any
+        # FixtureDefs requested through this specific `request` object.
+        # Allows tracking dependencies on fixtures.
+        self._own_fixture_defs: Final[dict[str, FixtureDef[Any]]] = {}
 
     @property
     def _fixturemanager(self) -> FixtureManager:
@@ -546,11 +549,6 @@ class FixtureRequest(abc.ABC):
             yield current
             current = current._parent_request
 
-    def _account_dependency(self, fixturedef: FixtureDef[object]) -> None:
-        if isinstance(self, SubRequest):
-            assert self._fixturedef._requested_fixtures is not None
-            self._fixturedef._requested_fixtures[fixturedef.argname] = fixturedef
-
     def _get_active_fixturedef(self, argname: str) -> FixtureDef[object]:
         if argname == "request":
             return RequestFixtureDef(self)
@@ -560,7 +558,7 @@ class FixtureRequest(abc.ABC):
         fixturedef = self._fixture_defs.get(argname)
         if fixturedef is not None:
             self._check_scope(fixturedef, fixturedef._scope)
-            self._account_dependency(fixturedef)
+            self._own_fixture_defs[argname] = fixturedef
             return fixturedef
 
         fixturedef = self._find_fixturedef(argname)
@@ -626,7 +624,7 @@ class FixtureRequest(abc.ABC):
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
 
-        self._account_dependency(fixturedef)
+        self._own_fixture_defs[argname] = fixturedef
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
 
@@ -1038,11 +1036,8 @@ class FixtureDef(Generic[FixtureValue]):
         # ID of the latest cache computation. Prevents finalizing a more recent
         # evaluation of the fixture than expected.
         self._cache_epoch: int = 0
-        # SubRequest used during setup of the current result.
-        self._cached_request: SubRequest | None = None
-        # Tracks dependencies discovered during the current execution.
-        # Filled by FixtureRequest.
-        self._requested_fixtures: dict[str, FixtureDef[Any]] | None = None
+        # Callback to finalize cached_result.
+        self._self_finalizer: Callable[[], object] | None = None
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1075,7 +1070,7 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.clear()
         self._cache_epoch += 1
         request._fixturemanager._on_parametrized_fixture_finished(self)
-        self._cached_request = None
+        self._self_finalizer = None
         if len(exceptions) == 1:
             raise exceptions[0]
         elif len(exceptions) > 1:
@@ -1088,12 +1083,12 @@ class FixtureDef(Generic[FixtureValue]):
             self._check_cache_hit(request, self.cached_result[1])
             return _get_cached_value(self.cached_result)
 
-        self._requested_fixtures = {}
         # Execute fixtures from argnames here to make sure that analytics
         # in pytest_fixture_setup only handle the body of the current fixture.
         for argname in self.argnames:
             request._get_active_fixturedef(argname)
 
+        self._self_finalizer = self._make_finalizer(request)
         ihook = request.node.ihook
         try:
             # Setup the fixture, run the code in it, and cache the value
@@ -1102,16 +1097,11 @@ class FixtureDef(Generic[FixtureValue]):
                 fixturedef=self, request=request
             )
         finally:
-            # Schedule our finalizer, even if the setup failed.
-            self._cached_request = request
-            finalizer = self._make_finalizer()
             request._fixturemanager._on_parametrized_fixture_setup(self)
-            request.node.addfinalizer(finalizer)
-            # Add finalizer to requested fixtures.
-            # We make sure to do this after checking for cached value to avoid
-            # adding our finalizer multiple times. (#12135)
-            for parent_fixture in self._requested_fixtures.values():
-                parent_fixture.addfinalizer(finalizer)
+            # Schedule our finalizer, even if the setup failed.
+            request.node.addfinalizer(self._self_finalizer)
+            for fixturedef in request._own_fixture_defs.values():
+                fixturedef.addfinalizer(self._self_finalizer)
 
         return result
 
@@ -1125,30 +1115,38 @@ class FixtureDef(Generic[FixtureValue]):
             cache_hit = new_cache_key is old_cache_key
         return cache_hit
 
-    def _make_finalizer(self) -> Callable[[], object]:
+    def _make_finalizer(self, request: SubRequest) -> Callable[[], object]:
         cache_epoch = self._cache_epoch
 
         def finalizer() -> None:
             if self._cache_epoch == cache_epoch:
-                assert self._cached_request is not None
-                self.finish(self._cached_request)
+                self.finish(request)
 
         return finalizer
 
     def _finish_if_param_changed(self, item: nodes.Item) -> None:
         if self.cached_result is None:
             return
-        assert self._cached_request is not None
+        assert self._self_finalizer is not None
         old_cache_key = self.cached_result[1]
-        new_cache_key = self._cache_key_internal(item)
+
+        callspec: CallSpec2 | None = getattr(item, "callspec", None)
+        if callspec is None or self.argname not in callspec.params:
+            # Carry the fixture cache over a test that does not request
+            # the (previously) parametrized fixture statically.
+            # This implementation decision has the consequence that requesting
+            # the fixture dynamically is disallowed, see _check_cache_hit.
+            return
+        new_cache_key = callspec.params[self.argname]
         if not self._is_cache_hit(old_cache_key, new_cache_key):
-            self.finish(self._cached_request)
+            self._self_finalizer()
 
     def _check_cache_hit(self, request: SubRequest, old_cache_key: object) -> None:
         new_cache_key = self.cache_key(request)
         if self._is_cache_hit(old_cache_key, new_cache_key):
             return
 
+        # Finishing the fixture in setup phase in unacceptable (see PR #14104).
         item = request._pyfuncitem
         location = getlocation(self.func, item.config.rootpath)
         msg = (
@@ -1157,7 +1155,7 @@ class FixtureDef(Generic[FixtureValue]):
             f"Requested fixture '{self.argname}' defined in:\n"
             f"{location}\n\n"
             f"Previous parameter value: {old_cache_key!r}\n"
-            f"New parameter value:      {new_cache_key!r}\n\n"
+            f"New parameter value: {new_cache_key!r}\n\n"
             f"This could happen because the current test requested the previously "
             "parametrized fixture dynamically via 'getfixturevalue' and did not "
             "provide a parameter for the fixture.\n"
@@ -1644,7 +1642,8 @@ class FixtureManager:
         self._nodeid_autousenames: Final[dict[str, list[str]]] = {
             "": self.config.getini("usefixtures"),
         }
-        self._active_parametrized_fixturedefs: Final[set[FixtureDef[Any]]] = set()
+        # Using dict for keeping insertion order.
+        self._active_parametrized_fixturedefs: Final[dict[FixtureDef[Any], None]] = {}
         session.config.pluginmanager.register(self, "funcmanage")
 
     def getfixtureinfo(
@@ -1994,7 +1993,7 @@ class FixtureManager:
 
     def _teardown_stale_fixtures(self, item: nodes.Item) -> None:
         exceptions: list[BaseException] = []
-        for fixturedef in list(self._active_parametrized_fixturedefs):
+        for fixturedef in reversed(list(self._active_parametrized_fixturedefs.keys())):
             try:
                 fixturedef._finish_if_param_changed(item)
             except BaseException as e:
@@ -2006,10 +2005,10 @@ class FixtureManager:
             raise BaseExceptionGroup(msg, exceptions[::-1])
 
     def _on_parametrized_fixture_setup(self, fixturedef: FixtureDef[Any]) -> None:
-        self._active_parametrized_fixturedefs.add(fixturedef)
+        self._active_parametrized_fixturedefs[fixturedef] = None
 
     def _on_parametrized_fixture_finished(self, fixturedef: FixtureDef[Any]) -> None:
-        self._active_parametrized_fixturedefs.remove(fixturedef)
+        del self._active_parametrized_fixturedefs[fixturedef]
 
 
 def show_fixtures_per_test(config: Config) -> int | ExitCode:
