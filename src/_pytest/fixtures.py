@@ -1125,8 +1125,7 @@ class FixtureDef(Generic[FixtureValue]):
         return finalizer
 
     def _finish_if_param_changed(self, item: nodes.Item) -> None:
-        if self.cached_result is None:
-            return
+        assert self.cached_result is not None
         assert self._self_finalizer is not None
         old_cache_key = self.cached_result[1]
 
@@ -1167,12 +1166,6 @@ class FixtureDef(Generic[FixtureValue]):
 
     def cache_key(self, request: SubRequest) -> object:
         return getattr(request, "param", None)
-
-    def _cache_key_internal(self, item: nodes.Item) -> object:
-        callspec: CallSpec2 | None = getattr(item, "callspec", None)
-        if callspec is not None and self.argname in callspec.params:
-            return callspec.params[self.argname]
-        return None
 
     def __repr__(self) -> str:
         return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
