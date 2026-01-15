@@ -1,3 +1,3 @@
 Garbage finalizers for fixture teardown are no longer accumulated in nodes and fixtures.
 
-As a side-effect, :func:`Node.addfinalizer <_pytest.nodes.Node.addfinalizer>` and :func:`FixtureRequest.addfinalizer <_pytest.fixtures.FixtureRequest.addfinalizer>` now return a handle that allows to remove the finalizer.
+As a side-effect, :func:`Node.addfinalizer <_pytest.nodes.Node.addfinalizer>` and ``request.addfinalizer()`` now return a handle that allows to remove the finalizer.
