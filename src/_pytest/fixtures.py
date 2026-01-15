@@ -486,9 +486,12 @@ class FixtureRequest(abc.ABC):
         return self._pyfuncitem.session
 
     @abc.abstractmethod
-    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
+    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
         """Add finalizer/teardown function to be called without arguments after
-        the last test within the requesting test context finished execution."""
+        the last test within the requesting test context finished execution.
+
+        :returns: A handle that can be used to remove the finalizer.
+        """
         raise NotImplementedError()
 
     def applymarker(self, marker: str | MarkDecorator) -> None:
@@ -695,7 +698,7 @@ class TopRequest(FixtureRequest):
         pass
 
     @property
-    def node(self):
+    def node(self) -> nodes.Node:
         return self._pyfuncitem
 
     def __repr__(self) -> str:
@@ -707,8 +710,8 @@ class TopRequest(FixtureRequest):
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfixturevalue(argname)
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
-        self.node.addfinalizer(finalizer)
+    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+        return self.node.addfinalizer(finalizer)
 
 
 @final
@@ -794,8 +797,8 @@ class SubRequest(FixtureRequest):
         sig = signature(factory)
         return f"{path}:{lineno + 1}:  def {factory.__name__}{sig}"
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
-        self._fixturedef.addfinalizer(finalizer)
+    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+        return self._fixturedef.addfinalizer(finalizer)
 
 
 @final
@@ -1186,8 +1189,8 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         )
         self.cached_result = (request, [0], None)
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
-        pass
+    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+        return lambda: None
 
 
 def resolve_fixture_function(
