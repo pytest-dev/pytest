@@ -208,4 +208,3 @@ Examples:
 
    # Disable auto-loading and load plugin modules during startup
    PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTEST_PLUGINS=mymodule.plugin,xdist pytest
-
