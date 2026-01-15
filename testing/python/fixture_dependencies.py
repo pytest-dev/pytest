@@ -199,17 +199,17 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
                 raise RuntimeError("Error in post finalizer hook")
 
         @pytest.fixture
-        def my_fixture():
-            yield "value"
+        def my_fixture(request):
+            yield request.node.nodeid
         """
     )
     pytester.makepyfile(
         test_fixtures="""
         def test_first(my_fixture):
-            assert my_fixture == "value"
+            assert "test_first" in my_fixture
 
         def test_second(my_fixture):
-            assert my_fixture == "value"
+            assert "test_second" in my_fixture
         """
     )
     result = pytester.runpytest("-v", "--setup-show")
@@ -226,11 +226,11 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
         [
             "test_fixtures.py::test_first ",
             "        SETUP    F my_fixture",
-            "        test_fixtures.py::test_first (fixtures used: my_fixture)PASSED",
+            "        test_fixtures.py::test_first (fixtures used: my_fixture, request)PASSED",
             "test_fixtures.py::test_first ERROR",
             "test_fixtures.py::test_second ",
             "        SETUP    F my_fixture",
-            "        test_fixtures.py::test_second (fixtures used: my_fixture)PASSED",
+            "        test_fixtures.py::test_second (fixtures used: my_fixture, request)PASSED",
             "        TEARDOWN F my_fixture",
         ],
         consecutive=True,
