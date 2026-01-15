@@ -592,18 +592,16 @@ def test_request_stealing_then_getfixturevalue_on_parametrized(
     )
 
 
-def test_cache_epoch_prevents_stale_finalizer(pytester: Pytester) -> None:
-    """Test that _cache_epoch prevents finalization by stale finalizers.
-
-    This test demonstrates the problem that _cache_epoch solves:
+def test_stale_finalizer_not_invoked(pytester: Pytester) -> None:
+    """Test that stale fixture finalizers are not invoked.
 
     Scenario:
-    1. Fixture 'bar' depends on 'foo' via getfixturevalue in first evaluation
+    1. Fixture 'bar' depends on 'foo' via getfixturevalue in first evaluation;
+       in a possible implementation, a finalizer is added to 'foo' to first destroy 'bar'
     2. Fixture 'bar' gets recomputed and no longer depends on 'foo'
     3. Fixture 'foo' gets finalized
-    4. Without _cache_epoch, 'bar' would be finalized by the old finalizer
-       registered during step 1, even though it has been recomputed
-    5. With _cache_epoch, the old finalizer checks the epoch and skips finalization
+    4. Without any measures to remove the stale finalizer, 'bar' would be finalized
+       by the finalizer registered during step 1, even though 'bar' has been recomputed
 
     The test verifies that 'bar' is NOT finalized when 'foo' is finalized,
     because 'bar' was recomputed and the old finalizer should be ignored.
@@ -651,8 +649,7 @@ def test_cache_epoch_prevents_stale_finalizer(pytester: Pytester) -> None:
             "SETUP    S bar[2]",
             "        *test_second*PASSED",
             "TEARDOWN S foo[1]",
-            # bar should NOT be torn down here because the old finalizer
-            # from the first evaluation should be ignored due to _cache_epoch.
+            # bar should NOT be torn down here.
             "test_fixtures.py::test_third[2-2] ",
             "SETUP    S foo[2]",
             "        *test_third*PASSED",

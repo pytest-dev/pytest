@@ -27,8 +27,10 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.nodes import append_finalizer
 from _pytest.nodes import Collector
 from _pytest.nodes import Directory
+from _pytest.nodes import FinalizerStorage
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.outcomes import Exit
@@ -501,7 +503,7 @@ class SetupState:
             Node,
             tuple[
                 # Node's finalizers.
-                list[Callable[[], object]],
+                FinalizerStorage,
                 # Node's exception and original traceback, if its setup raised.
                 tuple[OutcomeException | Exception, types.TracebackType | None] | None,
             ],
@@ -521,22 +523,28 @@ class SetupState:
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
             # Push onto the stack.
-            self.stack[col] = ([col.teardown], None)
+            finalizers = FinalizerStorage()
+            append_finalizer(finalizers, col.teardown)
+            self.stack[col] = (finalizers, None)
             try:
                 col.setup()
             except TEST_OUTCOME as exc:
                 self.stack[col] = (self.stack[col][0], (exc, exc.__traceback__))
                 raise
 
-    def addfinalizer(self, finalizer: Callable[[], object], node: Node) -> None:
+    def addfinalizer(
+        self, finalizer: Callable[[], object], node: Node
+    ) -> Callable[[], None]:
         """Attach a finalizer to the given node.
 
         The node must be currently active in the stack.
+
+        :returns: A handle that can be used to remove the finalizer.
         """
         assert node and not isinstance(node, tuple)
         assert callable(finalizer)
         assert node in self.stack, (node, self.stack)
-        self.stack[node][0].append(finalizer)
+        return append_finalizer(self.stack[node][0], finalizer)
 
     def teardown_exact(self, nextitem: Item | None) -> None:
         """Teardown the current stack up until reaching nodes that nextitem
@@ -553,7 +561,7 @@ class SetupState:
             node, (finalizers, _) = self.stack.popitem()
             these_exceptions = []
             while finalizers:
-                fin = finalizers.pop()
+                _, fin = finalizers.popitem()
                 try:
                     fin()
                 except TEST_OUTCOME as e:

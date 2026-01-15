@@ -1032,12 +1032,11 @@ class FixtureDef(Generic[FixtureValue]):
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
-        self._finalizers: Final[list[Callable[[], object]]] = []
-        # ID of the latest cache computation. Prevents finalizing a more recent
-        # evaluation of the fixture than expected.
-        self._cache_epoch: int = 0
+        self._finalizers: Final[nodes.FinalizerStorage] = {}
         # Callback to finalize cached_result.
         self._self_finalizer: Callable[[], object] | None = None
+        # Handles to remove _self_finalizer from various scopes.
+        self._self_finalizer_handles: Final[list[Callable[[], None]]] = []
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1047,13 +1046,13 @@ class FixtureDef(Generic[FixtureValue]):
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
-        self._finalizers.append(finalizer)
+    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+        return nodes.append_finalizer(self._finalizers, finalizer)
 
     def finish(self, request: SubRequest) -> None:
         exceptions: list[BaseException] = []
         while self._finalizers:
-            fin = self._finalizers.pop()
+            _, fin = self._finalizers.popitem()
             try:
                 fin()
             except BaseException as e:
@@ -1068,9 +1067,12 @@ class FixtureDef(Generic[FixtureValue]):
         # which will keep instances alive.
         self.cached_result = None
         self._finalizers.clear()
-        self._cache_epoch += 1
         request._fixturemanager._on_parametrized_fixture_finished(self)
         self._self_finalizer = None
+        # Avoid accumulating garbage finalizers in nodes and fixturedefs (#4871).
+        for handle in self._self_finalizer_handles:
+            handle()
+        self._self_finalizer_handles.clear()
         if len(exceptions) == 1:
             raise exceptions[0]
         elif len(exceptions) > 1:
@@ -1088,7 +1090,7 @@ class FixtureDef(Generic[FixtureValue]):
         for argname in self.argnames:
             request._get_active_fixturedef(argname)
 
-        self._self_finalizer = self._make_finalizer(request)
+        self._self_finalizer = functools.partial(self.finish, request)
         ihook = request.node.ihook
         try:
             # Setup the fixture, run the code in it, and cache the value
@@ -1099,9 +1101,13 @@ class FixtureDef(Generic[FixtureValue]):
         finally:
             request._fixturemanager._on_parametrized_fixture_setup(self)
             # Schedule our finalizer, even if the setup failed.
-            request.node.addfinalizer(self._self_finalizer)
+            self._self_finalizer_handles.append(
+                request.node.addfinalizer(self._self_finalizer)
+            )
             for fixturedef in request._own_fixture_defs.values():
-                fixturedef.addfinalizer(self._self_finalizer)
+                self._self_finalizer_handles.append(
+                    fixturedef.addfinalizer(self._self_finalizer)
+                )
 
         return result
 
@@ -1114,15 +1120,6 @@ class FixtureDef(Generic[FixtureValue]):
             # If the comparison raises, use 'is' as fallback.
             cache_hit = new_cache_key is old_cache_key
         return cache_hit
-
-    def _make_finalizer(self, request: SubRequest) -> Callable[[], object]:
-        cache_epoch = self._cache_epoch
-
-        def finalizer() -> None:
-            if self._cache_epoch == cache_epoch:
-                self.finish(request)
-
-        return finalizer
 
     def _finish_if_param_changed(self, item: nodes.Item) -> None:
         assert self.cached_result is not None

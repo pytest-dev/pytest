@@ -1,0 +1,3 @@
+Teardown of parametrized fixtures now happens in the teardown stage of the test before the parameter changes.
+
+Previously teardown would happen in the setup stage of the test where the parameter changes.
