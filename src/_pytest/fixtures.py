@@ -1190,7 +1190,7 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         self.cached_result = (request, [0], None)
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
-        return lambda: None
+        assert False
 
 
 def resolve_fixture_function(
