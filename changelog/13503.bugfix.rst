@@ -1,0 +1,1 @@
+Dictionary keys in assertion failure output now preserve insertion order instead of being sorted alphabetically, matching Python's dict behavior since 3.7+.
