@@ -68,3 +68,19 @@ class TestDummy(BaseTestClass):
     def test_dummy(self) -> None:
         assert self.test_func_scope_set is True
         assert self.test_class_scope_set is True
+
+
+@pytest.mark.usefixtures("fix")
+class TestMultipleMethods(ParentBase):
+    """check to bind methods in _ClassScopeInstance proxy"""
+
+    name = "multi"
+
+    def test_a(self) -> None:
+        assert self.variable == self.name
+
+    def test_b(self) -> None:
+        assert self.variable == self.name
+
+    def test_c(self) -> None:
+        assert self.variable == self.name

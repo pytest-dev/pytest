@@ -1138,6 +1138,28 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         pass
 
 
+class _ClassScopeInstance:
+    """Proxy that redirects attribute writes to the class.
+
+    Used for class-scoped fixtures so that self.attr = value
+    sets a class attribute visible to all test instances.
+    """
+
+    _cls: type
+
+    def __init__(self, cls: type) -> None:
+        object.__setattr__(self, "_cls", cls)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        setattr(self._cls, name, value)
+
+    def __getattr__(self, name: str) -> object:
+        attr = getattr(self._cls, name)
+        if isinstance(attr, types.FunctionType):
+            return attr.__get__(self, self._cls)
+        return attr
+
+
 def resolve_fixture_function(
     fixturedef: FixtureDef[FixtureValue], request: FixtureRequest
 ) -> _FixtureFunc[FixtureValue]:
@@ -1149,17 +1171,19 @@ def resolve_fixture_function(
     # as expected.
     instance = request.instance
 
-    if instance is None and fixturedef._scope is Scope.Class:
-        instance = getattr(request._pyfuncitem, "instance", None)
+    if instance is None and fixturedef._scope is Scope.Class and request.cls is not None:
+        instance = _ClassScopeInstance(request.cls)
 
     if instance is not None:
         # Handle the case where fixture is defined not in a test class, but some other class
         # (for example a plugin class with a fixture), see #2270.
-        if hasattr(fixturefunc, "__self__") and not isinstance(
-            instance,
-            fixturefunc.__self__.__class__,
-        ):
-            return fixturefunc
+        if hasattr(fixturefunc, "__self__"):
+            if isinstance(instance, _ClassScopeInstance):
+                instance_cls = instance._cls
+            else:
+                instance_cls = type(instance)
+            if not issubclass(instance_cls, fixturefunc.__self__.__class__):
+                return fixturefunc
         fixturefunc = getimfunc(fixturedef.func)
         if fixturefunc != fixturedef.func:
             fixturefunc = fixturefunc.__get__(instance)
