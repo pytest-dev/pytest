@@ -445,17 +445,17 @@ def test_dict_preserves_insertion_order() -> None:
 
 def test_dict_insertion_order_with_depth() -> None:
     """Test dict insertion order in _safe_repr (used with maxlevels/depth).
-    
+
     This test ensures the _safe_repr method also preserves insertion order
     when it formats dicts at maximum depth levels.
     """
     # Create nested dict structure with non-alphabetical keys
     d = {"z": {"inner": 1}, "a": {"inner": 2}, "m": {"inner": 3}}
-    
+
     # Use depth parameter to trigger _safe_repr path
     pp = PrettyPrinter(depth=1)
     result = pp.pformat(d)
-    
+
     # Verify insertion order is preserved (z before a before m)
     z_pos = result.index("'z'")
     a_pos = result.index("'a'")
