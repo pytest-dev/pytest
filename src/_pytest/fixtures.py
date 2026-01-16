@@ -1171,7 +1171,11 @@ def resolve_fixture_function(
     # as expected.
     instance = request.instance
 
-    if instance is None and fixturedef._scope is Scope.Class and request.cls is not None:
+    if (
+        instance is None
+        and fixturedef._scope is Scope.Class
+        and request.cls is not None
+    ):
         instance = _ClassScopeInstance(request.cls)
 
     if instance is not None:
