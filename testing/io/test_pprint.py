@@ -467,18 +467,18 @@ def test_dict_insertion_order_with_depth() -> None:
 
 def test_dict_insertion_order_in_repr() -> None:
     """Test dict insertion order in _safe_repr inline representation.
-    
+
     This covers the _safe_repr dict formatting code path used for
     inline/fallback representations.
     """
     pp = PrettyPrinter()
-    
+
     # Create a dict that will be rendered inline via _safe_repr
     d = {"z": 1, "a": 2, "m": 3}
-    
+
     # Call _safe_repr directly to ensure that code path is covered
     result = pp._safe_repr(d, set(), None, 0)
-    
+
     # Verify insertion order is preserved in the inline repr
     z_pos = result.index("'z'")
     a_pos = result.index("'a'")
