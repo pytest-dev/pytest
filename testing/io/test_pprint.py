@@ -406,3 +406,36 @@ class DataclassWithTwoItems:
 )
 def test_consistent_pretty_printer(data: Any, expected: str) -> None:
     assert PrettyPrinter().pformat(data) == textwrap.dedent(expected).strip()
+
+
+def test_dict_preserves_insertion_order() -> None:
+    """Test that dictionary keys maintain insertion order, not alphabetical.
+    
+    Relates to issue #13503 - dicts should preserve insertion order
+    since Python 3.7+, not sort alphabetically.
+    """
+    # Create dict with non-alphabetical insertion order
+    d = {}
+    d['z'] = 1
+    d['a'] = 2
+    d['m'] = 3
+    
+    result = PrettyPrinter().pformat(d)
+    
+    # Verify the keys appear in insertion order (z, a, m)
+    z_pos = result.index("'z'")
+    a_pos = result.index("'a'")
+    m_pos = result.index("'m'")
+    
+    # z should appear before a, and a before m
+    assert z_pos < a_pos < m_pos, f"Expected insertion order z<a<m, got positions: z={z_pos}, a={a_pos}, m={m_pos}"
+    
+    # Also verify expected format
+    expected = textwrap.dedent("""
+    {
+        'z': 1,
+        'a': 2,
+        'm': 3,
+    }
+    """).strip()
+    assert result == expected
