@@ -1629,14 +1629,13 @@ class FixtureManager:
             # case-insensitive systems (Windows) and other normalization issues
             # (issue #11816).
             conftestpath = absolutepath(plugin_name)
-            try:
-                nodeid = str(conftestpath.parent.relative_to(self.config.rootpath))
-            except ValueError:
-                nodeid = ""
-            if nodeid == ".":
-                nodeid = ""
-            if os.sep != nodes.SEP:
-                nodeid = nodeid.replace(os.sep, nodes.SEP)
+            # initial_paths not available yet at plugin registration time,
+            # so we skip that step and fall back to bestrelpath
+            nodeid = nodes.compute_nodeid_prefix_for_path(
+                path=conftestpath.parent,
+                rootpath=self.config.rootpath,
+                invocation_dir=self.config.invocation_params.dir,
+            )
         else:
             nodeid = None
 
@@ -1644,8 +1643,15 @@ class FixtureManager:
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to node."""
+        seen_nodeids: set[str] = set()
         for parentnode in node.listchain():
-            basenames = self._nodeid_autousenames.get(parentnode.nodeid)
+            nodeid = parentnode.nodeid
+            # Avoid yielding duplicates when multiple nodes share the same nodeid
+            # (e.g., Session and root Directory both have nodeid "").
+            if nodeid in seen_nodeids:
+                continue
+            seen_nodeids.add(nodeid)
+            basenames = self._nodeid_autousenames.get(nodeid)
             if basenames:
                 yield from basenames
 
