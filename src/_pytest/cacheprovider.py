@@ -12,6 +12,7 @@ import errno
 import json
 import os
 from pathlib import Path
+import shutil
 import tempfile
 from typing import final
 
@@ -33,7 +34,8 @@ from _pytest.nodes import File
 from _pytest.reports import TestReport
 
 
-README_CONTENT = """\
+CACHEDIR_FILES: dict[str, bytes] = {
+    "README.md": b"""\
 # pytest cache directory #
 
 This directory contains data from the pytest's cache plugin,
@@ -42,14 +44,48 @@ which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
 **Do not** commit this to version control.
 
 See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
-"""
-
-CACHEDIR_TAG_CONTENT = b"""\
+""",
+    ".gitignore": b"# Created by pytest automatically.\n*\n",
+    "CACHEDIR.TAG": b"""\
 Signature: 8a477f597d28d172789f06886806bc55
 # This file is a cache directory tag created by pytest.
 # For information about cache directory tags, see:
 #	https://bford.info/cachedir/spec.html
-"""
+""",
+}
+
+
+def _make_cachedir(target: Path) -> None:
+    """Create the pytest cache directory atomically with supporting files.
+
+    Creates a temporary directory with README.md, .gitignore, and CACHEDIR.TAG,
+    then atomically renames it to the target location. If another process wins
+    the race, the temporary directory is cleaned up.
+    """
+    target.parent.mkdir(parents=True, exist_ok=True)
+    path = Path(tempfile.mkdtemp(prefix="pytest-cache-files-", dir=target.parent))
+    try:
+        # Reset permissions to the default, see #12308.
+        # Note: there's no way to get the current umask atomically, eek.
+        umask = os.umask(0o022)
+        os.umask(umask)
+        path.chmod(0o777 - umask)
+
+        for name, content in CACHEDIR_FILES.items():
+            path.joinpath(name).write_bytes(content)
+
+        path.rename(target)
+    except OSError as e:
+        # If 2 concurrent pytests both race to the rename, the loser
+        # gets "Directory not empty" from the rename. In this case,
+        # everything is handled so just continue after cleanup.
+        # On Windows, the error is a FileExistsError which translates to EEXIST.
+        shutil.rmtree(path, ignore_errors=True)
+        if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
+            raise
+    except BaseException:
+        shutil.rmtree(path, ignore_errors=True)
+        raise
 
 
 @final
@@ -202,48 +238,8 @@ class Cache:
 
     def _ensure_cache_dir_and_supporting_files(self) -> None:
         """Create the cache dir and its supporting files."""
-        if self._cachedir.is_dir():
-            return
-
-        self._cachedir.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(
-            prefix="pytest-cache-files-",
-            dir=self._cachedir.parent,
-        ) as newpath:
-            path = Path(newpath)
-
-            # Reset permissions to the default, see #12308.
-            # Note: there's no way to get the current umask atomically, eek.
-            umask = os.umask(0o022)
-            os.umask(umask)
-            path.chmod(0o777 - umask)
-
-            with open(path.joinpath("README.md"), "x", encoding="UTF-8") as f:
-                f.write(README_CONTENT)
-            with open(path.joinpath(".gitignore"), "x", encoding="UTF-8") as f:
-                f.write("# Created by pytest automatically.\n*\n")
-            with open(path.joinpath("CACHEDIR.TAG"), "xb") as f:
-                f.write(CACHEDIR_TAG_CONTENT)
-
-            try:
-                path.rename(self._cachedir)
-            except OSError as e:
-                # If 2 concurrent pytests both race to the rename, the loser
-                # gets "Directory not empty" from the rename. In this case,
-                # everything is handled so just continue (while letting the
-                # temporary directory be cleaned up).
-                # On Windows, the error is a FileExistsError which translates to EEXIST.
-                if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
-                    raise
-            else:
-                # Create a directory in place of the one we just moved so that
-                # `TemporaryDirectory`'s cleanup doesn't complain.
-                #
-                # TODO: pass ignore_cleanup_errors=True when we no longer support python < 3.10.
-                # See https://github.com/python/cpython/issues/74168. Note that passing
-                # delete=False would do the wrong thing in case of errors and isn't supported
-                # until python 3.12.
-                path.mkdir()
+        if not self._cachedir.is_dir():
+            _make_cachedir(self._cachedir)
 
 
 class LFPluginCollWrapper:

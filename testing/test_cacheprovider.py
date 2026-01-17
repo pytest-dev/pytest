@@ -1348,13 +1348,13 @@ def test_does_not_create_boilerplate_in_existing_dirs(pytester: Pytester) -> Non
 def test_cachedir_tag(pytester: Pytester) -> None:
     """Ensure we automatically create CACHEDIR.TAG file in the pytest_cache directory (#4278)."""
     from _pytest.cacheprovider import Cache
-    from _pytest.cacheprovider import CACHEDIR_TAG_CONTENT
+    from _pytest.cacheprovider import CACHEDIR_FILES
 
     config = pytester.parseconfig()
     cache = Cache.for_config(config, _ispytest=True)
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
-    assert cachedir_tag_path.read_bytes() == CACHEDIR_TAG_CONTENT
+    assert cachedir_tag_path.read_bytes() == CACHEDIR_FILES["CACHEDIR.TAG"]
 
 
 def test_clioption_with_cacheshow_and_help(pytester: Pytester) -> None:
