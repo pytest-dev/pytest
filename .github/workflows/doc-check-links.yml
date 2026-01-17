@@ -31,7 +31,7 @@ jobs:
       - name: Install tox
         run: |
           python -m pip install --upgrade pip
-          pip install tox
+          pip install tox tox-uv
 
       - name: Run sphinx linkcheck via tox
         run: tox -e docs-checklinks
