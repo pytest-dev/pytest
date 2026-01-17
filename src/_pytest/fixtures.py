@@ -1629,14 +1629,13 @@ class FixtureManager:
             # case-insensitive systems (Windows) and other normalization issues
             # (issue #11816).
             conftestpath = absolutepath(plugin_name)
-            try:
-                nodeid = str(conftestpath.parent.relative_to(self.config.rootpath))
-            except ValueError:
-                nodeid = ""
-            if nodeid == ".":
-                nodeid = ""
-            elif nodeid:
-                nodeid = nodes.norm_sep(nodeid)
+            # initial_paths not available yet at plugin registration time,
+            # so we skip that step and fall back to bestrelpath
+            nodeid = nodes.compute_nodeid_prefix_for_path(
+                path=conftestpath.parent,
+                rootpath=self.config.rootpath,
+                invocation_dir=self.config.invocation_params.dir,
+            )
         else:
             nodeid = None
 

@@ -636,22 +636,19 @@ def compute_nodeid_prefix_for_path(
     path: Path,
     rootpath: Path,
     invocation_dir: Path,
-    initial_paths: frozenset[Path],
     site_packages: frozenset[Path] | None = None,
 ) -> str:
     """Compute a nodeid prefix for a filesystem path.
 
     The nodeid prefix is computed based on the path's relationship to:
     1. rootpath - if relative, use simple relative path
-    2. initial_paths - if relative to an initial path, use that
-    3. site-packages - use "site://<package>/<path>" prefix
-    4. invocation_dir - if close by, use relative path with ".." components
-    5. Otherwise, use absolute path
+    2. site-packages - use "site://<package>/<path>" prefix
+    3. invocation_dir - if close by, use relative path with ".." components
+    4. Otherwise, use absolute path
 
     :param path: The path to compute a nodeid prefix for.
     :param rootpath: The pytest root path.
     :param invocation_dir: The directory from which pytest was invoked.
-    :param initial_paths: The initial paths (testpaths or command line args).
     :param site_packages: Optional set of site-packages directories. If None,
         uses the cached system site-packages directories.
 
@@ -667,19 +664,14 @@ def compute_nodeid_prefix_for_path(
     except ValueError:
         pass
 
-    # 2. Try relative to initial_paths
-    nodeid = _check_initialpaths_for_relpath(initial_paths, path)
-    if nodeid is not None:
-        return nodeid.replace(os.sep, SEP) if nodeid else ""
-
-    # 3. Check if path is in site-packages
+    # 2. Check if path is in site-packages
     site_info = _path_in_site_packages(path, site_packages)
     if site_info is not None:
         _sp_dir, rel_path = site_info
         result = f"site://{rel_path}"
         return result.replace(os.sep, SEP)
 
-    # 4. Try relative to invocation_dir if "close by" (i.e., not too many ".." components)
+    # 3. Try relative to invocation_dir if "close by" (i.e., not too many ".." components)
     rel_from_invocation = bestrelpath(invocation_dir, path)
     # Count the number of ".." components - if it's reasonable, use the relative path
     # Also check total path length to avoid overly long relative paths
@@ -691,7 +683,7 @@ def compute_nodeid_prefix_for_path(
     if up_count <= 2 and rel_from_invocation != str(path):
         return rel_from_invocation.replace(os.sep, SEP)
 
-    # 5. Fall back to absolute path
+    # 4. Fall back to absolute path
     return str(path).replace(os.sep, SEP)
 
 
@@ -739,7 +731,6 @@ class FSCollector(Collector, abc.ABC):
                 path=path,
                 rootpath=session.config.rootpath,
                 invocation_dir=session.config.invocation_params.dir,
-                initial_paths=session._initialpaths,
             )
 
         super().__init__(

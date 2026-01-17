@@ -215,14 +215,13 @@ class TestNodeidPrefixComputation:
             path=test_file,
             rootpath=rootpath,
             invocation_dir=rootpath,
-            initial_paths=frozenset(),
             site_packages=frozenset(),
         )
 
         assert result == "tests/test_foo.py"
 
-    def test_compute_nodeid_in_initial_paths(self, tmp_path: Path) -> None:
-        """Test nodeid computation for paths relative to initial_paths."""
+    def test_compute_nodeid_outside_rootpath(self, tmp_path: Path) -> None:
+        """Test nodeid computation for paths outside rootpath uses bestrelpath."""
         rootpath = tmp_path / "project"
         rootpath.mkdir()
         tests_dir = tmp_path / "tests"
@@ -234,11 +233,11 @@ class TestNodeidPrefixComputation:
             path=test_file,
             rootpath=rootpath,
             invocation_dir=rootpath,
-            initial_paths=frozenset([tests_dir]),
             site_packages=frozenset(),
         )
 
-        assert result == "test_foo.py"
+        # Uses bestrelpath since outside rootpath
+        assert result == "../tests/test_foo.py"
 
     def test_compute_nodeid_in_site_packages(self, tmp_path: Path) -> None:
         """Test nodeid computation for paths in site-packages uses site:// prefix."""
@@ -254,7 +253,6 @@ class TestNodeidPrefixComputation:
             path=pkg_test,
             rootpath=rootpath,
             invocation_dir=rootpath,
-            initial_paths=frozenset(),
             site_packages=frozenset([fake_site_packages]),
         )
 
@@ -272,8 +270,6 @@ class TestNodeidPrefixComputation:
             path=sibling,
             rootpath=rootpath,
             invocation_dir=rootpath,
-            initial_paths=frozenset(),
-            site_packages=frozenset(),
         )
 
         assert result == "../sibling/tests/test_foo.py"
@@ -290,8 +286,6 @@ class TestNodeidPrefixComputation:
             path=far_away,
             rootpath=rootpath,
             invocation_dir=rootpath,
-            initial_paths=frozenset(),
-            site_packages=frozenset(),
         )
 
         # Should use absolute path since it's more than 2 levels up
@@ -306,25 +300,6 @@ class TestNodeidPrefixComputation:
             path=rootpath,
             rootpath=rootpath,
             invocation_dir=rootpath,
-            initial_paths=frozenset(),
-            site_packages=frozenset(),
-        )
-
-        assert result == ""
-
-    def test_compute_nodeid_initial_path_itself(self, tmp_path: Path) -> None:
-        """Test nodeid computation for initial_path itself returns empty string."""
-        rootpath = tmp_path / "project"
-        rootpath.mkdir()
-        tests_dir = tmp_path / "tests"
-        tests_dir.mkdir()
-
-        result = nodes.compute_nodeid_prefix_for_path(
-            path=tests_dir,
-            rootpath=rootpath,
-            invocation_dir=rootpath,
-            initial_paths=frozenset([tests_dir]),
-            site_packages=frozenset(),
         )
 
         assert result == ""
