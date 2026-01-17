@@ -1611,8 +1611,8 @@ def test_class_from_parent(request: FixtureRequest) -> None:
     """Ensure Class.from_parent can forward custom arguments to the constructor."""
 
     class MyCollector(pytest.Class):
-        def __init__(self, name, parent, x):
-            super().__init__(name, parent)
+        def __init__(self, *, x, **kw):
+            super().__init__(**kw)
             self.x = x
 
         @classmethod

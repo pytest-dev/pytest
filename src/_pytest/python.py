@@ -45,7 +45,6 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -654,24 +653,21 @@ class Package(nodes.Directory):
 
     def __init__(
         self,
-        fspath: LEGACY_PATH | None,
-        parent: nodes.Collector,
-        # NOTE: following args are unused:
-        config=None,
-        session=None,
-        nodeid=None,
-        path: Path | None = None,
+        *,
+        path: Path,
+        parent: nodes.Collector | None = None,
+        config: Config | None = None,
+        session: Session | None = None,
+        nodeid: str | None = None,
+        **kw,
     ) -> None:
-        # NOTE: Could be just the following, but kept as-is for compat.
-        # super().__init__(self, fspath, parent=parent)
-        session = parent.session
         super().__init__(
-            fspath=fspath,
             path=path,
             parent=parent,
             config=config,
             session=session,
             nodeid=nodeid,
+            **kw,
         )
 
     def setup(self) -> None:
@@ -1592,8 +1588,9 @@ class Function(PyobjMixin, nodes.Item):
         session: Session | None = None,
         fixtureinfo: FuncFixtureInfo | None = None,
         originalname: str | None = None,
+        **kw,
     ) -> None:
-        super().__init__(name, parent, config=config, session=session)
+        super().__init__(name, parent, config=config, session=session, **kw)
 
         if callobj is not NOTSET:
             self._obj = callobj
@@ -1625,6 +1622,8 @@ class Function(PyobjMixin, nodes.Item):
         if keywords:
             self.keywords.update(keywords)
 
+        # Fixtureinfo is typically passed by from_parent.
+        # Fallback to computing for backward compat with non-cooperative callers.
         if fixtureinfo is None:
             fm = self.session._fixturemanager
             fixtureinfo = fm.getfixtureinfo(self, self.obj, self.cls)
@@ -1632,7 +1631,6 @@ class Function(PyobjMixin, nodes.Item):
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
-    # todo: determine sound type limitations
     @classmethod
     def from_parent(cls, parent, **kw) -> Self:
         """The public constructor."""

@@ -253,10 +253,12 @@ class DoctestItem(Item):
         self,
         name: str,
         parent: DoctestTextfile | DoctestModule,
+        *,
         runner: doctest.DocTestRunner,
         dtest: doctest.DocTest,
+        **kw,
     ) -> None:
-        super().__init__(name, parent)
+        super().__init__(name, parent, **kw)
         self.runner = runner
         self.dtest = dtest
 

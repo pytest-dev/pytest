@@ -591,7 +591,6 @@ class Session(nodes.Collector):
         super().__init__(
             name="",
             path=config.rootpath,
-            fspath=None,
             parent=None,
             config=config,
             session=self,
@@ -611,11 +610,12 @@ class Session(nodes.Collector):
 
         self._bestrelpathcache: dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
-        self.config.pluginmanager.register(self, name="session")
-
     @classmethod
     def from_config(cls, config: Config) -> Session:
+        """The public constructor for Session."""
         session: Session = cls._create(config=config)
+        # Register session as a plugin after construction.
+        config.pluginmanager.register(session, name="session")
         return session
 
     def __repr__(self) -> str:

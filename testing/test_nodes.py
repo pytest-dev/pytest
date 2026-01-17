@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-import re
 import warnings
 
 from _pytest import nodes
-from _pytest.compat import legacy_path
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestWarning
@@ -33,21 +31,18 @@ def test_node_direct_construction_deprecated() -> None:
         nodes.Node(None, session=None)  # type: ignore[arg-type]
 
 
-def test_subclassing_both_item_and_collector_deprecated(
-    request, tmp_path: Path
-) -> None:
+def test_subclassing_both_item_and_collector_warns(request, tmp_path: Path) -> None:
     """
-    Verifies we warn on diamond inheritance as well as correctly managing legacy
-    inheritance constructors with missing args as found in plugins.
+    Verifies we warn on diamond inheritance (Item + Collector) during from_parent.
+    Diamond inheritance is not supported and will fail at construction time.
     """
     # We do not expect any warnings messages to issued during class definition.
     with warnings.catch_warnings():
         warnings.simplefilter("error")
 
         class SoWrong(nodes.Item, nodes.File):
-            def __init__(self, fspath, parent):
-                """Legacy ctor with legacy call # don't wana see"""
-                super().__init__(fspath, parent)
+            def __init__(self, **kw):
+                super().__init__(**kw)
 
             def collect(self):
                 raise NotImplementedError()
@@ -55,18 +50,10 @@ def test_subclassing_both_item_and_collector_deprecated(
             def runtest(self):
                 raise NotImplementedError()
 
-    with pytest.warns(PytestWarning) as rec:
-        SoWrong.from_parent(
-            request.session, fspath=legacy_path(tmp_path / "broken.txt")
-        )
-    messages = [str(x.message) for x in rec]
-    assert any(
-        re.search(".*SoWrong.* not using a cooperative constructor.*", x)
-        for x in messages
-    )
-    assert any(
-        re.search("(?m)SoWrong .* should not be a collector", x) for x in messages
-    )
+    # Diamond inheritance will warn and then fail due to MRO issues.
+    with pytest.warns(PytestWarning, match="should not be a collector"):
+        with pytest.raises(TypeError):
+            SoWrong.from_parent(request.session, path=tmp_path / "broken.txt")
 
 
 @pytest.mark.parametrize(

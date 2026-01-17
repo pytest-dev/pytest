@@ -12,7 +12,6 @@ import os
 import pathlib
 from pathlib import Path
 from typing import Any
-from typing import cast
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -28,11 +27,8 @@ from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
 from _pytest.compat import LEGACY_PATH
-from _pytest.compat import signature
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
-from _pytest.config.compat import _check_path
-from _pytest.deprecated import NODE_CTOR_FSPATH_ARG
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -55,28 +51,6 @@ tracebackcutdir = Path(_pytest.__file__).parent
 
 
 _T = TypeVar("_T")
-
-
-def _imply_path(
-    node_type: type[Node],
-    path: Path | None,
-    fspath: LEGACY_PATH | None,
-) -> Path:
-    if fspath is not None:
-        warnings.warn(
-            NODE_CTOR_FSPATH_ARG.format(
-                node_type_name=node_type.__name__,
-            ),
-            stacklevel=6,
-        )
-    if path is not None:
-        if fspath is not None:
-            _check_path(path, fspath)
-        return path
-    else:
-        assert fspath is not None
-        return Path(fspath)
-
 
 _NodeType = TypeVar("_NodeType", bound="Node")
 
@@ -106,23 +80,7 @@ class NodeMeta(abc.ABCMeta):
         fail(msg, pytrace=False)
 
     def _create(cls: type[_T], *k, **kw) -> _T:
-        try:
-            return super().__call__(*k, **kw)  # type: ignore[no-any-return,misc]
-        except TypeError:
-            sig = signature(getattr(cls, "__init__"))
-            known_kw = {k: v for k, v in kw.items() if k in sig.parameters}
-            from .warning_types import PytestDeprecationWarning
-
-            warnings.warn(
-                PytestDeprecationWarning(
-                    f"{cls} is not using a cooperative constructor and only takes {set(known_kw)}.\n"
-                    "See https://docs.pytest.org/en/stable/deprecations.html"
-                    "#constructors-of-custom-pytest-node-subclasses-should-take-kwargs "
-                    "for more details."
-                )
-            )
-
-            return super().__call__(*k, **known_kw)  # type: ignore[no-any-return,misc]
+        return super().__call__(*k, **kw)  # type: ignore[no-any-return,misc]
 
 
 class Node(abc.ABC, metaclass=NodeMeta):
@@ -159,7 +117,6 @@ class Node(abc.ABC, metaclass=NodeMeta):
         parent: Node | None = None,
         config: Config | None = None,
         session: Session | None = None,
-        fspath: LEGACY_PATH | None = None,
         path: Path | None = None,
         nodeid: str | None = None,
     ) -> None:
@@ -169,26 +126,23 @@ class Node(abc.ABC, metaclass=NodeMeta):
         #: The parent collector node.
         self.parent = parent
 
-        if config:
-            #: The pytest config object.
-            self.config: Config = config
-        else:
-            if not parent:
-                raise TypeError("config or parent must be provided")
-            self.config = parent.config
+        if config is None:
+            raise TypeError("config must be provided")
+        #: The pytest config object.
+        self.config: Config = config
 
-        if session:
-            #: The pytest session this node is part of.
-            self.session: Session = session
-        else:
-            if not parent:
-                raise TypeError("session or parent must be provided")
-            self.session = parent.session
+        if session is None:
+            raise TypeError("session must be provided")
+        #: The pytest session this node is part of.
+        self.session: Session = session
 
-        if path is None and fspath is None:
+        # Path - for Item nodes, inherit from parent if not provided.
+        if path is None and parent is not None:
             path = getattr(parent, "path", None)
-        #: Filesystem path where this node was collected from (can be None).
-        self.path: pathlib.Path = _imply_path(type(self), path, fspath=fspath)
+        if path is None:
+            raise TypeError("path must be provided")
+        #: Filesystem path where this node was collected from.
+        self.path: pathlib.Path = path
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -200,13 +154,14 @@ class Node(abc.ABC, metaclass=NodeMeta):
         #: Allow adding of extra keywords to use for matching.
         self.extra_keyword_matches: set[str] = set()
 
+        # Nodeid - for Item nodes, compute from parent if not provided.
         if nodeid is not None:
             assert "::()" not in nodeid
             self._nodeid = nodeid
+        elif parent is not None:
+            self._nodeid = parent.nodeid + "::" + self.name
         else:
-            if not self.parent:
-                raise TypeError("nodeid or parent must be provided")
-            self._nodeid = self.parent.nodeid + "::" + self.name
+            raise TypeError("nodeid or parent must be provided")
 
         #: A place where plugins can store information on the node for their
         #: own use.
@@ -230,7 +185,12 @@ class Node(abc.ABC, metaclass=NodeMeta):
             raise TypeError("config is not a valid argument for from_parent")
         if "session" in kw:
             raise TypeError("session is not a valid argument for from_parent")
-        return cls._create(parent=parent, **kw)
+
+        # Derive config and session from parent.
+        config = parent.config
+        session = parent.session
+
+        return cls._create(parent=parent, config=config, session=session, **kw)
 
     @property
     def ihook(self) -> pluggy.HookRelay:
@@ -562,48 +522,16 @@ class FSCollector(Collector, abc.ABC):
 
     def __init__(
         self,
-        fspath: LEGACY_PATH | None = None,
-        path_or_parent: Path | Node | None = None,
-        path: Path | None = None,
-        name: str | None = None,
+        *,
+        path: Path,
+        name: str,
         parent: Node | None = None,
         config: Config | None = None,
         session: Session | None = None,
         nodeid: str | None = None,
+        **kw,
     ) -> None:
-        if path_or_parent:
-            if isinstance(path_or_parent, Node):
-                assert parent is None
-                parent = cast(FSCollector, path_or_parent)
-            elif isinstance(path_or_parent, Path):
-                assert path is None
-                path = path_or_parent
-
-        path = _imply_path(type(self), path, fspath=fspath)
-        if name is None:
-            name = path.name
-            if parent is not None and parent.path != path:
-                try:
-                    rel = path.relative_to(parent.path)
-                except ValueError:
-                    pass
-                else:
-                    name = str(rel)
-                name = name.replace(os.sep, SEP)
         self.path = path
-
-        if session is None:
-            assert parent is not None
-            session = parent.session
-
-        if nodeid is None:
-            try:
-                nodeid = str(self.path.relative_to(session.config.rootpath))
-            except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
-
-            if nodeid and os.sep != SEP:
-                nodeid = nodeid.replace(os.sep, SEP)
 
         super().__init__(
             name=name,
@@ -612,6 +540,7 @@ class FSCollector(Collector, abc.ABC):
             session=session,
             nodeid=nodeid,
             path=path,
+            **kw,
         )
 
     @classmethod
@@ -619,12 +548,40 @@ class FSCollector(Collector, abc.ABC):
         cls,
         parent,
         *,
-        fspath: LEGACY_PATH | None = None,
         path: Path | None = None,
         **kw,
     ) -> Self:
         """The public constructor."""
-        return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
+        if path is None:
+            raise TypeError("path argument is required")
+        # Compute name from path if not provided.
+        if "name" not in kw:
+            name = path.name
+            if parent.path != path:
+                try:
+                    rel = path.relative_to(parent.path)
+                except ValueError:
+                    pass
+                else:
+                    name = str(rel)
+                name = name.replace(os.sep, SEP)
+            kw["name"] = name
+
+        # Compute nodeid from path if not provided.
+        if "nodeid" not in kw:
+            try:
+                nodeid: str | None = str(
+                    path.relative_to(parent.session.config.rootpath)
+                )
+            except ValueError:
+                nodeid = _check_initialpaths_for_relpath(
+                    parent.session._initialpaths, path
+                )
+            if nodeid and os.sep != SEP:
+                nodeid = nodeid.replace(os.sep, SEP)
+            kw["nodeid"] = nodeid
+
+        return super().from_parent(parent=parent, path=path, **kw)
 
 
 class File(FSCollector, abc.ABC):
@@ -687,15 +644,19 @@ class Item(Node, abc.ABC):
         #: for this test.
         self.user_properties: list[tuple[str, object]] = []
 
-        self._check_item_and_collector_diamond_inheritance()
+    @classmethod
+    def from_parent(cls, parent: Node, **kw) -> Self:
+        """The public constructor."""
+        # Check for diamond inheritance before construction.
+        cls._check_item_and_collector_diamond_inheritance()
+        return super().from_parent(parent=parent, **kw)
 
-    def _check_item_and_collector_diamond_inheritance(self) -> None:
+    @classmethod
+    def _check_item_and_collector_diamond_inheritance(cls) -> None:
         """
         Check if the current type inherits from both File and Collector
         at the same time, emitting a warning accordingly (#8447).
         """
-        cls = type(self)
-
         # We inject an attribute in the type to avoid issuing this warning
         # for the same class more than once, which is not helpful.
         # It is a hack, but was deemed acceptable in order to avoid
