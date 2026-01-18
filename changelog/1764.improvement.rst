@@ -1,0 +1,1 @@
+Improved argparse program name to show ``pytest``, ``python -m pytest``, or ``pytest.main()`` based on how pytest was invoked, making help and error messages clearer.
