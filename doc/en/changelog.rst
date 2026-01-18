@@ -2805,6 +2805,7 @@ Breaking Changes
 
 - `#8246 <https://github.com/pytest-dev/pytest/issues/8246>`_: ``--version`` now writes version information to ``stdout`` rather than ``stderr``.
 
+- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: ``pytest_cmdline_preparse`` has been removed.  Use :hook:`pytest_load_initial_conftests` instead.
 
 - `#8733 <https://github.com/pytest-dev/pytest/issues/8733>`_: Drop a workaround for `pyreadline <https://github.com/pyreadline/pyreadline>`__ that made it work with ``--pdb``.
 
