@@ -1760,8 +1760,8 @@ into a configuration file:
 Overriding fixtures on various levels
 -------------------------------------
 
-In relatively large test suite, you most likely need to ``override`` a ``global`` or ``root`` fixture with a ``locally``
-defined one, keeping the test code readable and maintainable.
+In relatively large test suite, you may want to *override* a fixture, to augment
+or change its behavior inside of certain test modules or folders.
 
 Override a fixture on a folder (conftest) level
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
