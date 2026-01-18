@@ -1,0 +1,3 @@
+Fixed class-scoped fixtures defined in base classes not binding to the correct test instance when inherited by child test classes -- by :user:`yastcher`.
+
+Fixes :issue:`10819` and :issue:`14011`.
