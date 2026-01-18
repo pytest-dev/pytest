@@ -566,10 +566,11 @@ class SetupState:
                     fin()
                 except TEST_OUTCOME as e:
                     these_exceptions.append(e)
-            if isinstance(nextitem, Item):
+
+            if isinstance(node, Item) and nextitem is not None:
                 try:
-                    nextitem._teardown_stale_fixtures()
-                except BaseException as e:
+                    self._teardown_item_towards_nextitem(nextitem)
+                except TEST_OUTCOME as e:
                     exceptions.append(e)
 
             if len(these_exceptions) == 1:
@@ -584,6 +585,9 @@ class SetupState:
             raise BaseExceptionGroup("errors during test teardown", exceptions[::-1])
         if nextitem is None:
             assert not self.stack
+
+    def _teardown_item_towards_nextitem(self, nextitem: Item) -> None:
+        nextitem.session._fixturemanager._teardown_stale_fixtures(nextitem)
 
 
 def collect_one_node(collector: Collector) -> CollectReport:

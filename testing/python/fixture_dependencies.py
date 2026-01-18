@@ -184,8 +184,6 @@ def test_override_fixture_with_new_parametrized_fixture(pytester: Pytester) -> N
 def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
     """Test that exceptions in pytest_fixture_post_finalizer hook are caught.
 
-    Covers line 1069: node.ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
-
     Also verifies that the fixture cache is properly reset even when the
     post_finalizer hook raises an exception, so the fixture can be rebuilt
     in subsequent tests.
@@ -235,6 +233,49 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
         ],
         consecutive=True,
     )
+
+
+def test_fixture_rebuilt_when_param_appears(pytester: Pytester) -> None:
+    """Test that fixtures are rebuilt when their parameter appears or disappears.
+
+    We disable test reordering to ensure tests run in the defined order.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.hookimpl(wrapper=True, tryfirst=True)
+        def pytest_collection_modifyitems(items):
+            original_items = items[:]
+            yield
+            items[:] = original_items
+        """
+    )
+    pytester.makepyfile(
+        test_fixtures="""
+        import pytest
+
+        @pytest.fixture(scope="session")
+        def foo(request):
+            return getattr(request, "param", None)
+
+        @pytest.mark.parametrize("foo", [1], indirect=True)
+        def test_a(foo):
+            assert foo == 1
+
+        def test_b(foo):
+            assert foo is None
+
+        @pytest.mark.parametrize("foo", [1], indirect=True)
+        def test_c(foo):
+            assert foo == 1
+
+        def test_d(foo):
+            assert foo is None
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=4)
 
 
 def test_fixture_not_rebuilt_when_not_requested(pytester: Pytester) -> None:

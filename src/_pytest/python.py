@@ -1687,9 +1687,6 @@ class Function(PyobjMixin, nodes.Item):
     def setup(self) -> None:
         self._request._fillfixtures()
 
-    def _teardown_stale_fixtures(self) -> None:
-        self.session._fixturemanager._teardown_stale_fixtures(self)
-
     def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
             code = _pytest._code.Code.from_function(get_real_func(self.obj))

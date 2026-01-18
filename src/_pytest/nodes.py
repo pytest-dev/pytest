@@ -82,11 +82,12 @@ class _FinalizerId:
     __slots__ = ()
 
 
-FinalizerStorage = dict[_FinalizerId, Callable[[], object]]
+Finalizer = Callable[[], object]
+FinalizerStorage = dict[_FinalizerId, Finalizer]
 
 
 def append_finalizer(
-    finalizer_storage: FinalizerStorage, finalizer: Callable[[], object]
+    finalizer_storage: FinalizerStorage, finalizer: Finalizer
 ) -> Callable[[], None]:
     finalizer_id = _FinalizerId()
     finalizer_storage[finalizer_id] = finalizer
@@ -791,6 +792,3 @@ class Item(Node, abc.ABC):
         relfspath = self.session._node_location_to_relpath(path)
         assert type(location[2]) is str
         return (relfspath, location[1], location[2])
-
-    def _teardown_stale_fixtures(self) -> None:
-        pass
