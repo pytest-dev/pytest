@@ -1,0 +1,3 @@
+Raised minimal versions of ``exceptiongroup``, ``iniconfig`` and ``pygments`` following uv powered test runs using the ``lowest-direct`` resolution strategy.
+
+-- by :user:`sgaist`
