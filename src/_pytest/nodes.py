@@ -16,6 +16,7 @@ from typing import cast
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
+from typing import TypeAlias
 from typing import TypeVar
 import warnings
 
@@ -96,8 +97,8 @@ class _FinalizerId:
     __slots__ = ()
 
 
-Finalizer = Callable[[], object]
-FinalizerStorage = dict[_FinalizerId, Finalizer]
+Finalizer: TypeAlias = Callable[[], object]
+FinalizerStorage: TypeAlias = dict[_FinalizerId, Finalizer]
 
 
 def append_finalizer(
