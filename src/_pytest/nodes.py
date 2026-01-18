@@ -16,6 +16,7 @@ from typing import cast
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
+from typing import TypeAlias
 from typing import TypeVar
 import warnings
 
@@ -90,6 +91,26 @@ def _imply_path(
     else:
         assert fspath is not None
         return Path(fspath)
+
+
+class _FinalizerId:
+    __slots__ = ()
+
+
+Finalizer: TypeAlias = Callable[[], object]
+FinalizerStorage: TypeAlias = dict[_FinalizerId, Finalizer]
+
+
+def append_finalizer(
+    finalizer_storage: FinalizerStorage, finalizer: Finalizer
+) -> Callable[[], None]:
+    finalizer_id = _FinalizerId()
+    finalizer_storage[finalizer_id] = finalizer
+
+    def remove_finalizer() -> None:
+        finalizer_storage.pop(finalizer_id, None)
+
+    return remove_finalizer
 
 
 _NodeType = TypeVar("_NodeType", bound="Node")
@@ -395,14 +416,16 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def listnames(self) -> list[str]:
         return [x.name for x in self.listchain()]
 
-    def addfinalizer(self, fin: Callable[[], object]) -> None:
+    def addfinalizer(self, fin: Callable[[], object]) -> Callable[[], None]:
         """Register a function to be called without arguments when this node is
         finalized.
 
         This method can only be called when this node is active
         in a setup chain, for example during self.setup().
+
+        :returns: A handle that can be used to remove the finalizer.
         """
-        self.session._setupstate.addfinalizer(fin, self)
+        return self.session._setupstate.addfinalizer(fin, self)
 
     def getparent(self, cls: type[_NodeType]) -> _NodeType | None:
         """Get the closest parent node (including self) which is an instance of
