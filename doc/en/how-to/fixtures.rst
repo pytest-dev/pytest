@@ -391,9 +391,25 @@ Multiple test functions in a test module will thus
 each receive the same ``smtp_connection`` fixture instance, thus saving time.
 Possible values for ``scope`` are: ``function``, ``class``, ``module``, ``package`` or ``session``.
 
-The next example puts the fixture function into a separate ``conftest.py`` file
+.. note::
+
+   Fixture *scope* controls lifetime and caching, not visibility.
+   Visibility is determined by where the fixture is defined (test module,
+   ``conftest.py``, or plugin).
+
+The next example puts the fixture function into a separate :ref:`conftest.py <conftest>` file
 so that tests from multiple test modules in the directory can
 access the fixture function:
+
+.. note::
+
+   This is the recommended way to share fixtures across multiple test modules.
+   Avoid importing fixtures from other test files or from ``conftest.py``,
+   as importing fixtures can cause them to be registered in multiple modules and
+   lead to confusing behavior (such as fixtures running more than once).
+
+   As a rule of thumb: **never import fixtures from test files or conftest.py,
+   unless it is only for type annotations**.
 
 .. code-block:: python
 
