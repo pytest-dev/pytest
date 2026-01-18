@@ -1761,10 +1761,10 @@ Overriding fixtures on various levels
 -------------------------------------
 
 In relatively large test suite, you may want to *override* a fixture, to augment
-or change its behavior inside of certain test modules or folders.
+or change its behavior inside of certain test modules or directories.
 
-Override a fixture on a folder (conftest) level
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Override a fixture on a directory (conftest) level
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Given the tests file structure is:
 
@@ -1784,9 +1784,9 @@ Given the tests file structure is:
             def test_username(username):
                 assert username == 'username'
 
-        subfolder/
+        subdir/
             conftest.py
-                # content of tests/subfolder/conftest.py
+                # content of tests/subdir/conftest.py
                 import pytest
 
                 @pytest.fixture
@@ -1794,11 +1794,11 @@ Given the tests file structure is:
                     return 'overridden-' + username
 
             test_something_else.py
-                # content of tests/subfolder/test_something_else.py
+                # content of tests/subdir/test_something_else.py
                 def test_username(username):
                     assert username == 'overridden-username'
 
-As you can see, a fixture with the same name can be overridden for certain test folder level.
+As you can see, a fixture with the same name can be overridden for certain test directory level.
 Note that the ``base`` or ``super`` fixture can be accessed from the ``overriding``
 fixture easily - used in the example above.
 
@@ -1927,7 +1927,7 @@ Given the tests file structure is:
 
 In the example above, a parametrized fixture is overridden with a non-parametrized version, and
 a non-parametrized fixture is overridden with a parametrized version for certain test module.
-The same applies for the test folder level obviously.
+The same applies for the test directory level obviously.
 
 
 Using fixtures from other projects

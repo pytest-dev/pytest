@@ -272,7 +272,7 @@ check for configuration files as follows:
 
     Custom pytest plugin commandline arguments may include a path, as in
     ``pytest --log-output ../../test.log args``. Then ``args`` is mandatory,
-    otherwise pytest uses the folder of test.log for rootdir determination
+    otherwise pytest uses the directory of test.log for rootdir determination
     (see also :issue:`1435`).
     A dot ``.`` for referencing to the current working directory is also
     possible.
