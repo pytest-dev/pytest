@@ -322,3 +322,21 @@ def test_str_keyword_expressions(
     expr: str, expected: bool, mark_matcher: MarkMatcher
 ) -> None:
     assert evaluate(expr, mark_matcher) is expected
+
+
+@pytest.mark.parametrize(
+    ("expr", "expected_idents"),
+    (
+        ("", frozenset()),
+        ("foo", frozenset(["foo"])),
+        ("foo and bar", frozenset(["foo", "bar"])),
+        ("foo or bar", frozenset(["foo", "bar"])),
+        ("not foo", frozenset(["foo"])),
+        ("(foo and bar) or baz", frozenset(["foo", "bar", "baz"])),
+        ("foo and foo", frozenset(["foo"])),  # Duplicates are deduplicated.
+        ("mark(a=1)", frozenset(["mark"])),  # Only marker name, not kwargs.
+    ),
+)
+def test_expression_idents(expr: str, expected_idents: frozenset[str]) -> None:
+    """Test that Expression.idents() returns the identifiers in the expression."""
+    assert Expression.compile(expr).idents() == expected_idents

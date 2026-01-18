@@ -3,10 +3,14 @@ from __future__ import annotations
 
 import os
 import sys
+from typing import cast
 from unittest import mock
 
 from _pytest.config import ExitCode
+from _pytest.config import UsageError
+from _pytest.mark import _validate_marker_names
 from _pytest.mark import MarkGenerator
+from _pytest.mark.expression import Expression
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
@@ -211,6 +215,62 @@ def test_strict_prohibits_unregistered_markers(
     result.stdout.fnmatch_lines(
         ["'unregisteredmark' not found in `markers` configuration option"]
     )
+
+
+class TestValidateMarkerNames:
+    """Tests for _validate_marker_names (issue #2781)."""
+
+    class FakeConfig:
+        def __init__(
+            self,
+            markers: list[str],
+            strict_markers: bool | None = None,
+            strict: bool = False,
+        ) -> None:
+            self._ini: dict[str, list[str] | bool | None] = {
+                "markers": markers,
+                "strict_markers": strict_markers,
+                "strict": strict,
+            }
+
+        def getini(self, name: str) -> list[str] | bool | None:
+            return self._ini[name]
+
+    def _make_config(
+        self,
+        strict_markers: bool | None = None,
+        strict: bool = False,
+    ) -> pytest.Config:
+        return cast(
+            pytest.Config,
+            self.FakeConfig(
+                markers=["registered: a registered marker"],
+                strict_markers=strict_markers,
+                strict=strict,
+            ),
+        )
+
+    def test_unknown_marker_with_strict_markers(self) -> None:
+        expr = Expression.compile("unknown_marker")
+
+        with pytest.raises(UsageError, match=r"Unknown marker.*unknown_marker"):
+            _validate_marker_names(expr, self._make_config(strict_markers=True))
+
+    def test_unknown_marker_with_strict(self) -> None:
+        expr = Expression.compile("unknown_marker")
+
+        with pytest.raises(UsageError, match=r"Unknown marker.*unknown_marker"):
+            _validate_marker_names(expr, self._make_config(strict=True))
+
+    def test_registered_marker_passes(self) -> None:
+        expr = Expression.compile("registered")
+
+        _validate_marker_names(expr, self._make_config(strict_markers=True))
+
+    def test_no_validation_without_strict(self) -> None:
+        expr = Expression.compile("any_marker")
+
+        _validate_marker_names(expr, self._make_config())
 
 
 @pytest.mark.parametrize(
