@@ -391,25 +391,8 @@ Multiple test functions in a test module will thus
 each receive the same ``smtp_connection`` fixture instance, thus saving time.
 Possible values for ``scope`` are: ``function``, ``class``, ``module``, ``package`` or ``session``.
 
-.. note::
-
-   Fixture *scope* controls lifetime and caching, not visibility.
-   Visibility is determined by where the fixture is defined (test module,
-   ``conftest.py``, or plugin).
-
 The next example puts the fixture function into a separate :ref:`conftest.py <conftest>` file
-so that tests from multiple test modules in the directory can
-access the fixture function:
-
-.. note::
-
-   This is the recommended way to share fixtures across multiple test modules.
-   Avoid importing fixtures from other test files or from ``conftest.py``,
-   as importing fixtures can cause them to be registered in multiple modules and
-   lead to confusing behavior (such as fixtures running more than once).
-
-   As a rule of thumb: **never import fixtures from test files or conftest.py,
-   unless it is only for type annotations**.
+so that tests from multiple test modules in the directory can access the fixture function.
 
 .. code-block:: python
 
@@ -423,6 +406,18 @@ access the fixture function:
     def smtp_connection():
         return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
+Using ``conftest.py`` is the recommended way to share fixtures across multiple test modules.
+The ``scope`` setting controls how long a fixture value is cached 
+(for example, once per test function or once per module).
+The file where the fixture is defined determines which tests are able to use it.
+
+Avoid importing fixtures from other test files or from ``conftest.py``: importing can cause
+fixtures to be registered in more than one place, which can lead to confusing behavior such as
+fixtures running more than once.
+
+As a rule of thumb, don't import fixtures from test files or ``conftest.py`` for runtime use.
+If imports are needed only for editor or type checker support, use ``typing.TYPE_CHECKING`` or forward 
+references so those imports are not executed during test collection.
 
 .. code-block:: python
 
