@@ -1746,16 +1746,14 @@ into a configuration file:
 
 .. warning::
 
-    Note this mark has no effect in **fixture functions**. For example,
-    this **will not work as expected**:
+    ``@pytest.mark.usefixtures`` cannot be used on **fixture functions**. For example,
+    this is an error:
 
     .. code-block:: python
 
         @pytest.mark.usefixtures("my_other_fixture")
         @pytest.fixture
         def my_fixture_that_sadly_wont_use_my_other_fixture(): ...
-
-    This generates a deprecation warning, and will become an error in Pytest 8.
 
 .. _`override fixtures`:
 
