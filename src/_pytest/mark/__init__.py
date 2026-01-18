@@ -258,6 +258,10 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
         return
 
     expr = _parse_expression(matchexpr, "Wrong expression passed to '-m'")
+
+    # Validate marker names in the expression if strict_markers is enabled.
+    _validate_marker_names(expr, config)
+
     remaining: list[Item] = []
     deselected: list[Item] = []
     for item in items:
@@ -268,6 +272,34 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
+
+
+def _validate_marker_names(expr: Expression, config: Config) -> None:
+    """Validate that all marker names in the expression are registered.
+
+    Only validates when strict_markers is enabled.
+    """
+    strict_markers = config.getini("strict_markers")
+    if strict_markers is None:
+        strict_markers = config.getini("strict")
+    if not strict_markers:
+        return
+
+    registered_markers: set[str] = set()
+    for line in config.getini("markers"):
+        # example lines: "skipif(condition): skip the given test if..."
+        # or "hypothesis: tests which use Hypothesis", so to get the
+        # marker name we split on both `:` and `(`.
+        marker = line.split(":")[0].split("(")[0].strip()
+        registered_markers.add(marker)
+
+    unknown_markers = expr.idents() - registered_markers
+    if unknown_markers:
+        unknown_str = ", ".join(sorted(unknown_markers))
+        raise UsageError(
+            f"Unknown marker(s) in '-m' expression: {unknown_str}. "
+            "Use 'pytest --markers' to see available markers."
+        )
 
 
 def _parse_expression(expr: str, exc_message: str) -> Expression:
