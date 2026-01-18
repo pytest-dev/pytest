@@ -1218,7 +1218,9 @@ See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
 
-Contains comma-separated list of modules that should be loaded as plugins:
+Contains comma-separated list of :term:`importable modules <Module>`
+or :ref:`entry point names <pip-installable plugins>` that should be
+loaded as plugins:
 
 .. code-block:: bash
 
