@@ -1659,7 +1659,7 @@ class TestImportModeImportlib:
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     def setup_conftest_and_foo(self, pytester: Pytester) -> None:
-        """Setup a tests folder to be used to test if modules in that folder can be imported
+        """Setup a tests directory to be used to test if modules in that directory can be imported
         due to side-effects of --import-mode or not."""
         pytester.makepyfile(
             **{
@@ -1676,14 +1676,14 @@ class TestImportModeImportlib:
         )
 
     def test_modules_importable_as_side_effect(self, pytester: Pytester) -> None:
-        """In import-modes `prepend` and `append`, we are able to import modules from folders
+        """In import-modes `prepend` and `append`, we are able to import modules from directories
         containing conftest.py files due to the side effect of changing sys.path."""
         self.setup_conftest_and_foo(pytester)
         result = pytester.runpytest("-v", "--import-mode=prepend")
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     def test_modules_not_importable_as_side_effect(self, pytester: Pytester) -> None:
-        """In import-mode `importlib`, modules in folders containing conftest.py are not
+        """In import-mode `importlib`, modules in directories containing conftest.py are not
         importable, as don't change sys.path or sys.modules as side effect of importing
         the conftest.py file.
         """

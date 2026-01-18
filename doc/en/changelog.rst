@@ -16,7 +16,7 @@ with advance notice in the **Deprecations** section of releases.
     fix problems like typo corrections or such.
     To add a new change log entry, please see
     https://pip.pypa.io/en/latest/development/contributing/#news-entries
-    we named the news folder changelog
+    but note that in pytest the "news/" directory is named "changelog/".
 
 
 .. only:: not is_release
