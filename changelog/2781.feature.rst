@@ -1,0 +1,1 @@
+When ``--strict-markers`` is enabled, marker names used in ``-m`` expressions are now validated against registered markers.
