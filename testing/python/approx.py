@@ -1062,6 +1062,46 @@ class TestApprox:
         ):
             assert actual == approx(expected)
 
+    def test_approx_on_unordered_mapping_with_mismatch(
+        self, pytester: Pytester
+    ) -> None:
+        """https://github.com/pytest-dev/pytest/issues/12444"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_approx_on_unordered_mapping_with_mismatch():
+                expected = {"a": 1, "b": 2, "c": 3, "d": 4}
+                actual = {"d": 4, "c": 5, "a": 8, "b": 2}
+                assert actual == pytest.approx(expected)
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(failed=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*comparison failed.**Mismatched elements: 2 / 4:*",
+                "*Max absolute difference: 7*",
+                "*Index | Obtained | Expected *",
+                "* a * | 8 * | 1 *",
+                "* c * | 5 * | 3 *",
+            ]
+        )
+
+    def test_approx_on_unordered_mapping_matching(self, pytester: Pytester) -> None:
+        """https://github.com/pytest-dev/pytest/issues/12444"""
+        pytester.makepyfile(
+            """
+            import pytest
+            def test_approx_on_unordered_mapping_matching():
+                expected = {"a": 1, "b": 2, "c": 3, "d": 4}
+                actual = {"d": 4, "c": 3, "a": 1, "b": 2}
+                assert actual == pytest.approx(expected)
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
 
 class MyVec3:  # incomplete
     """sequence like"""

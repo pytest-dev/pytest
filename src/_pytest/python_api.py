@@ -242,7 +242,7 @@ class ApproxMapping(ApproxBase):
                 f"Lengths: {len(self.expected)} and {len(other_side)}",
             ]
 
-        if set(self.expected.keys()) != set(other_side.keys()):
+        if self.expected.keys() != other_side.keys():
             return [
                 "comparison failed.",
                 f"Mappings has different keys: expected {self.expected.keys()} but got {other_side.keys()}",
@@ -256,9 +256,8 @@ class ApproxMapping(ApproxBase):
         max_abs_diff = -math.inf
         max_rel_diff = -math.inf
         different_ids = []
-        for (approx_key, approx_value), other_value in zip(
-            approx_side_as_map.items(), other_side.values(), strict=True
-        ):
+        for approx_key, approx_value in approx_side_as_map.items():
+            other_value = other_side[approx_key]
             if approx_value != other_value:
                 if approx_value.expected is not None and other_value is not None:
                     try:
