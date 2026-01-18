@@ -407,7 +407,7 @@ so that tests from multiple test modules in the directory can access the fixture
         return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
 Using ``conftest.py`` is the recommended way to share fixtures across multiple test modules.
-The ``scope`` setting controls how long a fixture value is cached 
+The ``scope`` setting controls how long a fixture value is cached
 (for example, once per test function or once per module).
 The file where the fixture is defined determines which tests are able to use it.
 
@@ -416,7 +416,7 @@ fixtures to be registered in more than one place, which can lead to confusing be
 fixtures running more than once.
 
 As a rule of thumb, don't import fixtures from test files or ``conftest.py`` for runtime use.
-If imports are needed only for editor or type checker support, use ``typing.TYPE_CHECKING`` or forward 
+If imports are needed only for editor or type checker support, use ``typing.TYPE_CHECKING`` or forward
 references so those imports are not executed during test collection.
 
 .. code-block:: python
