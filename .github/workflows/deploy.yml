@@ -25,7 +25,7 @@ jobs:
       attestations: write
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         fetch-depth: 0
         persist-credentials: false
@@ -42,13 +42,13 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         fetch-depth: 0
         persist-credentials: false
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: "3.13"
 
@@ -64,7 +64,7 @@ jobs:
         tox -e generate-gh-release-notes -- "$VERSION" gh-release-notes.md
 
     - name: Upload release notes
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
       with:
         name: release-notes
         path: gh-release-notes.md
@@ -82,7 +82,7 @@ jobs:
       id-token: write
     steps:
     - name: Download Package
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: Packages
         path: dist
@@ -99,7 +99,7 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         fetch-depth: 0
         persist-credentials: true
@@ -121,13 +121,13 @@ jobs:
       contents: write
     steps:
     - name: Download Package
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: Packages
         path: dist
 
     - name: Download release notes
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
       with:
         name: release-notes
         path: .

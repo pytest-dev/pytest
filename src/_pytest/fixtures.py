@@ -1706,8 +1706,8 @@ class FixtureManager:
                 nodeid = ""
             if nodeid == ".":
                 nodeid = ""
-            if os.sep != nodes.SEP:
-                nodeid = nodeid.replace(os.sep, nodes.SEP)
+            elif nodeid:
+                nodeid = nodes.norm_sep(nodeid)
         else:
             nodeid = None
 
