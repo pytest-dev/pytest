@@ -235,6 +235,69 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
     )
 
 
+def test_parametrized_fixture_carries_over_unaware_item(pytester: Pytester) -> None:
+    """Test that cached parametrized fixtures carry over non-fixture-aware test items.
+
+    We disable test reordering to ensure tests run in the defined order.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        class MeaningOfLifeTest(pytest.Item):
+            def runtest(self):
+                return self.path.read_text(encoding="utf-8").strip() == "42"
+
+        def pytest_collect_file(parent, file_path):
+            if "meaning_of_life" in file_path.name:
+                return MeaningOfLifeTest.from_parent(parent, path=file_path, name=file_path.stem)
+
+        @pytest.hookimpl(wrapper=True, tryfirst=True)
+        def pytest_collection_modifyitems(items):
+            original_items = items[:]
+            yield
+            items[:] = original_items
+
+        @pytest.fixture(scope="session")
+        def foo(request):
+            return getattr(request, "param", None)
+        """
+    )
+    pytester.makepyfile(
+        test_1="""
+        import pytest
+
+        @pytest.mark.parametrize("foo", [1], indirect=True)
+        def test_first(foo):
+            pass
+        """
+    )
+    pytester.maketxtfile(test_2_meaning_of_life="42\n")
+    pytester.makepyfile(
+        test_3="""
+        import pytest
+
+        @pytest.mark.parametrize("foo", [1], indirect=True)
+        def test_third(foo):
+            pass
+        """
+    )
+    result = pytester.runpytest("-v", "--setup-only")
+    result.stdout.fnmatch_lines(
+        [
+            "test_1.py::test_first[1] ",
+            "SETUP    S foo[1]",
+            "        test_1.py::test_first[1] (fixtures used: foo, request)",
+            ".::test_2_meaning_of_life ",
+            "        .::test_2_meaning_of_life",
+            "test_3.py::test_third[1] ",
+            "        test_3.py::test_third[1] (fixtures used: foo, request)",
+            "TEARDOWN S foo[1]",
+        ],
+        consecutive=True,
+    )
+
+
 def test_fixture_rebuilt_when_param_appears(pytester: Pytester) -> None:
     """Test that fixtures are rebuilt when their parameter appears or disappears.
 
