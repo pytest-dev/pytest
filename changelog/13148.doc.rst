@@ -1,1 +1,1 @@
-Clarified fixture visibility, conftest usage, and why importing fixtures is discouraged. 
+Clarified fixture visibility, conftest usage, and why importing fixtures is discouraged.
