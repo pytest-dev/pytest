@@ -9,11 +9,13 @@ import dataclasses
 import os
 import sys
 import types
+from typing import Any
 from typing import cast
 from typing import final
 from typing import Generic
 from typing import Literal
 from typing import TYPE_CHECKING
+from typing import TypeAlias
 from typing import TypeVar
 
 from .config import Config
@@ -27,10 +29,8 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.nodes import append_finalizer
 from _pytest.nodes import Collector
 from _pytest.nodes import Directory
-from _pytest.nodes import FinalizerStorage
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.outcomes import Exit
@@ -43,6 +43,7 @@ if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureDef
     from _pytest.main import Session
     from _pytest.terminal import TerminalReporter
 
@@ -433,6 +434,26 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     return rep
 
 
+class _FinalizerId:
+    __slots__ = ()
+
+
+_Finalizer: TypeAlias = Callable[[], object]
+_FinalizerStorage: TypeAlias = dict[_FinalizerId, _Finalizer]
+
+
+def _append_finalizer(
+    finalizer_storage: _FinalizerStorage, finalizer: _Finalizer
+) -> Callable[[], None]:
+    finalizer_id = _FinalizerId()
+    finalizer_storage[finalizer_id] = finalizer
+
+    def remove_finalizer() -> None:
+        finalizer_storage.pop(finalizer_id, None)
+
+    return remove_finalizer
+
+
 class SetupState:
     """Shared state for setting up/tearing down test items or collectors
     in a session.
@@ -503,11 +524,12 @@ class SetupState:
             Node,
             tuple[
                 # Node's finalizers.
-                FinalizerStorage,
+                _FinalizerStorage,
                 # Node's exception and original traceback, if its setup raised.
                 tuple[OutcomeException | Exception, types.TracebackType | None] | None,
             ],
         ] = {}
+        self._fixture_finalizers: dict[FixtureDef[Any], _FinalizerStorage] = {}
 
     def setup(self, item: Item) -> None:
         """Setup objects along the collector chain to the item."""
@@ -523,8 +545,8 @@ class SetupState:
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
             # Push onto the stack.
-            finalizers = FinalizerStorage()
-            append_finalizer(finalizers, col.teardown)
+            finalizers = _FinalizerStorage()
+            _append_finalizer(finalizers, col.teardown)
             self.stack[col] = (finalizers, None)
             try:
                 col.setup()
@@ -544,7 +566,7 @@ class SetupState:
         assert node and not isinstance(node, tuple)
         assert callable(finalizer)
         assert node in self.stack, (node, self.stack)
-        return append_finalizer(self.stack[node][0], finalizer)
+        return _append_finalizer(self.stack[node][0], finalizer)
 
     def teardown_exact(self, nextitem: Item | None) -> None:
         """Teardown the current stack up until reaching nodes that nextitem
@@ -569,7 +591,7 @@ class SetupState:
 
             if isinstance(node, Item) and nextitem is not None:
                 try:
-                    self._teardown_item_towards_nextitem(nextitem)
+                    self._finish_stale_fixtures(nextitem)
                 except TEST_OUTCOME as e:
                     exceptions.append(e)
 
@@ -586,8 +608,48 @@ class SetupState:
         if nextitem is None:
             assert not self.stack
 
-    def _teardown_item_towards_nextitem(self, nextitem: Item) -> None:
-        nextitem.session._fixturemanager._teardown_stale_fixtures(nextitem)
+    def fixture_setup(self, fixturedef: FixtureDef[Any]) -> None:
+        assert fixturedef not in self._fixture_finalizers
+        self._fixture_finalizers[fixturedef] = _FinalizerStorage()
+
+    def fixture_addfinalizer(
+        self, finalizer: Callable[[], object], fixturedef: FixtureDef[Any]
+    ) -> Callable[[], None]:
+        assert fixturedef in self._fixture_finalizers
+        return _append_finalizer(self._fixture_finalizers[fixturedef], finalizer)
+
+    def fixture_teardown(self, fixturedef: FixtureDef[Any], node: Node) -> None:
+        assert fixturedef in self._fixture_finalizers
+        # Do not remove for now to allow adding finalizers last second.
+        finalizers = self._fixture_finalizers[fixturedef]
+
+        exceptions: list[BaseException] = []
+        while finalizers:
+            _, fin = finalizers.popitem()
+            try:
+                fin()
+            except TEST_OUTCOME as e:
+                exceptions.append(e)
+
+        self._fixture_finalizers.pop(fixturedef)
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        elif len(exceptions) > 1:
+            msg = f'errors while tearing down fixture "{fixturedef.argname}" of {node}'
+            raise BaseExceptionGroup(msg, exceptions[::-1])
+
+    def _finish_stale_fixtures(self, nextitem: Item) -> None:
+        exceptions: list[BaseException] = []
+        for fixturedef in reversed(list(self._fixture_finalizers.keys())):
+            try:
+                fixturedef._finish_if_param_changed(nextitem)
+            except TEST_OUTCOME as e:
+                exceptions.append(e)
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        elif len(exceptions) > 1:
+            msg = f'errors while tearing down fixtures for "{nextitem.nodeid}"'
+            raise BaseExceptionGroup(msg, exceptions[::-1])
 
 
 def collect_one_node(collector: Collector) -> CollectReport:

@@ -69,10 +69,6 @@ from _pytest.scope import Scope
 from _pytest.warning_types import PytestWarning
 
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup
-
-
 if TYPE_CHECKING:
     from _pytest.python import CallSpec2
     from _pytest.python import Function
@@ -1035,7 +1031,6 @@ class FixtureDef(Generic[FixtureValue]):
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
-        self._finalizers: Final[nodes.FinalizerStorage] = {}
         # The request object with which the fixture was set up.
         self._cached_request: SubRequest | None = None
         # Handles to remove our finalizer from various scopes.
@@ -1050,39 +1045,20 @@ class FixtureDef(Generic[FixtureValue]):
         return self._scope.value
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
-        return nodes.append_finalizer(self._finalizers, finalizer)
+        assert self._cached_request is not None
+        setupstate = self._cached_request.session._setupstate
+        return setupstate.fixture_addfinalizer(finalizer, self)
 
     def finish(self, request: SubRequest) -> None:
-        exceptions: list[BaseException] = []
-        while self._finalizers:
-            _, fin = self._finalizers.popitem()
-            try:
-                fin()
-            except TEST_OUTCOME as e:
-                exceptions.append(e)
-        node = request.node
         try:
-            node.ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
-        except TEST_OUTCOME as e:
-            exceptions.append(e)
-
-        # Even if finalization fails, we invalidate the cached fixture
-        # value and remove all finalizers because they may be bound methods
-        # which will keep instances alive.
-        self.cached_result = None
-        self._finalizers.clear()
-        request._fixturemanager._on_fixture_finished(self)
-        self._cached_request = None
-        # Avoid accumulating garbage finalizers in nodes and fixturedefs (#4871).
-        for handle in self._self_finalizer_handles:
-            handle()
-        self._self_finalizer_handles.clear()
-
-        if len(exceptions) == 1:
-            raise exceptions[0]
-        elif len(exceptions) > 1:
-            msg = f'errors while tearing down fixture "{self.argname}" of {node}'
-            raise BaseExceptionGroup(msg, exceptions[::-1])
+            request.session._setupstate.fixture_teardown(self, request.node)
+        finally:
+            self.cached_result = None
+            self._cached_request = None
+            # Avoid accumulating garbage finalizers in nodes and fixturedefs (#4871).
+            for handle in self._self_finalizer_handles:
+                handle()
+            self._self_finalizer_handles.clear()
 
     def execute(self, request: SubRequest) -> FixtureValue:
         """Return the value of this fixture, executing it if not cached."""
@@ -1095,6 +1071,11 @@ class FixtureDef(Generic[FixtureValue]):
         for argname in self.argnames:
             request._get_active_fixturedef(argname)
 
+        self._cached_request = request
+        setupstate = request.session._setupstate
+        setupstate.fixture_setup(self)
+        setupstate.fixture_addfinalizer(self._run_post_finalizer, self)
+
         ihook = request.node.ihook
         try:
             # Setup the fixture, run the code in it, and cache the value
@@ -1103,8 +1084,6 @@ class FixtureDef(Generic[FixtureValue]):
                 fixturedef=self, request=request
             )
         finally:
-            self._cached_request = request
-            request._fixturemanager._on_fixture_setup(self)
             # Schedule our finalizer, even if the setup failed.
             fin = functools.partial(self.finish, request)
             self._self_finalizer_handles.append(request.node.addfinalizer(fin))
@@ -1112,6 +1091,12 @@ class FixtureDef(Generic[FixtureValue]):
                 self._self_finalizer_handles.append(fixturedef.addfinalizer(fin))
 
         return result
+
+    def _run_post_finalizer(self) -> None:
+        request = self._cached_request
+        assert request is not None
+        ihook = request.node.ihook
+        ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
 
     def _is_cache_hit(self, old_cache_key: object, new_cache_key: object) -> bool:
         try:
@@ -1649,8 +1634,6 @@ class FixtureManager:
         self._nodeid_autousenames: Final[dict[str, list[str]]] = {
             "": self.config.getini("usefixtures"),
         }
-        # Using dict for keeping insertion order.
-        self._active_fixturedefs: Final[dict[FixtureDef[Any], None]] = {}
         session.config.pluginmanager.register(self, "funcmanage")
 
     def getfixtureinfo(
@@ -1997,25 +1980,6 @@ class FixtureManager:
         for fixturedef in fixturedefs:
             if fixturedef.baseid in parentnodeids:
                 yield fixturedef
-
-    def _teardown_stale_fixtures(self, nextitem: nodes.Item) -> None:
-        exceptions: list[BaseException] = []
-        for fixturedef in reversed(list(self._active_fixturedefs.keys())):
-            try:
-                fixturedef._finish_if_param_changed(nextitem)
-            except TEST_OUTCOME as e:
-                exceptions.append(e)
-        if len(exceptions) == 1:
-            raise exceptions[0]
-        elif len(exceptions) > 1:
-            msg = f'errors while tearing down fixtures for "{nextitem.nodeid}"'
-            raise BaseExceptionGroup(msg, exceptions[::-1])
-
-    def _on_fixture_setup(self, fixturedef: FixtureDef[Any]) -> None:
-        self._active_fixturedefs[fixturedef] = None
-
-    def _on_fixture_finished(self, fixturedef: FixtureDef[Any]) -> None:
-        del self._active_fixturedefs[fixturedef]
 
 
 def show_fixtures_per_test(config: Config) -> int | ExitCode:
