@@ -1343,10 +1343,12 @@ def test_fixture_disallowed_between_marks() -> None:
         @pytest.fixture
         @pytest.mark.usefixtures("tmp_path")
         def foo():
-           raise NotImplementedError()
+            raise NotImplementedError()
+
 
 def test_marker_rejects_unserializable_argument():
     with pytest.raises(TypeError):
+
         @pytest.mark.example(object())
         def test_func():
             pass
