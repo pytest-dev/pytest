@@ -9,7 +9,6 @@ import dataclasses
 import os
 import sys
 import types
-from typing import Any
 from typing import cast
 from typing import final
 from typing import Generic
@@ -529,7 +528,7 @@ class SetupState:
                 tuple[OutcomeException | Exception, types.TracebackType | None] | None,
             ],
         ] = {}
-        self._fixture_finalizers: dict[FixtureDef[Any], _FinalizerStorage] = {}
+        self._fixture_finalizers: dict[FixtureDef[object], _FinalizerStorage] = {}
 
     def setup(self, item: Item) -> None:
         """Setup objects along the collector chain to the item."""
@@ -608,17 +607,17 @@ class SetupState:
         if nextitem is None:
             assert not self.stack
 
-    def fixture_setup(self, fixturedef: FixtureDef[Any]) -> None:
+    def fixture_setup(self, fixturedef: FixtureDef[object]) -> None:
         assert fixturedef not in self._fixture_finalizers
         self._fixture_finalizers[fixturedef] = _FinalizerStorage()
 
     def fixture_addfinalizer(
-        self, finalizer: Callable[[], object], fixturedef: FixtureDef[Any]
+        self, finalizer: Callable[[], object], fixturedef: FixtureDef[object]
     ) -> Callable[[], None]:
         assert fixturedef in self._fixture_finalizers
         return _append_finalizer(self._fixture_finalizers[fixturedef], finalizer)
 
-    def fixture_teardown(self, fixturedef: FixtureDef[Any], node: Node) -> None:
+    def fixture_teardown(self, fixturedef: FixtureDef[object], node: Node) -> None:
         assert fixturedef in self._fixture_finalizers
         # Do not remove for now to allow adding finalizers last second.
         finalizers = self._fixture_finalizers[fixturedef]

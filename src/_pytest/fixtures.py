@@ -387,7 +387,7 @@ class FixtureRequest(abc.ABC):
         self.param: Any
         # FixtureDefs requested through this specific `request` object.
         # Allows tracking dependencies on fixtures.
-        self._own_fixture_defs: Final[dict[str, FixtureDef[Any]]] = {}
+        self._own_fixture_defs: Final[dict[str, FixtureDef[object]]] = {}
 
     @property
     def _fixturemanager(self) -> FixtureManager:
@@ -560,11 +560,6 @@ class FixtureRequest(abc.ABC):
             self._own_fixture_defs[argname] = fixturedef
             return fixturedef
 
-        fixturedef = self._find_fixturedef(argname)
-        self._execute_fixturedef(fixturedef)
-        return fixturedef
-
-    def _find_fixturedef(self, argname: str) -> FixtureDef[object]:
         # Find the appropriate fixturedef.
         fixturedefs = self._arg2fixturedefs.get(argname, None)
         if fixturedefs is None:
@@ -597,10 +592,8 @@ class FixtureRequest(abc.ABC):
         # If already consumed all of the available levels, fail.
         if -index > len(fixturedefs):
             raise FixtureLookupError(argname, self)
-        return fixturedefs[index]
+        fixturedef = fixturedefs[index]
 
-    def _execute_fixturedef(self, fixturedef: FixtureDef[object]) -> None:
-        argname = fixturedef.argname
         # Prepare a SubRequest object for calling the fixture.
         callspec: CallSpec2 | None = getattr(self._pyfuncitem, "callspec", None)
         if callspec is not None and argname in callspec.params:
@@ -628,6 +621,7 @@ class FixtureRequest(abc.ABC):
         fixturedef.execute(request=subrequest)
 
         self._fixture_defs[argname] = fixturedef
+        return fixturedef
 
     def _check_fixturedef_without_param(self, fixturedef: FixtureDef[object]) -> None:
         """Check that this request is allowed to execute this fixturedef without
@@ -643,7 +637,7 @@ class FixtureRequest(abc.ABC):
             )
             fail(msg, pytrace=False)
         if has_params:
-            frame = inspect.stack()[4]
+            frame = inspect.stack()[3]
             frameinfo = inspect.getframeinfo(frame[0])
             source_path = absolutepath(frameinfo.filename)
             source_lineno = frameinfo.lineno
