@@ -21,7 +21,7 @@ If a test forces teardown of a parametrized fixture, e.g. using ``request.getfix
 
     @pytest.fixture(scope="session")
     def foo(request):
-        return getattr(request, 'param', 'default')
+        return getattr(request, "param", "default")
 
     @pytest.mark.parametrize("foo", [1], indirect=True)
     def test_a(foo):
