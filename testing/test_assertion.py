@@ -696,7 +696,9 @@ class TestAssert_reprcompare:
             "",
             "Omitting 1 identical items, use -vv to show",
             "Right contains 1 more item:",
-            "{'new': 1}",
+            "{",
+            "    'new': 1,",
+            "}",
             "",
             "Full diff:",
             "  {",
@@ -741,7 +743,10 @@ class TestAssert_reprcompare:
         assert lines is not None
         assert lines[2].startswith("Common items:")
         assert "Omitting" not in lines[2]
-        assert lines[3] == "{'b': 1}"
+        # Common items now formatted with proper indentation across multiple lines
+        assert lines[3] == "{"
+        assert lines[4] == "    'b': 1,"
+        assert lines[5] == "}"
 
     def test_dict_different_items(self) -> None:
         lines = callequal({"a": 0}, {"b": 1, "c": 2}, verbose=2)
@@ -749,9 +754,14 @@ class TestAssert_reprcompare:
             "{'a': 0} == {'b': 1, 'c': 2}",
             "",
             "Left contains 1 more item:",
-            "{'a': 0}",
+            "{",
+            "    'a': 0,",
+            "}",
             "Right contains 2 more items:",
-            "{'b': 1, 'c': 2}",
+            "{",
+            "    'b': 1,",
+            "    'c': 2,",
+            "}",
             "",
             "Full diff:",
             "  {",
@@ -767,9 +777,14 @@ class TestAssert_reprcompare:
             "{'b': 1, 'c': 2} == {'a': 0}",
             "",
             "Left contains 2 more items:",
-            "{'b': 1, 'c': 2}",
+            "{",
+            "    'b': 1,",
+            "    'c': 2,",
+            "}",
             "Right contains 1 more item:",
-            "{'a': 0}",
+            "{",
+            "    'a': 0,",
+            "}",
             "",
             "Full diff:",
             "  {",
@@ -780,6 +795,61 @@ class TestAssert_reprcompare:
             "+     'c': 2,",
             "  }",
         ]
+
+    def test_dict_insertion_order_preserved(self) -> None:
+        """Test that dictionary insertion order is preserved in output (issue #13503)."""
+        # Create dicts with keys that would differ in alphabetical vs insertion order
+        left_dict = {
+            "zebra": 1,
+            "apple": 2,
+            "mango": 3,
+        }
+        right_dict: dict[str, int] = {}
+
+        lines = callequal(left_dict, right_dict, verbose=2)
+        assert lines is not None
+
+        # The "Left contains" section should preserve insertion order (zebra, apple, mango)
+        # NOT alphabetical order (apple, mango, zebra)
+        left_section = "\n".join(lines)
+
+        # Find the position of each key in the output
+        zebra_pos = left_section.find("'zebra'")
+        apple_pos = left_section.find("'apple'")
+        mango_pos = left_section.find("'mango'")
+
+        # All keys should appear
+        assert zebra_pos != -1
+        assert apple_pos != -1
+        assert mango_pos != -1
+
+        # Insertion order: zebra should come before apple, apple before mango
+        assert zebra_pos < apple_pos, "Expected zebra before apple (insertion order)"
+        assert apple_pos < mango_pos, "Expected apple before mango (insertion order)"
+
+        # Test with right dict having extra items
+        left_dict2: dict[str, str] = {}
+        right_dict2 = {
+            "zulu": "a",
+            "alpha": "b",
+            "mike": "c",
+        }
+
+        lines2 = callequal(left_dict2, right_dict2, verbose=2)
+        assert lines2 is not None
+
+        right_section = "\n".join(lines2)
+        zulu_pos = right_section.find("'zulu'")
+        alpha_pos = right_section.find("'alpha'")
+        mike_pos = right_section.find("'mike'")
+
+        assert zulu_pos != -1
+        assert alpha_pos != -1
+        assert mike_pos != -1
+
+        # Insertion order: zulu, alpha, mike
+        assert zulu_pos < alpha_pos, "Expected zulu before alpha (insertion order)"
+        assert alpha_pos < mike_pos, "Expected alpha before mike (insertion order)"
 
     def test_sequence_different_items(self) -> None:
         lines = callequal((1, 2), (3, 4, 5), verbose=2)
@@ -2070,12 +2140,16 @@ def test_reprcompare_verbose_long() -> None:
                 }
             """,
             [
+                # Common items are now formatted with multi-line indentation
                 "{bold}{red}E         Common items:{reset}",
-                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-1{hl-reset}{str}'{hl-reset}: {number}1*",
+                "{bold}{red}E         {reset}{{{endline}{reset}",
+                "*{str}'{hl-reset}{str}number-is-1{hl-reset}{str}'{hl-reset}: {number}1*",
                 "{bold}{red}E         Left contains 1 more item:{reset}",
-                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-5{hl-reset}{str}'{hl-reset}: {number}5*",
+                "{bold}{red}E         {reset}{{{endline}{reset}",
+                "*{str}'{hl-reset}{str}number-is-5{hl-reset}{str}'{hl-reset}: {number}5*",
                 "{bold}{red}E         Right contains 1 more item:{reset}",
-                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-0{hl-reset}{str}'{hl-reset}: {number}0*",
+                "{bold}{red}E         {reset}{{{endline}{reset}",
+                "*{str}'{hl-reset}{str}number-is-0{hl-reset}{str}'{hl-reset}: {number}0*",
                 "{bold}{red}E         {reset}{light-gray} {hl-reset} {{{endline}{reset}",
                 "{bold}{red}E         {light-gray} {hl-reset}     'number-is-1': 1,{endline}{reset}",
                 "{bold}{red}E         {light-green}+     'number-is-5': 5,{hl-reset}{endline}{reset}",
