@@ -35,6 +35,7 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import IO
+from typing import NamedTuple
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
@@ -1012,6 +1013,19 @@ class _DeprecatedInicfgProxy(MutableMapping[str, Any]):
         return len(self._config._inicfg)
 
 
+class RegisteredMarker(NamedTuple):
+    """A marker registered in the configuration.
+
+    :param name: The marker name (e.g., ``skipif``).
+    :param signature: The full marker signature (e.g., ``skipif(condition)``).
+    :param description: The marker description.
+    """
+
+    name: str
+    signature: str
+    description: str
+
+
 @final
 class Config:
     """Access to configuration values, pluginmanager and plugin hooks.
@@ -1670,6 +1684,22 @@ class Config:
             pass
         self._inicache[canonical_name] = val = self._getini(canonical_name)
         return val
+
+    def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
+        """Iterate over all markers registered in the configuration.
+
+        Yields :class:`RegisteredMarker` named tuples with ``name``,
+        ``signature``, and ``description`` fields.
+        """
+        for line in self.getini("markers"):
+            # Example lines: "skipif(condition): skip the given test if..."
+            # or "hypothesis: tests which use Hypothesis", so to get the
+            # marker name we split on both `:` and `(`.
+            parts = line.split(":", 1)
+            signature = parts[0]
+            description = parts[1].strip() if len(parts) == 2 else ""
+            name = signature.split("(")[0].strip()
+            yield RegisteredMarker(name, signature, description)
 
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.
