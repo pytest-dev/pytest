@@ -1,0 +1,1 @@
+Assertion comparison output now preserves dictionary insertion order instead of sorting keys.
