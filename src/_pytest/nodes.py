@@ -578,17 +578,28 @@ def _get_site_packages_dirs() -> frozenset[Path]:
 
     dirs: set[Path] = set()
     # Standard site-packages
-    for sp in site.getsitepackages():
+    # getsitepackages() may not exist in some virtualenv configurations
+    try:
+        site_packages = site.getsitepackages()
+    except AttributeError:
+        site_packages = []
+    for sp in site_packages:
         try:
             dirs.add(Path(sp).resolve())
         except OSError:
+            # Path resolution can fail (deleted dir, permission issues, etc.)
             pass
     # User site-packages
-    user_site = site.getusersitepackages()
+    # getusersitepackages() may not exist in some virtualenv configurations
+    try:
+        user_site = site.getusersitepackages()
+    except AttributeError:
+        user_site = None
     if user_site:
         try:
             dirs.add(Path(user_site).resolve())
         except OSError:
+            # Path resolution can fail (deleted dir, permission issues, etc.)
             pass
     return frozenset(dirs)
 
