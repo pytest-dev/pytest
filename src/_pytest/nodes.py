@@ -733,11 +733,13 @@ class FSCollector(Collector, abc.ABC):
             session = parent.session
 
         if nodeid is None:
-            nodeid = compute_nodeid_prefix_for_path(
-                path=path,
-                rootpath=session.config.rootpath,
-                invocation_dir=session.config.invocation_params.dir,
-            )
+            try:
+                nodeid = str(path.relative_to(session.config.rootpath))
+            except ValueError:
+                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
+
+            if nodeid:
+                nodeid = norm_sep(nodeid)
 
         super().__init__(
             name=name,
