@@ -577,30 +577,25 @@ def _get_site_packages_dirs() -> frozenset[Path]:
     import site
 
     dirs: set[Path] = set()
-    # Standard site-packages
-    # getsitepackages() may not exist in some virtualenv configurations
-    try:
-        site_packages = site.getsitepackages()
-    except AttributeError:
-        site_packages = []
-    for sp in site_packages:
+
+    def add_from(getter: Callable[[], list[str]]) -> None:
+        """Call getter and add resolved paths to dirs.
+
+        Handles AttributeError (function missing in some virtualenvs)
+        and OSError (path resolution failures).
+        """
         try:
-            dirs.add(Path(sp).resolve())
-        except OSError:
-            # Path resolution can fail (deleted dir, permission issues, etc.)
-            pass
-    # User site-packages
-    # getusersitepackages() may not exist in some virtualenv configurations
-    try:
-        user_site = site.getusersitepackages()
-    except AttributeError:
-        user_site = None
-    if user_site:
-        try:
-            dirs.add(Path(user_site).resolve())
-        except OSError:
-            # Path resolution can fail (deleted dir, permission issues, etc.)
-            pass
+            paths = getter()
+        except AttributeError:
+            return
+        for p in paths:
+            try:
+                dirs.add(Path(p).resolve())
+            except OSError:
+                pass
+
+    add_from(lambda: site.getsitepackages())
+    add_from(lambda: [site.getusersitepackages()])
     return frozenset(dirs)
 
 
