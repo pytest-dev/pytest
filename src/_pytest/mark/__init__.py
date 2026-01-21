@@ -140,12 +140,9 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.markers:
         config._do_configure()
         tw = _pytest.config.create_terminal_writer(config)
-        for line in config.getini("markers"):
-            parts = line.split(":", 1)
-            name = parts[0]
-            rest = parts[1] if len(parts) == 2 else ""
-            tw.write(f"@pytest.mark.{name}:", bold=True)
-            tw.line(rest)
+        for marker in config._iter_registered_markers():
+            tw.write(f"@pytest.mark.{marker.signature}:", bold=True)
+            tw.line(f" {marker.description}" if marker.description else "")
             tw.line()
         config._ensure_unconfigure()
         return 0
