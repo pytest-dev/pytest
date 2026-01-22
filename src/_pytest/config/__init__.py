@@ -1014,13 +1014,11 @@ class _DeprecatedInicfgProxy(MutableMapping[str, Any]):
 
 
 class RegisteredMarker(NamedTuple):
-    """A marker registered in the configuration.
-
-    """
+    """A marker registered in the configuration."""
 
     #: The marker name (e.g., ``skipif``).
     name: str
-    #: The full marker signature (e.g., ``skipif(condition)``). 
+    #: The full marker signature (e.g., ``skipif(condition)``).
     signature: str
     #: The marker description.
     description: str
