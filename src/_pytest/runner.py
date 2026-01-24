@@ -450,6 +450,8 @@ class FinalizerHandle:
     .. versionadded:: 9.1
     """
 
+    __slots__ = ("_finalizer_storage", "_id")
+
     def __init__(
         self,
         finalizer_storage: _FinalizerStorage,
