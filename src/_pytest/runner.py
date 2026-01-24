@@ -441,16 +441,37 @@ _Finalizer: TypeAlias = Callable[[], object]
 _FinalizerStorage: TypeAlias = dict[_FinalizerId, _Finalizer]
 
 
+class FinalizerHandle:
+    """
+    Allows to remove a finalizer after an ``addfinalizer`` call.
+
+    The handle does not own the finalizer, dropping the handle does nothing.
+
+    .. versionadded:: 9.1
+    """
+
+    def __init__(
+        self,
+        finalizer_storage: _FinalizerStorage,
+        id: _FinalizerId,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+        self._finalizer_storage = finalizer_storage
+        self._id = id
+
+    def remove_finalizer(self) -> None:
+        """Remove the finalizer."""
+        self._finalizer_storage.pop(self._id, None)
+
+
 def _append_finalizer(
     finalizer_storage: _FinalizerStorage, finalizer: _Finalizer
-) -> Callable[[], None]:
+) -> FinalizerHandle:
     finalizer_id = _FinalizerId()
     finalizer_storage[finalizer_id] = finalizer
-
-    def remove_finalizer() -> None:
-        finalizer_storage.pop(finalizer_id, None)
-
-    return remove_finalizer
+    return FinalizerHandle(finalizer_storage, finalizer_id, _ispytest=True)
 
 
 class SetupState:
@@ -555,7 +576,7 @@ class SetupState:
 
     def addfinalizer(
         self, finalizer: Callable[[], object], node: Node
-    ) -> Callable[[], None]:
+    ) -> FinalizerHandle:
         """Attach a finalizer to the given node.
 
         The node must be currently active in the stack.
@@ -613,7 +634,7 @@ class SetupState:
 
     def fixture_addfinalizer(
         self, finalizer: Callable[[], object], fixturedef: FixtureDef[object]
-    ) -> Callable[[], None]:
+    ) -> FinalizerHandle:
         assert fixturedef in self._fixture_finalizers
         return _append_finalizer(self._fixture_finalizers[fixturedef], finalizer)
 

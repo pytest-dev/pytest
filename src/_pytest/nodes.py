@@ -47,6 +47,7 @@ if TYPE_CHECKING:
 
     # Imported here due to circular import.
     from _pytest.main import Session
+    from _pytest.runner import FinalizerHandle
 
 
 SEP = "/"
@@ -395,7 +396,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def listnames(self) -> list[str]:
         return [x.name for x in self.listchain()]
 
-    def addfinalizer(self, fin: Callable[[], object]) -> Callable[[], None]:
+    def addfinalizer(self, fin: Callable[[], object]) -> FinalizerHandle:
         """Register a function to be called without arguments when this node is
         finalized.
 
@@ -403,6 +404,9 @@ class Node(abc.ABC, metaclass=NodeMeta):
         in a setup chain, for example during self.setup().
 
         :returns: A handle that can be used to remove the finalizer.
+
+        .. versionadded:: 9.1
+            The :class:`FinalizerHandle <pytest.FinalizerHandle>` result.
         """
         return self.session._setupstate.addfinalizer(fin, self)
 

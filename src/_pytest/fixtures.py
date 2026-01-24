@@ -73,6 +73,7 @@ if TYPE_CHECKING:
     from _pytest.python import CallSpec2
     from _pytest.python import Function
     from _pytest.python import Metafunc
+    from _pytest.runner import FinalizerHandle
 
 
 # The value of the fixture -- return/yield of the fixture function (type variable).
@@ -482,11 +483,14 @@ class FixtureRequest(abc.ABC):
         return self._pyfuncitem.session
 
     @abc.abstractmethod
-    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
         """Add finalizer/teardown function to be called without arguments after
         the last test within the requesting test context finished execution.
 
         :returns: A handle that can be used to remove the finalizer.
+
+        .. versionadded:: 9.1
+            The :class:`FinalizerHandle <pytest.FinalizerHandle>` result.
         """
         raise NotImplementedError()
 
@@ -700,7 +704,7 @@ class TopRequest(FixtureRequest):
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfixturevalue(argname)
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
         return self.node.addfinalizer(finalizer)
 
 
@@ -787,7 +791,7 @@ class SubRequest(FixtureRequest):
         sig = signature(factory)
         return f"{path}:{lineno + 1}:  def {factory.__name__}{sig}"
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
         return self._fixturedef.addfinalizer(finalizer)
 
 
@@ -1028,7 +1032,7 @@ class FixtureDef(Generic[FixtureValue]):
         # The request object with which the fixture was set up.
         self._cached_request: SubRequest | None = None
         # Handles to remove our finalizer from various scopes.
-        self._self_finalizer_handles: Final[list[Callable[[], None]]] = []
+        self._self_finalizer_handles: Final[list[FinalizerHandle]] = []
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1038,7 +1042,7 @@ class FixtureDef(Generic[FixtureValue]):
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
         assert self._cached_request is not None
         setupstate = self._cached_request.session._setupstate
         return setupstate.fixture_addfinalizer(finalizer, self)
@@ -1051,7 +1055,7 @@ class FixtureDef(Generic[FixtureValue]):
             self._cached_request = None
             # Avoid accumulating garbage finalizers in nodes and fixturedefs (#4871).
             for handle in self._self_finalizer_handles:
-                handle()
+                handle.remove_finalizer()
             self._self_finalizer_handles.clear()
 
     def execute(self, request: SubRequest) -> FixtureValue:
@@ -1182,7 +1186,11 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         )
         self.cached_result = (request, [0], None)
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> Callable[[], None]:
+    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
+        # RequestFixtureDef is not exposed to the user, e.g. it does not call
+        # pytest_fixture_setup and pytest_fixture_post_teardown.
+        # Also RequestFixtureDef is not finalized properly, so if addfinalizer is
+        # somehow called, then the finalizer would never be called.
         assert False
 
 
