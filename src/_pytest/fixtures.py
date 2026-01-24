@@ -1187,10 +1187,10 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         self.cached_result = (request, [0], None)
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
-        # RequestFixtureDef is not exposed to the user, e.g. it does not call
-        # pytest_fixture_setup and pytest_fixture_post_teardown.
+        # RequestFixtureDef is not exposed to the user, e.g.
+        # pytest_fixture_setup and pytest_fixture_post_teardown are not called.
         # Also RequestFixtureDef is not finalized properly, so if addfinalizer is
-        # somehow called, then the finalizer would never be called.
+        # somehow called, then the finalizer will never be called.
         assert False
 
 
