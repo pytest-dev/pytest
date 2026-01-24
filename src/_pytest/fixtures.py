@@ -1629,17 +1629,95 @@ class FixtureManager:
             # case-insensitive systems (Windows) and other normalization issues
             # (issue #11816).
             conftestpath = absolutepath(plugin_name)
-            # initial_paths not available yet at plugin registration time,
-            # so we skip that step and fall back to bestrelpath
-            nodeid = nodes.compute_nodeid_prefix_for_path(
-                path=conftestpath.parent,
-                rootpath=self.config.rootpath,
-                invocation_dir=self.config.invocation_params.dir,
-            )
+            nodeid = self._compute_conftest_nodeid(conftestpath.parent)
         else:
             nodeid = None
 
         self.parsefactories(plugin, nodeid)
+
+    def _compute_conftest_nodeid(self, conftest_dir: Path) -> str:
+        """Compute nodeid for a conftest directory.
+
+        The nodeid must match how FSCollector computes nodeids so that
+        fixture scoping works correctly. This is especially important when
+        testpaths points outside rootdir (issue #14004).
+
+        This mirrors the logic in FSCollector.__init__:
+        1. Try relative to rootpath
+        2. Fall back to _check_initialpaths_for_relpath logic
+        """
+        rootpath = self.config.rootpath
+        invocation_dir = self.config.invocation_params.dir
+
+        # First, try relative to rootpath (same as FSCollector)
+        try:
+            nodeid = str(conftest_dir.relative_to(rootpath))
+            if nodeid == ".":
+                return ""
+            return nodes.norm_sep(nodeid)
+        except ValueError:
+            pass
+
+        # Path is outside rootpath. Use the same logic as FSCollector's
+        # _check_initialpaths_for_relpath fallback.
+        #
+        # During collection, _initialpaths is available and contains the
+        # resolved collection targets (including --pyargs targets). This
+        # allows conftests in those targets to get the correct nodeid.
+        initialpaths = self.session._initialpaths
+        if initialpaths:
+            # Same logic as _check_initialpaths_for_relpath in nodes.py
+            if conftest_dir in initialpaths:
+                return ""
+            for initialpath in initialpaths:
+                try:
+                    rel = conftest_dir.relative_to(initialpath)
+                    nodeid = str(rel)
+                    if nodeid == ".":
+                        return ""
+                    return nodes.norm_sep(nodeid)
+                except ValueError:
+                    continue
+
+        # During initial conftest loading (before collection), _initialpaths
+        # is empty. Fall back to checking testpaths configuration.
+        testpaths = self.config.getini("testpaths")
+        if testpaths:
+            for testpath_str in testpaths:
+                # Resolve testpath relative to invocation_dir
+                testpath = (invocation_dir / testpath_str).resolve()
+                # Only consider testpaths that are outside rootpath
+                try:
+                    testpath.relative_to(rootpath)
+                    # testpath is under rootpath, skip
+                    continue
+                except ValueError:
+                    pass
+                # testpath is outside rootpath, check if conftest is under it
+                try:
+                    rel = conftest_dir.relative_to(testpath)
+                    nodeid = str(rel)
+                    if nodeid == ".":
+                        return ""
+                    return nodes.norm_sep(nodeid)
+                except ValueError:
+                    continue
+
+        # Path is outside rootpath, not under any initialpath or testpath.
+        # Check if rootpath is under conftest_dir (conftest is a parent).
+        # In this case, the conftest should be global (nodeid="").
+        try:
+            rootpath.relative_to(conftest_dir)
+            # rootpath is under conftest_dir, so conftest is a parent
+            return ""
+        except ValueError:
+            pass
+
+        # For all other cases (e.g., site-packages, unrelated paths),
+        # return empty nodeid so fixtures are globally visible.
+        # This matches the behavior when FSCollector's
+        # _check_initialpaths_for_relpath returns None.
+        return ""
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to node."""
