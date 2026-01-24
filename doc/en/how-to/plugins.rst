@@ -148,7 +148,7 @@ Disabling plugins from autoloading
 ----------------------------------
 
 If you want to disable plugins from loading automatically, instead of requiring you to
-manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can use ``--disable-plugin-autoload`` or :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD`.
+manually specify each plugin with :option:`-p` or :envvar:`PYTEST_PLUGINS`, you can use :option:`--disable-plugin-autoload` or :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD`.
 
 .. code-block:: bash
 
@@ -158,7 +158,7 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 
 .. code-block:: bash
 
-   pytest --disable-plugin-autoload -p NAME,NAME2
+   pytest --disable-plugin-autoload -p NAME -p NAME2
 
 .. tab:: toml
 
@@ -179,4 +179,32 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 
 .. versionadded:: 8.4
 
-   The ``--disable-plugin-autoload`` command-line flag.
+   The :option:`--disable-plugin-autoload` command-line flag.
+
+.. note::
+
+   :option:`-p` and :envvar:`PYTEST_PLUGINS` are both ways to explicitly control which
+   plugins are loaded, but they serve slightly different use-cases.
+
+   * :option:`-p` loads (or disables with ``-p no:<name>``) a plugin by name or entry point
+     for a specific pytest invocation, and is processed early during startup.
+   * :envvar:`PYTEST_PLUGINS` is a comma-separated list of Python modules that are imported
+     and registered as plugins during startup. This mechanism is commonly used by test
+     suites, for example when testing a plugin.
+
+   When explicitly controlling plugin loading (especially with
+   :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD` or :option:`--disable-plugin-autoload`),
+   avoid specifying the same plugin via multiple mechanisms. Registering the same plugin
+   more than once can lead to errors during plugin registration.
+
+Examples:
+
+.. code-block:: bash
+
+   # Disable auto-loading and load only specific plugins for this invocation
+   PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -p xdist
+
+.. code-block:: bash
+
+   # Disable auto-loading and load plugin modules during startup
+   PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTEST_PLUGINS=mymodule.plugin,xdist pytest

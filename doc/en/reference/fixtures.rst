@@ -34,7 +34,7 @@ Built-in fixtures
 
    :fixture:`capteesys`
         Capture in the same manner as :fixture:`capsys`, but also pass text
-        through according to ``--capture=``.
+        through according to :option:`--capture`.
 
    :fixture:`capsysbinary`
         Capture, as bytes, output to ``sys.stdout`` and ``sys.stderr``.
@@ -281,9 +281,9 @@ searching for them first in the scopes inside ``tests/``.
 
     pytest can tell you what fixtures are available for a given test if you call
     ``pytests`` along with the test's name (or the scope it's in), and provide
-    the ``--fixtures`` flag, e.g. ``pytest --fixtures test_something.py``
+    the :option:`--fixtures` flag, e.g. ``pytest --fixtures test_something.py``
     (fixtures with names that start with ``_`` will only be shown if you also
-    provide the ``-v`` flag).
+    provide the :option:`-v` flag).
 
 
 .. _`fixture order`:
@@ -452,6 +452,6 @@ can't see ``c3``.
 
     pytest can tell you what order the fixtures will execute in for a given test
     if you call ``pytests`` along with the test's name (or the scope it's in),
-    and provide the ``--setup-plan`` flag, e.g.
+    and provide the :option:`--setup-plan` flag, e.g.
     ``pytest --setup-plan test_something.py`` (fixtures with names that start
-    with ``_`` will only be shown if you also provide the ``-v`` flag).
+    with ``_`` will only be shown if you also provide the :option:`-v` flag).

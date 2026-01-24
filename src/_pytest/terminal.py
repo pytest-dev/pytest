@@ -189,6 +189,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group._addoption(  # private to use reserved lower-case short option
         "-r",
+        "--report-chars",
         action="store",
         dest="reportchars",
         default=_REPORTCHARS_DEFAULT,
@@ -1033,9 +1034,7 @@ class TerminalReporter:
         # fspath comes from testid which has a "/"-normalized path.
         if fspath:
             res = mkrel(nodeid)
-            if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
-                "\\", nodes.SEP
-            ):
+            if self.verbosity >= 2 and nodeid.split("::")[0] != nodes.norm_sep(fspath):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
             res = "[location]"

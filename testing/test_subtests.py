@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from enum import Enum
+import json
 import sys
 from typing import Literal
 
+from _pytest._io.saferepr import saferepr
 from _pytest.subtests import SubtestContext
 from _pytest.subtests import SubtestReport
 import pytest
@@ -302,10 +305,10 @@ def test_subtests_and_parametrization(
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i=1) *[[] 50%[]]",
-            "*.py::test_foo[[]0[]] FAILED                      *[[] 50%[]]",
-            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
-            "*.py::test_foo[[]1[]] FAILED                      *[[]100%[]]",
+            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i='1') *[[] 50%[]]",
+            "*.py::test_foo[[]0[]] FAILED                        *[[] 50%[]]",
+            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i='1') *[[]100%[]]",
+            "*.py::test_foo[[]1[]] FAILED                        *[[]100%[]]",
             "contains 1 failed subtest",
             "* 4 failed, 4 subtests passed in *",
         ]
@@ -320,10 +323,10 @@ def test_subtests_and_parametrization(
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i=1) *[[] 50%[]]",
-            "*.py::test_foo[[]0[]] FAILED                      *[[] 50%[]]",
-            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
-            "*.py::test_foo[[]1[]] FAILED                      *[[]100%[]]",
+            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i='1') *[[] 50%[]]",
+            "*.py::test_foo[[]0[]] FAILED                        *[[] 50%[]]",
+            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i='1') *[[]100%[]]",
+            "*.py::test_foo[[]1[]] FAILED                        *[[]100%[]]",
             "contains 1 failed subtest",
             "* 4 failed in *",
         ]
@@ -650,12 +653,12 @@ class TestCapture:
         result = pytester.runpytest(f"--capture={mode}")
         result.stdout.fnmatch_lines(
             [
-                "*__ test (i='A') __*",
+                "*__ test (i=\"'A'\") __*",
                 "*Captured stdout call*",
                 "hello stdout A",
                 "*Captured stderr call*",
                 "hello stderr A",
-                "*__ test (i='B') __*",
+                "*__ test (i=\"'B'\") __*",
                 "*Captured stdout call*",
                 "hello stdout B",
                 "*Captured stderr call*",
@@ -676,8 +679,8 @@ class TestCapture:
                 "hello stdout A",
                 "uhello stdout B",
                 "uend test",
-                "*__ test (i='A') __*",
-                "*__ test (i='B') __*",
+                "*__ test (i=\"'A'\") __*",
+                "*__ test (i=\"'B'\") __*",
                 "*__ test __*",
             ]
         )
@@ -957,7 +960,14 @@ def test_nested(pytester: pytest.Pytester) -> None:
     )
 
 
+class MyEnum(Enum):
+    """Used in test_serialization, needs to be declared at the module level to be pickled."""
+
+    A = "A"
+
+
 def test_serialization() -> None:
+    """Ensure subtest's kwargs are serialized using `saferepr` (pytest-dev/pytest-xdist#1273)."""
     from _pytest.subtests import pytest_report_from_serializable
     from _pytest.subtests import pytest_report_to_serializable
 
@@ -968,10 +978,41 @@ def test_serialization() -> None:
         outcome="passed",
         when="call",
         longrepr=None,
-        context=SubtestContext(msg="custom message", kwargs=dict(i=10)),
+        context=SubtestContext(msg="custom message", kwargs=dict(i=10, a=MyEnum.A)),
     )
     data = pytest_report_to_serializable(report)
     assert data is not None
+    # Ensure the report is actually serializable to JSON.
+    _ = json.dumps(data)
     new_report = pytest_report_from_serializable(data)
     assert new_report is not None
-    assert new_report.context == SubtestContext(msg="custom message", kwargs=dict(i=10))
+    assert new_report.context == SubtestContext(
+        msg="custom message", kwargs=dict(i=saferepr(10), a=saferepr(MyEnum.A))
+    )
+
+
+def test_serialization_xdist(pytester: pytest.Pytester) -> None:  # pragma: no cover
+    """Regression test for pytest-dev/pytest-xdist#1273."""
+    pytest.importorskip("xdist")
+    pytester.makepyfile(
+        """
+        from enum import Enum
+        import unittest
+
+        class MyEnum(Enum):
+            A = "A"
+
+        def test(subtests):
+            with subtests.test(a=MyEnum.A):
+                pass
+
+        class T(unittest.TestCase):
+
+            def test(self):
+                with self.subTest(a=MyEnum.A):
+                    pass
+        """
+    )
+    pytester.syspathinsert()
+    result = pytester.runpytest("-n1", "-pxdist.plugin")
+    result.assert_outcomes(passed=2)

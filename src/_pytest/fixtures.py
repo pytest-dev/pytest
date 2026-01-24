@@ -66,7 +66,6 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
-from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestWarning
 
 
@@ -1178,18 +1177,11 @@ def pytest_fixture_setup(
         fixturefunc
     ):
         auto_str = " with autouse=True" if fixturedef._autouse else ""
-
-        warnings.warn(
-            PytestRemovedIn9Warning(
-                f"{request.node.name!r} requested an async fixture "
-                f"{request.fixturename!r}{auto_str}, with no plugin or hook that "
-                "handled it. This is usually an error, as pytest does not natively "
-                "support it. "
-                "This will turn into an error in pytest 9.\n"
-                "See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture"
-            ),
-            # no stacklevel will point at users code, so we just point here
-            stacklevel=1,
+        fail(
+            f"{request.node.name!r} requested an async fixture {request.fixturename!r}{auto_str}, "
+            "with no plugin or hook that handled it. This is an error, as pytest does not natively support it.\n"
+            "See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+            pytrace=False,
         )
 
     try:
@@ -1643,8 +1635,8 @@ class FixtureManager:
                 nodeid = ""
             if nodeid == ".":
                 nodeid = ""
-            if os.sep != nodes.SEP:
-                nodeid = nodeid.replace(os.sep, nodes.SEP)
+            elif nodeid:
+                nodeid = nodes.norm_sep(nodeid)
         else:
             nodeid = None
 

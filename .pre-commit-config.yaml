@@ -1,7 +1,7 @@
 minimum_pre_commit_version: "4.4.0"
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.14.5"
+  rev: "v0.14.13"
   hooks:
     - id: ruff-check
       args: ["--fix"]
@@ -13,10 +13,10 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
 - repo: https://github.com/woodruffw/zizmor-pre-commit
-  rev: v1.16.3
+  rev: v1.22.0
   hooks:
     - id: zizmor
-      args: ["--fix"]
+      args: ["--fix", "--no-progress"]
 -   repo: https://github.com/adamchainz/blacken-docs
     rev: 1.20.0
     hooks:
@@ -34,7 +34,7 @@ repos:
     hooks:
     -   id: python-use-type-annotations
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+    rev: v1.19.1
     hooks:
     -   id: mypy
         files: ^(src/|testing/|scripts/)
@@ -50,7 +50,7 @@ repos:
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 -   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.407
+    rev: v1.1.408
     hooks:
     -   id: pyright
         files: ^(src/|scripts/)
@@ -74,7 +74,7 @@ repos:
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
       additional_dependencies: ["tox>=4.9"]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.21.1
+    rev: v3.21.2
     hooks:
     -   id: pyupgrade
         args:
@@ -94,10 +94,10 @@ repos:
         stages: [manual]
     -   id: rst
         name: rst
-        entry: rst-lint --encoding utf-8
+        entry: rst-lint
         files: ^(RELEASING.rst|README.rst|TIDELIFT.rst)$
         language: python
-        additional_dependencies: [pygments, restructuredtext_lint]
+        additional_dependencies: [pygments, restructuredtext_lint>=2.0.0]
     -   id: changelogs-rst
         name: changelog filenames
         language: fail

@@ -198,7 +198,7 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
 Disabling warnings summary
 --------------------------
 
-Although not recommended, you can use the ``--disable-warnings`` command-line option to suppress the
+Although not recommended, you can use the :option:`--disable-warnings` command-line option to suppress the
 warning summary entirely from the test run output.
 
 Disabling warning capture entirely
@@ -286,8 +286,8 @@ Ensuring code triggers a deprecation warning
 --------------------------------------------
 
 You can also use :func:`pytest.deprecated_call` for checking
-that a certain function call triggers a ``DeprecationWarning`` or
-``PendingDeprecationWarning``:
+that a certain function call triggers a ``DeprecationWarning``, ``PendingDeprecationWarning`` or
+``FutureWarning``:
 
 .. code-block:: python
 

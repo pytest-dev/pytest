@@ -51,6 +51,20 @@ if TYPE_CHECKING:
 
 SEP = "/"
 
+
+def norm_sep(path: str | os.PathLike[str]) -> str:
+    """Normalize path separators to forward slashes for nodeid compatibility.
+
+    Replaces backslashes with forward slashes. This handles both Windows native
+    paths and cross-platform data (e.g., Windows paths in serialized test reports
+    when running on Linux).
+
+    :param path: A path string or PathLike object.
+    :returns: String with all backslashes replaced by forward slashes.
+    """
+    return os.fspath(path).replace("\\", SEP)
+
+
 tracebackcutdir = Path(_pytest.__file__).parent
 
 
@@ -589,7 +603,7 @@ class FSCollector(Collector, abc.ABC):
                     pass
                 else:
                     name = str(rel)
-                name = name.replace(os.sep, SEP)
+                name = norm_sep(name)
         self.path = path
 
         if session is None:
@@ -602,8 +616,8 @@ class FSCollector(Collector, abc.ABC):
             except ValueError:
                 nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
 
-            if nodeid and os.sep != SEP:
-                nodeid = nodeid.replace(os.sep, SEP)
+            if nodeid:
+                nodeid = norm_sep(nodeid)
 
         super().__init__(
             name=name,
