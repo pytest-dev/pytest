@@ -1,5 +1,9 @@
+from __future__ import annotations
+
+
 def add(a, b):
     return a + b
+
 
 def divide(a, b):
     if b == 0:
