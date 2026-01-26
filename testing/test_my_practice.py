@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import pytest
+
 
 def test_basic_math():
     assert 1 + 1 == 2
+
 
 def test_pytest_raises():
     with pytest.raises(ZeroDivisionError):
