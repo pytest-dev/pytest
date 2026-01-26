@@ -169,9 +169,33 @@ def print_usage_error(e: UsageError, file: TextIO) -> None:
         tw.line(f"ERROR: {msg}\n", red=True)
 
 
+def _get_prog_name(
+    *, invoked_from_console: bool, _argv: list[str] | None = None
+) -> str:
+    """Determine the appropriate program name for argparse based on invocation context.
+
+    :param invoked_from_console: Whether pytest was invoked from the CLI entry point.
+    :param _argv: Optional argv list for testing; defaults to sys.argv.
+    :returns: The program name to display in help and error messages.
+    """
+    if not invoked_from_console:
+        # Called programmatically via pytest.main()
+        return "pytest.main()"
+
+    # Called from CLI - check if it's `python -m pytest` or direct `pytest`
+    argv = sys.argv if _argv is None else _argv
+    argv0 = argv[0] if argv else ""
+    # When running as `python -m pytest`, argv[0] is the path to __main__.py
+    if os.path.basename(argv0) == "__main__.py":
+        return "python -m pytest"
+    return "pytest"
+
+
 def main(
     args: list[str] | os.PathLike[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
+    *,
+    _invoked_from_console: bool = False,
 ) -> int | ExitCode:
     """Perform an in-process test run.
 
@@ -188,11 +212,13 @@ def main(
         sys.stdout.write(f"pytest {__version__}\n")
         return ExitCode.OK
 
+    prog = _get_prog_name(invoked_from_console=_invoked_from_console)
+
     old_pytest_version = os.environ.get("PYTEST_VERSION")
     try:
         os.environ["PYTEST_VERSION"] = __version__
         try:
-            config = _prepareconfig(new_args, plugins)
+            config = _prepareconfig(new_args, plugins, prog=prog)
         except ConftestImportFailure as e:
             print_conftest_import_error(e, file=sys.stderr)
             return ExitCode.USAGE_ERROR
@@ -222,7 +248,7 @@ def console_main() -> int:
     """
     # https://docs.python.org/3/library/signal.html#note-on-sigpipe
     try:
-        code = main()
+        code = main(_invoked_from_console=True)
         sys.stdout.flush()
         return code
     except BrokenPipeError:
@@ -308,6 +334,8 @@ builtin_plugins = {
 def get_config(
     args: Iterable[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
+    *,
+    prog: str | None = None,
 ) -> Config:
     # Subsequent calls to main will create a fresh instance.
     pluginmanager = PytestPluginManager()
@@ -316,7 +344,7 @@ def get_config(
         plugins=plugins,
         dir=pathlib.Path.cwd(),
     )
-    config = Config(pluginmanager, invocation_params=invocation_params)
+    config = Config(pluginmanager, invocation_params=invocation_params, prog=prog)
 
     if invocation_params.args:
         # Handle any "-p no:plugin" args.
@@ -342,6 +370,8 @@ def get_plugin_manager() -> PytestPluginManager:
 def _prepareconfig(
     args: list[str] | os.PathLike[str],
     plugins: Sequence[str | _PluggyPlugin] | None = None,
+    *,
+    prog: str | None = None,
 ) -> Config:
     if isinstance(args, os.PathLike):
         args = [os.fspath(args)]
@@ -351,7 +381,7 @@ def _prepareconfig(
         )
         raise TypeError(msg.format(args, type(args)))
 
-    initial_config = get_config(args, plugins)
+    initial_config = get_config(args, plugins, prog=prog)
     pluginmanager = initial_config.pluginmanager
     try:
         if plugins:
@@ -1081,6 +1111,7 @@ class Config:
         pluginmanager: PytestPluginManager,
         *,
         invocation_params: InvocationParams | None = None,
+        prog: str | None = None,
     ) -> None:
         if invocation_params is None:
             invocation_params = self.InvocationParams(
@@ -1104,6 +1135,8 @@ class Config:
             processopt=self._processopt,
             _ispytest=True,
         )
+        if prog is not None:
+            self._parser.prog = prog
         self.pluginmanager = pluginmanager
         """The plugin manager handles plugin registration and hook invocation.
 
