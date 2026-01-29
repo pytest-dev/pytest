@@ -2783,7 +2783,12 @@ Collection
     Like :option:`--collect-only`, but displays collected tests as a tree
     with box-drawing characters instead of the classic ``<Type name>`` format.
     Uses colors when outputting to a TTY, and falls back to ASCII characters
-    for non-TTY output.
+    for non-UTF-8 output.
+
+    Note: This shows the *structural* organization of tests (grouped by
+    directory, module, and class), which may differ from the execution order
+    shown by :option:`--collect-only` if plugins reorder tests via the
+    :hook:`pytest_collection_modifyitems` hook.
 
 .. option:: --pyargs
 

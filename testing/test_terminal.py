@@ -668,9 +668,9 @@ class TestCollectonlyTree:
         result.stdout.fnmatch_lines(
             [
                 "*",
-                "`-- test_tree_basic.py",
-                "    *-- test_one",
-                "    `-- test_two",
+                "└── test_tree_basic.py",
+                "    ├── test_one",
+                "    └── test_two",
             ]
         )
 
@@ -691,11 +691,11 @@ class TestCollectonlyTree:
         result.stdout.fnmatch_lines(
             [
                 "*",
-                "`-- test_tree_with_classes.py",
-                "    *-- TestFoo",
-                "    |   *-- test_method_one",
-                "    |   `-- test_method_two",
-                "    `-- test_standalone",
+                "└── test_tree_with_classes.py",
+                "    ├── TestFoo",
+                "    │   ├── test_method_one",
+                "    │   └── test_method_two",
+                "    └── test_standalone",
             ]
         )
 
@@ -710,12 +710,12 @@ class TestCollectonlyTree:
         result.stdout.fnmatch_lines(
             [
                 "*",
-                "`-- a",
-                "    *-- b",
-                "    |   `-- test_b.py",
-                "    |       `-- test_b",
-                "    `-- test_a.py",
-                "        `-- test_a",
+                "└── a",
+                "    ├── b",
+                "    │   └── test_b.py",
+                "    │       └── test_b",
+                "    └── test_a.py",
+                "        └── test_a",
             ]
         )
 
@@ -728,10 +728,10 @@ class TestCollectonlyTree:
         result.stdout.fnmatch_lines(
             [
                 "*",
-                "*-- test_alpha.py",
-                "|   `-- test_alpha",
-                "`-- test_beta.py",
-                "    `-- test_beta",
+                "├── test_alpha.py",
+                "│   └── test_alpha",
+                "└── test_beta.py",
+                "    └── test_beta",
             ]
         )
 
@@ -761,10 +761,48 @@ class TestCollectonlyTree:
         result = pytester.runpytest("--co-tree", "-v")
         result.stdout.fnmatch_lines(
             [
-                "*-- test_documented",
+                "*── test_documented",
                 "*This is a documented test.*",
             ]
         )
+
+    def test_tree_parametrized(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("x", [1, 2, 3])
+            def test_param(x):
+                pass
+            """
+        )
+        result = pytester.runpytest("--co-tree")
+        result.stdout.fnmatch_lines(
+            [
+                "*── test_tree_parametrized.py",
+                "    ├── test_param[[]1]",
+                "    ├── test_param[[]2]",
+                "    └── test_param[[]3]",
+            ]
+        )
+
+    def test_tree_with_both_collect_flags(self, pytester: Pytester) -> None:
+        """When both --co and --co-tree are specified, --co-tree takes precedence."""
+        pytester.makepyfile(
+            """
+            def test_one():
+                pass
+            """
+        )
+        result = pytester.runpytest("--co", "--co-tree")
+        # Should show tree format, not classic format
+        result.stdout.fnmatch_lines(
+            [
+                "└── test_tree_with_both_collect_flags.py",
+            ]
+        )
+        # Should NOT show classic <Module ...> format
+        assert "<Module" not in result.stdout.str()
 
 
 class TestFixtureReporting:

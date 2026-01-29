@@ -454,24 +454,6 @@ class CollectionTree:
 
                 parent_tree_node = tree_node
 
-    def render_classic(self, tw: TerminalWriter, verbosity: int = 0) -> None:
-        """Render the tree in classic <Type name> format."""
-
-        def render_node(tree_node: CollectionTreeNode, depth: int) -> None:
-            indent = "  " * depth
-            tw.line(f"{indent}{tree_node.node}")
-            if verbosity >= 1:
-                obj = getattr(tree_node.node, "obj", None)
-                doc = inspect.getdoc(obj) if obj else None
-                if doc:
-                    for line in doc.splitlines():
-                        tw.line(f"{indent}  {line}")
-            for child in tree_node.children:
-                render_node(child, depth + 1)
-
-        for root in self.roots:
-            render_node(root, 0)
-
     def render_tree(
         self, tw: TerminalWriter, verbosity: int = 0, use_markup: bool = True
     ) -> None:
@@ -483,6 +465,12 @@ class CollectionTree:
         from _pytest.python import Function
         from _pytest.python import Module
         from _pytest.python import Package
+
+        # Check Unicode support separately from color support
+        use_unicode = True
+        if tw._file is not None:
+            encoding = getattr(tw._file, "encoding", None) or ""
+            use_unicode = "utf" in encoding.lower()
 
         def get_node_markup(pytest_node: Node) -> dict[str, bool]:
             """Return markup kwargs for a node based on its type."""
@@ -536,11 +524,11 @@ class CollectionTree:
                     if is_last_at_level[i]:
                         prefix_parts.append("    ")
                     else:
-                        prefix_parts.append("│   " if use_markup else "|   ")
+                        prefix_parts.append("│   " if use_unicode else "|   ")
                 if is_last:
-                    prefix_parts.append("└── " if use_markup else "`-- ")
+                    prefix_parts.append("└── " if use_unicode else "`-- ")
                 else:
-                    prefix_parts.append("├── " if use_markup else "+-- ")
+                    prefix_parts.append("├── " if use_unicode else "+-- ")
                 prefix = "".join(prefix_parts)
 
             label = get_node_label(tree_node.node)
@@ -558,12 +546,12 @@ class CollectionTree:
                         if is_last_at_level[i]:
                             doc_prefix_parts.append("    ")
                         else:
-                            doc_prefix_parts.append("│   " if use_markup else "|   ")
+                            doc_prefix_parts.append("│   " if use_unicode else "|   ")
                     if depth > 0:
                         if is_last:
                             doc_prefix_parts.append("    ")
                         else:
-                            doc_prefix_parts.append("│   " if use_markup else "|   ")
+                            doc_prefix_parts.append("│   " if use_unicode else "|   ")
                     doc_prefix = "".join(doc_prefix_parts)
                     for line in doc.splitlines():
                         tw.line(f"{doc_prefix}{line}")
