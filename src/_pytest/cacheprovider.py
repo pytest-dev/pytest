@@ -80,12 +80,10 @@ def _make_cachedir(target: Path) -> None:
         # gets "Directory not empty" from the rename. In this case,
         # everything is handled so just continue after cleanup.
         # On Windows, the error is a FileExistsError which translates to EEXIST.
-        shutil.rmtree(path, ignore_errors=True)
         if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
             raise
-    except BaseException:
+    finally:
         shutil.rmtree(path, ignore_errors=True)
-        raise
 
 
 @final
