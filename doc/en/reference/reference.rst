@@ -2778,6 +2778,13 @@ Collection
     Only collect tests, don't execute them.
     Shows which tests would be collected and run.
 
+.. option:: --collect-only-tree, --co-tree
+
+    Like :option:`--collect-only`, but displays collected tests as a tree
+    with box-drawing characters instead of the classic ``<Type name>`` format.
+    Uses colors when outputting to a TTY, and falls back to ASCII characters
+    for non-TTY output.
+
 .. option:: --pyargs
 
     Try to interpret all arguments as Python packages.
@@ -3360,6 +3367,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
 
     collection:
       --collect-only, --co  Only collect tests, don't execute them
+      --collect-only-tree, --co-tree
+                            Like --collect-only, but display as a tree
       --pyargs              Try to interpret all arguments as Python packages
       --ignore=path         Ignore path during collection (multi-allowed)
       --ignore-glob=path    Ignore path pattern during collection (multi-
