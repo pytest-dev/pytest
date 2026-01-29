@@ -468,7 +468,7 @@ class NFPlugin:
         if config.getoption("cacheshow") or hasattr(config, "workerinput"):
             return
 
-        if config.getoption("collectonly"):
+        if config.getoption("collectonly") or config.getoption("collect_only_tree"):
             return
 
         assert config.cache is not None

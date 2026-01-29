@@ -652,6 +652,121 @@ class TestCollectonly:
         )
 
 
+class TestCollectonlyTree:
+    """Tests for the --collect-only-tree (--co-tree) flag."""
+
+    def test_tree_basic(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_one():
+                pass
+            def test_two():
+                pass
+            """
+        )
+        result = pytester.runpytest("--co-tree")
+        result.stdout.fnmatch_lines(
+            [
+                "*",
+                "`-- test_tree_basic.py",
+                "    *-- test_one",
+                "    `-- test_two",
+            ]
+        )
+
+    def test_tree_with_classes(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            class TestFoo:
+                def test_method_one(self):
+                    pass
+                def test_method_two(self):
+                    pass
+
+            def test_standalone():
+                pass
+            """
+        )
+        result = pytester.runpytest("--co-tree")
+        result.stdout.fnmatch_lines(
+            [
+                "*",
+                "`-- test_tree_with_classes.py",
+                "    *-- TestFoo",
+                "    |   *-- test_method_one",
+                "    |   `-- test_method_two",
+                "    `-- test_standalone",
+            ]
+        )
+
+    def test_tree_nested_directories(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            **{
+                "a/test_a.py": "def test_a(): pass",
+                "a/b/test_b.py": "def test_b(): pass",
+            }
+        )
+        result = pytester.runpytest("--co-tree")
+        result.stdout.fnmatch_lines(
+            [
+                "*",
+                "`-- a",
+                "    *-- b",
+                "    |   `-- test_b.py",
+                "    |       `-- test_b",
+                "    `-- test_a.py",
+                "        `-- test_a",
+            ]
+        )
+
+    def test_tree_multiple_files(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_alpha="def test_alpha(): pass",
+            test_beta="def test_beta(): pass",
+        )
+        result = pytester.runpytest("--co-tree")
+        result.stdout.fnmatch_lines(
+            [
+                "*",
+                "*-- test_alpha.py",
+                "|   `-- test_alpha",
+                "`-- test_beta.py",
+                "    `-- test_beta",
+            ]
+        )
+
+    def test_tree_quiet_mode(self, pytester: Pytester) -> None:
+        """With -q, tree output falls back to nodeids."""
+        pytester.makepyfile(
+            """
+            def test_func():
+                pass
+            """
+        )
+        result = pytester.runpytest("--co-tree", "-q")
+        result.stdout.fnmatch_lines(["test_tree_quiet_mode.py::test_func"])
+
+    def test_tree_no_tests_collected(self, pytester: Pytester) -> None:
+        result = pytester.runpytest("--co-tree")
+        result.stdout.fnmatch_lines("*== no tests collected in * ==*")
+
+    def test_tree_verbose_shows_docstrings(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            '''
+            def test_documented():
+                """This is a documented test."""
+                pass
+            '''
+        )
+        result = pytester.runpytest("--co-tree", "-v")
+        result.stdout.fnmatch_lines(
+            [
+                "*-- test_documented",
+                "*This is a documented test.*",
+            ]
+        )
+
+
 class TestFixtureReporting:
     def test_setup_fixture_error(self, pytester: Pytester) -> None:
         pytester.makepyfile(
