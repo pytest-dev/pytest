@@ -74,6 +74,10 @@ Plugins to deliberately randomize tests can help expose tests with state problem
 * `pytest-random-order <https://github.com/jbasko/pytest-random-order>`_
 * `pytest-randomly <https://github.com/pytest-dev/pytest-randomly>`_
 
+Plugins to classify test failures as genuine or flaky:
+
+* `pytest-flakefighters <https://github.com/test-flare/pytest-flakefighters>`_
+
 
 Other general strategies
 ^^^^^^^^^^^^^^^^^^^^^^^^
