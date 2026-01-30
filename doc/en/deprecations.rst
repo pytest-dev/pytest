@@ -137,7 +137,11 @@ test class for each test method, while the fixture runs only once per class on a
             self.data = [1, 2, 3]  # This won't be visible to tests!
 
         def test_something(self, setup_data):
-            assert self.data == [1, 2, 3]  # AttributeError: 'TestExample' object has no attribute 'data'
+            assert self.data == [
+                1,
+                2,
+                3,
+            ]  # AttributeError: 'TestExample' object has no attribute 'data'
 
 **After** (recommended):
 
