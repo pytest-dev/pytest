@@ -1,0 +1,1 @@
+Fixed an issue where internal exceptions like those raised from :func:`pytest.exit` would not be correctly handled during test teardown.
