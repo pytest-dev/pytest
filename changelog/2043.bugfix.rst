@@ -1,0 +1,1 @@
+If a fixture depends on a fixture that becomes hidden in a test (compared to the previous test), the hidden fixture definition is no longer executed.

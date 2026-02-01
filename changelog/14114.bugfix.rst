@@ -1,0 +1,1 @@
+An exception from ``pytest_fixture_post_finalizer`` no longer prevents fixtures from being torn down, causing additional errors in the following tests.

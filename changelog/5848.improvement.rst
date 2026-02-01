@@ -1,0 +1,1 @@
+``pytest_fixture_post_finalizer`` is no longer called extra times for the same fixture teardown.
