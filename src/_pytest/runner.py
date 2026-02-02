@@ -8,9 +8,9 @@ from collections.abc import Callable
 from contextvars import ContextVar
 import dataclasses
 import os
+import re
 import sys
 import threading
-import re
 import types
 from typing import cast
 from typing import final
@@ -141,7 +141,7 @@ def runtestprotocol(
 
     thread = threading.current_thread()
     if match := re.match(r"^pytest-thread-(\d+)$", thread.name):
-        thread_id = PytestThreadId(match.group(1))
+        thread_id = PytestThreadId(int(match.group(1)))
         _pytest_thread_id.set(thread_id)
         item.session._thread_started(thread, thread_id)
     elif item.session._thread_info:
@@ -235,13 +235,10 @@ def _update_current_test_var(
     # _thread_info. Copy to avoid races.
     thread_info = item.session._thread_info.copy()
     if thread_info:
-        if when is None:
-            value = None
-
         thread = threading.current_thread()
         # validated by our rejection of invalidly-named threads in runtestprotocol.
         assert thread in thread_info
-        thread_info[thread].current_test_var = value
+        thread_info[thread].current_test_var = None if when is None else value
         if any(info.current_test_var is not None for info in thread_info.values()):
             os.environ[var_name] = "; ".join(
                 f"{info.pytest_thread_id}={info.current_test_var}"

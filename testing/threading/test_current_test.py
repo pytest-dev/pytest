@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from testing.threading.utils import threaded_conftest, n_conftest_threads
+from testing.threading.utils import n_conftest_threads
+from testing.threading.utils import threaded_conftest
+
+from _pytest.pytester import Pytester
 
 
-def test_current_test_envvar_shows_all_threads(pytester):
+def test_current_test_envvar_shows_all_threads(pytester: Pytester) -> None:
     pytester.makeconftest(threaded_conftest)
 
     # PYTEST_CURRENT_TEST should be popped from os.environ after pytest finishes

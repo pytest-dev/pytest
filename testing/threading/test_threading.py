@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import sys
 
-import pytest
-from _pytest.pytester import Pytester
 from testing.threading.utils import threaded_conftest
+
+from _pytest.pytester import Pytester
+import pytest
 
 
 def test_invalid_thread_name_raises(pytester: Pytester) -> None:

@@ -56,8 +56,6 @@ from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
-from _pytest.runner import _pytest_thread_id
-from _pytest.runner import PytestThreadId
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
@@ -65,6 +63,8 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
+from _pytest.runner import _pytest_thread_id
+from _pytest.runner import PytestThreadId
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope

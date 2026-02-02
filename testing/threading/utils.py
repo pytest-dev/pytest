@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 n_conftest_threads = 3
 
 # a conftest that runs tests in a threadpool. You can think of this as "like pytest-xdist,
