@@ -76,6 +76,46 @@ class TestMetafunc:
         assert metafunc.function is func
         assert metafunc.cls is None
 
+    def test_parametrize_single_arg_trailing_comma(self) -> None:
+        """Test that trailing comma in string argnames behaves like tuple argnames.
+
+        Regression test for https://github.com/pytest-dev/pytest/issues/719
+
+        When using a single argument with:
+        - "arg" (string, no comma): argvalues is a list of values
+        - "arg," (string, trailing comma): argvalues is a list of tuples (like tuple form)
+        - ("arg",) (tuple): argvalues is a list of tuples
+        """
+
+        def func(arg):
+            pass  # pragma: no cover
+
+        scenarios = [("a",), ("b",)]
+
+        # Tuple form: argvalues are tuples, unpacked to get the value
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize(("arg",), scenarios)
+        assert metafunc._calls[0].params == {"arg": "a"}
+        assert metafunc._calls[1].params == {"arg": "b"}
+
+        # String with trailing comma: should behave like tuple form
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize("arg,", scenarios)
+        assert metafunc._calls[0].params == {"arg": "a"}
+        assert metafunc._calls[1].params == {"arg": "b"}
+
+        # String without comma: argvalues are values directly (tuples are passed as-is)
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize("arg", scenarios)
+        assert metafunc._calls[0].params == {"arg": ("a",)}
+        assert metafunc._calls[1].params == {"arg": ("b",)}
+
+        # String without comma with plain values: values are used directly
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize("arg", ["a", "b"])
+        assert metafunc._calls[0].params == {"arg": "a"}
+        assert metafunc._calls[1].params == {"arg": "b"}
+
     def test_parametrize_error(self) -> None:
         def func(x, y):
             pass
@@ -1255,6 +1295,41 @@ class TestMetafuncFunctional:
         result.stdout.fnmatch_lines(
             ["*(1, 4)*", "*(1, 5)*", "*(2, 4)*", "*(2, 5)*", "*4 failed*"]
         )
+
+    def test_parametrize_single_arg_trailing_comma_functional(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that trailing comma in string argnames behaves like tuple argnames.
+
+        Regression test for https://github.com/pytest-dev/pytest/issues/719
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            scenarios = [('a',), ('b',)]
+
+            @pytest.mark.parametrize(("arg",), scenarios)
+            def test_tuple_form(arg):
+                # Tuple argnames: values are unpacked from tuples
+                assert arg in ('a', 'b')
+                assert isinstance(arg, str)
+
+            @pytest.mark.parametrize("arg,", scenarios)
+            def test_string_trailing_comma(arg):
+                # String with trailing comma: should behave like tuple form
+                assert arg in ('a', 'b')
+                assert isinstance(arg, str)
+
+            @pytest.mark.parametrize("arg", scenarios)
+            def test_string_no_comma(arg):
+                # String without comma: tuples are passed as-is
+                assert arg in (('a',), ('b',))
+                assert isinstance(arg, tuple)
+        """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=6)
 
     def test_parametrize_and_inner_getfixturevalue(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
