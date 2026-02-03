@@ -374,15 +374,6 @@ class SysCaptureBase(CaptureBase[AnyStr]):
         self.tmpfile = tmpfile
         self._state = "initialized"
 
-    def repr(self, class_name: str) -> str:
-        return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
-            class_name,
-            self.name,
-            (hasattr(self, "_old") and repr(self._old)) or "<UNSET>",
-            self._state,
-            self.tmpfile,
-        )
-
     def __repr__(self) -> str:
         return "<{} {} _old={} _state={!r} tmpfile={!r}>".format(
             self.__class__.__name__,
