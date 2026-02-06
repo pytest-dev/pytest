@@ -170,8 +170,12 @@ class ParameterSet(NamedTuple):
         **kwargs,
     ) -> tuple[Sequence[str], bool]:
         if isinstance(argnames, str):
+            # A trailing comma indicates tuple-style: "arg," is equivalent to ("arg",)
+            # In this case, argvalues should be a list of tuples, not wrapped values.
+            # See https://github.com/pytest-dev/pytest/issues/719
+            has_trailing_comma = argnames.rstrip().endswith(",")
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            force_tuple = len(argnames) == 1
+            force_tuple = len(argnames) == 1 and not has_trailing_comma
         else:
             force_tuple = False
         return argnames, force_tuple

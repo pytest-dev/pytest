@@ -16,13 +16,13 @@ keywords = [
 license = "MIT"
 license-files = [ "LICENSE" ]
 authors = [
-    { name = "Holger Krekel" },
-    { name = "Bruno Oliveira" },
-    { name = "Ronny Pfannschmidt" },
-    { name = "Floris Bruynooghe" },
     { name = "Brianna Laugher" },
+    { name = "Bruno Oliveira" },
     { name = "Florian Bruhin" },
+    { name = "Floris Bruynooghe" },
+    { name = "Holger Krekel" },
     { name = "Others (See AUTHORS)" },
+    { name = "Ronny Pfannschmidt" },
 ]
 requires-python = ">=3.10"
 classifiers = [
@@ -432,24 +432,6 @@ markers = [
     "keep_ci_var",
 ]
 
-[tool.coverage.run]
-include = [
-    'src/*',
-    'testing/*',
-    '*/lib/python*/site-packages/_pytest/*',
-    '*/lib/python*/site-packages/pytest.py',
-    '*/pypy*/site-packages/_pytest/*',
-    '*/pypy*/site-packages/pytest.py',
-    '*\Lib\site-packages\_pytest\*',
-    '*\Lib\site-packages\pytest.py',
-]
-parallel = true
-branch = true
-patch = [ "subprocess" ]
-# The sysmon core (default since Python 3.14) is much slower.
-# Perhaps: https://github.com/coveragepy/coveragepy/issues/2082
-core = "ctrace"
-
 [tool.coverage.paths]
 source = [
     'src/',
@@ -473,6 +455,24 @@ exclude_lines = [
     '^\s*def .+: \.\.\.$',
     '^\s*@pytest\.mark\.xfail',
 ]
+
+[tool.coverage.run]
+include = [
+    'src/*',
+    'testing/*',
+    '*/lib/python*/site-packages/_pytest/*',
+    '*/lib/python*/site-packages/pytest.py',
+    '*/pypy*/site-packages/_pytest/*',
+    '*/pypy*/site-packages/pytest.py',
+    '*\Lib\site-packages\_pytest\*',
+    '*\Lib\site-packages\pytest.py',
+]
+parallel = true
+branch = true
+patch = [ "subprocess" ]
+# The sysmon core (default since Python 3.14) is much slower.
+# Perhaps: https://github.com/coveragepy/coveragepy/issues/2082
+core = "ctrace"
 
 [tool.towncrier]
 package = "pytest"

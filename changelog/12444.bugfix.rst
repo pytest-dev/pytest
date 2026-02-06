@@ -1,0 +1,1 @@
+Fixed :func:`pytest.approx` which now correctly takes account Mapping keys order to compare them.
