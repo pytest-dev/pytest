@@ -285,7 +285,7 @@ jobs:
       if: "matrix.use_coverage"
       shell: bash
       env:
-        _PYTEST_TOX_POSARGS_JUNIT: --junitxml=junit-${{ matrix.name }}.xml
+        _PYTEST_TOX_POSARGS_JUNIT: --junitxml=junit.xml
       run: tox run -e ${{ matrix.tox_env }}-coverage --installpkg `find dist/*.tar.gz`
 
     - name: Upload coverage to Codecov
