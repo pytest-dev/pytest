@@ -300,7 +300,7 @@ jobs:
       uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
       with:
         fail_ci_if_error: false
-        files: junit-${{ matrix.name }}.xml
+        files: junit.xml
         report_type: test_results
         verbose: true
 
