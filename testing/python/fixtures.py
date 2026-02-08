@@ -5465,10 +5465,12 @@ def test_autouse_fixtures_with_same_name_definition_order(pytester: Pytester) ->
     result.assert_outcomes(passed=2)
 
 
-def test_fixture_override_with_name_kwarg_respects_definition_order(pytester: Pytester) -> None:
+def test_fixture_override_with_name_kwarg_respects_definition_order(
+    pytester: Pytester,
+) -> None:
     """
     Test that fixture override using name kwarg respects definition order.
-    
+
     Related to https://github.com/pytest-dev/pytest/issues/12952
     """
     pytester.makepyfile(
