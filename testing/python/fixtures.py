@@ -5426,3 +5426,67 @@ def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
+
+
+def test_autouse_fixtures_with_same_name_definition_order(pytester: Pytester) -> None:
+    """
+    Test that fixtures with the same name are processed in definition order,
+    not alphabetical order. The fixture discovered first shadows later ones.
+
+    Regression test for https://github.com/pytest-dev/pytest/issues/11281
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        call_order = []
+
+        @pytest.fixture(scope='module', autouse=True)
+        def setup():
+            call_order.append("MODULE")
+
+        class TestFoo:
+            @classmethod
+            @pytest.fixture(scope='class', autouse=True)
+            def setup(cls):
+                call_order.append("CLASS")
+
+            def test_in_class(self):
+                # The module fixture is defined first in source order,
+                # so it shadows the class fixture. Only module fixture runs.
+                assert call_order == ["MODULE"]
+
+        def test_module_level():
+            # Only module fixture runs
+            assert call_order == ["MODULE"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=2)
+
+
+def test_fixture_override_with_name_kwarg_respects_definition_order(pytester: Pytester) -> None:
+    """
+    Test that fixture override using name kwarg respects definition order.
+    
+    Related to https://github.com/pytest-dev/pytest/issues/12952
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture()
+        def f1():
+            return 1
+
+        @pytest.fixture(name="f1")
+        def f2():
+            return 2
+
+        def test_override(f1):
+            # Later definition should override
+            assert f1 == 2
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
