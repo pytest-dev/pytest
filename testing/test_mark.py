@@ -1344,3 +1344,29 @@ def test_fixture_disallowed_between_marks() -> None:
         @pytest.mark.usefixtures("tmp_path")
         def foo():
             raise NotImplementedError()
+
+
+def test_module_getattr_without_attributeerror(pytester: Pytester) -> None:
+    """
+    Test that a helpful error message is provided when a module-level
+    __getattr__ fails to raise AttributeError.
+    
+    Regression test for https://github.com/pytest-dev/pytest/issues/8265
+    """
+    pytester.makepyfile(
+        """
+        def __getattr__(key):
+            # Bug: should raise AttributeError, but returns None
+            return None
+
+        def test_something():
+            assert True
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines([
+        "*TypeError*got None instead of Mark*",
+        "*module-level __getattr__*",
+        "*AttributeError*",
+    ])
+    assert result.ret != 0

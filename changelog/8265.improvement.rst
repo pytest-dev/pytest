@@ -1,0 +1,5 @@
+Improved error message when a module-level ``__getattr__`` fails to raise ``AttributeError`` for missing attributes.
+
+When a module defines a custom ``__getattr__`` that returns ``None`` instead of raising ``AttributeError``,
+pytest now provides a more helpful error message explaining the likely cause and suggesting the fix,
+rather than the cryptic "got None instead of Mark" message.

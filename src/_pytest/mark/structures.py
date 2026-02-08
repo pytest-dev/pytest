@@ -463,6 +463,15 @@ def normalize_mark_list(
     for mark in mark_list:
         mark_obj = getattr(mark, "mark", mark)
         if not isinstance(mark_obj, Mark):
+            # Provide a helpful error message for a common mistake:
+            # a module-level __getattr__ that doesn't raise AttributeError
+            if mark_obj is None:
+                raise TypeError(
+                    "got None instead of Mark - "
+                    "this is likely caused by a module-level __getattr__ "
+                    "that does not raise AttributeError for missing attributes. "
+                    "Make sure __getattr__ raises AttributeError when the attribute is not found."
+                )
             raise TypeError(f"got {mark_obj!r} instead of Mark")
         yield mark_obj
 
