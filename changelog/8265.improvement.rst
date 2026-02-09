@@ -1,5 +1,4 @@
-Improved error message when a module-level ``__getattr__`` fails to raise ``AttributeError`` for missing attributes.
+Emit a ``PytestCollectionWarning`` when a module-level ``__getattr__`` returns ``None`` for ``pytestmark`` instead of raising ``AttributeError``.
 
-When a module defines a custom ``__getattr__`` that returns ``None`` instead of raising ``AttributeError``,
-pytest now provides a more helpful error message explaining the likely cause and suggesting the fix,
-rather than the cryptic "got None instead of Mark" message.
+Previously this caused a cryptic ``TypeError: got None instead of Mark`` error.
+Now pytest issues a helpful warning and continues collecting the module normally.
