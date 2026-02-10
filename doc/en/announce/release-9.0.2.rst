@@ -12,7 +12,7 @@ Thanks to all of the contributors to this release:
 * Alex Waygood
 * Bruno Oliveira
 * Fazeel Usmani
-* Florian Bruhin
+* Freya Bruhin
 * Ran Benita
 * Tom Most
 * 🇺🇦 Sviatoslav Sydorenko (Святослав Сидоренко)

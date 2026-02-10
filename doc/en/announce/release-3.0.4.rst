@@ -14,7 +14,7 @@ Thanks to all who contributed to this release, among them:
 
 * Bruno Oliveira
 * Dan Wandschneider
-* Florian Bruhin
+* Freya Bruhin
 * Georgy Dyuldin
 * Grigorii Eremeev
 * Jason R. Coombs

@@ -25,7 +25,7 @@ Thanks to all who contributed to this release, among them:
 * David Diaz Barquero
 * Fabio Zadrozny
 * Felix Nieuwenhuizen
-* Florian Bruhin
+* Freya Bruhin
 * Florian Dahlitz
 * Gleb Nikonorov
 * Hugo van Kemenade

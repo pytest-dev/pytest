@@ -42,7 +42,7 @@ Thanks to all of the contributors to this release:
 * Ezio Melotti
 * Felix Hofstätter
 * Florian Best
-* Florian Bruhin
+* Freya Bruhin
 * Fredrik Berndtsson
 * Gabriel Landau
 * Garvit Shubham

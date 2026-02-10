@@ -27,7 +27,7 @@ Thanks to all of the contributors to this release:
 * CoretexShadow
 * Cornelius Roemer
 * Eero Vaher
-* Florian Bruhin
+* Freya Bruhin
 * Harsha Sai
 * Hossein
 * Israël Hallé
