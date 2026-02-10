@@ -26,7 +26,7 @@ Thanks to all who contributed to this release, among them:
 * Daniel Hahler
 * Dirk Thomas
 * Evan Kepner
-* Florian Bruhin
+* Freya Bruhin
 * Hugo
 * Kevin J. Foley
 * Pulkit Goyal

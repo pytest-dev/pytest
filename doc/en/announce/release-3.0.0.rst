@@ -39,7 +39,7 @@ Thanks to all who contributed to this release, among them:
     Dmitry Dygalo
     Edoardo Batini
     Eli Boyarski
-    Florian Bruhin
+    Freya Bruhin
     Floris Bruynooghe
     Greg Price
     Guyzmo

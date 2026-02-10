@@ -14,7 +14,7 @@ Thanks to all who contributed to this release, among them:
 
 * Ahn Ki-Wook
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Jordan Guymon
 * Raphael Pierzina
 * Ronny Pfannschmidt

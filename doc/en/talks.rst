@@ -17,19 +17,19 @@ Books
 Talks and blog postings
 ---------------------------------------------
 
-- Training: `pytest - simple, rapid and fun testing with Python <https://www.youtube.com/watch?v=ofPHJrAOaTE>`_, Florian Bruhin, PyConDE 2022
+- Training: `pytest - simple, rapid and fun testing with Python <https://www.youtube.com/watch?v=ofPHJrAOaTE>`_, Freya Bruhin, PyConDE 2022
 
-- `pytest: Simple, rapid and fun testing with Python, <https://youtu.be/cSJ-X3TbQ1c?t=15752>`_ (@ 4:22:32), Florian Bruhin, WeAreDevelopers World Congress 2021
+- `pytest: Simple, rapid and fun testing with Python, <https://youtu.be/cSJ-X3TbQ1c?t=15752>`_ (@ 4:22:32), Freya Bruhin, WeAreDevelopers World Congress 2021
 
-- Webinar: `pytest: Test Driven Development für Python (German) <https://bruhin.software/ins-pytest/>`_, Florian Bruhin, via mylearning.ch, 2020
+- Webinar: `pytest: Test Driven Development für Python (German) <https://bruhin.software/ins-pytest/>`_, Freya Bruhin, via mylearning.ch, 2020
 
 - Webinar: `Simplify Your Tests with Fixtures <https://blog.jetbrains.com/pycharm/2020/08/webinar-recording-simplify-your-tests-with-fixtures-with-oliver-bestwalter/>`_, Oliver Bestwalter, via JetBrains, 2020
 
-- Training: `Introduction to pytest - simple, rapid and fun testing with Python <https://www.youtube.com/watch?v=CMuSn9cofbI>`_, Florian Bruhin, PyConDE 2019
+- Training: `Introduction to pytest - simple, rapid and fun testing with Python <https://www.youtube.com/watch?v=CMuSn9cofbI>`_, Freya Bruhin, PyConDE 2019
 
 - Abridged metaprogramming classics - this episode: pytest, Oliver Bestwalter, PyConDE 2019 (`repository <https://github.com/obestwalter/abridged-meta-programming-classics>`__, `recording <https://www.youtube.com/watch?v=zHpeMTJsBRk&feature=youtu.be>`__)
 
-- Testing PySide/PyQt code easily using the pytest framework, Florian Bruhin, Qt World Summit 2019 (`slides <https://bruhin.software/talks/qtws19.pdf>`__, `recording <https://www.youtube.com/watch?v=zdsBS5BXGqQ>`__)
+- Testing PySide/PyQt code easily using the pytest framework, Freya Bruhin, Qt World Summit 2019 (`slides <https://bruhin.software/talks/qtws19.pdf>`__, `recording <https://www.youtube.com/watch?v=zdsBS5BXGqQ>`__)
 
 - `pytest: recommendations, basic packages for testing in Python and Django, Andreu Vallbona, PyBCN June 2019 <https://www.slideshare.net/AndreuVallbonaPlazas/pybcn-pytest-recomendaciones-paquetes-bsicos-para-testing-en-python-y-django>`_.
 
@@ -41,7 +41,7 @@ Talks and blog postings
 - `Pythonic testing, Igor Starikov (Russian, PyNsk, November 2016)
   <https://www.youtube.com/watch?v=_92nfdd5nK8>`_.
 
-- `pytest - Rapid Simple Testing, Florian Bruhin, Swiss Python Summit 2016
+- `pytest - Rapid Simple Testing, Freya Bruhin, Swiss Python Summit 2016
   <https://www.youtube.com/watch?v=rCBHkQ_LVIs>`_.
 
 - `Improve your testing with Pytest and Mock, Gabe Hollombe, PyCon SG 2015

@@ -17,7 +17,7 @@ Thanks to all who contributed to this release, among them:
       Bruno Oliveira
       Daniel Hahler
       Dmitry Dygalo
-      Florian Bruhin
+      Freya Bruhin
       Marcin Bachry
       Ronny Pfannschmidt
       matthiasha
