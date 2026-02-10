@@ -28,7 +28,7 @@ Thanks to all of the contributors to this release:
 * Eric Larson
 * Fabian Sturm
 * Faisal Fawad
-* Florian Bruhin
+* Freya Bruhin
 * Franck Charras
 * Joachim B Haga
 * John Litborn

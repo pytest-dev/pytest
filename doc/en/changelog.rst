@@ -9374,10 +9374,10 @@ time or change existing behaviors in order to make them less surprising/more use
   non-ascii characters. Thanks Bruno Oliveira for the PR.
 
 - fix #1204: another error when collecting with a nasty __getattr__().
-  Thanks Florian Bruhin for the PR.
+  Thanks Freya Bruhin for the PR.
 
 - fix the summary printed when no tests did run.
-  Thanks Florian Bruhin for the PR.
+  Thanks Freya Bruhin for the PR.
 - fix #1185 - ensure MANIFEST.in exactly matches what should go to a sdist
 
 - a number of documentation modernizations wrt good practices.
@@ -9499,7 +9499,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue934: when string comparison fails and a diff is too large to display
   without passing -vv, still show a few lines of the diff.
-  Thanks Florian Bruhin for the report and Bruno Oliveira for the PR.
+  Thanks Freya Bruhin for the report and Bruno Oliveira for the PR.
 
 - fix issue736: Fix a bug where fixture params would be discarded when combined
   with parametrization markers.
@@ -9512,7 +9512,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - parametrize now also generates meaningful test IDs for enum, regex and class
   objects (as opposed to class instances).
-  Thanks to Florian Bruhin for the PR.
+  Thanks to Freya Bruhin for the PR.
 
 - Add 'warns' to assert that warnings are thrown (like 'raises').
   Thanks to Eric Hunsberger for the PR.
@@ -9639,7 +9639,7 @@ time or change existing behaviors in order to make them less surprising/more use
   one will also have a "reprec" attribute with the recorded events/reports.
 
 - fix monkeypatch.setattr("x.y", raising=False) to actually not raise
-  if "y" is not a preexisting attribute. Thanks Florian Bruhin.
+  if "y" is not a preexisting attribute. Thanks Freya Bruhin.
 
 - fix issue741: make running output from testdir.run copy/pasteable
   Thanks Bruno Oliveira.
@@ -9699,7 +9699,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue833: --fixtures now shows all fixtures of collected test files, instead of just the
   fixtures declared on the first one.
-  Thanks Florian Bruhin for reporting and Bruno Oliveira for the PR.
+  Thanks Freya Bruhin for reporting and Bruno Oliveira for the PR.
 
 - fix issue863: skipped tests now report the correct reason when a skip/xfail
   condition is met when using multiple markers.

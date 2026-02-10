@@ -21,7 +21,7 @@ authors = [
     { name = "Ronny Pfannschmidt" },
     { name = "Floris Bruynooghe" },
     { name = "Brianna Laugher" },
-    { name = "Florian Bruhin" },
+    { name = "Freya Bruhin" },
     { name = "Others (See AUTHORS)" },
 ]
 requires-python = ">=3.10"
