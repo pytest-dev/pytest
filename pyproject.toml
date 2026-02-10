@@ -155,7 +155,6 @@ lint.ignore = [
     "PLR2004", # Magic value used in comparison
     "PLR2044", # Line with empty comment
     "PLR5501", # Use `elif` instead of `else` then `if`
-    "PLW0108", # Lambda may be unnecessary; consider inlining inner function
     "PLW0120", # remove the else and dedent its contents
     "PLW0603", # Using the global statement
     "PLW1641", # Does not implement the __hash__ method
