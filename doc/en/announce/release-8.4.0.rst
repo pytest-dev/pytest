@@ -38,7 +38,7 @@ Thanks to all of the contributors to this release:
 * Deysha Rivera
 * Emil Hjelm
 * Eugene Mwangi
-* Florian Bruhin
+* Freya Bruhin
 * Frank Hoffmann
 * GTowers1
 * Guillaume Gauvrit
