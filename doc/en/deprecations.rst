@@ -139,7 +139,7 @@ In ``8.2`` the ``exc_type`` parameter has been added, giving users the ability o
 to skip tests only if the module cannot really be found, and not because of some other error.
 
 Catching only :class:`ModuleNotFoundError` by default (and letting other errors propagate) would be the best solution,
-however for backward compatibility, pytest will keep the existing behavior but raise an warning if:
+however for backward compatibility, pytest will keep the existing behavior but raise a warning if:
 
 1. The captured exception is of type :class:`ImportError`, and:
 2. The user does not pass ``exc_type`` explicitly.
@@ -358,7 +358,7 @@ The ``yield_fixture`` function/decorator
 
 ``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
 
-It has been so for a very long time, so can be search/replaced safely.
+It has been so for a very long time, so it can be searched/replaced safely.
 
 
 Removed Features and Breaking Changes
@@ -774,7 +774,7 @@ The ``pytest._fillfuncargs`` function
 
 This function was kept for backward compatibility with an older plugin.
 
-It's functionality is not meant to be used directly, but if you must replace
+Its functionality is not meant to be used directly, but if you must replace
 it, use `function._request._fillfixtures()` instead, though note this is not
 a public API and may break in the future.
 
@@ -805,7 +805,7 @@ The ``--result-log`` option produces a stream of test reports which can be
 analysed at runtime, but it uses a custom format which requires users to implement their own
 parser.
 
-The  `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
+The :pypi:`pytest-reportlog` plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
 one JSON object per-line, and should cover the same use cases. Please try it out and provide feedback.
 
 The ``pytest-reportlog`` plugin might even be merged into the core

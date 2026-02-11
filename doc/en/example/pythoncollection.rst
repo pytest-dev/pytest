@@ -161,7 +161,7 @@ You can check for multiple glob patterns by adding a space between the patterns:
 
 .. note::
 
-   the ``python_functions`` and ``python_classes`` options has no effect
+   the ``python_functions`` and ``python_classes`` options have no effect
    for ``unittest.TestCase`` test discovery because pytest delegates
    discovery of test case methods to unittest code.
 

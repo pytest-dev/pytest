@@ -382,7 +382,7 @@ You can use the :py:meth:`monkeypatch.delitem <MonkeyPatch.delitem>` to remove v
 
 
     def test_missing_user(monkeypatch):
-        # patch the DEFAULT_CONFIG t be missing the 'user' key
+        # patch the DEFAULT_CONFIG to be missing the 'user' key
         monkeypatch.delitem(app.DEFAULT_CONFIG, "user", raising=False)
 
         # Key error expected because a config is not passed, and the

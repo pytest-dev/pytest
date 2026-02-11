@@ -6,7 +6,7 @@ How to capture stdout/stderr output
 
 Pytest intercepts stdout and stderr as configured by the :option:`--capture=`
 command-line argument or by using fixtures. The ``--capture=`` flag configures
-reporting, whereas the fixtures offer more granular control and allows
+reporting, whereas the fixtures offer more granular control and allow
 inspection of output during testing. The reports can be customized with the
 :option:`-r` flag.
 
@@ -23,7 +23,7 @@ fail on attempts to read from it because it is rarely desired
 to wait for interactive input when running automated tests.
 
 By default capturing is done by intercepting writes to low level
-file descriptors.  This allows to capture output from simple
+file descriptors.  This allows capturing output from simple
 print statements as well as output from a subprocess started by
 a test.
 
