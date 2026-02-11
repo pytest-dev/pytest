@@ -3179,7 +3179,7 @@ See :ref:`logging` for a guide on using these flags.
 
 .. option:: --log-file=PATH
 
-    Path to a file where logging will be written to.
+    Path to a file logging will be written to.
 
 .. option:: --log-file-mode
 

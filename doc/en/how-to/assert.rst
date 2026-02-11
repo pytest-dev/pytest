@@ -218,7 +218,7 @@ To specify more details about the contained exception you can use :class:`pytest
         with pytest.RaisesGroup(pytest.RaisesExc(ValueError, match="foo")):
             raise ExceptionGroup("", (ValueError("foo")))
 
-They both supply a method :meth:`pytest.RaisesGroup.matches` :meth:`pytest.RaisesExc.matches` if you want to do matching outside of using it as a context manager. This can be helpful when checking ``.__context__`` or ``.__cause__``.
+They both supply a method :meth:`pytest.RaisesGroup.matches` :meth:`pytest.RaisesExc.matches` if you want to do matching outside of using it as a :external+python:std:ref:`context manager <context-managers>`. This can be helpful when checking ``.__context__`` or ``.__cause__``.
 
 .. code-block:: python
 

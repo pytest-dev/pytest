@@ -8,7 +8,7 @@ Rationale
 
 The goal of testing in a CI pipeline is different from testing locally. Indeed,
 you can quickly edit some code and run your tests again on your computer, but
-it is not possible with a CI pipeline. It runs on a separate server and is
+it is not possible with CI pipelines. They run on a separate server and are
 triggered by specific actions.
 
 From that observation, pytest can detect when it is in a CI environment and

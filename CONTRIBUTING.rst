@@ -482,7 +482,7 @@ above?
 3. For bugs submitted by non-maintainers, it is expected that a core developer will do
    the backport, normally the one that merged the PR on ``main``.
 4. If a non-maintainer notices a bug which is fixed on ``main`` but has not been backported
-   (due to maintainers forgetting to apply the *needs backport* label, or just plain missing it),
+   (due to maintainers forgetting to apply the *needs backport* or *backport x.x.x* labels, or just plain missing it),
    they are also welcome to open a PR with the backport. The procedure is simple and really
    helps with the maintenance of the project.
 
@@ -512,7 +512,7 @@ can always reopen the issue/pull request in their own time later if it makes sen
 When to close
 ~~~~~~~~~~~~~
 
-Here are a few general rules the maintainers use when deciding when to close issues/PRs because
+Here are a few general rules the maintainers use to decide when to close issues/PRs because
 of lack of inactivity:
 
 * Issues labeled ``question`` or ``needs information``: closed after 14 days inactive.
@@ -524,7 +524,7 @@ The above are **not hard rules**, but merely **guidelines**, and can be (and oft
 Closing pull requests
 ~~~~~~~~~~~~~~~~~~~~~
 
-When closing a Pull Request, it needs to acknowledge the time, effort, and interest demonstrated by the person who submitted it. As mentioned previously, it is not the intent of the team to dismiss a stalled pull request entirely but to merely to clear up our queue, so a message like the one below is warranted when closing a pull request that went stale:
+When closing a Pull Request, we should acknowledge the time, effort, and interest demonstrated by the person who submitted it. As mentioned previously, it is not the intent of the team to dismiss a stalled pull request entirely but to merely to clear up our queue, so a message like the one below is warranted when closing a pull request that went stale:
 
     Hi <contributor>,
 

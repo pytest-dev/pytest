@@ -216,8 +216,8 @@ option names are:
 * :confval:`log_cli_date_format`
 
 If you need to record the whole test suite logging calls to a file, you can pass
-:option:`--log-file=/path/to/log/file`. This log file is opened in write mode by default which
-means that it will be overwritten at each test run session.
+:option:`--log-file=/path/to/log/file`. This log file is opened in write mode by default, which
+means that it will be overwritten at each test session.
 If you'd like the file opened in append mode instead, then you can pass :option:`--log-file-mode=a`.
 Note that relative paths for the log-file location, whether passed on the CLI or declared in a
 config file, are always resolved relative to the current working directory.

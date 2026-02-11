@@ -342,7 +342,7 @@ The ``yield_fixture`` function/decorator
 
 ``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
 
-It has been so for a very long time, so it can be search/replaced safely.
+It has been so for a very long time, so it can be searched/replaced safely.
 
 
 Removed Features and Breaking Changes
@@ -907,7 +907,7 @@ The ``--result-log`` option produces a stream of test reports which can be
 analysed at runtime, but it uses a custom format which requires users to implement their own
 parser.
 
-The `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
+The :pypi:`pytest-reportlog` plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
 one JSON object per-line, and should cover the same use cases. Please try it out and provide feedback.
 
 The ``pytest-reportlog`` plugin might even be merged into the core
