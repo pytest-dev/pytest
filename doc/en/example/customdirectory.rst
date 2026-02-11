@@ -36,7 +36,7 @@ You can create a ``manifest.json`` file and some test files:
 .. include:: customdirectory/tests/test_third.py
     :literal:
 
-An you can now execute the test specification:
+And you can now execute the test specification:
 
 .. code-block:: pytest
 

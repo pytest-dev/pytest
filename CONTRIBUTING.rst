@@ -146,7 +146,7 @@ the following:
 - PyPI presence with packaging metadata that contains a ``pytest-``
   prefixed name, version number, authors, short and long description.
 
-- a  `tox configuration <https://tox.readthedocs.io/en/latest/config.html#configuration-discovery>`_
+- a `tox configuration <https://tox.readthedocs.io/en/latest/config.html#configuration-discovery>`_
   for running tests using `tox <https://tox.readthedocs.io>`_.
 
 - a ``README`` describing how to use the plugin and on which
@@ -280,7 +280,7 @@ Here is a simple overview, with pytest-specific bits:
 #. You can now edit your local working copy and run the tests again as necessary. Please follow `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ for naming.
 
    You can pass different options to ``tox``. For example, to run tests on Python 3.13 and pass options to pytest
-   (e.g. enter pdb on failure) to pytest you can do::
+   (e.g. enter pdb on failure) you can do::
 
     $ tox -e py313 -- --pdb
 
@@ -346,7 +346,7 @@ For example, to ensure a simple test passes you can write:
         result.assert_outcomes(failed=0, passed=1)
 
 
-Alternatively, it is possible to make checks based on the actual output of the termal using
+Alternatively, it is possible to make checks based on the actual output of the terminal using
 *glob-like* expressions:
 
 .. code-block:: python
@@ -479,9 +479,9 @@ above?
    to do the backport.
 2. However, often the merge is done by another maintainer, in which case it is nice of them to
    do the backport procedure if they have the time.
-3. For bugs submitted by non-maintainers, it is expected that a core developer will to do
+3. For bugs submitted by non-maintainers, it is expected that a core developer will do
    the backport, normally the one that merged the PR on ``main``.
-4. If a non-maintainers notices a bug which is fixed on ``main`` but has not been backported
+4. If a non-maintainer notices a bug which is fixed on ``main`` but has not been backported
    (due to maintainers forgetting to apply the *needs backport* label, or just plain missing it),
    they are also welcome to open a PR with the backport. The procedure is simple and really
    helps with the maintenance of the project.
@@ -512,7 +512,7 @@ can always reopen the issue/pull request in their own time later if it makes sen
 When to close
 ~~~~~~~~~~~~~
 
-Here are a few general rules the maintainers use deciding when to close issues/PRs because
+Here are a few general rules the maintainers use when deciding when to close issues/PRs because
 of lack of inactivity:
 
 * Issues labeled ``question`` or ``needs information``: closed after 14 days inactive.
@@ -524,7 +524,7 @@ The above are **not hard rules**, but merely **guidelines**, and can be (and oft
 Closing pull requests
 ~~~~~~~~~~~~~~~~~~~~~
 
-When closing a Pull Request, it needs to be acknowledging the time, effort, and interest demonstrated by the person which submitted it. As mentioned previously, it is not the intent of the team to dismiss a stalled pull request entirely but to merely to clear up our queue, so a message like the one below is warranted when closing a pull request that went stale:
+When closing a Pull Request, it needs to acknowledge the time, effort, and interest demonstrated by the person who submitted it. As mentioned previously, it is not the intent of the team to dismiss a stalled pull request entirely but to merely to clear up our queue, so a message like the one below is warranted when closing a pull request that went stale:
 
     Hi <contributor>,
 
@@ -532,7 +532,7 @@ When closing a Pull Request, it needs to be acknowledging the time, effort, and 
 
     We noticed it has been awhile since you have updated this PR, however. pytest is a high activity project, with many issues/PRs being opened daily, so it is hard for us maintainers to track which PRs are ready for merging, for review, or need more attention.
 
-    So for those reasons we, think it is best to close the PR for now, but with the only intention to clean up our queue, it is by no means a rejection of your changes. We still encourage you to re-open this PR (it is just a click of a button away) when you are ready to get back to it.
+    So for those reasons, we think it is best to close the PR for now, but with the only intention to clean up our queue, it is by no means a rejection of your changes. We still encourage you to re-open this PR (it is just a click of a button away) when you are ready to get back to it.
 
     Again we appreciate your time for working on this, and hope you might get back to this at a later time!
 

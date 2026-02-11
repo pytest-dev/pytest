@@ -771,7 +771,7 @@ record_testsuite_property
 
 .. versionadded:: 4.5
 
-If you want to add a properties node at the test-suite level, which may contains properties
+If you want to add a properties node at the test-suite level, which may contain properties
 that are relevant to all tests, you can use the ``record_testsuite_property`` session-scoped fixture:
 
 The ``record_testsuite_property`` session-scoped fixture can be used to add properties relevant

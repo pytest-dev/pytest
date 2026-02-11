@@ -217,7 +217,7 @@ option names are:
 
 If you need to record the whole test suite logging calls to a file, you can pass
 :option:`--log-file=/path/to/log/file`. This log file is opened in write mode by default which
-means that it will be overwritten at each run tests session.
+means that it will be overwritten at each test run session.
 If you'd like the file opened in append mode instead, then you can pass :option:`--log-file-mode=a`.
 Note that relative paths for the log-file location, whether passed on the CLI or declared in a
 config file, are always resolved relative to the current working directory.
@@ -312,7 +312,7 @@ made in ``3.4`` after community feedback:
 * :ref:`Live Logs <live_logs>` are now sent to ``sys.stdout`` and no longer require the :option:`-s` command-line option
   to work.
 
-If you want to partially restore the logging behavior of version ``3.3``, you can add this options to your configuration
+If you want to partially restore the logging behavior of version ``3.3``, you can add these options to your configuration
 file:
 
 .. tab:: toml
@@ -331,4 +331,4 @@ file:
         log_cli = true
         log_level = NOTSET
 
-More details about the discussion that lead to this changes can be read in :issue:`3013`.
+More details about the discussion that led to these changes can be read in :issue:`3013`.

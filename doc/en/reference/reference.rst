@@ -1179,11 +1179,11 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set to a non-empty value, pytest acknowledges that is running in a CI process. See also :ref:`ci-pipelines`.
+When set to a non-empty value, pytest acknowledges that it is running in a CI process. See also :ref:`ci-pipelines`.
 
 .. envvar:: BUILD_NUMBER
 
-When set to a non-empty value, pytest acknowledges that is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
+When set to a non-empty value, pytest acknowledges that it is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
 
 .. envvar:: PYTEST_ADDOPTS
 
@@ -1315,7 +1315,7 @@ Configuration Options
 Here is a list of builtin configuration options that may be written in a ``pytest.ini`` (or ``.pytest.ini``),
 ``pyproject.toml``, ``tox.ini``, or ``setup.cfg`` file, usually located at the root of your repository.
 
-To see each file format in details, see :ref:`config file formats`.
+To see each file format in detail, see :ref:`config file formats`.
 
 .. warning::
     Usage of ``setup.cfg`` is not recommended except for very simple use cases. ``.cfg``
@@ -1585,7 +1585,6 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             faulthandler_timeout = 5
 
-   For more information please refer to :ref:`faulthandler`.
    For more information please refer to :ref:`faulthandler`.
 
 
@@ -3180,7 +3179,7 @@ See :ref:`logging` for a guide on using these flags.
 
 .. option:: --log-file=PATH
 
-    Path to a file when logging will be written to.
+    Path to a file where logging will be written to.
 
 .. option:: --log-file-mode
 

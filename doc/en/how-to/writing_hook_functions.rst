@@ -94,7 +94,7 @@ around the actual hook implementations, in which case it can return the result
 value of the ``yield``. The simplest (though useless) hook wrapper is
 ``return (yield)``.
 
-In other cases, the wrapper wants the adjust or adapt the result, in which case
+In other cases, the wrapper wants to adjust or adapt the result, in which case
 it can return a new value. If the result of the underlying hook is a mutable
 object, the wrapper may modify that result, but it's probably better to avoid it.
 

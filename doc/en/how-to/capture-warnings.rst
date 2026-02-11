@@ -220,7 +220,7 @@ This plugin is enabled by default but can be disabled entirely in your configura
         [pytest]
         addopts = -p no:warnings
 
-Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suites handles warnings
+Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suites handle warnings
 using an external system.
 
 

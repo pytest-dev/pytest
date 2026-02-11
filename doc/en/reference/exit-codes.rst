@@ -20,7 +20,7 @@ They are represented by the :class:`pytest.ExitCode` enum. The exit codes being 
 
 .. note::
 
-    If you would like to customize the exit code in some scenarios, specially when
+    If you would like to customize the exit code in some scenarios, especially when
     no tests are collected, consider using the
     `pytest-custom_exit_code <https://github.com/yashtodi94/pytest-custom_exit_code>`__
     plugin.

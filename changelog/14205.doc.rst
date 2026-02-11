@@ -1,0 +1,1 @@
+Fixed ~75 typos and grammar issues across documentation, including broken RST directives, subject-verb agreement errors, missing articles, and incorrect prepositions.

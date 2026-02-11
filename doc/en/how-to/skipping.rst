@@ -311,7 +311,7 @@ even executed, use the ``run`` parameter as ``False``:
     @pytest.mark.xfail(run=False)
     def test_function(): ...
 
-This is specially useful for xfailing tests that are crashing the interpreter and should be
+This is especially useful for xfailing tests that are crashing the interpreter and should be
 investigated later.
 
 .. _`xfail strict tutorial`:
