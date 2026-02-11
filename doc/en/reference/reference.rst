@@ -1179,77 +1179,77 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set to a non-empty value, pytest acknowledges that is running in a CI process. See also :ref:`ci-pipelines`.
+   When set to a non-empty value, pytest acknowledges that is running in a CI process. See also :ref:`ci-pipelines`.
 
 .. envvar:: BUILD_NUMBER
 
-When set to a non-empty value, pytest acknowledges that is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
+   When set to a non-empty value, pytest acknowledges that is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
 
 .. envvar:: PYTEST_ADDOPTS
 
-This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
-by the user, see :ref:`adding default options` for more information.
+   This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
+   by the user, see :ref:`adding default options` for more information.
 
 .. envvar:: PYTEST_VERSION
 
-This environment variable is defined at the start of the pytest session and is undefined afterwards.
-It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
+   This environment variable is defined at the start of the pytest session and is undefined afterwards.
+   It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
 
 .. envvar:: PYTEST_CURRENT_TEST
 
-This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
-processes can inspect it, see :ref:`pytest current test env` for more information.
+   This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
+   processes can inspect it, see :ref:`pytest current test env` for more information.
 
 .. envvar:: PYTEST_DEBUG
 
-When set, pytest will print tracing and debug information.
+   When set, pytest will print tracing and debug information.
 
 .. envvar:: PYTEST_DEBUG_TEMPROOT
 
-Root for temporary directories produced by fixtures like :fixture:`tmp_path`
-as discussed in :ref:`temporary directory location and retention`.
+   Root for temporary directories produced by fixtures like :fixture:`tmp_path`
+   as discussed in :ref:`temporary directory location and retention`.
 
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
-When set, disables plugin auto-loading through :std:doc:`entry point packaging
-metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
-explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
-See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
+   When set, disables plugin auto-loading through :std:doc:`entry point packaging
+   metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
+   explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
+   See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
 
-Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules that should be loaded as plugins:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    export PYTEST_PLUGINS=mymodule.plugin,xdist
+       export PYTEST_PLUGINS=mymodule.plugin,xdist
 
-See also :option:`-p`.
+   See also :option:`-p`.
 
 .. envvar:: PYTEST_THEME
 
-Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
+   Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
 
 .. envvar:: PYTEST_THEME_MODE
 
-Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
+   Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
 
 .. envvar:: PY_COLORS
 
-When set to ``1``, pytest will use color in terminal output.
-When set to ``0``, pytest will not use color.
-``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
+   When set to ``1``, pytest will use color in terminal output.
+   When set to ``0``, pytest will not use color.
+   ``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
 
 .. envvar:: NO_COLOR
 
-When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
-``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
-See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
+   When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
+   ``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
+   See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
 
 .. envvar:: FORCE_COLOR
 
-When set to a non-empty string (regardless of value), pytest will use color in terminal output.
-``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
+   When set to a non-empty string (regardless of value), pytest will use color in terminal output.
+   ``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
 
 Exceptions
 ----------

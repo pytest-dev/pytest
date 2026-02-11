@@ -150,6 +150,11 @@ which are better explained in this excellent `blog post`_ by Ionel Cristian Măr
     See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
 
+.. seealso::
+
+    `src layout vs flat layout <https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/>`_
+        The Python Packaging User Guide discusses the trade-offs between the ``src`` layout and flat layout.
+
 Tests as part of application code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
