@@ -2493,8 +2493,8 @@ passed multiple times. The expected format is ``name=value``. For example::
    based on test outcome.
 
     * `all`: retains directories for all tests, regardless of the outcome.
-    * `failed`: retains directories only for tests with outcome `error` or `failed`.
-    * `none`: directories are always removed after each test ends, regardless of the outcome.
+    * `failed`: retains directories only for tests with outcome `error` or `failed`. Non-retained directories are removed during teardown of the tmp_path fixture.
+    * `none`: directories are always removed after each test session ends, regardless of the outcome.
 
    .. tab:: toml
 
