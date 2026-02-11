@@ -2465,7 +2465,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: tmp_path_retention_count
 
-   How many sessions should we keep the `tmp_path` directories,
+   How many sessions should we keep the :fixture:`tmp_path` directories,
    according to :confval:`tmp_path_retention_policy`.
 
    .. tab:: toml
@@ -2489,11 +2489,11 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 
-   Controls which directories created by the `tmp_path` fixture are kept around,
+   Controls which directories created by the :fixture:`tmp_path` fixture are kept around,
    based on test outcome.
 
     * `all`: retains directories for all tests, regardless of the outcome.
-    * `failed`: retains directories only for tests with outcome `error` or `failed`. Non-retained directories are removed during teardown of the tmp_path fixture.
+    * `failed`: retains directories only for tests with outcome `error` or `failed`. Non-retained directories are removed during teardown of the :fixture:`tmp_path` fixture.
     * `none`: directories are always removed after each test session ends, regardless of the outcome.
 
    .. tab:: toml
