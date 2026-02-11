@@ -136,4 +136,4 @@ Subtests
 
     This feature was originally implemented as a separate plugin in `pytest-subtests <https://github.com/pytest-dev/pytest-subtests>`__, but since ``9.0`` has been merged into the core.
 
-    The core implementation should be compatible to the plugin implementation, except it does not contain custom command-line options to control subtest output.
+    The core implementation should be compatible with the plugin implementation, except it does not contain custom command-line options to control subtest output.
