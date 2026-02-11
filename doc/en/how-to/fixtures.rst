@@ -471,7 +471,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     ============================ 2 failed in 0.12s =============================
 
 You see the two ``assert 0`` failing and more importantly you can also see
-that the **exactly same** ``smtp_connection`` object was passed into the
+that the **exact same** ``smtp_connection`` object was passed into the
 two test functions because pytest shows the incoming argument values in the
 traceback.  As a result, the two test functions using ``smtp_connection`` run
 as quick as a single one because they reuse the same instance.
@@ -1645,7 +1645,7 @@ Let's run the tests in verbose mode and with looking at the print-output:
     ============================ 8 passed in 0.12s =============================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
-ordering of test execution that lead to the fewest possible "active" resources.
+ordering of test execution that led to the fewest possible "active" resources.
 The finalizer for the ``mod1`` parametrized resource was executed before the
 ``mod2`` resource was setup.
 
@@ -1654,7 +1654,7 @@ Then test_1 is executed with ``mod1``, then test_2 with ``mod1``, then test_1
 with ``mod2`` and finally test_2 with ``mod2``.
 
 The ``otherarg`` parametrized resource (having function scope) was set up before
-and teared down after every test that used it.
+and torn down after every test that used it.
 
 
 .. _`usefixtures`:
@@ -1760,7 +1760,7 @@ into a configuration file:
 Overriding fixtures on various levels
 -------------------------------------
 
-In relatively large test suite, you may want to *override* a fixture, to augment
+In a relatively large test suite, you may want to *override* a fixture, to augment
 or change its behavior inside of certain test modules or directories.
 
 Override a fixture on a directory (conftest) level
@@ -1798,7 +1798,7 @@ Given the tests file structure is:
                 def test_username(username):
                     assert username == 'overridden-username'
 
-As you can see, a fixture with the same name can be overridden for certain test directory level.
+As you can see, a fixture with the same name can be overridden for a certain test directory level.
 Note that the ``base`` or ``super`` fixture can be accessed from the ``overriding``
 fixture easily - used in the example above.
 
@@ -1840,7 +1840,7 @@ Given the tests file structure is:
             def test_username(username):
                 assert username == 'overridden-else-username'
 
-In the example above, a fixture with the same name can be overridden for certain test module.
+In the example above, a fixture with the same name can be overridden for a certain test module.
 
 
 Override a fixture with direct test parametrization
