@@ -510,7 +510,8 @@ def _compare_eq_dict(
         explanation += [f"Omitting {len(same)} identical items, use -vv to show"]
     elif same:
         explanation += ["Common items:"]
-        explanation += highlighter(pprint.pformat(same)).splitlines()
+        # Use custom PrettyPrinter to preserve insertion order
+        explanation += highlighter(PrettyPrinter().pformat(same)).splitlines()
     diff = {k for k in common if left[k] != right[k]}
     if diff:
         explanation += ["Differing items:"]
@@ -526,8 +527,11 @@ def _compare_eq_dict(
         explanation.append(
             f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
         )
+        # Preserve insertion order from the original dict - use custom PrettyPrinter
         explanation.extend(
-            highlighter(pprint.pformat({k: left[k] for k in extra_left})).splitlines()
+            highlighter(
+                PrettyPrinter().pformat({k: left[k] for k in left if k in extra_left})
+            ).splitlines()
         )
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
@@ -535,8 +539,13 @@ def _compare_eq_dict(
         explanation.append(
             f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
         )
+        # Preserve insertion order from the original dict - use custom PrettyPrinter
         explanation.extend(
-            highlighter(pprint.pformat({k: right[k] for k in extra_right})).splitlines()
+            highlighter(
+                PrettyPrinter().pformat(
+                    {k: right[k] for k in right if k in extra_right}
+                )
+            ).splitlines()
         )
     return explanation
 
