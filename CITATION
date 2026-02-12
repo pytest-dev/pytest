@@ -10,19 +10,19 @@ BibLaTeX:
 
 @software{pytest,
   title        = {pytest x.y},
-  author       = {Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Florian Bruhin},
+  author       = {Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Freya Bruhin},
   year         = {2004},
   version      = {x.y},
   url          = {https://github.com/pytest-dev/pytest},
-  note         = {Contributors: Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Florian Bruhin and others}
+  note         = {Contributors: Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Freya Bruhin and others}
 }
 
 BibTeX:
 
 @misc{pytest,
-  author       = {Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Florian Bruhin},
+  author       = {Holger Krekel and Bruno Oliveira and Ronny Pfannschmidt and Floris Bruynooghe and Brianna Laugher and Freya Bruhin},
   title        = {pytest x.y},
   year         = {2004},
   howpublished = {\url{https://github.com/pytest-dev/pytest}},
-  note         = {Version x.y. Contributors include Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin, and others.}
+  note         = {Version x.y. Contributors include Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Freya Bruhin, and others.}
 }

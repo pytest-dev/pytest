@@ -27,7 +27,7 @@ Thanks to all who contributed to this release, among them:
 * David Giese
 * David Szotten
 * Dmitri Pribysh
-* Florian Bruhin
+* Freya Bruhin
 * Florian Schulze
 * Floris Bruynooghe
 * John Towler

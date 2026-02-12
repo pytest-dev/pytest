@@ -15,7 +15,7 @@ Thanks to all who contributed to this release, among them:
 * Antony Lee
 * Austin
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Floris Bruynooghe
 * Henk-Jaap Wagenaar
 * Jurko Gospodnetić

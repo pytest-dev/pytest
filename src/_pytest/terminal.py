@@ -1034,9 +1034,7 @@ class TerminalReporter:
         # fspath comes from testid which has a "/"-normalized path.
         if fspath:
             res = mkrel(nodeid)
-            if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
-                "\\", nodes.SEP
-            ):
+            if self.verbosity >= 2 and nodeid.split("::")[0] != nodes.norm_sep(fspath):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
             res = "[location]"

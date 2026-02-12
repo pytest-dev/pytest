@@ -1,0 +1,1 @@
+Fixed :func:`pytest.approx` which now correctly takes into account :class:`~collections.abc.Mapping` keys order to compare them.

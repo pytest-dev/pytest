@@ -304,7 +304,7 @@ For more details see :ref:`breakpoints`.
 
 
 
-Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances have long
+Access of ``Module``, ``Function``, ``Class``, ``Instance``, ``File`` and ``Item`` through ``Node`` instances has long
 been documented as deprecated, but started to emit warnings from pytest ``3.9`` and onward.
 
 Users should just ``import pytest`` and access those objects using the ``pytest`` module.

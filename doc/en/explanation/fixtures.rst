@@ -152,7 +152,7 @@ If you want to make test data from files available to your tests, a good way
 to do this is by loading these data in a fixture for use by your tests.
 This makes use of the automatic caching mechanisms of pytest.
 
-Another good approach is by adding the data files in the ``tests`` folder.
+Another good approach is by adding the data files in the ``tests`` directory.
 There are also community plugins available to help to manage this aspect of
 testing, e.g. :pypi:`pytest-datadir` and :pypi:`pytest-datafiles`.
 

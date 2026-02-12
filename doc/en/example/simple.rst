@@ -416,10 +416,10 @@ running from a test you can do this:
 
 
     if os.environ.get("PYTEST_VERSION") is not None:
-        # Things you want to to do if your code is called by pytest.
+        # Things you want to do if your code is called by pytest.
         ...
     else:
-        # Things you want to to do if your code is not called by pytest.
+        # Things you want to do if your code is not called by pytest.
         ...
 
 
@@ -553,12 +553,10 @@ an ``incremental`` marker which is to be used on classes:
 
     # content of conftest.py
 
-    from typing import Dict, Tuple
-
     import pytest
 
     # store history of failures per test class name and per index in parametrize (if parametrize used)
-    _test_failed_incremental: Dict[str, Dict[Tuple[int, ...], str]] = {}
+    _test_failed_incremental: dict[str, dict[tuple[int, ...], str]] = {}
 
 
     def pytest_runtest_makereport(item, call):
@@ -775,7 +773,7 @@ The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
 also define a ``db`` fixture in that sister directory's ``conftest.py`` file.
 Note that each fixture is only instantiated if there is a test actually needing
-it (unless you use "autouse" fixture which are always executed ahead of the first test
+it (unless you use "autouse" fixtures which are always executed ahead of the first test
 executing).
 
 
@@ -883,11 +881,10 @@ here is a little example implemented via a local plugin:
 .. code-block:: python
 
     # content of conftest.py
-    from typing import Dict
     import pytest
     from pytest import StashKey, CollectReport
 
-    phase_report_key = StashKey[Dict[str, CollectReport]]()
+    phase_report_key = StashKey[dict[str, CollectReport]]()
 
 
     @pytest.hookimpl(wrapper=True, tryfirst=True)

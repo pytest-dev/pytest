@@ -98,6 +98,37 @@ def test_node_warning_enforces_warning_types(pytester: Pytester) -> None:
         items[0].warn(Exception("ok"))  # type: ignore[arg-type]
 
 
+class TestNormSep:
+    """Tests for the norm_sep helper function."""
+
+    def test_forward_slashes_unchanged(self) -> None:
+        """Forward slashes pass through unchanged."""
+        assert nodes.norm_sep("a/b/c") == "a/b/c"
+
+    def test_backslashes_converted(self) -> None:
+        """Backslashes are converted to forward slashes."""
+        assert nodes.norm_sep("a\\b\\c") == "a/b/c"
+
+    def test_mixed_separators(self) -> None:
+        """Mixed separators are all normalized to forward slashes."""
+        assert nodes.norm_sep("a\\b/c\\d") == "a/b/c/d"
+
+    def test_pathlike_input(self, tmp_path: Path) -> None:
+        """PathLike objects are converted to string with normalized separators."""
+        # Create a path and verify it's normalized
+        result = nodes.norm_sep(tmp_path / "subdir" / "file.py")
+        assert "\\" not in result
+        assert "subdir/file.py" in result
+
+    def test_empty_string(self) -> None:
+        """Empty string returns empty string."""
+        assert nodes.norm_sep("") == ""
+
+    def test_windows_absolute_path(self) -> None:
+        """Windows absolute paths have backslashes converted."""
+        assert nodes.norm_sep("C:\\Users\\test\\project") == "C:/Users/test/project"
+
+
 def test__check_initialpaths_for_relpath() -> None:
     """Ensure that it handles dirs, and does not always use dirname."""
     cwd = Path.cwd()

@@ -16,7 +16,7 @@ with advance notice in the **Deprecations** section of releases.
     fix problems like typo corrections or such.
     To add a new change log entry, please see
     https://pip.pypa.io/en/latest/development/contributing/#news-entries
-    we named the news folder changelog
+    but note that in pytest the "news/" directory is named "changelog/".
 
 
 .. only:: not is_release
@@ -2805,6 +2805,7 @@ Breaking Changes
 
 - `#8246 <https://github.com/pytest-dev/pytest/issues/8246>`_: ``--version`` now writes version information to ``stdout`` rather than ``stderr``.
 
+- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: The ``pytest_cmdline_preparse`` hook has been removed following its deprecation. See :ref:`the deprecation note <cmdline-preparse-deprecated>` for more details.
 
 - `#8733 <https://github.com/pytest-dev/pytest/issues/8733>`_: Drop a workaround for `pyreadline <https://github.com/pyreadline/pyreadline>`__ that made it work with ``--pdb``.
 
@@ -9373,10 +9374,10 @@ time or change existing behaviors in order to make them less surprising/more use
   non-ascii characters. Thanks Bruno Oliveira for the PR.
 
 - fix #1204: another error when collecting with a nasty __getattr__().
-  Thanks Florian Bruhin for the PR.
+  Thanks Freya Bruhin for the PR.
 
 - fix the summary printed when no tests did run.
-  Thanks Florian Bruhin for the PR.
+  Thanks Freya Bruhin for the PR.
 - fix #1185 - ensure MANIFEST.in exactly matches what should go to a sdist
 
 - a number of documentation modernizations wrt good practices.
@@ -9498,7 +9499,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue934: when string comparison fails and a diff is too large to display
   without passing -vv, still show a few lines of the diff.
-  Thanks Florian Bruhin for the report and Bruno Oliveira for the PR.
+  Thanks Freya Bruhin for the report and Bruno Oliveira for the PR.
 
 - fix issue736: Fix a bug where fixture params would be discarded when combined
   with parametrization markers.
@@ -9511,7 +9512,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - parametrize now also generates meaningful test IDs for enum, regex and class
   objects (as opposed to class instances).
-  Thanks to Florian Bruhin for the PR.
+  Thanks to Freya Bruhin for the PR.
 
 - Add 'warns' to assert that warnings are thrown (like 'raises').
   Thanks to Eric Hunsberger for the PR.
@@ -9638,7 +9639,7 @@ time or change existing behaviors in order to make them less surprising/more use
   one will also have a "reprec" attribute with the recorded events/reports.
 
 - fix monkeypatch.setattr("x.y", raising=False) to actually not raise
-  if "y" is not a preexisting attribute. Thanks Florian Bruhin.
+  if "y" is not a preexisting attribute. Thanks Freya Bruhin.
 
 - fix issue741: make running output from testdir.run copy/pasteable
   Thanks Bruno Oliveira.
@@ -9698,7 +9699,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue833: --fixtures now shows all fixtures of collected test files, instead of just the
   fixtures declared on the first one.
-  Thanks Florian Bruhin for reporting and Bruno Oliveira for the PR.
+  Thanks Freya Bruhin for reporting and Bruno Oliveira for the PR.
 
 - fix issue863: skipped tests now report the correct reason when a skip/xfail
   condition is met when using multiple markers.

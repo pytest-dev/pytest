@@ -160,7 +160,7 @@ the command line arguments (specified test files, paths) and on
 the existence of configuration files.  The determined ``rootdir`` and ``configfile`` are
 printed as part of the pytest header during startup.
 
-Here's a summary what ``pytest`` uses ``rootdir`` for:
+Here's a summary of what ``pytest`` uses ``rootdir`` for:
 
 * Construct *nodeids* during collection; each test is assigned
   a unique *nodeid* which is rooted at the ``rootdir`` and takes into account
@@ -204,7 +204,7 @@ Here is the algorithm which finds the rootdir from ``args``:
   directory. This allows the use of pytest in structures that are not part of
   a package and don't have any particular configuration file.
 
-If no ``args`` are given, pytest collects test below the current working
+If no ``args`` are given, pytest collects tests below the current working
 directory and also starts determining the ``rootdir`` from there.
 
 Files will only be matched for configuration if:
@@ -272,9 +272,9 @@ check for configuration files as follows:
 
     Custom pytest plugin commandline arguments may include a path, as in
     ``pytest --log-output ../../test.log args``. Then ``args`` is mandatory,
-    otherwise pytest uses the folder of test.log for rootdir determination
+    otherwise pytest uses the directory of test.log for rootdir determination
     (see also :issue:`1435`).
-    A dot ``.`` for referencing to the current working directory is also
+    A dot ``.`` for referencing the current working directory is also
     possible.
 
 

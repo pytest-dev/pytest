@@ -18,7 +18,7 @@ The current pytest version, as a string::
 
     >>> import pytest
     >>> pytest.__version__
-    '7.0.0'
+    '9.0.2'
 
 .. _`hidden-param`:
 
@@ -757,6 +757,7 @@ items, delete or otherwise amend the test items:
     If this hook is implemented in ``conftest.py`` files, it always receives all collected items, not only those
     under the ``conftest.py`` where it is implemented.
 
+.. hook:: pytest_collection_finish
 .. autofunction:: pytest_collection_finish
 
 Test running (runtest) hooks
@@ -1178,77 +1179,77 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set to a non-empty value, pytest acknowledges that is running in a CI process. See also :ref:`ci-pipelines`.
+   When set to a non-empty value, pytest acknowledges that it is running in a CI process. See also :ref:`ci-pipelines`.
 
 .. envvar:: BUILD_NUMBER
 
-When set to a non-empty value, pytest acknowledges that is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
+   When set to a non-empty value, pytest acknowledges that it is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
 
 .. envvar:: PYTEST_ADDOPTS
 
-This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
-by the user, see :ref:`adding default options` for more information.
+   This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
+   by the user, see :ref:`adding default options` for more information.
 
 .. envvar:: PYTEST_VERSION
 
-This environment variable is defined at the start of the pytest session and is undefined afterwards.
-It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
+   This environment variable is defined at the start of the pytest session and is undefined afterwards.
+   It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
 
 .. envvar:: PYTEST_CURRENT_TEST
 
-This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
-processes can inspect it, see :ref:`pytest current test env` for more information.
+   This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
+   processes can inspect it, see :ref:`pytest current test env` for more information.
 
 .. envvar:: PYTEST_DEBUG
 
-When set, pytest will print tracing and debug information.
+   When set, pytest will print tracing and debug information.
 
 .. envvar:: PYTEST_DEBUG_TEMPROOT
 
-Root for temporary directories produced by fixtures like :fixture:`tmp_path`
-as discussed in :ref:`temporary directory location and retention`.
+   Root for temporary directories produced by fixtures like :fixture:`tmp_path`
+   as discussed in :ref:`temporary directory location and retention`.
 
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
-When set, disables plugin auto-loading through :std:doc:`entry point packaging
-metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
-explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
-See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
+   When set, disables plugin auto-loading through :std:doc:`entry point packaging
+   metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
+   explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
+   See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
 
-Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules that should be loaded as plugins:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    export PYTEST_PLUGINS=mymodule.plugin,xdist
+       export PYTEST_PLUGINS=mymodule.plugin,xdist
 
-See also :option:`-p`.
+   See also :option:`-p`.
 
 .. envvar:: PYTEST_THEME
 
-Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
+   Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
 
 .. envvar:: PYTEST_THEME_MODE
 
-Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
+   Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
 
 .. envvar:: PY_COLORS
 
-When set to ``1``, pytest will use color in terminal output.
-When set to ``0``, pytest will not use color.
-``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
+   When set to ``1``, pytest will use color in terminal output.
+   When set to ``0``, pytest will not use color.
+   ``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
 
 .. envvar:: NO_COLOR
 
-When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
-``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
-See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
+   When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
+   ``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
+   See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
 
 .. envvar:: FORCE_COLOR
 
-When set to a non-empty string (regardless of value), pytest will use color in terminal output.
-``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
+   When set to a non-empty string (regardless of value), pytest will use color in terminal output.
+   ``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
 
 Exceptions
 ----------
@@ -1314,7 +1315,7 @@ Configuration Options
 Here is a list of builtin configuration options that may be written in a ``pytest.ini`` (or ``.pytest.ini``),
 ``pyproject.toml``, ``tox.ini``, or ``setup.cfg`` file, usually located at the root of your repository.
 
-To see each file format in details, see :ref:`config file formats`.
+To see each file format in detail, see :ref:`config file formats`.
 
 .. warning::
     Usage of ``setup.cfg`` is not recommended except for very simple use cases. ``.cfg``
@@ -1584,7 +1585,6 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             faulthandler_timeout = 5
 
-   For more information please refer to :ref:`faulthandler`.
    For more information please refer to :ref:`faulthandler`.
 
 
@@ -2543,7 +2543,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: truncation_limit_lines
 
-   Controls maximum number of linesto truncate assertion message contents.
+   Controls maximum number of lines to truncate assertion message contents.
 
    Setting value to ``0`` disables the lines limit for truncation.
 
@@ -3179,7 +3179,7 @@ See :ref:`logging` for a guide on using these flags.
 
 .. option:: --log-file=PATH
 
-    Path to a file when logging will be written to.
+    Path to a file logging will be written to.
 
 .. option:: --log-file-mode
 

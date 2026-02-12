@@ -18,7 +18,7 @@ The pre pytest-2.3 funcarg mechanism calls a factory each time a
 funcarg for a test function is required.  If a factory wants to
 reuse a resource across different scopes, it often used
 the ``request.cached_setup()`` helper to manage caching of
-resources.  Here is a basic example how we could implement
+resources.  Here is a basic example of how we could implement
 a per-session Database object:
 
 .. code-block:: python
@@ -39,10 +39,10 @@ a per-session Database object:
 
 There are several limitations and difficulties with this approach:
 
-1. Scoping funcarg resource creation is not straight forward, instead one must
+1. Scoping funcarg resource creation is not straightforward, instead one must
    understand the intricate cached_setup() method mechanics.
 
-2. parametrizing the "db" resource is not straight forward:
+2. parametrizing the "db" resource is not straightforward:
    you need to apply a "parametrize" decorator or implement a
    :hook:`pytest_generate_tests` hook
    calling :py:func:`~pytest.Metafunc.parametrize` which
@@ -55,7 +55,7 @@ There are several limitations and difficulties with this approach:
    at the same time, making it hard for them to affect global state
    of the application under test.
 
-4. there is no way how you can make use of funcarg factories
+4. there is no way you can make use of funcarg factories
    in xUnit setup methods.
 
 5. A non-parametrized fixture function cannot use a parametrized

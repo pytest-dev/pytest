@@ -1,7 +1,7 @@
 minimum_pre_commit_version: "4.4.0"
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.14.9"
+  rev: "v0.14.14"
   hooks:
     - id: ruff-check
       args: ["--fix"]
@@ -13,10 +13,10 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
 - repo: https://github.com/woodruffw/zizmor-pre-commit
-  rev: v1.18.0
+  rev: v1.22.0
   hooks:
     - id: zizmor
-      args: ["--fix"]
+      args: ["--fix", "--no-progress"]
 -   repo: https://github.com/adamchainz/blacken-docs
     rev: 1.20.0
     hooks:
@@ -50,7 +50,7 @@ repos:
             # on <3.11
           - exceptiongroup>=1.0.0rc8
 -   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.407
+    rev: v1.1.408
     hooks:
     -   id: pyright
         files: ^(src/|scripts/)
@@ -68,7 +68,7 @@ repos:
         # Manual because passing pyright is a work in progress.
         stages: [manual]
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "v2.11.1"
+  rev: "v2.12.1"
   hooks:
     - id: pyproject-fmt
       # https://pyproject-fmt.readthedocs.io/en/latest/#calculating-max-supported-python-version
