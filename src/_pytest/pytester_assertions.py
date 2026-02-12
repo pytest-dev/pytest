@@ -26,11 +26,11 @@ def assertoutcome(
 
     realpassed, realskipped, realfailed = outcomes
     obtained = {
+        "failed": len(realfailed),
         "passed": len(realpassed),
         "skipped": len(realskipped),
-        "failed": len(realfailed),
     }
-    expected = {"passed": passed, "skipped": skipped, "failed": failed}
+    expected = {"failed": failed, "passed": passed, "skipped": skipped}
     assert obtained == expected, outcomes
 
 

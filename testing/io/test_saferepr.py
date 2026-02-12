@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from _pytest._io.saferepr import DEFAULT_REPR_MAX_SIZE
+from _pytest._io.saferepr import SafeRepr
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 import pytest
@@ -194,29 +195,37 @@ def test_saferepr_unlimited_exc():
     )
 
 
-def test_saferepr_dict_preserves_insertion_order():
-    d = {"b": 1, "a": 2}
-    assert saferepr(d, maxsize=None) == "{'b': 1, 'a': 2}"
+def test_saferepr_dict_preserves_insertion_order() -> None:
+    d = {
+        "b": 2,
+        "a": 1,
+        "d": 4,
+        "e": 5,
+        "c": 3,
+    }
+    s = SafeRepr(maxsize=None)
+    s.maxdict = 10
+    assert s.repr(d) == "{'b': 2, 'a': 1, 'd': 4, 'e': 5, 'c': 3}"
 
 
-def test_saferepr_dict_truncation_preserves_insertion_order():
-    from _pytest._io.saferepr import SafeRepr
-
-    d = {"b": 1, "a": 2}
+def test_saferepr_dict_truncation_preserves_insertion_order() -> None:
+    d = {
+        "b": 2,
+        "a": 1,
+        "d": 4,
+        "e": 5,
+        "c": 3,
+    }
     s = SafeRepr(maxsize=None)
     s.maxdict = 1
-    assert s.repr(d) == "{'b': 1, ...}"
+    assert s.repr(d) == "{'b': 2, ...}"
 
 
-def test_saferepr_dict_fillvalue_when_level_is_zero():
-    from _pytest._io.saferepr import SafeRepr
-
+def test_saferepr_dict_fillvalue_when_level_is_zero() -> None:
     s = SafeRepr(maxsize=None)
     assert s.repr_dict({"a": 1}, level=0) == "{...}"
 
 
-def test_saferepr_dict_empty():
-    from _pytest._io.saferepr import SafeRepr
-
+def test_saferepr_dict_empty() -> None:
     s = SafeRepr(maxsize=None)
     assert s.repr_dict({}, level=1) == "{}"

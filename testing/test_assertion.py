@@ -129,7 +129,7 @@ class TestImportHookInstallation:
             [
                 ">       r.assertoutcome(passed=1)",
                 "E       AssertionError: ([[][]], [[][]], [[]<TestReport *>[]])*",
-                "E       assert {'passed': 0,...*'failed': 1} == {'passed': 1,...*'failed': 0}",
+                "E       assert {'failed': 1,... 'skipped': 0} == {'failed': 0,... 'skipped': 0}",
                 "E         Omitting 1 identical items, use -vv to show",
                 "E         Differing items:",
                 "E         Use -v to get more diff",
@@ -2198,3 +2198,34 @@ def test_full_output_vvv(pytester: Pytester) -> None:
         ]
     )
     result.stdout.no_fnmatch_line(expected_non_vvv_arg_line)
+
+
+def test_dict_extra_items_preserve_insertion_order(pytester: Pytester) -> None:
+    """Assertion output of dict diff shows keys in insertion order (#13503)."""
+    pytester.makepyfile(
+        test_order="""
+        def test_order():
+            a = {
+                "b": 2,
+                "a": 1,
+                "d": 4,
+                "e": 5,
+                "c": 3,
+            }
+            assert a == {}
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "*Left contains 5 more items:*",
+            "*Full diff:",
+            "* + *'b': 2,",
+            "* + *'a': 1,",
+            "* + *'d': 4,",
+            "* + *'e': 5,",
+            "* + *'c': 3,",
+            "test_order.py:*: AssertionError",
+        ]
+    )
