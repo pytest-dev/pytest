@@ -1873,10 +1873,19 @@ class FixtureManager:
         # Use __dict__ to preserve definition order instead of dir() which sorts.
         # This ensures fixtures are processed in their definition order, which is
         # important for autouse fixtures and fixture overriding (#11281, #12952).
-        dicts = [getattr(holderobj, "__dict__", {})]
-        if safe_isclass(holderobj):
-            for basecls in holderobj.__mro__:
-                dicts.append(basecls.__dict__)
+        #
+        # For modules: module.__dict__ contains all module-level names.
+        # For classes: walk the MRO to get all class and base class attributes.
+        # For instances (e.g. unittest TestCase instances): walk the class MRO,
+        # since fixtures are defined on the class, not the instance.
+        if isinstance(holderobj, types.ModuleType):
+            dicts = [holderobj.__dict__]
+        elif safe_isclass(holderobj):
+            assert isinstance(holderobj, type)
+            dicts = [cls.__dict__ for cls in holderobj.__mro__]
+        else:
+            # Instance: walk the class hierarchy.
+            dicts = [cls.__dict__ for cls in type(holderobj).__mro__]
 
         seen: set[str] = set()
         for dic in dicts:
