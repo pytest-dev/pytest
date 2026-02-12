@@ -1878,6 +1878,7 @@ class FixtureManager:
         # For classes: walk the MRO to get all class and base class attributes.
         # For instances (e.g. unittest TestCase instances): walk the class MRO,
         # since fixtures are defined on the class, not the instance.
+        dicts: list[Mapping[str, Any]]
         if isinstance(holderobj, types.ModuleType):
             dicts = [holderobj.__dict__]
         elif safe_isclass(holderobj):

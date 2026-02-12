@@ -5428,10 +5428,12 @@ def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_autouse_fixtures_with_same_name_definition_order(pytester: Pytester) -> None:
+def test_autouse_fixtures_definition_order_preserved(pytester: Pytester) -> None:
     """
-    Test that fixtures with the same name are processed in definition order,
-    not alphabetical order. The fixture discovered first shadows later ones.
+    Test that fixture discovery uses definition order instead of alphabetical
+    sorting from dir(). When fixtures have different names, they should be
+    discovered and registered in their definition order, which ensures
+    higher-scoped fixtures execute before lower-scoped ones.
 
     Regression test for https://github.com/pytest-dev/pytest/issues/11281
     """
@@ -5442,27 +5444,21 @@ def test_autouse_fixtures_with_same_name_definition_order(pytester: Pytester) ->
         call_order = []
 
         @pytest.fixture(scope='module', autouse=True)
-        def setup():
+        def module_setup():
             call_order.append("MODULE")
 
         class TestFoo:
-            @classmethod
             @pytest.fixture(scope='class', autouse=True)
-            def setup(cls):
+            def class_setup(self):
                 call_order.append("CLASS")
 
             def test_in_class(self):
-                # The module fixture is defined first in source order,
-                # so it shadows the class fixture. Only module fixture runs.
-                assert call_order == ["MODULE"]
-
-        def test_module_level():
-            # Only module fixture runs
-            assert call_order == ["MODULE"]
+                # Module-scoped fixture runs first, then class-scoped.
+                assert call_order == ["MODULE", "CLASS"]
         """
     )
     result = pytester.runpytest("-v")
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=1)
 
 
 def test_fixture_override_with_name_kwarg_respects_definition_order(
