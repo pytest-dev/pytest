@@ -219,31 +219,30 @@ main.disable = [
     "comparison-with-callable",
     "comparison-with-itself",                 # PLR0124 from ruff
     "condition-evals-to-constant",
-    "consider-alternative-union-syntax",
     "confusing-consecutive-elif",
+    "consider-alternative-union-syntax",
+    "consider-ternary-expression",
     "consider-using-assignment-expr",
     "consider-using-dict-items",
-    "consider-using-from-import",
+    "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
     "consider-using-f-string",
     "consider-using-in",
     "consider-using-namedtuple-or-dataclass",
     "consider-using-ternary",
     "consider-using-tuple",
     "consider-using-with",
-    "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
-    "consider-ternary-expression",
     "cyclic-import",
-    "differing-param-doc",
-    "docstring-first-line-empty",
     "deprecated-argument",
     "deprecated-attribute",
     "deprecated-class",
+    "differing-param-doc",
     "disallowed-name",                        # foo / bar are used often in tests
+    "docstring-first-line-empty",
     "duplicate-code",
     "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
     "empty-comment",                          # not activated by default, PLR2044 disabled in ruff
-    "eval-used",
     "eq-without-hash",                        # PLW1641 disabled in ruff
+    "eval-used",
     "exec-used",
     "expression-not-assigned",
     "fixme",
@@ -260,13 +259,13 @@ main.disable = [
     "line-too-long",
     "magic-value-comparison",                 # not activated by default, PLR2004 disabled in ruff
     "method-hidden",
+    "misplaced-bare-raise",                   # PLE0704 from ruff
+    "misplaced-comparison-constant",
     "missing-docstring",
     "missing-param-doc",
     "missing-raises-doc",
     "missing-timeout",
     "missing-type-doc",
-    "misplaced-bare-raise",                   # PLE0704 from ruff
-    "misplaced-comparison-constant",
     "multiple-statements",                    # multiple-statements-on-one-line-colon (E701) from ruff
     "no-else-break",
     "no-else-continue",
@@ -331,10 +330,10 @@ main.disable = [
     "use-dict-literal",
     "use-implicit-booleaness-not-comparison",
     "use-implicit-booleaness-not-len",
-    "use-set-for-membership",
     "useless-else-on-loop",                   # PLC0414 disabled in ruff
     "useless-import-alias",
     "useless-return",
+    "use-set-for-membership",
     "using-constant-test",
     "while-used",
     "wrong-import-order",                     # handled by isort / ruff
