@@ -476,7 +476,7 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
-        fspath = self.config.rootpath / nodeid.split("::")[0]
+        fspath = self.config.rootpath / nodeid.split("::", maxsplit=1)[0]
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
@@ -1034,7 +1034,9 @@ class TerminalReporter:
         # fspath comes from testid which has a "/"-normalized path.
         if fspath:
             res = mkrel(nodeid)
-            if self.verbosity >= 2 and nodeid.split("::")[0] != nodes.norm_sep(fspath):
+            if self.verbosity >= 2 and nodeid.split("::", maxsplit=1)[
+                0
+            ] != nodes.norm_sep(fspath):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
             res = "[location]"

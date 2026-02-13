@@ -155,12 +155,14 @@ lint.ignore = [
     "PLR2004", # Magic value used in comparison
     "PLR2044", # Line with empty comment
     "PLR5501", # Use `elif` instead of `else` then `if`
+    "PLW0108", # Lambda may be unnecessary; consider inlining inner function
     "PLW0120", # remove the else and dedent its contents
     "PLW0603", # Using the global statement
     "PLW1641", # Does not implement the __hash__ method
     "PLW2901", # for loop variable overwritten by assignment target
     # ruff ignore
     "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF061",  # Use context-manager form of `pytest.raises()`
 ]
 lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
     "B",
@@ -169,6 +171,7 @@ lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
 lint.per-file-ignores."src/_pytest/_version.py" = [
     "I001",
 ]
+lint.per-file-ignores."testing/**/*.py" = [ "RUF060" ]
 # can't be disabled on a line-by-line basis in file
 lint.per-file-ignores."testing/code/test_source.py" = [
     "F841",
