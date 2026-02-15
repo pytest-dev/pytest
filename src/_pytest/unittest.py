@@ -16,6 +16,7 @@ import types
 from typing import Any
 from typing import TYPE_CHECKING
 from unittest import TestCase
+from unittest.case import _subtest_msg_sentinel  # type: ignore[attr-defined]
 
 import _pytest._code
 from _pytest._code import ExceptionInfo
@@ -427,7 +428,7 @@ class TestCaseFunction(Function):
             when="call",
             _ispytest=True,
         )
-        msg = test._message if isinstance(test._message, str) else None  # type: ignore[attr-defined]
+        msg = None if test._message is _subtest_msg_sentinel else str(test._message)  # type: ignore[attr-defined]
         report = self.ihook.pytest_runtest_makereport(item=self, call=call_info)
         sub_report = SubtestReport._new(
             report,
