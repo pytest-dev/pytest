@@ -61,6 +61,7 @@ jobs:
           "windows-py310-unittest-twisted25",
           "windows-py310-pluggy",
           "windows-py310-xdist",
+          "windows-py310-lowestdirect-onlymanaged",
           "windows-py311",
           "windows-py312",
           "windows-py313",
@@ -73,6 +74,7 @@ jobs:
           "ubuntu-py310-pluggy",
           "ubuntu-py310-freeze",
           "ubuntu-py310-xdist",
+          "ubuntu-py310-lowestdirect-onlymanaged",
           "ubuntu-py311",
           "ubuntu-py312",
           "ubuntu-py313-pexpect",
@@ -80,6 +82,7 @@ jobs:
           "ubuntu-pypy3-xdist",
 
           "macos-py310",
+          "macos-py310-lowestdirect-onlymanaged",
           "macos-py312",
           "macos-py313",
           "macos-py314",
@@ -118,6 +121,12 @@ jobs:
             python: "3.10"
             os: windows-latest
             tox_env: "py310-xdist"
+
+          - name: "windows-py310-lowestdirect-onlymanaged"
+            python: "3.10"
+            os: windows-latest
+            tox_env: "py310-lowestdirect-onlymanaged"
+            use_uv: true
 
           - name: "windows-py311"
             python: "3.11"
@@ -183,6 +192,12 @@ jobs:
             os: ubuntu-latest
             tox_env: "py310-xdist"
 
+          - name: "ubuntu-py310-lowestdirect-onlymanaged"
+            python: "3.10"
+            os: ubuntu-latest
+            tox_env: "py310-lowestdirect-onlymanaged"
+            use_uv: true
+
           - name: "ubuntu-py311"
             python: "3.11"
             os: ubuntu-latest
@@ -219,6 +234,13 @@ jobs:
             os: macos-latest
             tox_env: "py310-xdist"
             xfail: true
+
+          - name: "macos-py310-lowestdirect-onlymanaged"
+            python: "3.10"
+            os: macos-latest
+            tox_env: "py310-lowestdirect-onlymanaged"
+            xfail: true
+            use_uv: true
 
           - name: "macos-py312"
             python: "3.12"
@@ -273,6 +295,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install tox
+
+    - name: Set up uv
+      if: "matrix.use_uv"
+      shell: bash
+      run: pip install tox-uv
 
     - name: Test without coverage
       if: "! matrix.use_coverage"
