@@ -1094,9 +1094,7 @@ def test_raisesexc() -> None:
     with RaisesExc(ValueError):
         raise ValueError
 
-    # FIXME: leaving this one formatted differently for now to not change
-    # tests in python/raises.py
-    with pytest.raises(Failed, match=wrap_escape("DID NOT RAISE <class 'ValueError'>")):
+    with pytest.raises(Failed, match=wrap_escape("DID NOT RAISE ValueError")):
         with RaisesExc(ValueError):
             ...
 
@@ -1105,11 +1103,8 @@ def test_raisesexc() -> None:
             ...
 
     with pytest.raises(
-        # FIXME: do we want repr(type) or type.__name__ ?
         Failed,
-        match=wrap_escape(
-            "DID NOT RAISE any of (<class 'ValueError'>, <class 'TypeError'>)"
-        ),
+        match=wrap_escape("DID NOT RAISE any of (ValueError, TypeError)"),
     ):
         with RaisesExc((ValueError, TypeError)):
             ...
