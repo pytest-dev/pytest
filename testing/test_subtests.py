@@ -370,6 +370,36 @@ def test_subtests_do_not_overwrite_top_level_failure(pytester: pytest.Pytester) 
     )
 
 
+def test_msg_not_a_string(
+    pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    Using a non-string in subtests.test() should still show it in the terminal (#14195).
+
+    Note: this was not a problem originally with the subtests fixture, only with TestCase.subTest; this test
+    was added for symmetry.
+    """
+    monkeypatch.setenv("COLUMNS", "120")
+    pytester.makepyfile(
+        """
+        def test_int_msg(subtests):
+            with subtests.test(42):
+                assert False, "subtest failure"
+
+        def test_no_msg(subtests):
+            with subtests.test():
+                assert False, "subtest failure"
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "SUBFAILED[[]42[]] test_msg_not_a_string.py::test_int_msg - AssertionError: subtest failure",
+            "SUBFAILED(<subtest>) test_msg_not_a_string.py::test_no_msg - AssertionError: subtest failure",
+        ]
+    )
+
+
 @pytest.mark.parametrize("flag", ["--last-failed", "--stepwise"])
 def test_subtests_last_failed_step_wise(pytester: pytest.Pytester, flag: str) -> None:
     """Check that --last-failed and --step-wise correctly rerun tests with failed subtests."""
@@ -617,6 +647,33 @@ class TestUnittestSubTest:
         )
         result.stdout.no_fnmatch_line(
             "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py:*: skip subtest 1"
+        )
+
+    def test_msg_not_a_string(
+        self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Using a non-string in TestCase.subTest should still show it in the terminal (#14195)."""
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
+            """
+            from unittest import TestCase
+
+            class T(TestCase):
+                def test_int_msg(self):
+                    with self.subTest(42):
+                        assert False, "subtest failure"
+
+                def test_no_msg(self):
+                    with self.subTest():
+                        assert False, "subtest failure"
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "SUBFAILED[[]42[]] test_msg_not_a_string.py::T::test_int_msg - AssertionError: subtest failure",
+                "SUBFAILED(<subtest>) test_msg_not_a_string.py::T::test_no_msg - AssertionError: subtest failure",
+            ]
         )
 
 
