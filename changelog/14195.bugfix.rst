@@ -1,0 +1,1 @@
+Fixed an issue where non-string messages passed to `unittest.TestCase.subTest()` were not printed.
