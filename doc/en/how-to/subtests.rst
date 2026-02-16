@@ -26,10 +26,10 @@ Subtests are an alternative to parametrization, particularly useful when the exa
 
 Each assertion failure or error is caught by the context manager and reported individually:
 
-.. code-block:: pytest
+.. code-block:: console
 
     $ pytest -q test_subtest.py
-    uuuuuF                                                               [100%]
+    u u u u uF                                                           [100%]
     ================================= FAILURES =================================
     _______________________ test [custom message] (i=1) ________________________
 
