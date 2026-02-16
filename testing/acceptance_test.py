@@ -690,6 +690,27 @@ class TestInvocationVariants:
         result = pytester.runpytest("--pyargs", "t.py")
         assert result.ret == ExitCode.OK
 
+    def test_pyargs_finds_module_in_current_dir(self, pytester: Pytester) -> None:
+        """Regression test for issue #14048.
+
+        Test that --pyargs can find modules in the current directory
+        (invocation directory) even when pytest's rootdir is different.
+        This is important for tox usage where pytest is run from a subdirectory.
+        """
+        # Create a module structure in the current directory
+        pkg = pytester.mkpydir("amodule")
+        tests_pkg = pkg / "tests"
+        tests_pkg.mkdir()
+        tests_pkg.joinpath("__init__.py").write_text("", encoding="utf-8")
+        tests_pkg.joinpath("test_some.py").write_text(
+            "def test_something():\n    assert True", encoding="utf-8"
+        )
+
+        # Run pytest with --pyargs from the directory containing the module
+        result = pytester.runpytest("--pyargs", "amodule.tests")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
     def test_cmdline_python_package(self, pytester: Pytester, monkeypatch) -> None:
         import warnings
 

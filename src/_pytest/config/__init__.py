@@ -1274,6 +1274,14 @@ class Config:
         # early_config.args it not set yet. But we need it for
         # discovering the initial conftests. So "pre-run" the logic here.
         # It will be done for real in `parse()`.
+
+        # When using --pyargs, ensure invocation_dir is in sys.path so that
+        # modules in the current directory can be found by importlib.
+        if early_config.known_args_namespace.pyargs:
+            invocation_dir_str = str(early_config.invocation_params.dir)
+            if invocation_dir_str not in sys.path:
+                sys.path.insert(0, invocation_dir_str)
+
         args, _args_source = early_config._decide_args(
             args=early_config.known_args_namespace.file_or_dir,
             pyargs=early_config.known_args_namespace.pyargs,
