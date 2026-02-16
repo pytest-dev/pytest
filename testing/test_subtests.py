@@ -376,6 +376,12 @@ def test_subtests_do_not_overwrite_top_level_failure(pytester: pytest.Pytester) 
 def test_msg_not_a_string(
     pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """
+    Using a non-string in subtests.test() should still show it in the terminal (#14195).
+
+    Note: this was not a problem originally with the subtests fixture, only with TestCase.subTest; this test
+    was added for symmetry.
+    """
     monkeypatch.setenv("COLUMNS", "120")
     pytester.makepyfile(
         """
@@ -649,6 +655,7 @@ class TestUnittestSubTest:
     def test_msg_not_a_string(
         self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """Using a non-string in TestCase.subTest should still show it in the terminal (#14195)."""
         monkeypatch.setenv("COLUMNS", "120")
         pytester.makepyfile(
             """
