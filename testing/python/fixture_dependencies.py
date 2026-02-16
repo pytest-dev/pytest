@@ -125,12 +125,14 @@ def test_fixture_override_finishes_dependencies(pytester: Pytester) -> None:
 
 def test_override_fixture_with_new_parametrized_fixture(pytester: Pytester) -> None:
     """Test what happens when a cached fixture is overridden by a new parametrized fixture,
-    and another fixture depends on it.
+    and another fixture depends on it. (#11075)
 
     This test verifies that:
     1. A fixture can be overridden by a parametrized fixture in a nested scope
     2. Dependent fixtures get recomputed because a dependency now resolves to a different fixturedef
-    3. The outer fixture is not setup or finalized unnecessarily
+
+    Note: the behavior where the outer fixture is torn down "unnecessarily" is not guaranteed
+    and may change in future versions of pytest.
     """
     pytester.makepyfile(
         test_fixtures="""
