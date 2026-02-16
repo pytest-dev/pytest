@@ -783,6 +783,7 @@ class TestConfigAPI:
         assert config_novalue.getoption("hello") is None
         assert config_novalue.getoption("hello", default=1) is None
         assert config_novalue.getoption("hello", default=1, skip=True) == 1
+        assert config_novalue.getoption("hello", default=None, skip=True) is None
 
     def test_config_getoption_undeclared_option_name(self, pytester: Pytester) -> None:
         config = pytester.parseconfig()
@@ -790,6 +791,7 @@ class TestConfigAPI:
             config.getoption("x")
         assert config.getoption("x", default=1) == 1
         assert config.getoption("x", default=1, skip=True) == 1
+        assert config.getoption("x", default=None, skip=True) is None
 
     def test_config_getoption_unicode(self, pytester: Pytester) -> None:
         pytester.makeconftest(
