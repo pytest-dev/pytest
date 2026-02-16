@@ -16,7 +16,6 @@ import types
 from typing import Any
 from typing import TYPE_CHECKING
 from unittest import TestCase
-from unittest.case import _subtest_msg_sentinel  # type: ignore[attr-defined]
 
 import _pytest._code
 from _pytest._code import ExceptionInfo
@@ -410,6 +409,10 @@ class TestCaseFunction(Function):
         | tuple[type[BaseException], BaseException, TracebackType]
         | None,
     ) -> None:
+        # Importing this private symbol locally in case this symbol is renamed/removed in the future; importing
+        # it globally would break pytest entirely, importing it locally only will break unittests using `addSubTest`.
+        from unittest.case import _subtest_msg_sentinel  # type: ignore[attr-defined]
+
         exception_info: ExceptionInfo[BaseException] | None
         match exc_info:
             case tuple():
