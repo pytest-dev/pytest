@@ -40,6 +40,7 @@ from iniconfig import SectionWrapper
 
 from _pytest import timing
 from _pytest._code import Source
+from _pytest.assertion.rewrite import assertstate_key
 from _pytest.capture import _get_multicapture
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
@@ -751,6 +752,9 @@ class Pytester:
         This is done automatically upon instantiation.
         """
         self._monkeypatch.chdir(self.path)
+        self._monkeypatch.setattr(
+            self._request.config.stash[assertstate_key], "invocation_path", self.path
+        )
 
     def _makefile(
         self,

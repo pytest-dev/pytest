@@ -250,7 +250,9 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         # rewritten if they match the naming convention for test files
         fn_path = PurePath(fn)
         for pat in self.fnpats:
-            if fnmatch_ex(pat, fn_path):
+            if fnmatch_ex(pat, fn_path) and fn_path.is_relative_to(
+                state.invocation_path
+            ):
                 state.trace(f"matched test file {fn!r}")
                 return True
 
