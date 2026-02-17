@@ -1,0 +1,1 @@
+Fixed ``no parameter defined for test`` error when overriding a fixture that requests a parametrized fixture.
