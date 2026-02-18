@@ -89,6 +89,22 @@ class TestSetattrWithImportPath:
             mp.setattr("os.path.qweqwe", 42, raising=False)
             assert os.path.qweqwe == 42  # type: ignore
 
+    def test_setattr_failure_does_not_corrupt_undo(
+        self, monkeypatch: MonkeyPatch
+    ) -> None:
+        """If setattr() raises (e.g. target doesn't support attribute
+        setting), the undo stack should not contain a stale entry that
+        crashes during teardown (#14161)."""
+
+        class Immutable:
+            __slots__ = ()
+
+        target = Immutable()
+        with pytest.raises(AttributeError):
+            monkeypatch.setattr(target, "x", 42, raising=False)
+        # undo() must not raise — no entry should be on the undo stack.
+        monkeypatch.undo()
+
     def test_delattr(self, monkeypatch: MonkeyPatch) -> None:
         with monkeypatch.context() as mp:
             mp.delattr("os.path.abspath")
