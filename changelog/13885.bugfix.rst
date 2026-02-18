@@ -1,0 +1,1 @@
+Fixed autouse fixtures defined inside a :class:`unittest.TestCase` class running even when the class is decorated with :func:`unittest.skip` or :func:`unittest.skipIf` -- regression since pytest 8.1.0.

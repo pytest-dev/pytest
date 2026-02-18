@@ -100,6 +100,8 @@ class UnitTestCase(Class):
             self._register_unittest_setup_method_fixture(cls)
             self._register_unittest_setup_class_fixture(cls)
             self._register_setup_class_fixture()
+        else:
+            self._register_unittest_skip_fixture(cls)
 
         self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
 
@@ -170,6 +172,22 @@ class UnitTestCase(Class):
             # Use a unique name to speed up lookup.
             name=f"_unittest_setUpClass_fixture_{cls.__qualname__}",
             func=unittest_setup_class_fixture,
+            nodeid=self.nodeid,
+            scope="class",
+            autouse=True,
+        )
+
+    def _register_unittest_skip_fixture(self, cls: type) -> None:
+        """Register an auto-use fixture to skip tests for a class decorated
+        with @unittest.skip or @unittest.skipIf (#13885)."""
+
+        def unittest_skip_fixture(request: FixtureRequest) -> None:
+            reason = cls.__unittest_skip_why__
+            raise skip.Exception(reason, _use_item_location=True)
+
+        self.session._fixturemanager._register_fixture(
+            name=f"_unittest_skip_fixture_{cls.__qualname__}",
+            func=unittest_skip_fixture,
             nodeid=self.nodeid,
             scope="class",
             autouse=True,
