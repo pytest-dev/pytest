@@ -1358,7 +1358,7 @@ class Config:
         self._parser.extra_info["config source"] = via
         try:
             self._parser.parse_known_and_unknown_args(
-                args, namespace=copy.copy(self.option)
+                args, namespace=copy.deepcopy(self.option)
             )
         finally:
             self._parser.extra_info.pop("config source", None)
@@ -1500,7 +1500,7 @@ class Config:
                     + args
                 )
 
-        ns = self._parser.parse_known_args(args, namespace=copy.copy(self.option))
+        ns = self._parser.parse_known_args(args, namespace=copy.deepcopy(self.option))
         rootpath, inipath, inicfg, ignored_config_files = determine_setup(
             inifile=ns.inifilename,
             override_ini=ns.override_ini,
@@ -1533,7 +1533,7 @@ class Config:
             )
 
         self.known_args_namespace = self._parser.parse_known_args(
-            args, namespace=copy.copy(self.option)
+            args, namespace=copy.deepcopy(self.option)
         )
         self._checkversion()
         self._consider_importhook()
@@ -1550,7 +1550,9 @@ class Config:
         # are going to be loaded.
         self.pluginmanager.consider_env()
 
-        self._parser.parse_known_args(args, namespace=self.known_args_namespace)
+        self.known_args_namespace = self._parser.parse_known_args(
+            args, namespace=copy.deepcopy(self.option)
+        )
 
         self._validate_plugins()
         self._warn_about_skipped_plugins()
