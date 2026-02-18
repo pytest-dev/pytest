@@ -209,8 +209,10 @@ class TestImportHookInstallation:
             "hamster.py": "",
             "test_foo.py": """\
                 def test_foo(pytestconfig):
-                    assert pytestconfig.pluginmanager.rewrite_hook.find_spec('ham') is not None
-                    assert pytestconfig.pluginmanager.rewrite_hook.find_spec('hamster') is None
+                    assert pytestconfig.pluginmanager.rewrite_hook.find_spec(
+                        'ham') is not None
+                    assert pytestconfig.pluginmanager.rewrite_hook.find_spec(
+                        'hamster') is None
             """,
         }
         pytester.makepyfile(**contents)
@@ -416,6 +418,45 @@ def callequal(left: Any, right: Any, verbose: int = 0) -> list[str] | None:
 class TestAssert_reprcompare:
     def test_different_types(self) -> None:
         assert callequal([0, 1], "foo") is None
+
+    def test_dict_preserves_insertion_order_regression(self) -> None:
+        # Regression test for issue #14079
+
+        long_a = "a" * 80
+        sub = {
+            "long_a": long_a,
+            "sub1": {
+                "long_a": "substring that gets wrapped " * 3,
+            },
+        }
+
+        left = {"env": {"sub": sub}}
+        right = {"env": {"sub": sub}, "new": 1}
+
+        diff = callequal(left, right, verbose=True)
+        assert diff is not None
+
+        # extra key is reported
+        assert "{'new': 1}" in diff
+
+        # inspect only structured diff
+        assert "Full diff:" in diff
+        start = diff.index("Full diff:") + 1
+        diff_block = diff[start:]
+
+        # 'new' must not appear as a structural key
+        assert all(
+            "'new': 1" not in line or line.lstrip().startswith("-")
+            for line in diff_block
+        )
+
+        # insertion order preserved inside left dict
+        env_index = next(i for i, line in enumerate(diff_block) if "'env': {" in line)
+        closing_index = next(
+            i for i, line in enumerate(diff_block) if line.strip() == "}"
+        )
+
+        assert env_index < closing_index
 
     def test_summary(self) -> None:
         lines = callequal([0, 1], [0, 2])
