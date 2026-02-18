@@ -206,6 +206,25 @@ def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
     assert unfiltered_tuple == ("test_fixture", 20, "handler call")
 
 
+def test_nested_filtering_same_filter(caplog: pytest.LogCaptureFixture) -> None:
+    """Nested ``caplog.filtering()`` with the same filter should not remove
+    the filter when the inner context exits (#14189)."""
+
+    def no_capture(record: logging.LogRecord) -> bool:
+        return False
+
+    with caplog.at_level(logging.INFO):
+        with caplog.filtering(no_capture):
+            logger.info("outer before inner")
+            with caplog.filtering(no_capture):
+                logger.info("inside inner")
+            logger.info("outer after inner")
+        logger.info("outside both")
+
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message == "outside both"
+
+
 @pytest.mark.parametrize(
     "level_str,expected_disable_level",
     [
