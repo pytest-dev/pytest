@@ -182,7 +182,7 @@ class UnitTestCase(Class):
         with @unittest.skip or @unittest.skipIf (#13885)."""
 
         def unittest_skip_fixture(request: FixtureRequest) -> None:
-            reason = cls.__unittest_skip_why__
+            reason = getattr(cls, "__unittest_skip_why__", "")
             raise skip.Exception(reason, _use_item_location=True)
 
         self.session._fixturemanager._register_fixture(
