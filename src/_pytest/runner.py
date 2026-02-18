@@ -5,14 +5,18 @@ from __future__ import annotations
 
 import bdb
 from collections.abc import Callable
+from contextvars import ContextVar
 import dataclasses
 import os
+import re
 import sys
+import threading
 import types
 from typing import cast
 from typing import final
 from typing import Generic
 from typing import Literal
+from typing import NewType
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -43,6 +47,12 @@ if sys.version_info < (3, 11):
 if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.terminal import TerminalReporter
+
+PytestThreadId = NewType("PytestThreadId", int)
+
+_pytest_thread_id: ContextVar[PytestThreadId | None] = ContextVar(
+    "_pytest_thread_id", default=None
+)
 
 #
 # pytest plugin hooks.
@@ -128,6 +138,20 @@ def runtestprotocol(
         # This only happens if the item is re-run, as is done by
         # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
+
+    thread = threading.current_thread()
+    if match := re.match(r"^pytest-thread-(\d+)$", thread.name):
+        thread_id = PytestThreadId(int(match.group(1)))
+        _pytest_thread_id.set(thread_id)
+        item.session._thread_started(thread, thread_id)
+    elif item.session._thread_info:
+        raise RuntimeError(
+            f"pytest threads must follow the naming convention pytest-thread-{{n}}, "
+            f"but got thread named {thread.name!r}, which does not. "
+            "(Currently registered thread names: "
+            f"{[thread.name for thread in item.session._thread_info]!r})"
+        )
+
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
@@ -203,10 +227,37 @@ def _update_current_test_var(
     If ``when`` is None, delete ``PYTEST_CURRENT_TEST`` from the environment.
     """
     var_name = "PYTEST_CURRENT_TEST"
+    value = f"{item.nodeid} ({when})"
+    # don't allow null bytes on environment variables (see #2644, #2957)
+    value = value.replace("\x00", "(null)")
+
+    # We are not synchronizing with other threads that may be registering into
+    # _thread_info. Copy to avoid races.
+    thread_info = item.session._thread_info.copy()
+    if thread_info:
+        thread = threading.current_thread()
+        # validated by our rejection of invalidly-named threads in runtestprotocol.
+        assert thread in thread_info
+        thread_info[thread].current_test_var = None if when is None else value
+        if any(info.current_test_var is not None for info in thread_info.values()):
+            os.environ[var_name] = "; ".join(
+                f"{info.pytest_thread_id}={info.current_test_var}"
+                for info in thread_info.values()
+                if info.current_test_var is not None
+            )
+        else:
+            # all items across all threads have finished.
+            #
+            # If python switches threads right after the else, we might have a
+            # race with two threads executing this code. Guard against this with
+            # try/except.
+            try:
+                os.environ.pop(var_name)
+            except KeyError:
+                pass
+        return
+
     if when:
-        value = f"{item.nodeid} ({when})"
-        # don't allow null bytes on environment variables (see #2644, #2957)
-        value = value.replace("\x00", "(null)")
         os.environ[var_name] = value
     else:
         os.environ.pop(var_name)

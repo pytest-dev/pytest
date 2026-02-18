@@ -63,6 +63,8 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
+from _pytest.runner import _pytest_thread_id
+from _pytest.runner import PytestThreadId
 from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
@@ -1013,11 +1015,30 @@ class FixtureDef(Generic[FixtureValue]):
         self.argnames: Final = getfuncargnames(func, name=argname)
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
-        self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
-        self._finalizers: Final[list[Callable[[], object]]] = []
+        self._cached_results_by_thread: dict[
+            PytestThreadId | None, _FixtureCachedResult[FixtureValue] | None
+        ] = defaultdict(lambda: None)
+        self._finalizers_by_thread: dict[
+            PytestThreadId | None, list[Callable[[], object]]
+        ] = defaultdict(list)
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
+
+    @property
+    def cached_result(self) -> _FixtureCachedResult[FixtureValue] | None:
+        key = _pytest_thread_id.get()
+        return self._cached_results_by_thread[key]
+
+    @cached_result.setter
+    def cached_result(self, value: _FixtureCachedResult[FixtureValue] | None) -> None:
+        key = _pytest_thread_id.get()
+        self._cached_results_by_thread[key] = value
+
+    @property
+    def _finalizers(self) -> list[Callable[[], object]]:
+        key = _pytest_thread_id.get()
+        return self._finalizers_by_thread[key]
 
     @property
     def scope(self) -> _ScopeName:
