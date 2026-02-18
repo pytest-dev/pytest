@@ -1264,3 +1264,34 @@ def test_teardown_session_stopped(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("--stepwise")
     result.assert_outcomes(failed=1, errors=1)
+
+
+def test_exit_in_teardown_exception_group_stops_session(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_it="""
+        import pytest
+        @pytest.fixture
+        def failing_teardown():
+            yield
+            raise IOError("Exception in teardown")
+        @pytest.fixture
+        def exit_session():
+            yield
+            pytest.exit("Forced exit")
+        def test_1(): return
+        @pytest.mark.usefixtures(
+            "failing_teardown",
+            "exit_session"
+            )
+        def test_failure(): return
+        def test_3(): return
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+    result.stdout.fnmatch_lines(
+        [
+            "!* _pytest.outcomes.Exit: Forced exit !*",
+            "=* 2 passed in * =*",
+        ]
+    )
