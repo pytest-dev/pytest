@@ -1518,7 +1518,10 @@ class Config:
         self._parser.addini("addopts", "Extra command line options", "args")
         self._parser.addini("minversion", "Minimally required pytest version")
         self._parser.addini(
-            "pythonpath", type="paths", help="Add paths to sys.path", default=[self._parser.extra_info["rootdir"]]
+            "pythonpath",
+            type="paths",
+            help="Add paths to sys.path",
+            default=[self._parser.extra_info["rootdir"]],
         )
         self._parser.addini(
             "required_plugins",
