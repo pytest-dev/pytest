@@ -481,7 +481,7 @@ class TestCaptureFixture:
     def test_capteesys_no_double_output_with_capture_no(
         self, pytester: Pytester
     ) -> None:
-        """capteesys with --capture=no should not produce doubled output (#13784)."""
+        """Capteesys with --capture=no should not produce doubled output (#13784)."""
         p = pytester.makepyfile(
             """\
             def test_one(capteesys):
