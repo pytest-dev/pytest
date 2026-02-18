@@ -365,6 +365,27 @@ def test_excinfo_for_later() -> None:
     assert "for raises" in str(e)
 
 
+def test_excinfo_for_later_strips_assertion(pytester: Pytester) -> None:
+    """ExceptionInfo created via for_later() should strip AssertionError prefix
+    with exconly(tryshort=True) for rewritten assertions (#12175)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test_tryshort():
+            with pytest.raises(AssertionError) as exc_info:
+                assert 1 == 2
+            # tryshort should strip 'AssertionError: ' from rewritten assertions
+            result = exc_info.exconly(tryshort=True)
+            assert not result.startswith("AssertionError"), (
+                f"Expected stripped prefix, got: {result!r}"
+            )
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_excinfo_errisinstance():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.errisinstance(ValueError)

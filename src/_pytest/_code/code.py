@@ -591,6 +591,12 @@ class ExceptionInfo(Generic[E]):
         """Fill an unfilled ExceptionInfo created with ``for_later()``."""
         assert self._excinfo is None, "ExceptionInfo was already filled"
         self._excinfo = exc_info
+        if isinstance(exc_info[1], AssertionError):
+            exprinfo = getattr(exc_info[1], "msg", None)
+            if exprinfo is None:
+                exprinfo = saferepr(exc_info[1])
+            if exprinfo and exprinfo.startswith(self._assert_start_repr):
+                self._striptext = "AssertionError: "
 
     @property
     def type(self) -> type[E]:
