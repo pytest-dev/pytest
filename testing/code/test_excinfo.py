@@ -386,6 +386,30 @@ def test_excinfo_for_later_strips_assertion(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
+def test_excinfo_for_later_no_strip_non_assertion() -> None:
+    """fill_unfilled() should not strip prefix for non-AssertionError exceptions."""
+    excinfo: ExceptionInfo[ValueError] = ExceptionInfo.for_later()
+    try:
+        raise ValueError("test error")
+    except ValueError:
+        excinfo.fill_unfilled(sys.exc_info())  # type: ignore[arg-type]
+    assert excinfo.exconly(tryshort=True).startswith("ValueError")
+
+
+def test_excinfo_for_later_strips_manual_assertion() -> None:
+    """fill_unfilled() handles AssertionError with explicit .msg attribute."""
+    excinfo: ExceptionInfo[AssertionError] = ExceptionInfo.for_later()
+    try:
+        err = AssertionError("manual error")
+        err.msg = "assert something"  # type: ignore[attr-defined]
+        raise err
+    except AssertionError:
+        excinfo.fill_unfilled(sys.exc_info())  # type: ignore[arg-type]
+    # Manual .msg that doesn't match _assert_start_repr should not strip
+    result = excinfo.exconly(tryshort=True)
+    assert result.startswith("AssertionError")
+
+
 def test_excinfo_errisinstance():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.errisinstance(ValueError)
