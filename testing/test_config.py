@@ -2327,9 +2327,7 @@ class TestOverrideIniArgs:
         )
         assert result.ret == _pytest.config.ExitCode.USAGE_ERROR
 
-    def test_append_args_not_duplicated(
-        self, _config_for_test, _sys_snapshot
-    ) -> None:
+    def test_append_args_not_duplicated(self, _config_for_test, _sys_snapshot) -> None:
         """Append-action args should not be duplicated after multiple parses (#13484)."""
         config = _config_for_test
         config.parse(["-Werror"], addopts=True)
