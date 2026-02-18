@@ -210,13 +210,15 @@ def test_nested_filtering_same_filter(caplog: pytest.LogCaptureFixture) -> None:
     """Nested ``caplog.filtering()`` with the same filter should not remove
     the filter when the inner context exits (#14189)."""
 
-    def no_capture(record: logging.LogRecord) -> bool:
-        return False
+    class NoCaptureFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            return False
 
+    filter_instance = NoCaptureFilter()
     with caplog.at_level(logging.INFO):
-        with caplog.filtering(no_capture):
+        with caplog.filtering(filter_instance):
             logger.info("outer before inner")
-            with caplog.filtering(no_capture):
+            with caplog.filtering(filter_instance):
                 logger.info("inside inner")
             logger.info("outer after inner")
         logger.info("outside both")
