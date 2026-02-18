@@ -546,6 +546,20 @@ class ExceptionInfo(Generic[E]):
         return cls.from_exc_info(exc_info, exprinfo)
 
     @classmethod
+    def _compute_striptext(
+        cls,
+        exc_info: tuple[type[E], E, TracebackType],
+    ) -> str:
+        """Determine if AssertionError prefix should be stripped from output."""
+        if isinstance(exc_info[1], AssertionError):
+            exprinfo = getattr(exc_info[1], "msg", None)
+            if exprinfo is None:
+                exprinfo = saferepr(exc_info[1])
+            if exprinfo and exprinfo.startswith(cls._assert_start_repr):
+                return "AssertionError: "
+        return ""
+
+    @classmethod
     def from_exc_info(
         cls,
         exc_info: tuple[type[E], E, TracebackType],
@@ -553,12 +567,8 @@ class ExceptionInfo(Generic[E]):
     ) -> ExceptionInfo[E]:
         """Like :func:`from_exception`, but using old-style exc_info tuple."""
         _striptext = ""
-        if exprinfo is None and isinstance(exc_info[1], AssertionError):
-            exprinfo = getattr(exc_info[1], "msg", None)
-            if exprinfo is None:
-                exprinfo = saferepr(exc_info[1])
-            if exprinfo and exprinfo.startswith(cls._assert_start_repr):
-                _striptext = "AssertionError: "
+        if exprinfo is None:
+            _striptext = cls._compute_striptext(exc_info)
 
         return cls(exc_info, _striptext, _ispytest=True)
 
@@ -591,12 +601,7 @@ class ExceptionInfo(Generic[E]):
         """Fill an unfilled ExceptionInfo created with ``for_later()``."""
         assert self._excinfo is None, "ExceptionInfo was already filled"
         self._excinfo = exc_info
-        if isinstance(exc_info[1], AssertionError):
-            exprinfo = getattr(exc_info[1], "msg", None)
-            if exprinfo is None:
-                exprinfo = saferepr(exc_info[1])
-            if exprinfo and exprinfo.startswith(self._assert_start_repr):
-                self._striptext = "AssertionError: "
+        self._striptext = self._compute_striptext(exc_info)
 
     @property
     def type(self) -> type[E]:
