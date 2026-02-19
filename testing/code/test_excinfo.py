@@ -279,6 +279,31 @@ class TestTraceback_f_g_h:
         recindex = traceback.recursionindex()
         assert recindex is None
 
+    def test_traceback_no_false_recursion_for_equal_code_objects(self) -> None:
+        import types
+
+        def template(n: int) -> int:
+            return next_func(n)  # type: ignore[name-defined]
+
+        f = template
+        # Use a distinct code object with equal contents to avoid false recursion detection.
+        g = types.FunctionType(template.__code__.replace(), globals(), "g")
+
+        def leaf(n: int) -> int:
+            raise ValueError("boom")
+
+        def call_g(n: int) -> int:
+            globals()["next_func"] = leaf
+            return g(n)
+
+        globals()["next_func"] = call_g
+        try:
+            excinfo = pytest.raises(ValueError, f, 1)
+        finally:
+            globals().pop("next_func", None)
+
+        assert excinfo.traceback.recursionindex() is None
+
     def test_traceback_messy_recursion(self):
         # XXX: simplified locally testable version
         decorator = pytest.importorskip("decorator").decorator
