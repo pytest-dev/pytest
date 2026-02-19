@@ -11,7 +11,7 @@ Typing in pytest
 Why type tests?
 ---------------
 
-Typing tests provides significant advantages:
+Typing tests provide significant advantages:
 
 - **Readability:** Clearly defines expected inputs and outputs, improving readability, especially in complex or parameterized tests.
 
