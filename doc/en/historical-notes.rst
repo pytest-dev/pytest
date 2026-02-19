@@ -267,13 +267,13 @@ The equivalent with "boolean conditions" is:
 
 .. code-block:: python
 
-    @pytest.mark.skipif(not pytest.config.getvalue("db"), reason="--db was not specified")
+    @pytest.mark.skipif(not request.config.getvalue("db"), reason="--db was not specified")
     def test_function():
         pass
 
 .. note::
 
-    You cannot use ``pytest.config.getvalue()`` in code
+    You cannot use ``request.config.getvalue()`` in code
     imported before pytest's argument parsing takes place.  For example,
     ``conftest.py`` files are imported before command line parsing and thus
     ``config.getvalue()`` will not execute correctly.
