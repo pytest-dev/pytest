@@ -1,0 +1,1 @@
+Fixed class-scoped fixtures defined in base classes not being visible to all inheriting test classes.
