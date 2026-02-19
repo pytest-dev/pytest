@@ -272,6 +272,7 @@ The equivalent with "boolean conditions" using ``request.config`` is:
         if not request.config.getoption("--db", default=False):
             pytest.skip("--db was not specified")
 
+
     def test_function():
         pass
 
