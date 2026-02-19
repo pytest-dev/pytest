@@ -1,1 +1,1 @@
-Fixed :meth:`ExceptionInfo.exconly(tryshort=True) <ExceptionInfo.exconly>` not stripping the ``AssertionError`` prefix when the :class:`ExceptionInfo` was created via :meth:`ExceptionInfo.for_later` (e.g. when using :func:`pytest.raises`).
+Fixed :meth:`ExceptionInfo.exconly(tryshort=True) <pytest.ExceptionInfo.exconly>` not stripping the ``AssertionError`` prefix when the :class:`~pytest.ExceptionInfo` was created via :meth:`ExceptionInfo.for_later() <pytest.ExceptionInfo.for_later>` (e.g. when using :func:`pytest.raises`).
