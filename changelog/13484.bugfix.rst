@@ -1,0 +1,1 @@
+Fixed ``known_args_namespace`` containing duplicate values for append-action arguments like ``-W`` due to re-parsing into the same namespace.
