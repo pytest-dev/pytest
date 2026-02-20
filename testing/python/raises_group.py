@@ -1372,9 +1372,7 @@ def test_stale_loop_variable_in_error_message() -> None:
     # expected (index 0) would use results from the last expected (index 2)
     # instead of its own, potentially showing incorrect "It matches" lines.
     with pytest.raises(Failed) as exc_info:
-        with RaisesGroup(
-            RaisesExc(ValueError, match="foo"), TypeError, RuntimeError
-        ):
+        with RaisesGroup(RaisesExc(ValueError, match="foo"), TypeError, RuntimeError):
             raise ExceptionGroup(
                 "",
                 [ValueError("bar"), TypeError(), KeyError()],
