@@ -438,7 +438,8 @@ class TestRaises:
         as a real regex (not a fully-escaped literal), so that pytest does not
         attempt an exact-string diff against it.
         """
-        from _pytest.raises import is_fully_escaped, unescape
+        from _pytest.raises import is_fully_escaped
+        from _pytest.raises import unescape
 
         # Pipe is a metacharacter and should not be treated as escaped
         assert not is_fully_escaped("foo|bar")
