@@ -430,3 +430,21 @@ class TestRaises:
         pattern_with_flags = re.compile(r"INVALID LITERAL", re.IGNORECASE)
         with pytest.raises(ValueError, match=pattern_with_flags):
             int("asdf")
+
+    def test_pipe_metacharacter_not_treated_as_literal(self) -> None:
+        """Regression test: | (pipe) must be recognized as a regex metacharacter.
+
+        When match='^foo|bar$' is used, is_fully_escaped should recognize this
+        as a real regex (not a fully-escaped literal), so that pytest does not
+        attempt an exact-string diff against it.
+        """
+        from _pytest.raises import is_fully_escaped, unescape
+
+        # Pipe is a metacharacter and should not be treated as escaped
+        assert not is_fully_escaped("foo|bar")
+
+        # Escaped pipe should be treated as a literal
+        assert is_fully_escaped(r"foo\|bar")
+
+        # unescape should remove the backslash from an escaped pipe
+        assert unescape(r"foo\|bar") == "foo|bar"
