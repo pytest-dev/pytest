@@ -1355,3 +1355,29 @@ def test_tuples() -> None:
         ),
     ):
         RaisesGroup((ValueError, IndexError))  # type: ignore[call-overload]
+
+
+def test_stale_loop_variable_in_error_message() -> None:
+    """Regression test: error message for failed expected exceptions should
+    reference the correct expected index, not a stale loop variable from
+    a previous enumerate() loop."""
+    # We need multiple expected exceptions where a non-last expected fails.
+    # Expected: [RaisesExc(ValueError, match='foo'), TypeError, RuntimeError]
+    # Actual:   [ValueError('bar'), TypeError(), KeyError()]
+    # Greedy matching: TypeError() pairs with TypeError (index 1->1)
+    # Failed expected: index 0 (match fails) and index 2 (KeyError is not RuntimeError)
+    # Remaining actual: index 0 (ValueError('bar')) and index 2 (KeyError())
+    #
+    # With the stale-variable bug, the error message for the first failed
+    # expected (index 0) would use results from the last expected (index 2)
+    # instead of its own, potentially showing incorrect "It matches" lines.
+    with pytest.raises(Failed) as exc_info:
+        with RaisesGroup(RaisesExc(ValueError, match="foo"), TypeError, RuntimeError):
+            raise ExceptionGroup(
+                "",
+                [ValueError("bar"), TypeError(), KeyError()],
+            )
+    # Verify the error message references the correct expected exceptions
+    message = str(exc_info.value)
+    assert "RaisesExc(ValueError, match='foo')" in message
+    assert "RuntimeError" in message

@@ -1365,7 +1365,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
                 f"\n{indent_1}{self._repr_expected(self.expected_exceptions[i_failed])}"
             )
             for i_actual, actual in enumerate(actual_exceptions):
-                if results.get_result(i_exp, i_actual) is None:
+                if results.get_result(i_failed, i_actual) is None:
                     # we print full repr of match target
                     s += (
                         f"\n{indent_2}It matches {backquote(repr(actual))} which was paired with "
