@@ -53,6 +53,12 @@ def catch_warnings_for_item(
                 for arg in mark.args:
                     warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
 
+        strict_warnings = bool(config.getini("strict_warnings")) or bool(
+            getattr(config.option, "strict_warnings", False)
+        )
+        if strict_warnings:
+            warnings.filterwarnings("error", category=pytest.PytestWarning)
+
         try:
             yield
         finally:

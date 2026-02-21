@@ -106,6 +106,19 @@ def pytest_addoption(parser: Parser) -> None:
         "Processed after -W/--pythonwarnings.",
     )
 
+    parser.addini(
+        "strict_warnings",
+        type="bool",
+        default=False,
+        help="If true, treat internal pytest warnings (PytestWarning and subclasses) as errors.",
+    )
+    group.addoption(
+        "--strict-warnings",
+        action="store_true",
+        dest="strict_warnings",
+        help="Treat internal pytest warnings (PytestWarning and subclasses) as errors.",
+    )
+
     group = parser.getgroup("collect", "collection")
     group.addoption(
         "--collectonly",

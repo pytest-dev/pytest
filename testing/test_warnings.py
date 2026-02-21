@@ -590,6 +590,34 @@ class TestAssertionWarnings:
             result, "assertion is always true, perhaps remove parentheses?"
         )
 
+def test_strict_warnings_treats_pytest_collection_warning_as_error(
+    pytester: Pytester,
+) -> None:
+    """In strict warnings mode, PytestCollectionWarning should be treated as an error."""
+    pytester.makepyfile(
+        """
+        import pytest
+        pytestmark = pytest.mark.filterwarnings("default::pytest.PytestCollectionWarning")
+
+        class TestFoo:
+            def __new__(cls):
+                return super().__new__(cls)
+        """
+    )
+    result = pytester.runpytest("--collect-only")
+    result.stdout.fnmatch_lines(
+        [
+            "*warnings summary*",
+            "*PytestCollectionWarning: cannot collect test class 'TestFoo' because it has a __new__ constructor*",
+        ]
+    )
+    result_strict = pytester.runpytest("--collect-only", "--strict-warnings")
+    assert result_strict.ret != 0
+    result_strict.stdout.fnmatch_lines(
+        [
+            "*PytestCollectionWarning: cannot collect test class 'TestFoo' because it has a __new__ constructor*",
+        ]
+    )
 
 def test_warnings_checker_twice() -> None:
     """Issue #4617"""
