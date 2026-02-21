@@ -789,7 +789,7 @@ class LoggingPlugin:
 
     @hookimpl(wrapper=True)
     def pytest_runtestloop(self, session: Session) -> Generator[None, object, object]:
-        if session.config.option.collectonly:
+        if session.config.option.collectonly or session.config.option.collect_only_tree:
             return (yield)
 
         if self._log_cli_enabled() and self._config.get_verbosity() < 1:

@@ -142,6 +142,13 @@ def pytest_addoption(parser: Parser) -> None:
         help="Only collect tests, don't execute them",
     )
     group.addoption(
+        "--collect-only-tree",
+        "--co-tree",
+        action="store_true",
+        dest="collect_only_tree",
+        help="Like --collect-only, but display as a tree with box-drawing characters",
+    )
+    group.addoption(
         "--pyargs",
         action="store_true",
         help="Try to interpret all arguments as Python packages",
@@ -387,7 +394,7 @@ def pytest_runtestloop(session: Session) -> bool:
             f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
         )
 
-    if session.config.option.collectonly:
+    if session.config.option.collectonly or session.config.option.collect_only_tree:
         return True
 
     for i, item in enumerate(session.items):

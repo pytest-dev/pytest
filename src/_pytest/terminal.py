@@ -375,6 +375,198 @@ class WarningReport:
         return None
 
 
+@dataclasses.dataclass
+class CollectionTreeNode:
+    """A node in the collection tree."""
+
+    node: Node
+    children: list[CollectionTreeNode] = dataclasses.field(default_factory=list)
+
+    @property
+    def name(self) -> str:
+        return self.node.name
+
+
+class CollectionTree:
+    """A tree structure built from collected test items.
+
+    This class separates the concern of building a hierarchical representation
+    of collected items from the concern of rendering that structure. Different
+    output formats (tree, JSON, etc.) can use the same tree structure.
+
+    Note: This builds a *structural* view of tests grouped by their hierarchy
+    (directory/module/class), not an *execution order* view. This means it
+    deliberately does not reflect reordering from hooks like
+    ``pytest_collection_modifyitems``. The classic ``--collect-only`` output
+    shows execution order; this tree view answers "how are tests organized?"
+    rather than "what order will tests run?".
+    """
+
+    def __init__(self, items: Sequence[Item]) -> None:
+        self.roots: list[CollectionTreeNode] = []
+        self._node_map: dict[int, CollectionTreeNode] = {}
+        self._build(items)
+
+    def _build(self, items: Sequence[Item]) -> None:
+        """Build the tree structure from collected items."""
+        # Track seen names per parent to deduplicate overlapping collection paths
+        seen_names: dict[int | None, set[str]] = {None: set()}
+
+        for item in items:
+            chain = item.listchain()[1:]  # strip Session
+            parent_tree_node: CollectionTreeNode | None = None
+
+            for pytest_node in chain:
+                node_id = id(pytest_node)
+                parent_id = id(parent_tree_node.node) if parent_tree_node else None
+
+                # Check if we've already added this exact node object
+                if node_id in self._node_map:
+                    parent_tree_node = self._node_map[node_id]
+                    continue
+
+                # Check for name collision (different object, same name under same parent)
+                if parent_id not in seen_names:
+                    seen_names[parent_id] = set()
+                if pytest_node.name in seen_names[parent_id]:
+                    # Find existing node with this name
+                    if parent_tree_node is None:
+                        for root in self.roots:
+                            if root.name == pytest_node.name:
+                                parent_tree_node = root
+                                break
+                    else:
+                        for child in parent_tree_node.children:
+                            if child.name == pytest_node.name:
+                                parent_tree_node = child
+                                break
+                    continue
+                seen_names[parent_id].add(pytest_node.name)
+
+                # Create new tree node
+                tree_node = CollectionTreeNode(node=pytest_node)
+                self._node_map[node_id] = tree_node
+
+                if parent_tree_node is None:
+                    self.roots.append(tree_node)
+                else:
+                    parent_tree_node.children.append(tree_node)
+
+                parent_tree_node = tree_node
+
+    def render_tree(
+        self, tw: TerminalWriter, verbosity: int = 0, use_markup: bool = True
+    ) -> None:
+        """Render the tree with box-drawing characters."""
+        # Import here to avoid circular imports
+        from _pytest.main import Dir
+        from _pytest.main import Session
+        from _pytest.python import Class
+        from _pytest.python import Function
+        from _pytest.python import Module
+        from _pytest.python import Package
+
+        # Check Unicode support separately from color support
+        use_unicode = True
+        if tw._file is not None:
+            encoding = getattr(tw._file, "encoding", None) or ""
+            use_unicode = "utf" in encoding.lower()
+
+        def get_node_markup(pytest_node: Node) -> dict[str, bool]:
+            """Return markup kwargs for a node based on its type."""
+            if not use_markup:
+                return {}
+            if isinstance(pytest_node, (Module, nodes.File)):
+                return {"bold": True}
+            elif isinstance(pytest_node, Package):
+                return {"bold": True, "cyan": True}
+            elif isinstance(pytest_node, nodes.Directory):
+                return {"bold": True}
+            elif isinstance(pytest_node, Class):
+                return {"cyan": True}
+            elif isinstance(pytest_node, Function):
+                return {"green": True}
+            return {}
+
+        def get_node_label(pytest_node: Node) -> str:
+            """Return a label for a node."""
+            standard_types = (
+                Module,
+                Function,
+                Class,
+                Package,
+                Dir,
+                Session,
+                nodes.Directory,
+                nodes.File,
+                nodes.Item,
+            )
+            node_type = type(pytest_node)
+            is_custom = not any(node_type is t for t in standard_types) and isinstance(
+                pytest_node, standard_types
+            )
+            if is_custom:
+                return f"{pytest_node.name} ({node_type.__name__})"
+            return pytest_node.name
+
+        def render_node(
+            tree_node: CollectionTreeNode,
+            depth: int,
+            is_last_at_level: list[bool],
+            is_last: bool,
+        ) -> None:
+            # Build prefix
+            if depth == 0:
+                prefix = ""
+            else:
+                prefix_parts = []
+                for i in range(1, depth):
+                    if is_last_at_level[i]:
+                        prefix_parts.append("    ")
+                    else:
+                        prefix_parts.append("│   " if use_unicode else "|   ")
+                if is_last:
+                    prefix_parts.append("└── " if use_unicode else "`-- ")
+                else:
+                    prefix_parts.append("├── " if use_unicode else "+-- ")
+                prefix = "".join(prefix_parts)
+
+            label = get_node_label(tree_node.node)
+            markup = get_node_markup(tree_node.node)
+            tw.write(prefix)
+            tw.line(label, **markup)
+
+            # Print docstrings if verbosity >= 1
+            if verbosity >= 1:
+                obj = getattr(tree_node.node, "obj", None)
+                doc = inspect.getdoc(obj) if obj else None
+                if doc:
+                    doc_prefix_parts = []
+                    for i in range(1, depth):
+                        if is_last_at_level[i]:
+                            doc_prefix_parts.append("    ")
+                        else:
+                            doc_prefix_parts.append("│   " if use_unicode else "|   ")
+                    if depth > 0:
+                        if is_last:
+                            doc_prefix_parts.append("    ")
+                        else:
+                            doc_prefix_parts.append("│   " if use_unicode else "|   ")
+                    doc_prefix = "".join(doc_prefix_parts)
+                    for line in doc.splitlines():
+                        tw.line(f"{doc_prefix}{line}")
+
+            # Render children
+            new_is_last_at_level = [*is_last_at_level, is_last]
+            for i, child in enumerate(tree_node.children):
+                child_is_last = i == len(tree_node.children) - 1
+                render_node(child, depth + 1, new_is_last_at_level, child_is_last)
+
+        for i, root in enumerate(self.roots):
+            is_last = i == len(self.roots) - 1
+            render_node(root, 0, [], is_last)
+
+
 @final
 class TerminalReporter:
     def __init__(self, config: Config, file: TextIO | None = None) -> None:
@@ -912,11 +1104,16 @@ class TerminalReporter:
         )
         self._write_report_lines_from_hooks(lines)
 
-        if self.config.getoption("collectonly"):
+        if self.config.getoption("collectonly") or self.config.getoption(
+            "collect_only_tree"
+        ):
             if session.items:
                 if self.config.option.verbose > -1:
                     self._tw.line("")
-                self._printcollecteditems(session.items)
+                if self.config.getoption("collect_only_tree"):
+                    self._printcollecteditems_tree(session.items)
+                else:
+                    self._printcollecteditems(session.items)
 
             failed = self.stats.get("failed")
             if failed:
@@ -925,15 +1122,14 @@ class TerminalReporter:
                     rep.toterminal(self._tw)
 
     def _printcollecteditems(self, items: Sequence[Item]) -> None:
+        """Print collected items in classic <Type name> format.
+
+        Uses stack-based traversal to follow collection order, which naturally
+        handles --keep-duplicates by reprinting nodes when paths diverge.
+        """
         test_cases_verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
         if test_cases_verbosity < 0:
-            if test_cases_verbosity < -1:
-                counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
-                for name, count in sorted(counts.items()):
-                    self._tw.line(f"{name}: {count}")
-            else:
-                for item in items:
-                    self._tw.line(item.nodeid)
+            self._print_items_quiet(items, test_cases_verbosity)
             return
         stack: list[Node] = []
         indent = ""
@@ -953,6 +1149,25 @@ class TerminalReporter:
                     if doc:
                         for line in doc.splitlines():
                             self._tw.line("{}{}".format(indent + "  ", line))
+
+    def _printcollecteditems_tree(self, items: Sequence[Item]) -> None:
+        """Print collected items as a tree with box-drawing characters."""
+        test_cases_verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
+        if test_cases_verbosity < 0:
+            self._print_items_quiet(items, test_cases_verbosity)
+            return
+        tree = CollectionTree(items)
+        tree.render_tree(self._tw, test_cases_verbosity, self.hasmarkup)
+
+    def _print_items_quiet(self, items: Sequence[Item], verbosity: int) -> None:
+        """Print items in quiet mode (nodeid or count format)."""
+        if verbosity < -1:
+            counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
+            for name, count in sorted(counts.items()):
+                self._tw.line(f"{name}: {count}")
+        else:
+            for item in items:
+                self._tw.line(item.nodeid)
 
     @hookimpl(wrapper=True)
     def pytest_sessionfinish(
@@ -1418,7 +1633,9 @@ class TerminalReporter:
         The final color of the line is also determined by this function, and is the second
         element of the returned tuple.
         """
-        if self.config.getoption("collectonly"):
+        if self.config.getoption("collectonly") or self.config.getoption(
+            "collect_only_tree"
+        ):
             return self._build_collect_only_summary_stats_line()
         else:
             return self._build_normal_summary_stats_line()
