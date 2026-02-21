@@ -11,6 +11,11 @@ If this change fixes an issue, please:
 
 - [ ] Add text like ``closes #XYZW`` to the PR description and/or commits (where ``XYZW`` is the issue number). See the [github docs](https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) for more information.
 
+**If you used AI/LLM tools** (e.g. GitHub Copilot, ChatGPT, Claude, or similar) to help with this PR, you **must** disclose it below. State which tools were used and to what extent. Purely agentic contributions are not accepted. See our [AI/LLM-Assisted Contributions Policy](https://github.com/pytest-dev/pytest/blob/main/CONTRIBUTING.rst#aillm-assisted-contributions-policy).
+
+- [ ] This PR was made **without** AI/LLM assistance.
+- [ ] This PR used AI/LLM assistance (describe tools and extent below).
+
 Unless your change is trivial or a small documentation fix (e.g., a typo or reword of a small section) please:
 
 - [ ] Create a new changelog file in the `changelog` directory, with a name like `<ISSUE NUMBER>.<TYPE>.rst`. See [changelog/README.rst](https://github.com/pytest-dev/pytest/blob/main/changelog/README.rst) for details.
