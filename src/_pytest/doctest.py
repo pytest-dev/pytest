@@ -31,6 +31,7 @@ from _pytest.compat import safe_getattr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import fixture
+from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import TopRequest
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -249,6 +250,9 @@ def _get_runner(
 
 
 class DoctestItem(Item):
+    _fixtureinfo: FuncFixtureInfo
+    fixturenames: list[str]
+
     def __init__(
         self,
         name: str,
@@ -259,14 +263,7 @@ class DoctestItem(Item):
         super().__init__(name, parent)
         self.runner = runner
         self.dtest = dtest
-
-        # Stuff needed for fixture support.
         self.obj = None
-        fm = self.session._fixturemanager
-        fixtureinfo = fm.getfixtureinfo(node=self, func=None, cls=None)
-        self._fixtureinfo = fixtureinfo
-        self.fixturenames = fixtureinfo.names_closure
-        self._initrequest()
 
     @classmethod
     def from_parent(  # type: ignore[override]
@@ -279,7 +276,13 @@ class DoctestItem(Item):
     ) -> Self:
         # incompatible signature due to imposed limits on subclass
         """The public named constructor."""
-        return super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
+        item = super().from_parent(name=name, parent=parent, runner=runner, dtest=dtest)
+        fm = item.session._fixturemanager
+        fixtureinfo = fm.getfixtureinfo(node=item, func=None, cls=None)
+        item._fixtureinfo = fixtureinfo
+        item.fixturenames = fixtureinfo.names_closure
+        item._initrequest()
+        return item
 
     def _initrequest(self) -> None:
         self.funcargs: dict[str, object] = {}
