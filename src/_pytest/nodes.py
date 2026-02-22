@@ -594,7 +594,13 @@ class FSCollector(Collector, abc.ABC):
                 assert path is None
                 path = path_or_parent
 
-        path = _imply_path(type(self), path, fspath=fspath)
+        if path is not None:
+            # Path was already resolved (typically by from_parent); skip
+            # _imply_path to avoid a duplicate deprecation warning for fspath.
+            if fspath is not None:
+                _check_path(path, fspath)
+        else:
+            path = _imply_path(type(self), path, fspath=fspath)
         if name is None:
             name = self._derive_name(path, parent)
         self.path = path

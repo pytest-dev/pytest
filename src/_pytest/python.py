@@ -1580,12 +1580,11 @@ class Function(PyobjMixin, nodes.Item):
         config: Config | None = None,
         callspec: CallSpec2 | None = None,
         callobj=NOTSET,
-        keywords: Mapping[str, Any] | None = None,
         session: Session | None = None,
-        fixtureinfo: FuncFixtureInfo | None = None,
         originalname: str | None = None,
+        **kw,
     ) -> None:
-        super().__init__(name, parent, config=config, session=session)
+        super().__init__(name, parent, config=config, session=session, **kw)
 
         if callobj is not NOTSET:
             self._obj = callobj
