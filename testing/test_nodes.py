@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import re
 import warnings
@@ -169,3 +170,138 @@ def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.stdout.fnmatch_lines([str(p) + ":*: AssertionError", "*1 failed in *"])
+
+
+class TestNodeidPrefixComputation:
+    """Tests for nodeid prefix computation for paths outside rootdir."""
+
+    def test_path_in_site_packages_found(self, tmp_path: Path) -> None:
+        """Test _path_in_site_packages finds paths inside site-packages."""
+        fake_site_packages = tmp_path / "site-packages"
+        fake_site_packages.mkdir()
+        pkg_path = fake_site_packages / "mypackage" / "tests" / "test_foo.py"
+        pkg_path.parent.mkdir(parents=True)
+        pkg_path.touch()
+
+        site_packages = frozenset([fake_site_packages])
+        result = nodes._path_in_site_packages(pkg_path, site_packages)
+
+        assert result is not None
+        sp_dir, rel_path = result
+        assert sp_dir == fake_site_packages
+        assert rel_path == Path("mypackage/tests/test_foo.py")
+
+    def test_path_in_site_packages_not_found(self, tmp_path: Path) -> None:
+        """Test _path_in_site_packages returns None for paths outside site-packages."""
+        fake_site_packages = tmp_path / "site-packages"
+        fake_site_packages.mkdir()
+        other_path = tmp_path / "other" / "test_foo.py"
+        other_path.parent.mkdir(parents=True)
+        other_path.touch()
+
+        site_packages = frozenset([fake_site_packages])
+        result = nodes._path_in_site_packages(other_path, site_packages)
+
+        assert result is None
+
+    def test_compute_nodeid_inside_rootpath(self, tmp_path: Path) -> None:
+        """Test nodeid computation for paths inside rootpath."""
+        rootpath = tmp_path / "project"
+        rootpath.mkdir()
+        test_file = rootpath / "tests" / "test_foo.py"
+        test_file.parent.mkdir(parents=True)
+        test_file.touch()
+
+        result = nodes.compute_nodeid_prefix_for_path(
+            path=test_file,
+            rootpath=rootpath,
+            invocation_dir=rootpath,
+            site_packages=frozenset(),
+        )
+
+        assert result == "tests/test_foo.py"
+
+    def test_compute_nodeid_outside_rootpath(self, tmp_path: Path) -> None:
+        """Test nodeid computation for paths outside rootpath uses bestrelpath."""
+        rootpath = tmp_path / "project"
+        rootpath.mkdir()
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        test_file = tests_dir / "test_foo.py"
+        test_file.touch()
+
+        result = nodes.compute_nodeid_prefix_for_path(
+            path=test_file,
+            rootpath=rootpath,
+            invocation_dir=rootpath,
+            site_packages=frozenset(),
+        )
+
+        # Uses bestrelpath since outside rootpath
+        assert result == "../tests/test_foo.py"
+
+    def test_compute_nodeid_in_site_packages(self, tmp_path: Path) -> None:
+        """Test nodeid computation for paths in site-packages uses site:// prefix."""
+        rootpath = tmp_path / "project"
+        rootpath.mkdir()
+        fake_site_packages = tmp_path / "site-packages"
+        fake_site_packages.mkdir()
+        pkg_test = fake_site_packages / "mypackage" / "tests" / "test_foo.py"
+        pkg_test.parent.mkdir(parents=True)
+        pkg_test.touch()
+
+        result = nodes.compute_nodeid_prefix_for_path(
+            path=pkg_test,
+            rootpath=rootpath,
+            invocation_dir=rootpath,
+            site_packages=frozenset([fake_site_packages]),
+        )
+
+        assert result == "site://mypackage/tests/test_foo.py"
+
+    def test_compute_nodeid_nearby_relative(self, tmp_path: Path) -> None:
+        """Test nodeid computation for nearby paths uses relative path."""
+        rootpath = tmp_path / "project"
+        rootpath.mkdir()
+        sibling = tmp_path / "sibling" / "tests" / "test_foo.py"
+        sibling.parent.mkdir(parents=True)
+        sibling.touch()
+
+        result = nodes.compute_nodeid_prefix_for_path(
+            path=sibling,
+            rootpath=rootpath,
+            invocation_dir=rootpath,
+        )
+
+        assert result == "../sibling/tests/test_foo.py"
+
+    def test_compute_nodeid_far_away_absolute(self, tmp_path: Path) -> None:
+        """Test nodeid computation for far-away paths uses absolute path."""
+        rootpath = tmp_path / "deep" / "nested" / "project"
+        rootpath.mkdir(parents=True)
+        far_away = tmp_path / "other" / "location" / "tests" / "test_foo.py"
+        far_away.parent.mkdir(parents=True)
+        far_away.touch()
+
+        result = nodes.compute_nodeid_prefix_for_path(
+            path=far_away,
+            rootpath=rootpath,
+            invocation_dir=rootpath,
+        )
+
+        # Should use absolute path since it's more than 2 levels up
+        # Use nodes.SEP for cross-platform compatibility (nodeids always use forward slashes)
+        assert result == str(far_away).replace(os.sep, nodes.SEP)
+
+    def test_compute_nodeid_rootpath_itself(self, tmp_path: Path) -> None:
+        """Test nodeid computation for rootpath itself returns empty string."""
+        rootpath = tmp_path / "project"
+        rootpath.mkdir()
+
+        result = nodes.compute_nodeid_prefix_for_path(
+            path=rootpath,
+            rootpath=rootpath,
+            invocation_dir=rootpath,
+        )
+
+        assert result == ""
