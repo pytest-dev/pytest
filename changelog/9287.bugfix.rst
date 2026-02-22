@@ -1,0 +1,47 @@
+Teardown of parametrized fixtures now happens in the teardown stage of the test before the parameter changes.
+
+Previously teardown would happen in the setup stage of the test where the parameter changes.
+
+If a test forces teardown of a parametrized fixture, e.g. using ``request.getfixturevalue()``, it instead fails. An example of such test:
+
+.. code-block:: pytest
+
+    # conftest.py
+    import pytest
+
+    @pytest.hookimpl(wrapper=True, tryfirst=True)
+    def pytest_collection_modifyitems(items):
+        # Disable built-in test reordering.
+        original_items = items[:]
+        yield
+        items[:] = original_items
+
+    # test_invalid.py
+    import pytest
+
+    @pytest.fixture(scope="session")
+    def foo(request):
+        return getattr(request, "param", "default")
+
+    @pytest.mark.parametrize("foo", [1], indirect=True)
+    def test_a(foo):
+        assert foo == 1
+
+    def test_b(request):
+        request.getfixturevalue("foo")
+
+    @pytest.mark.parametrize("foo", [1], indirect=True)
+    def test_c(foo):
+        assert foo == 1
+
+This produces the following error:
+
+.. code-block:: console
+
+    Parameter for the requested fixture changed unexpectedly in test:
+        test_invalid.py::test_b
+    Requested fixture 'foo' defined in:
+        test_invalid.py:4
+
+    Previous parameter value: 1
+    New parameter value: None
