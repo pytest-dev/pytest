@@ -701,15 +701,22 @@ class Item(Node, abc.ABC):
         #: for this test.
         self.user_properties: list[tuple[str, object]] = []
 
-        self._check_item_and_collector_diamond_inheritance()
+    @classmethod
+    def from_parent(cls, parent: Node, **kw) -> Self:
+        """Public constructor for Items.
 
-    def _check_item_and_collector_diamond_inheritance(self) -> None:
+        This calls the diamond inheritance check before delegating to
+        :meth:`Node.from_parent`.
+        """
+        cls._check_item_and_collector_diamond_inheritance()
+        return super().from_parent(parent=parent, **kw)
+
+    @classmethod
+    def _check_item_and_collector_diamond_inheritance(cls) -> None:
         """
         Check if the current type inherits from both File and Collector
         at the same time, emitting a warning accordingly (#8447).
         """
-        cls = type(self)
-
         # We inject an attribute in the type to avoid issuing this warning
         # for the same class more than once, which is not helpful.
         # It is a hack, but was deemed acceptable in order to avoid
