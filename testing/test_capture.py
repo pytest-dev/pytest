@@ -478,6 +478,30 @@ class TestCaptureFixture:
         result.stdout.fnmatch_lines(["sTdoUt", "sTdeRr"])  # no tee, just reported
         assert not result.stderr.lines
 
+    def test_capteesys_no_global_capture(self, pytester: Pytester) -> None:
+        """When global capture is disabled (-s), capteesys should not duplicate output.
+
+        It should pass output straight through (printed once) and capteesys.readouterr()
+        should return empty strings since no per-test capture is active.
+        """
+        p = pytester.makepyfile(
+            """\
+            import sys
+
+            def test_one(capteesys):
+                print("sTdoUt")
+                print("sTdeRr", file=sys.stderr)
+                out, err = capteesys.readouterr()
+                assert out == ""
+                assert err == ""
+            """
+        )
+        # Run with -s to disable global capture; ensure each line appears exactly once
+        result = pytester.runpytest_subprocess(p, "-s", "--quiet", "--quiet")
+        assert result.ret == ExitCode.OK
+        assert result.stdout.str().count("sTdoUt") == 1
+        assert result.stderr.str().count("sTdeRr") == 1
+
     def test_capsyscapfd(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """\
