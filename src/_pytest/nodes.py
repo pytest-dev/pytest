@@ -585,6 +585,7 @@ class FSCollector(Collector, abc.ABC):
         session: Session | None = None,
         nodeid: str | None = None,
     ) -> None:
+        # Legacy path_or_parent handling — kept for non-cooperative constructors.
         if path_or_parent:
             if isinstance(path_or_parent, Node):
                 assert parent is None
@@ -595,15 +596,7 @@ class FSCollector(Collector, abc.ABC):
 
         path = _imply_path(type(self), path, fspath=fspath)
         if name is None:
-            name = path.name
-            if parent is not None and parent.path != path:
-                try:
-                    rel = path.relative_to(parent.path)
-                except ValueError:
-                    pass
-                else:
-                    name = str(rel)
-                name = norm_sep(name)
+            name = self._derive_name(path, parent)
         self.path = path
 
         if session is None:
@@ -611,13 +604,7 @@ class FSCollector(Collector, abc.ABC):
             session = parent.session
 
         if nodeid is None:
-            try:
-                nodeid = str(self.path.relative_to(session.config.rootpath))
-            except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
-
-            if nodeid:
-                nodeid = norm_sep(nodeid)
+            nodeid = self._derive_nodeid(path, parent, session)
 
         super().__init__(
             name=name,
@@ -629,6 +616,35 @@ class FSCollector(Collector, abc.ABC):
         )
 
     @classmethod
+    def _derive_name(cls, path: Path, parent: Node | None) -> str:
+        """Derive a collector name from its path and parent."""
+        name = path.name
+        if parent is not None and parent.path != path:
+            try:
+                rel = path.relative_to(parent.path)
+            except ValueError:
+                pass
+            else:
+                name = str(rel)
+            name = norm_sep(name)
+        return name
+
+    @classmethod
+    def _derive_nodeid(
+        cls, path: Path, parent: Node | None, session: Session
+    ) -> str | None:
+        """Derive a node ID from its path and the session root."""
+        nodeid: str | None
+        try:
+            nodeid = str(path.relative_to(session.config.rootpath))
+        except ValueError:
+            nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
+
+        if nodeid:
+            nodeid = norm_sep(nodeid)
+        return nodeid
+
+    @classmethod
     def from_parent(
         cls,
         parent,
@@ -637,7 +653,18 @@ class FSCollector(Collector, abc.ABC):
         path: Path | None = None,
         **kw,
     ) -> Self:
-        """The public constructor."""
+        """The public constructor.
+
+        Pre-computes name and nodeid from the path so that ``__init__``
+        receives fully resolved values.
+        """
+        path = _imply_path(cls, path, fspath=fspath)
+
+        if "name" not in kw:
+            kw["name"] = cls._derive_name(path, parent)
+        if "nodeid" not in kw:
+            kw["nodeid"] = cls._derive_nodeid(path, parent, parent.session)
+
         return super().from_parent(parent=parent, fspath=fspath, path=path, **kw)
 
 
