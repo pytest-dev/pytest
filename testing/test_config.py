@@ -14,6 +14,7 @@ from typing import Any
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list
+from _pytest.config import _get_prog_name
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool
 from _pytest.config import Config
@@ -3072,3 +3073,83 @@ class TestInicfgDeprecation:
 
         result = pytester.runpytest()
         assert result.ret == 0
+
+
+class TestProgName:
+    """Test program name display in help and error messages (issue #1764)."""
+
+    def test_get_prog_name_programmatic_invocation(self) -> None:
+        """When invoked programmatically, prog should be 'pytest.main()'."""
+        # Regardless of what argv[0] is, programmatic invocation should
+        # always show pytest.main()
+        assert (
+            _get_prog_name(invoked_from_console=False, _argv=["setup.py", "test"])
+            == "pytest.main()"
+        )
+        assert (
+            _get_prog_name(invoked_from_console=False, _argv=["my_script.py"])
+            == "pytest.main()"
+        )
+
+    def test_get_prog_name_console_pytest(self) -> None:
+        """When invoked via 'pytest' CLI, prog should be 'pytest'."""
+        assert (
+            _get_prog_name(
+                invoked_from_console=True, _argv=["/usr/bin/pytest", "--help"]
+            )
+            == "pytest"
+        )
+        assert (
+            _get_prog_name(invoked_from_console=True, _argv=["pytest", "-v"])
+            == "pytest"
+        )
+
+    def test_get_prog_name_console_python_m_pytest(self) -> None:
+        """When invoked via 'python -m pytest', prog should be 'python -m pytest'."""
+        # When running as python -m pytest, argv[0] is the path to __main__.py
+        assert (
+            _get_prog_name(
+                invoked_from_console=True,
+                _argv=["/path/to/site-packages/pytest/__main__.py", "--help"],
+            )
+            == "python -m pytest"
+        )
+        assert (
+            _get_prog_name(invoked_from_console=True, _argv=["__main__.py", "-v"])
+            == "python -m pytest"
+        )
+
+    def test_get_prog_name_empty_argv(self) -> None:
+        """When argv is empty, should handle gracefully."""
+        # Empty argv with console invocation should default to pytest
+        assert _get_prog_name(invoked_from_console=True, _argv=[]) == "pytest"
+        # Empty argv with programmatic invocation should show pytest.main()
+        assert _get_prog_name(invoked_from_console=False, _argv=[]) == "pytest.main()"
+
+    def test_prog_in_error_message_programmatic(self, pytester: Pytester) -> None:
+        """Error messages should show 'pytest.main()' when called programmatically.
+
+        runpytest_inprocess calls pytest.main() directly, so it should show
+        pytest.main() as the program name.
+        """
+        result = pytester.runpytest_inprocess("--invalid-option-xyz")
+        result.stderr.fnmatch_lines(["*pytest.main(): error:*invalid-option-xyz*"])
+
+    def test_prog_in_error_message_cli(self, pytester: Pytester) -> None:
+        """Error messages should show 'python -m pytest' when called from CLI subprocess.
+
+        runpytest_subprocess runs pytest via 'python -m pytest', so it should
+        show 'python -m pytest' as the program name.
+        """
+        result = pytester.runpytest_subprocess("--invalid-option-xyz")
+        result.stderr.fnmatch_lines(["*python -m pytest: error:*invalid-option-xyz*"])
+
+    def test_prog_in_usage_programmatic(self, pytester: Pytester) -> None:
+        """Usage line should show 'pytest.main()' when called programmatically."""
+        result = pytester.runpytest_inprocess("--help")
+        result.stdout.fnmatch_lines(["usage: pytest.main() *"])
+
+    def test_prog_in_usage_cli(self, pytester: Pytester) -> None:
+        """Usage line should show 'python -m pytest' when called from CLI subprocess."""
+        result = pytester.runpytest_subprocess("--help")
+        result.stdout.fnmatch_lines(["usage: python -m pytest *"])
