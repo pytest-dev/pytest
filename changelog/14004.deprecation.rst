@@ -1,0 +1,7 @@
+Passing ``baseid`` to :class:`~pytest.FixtureDef` or ``nodeid`` strings to fixture registration
+APIs is now deprecated.
+
+Use the ``node`` parameter instead for fixture scoping. This enables more robust node-based
+matching instead of string prefix matching.
+
+This will be removed in pytest 10.

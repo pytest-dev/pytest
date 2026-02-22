@@ -38,6 +38,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
+from _pytest.pathlib import bestrelpath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
@@ -571,6 +572,129 @@ def _check_initialpaths_for_relpath(
     return None
 
 
+def _get_site_packages_dirs() -> frozenset[Path]:
+    """Get all site-packages directories as resolved absolute paths."""
+    import site
+
+    dirs: set[Path] = set()
+    # Standard site-packages
+    for sp in site.getsitepackages():
+        try:
+            dirs.add(Path(sp).resolve())
+        except OSError:
+            pass
+    # User site-packages
+    user_site = site.getusersitepackages()
+    if user_site:
+        try:
+            dirs.add(Path(user_site).resolve())
+        except OSError:
+            pass
+    return frozenset(dirs)
+
+
+# Cache site-packages dirs since they don't change during a run.
+_SITE_PACKAGES_DIRS: frozenset[Path] | None = None
+
+
+def _get_cached_site_packages_dirs() -> frozenset[Path]:
+    """Get cached site-packages directories."""
+    global _SITE_PACKAGES_DIRS
+    if _SITE_PACKAGES_DIRS is None:
+        _SITE_PACKAGES_DIRS = _get_site_packages_dirs()
+    return _SITE_PACKAGES_DIRS
+
+
+def _path_in_site_packages(
+    path: Path,
+    site_packages: frozenset[Path] | None = None,
+) -> tuple[Path, Path] | None:
+    """Check if path is inside a site-packages directory.
+
+    :param path: The path to check.
+    :param site_packages: Optional set of site-packages directories to check against.
+        If None, uses the cached system site-packages directories.
+    Returns (site_packages_dir, relative_path) if found, None otherwise.
+    """
+    if site_packages is None:
+        site_packages = _get_cached_site_packages_dirs()
+    try:
+        resolved = path.resolve()
+    except OSError:
+        return None
+
+    for sp in site_packages:
+        try:
+            rel = resolved.relative_to(sp)
+            return (sp, rel)
+        except ValueError:
+            continue
+    return None
+
+
+def compute_nodeid_prefix_for_path(
+    path: Path,
+    rootpath: Path,
+    invocation_dir: Path,
+    initial_paths: frozenset[Path],
+    site_packages: frozenset[Path] | None = None,
+) -> str:
+    """Compute a nodeid prefix for a filesystem path.
+
+    The nodeid prefix is computed based on the path's relationship to:
+    1. rootpath - if relative, use simple relative path
+    2. initial_paths - if relative to an initial path, use that
+    3. site-packages - use "site://<package>/<path>" prefix
+    4. invocation_dir - if close by, use relative path with ".." components
+    5. Otherwise, use absolute path
+
+    :param path: The path to compute a nodeid prefix for.
+    :param rootpath: The pytest root path.
+    :param invocation_dir: The directory from which pytest was invoked.
+    :param initial_paths: The initial paths (testpaths or command line args).
+    :param site_packages: Optional set of site-packages directories. If None,
+        uses the cached system site-packages directories.
+
+    The returned string uses forward slashes as separators regardless of OS.
+    """
+    # 1. Try relative to rootpath (simplest case)
+    try:
+        rel = path.relative_to(rootpath)
+        result = str(rel)
+        if result == ".":
+            return ""
+        return result.replace(os.sep, SEP)
+    except ValueError:
+        pass
+
+    # 2. Try relative to initial_paths
+    nodeid = _check_initialpaths_for_relpath(initial_paths, path)
+    if nodeid is not None:
+        return nodeid.replace(os.sep, SEP) if nodeid else ""
+
+    # 3. Check if path is in site-packages
+    site_info = _path_in_site_packages(path, site_packages)
+    if site_info is not None:
+        _sp_dir, rel_path = site_info
+        result = f"site://{rel_path}"
+        return result.replace(os.sep, SEP)
+
+    # 4. Try relative to invocation_dir if "close by" (i.e., not too many ".." components)
+    rel_from_invocation = bestrelpath(invocation_dir, path)
+    # Count the number of ".." components - if it's reasonable, use the relative path
+    # Also check total path length to avoid overly long relative paths
+    parts = Path(rel_from_invocation).parts
+    up_count = sum(1 for p in parts if p == "..")
+    # Only use relative path if:
+    # - At most 2 ".." components (close to invocation dir)
+    # - bestrelpath actually produced a relative path (not the absolute path unchanged)
+    if up_count <= 2 and rel_from_invocation != str(path):
+        return rel_from_invocation.replace(os.sep, SEP)
+
+    # 5. Fall back to absolute path
+    return str(path).replace(os.sep, SEP)
+
+
 class FSCollector(Collector, abc.ABC):
     """Base class for filesystem collectors."""
 
@@ -611,13 +735,12 @@ class FSCollector(Collector, abc.ABC):
             session = parent.session
 
         if nodeid is None:
-            try:
-                nodeid = str(self.path.relative_to(session.config.rootpath))
-            except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
-
-            if nodeid:
-                nodeid = norm_sep(nodeid)
+            nodeid = compute_nodeid_prefix_for_path(
+                path=path,
+                rootpath=session.config.rootpath,
+                invocation_dir=session.config.invocation_params.dir,
+                initial_paths=session._initialpaths,
+            )
 
         super().__init__(
             name=name,
