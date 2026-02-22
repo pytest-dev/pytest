@@ -944,7 +944,14 @@ class CaptureFixture(Generic[AnyStr]):
 
     def close(self) -> None:
         if self._capture is not None:
-            out, err = self._capture.pop_outerr_to_orig()
+            if self._config.get("tee"):
+                # When tee is enabled, output was already written to the
+                # original stream in real-time by TeeCaptureIO.  Using
+                # pop_outerr_to_orig() would write it a second time via
+                # writeorg(), causing doubled output (see #13784).
+                out, err = self._capture.readouterr()
+            else:
+                out, err = self._capture.pop_outerr_to_orig()
             self._captured_out += out
             self._captured_err += err
             self._capture.stop_capturing()
