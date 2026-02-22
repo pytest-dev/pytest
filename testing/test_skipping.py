@@ -1489,3 +1489,141 @@ def test_exit_with_reason_works_ok(pytester: Pytester) -> None:
     )
     result = pytester.runpytest(p)
     result.stdout.fnmatch_lines("*_pytest.outcomes.Exit: foo*")
+
+
+class TestMarkXFailWithFailAndXFail:
+    def test_marked_xfail_with_reason_pytest_fail_with_reason(
+        self, pytester: Pytester
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail(reason="reason mark.xfail")
+            def test_func():
+                pytest.fail("reason pytest.fail")
+            """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == "reason mark.xfail"
+
+    def test_marked_xfail_with_reason_pytest_fail_without_reason(
+        self, pytester: Pytester
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail(reason="reason mark.xfail")
+            def test_func():
+                pytest.fail()
+            """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == "reason mark.xfail"
+
+    def test_marked_xfail_without_reason_pytest_fail_with_reason(
+        self, pytester: Pytester
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                pytest.fail("reason pytest.fail")
+            """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == "reason pytest.fail"
+
+    def test_marked_xfail_without_reason_pytest_fail_without_reason(
+        self, pytester: Pytester
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                pytest.fail()
+            """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == ""
+
+    def test_marked_xfail_with_reason_pytest_xfail_with_reason(
+        self, pytester: Pytester
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail(reason="reason mark.xfail")
+            def test_func():
+                pytest.xfail("reason pytest.xfail")
+            """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == "reason mark.xfail"
+
+    def test_marked_xfail_with_reason_pytest_xfail_without_reason(
+        self, pytester: Pytester
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail(reason="reason mark.xfail")
+            def test_func():
+                pytest.xfail()
+            """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == "reason mark.xfail"
+
+    def test_marked_xfail_without_reason_pytest_xfail_with_reason(
+        self, pytester: Pytester
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                pytest.xfail("reason pytest.xfail")
+            """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == "reason pytest.xfail"
+
+    def test_marked_xfail_without_reason_pytest_xfail_without_reason(
+        self, pytester: Pytester
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                pytest.xfail()
+            """
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == ""
