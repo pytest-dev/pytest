@@ -1,0 +1,2 @@
+Clarify :confval:`tmp_path_retention_policy` by documenting that `failed` removes the files of passing tests in the teardown
+step but `none` only removes the files of tests at the end of the test session -- by :user:`jenshnielsen`.
