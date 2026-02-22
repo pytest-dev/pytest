@@ -1599,16 +1599,22 @@ class Function(PyobjMixin, nodes.Item):
         #: .. versionadded:: 3.0
         self.originalname = originalname or name
 
-        # Note: when FunctionDefinition is introduced, we should change ``originalname``
-        # to a readonly property that returns FunctionDefinition.name.
-
-        self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
-            self.own_markers.extend(callspec.marks)
 
-        # todo: this is a hell of a hack
-        # https://github.com/pytest-dev/pytest/issues/4569
+    def _setup_markers_and_fixtures(
+        self,
+        keywords: Mapping[str, Any] | None = None,
+        fixtureinfo: FuncFixtureInfo | None = None,
+    ) -> None:
+        """Set up markers, keywords, fixture info, and the fixture request.
+
+        Called from :meth:`from_parent` after the node is fully constructed.
+        """
+        self.own_markers.extend(get_unpacked_marks(self.obj))
+        if hasattr(self, "callspec"):
+            self.own_markers.extend(self.callspec.marks)
+
         # Note: the order of the updates is important here; indicates what
         # takes priority (ctor argument over function attributes over markers).
         # Take own_markers only; NodeKeywords handles parent traversal on its own.
@@ -1624,11 +1630,17 @@ class Function(PyobjMixin, nodes.Item):
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
-    # todo: determine sound type limitations
     @classmethod
     def from_parent(cls, parent, **kw) -> Self:
         """The public constructor."""
-        return super().from_parent(parent=parent, **kw)
+        keywords = kw.pop("keywords", None)
+        fixtureinfo = kw.pop("fixtureinfo", None)
+        item = super().from_parent(parent=parent, **kw)
+        item._setup_markers_and_fixtures(
+            keywords=keywords,
+            fixtureinfo=fixtureinfo,
+        )
+        return item
 
     def _initrequest(self) -> None:
         self.funcargs: dict[str, object] = {}
