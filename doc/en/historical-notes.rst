@@ -282,13 +282,6 @@ The equivalent with "boolean conditions" using ``request.config`` is:
     (via the ``request`` fixture) or the ``pytestconfig`` fixture instead.
     See :ref:`pytest.config global deprecated` for details.
 
-.. note::
-
-    You cannot use ``request.config.getoption()`` in code
-    imported before pytest's argument parsing takes place.  For example,
-    ``conftest.py`` files are imported before command line parsing and thus
-    ``request.config.getoption()`` will not execute correctly at module level.
-
 ``pytest.set_trace()``
 ----------------------
 
