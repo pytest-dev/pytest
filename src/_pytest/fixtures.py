@@ -1875,18 +1875,18 @@ class FixtureManager:
         # important for autouse fixtures and fixture overriding (#11281, #12952).
         #
         # For modules: module.__dict__ contains all module-level names.
-        # For classes: walk the MRO to get all class and base class attributes.
-        # For instances (e.g. unittest TestCase instances): walk the class MRO,
-        # since fixtures are defined on the class, not the instance.
+        # For classes/instances: walk the MRO to get all class and base class
+        # attributes (using holderobj_tp which resolves to the class in both cases).
         dicts: list[Mapping[str, Any]]
         if isinstance(holderobj, types.ModuleType):
             dicts = [holderobj.__dict__]
-        elif safe_isclass(holderobj):
-            assert isinstance(holderobj, type)
-            dicts = [cls.__dict__ for cls in holderobj.__mro__]
         else:
-            # Instance: walk the class hierarchy.
-            dicts = [cls.__dict__ for cls in type(holderobj).__mro__]
+            # For classes and instances: walk the MRO to get all attributes.
+            # For classes, holderobj_tp is the class itself; for instances,
+            # holderobj_tp is type(holderobj) (set above on line 1867).
+            # In both cases holderobj_tp is a type with __mro__.
+            assert isinstance(holderobj_tp, type)
+            dicts = [cls.__dict__ for cls in holderobj_tp.__mro__]
 
         seen: set[str] = set()
         for dic in dicts:
