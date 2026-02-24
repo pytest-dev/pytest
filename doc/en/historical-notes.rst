@@ -263,20 +263,24 @@ configuration value which you might have added:
     @pytest.mark.skipif("not config.getvalue('db')")
     def test_function(): ...
 
-The equivalent with "boolean conditions" is:
+The equivalent with "boolean conditions" using ``request.config`` is:
 
 .. code-block:: python
 
-    @pytest.mark.skipif(not pytest.config.getvalue("db"), reason="--db was not specified")
+    @pytest.fixture(autouse=True)
+    def skip_if_no_db(request):
+        if not request.config.getoption("--db", default=False):
+            pytest.skip("--db was not specified")
+
+
     def test_function():
         pass
 
 .. note::
 
-    You cannot use ``pytest.config.getvalue()`` in code
-    imported before pytest's argument parsing takes place.  For example,
-    ``conftest.py`` files are imported before command line parsing and thus
-    ``config.getvalue()`` will not execute correctly.
+    ``pytest.config`` was removed in pytest 5.0. Use ``request.config``
+    (via the ``request`` fixture) or the ``pytestconfig`` fixture instead.
+    See :ref:`pytest.config global deprecated` for details.
 
 ``pytest.set_trace()``
 ----------------------
