@@ -15,7 +15,7 @@ Install ``pytest``
 
     pip install -U pytest
 
-2. Check that you installed the correct version:
+2. Check if you installed the correct version:
 
 .. code-block:: bash
 
