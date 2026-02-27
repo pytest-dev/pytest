@@ -372,7 +372,7 @@ def test_testcase_adderrorandfailure_defers(pytester: Pytester, type: str) -> No
                     result.add{type}(self, excinfo._excinfo)
                 except KeyboardInterrupt:
                     raise
-                except:
+                except Exception:
                     pytest.fail("add{type} should not raise")
             def test_hello(self):
                 pass

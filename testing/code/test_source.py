@@ -166,7 +166,7 @@ class TestSourceParsing:
                 x = (
                    y +
                    z)
-            except:
+            except Exception:
                 pass
         """
         )
