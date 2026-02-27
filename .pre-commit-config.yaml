@@ -67,7 +67,7 @@ repos:
           - exceptiongroup>=1.0.0rc8
         # Manual because passing pyright is a work in progress.
         stages: [manual]
-- repo: https://github.com/tox-dev/pyproject-fmt
+- repo: https://github.com/pytest-dev/pyproject-fmt
   rev: "v2.12.1"
   hooks:
     - id: pyproject-fmt
