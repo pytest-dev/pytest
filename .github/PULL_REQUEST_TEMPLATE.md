@@ -11,9 +11,10 @@ If this change fixes an issue, please:
 
 - [ ] Add text like ``closes #XYZW`` to the PR description and/or commits (where ``XYZW`` is the issue number). See the [github docs](https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) for more information.
 
-**If you used AI agents** (e.g. Cursor Agent, Copilot Workspace, Claude Code, or similar) to generate code or commits, credit them as co-authors using `Co-authored-by` trailers in your commit messages. Purely agentic contributions are not accepted. See our [AI/LLM-Assisted Contributions Policy](https://github.com/pytest-dev/pytest/blob/main/CONTRIBUTING.rst#aillm-assisted-contributions-policy).
+> [!IMPORTANT]
+> **Unsupervised agentic contributions are not accepted**. See our [AI/LLM-Assisted Contributions Policy](https://github.com/pytest-dev/pytest/blob/main/CONTRIBUTING.rst#aillm-assisted-contributions-policy).
 
-- [ ] Any AI agents used are credited as co-authors in commit messages.
+- [ ] If AI agents were used, they are credited in `Co-authored-by` commit trailers.
 
 Unless your change is trivial or a small documentation fix (e.g., a typo or reword of a small section) please:
 
