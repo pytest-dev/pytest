@@ -532,7 +532,7 @@ if TYPE_CHECKING:
             argvalues: Collection[ParameterSet | Sequence[object] | object],
             *,
             indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool]
+            ids: Iterable[None | str | float | int | bool | _HiddenParam]
             | Callable[[Any], object | None]
             | None = ...,
             scope: ScopeName | None = ...,

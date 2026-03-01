@@ -1,0 +1,1 @@
+Allow :ref:`pytest.HIDDEN_PARAM <hidden-param>` in :ref:`@pytest.mark.parametrize(ids=...) <pytest.mark.parametrize ref>` typing.
