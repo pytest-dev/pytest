@@ -1,0 +1,1 @@
+Allow ``pytest.HIDDEN_PARAM`` in ``parametrize(ids=...)`` type annotations.
