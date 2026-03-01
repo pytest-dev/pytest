@@ -60,6 +60,12 @@ def check_testreport_attributes(report: TestReport) -> None:
     assert_type(report.location, tuple[str, int | None, str])
 
 
+# Issue #14234.
+@pytest.mark.parametrize("x", [1, 2], ids=[pytest.HIDDEN_PARAM, "visible"])
+def test_hidden_param(x: int) -> None:
+    pass
+
+
 # Test @pytest.mark.parametrize iterator argvalues deprecation.
 # Will be complain about unused type ignore if doesn't work.
 @pytest.mark.parametrize("x", iter(range(10)))  # type: ignore[deprecated]
