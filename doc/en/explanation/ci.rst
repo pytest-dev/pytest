@@ -50,7 +50,7 @@ Running this locally, without any extra options, will output:
      $ pytest test_ci.py
      ...
      ========================= short test summary info ==========================
-     FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately f...
+     FAILED test_ci.py::test_db_initialized - Failed: deliberately f...
 
 *(Note the truncated text)*
 
@@ -63,7 +63,7 @@ While running this on CI will output:
      $ pytest test_ci.py
      ...
      ========================= short test summary info ==========================
-     FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately failing
+     FAILED test_ci.py::test_db_initialized - Failed: deliberately failing
      for demo purpose, Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras
      facilisis, massa in suscipit dignissim, mauris lacus molestie nisi, quis varius
      metus nulla ut ipsum.
