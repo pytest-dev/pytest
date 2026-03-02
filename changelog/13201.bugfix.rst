@@ -1,0 +1,1 @@
+Fixed color inconsistency in verbose mode where test status showed green instead of yellow for passed tests with warnings.
