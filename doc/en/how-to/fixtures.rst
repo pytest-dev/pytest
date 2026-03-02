@@ -505,6 +505,13 @@ Fixtures are created when first requested by a test, and are destroyed based on 
     means that when using a parametrized fixture, pytest may invoke a fixture more than once in
     the given scope.
 
+    .. note::
+
+   When using parametrized fixtures, pytest determines the effective scope based on
+   how the fixture is defined. If parameters are provided in a way that limits reuse,
+   pytest will automatically use the narrowest applicable scope to ensure correct
+   isolation between tests.
+
 .. _dynamic scope:
 
 Dynamic scope
