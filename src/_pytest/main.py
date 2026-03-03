@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
@@ -16,6 +17,7 @@ import importlib.util
 import os
 from pathlib import Path
 import sys
+from threading import Thread
 from typing import final
 from typing import Literal
 from typing import overload
@@ -43,7 +45,9 @@ from _pytest.pathlib import samefile_nofollow
 from _pytest.pathlib import scandir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+from _pytest.runner import _pytest_thread_id
 from _pytest.runner import collect_one_node
+from _pytest.runner import PytestThreadId
 from _pytest.runner import SetupState
 from _pytest.warning_types import PytestWarning
 
@@ -520,6 +524,14 @@ class _bestrelpath_cache(dict[Path, str]):
         return r
 
 
+@dataclasses.dataclass
+class ThreadInfo:
+    thread: Thread
+    # note that this is the id from pytest-thread-n, not get_ident().
+    pytest_thread_id: PytestThreadId
+    current_test_var: str | None = None
+
+
 @final
 class Dir(nodes.Directory):
     """Collector of files in a file system directory.
@@ -581,8 +593,6 @@ class Session(nodes.Collector):
 
     Interrupted = Interrupted
     Failed = Failed
-    # Set on the session by runner.pytest_sessionstart.
-    _setupstate: SetupState
     # Set on the session by fixtures.pytest_sessionstart.
     _fixturemanager: FixtureManager
     exitstatus: int | ExitCode
@@ -608,10 +618,32 @@ class Session(nodes.Collector):
         self._initial_parts: list[CollectionArgument] = []
         self._collection_cache: dict[nodes.Collector, CollectReport] = {}
         self.items: list[nodes.Item] = []
+        # info about each thread that is running pytest items
+        self._thread_info: dict[Thread, ThreadInfo] = {}
 
         self._bestrelpathcache: dict[Path, str] = _bestrelpath_cache(config.rootpath)
 
         self.config.pluginmanager.register(self, name="session")
+
+        self._setupstates: dict[PytestThreadId | None, SetupState] = defaultdict(
+            SetupState
+        )
+
+    def _thread_started(self, thread: Thread, pytest_thread_id: PytestThreadId) -> None:
+        if thread not in self._thread_info:
+            self._thread_info[thread] = ThreadInfo(
+                thread=thread, pytest_thread_id=pytest_thread_id
+            )
+
+    @property
+    def _setupstate(self) -> SetupState:
+        key = _pytest_thread_id.get()
+        return self._setupstates[key]
+
+    @_setupstate.setter
+    def _setupstate(self, setupstate: SetupState) -> None:
+        key = _pytest_thread_id.get()
+        self._setupstates[key] = setupstate
 
     @classmethod
     def from_config(cls, config: Config) -> Session:

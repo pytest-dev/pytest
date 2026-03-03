@@ -1009,9 +1009,12 @@ def test_makereport_getsource_dynamic_code(
     result.stdout.fnmatch_lines(["*test_fix*", "*fixture*'missing'*not found*"])
 
 
-def test_store_except_info_on_error() -> None:
+def test_store_except_info_on_error(monkeypatch: MonkeyPatch) -> None:
     """Test that upon test failure, the exception info is stored on
     sys.last_traceback and friends."""
+    # pytest_runtest_call calls _update_current_test_var which in turn accesses
+    # item.session, which doesn't exist on our mocked ItemMightRaise.
+    monkeypatch.setattr(runner, "_update_current_test_var", lambda *args: None)
 
     # Simulate item that might raise a specific exception, depending on `raise_error` class var
     class ItemMightRaise:
