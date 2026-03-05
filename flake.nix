@@ -1,5 +1,6 @@
 {
-  description = "Development environment for Pytest";
+  # The pytest core team doesn't maintain this flake.
+  description = "Unofficial Nix development environment for Pytest";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
