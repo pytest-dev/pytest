@@ -109,7 +109,8 @@ class TempPathFactory:
     def _ensure_relative_to_basetemp(self, basename: str) -> str:
         basename = os.path.normpath(basename)
         if (self.getbasetemp() / basename).resolve().parent != self.getbasetemp():
-            raise ValueError(f"{basename} is not a normalized and relative path")
+            raise ValueError(
+                f"{basename} is not a normalized and relative path")
         return basename
 
     def mktemp(self, basename: str, numbered: bool = True) -> Path:
@@ -132,7 +133,8 @@ class TempPathFactory:
             p = self.getbasetemp().joinpath(basename)
             p.mkdir(mode=0o700)
         else:
-            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename, mode=0o700)
+            p = make_numbered_dir(root=self.getbasetemp(),
+                                  prefix=basename, mode=0o700)
             self._trace("mktemp", p)
         return p
 
@@ -158,12 +160,18 @@ class TempPathFactory:
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
             rootdir = temproot.joinpath(f"pytest-of-{user}")
+            if rootdir.is_symlink():
+                raise OSError(f"Symlink attack detected at {rootdir}")
             try:
                 rootdir.mkdir(mode=0o700, exist_ok=True)
             except OSError:
                 # getuser() likely returned illegal characters for the platform, use unknown back off mechanism
                 rootdir = temproot.joinpath("pytest-of-unknown")
+                if rootdir.is_symlink():
+                    raise OSError(f"Symlink attack detected at {rootdir}")
                 rootdir.mkdir(mode=0o700, exist_ok=True)
+            if rootdir.is_symlink():
+                raise OSError(f"Symlink attack detected at {rootdir}")
             # Because we use exist_ok=True with a predictable name, make sure
             # we are the owners, to prevent any funny business (on unix, where
             # temproot is usually shared).
@@ -172,7 +180,7 @@ class TempPathFactory:
             # just error out on this, at least for a while.
             uid = get_user_id()
             if uid is not None:
-                rootdir_stat = rootdir.stat()
+                rootdir_stat = os.lstat(rootdir)
                 if rootdir_stat.st_uid != uid:
                     raise OSError(
                         f"The temporary directory {rootdir} is not owned by the current user. "

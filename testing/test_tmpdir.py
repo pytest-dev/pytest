@@ -116,12 +116,14 @@ class TestConfigTmpPath:
 
         for child in root.iterdir():
             base_dir = list(
-                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
+                filter(lambda x: x.is_dir()
+                       and not x.is_symlink(), child.iterdir())
             )
             assert len(base_dir) == 1
             test_dir = list(
                 filter(
-                    lambda x: x.is_dir() and not x.is_symlink(), base_dir[0].iterdir()
+                    lambda x: x.is_dir() and not x.is_symlink(
+                    ), base_dir[0].iterdir()
                 )
             )
             # Check only the failed one remains
@@ -183,7 +185,8 @@ class TestConfigTmpPath:
         root = pytester._test_tmproot
         for child in root.iterdir():
             base_dir = list(
-                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
+                filter(lambda x: x.is_dir()
+                       and not x.is_symlink(), child.iterdir())
             )
             assert len(base_dir) == 0
 
@@ -215,12 +218,14 @@ class TestConfigTmpPath:
         root = pytester._test_tmproot
         for child in root.iterdir():
             base_dir = list(
-                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
+                filter(lambda x: x.is_dir()
+                       and not x.is_symlink(), child.iterdir())
             )
             assert len(base_dir) == 1
             test_dir = list(
                 filter(
-                    lambda x: x.is_dir() and not x.is_symlink(), base_dir[0].iterdir()
+                    lambda x: x.is_dir() and not x.is_symlink(
+                    ), base_dir[0].iterdir()
                 )
             )
             assert len(test_dir) == 1
@@ -516,7 +521,8 @@ class TestRmRf:
 
         # we ignore FileNotFoundError
         exc_info2 = (FileNotFoundError, FileNotFoundError(), None)
-        assert not on_rm_rf_error(None, str(fn), exc_info2, start_path=tmp_path)
+        assert not on_rm_rf_error(
+            None, str(fn), exc_info2, start_path=tmp_path)
 
         # unknown function
         with pytest.warns(
@@ -587,7 +593,8 @@ def test_tmp_path_factory_create_directory_with_safe_permissions(
     """Verify that pytest creates directories under /tmp with private permissions."""
     # Use the test's tmp_path as the system temproot (/tmp).
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(
+        None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # No world-readable permissions.
@@ -607,15 +614,40 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
     """
     # Use the test's tmp_path as the system temproot (/tmp).
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(
+        None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # Before - simulate bad perms.
     os.chmod(basetemp.parent, 0o777)
     assert (basetemp.parent.stat().st_mode & 0o077) != 0
 
-    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    tmp_factory = TempPathFactory(
+        None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
     # After - fixed.
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
+
+
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires symlink support")
+def test_tmp_path_factory_fixes_rejects_symlink_attack(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """ A local attacker could create a symlink at the predictable
+    /tmp/pytest-of-{user} user pointing to an attacker controlled location.
+    """
+    # Use the test's tmp_path as the system temproot (/tmp).
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    # Set username
+    monkeypatch.setattr("_pytest.tmpdir.get_user", lambda: "testuser")
+    attacker_target = tmp_path / "attacker_controlled"
+    # Simulate symlink attack
+    attacker_target.mkdir(mode=0o700)
+    symlink_path = tmp_path = tmp_path/"pytest-of-testuser"
+    symlink_path.symlink_to(attacker_target)
+
+    tmp_factory = TempPathFactory(
+        None, 3, "all", lambda *args: None, _ispytest=True)
+    with pytest.raises(OSError, match="Symlink"):
+        tmp_factory.getbasetemp()
