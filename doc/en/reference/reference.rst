@@ -1850,7 +1850,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_cli_level = "INFO"
-            log_cli_level = "10"            
+            log_cli_level = "10"
 
     .. tab:: ini
 
