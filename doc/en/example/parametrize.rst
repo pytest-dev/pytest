@@ -356,6 +356,11 @@ Using the ``indirect=True`` parameter when parametrizing a test allows one to
 parametrize a test with a fixture receiving the values before passing them to a
 test:
 
+The fixture receives the built-in ``request`` fixture object as its first
+argument. For indirect parametrization, each value from
+``@pytest.mark.parametrize`` is available as ``request.param`` inside that
+fixture.
+
 .. code-block:: python
 
     import pytest
