@@ -200,7 +200,8 @@ The new config.cache object
 Plugins or conftest.py support code can get a cached value using the
 pytest ``config`` object.  Here is a basic example plugin which
 implements a :ref:`fixture <fixture>` which reuses previously created state
-across pytest invocations:
+across pytest invocations. The example below also works when the
+``cacheprovider`` plugin is disabled:
 
 .. code-block:: python
 
@@ -214,11 +215,16 @@ across pytest invocations:
 
     @pytest.fixture
     def mydata(pytestconfig):
-        val = pytestconfig.cache.get("example/value", None)
+        cache = getattr(pytestconfig, "cache", None)
+        if cache is None:
+            expensive_computation()
+            return 42
+
+        val = cache.get("example/value", None)
         if val is None:
             expensive_computation()
             val = 42
-            pytestconfig.cache.set("example/value", val)
+            cache.set("example/value", val)
         return val
 
 
