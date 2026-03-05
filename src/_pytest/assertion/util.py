@@ -511,6 +511,7 @@ def _compare_eq_dict(
     elif same:
         explanation += ["Common items:"]
         explanation += highlighter(pprint.pformat(same)).splitlines()
+
     diff = {k for k in common if left[k] != right[k]}
     if diff:
         explanation += ["Differing items:"]
@@ -520,24 +521,25 @@ def _compare_eq_dict(
                 + " != "
                 + highlighter(saferepr({k: right[k]}))
             ]
+
     extra_left = set_left - set_right
-    len_extra_left = len(extra_left)
-    if len_extra_left:
+    if extra_left:
         explanation.append(
-            f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
+            f"Left contains {len(extra_left)} more item{'' if len(extra_left) == 1 else 's'}:"
         )
         explanation.extend(
-            highlighter(pprint.pformat({k: left[k] for k in extra_left})).splitlines()
+            highlighter(saferepr({k: left[k] for k in extra_left})).splitlines()
         )
+
     extra_right = set_right - set_left
-    len_extra_right = len(extra_right)
-    if len_extra_right:
+    if extra_right:
         explanation.append(
-            f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
+            f"Right contains {len(extra_right)} more item{'' if len(extra_right) == 1 else 's'}:"
         )
         explanation.extend(
-            highlighter(pprint.pformat({k: right[k] for k in extra_right})).splitlines()
+            highlighter(saferepr({k: right[k] for k in extra_right})).splitlines()
         )
+
     return explanation
 
 
