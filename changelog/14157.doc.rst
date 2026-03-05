@@ -1,0 +1,2 @@
+Added the ``pytest-flakefighters`` plugin to the list of flaky test plugins in ``plugins.rst``.
+Added flaky test papers published on the `Test FLARE <https://test-flare.github.io/>`__ project to the list of flaky papers in ``plugins.rst``.
