@@ -478,6 +478,26 @@ class TestCaptureFixture:
         result.stdout.fnmatch_lines(["sTdoUt", "sTdeRr"])  # no tee, just reported
         assert not result.stderr.lines
 
+    def test_capteesys_no_double_output_with_capture_no(
+        self, pytester: Pytester
+    ) -> None:
+        """Capteesys with --capture=no should not produce doubled output (#13784)."""
+        p = pytester.makepyfile(
+            """\
+            def test_one(capteesys):
+                print("hello world stdout")
+                out, err = capteesys.readouterr()
+                assert out == "hello world stdout\\n"
+            """
+        )
+        result = pytester.runpytest(p, "--quiet", "--quiet", "-rN", "-s")
+        assert result.ret == ExitCode.OK
+        # "hello world stdout" should appear exactly once, not twice.
+        count = result.stdout.lines.count("hello world stdout")
+        assert count == 1, (
+            f"Expected 'hello world stdout' once, but found {count} times"
+        )
+
     def test_capsyscapfd(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """\
