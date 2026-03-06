@@ -581,15 +581,22 @@ class LogCaptureFixture:
         :meth:`handler` for the 'with' statement block, and removes that filter at the
         end of the block.
 
+        If the filter is already attached to the handler (e.g. from an outer
+        nested ``filtering()`` call), it is not added again, and will not be
+        removed when the inner block exits.
+
         :param filter_: A custom :class:`logging.Filter` object.
 
         .. versionadded:: 7.5
         """
-        self.handler.addFilter(filter_)
+        already_present = filter_ in self.handler.filters
+        if not already_present:
+            self.handler.addFilter(filter_)
         try:
             yield
         finally:
-            self.handler.removeFilter(filter_)
+            if not already_present:
+                self.handler.removeFilter(filter_)
 
 
 @fixture
