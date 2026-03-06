@@ -779,3 +779,161 @@ def test_required_option_help(pytester: Pytester) -> None:
     result = pytester.runpytest("-h", x)
     result.stdout.no_fnmatch_line("*argument --xyz is required*")
     assert "general:" in result.stdout.str()
+
+
+def test_conftest_outside_rootdir_fixture_scoping(pytester: Pytester) -> None:
+    """Test that conftest fixtures are correctly scoped when testpaths points outside rootdir.
+
+    Regression test for issue #14004: conftest fixtures from nested directories
+    should not leak to sibling directories when testpaths points outside rootdir.
+    """
+    # Structure:
+    # sdk/
+    #   pyproject.toml  (rootdir, testpaths = ["../tests/sdk"])
+    # tests/
+    #   sdk/
+    #     conftest.py  (outer_fixture)
+    #     test_outer.py
+    #     inner/
+    #       conftest.py  (inner_fixture - would fail if applied to outer)
+    #       test_inner.py
+
+    sdk = pytester.mkdir("sdk")
+    tests_sdk = pytester.mkdir("tests").joinpath("sdk")
+    tests_sdk.mkdir()
+    inner = tests_sdk.joinpath("inner")
+    inner.mkdir()
+
+    # Config in sdk/ pointing to ../tests/sdk
+    sdk.joinpath("pyproject.toml").write_text(
+        textwrap.dedent(
+            """\
+            [tool.pytest.ini_options]
+            testpaths = ["../tests/sdk"]
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Outer conftest with autouse fixture
+    tests_sdk.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def outer_fixture():
+                pass  # This should run for all tests
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Inner conftest with autouse fixture that sets a marker
+    # If this leaks to outer tests, test_outer will fail
+    inner.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def inner_fixture(request):
+                # Mark that inner_fixture ran
+                request.node.inner_fixture_ran = True
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Outer test checks that inner_fixture did NOT run
+    tests_sdk.joinpath("test_outer.py").write_text(
+        textwrap.dedent(
+            """\
+            def test_outer(request):
+                # inner_fixture should NOT have run for this test
+                assert not hasattr(request.node, 'inner_fixture_ran'), \
+                    "inner_fixture leaked to outer test!"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Inner test checks that inner_fixture DID run
+    inner.joinpath("test_inner.py").write_text(
+        textwrap.dedent(
+            """\
+            def test_inner(request):
+                # inner_fixture should have run for this test
+                assert getattr(request.node, 'inner_fixture_ran', False), \
+                    "inner_fixture did not run for inner test!"
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    # Run from sdk/ directory using testpaths
+    os.chdir(sdk)
+    result = pytester.runpytest("-v")
+
+    result.assert_outcomes(passed=2)
+
+
+def test_conftest_symlink_fixture_scoping(pytester: Pytester) -> None:
+    """Test that conftest fixtures are correctly scoped when using symlinks.
+
+    Ensures that symlinked test directories still have proper conftest scoping.
+    """
+    # Structure:
+    # real/
+    #   conftest.py  (real_fixture)
+    #   tests/
+    #     conftest.py  (tests_fixture)
+    #     test_it.py
+    # link -> real/tests (symlink)
+
+    real = pytester.mkdir("real")
+    real_tests = real.joinpath("tests")
+    real_tests.mkdir()
+
+    real.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def real_fixture():
+                print("REAL_FIXTURE")
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    real_tests.joinpath("conftest.py").write_text(
+        textwrap.dedent(
+            """\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def tests_fixture():
+                print("TESTS_FIXTURE")
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    real_tests.joinpath("test_it.py").write_text(
+        "def test_it(): pass",
+        encoding="utf-8",
+    )
+
+    # Create symlink to real/tests
+    link = pytester.path.joinpath("link")
+    symlink_or_skip(real_tests, link)
+
+    # Running via symlink should still find conftest fixtures in the real directory
+    os.chdir(pytester.path)
+    result = pytester.runpytest("-s", "-v", "link")
+
+    # The tests_fixture from real/tests/conftest.py should be found
+    result.stdout.fnmatch_lines(["*TESTS_FIXTURE*"])
+    result.assert_outcomes(passed=1)
