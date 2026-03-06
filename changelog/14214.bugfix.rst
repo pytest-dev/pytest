@@ -1,0 +1,1 @@
+Fixed ``-v`` hint in :func:`pytest.raises` match diff not working because assertion verbosity was not propagated.

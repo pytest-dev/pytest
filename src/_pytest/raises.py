@@ -510,12 +510,19 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             else ""
         )
         if isinstance(self.rawmatch, str):
-            # TODO: it instructs to use `-v` to print leading text, but that doesn't work
-            # I also don't know if this is the proper entry point, or tool to use at all
+            from _pytest.assertion.util import _config
             from _pytest.assertion.util import _diff_text
             from _pytest.assertion.util import dummy_highlighter
+            from _pytest.config import Config
 
-            diff = _diff_text(self.rawmatch, stringified_exception, dummy_highlighter)
+            verbose = (
+                _config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
+                if _config is not None
+                else 0
+            )
+            diff = _diff_text(
+                self.rawmatch, stringified_exception, dummy_highlighter, verbose
+            )
             self._fail_reason = ("\n" if diff[0][0] == "-" else "") + "\n".join(diff)
             return False
 

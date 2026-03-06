@@ -430,3 +430,29 @@ class TestRaises:
         pattern_with_flags = re.compile(r"INVALID LITERAL", re.IGNORECASE)
         with pytest.raises(ValueError, match=pattern_with_flags):
             int("asdf")
+
+    def test_raises_match_verbose_diff(self, pytester: Pytester) -> None:
+        """Test that -v flag shows full diff in raises match failure (#14214)."""
+        pytester.makepyfile(
+            """
+            import re
+            import pytest
+
+            def test_raises_v_hint():
+                prefix = "A" * 60
+                expected = prefix + " expected_ending"
+                actual = prefix + " actual_ending"
+
+                with pytest.raises(
+                    ValueError, match=f"^{re.escape(expected)}$"
+                ):
+                    raise ValueError(actual)
+            """
+        )
+        # Without -v: should show "Skipping ... identical leading characters"
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*Skipping*identical leading*"])
+
+        # With -v: should NOT show "Skipping" — full diff shown
+        result_v = pytester.runpytest("-v")
+        assert "Skipping" not in result_v.stdout.str()
