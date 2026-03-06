@@ -1535,6 +1535,8 @@ def _get_line_with_reprcrash_message(
         else:
             # Type ignored intentionally -- possible AttributeError expected.
             msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr]
+            if msg and not config.option.verbose >= 2:
+                msg = msg.strip().splitlines()[0]
     except AttributeError:
         pass
     else:
