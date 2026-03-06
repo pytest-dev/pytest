@@ -651,7 +651,8 @@ class TerminalReporter:
             else:
                 markup = {}
         self._progress_nodeids_reported.add(rep.nodeid)
-        if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
+        verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
+        if verbosity == 0:
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
             # items are interspersed, e.g. `logreport`, `logreport`,
@@ -661,7 +662,7 @@ class TerminalReporter:
             # should only be printed after all teardowns are finished.
             if self._show_progress_info and not self._is_last_item:
                 self._write_progress_information_if_past_edge()
-        else:
+        elif verbosity > 0:
             line = self._locationline(rep.nodeid, *rep.location)
             running_xdist = hasattr(rep, "node")
             if not running_xdist:
@@ -709,7 +710,7 @@ class TerminalReporter:
 
         # Write the final/100% progress -- deferred until the loop is complete.
         if (
-            self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0
+            self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) == 0
             and self._show_progress_info
             and self.reported_progress
         ):
