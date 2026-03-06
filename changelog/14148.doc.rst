@@ -1,0 +1,1 @@
+The cache how-to example now guards access to ``pytestconfig.cache`` when the ``cacheprovider`` plugin is disabled.
