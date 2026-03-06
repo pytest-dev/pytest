@@ -1713,11 +1713,7 @@ def test_disable_plugin_autoload_warns_for_submodule_entrypoint(
 
     top_level_plugin = types.ModuleType("pytest_recording")
     submodule_plugin = types.ModuleType("pytest_recording.plugin")
-
-    def pytest_addoption(parser):
-        parser.addoption("--block-network")
-
-    setattr(submodule_plugin, "pytest_addoption", pytest_addoption)
+    setattr(submodule_plugin, "pytest_addoption", lambda parser: None)
 
     monkeypatch.setattr(importlib.metadata, "distributions", distributions)
     monkeypatch.setitem(sys.modules, "pytest_recording", top_level_plugin)
