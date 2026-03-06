@@ -1836,7 +1836,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
     Sets the minimum log message level that should be captured for live logging. The integer value or
-    the names of the levels can be used.
+    the names of the levels can be used. Note in TOML the integer must be quoted, as there is no support
+    for config parameters of mixed type.
 
     .. tab:: toml
 
@@ -1844,6 +1845,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_cli_level = "INFO"
+            log_cli_level = "10"
 
     .. tab:: ini
 
@@ -1851,6 +1853,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_cli_level = INFO
+            log_cli_level = 10
 
     For more information, see :ref:`live_logs`.
 
@@ -1951,7 +1954,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
     Sets the minimum log message level that should be captured for the logging file. The integer value or
-    the names of the levels can be used.
+    the names of the levels can be used. Note in TOML the integer must be quoted, as there is no support
+    for config parameters of mixed type.
 
     .. tab:: toml
 
@@ -1959,6 +1963,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_file_level = "INFO"
+            log_cli_level = "10"
 
     .. tab:: ini
 
@@ -1966,6 +1971,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_file_level = INFO
+            log_cli_level = 10
 
     For more information, see :ref:`logging`.
 
@@ -2020,7 +2026,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
     Sets the minimum log message level that should be captured for logging capture. The integer value or
-    the names of the levels can be used.
+    the names of the levels can be used. Note in TOML the integer must be quoted, as there is no support
+    for config parameters of mixed type.
 
     .. tab:: toml
 
@@ -2028,6 +2035,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_level = "INFO"
+            log_cli_level = "10"
 
     .. tab:: ini
 
@@ -2035,6 +2043,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_level = INFO
+            log_cli_level = 10
 
     For more information, see :ref:`logging`.
 
