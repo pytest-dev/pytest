@@ -10,6 +10,7 @@ import platform
 import re
 import sys
 import textwrap
+import types
 from typing import Any
 
 import _pytest._code
@@ -30,6 +31,7 @@ from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 import pytest
 
@@ -1688,6 +1690,50 @@ def test_disable_plugin_autoload(
             enable_plugin_method == "env_var" and disable_plugin_method
         )
     # __spec__ is present when testing locally on pypy, but not in CI ????
+
+
+def test_disable_plugin_autoload_warns_for_submodule_entrypoint(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    class DummyEntryPoint:
+        project_name = "pytest-recording"
+        name = "recording"
+        group = "pytest11"
+        version = "1.0"
+        value = "pytest_recording.plugin"
+
+        def load(self):
+            return sys.modules[self.value]
+
+    class Distribution:
+        metadata = {"name": "pytest-recording"}
+        entry_points = (DummyEntryPoint(),)
+        files = ()
+
+    def distributions():
+        return (Distribution(),)
+
+    top_level_plugin = types.ModuleType("pytest_recording")
+    submodule_plugin = types.ModuleType("pytest_recording.plugin")
+
+    def pytest_addoption(parser):
+        parser.addoption("--block-network")
+
+    setattr(submodule_plugin, "pytest_addoption", pytest_addoption)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    monkeypatch.setitem(sys.modules, "pytest_recording", top_level_plugin)
+    monkeypatch.setitem(sys.modules, "pytest_recording.plugin", submodule_plugin)
+
+    with pytest.warns(
+        PytestConfigWarning,
+        match=r'Plugin "pytest_recording" contains no pytest hooks\. Did you mean to use -p recording\?',
+    ):
+        config = pytester.parseconfig(
+            "--disable-plugin-autoload", "-p", "pytest_recording"
+        )
+
+    assert config.pluginmanager.get_plugin("pytest_recording") is not None
 
 
 def test_plugin_loading_order(pytester: Pytester) -> None:
