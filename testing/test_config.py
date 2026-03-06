@@ -1869,6 +1869,36 @@ def test_disable_plugin_autoload_warns_for_multiple_submodule_entrypoints(
     assert config.pluginmanager.get_plugin("pytest_recording") is not None
 
 
+def test_warn_about_submodule_entrypoint_plugin_direct(pytester: Pytester, monkeypatch):
+    class DummyEntryPoint:
+        group = "pytest11"
+        version = "1.0"
+
+        def __init__(self, name: str, value: str):
+            self.name = name
+            self.value = value
+
+    class Distribution:
+        metadata = {"name": "pytest-recording"}
+        entry_points = (DummyEntryPoint("recording", "pytest_recording.plugin"),)
+        files = ()
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    config = pytester.parseconfig()
+    plugin = types.ModuleType("pytest_recording")
+
+    with pytest.warns(
+        PytestConfigWarning,
+        match=r'Plugin "pytest_recording" contains no pytest hooks\. Did you mean to use -p recording\?',
+    ):
+        config.pluginmanager._warn_about_submodule_entrypoint_plugin(
+            "pytest_recording", plugin
+        )
+
+
 def test_plugin_loading_order(pytester: Pytester) -> None:
     """Test order of plugin loading with `-p`."""
     p1 = pytester.makepyfile(
