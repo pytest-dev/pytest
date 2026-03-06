@@ -993,6 +993,13 @@ ExitCode
     :members:
 
 
+FinalizerHandle
+~~~~~~~~~~~~~~~
+
+.. autoclass:: pytest.FinalizerHandle()
+    :members:
+
+
 FixtureDef
 ~~~~~~~~~~
 
