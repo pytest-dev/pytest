@@ -1703,9 +1703,6 @@ def test_disable_plugin_autoload_warns_for_submodule_entrypoint(
         version = "1.0"
         value = "pytest_recording.plugin"
 
-        def load(self):
-            return sys.modules[self.value]
-
     class Distribution:
         metadata = {"name": "pytest-recording"}
         entry_points = (DummyEntryPoint(),)
@@ -1746,9 +1743,6 @@ def test_disable_plugin_autoload_does_not_warn_when_module_has_hooks(
         group = "pytest11"
         version = "1.0"
         value = "pytest_recording.plugin"
-
-        def load(self):
-            return sys.modules[self.value]
 
     class Distribution:
         metadata = {"name": "pytest-recording"}
@@ -1793,9 +1787,6 @@ def test_disable_plugin_autoload_does_not_warn_when_no_submodule_entrypoint(
         version = "1.0"
         value = "other_plugin.plugin"
 
-        def load(self):
-            return sys.modules[self.value]
-
     class Distribution:
         metadata = {"name": "pytest-recording"}
         entry_points = (DummyEntryPoint(),)
@@ -1835,9 +1826,6 @@ def test_disable_plugin_autoload_warns_for_multiple_submodule_entrypoints(
         def __init__(self, name: str, value: str) -> None:
             self.name = name
             self.value = value
-
-        def load(self):
-            return sys.modules[self.value]
 
     class Distribution:
         metadata = {"name": "pytest-recording"}
