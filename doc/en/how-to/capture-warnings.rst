@@ -160,6 +160,15 @@ You can specify multiple filters with separate decorators:
     def test_one():
         assert api_v1() == 1
 
+You can also pass multiple filters to a single mark by providing multiple arguments:
+
+.. code-block:: python
+
+    # Later arguments take precedence, matching warnings.filterwarnings behavior.
+    @pytest.mark.filterwarnings("error", "ignore:api v1")
+    def test_one():
+        assert api_v1() == 1
+
 .. important::
 
     Regarding decorator order and filter precedence:
