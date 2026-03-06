@@ -12,6 +12,7 @@ import sys
 import textwrap
 import types
 from typing import Any
+import warnings
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list
@@ -1728,6 +1729,138 @@ def test_disable_plugin_autoload_warns_for_submodule_entrypoint(
     with pytest.warns(
         PytestConfigWarning,
         match=r'Plugin "pytest_recording" contains no pytest hooks\. Did you mean to use -p recording\?',
+    ):
+        config = pytester.parseconfig(
+            "--disable-plugin-autoload", "-p", "pytest_recording"
+        )
+
+    assert config.pluginmanager.get_plugin("pytest_recording") is not None
+
+
+def test_disable_plugin_autoload_does_not_warn_when_module_has_hooks(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    class DummyEntryPoint:
+        project_name = "pytest-recording"
+        name = "recording"
+        group = "pytest11"
+        version = "1.0"
+        value = "pytest_recording.plugin"
+
+        def load(self):
+            return sys.modules[self.value]
+
+    class Distribution:
+        metadata = {"name": "pytest-recording"}
+        entry_points = (DummyEntryPoint(),)
+        files = ()
+
+    def distributions():
+        return (Distribution(),)
+
+    plugin_with_hooks = types.ModuleType("pytest_recording")
+
+    def pytest_addoption(parser):
+        parser.addoption("--block-network")
+
+    setattr(plugin_with_hooks, "pytest_addoption", pytest_addoption)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    monkeypatch.setitem(sys.modules, "pytest_recording", plugin_with_hooks)
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always")
+        config = pytester.parseconfig(
+            "--disable-plugin-autoload", "-p", "pytest_recording"
+        )
+
+    assert config.pluginmanager.get_plugin("pytest_recording") is not None
+    assert not [
+        w
+        for w in captured
+        if isinstance(w.message, PytestConfigWarning)
+        and "contains no pytest hooks" in str(w.message)
+    ]
+
+
+def test_disable_plugin_autoload_does_not_warn_when_no_submodule_entrypoint(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    class DummyEntryPoint:
+        project_name = "pytest-recording"
+        name = "recording"
+        group = "pytest11"
+        version = "1.0"
+        value = "other_plugin.plugin"
+
+        def load(self):
+            return sys.modules[self.value]
+
+    class Distribution:
+        metadata = {"name": "pytest-recording"}
+        entry_points = (DummyEntryPoint(),)
+        files = ()
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    monkeypatch.setitem(
+        sys.modules, "pytest_recording", types.ModuleType("pytest_recording")
+    )
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always")
+        config = pytester.parseconfig(
+            "--disable-plugin-autoload", "-p", "pytest_recording"
+        )
+
+    assert config.pluginmanager.get_plugin("pytest_recording") is not None
+    assert not [
+        w
+        for w in captured
+        if isinstance(w.message, PytestConfigWarning)
+        and "contains no pytest hooks" in str(w.message)
+    ]
+
+
+def test_disable_plugin_autoload_warns_for_multiple_submodule_entrypoints(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    class DummyEntryPoint:
+        project_name = "pytest-recording"
+        group = "pytest11"
+        version = "1.0"
+
+        def __init__(self, name: str, value: str) -> None:
+            self.name = name
+            self.value = value
+
+        def load(self):
+            return sys.modules[self.value]
+
+    class Distribution:
+        metadata = {"name": "pytest-recording"}
+        entry_points = (
+            DummyEntryPoint("recording", "pytest_recording.plugin"),
+            DummyEntryPoint("recording_alt", "pytest_recording.alt"),
+        )
+        files = ()
+
+    def distributions():
+        return (Distribution(),)
+
+    monkeypatch.setattr(importlib.metadata, "distributions", distributions)
+    monkeypatch.setitem(
+        sys.modules, "pytest_recording", types.ModuleType("pytest_recording")
+    )
+
+    with pytest.warns(
+        PytestConfigWarning,
+        match=(
+            r'Plugin "pytest_recording" contains no pytest hooks\. '
+            r"Did you mean to use one of: -p recording, -p recording_alt\?"
+        ),
     ):
         config = pytester.parseconfig(
             "--disable-plugin-autoload", "-p", "pytest_recording"
