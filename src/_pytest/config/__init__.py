@@ -930,8 +930,7 @@ class PytestPluginManager(PluginManager):
         )
         warnings.warn(
             PytestConfigWarning(
-                f'Plugin "{modname}" contains no pytest hooks. '
-                f"Did you mean to use {suggestion}?"
+                f'Plugin "{modname}" contains no pytest hooks. Did you mean to use {suggestion}?'
             ),
             stacklevel=3,
         )
