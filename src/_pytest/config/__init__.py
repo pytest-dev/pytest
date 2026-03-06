@@ -878,8 +878,9 @@ class PytestPluginManager(PluginManager):
         importspec = "_pytest." + modname if modname in builtin_plugins else modname
         self.rewrite_hook.mark_rewrite(importspec)
 
+        loaded = False
         if consider_entry_points:
-            loaded = self.load_setuptools_entrypoints("pytest11", name=modname)
+            loaded = bool(self.load_setuptools_entrypoints("pytest11", name=modname))
             if loaded:
                 return
 
@@ -900,6 +901,44 @@ class PytestPluginManager(PluginManager):
             self.skipped_plugins.append((modname, e.msg or ""))
         else:
             self.register(mod, modname)
+            if consider_entry_points and not loaded:
+                self._warn_about_submodule_entrypoint_plugin(modname, mod)
+
+    def _warn_about_submodule_entrypoint_plugin(
+        self, modname: str, mod: _PluggyPlugin
+    ) -> None:
+        if self._plugin_has_pytest_hooks(mod):
+            return
+
+        modname_prefix = f"{modname}."
+        suggested = {
+            ep.name
+            for dist in importlib.metadata.distributions()
+            for ep in dist.entry_points
+            if ep.group == "pytest11"
+            and ep.name != modname
+            and isinstance(getattr(ep, "value", None), str)
+            and getattr(ep, "value").split(":", 1)[0].startswith(modname_prefix)
+        }
+        if not suggested:
+            return
+
+        suggestion = (
+            f"-p {sorted(suggested)[0]}"
+            if len(suggested) == 1
+            else "one of: " + ", ".join(f"-p {name}" for name in sorted(suggested))
+        )
+        warnings.warn(
+            PytestConfigWarning(
+                f'Plugin "{modname}" contains no pytest hooks. Did you mean to use {suggestion}?'
+            ),
+            stacklevel=3,
+        )
+
+    def _plugin_has_pytest_hooks(self, plugin: _PluggyPlugin) -> bool:
+        return any(
+            self.parse_hookimpl_opts(plugin, attr) is not None for attr in dir(plugin)
+        )
 
 
 def _get_plugin_specs_as_list(
