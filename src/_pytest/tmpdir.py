@@ -19,7 +19,6 @@ from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
-from _pytest.compat import get_user_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -167,8 +166,7 @@ class TempPathFactory:
             except OSError:
                 rootdir = temproot.joinpath("pytest-of-unknown")
                 if rootdir.is_symlink():
-                    raise OSError(
-                        f"Symlink attack detected at {rootdir}") from None
+                    raise OSError(f"Symlink attack detected at {rootdir}") from None
                 rootdir.mkdir(mode=0o700, exist_ok=True)
 
             if rootdir.is_symlink():
