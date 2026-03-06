@@ -619,3 +619,25 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
 
     # After - fixed.
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
+
+
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires symlink support")
+def test_tmp_path_factory_fixes_rejects_symlink_attack(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """A local attacker could create a symlink at the predictable
+    /tmp/pytest-of-{user} user pointing to an attacker controlled location.
+    """
+    # Use the test's tmp_path as the system temproot (/tmp).
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    # Set username
+    monkeypatch.setattr("_pytest.tmpdir.get_user", lambda: "testuser")
+    attacker_target = tmp_path / "attacker_controlled"
+    # Simulate symlink attack
+    attacker_target.mkdir(mode=0o700)
+    symlink_path = tmp_path = tmp_path / "pytest-of-testuser"
+    symlink_path.symlink_to(attacker_target)
+
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    with pytest.raises(OSError, match="Symlink"):
+        tmp_factory.getbasetemp()

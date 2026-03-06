@@ -19,7 +19,6 @@ from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
-from _pytest.compat import get_user_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -145,6 +144,8 @@ class TempPathFactory:
         if self._basetemp is not None:
             return self._basetemp
 
+        basetemp: Path
+
         if self._given_basetemp is not None:
             basetemp = self._given_basetemp
             if basetemp.exists():
@@ -155,42 +156,32 @@ class TempPathFactory:
             from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
             temproot = Path(from_env or tempfile.gettempdir()).resolve()
             user = get_user() or "unknown"
-            # use a sub-directory in the temproot to speed-up
-            # make_numbered_dir() call
+
             rootdir = temproot.joinpath(f"pytest-of-{user}")
+            if rootdir.is_symlink():
+                raise OSError(f"Symlink attack detected at {rootdir}")
+
             try:
                 rootdir.mkdir(mode=0o700, exist_ok=True)
             except OSError:
-                # getuser() likely returned illegal characters for the platform, use unknown back off mechanism
                 rootdir = temproot.joinpath("pytest-of-unknown")
+                if rootdir.is_symlink():
+                    raise OSError(f"Symlink attack detected at {rootdir}") from None
                 rootdir.mkdir(mode=0o700, exist_ok=True)
-            # Because we use exist_ok=True with a predictable name, make sure
-            # we are the owners, to prevent any funny business (on unix, where
-            # temproot is usually shared).
-            # Also, to keep things private, fixup any world-readable temp
-            # rootdir's permissions. Historically 0o755 was used, so we can't
-            # just error out on this, at least for a while.
-            uid = get_user_id()
-            if uid is not None:
-                rootdir_stat = rootdir.stat()
-                if rootdir_stat.st_uid != uid:
-                    raise OSError(
-                        f"The temporary directory {rootdir} is not owned by the current user. "
-                        "Fix this and try again."
-                    )
-                if (rootdir_stat.st_mode & 0o077) != 0:
-                    os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
+
+            if rootdir.is_symlink():
+                raise OSError(f"Symlink attack detected at {rootdir}")
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0
-            basetemp = make_numbered_dir_with_cleanup(
+            res = make_numbered_dir_with_cleanup(
                 prefix="pytest-",
                 root=rootdir,
                 keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
             )
-        assert basetemp is not None, basetemp
+            basetemp = res
         self._basetemp = basetemp
         self._trace("new basetemp", basetemp)
         return basetemp
