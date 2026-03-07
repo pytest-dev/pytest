@@ -1041,7 +1041,6 @@ class FixtureDef(Generic[FixtureValue]):
             except BaseException as e:
                 exceptions.append(e)
         node = request.node
-        node.ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
         # Even if finalization fails, we invalidate the cached fixture
         # value and remove all finalizers because they may be bound methods
         # which will keep instances alive.
@@ -1100,6 +1099,15 @@ class FixtureDef(Generic[FixtureValue]):
         finalizer = functools.partial(self.finish, request=request)
         for parent_fixture in requested_fixtures_that_should_finalize_us:
             parent_fixture.addfinalizer(finalizer)
+
+        # Register the pytest_fixture_post_finalizer as the first finalizer,
+        # which is executed last.
+        assert not self._finalizers
+        self.addfinalizer(
+            lambda: request.node.ihook.pytest_fixture_post_finalizer(
+                fixturedef=self, request=request
+            )
+        )
 
         ihook = request.node.ihook
         try:

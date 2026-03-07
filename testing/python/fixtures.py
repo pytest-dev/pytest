@@ -4281,6 +4281,60 @@ def test_fixture_post_finalizer_called_once(pytester: Pytester) -> None:
     result.assert_outcomes(passed=2)
 
 
+def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
+    """Test that exceptions in pytest_fixture_post_finalizer hook are caught.
+
+    Also verifies that the fixture cache is properly reset even when the
+    post_finalizer hook raises an exception, so the fixture can be rebuilt
+    in subsequent tests.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            if "test_first" in request.node.nodeid:
+                raise RuntimeError("Error in post finalizer hook")
+
+        @pytest.fixture
+        def my_fixture(request):
+            yield request.node.nodeid
+        """
+    )
+    pytester.makepyfile(
+        test_fixtures="""
+        def test_first(my_fixture):
+            assert "test_first" in my_fixture
+
+        def test_second(my_fixture):
+            assert "test_second" in my_fixture
+        """
+    )
+    result = pytester.runpytest("-v", "--setup-show")
+    result.assert_outcomes(passed=2, errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*test_first*PASSED",
+            "*test_first*ERROR",
+            "*RuntimeError: Error in post finalizer hook*",
+        ]
+    )
+    # Verify fixture is setup twice (rebuilt for test_second despite error).
+    result.stdout.fnmatch_lines(
+        [
+            "test_fixtures.py::test_first ",
+            "        SETUP    F my_fixture",
+            "        test_fixtures.py::test_first (fixtures used: my_fixture, request)PASSED",
+            "test_fixtures.py::test_first ERROR",
+            "test_fixtures.py::test_second ",
+            "        SETUP    F my_fixture",
+            "        test_fixtures.py::test_second (fixtures used: my_fixture, request)PASSED",
+            "        TEARDOWN F my_fixture",
+        ],
+        consecutive=True,
+    )
+
+
 class TestScopeOrdering:
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
