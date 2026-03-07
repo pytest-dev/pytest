@@ -2009,3 +2009,35 @@ def test_check_error_notes_failure(
     with pytest.raises(AssertionError):
         with pytest.raises(type(error), match=match):
             raise error
+
+
+def test_chained_exceptiongroup_uses_current_excinfo(pytester: Pytester) -> None:
+    """Regression test: when a BaseExceptionGroup appears as a chained exception,
+    repr_excinfo should use excinfo_ (current) not excinfo (original outer).
+
+    With the bug, the traceback and type info from the outer exception was used
+    instead of the chained ExceptionGroup, potentially causing wrong output or
+    a mismatch between the displayed exception type and its traceback.
+    """
+    pytester.makepyfile(
+        """
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
+
+        def test_chained_eg():
+            try:
+                raise ExceptionGroup("inner", [TypeError("from inner")])
+            except BaseException:
+                raise ValueError("outer")
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "*ExceptionGroup*",
+            "*TypeError: from inner*",
+            "*During handling of the above exception, another exception occurred:*",
+            "*ValueError: outer*",
+        ]
+    )

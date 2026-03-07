@@ -1188,11 +1188,11 @@ class FormattedExcinfo:
                 reprtraceback: ReprTraceback | ReprTracebackNative
                 if isinstance(e, BaseExceptionGroup):
                     # don't filter any sub-exceptions since they shouldn't have any internal frames
-                    traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
+                    traceback = filter_excinfo_traceback(self.tbfilter, excinfo_)
                     reprtraceback = ReprTracebackNative(
                         format_exception(
-                            type(excinfo.value),
-                            excinfo.value,
+                            type(excinfo_.value),
+                            excinfo_.value,
                             traceback[0]._rawentry if traceback else None,
                         )
                     )
