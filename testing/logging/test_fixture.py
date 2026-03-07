@@ -206,6 +206,25 @@ def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
     assert unfiltered_tuple == ("test_fixture", 20, "handler call")
 
 
+def test_with_statement_filtering_nested_same_filter(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    class NoCaptureFilter(logging.Filter):
+        def filter(self, _record: logging.LogRecord) -> bool:
+            return False
+
+    filter_obj = NoCaptureFilter()
+
+    with caplog.at_level(logging.INFO):
+        with caplog.filtering(filter_obj):
+            logger.info("Will not be captured")
+            with caplog.filtering(filter_obj):
+                logger.info("Will also not be captured")
+            logger.info("Will still not be captured")
+
+    assert caplog.records == []
+
+
 @pytest.mark.parametrize(
     "level_str,expected_disable_level",
     [
