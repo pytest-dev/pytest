@@ -1869,35 +1869,60 @@ class FixtureManager:
             holderobj_tp = holderobj
 
         self._holderobjseen.add(holderobj)
-        for name in dir(holderobj):
-            # The attribute can be an arbitrary descriptor, so the attribute
-            # access below can raise. safe_getattr() ignores such exceptions.
-            obj_ub = safe_getattr(holderobj_tp, name, None)
-            if type(obj_ub) is FixtureFunctionDefinition:
-                marker = obj_ub._fixture_function_marker
-                if marker.name:
-                    fixture_name = marker.name
-                else:
-                    fixture_name = name
 
-                # OK we know it is a fixture -- now safe to look up on the _instance_.
-                try:
-                    obj = getattr(holderobj, name)
-                # if the fixture is named in the decorator we cannot find it in the module
-                except AttributeError:
-                    obj = obj_ub
+        # Use __dict__ to preserve definition order instead of dir() which sorts.
+        # This ensures fixtures are processed in their definition order, which is
+        # important for autouse fixtures and fixture overriding (#11281, #12952).
+        #
+        # For modules: module.__dict__ contains all module-level names.
+        # For classes/instances: walk the MRO to get all class and base class
+        # attributes (using holderobj_tp which resolves to the class in both cases).
+        dicts: list[Mapping[str, Any]]
+        if isinstance(holderobj, types.ModuleType):
+            dicts = [holderobj.__dict__]
+        else:
+            # For classes and instances: walk the MRO to get all attributes.
+            # For classes, holderobj_tp is the class itself; for instances,
+            # holderobj_tp is type(holderobj) (set above on line 1867).
+            # In both cases holderobj_tp is a type with __mro__.
+            assert isinstance(holderobj_tp, type)
+            dicts = [cls.__dict__ for cls in holderobj_tp.__mro__]
 
-                func = obj._get_wrapped_function()
+        seen: set[str] = set()
+        for dic in dicts:
+            for name in dic:
+                if name in seen:
+                    continue
+                seen.add(name)
 
-                self._register_fixture(
-                    name=fixture_name,
-                    nodeid=nodeid,
-                    func=func,
-                    scope=marker.scope,
-                    params=marker.params,
-                    ids=marker.ids,
-                    autouse=marker.autouse,
-                )
+                # The attribute can be an arbitrary descriptor, so the attribute
+                # access below can raise. safe_getattr() ignores such exceptions.
+                obj_ub = safe_getattr(holderobj_tp, name, None)
+                if type(obj_ub) is FixtureFunctionDefinition:
+                    marker = obj_ub._fixture_function_marker
+                    if marker.name:
+                        fixture_name = marker.name
+                    else:
+                        fixture_name = name
+
+                    # OK we know it is a fixture -- now safe to look up on the _instance_.
+                    try:
+                        obj = getattr(holderobj, name)
+                    # if the fixture is named in the decorator we cannot find it in the module
+                    except AttributeError:
+                        obj = obj_ub
+
+                    func = obj._get_wrapped_function()
+
+                    self._register_fixture(
+                        name=fixture_name,
+                        nodeid=nodeid,
+                        func=func,
+                        scope=marker.scope,
+                        params=marker.params,
+                        ids=marker.ids,
+                        autouse=marker.autouse,
+                    )
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node

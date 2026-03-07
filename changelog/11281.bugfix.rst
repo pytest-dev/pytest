@@ -1,0 +1,6 @@
+Fixed fixture discovery to preserve definition order instead of using alphabetical sorting.
+
+This ensures that fixtures are processed in the order they appear in source code,
+which is important for autouse fixtures and fixture overriding with the ``name`` parameter.
+Previously, using ``dir()`` for fixture discovery caused alphabetical sorting, leading to
+unexpected behavior when fixtures with the same name were defined at different scopes.

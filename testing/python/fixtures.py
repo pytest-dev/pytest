@@ -5426,3 +5426,65 @@ def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
+
+
+def test_autouse_fixtures_definition_order_preserved(pytester: Pytester) -> None:
+    """
+    Test that fixture discovery uses definition order instead of alphabetical
+    sorting from dir(). When fixtures have different names, they should be
+    discovered and registered in their definition order, which ensures
+    higher-scoped fixtures execute before lower-scoped ones.
+
+    Regression test for https://github.com/pytest-dev/pytest/issues/11281
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        call_order = []
+
+        @pytest.fixture(scope='module', autouse=True)
+        def module_setup():
+            call_order.append("MODULE")
+
+        class TestFoo:
+            @pytest.fixture(scope='class', autouse=True)
+            def class_setup(self):
+                call_order.append("CLASS")
+
+            def test_in_class(self):
+                # Module-scoped fixture runs first, then class-scoped.
+                assert call_order == ["MODULE", "CLASS"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_override_with_name_kwarg_respects_definition_order(
+    pytester: Pytester,
+) -> None:
+    """
+    Test that fixture override using name kwarg respects definition order.
+
+    Related to https://github.com/pytest-dev/pytest/issues/12952
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture()
+        def f1():
+            return 1
+
+        @pytest.fixture(name="f1")
+        def f2():
+            return 2
+
+        def test_override(f1):
+            # Later definition should override
+            assert f1 == 2
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
