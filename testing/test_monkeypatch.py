@@ -117,6 +117,18 @@ def test_delattr() -> None:
     assert A.x == 1
 
 
+def test_delattr_non_existing_with_raising_false() -> None:
+    class A:
+        pass
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.delattr(A, "x", raising=False)
+    monkeypatch.setattr(A, "x", 1, raising=False)
+    assert A.x == 1  # type: ignore[attr-defined]
+    monkeypatch.undo()
+    assert not hasattr(A, "x")
+
+
 def test_setitem() -> None:
     d = {"x": 1}
     monkeypatch = MonkeyPatch()
@@ -175,6 +187,16 @@ def test_delitem() -> None:
     assert d["x"] == 1500
     monkeypatch.undo()
     assert d == {"hello": "world", "x": 1}
+
+
+def test_delitem_non_existing_with_raising_false() -> None:
+    d: dict[str, object] = {}
+    monkeypatch = MonkeyPatch()
+    monkeypatch.delitem(d, "x", raising=False)
+    monkeypatch.setitem(d, "x", 1)
+    assert d["x"] == 1
+    monkeypatch.undo()
+    assert "x" not in d
 
 
 def test_setenv() -> None:

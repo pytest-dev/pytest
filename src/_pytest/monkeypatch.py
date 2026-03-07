@@ -277,6 +277,7 @@ class MonkeyPatch:
         if not hasattr(target, name):
             if raising:
                 raise AttributeError(name)
+            self._setattr.append((target, name, NOTSET))
         else:
             oldval = getattr(target, name, NOTSET)
             # Avoid class descriptors like staticmethod/classmethod.
@@ -300,6 +301,7 @@ class MonkeyPatch:
         if name not in dic:
             if raising:
                 raise KeyError(name)
+            self._setitem.append((dic, name, NOTSET))
         else:
             self._setitem.append((dic, name, dic.get(name, NOTSET)))
             # Not all Mapping types support indexing, but MutableMapping doesn't support TypedDict
@@ -408,7 +410,10 @@ class MonkeyPatch:
             if value is not NOTSET:
                 setattr(obj, name, value)
             else:
-                delattr(obj, name)
+                try:
+                    delattr(obj, name)
+                except AttributeError:
+                    pass  # Was already deleted, so we have the desired state.
         self._setattr[:] = []
         for dictionary, key, value in reversed(self._setitem):
             if value is NOTSET:
