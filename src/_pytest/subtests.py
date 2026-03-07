@@ -380,9 +380,8 @@ def pytest_report_teststatus(
             if quiet:
                 return "", "", ""
             elif outcome == "skipped":
-                category = "xfailed"
-                short = "y"  # x letter is used for regular xfail, y for subtest xfail
-                status = "SUBXFAIL"
+                # x letter is used for regular xfail, y for subtest xfail
+                return "xfailed", "y", f"SUBXFAIL{description}"
             # outcome == "passed" in an xfail is only possible via a @pytest.mark.xfail mark, which
             # is not applicable to a subtest, which only handles pytest.xfail().
             else:  # pragma: no cover
@@ -391,21 +390,15 @@ def pytest_report_teststatus(
                 # passed in case of xfail.
                 # Let's pass this report to the next hook.
                 return None
-            return category, short, f"{status}{description}"
 
         if report.failed:
             return outcome, "u", f"SUBFAILED{description}"
-        else:
-            if report.passed:
-                if quiet:
-                    return "", "", ""
-                else:
-                    return f"subtests {outcome}", "u", f"SUBPASSED{description}"
-            elif report.skipped:
-                if quiet:
-                    return "", "", ""
-                else:
-                    return outcome, "-", f"SUBSKIPPED{description}"
+        elif quiet:
+            return "", "", ""
+        elif report.passed:
+            return f"subtests {outcome}", "u", f"SUBPASSED{description}"
+        elif report.skipped:
+            return outcome, "-", f"SUBSKIPPED{description}"
 
     else:
         failed_subtests_count = config.stash[failed_subtests_key][report.nodeid]
