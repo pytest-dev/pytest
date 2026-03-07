@@ -86,15 +86,8 @@ def collect_unraisable(config: Config) -> None:
 def cleanup(
     *, config: Config, prev_hook: Callable[[sys.UnraisableHookArgs], object]
 ) -> None:
-    # A single collection doesn't necessarily collect everything.
-    # Constant determined experimentally by the Trio project.
-    gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
     try:
-        try:
-            gc_collect_harder(gc_collect_iterations)
-            collect_unraisable(config)
-        finally:
-            sys.unraisablehook = prev_hook
+        sys.unraisablehook = prev_hook
     finally:
         del config.stash[unraisable_exceptions]
 
@@ -147,6 +140,11 @@ def pytest_configure(config: Config) -> None:
     config.add_cleanup(functools.partial(cleanup, config=config, prev_hook=prev_hook))
     sys.unraisablehook = functools.partial(unraisable_hook, append=deque.append)
 
+
+def pytest_unconfigure(config: Config) -> None:
+    gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
+    gc_collect_harder(gc_collect_iterations)
+    collect_unraisable(config)
 
 @pytest.hookimpl(trylast=True)
 def pytest_runtest_setup(item: Item) -> None:
