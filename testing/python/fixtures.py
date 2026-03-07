@@ -4219,6 +4219,68 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(pytester: Pytester) -> Non
     )
 
 
+def test_fixture_post_finalizer_called_once(pytester: Pytester) -> None:
+    """Test that pytest_fixture_post_finalizer is called only once per fixture teardown.
+
+    When a fixture depends on multiple parametrized fixtures and all their parameters
+    change at the same time, the dependent fixture should be torn down only once,
+    and pytest_fixture_post_finalizer should be called only once for it.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        finalizer_calls = []
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            finalizer_calls.append(fixturedef.argname)
+
+        @pytest.fixture(autouse=True)
+        def check_finalizer_calls(request):
+            yield
+            # After each test, verify no duplicate finalizer calls.
+            if finalizer_calls:
+                assert len(finalizer_calls) == len(set(finalizer_calls)), (
+                    f"Duplicate finalizer calls detected: {finalizer_calls}"
+                )
+                finalizer_calls.clear()
+        """
+    )
+    pytester.makepyfile(
+        test_fixtures="""
+        import pytest
+
+        @pytest.fixture(scope="session")
+        def foo(request):
+            return request.param
+
+        @pytest.fixture(scope="session")
+        def bar(request):
+            return request.param
+
+        @pytest.fixture(scope="session")
+        def baz(foo, bar):
+            return f"{foo}-{bar}"
+
+        @pytest.mark.parametrize("foo,bar", [(1, 1)], indirect=True)
+        def test_first(foo, bar, baz):
+            assert foo == 1
+            assert bar == 1
+            assert baz == "1-1"
+
+        @pytest.mark.parametrize("foo,bar", [(2, 2)], indirect=True)
+        def test_second(foo, bar, baz):
+            assert foo == 2
+            assert bar == 2
+            assert baz == "2-2"
+        """
+    )
+    result = pytester.runpytest("-v")
+    # The test passes, which means no duplicate finalizer calls were detected
+    # by the check_finalizer_calls autouse fixture.
+    result.assert_outcomes(passed=2)
+
+
 class TestScopeOrdering:
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
