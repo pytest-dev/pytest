@@ -1,0 +1,1 @@
+Fixed ``MonkeyPatch.delattr(..., raising=False)`` and ``MonkeyPatch.delitem(..., raising=False)`` so ``undo()`` restores the original missing state.
