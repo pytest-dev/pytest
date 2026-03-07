@@ -45,7 +45,6 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -652,27 +651,20 @@ class Package(nodes.Directory):
         Now inherits from :class:`~pytest.Directory`.
     """
 
-    def __init__(
-        self,
-        fspath: LEGACY_PATH | None,
+    @classmethod
+    def from_parent(  # type: ignore[override]
+        cls,
         parent: nodes.Collector,
-        # NOTE: following args are unused:
-        config=None,
-        session=None,
-        nodeid=None,
-        path: Path | None = None,
-    ) -> None:
-        # NOTE: Could be just the following, but kept as-is for compat.
-        # super().__init__(self, fspath, parent=parent)
-        session = parent.session
-        super().__init__(
-            fspath=fspath,
-            path=path,
-            parent=parent,
-            config=config,
-            session=session,
-            nodeid=nodeid,
-        )
+        *,
+        path: Path,
+    ) -> Self:
+        """The public constructor.
+
+        :param parent: The parent collector of this Package.
+        :param path: The package directory's path.
+        :type path: pathlib.Path
+        """
+        return super().from_parent(parent=parent, path=path)
 
     def setup(self) -> None:
         init_mod = importtestmodule(self.path / "__init__.py", self.config)
@@ -1588,12 +1580,11 @@ class Function(PyobjMixin, nodes.Item):
         config: Config | None = None,
         callspec: CallSpec2 | None = None,
         callobj=NOTSET,
-        keywords: Mapping[str, Any] | None = None,
         session: Session | None = None,
-        fixtureinfo: FuncFixtureInfo | None = None,
         originalname: str | None = None,
+        **kw,
     ) -> None:
-        super().__init__(name, parent, config=config, session=session)
+        super().__init__(name, parent, config=config, session=session, **kw)
 
         if callobj is not NOTSET:
             self._obj = callobj
@@ -1607,16 +1598,22 @@ class Function(PyobjMixin, nodes.Item):
         #: .. versionadded:: 3.0
         self.originalname = originalname or name
 
-        # Note: when FunctionDefinition is introduced, we should change ``originalname``
-        # to a readonly property that returns FunctionDefinition.name.
-
-        self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
-            self.own_markers.extend(callspec.marks)
 
-        # todo: this is a hell of a hack
-        # https://github.com/pytest-dev/pytest/issues/4569
+    def _setup_markers_and_fixtures(
+        self,
+        keywords: Mapping[str, Any] | None = None,
+        fixtureinfo: FuncFixtureInfo | None = None,
+    ) -> None:
+        """Set up markers, keywords, fixture info, and the fixture request.
+
+        Called from :meth:`from_parent` after the node is fully constructed.
+        """
+        self.own_markers.extend(get_unpacked_marks(self.obj))
+        if hasattr(self, "callspec"):
+            self.own_markers.extend(self.callspec.marks)
+
         # Note: the order of the updates is important here; indicates what
         # takes priority (ctor argument over function attributes over markers).
         # Take own_markers only; NodeKeywords handles parent traversal on its own.
@@ -1632,11 +1629,17 @@ class Function(PyobjMixin, nodes.Item):
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
-    # todo: determine sound type limitations
     @classmethod
     def from_parent(cls, parent, **kw) -> Self:
         """The public constructor."""
-        return super().from_parent(parent=parent, **kw)
+        keywords = kw.pop("keywords", None)
+        fixtureinfo = kw.pop("fixtureinfo", None)
+        item = super().from_parent(parent=parent, **kw)
+        item._setup_markers_and_fixtures(
+            keywords=keywords,
+            fixtureinfo=fixtureinfo,
+        )
+        return item
 
     def _initrequest(self) -> None:
         self.funcargs: dict[str, object] = {}
