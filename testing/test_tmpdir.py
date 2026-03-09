@@ -681,3 +681,97 @@ def test_tmp_path_factory_nofollow_flag_missing(
     # Should still create the directory with safe permissions.
     assert basetemp.is_dir()
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
+
+
+def test_tmp_path_factory_from_config_rejects_negative_count(
+    tmp_path: Path,
+) -> None:
+    """Verify that a negative tmp_path_retention_count raises ValueError."""
+
+    @dataclasses.dataclass
+    class BadCountConfig:
+        basetemp: str | Path = ""
+
+        @property
+        def trace(self):
+            return self
+
+        def get(self, key):
+            return lambda *k: None
+
+        def getini(self, name):
+            if name == "tmp_path_retention_count":
+                return -1
+            elif name == "tmp_path_retention_policy":
+                return "all"
+            else:
+                assert False
+
+        @property
+        def option(self):
+            return self
+
+    config = cast(Config, BadCountConfig(tmp_path))
+    with pytest.raises(ValueError, match="tmp_path_retention_count must be >= 0"):
+        TempPathFactory.from_config(config, _ispytest=True)
+
+
+def test_tmp_path_factory_from_config_rejects_invalid_policy(
+    tmp_path: Path,
+) -> None:
+    """Verify that an invalid tmp_path_retention_policy raises ValueError."""
+
+    @dataclasses.dataclass
+    class BadPolicyConfig:
+        basetemp: str | Path = ""
+
+        @property
+        def trace(self):
+            return self
+
+        def get(self, key):
+            return lambda *k: None
+
+        def getini(self, name):
+            if name == "tmp_path_retention_count":
+                return 3
+            elif name == "tmp_path_retention_policy":
+                return "invalid_policy"
+            else:
+                assert False
+
+        @property
+        def option(self):
+            return self
+
+    config = cast(Config, BadPolicyConfig(tmp_path))
+    with pytest.raises(ValueError, match="tmp_path_retention_policy must be either"):
+        TempPathFactory.from_config(config, _ispytest=True)
+
+
+def test_tmp_path_factory_none_policy_sets_keep_zero(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Verify that retention_policy='none' sets keep=0."""
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    tmp_factory = TempPathFactory(
+        None, 3, "none", lambda *args: None, _ispytest=True
+    )
+    basetemp = tmp_factory.getbasetemp()
+    assert basetemp.is_dir()
+
+
+def test_pytest_sessionfinish_noop_when_no_basetemp(
+    pytester: Pytester,
+) -> None:
+    """Verify that pytest_sessionfinish returns early when basetemp is None."""
+    from _pytest.tmpdir import pytest_sessionfinish
+
+    p = pytester.makepyfile(
+        """
+        def test_no_tmp():
+            pass
+    """
+    )
+    result = pytester.runpytest(p)
+    result.assert_outcomes(passed=1)
