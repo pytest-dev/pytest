@@ -619,3 +619,31 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
 
     # After - fixed.
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
+
+
+@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+def test_tmp_path_factory_rejects_symlink_rootdir(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """CVE-2025-71176: verify that a symlink at the pytest-of-<user> location
+    is rejected to prevent symlink attacks."""
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+
+    # Pre-create a target directory that the symlink will point to.
+    attacker_dir = tmp_path / "attacker-controlled"
+    attacker_dir.mkdir(mode=0o700)
+
+    # Figure out what rootdir name pytest would use, then replace it
+    # with a symlink pointing to the attacker-controlled directory.
+    import getpass
+
+    user = getpass.getuser()
+    rootdir = tmp_path / f"pytest-of-{user}"
+    # Remove the real dir if a prior factory call created it.
+    if rootdir.exists():
+        rootdir.rmdir()
+    rootdir.symlink_to(attacker_dir)
+
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    with pytest.raises(OSError, match="could not be safely opened"):
+        tmp_factory.getbasetemp()

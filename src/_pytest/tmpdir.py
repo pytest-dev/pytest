@@ -172,14 +172,31 @@ class TempPathFactory:
             # just error out on this, at least for a while.
             uid = get_user_id()
             if uid is not None:
-                rootdir_stat = rootdir.stat()
-                if rootdir_stat.st_uid != uid:
+                # Open the directory without following symlinks to prevent
+                # symlink attacks (CVE-2025-71176). Using a file descriptor
+                # for fstat/fchmod also eliminates TOCTOU races.
+                open_flags = os.O_RDONLY
+                for _flag in ("O_NOFOLLOW", "O_DIRECTORY"):
+                    open_flags |= getattr(os, _flag, 0)
+                try:
+                    dir_fd = os.open(str(rootdir), open_flags)
+                except OSError as e:
                     raise OSError(
-                        f"The temporary directory {rootdir} is not owned by the current user. "
-                        "Fix this and try again."
-                    )
-                if (rootdir_stat.st_mode & 0o077) != 0:
-                    os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
+                        f"The temporary directory {rootdir} could not be "
+                        "safely opened (it may be a symlink). "
+                        "Remove the symlink or directory and try again."
+                    ) from e
+                try:
+                    rootdir_stat = os.fstat(dir_fd)
+                    if rootdir_stat.st_uid != uid:
+                        raise OSError(
+                            f"The temporary directory {rootdir} is not owned by the current user. "
+                            "Fix this and try again."
+                        )
+                    if (rootdir_stat.st_mode & 0o077) != 0:
+                        os.fchmod(dir_fd, rootdir_stat.st_mode & ~0o077)
+                finally:
+                    os.close(dir_fd)
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0
