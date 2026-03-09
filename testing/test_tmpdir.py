@@ -775,3 +775,25 @@ def test_pytest_sessionfinish_noop_when_no_basetemp(
     )
     result = pytester.runpytest(p)
     result.assert_outcomes(passed=1)
+
+
+def test_pytest_sessionfinish_handles_missing_basetemp_dir(
+    tmp_path: Path,
+) -> None:
+    """Cover the branch where basetemp is set but the directory no longer
+    exists when pytest_sessionfinish runs (314->320 partial branch)."""
+    from _pytest.tmpdir import pytest_sessionfinish
+
+    factory = TempPathFactory(
+        None, 3, "failed", lambda *args: None, _ispytest=True
+    )
+    # Point _basetemp at a path that does not exist on disk.
+    factory._basetemp = tmp_path / "already-gone"
+
+    class FakeSession:
+        class config:
+            _tmp_path_factory = factory
+
+    # exitstatus=0 + policy="failed" + _given_basetemp=None enters the
+    # cleanup block; basetemp.is_dir() is False so rmtree is skipped.
+    pytest_sessionfinish(FakeSession, exitstatus=0)
