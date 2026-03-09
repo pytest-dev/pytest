@@ -647,3 +647,37 @@ def test_tmp_path_factory_rejects_symlink_rootdir(
     tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     with pytest.raises(OSError, match="could not be safely opened"):
         tmp_factory.getbasetemp()
+
+
+@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+def test_tmp_path_factory_rejects_wrong_owner(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """CVE-2025-71176: verify that a rootdir owned by a different user is
+    rejected (covers the fstat uid mismatch branch)."""
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+
+    # Make get_user_id() return a uid that won't match the directory owner.
+    monkeypatch.setattr("_pytest.tmpdir.get_user_id", lambda: os.getuid() + 1)
+
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    with pytest.raises(OSError, match="not owned by the current user"):
+        tmp_factory.getbasetemp()
+
+
+@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+def test_tmp_path_factory_nofollow_flag_missing(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """CVE-2025-71176: verify that the code still works when O_NOFOLLOW or
+    O_DIRECTORY flags are not available on the platform."""
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    monkeypatch.delattr(os, "O_NOFOLLOW", raising=False)
+    monkeypatch.delattr(os, "O_DIRECTORY", raising=False)
+
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    basetemp = tmp_factory.getbasetemp()
+
+    # Should still create the directory with safe permissions.
+    assert basetemp.is_dir()
+    assert (basetemp.parent.stat().st_mode & 0o077) == 0
