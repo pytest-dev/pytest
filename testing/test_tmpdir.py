@@ -754,9 +754,7 @@ def test_tmp_path_factory_none_policy_sets_keep_zero(
 ) -> None:
     """Verify that retention_policy='none' sets keep=0."""
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    tmp_factory = TempPathFactory(
-        None, 3, "none", lambda *args: None, _ispytest=True
-    )
+    tmp_factory = TempPathFactory(None, 3, "none", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
     assert basetemp.is_dir()
 
@@ -765,8 +763,6 @@ def test_pytest_sessionfinish_noop_when_no_basetemp(
     pytester: Pytester,
 ) -> None:
     """Verify that pytest_sessionfinish returns early when basetemp is None."""
-    from _pytest.tmpdir import pytest_sessionfinish
-
     p = pytester.makepyfile(
         """
         def test_no_tmp():
