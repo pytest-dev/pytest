@@ -639,9 +639,9 @@ def test_tmp_path_factory_rejects_symlink_rootdir(
 
     user = getpass.getuser()
     rootdir = tmp_path / f"pytest-of-{user}"
-    # Remove the real dir if a prior factory call created it.
-    if rootdir.exists():
-        rootdir.rmdir()
+    # Ensure the real dir exists so the cleanup branch is exercised.
+    rootdir.mkdir(mode=0o700, exist_ok=True)
+    rootdir.rmdir()
     rootdir.symlink_to(attacker_dir)
 
     tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
@@ -692,24 +692,10 @@ def test_tmp_path_factory_from_config_rejects_negative_count(
     class BadCountConfig:
         basetemp: str | Path = ""
 
-        @property
-        def trace(self):
-            return self
-
-        def get(self, key):
-            return lambda *k: None
-
         def getini(self, name):
             if name == "tmp_path_retention_count":
                 return -1
-            elif name == "tmp_path_retention_policy":
-                return "all"
-            else:
-                assert False
-
-        @property
-        def option(self):
-            return self
+            assert False
 
     config = cast(Config, BadCountConfig(tmp_path))
     with pytest.raises(ValueError, match="tmp_path_retention_count must be >= 0"):
@@ -725,24 +711,12 @@ def test_tmp_path_factory_from_config_rejects_invalid_policy(
     class BadPolicyConfig:
         basetemp: str | Path = ""
 
-        @property
-        def trace(self):
-            return self
-
-        def get(self, key):
-            return lambda *k: None
-
         def getini(self, name):
             if name == "tmp_path_retention_count":
                 return 3
             elif name == "tmp_path_retention_policy":
                 return "invalid_policy"
-            else:
-                assert False
-
-        @property
-        def option(self):
-            return self
+            assert False
 
     config = cast(Config, BadPolicyConfig(tmp_path))
     with pytest.raises(ValueError, match="tmp_path_retention_policy must be either"):
