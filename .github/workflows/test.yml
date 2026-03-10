@@ -257,7 +257,7 @@ jobs:
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
       with:
         name: Packages
         path: dist
@@ -297,7 +297,7 @@ jobs:
         verbose: true
 
     - name: Upload JUnit report to Codecov
-      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
+      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
       with:
         fail_ci_if_error: false
         files: junit.xml

@@ -305,9 +305,9 @@ def test_subtests_and_parametrization(
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i='1') *[[] 50%[]]",
+            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i=1) *[[] 50%[]]",
             "*.py::test_foo[[]0[]] FAILED                        *[[] 50%[]]",
-            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i='1') *[[]100%[]]",
+            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
             "*.py::test_foo[[]1[]] FAILED                        *[[]100%[]]",
             "contains 1 failed subtest",
             "* 4 failed, 4 subtests passed in *",
@@ -323,9 +323,9 @@ def test_subtests_and_parametrization(
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines(
         [
-            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i='1') *[[] 50%[]]",
+            "*.py::test_foo[[]0[]] SUBFAILED[[]custom[]] (i=1) *[[] 50%[]]",
             "*.py::test_foo[[]0[]] FAILED                        *[[] 50%[]]",
-            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i='1') *[[]100%[]]",
+            "*.py::test_foo[[]1[]] SUBFAILED[[]custom[]] (i=1) *[[]100%[]]",
             "*.py::test_foo[[]1[]] FAILED                        *[[]100%[]]",
             "contains 1 failed subtest",
             "* 4 failed in *",
@@ -369,6 +369,36 @@ def test_subtests_do_not_overwrite_top_level_failure(pytester: pytest.Pytester) 
         [
             "*AssertionError: top-level failure",
             "* 2 failed, 2 subtests passed in *",
+        ]
+    )
+
+
+def test_msg_not_a_string(
+    pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    Using a non-string in subtests.test() should still show it in the terminal (#14195).
+
+    Note: this was not a problem originally with the subtests fixture, only with TestCase.subTest; this test
+    was added for symmetry.
+    """
+    monkeypatch.setenv("COLUMNS", "120")
+    pytester.makepyfile(
+        """
+        def test_int_msg(subtests):
+            with subtests.test(42):
+                assert False, "subtest failure"
+
+        def test_no_msg(subtests):
+            with subtests.test():
+                assert False, "subtest failure"
+        """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "SUBFAILED[[]42[]] test_msg_not_a_string.py::test_int_msg - AssertionError: subtest failure",
+            "SUBFAILED(<subtest>) test_msg_not_a_string.py::test_no_msg - AssertionError: subtest failure",
         ]
     )
 
@@ -622,6 +652,33 @@ class TestUnittestSubTest:
             "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py:*: skip subtest 1"
         )
 
+    def test_msg_not_a_string(
+        self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Using a non-string in TestCase.subTest should still show it in the terminal (#14195)."""
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
+            """
+            from unittest import TestCase
+
+            class T(TestCase):
+                def test_int_msg(self):
+                    with self.subTest(42):
+                        assert False, "subtest failure"
+
+                def test_no_msg(self):
+                    with self.subTest():
+                        assert False, "subtest failure"
+            """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "SUBFAILED[[]42[]] test_msg_not_a_string.py::T::test_int_msg - AssertionError: subtest failure",
+                "SUBFAILED(<subtest>) test_msg_not_a_string.py::T::test_no_msg - AssertionError: subtest failure",
+            ]
+        )
+
 
 class TestCapture:
     def create_file(self, pytester: pytest.Pytester) -> None:
@@ -653,12 +710,12 @@ class TestCapture:
         result = pytester.runpytest(f"--capture={mode}")
         result.stdout.fnmatch_lines(
             [
-                "*__ test (i=\"'A'\") __*",
+                "*__ test (i='A') __*",
                 "*Captured stdout call*",
                 "hello stdout A",
                 "*Captured stderr call*",
                 "hello stderr A",
-                "*__ test (i=\"'B'\") __*",
+                "*__ test (i='B') __*",
                 "*Captured stdout call*",
                 "hello stdout B",
                 "*Captured stderr call*",
@@ -679,8 +736,8 @@ class TestCapture:
                 "hello stdout A",
                 "uhello stdout B",
                 "uend test",
-                "*__ test (i=\"'A'\") __*",
-                "*__ test (i=\"'B'\") __*",
+                "*__ test (i='A') __*",
+                "*__ test (i='B') __*",
                 "*__ test __*",
             ]
         )

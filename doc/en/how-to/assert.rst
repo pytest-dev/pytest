@@ -436,6 +436,10 @@ Special comparisons are done for a number of cases:
 * comparing long sequences: first failing indices
 * comparing dicts: different entries
 
+In string context diffs, lines prefixed with ``-`` come from the left-hand side
+of ``assert left == right``, while lines prefixed with ``+`` come from the
+right-hand side.
+
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
 Defining your own explanation for failed assertions

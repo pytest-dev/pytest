@@ -5399,3 +5399,30 @@ def test_fixture_closure_with_parametrize_ignore(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
+
+
+def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
+    """#11075"""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(params=["foo"])
+        def fixture_foo(request):
+            yield request.param
+
+        @pytest.fixture
+        def fixture_bar(fixture_foo):
+            yield fixture_foo
+
+        class TestFoobar:
+            @pytest.fixture
+            def fixture_bar(self, fixture_bar):
+                yield fixture_bar
+
+            def test_foobar(self, fixture_bar):
+                assert fixture_bar == "foo"
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)

@@ -409,6 +409,10 @@ class TestCaseFunction(Function):
         | tuple[type[BaseException], BaseException, TracebackType]
         | None,
     ) -> None:
+        # Importing this private symbol locally in case this symbol is renamed/removed in the future; importing
+        # it globally would break pytest entirely, importing it locally only will break unittests using `addSubTest`.
+        from unittest.case import _subtest_msg_sentinel  # type: ignore[attr-defined]
+
         exception_info: ExceptionInfo[BaseException] | None
         match exc_info:
             case tuple():
@@ -427,7 +431,7 @@ class TestCaseFunction(Function):
             when="call",
             _ispytest=True,
         )
-        msg = test._message if isinstance(test._message, str) else None  # type: ignore[attr-defined]
+        msg = None if test._message is _subtest_msg_sentinel else str(test._message)  # type: ignore[attr-defined]
         report = self.ihook.pytest_runtest_makereport(item=self, call=call_info)
         sub_report = SubtestReport._new(
             report,

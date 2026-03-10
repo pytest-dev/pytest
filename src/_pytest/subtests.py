@@ -91,7 +91,7 @@ class SubtestReport(TestReport):
             parts.append(f"[{self.context.msg}]")
         if self.context.kwargs:
             params_desc = ", ".join(
-                f"{k}={saferepr(v)}" for (k, v) in self.context.kwargs.items()
+                f"{k}={v}" for (k, v) in self.context.kwargs.items()
             )
             parts.append(f"({params_desc})")
         return " ".join(parts) or "(<subtest>)"
