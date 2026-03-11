@@ -1,8 +1,8 @@
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-    "setuptools>=77",
-    "setuptools-scm[toml]>=6.2.3",
+  "setuptools>=77",
+  "setuptools-scm[toml]>=6.2.3",
 ]
 
 [project]
@@ -10,58 +10,58 @@ name = "pytest"
 description = "pytest: simple powerful testing with Python"
 readme = "README.rst"
 keywords = [
-    "test",
-    "unittest",
+  "test",
+  "unittest",
 ]
 license = "MIT"
 license-files = [ "LICENSE" ]
 authors = [
-    { name = "Brianna Laugher" },
-    { name = "Bruno Oliveira" },
-    { name = "Floris Bruynooghe" },
-    { name = "Freya Bruhin" },
-    { name = "Holger Krekel" },
-    { name = "Others (See AUTHORS)" },
-    { name = "Ronny Pfannschmidt" },
+  { name = "Brianna Laugher" },
+  { name = "Bruno Oliveira" },
+  { name = "Floris Bruynooghe" },
+  { name = "Freya Bruhin" },
+  { name = "Holger Krekel" },
+  { name = "Others (See AUTHORS)" },
+  { name = "Ronny Pfannschmidt" },
 ]
 requires-python = ">=3.10"
 classifiers = [
-    "Development Status :: 6 - Mature",
-    "Intended Audience :: Developers",
-    "Operating System :: MacOS",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: POSIX",
-    "Operating System :: Unix",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Topic :: Software Development :: Libraries",
-    "Topic :: Software Development :: Testing",
-    "Topic :: Utilities",
+  "Development Status :: 6 - Mature",
+  "Intended Audience :: Developers",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Operating System :: Unix",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Utilities",
 ]
 dynamic = [
-    "version",
+  "version",
 ]
 dependencies = [
-    "colorama>=0.4; sys_platform=='win32'",
-    "exceptiongroup>=1; python_version<'3.11'",
-    "iniconfig>=1.0.1",
-    "packaging>=22",
-    "pluggy>=1.5,<2",
-    "pygments>=2.7.2",
-    "tomli>=1; python_version<'3.11'",
+  "colorama>=0.4; sys_platform=='win32'",
+  "exceptiongroup>=1; python_version<'3.11'",
+  "iniconfig>=1.0.1",
+  "packaging>=22",
+  "pluggy>=1.5,<2",
+  "pygments>=2.7.2",
+  "tomli>=1; python_version<'3.11'",
 ]
 optional-dependencies.dev = [
-    "argcomplete",
-    "attrs>=19.2",
-    "hypothesis>=3.56",
-    "mock",
-    "requests",
-    "setuptools",
-    "xmlschema",
+  "argcomplete",
+  "attrs>=19.2",
+  "hypothesis>=3.56",
+  "mock",
+  "requests",
+  "setuptools",
+  "xmlschema",
 ]
 urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
 urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
