@@ -480,6 +480,9 @@ class SetupState:
     """Shared state for setting up/tearing down test items or collectors
     in a session.
 
+    Setup and teardown of nodes
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     Suppose we have a collection tree as follows:
 
     <Session session>
@@ -538,6 +541,24 @@ class SetupState:
         []
 
     The end!
+
+    Setup and teardown of fixtures
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    SetupState also manages fixture teardown. Rules for them are as follows:
+
+    * Fixture teardown runs during teardown phase of test items.
+
+    * Fixture teardowns normally happen when leaving the fixture's containing node,
+      as defined by the fixture's ``scope``, following the stack procedure above.
+
+    * Fixture teardown can also be called early, e.g. if the fixture's parameter
+      changes in the next test item.
+
+    * Teardowns of multiple fixtures with the same containing node run in the reverse
+      order of fixture setup.
+
+    * For a given fixture, finalizers are called in the reverse order of addition.
     """
 
     def __init__(self) -> None:
