@@ -69,6 +69,7 @@ from _pytest.recwarn import warns
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
+from _pytest.runner import FinalizerHandle
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
 from _pytest.subtests import SubtestReport
@@ -110,6 +111,7 @@ __all__ = [
     "ExceptionInfo",
     "ExitCode",
     "File",
+    "FinalizerHandle",
     "FixtureDef",
     "FixtureLookupError",
     "FixtureRequest",
