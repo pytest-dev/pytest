@@ -695,7 +695,7 @@ class TopRequest(FixtureRequest):
         pass
 
     @property
-    def node(self) -> nodes.Node:
+    def node(self):
         return self._pyfuncitem
 
     def __repr__(self) -> str:
@@ -708,7 +708,8 @@ class TopRequest(FixtureRequest):
                 item.funcargs[argname] = self.getfixturevalue(argname)
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
-        return self.node.addfinalizer(finalizer)
+        # The missing type annotation on 'node' is intentional.
+        return self.node.addfinalizer(finalizer)  # type: ignore[no-any-return]
 
 
 @final
