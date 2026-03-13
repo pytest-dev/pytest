@@ -3,44 +3,31 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from collections.abc import Mapping
-from collections.abc import Set as AbstractSet
-from contextlib import contextmanager
-from contextlib import nullcontext
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
 import io
-from io import StringIO
 import logging
-from logging import LogRecord
 import os
-from pathlib import Path
 import re
+from collections.abc import Generator, Mapping
+from collections.abc import Set as AbstractSet
+from contextlib import contextmanager, nullcontext
+from datetime import datetime, timedelta, timezone
+from io import StringIO
+from logging import LogRecord
+from pathlib import Path
 from types import TracebackType
-from typing import final
-from typing import Generic
-from typing import Literal
-from typing import TYPE_CHECKING
-from typing import TypeVar
+from typing import TYPE_CHECKING, Generic, Literal, TypeVar, final
 
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.capture import CaptureManager
-from _pytest.config import _strtobool
-from _pytest.config import Config
-from _pytest.config import create_terminal_writer
-from _pytest.config import hookimpl
-from _pytest.config import UsageError
+from _pytest.config import (Config, UsageError, _strtobool,
+                            create_terminal_writer, hookimpl)
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
-from _pytest.fixtures import fixture
-from _pytest.fixtures import FixtureRequest
+from _pytest.fixtures import FixtureRequest, fixture
 from _pytest.main import Session
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
-
 
 if TYPE_CHECKING:
     logging_StreamHandler = logging.StreamHandler[StringIO]

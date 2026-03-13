@@ -2,13 +2,12 @@
 # mypy: disallow-untyped-defs
 from __future__ import annotations
 
-from collections.abc import Iterator
 import logging
+from collections.abc import Iterator
 
+import pytest
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
-import pytest
-
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")
@@ -69,8 +68,7 @@ def test_change_level_undo(pytester: Pytester) -> None:
 
     Tests the logging output themselves (affected both by logger and handler levels).
     """
-    pytester.makepyfile(
-        """
+    pytester.makepyfile("""
         import logging
 
         def test1(caplog):
@@ -83,8 +81,7 @@ def test_change_level_undo(pytester: Pytester) -> None:
             # using + operator here so fnmatch_lines doesn't match the code in the traceback
             logging.info('log from ' + 'test2')
             assert 0
-    """
-    )
+    """)
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
     result.stdout.no_fnmatch_line("*log from test2*")
@@ -95,8 +92,7 @@ def test_change_disabled_level_undo(pytester: Pytester) -> None:
 
     Tests the logging output themselves (affected by disabled logging level).
     """
-    pytester.makepyfile(
-        """
+    pytester.makepyfile("""
         import logging
 
         def test1(caplog):
@@ -112,8 +108,7 @@ def test_change_disabled_level_undo(pytester: Pytester) -> None:
             # isn't reset to ``CRITICAL`` after test1.
             logging.warning('log from ' + 'test2')
             assert 0
-    """
-    )
+    """)
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*log from test1*", "*2 failed in *"])
     result.stdout.no_fnmatch_line("*log from test2*")
@@ -124,8 +119,7 @@ def test_change_level_undoes_handler_level(pytester: Pytester) -> None:
 
     Issue #7569. Tests the handler level specifically.
     """
-    pytester.makepyfile(
-        """
+    pytester.makepyfile("""
         import logging
 
         def test1(caplog):
@@ -141,8 +135,7 @@ def test_change_level_undoes_handler_level(pytester: Pytester) -> None:
             assert caplog.handler.level == 0
             caplog.set_level(43)
             assert caplog.handler.level == 43
-    """
-    )
+    """)
     result = pytester.runpytest()
     result.assert_outcomes(passed=3)
 
@@ -377,8 +370,7 @@ def test_clear_for_call_stage(
 
 
 def test_ini_controls_global_log_level(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
+    pytester.makepyfile("""
         import pytest
         import logging
         def test_log_level_override(request, caplog):
@@ -389,14 +381,11 @@ def test_ini_controls_global_log_level(pytester: Pytester) -> None:
             logger.error("ERROR message will be shown")
             assert 'WARNING' not in caplog.text
             assert 'ERROR' in caplog.text
-    """
-    )
-    pytester.makeini(
-        """
+    """)
+    pytester.makeini("""
         [pytest]
         log_level=ERROR
-    """
-    )
+    """)
 
     result = pytester.runpytest()
     # make sure that we get a '0' exit code for the testsuite
@@ -404,8 +393,7 @@ def test_ini_controls_global_log_level(pytester: Pytester) -> None:
 
 
 def test_can_override_global_log_level(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
+    pytester.makepyfile("""
         import pytest
         import logging
         def test_log_level_override(request, caplog):
@@ -429,22 +417,18 @@ def test_can_override_global_log_level(pytester: Pytester) -> None:
             logger.info("INFO message will be shown")
 
             assert "message won't be shown" not in caplog.text
-    """
-    )
-    pytester.makeini(
-        """
+    """)
+    pytester.makeini("""
         [pytest]
         log_level=WARNING
-    """
-    )
+    """)
 
     result = pytester.runpytest()
     assert result.ret == 0
 
 
 def test_captures_despite_exception(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
+    pytester.makepyfile("""
         import pytest
         import logging
         def test_log_level_override(request, caplog):
@@ -457,14 +441,11 @@ def test_captures_despite_exception(pytester: Pytester) -> None:
             with caplog.at_level(logging.DEBUG, logger.name):
                 logger.debug("DEBUG message " + "won't be shown")
                 raise Exception()
-    """
-    )
-    pytester.makeini(
-        """
+    """)
+    pytester.makeini("""
         [pytest]
         log_level=WARNING
-    """
-    )
+    """)
 
     result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*ERROR message will be shown*"])
@@ -480,8 +461,7 @@ def test_log_report_captures_according_to_config_option_upon_failure(
     (2) The `DEBUG` message does NOT appear in the `Captured log call` report.
     (3) The stdout, `INFO`, and `WARNING` messages DO appear in the test reports due to `--log-level=INFO`.
     """
-    pytester.makepyfile(
-        """
+    pytester.makepyfile("""
         import pytest
         import logging
 
@@ -502,8 +482,7 @@ def test_log_report_captures_according_to_config_option_upon_failure(
                 raise Exception('caplog failed to ' + 'capture DEBUG')
 
             assert False
-    """
-    )
+    """)
 
     result = pytester.runpytest("--log-level=INFO")
     result.stdout.no_fnmatch_line("*Exception: caplog failed to capture DEBUG*")
