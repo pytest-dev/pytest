@@ -206,6 +206,19 @@ def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
     assert unfiltered_tuple == ("test_fixture", 20, "handler call")
 
 
+def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> None:
+    def no_capture_filter(log_record: logging.LogRecord) -> bool:
+        return False
+
+    with caplog.filtering(no_capture_filter):  # type: ignore[arg-type]
+        logger.warning("Will not be captured")
+        with caplog.filtering(no_capture_filter):  # type: ignore[arg-type]
+            logger.warning("Will also not be captured")
+        logger.warning("Should not be captured either")
+
+    assert caplog.records == []
+
+
 @pytest.mark.parametrize(
     "level_str,expected_disable_level",
     [
