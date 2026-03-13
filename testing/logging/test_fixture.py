@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 import logging
+from typing import cast
 
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
@@ -201,15 +202,12 @@ def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
 
 
 def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> None:
-    class NoCaptureFilter(logging.Filter):
-        def filter(self, record: logging.LogRecord) -> bool:
-            return False
+    def no_capture_filter(log_record: logging.LogRecord) -> bool:
+        return False
 
-    no_capture_filter = NoCaptureFilter()
-
-    with caplog.filtering(no_capture_filter):
+    with caplog.filtering(cast(logging.Filter, no_capture_filter)):
         logger.warning("Will not be captured")
-        with caplog.filtering(no_capture_filter):
+        with caplog.filtering(cast(logging.Filter, no_capture_filter)):
             logger.warning("Will also not be captured")
         logger.warning("Should not be captured either")
 
@@ -219,15 +217,12 @@ def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> No
 def test_with_statement_filtering_already_present(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    class NoCaptureFilter(logging.Filter):
-        def filter(self, record: logging.LogRecord) -> bool:
-            return False
-
-    no_capture_filter = NoCaptureFilter()
+    def no_capture_filter(log_record: logging.LogRecord) -> bool:
+        return False
 
     caplog.handler.addFilter(no_capture_filter)
     try:
-        with caplog.filtering(no_capture_filter):
+        with caplog.filtering(cast(logging.Filter, no_capture_filter)):
             logger.warning("Should not be captured")
 
         # After context manager, filter should STILL be present because it was already there
