@@ -2,12 +2,13 @@
 # mypy: disallow-untyped-defs
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterator
+import logging
 
-import pytest
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
+import pytest
+
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__ + ".baz")
