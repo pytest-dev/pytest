@@ -1,3 +1,3 @@
-Fixed a symlink attack vulnerability (CVE-2025-71176) in the :fixture:`tmp_path` fixture's base directory handling.
+Fixed a symlink attack vulnerability (:cve:`2025-71176`) in the :fixture:`tmp_path` fixture's base directory handling -- by :user:`laurac8r`.
 
 The ``pytest-of-<user>`` directory under the system temp root is now opened with ``O_NOFOLLOW`` and verified using file-descriptor-based ``fstat``/``fchmod``, preventing symlink attacks and TOCTOU races.
