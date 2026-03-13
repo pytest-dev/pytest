@@ -201,8 +201,11 @@ def test_with_statement_filtering(caplog: pytest.LogCaptureFixture) -> None:
 
 
 def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> None:
-    def no_capture_filter(log_record: logging.LogRecord) -> bool:
-        return False
+    class NoCaptureFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            return False
+
+    no_capture_filter = NoCaptureFilter()
 
     with caplog.filtering(no_capture_filter):
         logger.warning("Will not be captured")
@@ -216,8 +219,11 @@ def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> No
 def test_with_statement_filtering_already_present(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    def no_capture_filter(log_record: logging.LogRecord) -> bool:
-        return False
+    class NoCaptureFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            return False
+
+    no_capture_filter = NoCaptureFilter()
 
     caplog.handler.addFilter(no_capture_filter)
     try:
