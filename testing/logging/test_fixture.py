@@ -219,6 +219,24 @@ def test_with_statement_nested_filtering(caplog: pytest.LogCaptureFixture) -> No
     assert caplog.records == []
 
 
+def test_with_statement_filtering_already_present(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    def no_capture_filter(log_record: logging.LogRecord) -> bool:
+        return False
+
+    caplog.handler.addFilter(no_capture_filter)  # type: ignore[arg-type]
+    try:
+        with caplog.filtering(no_capture_filter):  # type: ignore[arg-type]
+            logger.warning("Should not be captured")
+
+        # After context manager, filter should STILL be present because it was already there
+        logger.warning("Should still not be captured")
+        assert caplog.records == []
+    finally:
+        caplog.handler.removeFilter(no_capture_filter)  # type: ignore[arg-type]
+
+
 @pytest.mark.parametrize(
     "level_str,expected_disable_level",
     [
