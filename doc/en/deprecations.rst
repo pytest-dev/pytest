@@ -113,6 +113,53 @@ You can fix it by converting generators and iterators to lists or tuples:
 Note that :class:`range` objects are ``Collection`` and are not affected by this deprecation.
 
 
+.. _class-scoped-fixture-as-instance-method:
+
+Class-scoped fixture as instance method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+Defining a class-scoped fixture as an instance method (without ``@classmethod``) is deprecated
+and will be removed in pytest 10.0.
+
+When a class-scoped fixture is defined as an instance method, any attributes set on ``self``
+will not be visible to test methods. This happens because pytest creates a new instance of the
+test class for each test method, while the fixture runs only once per class on a different instance.
+
+**Before** (deprecated):
+
+.. code-block:: python
+
+    class TestExample:
+        @pytest.fixture(scope="class")
+        def setup_data(self):
+            self.data = [1, 2, 3]  # This won't be visible to tests!
+
+        def test_something(self, setup_data):
+            assert self.data == [
+                1,
+                2,
+                3,
+            ]  # AttributeError: 'TestExample' object has no attribute 'data'
+
+**After** (recommended):
+
+.. code-block:: python
+
+    class TestExample:
+        @pytest.fixture(scope="class")
+        @classmethod
+        def setup_data(cls):
+            cls.data = [1, 2, 3]
+
+        def test_something(self, setup_data):
+            assert self.data == [1, 2, 3]  # Works correctly
+
+Using ``@classmethod`` ensures attributes are set on the class itself, making them accessible
+to all test methods.
+
+
 .. _monkeypatch-fixup-namespace-packages:
 
 ``monkeypatch.syspath_prepend`` with legacy namespace packages
