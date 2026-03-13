@@ -591,6 +591,19 @@ class FixtureRequest(abc.ABC):
             raise FixtureLookupError(argname, self)
         fixturedef = fixturedefs[index]
 
+        # When an autouse fixture shadows a broader-scoped autouse fixture
+        # with the same name (e.g., class-level "setup" shadows module-level
+        # "setup"), both should run -- the broader-scoped one first.
+        # If the closer fixture doesn't explicitly request its super (i.e.,
+        # argname not in its own argnames), the broader-scoped autouse
+        # fixture would never be activated. Ensure it runs here. (#11281)
+        if (
+            fixturedef._autouse
+            and argname not in fixturedef.argnames
+            and len(fixturedefs) > 1
+        ):
+            self._ensure_autouse_super_fixtures(argname, fixturedefs, index)
+
         # Prepare a SubRequest object for calling the fixture.
         try:
             callspec = self._pyfuncitem.callspec
@@ -621,6 +634,42 @@ class FixtureRequest(abc.ABC):
 
         self._fixture_defs[argname] = fixturedef
         return fixturedef
+
+    def _ensure_autouse_super_fixtures(
+        self,
+        argname: str,
+        fixturedefs: Sequence[FixtureDef[Any]],
+        index: int,
+    ) -> None:
+        """Ensure broader-scoped autouse fixtures in the override chain are executed.
+
+        When an autouse fixture at a closer scope (e.g., class) shadows an
+        autouse fixture at a broader scope (e.g., module) with the same name,
+        the broader-scoped fixture would not run because the closer one does
+        not explicitly request it. This method activates the broader-scoped
+        autouse fixtures so they run first, preserving the documented behavior
+        that higher-scoped fixtures execute first.
+
+        See issue #11281.
+        """
+        # fixturedefs is ordered from broadest to closest scope.
+        # index is negative (-1 = closest). We want to activate all
+        # broader-scoped autouse fixtures that come before the active one.
+        active_pos = len(fixturedefs) + index
+        for i in range(active_pos):
+            super_fixturedef = fixturedefs[i]
+            if not super_fixturedef._autouse:
+                continue
+            if super_fixturedef.cached_result is not None:
+                # Already executed (e.g., by a module-level test).
+                continue
+            # Execute the broader-scoped autouse fixture.
+            super_scope = super_fixturedef._scope
+            self._check_scope(super_fixturedef, super_scope)
+            super_subrequest = SubRequest(
+                self, super_scope, NOTSET, 0, super_fixturedef, _ispytest=True
+            )
+            super_fixturedef.execute(request=super_subrequest)
 
     def _check_fixturedef_without_param(self, fixturedef: FixtureDef[object]) -> None:
         """Check that this request is allowed to execute this fixturedef without
@@ -1028,6 +1077,11 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
+        if self.cached_result is None:
+            # Already finished. It is assumed that finalizers cannot be added in
+            # this state.
+            return
+
         exceptions: list[BaseException] = []
         while self._finalizers:
             fin = self._finalizers.pop()
@@ -1036,7 +1090,6 @@ class FixtureDef(Generic[FixtureValue]):
             except BaseException as e:
                 exceptions.append(e)
         node = request.node
-        node.ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
         # Even if finalization fails, we invalidate the cached fixture
         # value and remove all finalizers because they may be bound methods
         # which will keep instances alive.
@@ -1095,6 +1148,15 @@ class FixtureDef(Generic[FixtureValue]):
         finalizer = functools.partial(self.finish, request=request)
         for parent_fixture in requested_fixtures_that_should_finalize_us:
             parent_fixture.addfinalizer(finalizer)
+
+        # Register the pytest_fixture_post_finalizer as the first finalizer,
+        # which is executed last.
+        assert not self._finalizers
+        self.addfinalizer(
+            lambda: request.node.ihook.pytest_fixture_post_finalizer(
+                fixturedef=self, request=request
+            )
+        )
 
         ihook = request.node.ihook
         try:
@@ -1869,60 +1931,35 @@ class FixtureManager:
             holderobj_tp = holderobj
 
         self._holderobjseen.add(holderobj)
+        for name in dir(holderobj):
+            # The attribute can be an arbitrary descriptor, so the attribute
+            # access below can raise. safe_getattr() ignores such exceptions.
+            obj_ub = safe_getattr(holderobj_tp, name, None)
+            if type(obj_ub) is FixtureFunctionDefinition:
+                marker = obj_ub._fixture_function_marker
+                if marker.name:
+                    fixture_name = marker.name
+                else:
+                    fixture_name = name
 
-        # Use __dict__ to preserve definition order instead of dir() which sorts.
-        # This ensures fixtures are processed in their definition order, which is
-        # important for autouse fixtures and fixture overriding (#11281, #12952).
-        #
-        # For modules: module.__dict__ contains all module-level names.
-        # For classes/instances: walk the MRO to get all class and base class
-        # attributes (using holderobj_tp which resolves to the class in both cases).
-        dicts: list[Mapping[str, Any]]
-        if isinstance(holderobj, types.ModuleType):
-            dicts = [holderobj.__dict__]
-        else:
-            # For classes and instances: walk the MRO to get all attributes.
-            # For classes, holderobj_tp is the class itself; for instances,
-            # holderobj_tp is type(holderobj) (set above on line 1867).
-            # In both cases holderobj_tp is a type with __mro__.
-            assert isinstance(holderobj_tp, type)
-            dicts = [cls.__dict__ for cls in holderobj_tp.__mro__]
+                # OK we know it is a fixture -- now safe to look up on the _instance_.
+                try:
+                    obj = getattr(holderobj, name)
+                # if the fixture is named in the decorator we cannot find it in the module
+                except AttributeError:
+                    obj = obj_ub
 
-        seen: set[str] = set()
-        for dic in dicts:
-            for name in dic:
-                if name in seen:
-                    continue
-                seen.add(name)
+                func = obj._get_wrapped_function()
 
-                # The attribute can be an arbitrary descriptor, so the attribute
-                # access below can raise. safe_getattr() ignores such exceptions.
-                obj_ub = safe_getattr(holderobj_tp, name, None)
-                if type(obj_ub) is FixtureFunctionDefinition:
-                    marker = obj_ub._fixture_function_marker
-                    if marker.name:
-                        fixture_name = marker.name
-                    else:
-                        fixture_name = name
-
-                    # OK we know it is a fixture -- now safe to look up on the _instance_.
-                    try:
-                        obj = getattr(holderobj, name)
-                    # if the fixture is named in the decorator we cannot find it in the module
-                    except AttributeError:
-                        obj = obj_ub
-
-                    func = obj._get_wrapped_function()
-
-                    self._register_fixture(
-                        name=fixture_name,
-                        nodeid=nodeid,
-                        func=func,
-                        scope=marker.scope,
-                        params=marker.params,
-                        ids=marker.ids,
-                        autouse=marker.autouse,
-                    )
+                self._register_fixture(
+                    name=fixture_name,
+                    nodeid=nodeid,
+                    func=func,
+                    scope=marker.scope,
+                    params=marker.params,
+                    ids=marker.ids,
+                    autouse=marker.autouse,
+                )
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node

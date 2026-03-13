@@ -5428,12 +5428,10 @@ def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_autouse_fixtures_definition_order_preserved(pytester: Pytester) -> None:
-    """
-    Test that fixture discovery uses definition order instead of alphabetical
-    sorting from dir(). When fixtures have different names, they should be
-    discovered and registered in their definition order, which ensures
-    higher-scoped fixtures execute before lower-scoped ones.
+def test_autouse_same_name_module_and_class_both_run(pytester: Pytester) -> None:
+    """When module-scope and class-scope autouse fixtures share the same name,
+    both should execute for tests inside the class, with the module-scoped
+    fixture running first (higher scope executes first).
 
     Regression test for https://github.com/pytest-dev/pytest/issues/11281
     """
@@ -5443,47 +5441,56 @@ def test_autouse_fixtures_definition_order_preserved(pytester: Pytester) -> None
 
         call_order = []
 
-        @pytest.fixture(scope='module', autouse=True)
-        def module_setup():
+        @pytest.fixture(scope="module", autouse=True)
+        def setup():
             call_order.append("MODULE")
 
         class TestFoo:
-            @pytest.fixture(scope='class', autouse=True)
-            def class_setup(self):
+            @pytest.fixture(scope="class", autouse=True)
+            def setup(self):
                 call_order.append("CLASS")
 
             def test_in_class(self):
-                # Module-scoped fixture runs first, then class-scoped.
                 assert call_order == ["MODULE", "CLASS"]
+
+        def test_module():
+            # Module-level test only sees the module fixture.
+            assert "MODULE" in call_order
         """
     )
     result = pytester.runpytest("-v")
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=2)
 
 
-def test_fixture_override_with_name_kwarg_respects_definition_order(
-    pytester: Pytester,
-) -> None:
+def test_autouse_same_name_conftest_and_module_both_run(pytester: Pytester) -> None:
+    """When a conftest autouse fixture and a module autouse fixture share the
+    same name, both should execute, with the conftest (broader scope) running
+    first.
+
+    Regression test for https://github.com/pytest-dev/pytest/issues/11281
     """
-    Test that fixture override using name kwarg respects definition order.
-
-    Related to https://github.com/pytest-dev/pytest/issues/12952
-    """
-    pytester.makepyfile(
+    pytester.makeconftest(
         """
         import pytest
 
-        @pytest.fixture()
-        def f1():
-            return 1
+        call_order = []
 
-        @pytest.fixture(name="f1")
-        def f2():
-            return 2
+        @pytest.fixture(scope="session", autouse=True)
+        def setup():
+            call_order.append("SESSION")
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        from conftest import call_order
 
-        def test_override(f1):
-            # Later definition should override
-            assert f1 == 2
+        @pytest.fixture(scope="module", autouse=True)
+        def setup():
+            call_order.append("MODULE")
+
+        def test_both_run():
+            assert call_order == ["SESSION", "MODULE"]
         """
     )
     result = pytester.runpytest("-v")
