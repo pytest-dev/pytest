@@ -73,7 +73,6 @@ if TYPE_CHECKING:
     from _pytest.python import CallSpec2
     from _pytest.python import Function
     from _pytest.python import Metafunc
-    from _pytest.runner import FinalizerHandle
 
 
 # The value of the fixture -- return/yield of the fixture function (type variable).
@@ -483,15 +482,9 @@ class FixtureRequest(abc.ABC):
         return self._pyfuncitem.session
 
     @abc.abstractmethod
-    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
+    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         """Add finalizer/teardown function to be called without arguments after
-        the last test within the requesting test context finished execution.
-
-        :returns: A handle that can be used to remove the finalizer.
-
-        .. versionadded:: 9.1
-            The :class:`FinalizerHandle <pytest.FinalizerHandle>` result.
-        """
+        the last test within the requesting test context finished execution."""
         raise NotImplementedError()
 
     def applymarker(self, marker: str | MarkDecorator) -> None:
@@ -707,9 +700,8 @@ class TopRequest(FixtureRequest):
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfixturevalue(argname)
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
-        # The missing type annotation on 'node' is intentional.
-        return self.node.addfinalizer(finalizer)  # type: ignore[no-any-return]
+    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
+        self.node.addfinalizer(finalizer)
 
 
 @final
@@ -795,8 +787,8 @@ class SubRequest(FixtureRequest):
         sig = signature(factory)
         return f"{path}:{lineno + 1}:  def {factory.__name__}{sig}"
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
-        return self._fixturedef.addfinalizer(finalizer)
+    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
+        self._fixturedef.addfinalizer(finalizer)
 
 
 @final
@@ -1035,8 +1027,6 @@ class FixtureDef(Generic[FixtureValue]):
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         # The request object with which the fixture was set up.
         self._cached_request: SubRequest | None = None
-        # Handles to remove our finalizer from various scopes.
-        self._self_finalizer_handles: Final[list[FinalizerHandle]] = []
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1046,21 +1036,18 @@ class FixtureDef(Generic[FixtureValue]):
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
+    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         assert self._cached_request is not None
         setupstate = self._cached_request.session._setupstate
-        return setupstate.fixture_addfinalizer(finalizer, self)
+        setupstate.fixture_add_finalizer(self, finalizer)
 
-    def finish(self, request: SubRequest) -> None:
+    def finish(self) -> None:
+        assert self._cached_request is not None
         try:
-            request.session._setupstate.fixture_teardown(self, request.node)
+            self._cached_request.session._setupstate.fixture_teardown(self)
         finally:
             self.cached_result = None
             self._cached_request = None
-            # Avoid accumulating garbage finalizers in nodes and fixturedefs (#4871).
-            for handle in self._self_finalizer_handles:
-                handle.remove_finalizer()
-            self._self_finalizer_handles.clear()
 
     def execute(self, request: SubRequest) -> FixtureValue:
         """Return the value of this fixture, executing it if not cached."""
@@ -1075,8 +1062,8 @@ class FixtureDef(Generic[FixtureValue]):
 
         self._cached_request = request
         setupstate = request.session._setupstate
-        setupstate.fixture_setup(self)
-        setupstate.fixture_addfinalizer(self._run_post_finalizer, self)
+        setupstate.fixture_setup(self, request.node)
+        setupstate.fixture_add_finalizer(self, self._run_post_finalizer)
 
         ihook = request.node.ihook
         try:
@@ -1086,11 +1073,8 @@ class FixtureDef(Generic[FixtureValue]):
                 fixturedef=self, request=request
             )
         finally:
-            # Schedule our finalizer, even if the setup failed.
-            fin = functools.partial(self.finish, request)
-            self._self_finalizer_handles.append(request.node.addfinalizer(fin))
-            for fixturedef in request._own_fixture_defs.values():
-                self._self_finalizer_handles.append(fixturedef.addfinalizer(fin))
+            dependencies = request._own_fixture_defs.values()
+            setupstate.fixture_set_dependencies(self, dependencies)
 
         return result
 
@@ -1111,7 +1095,6 @@ class FixtureDef(Generic[FixtureValue]):
         return cache_hit
 
     def _finish_if_param_changed(self, nextitem: nodes.Item) -> None:
-        assert self._cached_request is not None
         assert self.cached_result is not None
         old_cache_key = self.cached_result[1]
 
@@ -1139,7 +1122,7 @@ class FixtureDef(Generic[FixtureValue]):
                 return
 
         if not self._is_cache_hit(old_cache_key, new_cache_key):
-            self.finish(self._cached_request)
+            self.finish()
 
     def _check_cache_hit(self, request: SubRequest, old_cache_key: object) -> None:
         new_cache_key = self.cache_key(request)
@@ -1190,7 +1173,7 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         )
         self.cached_result = (request, [0], None)
 
-    def addfinalizer(self, finalizer: Callable[[], object]) -> FinalizerHandle:
+    def addfinalizer(self, finalizer: Callable[[], object]):
         # RequestFixtureDef is not exposed to the user, e.g.
         # pytest_fixture_setup and pytest_fixture_post_teardown are not called.
         # Also RequestFixtureDef is not finalized properly, so if addfinalizer is
