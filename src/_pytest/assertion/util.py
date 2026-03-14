@@ -407,14 +407,33 @@ def _compare_eq_sequence(
 
     len_diff = len_left - len_right
     if len_diff:
+        # dynamic import to speedup pytest
+        import difflib
+
+        sm = difflib.SequenceMatcher(None, left, right)
         if len_diff > 0:
             dir_with_more = "Left"
-            extra = saferepr(left[len_right])
+            # Find items deleted from left (i.e., in left but not aligned to right)
+            extra_items = []
+            for tag, i1, i2, j1, j2 in sm.get_opcodes():
+                if tag == "delete":
+                    extra_items.extend(left[i1:i2])
+            if not extra_items:
+                extra_items = list(left[len_right:])
+            len_diff = len(extra_items)
         else:
-            len_diff = 0 - len_diff
+            len_diff = -len_diff
             dir_with_more = "Right"
-            extra = saferepr(right[len_left])
+            # Find items inserted into right (i.e., in right but not aligned to left)
+            extra_items = []
+            for tag, i1, i2, j1, j2 in sm.get_opcodes():
+                if tag == "insert":
+                    extra_items.extend(right[j1:j2])
+            if not extra_items:
+                extra_items = list(right[len_left:])
+            len_diff = len(extra_items)
 
+        extra = saferepr(extra_items[0])
         if len_diff == 1:
             explanation += [
                 f"{dir_with_more} contains one more item: {highlighter(extra)}"
