@@ -441,8 +441,10 @@ config.cache
 **Tutorial**: :ref:`cache`
 
 The ``config.cache`` object allows other plugins and fixtures
-to store and retrieve values across test runs. To access it from fixtures
-request ``pytestconfig`` into your fixture and get it with ``pytestconfig.cache``.
+to store and retrieve values across test runs. In fixtures, prefer the built-in
+:fixture:`cache` fixture. If you need ``pytestconfig.cache`` directly, guard the
+attribute with ``hasattr(pytestconfig, "cache")`` because users may disable the
+``cacheprovider`` plugin.
 
 Under the hood, the cache plugin uses the simple
 ``dumps``/``loads`` API of the :py:mod:`json` stdlib module.

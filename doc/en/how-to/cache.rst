@@ -29,6 +29,10 @@ Other plugins may access the `config.cache`_ object to set/get
     :ref:`cmdunregister` (the internal name for this plugin is
     ``cacheprovider``).
 
+    In fixtures and tests, prefer the built-in :fixture:`cache` fixture. If
+    you need to access ``pytestconfig.cache`` directly, first guard it with
+    ``hasattr(pytestconfig, "cache")`` because the plugin may be disabled.
+
 
 Rerunning only failures or failures first
 -----------------------------------------------
@@ -213,12 +217,12 @@ across pytest invocations:
 
 
     @pytest.fixture
-    def mydata(pytestconfig):
-        val = pytestconfig.cache.get("example/value", None)
+    def mydata(cache):
+        val = cache.get("example/value", None)
         if val is None:
             expensive_computation()
             val = 42
-            pytestconfig.cache.set("example/value", val)
+            cache.set("example/value", val)
         return val
 
 
