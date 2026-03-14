@@ -507,6 +507,11 @@ class SetupState:
             ],
         ] = {}
 
+    def is_node_active(self, node: Node) -> bool:
+        """Check if a node is currently active in the stack -- set up and not
+        torn down yet."""
+        return node in self.stack
+
     def setup(self, item: Item) -> None:
         """Setup objects along the collector chain to the item."""
         needed_collectors = item.listchain()

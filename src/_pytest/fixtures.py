@@ -54,6 +54,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
@@ -507,6 +508,16 @@ class FixtureRequest(abc.ABC):
         """
         raise FixtureLookupError(None, self, msg)
 
+    def _raise_teardown_lookup_error(self, argname: str) -> NoReturn:
+        msg = (
+            f'The fixture value for "{argname}" is not available during teardown '
+            "because it was not previously requested.\n"
+            "Only fixtures that were already active can be retrieved during teardown.\n"
+            "Request the fixture before teardown begins by declaring it in the fixture "
+            "signature or by calling request.getfixturevalue() before the fixture yields."
+        )
+        raise FixtureLookupError(argname, self, msg)
+
     def getfixturevalue(self, argname: str) -> Any:
         """Dynamically run a named fixture function.
 
@@ -516,8 +527,12 @@ class FixtureRequest(abc.ABC):
         or test function body.
 
         This method can be used during the test setup phase or the test run
-        phase, but during the test teardown phase a fixture's value may not
-        be available.
+        phase. Avoid using it during the teardown phase.
+
+        .. versionchanged:: 9.1
+            Calling ``request.getfixturevalue()`` during teardown to request a
+            fixture that was not already requested
+            :ref:`is deprecated <dynamic-fixture-request-during-teardown>`.
 
         :param argname:
             The fixture name.
@@ -615,6 +630,16 @@ class FixtureRequest(abc.ABC):
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
+
+        if not self.session._setupstate.is_node_active(self.node):
+            # TODO(pytest10.1): Remove the `warn` and `if` and call
+            # _raise_teardown_lookup_error unconditionally.
+            warnings.warn(
+                FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN.format(argname=argname),
+                stacklevel=3,
+            )
+            if subrequest.node not in self.session._setupstate.stack:
+                self._raise_teardown_lookup_error(argname)
 
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)

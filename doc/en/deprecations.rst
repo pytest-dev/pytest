@@ -15,6 +15,29 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _dynamic-fixture-request-during-teardown:
+
+``request.getfixturevalue()`` during fixture teardown
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+Calling :meth:`request.getfixturevalue() <pytest.FixtureRequest.getfixturevalue>`
+during teardown to request a fixture that was not already requested is deprecated.
+
+This pattern is brittle because teardown runs after pytest has started unwinding active scopes.
+Depending on the requested fixture's scope and the current teardown order, the lookup may appear
+to work, or it may fail.
+
+In pytest 10, first-time fixture requests made during teardown will become an error.
+If teardown logic needs another fixture, request it before teardown begins, either by
+declaring it in the fixture signature or by calling ``request.getfixturevalue()`` before
+the fixture yields.
+
+Fixtures that were already requested before teardown started are unaffected and may still
+be retrieved while they remain active, though this is discouraged.
+
+
 .. _config-inicfg:
 
 ``config.inicfg``
