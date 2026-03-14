@@ -47,7 +47,7 @@ def pytest_fixture_setup(
                 else:
                     param = request.param
                 fixturedef.cached_param = param  # type: ignore[attr-defined]
-            _show_fixture_action(fixturedef, request.config, "SETUP")
+            _show_fixture_action(fixturedef, request, "SETUP")
 
 
 def pytest_fixture_post_finalizer(
@@ -56,14 +56,15 @@ def pytest_fixture_post_finalizer(
     if fixturedef.cached_result is not None:
         config = request.config
         if config.option.setupshow:
-            _show_fixture_action(fixturedef, request.config, "TEARDOWN")
+            _show_fixture_action(fixturedef, request, "TEARDOWN")
             if hasattr(fixturedef, "cached_param"):
                 del fixturedef.cached_param
 
 
 def _show_fixture_action(
-    fixturedef: FixtureDef[object], config: Config, msg: str
+    fixturedef: FixtureDef[object], request: SubRequest, msg: str
 ) -> None:
+    config = request.config
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:
         capman.suspend_global_capture()
@@ -77,13 +78,13 @@ def _show_fixture_action(
     scopename = fixturedef.scope[0].upper()
     tw.write(f"{msg:<8} {scopename} {fixturedef.argname}")
 
-    if msg == "SETUP":
-        deps = sorted(arg for arg in fixturedef.argnames if arg != "request")
-        if deps:
-            tw.write(" (fixtures used: {})".format(", ".join(deps)))
-
     if hasattr(fixturedef, "cached_param"):
         tw.write(f"[{saferepr(fixturedef.cached_param, maxsize=42)}]")
+
+    if msg == "SETUP":
+        deps = sorted(request._own_fixture_defs.keys())
+        if deps:
+            tw.write(" (fixtures used: {})".format(", ".join(deps)))
 
     tw.flush()
 
