@@ -66,7 +66,7 @@ TESTCASES = [
         >       assert result == expected
         E       assert [1, 3] == [1, 2, 3]
         E         At index 1 diff: 3 != 2
-        E         Right contains one more item: 3
+        E         Right contains one more item: 2
         E         Full diff:
         E           [
         E               1,

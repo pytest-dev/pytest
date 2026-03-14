@@ -834,6 +834,12 @@ class TestAssert_reprcompare:
             "      3,",
             "  )",
         ]
+        # Extra item inserted in the middle: the message should identify
+        # the inserted item, not the last item of the longer sequence.
+        # Regression test for https://github.com/pytest-dev/pytest/issues/13652
+        lines = callequal(["1", "2", "3"], ["1", "2", "0", "3"], verbose=2)
+        assert lines is not None
+        assert "Right contains one more item: '0'" in lines
 
     def test_set(self) -> None:
         expl = callequal({0, 1}, {0, 2})

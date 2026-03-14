@@ -1,0 +1,5 @@
+Fixed misleading "Right/Left contains one more item" message in sequence comparison output.
+
+When a sequence had an item inserted in the middle, pytest incorrectly identified
+the last element of the longer sequence as the extra item instead of the actually
+inserted one. Now ``difflib.SequenceMatcher`` is used to locate the true extra items.
