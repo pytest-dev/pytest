@@ -1369,7 +1369,7 @@ class Metafunc:
                 fixturedef = name2pseudofixturedef[argname]
             else:
                 fixturedef = FixtureDef(
-                    config=self.config,
+                    session=self.definition.session,
                     baseid="",
                     argname=argname,
                     func=get_direct_param_fixture_func,

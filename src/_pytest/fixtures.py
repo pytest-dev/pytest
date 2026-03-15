@@ -970,7 +970,7 @@ class FixtureDef(Generic[FixtureValue]):
 
     def __init__(
         self,
-        config: Config,
+        session: Session,
         baseid: str | None,
         argname: str,
         func: _FixtureFunc[FixtureValue],
@@ -983,6 +983,7 @@ class FixtureDef(Generic[FixtureValue]):
         _autouse: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
+        self._session: Final = session
         # The "base" node ID for the fixture.
         #
         # This is a node ID prefix. A fixture is only available to a node (e.g.
@@ -1008,7 +1009,7 @@ class FixtureDef(Generic[FixtureValue]):
         if scope is None:
             scope = Scope.Function
         elif callable(scope):
-            scope = _eval_scope_callable(scope, argname, config)
+            scope = _eval_scope_callable(scope, argname, session.config)
         if isinstance(scope, str):
             scope = Scope.from_user(
                 scope, descr=f"Fixture '{func.__name__}'", where=baseid
@@ -1025,8 +1026,6 @@ class FixtureDef(Generic[FixtureValue]):
         # If the fixture was executed, the current value of the fixture.
         # Can change if the fixture is executed with different parameters.
         self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
-        # The request object with which the fixture was set up.
-        self._cached_request: SubRequest | None = None
 
         # only used to emit a deprecationwarning, can be removed in pytest9
         self._autouse = _autouse
@@ -1037,17 +1036,13 @@ class FixtureDef(Generic[FixtureValue]):
         return self._scope.value
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
-        assert self._cached_request is not None
-        setupstate = self._cached_request.session._setupstate
-        setupstate.fixture_add_finalizer(self, finalizer)
+        self._session._setupstate.fixture_add_finalizer(self, finalizer)
 
     def finish(self) -> None:
-        assert self._cached_request is not None
         try:
-            self._cached_request.session._setupstate.fixture_teardown(self)
+            self._session._setupstate.fixture_teardown(self)
         finally:
             self.cached_result = None
-            self._cached_request = None
 
     def execute(self, request: SubRequest) -> FixtureValue:
         """Return the value of this fixture, executing it if not cached."""
@@ -1060,10 +1055,14 @@ class FixtureDef(Generic[FixtureValue]):
         for argname in self.argnames:
             request._get_active_fixturedef(argname)
 
-        self._cached_request = request
-        setupstate = request.session._setupstate
+        setupstate = self._session._setupstate
         setupstate.fixture_setup(self, request.node)
-        setupstate.fixture_add_finalizer(self, self._run_post_finalizer)
+        setupstate.fixture_add_finalizer(
+            self,
+            lambda: ihook.pytest_fixture_post_finalizer(
+                fixturedef=self, request=request
+            ),
+        )
 
         ihook = request.node.ihook
         try:
@@ -1074,15 +1073,9 @@ class FixtureDef(Generic[FixtureValue]):
             )
         finally:
             dependencies = request._own_fixture_defs.values()
-            setupstate.fixture_set_dependencies(self, dependencies)
+            setupstate.fixture_post_setup(self, dependencies)
 
         return result
-
-    def _run_post_finalizer(self) -> None:
-        request = self._cached_request
-        assert request is not None
-        ihook = request.node.ihook
-        ihook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
 
     def _is_cache_hit(self, old_cache_key: object, new_cache_key: object) -> bool:
         try:
@@ -1163,7 +1156,7 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
 
     def __init__(self, request: FixtureRequest) -> None:
         super().__init__(
-            config=request.config,
+            session=request.session,
             baseid=None,
             argname="request",
             func=lambda: request,
@@ -1173,7 +1166,7 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         )
         self.cached_result = (request, [0], None)
 
-    def addfinalizer(self, finalizer: Callable[[], object]):
+    def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         # RequestFixtureDef is not exposed to the user, e.g.
         # pytest_fixture_setup and pytest_fixture_post_teardown are not called.
         # Also RequestFixtureDef is not finalized properly, so if addfinalizer is
@@ -1837,7 +1830,7 @@ class FixtureManager:
             Whether this is an autouse fixture.
         """
         fixture_def = FixtureDef(
-            config=self.config,
+            session=self.session,
             baseid=nodeid,
             argname=name,
             func=func,

@@ -613,7 +613,7 @@ class SetupState:
             assert not self.stack
 
     def fixture_setup(self, fixturedef: FixtureDef[object], node: Node) -> None:
-        """Register the fixture as active."""
+        """Register the fixture as active. Should be called before fixture setup."""
         assert fixturedef not in self._active_fixtures
         node_teardown_info = self.stack[node][0]
         self._active_fixtures[fixturedef] = _FixtureInfo(
@@ -622,10 +622,16 @@ class SetupState:
         assert fixturedef not in node_teardown_info.dependent_fixtures
         node_teardown_info.dependent_fixtures[fixturedef] = None
 
-    def fixture_set_dependencies(
+    def fixture_post_setup(
         self, fixturedef: FixtureDef[object], dependencies: Iterable[FixtureDef[object]]
     ) -> None:
-        """Mark the completion of fixture setup."""
+        """Mark the completion of fixture setup.
+
+        :param fixturedef:
+            The fixture for which setup was just executed.
+        :param dependencies:
+            Fixtures used during the setup of the current fixture.
+        """
         fixture_info = self._active_fixtures[fixturedef]
         # Order fixture after its dependencies.
         del self._active_fixtures[fixturedef]
