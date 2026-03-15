@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import dataclasses
+import getpass
 import os
 from pathlib import Path
 import stat
@@ -27,7 +28,6 @@ from _pytest.tmpdir import pytest_sessionfinish
 from _pytest.tmpdir import TempPathFactory
 import pytest
 
-import getpass
 
 skip_if_no_getuid = pytest.mark.skipif(
     not hasattr(os, "getuid"), reason="checks unix permissions"
