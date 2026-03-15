@@ -726,22 +726,11 @@ class SubRequest(FixtureRequest):
             _ispytest=_ispytest,
         )
         self._parent_request: Final[FixtureRequest] = request
-        self._scope_field: Final = scope
         self._fixturedef: Final[FixtureDef[object]] = fixturedef
         if param is not NOTSET:
             self.param = param
         self.param_index: Final = param_index
-
-    def __repr__(self) -> str:
-        return f"<SubRequest {self.fixturename!r} for {self._pyfuncitem!r}>"
-
-    @property
-    def _scope(self) -> Scope:
-        return self._scope_field
-
-    @property
-    def node(self):
-        scope = self._scope
+        self._scope_field: Final = scope
         if scope is Scope.Function:
             # This might also be a non-function Item despite its attribute name.
             node: nodes.Node | None = self._pyfuncitem
@@ -755,7 +744,18 @@ class SubRequest(FixtureRequest):
         assert node, (
             f'Could not obtain a node for scope "{scope}" for function {self._pyfuncitem!r}'
         )
-        return node
+        self._node: Final = node
+
+    def __repr__(self) -> str:
+        return f"<SubRequest {self.fixturename!r} for {self._pyfuncitem!r}>"
+
+    @property
+    def _scope(self) -> Scope:
+        return self._scope_field
+
+    @property
+    def node(self):
+        return self._node
 
     def _check_scope(
         self,
