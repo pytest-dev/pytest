@@ -809,6 +809,24 @@ class TestTryEnsureDirectory:
         result = _try_ensure_directory(target)
         assert result is None
 
+    def test_returns_none_when_mkdir_fails_after_unlink(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """unlink succeeds but the subsequent mkdir still raises (e.g. race)."""
+        target = tmp_path / "blocked"
+        target.touch()
+
+        original_mkdir = Path.mkdir
+
+        def _fail_mkdir(self: Path, *args: object, **kwargs: object) -> None:
+            if self == target and not target.exists():
+                raise OSError("simulated race: mkdir failed after unlink")
+            original_mkdir(self, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "mkdir", _fail_mkdir)
+        result = _try_ensure_directory(target)
+        assert result is None
+
     def test_returns_none_for_unresolvable_path(self) -> None:
         result = _try_ensure_directory(Path("/no/such/parent/dir"))
         assert result is None
