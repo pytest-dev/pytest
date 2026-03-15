@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import contextlib
 import dataclasses
 import os
 from pathlib import Path
@@ -35,6 +36,40 @@ from _pytest.stash import StashKey
 
 tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
+
+
+@contextlib.contextmanager
+def _safe_open_dir(path: Path) -> Generator[int]:
+    """Open a directory without following symlinks and yield its file descriptor.
+
+    Uses O_NOFOLLOW and O_DIRECTORY (when available) to prevent symlink
+    attacks (CVE-2025-71176).  The fd-based operations (fstat, fchmod)
+    also eliminate TOCTOU races.
+
+    Args:
+        path: Directory to open.
+
+    Yields:
+        An open file descriptor for the directory.
+
+    Raises:
+        OSError: If the path cannot be safely opened (e.g. it is a symlink).
+    """
+    open_flags = os.O_RDONLY
+    for _flag in ("O_NOFOLLOW", "O_DIRECTORY"):
+        open_flags |= getattr(os, _flag, 0)
+    try:
+        dir_fd = os.open(str(path), open_flags)
+    except OSError as e:
+        raise OSError(
+            f"The temporary directory {path} could not be "
+            "safely opened (it may be a symlink). "
+            "Remove the symlink or directory and try again."
+        ) from e
+    try:
+        yield dir_fd
+    finally:
+        os.close(dir_fd)
 
 
 @final
@@ -172,21 +207,7 @@ class TempPathFactory:
             # just error out on this, at least for a while.
             uid = get_user_id()
             if uid is not None:
-                # Open the directory without following symlinks to prevent
-                # symlink attacks (CVE-2025-71176). Using a file descriptor
-                # for fstat/fchmod also eliminates TOCTOU races.
-                open_flags = os.O_RDONLY
-                for _flag in ("O_NOFOLLOW", "O_DIRECTORY"):
-                    open_flags |= getattr(os, _flag, 0)
-                try:
-                    dir_fd = os.open(str(rootdir), open_flags)
-                except OSError as e:
-                    raise OSError(
-                        f"The temporary directory {rootdir} could not be "
-                        "safely opened (it may be a symlink). "
-                        "Remove the symlink or directory and try again."
-                    ) from e
-                try:
+                with _safe_open_dir(rootdir) as dir_fd:
                     rootdir_stat = os.fstat(dir_fd)
                     if rootdir_stat.st_uid != uid:
                         raise OSError(
@@ -195,8 +216,6 @@ class TempPathFactory:
                         )
                     if (rootdir_stat.st_mode & 0o077) != 0:
                         os.fchmod(dir_fd, rootdir_stat.st_mode & ~0o077)
-                finally:
-                    os.close(dir_fd)
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0

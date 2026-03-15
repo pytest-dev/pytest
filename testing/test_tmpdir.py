@@ -21,9 +21,14 @@ from _pytest.pathlib import on_rm_rf_error
 from _pytest.pathlib import register_cleanup_lock_removal
 from _pytest.pathlib import rm_rf
 from _pytest.pytester import Pytester
+from _pytest.tmpdir import _safe_open_dir
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import TempPathFactory
 import pytest
+
+skip_if_no_getuid = pytest.mark.skipif(
+    not hasattr(os, "getuid"), reason="checks unix permissions"
+)
 
 
 def test_tmp_path_fixture(pytester: Pytester) -> None:
@@ -765,3 +770,59 @@ def test_pytest_sessionfinish_handles_missing_basetemp_dir(
     # exitstatus=0 + policy="failed" + _given_basetemp=None enters the
     # cleanup block; basetemp.is_dir() is False so rmtree is skipped.
     pytest_sessionfinish(FakeSession, exitstatus=0)
+
+
+# -- Direct unit tests for _safe_open_dir context manager --
+
+
+class TestSafeOpenDir:
+    """Unit tests for the _safe_open_dir context manager (CVE-2025-71176)."""
+
+    @skip_if_no_getuid
+    def test_yields_valid_fd_for_real_directory(self, tmp_path: Path) -> None:
+        """Happy path: yields a valid file descriptor for a real directory."""
+        with _safe_open_dir(tmp_path) as fd:
+            st = os.fstat(fd)
+            assert stat.S_ISDIR(st.st_mode)
+
+    @skip_if_no_getuid
+    def test_fd_is_closed_after_context_exit(self, tmp_path: Path) -> None:
+        """The file descriptor must be closed when the context exits."""
+        with _safe_open_dir(tmp_path) as fd:
+            pass
+        # After exiting, fstat on the closed fd should raise.
+        with pytest.raises(OSError):
+            os.fstat(fd)
+
+    @skip_if_no_getuid
+    def test_rejects_symlink(self, tmp_path: Path) -> None:
+        """A symlink must be rejected with a clear error message."""
+        real_dir = tmp_path / "real"
+        real_dir.mkdir()
+        link = tmp_path / "link"
+        link.symlink_to(real_dir)
+
+        with pytest.raises(OSError, match="could not be safely opened"):
+            with _safe_open_dir(link):
+                pass  # pragma: no cover
+
+    @skip_if_no_getuid
+    def test_rejects_nonexistent_path(self, tmp_path: Path) -> None:
+        """A non-existent path must be rejected with a clear error message."""
+        missing = tmp_path / "does-not-exist"
+        with pytest.raises(OSError, match="could not be safely opened"):
+            with _safe_open_dir(missing):
+                pass  # pragma: no cover
+
+    @skip_if_no_getuid
+    def test_fd_closed_on_exception_inside_context(self, tmp_path: Path) -> None:
+        """The fd must be closed even if the caller raises inside the with block."""
+        fd_holder: list[int] = []
+        with pytest.raises(RuntimeError, match="boom"):
+            with _safe_open_dir(tmp_path) as fd:
+                fd_holder.append(fd)
+                raise RuntimeError("boom")
+
+        # fd should be closed despite the exception.
+        with pytest.raises(OSError):
+            os.fstat(fd_holder[0])
