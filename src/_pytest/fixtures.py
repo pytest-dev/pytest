@@ -377,8 +377,9 @@ class FixtureRequest(abc.ABC):
         # collection. Dynamically requested fixtures (using
         # `request.getfixturevalue("foo")`) are added dynamically.
         self._arg2fixturedefs: Final = arg2fixturedefs
-        # The argnames evaluated in the current test item, mapping to the FixtureDef
-        # they resolved to.
+        # The argnames evaluated in the current test item so far, mapping
+        # to the FixtureDef they resolved to. Shared by the TopRequest and all
+        # of its SubRequests.
         self._fixture_defs: Final = fixture_defs
         # FixtureDefs requested through this specific `request` object.
         # Allows tracking dependencies on fixtures.
