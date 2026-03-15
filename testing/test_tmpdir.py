@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import dataclasses
-import getpass
 import os
 from pathlib import Path
 import stat
@@ -777,6 +776,7 @@ def test_pytest_sessionfinish_handles_missing_basetemp_dir() -> None:
 
 # -- Tests for mkdtemp-based rootdir creation (DoS mitigation, #13669) --
 
+
 def test_getbasetemp_uses_mkdtemp_rootdir(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -832,9 +832,7 @@ class TestCleanupOldRootdirs:
         current = dirs[-1]
         _cleanup_old_rootdirs(tmp_path, prefix, keep=2, current=current)
 
-        remaining = sorted(
-            p for p in tmp_path.iterdir() if p.name.startswith(prefix)
-        )
+        remaining = sorted(p for p in tmp_path.iterdir() if p.name.startswith(prefix))
         # current + 2 most recent old dirs = 3 total
         assert len(remaining) == 3
         assert current in remaining

@@ -221,16 +221,12 @@ class TempPathFactory:
             # DoS via pre-created files/dirs, etc.).  See #13669.
             rootdir_prefix = f"pytest-of-{user}-"
             try:
-                rootdir = Path(
-                    tempfile.mkdtemp(prefix=rootdir_prefix, dir=temproot)
-                )
+                rootdir = Path(tempfile.mkdtemp(prefix=rootdir_prefix, dir=temproot))
             except OSError:
                 # getuser() likely returned illegal characters for the
                 # platform, fall back to a safe prefix.
                 rootdir_prefix = "pytest-of-unknown-"
-                rootdir = Path(
-                    tempfile.mkdtemp(prefix=rootdir_prefix, dir=temproot)
-                )
+                rootdir = Path(tempfile.mkdtemp(prefix=rootdir_prefix, dir=temproot))
             # mkdtemp applies the umask; ensure 0o700 unconditionally.
             os.chmod(rootdir, 0o700)
             # Defense-in-depth: verify ownership and tighten permissions
