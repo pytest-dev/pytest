@@ -26,6 +26,7 @@ from _pytest.tmpdir import get_user
 from _pytest.tmpdir import TempPathFactory
 import pytest
 
+
 skip_if_no_getuid = pytest.mark.skipif(
     not hasattr(os, "getuid"), reason="checks unix permissions"
 )
