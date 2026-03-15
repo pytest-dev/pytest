@@ -6,7 +6,6 @@ import re
 import warnings
 
 from _pytest import nodes
-from _pytest.compat import legacy_path
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestWarning
@@ -36,18 +35,14 @@ def test_node_direct_construction_deprecated() -> None:
 def test_subclassing_both_item_and_collector_deprecated(
     request, tmp_path: Path
 ) -> None:
-    """
-    Verifies we warn on diamond inheritance as well as correctly managing legacy
-    inheritance constructors with missing args as found in plugins.
-    """
-    # We do not expect any warnings messages to issued during class definition.
+    """Verifies we warn on diamond inheritance from both Item and Collector."""
+    # We do not expect any warnings messages to be issued during class definition.
     with warnings.catch_warnings():
         warnings.simplefilter("error")
 
         class SoWrong(nodes.Item, nodes.File):
-            def __init__(self, fspath, parent):
-                """Legacy ctor with legacy call # don't wana see"""
-                super().__init__(fspath, parent)
+            def __init__(self, parent: nodes.Collector, path: Path) -> None:
+                super().__init__(name="broken", parent=parent, path=path)
 
             def collect(self):
                 raise NotImplementedError()
@@ -56,9 +51,7 @@ def test_subclassing_both_item_and_collector_deprecated(
                 raise NotImplementedError()
 
     with pytest.warns(PytestWarning) as rec:
-        SoWrong.from_parent(
-            request.session, fspath=legacy_path(tmp_path / "broken.txt")
-        )
+        SoWrong.from_parent(request.session, path=tmp_path / "broken.txt")
     messages = [str(x.message) for x in rec]
     assert any(
         re.search(".*SoWrong.* not using a cooperative constructor.*", x)
