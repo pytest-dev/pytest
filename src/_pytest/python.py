@@ -45,7 +45,6 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -654,7 +653,7 @@ class Package(nodes.Directory):
 
     def __init__(
         self,
-        fspath: LEGACY_PATH | None,
+        fspath: None,
         parent: nodes.Collector,
         # NOTE: following args are unused:
         config=None,
