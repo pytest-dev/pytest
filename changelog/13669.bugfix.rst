@@ -1,3 +1,9 @@
-Fixed a symlink attack vulnerability (CVE-2025-71176) in the :fixture:`tmp_path` fixture's base directory handling.
+Fixed a symlink attack vulnerability ([CVE-2025-71176](https://github.com/pytest-dev/pytest/issues/13669)) in
+the [tmp_path](https://github.com/pytest-dev/pytest/blob/295d9da900a0dbe8b4093d6a6bc977cd567aa4b0/src/_pytest/tmpdir.py#L258)
+fixture's base directory handling.
 
-The ``pytest-of-<user>`` directory under the system temp root is now opened with ``O_NOFOLLOW`` and verified using file-descriptor-based ``fstat``/``fchmod``, preventing symlink attacks and TOCTOU races.
+The ``pytest-of-<user>`` directory under the system temp root is now opened
+with [O_NOFOLLOW](https://man7.org/linux/man-pages/man2/open.2.html#:~:text=not%20have%20one.-,O_NOFOLLOW,-If%20the%20trailing)
+and verified using
+file-descriptor-based [fstat](https://linux.die.net/man/2/fstat)/[fchmod](https://linux.die.net/man/2/fchmod),
+preventing symlink attacks and [TOCTOU](https://en.wikipedia.org/wiki/Time-of-check_to_time-of-use) races.
