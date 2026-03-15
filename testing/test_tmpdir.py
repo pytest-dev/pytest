@@ -31,6 +31,8 @@ from _pytest.tmpdir import (
 )
 import pytest
 
+import getpass
+
 skip_if_no_getuid = pytest.mark.skipif(
     not hasattr(os, "getuid"), reason="checks unix permissions"
 )
@@ -645,10 +647,9 @@ def test_tmp_path_factory_rejects_symlink_rootdir(
 
     # Figure out what rootdir name pytest would use, then replace it
     # with a symlink pointing to the attacker-controlled directory.
-    import getpass
-
     user = getpass.getuser()
     rootdir = tmp_path / f"pytest-of-{user}"
+
     # Ensure the real dir exists so the cleanup branch is exercised.
     rootdir.mkdir(mode=0o700, exist_ok=True)
     rootdir.rmdir()
