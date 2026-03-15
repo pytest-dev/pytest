@@ -33,6 +33,7 @@ from _pytest.nodes import Item
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 
+
 tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
 
