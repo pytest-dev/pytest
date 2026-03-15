@@ -621,7 +621,7 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
 
 
-@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+@skip_if_no_getuid
 def test_tmp_path_factory_rejects_symlink_rootdir(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
