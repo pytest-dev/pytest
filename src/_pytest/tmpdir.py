@@ -72,33 +72,28 @@ def _safe_open_dir(path: Path) -> Generator[int]:
         os.close(dir_fd)
 
 
-def _try_ensure_directory(path: Path) -> Path | None:
-    """Try to create *path* as a directory (mode 0o700).
+def _cleanup_old_rootdirs(
+    temproot: Path, prefix: str, keep: int, current: Path
+) -> None:
+    """Remove old randomly-named rootdirs, keeping the *keep* most recent.
 
-    If a non-directory file is blocking the path (e.g. placed by another user),
-    attempt to remove it first and retry.  Returns the path on success, or
-    ``None`` when the directory cannot be created.
+    *current* is excluded so the running session's rootdir is never removed.
+    Errors are silently ignored (other sessions may hold locks, etc.).
     """
     try:
-        path.mkdir(mode=0o700, exist_ok=True)
-        return path
+        candidates = sorted(
+            (
+                p
+                for p in temproot.iterdir()
+                if p.is_dir() and p.name.startswith(prefix) and p != current
+            ),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
     except OSError:
-        pass
-
-    # A non-directory entry (regular file, socket, …) may be squatting on the
-    # name.  Try to remove it so we can create our directory.
-    if path.exists() and not path.is_dir():
-        try:
-            path.unlink()
-        except OSError:
-            return None
-        try:
-            path.mkdir(mode=0o700)
-            return path
-        except OSError:
-            return None
-
-    return None
+        return
+    for old in candidates[keep:]:
+        rmtree(old, ignore_errors=True)
 
 
 @final
@@ -221,25 +216,25 @@ class TempPathFactory:
             user = get_user() or "unknown"
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
-            rootdir = _try_ensure_directory(temproot.joinpath(f"pytest-of-{user}"))
-            if rootdir is None:
-                # getuser() likely returned illegal characters for the
-                # platform, use unknown back off mechanism
-                rootdir = _try_ensure_directory(temproot.joinpath("pytest-of-unknown"))
-            if rootdir is None:
-                # All predictable names are blocked (e.g. by a non-directory
-                # file we cannot remove).  Fall back to a unique directory
-                # so that pytest can still function.
+            # Use a randomly-named rootdir created via mkdtemp to avoid
+            # the entire class of predictable-name attacks (symlink races,
+            # DoS via pre-created files/dirs, etc.).  See #13669.
+            rootdir_prefix = f"pytest-of-{user}-"
+            try:
                 rootdir = Path(
-                    tempfile.mkdtemp(prefix=f"pytest-of-{user}-", dir=temproot)
+                    tempfile.mkdtemp(prefix=rootdir_prefix, dir=temproot)
                 )
-                os.chmod(rootdir, 0o700)
-            # Because we use exist_ok=True with a predictable name, make sure
-            # we are the owners, to prevent any funny business (on unix, where
-            # temproot is usually shared).
-            # Also, to keep things private, fixup any world-readable temp
-            # rootdir's permissions. Historically 0o755 was used, so we can't
-            # just error out on this, at least for a while.
+            except OSError:
+                # getuser() likely returned illegal characters for the
+                # platform, fall back to a safe prefix.
+                rootdir_prefix = "pytest-of-unknown-"
+                rootdir = Path(
+                    tempfile.mkdtemp(prefix=rootdir_prefix, dir=temproot)
+                )
+            # mkdtemp applies the umask; ensure 0o700 unconditionally.
+            os.chmod(rootdir, 0o700)
+            # Defense-in-depth: verify ownership and tighten permissions
+            # via fd-based ops to eliminate TOCTOU races (CVE-2025-71176).
             uid = get_user_id()
             if uid is not None:
                 with _safe_open_dir(rootdir) as dir_fd:
@@ -261,6 +256,8 @@ class TempPathFactory:
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
             )
+            # Clean up old rootdirs from previous sessions.
+            _cleanup_old_rootdirs(temproot, rootdir_prefix, keep, current=rootdir)
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
         self._trace("new basetemp", basetemp)

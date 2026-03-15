@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 import stat
 import sys
+import tempfile
+from typing import Any
 from typing import cast
 import warnings
 
@@ -22,8 +24,8 @@ from _pytest.pathlib import on_rm_rf_error
 from _pytest.pathlib import register_cleanup_lock_removal
 from _pytest.pathlib import rm_rf
 from _pytest.pytester import Pytester
+from _pytest.tmpdir import _cleanup_old_rootdirs
 from _pytest.tmpdir import _safe_open_dir
-from _pytest.tmpdir import _try_ensure_directory
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import pytest_sessionfinish
 from _pytest.tmpdir import TempPathFactory
@@ -601,32 +603,33 @@ def test_tmp_path_factory_create_directory_with_safe_permissions(
 
     # No world-readable permissions.
     assert (basetemp.stat().st_mode & 0o077) == 0
-    # Parent too (pytest-of-foo).
+    # Parent rootdir too (pytest-of-<user>-XXXXXX).
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
 
 
 @pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
-def test_tmp_path_factory_fixes_up_world_readable_permissions(
+def test_tmp_path_factory_defense_in_depth_fchmod(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
-    """Verify that if a /tmp/pytest-of-foo directory already exists with
-    world-readable permissions, it is fixed.
-
-    pytest used to mkdir with such permissions, that's why we fix it up.
-    """
-    # Use the test's tmp_path as the system temproot (/tmp).
+    """Defense-in-depth: even if os.chmod after mkdtemp somehow leaves
+    world-readable permissions, the fchmod inside _safe_open_dir corrects
+    them."""
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+
+    # Sabotage os.chmod so the initial permission fix is a no-op;
+    # the fd-based fchmod should still tighten permissions.
+    original_chmod = os.chmod
+
+    def _noop_chmod(path: Any, mode: int, **kw: Any) -> None:
+        # Let mkdtemp's internal mkdir work, but skip our explicit fix-up.
+        pass
+
+    monkeypatch.setattr(os, "chmod", _noop_chmod)
+
     tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
-    # Before - simulate bad perms.
-    os.chmod(basetemp.parent, 0o777)
-    assert (basetemp.parent.stat().st_mode & 0o077) != 0
-
-    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
-    basetemp = tmp_factory.getbasetemp()
-
-    # After - fixed.
+    # The fchmod defense should have corrected the permissions.
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
 
 
@@ -634,23 +637,24 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
 def test_tmp_path_factory_rejects_symlink_rootdir(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
-    """CVE-2025-71176: verify that a symlink at the pytest-of-<user> location
-    is rejected to prevent symlink attacks."""
+    """CVE-2025-71176: defense-in-depth — if the mkdtemp-created rootdir is
+    somehow replaced by a symlink before _safe_open_dir runs, it must be
+    rejected."""
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
 
-    # Pre-create a target directory that the symlink will point to.
     attacker_dir = tmp_path / "attacker-controlled"
     attacker_dir.mkdir(mode=0o700)
 
-    # Figure out what rootdir name pytest would use, then replace it
-    # with a symlink pointing to the attacker-controlled directory.
-    user = getpass.getuser()
-    rootdir = tmp_path / f"pytest-of-{user}"
+    original_mkdtemp = tempfile.mkdtemp
 
-    # Ensure the real dir exists so the cleanup branch is exercised.
-    rootdir.mkdir(mode=0o700, exist_ok=True)
-    rootdir.rmdir()
-    rootdir.symlink_to(attacker_dir)
+    def _mkdtemp_then_replace_with_symlink(**kwargs: Any) -> str:
+        """Create the dir normally, then swap it for a symlink."""
+        path = original_mkdtemp(**kwargs)
+        os.rmdir(path)
+        os.symlink(str(attacker_dir), path)
+        return path
+
+    monkeypatch.setattr(tempfile, "mkdtemp", _mkdtemp_then_replace_with_symlink)
 
     tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     with pytest.raises(OSError, match="could not be safely opened"):
@@ -771,95 +775,90 @@ def test_pytest_sessionfinish_handles_missing_basetemp_dir() -> None:
     pytest_sessionfinish(FakeSession, exitstatus=0)
 
 
-# -- Unit tests for _try_ensure_directory --
+# -- Tests for mkdtemp-based rootdir creation (DoS mitigation, #13669) --
 
-
-class TestTryEnsureDirectory:
-    """Tests for _try_ensure_directory which mitigates the DoS where an
-    attacker pre-creates regular files at /tmp/pytest-of-<user>."""
-
-    def test_creates_new_directory(self, tmp_path: Path) -> None:
-        target = tmp_path / "newdir"
-        result = _try_ensure_directory(target)
-        assert result == target
-        assert target.is_dir()
-
-    def test_returns_existing_directory(self, tmp_path: Path) -> None:
-        target = tmp_path / "existingdir"
-        target.mkdir(mode=0o700)
-        result = _try_ensure_directory(target)
-        assert result == target
-        assert target.is_dir()
-
-    def test_removes_blocking_file_and_creates_dir(self, tmp_path: Path) -> None:
-        """If a regular file squats on the name we can remove, mkdir succeeds."""
-        target = tmp_path / "blocked"
-        target.touch()
-        result = _try_ensure_directory(target)
-        assert result == target
-        assert target.is_dir()
-
-    def test_returns_none_when_unlink_fails(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
-        """When we cannot remove the blocking file, return None."""
-        target = tmp_path / "blocked"
-        target.touch()
-        monkeypatch.setattr(Path, "unlink", _raise_oserror)
-        result = _try_ensure_directory(target)
-        assert result is None
-
-    def test_returns_none_when_mkdir_fails_after_unlink(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
-        """Unlink succeeds but the subsequent mkdir still raises (e.g. race)."""
-        target = tmp_path / "blocked"
-        target.touch()
-
-        original_mkdir = Path.mkdir
-
-        def _fail_mkdir(self: Path, *args: object, **kwargs: object) -> None:
-            if self == target and not target.exists():
-                raise OSError("simulated race: mkdir failed after unlink")
-            original_mkdir(self, *args, **kwargs)
-
-        monkeypatch.setattr(Path, "mkdir", _fail_mkdir)
-        result = _try_ensure_directory(target)
-        assert result is None
-
-    def test_returns_none_for_unresolvable_path(self) -> None:
-        result = _try_ensure_directory(Path("/no/such/parent/dir"))
-        assert result is None
-
-
-def _raise_oserror(*args: object, **kwargs: object) -> None:
-    raise OSError("simulated permission denied")
-
-
-def test_getbasetemp_falls_back_to_mkdtemp_when_paths_blocked(
+def test_getbasetemp_uses_mkdtemp_rootdir(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
-    """When both pytest-of-<user> and pytest-of-unknown are blocked by
-    non-directory files that cannot be removed, getbasetemp falls back to
-    tempfile.mkdtemp so pytest can still function (DoS mitigation)."""
+    """Verify that getbasetemp always creates a randomly-named rootdir
+    via mkdtemp, not a predictable pytest-of-<user> directory."""
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+    factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    basetemp = factory.getbasetemp()
+    user = get_user() or "unknown"
+    rootdir = basetemp.parent
+    # The rootdir name should start with the user prefix but have a
+    # random suffix (from mkdtemp), NOT be exactly "pytest-of-<user>".
+    assert rootdir.name.startswith(f"pytest-of-{user}-")
+    assert rootdir.name != f"pytest-of-{user}"
+    assert rootdir.is_dir()
+
+
+def test_getbasetemp_immune_to_predictable_path_dos(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """An attacker pre-creating files at /tmp/pytest-of-<user> cannot DoS
+    pytest because we no longer use predictable paths (#13669)."""
     temproot = tmp_path / "temproot"
     temproot.mkdir()
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(temproot))
 
     user = get_user() or "unknown"
-    # Create blocking files for both predictable paths.
+    # Simulate the attack: touch /tmp/pytest-of-$user for every user.
     (temproot / f"pytest-of-{user}").touch()
-    if user != "unknown":
-        (temproot / "pytest-of-unknown").touch()
-
-    # Make the blocking files undeletable by monkeypatching Path.unlink.
-    monkeypatch.setattr(Path, "unlink", _raise_oserror)
+    (temproot / "pytest-of-unknown").touch()
 
     factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = factory.getbasetemp()
     assert basetemp.is_dir()
-    # The rootdir should start with the mkdtemp prefix.
+    # The blocking files are simply ignored; mkdtemp picks a unique name.
     assert basetemp.parent.name.startswith(f"pytest-of-{user}-")
+
+
+# -- Unit tests for _cleanup_old_rootdirs --
+
+
+class TestCleanupOldRootdirs:
+    """Tests for cross-session cleanup of mkdtemp-created rootdirs."""
+
+    def test_removes_excess_rootdirs(self, tmp_path: Path) -> None:
+        prefix = "pytest-of-testuser-"
+        dirs = []
+        for i in range(5):
+            d = tmp_path / f"{prefix}{i:08}"
+            d.mkdir()
+            dirs.append(d)
+
+        current = dirs[-1]
+        _cleanup_old_rootdirs(tmp_path, prefix, keep=2, current=current)
+
+        remaining = sorted(
+            p for p in tmp_path.iterdir() if p.name.startswith(prefix)
+        )
+        # current + 2 most recent old dirs = 3 total
+        assert len(remaining) == 3
+        assert current in remaining
+
+    def test_never_removes_current(self, tmp_path: Path) -> None:
+        prefix = "pytest-of-testuser-"
+        current = tmp_path / f"{prefix}only"
+        current.mkdir()
+        _cleanup_old_rootdirs(tmp_path, prefix, keep=0, current=current)
+        assert current.is_dir()
+
+    def test_tolerates_missing_temproot(self) -> None:
+        _cleanup_old_rootdirs(
+            Path("/nonexistent"), "pytest-of-x-", keep=3, current=Path("/x")
+        )
+
+    def test_ignores_non_matching_entries(self, tmp_path: Path) -> None:
+        prefix = "pytest-of-testuser-"
+        current = tmp_path / f"{prefix}current"
+        current.mkdir()
+        unrelated = tmp_path / "some-other-dir"
+        unrelated.mkdir()
+        _cleanup_old_rootdirs(tmp_path, prefix, keep=0, current=current)
+        assert unrelated.is_dir()
 
 
 # -- Direct unit tests for _safe_open_dir context manager --
