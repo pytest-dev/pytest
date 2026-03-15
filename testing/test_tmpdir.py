@@ -812,7 +812,7 @@ class TestTryEnsureDirectory:
     def test_returns_none_when_mkdir_fails_after_unlink(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        """unlink succeeds but the subsequent mkdir still raises (e.g. race)."""
+        """Unlink succeeds but the subsequent mkdir still raises (e.g. race)."""
         target = tmp_path / "blocked"
         target.touch()
 
