@@ -756,7 +756,7 @@ def test_pytest_sessionfinish_handles_missing_basetemp_dir(
     tmp_path: Path,
 ) -> None:
     """Cover the branch where basetemp is set but the directory no longer
-    exists when pytest_sessionfinish runs (314->320 partial branch)."""
+    exists when pytest_sessionfinish runs."""
     from _pytest.tmpdir import pytest_sessionfinish
 
     factory = TempPathFactory(None, 3, "failed", lambda *args: None, _ispytest=True)
