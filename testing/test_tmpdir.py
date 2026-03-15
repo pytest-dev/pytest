@@ -23,6 +23,7 @@ from _pytest.pathlib import register_cleanup_lock_removal
 from _pytest.pathlib import rm_rf
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import _safe_open_dir
+from _pytest.tmpdir import _try_ensure_directory
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import pytest_sessionfinish
 from _pytest.tmpdir import TempPathFactory
@@ -768,6 +769,79 @@ def test_pytest_sessionfinish_handles_missing_basetemp_dir() -> None:
     # exitstatus=0 + policy="failed" + _given_basetemp=None enters the
     # cleanup block; basetemp.is_dir() is False so rmtree is skipped.
     pytest_sessionfinish(FakeSession, exitstatus=0)
+
+
+# -- Unit tests for _try_ensure_directory --
+
+
+class TestTryEnsureDirectory:
+    """Tests for _try_ensure_directory which mitigates the DoS where an
+    attacker pre-creates regular files at /tmp/pytest-of-<user>."""
+
+    def test_creates_new_directory(self, tmp_path: Path) -> None:
+        target = tmp_path / "newdir"
+        result = _try_ensure_directory(target)
+        assert result == target
+        assert target.is_dir()
+
+    def test_returns_existing_directory(self, tmp_path: Path) -> None:
+        target = tmp_path / "existingdir"
+        target.mkdir(mode=0o700)
+        result = _try_ensure_directory(target)
+        assert result == target
+        assert target.is_dir()
+
+    def test_removes_blocking_file_and_creates_dir(self, tmp_path: Path) -> None:
+        """If a regular file squats on the name we can remove, mkdir succeeds."""
+        target = tmp_path / "blocked"
+        target.touch()
+        result = _try_ensure_directory(target)
+        assert result == target
+        assert target.is_dir()
+
+    def test_returns_none_when_unlink_fails(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """When we cannot remove the blocking file, return None."""
+        target = tmp_path / "blocked"
+        target.touch()
+        monkeypatch.setattr(Path, "unlink", _raise_oserror)
+        result = _try_ensure_directory(target)
+        assert result is None
+
+    def test_returns_none_for_unresolvable_path(self) -> None:
+        result = _try_ensure_directory(Path("/no/such/parent/dir"))
+        assert result is None
+
+
+def _raise_oserror(*args: object, **kwargs: object) -> None:
+    raise OSError("simulated permission denied")
+
+
+def test_getbasetemp_falls_back_to_mkdtemp_when_paths_blocked(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """When both pytest-of-<user> and pytest-of-unknown are blocked by
+    non-directory files that cannot be removed, getbasetemp falls back to
+    tempfile.mkdtemp so pytest can still function (DoS mitigation)."""
+    temproot = tmp_path / "temproot"
+    temproot.mkdir()
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(temproot))
+
+    user = get_user() or "unknown"
+    # Create blocking files for both predictable paths.
+    (temproot / f"pytest-of-{user}").touch()
+    if user != "unknown":
+        (temproot / "pytest-of-unknown").touch()
+
+    # Make the blocking files undeletable by monkeypatching Path.unlink.
+    monkeypatch.setattr(Path, "unlink", _raise_oserror)
+
+    factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    basetemp = factory.getbasetemp()
+    assert basetemp.is_dir()
+    # The rootdir should start with the mkdtemp prefix.
+    assert basetemp.parent.name.startswith(f"pytest-of-{user}-")
 
 
 # -- Direct unit tests for _safe_open_dir context manager --

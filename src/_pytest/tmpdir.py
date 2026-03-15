@@ -72,6 +72,35 @@ def _safe_open_dir(path: Path) -> Generator[int]:
         os.close(dir_fd)
 
 
+def _try_ensure_directory(path: Path) -> Path | None:
+    """Try to create *path* as a directory (mode 0o700).
+
+    If a non-directory file is blocking the path (e.g. placed by another user),
+    attempt to remove it first and retry.  Returns the path on success, or
+    ``None`` when the directory cannot be created.
+    """
+    try:
+        path.mkdir(mode=0o700, exist_ok=True)
+        return path
+    except OSError:
+        pass
+
+    # A non-directory entry (regular file, socket, …) may be squatting on the
+    # name.  Try to remove it so we can create our directory.
+    if path.exists() and not path.is_dir():
+        try:
+            path.unlink()
+        except OSError:
+            return None
+        try:
+            path.mkdir(mode=0o700)
+            return path
+        except OSError:
+            return None
+
+    return None
+
+
 @final
 @dataclasses.dataclass
 class TempPathFactory:
@@ -192,13 +221,23 @@ class TempPathFactory:
             user = get_user() or "unknown"
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
-            rootdir = temproot.joinpath(f"pytest-of-{user}")
-            try:
-                rootdir.mkdir(mode=0o700, exist_ok=True)
-            except OSError:
-                # getuser() likely returned illegal characters for the platform, use unknown back off mechanism
-                rootdir = temproot.joinpath("pytest-of-unknown")
-                rootdir.mkdir(mode=0o700, exist_ok=True)
+            rootdir = _try_ensure_directory(
+                temproot.joinpath(f"pytest-of-{user}")
+            )
+            if rootdir is None:
+                # getuser() likely returned illegal characters for the
+                # platform, use unknown back off mechanism
+                rootdir = _try_ensure_directory(
+                    temproot.joinpath("pytest-of-unknown")
+                )
+            if rootdir is None:
+                # All predictable names are blocked (e.g. by a non-directory
+                # file we cannot remove).  Fall back to a unique directory
+                # so that pytest can still function.
+                rootdir = Path(
+                    tempfile.mkdtemp(prefix=f"pytest-of-{user}-", dir=temproot)
+                )
+                os.chmod(rootdir, 0o700)
             # Because we use exist_ok=True with a predictable name, make sure
             # we are the owners, to prevent any funny business (on unix, where
             # temproot is usually shared).
