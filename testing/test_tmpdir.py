@@ -615,13 +615,14 @@ def test_tmp_path_factory_defense_in_depth_fchmod(
     them."""
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
 
-    # Sabotage os.chmod so the initial permission fix is a no-op;
-    # the fd-based fchmod should still tighten permissions.
-    def _noop_chmod(path: Any, mode: int, **kw: Any) -> None:
-        # Let mkdtemp's internal mkdir work, but skip our explicit fix-up.
-        pass
+    # Sabotage os.chmod so it *widens* permissions instead of tightening;
+    # the fd-based fchmod should still correct them.
+    original_chmod = os.chmod
 
-    monkeypatch.setattr(os, "chmod", _noop_chmod)
+    def _widen_chmod(path: Any, mode: int, **kw: Any) -> None:
+        original_chmod(path, 0o755)
+
+    monkeypatch.setattr(os, "chmod", _widen_chmod)
 
     tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
