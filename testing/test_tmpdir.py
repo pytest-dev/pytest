@@ -13,19 +13,23 @@ import warnings
 from _pytest import pathlib
 from _pytest.config import Config
 from _pytest.monkeypatch import MonkeyPatch
-from _pytest.pathlib import cleanup_numbered_dir
-from _pytest.pathlib import create_cleanup_lock
-from _pytest.pathlib import make_numbered_dir
-from _pytest.pathlib import maybe_delete_a_numbered_dir
-from _pytest.pathlib import on_rm_rf_error
-from _pytest.pathlib import register_cleanup_lock_removal
-from _pytest.pathlib import rm_rf
+from _pytest.pathlib import (
+    cleanup_numbered_dir,
+    create_cleanup_lock,
+    make_numbered_dir,
+    maybe_delete_a_numbered_dir,
+    on_rm_rf_error,
+    register_cleanup_lock_removal,
+    rm_rf,
+)
 from _pytest.pytester import Pytester
-from _pytest.tmpdir import _safe_open_dir
-from _pytest.tmpdir import get_user
-from _pytest.tmpdir import TempPathFactory
+from _pytest.tmpdir import (
+    _safe_open_dir,
+    get_user,
+    TempPathFactory,
+    pytest_sessionfinish,
+)
 import pytest
-
 
 skip_if_no_getuid = pytest.mark.skipif(
     not hasattr(os, "getuid"), reason="checks unix permissions"
@@ -758,7 +762,6 @@ def test_pytest_sessionfinish_handles_missing_basetemp_dir(
 ) -> None:
     """Cover the branch where basetemp is set but the directory no longer
     exists when pytest_sessionfinish runs."""
-    from _pytest.tmpdir import pytest_sessionfinish
 
     factory = TempPathFactory(None, 3, "failed", lambda *args: None, _ispytest=True)
     # Point _basetemp at a path that does not exist on disk.
