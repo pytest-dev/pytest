@@ -221,15 +221,11 @@ class TempPathFactory:
             user = get_user() or "unknown"
             # use a sub-directory in the temproot to speed-up
             # make_numbered_dir() call
-            rootdir = _try_ensure_directory(
-                temproot.joinpath(f"pytest-of-{user}")
-            )
+            rootdir = _try_ensure_directory(temproot.joinpath(f"pytest-of-{user}"))
             if rootdir is None:
                 # getuser() likely returned illegal characters for the
                 # platform, use unknown back off mechanism
-                rootdir = _try_ensure_directory(
-                    temproot.joinpath("pytest-of-unknown")
-                )
+                rootdir = _try_ensure_directory(temproot.joinpath("pytest-of-unknown"))
             if rootdir is None:
                 # All predictable names are blocked (e.g. by a non-directory
                 # file we cannot remove).  Fall back to a unique directory
