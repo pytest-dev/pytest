@@ -363,7 +363,7 @@ class FixtureRequest(abc.ABC):
         self,
         pyfuncitem: Function,
         fixturename: str | None,
-        arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]],
+        arg2fixturedefs: Mapping[str, Sequence[FixtureDef[Any]]],
         fixture_defs: dict[str, FixtureDef[Any]],
         *,
         _ispytest: bool = False,
@@ -372,10 +372,9 @@ class FixtureRequest(abc.ABC):
         #: Fixture for which this request is being performed.
         self.fixturename: Final = fixturename
         self._pyfuncitem: Final = pyfuncitem
-        # The FixtureDefs for each fixture name requested by this item.
-        # Starts from the statically-known fixturedefs resolved during
-        # collection. Dynamically requested fixtures (using
-        # `request.getfixturevalue("foo")`) are added dynamically.
+        # The FixtureDefs for each fixture name statically requested by this
+        # item (computed during collection). Dynamically requested fixtures
+        # (using `request.getfixturevalue("foo")`) are not included here.
         self._arg2fixturedefs: Final = arg2fixturedefs
         # The evaluated argnames so far, mapping to the FixtureDef they resolved
         # to.
@@ -564,8 +563,6 @@ class FixtureRequest(abc.ABC):
             # getfixturevalue(argname) which was naturally
             # not known at parsing/collection time.
             fixturedefs = self._fixturemanager.getfixturedefs(argname, self._pyfuncitem)
-            if fixturedefs is not None:
-                self._arg2fixturedefs[argname] = fixturedefs
         # No fixtures defined with this name.
         if fixturedefs is None:
             raise FixtureLookupError(argname, self)
@@ -669,7 +666,7 @@ class TopRequest(FixtureRequest):
         super().__init__(
             fixturename=None,
             pyfuncitem=pyfuncitem,
-            arg2fixturedefs=pyfuncitem._fixtureinfo.name2fixturedefs.copy(),
+            arg2fixturedefs=pyfuncitem._fixtureinfo.name2fixturedefs,
             fixture_defs={},
             _ispytest=_ispytest,
         )
