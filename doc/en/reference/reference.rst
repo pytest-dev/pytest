@@ -1291,7 +1291,7 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestReturnNotNoneWarning
   :show-inheritance:
 
-.. autoclass:: pytest.PytestRemovedIn9Warning
+.. autoclass:: pytest.PytestRemovedIn10Warning
   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnknownMarkWarning
