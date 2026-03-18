@@ -1,2 +1,2 @@
-Running `pytest` needs `pkg_resources` which is or has been part of `setuptools` before version 82.
+Running pytest needs pkg_resources which is or has been part of setuptools before version 82.
 The only change done here is the adopted requirement for setupuptools in the pyproject.toml file.
