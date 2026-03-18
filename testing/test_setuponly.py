@@ -162,6 +162,40 @@ def test_show_fixtures_with_parameters(pytester: Pytester, mode) -> None:
     )
 
 
+def test_show_fixtures_with_parameters_and_deps(pytester: Pytester) -> None:
+    p = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def static_dep():
+            pass
+
+        @pytest.fixture
+        def dynamic_dep():
+            pass
+
+        @pytest.fixture
+        def param_fixture(static_dep, request):
+            request.getfixturevalue('dynamic_dep')
+
+        @pytest.mark.parametrize('param_fixture', [1], indirect=True)
+        def test_indirect(param_fixture):
+            pass
+        """
+    )
+
+    result = pytester.runpytest("--setup-only", p)
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines(
+        [
+            "        SETUP    F param_fixture[1] (fixtures used: dynamic_dep, static_dep)",
+            "        TEARDOWN F param_fixture[1]",
+        ]
+    )
+
+
 def test_show_fixtures_with_parameter_ids(pytester: Pytester, mode) -> None:
     pytester.makeconftest(
         '''
@@ -215,12 +249,15 @@ def test_dynamic_fixture_request(pytester: Pytester) -> None:
     p = pytester.makepyfile(
         """
         import pytest
+
         @pytest.fixture()
         def dynamically_requested_fixture():
             pass
+
         @pytest.fixture()
         def dependent_fixture(request):
             request.getfixturevalue('dynamically_requested_fixture')
+
         def test_dyn(dependent_fixture):
             pass
     """
@@ -232,6 +269,8 @@ def test_dynamic_fixture_request(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*SETUP    F dynamically_requested_fixture",
+            "*SETUP    F dependent_fixture (fixtures used: dynamically_requested_fixture)",
+            "*TEARDOWN F dependent_fixture",
             "*TEARDOWN F dynamically_requested_fixture",
         ]
     )

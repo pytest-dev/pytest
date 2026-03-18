@@ -376,9 +376,13 @@ class FixtureRequest(abc.ABC):
         # item (computed during collection). Dynamically requested fixtures
         # (using `request.getfixturevalue("foo")`) are not included here.
         self._arg2fixturedefs: Final = arg2fixturedefs
-        # The evaluated argnames so far, mapping to the FixtureDef they resolved
-        # to.
+        # The argnames evaluated in the current test item so far, mapping
+        # to the FixtureDef they resolved to. Shared by the TopRequest and all
+        # of its SubRequests.
         self._fixture_defs: Final = fixture_defs
+        # FixtureDefs requested through this specific `request` object.
+        # Allows tracking dependencies on fixtures.
+        self._own_fixture_defs: Final[dict[str, FixtureDef[object]]] = {}
         # Notes on the type of `param`:
         # -`request.param` is only defined in parametrized fixtures, and will raise
         #   AttributeError otherwise. Python typing has no notion of "undefined", so
@@ -554,6 +558,7 @@ class FixtureRequest(abc.ABC):
         fixturedef = self._fixture_defs.get(argname)
         if fixturedef is not None:
             self._check_scope(fixturedef, fixturedef._scope)
+            self._own_fixture_defs[argname] = fixturedef
             return fixturedef
 
         # Find the appropriate fixturedef.
@@ -613,6 +618,7 @@ class FixtureRequest(abc.ABC):
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
 
+        self._own_fixture_defs[argname] = fixturedef
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
 

@@ -1,0 +1,1 @@
+Dynamic fixture dependencies via :func:`request.getfixturevalue() <pytest.FixtureRequest.getfixturevalue>` are now shown in ``--setuponly`` output.
