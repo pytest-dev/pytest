@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import bdb
 from collections.abc import Callable
+from collections.abc import Iterable
 import dataclasses
 import os
 import sys
@@ -41,6 +42,7 @@ if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup
 
 if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureDef
     from _pytest.main import Session
     from _pytest.terminal import TerminalReporter
 
@@ -431,9 +433,27 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     return rep
 
 
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class _TeardownInfo:
+    finalizers: list[Callable[[], object]] = dataclasses.field(default_factory=list)
+    # dict for fast removal and keeping the order of insertion.
+    dependent_fixtures: dict[FixtureDef[object], None] = dataclasses.field(
+        default_factory=dict
+    )
+
+
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class _FixtureInfo(_TeardownInfo):
+    node: Node
+    dependencies: list[_TeardownInfo] = dataclasses.field(default_factory=list)
+
+
 class SetupState:
     """Shared state for setting up/tearing down test items or collectors
     in a session.
+
+    Setup and teardown of nodes
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Suppose we have a collection tree as follows:
 
@@ -493,6 +513,24 @@ class SetupState:
         []
 
     The end!
+
+    Setup and teardown of fixtures
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    SetupState also manages fixture teardown. Rules for them are as follows:
+
+    * Fixture teardown runs during teardown phase of test items.
+
+    * Fixture teardowns normally happen when leaving the fixture's containing node,
+      as defined by the fixture's ``scope``, following the stack procedure above.
+
+    * Fixture teardown can also be called early, e.g. if the fixture's parameter
+      changes in the next test item.
+
+    * Teardowns of multiple fixtures with the same containing node run in the reverse
+      order of fixture setup.
+
+    * For a given fixture, finalizers are called in the reverse order of addition.
     """
 
     def __init__(self) -> None:
@@ -500,12 +538,13 @@ class SetupState:
         self.stack: dict[
             Node,
             tuple[
-                # Node's finalizers.
-                list[Callable[[], object]],
+                # Node's finalizers and dependent fixtures.
+                _TeardownInfo,
                 # Node's exception and original traceback, if its setup raised.
                 tuple[OutcomeException | Exception, types.TracebackType | None] | None,
             ],
         ] = {}
+        self._active_fixtures: dict[FixtureDef[object], _FixtureInfo] = {}
 
     def setup(self, item: Item) -> None:
         """Setup objects along the collector chain to the item."""
@@ -521,7 +560,7 @@ class SetupState:
         for col in needed_collectors[len(self.stack) :]:
             assert col not in self.stack
             # Push onto the stack.
-            self.stack[col] = ([col.teardown], None)
+            self.stack[col] = (_TeardownInfo(finalizers=[col.teardown]), None)
             try:
                 col.setup()
             except TEST_OUTCOME as exc:
@@ -536,7 +575,7 @@ class SetupState:
         assert node and not isinstance(node, tuple)
         assert callable(finalizer)
         assert node in self.stack, (node, self.stack)
-        self.stack[node][0].append(finalizer)
+        self.stack[node][0].finalizers.append(finalizer)
 
     def teardown_exact(self, nextitem: Item | None) -> None:
         """Teardown the current stack up until reaching nodes that nextitem
@@ -550,14 +589,15 @@ class SetupState:
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:
                 break
-            node, (finalizers, _) = self.stack.popitem()
-            these_exceptions = []
-            while finalizers:
-                fin = finalizers.pop()
+            node, (teardown_info, _) = self.stack.popitem()
+            these_exceptions: list[BaseException] = []
+            self._perform_teardown(teardown_info, these_exceptions)
+
+            if isinstance(node, Item) and nextitem is not None:
                 try:
-                    fin()
+                    self._finish_stale_fixtures(node, nextitem)
                 except TEST_OUTCOME as e:
-                    these_exceptions.append(e)
+                    exceptions.append(e)
 
             if len(these_exceptions) == 1:
                 exceptions.extend(these_exceptions)
@@ -571,6 +611,110 @@ class SetupState:
             raise BaseExceptionGroup("errors during test teardown", exceptions[::-1])
         if nextitem is None:
             assert not self.stack
+
+    def fixture_setup(self, fixturedef: FixtureDef[object], node: Node) -> None:
+        """Register the fixture as active. Should be called before fixture setup."""
+        assert fixturedef not in self._active_fixtures
+        node_teardown_info = self.stack[node][0]
+        self._active_fixtures[fixturedef] = _FixtureInfo(
+            node=node, dependencies=[node_teardown_info]
+        )
+        assert fixturedef not in node_teardown_info.dependent_fixtures
+        node_teardown_info.dependent_fixtures[fixturedef] = None
+
+    def fixture_post_setup(
+        self, fixturedef: FixtureDef[object], dependencies: Iterable[FixtureDef[object]]
+    ) -> None:
+        """Mark the completion of fixture setup.
+
+        :param fixturedef:
+            The fixture for which setup was just executed.
+        :param dependencies:
+            Fixtures used during the setup of the current fixture.
+        """
+        fixture_info = self._active_fixtures[fixturedef]
+        # Order fixture after its dependencies.
+        del self._active_fixtures[fixturedef]
+        self._active_fixtures[fixturedef] = fixture_info
+
+        for dependency in dependencies:
+            dependency_info = self._active_fixtures[dependency]
+            fixture_info.dependencies.append(dependency_info)
+            assert dependency not in dependency_info.dependent_fixtures
+            dependency_info.dependent_fixtures[fixturedef] = None
+
+    def fixture_add_finalizer(
+        self, fixturedef: FixtureDef[object], finalizer: Callable[[], object]
+    ) -> None:
+        """Attach a finalizer to the given fixture.
+
+        The fixture must be currently active, see :func:`SetupState.fixture_setup`.
+        """
+        self._active_fixtures[fixturedef].finalizers.append(finalizer)
+
+    def fixture_teardown(self, fixturedef: FixtureDef[object]) -> None:
+        """Teardown the specified fixture (along with its dependencies), running its
+        finalizers and unregistering it from ``SetupState``.
+
+        The finalizers are executed in the reverse order of their addition.
+        """
+        # Do not remove fixture_info for now to allow adding finalizers last second.
+        fixture_info = self._active_fixtures[fixturedef]
+        exceptions: list[BaseException] = []
+        self._perform_teardown(fixture_info, exceptions)
+
+        del self._active_fixtures[fixturedef]
+        for dependency in fixture_info.dependencies:
+            del dependency.dependent_fixtures[fixturedef]
+
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        elif len(exceptions) > 1:
+            node = fixture_info.node
+            msg = f'errors while tearing down fixture "{fixturedef.argname}" of {node}'
+            raise BaseExceptionGroup(msg, exceptions[::-1])
+
+    def _perform_teardown(
+        self, teardown_info: _TeardownInfo, exceptions: list[BaseException]
+    ) -> None:
+        # New finalizers or dependent fixtures may be added last second from other
+        # finalizers or dependent fixture teardowns. Hopefully, this process ends
+        # at some point.
+        while True:
+            if teardown_info.dependent_fixtures:
+                dependent_fixture = next(reversed(teardown_info.dependent_fixtures))
+                try:
+                    dependent_fixture.finish()
+                except TEST_OUTCOME as e:
+                    exceptions.append(e)
+                assert dependent_fixture not in teardown_info.dependent_fixtures
+            elif teardown_info.finalizers:
+                fin = teardown_info.finalizers.pop()
+                try:
+                    fin()
+                except TEST_OUTCOME as e:
+                    exceptions.append(e)
+            else:
+                break
+
+    def _finish_stale_fixtures(self, item: Item, nextitem: Item) -> None:
+        """A stale fixture, for the purposes of ``SetupState``, is a fixture that
+        should be recomputed for the next test item regardless of the scoping rules.
+
+        For now, this can only happen if the fixture's parameter changes.
+        """
+        exceptions: list[BaseException] = []
+        for fixturedef in reversed(list(self._active_fixtures.keys())):
+            assert fixturedef in self._active_fixtures
+            try:
+                fixturedef._finish_if_param_changed(nextitem)
+            except TEST_OUTCOME as e:
+                exceptions.append(e)
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        elif len(exceptions) > 1:
+            msg = f"errors while tearing down fixtures of {item.nodeid!r}"
+            raise BaseExceptionGroup(msg, exceptions[::-1])
 
 
 def collect_one_node(collector: Collector) -> CollectReport:
