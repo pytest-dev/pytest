@@ -952,6 +952,37 @@ class TestCleanupOldRootdirs:
         _cleanup_old_rootdirs(tmp_path, prefix, keep=0, current=current)
         assert unrelated.is_dir()
 
+    def test_skips_symlinks_under_temproot(self, tmp_path: Path) -> None:
+        """CVE-2025-71176 defense-in-depth: symlinks under temproot that match
+        the prefix must be silently skipped, not followed or removed."""
+        prefix = "pytest-of-testuser-"
+        current = tmp_path / f"{prefix}current"
+        current.mkdir()
+
+        # Real old dir that should be cleaned up.
+        old_real = tmp_path / f"{prefix}old-real"
+        old_real.mkdir()
+
+        # Attacker-planted symlink matching the prefix.
+        attacker_target = tmp_path / "attacker-controlled"
+        attacker_target.mkdir()
+        symlink = tmp_path / f"{prefix}evil-link"
+        try:
+            symlink.symlink_to(attacker_target)
+        except OSError:
+            pytest.skip("could not create symbolic link")
+
+        _cleanup_old_rootdirs(tmp_path, prefix, keep=0, current=current)
+
+        # The symlink itself must be untouched (not followed, not removed).
+        assert symlink.is_symlink()
+        # The attacker's target directory must be untouched.
+        assert attacker_target.is_dir()
+        # The real old directory should have been cleaned up.
+        assert not old_real.exists()
+        # Current is always preserved.
+        assert current.is_dir()
+
 
 # -- Direct unit tests for _safe_open_dir context manager --
 

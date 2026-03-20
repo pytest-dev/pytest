@@ -79,15 +79,21 @@ def _cleanup_old_rootdirs(
 
     *current* is excluded so the running session's rootdir is never removed.
     Errors are silently ignored (other sessions may hold locks, etc.).
+
+    Uses ``os.scandir`` with ``follow_symlinks=False`` so that symlinks
+    planted under *temproot* are never followed during enumeration —
+    defense-in-depth against symlink attacks (CVE-2025-71176).
     """
     try:
         candidates = sorted(
             (
-                p
-                for p in temproot.iterdir()
-                if p.is_dir() and p.name.startswith(prefix) and p != current
+                Path(entry.path)
+                for entry in os.scandir(temproot)
+                if entry.is_dir(follow_symlinks=False)
+                and entry.name.startswith(prefix)
+                and Path(entry.path) != current
             ),
-            key=lambda p: p.stat().st_mtime,
+            key=lambda p: p.lstat().st_mtime,
             reverse=True,
         )
     except OSError:
