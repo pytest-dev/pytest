@@ -639,9 +639,7 @@ class TestSafeRmtree:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             safe_rmtree(target)
-        symlink_warnings = [
-            x for x in w if "avoids_symlink_attacks" in str(x.message)
-        ]
+        symlink_warnings = [x for x in w if "avoids_symlink_attacks" in str(x.message)]
         assert len(symlink_warnings) == 0
         assert not target.exists()
 
