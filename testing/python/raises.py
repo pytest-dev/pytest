@@ -430,3 +430,12 @@ class TestRaises:
         pattern_with_flags = re.compile(r"INVALID LITERAL", re.IGNORECASE)
         with pytest.raises(ValueError, match=pattern_with_flags):
             int("asdf")
+
+    def test_pipe_is_treated_as_regex_metacharacter(self) -> None:
+        """| (pipe) must be recognized as a regex metacharacter."""
+        from _pytest.raises import is_fully_escaped
+        from _pytest.raises import unescape
+
+        assert not is_fully_escaped("foo|bar")
+        assert is_fully_escaped(r"foo\|bar")
+        assert unescape(r"foo\|bar") == "foo|bar"

@@ -363,14 +363,14 @@ def _check_raw_type(
 
 def is_fully_escaped(s: str) -> bool:
     # we know we won't compile with re.VERBOSE, so whitespace doesn't need to be escaped
-    metacharacters = "{}()+.*?^$[]"
+    metacharacters = "{}()+.*?^$[]|"
     return not any(
         c in metacharacters and (i == 0 or s[i - 1] != "\\") for (i, c) in enumerate(s)
     )
 
 
 def unescape(s: str) -> str:
-    return re.sub(r"\\([{}()+-.*?^$\[\]\s\\])", r"\1", s)
+    return re.sub(r"\\([{}()+-.*?^$\[\]\s\\|])", r"\1", s)
 
 
 # These classes conceptually differ from ExceptionInfo in that ExceptionInfo is tied, and
