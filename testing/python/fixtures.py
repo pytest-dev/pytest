@@ -871,6 +871,115 @@ class TestRequestBasic:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 2 passed in *"])
 
+    def test_getfixturevalue_teardown_previously_requested_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was previously
+        requested is OK (#12882).
+
+        Note: this is still kinda dubious so don't let this test lock you in to
+        allowing this behavior forever...
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix(request, tmp_path):
+                yield
+                assert request.getfixturevalue("tmp_path") == tmp_path
+
+            def test_it(fix):
+                pass
+        """
+        )
+        result = pytester.runpytest("-Werror")
+        result.assert_outcomes(passed=1)
+
+    def test_getfixturevalue_teardown_new_fixture_deprecated(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises a deprecation warning (#12882).
+
+        Note: this is a case that previously worked but will become a hard
+        error after the deprecation is completed.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="session")
+            def resource():
+                return "value"
+
+            @pytest.fixture
+            def fix(request):
+                yield
+                with pytest.warns(
+                    pytest.PytestRemovedIn10Warning,
+                    match=r'Calling request\\.getfixturevalue\\("resource"\\) during teardown is deprecated',
+                ):
+                    assert request.getfixturevalue("resource") == "value"
+
+            def test_it(fix):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
+    def test_getfixturevalue_teardown_new_inactive_fixture_errors(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises an error (#12882)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix(request):
+                yield
+                request.getfixturevalue("tmp_path")
+
+            def test_it(fix):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                (
+                    '*The fixture value for "tmp_path" is not available during '
+                    "teardown because it was not previously requested.*"
+                ),
+            ]
+        )
+
+    def test_getfixturevalue_teardown_new_inactive_fixture_errors_top_request(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises an error (tricky case) (#12882)."""
+        pytester.makepyfile(
+            """
+            def test_it(request):
+                request.addfinalizer(lambda: request.getfixturevalue("tmp_path"))
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                (
+                    '*The fixture value for "tmp_path" is not available during '
+                    "teardown because it was not previously requested.*"
+                ),
+            ]
+        )
+
     def test_getfixturevalue(self, pytester: Pytester) -> None:
         item = pytester.getitem(
             """

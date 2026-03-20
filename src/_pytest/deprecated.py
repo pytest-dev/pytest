@@ -67,6 +67,14 @@ CONFIG_INICFG = PytestRemovedIn10Warning(
     "See https://docs.pytest.org/en/stable/deprecations.html#config-inicfg"
 )
 
+FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    'Calling request.getfixturevalue("{argname}") during teardown is deprecated.\n'
+    "Please request the fixture before teardown begins, either by declaring it in the fixture signature "
+    "or by calling request.getfixturevalue() before the fixture yields.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#dynamic-fixture-request-during-teardown",
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):
