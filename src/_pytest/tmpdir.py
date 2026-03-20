@@ -9,7 +9,6 @@ import dataclasses
 import os
 from pathlib import Path
 import re
-from shutil import rmtree
 import tempfile
 from typing import Any
 from typing import final
@@ -20,6 +19,7 @@ from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
 from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
+from .pathlib import safe_rmtree
 from _pytest.compat import get_user_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -93,7 +93,7 @@ def _cleanup_old_rootdirs(
     except OSError:
         return
     for old in candidates[keep:]:
-        rmtree(old, ignore_errors=True)
+        safe_rmtree(old, ignore_errors=True)
 
 
 @final
@@ -338,7 +338,7 @@ def tmp_path(
     if policy == "failed" and result_dict.get("call", True):
         # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
         # permissions, etc, in which case we ignore it.
-        rmtree(path, ignore_errors=True)
+        safe_rmtree(path, ignore_errors=True)
 
     del request.node.stash[tmppath_result_key]
 
@@ -361,7 +361,7 @@ def pytest_sessionfinish(session, exitstatus: int | ExitCode):
         if basetemp.is_dir():
             # We do a "best effort" to remove files, but it might not be possible due to some leaked resource,
             # permissions, etc, in which case we ignore it.
-            rmtree(basetemp, ignore_errors=True)
+            safe_rmtree(basetemp, ignore_errors=True)
 
     # Remove dead symlinks.
     if basetemp.is_dir():
