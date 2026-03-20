@@ -159,9 +159,59 @@ def get_extended_length_path_str(path: str) -> str:
     return long_path_prefix + path
 
 
+def _check_symlink_attack_safety(path: Path) -> None:
+    """Guard against symlink attacks before recursive directory removal.
+
+    If ``shutil.rmtree.avoids_symlink_attacks`` is True the platform's
+    rmtree implementation uses fd-based operations that are inherently
+    resistant to symlink races; we only need to verify *path* itself is
+    not a symlink.
+
+    When the attribute is False the platform cannot guarantee safety.  We
+    still refuse to remove a symlink, but a TOCTOU window remains for
+    contents *inside* the tree, so we emit a one-time warning.
+
+    Raises ``OSError`` if *path* is a symlink.
+    """
+    if path.is_symlink():
+        raise OSError(
+            f"Refusing to recursively remove {path}: "
+            "path is a symlink, not a real directory."
+        )
+    if not shutil.rmtree.avoids_symlink_attacks:
+        warnings.warn(
+            PytestWarning(
+                "shutil.rmtree.avoids_symlink_attacks is False on this platform: "
+                "recursive directory removal may be susceptible to symlink attacks."
+            ),
+            stacklevel=3,
+        )
+
+
+def safe_rmtree(path: Path, *, ignore_errors: bool = False) -> None:
+    """Remove a directory tree with protection against symlink attacks.
+
+    Verifies that ``shutil.rmtree.avoids_symlink_attacks`` is True (the
+    platform provides a symlink-attack-resistant implementation) before
+    proceeding.  On platforms without this guarantee an explicit symlink
+    check is performed and a warning is emitted.
+
+    When *ignore_errors* is True, a symlink at *path* is silently skipped
+    rather than raising.
+    """
+    try:
+        _check_symlink_attack_safety(path)
+    except OSError:
+        if not ignore_errors:
+            raise
+        return
+    shutil.rmtree(str(path), ignore_errors=ignore_errors)
+
+
 def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
     are read-only."""
+    _check_symlink_attack_safety(path)
     path = ensure_extended_length_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
     if sys.version_info >= (3, 12):
