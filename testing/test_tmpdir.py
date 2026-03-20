@@ -22,6 +22,7 @@ from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import on_rm_rf_error
 from _pytest.pathlib import register_cleanup_lock_removal
 from _pytest.pathlib import rm_rf
+from _pytest.pathlib import safe_rmtree
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import _cleanup_old_rootdirs
 from _pytest.tmpdir import _safe_open_dir
@@ -547,6 +548,102 @@ class TestRmRf:
         exc_info5 = PermissionError()
         on_rm_rf_error(os.unlink, str(fn), exc_info5, start_path=tmp_path)
         assert not fn.is_file()
+
+
+class TestSafeRmtree:
+    """Tests for safe_rmtree and the avoids_symlink_attacks guard."""
+
+    def test_removes_real_directory(self, tmp_path: Path) -> None:
+        """safe_rmtree removes a real (non-symlink) directory."""
+        target = tmp_path / "real"
+        target.mkdir()
+        (target / "file.txt").write_text("data")
+        safe_rmtree(target)
+        assert not target.exists()
+
+    def test_refuses_symlink_raises(self, tmp_path: Path) -> None:
+        """safe_rmtree raises OSError when path is a symlink."""
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+        try:
+            link.symlink_to(real)
+        except OSError:
+            pytest.skip("could not create symbolic link")
+
+        with pytest.raises(OSError, match="Refusing to recursively remove"):
+            safe_rmtree(link)
+        # The real directory must be untouched.
+        assert real.is_dir()
+
+    def test_refuses_symlink_ignore_errors(self, tmp_path: Path) -> None:
+        """safe_rmtree silently skips a symlink when ignore_errors=True."""
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+        try:
+            link.symlink_to(real)
+        except OSError:
+            pytest.skip("could not create symbolic link")
+
+        # Should not raise; should silently skip.
+        safe_rmtree(link, ignore_errors=True)
+        # Both the symlink and the real directory must still exist.
+        assert link.is_symlink()
+        assert real.is_dir()
+
+    def test_rm_rf_refuses_symlink(self, tmp_path: Path) -> None:
+        """rm_rf also refuses to remove a symlink after the guard was added."""
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+        try:
+            link.symlink_to(real)
+        except OSError:
+            pytest.skip("could not create symbolic link")
+
+        with pytest.raises(OSError, match="Refusing to recursively remove"):
+            rm_rf(link)
+        assert real.is_dir()
+
+    def test_warns_when_avoids_symlink_attacks_is_false(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A warning is emitted when the platform lacks native symlink-attack
+        protection in rmtree."""
+        target = tmp_path / "dir"
+        target.mkdir()
+
+        import shutil
+
+        monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
+
+        with pytest.warns(
+            pytest.PytestWarning,
+            match="avoids_symlink_attacks is False",
+        ):
+            safe_rmtree(target)
+        assert not target.exists()
+
+    def test_no_warning_when_avoids_symlink_attacks_is_true(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """No warning when the platform natively guards against symlink attacks."""
+        target = tmp_path / "dir"
+        target.mkdir()
+
+        import shutil
+
+        monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", True)
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            safe_rmtree(target)
+        symlink_warnings = [
+            x for x in w if "avoids_symlink_attacks" in str(x.message)
+        ]
+        assert len(symlink_warnings) == 0
+        assert not target.exists()
 
 
 def attempt_symlink_to(path, to_path):
