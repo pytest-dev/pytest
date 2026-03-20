@@ -89,6 +89,8 @@ nitpick_ignore = [
     ("py:class", "_pytest.python_api.RaisesContext"),
     ("py:class", "_pytest.recwarn.WarningsChecker"),
     ("py:class", "_pytest.reports.BaseReport"),
+    # Sphinx bugs(?)
+    ("py:class", "RewriteHook"),
     # Undocumented third parties
     ("py:class", "_tracing.TagTracerSub"),
     ("py:class", "warnings.WarningMessage"),
