@@ -306,8 +306,6 @@ def setup(app: sphinx.application.Sphinx) -> None:
 
     # legacypath.py monkey-patches pytest.Testdir in. Import the file so
     # that autodoc can discover references to it.
-    import _pytest.legacypath  # noqa: F401
-
     # Workaround for Sphinx bug with Python 3.14:
     # inspect.getsource() returns '\n' instead of raising OSError for classes
     # whose __module__ doesn't match the file they're defined in, causing
@@ -315,14 +313,14 @@ def setup(app: sphinx.application.Sphinx) -> None:
     # See: https://github.com/sphinx-doc/sphinx/issues/14345
     import sys
 
+    import _pytest.legacypath  # noqa: F401
+
     if sys.version_info >= (3, 14):
         from sphinx.ext.autodoc._dynamic import _type_comments
 
         _orig_get_type_comment = _type_comments.get_type_comment
 
-        def _get_type_comment_safe(
-            obj: object, bound_method: bool = False
-        ) -> object:
+        def _get_type_comment_safe(obj: object, bound_method: bool = False) -> object:
             try:
                 return _orig_get_type_comment(obj, bound_method)
             except IndexError:
