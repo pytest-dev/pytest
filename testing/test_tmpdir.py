@@ -364,8 +364,18 @@ def test_get_user(monkeypatch):
     required by getpass module are missing from the environment on Windows
     (#1010).
     """
-    monkeypatch.delenv("USER", raising=False)
-    monkeypatch.delenv("USERNAME", raising=False)
+    for envvar in ("LOGNAME", "USER", "LNAME", "USERNAME"):
+        monkeypatch.delenv(envvar, raising=False)
+    assert get_user() is None
+
+
+def test_get_user_handles_oserror(monkeypatch):
+    import getpass
+
+    def raise_oserror():
+        raise OSError("No username set in the environment")
+
+    monkeypatch.setattr(getpass, "getuser", raise_oserror)
     assert get_user() is None
 
 
