@@ -406,6 +406,25 @@ class TestWarns:
                 with pytest.warns(FutureWarning, match=r"must be \d+$"):
                     warnings.warn("value must be 42", UserWarning)
 
+    def test_warns_regex_escape_hint(self) -> None:
+        with pytest.warns():
+            with pytest.raises(
+                pytest.fail.Exception,
+                match=r"Did you mean to `re\.escape\(\)` the regex\?",
+            ):
+                with pytest.warns(UserWarning, match=r"foo(bar)"):
+                    warnings.warn("foo(bar)", UserWarning)
+
+    def test_warns_compiled_regex_mismatch(self) -> None:
+        import re
+
+        with pytest.warns():
+            with pytest.raises(
+                pytest.fail.Exception, match="Regex pattern did not match"
+            ):
+                with pytest.warns(UserWarning, match=re.compile(r"not gonna match")):
+                    warnings.warn("something else", UserWarning)
+
     def test_one_from_multiple_warns(self) -> None:
         with pytest.warns():
             with pytest.raises(
