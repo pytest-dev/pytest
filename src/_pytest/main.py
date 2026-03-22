@@ -277,6 +277,16 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def validate_basetemp(path: str) -> str:
+    """Validate the ``--basetemp`` option value.
+
+    Raises :class:`argparse.ArgumentTypeError` if ``path`` is empty or is
+    an ancestor of (or equal to) the current working directory, to prevent
+    accidental deletion of the working tree.
+
+    :param path: The path string provided by the user for the base temp directory.
+    :returns: The validated path string unchanged.
+    :raises argparse.ArgumentTypeError: If the path is empty or an ancestor of cwd.
+    """
     # GH 7119
     msg = "basetemp must not be empty, the current working directory or any parent directory of it"
 
@@ -361,6 +371,14 @@ def wrap_session(
 
 
 def pytest_cmdline_main(config: Config) -> int | ExitCode:
+    """Default implementation of the :hook:`pytest_cmdline_main` hook.
+
+    Runs the full test session by calling :func:`wrap_session` with the
+    default ``_main`` implementation.
+
+    :param config: The pytest :class:`~pytest.Config` object.
+    :returns: The session exit code.
+    """
     return wrap_session(config, _main)
 
 
@@ -378,10 +396,27 @@ def _main(config: Config, session: Session) -> int | ExitCode | None:
 
 
 def pytest_collection(session: Session) -> None:
+    """Default implementation of the :hook:`pytest_collection` hook.
+
+    Triggers test collection by calling :meth:`~pytest.Session.perform_collect`
+    on the active session.
+
+    :param session: The active :class:`~pytest.Session`.
+    """
     session.perform_collect()
 
 
 def pytest_runtestloop(session: Session) -> bool:
+    """Default implementation of the :hook:`pytest_runtestloop` hook.
+
+    Iterates over all collected test items and runs each one via
+    :hook:`pytest_runtest_protocol`.  Raises :class:`~pytest.Session.Failed`
+    or :class:`~pytest.Session.Interrupted` if the session signals that
+    testing should stop early.
+
+    :param session: The active :class:`~pytest.Session`.
+    :returns: ``True`` when the loop completes normally.
+    """
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
         raise session.Interrupted(
             f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
@@ -422,6 +457,24 @@ def _in_venv(path: Path) -> bool:
 
 
 def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
+    """Default implementation of the :hook:`pytest_ignore_collect` hook.
+
+    Returns ``True`` to skip collection of *collection_path* when any of the
+    following conditions hold:
+
+    * The path is a ``__pycache__`` directory.
+    * The path matches an entry in ``collect_ignore`` or ``--ignore``.
+    * The path matches a glob in ``collect_ignore_glob`` or ``--ignore-glob``.
+    * The path is a virtual environment root and ``--collect-in-virtualenv``
+      is not set.
+    * The path is a directory matching a pattern in ``norecursedirs``.
+
+    Returns ``None`` to allow collection to proceed normally.
+
+    :param collection_path: The filesystem path being considered for collection.
+    :param config: The pytest :class:`~pytest.Config` object.
+    :returns: ``True`` to skip the path, ``None`` to allow collection.
+    """
     if collection_path.name == "__pycache__":
         return True
 
@@ -462,10 +515,27 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
 def pytest_collect_directory(
     path: Path, parent: nodes.Collector
 ) -> nodes.Collector | None:
+    """Default implementation of the :hook:`pytest_collect_directory` hook.
+
+    Creates a :class:`~pytest.Dir` collector node for the given directory.
+
+    :param path: The directory path to collect.
+    :param parent: The parent collector node.
+    :returns: A :class:`~pytest.Dir` node for the directory.
+    """
     return Dir.from_parent(parent, path=path)
 
 
 def pytest_collection_modifyitems(items: list[nodes.Item], config: Config) -> None:
+    """Default implementation of the :hook:`pytest_collection_modifyitems` hook.
+
+    Removes test items whose node IDs start with any of the prefixes supplied
+    via the ``--deselect`` command-line option, firing the
+    :hook:`pytest_deselected` hook for the removed items.
+
+    :param items: The list of collected test items (modified in place).
+    :param config: The pytest :class:`~pytest.Config` object.
+    """
     deselect_prefixes = tuple(config.getoption("deselect") or [])
     if not deselect_prefixes:
         return
