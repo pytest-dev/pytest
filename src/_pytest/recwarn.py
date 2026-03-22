@@ -321,11 +321,19 @@ class WarningsChecker(WarningsRecorder):
                     f" Emitted warnings: {found_str()}."
                 )
             elif not any(self.matches(w) for w in self):
-                fail(
-                    f"DID NOT WARN. No warnings of type {self.expected_warning} matching the regex were emitted.\n"
-                    f" Regex: {self.match_expr}\n"
+                match_pattern = (
+                    self.match_expr.pattern
+                    if isinstance(self.match_expr, re.Pattern)
+                    else self.match_expr
+                )
+                msg = (
+                    f"Regex pattern did not match.\n"
+                    f" Regex: {match_pattern!r}\n"
                     f" Emitted warnings: {found_str()}."
                 )
+                if any(str(w.message) == match_pattern for w in self):
+                    msg += "\n Did you mean to `re.escape()` the regex?"
+                fail(msg)
         finally:
             # Whether or not any warnings matched, we want to re-emit all unmatched warnings.
             for w in self:

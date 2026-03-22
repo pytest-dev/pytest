@@ -243,7 +243,9 @@ class TestDeprecatedCall:
             warnings.warn("value must be 42", DeprecationWarning)
 
         with pytest.deprecated_call():
-            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.raises(
+                pytest.fail.Exception, match="Regex pattern did not match"
+            ):
                 with pytest.deprecated_call(match=r"must be \d+$"):
                     warnings.warn("this is not here", DeprecationWarning)
 
@@ -406,7 +408,9 @@ class TestWarns:
 
     def test_one_from_multiple_warns(self) -> None:
         with pytest.warns():
-            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.raises(
+                pytest.fail.Exception, match="Regex pattern did not match"
+            ):
                 with pytest.warns(UserWarning, match=r"aaa"):
                     with pytest.warns(UserWarning, match=r"aaa"):
                         warnings.warn("cccccccccc", UserWarning)
@@ -415,7 +419,9 @@ class TestWarns:
 
     def test_none_of_multiple_warns(self) -> None:
         with pytest.warns():
-            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.raises(
+                pytest.fail.Exception, match="Regex pattern did not match"
+            ):
                 with pytest.warns(UserWarning, match=r"aaa"):
                     warnings.warn("bbbbbbbbbb", UserWarning)
                     warnings.warn("cccccccccc", UserWarning)
@@ -589,7 +595,7 @@ def test_multiple_arg_custom_warning() -> None:
             pass
 
     with pytest.warns(CustomWarning):
-        with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+        with pytest.raises(pytest.fail.Exception, match="Regex pattern did not match"):
             with pytest.warns(CustomWarning, match="not gonna match"):
                 a, b = 1, 2
                 warnings.warn(CustomWarning(a, b))
