@@ -1,0 +1,2 @@
+Improved the error message for unmatching regex patterns in ``pytest.warns()`` to align with the one used for ``pytest.raises()``.
+Also added a hint suggesting ``re.escape()`` if the text exactly matches but the regex compilation fails or lacks escape characters.
