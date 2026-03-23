@@ -1,0 +1,48 @@
+{
+    "name": "parse5",
+    "type": "module",
+    "description": "HTML parser and serializer.",
+    "version": "8.0.0",
+    "author": "Ivan Nikulin <ifaaan@gmail.com> (https://github.com/inikulin)",
+    "contributors": "https://github.com/inikulin/parse5/graphs/contributors",
+    "homepage": "https://parse5.js.org",
+    "funding": "https://github.com/inikulin/parse5?sponsor=1",
+    "dependencies": {
+        "entities": "^6.0.0"
+    },
+    "keywords": [
+        "html",
+        "parser",
+        "html5",
+        "WHATWG",
+        "specification",
+        "fast",
+        "html parser",
+        "html5 parser",
+        "htmlparser",
+        "parse5",
+        "serializer",
+        "html serializer",
+        "htmlserializer",
+        "parse",
+        "serialize"
+    ],
+    "license": "MIT",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "default": "./dist/index.js"
+        }
+    },
+    "scripts": {},
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/inikulin/parse5.git"
+    },
+    "files": [
+        "dist/**/*.js",
+        "dist/**/*.d.ts"
+    ]
+}
