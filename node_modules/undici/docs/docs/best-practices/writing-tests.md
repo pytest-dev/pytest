@@ -22,9 +22,9 @@ setGlobalDispatcher(agent)
 ## Guarding against unexpected disconnects
 
 Undici's `Client` automatically reconnects after a socket error. This means
-a test can silently disconnect, reconnect, and still pass. Unfortunately, 
+a test can silently disconnect, reconnect, and still pass. Unfortunately,
 this could mask bugs like unexpected parser errors or protocol violations.
-To catch these silent reconnections, add a disconnect guard after creating 
+To catch these silent reconnections, add a disconnect guard after creating
 a `Client`:
 
 ```js

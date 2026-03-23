@@ -11,7 +11,7 @@ Install all WHATWG fetch classes globally on `globalThis`.
 ```js
 import { install } from 'undici'
 
-// Install all WHATWG fetch classes globally  
+// Install all WHATWG fetch classes globally
 install()
 
 // Now you can use fetch classes globally without importing
