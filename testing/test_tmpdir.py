@@ -128,9 +128,7 @@ class TestConfigTmpPath:
         for child in root.iterdir():
             # basetemp IS the mkdtemp rootdir; test dirs are directly inside.
             test_dir = list(
-                filter(
-                    lambda x: x.is_dir() and not x.is_symlink(), child.iterdir()
-                )
+                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
             )
             # Check only the failed one remains
             assert len(test_dir) == 1
@@ -224,9 +222,7 @@ class TestConfigTmpPath:
         for child in root.iterdir():
             # basetemp IS the mkdtemp rootdir; test dirs are directly inside.
             test_dir = list(
-                filter(
-                    lambda x: x.is_dir() and not x.is_symlink(), child.iterdir()
-                )
+                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
             )
             assert len(test_dir) == 1
 
