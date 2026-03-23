@@ -884,7 +884,7 @@ class IdMaker:
     # ParameterSet.
     idfn: Callable[[Any], object | None] | None
     # Optionally, explicit IDs for ParameterSets by index.
-    ids: Sequence[object | None] | None
+    ids: Sequence[str | _HiddenParam | None] | None
     # Optionally, the pytest config.
     # Used for controlling ASCII escaping, determining parametrization ID
     # strictness, and for calling the :hook:`pytest_make_parametrize_id` hook.
@@ -1208,7 +1208,7 @@ class Metafunc:
         argnames: str | Sequence[str],
         argvalues: Iterable[ParameterSet | Sequence[object] | object],
         indirect: bool | Sequence[str] = False,
-        ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
+        ids: Iterable[str | _HiddenParam | None] | Callable[[Any], object | None] | None = None,
         scope: _ScopeName | None = None,
         *,
         _param_mark: Mark | None = None,
@@ -1404,7 +1404,7 @@ class Metafunc:
     def _resolve_parameter_set_ids(
         self,
         argnames: Sequence[str],
-        ids: Iterable[object | None] | Callable[[Any], object | None] | None,
+        ids: Iterable[str | _HiddenParam | None] | Callable[[Any], object | None] | None,
         parametersets: Sequence[ParameterSet],
         nodeid: str,
     ) -> list[str | _HiddenParam]:
@@ -1444,7 +1444,7 @@ class Metafunc:
 
     def _validate_ids(
         self,
-        ids: Iterable[object | None],
+        ids: Iterable[str | _HiddenParam | None],
         parametersets: Sequence[ParameterSet],
     ) -> list[object | None]:
         try:
