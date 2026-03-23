@@ -1208,7 +1208,9 @@ class Metafunc:
         argnames: str | Sequence[str],
         argvalues: Iterable[ParameterSet | Sequence[object] | object],
         indirect: bool | Sequence[str] = False,
-        ids: Iterable[str | _HiddenParam | None] | Callable[[Any], object | None] | None = None,
+        ids: Iterable[str | _HiddenParam | None]
+        | Callable[[Any], object | None]
+        | None = None,
         scope: _ScopeName | None = None,
         *,
         _param_mark: Mark | None = None,
@@ -1404,7 +1406,9 @@ class Metafunc:
     def _resolve_parameter_set_ids(
         self,
         argnames: Sequence[str],
-        ids: Iterable[str | _HiddenParam | None] | Callable[[Any], object | None] | None,
+        ids: Iterable[str | _HiddenParam | None]
+        | Callable[[Any], object | None]
+        | None,
         parametersets: Sequence[ParameterSet],
         nodeid: str,
     ) -> list[str | _HiddenParam]:
