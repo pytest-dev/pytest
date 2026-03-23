@@ -25,7 +25,7 @@ from _pytest.pathlib import rm_rf
 from _pytest.pathlib import safe_rmtree
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import _cleanup_old_rootdirs
-from _pytest.tmpdir import _safe_open_dir
+from _pytest.tmpdir import _verify_ownership_and_tighten_permissions
 from _pytest.tmpdir import get_user
 from _pytest.tmpdir import pytest_sessionfinish
 from _pytest.tmpdir import TempPathFactory
@@ -126,13 +126,10 @@ class TestConfigTmpPath:
         root = pytester._test_tmproot
 
         for child in root.iterdir():
-            base_dir = list(
-                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
-            )
-            assert len(base_dir) == 1
+            # basetemp IS the mkdtemp rootdir; test dirs are directly inside.
             test_dir = list(
                 filter(
-                    lambda x: x.is_dir() and not x.is_symlink(), base_dir[0].iterdir()
+                    lambda x: x.is_dir() and not x.is_symlink(), child.iterdir()
                 )
             )
             # Check only the failed one remains
@@ -158,12 +155,12 @@ class TestConfigTmpPath:
         pytester.inline_run(p)
         root = pytester._test_tmproot
         for child in root.iterdir():
-            # This symlink will be deleted by cleanup_numbered_dir **after**
-            # the test finishes because it's triggered by atexit.
-            # So it has to be ignored here.
-            base_dir = filter(lambda x: not x.is_symlink(), child.iterdir())
-            # Check the base dir itself is gone
-            assert len(list(base_dir)) == 0
+            # basetemp IS the mkdtemp rootdir; with policy "failed" and
+            # all tests passing, test dirs are removed directly.
+            test_dirs = list(
+                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
+            )
+            assert len(test_dirs) == 0
 
     # issue #10502
     def test_policy_failed_removes_dir_when_skipped_from_fixture(
@@ -190,13 +187,13 @@ class TestConfigTmpPath:
 
         pytester.inline_run(p)
 
-        # Check if the whole directory is removed
+        # Check if the test directories are removed
         root = pytester._test_tmproot
         for child in root.iterdir():
-            base_dir = list(
+            test_dirs = list(
                 filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
             )
-            assert len(base_dir) == 0
+            assert len(test_dirs) == 0
 
     # issue #10502
     def test_policy_all_keeps_dir_when_skipped_from_fixture(
@@ -222,16 +219,13 @@ class TestConfigTmpPath:
         )
         pytester.inline_run(p)
 
-        # Check if the whole directory is kept
+        # Check if the test directory is kept
         root = pytester._test_tmproot
         for child in root.iterdir():
-            base_dir = list(
-                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
-            )
-            assert len(base_dir) == 1
+            # basetemp IS the mkdtemp rootdir; test dirs are directly inside.
             test_dir = list(
                 filter(
-                    lambda x: x.is_dir() and not x.is_symlink(), base_dir[0].iterdir()
+                    lambda x: x.is_dir() and not x.is_symlink(), child.iterdir()
                 )
             )
             assert len(test_dir) == 1
@@ -685,28 +679,12 @@ def test_tmp_path_factory_handles_invalid_dir_characters(
     assert "pytest-of-unknown" in str(p)
 
 
-@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
-def test_tmp_path_factory_create_directory_with_safe_permissions(
-    tmp_path: Path, monkeypatch: MonkeyPatch
-) -> None:
-    """Verify that pytest creates directories under /tmp with private permissions."""
-    # Use the test's tmp_path as the system temproot (/tmp).
-    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
-    basetemp = tmp_factory.getbasetemp()
-
-    # No world-readable permissions.
-    assert (basetemp.stat().st_mode & 0o077) == 0
-    # Parent rootdir too (pytest-of-<user>-XXXXXX).
-    assert (basetemp.parent.stat().st_mode & 0o077) == 0
-
-
-@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+@skip_if_no_getuid
 def test_tmp_path_factory_defense_in_depth_fchmod(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
     """Defense-in-depth: even if os.chmod after mkdtemp somehow leaves
-    world-readable permissions, the fchmod inside _safe_open_dir corrects
+    world-readable permissions, the fchmod inside _verify_ownership_and_tighten_permissions corrects
     them."""
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
 
@@ -722,8 +700,8 @@ def test_tmp_path_factory_defense_in_depth_fchmod(
     tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = tmp_factory.getbasetemp()
 
-    # The fchmod defense should have corrected the permissions.
-    assert (basetemp.parent.stat().st_mode & 0o077) == 0
+    # The fchmod defense should have corrected the permissions on basetemp (= rootdir).
+    assert (basetemp.stat().st_mode & 0o077) == 0
 
 
 @skip_if_no_getuid
@@ -731,7 +709,7 @@ def test_tmp_path_factory_rejects_symlink_rootdir(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
     """CVE-2025-71176: defense-in-depth — if the mkdtemp-created rootdir is
-    somehow replaced by a symlink before _safe_open_dir runs, it must be
+    somehow replaced by a symlink before _verify_ownership_and_tighten_permissions runs, it must be
     rejected."""
     monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
 
@@ -754,23 +732,7 @@ def test_tmp_path_factory_rejects_symlink_rootdir(
         tmp_factory.getbasetemp()
 
 
-@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
-def test_tmp_path_factory_rejects_wrong_owner(
-    tmp_path: Path, monkeypatch: MonkeyPatch
-) -> None:
-    """CVE-2025-71176: verify that a rootdir owned by a different user is
-    rejected (covers the fstat uid mismatch branch)."""
-    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
-
-    # Make get_user_id() return a uid that won't match the directory owner.
-    monkeypatch.setattr("_pytest.tmpdir.get_user_id", lambda: os.getuid() + 1)
-
-    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
-    with pytest.raises(OSError, match="not owned by the current user"):
-        tmp_factory.getbasetemp()
-
-
-@pytest.mark.skipif(not hasattr(os, "getuid"), reason="checks unix permissions")
+@skip_if_no_getuid
 def test_tmp_path_factory_nofollow_flag_missing(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -785,46 +747,40 @@ def test_tmp_path_factory_nofollow_flag_missing(
 
     # Should still create the directory with safe permissions.
     assert basetemp.is_dir()
-    assert (basetemp.parent.stat().st_mode & 0o077) == 0
+    assert (basetemp.stat().st_mode & 0o077) == 0
 
 
-def test_tmp_path_factory_from_config_rejects_negative_count(
-    tmp_path: Path,
+@pytest.mark.parametrize(
+    "ini_overrides, match",
+    [
+        ({"tmp_path_retention_count": -1}, "tmp_path_retention_count must be >= 0"),
+        (
+            {"tmp_path_retention_count": 3, "tmp_path_retention_policy": "invalid"},
+            "tmp_path_retention_policy must be either",
+        ),
+    ],
+    ids=["negative_count", "invalid_policy"],
+)
+def test_tmp_path_factory_from_config_rejects_bad_ini(
+    tmp_path: Path, ini_overrides: dict[str, Any], match: str
 ) -> None:
-    """Verify that a negative tmp_path_retention_count raises ValueError."""
+    """Verify that invalid ini options raise ValueError."""
 
     @dataclasses.dataclass
-    class BadCountConfig:
+    class FakeIniConfig:
         basetemp: str | Path = ""
 
         def getini(self, name):
-            if name == "tmp_path_retention_count":
-                return -1
-            assert False
-
-    config = cast(Config, BadCountConfig(tmp_path))
-    with pytest.raises(ValueError, match="tmp_path_retention_count must be >= 0"):
-        TempPathFactory.from_config(config, _ispytest=True)
-
-
-def test_tmp_path_factory_from_config_rejects_invalid_policy(
-    tmp_path: Path,
-) -> None:
-    """Verify that an invalid tmp_path_retention_policy raises ValueError."""
-
-    @dataclasses.dataclass
-    class BadPolicyConfig:
-        basetemp: str | Path = ""
-
-        def getini(self, name):
+            if name in ini_overrides:
+                return ini_overrides[name]
             if name == "tmp_path_retention_count":
                 return 3
-            elif name == "tmp_path_retention_policy":
-                return "invalid_policy"
-            assert False
+            if name == "tmp_path_retention_policy":
+                return "all"
+            raise KeyError(name)
 
-    config = cast(Config, BadPolicyConfig(tmp_path))
-    with pytest.raises(ValueError, match="tmp_path_retention_policy must be either"):
+    config = cast(Config, FakeIniConfig(tmp_path))
+    with pytest.raises(ValueError, match=match):
         TempPathFactory.from_config(config, _ispytest=True)
 
 
@@ -880,12 +836,10 @@ def test_getbasetemp_uses_mkdtemp_rootdir(
     factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     basetemp = factory.getbasetemp()
     user = get_user() or "unknown"
-    rootdir = basetemp.parent
-    # The rootdir name should start with the user prefix but have a
-    # random suffix (from mkdtemp), NOT be exactly "pytest-of-<user>".
-    assert rootdir.name.startswith(f"pytest-of-{user}-")
-    assert rootdir.name != f"pytest-of-{user}"
-    assert rootdir.is_dir()
+    # basetemp IS the mkdtemp rootdir — no numbered subdir inside it.
+    assert basetemp.name.startswith(f"pytest-of-{user}-")
+    assert basetemp.name != f"pytest-of-{user}"
+    assert basetemp.is_dir()
 
 
 def test_getbasetemp_immune_to_predictable_path_dos(
@@ -906,7 +860,7 @@ def test_getbasetemp_immune_to_predictable_path_dos(
     basetemp = factory.getbasetemp()
     assert basetemp.is_dir()
     # The blocking files are simply ignored; mkdtemp picks a unique name.
-    assert basetemp.parent.name.startswith(f"pytest-of-{user}-")
+    assert basetemp.name.startswith(f"pytest-of-{user}-")
 
 
 # -- Unit tests for _cleanup_old_rootdirs --
@@ -984,27 +938,18 @@ class TestCleanupOldRootdirs:
         assert current.is_dir()
 
 
-# -- Direct unit tests for _safe_open_dir context manager --
+# -- Direct unit tests for _verify_ownership_and_tighten_permissions context manager --
 
 
-class TestSafeOpenDir:
-    """Unit tests for the _safe_open_dir context manager (CVE-2025-71176)."""
-
-    @skip_if_no_getuid
-    def test_yields_valid_fd_for_real_directory(self, tmp_path: Path) -> None:
-        """Happy path: yields a valid file descriptor for a real directory."""
-        with _safe_open_dir(tmp_path) as fd:
-            st = os.fstat(fd)
-            assert stat.S_ISDIR(st.st_mode)
+class TestVerifyOwnershipAndTightenPermissions:
+    """Unit tests for _verify_ownership_and_tighten_permissions (CVE-2025-71176)."""
 
     @skip_if_no_getuid
-    def test_fd_is_closed_after_context_exit(self, tmp_path: Path) -> None:
-        """The file descriptor must be closed when the context exits."""
-        with _safe_open_dir(tmp_path) as fd:
-            pass
-        # After exiting, fstat on the closed fd should raise.
-        with pytest.raises(OSError):
-            os.fstat(fd)
+    def test_accepts_real_directory_owned_by_current_user(self, tmp_path: Path) -> None:
+        """Happy path: no error for a real directory owned by us."""
+        d = tmp_path / "owned"
+        d.mkdir(mode=0o700)
+        _verify_ownership_and_tighten_permissions(d, os.getuid())
 
     @skip_if_no_getuid
     def test_rejects_symlink(self, tmp_path: Path) -> None:
@@ -1015,26 +960,27 @@ class TestSafeOpenDir:
         link.symlink_to(real_dir)
 
         with pytest.raises(OSError, match="could not be safely opened"):
-            with _safe_open_dir(link):
-                pass  # pragma: no cover
+            _verify_ownership_and_tighten_permissions(link, os.getuid())
 
     @skip_if_no_getuid
     def test_rejects_nonexistent_path(self, tmp_path: Path) -> None:
         """A non-existent path must be rejected with a clear error message."""
         missing = tmp_path / "does-not-exist"
         with pytest.raises(OSError, match="could not be safely opened"):
-            with _safe_open_dir(missing):
-                pass  # pragma: no cover
+            _verify_ownership_and_tighten_permissions(missing, os.getuid())
 
     @skip_if_no_getuid
-    def test_fd_closed_on_exception_inside_context(self, tmp_path: Path) -> None:
-        """The fd must be closed even if the caller raises inside the with block."""
-        fd_holder: list[int] = []
-        with pytest.raises(RuntimeError, match="boom"):
-            with _safe_open_dir(tmp_path) as fd:
-                fd_holder.append(fd)
-                raise RuntimeError("boom")
+    def test_rejects_wrong_owner(self, tmp_path: Path) -> None:
+        """A directory owned by someone else must be rejected."""
+        d = tmp_path / "dir"
+        d.mkdir(mode=0o700)
+        with pytest.raises(OSError, match="not owned by the current user"):
+            _verify_ownership_and_tighten_permissions(d, os.getuid() + 1)
 
-        # fd should be closed despite the exception.
-        with pytest.raises(OSError):
-            os.fstat(fd_holder[0])
+    @skip_if_no_getuid
+    def test_tightens_loose_permissions(self, tmp_path: Path) -> None:
+        """World-readable permissions must be tightened to 0o700."""
+        d = tmp_path / "loose"
+        d.mkdir(mode=0o755)
+        _verify_ownership_and_tighten_permissions(d, os.getuid())
+        assert (d.stat().st_mode & 0o077) == 0
