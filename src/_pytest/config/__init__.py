@@ -589,7 +589,8 @@ class PytestPluginManager(PluginManager):
         )
         self._noconftest = noconftest
         self._using_pyargs = pyargs
-        foundanchor = False
+
+        anchors = []
         for initial_path in args:
             path = str(initial_path)
             # remove node-id syntax
@@ -601,16 +602,18 @@ class PytestPluginManager(PluginManager):
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
             if safe_exists(anchor):
-                self._try_load_conftest(
-                    anchor,
-                    importmode,
-                    rootpath,
-                    consider_namespace_packages=consider_namespace_packages,
-                )
-                foundanchor = True
-        if not foundanchor:
-            self._try_load_conftest(
-                invocation_dir,
+                anchors.append(anchor)
+                # Let's also consider test* subdirs.
+                if anchor.is_dir():
+                    for x in anchor.glob("test*"):
+                        if x.is_dir():
+                            anchors.append(x)
+        if not anchors:
+            anchors = [invocation_dir]
+
+        for anchor in anchors:
+            self._loadconftestmodules(
+                anchor,
                 importmode,
                 rootpath,
                 consider_namespace_packages=consider_namespace_packages,
@@ -630,31 +633,6 @@ class PytestPluginManager(PluginManager):
         # in out-of-source trees.
         # (see #9767 for a regression where the logic was inverted).
         return path not in self._confcutdir.parents
-
-    def _try_load_conftest(
-        self,
-        anchor: pathlib.Path,
-        importmode: str | ImportMode,
-        rootpath: pathlib.Path,
-        *,
-        consider_namespace_packages: bool,
-    ) -> None:
-        self._loadconftestmodules(
-            anchor,
-            importmode,
-            rootpath,
-            consider_namespace_packages=consider_namespace_packages,
-        )
-        # let's also consider test* subdirs
-        if anchor.is_dir():
-            for x in anchor.glob("test*"):
-                if x.is_dir():
-                    self._loadconftestmodules(
-                        x,
-                        importmode,
-                        rootpath,
-                        consider_namespace_packages=consider_namespace_packages,
-                    )
 
     def _loadconftestmodules(
         self,
