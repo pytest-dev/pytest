@@ -1,0 +1,2 @@
+Added a documentation example showing how to build dynamic session-scoped
+parametrized fixtures whose ``params`` depend on command-line options.
