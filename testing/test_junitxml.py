@@ -1379,11 +1379,45 @@ def test_record_attribute(pytester: Pytester, run_and_parse: RunAndParse) -> Non
 
 
 @pytest.mark.filterwarnings("default")
+def test_record_property_xunit2(pytester: Pytester, run_and_parse: RunAndParse) -> None:
+    pytester.makeini(
+        """
+        [pytest]
+        junit_family = xunit2
+    """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def other(record_property):
+            record_property("bar", 1)
+
+        def test_record(record_property, other):
+            record_property("foo", "<1")
+    """
+    )
+
+    result, dom = run_and_parse(family=None)
+    node = dom.get_first_by_tag("testsuite")
+    tnode = node.get_first_by_tag("testcase")
+    psnode = tnode.get_first_by_tag("properties")
+    pnodes = psnode.find_by_tag("property")
+    pnodes[0].assert_attr(name="bar", value="1")
+    pnodes[1].assert_attr(name="foo", value="<1")
+
+    result.stdout.no_fnmatch_line(
+        "*record_property is incompatible with junit_family 'xunit2'*"
+    )
+
+
+@pytest.mark.filterwarnings("default")
 @pytest.mark.parametrize("fixture_name", ["record_xml_attribute", "record_property"])
 def test_record_fixtures_xunit2(
     pytester: Pytester, fixture_name: str, run_and_parse: RunAndParse
 ) -> None:
-    """Ensure record_xml_attribute and record_property drop values when outside of legacy family."""
+    """Ensure xunit2 still warns for record_xml_attribute, but record_property remains supported."""
     pytester.makeini(
         """
         [pytest]
@@ -1403,16 +1437,16 @@ def test_record_fixtures_xunit2(
     )
 
     result, _dom = run_and_parse(family=None)
-    expected_lines = []
     if fixture_name == "record_xml_attribute":
-        expected_lines.append(
-            "*test_record_fixtures_xunit2.py:6:*record_xml_attribute is an experimental feature"
+        expected_lines = [
+            "*test_record_fixtures_xunit2.py:6:*record_xml_attribute is incompatible "
+            "with junit_family 'xunit2' (use 'legacy' or 'xunit1')"
+        ]
+        result.stdout.fnmatch_lines(expected_lines)
+    else:
+        result.stdout.no_fnmatch_line(
+            "*record_property is incompatible with junit_family 'xunit2'*"
         )
-    expected_lines = [
-        f"*test_record_fixtures_xunit2.py:6:*{fixture_name} is incompatible "
-        "with junit_family 'xunit2' (use 'legacy' or 'xunit1')"
-    ]
-    result.stdout.fnmatch_lines(expected_lines)
 
 
 def test_random_report_log_xdist(

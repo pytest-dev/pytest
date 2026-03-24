@@ -288,7 +288,6 @@ def record_property(request: FixtureRequest) -> Callable[[str, object], None]:
         def test_function(record_property):
             record_property("example_key", 1)
     """
-    _warn_incompatibility_with_xunit2(request, "record_property")
 
     def append_property(name: str, value: object) -> None:
         request.node.user_properties.append((name, value))
