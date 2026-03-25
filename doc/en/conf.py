@@ -110,7 +110,7 @@ nitpick_ignore = [
     ("py:class", "_pytest.runner.TResult"),
     ("py:obj", "_pytest.fixtures.FixtureValue"),
     ("py:obj", "_pytest.stash.T"),
-    ("py:class", "_ScopeName"),
+    ("py:class", "ScopeName"),
     ("py:class", "BaseExcT_1"),
     ("py:class", "ExcT_1"),
 ]
