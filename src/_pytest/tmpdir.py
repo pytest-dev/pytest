@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-import contextlib
 import dataclasses
 import os
 from pathlib import Path
@@ -15,9 +14,7 @@ from typing import final
 from typing import Literal
 
 from .pathlib import cleanup_dead_symlinks
-from .pathlib import LOCK_TIMEOUT
 from .pathlib import make_numbered_dir
-from .pathlib import make_numbered_dir_with_cleanup
 from .pathlib import rm_rf
 from .pathlib import safe_rmtree
 from _pytest.compat import get_user_id
@@ -38,22 +35,16 @@ tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
 
 
-@contextlib.contextmanager
-def _safe_open_dir(path: Path) -> Generator[int]:
-    """Open a directory without following symlinks and yield its file descriptor.
+def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
+    """Verify directory ownership and ensure private permissions (0o700).
 
-    Uses O_NOFOLLOW and O_DIRECTORY (when available) to prevent symlink
-    attacks (CVE-2025-71176).  The fd-based operations (fstat, fchmod)
-    also eliminate TOCTOU races.
-
-    Args:
-        path: Directory to open.
-
-    Yields:
-        An open file descriptor for the directory.
+    Opens *path* with ``O_NOFOLLOW`` / ``O_DIRECTORY`` (when available) so
+    that symlinks are never followed, then uses fd-based ``fstat`` /
+    ``fchmod`` to eliminate TOCTOU races (CVE-2025-71176).
 
     Raises:
-        OSError: If the path cannot be safely opened (e.g. it is a symlink).
+        OSError: If *path* cannot be safely opened (e.g. it is a symlink)
+            or is not owned by *user_id*.
     """
     open_flags = os.O_RDONLY
     for _flag in ("O_NOFOLLOW", "O_DIRECTORY"):
@@ -67,7 +58,14 @@ def _safe_open_dir(path: Path) -> Generator[int]:
             "Remove the symlink or directory and try again."
         ) from e
     try:
-        yield dir_fd
+        st = os.fstat(dir_fd)
+        if st.st_uid != user_id:
+            raise OSError(
+                f"The temporary directory {path} is not owned by the current user. "
+                "Fix this and try again."
+            )
+        if (st.st_mode & 0o077) != 0:
+            os.fchmod(dir_fd, st.st_mode & ~0o077)
     finally:
         os.close(dir_fd)
 
@@ -97,6 +95,8 @@ def _cleanup_old_rootdirs(
             reverse=True,
         )
     except OSError:
+        # temproot may not exist, may be unreadable, or an entry's
+        # lstat may fail (e.g. concurrent removal by another session).
         return
     for old in candidates[keep:]:
         safe_rmtree(old, ignore_errors=True)
@@ -220,8 +220,6 @@ class TempPathFactory:
             from_env = os.environ.get("PYTEST_DEBUG_TEMPROOT")
             temproot = Path(from_env or tempfile.gettempdir()).resolve()
             user = get_user() or "unknown"
-            # use a sub-directory in the temproot to speed-up
-            # make_numbered_dir() call
             # Use a randomly-named rootdir created via mkdtemp to avoid
             # the entire class of predictable-name attacks (symlink races,
             # DoS via pre-created files/dirs, etc.).  See #13669.
@@ -239,27 +237,18 @@ class TempPathFactory:
             # via fd-based ops to eliminate TOCTOU races (CVE-2025-71176).
             uid = get_user_id()
             if uid is not None:
-                with _safe_open_dir(rootdir) as dir_fd:
-                    rootdir_stat = os.fstat(dir_fd)
-                    if rootdir_stat.st_uid != uid:
-                        raise OSError(
-                            f"The temporary directory {rootdir} is not owned by the current user. "
-                            "Fix this and try again."
-                        )
-                    if (rootdir_stat.st_mode & 0o077) != 0:
-                        os.fchmod(dir_fd, rootdir_stat.st_mode & ~0o077)
+                _verify_ownership_and_tighten_permissions(rootdir, uid)
+            # Each session gets its own mkdtemp rootdir, so use it
+            # directly as basetemp — no need for numbered subdirs.
+            basetemp = rootdir
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0
-            basetemp = make_numbered_dir_with_cleanup(
-                prefix="pytest-",
-                root=rootdir,
-                keep=keep,
-                lock_timeout=LOCK_TIMEOUT,
-                mode=0o700,
+            # keep-1 because the current session's rootdir (excluded from
+            # candidates) already counts toward the retention total.
+            _cleanup_old_rootdirs(
+                temproot, rootdir_prefix, max(keep - 1, 0), current=rootdir
             )
-            # Clean up old rootdirs from previous sessions.
-            _cleanup_old_rootdirs(temproot, rootdir_prefix, keep, current=rootdir)
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
         self._trace("new basetemp", basetemp)
