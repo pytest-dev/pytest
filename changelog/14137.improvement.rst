@@ -1,0 +1,1 @@
+Changed _ScopeName to ScopeName for typing checks.
