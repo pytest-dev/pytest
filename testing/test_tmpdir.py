@@ -547,7 +547,7 @@ class TestSafeRmtree:
         """safe_rmtree removes a real (non-symlink) directory."""
         target = tmp_path / "real"
         target.mkdir()
-        (target / "file.txt").write_text("data")
+        (target / "file.txt").write_text("data", encoding="utf-8")
         safe_rmtree(target)
         assert not target.exists()
 
