@@ -417,7 +417,7 @@ def test_check() -> None:
 
     with (
         fails_raises_group(
-            f"check {is_exc_repr} did not return True on the ExceptionGroup"
+            f"check {is_exc_repr} did not return True on the ExceptionGroup. If you meant to check the sub-exception instead of the group, you might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
         ),
         RaisesGroup(ValueError, check=is_exc),
     ):
@@ -429,11 +429,29 @@ def test_check() -> None:
     # helpful suggestion if the user thinks the check is for the sub-exception
     with (
         fails_raises_group(
-            f"check {is_value_error} did not return True on the ExceptionGroup, but did return True for the expected ValueError. You might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
+            f"check {is_value_error} did not return True on the ExceptionGroup. If you meant to check the sub-exception instead of the group, you might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
         ),
         RaisesGroup(ValueError, check=is_value_error),
     ):
         raise ExceptionGroup("", (ValueError(),))
+
+
+def test_check_is_only_called_on_the_group() -> None:
+    calls: list[type[BaseException]] = []
+
+    def check(exc_group: ExceptionGroup[ValueError]) -> bool:
+        calls.append(type(exc_group))
+        return False
+
+    with (
+        fails_raises_group(
+            f"check {repr_callable(check)} did not return True on the ExceptionGroup. If you meant to check the sub-exception instead of the group, you might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
+        ),
+        RaisesGroup(ValueError, check=check),
+    ):
+        raise ExceptionGroup("", (ValueError(),))
+
+    assert calls == [ExceptionGroup]
 
 
 def test_unwrapped_match_check() -> None:
