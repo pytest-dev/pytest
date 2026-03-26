@@ -139,7 +139,7 @@ def warns(
         ...         warnings.warn("this is not here", UserWarning)
         Traceback (most recent call last):
           ...
-        Failed: Regex pattern did not match.
+        Failed: Regex pattern did not match any of the 1 warnings emitted.
          Regex: ...
          Emitted warnings: ...UserWarning...
 
@@ -331,7 +331,7 @@ class WarningsChecker(WarningsRecorder):
                 ):
                     escape_hint = "\n Did you mean to `re.escape()` the regex?"
                 fail(
-                    "Regex pattern did not match.\n"
+                    f"Regex pattern did not match any of the {len(self)} warnings emitted.\n"
                     f" Regex: {self.match_expr!r}\n"
                     f" Emitted warnings: {found_str()}.{escape_hint}"
                 )
