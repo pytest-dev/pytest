@@ -1388,7 +1388,7 @@ class TestPOSIXLocalPath:
 
     def test_stat_non_raising(self, tmpdir):
         path1 = tmpdir.join("file")
-        pytest.raises(error.ENOENT, lambda: path1.stat())
+        pytest.raises(error.ENOENT, path1.stat)
         res = path1.stat(raising=False)
         assert res is None
 
