@@ -243,7 +243,9 @@ class TestDeprecatedCall:
             warnings.warn("value must be 42", DeprecationWarning)
 
         with pytest.deprecated_call():
-            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.raises(
+                pytest.fail.Exception, match="Regex pattern did not match"
+            ):
                 with pytest.deprecated_call(match=r"must be \d+$"):
                     warnings.warn("this is not here", DeprecationWarning)
 
@@ -406,7 +408,9 @@ class TestWarns:
 
     def test_one_from_multiple_warns(self) -> None:
         with pytest.warns():
-            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.raises(
+                pytest.fail.Exception, match="Regex pattern did not match"
+            ):
                 with pytest.warns(UserWarning, match=r"aaa"):
                     with pytest.warns(UserWarning, match=r"aaa"):
                         warnings.warn("cccccccccc", UserWarning)
@@ -415,10 +419,37 @@ class TestWarns:
 
     def test_none_of_multiple_warns(self) -> None:
         with pytest.warns():
-            with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+            with pytest.raises(
+                pytest.fail.Exception, match="Regex pattern did not match"
+            ):
                 with pytest.warns(UserWarning, match=r"aaa"):
                     warnings.warn("bbbbbbbbbb", UserWarning)
                     warnings.warn("cccccccccc", UserWarning)
+
+    def test_warns_match_failure_message_detail(self) -> None:
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception) as excinfo:
+                with pytest.warns(UserWarning, match=r"must be \d+$"):
+                    warnings.warn("this is not here", UserWarning)
+        msg = str(excinfo.value)
+        assert "Regex pattern did not match" in msg
+        assert "this is not here" in msg
+        assert "DID NOT WARN" not in msg
+
+    def test_warns_match_re_escape_hint(self) -> None:
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception) as excinfo:
+                with pytest.warns(UserWarning, match="foo (bar)"):
+                    warnings.warn("foo (bar)", UserWarning)
+        assert "re.escape()" in str(excinfo.value)
+
+    def test_warns_match_re_escape_hint_no_false_positive(self) -> None:
+        with pytest.warns():
+            with pytest.raises(pytest.fail.Exception) as excinfo:
+                with pytest.warns(DeprecationWarning, match="foo (bar)"):
+                    warnings.warn("some deprecation msg", DeprecationWarning)
+                    warnings.warn("foo (bar)", UserWarning)
+        assert "re.escape()" not in str(excinfo.value)
 
     @pytest.mark.filterwarnings("ignore")
     def test_can_capture_previously_warned(self) -> None:
@@ -589,7 +620,7 @@ def test_multiple_arg_custom_warning() -> None:
             pass
 
     with pytest.warns(CustomWarning):
-        with pytest.raises(pytest.fail.Exception, match="DID NOT WARN"):
+        with pytest.raises(pytest.fail.Exception, match="Regex pattern did not match"):
             with pytest.warns(CustomWarning, match="not gonna match"):
                 a, b = 1, 2
                 warnings.warn(CustomWarning(a, b))
