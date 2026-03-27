@@ -70,6 +70,25 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
     return path.joinpath(".lock")
 
 
+def _chmod_rwx(p: str) -> bool:
+    """Grant owner read, write, and execute permissions.
+
+    Returns True if permissions were actually changed, False if they were
+    already sufficient or couldn't be changed.
+    """
+    import stat
+
+    try:
+        old_mode = os.stat(p).st_mode
+        new_mode = old_mode | stat.S_IRWXU
+        if old_mode == new_mode:
+            return False
+        os.chmod(p, new_mode)
+    except OSError:
+        return False
+    return True
+
+
 def on_rm_rf_error(
     func: Callable[..., Any] | None,
     path: str,
@@ -98,32 +117,44 @@ def on_rm_rf_error(
         )
         return False
 
+    if func in (os.open, os.scandir):
+        # Directory traversal failed (e.g. missing S_IXUSR). Fix permissions
+        # on the path and its parent, then remove it ourselves since rmtree
+        # skips entries after the error handler returns.
+        # See: https://github.com/pytest-dev/pytest/issues/7940
+        p = Path(path)
+        if p.parent != p:
+            _chmod_rwx(str(p.parent))
+        if not _chmod_rwx(path):
+            return False
+        if os.path.isdir(path):
+            rm_rf(Path(path))
+        else:
+            try:
+                os.unlink(path)
+            except OSError:
+                return False
+        return True
+
     if func not in (os.rmdir, os.remove, os.unlink):
-        if func not in (os.open,):
-            warnings.warn(
-                PytestWarning(
-                    f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
-                )
+        warnings.warn(
+            PytestWarning(
+                f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
             )
+        )
         return False
 
     # Chmod + retry.
-    import stat
-
-    def chmod_rw(p: str) -> None:
-        mode = os.stat(p).st_mode
-        os.chmod(p, mode | stat.S_IRUSR | stat.S_IWUSR)
-
     # For files, we need to recursively go upwards in the directories to
-    # ensure they all are also writable.
+    # ensure they all are also accessible and writable.
     p = Path(path)
     if p.is_file():
         for parent in p.parents:
-            chmod_rw(str(parent))
+            _chmod_rwx(str(parent))
             # Stop when we reach the original path passed to rm_rf.
             if parent == start_path:
                 break
-    chmod_rw(str(path))
+    _chmod_rwx(str(path))
 
     func(path)
     return True

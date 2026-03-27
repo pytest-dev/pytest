@@ -500,6 +500,25 @@ class TestRmRf:
 
         assert not adir.is_dir()
 
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_rm_rf_with_no_exec_permission_directories(self, tmp_path):
+        """Ensure rm_rf can remove directories without S_IXUSR (#7940).
+
+        This is the exact scenario from the original issue: nested directories
+        and files with all permissions stripped.
+        """
+        p = tmp_path / "foo" / "bar" / "baz"
+        p.parent.mkdir(parents=True)
+        p.touch(mode=0)
+        for parent in p.parents:
+            if parent == tmp_path:
+                break
+            parent.chmod(mode=0)
+
+        rm_rf(tmp_path / "foo")
+
+        assert not (tmp_path / "foo").exists()
+
     def test_on_rm_rf_error(self, tmp_path: Path) -> None:
         adir = tmp_path / "dir"
         adir.mkdir()
@@ -527,16 +546,41 @@ class TestRmRf:
             on_rm_rf_error(None, str(fn), exc_info3, start_path=tmp_path)
             assert fn.is_file()
 
-        # ignored function
-        with warnings.catch_warnings(record=True) as w:
-            exc_info4 = PermissionError()
-            on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
-            assert fn.is_file()
-            assert not [x.message for x in w]
-
+        # os.unlink PermissionError is handled (chmod + retry)
         exc_info5 = PermissionError()
         on_rm_rf_error(os.unlink, str(fn), exc_info5, start_path=tmp_path)
         assert not fn.is_file()
+
+    def test_on_rm_rf_error_os_open_handles_file(self, tmp_path: Path) -> None:
+        """os.open PermissionError on a file is handled by fixing
+        permissions and removing it (#7940)."""
+        adir = tmp_path / "dir"
+        adir.mkdir()
+        fn = adir / "foo.txt"
+        fn.touch()
+        self.chmod_r(fn)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = PermissionError()
+            on_rm_rf_error(os.open, str(fn), exc_info, start_path=tmp_path)
+            assert not fn.exists()
+            assert not [x.message for x in w]
+
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_on_rm_rf_error_os_open_handles_directory(self, tmp_path: Path) -> None:
+        """os.open PermissionError on a directory is handled by fixing
+        permissions and recursively removing it (#7940)."""
+        adir = tmp_path / "dir"
+        adir.mkdir()
+        (adir / "child").mkdir()
+        (adir / "child" / "file.txt").touch()
+        os.chmod(str(adir), 0o600)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = PermissionError()
+            on_rm_rf_error(os.open, str(adir), exc_info, start_path=tmp_path)
+            assert not adir.exists()
+            assert not [x.message for x in w]
 
 
 def attempt_symlink_to(path, to_path):
