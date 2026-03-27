@@ -29,7 +29,7 @@ you will see the return value of the function call:
 
     $ pytest test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -65,6 +65,33 @@ it is printed alongside the assertion introspection in the traceback.
 See :ref:`assert-details` for more information on assertion introspection.
 
 .. _`assertraises`:
+
+Assertions about approximate equality
+-------------------------------------
+
+When comparing floating point values (or arrays of floats), small rounding
+errors are common. Instead of using ``assert abs(a - b) < tol`` or
+``numpy.isclose``, you can use :func:`pytest.approx`:
+
+.. code-block:: python
+
+    import pytest
+    import numpy as np
+
+
+    def test_floats():
+        assert (0.1 + 0.2) == pytest.approx(0.3)
+
+
+    def test_arrays():
+        a = np.array([1.0, 2.0, 3.0])
+        b = np.array([0.9999, 2.0001, 3.0])
+        assert a == pytest.approx(b)
+
+``pytest.approx`` works with scalars, lists, dictionaries, and NumPy arrays.
+It also supports comparisons involving NaNs.
+
+See :func:`pytest.approx` for details.
 
 Assertions about expected exceptions
 ------------------------------------------
@@ -191,7 +218,7 @@ To specify more details about the contained exception you can use :class:`pytest
         with pytest.RaisesGroup(pytest.RaisesExc(ValueError, match="foo")):
             raise ExceptionGroup("", (ValueError("foo")))
 
-They both supply a method :meth:`pytest.RaisesGroup.matches` :meth:`pytest.RaisesExc.matches` if you want to do matching outside of using it as a contextmanager. This can be helpful when checking ``.__context__`` or ``.__cause__``.
+They both supply a method :meth:`pytest.RaisesGroup.matches` :meth:`pytest.RaisesExc.matches` if you want to do matching outside of using it as a :external+python:std:ref:`context manager <context-managers>`. This can be helpful when checking ``.__context__`` or ``.__cause__``.
 
 .. code-block:: python
 
@@ -377,7 +404,7 @@ if you run this module:
 
     $ pytest test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -408,6 +435,10 @@ Special comparisons are done for a number of cases:
 * comparing long strings: a context diff is shown
 * comparing long sequences: first failing indices
 * comparing dicts: different entries
+
+In string context diffs, lines prefixed with ``-`` come from the left-hand side
+of ``assert left == right``, while lines prefixed with ``+`` come from the
+right-hand side.
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
@@ -476,6 +507,50 @@ the conftest file:
    FAILED test_foocompare.py::test_compare - assert Comparing Foo instances:
    1 failed in 0.12s
 
+.. _`return-not-none`:
+
+Returning non-None value in test functions
+------------------------------------------
+
+A :class:`pytest.PytestReturnNotNoneWarning` is emitted when a test function returns a value other than ``None``.
+
+This helps prevent a common mistake made by beginners who assume that returning a ``bool`` (e.g., ``True`` or ``False``) will determine whether a test passes or fails.
+
+Example:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        ["a", "b", "result"],
+        [
+            [1, 2, 5],
+            [2, 3, 8],
+            [5, 3, 18],
+        ],
+    )
+    def test_foo(a, b, result):
+        return foo(a, b) == result  # Incorrect usage, do not do this.
+
+Since pytest ignores return values, it might be surprising that the test will never fail based on the returned value.
+
+The correct fix is to replace the ``return`` statement with an ``assert``:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize(
+        ["a", "b", "result"],
+        [
+            [1, 2, 5],
+            [2, 3, 8],
+            [5, 3, 18],
+        ],
+    )
+    def test_foo(a, b, result):
+        assert foo(a, b) == result
+
+
+
+
 .. _assert-details:
 .. _`assert introspection`:
 
@@ -512,7 +587,7 @@ Note that you still get the benefits of assertion introspection, the only change
 the ``.pyc`` files won't be cached on disk.
 
 Additionally, rewriting will silently skip caching if it cannot write new ``.pyc`` files,
-i.e. in a read-only filesystem or a zipfile.
+e.g. in a read-only filesystem or a zipfile.
 
 
 Disabling assert rewriting
@@ -528,4 +603,4 @@ If this is the case you have two options:
 * Disable rewriting for a specific module by adding the string
   ``PYTEST_DONT_REWRITE`` to its docstring.
 
-* Disable rewriting for all modules by using ``--assert=plain``.
+* Disable rewriting for all modules by using :option:`--assert=plain`.

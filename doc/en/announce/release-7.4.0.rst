@@ -27,7 +27,7 @@ Thanks to all of the contributors to this release:
 * Bryan Ricker
 * Chris Mahoney
 * Facundo Batista
-* Florian Bruhin
+* Freya Bruhin
 * Jarrett Keifer
 * Kenny Y
 * Miro Hrončok

@@ -20,6 +20,11 @@ pytest enables test parametrization at several levels:
 * `pytest_generate_tests`_ allows one to define custom parametrization
   schemes or extensions.
 
+
+.. note::
+
+    See :ref:`subtests` for an alternative to parametrization.
+
 .. _parametrizemark:
 .. _`@pytest.mark.parametrize`:
 
@@ -52,7 +57,7 @@ them in turn:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 3 items
 
@@ -88,12 +93,21 @@ them in turn:
     for the parametrization because it has several downsides.
     If however you would like to use unicode strings in parametrization
     and see them in the terminal as is (non-escaped), use this option
-    in your ``pytest.ini``:
+    in your configuration file:
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+        .. code-block:: toml
+
+            [pytest]
+            disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 
     Keep in mind however that this might cause unwanted side effects and
     even bugs depending on the OS used and plugins currently installed,
@@ -163,7 +177,7 @@ Let's run this:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 3 items
 
@@ -193,6 +207,7 @@ To get all combinations of multiple parametrized arguments you can stack
 
 This will run the test with the arguments set to ``x=0/y=2``, ``x=1/y=2``,
 ``x=0/y=3``, and ``x=1/y=3`` exhausting parameters in the order of the decorators.
+
 
 .. _`pytest_generate_tests`:
 
@@ -240,6 +255,13 @@ command line option and the parametrization of our test function:
         if "stringinput" in metafunc.fixturenames:
             metafunc.parametrize("stringinput", metafunc.config.getoption("stringinput"))
 
+.. note::
+
+    The :hook:`pytest_generate_tests` hook can also be implemented directly in a test
+    module or inside a test class; unlike other hooks, pytest will discover it there
+    as well. Other hooks must live in a :ref:`conftest.py <localplugin>` or a plugin.
+    See :ref:`writinghooks`.
+
 If we now pass two stringinput values, our test will run twice:
 
 .. code-block:: pytest
@@ -281,7 +303,7 @@ list:
     $ pytest -q -rs test_strings.py
     s                                                                    [100%]
     ========================= short test summary info ==========================
-    SKIPPED [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at /home/sweet/project/test_strings.py:2
+    SKIPPED [1] test_strings.py: got empty parameter set for (stringinput)
     1 skipped in 0.12s
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across

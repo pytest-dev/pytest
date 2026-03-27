@@ -35,13 +35,12 @@ Mail
 ----
 
 - `Testing In Python`_: a mailing list for Python testing tools and discussion.
-- `pytest-dev at python.org`_ a mailing list for pytest specific announcements and discussions.
 - Mail to `core@pytest.org <mailto:core@pytest.org>`_ for topics that cannot be
   discussed in public. Mails sent there will be distributed among the members
   in the pytest core team, who can also be contacted individually:
 
   * Bruno Oliveira (:user:`nicoddemus`, `bruno@pytest.org <mailto:bruno@pytest.org>`_)
-  * Florian Bruhin (:user:`The-Compiler`, `florian@pytest.org <mailto:florian@pytest.org>`_)
+  * Freya Bruhin (:user:`The-Compiler`, `freya@pytest.org <mailto:freya@pytest.org>`_)
   * Pierre Sassoulas (:user:`Pierre-Sassoulas`, `pierre@pytest.org <mailto:pierre@pytest.org>`_)
   * Ran Benita (:user:`bluetech`, `ran@pytest.org <mailto:ran@pytest.org>`_)
   * Ronny Pfannschmidt (:user:`RonnyPfannschmidt`, `ronny@pytest.org <mailto:ronny@pytest.org>`_)
@@ -52,10 +51,9 @@ Other
 
 - The :doc:`contribution guide <contributing>` for help on submitting pull
   requests to GitHub.
-- Florian Bruhin (:user:`The-Compiler`) offers pytest professional teaching and
+- Freya Bruhin (:user:`The-Compiler`) offers pytest professional teaching and
   consulting via `Bruhin Software <https://bruhin.software>`_.
 
 .. _`pytest issue tracker`: https://github.com/pytest-dev/pytest/issues
 .. _`pytest discussions`: https://github.com/pytest-dev/pytest/discussions
 .. _`Testing in Python`: http://lists.idyll.org/listinfo/testing-in-python
-.. _`pytest-dev at python.org`: http://mail.python.org/mailman/listinfo/pytest-dev

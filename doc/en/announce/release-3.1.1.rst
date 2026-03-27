@@ -12,7 +12,7 @@ The full changelog is available at http://doc.pytest.org/en/stable/changelog.htm
 Thanks to all who contributed to this release, among them:
 
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Floris Bruynooghe
 * Jason R. Coombs
 * Ronny Pfannschmidt

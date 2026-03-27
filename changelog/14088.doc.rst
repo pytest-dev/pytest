@@ -1,0 +1,1 @@
+Clarified that the default :hook:`pytest_collection` hook sets ``session.items`` before it calls :hook:`pytest_collection_finish`, not after.

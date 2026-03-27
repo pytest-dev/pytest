@@ -31,6 +31,7 @@ import warnings
 
 import pluggy
 
+from _pytest import compat
 from _pytest import nodes
 from _pytest import timing
 from _pytest._code import ExceptionInfo
@@ -38,7 +39,7 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 import _pytest._version
-from _pytest.assertion.util import running_on_ci
+from _pytest.compat import running_on_ci
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -68,6 +69,9 @@ KNOWN_TYPES = (
     "xpassed",
     "warnings",
     "error",
+    "subtests passed",
+    "subtests failed",
+    "subtests skipped",
 )
 
 _REPORTCHARS_DEFAULT = "fE"
@@ -185,6 +189,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group._addoption(  # private to use reserved lower-case short option
         "-r",
+        "--report-chars",
         action="store",
         dest="reportchars",
         default=_REPORTCHARS_DEFAULT,
@@ -294,6 +299,11 @@ def pytest_configure(config: Config) -> None:
 
         config.trace.root.setprocessor("pytest:config", mywriter)
 
+    # See terminalprogress.py.
+    # On Windows it's safe to load by default.
+    if sys.platform == "win32":
+        config.pluginmanager.import_plugin("terminalprogress")
+
 
 def getreportopt(config: Config) -> str:
     reportchars: str = config.option.reportchars
@@ -387,11 +397,13 @@ class TerminalReporter:
         self.reportchars = getreportopt(config)
         self.foldskipped = config.option.fold_skipped
         self.hasmarkup = self._tw.hasmarkup
-        self.isatty = file.isatty()
+        # isatty should be a method but was wrongly implemented as a boolean.
+        # We use CallableBool here to support both.
+        self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[str] = set()
         self._timing_nodeids_reported: set[str] = set()
         self._show_progress_info = self._determine_show_progress_info()
-        self._collect_report_last_write: float | None = None
+        self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
         self._keyboardinterrupt_memo: ExceptionRepr | None = None
 
@@ -451,12 +463,20 @@ class TerminalReporter:
     def showlongtestinfo(self) -> bool:
         return self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) > 0
 
+    @property
+    def reported_progress(self) -> int:
+        """The amount of items reported in the progress so far.
+
+        :meta private:
+        """
+        return len(self._progress_nodeids_reported)
+
     def hasopt(self, char: str) -> bool:
         char = {"xfailed": "x", "skipped": "s"}.get(char, char)
         return char in self.reportchars
 
     def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
-        fspath = self.config.rootpath / nodeid.split("::")[0]
+        fspath = self.config.rootpath / nodeid.split("::", maxsplit=1)[0]
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
@@ -504,6 +524,9 @@ class TerminalReporter:
 
     def write(self, content: str, *, flush: bool = False, **markup: bool) -> None:
         self._tw.write(content, flush=flush, **markup)
+
+    def write_raw(self, content: str, *, flush: bool = False) -> None:
+        self._tw.write_raw(content, flush=flush)
 
     def flush(self) -> None:
         self._tw.flush()
@@ -678,7 +701,7 @@ class TerminalReporter:
     @property
     def _is_last_item(self) -> bool:
         assert self._session is not None
-        return len(self._progress_nodeids_reported) == self._session.testscollected
+        return self.reported_progress == self._session.testscollected
 
     @hookimpl(wrapper=True)
     def pytest_runtestloop(self) -> Generator[None, object, object]:
@@ -688,7 +711,7 @@ class TerminalReporter:
         if (
             self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0
             and self._show_progress_info
-            and self._progress_nodeids_reported
+            and self.reported_progress
         ):
             self._write_progress_information_filling_space()
 
@@ -699,7 +722,7 @@ class TerminalReporter:
         collected = self._session.testscollected
         if self._show_progress_info == "count":
             if collected:
-                progress = len(self._progress_nodeids_reported)
+                progress = self.reported_progress
                 counter_format = f"{{:{len(str(collected))}d}}"
                 format_string = f" [{counter_format}/{{}}]"
                 return format_string.format(progress, collected)
@@ -731,10 +754,12 @@ class TerminalReporter:
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
                 self._timing_nodeids_reported.update(r.nodeid for r in not_reported)
-                return format_node_duration(sum(r.duration for r in not_reported))
+                return format_node_duration(
+                    sum(r.duration for r in not_reported if isinstance(r, TestReport))
+                )
             return ""
         if collected:
-            return f" [{len(self._progress_nodeids_reported) * 100 // collected:3d}%]"
+            return f" [{self.reported_progress * 100 // collected:3d}%]"
         return " [100%]"
 
     def _write_progress_information_if_past_edge(self) -> None:
@@ -766,10 +791,9 @@ class TerminalReporter:
         return self._tw.width_of_current_line
 
     def pytest_collection(self) -> None:
-        if self.isatty:
+        if self.isatty():
             if self.config.option.verbose >= 0:
                 self.write("collecting ... ", flush=True, bold=True)
-                self._collect_report_last_write = timing.time()
         elif self.config.option.verbose >= 1:
             self.write("collecting ... ", flush=True, bold=True)
 
@@ -780,7 +804,7 @@ class TerminalReporter:
             self._add_stats("skipped", [report])
         items = [x for x in report.result if isinstance(x, Item)]
         self._numcollected += len(items)
-        if self.isatty:
+        if self.isatty():
             self.report_collect()
 
     def report_collect(self, final: bool = False) -> None:
@@ -788,14 +812,13 @@ class TerminalReporter:
             return
 
         if not final:
-            # Only write "collecting" report every 0.5s.
-            t = timing.time()
+            # Only write the "collecting" report every `REPORT_COLLECTING_RESOLUTION`.
             if (
-                self._collect_report_last_write is not None
-                and self._collect_report_last_write > t - REPORT_COLLECTING_RESOLUTION
+                self._collect_report_last_write.elapsed().seconds
+                < REPORT_COLLECTING_RESOLUTION
             ):
                 return
-            self._collect_report_last_write = t
+            self._collect_report_last_write = timing.Instant()
 
         errors = len(self.stats.get("error", []))
         skipped = len(self.stats.get("skipped", []))
@@ -813,7 +836,7 @@ class TerminalReporter:
             line += f" / {skipped} skipped"
         if self._numcollected > selected:
             line += f" / {selected} selected"
-        if self.isatty:
+        if self.isatty():
             self.rewrite(line, bold=True, erase=True)
             if final:
                 self.write("\n")
@@ -823,7 +846,7 @@ class TerminalReporter:
     @hookimpl(trylast=True)
     def pytest_sessionstart(self, session: Session) -> None:
         self._session = session
-        self._sessionstarttime = timing.time()
+        self._session_start = timing.Instant()
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
@@ -861,7 +884,12 @@ class TerminalReporter:
         result = [f"rootdir: {config.rootpath}"]
 
         if config.inipath:
-            result.append("configfile: " + bestrelpath(config.rootpath, config.inipath))
+            warning = ""
+            if config._ignored_config_files:
+                warning = f" (WARNING: ignoring pytest config in {', '.join(config._ignored_config_files)}!)"
+            result.append(
+                "configfile: " + bestrelpath(config.rootpath, config.inipath) + warning
+            )
 
         if config.args_source == Config.ArgsSource.TESTPATHS:
             testpaths: list[str] = config.getini("testpaths")
@@ -1006,8 +1034,8 @@ class TerminalReporter:
         # fspath comes from testid which has a "/"-normalized path.
         if fspath:
             res = mkrel(nodeid)
-            if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
-                "\\", nodes.SEP
+            if self.verbosity >= 2 and (
+                nodeid.split("::", maxsplit=1)[0] != nodes.norm_sep(fspath)
             ):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
@@ -1162,6 +1190,7 @@ class TerminalReporter:
                 if style == "line":
                     for rep in reports:
                         line = self._getcrashline(rep)
+                        self._outrep_summary(rep)
                         self.write_line(line)
                 else:
                     for rep in reports:
@@ -1202,7 +1231,7 @@ class TerminalReporter:
         if self.verbosity < -1:
             return
 
-        session_duration = timing.time() - self._sessionstarttime
+        session_duration = self._session_start.elapsed()
         (parts, main_color) = self.build_summary_stats_line()
         line_parts = []
 
@@ -1217,7 +1246,7 @@ class TerminalReporter:
         msg = ", ".join(line_parts)
 
         main_markup = {main_color: True}
-        duration = f" in {format_session_duration(session_duration)}"
+        duration = f" in {format_session_duration(session_duration.seconds)}"
         duration_with_markup = self._tw.markup(duration, **main_markup)
         if display_sep:
             fullwidth += len(duration_with_markup) - len(duration)
@@ -1501,9 +1530,13 @@ def _get_line_with_reprcrash_message(
     line = f"{word} {node}"
     line_width = wcswidth(line)
 
+    msg: str | None
     try:
-        # Type ignored intentionally -- possible AttributeError expected.
-        msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr]
+        if isinstance(rep.longrepr, str):
+            msg = rep.longrepr
+        else:
+            # Type ignored intentionally -- possible AttributeError expected.
+            msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr]
     except AttributeError:
         pass
     else:
@@ -1556,6 +1589,8 @@ _color_for_type = {
     "error": "red",
     "warnings": "yellow",
     "passed": "green",
+    "subtests passed": "green",
+    "subtests failed": "red",
 }
 _color_for_type_default = "yellow"
 
@@ -1638,3 +1673,92 @@ def _get_raw_skip_reason(report: TestReport) -> str:
         elif reason == "Skipped":
             reason = ""
         return reason
+
+
+class TerminalProgressPlugin:
+    """Terminal progress reporting plugin using OSC 9;4 ANSI sequences.
+
+    Emits OSC 9;4 sequences to indicate test progress to terminal
+    tabs/windows/etc.
+
+    Not all terminal emulators support this feature.
+
+    Ref: https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+    """
+
+    def __init__(self, tr: TerminalReporter) -> None:
+        self._tr = tr
+        self._session: Session | None = None
+        self._has_failures = False
+
+    def _emit_progress(
+        self,
+        state: Literal["remove", "normal", "error", "indeterminate", "paused"],
+        progress: int | None = None,
+    ) -> None:
+        """Emit OSC 9;4 sequence for indicating progress to the terminal.
+
+        :param state:
+            Progress state to set.
+        :param progress:
+            Progress value 0-100. Required for "normal", optional for "error"
+            and "paused", otherwise ignored.
+        """
+        assert progress is None or 0 <= progress <= 100
+
+        # OSC 9;4 sequence: ESC ] 9 ; 4 ; state ; progress ST
+        # ST can be ESC \ or BEL. ESC \ seems better supported.
+        match state:
+            case "remove":
+                sequence = "\x1b]9;4;0;\x1b\\"
+            case "normal":
+                assert progress is not None
+                sequence = f"\x1b]9;4;1;{progress}\x1b\\"
+            case "error":
+                if progress is not None:
+                    sequence = f"\x1b]9;4;2;{progress}\x1b\\"
+                else:
+                    sequence = "\x1b]9;4;2;\x1b\\"
+            case "indeterminate":
+                sequence = "\x1b]9;4;3;\x1b\\"
+            case "paused":
+                if progress is not None:
+                    sequence = f"\x1b]9;4;4;{progress}\x1b\\"
+                else:
+                    sequence = "\x1b]9;4;4;\x1b\\"
+
+        self._tr.write_raw(sequence, flush=True)
+
+    @hookimpl
+    def pytest_sessionstart(self, session: Session) -> None:
+        self._session = session
+        # Show indeterminate progress during collection.
+        self._emit_progress("indeterminate")
+
+    @hookimpl
+    def pytest_collection_finish(self) -> None:
+        assert self._session is not None
+        if self._session.testscollected > 0:
+            # Switch from indeterminate to 0% progress.
+            self._emit_progress("normal", 0)
+
+    @hookimpl
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
+        if report.failed:
+            self._has_failures = True
+
+        # Let's consider the "call" phase for progress.
+        if report.when != "call":
+            return
+
+        # Calculate and emit progress.
+        assert self._session is not None
+        collected = self._session.testscollected
+        if collected > 0:
+            reported = self._tr.reported_progress
+            progress = min(reported * 100 // collected, 100)
+            self._emit_progress("error" if self._has_failures else "normal", progress)
+
+    @hookimpl
+    def pytest_sessionfinish(self) -> None:
+        self._emit_progress("remove")

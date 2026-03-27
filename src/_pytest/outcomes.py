@@ -3,15 +3,11 @@ functions creating them."""
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import importlib
 import sys
 from typing import Any
-from typing import cast
+from typing import ClassVar
 from typing import NoReturn
-from typing import Protocol
-from typing import TypeVar
-
-from .warning_types import PytestDeprecationWarning
 
 
 class OutcomeException(BaseException):
@@ -77,35 +73,11 @@ class Exit(Exception):
         super().__init__(msg)
 
 
-# We need a callable protocol to add attributes, for discussion see
-# https://github.com/python/mypy/issues/2087.
-
-_F = TypeVar("_F", bound=Callable[..., object])
-_ET = TypeVar("_ET", bound=type[BaseException])
+class XFailed(Failed):
+    """Raised from an explicit call to pytest.xfail()."""
 
 
-class _WithException(Protocol[_F, _ET]):
-    Exception: _ET
-    __call__: _F
-
-
-def _with_exception(exception_type: _ET) -> Callable[[_F], _WithException[_F, _ET]]:
-    def decorate(func: _F) -> _WithException[_F, _ET]:
-        func_with_exception = cast(_WithException[_F, _ET], func)
-        func_with_exception.Exception = exception_type
-        return func_with_exception
-
-    return decorate
-
-
-# Exposed helper methods.
-
-
-@_with_exception(Exit)
-def exit(
-    reason: str = "",
-    returncode: int | None = None,
-) -> NoReturn:
+class _Exit:
     """Exit testing process.
 
     :param reason:
@@ -113,21 +85,24 @@ def exit(
         only because `msg` is deprecated.
 
     :param returncode:
-        Return code to be used when exiting pytest. None means the same as ``0`` (no error), same as :func:`sys.exit`.
+        Return code to be used when exiting pytest. None means the same as ``0`` (no error),
+        same as :func:`sys.exit`.
 
     :raises pytest.exit.Exception:
         The exception that is raised.
     """
-    __tracebackhide__ = True
-    raise Exit(reason, returncode)
+
+    Exception: ClassVar[type[Exit]] = Exit
+
+    def __call__(self, reason: str = "", returncode: int | None = None) -> NoReturn:
+        __tracebackhide__ = True
+        raise Exit(msg=reason, returncode=returncode)
 
 
-@_with_exception(Skipped)
-def skip(
-    reason: str = "",
-    *,
-    allow_module_level: bool = False,
-) -> NoReturn:
+exit: _Exit = _Exit()
+
+
+class _Skip:
     """Skip an executing test with the given message.
 
     This function should be called only during testing (setup, call or teardown) or
@@ -155,12 +130,18 @@ def skip(
         Similarly, use the ``# doctest: +SKIP`` directive (see :py:data:`doctest.SKIP`)
         to skip a doctest statically.
     """
-    __tracebackhide__ = True
-    raise Skipped(msg=reason, allow_module_level=allow_module_level)
+
+    Exception: ClassVar[type[Skipped]] = Skipped
+
+    def __call__(self, reason: str = "", allow_module_level: bool = False) -> NoReturn:
+        __tracebackhide__ = True
+        raise Skipped(msg=reason, allow_module_level=allow_module_level)
 
 
-@_with_exception(Failed)
-def fail(reason: str = "", pytrace: bool = True) -> NoReturn:
+skip: _Skip = _Skip()
+
+
+class _Fail:
     """Explicitly fail an executing test with the given message.
 
     :param reason:
@@ -173,16 +154,18 @@ def fail(reason: str = "", pytrace: bool = True) -> NoReturn:
     :raises pytest.fail.Exception:
         The exception that is raised.
     """
-    __tracebackhide__ = True
-    raise Failed(msg=reason, pytrace=pytrace)
+
+    Exception: ClassVar[type[Failed]] = Failed
+
+    def __call__(self, reason: str = "", pytrace: bool = True) -> NoReturn:
+        __tracebackhide__ = True
+        raise Failed(msg=reason, pytrace=pytrace)
 
 
-class XFailed(Failed):
-    """Raised from an explicit call to pytest.xfail()."""
+fail: _Fail = _Fail()
 
 
-@_with_exception(XFailed)
-def xfail(reason: str = "") -> NoReturn:
+class _XFail:
     """Imperatively xfail an executing test or setup function with the given reason.
 
     This function should be called only during testing (setup, call or teardown).
@@ -201,8 +184,15 @@ def xfail(reason: str = "") -> NoReturn:
     :raises pytest.xfail.Exception:
         The exception that is raised.
     """
-    __tracebackhide__ = True
-    raise XFailed(reason)
+
+    Exception: ClassVar[type[XFailed]] = XFailed
+
+    def __call__(self, reason: str = "") -> NoReturn:
+        __tracebackhide__ = True
+        raise XFailed(msg=reason)
+
+
+xfail: _XFail = _XFail()
 
 
 def importorskip(
@@ -227,11 +217,10 @@ def importorskip(
         The exception that should be captured in order to skip modules.
         Must be :py:class:`ImportError` or a subclass.
 
-        If the module can be imported but raises :class:`ImportError`, pytest will
-        issue a warning to the user, as often users expect the module not to be
-        found (which would raise :class:`ModuleNotFoundError` instead).
-
-        This warning can be suppressed by passing ``exc_type=ImportError`` explicitly.
+        Defaults to :class:`ModuleNotFoundError` when not given, which means
+        the module must be missing for the test to be skipped.
+        Pass ``exc_type=ImportError`` to also skip modules that raise
+        :class:`ImportError` during import.
 
         See :ref:`import-or-skip-import-error` for details.
 
@@ -249,26 +238,21 @@ def importorskip(
     .. versionadded:: 8.2
 
         The ``exc_type`` parameter.
+
+    .. versionchanged:: 9.1
+
+        The default for ``exc_type`` is now :class:`ModuleNotFoundError`.
     """
     import warnings
 
     __tracebackhide__ = True
     compile(modname, "", "eval")  # to catch syntaxerrors
 
-    # Until pytest 9.1, we will warn the user if we catch ImportError (instead of ModuleNotFoundError),
-    # as this might be hiding an installation/environment problem, which is not usually what is intended
-    # when using importorskip() (#11523).
-    # In 9.1, to keep the function signature compatible, we just change the code below to:
-    # 1. Use `exc_type = ModuleNotFoundError` if `exc_type` is not given.
-    # 2. Remove `warn_on_import` and the warning handling.
+    # Keep the public signature compatible while using the pytest 9.1 default behavior.
     if exc_type is None:
-        exc_type = ImportError
-        warn_on_import_error = True
-    else:
-        warn_on_import_error = False
+        exc_type = ModuleNotFoundError
 
     skipped: Skipped | None = None
-    warning: Warning | None = None
 
     with warnings.catch_warnings():
         # Make sure to ignore ImportWarnings that might happen because
@@ -277,27 +261,12 @@ def importorskip(
         warnings.simplefilter("ignore")
 
         try:
-            __import__(modname)
+            importlib.import_module(modname)
         except exc_type as exc:
             # Do not raise or issue warnings inside the catch_warnings() block.
             if reason is None:
                 reason = f"could not import {modname!r}: {exc}"
             skipped = Skipped(reason, allow_module_level=True)
-
-            if warn_on_import_error and not isinstance(exc, ModuleNotFoundError):
-                lines = [
-                    "",
-                    f"Module '{modname}' was found, but when imported by pytest it raised:",
-                    f"    {exc!r}",
-                    "In pytest 9.1 this warning will become an error by default.",
-                    "You can fix the underlying problem, or alternatively overwrite this behavior and silence this "
-                    "warning by passing exc_type=ImportError explicitly.",
-                    "See https://docs.pytest.org/en/stable/deprecations.html#pytest-importorskip-default-behavior-regarding-importerror",
-                ]
-                warning = PytestDeprecationWarning("\n".join(lines))
-
-    if warning:
-        warnings.warn(warning, stacklevel=2)
     if skipped:
         raise skipped
 

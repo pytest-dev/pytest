@@ -26,7 +26,7 @@ class Source:
         elif isinstance(obj, Source):
             self.lines = obj.lines
             self.raw_lines = obj.raw_lines
-        elif isinstance(obj, (tuple, list)):
+        elif isinstance(obj, tuple | list):
             self.lines = deindent(x.rstrip("\n") for x in obj)
             self.raw_lines = list(x.rstrip("\n") for x in obj)
         elif isinstance(obj, str):
@@ -103,7 +103,7 @@ class Source:
         which containing the given lineno."""
         if not (0 <= lineno < len(self)):
             raise IndexError("lineno out of range")
-        ast, start, end = getstatementrange_ast(lineno, self)
+        _ast, start, end = getstatementrange_ast(lineno, self)
         return start, end
 
     def deindent(self) -> Source:
@@ -155,9 +155,9 @@ def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None
     # AST's line numbers start indexing at 1.
     values: list[int] = []
     for x in ast.walk(node):
-        if isinstance(x, (ast.stmt, ast.ExceptHandler)):
+        if isinstance(x, ast.stmt | ast.ExceptHandler):
             # The lineno points to the class/def, so need to include the decorators.
-            if isinstance(x, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(x, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
                 for d in x.decorator_list:
                     values.append(d.lineno - 1)
             values.append(x.lineno - 1)
@@ -168,6 +168,8 @@ def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None
                     values.append(val[0].lineno - 1 - 1)
     values.sort()
     insert_index = bisect_right(values, lineno)
+    if insert_index == 0:
+        return 0, None
     start = values[insert_index - 1]
     if insert_index >= len(values):
         end = None
@@ -216,6 +218,7 @@ def getstatementrange_ast(
             pass
 
     # The end might still point to a comment or empty line, correct it.
+    end = min(end, len(source.lines))
     while end:
         line = source.lines[end - 1].lstrip()
         if line.startswith("#") or not line:

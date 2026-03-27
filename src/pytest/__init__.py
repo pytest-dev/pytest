@@ -60,9 +60,9 @@ from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
 from _pytest.python_api import approx
-from _pytest.python_api import raises
-from _pytest.raises_group import RaisesExc
-from _pytest.raises_group import RaisesGroup
+from _pytest.raises import raises
+from _pytest.raises import RaisesExc
+from _pytest.raises import RaisesGroup
 from _pytest.recwarn import deprecated_call
 from _pytest.recwarn import WarningsRecorder
 from _pytest.recwarn import warns
@@ -71,6 +71,8 @@ from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
+from _pytest.subtests import SubtestReport
+from _pytest.subtests import Subtests
 from _pytest.terminal import TerminalReporter
 from _pytest.terminal import TestShortLogReport
 from _pytest.tmpdir import TempPathFactory
@@ -81,7 +83,8 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
 from _pytest.warning_types import PytestFDWarning
-from _pytest.warning_types import PytestRemovedIn9Warning
+from _pytest.warning_types import PytestRemovedIn10Warning
+from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestUnraisableExceptionWarning
@@ -131,7 +134,8 @@ __all__ = [
     "PytestExperimentalApiWarning",
     "PytestFDWarning",
     "PytestPluginManager",
-    "PytestRemovedIn9Warning",
+    "PytestRemovedIn10Warning",
+    "PytestReturnNotNoneWarning",
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
     "PytestUnraisableExceptionWarning",
@@ -144,6 +148,8 @@ __all__ = [
     "Session",
     "Stash",
     "StashKey",
+    "SubtestReport",
+    "Subtests",
     "TempPathFactory",
     "TempdirFactory",
     "TerminalReporter",

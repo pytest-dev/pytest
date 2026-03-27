@@ -10,6 +10,8 @@ import subprocess
 import sys
 import types
 
+import setuptools
+
 from _pytest.config import ExitCode
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
@@ -127,9 +129,9 @@ class TestGeneralUsage:
             group: str = "pytest11"
 
             def load(self):
-                __import__(self.module)
+                mod = importlib.import_module(self.module)
                 loaded.append(self.name)
-                return sys.modules[self.module]
+                return mod
 
         entry_points = [
             DummyEntryPoint("myplugin1", "mytestplugin1_module"),
@@ -642,10 +644,9 @@ class TestInvocationVariants:
         ):
             pytest.main("-h")  # type: ignore[arg-type]
 
-    def test_invoke_with_path(self, pytester: Pytester, capsys) -> None:
+    def test_invoke_with_path(self, pytester: Pytester) -> None:
         retcode = pytest.main([str(pytester.path)])
         assert retcode == ExitCode.NO_TESTS_COLLECTED
-        out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, capsys) -> None:
         class MyPlugin:
@@ -653,7 +654,7 @@ class TestInvocationVariants:
                 parser.addoption("--myopt")
 
         pytest.main(["-h"], plugins=[MyPlugin()])
-        out, err = capsys.readouterr()
+        out, _err = capsys.readouterr()
         assert "--myopt" in out
 
     def test_pyargs_importerror(self, pytester: Pytester, monkeypatch) -> None:
@@ -722,10 +723,14 @@ class TestInvocationVariants:
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*not*found*test_missing*"])
 
-    def test_cmdline_python_namespace_package(
+    @pytest.mark.skipif(
+        int(setuptools.__version__.split(".")[0]) >= 80,
+        reason="modern setuptools removing pkg_resources",
+    )
+    def test_cmdline_python_legacy_namespace_package(
         self, pytester: Pytester, monkeypatch
     ) -> None:
-        """Test --pyargs option with namespace packages (#1567).
+        """Test --pyargs option with legacy namespace packages (#1567).
 
         Ref: https://packaging.python.org/guides/packaging-namespace-packages/
         """
@@ -1302,7 +1307,7 @@ def test_error_on_async_gen_function(pytester: Pytester) -> None:
     result.assert_outcomes(failed=3)
 
 
-def test_warning_on_sync_test_async_fixture(pytester: Pytester) -> None:
+def test_error_on_sync_test_async_fixture(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_sync="""
             import pytest
@@ -1320,22 +1325,16 @@ def test_warning_on_sync_test_async_fixture(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
         [
-            "*== warnings summary ==*",
-            (
-                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
-                "fixture 'async_fixture', with no plugin or hook that handled it. "
-                "This is usually an error, as pytest does not natively support it. "
-                "This will turn into an error in pytest 9."
-            ),
-            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+            "'test_foo' requested an async fixture 'async_fixture', with no plugin or hook that handled it. "
+            "This is an error, as pytest does not natively support it."
         ]
     )
-    result.assert_outcomes(passed=1, warnings=1)
 
 
-def test_warning_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
+def test_error_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_sync="""
             import pytest
@@ -1350,22 +1349,16 @@ def test_warning_on_sync_test_async_fixture_gen(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
         [
-            "*== warnings summary ==*",
-            (
-                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
-                "fixture 'async_fixture', with no plugin or hook that handled it. "
-                "This is usually an error, as pytest does not natively support it. "
-                "This will turn into an error in pytest 9."
-            ),
-            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+            "'test_foo' requested an async fixture 'async_fixture', with no plugin or hook that handled it. "
+            "This is an error, as pytest does not natively support it."
         ]
     )
-    result.assert_outcomes(passed=1, warnings=1)
 
 
-def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
+def test_error_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_sync="""
             import pytest
@@ -1384,20 +1377,14 @@ def test_warning_on_sync_test_async_autouse_fixture(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
         [
-            "*== warnings summary ==*",
-            (
-                "*PytestRemovedIn9Warning: 'test_foo' requested an async "
-                "fixture 'async_fixture' with autouse=True, with no plugin or hook "
-                "that handled it. "
-                "This is usually an error, as pytest does not natively support it. "
-                "This will turn into an error in pytest 9."
-            ),
-            "  See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+            "'test_foo' requested an async fixture 'async_fixture' with autouse=True, "
+            "with no plugin or hook that handled it. "
+            "This is an error, as pytest does not natively support it."
         ]
     )
-    result.assert_outcomes(passed=1, warnings=1)
 
 
 def test_pdb_can_be_rewritten(pytester: Pytester) -> None:
@@ -1483,7 +1470,8 @@ def test_no_brokenpipeerror_message(pytester: Pytester) -> None:
     popen.stderr.close()
 
 
-def test_function_return_non_none_error(pytester: Pytester) -> None:
+@pytest.mark.filterwarnings("default")
+def test_function_return_non_none_warning(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
         def test_stuff():
@@ -1491,7 +1479,6 @@ def test_function_return_non_none_error(pytester: Pytester) -> None:
     """
     )
     res = pytester.runpytest()
-    res.assert_outcomes(failed=1)
     res.stdout.fnmatch_lines(["*Did you mean to use `assert` instead of `return`?*"])
 
 
@@ -1600,3 +1587,49 @@ def test_no_terminal_plugin(pytester: Pytester) -> None:
     pytester.makepyfile("def test(): assert 1 == 2")
     result = pytester.runpytest("-pno:terminal", "-s")
     assert result.ret == ExitCode.TESTS_FAILED
+
+
+def test_stop_iteration_from_collect(pytester: Pytester) -> None:
+    pytester.makepyfile(test_it="raise StopIteration('hello')")
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.INTERRUPTED
+    result.assert_outcomes(failed=0, passed=0, errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "=* short test summary info =*",
+            "ERROR test_it.py - StopIteration: hello",
+            "!* Interrupted: 1 error during collection !*",
+            "=* 1 error in * =*",
+        ]
+    )
+
+
+def test_stop_iteration_runtest_protocol(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        test_it="""
+        import pytest
+        @pytest.fixture
+        def fail_setup():
+            raise StopIteration(1)
+        def test_fail_setup(fail_setup):
+            pass
+        def test_fail_teardown(request):
+            def stop_iteration():
+                raise StopIteration(2)
+            request.addfinalizer(stop_iteration)
+        def test_fail_call():
+            raise StopIteration(3)
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.TESTS_FAILED
+    result.assert_outcomes(failed=1, passed=1, errors=2)
+    result.stdout.fnmatch_lines(
+        [
+            "=* short test summary info =*",
+            "FAILED test_it.py::test_fail_call - StopIteration: 3",
+            "ERROR test_it.py::test_fail_setup - StopIteration: 1",
+            "ERROR test_it.py::test_fail_teardown - StopIteration: 2",
+            "=* 1 failed, 1 passed, 2 errors in * =*",
+        ]
+    )

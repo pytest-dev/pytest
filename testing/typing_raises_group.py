@@ -1,8 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 import sys
-from typing import Callable
-from typing import Union
 
 from typing_extensions import assert_type
 
@@ -70,9 +69,8 @@ def check_raisesexc_init() -> None:
     # At least 1 arg must be provided.
     RaisesExc()  # type: ignore
     RaisesExc(ValueError)
-    RaisesExc(ValueError, "regex")
-    RaisesExc(ValueError, "regex", check_exc)
-    RaisesExc(expected_exception=ValueError)
+    RaisesExc(ValueError, match="regex")
+    RaisesExc(ValueError, match="regex", check=check_exc)
     RaisesExc(match="regex")
     RaisesExc(check=check_exc)
     RaisesExc(ValueError, match="regex")
@@ -86,6 +84,11 @@ def check_raisesexc_init() -> None:
     RaisesExc(ValueError, check=check_filenotfound)  # type: ignore
     RaisesExc(check=check_filenotfound)  # type: ignore
     RaisesExc(FileNotFoundError, match="regex", check=check_filenotfound)
+
+    # exceptions are pos-only
+    RaisesExc(expected_exception=ValueError)  # type: ignore
+    # match and check are kw-only
+    RaisesExc(ValueError, "regex")  # type: ignore
 
 
 def raisesgroup_check_type_narrowing() -> None:
@@ -156,10 +159,7 @@ def check_nested_raisesgroups_contextmanager() -> None:
     assert_type(
         excinfo.value.exceptions[0],
         # this union is because of how typeshed defines .exceptions
-        Union[
-            ExceptionGroup[ValueError],
-            ExceptionGroup[ExceptionGroup[ValueError]],
-        ],
+        ExceptionGroup[ValueError] | ExceptionGroup[ExceptionGroup[ValueError]],
     )
 
 
@@ -236,8 +236,5 @@ def check_check_typing() -> None:
     # `BaseExceptiongroup` should perhaps be `ExceptionGroup`, but close enough
     assert_type(
         RaisesGroup(ValueError).check,
-        Union[
-            Callable[[BaseExceptionGroup[ValueError]], bool],
-            None,
-        ],
+        Callable[[BaseExceptionGroup[ValueError]], bool] | None,
     )

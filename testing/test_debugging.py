@@ -1373,6 +1373,10 @@ def test_pdbcls_via_local_module(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*runcall_called*", "* 1 passed in *"])
 
 
+@pytest.mark.xfail(
+    sys.version_info >= (3, 14),
+    reason="C-D now quits the test session, rather than failing the test. See https://github.com/python/cpython/issues/124703",
+)
 def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
     """It is not guaranteed that DontReadFromInput's read is called."""
     p1 = pytester.makepyfile(
@@ -1387,6 +1391,7 @@ def test_raises_bdbquit_with_eoferror(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest(str(p1))
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["E *BdbQuit", "*= 1 failed in*"])
     assert result.ret == 1
 

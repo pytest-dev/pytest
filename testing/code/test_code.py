@@ -86,9 +86,9 @@ def test_unicode_handling() -> None:
     value = "ąć".encode()
 
     def f() -> None:
-        raise Exception(value)
+        raise ValueError(value)
 
-    excinfo = pytest.raises(Exception, f)
+    excinfo = pytest.raises(ValueError, f)
     str(excinfo)
 
 

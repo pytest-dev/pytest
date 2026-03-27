@@ -101,8 +101,7 @@ class TestReportSerialization:
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
-        assert len(rep_entries) == len(a_entries)  # python < 3.10 zip(strict=True)
-        for a_entry, rep_entry in zip(a_entries, rep_entries):
+        for a_entry, rep_entry in zip(a_entries, rep_entries, strict=True):
             assert isinstance(rep_entry, ReprEntry)
             assert rep_entry.reprfileloc is not None
             assert rep_entry.reprfuncargs is not None
@@ -146,8 +145,7 @@ class TestReportSerialization:
 
         rep_entries = rep.longrepr.reprtraceback.reprentries
         a_entries = a.longrepr.reprtraceback.reprentries
-        assert len(rep_entries) == len(a_entries)  # python < 3.10 zip(strict=True)
-        for rep_entry, a_entry in zip(rep_entries, a_entries):
+        for rep_entry, a_entry in zip(rep_entries, a_entries, strict=True):
             assert isinstance(rep_entry, ReprEntryNative)
             assert rep_entry.lines == a_entry.lines
 
@@ -319,8 +317,8 @@ class TestReportSerialization:
             assert longrepr.sections == [("title", "contents", "=")]
             assert len(longrepr.chain) == 2
             entry1, entry2 = longrepr.chain
-            tb1, fileloc1, desc1 = entry1
-            tb2, fileloc2, desc2 = entry2
+            tb1, _fileloc1, desc1 = entry1
+            tb2, _fileloc2, desc2 = entry2
 
             assert "ValueError('value error')" in str(tb1)
             assert "RuntimeError('runtime error')" in str(tb2)
@@ -377,8 +375,8 @@ class TestReportSerialization:
             assert isinstance(longrepr, ExceptionChainRepr)
             assert len(longrepr.chain) == 2
             entry1, entry2 = longrepr.chain
-            tb1, fileloc1, desc1 = entry1
-            tb2, fileloc2, desc2 = entry2
+            tb1, fileloc1, _desc1 = entry1
+            tb2, fileloc2, _desc2 = entry2
 
             assert "RemoteTraceback" in str(tb1)
             assert "ValueError: value error" in str(tb2)
@@ -435,6 +433,83 @@ class TestReportSerialization:
             data = report._to_json()
             loaded_report = TestReport._from_json(data)
             assert loaded_report.stop - loaded_report.start == approx(report.duration)
+
+    @pytest.mark.parametrize(
+        "first_skip_reason, second_skip_reason, skip_reason_output",
+        [("A", "B", "(A; B)"), ("A", "A", "(A)")],
+    )
+    def test_exception_group_with_only_skips(
+        self,
+        pytester: Pytester,
+        first_skip_reason: str,
+        second_skip_reason: str,
+        skip_reason_output: str,
+    ):
+        """
+        Test that when an ExceptionGroup with only Skipped exceptions is raised in teardown,
+        it is reported as a single skipped test, not as an error.
+        This is a regression test for issue #13537.
+        """
+        pytester.makepyfile(
+            test_it=f"""
+            import pytest
+            @pytest.fixture
+            def fixA():
+                yield
+                pytest.skip(reason="{first_skip_reason}")
+            @pytest.fixture
+            def fixB():
+                yield
+                pytest.skip(reason="{second_skip_reason}")
+            def test_skip(fixA, fixB):
+                assert True
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=1, skipped=1)
+        out = result.stdout.str()
+        assert skip_reason_output in out
+        assert "ERROR at teardown" not in out
+
+    @pytest.mark.parametrize(
+        "use_item_location, skip_file_location",
+        [(True, "test_it.py"), (False, "runner.py")],
+    )
+    def test_exception_group_skips_use_item_location(
+        self, pytester: Pytester, use_item_location: bool, skip_file_location: str
+    ):
+        """
+        Regression for #13537:
+        If any skip inside an ExceptionGroup has _use_item_location=True,
+        the report location should point to the test item, not the fixture teardown.
+        """
+        pytester.makepyfile(
+            test_it=f"""
+            import pytest
+            @pytest.fixture
+            def fix_item1():
+                yield
+                exc = pytest.skip.Exception("A")
+                exc._use_item_location = True
+                raise exc
+            @pytest.fixture
+            def fix_item2():
+                yield
+                exc = pytest.skip.Exception("B")
+                exc._use_item_location = {use_item_location}
+                raise exc
+            def test_both(fix_item1, fix_item2):
+                assert True
+            """
+        )
+        result = pytester.runpytest("-rs")
+        result.assert_outcomes(passed=1, skipped=1)
+
+        out = result.stdout.str()
+        # Both reasons should appear
+        assert "A" and "B" in out
+        # Crucially, the skip should be attributed to the test item, not teardown
+        assert skip_file_location in out
 
 
 class TestHooks:

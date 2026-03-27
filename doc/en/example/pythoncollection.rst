@@ -5,7 +5,7 @@ Ignore paths during test collection
 -----------------------------------
 
 You can easily ignore certain test directories and modules during collection
-by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
+by passing the :option:`--ignore=path` option on the cli. ``pytest`` allows multiple
 ``--ignore`` options. Example:
 
 .. code-block:: text
@@ -43,17 +43,19 @@ you will see that ``pytest`` only collects test-modules, which do not match the 
 
     ========================= 5 passed in 0.02 seconds =========================
 
-The ``--ignore-glob`` option allows to ignore test file paths based on Unix shell-style wildcards.
-If you want to exclude test-modules that end with ``_01.py``, execute ``pytest`` with ``--ignore-glob='*_01.py'``.
+The :option:`--ignore-glob` option allows to ignore test file paths based on Unix shell-style wildcards.
+If you want to exclude test-modules that end with ``_01.py``, execute ``pytest`` with :option:`--ignore-glob='*_01.py'`.
 
 Deselect tests during test collection
 -------------------------------------
 
-Tests can individually be deselected during collection by passing the ``--deselect=item`` option.
+Tests can individually be deselected during collection by passing the :option:`--deselect=item` option.
 For example, say ``tests/foobar/test_foobar_01.py`` contains ``test_a`` and ``test_b``.
 You can run all of the tests within ``tests/`` *except* for ``tests/foobar/test_foobar_01.py::test_a``
-by invoking ``pytest`` with ``--deselect tests/foobar/test_foobar_01.py::test_a``.
+by invoking ``pytest`` with ``--deselect=tests/foobar/test_foobar_01.py::test_a``.
 ``pytest`` allows multiple ``--deselect`` options.
+
+.. _duplicate-paths:
 
 Keeping duplicate paths specified from command line
 ----------------------------------------------------
@@ -71,7 +73,7 @@ Example:
 
 Just collect tests once.
 
-To collect duplicate tests, use the ``--keep-duplicates`` option on the cli.
+To collect duplicate tests, use the :option:`--keep-duplicates` option on the cli.
 Example:
 
 .. code-block:: pytest
@@ -82,29 +84,17 @@ Example:
     collected 2 items
     ...
 
-As the collector just works on directories, if you specify twice a single test file, ``pytest`` will
-still collect it twice, no matter if the ``--keep-duplicates`` is not specified.
-Example:
-
-.. code-block:: pytest
-
-    pytest test_a.py test_a.py
-
-    ...
-    collected 2 items
-    ...
-
 
 Changing directory recursion
 -----------------------------------------------------
 
-You can set the :confval:`norecursedirs` option in an ini-file, for example your ``pytest.ini`` in the project root directory:
+You can set the :confval:`norecursedirs` option in a configuration file:
 
-.. code-block:: ini
+.. code-block:: toml
 
-    # content of pytest.ini
+    # content of pytest.toml
     [pytest]
-    norecursedirs = .svn _build tmp*
+    norecursedirs = [".svn", "_build", "tmp*"]
 
 This would tell ``pytest`` to not recurse into typical subversion or sphinx-build directories or into any ``tmp`` prefixed directory.
 
@@ -118,14 +108,14 @@ the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` in your :ref:`configuration file <config file formats>`.
 Here is an example:
 
-.. code-block:: ini
+.. code-block:: toml
 
-    # content of pytest.ini
+    # content of pytest.toml
     # Example 1: have pytest look for "check" instead of "test"
     [pytest]
-    python_files = check_*.py
-    python_classes = Check
-    python_functions = *_check
+    python_files = ["check_*.py"]
+    python_classes = ["Check"]
+    python_functions = ["*_check"]
 
 This would make ``pytest`` look for tests in files that match the ``check_*
 .py`` glob-pattern, ``Check`` prefixes in classes, and functions and methods
@@ -147,12 +137,12 @@ The test collection would look like this:
 
     $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 2 items
 
-    <Dir pythoncollection.rst-207>
+    <Dir pythoncollection.rst-213>
       <Module check_myapp.py>
         <Class CheckMyApp>
           <Function simple_check>
@@ -162,23 +152,23 @@ The test collection would look like this:
 
 You can check for multiple glob patterns by adding a space between the patterns:
 
-.. code-block:: ini
+.. code-block:: toml
 
+    # content of pytest.toml
     # Example 2: have pytest look for files with "test" and "example"
-    # content of pytest.ini
     [pytest]
-    python_files = test_*.py example_*.py
+    python_files = ["test_*.py", "example_*.py"]
 
 .. note::
 
-   the ``python_functions`` and ``python_classes`` options has no effect
+   the ``python_functions`` and ``python_classes`` options have no effect
    for ``unittest.TestCase`` test discovery because pytest delegates
    discovery of test case methods to unittest code.
 
 Interpreting cmdline arguments as Python packages
 -----------------------------------------------------
 
-You can use the ``--pyargs`` option to make ``pytest`` try
+You can use the :option:`--pyargs` option to make ``pytest`` try
 interpreting arguments as python package names, deriving
 their file system path and then running the test. For
 example if you have unittest2 installed you can type:
@@ -188,14 +178,14 @@ example if you have unittest2 installed you can type:
     pytest --pyargs unittest2.test.test_skipping -q
 
 which would run the respective test module.  Like with
-other options, through an ini-file and the :confval:`addopts` option you
+other options, through a configuration file and the :confval:`addopts` option you
 can make this change more permanently:
 
-.. code-block:: ini
+.. code-block:: toml
 
-    # content of pytest.ini
+    # content of pytest.toml
     [pytest]
-    addopts = --pyargs
+    addopts = ["--pyargs"]
 
 Now a simple invocation of ``pytest NAME`` will check
 if NAME exists as an importable package/module and otherwise
@@ -210,12 +200,12 @@ You can always peek at the collection tree without running tests like this:
 
     . $ pytest --collect-only pythoncollection.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 3 items
 
-    <Dir pythoncollection.rst-207>
+    <Dir pythoncollection.rst-213>
       <Dir CWD>
         <Module pythoncollection.py>
           <Function test_function>
@@ -234,14 +224,14 @@ Customizing test collection
 
 You can easily instruct ``pytest`` to discover tests from every Python file:
 
-.. code-block:: ini
+.. code-block:: toml
 
-    # content of pytest.ini
+    # content of pytest.toml
     [pytest]
-    python_files = *.py
+    python_files = ["*.py"]
 
 However, many projects will have a ``setup.py`` which they don't want to be
-imported. Moreover, there may files only importable by a specific python
+imported. Moreover, there may be files only importable by a specific python
 version. For such cases you can dynamically define files to be ignored by
 listing them in a ``conftest.py`` file:
 
@@ -294,9 +284,9 @@ file will be left out:
 
     $ pytest --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 0 items
 
     ======================= no tests collected in 0.12s ========================
@@ -325,3 +315,30 @@ with ``Test`` by setting a boolean ``__test__`` attribute to ``False``.
     # Will not be discovered as a test
     class TestClass:
         __test__ = False
+
+.. note::
+
+   If you are working with abstract test classes and want to avoid manually setting
+   the ``__test__`` attribute for subclasses, you can use a mixin class to handle
+   this automatically. For example:
+
+   .. code-block:: python
+
+       # Mixin to handle abstract test classes
+       class NotATest:
+           def __init_subclass__(cls):
+               cls.__test__ = NotATest not in cls.__bases__
+
+
+       # Abstract test class
+       class AbstractTest(NotATest):
+           pass
+
+
+       # Subclass that will be collected as a test
+       class RealTest(AbstractTest):
+           def test_example(self):
+               assert 1 + 1 == 2
+
+   This approach ensures that subclasses of abstract test classes are automatically
+   collected without needing to explicitly set the ``__test__`` attribute.

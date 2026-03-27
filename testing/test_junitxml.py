@@ -76,10 +76,10 @@ def assert_attr(node: minidom.Element, **kwargs: object) -> None:
 
 
 class DomDocument:
-    def __init__(self, dom: minidom.Document):
-        self._node = dom
-
     _node: minidom.Document | minidom.Element
+
+    def __init__(self, dom: minidom.Document) -> None:
+        self._node = dom
 
     def find_first_by_tag(self, tag: str) -> DomNode | None:
         return self.find_nth_by_tag(tag, 0)
@@ -105,7 +105,9 @@ class DomDocument:
 
     @property
     def children(self) -> list[DomNode]:
-        return [DomNode(x) for x in self._node.childNodes]
+        return [
+            DomNode(x) for x in self._node.childNodes if isinstance(x, minidom.Element)
+        ]
 
     @property
     def get_unique_child(self) -> DomNode:
@@ -120,7 +122,7 @@ class DomDocument:
 class DomNode(DomDocument):
     _node: minidom.Element
 
-    def __init__(self, dom: minidom.Element):
+    def __init__(self, dom: minidom.Element) -> None:
         self._node = dom
 
     def __repr__(self) -> str:
@@ -129,7 +131,7 @@ class DomNode(DomDocument):
     def __getitem__(self, key: str) -> str:
         node = self._node.getAttributeNode(key)
         if node is not None:
-            return cast(str, node.value)
+            return node.value
         else:
             raise KeyError(key)
 
@@ -139,7 +141,9 @@ class DomNode(DomDocument):
 
     @property
     def text(self) -> str:
-        return cast(str, self._node.childNodes[0].wholeText)
+        text = self._node.childNodes[0]
+        assert isinstance(text, minidom.Text)
+        return text.wholeText
 
     @property
     def tag(self) -> str:
@@ -257,7 +261,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse(family=xunit_family)
+        _result, dom = run_and_parse(family=xunit_family)
         node = dom.get_first_by_tag("testsuite")
         node.assert_attr(hostname=platform.node())
 
@@ -272,7 +276,7 @@ class TestPython:
         """
         )
         start_time = datetime.now(timezone.utc)
-        result, dom = run_and_parse(family=xunit_family)
+        _result, dom = run_and_parse(family=xunit_family)
         node = dom.get_first_by_tag("testsuite")
         timestamp = datetime.fromisoformat(node["timestamp"])
         assert start_time <= timestamp < datetime.now(timezone.utc)
@@ -294,7 +298,7 @@ class TestPython:
                 timing.sleep(4)
         """
         )
-        result, dom = run_and_parse()
+        _result, dom = run_and_parse()
         node = dom.get_first_by_tag("testsuite")
         tnode = node.get_first_by_tag("testcase")
         val = tnode["time"]
@@ -325,7 +329,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse("-o", f"junit_duration_report={duration_report}")
+        _result, dom = run_and_parse("-o", f"junit_duration_report={duration_report}")
         node = dom.get_first_by_tag("testsuite")
         tnode = node.get_first_by_tag("testcase")
         val = float(tnode["time"])
@@ -631,7 +635,7 @@ class TestPython:
                 assert 0, "An error"
         """
         )
-        result, dom = run_and_parse(family=xunit_family)
+        _result, dom = run_and_parse(family=xunit_family)
         node = dom.get_first_by_tag("testsuite")
         tnode = node.get_first_by_tag("testcase")
         fnode = tnode.get_first_by_tag("failure")
@@ -657,8 +661,7 @@ class TestPython:
         node = dom.get_first_by_tag("testsuite")
         node.assert_attr(failures=3, tests=3)
         tnodes = node.find_by_tag("testcase")
-        assert len(tnodes) == 3
-        for tnode, char in zip(tnodes, "<&'"):
+        for tnode, char in zip(tnodes, "<&'", strict=True):
             tnode.assert_attr(
                 classname="test_failure_escape", name=f"test_func[{char}]"
             )
@@ -749,7 +752,7 @@ class TestPython:
                 assert 0
         """
         )
-        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
+        _result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.get_first_by_tag("testsuite")
         tnode = node.get_first_by_tag("testcase")
 
@@ -774,7 +777,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse(family=xunit_family)
+        _result, dom = run_and_parse(family=xunit_family)
         # assert result.ret
         node = dom.get_first_by_tag("testsuite")
         node.assert_attr(skipped=0, tests=1)
@@ -793,7 +796,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse(family=xunit_family)
+        _result, dom = run_and_parse(family=xunit_family)
         # assert result.ret
         node = dom.get_first_by_tag("testsuite")
         node.assert_attr(skipped=0, tests=1)
@@ -846,7 +849,7 @@ class TestPython:
                 assert M1 == M2
             """
         )
-        result, dom = run_and_parse()
+        _result, dom = run_and_parse()
         print(dom.toxml())
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
@@ -859,7 +862,7 @@ class TestPython:
                 print('hello-stdout')
         """
         )
-        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
+        _result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.get_first_by_tag("testsuite")
         pnode = node.get_first_by_tag("testcase")
         if junit_logging == "no":
@@ -883,7 +886,7 @@ class TestPython:
                 sys.stderr.write('hello-stderr')
         """
         )
-        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
+        _result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.get_first_by_tag("testsuite")
         pnode = node.get_first_by_tag("testcase")
         if junit_logging == "no":
@@ -912,7 +915,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
+        _result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.get_first_by_tag("testsuite")
         pnode = node.get_first_by_tag("testcase")
         if junit_logging == "no":
@@ -942,7 +945,7 @@ class TestPython:
                 pass
         """
         )
-        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
+        _result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.get_first_by_tag("testsuite")
         pnode = node.get_first_by_tag("testcase")
         if junit_logging == "no":
@@ -973,7 +976,7 @@ class TestPython:
                 sys.stdout.write('hello-stdout call')
         """
         )
-        result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
+        _result, dom = run_and_parse("-o", f"junit_logging={junit_logging}")
         node = dom.get_first_by_tag("testsuite")
         pnode = node.get_first_by_tag("testcase")
         if junit_logging == "no":
@@ -1323,7 +1326,7 @@ def test_record_property_same_name(
             record_property("foo", "baz")
     """
     )
-    result, dom = run_and_parse()
+    _result, dom = run_and_parse()
     node = dom.get_first_by_tag("testsuite")
     tnode = node.get_first_by_tag("testcase")
     psnode = tnode.get_first_by_tag("properties")
@@ -1399,7 +1402,7 @@ def test_record_fixtures_xunit2(
     """
     )
 
-    result, dom = run_and_parse(family=None)
+    result, _dom = run_and_parse(family=None)
     expected_lines = []
     if fixture_name == "record_xml_attribute":
         expected_lines.append(
@@ -1451,6 +1454,7 @@ def test_root_testsuites_tag(
     _, dom = run_and_parse(family=xunit_family)
     root = dom.get_unique_child
     assert root.tag == "testsuites"
+    root.assert_attr(name="pytest tests")
     suite_node = root.get_unique_child
     assert suite_node.tag == "testsuite"
 
@@ -1463,7 +1467,7 @@ def test_runs_twice(pytester: Pytester, run_and_parse: RunAndParse) -> None:
     """
     )
 
-    result, dom = run_and_parse(f, f)
+    result, dom = run_and_parse("--keep-duplicates", f, f)
     result.stdout.no_fnmatch_line("*INTERNALERROR*")
     first, second = (x["classname"] for x in dom.find_by_tag("testcase"))
     assert first == second
@@ -1817,3 +1821,13 @@ def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
         assert junit_logging == "no"
         assert len(node.find_by_tag("system-err")) == 0
         assert len(node.find_by_tag("system-out")) == 0
+
+
+def test_no_message_quiet(pytester: Pytester) -> None:
+    """Do not show the summary banner when --quiet is given (#13700)."""
+    pytester.makepyfile("def test(): pass")
+    result = pytester.runpytest("--junitxml=pytest.xml")
+    result.stdout.fnmatch_lines("* generated xml file: *")
+
+    result = pytester.runpytest("--junitxml=pytest.xml", "--quiet")
+    result.stdout.no_fnmatch_line("* generated xml file: *")

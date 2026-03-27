@@ -35,7 +35,7 @@ Running this would result in a passed test except for the last
 
     $ pytest test_tmp_path.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -136,9 +136,9 @@ Temporary directory location and retention
 The temporary directories,
 as returned by the :fixture:`tmp_path` and (now deprecated) :fixture:`tmpdir` fixtures,
 are automatically created under a base temporary directory,
-in a structure that depends on the ``--basetemp`` option:
+in a structure that depends on the :option:`--basetemp` option:
 
-- By default (when the ``--basetemp`` option is not set),
+- By default (when the :option:`--basetemp` option is not set),
   the temporary directories will follow this template:
 
   .. code-block:: text
@@ -160,7 +160,7 @@ in a structure that depends on the ``--basetemp`` option:
   but this behavior can be configured with
   :confval:`tmp_path_retention_count` and :confval:`tmp_path_retention_policy`.
 
-- When the ``--basetemp`` option is used (e.g. ``pytest --basetemp=mydir``),
+- When the :option:`--basetemp` option is used (e.g. ``pytest --basetemp=mydir``),
   it will be used directly as base temporary directory:
 
   .. code-block:: text
@@ -172,7 +172,7 @@ in a structure that depends on the ``--basetemp`` option:
 
   .. warning::
 
-      The directory given to ``--basetemp`` will be cleared blindly before each test run,
+      The directory given to :option:`--basetemp` will be cleared blindly before each test run,
       so make sure to use a directory for that purpose only.
 
 When distributing tests on the local machine using ``pytest-xdist``, care is taken to

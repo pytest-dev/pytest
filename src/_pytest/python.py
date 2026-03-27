@@ -21,8 +21,10 @@ import itertools
 import os
 from pathlib import Path
 import re
+import textwrap
 import types
 from typing import Any
+from typing import cast
 from typing import final
 from typing import Literal
 from typing import NoReturn
@@ -43,7 +45,6 @@ from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
-from _pytest.compat import LEGACY_PATH
 from _pytest.compat import NOTSET
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
@@ -51,6 +52,7 @@ from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FuncFixtureInfo
@@ -73,6 +75,7 @@ from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
+from _pytest.warning_types import PytestReturnNotNoneWarning
 
 
 if TYPE_CHECKING:
@@ -105,6 +108,13 @@ def pytest_addoption(parser: Parser) -> None:
         default=False,
         help="Disable string escape non-ASCII characters, might cause unwanted "
         "side effects(use at your own risk)",
+    )
+    parser.addini(
+        "strict_parametrization_ids",
+        type="bool",
+        # None => fallback to `strict`.
+        default=None,
+        help="Emit an error if non-unique parameter set IDs are detected",
     )
 
 
@@ -157,12 +167,12 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> object | None:
     if hasattr(result, "__await__") or hasattr(result, "__aiter__"):
         async_fail(pyfuncitem.nodeid)
     elif result is not None:
-        fail(
-            (
-                f"Expected None, but test returned {result!r}. "
-                "Did you mean to use `assert` instead of `return`?"
-            ),
-            pytrace=False,
+        warnings.warn(
+            PytestReturnNotNoneWarning(
+                f"Test functions should return None, but {pyfuncitem.nodeid} returned {type(result)!r}.\n"
+                "Did you mean to use `assert` instead of `return`?\n"
+                "See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information."
+            )
         )
     return True
 
@@ -209,7 +219,7 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Module:
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
 ) -> None | nodes.Item | nodes.Collector | list[nodes.Item | nodes.Collector]:
-    assert isinstance(collector, (Class, Module)), type(collector)
+    assert isinstance(collector, Class | Module), type(collector)
     # Nothing was collected elsewhere, let's do it here.
     if safe_isclass(obj):
         if collector.istestclass(obj, name):
@@ -357,7 +367,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
 
     def istestfunction(self, obj: object, name: str) -> bool:
         if self.funcnamefilter(name) or self.isnosetest(obj):
-            if isinstance(obj, (staticmethod, classmethod)):
+            if isinstance(obj, staticmethod | classmethod):
                 # staticmethods and classmethods need to be unwrapped.
                 obj = safe_getattr(obj, "__func__", False)
             return callable(obj) and fixtures.getfixturemarker(obj) is None
@@ -373,7 +383,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
 
     def _matches_prefix_or_glob_option(self, option_name: str, name: str) -> bool:
         """Check if the given name matches the prefix or glob-pattern defined
-        in ini configuration."""
+        in configuration."""
         for option in self.config.getini(option_name):
             if name.startswith(option):
                 return True
@@ -643,7 +653,7 @@ class Package(nodes.Directory):
 
     def __init__(
         self,
-        fspath: LEGACY_PATH | None,
+        fspath: None,
         parent: nodes.Collector,
         # NOTE: following args are unused:
         config=None,
@@ -860,7 +870,6 @@ class IdMaker:
     __slots__ = (
         "argnames",
         "config",
-        "func_name",
         "idfn",
         "ids",
         "nodeid",
@@ -877,19 +886,19 @@ class IdMaker:
     # Optionally, explicit IDs for ParameterSets by index.
     ids: Sequence[object | None] | None
     # Optionally, the pytest config.
-    # Used for controlling ASCII escaping, and for calling the
-    # :hook:`pytest_make_parametrize_id` hook.
+    # Used for controlling ASCII escaping, determining parametrization ID
+    # strictness, and for calling the :hook:`pytest_make_parametrize_id` hook.
     config: Config | None
     # Optionally, the ID of the node being parametrized.
     # Used only for clearer error messages.
     nodeid: str | None
-    # Optionally, the ID of the function being parametrized.
-    # Used only for clearer error messages.
-    func_name: str | None
 
     def make_unique_parameterset_ids(self) -> list[str | _HiddenParam]:
         """Make a unique identifier for each ParameterSet, that may be used to
         identify the parametrization in a node ID.
+
+        If strict_parametrization_ids is enabled, and duplicates are detected,
+        raises CollectError. Otherwise makes the IDs unique as follows:
 
         Format is <prm_1_token>-...-<prm_n_token>[counter], where prm_x_token is
         - user-provided id, if given
@@ -903,6 +912,33 @@ class IdMaker:
         if len(resolved_ids) != len(set(resolved_ids)):
             # Record the number of occurrences of each ID.
             id_counts = Counter(resolved_ids)
+
+            if self._strict_parametrization_ids_enabled():
+                parameters = ", ".join(self.argnames)
+                parametersets = ", ".join(
+                    [saferepr(list(param.values)) for param in self.parametersets]
+                )
+                ids = ", ".join(
+                    id if id is not HIDDEN_PARAM else "<hidden>" for id in resolved_ids
+                )
+                duplicates = ", ".join(
+                    id if id is not HIDDEN_PARAM else "<hidden>"
+                    for id, count in id_counts.items()
+                    if count > 1
+                )
+                msg = textwrap.dedent(f"""
+                    Duplicate parametrization IDs detected, but strict_parametrization_ids is set.
+
+                    Test name:      {self.nodeid}
+                    Parameters:     {parameters}
+                    Parameter sets: {parametersets}
+                    IDs:            {ids}
+                    Duplicates:     {duplicates}
+
+                    You can fix this problem using `@pytest.mark.parametrize(..., ids=...)` or `pytest.param(..., id=...)`.
+                """).strip()  # noqa: E501
+                raise nodes.Collector.CollectError(msg)
+
             # Map the ID to its next suffix.
             id_suffixes: dict[str, int] = defaultdict(int)
             # Suffix non-unique IDs to make them unique.
@@ -924,6 +960,14 @@ class IdMaker:
         )
         return resolved_ids
 
+    def _strict_parametrization_ids_enabled(self) -> bool:
+        if self.config is None:
+            return False
+        strict_parametrization_ids = self.config.getini("strict_parametrization_ids")
+        if strict_parametrization_ids is None:
+            strict_parametrization_ids = self.config.getini("strict")
+        return cast(bool, strict_parametrization_ids)
+
     def _resolve_ids(self) -> Iterable[str | _HiddenParam]:
         """Resolve IDs for all ParameterSets (may contain duplicates)."""
         for idx, parameterset in enumerate(self.parametersets):
@@ -943,7 +987,9 @@ class IdMaker:
                 # ID not provided - generate it.
                 yield "-".join(
                     self._idval(val, argname, idx)
-                    for val, argname in zip(parameterset.values, self.argnames)
+                    for val, argname in zip(
+                        parameterset.values, self.argnames, strict=True
+                    )
                 )
 
     def _idval(self, val: object, argname: str, idx: int) -> str:
@@ -988,9 +1034,9 @@ class IdMaker:
     def _idval_from_value(self, val: object) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet from its value,
         if the value type is supported."""
-        if isinstance(val, (str, bytes)):
+        if isinstance(val, str | bytes):
             return _ascii_escaped_by_config(val, self.config)
-        elif val is None or isinstance(val, (float, int, bool, complex)):
+        elif val is None or isinstance(val, float | int | bool | complex):
             return str(val)
         elif isinstance(val, re.Pattern):
             return ascii_escaped(val.pattern)
@@ -1033,9 +1079,7 @@ class IdMaker:
         )
 
     def _make_error_prefix(self) -> str:
-        if self.func_name is not None:
-            return f"In {self.func_name}: "
-        elif self.nodeid is not None:
+        if self.nodeid is not None:
             return f"In {self.nodeid}: "
         else:
             return ""
@@ -1056,6 +1100,7 @@ class CallSpec2:
     params: dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg index.
     indices: dict[str, int] = dataclasses.field(default_factory=dict)
+    # arg name -> parameter scope.
     # Used for sorting parametrized resources.
     _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
     # Parts which will be added to the item's name in `[..]` separated by "-".
@@ -1072,13 +1117,16 @@ class CallSpec2:
         marks: Iterable[Mark | MarkDecorator],
         scope: Scope,
         param_index: int,
+        nodeid: str,
     ) -> CallSpec2:
         params = self.params.copy()
         indices = self.indices.copy()
         arg2scope = dict(self._arg2scope)
-        for arg, val in zip(argnames, valset):
+        for arg, val in zip(argnames, valset, strict=True):
             if arg in params:
-                raise ValueError(f"duplicate parametrization of {arg!r}")
+                raise nodes.Collector.CollectError(
+                    f"{nodeid}: duplicate parametrization of {arg!r}"
+                )
             params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
@@ -1168,7 +1216,7 @@ class Metafunc:
         """Add new invocations to the underlying test function using the list
         of argvalues for the given argnames. Parametrization is performed
         during the collection phase. If you need to setup expensive resources
-        see about setting indirect to do it rather than at test setup time.
+        see about setting ``indirect`` to do it at test setup time instead.
 
         Can be called multiple times per test function (but only on different
         argument names), in which case each call parametrizes all previous
@@ -1192,7 +1240,13 @@ class Metafunc:
             If N argnames were specified, argvalues must be a list of
             N-tuples, where each tuple-element specifies a value for its
             respective argname.
-        :type argvalues: Iterable[_pytest.mark.structures.ParameterSet | Sequence[object] | object]
+
+            .. versionchanged:: 9.1
+
+                Passing a non-:class:`~collections.abc.Collection` iterable
+                (such as a generator or iterator) is deprecated. See
+                :ref:`parametrize-iterators` for details.
+
         :param indirect:
             A list of arguments' names (subset of argnames) or a boolean.
             If True the list contains all names from the argnames. Each
@@ -1232,6 +1286,8 @@ class Metafunc:
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
+        nodeid = self.definition.nodeid
+
         argnames, parametersets = ParameterSet._for_parametrize(
             argnames,
             argvalues,
@@ -1243,7 +1299,7 @@ class Metafunc:
 
         if "request" in argnames:
             fail(
-                "'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
+                f"{nodeid}: 'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
                 pytrace=False,
             )
 
@@ -1270,15 +1326,22 @@ class Metafunc:
         if _param_mark and _param_mark._param_ids_from and generated_ids is None:
             object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
 
-        # Add funcargs as fixturedefs to fixtureinfo.arg2fixturedefs by registering
-        # artificial "pseudo" FixtureDef's so that later at test execution time we can
-        # rely on a proper FixtureDef to exist for fixture setup.
+        # Calculate directness.
+        arg_directness = _resolve_args_directness(
+            argnames, indirect, self.definition.nodeid
+        )
+        self._params_directness.update(arg_directness)
+
+        # Add direct parametrizations as fixturedefs to arg2fixturedefs by
+        # registering artificial "pseudo" FixtureDef's such that later at test
+        # setup time we can rely on FixtureDefs to exist for all argnames.
         node = None
-        # If we have a scope that is higher than function, we need
-        # to make sure we only ever create an according fixturedef on
-        # a per-scope basis. We thus store and cache the fixturedef on the
-        # node related to the scope.
-        if scope_ is not Scope.Function:
+        # For scopes higher than function, a "pseudo" FixtureDef might have
+        # already been created for the scope. We thus store and cache the
+        # FixtureDef on the node related to the scope.
+        if scope_ is Scope.Function:
+            name2pseudofixturedef = None
+        else:
             collector = self.definition.parent
             assert collector is not None
             node = get_scope_node(collector, scope_)
@@ -1294,15 +1357,10 @@ class Metafunc:
                     node = collector.session
                 else:
                     assert False, f"Unhandled missing scope: {scope}"
-        if node is None:
-            name2pseudofixturedef = None
-        else:
             default: dict[str, FixtureDef[Any]] = {}
             name2pseudofixturedef = node.stash.setdefault(
                 name2pseudofixturedef_key, default
             )
-        arg_directness = self._resolve_args_directness(argnames, indirect)
-        self._params_directness.update(arg_directness)
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
@@ -1329,7 +1387,7 @@ class Metafunc:
         newcalls = []
         for callspec in self._calls or [CallSpec2()]:
             for param_index, (param_id, param_set) in enumerate(
-                zip(ids, parametersets)
+                zip(ids, parametersets, strict=True)
             ):
                 newcallspec = callspec.setmulti(
                     argnames=argnames,
@@ -1338,6 +1396,7 @@ class Metafunc:
                     marks=param_set.marks,
                     scope=scope_,
                     param_index=param_index,
+                    nodeid=nodeid,
                 )
                 newcalls.append(newcallspec)
         self._calls = newcalls
@@ -1372,7 +1431,7 @@ class Metafunc:
             ids_ = None
         else:
             idfn = None
-            ids_ = self._validate_ids(ids, parametersets, self.function.__name__)
+            ids_ = self._validate_ids(ids, parametersets)
         id_maker = IdMaker(
             argnames,
             parametersets,
@@ -1380,7 +1439,6 @@ class Metafunc:
             ids_,
             self.config,
             nodeid=nodeid,
-            func_name=self.function.__name__,
         )
         return id_maker.make_unique_parameterset_ids()
 
@@ -1388,7 +1446,6 @@ class Metafunc:
         self,
         ids: Iterable[object | None],
         parametersets: Sequence[ParameterSet],
-        func_name: str,
     ) -> list[object | None]:
         try:
             num_ids = len(ids)  # type: ignore[arg-type]
@@ -1401,49 +1458,13 @@ class Metafunc:
 
         # num_ids == 0 is a special case: https://github.com/pytest-dev/pytest/issues/1849
         if num_ids != len(parametersets) and num_ids != 0:
-            msg = "In {}: {} parameter sets specified, with different number of ids: {}"
-            fail(msg.format(func_name, len(parametersets), num_ids), pytrace=False)
-
-        return list(itertools.islice(ids, num_ids))
-
-    def _resolve_args_directness(
-        self,
-        argnames: Sequence[str],
-        indirect: bool | Sequence[str],
-    ) -> dict[str, Literal["indirect", "direct"]]:
-        """Resolve if each parametrized argument must be considered an indirect
-        parameter to a fixture of the same name, or a direct parameter to the
-        parametrized function, based on the ``indirect`` parameter of the
-        parametrized() call.
-
-        :param argnames:
-            List of argument names passed to ``parametrize()``.
-        :param indirect:
-            Same as the ``indirect`` parameter of ``parametrize()``.
-        :returns
-            A dict mapping each arg name to either "indirect" or "direct".
-        """
-        arg_directness: dict[str, Literal["indirect", "direct"]]
-        if isinstance(indirect, bool):
-            arg_directness = dict.fromkeys(
-                argnames, "indirect" if indirect else "direct"
-            )
-        elif isinstance(indirect, Sequence):
-            arg_directness = dict.fromkeys(argnames, "direct")
-            for arg in indirect:
-                if arg not in argnames:
-                    fail(
-                        f"In {self.function.__name__}: indirect fixture '{arg}' doesn't exist",
-                        pytrace=False,
-                    )
-                arg_directness[arg] = "indirect"
-        else:
+            nodeid = self.definition.nodeid
             fail(
-                f"In {self.function.__name__}: expected Sequence or boolean"
-                f" for indirect, got {type(indirect).__name__}",
+                f"In {nodeid}: {len(parametersets)} parameter sets specified, with different number of ids: {num_ids}",
                 pytrace=False,
             )
-        return arg_directness
+
+        return list(itertools.islice(ids, num_ids))
 
     def _validate_if_using_arg_names(
         self,
@@ -1457,12 +1478,12 @@ class Metafunc:
         :raises ValueError: If validation fails.
         """
         default_arg_names = set(get_default_arg_names(self.function))
-        func_name = self.function.__name__
+        nodeid = self.definition.nodeid
         for arg in argnames:
             if arg not in self.fixturenames:
                 if arg in default_arg_names:
                     fail(
-                        f"In {func_name}: function already takes an argument '{arg}' with a default value",
+                        f"In {nodeid}: function already takes an argument '{arg}' with a default value",
                         pytrace=False,
                     )
                 else:
@@ -1471,7 +1492,7 @@ class Metafunc:
                     else:
                         name = "fixture" if indirect else "argument"
                     fail(
-                        f"In {func_name}: function uses no {name} '{arg}'",
+                        f"In {nodeid}: function uses no {name} '{arg}'",
                         pytrace=False,
                     )
 

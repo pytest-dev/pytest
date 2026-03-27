@@ -263,7 +263,7 @@ class TestTraceback_f_g_h:
         def reraise_me() -> None:
             import sys
 
-            exc, val, tb = sys.exc_info()
+            _exc, val, tb = sys.exc_info()
             assert val is not None
             raise val.with_traceback(tb)
 
@@ -442,9 +442,9 @@ def test_match_raises_error(pytester: Pytester) -> None:
     assert result.ret != 0
 
     match = [
-        r"E .* AssertionError: Regex pattern did not match.",
-        r"E .* Regex: '\[123\]\+'",
-        r"E .* Input: 'division by zero'",
+        r"E\s+AssertionError: Regex pattern did not match.",
+        r"E\s+Expected regex: '\[123\]\+'",
+        r"E\s+Actual message: 'division by zero'",
     ]
     result.stdout.re_match_lines(match)
     result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
@@ -481,9 +481,8 @@ def test_raises_exception_escapes_generic_group() -> None:
     try:
         with pytest.raises(ExceptionGroup[Exception]):
             raise ValueError("my value error")
-    except AssertionError as e:
-        assert str(e) == "`ValueError()` is not an instance of `ExceptionGroup`"
-        assert str(e.__context__) == "my value error"
+    except ValueError as e:
+        assert str(e) == "my value error"
     else:
         pytest.fail("Expected ValueError to be raised")
 
@@ -1798,6 +1797,9 @@ def _exceptiongroup_common(
             rf"FAILED test_excgroup.py::test - {pre_catch}BaseExceptionGroup: Oops \(2.*"
         )
     result.stdout.re_match_lines(match_lines)
+    # Check for traceback filtering of pytest internals.
+    result.stdout.no_fnmatch_line("*, line *, in pytest_pyfunc_call")
+    result.stdout.no_fnmatch_line("*, line *, in pytest_runtest_call")
 
 
 @pytest.mark.skipif(
@@ -1895,19 +1897,23 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
 
 
 @pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
-def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
+@pytest.mark.parametrize("group", (True, False), ids=("group", "bare"))
+def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> None:
     """Regression test for #10903."""
     pytester.makepyfile(
-        """
+        f"""
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
         def test():
             __tracebackhide__ = True
-            1 / 0
+            raise {'ExceptionGroup("", [ValueError("bar")])' if group else 'ValueError("bar")'}
     """
     )
     result = pytester.runpytest("--tb", tbstyle)
     assert result.ret == 1
     if tbstyle != "line":
-        result.stdout.fnmatch_lines(["*ZeroDivisionError: division by zero"])
+        result.stdout.fnmatch_lines(["*ValueError: bar"])
     if tbstyle not in ("line", "native"):
         result.stdout.fnmatch_lines(["All traceback entries are hidden.*"])
 

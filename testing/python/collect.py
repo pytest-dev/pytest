@@ -524,6 +524,42 @@ class TestFunction:
         rec = pytester.inline_run()
         rec.assertoutcome(passed=1)
 
+    def test_parametrize_overrides_parametrized_fixture_with_unrelated_indirect(
+        self, pytester: Pytester
+    ) -> None:
+        """Test parametrization when parameter overrides existing parametrized fixture with same name,
+        and there is an unrelated indirect param.
+
+        Regression test for #13974.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=["a", "b"])
+            def target(request):
+                return request.param
+
+            @pytest.fixture
+            def val(request):
+                return int(request.param)
+
+            @pytest.mark.parametrize(
+                ["val", "target"],
+                [
+                    ("1", 1),
+                    ("2", 2),
+                ],
+                indirect=["val"],
+            )
+            def test(val, target):
+                assert val == target
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+        result.assert_outcomes(passed=2)
+
     def test_parametrize_overrides_indirect_dependency_fixture(
         self, pytester: Pytester
     ) -> None:
@@ -1075,7 +1111,8 @@ class TestTracebackCutting:
     def test_skip_simple(self):
         with pytest.raises(pytest.skip.Exception) as excinfo:
             pytest.skip("xxx")
-        assert excinfo.traceback[-1].frame.code.name == "skip"
+        if sys.version_info >= (3, 11):
+            assert excinfo.traceback[-1].frame.code.raw.co_qualname == "_Skip.__call__"
         assert excinfo.traceback[-1].ishidden(excinfo)
         assert excinfo.traceback[-2].frame.code.name == "test_skip_simple"
         assert not excinfo.traceback[-2].ishidden(excinfo)
@@ -1272,10 +1309,10 @@ class TestReportInfo:
         )
         classcol = pytester.collect_by_name(modcol, "TestClass")
         assert isinstance(classcol, Class)
-        path, lineno, msg = classcol.reportinfo()
+        _path, _lineno, _msg = classcol.reportinfo()
         func = next(iter(classcol.collect()))
         assert isinstance(func, Function)
-        path, lineno, msg = func.reportinfo()
+        _path, _lineno, _msg = func.reportinfo()
 
 
 def test_customized_python_discovery(pytester: Pytester) -> None:
@@ -1488,7 +1525,7 @@ def test_package_collection_init_given_as_argument(pytester: Pytester) -> None:
     Module, not the entire package.
     """
     p = pytester.copy_example("collect/package_init_given_as_arg")
-    items, hookrecorder = pytester.inline_genitems(p / "pkg" / "__init__.py")
+    items, _hookrecorder = pytester.inline_genitems(p / "pkg" / "__init__.py")
     assert len(items) == 1
     assert items[0].name == "test_init"
 

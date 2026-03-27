@@ -10,7 +10,9 @@ import sys
 import textwrap
 from types import SimpleNamespace
 from typing import cast
+from typing import Literal
 from typing import NamedTuple
+from unittest import mock
 
 import pluggy
 
@@ -30,6 +32,7 @@ from _pytest.terminal import _get_line_with_reprcrash_message
 from _pytest.terminal import _get_raw_skip_reason
 from _pytest.terminal import _plugin_nameversions
 from _pytest.terminal import getreportopt
+from _pytest.terminal import TerminalProgressPlugin
 from _pytest.terminal import TerminalReporter
 import pytest
 
@@ -111,6 +114,31 @@ class TestTerminal:
         result.stdout.fnmatch_lines(
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )
+
+    def test_console_output_style_times_with_skipped_and_passed(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                def test_hello():
+                    pass
+            """,
+            test_repro_skip="""
+                import pytest
+                pytest.importorskip("fakepackage_does_not_exist")
+            """,
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "test_repro_skip.py",
+            "-o",
+            "console_output_style=times",
+        )
+
+        result.stdout.fnmatch_lines("* 1 passed, 1 skipped in *")
+
+        combined = "\n".join(result.stdout.lines + result.stderr.lines)
+        assert "INTERNALERROR" not in combined
 
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
@@ -441,6 +469,16 @@ class TestTerminal:
                 "because baz is missing due to I don't know what) *",
             ]
         )
+
+    @pytest.mark.parametrize("isatty", [True, False])
+    def test_isatty(self, pytester: Pytester, monkeypatch, isatty: bool) -> None:
+        config = pytester.parseconfig()
+        f = StringIO()
+        monkeypatch.setattr(f, "isatty", lambda: isatty)
+        tr = TerminalReporter(config, f)
+        assert tr.isatty() == isatty
+        # It was incorrectly implemented as a boolean so we still support using it as one.
+        assert bool(tr.isatty) == isatty
 
 
 class TestCollectonly:
@@ -859,6 +897,7 @@ class TestTerminalFunctional:
         self, monkeypatch: MonkeyPatch, pytester: Pytester, request
     ) -> None:
         monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+        monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
         pytester.makepyfile(
             """
             def test_passes():
@@ -900,7 +939,7 @@ class TestTerminalFunctional:
         pytester.path.joinpath("tests").mkdir()
         pytester.path.joinpath("gui").mkdir()
 
-        # no ini file
+        # no configuration file
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["rootdir: *test_header0"])
 
@@ -1546,6 +1585,19 @@ class TestGenericReporting:
                 assert "FAILURES" not in s
                 assert "--calling--" not in s
                 assert "IndexError" not in s
+
+    def test_tb_line_show_capture(self, pytester: Pytester, option) -> None:
+        output_to_capture = "help! let me out!"
+        pytester.makepyfile(
+            f"""
+            import pytest
+            def test_fail():
+                print('{output_to_capture}')
+                assert False
+            """
+        )
+        result = pytester.runpytest("--tb=line")
+        result.stdout.fnmatch_lines(["*- Captured stdout call -*", output_to_capture])
 
     def test_tb_crashline(self, pytester: Pytester, option) -> None:
         p = pytester.makepyfile(
@@ -2214,8 +2266,8 @@ class TestProgressOutputStyle:
         output.stdout.re_match_lines(
             [
                 r"test_bar.py ...................",
-                r"........... \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
-                r"test_foo.py \.{5} \s+ \d{1,3}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"........... \s+ \d{1,4}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
+                r"test_foo.py \.{5} \s+ \d{1,4}[\.[a-z\ ]{1,2}\d{0,3}\w{1,2}$",
             ],
             consecutive=True,
         )
@@ -2641,7 +2693,7 @@ def test_full_sequence_print_with_vv(
         [
             "*short test summary info*",
             f"*{list(range(10))}*",
-            f"*{dict(zip(range(10), range(10)))}*",
+            f"*{dict(zip(range(10), range(10), strict=True))}*",
         ]
     )
 
@@ -2851,6 +2903,100 @@ def test_format_trimmed() -> None:
 
     assert _format_trimmed(" ({}) ", msg, len(msg) + 4) == " (unconditional skip) "
     assert _format_trimmed(" ({}) ", msg, len(msg) + 3) == " (unconditional ...) "
+
+
+def test_warning_when_init_trumps_pyproject_toml(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)",
+        ]
+    )
+
+
+def test_warning_when_init_trumps_multiple_files(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    pytester.makeini(
+        """
+        # tox.ini
+        [pytest]
+        minversion = 6.0
+        addopts = -ra -q
+        testpaths =
+            tests
+            integration
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml, tox.ini!)",
+        ]
+    )
+
+
+def test_no_warning_when_init_but_pyproject_toml_has_no_entry(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini",
+        ]
+    )
+
+
+def test_no_warning_on_terminal_with_a_single_config_file(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pyproject.toml",
+        ]
+    )
 
 
 class TestFineGrainedTestCase:
@@ -3261,3 +3407,144 @@ class TestNodeIDHandling:
                 r".*test_foo.py::test_x\[a::b/\] .*FAILED.*",
             ]
         )
+
+
+class TestTerminalProgressPlugin:
+    """Tests for the TerminalProgressPlugin."""
+
+    @pytest.fixture
+    def mock_file(self) -> StringIO:
+        return StringIO()
+
+    @pytest.fixture
+    def mock_tr(self, mock_file: StringIO) -> pytest.TerminalReporter:
+        tr: pytest.TerminalReporter = mock.create_autospec(pytest.TerminalReporter)
+
+        def write_raw(content: str, *, flush: bool = False) -> None:
+            mock_file.write(content)
+
+        tr.write_raw = write_raw  # type: ignore[method-assign]
+        tr._progress_nodeids_reported = set()
+        return tr
+
+    @pytest.mark.skipif(sys.platform != "win32", reason="#13896")
+    def test_plugin_registration_enabled_by_default(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that the plugin registration is enabled by default.
+
+        Currently only on Windows (#13896).
+        """
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+        # The plugin module should be registered as a default plugin.
+        config = pytester.parseconfigure()
+        plugin = config.pluginmanager.get_plugin("terminalprogress")
+        assert plugin is not None
+
+    def test_plugin_registred_on_all_platforms_when_explicitly_requested(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that the plugin is registered on any platform if explicitly requested."""
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+        # The plugin module should be registered as a default plugin.
+        config = pytester.parseconfigure("-p", "terminalprogress")
+        plugin = config.pluginmanager.get_plugin("terminalprogress")
+        assert plugin is not None
+
+    def test_disabled_for_non_tty(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that plugin is disabled for non-TTY output."""
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
+        config = pytester.parseconfigure("-p", "terminalprogress")
+        plugin = config.pluginmanager.get_plugin("terminalprogress-plugin")
+        assert plugin is None
+
+    def test_disabled_for_dumb_terminal(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that plugin is disabled when TERM=dumb."""
+        monkeypatch.setenv("TERM", "dumb")
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+        config = pytester.parseconfigure("-p", "terminalprogress")
+        plugin = config.pluginmanager.get_plugin("terminalprogress-plugin")
+        assert plugin is None
+
+    @pytest.mark.parametrize(
+        ["state", "progress", "expected"],
+        [
+            ("indeterminate", None, "\x1b]9;4;3;\x1b\\"),
+            ("normal", 50, "\x1b]9;4;1;50\x1b\\"),
+            ("error", 75, "\x1b]9;4;2;75\x1b\\"),
+            ("paused", None, "\x1b]9;4;4;\x1b\\"),
+            ("paused", 80, "\x1b]9;4;4;80\x1b\\"),
+            ("remove", None, "\x1b]9;4;0;\x1b\\"),
+        ],
+    )
+    def test_emit_progress_sequences(
+        self,
+        mock_file: StringIO,
+        mock_tr: pytest.TerminalReporter,
+        state: Literal["remove", "normal", "error", "indeterminate", "paused"],
+        progress: int | None,
+        expected: str,
+    ) -> None:
+        """Test that progress sequences are emitted correctly."""
+        plugin = TerminalProgressPlugin(mock_tr)
+        plugin._emit_progress(state, progress)
+        assert expected in mock_file.getvalue()
+
+    def test_session_lifecycle(
+        self, mock_file: StringIO, mock_tr: pytest.TerminalReporter
+    ) -> None:
+        """Test progress updates during session lifecycle."""
+        plugin = TerminalProgressPlugin(mock_tr)
+
+        session = mock.create_autospec(pytest.Session)
+        session.testscollected = 3
+
+        # Session start - should emit indeterminate progress.
+        plugin.pytest_sessionstart(session)
+        assert "\x1b]9;4;3;\x1b\\" in mock_file.getvalue()
+        mock_file.truncate(0)
+        mock_file.seek(0)
+
+        # Collection finish - should emit 0% progress.
+        plugin.pytest_collection_finish()
+        assert "\x1b]9;4;1;0\x1b\\" in mock_file.getvalue()
+        mock_file.truncate(0)
+        mock_file.seek(0)
+
+        # First test - 33% progress.
+        report1 = pytest.TestReport(
+            nodeid="test_1",
+            location=("test.py", 0, "test_1"),
+            when="call",
+            outcome="passed",
+            keywords={},
+            longrepr=None,
+        )
+        mock_tr.reported_progress = 1  # type: ignore[misc]
+        plugin.pytest_runtest_logreport(report1)
+        assert "\x1b]9;4;1;33\x1b\\" in mock_file.getvalue()
+        mock_file.truncate(0)
+        mock_file.seek(0)
+
+        # Second test with failure - 66% in error state.
+        report2 = pytest.TestReport(
+            nodeid="test_2",
+            location=("test.py", 1, "test_2"),
+            when="call",
+            outcome="failed",
+            keywords={},
+            longrepr=None,
+        )
+        mock_tr.reported_progress = 2  # type: ignore[misc]
+        plugin.pytest_runtest_logreport(report2)
+        assert "\x1b]9;4;2;66\x1b\\" in mock_file.getvalue()
+        mock_file.truncate(0)
+        mock_file.seek(0)
+
+        # Session finish - should remove progress.
+        plugin.pytest_sessionfinish()
+        assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()

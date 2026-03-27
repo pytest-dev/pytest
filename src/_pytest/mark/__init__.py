@@ -7,11 +7,9 @@ from collections.abc import Collection
 from collections.abc import Iterable
 from collections.abc import Set as AbstractSet
 import dataclasses
-from typing import Optional
 from typing import TYPE_CHECKING
 
 from .expression import Expression
-from .expression import ParseError
 from .structures import _HiddenParam
 from .structures import EMPTY_PARAMETERSET_OPTION
 from .structures import get_empty_parameterset_mark
@@ -21,11 +19,11 @@ from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from _pytest.compat import NOTSET
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
-from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
 
@@ -45,7 +43,7 @@ __all__ = [
 ]
 
 
-old_mark_config_key = StashKey[Optional[Config]]()
+old_mark_config_key = StashKey[Config | None]()
 
 
 def param(
@@ -249,7 +247,7 @@ class MarkMatcher:
             return False
 
         for mark in matches:  # pylint: disable=consider-using-any-or-all
-            if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
+            if all(mark.kwargs.get(k, NOTSET) == v for k, v in kwargs.items()):
                 return True
         return False
 
@@ -275,8 +273,10 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
 def _parse_expression(expr: str, exc_message: str) -> Expression:
     try:
         return Expression.compile(expr)
-    except ParseError as e:
-        raise UsageError(f"{exc_message}: {expr}: {e}") from None
+    except SyntaxError as e:
+        raise UsageError(
+            f"{exc_message}: {e.text}: at column {e.offset}: {e.msg}"
+        ) from None
 
 
 def pytest_collection_modifyitems(items: list[Item], config: Config) -> None:

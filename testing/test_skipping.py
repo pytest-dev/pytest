@@ -1,7 +1,6 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-import sys
 import textwrap
 
 from _pytest.pytester import Pytester
@@ -448,8 +447,8 @@ class TestXFail:
         result = pytester.runpytest(p, "-rx")
         result.stdout.fnmatch_lines(
             [
-                "*test_one*test_this - reason: *NOTRUN* noway",
-                "*test_one*test_this_true - reason: *NOTRUN* condition: True",
+                "*test_one*test_this - *NOTRUN* noway",
+                "*test_one*test_this_true - *NOTRUN* condition: True",
                 "*1 passed*",
             ]
         )
@@ -492,7 +491,7 @@ class TestXFail:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["*1 xfailed*"])
         result = pytester.runpytest(p, "-rx")
-        result.stdout.fnmatch_lines(["*XFAIL*test_this*reason:*hello*"])
+        result.stdout.fnmatch_lines(["*XFAIL*test_this*hello*"])
         result = pytester.runpytest(p, "--runxfail")
         result.stdout.fnmatch_lines(["*1 pass*"])
 
@@ -510,7 +509,7 @@ class TestXFail:
         result = pytester.runpytest(p)
         result.stdout.fnmatch_lines(["*1 xfailed*"])
         result = pytester.runpytest(p, "-rx")
-        result.stdout.fnmatch_lines(["*XFAIL*test_this*reason:*hello*"])
+        result.stdout.fnmatch_lines(["*XFAIL*test_this*hello*"])
         result = pytester.runpytest(p, "--runxfail")
         result.stdout.fnmatch_lines(
             """
@@ -685,13 +684,14 @@ class TestXFail:
         assert result.ret == 0
 
     @pytest.mark.parametrize("strict_val", ["true", "false"])
+    @pytest.mark.parametrize("option_name", ["strict_xfail", "strict"])
     def test_strict_xfail_default_from_file(
-        self, pytester: Pytester, strict_val
+        self, pytester: Pytester, strict_val: str, option_name: str
     ) -> None:
         pytester.makeini(
             f"""
             [pytest]
-            xfail_strict = {strict_val}
+            {option_name} = {strict_val}
         """
         )
         p = pytester.makepyfile(
@@ -1136,22 +1136,13 @@ def test_errors_in_xfail_skip_expressions(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    markline = "            ^"
-    pypy_version_info = getattr(sys, "pypy_version_info", None)
-    if pypy_version_info is not None:
-        markline = markline[7:]
 
-    if sys.version_info >= (3, 10):
-        expected = [
-            "*ERROR*test_nameerror*",
-            "*asd*",
-            "",
-            "During handling of the above exception, another exception occurred:",
-        ]
-    else:
-        expected = [
-            "*ERROR*test_nameerror*",
-        ]
+    expected = [
+        "*ERROR*test_nameerror*",
+        "*asd*",
+        "",
+        "During handling of the above exception, another exception occurred:",
+    ]
 
     expected += [
         "*evaluating*skipif*condition*",
@@ -1159,7 +1150,7 @@ def test_errors_in_xfail_skip_expressions(pytester: Pytester) -> None:
         "*ERROR*test_syntax*",
         "*evaluating*xfail*condition*",
         "    syntax error",
-        markline,
+        "            ^",
         "SyntaxError: invalid syntax",
         "*1 pass*2 errors*",
     ]
@@ -1188,7 +1179,7 @@ def test_default_markers(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*skipif(condition, ..., [*], reason=...)*skip*",
-            "*xfail(condition, ..., [*], reason=..., run=True, raises=None, strict=xfail_strict)*expected failure*",
+            "*xfail(condition, ..., [*], reason=..., run=True, raises=None, strict=strict_xfail)*expected failure*",
         ]
     )
 
@@ -1314,7 +1305,7 @@ def test_xfail_item(pytester: Pytester) -> None:
     """
     )
     result = pytester.inline_run()
-    passed, skipped, failed = result.listoutcomes()
+    _passed, skipped, failed = result.listoutcomes()
     assert not failed
     xfailed = [r for r in skipped if hasattr(r, "wasxfail")]
     assert xfailed
@@ -1388,7 +1379,7 @@ def test_mark_xfail_item(pytester: Pytester) -> None:
     """
     )
     result = pytester.inline_run()
-    passed, skipped, failed = result.listoutcomes()
+    _passed, skipped, failed = result.listoutcomes()
     assert not failed
     xfailed = [r for r in skipped if hasattr(r, "wasxfail")]
     assert xfailed
@@ -1416,7 +1407,7 @@ def test_summary_list_after_errors(pytester: Pytester) -> None:
 def test_importorskip() -> None:
     with pytest.raises(
         pytest.skip.Exception,
-        match="^could not import 'doesnotexist': No module named .*",
+        match=r"^could not import 'doesnotexist': No module named .*",
     ):
         pytest.importorskip("doesnotexist")
 

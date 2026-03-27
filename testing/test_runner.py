@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import sys
 import types
-import warnings
 
 from _pytest import outcomes
 from _pytest import reports
@@ -799,50 +798,29 @@ def test_importorskip_imports_last_module_part() -> None:
 
 
 class TestImportOrSkipExcType:
-    """Tests for #11523."""
+    """Tests for importorskip's exc_type behavior."""
 
-    def test_no_warning(self) -> None:
-        # An attempt on a module which does not exist will raise ModuleNotFoundError, so it will
-        # be skipped normally and no warning will be issued.
-        with warnings.catch_warnings(record=True) as captured:
-            warnings.simplefilter("always")
+    def test_module_not_found_skips_by_default(self) -> None:
+        with pytest.raises(pytest.skip.Exception):
+            pytest.importorskip(
+                "TestImportOrSkipExcType_test_module_not_found_skips_without_warning"
+            )
 
-            with pytest.raises(pytest.skip.Exception):
-                pytest.importorskip("TestImportOrSkipExcType_test_no_warning")
-
-        assert captured == []
-
-    def test_import_error_with_warning(self, pytester: Pytester) -> None:
-        # Create a module which exists and can be imported, however it raises
-        # ImportError due to some other problem. In this case we will issue a warning
-        # about the future behavior change.
+    def test_import_error_is_propagated_by_default(self, pytester: Pytester) -> None:
         fn = pytester.makepyfile("raise ImportError('some specific problem')")
         pytester.syspathinsert()
 
-        with warnings.catch_warnings(record=True) as captured:
-            warnings.simplefilter("always")
+        with pytest.raises(ImportError, match="some specific problem"):
+            pytest.importorskip(fn.stem)
 
-            with pytest.raises(pytest.skip.Exception):
-                pytest.importorskip(fn.stem)
-
-        [warning] = captured
-        assert warning.category is pytest.PytestDeprecationWarning
-
-    def test_import_error_suppress_warning(self, pytester: Pytester) -> None:
-        # Same as test_import_error_with_warning, but we can suppress the warning
-        # by passing ImportError as exc_type.
+    def test_import_error_can_be_captured_explicitly(self, pytester: Pytester) -> None:
         fn = pytester.makepyfile("raise ImportError('some specific problem')")
         pytester.syspathinsert()
 
-        with warnings.catch_warnings(record=True) as captured:
-            warnings.simplefilter("always")
+        with pytest.raises(pytest.skip.Exception):
+            pytest.importorskip(fn.stem, exc_type=ImportError)
 
-            with pytest.raises(pytest.skip.Exception):
-                pytest.importorskip(fn.stem, exc_type=ImportError)
-
-        assert captured == []
-
-    def test_warning_integration(self, pytester: Pytester) -> None:
+    def test_import_error_integration(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
             import pytest
@@ -857,12 +835,9 @@ class TestImportOrSkipExcType:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            [
-                "*Module 'warning_integration_module' was found, but when imported by pytest it raised:",
-                "*      ImportError('required library foobar not compiled properly')",
-                "*1 skipped, 1 warning*",
-            ]
+            ["*ImportError: required library foobar not compiled properly*"]
         )
+        result.assert_outcomes(failed=1)
 
 
 def test_importorskip_dev_module(monkeypatch) -> None:

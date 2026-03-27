@@ -6,18 +6,24 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
+from collections.abc import Iterator
+from enum import auto
+from enum import Enum
 import inspect
 import sys
 import traceback
 import types
 from typing import Any
 from typing import TYPE_CHECKING
-from typing import Union
+from unittest import TestCase
 
 import _pytest._code
+from _pytest._code import ExceptionInfo
+from _pytest.compat import assert_never
 from _pytest.compat import is_async_function
 from _pytest.config import hookimpl
 from _pytest.fixtures import FixtureRequest
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import exit
@@ -28,22 +34,25 @@ from _pytest.python import Class
 from _pytest.python import Function
 from _pytest.python import Module
 from _pytest.runner import CallInfo
-import pytest
+from _pytest.runner import check_interactive_exception
+from _pytest.subtests import SubtestContext
+from _pytest.subtests import SubtestReport
 
 
 if sys.version_info[:2] < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 if TYPE_CHECKING:
+    from types import TracebackType
     import unittest
 
     import twisted.trial.unittest
 
 
-_SysExcInfoType = Union[
-    tuple[type[BaseException], BaseException, types.TracebackType],
-    tuple[None, None, None],
-]
+_SysExcInfoType = (
+    tuple[type[BaseException], BaseException, types.TracebackType]
+    | tuple[None, None, None]
+)
 
 
 def pytest_pycollect_makeitem(
@@ -139,7 +148,7 @@ class UnitTestCase(Class):
             cls = request.cls
             if _is_skipped(cls):
                 reason = cls.__unittest_skip_why__
-                raise pytest.skip.Exception(reason, _use_item_location=True)
+                raise skip.Exception(reason, _use_item_location=True)
             if setup is not None:
                 try:
                     setup()
@@ -180,7 +189,7 @@ class UnitTestCase(Class):
             self = request.instance
             if _is_skipped(self):
                 reason = self.__unittest_skip_why__
-                raise pytest.skip.Exception(reason, _use_item_location=True)
+                raise skip.Exception(reason, _use_item_location=True)
             if setup is not None:
                 setup(self, request.function)
             yield
@@ -199,6 +208,7 @@ class UnitTestCase(Class):
 
 class TestCaseFunction(Function):
     nofuncargs = True
+    failfast = False
     _excinfo: list[_pytest._code.ExceptionInfo[BaseException]] | None = None
 
     def _getinstance(self):
@@ -215,6 +225,10 @@ class TestCaseFunction(Function):
         # A bound method to be called during teardown() if set (see 'runtest()').
         self._explicit_tearDown: Callable[[], None] | None = None
         super().setup()
+        if sys.version_info < (3, 11):
+            # A cache of the subTest errors and non-subtest skips in self._outcome.
+            # Compute and cache these lists once, instead of computing them again and again for each subtest (#13965).
+            self._cached_errors_and_skips: tuple[list[Any], list[Any]] | None = None
 
     def teardown(self) -> None:
         if self._explicit_tearDown is not None:
@@ -228,8 +242,7 @@ class TestCaseFunction(Function):
         pass
 
     def _addexcinfo(self, rawexcinfo: _SysExcInfoType) -> None:
-        # Unwrap potential exception info (see twisted trial support below).
-        rawexcinfo = getattr(rawexcinfo, "_rawexcinfo", rawexcinfo)
+        rawexcinfo = _handle_twisted_exc_info(rawexcinfo)
         try:
             excinfo = _pytest._code.ExceptionInfo[BaseException].from_exc_info(
                 rawexcinfo  # type: ignore[arg-type]
@@ -277,11 +290,38 @@ class TestCaseFunction(Function):
     ) -> None:
         self._addexcinfo(rawexcinfo)
 
-    def addSkip(self, testcase: unittest.TestCase, reason: str) -> None:
-        try:
-            raise pytest.skip.Exception(reason, _use_item_location=True)
-        except skip.Exception:
-            self._addexcinfo(sys.exc_info())
+    def addSkip(
+        self, testcase: unittest.TestCase, reason: str, *, handle_subtests: bool = True
+    ) -> None:
+        from unittest.case import _SubTest  # type: ignore[attr-defined]
+
+        def add_skip() -> None:
+            try:
+                raise skip.Exception(reason, _use_item_location=True)
+            except skip.Exception:
+                self._addexcinfo(sys.exc_info())
+
+        if not handle_subtests:
+            add_skip()
+            return
+
+        if isinstance(testcase, _SubTest):
+            add_skip()
+            if self._excinfo is not None:
+                exc_info = self._excinfo[-1]
+                self.addSubTest(testcase.test_case, testcase, exc_info)
+        else:
+            # For python < 3.11: the non-subtest skips have to be added by `add_skip` only after all subtest
+            # failures are processed by `_addSubTest`: `self.instance._outcome` has no attribute
+            # `skipped/errors` anymore.
+            # We also need to check if `self.instance._outcome` is `None` (this happens if the test
+            # class/method is decorated with `unittest.skip`, see pytest-dev/pytest-subtests#173).
+            if sys.version_info < (3, 11) and self.instance._outcome is not None:
+                subtest_errors, _ = self._obtain_errors_and_skips()
+                if len(subtest_errors) == 0:
+                    add_skip()
+            else:
+                add_skip()
 
     def addExpectedFailure(
         self,
@@ -361,6 +401,88 @@ class TestCaseFunction(Function):
             ntraceback = traceback
         return ntraceback
 
+    def addSubTest(
+        self,
+        test_case: Any,
+        test: TestCase,
+        exc_info: ExceptionInfo[BaseException]
+        | tuple[type[BaseException], BaseException, TracebackType]
+        | None,
+    ) -> None:
+        # Importing this private symbol locally in case this symbol is renamed/removed in the future; importing
+        # it globally would break pytest entirely, importing it locally only will break unittests using `addSubTest`.
+        from unittest.case import _subtest_msg_sentinel  # type: ignore[attr-defined]
+
+        exception_info: ExceptionInfo[BaseException] | None
+        match exc_info:
+            case tuple():
+                exception_info = ExceptionInfo(exc_info, _ispytest=True)
+            case ExceptionInfo() | None:
+                exception_info = exc_info
+            case unreachable:
+                assert_never(unreachable)
+
+        call_info = CallInfo[None](
+            None,
+            exception_info,
+            start=0,
+            stop=0,
+            duration=0,
+            when="call",
+            _ispytest=True,
+        )
+        msg = None if test._message is _subtest_msg_sentinel else str(test._message)  # type: ignore[attr-defined]
+        report = self.ihook.pytest_runtest_makereport(item=self, call=call_info)
+        sub_report = SubtestReport._new(
+            report,
+            SubtestContext(msg=msg, kwargs=dict(test.params)),  # type: ignore[attr-defined]
+            captured_output=None,
+            captured_logs=None,
+        )
+        self.ihook.pytest_runtest_logreport(report=sub_report)
+        if check_interactive_exception(call_info, sub_report):
+            self.ihook.pytest_exception_interact(
+                node=self, call=call_info, report=sub_report
+            )
+
+        # For python < 3.11: add non-subtest skips once all subtest failures are processed by # `_addSubTest`.
+        if sys.version_info < (3, 11):
+            subtest_errors, non_subtest_skip = self._obtain_errors_and_skips()
+
+            # Check if we have non-subtest skips: if there are also sub failures, non-subtest skips are not treated in
+            # `_addSubTest` and have to be added using `add_skip` after all subtest failures are processed.
+            if len(non_subtest_skip) > 0 and len(subtest_errors) > 0:
+                # Make sure we have processed the last subtest failure
+                last_subset_error = subtest_errors[-1]
+                if exc_info is last_subset_error[-1]:
+                    # Add non-subtest skips (as they could not be treated in `_addSkip`)
+                    for testcase, reason in non_subtest_skip:
+                        self.addSkip(testcase, reason, handle_subtests=False)
+
+    def _obtain_errors_and_skips(self) -> tuple[list[Any], list[Any]]:
+        """Compute or obtain the cached values for subtest errors and non-subtest skips."""
+        from unittest.case import _SubTest  # type: ignore[attr-defined]
+
+        assert sys.version_info < (3, 11), (
+            "This workaround only should be used in Python 3.10"
+        )
+        if self._cached_errors_and_skips is not None:
+            return self._cached_errors_and_skips
+
+        subtest_errors = [
+            (x, y)
+            for x, y in self.instance._outcome.errors
+            if isinstance(x, _SubTest) and y is not None
+        ]
+
+        non_subtest_skips = [
+            (x, y)
+            for x, y in self.instance._outcome.skipped
+            if not isinstance(x, _SubTest)
+        ]
+        self._cached_errors_and_skips = (subtest_errors, non_subtest_skips)
+        return subtest_errors, non_subtest_skips
+
 
 @hookimpl(tryfirst=True)
 def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
@@ -373,61 +495,138 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]) -> None:
                 pass
 
     # Convert unittest.SkipTest to pytest.skip.
-    # This is actually only needed for nose, which reuses unittest.SkipTest for
-    # its own nose.SkipTest. For unittest TestCases, SkipTest is already
-    # handled internally, and doesn't reach here.
+    # This covers explicit `raise unittest.SkipTest`.
     unittest = sys.modules.get("unittest")
     if unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest):
         excinfo = call.excinfo
-        call2 = CallInfo[None].from_call(
-            lambda: pytest.skip(str(excinfo.value)), call.when
-        )
+        call2 = CallInfo[None].from_call(lambda: skip(str(excinfo.value)), call.when)
         call.excinfo = call2.excinfo
-
-
-# Twisted trial support.
-classImplements_has_run = False
-
-
-@hookimpl(wrapper=True)
-def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
-    if isinstance(item, TestCaseFunction) and "twisted.trial.unittest" in sys.modules:
-        ut: Any = sys.modules["twisted.python.failure"]
-        global classImplements_has_run
-        Failure__init__ = ut.Failure.__init__
-        if not classImplements_has_run:
-            from twisted.trial.itrial import IReporter
-            from zope.interface import classImplements
-
-            classImplements(TestCaseFunction, IReporter)
-            classImplements_has_run = True
-
-        def excstore(
-            self, exc_value=None, exc_type=None, exc_tb=None, captureVars=None
-        ):
-            if exc_value is None:
-                self._rawexcinfo = sys.exc_info()
-            else:
-                if exc_type is None:
-                    exc_type = type(exc_value)
-                self._rawexcinfo = (exc_type, exc_value, exc_tb)
-            try:
-                Failure__init__(
-                    self, exc_value, exc_type, exc_tb, captureVars=captureVars
-                )
-            except TypeError:
-                Failure__init__(self, exc_value, exc_type, exc_tb)
-
-        ut.Failure.__init__ = excstore
-        try:
-            res = yield
-        finally:
-            ut.Failure.__init__ = Failure__init__
-    else:
-        res = yield
-    return res
 
 
 def _is_skipped(obj) -> bool:
     """Return True if the given object has been marked with @unittest.skip."""
     return bool(getattr(obj, "__unittest_skip__", False))
+
+
+def pytest_configure() -> None:
+    """Register the TestCaseFunction class as an IReporter if twisted.trial is available."""
+    if _get_twisted_version() is not TwistedVersion.NotInstalled:
+        from twisted.trial.itrial import IReporter
+        from zope.interface import classImplements
+
+        classImplements(TestCaseFunction, IReporter)
+
+
+class TwistedVersion(Enum):
+    """
+    The Twisted version installed in the environment.
+
+    We have different workarounds in place for different versions of Twisted.
+    """
+
+    # Twisted version 24 or prior.
+    Version24 = auto()
+    # Twisted version 25 or later.
+    Version25 = auto()
+    # Twisted version is not available.
+    NotInstalled = auto()
+
+
+def _get_twisted_version() -> TwistedVersion:
+    # We need to check if "twisted.trial.unittest" is specifically present in sys.modules.
+    # This is because we intend to integrate with Trial only when it's actively running
+    # the test suite, but not needed when only other Twisted components are in use.
+    if "twisted.trial.unittest" not in sys.modules:
+        return TwistedVersion.NotInstalled
+
+    import importlib.metadata
+
+    import packaging.version
+
+    version_str = importlib.metadata.version("twisted")
+    version = packaging.version.parse(version_str)
+    if version.major <= 24:
+        return TwistedVersion.Version24
+    else:
+        return TwistedVersion.Version25
+
+
+# Name of the attribute in `twisted.python.Failure` instances that stores
+# the `sys.exc_info()` tuple.
+# See twisted.trial support in `pytest_runtest_protocol`.
+TWISTED_RAW_EXCINFO_ATTR = "_twisted_raw_excinfo"
+
+
+@hookimpl(wrapper=True)
+def pytest_runtest_protocol(item: Item) -> Iterator[None]:
+    if _get_twisted_version() is TwistedVersion.Version24:
+        import twisted.python.failure as ut
+
+        # Monkeypatch `Failure.__init__` to store the raw exception info.
+        original__init__ = ut.Failure.__init__
+
+        def store_raw_exception_info(
+            self, exc_value=None, exc_type=None, exc_tb=None, captureVars=None
+        ):  # pragma: no cover
+            if exc_value is None:
+                raw_exc_info = sys.exc_info()
+            else:
+                if exc_type is None:
+                    exc_type = type(exc_value)
+                if exc_tb is None:
+                    exc_tb = sys.exc_info()[2]
+                raw_exc_info = (exc_type, exc_value, exc_tb)
+            setattr(self, TWISTED_RAW_EXCINFO_ATTR, tuple(raw_exc_info))
+            try:
+                original__init__(
+                    self, exc_value, exc_type, exc_tb, captureVars=captureVars
+                )
+            except TypeError:  # pragma: no cover
+                original__init__(self, exc_value, exc_type, exc_tb)
+
+        with MonkeyPatch.context() as patcher:
+            patcher.setattr(ut.Failure, "__init__", store_raw_exception_info)
+            return (yield)
+    else:
+        return (yield)
+
+
+def _handle_twisted_exc_info(
+    rawexcinfo: _SysExcInfoType | BaseException,
+) -> _SysExcInfoType:
+    """
+    Twisted passes a custom Failure instance to `addError()` instead of using `sys.exc_info()`.
+    Therefore, if `rawexcinfo` is a `Failure` instance, convert it into the equivalent `sys.exc_info()` tuple
+    as expected by pytest.
+    """
+    twisted_version = _get_twisted_version()
+    if twisted_version is TwistedVersion.NotInstalled:
+        # Unfortunately, because we cannot import `twisted.python.failure` at the top of the file
+        # and use it in the signature, we need to use `type:ignore` here because we cannot narrow
+        # the type properly in the `if` statement above.
+        return rawexcinfo  # type:ignore[return-value]
+    elif twisted_version is TwistedVersion.Version24:
+        # Twisted calls addError() passing its own classes (like `twisted.python.Failure`), which violates
+        # the `addError()` signature, so we extract the original `sys.exc_info()` tuple which is stored
+        # in the object.
+        if hasattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR):
+            saved_exc_info = getattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR)
+            # Delete the attribute from the original object to avoid leaks.
+            delattr(rawexcinfo, TWISTED_RAW_EXCINFO_ATTR)
+            return saved_exc_info  # type:ignore[no-any-return]
+        return rawexcinfo  # type:ignore[return-value]
+    elif twisted_version is TwistedVersion.Version25:
+        if isinstance(rawexcinfo, BaseException):
+            import twisted.python.failure
+
+            if isinstance(rawexcinfo, twisted.python.failure.Failure):
+                tb = rawexcinfo.__traceback__
+                if tb is None:
+                    tb = sys.exc_info()[2]
+                return type(rawexcinfo.value), rawexcinfo.value, tb
+
+        return rawexcinfo  # type:ignore[return-value]
+    else:
+        # Ideally we would use assert_never() here, but it is not available in all Python versions
+        # we support, plus we do not require `type_extensions` currently.
+        assert False, f"Unexpected Twisted version: {twisted_version}"

@@ -79,7 +79,7 @@ To execute it::
     ========================== 1 failed in 0.04 seconds ===========================
 
 
-Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <https://docs.pytest.org/en/stable/getting-started.html#our-first-test-run>`_ for more examples.
+Thanks to ``pytest``'s detailed assertion introspection, you can simply use plain ``assert`` statements. See `getting-started <https://docs.pytest.org/en/stable/getting-started.html#our-first-test-run>`_ for more examples.
 
 
 Features
@@ -97,7 +97,7 @@ Features
 - Can run `unittest <https://docs.pytest.org/en/stable/how-to/unittest.html>`_ (or trial)
   test suites out of the box
 
-- Python 3.9+ or PyPy3
+- Python 3.10+ or PyPy3
 
 - Rich plugin architecture, with over 1300+ `external plugins <https://docs.pytest.org/en/latest/reference/plugin_list.html>`_ and thriving community
 

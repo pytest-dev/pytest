@@ -513,7 +513,7 @@ class LogCaptureFixture:
 
         if isinstance(level, str):
             # Try to translate the level string to an int for `logging.disable()`
-            level = logging.getLevelName(level)
+            level = logging.getLevelName(level)  # type: ignore[deprecated]
 
         if not isinstance(level, int):
             # The level provided was not valid, so just un-disable all logging.
@@ -809,6 +809,7 @@ class LoggingPlugin:
     def pytest_runtest_logreport(self) -> None:
         self.log_cli_handler.set_when("logreport")
 
+    @contextmanager
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None]:
         """Implement the internals of the pytest_runtest_xxx() hooks."""
         with (
@@ -838,20 +839,23 @@ class LoggingPlugin:
 
         empty: dict[str, list[logging.LogRecord]] = {}
         item.stash[caplog_records_key] = empty
-        yield from self._runtest_for(item, "setup")
+        with self._runtest_for(item, "setup"):
+            yield
 
     @hookimpl(wrapper=True)
     def pytest_runtest_call(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("call")
 
-        yield from self._runtest_for(item, "call")
+        with self._runtest_for(item, "call"):
+            yield
 
     @hookimpl(wrapper=True)
     def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("teardown")
 
         try:
-            yield from self._runtest_for(item, "teardown")
+            with self._runtest_for(item, "teardown"):
+                yield
         finally:
             del item.stash[caplog_records_key]
             del item.stash[caplog_handler_key]

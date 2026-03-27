@@ -1,1 +1,0 @@
-Using :ref:`pytest.mark.usefixtures <pytest.mark.usefixtures ref>` on :func:`pytest.param` now produces an error instead of silently doing nothing.

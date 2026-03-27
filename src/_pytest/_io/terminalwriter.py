@@ -161,20 +161,23 @@ class TerminalWriter:
 
             msg = self.markup(msg, **markup)
 
-            try:
-                self._file.write(msg)
-            except UnicodeEncodeError:
-                # Some environments don't support printing general Unicode
-                # strings, due to misconfiguration or otherwise; in that case,
-                # print the string escaped to ASCII.
-                # When the Unicode situation improves we should consider
-                # letting the error propagate instead of masking it (see #7475
-                # for one brief attempt).
-                msg = msg.encode("unicode-escape").decode("ascii")
-                self._file.write(msg)
+            self.write_raw(msg, flush=flush)
 
-            if flush:
-                self.flush()
+    def write_raw(self, msg: str, *, flush: bool = False) -> None:
+        try:
+            self._file.write(msg)
+        except UnicodeEncodeError:
+            # Some environments don't support printing general Unicode
+            # strings, due to misconfiguration or otherwise; in that case,
+            # print the string escaped to ASCII.
+            # When the Unicode situation improves we should consider
+            # letting the error propagate instead of masking it (see #7475
+            # for one brief attempt).
+            msg = msg.encode("unicode-escape").decode("ascii")
+            self._file.write(msg)
+
+        if flush:
+            self.flush()
 
     def line(self, s: str = "", **markup: bool) -> None:
         self.write(s, **markup)
@@ -198,7 +201,8 @@ class TerminalWriter:
             indents = [""] * len(lines)
         source = "\n".join(lines)
         new_lines = self._highlight(source).splitlines()
-        for indent, new_line in zip(indents, new_lines):
+        # Would be better to strict=True but that fails some CI jobs.
+        for indent, new_line in zip(indents, new_lines, strict=False):
             self.line(indent + new_line)
 
     def _get_pygments_lexer(self, lexer: Literal["python", "diff"]) -> Lexer:

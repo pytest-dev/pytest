@@ -120,12 +120,21 @@ This means that any subsequent try to activate/load the named
 plugin will not work.
 
 If you want to unconditionally disable a plugin for a project, you can add
-this option to your ``pytest.ini`` file:
+this option to your configuration file:
 
-.. code-block:: ini
+.. tab:: toml
 
-      [pytest]
-      addopts = -p no:NAME
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["-p", "no:NAME"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = -p no:NAME
 
 Alternatively to disable it only in certain environments (for example in a
 CI server), you can set ``PYTEST_ADDOPTS`` environment variable to
@@ -139,7 +148,7 @@ Disabling plugins from autoloading
 ----------------------------------
 
 If you want to disable plugins from loading automatically, instead of requiring you to
-manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can use ``--disable-plugin-autoload`` or :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD`.
+manually specify each plugin with :option:`-p` or :envvar:`PYTEST_PLUGINS`, you can use :option:`--disable-plugin-autoload` or :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD`.
 
 .. code-block:: bash
 
@@ -149,13 +158,53 @@ manually specify each plugin with ``-p`` or :envvar:`PYTEST_PLUGINS`, you can us
 
 .. code-block:: bash
 
-   pytest --disable-plugin-autoload -p NAME,NAME2
+   pytest --disable-plugin-autoload -p NAME -p NAME2
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    addopts = --disable-plugin-autoload -p NAME,NAME2
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["--disable-plugin-autoload", "-p", "NAME", "-p", "NAME2"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts =
+            --disable-plugin-autoload
+            -p NAME
+            -p NAME2
 
 .. versionadded:: 8.4
 
-   The ``--disable-plugin-autoload`` command-line flag.
+   The :option:`--disable-plugin-autoload` command-line flag.
+
+.. note::
+
+   :option:`-p` and :envvar:`PYTEST_PLUGINS` are both ways to explicitly control which
+   plugins are loaded, but they serve slightly different use-cases.
+
+   * :option:`-p` loads (or disables with ``-p no:<name>``) a plugin by name or entry point
+     for a specific pytest invocation, and is processed early during startup.
+   * :envvar:`PYTEST_PLUGINS` is a comma-separated list of Python modules that are imported
+     and registered as plugins during startup. This mechanism is commonly used by test
+     suites, for example when testing a plugin.
+
+   When explicitly controlling plugin loading (especially with
+   :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD` or :option:`--disable-plugin-autoload`),
+   avoid specifying the same plugin via multiple mechanisms. Registering the same plugin
+   more than once can lead to errors during plugin registration.
+
+Examples:
+
+.. code-block:: bash
+
+   # Disable auto-loading and load only specific plugins for this invocation
+   PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -p xdist
+
+.. code-block:: bash
+
+   # Disable auto-loading and load plugin modules during startup
+   PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTEST_PLUGINS=mymodule.plugin,xdist pytest

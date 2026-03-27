@@ -964,7 +964,7 @@ class TestImportLibMode:
         )
 
         # unit test
-        __import__(name)  # import standard library
+        importlib.import_module(name)  # import standard library
 
         import_path(  # import user files
             file_path,
@@ -1177,24 +1177,24 @@ class TestImportLibMode:
 
         # Create another x.py module, but in some subdirectories to ensure it is not
         # accessible from sys.path.
-        x_in_sub_folder = pytester.path / "a/b/x.py"
-        x_in_sub_folder.parent.mkdir(parents=True)
-        x_in_sub_folder.write_text("X = 'a/b/x'", encoding="ascii")
+        x_in_sub_dir = pytester.path / "a/b/x.py"
+        x_in_sub_dir.parent.mkdir(parents=True)
+        x_in_sub_dir.write_text("X = 'a/b/x'", encoding="ascii")
 
         # Import our x.py module from the subdirectories.
         # The 'x.py' module from sys.path was not imported for sure because
         # otherwise we would get an AssertionError.
         mod = import_path(
-            x_in_sub_folder,
+            x_in_sub_dir,
             mode=ImportMode.importlib,
             root=pytester.path,
             consider_namespace_packages=ns_param,
         )
-        assert mod.__file__ and Path(mod.__file__) == x_in_sub_folder
+        assert mod.__file__ and Path(mod.__file__) == x_in_sub_dir
         assert mod.X == "a/b/x"
 
         mod2 = import_path(
-            x_in_sub_folder,
+            x_in_sub_dir,
             mode=ImportMode.importlib,
             root=pytester.path,
             consider_namespace_packages=ns_param,
@@ -1624,7 +1624,7 @@ class TestNamespacePackages:
                 return None
 
         # Setup directories without configuring sys.path.
-        models_py, algorithms_py = self.setup_directories(
+        models_py, _algorithms_py = self.setup_directories(
             tmp_path, monkeypatch=None, pytester=pytester
         )
         com_root_1 = tmp_path / "src/dist1/com"

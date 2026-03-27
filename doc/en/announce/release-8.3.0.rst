@@ -24,7 +24,7 @@ Thanks to all of the contributors to this release:
 * Bruno Oliveira
 * Cornelius Riemenschneider
 * Farbod Ahmadian
-* Florian Bruhin
+* Freya Bruhin
 * Hynek Schlawack
 * James Frost
 * Jason R. Coombs

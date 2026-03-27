@@ -27,7 +27,7 @@ Thanks to all who contributed to this release, among them:
 * Daniel Hahler
 * Dirk Thomas
 * Dmitry Malinovsky
-* Florian Bruhin
+* Freya Bruhin
 * George Y. Kussumoto
 * Hugo
 * Jesús Espino

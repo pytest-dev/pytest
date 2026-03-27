@@ -137,7 +137,7 @@ class NeverRaised(Exception):
 
 class Visitor:
     def __init__(self, fil, rec, ignore, bf, sort):
-        if isinstance(fil, str):
+        if isinstance(fil, (str, bytes)):
             fil = FNMatcher(fil)
         if isinstance(rec, str):
             self.rec: Callable[[LocalPath], bool] = FNMatcher(rec)
@@ -432,7 +432,7 @@ class LocalPath:
         """Return a string which is the relative part of the path
         to the given 'relpath'.
         """
-        if not isinstance(relpath, (str, LocalPath)):
+        if not isinstance(relpath, str | LocalPath):
             raise TypeError(f"{relpath!r}: not a string or path object")
         strrelpath = str(relpath)
         if strrelpath and strrelpath[-1] != self.sep:
@@ -652,7 +652,7 @@ class LocalPath:
         if not kw:
             obj.strpath = self.strpath
             return obj
-        drive, dirname, basename, purebasename, ext = self._getbyspec(
+        drive, dirname, _basename, purebasename, ext = self._getbyspec(
             "drive,dirname,basename,purebasename,ext"
         )
         if "basename" in kw:

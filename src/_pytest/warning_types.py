@@ -50,8 +50,8 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     __module__ = "pytest"
 
 
-class PytestRemovedIn9Warning(PytestDeprecationWarning):
-    """Warning class for features that will be removed in pytest 9."""
+class PytestRemovedIn10Warning(PytestDeprecationWarning):
+    """Warning class for features that will be removed in pytest 10."""
 
     __module__ = "pytest"
 
@@ -69,6 +69,17 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     @classmethod
     def simple(cls, apiname: str) -> PytestExperimentalApiWarning:
         return cls(f"{apiname} is an experimental api that may change over time")
+
+
+@final
+class PytestReturnNotNoneWarning(PytestWarning):
+    """
+    Warning emitted when a test function returns a value other than ``None``.
+
+    See :ref:`return-not-none` for details.
+    """
+
+    __module__ = "pytest"
 
 
 @final

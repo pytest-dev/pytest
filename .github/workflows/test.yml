@@ -20,6 +20,8 @@ on:
     - reopened  # default
     - ready_for_review  # used in PRs created from the release workflow
 
+  workflow_dispatch:  # allows manual triggering of the workflow
+
 env:
   PYTEST_ADDOPTS: "--color=yes"
 
@@ -35,12 +37,12 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@v2.12.0
+      uses: hynek/build-and-inspect-python-package@efb823f52190ad02594531168b7a2d5790e66516
 
   build:
     needs: [package]
@@ -54,51 +56,65 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py39-unittestextras",
-          "windows-py39-pluggy",
-          "windows-py39-xdist",
-          "windows-py310",
+          "windows-py310-unittest-asynctest",
+          "windows-py310-unittest-twisted24",
+          "windows-py310-unittest-twisted25",
+          "windows-py310-pluggy",
+          "windows-py310-xdist",
           "windows-py311",
           "windows-py312",
           "windows-py313",
+          "windows-py314",
 
-          "ubuntu-py39-lsof-numpy-pexpect",
-          "ubuntu-py39-pluggy",
-          "ubuntu-py39-freeze",
-          "ubuntu-py39-xdist",
+          "ubuntu-py310-unittest-asynctest",
+          "ubuntu-py310-unittest-twisted24",
+          "ubuntu-py310-unittest-twisted25",
+          "ubuntu-py310-lsof-numpy-pexpect",
+          "ubuntu-py310-pluggy",
+          "ubuntu-py310-freeze",
           "ubuntu-py310-xdist",
           "ubuntu-py311",
           "ubuntu-py312",
           "ubuntu-py313-pexpect",
+          "ubuntu-py314",
           "ubuntu-pypy3-xdist",
 
-          "macos-py39",
           "macos-py310",
           "macos-py312",
           "macos-py313",
+          "macos-py314",
 
           "doctesting",
           "plugins",
         ]
 
         include:
-          - name: "windows-py39-unittestextras"
-            python: "3.9"
+          # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
+          - name: "windows-py310-unittest-asynctest"
+            python: "3.10"
             os: windows-latest
-            tox_env: "py39-unittestextras"
+            tox_env: "py310-asynctest"
             use_coverage: true
 
-          - name: "windows-py39-pluggy"
-            python: "3.9"
+          - name: "windows-py310-unittest-twisted24"
+            python: "3.10"
             os: windows-latest
-            tox_env: "py39-pluggymain-pylib-xdist"
+            tox_env: "py310-twisted24"
+            use_coverage: true
 
-          - name: "windows-py39-xdist"
-            python: "3.9"
+          - name: "windows-py310-unittest-twisted25"
+            python: "3.10"
             os: windows-latest
-            tox_env: "py39-xdist"
+            tox_env: "py310-twisted25"
+            use_coverage: true
 
-          - name: "windows-py310"
+          - name: "windows-py310-pluggy"
+            python: "3.10"
+            os: windows-latest
+            tox_env: "py310-pluggymain-pylib-xdist"
+            xfail: true
+
+          - name: "windows-py310-xdist"
             python: "3.10"
             os: windows-latest
             tox_env: "py310-xdist"
@@ -117,28 +133,50 @@ jobs:
             python: "3.13"
             os: windows-latest
             tox_env: "py313"
+            xfail: true
 
-
-          - name: "ubuntu-py39-lsof-numpy-pexpect"
-            python: "3.9"
-            os: ubuntu-latest
-            tox_env: "py39-lsof-numpy-pexpect"
+          - name: "windows-py314"
+            python: "3.14"
+            os: windows-latest
+            tox_env: "py314"
             use_coverage: true
 
-          - name: "ubuntu-py39-pluggy"
-            python: "3.9"
+          # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
+          - name: "ubuntu-py310-unittest-asynctest"
+            python: "3.10"
             os: ubuntu-latest
-            tox_env: "py39-pluggymain-pylib-xdist"
+            tox_env: "py310-asynctest"
+            use_coverage: true
 
-          - name: "ubuntu-py39-freeze"
-            python: "3.9"
+          - name: "ubuntu-py310-unittest-twisted24"
+            python: "3.10"
             os: ubuntu-latest
-            tox_env: "py39-freeze"
+            tox_env: "py310-twisted24"
+            use_coverage: true
 
-          - name: "ubuntu-py39-xdist"
-            python: "3.9"
+          - name: "ubuntu-py310-unittest-twisted25"
+            python: "3.10"
             os: ubuntu-latest
-            tox_env: "py39-xdist"
+            tox_env: "py310-twisted25"
+            use_coverage: true
+
+          - name: "ubuntu-py310-lsof-numpy-pexpect"
+            python: "3.10"
+            os: ubuntu-latest
+            tox_env: "py310-lsof-numpy-pexpect"
+            use_coverage: true
+
+          - name: "ubuntu-py310-pluggy"
+            python: "3.10"
+            os: ubuntu-latest
+            tox_env: "py310-pluggymain-pylib-xdist"
+            xfail: true
+
+          - name: "ubuntu-py310-freeze"
+            python: "3.10"
+            os: ubuntu-latest
+            tox_env: "py310-freeze"
+            xfail: true
 
           - name: "ubuntu-py310-xdist"
             python: "3.10"
@@ -162,23 +200,25 @@ jobs:
             os: ubuntu-latest
             tox_env: "py313-pexpect"
             use_coverage: true
+            xfail: true
+
+          - name: "ubuntu-py314"
+            python: "3.14"
+            os: ubuntu-latest
+            tox_env: "py314"
+            use_coverage: true
 
           - name: "ubuntu-pypy3-xdist"
-            python: "pypy-3.9"
+            python: "pypy-3.10"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
-
-          - name: "macos-py39"
-            python: "3.9"
-            os: macos-latest
-            tox_env: "py39-xdist"
-            use_coverage: true
 
           - name: "macos-py310"
             python: "3.10"
             os: macos-latest
             tox_env: "py310-xdist"
+            xfail: true
 
           - name: "macos-py312"
             python: "3.12"
@@ -189,7 +229,12 @@ jobs:
             python: "3.13"
             os: macos-latest
             tox_env: "py313-xdist"
+            xfail: true
 
+          - name: "macos-py314"
+            python: "3.14"
+            os: macos-latest
+            tox_env: "py314-xdist"
 
           - name: "plugins"
             python: "3.12"
@@ -198,74 +243,65 @@ jobs:
 
 
           - name: "doctesting"
-            python: "3.9"
+            python: "3.10"
             os: ubuntu-latest
             tox_env: "doctesting"
             use_coverage: true
 
-    continue-on-error: >-
-      ${{
-        contains(
-          fromJSON(
-            '[
-              "windows-py39-pluggy",
-              "windows-py313",
-              "ubuntu-py39-pluggy",
-              "ubuntu-py39-freeze",
-              "ubuntu-py313",
-              "macos-py39",
-              "macos-py313"
-            ]'
-          ),
-          matrix.name
-        )
-        && true
-        || false
-      }}
+    continue-on-error: ${{ matrix.xfail && true || false }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: Packages
         path: dist
 
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python }}
-        check-latest: ${{ endsWith(matrix.python, '-dev') }}
+        check-latest: true
+        allow-prereleases: true
 
-    - name: Install dependencies
+    - name: Install tox
       run: |
         python -m pip install --upgrade pip
-        pip install tox coverage
+        pip install tox
 
     - name: Test without coverage
       if: "! matrix.use_coverage"
       shell: bash
+      env:
+        _PYTEST_TOX_POSARGS_JUNIT: --junitxml=junit.xml
       run: tox run -e ${{ matrix.tox_env }} --installpkg `find dist/*.tar.gz`
 
     - name: Test with coverage
       if: "matrix.use_coverage"
       shell: bash
+      env:
+        _PYTEST_TOX_POSARGS_JUNIT: --junitxml=junit.xml
       run: tox run -e ${{ matrix.tox_env }}-coverage --installpkg `find dist/*.tar.gz`
-
-    - name: Generate coverage report
-      if: "matrix.use_coverage"
-      run: python -m coverage xml
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
+        verbose: true
+
+    - name: Upload JUnit report to Codecov
+      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      with:
+        fail_ci_if_error: false
+        files: junit.xml
+        report_type: test_results
         verbose: true
 
   check:  # This job does nothing and is only used for the branch protection
@@ -278,6 +314,6 @@ jobs:
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@223e4bb7a751b91f43eda76992bcfbf23b8b0302
+      uses: re-actors/alls-green@a638d6464689bbb24c325bb3fe9404d63a913030
       with:
         jobs: ${{ toJSON(needs) }}

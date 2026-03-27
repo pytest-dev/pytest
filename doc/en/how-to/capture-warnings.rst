@@ -28,7 +28,7 @@ Running pytest now produces this output:
 
     $ pytest test_show_warnings.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -66,6 +66,7 @@ as an error:
 
         def test_one():
     >       assert api_v1() == 1
+                   ^^^^^^^^
 
     test_show_warnings.py:10:
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -79,30 +80,32 @@ as an error:
     FAILED test_show_warnings.py::test_one - UserWarning: api v1, should use ...
     1 failed in 0.12s
 
-The same option can be set in the ``pytest.ini`` or ``pyproject.toml`` file using the
-``filterwarnings`` ini option. For example, the configuration below will ignore all
+The same option can be set in the configuration file using the
+:confval:`filterwarnings` configuration option. For example, the configuration below will ignore all
 user warnings and specific deprecation warnings matching a regex, but will transform
 all other warnings into errors.
 
-.. code-block:: ini
+.. tab:: toml
 
-    # pytest.ini
-    [pytest]
-    filterwarnings =
-        error
-        ignore::UserWarning
-        ignore:function ham\(\) is deprecated:DeprecationWarning
+    .. code-block:: toml
 
-.. code-block:: toml
+        [pytest]
+        filterwarnings = [
+            'error',
+            'ignore::UserWarning',
+            # Note the use of single quote below to denote "raw" strings in TOML.
+            'ignore:function ham\(\) is deprecated:DeprecationWarning',
+        ]
 
-    # pyproject.toml
-    [tool.pytest.ini_options]
-    filterwarnings = [
-        "error",
-        "ignore::UserWarning",
-        # note the use of single quote below to denote "raw" strings in TOML
-        'ignore:function ham\(\) is deprecated:DeprecationWarning',
-    ]
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        filterwarnings =
+            error
+            ignore::UserWarning
+            ignore:function ham\(\) is deprecated:DeprecationWarning
 
 
 When a warning matches more than one option in the list, the action for the last matching option
@@ -111,7 +114,7 @@ is performed.
 
 .. note::
 
-    The ``-W`` flag and the ``filterwarnings`` ini option use warning filters that are
+    The ``-W`` flag and the :confval:`filterwarnings` configuration option use warning filters that are
     similar in structure, but each configuration option interprets its filter
     differently. For example, *message* in ``filterwarnings`` is a string containing a
     regular expression that the start of the warning message must match,
@@ -157,6 +160,15 @@ You can specify multiple filters with separate decorators:
     def test_one():
         assert api_v1() == 1
 
+You can also pass multiple filters to a single mark by providing multiple arguments:
+
+.. code-block:: python
+
+    # Later arguments take precedence, matching warnings.filterwarnings behavior.
+    @pytest.mark.filterwarnings("error", "ignore:api v1")
+    def test_one():
+        assert api_v1() == 1
+
 .. important::
 
     Regarding decorator order and filter precedence:
@@ -168,7 +180,7 @@ You can specify multiple filters with separate decorators:
 
 
 Filters applied using a mark take precedence over filters passed on the command line or configured
-by the :confval:`filterwarnings` ini option.
+by the :confval:`filterwarnings` configuration option.
 
 You may apply a filter to all tests of a class by using the :ref:`filterwarnings <pytest.mark.filterwarnings ref>` mark as a class
 decorator or to all tests in a module by setting the :globalvar:`pytestmark` variable:
@@ -195,20 +207,29 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
 Disabling warnings summary
 --------------------------
 
-Although not recommended, you can use the ``--disable-warnings`` command-line option to suppress the
+Although not recommended, you can use the :option:`--disable-warnings` command-line option to suppress the
 warning summary entirely from the test run output.
 
 Disabling warning capture entirely
 ----------------------------------
 
-This plugin is enabled by default but can be disabled entirely in your ``pytest.ini`` file with:
+This plugin is enabled by default but can be disabled entirely in your configuration file with:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        addopts = ["-p", "no:warnings"]
+
+.. tab:: ini
 
     .. code-block:: ini
 
         [pytest]
         addopts = -p no:warnings
 
-Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suites handles warnings
+Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suite handles warnings
 using an external system.
 
 
@@ -226,16 +247,27 @@ However, in the specific case where users capture any type of warnings in their 
 no warning will be displayed at all.
 
 Sometimes it is useful to hide some specific deprecation warnings that happen in code that you have no control over
-(such as third-party libraries), in which case you might use the warning filters options (ini or marks) to ignore
+(such as third-party libraries), in which case you might use the warning filters options (configuration or marks) to ignore
 those warnings.
 
 For example:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    filterwarnings =
-        ignore:.*U.*mode is deprecated:DeprecationWarning
+    .. code-block:: toml
+
+        [pytest]
+        filterwarnings = [
+            'ignore:.*U.*mode is deprecated:DeprecationWarning',
+        ]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        filterwarnings =
+            ignore:.*U.*mode is deprecated:DeprecationWarning
 
 
 This will ignore all warnings of type ``DeprecationWarning`` where the start of the message matches
@@ -263,8 +295,8 @@ Ensuring code triggers a deprecation warning
 --------------------------------------------
 
 You can also use :func:`pytest.deprecated_call` for checking
-that a certain function call triggers a ``DeprecationWarning`` or
-``PendingDeprecationWarning``:
+that a certain function call triggers a ``DeprecationWarning``, ``PendingDeprecationWarning`` or
+``FutureWarning``:
 
 .. code-block:: python
 
@@ -331,7 +363,9 @@ Some examples:
     ...
     Traceback (most recent call last):
       ...
-    Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+    Failed: Regex pattern did not match any of the 1 warnings emitted.
+     Regex: ...
+     Emitted warnings: ...UserWarning...
 
     >>> with warns(UserWarning, match=re.escape("issue with foo() func")):
     ...     warnings.warn("issue with foo() func")

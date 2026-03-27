@@ -225,13 +225,16 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "tmp_path_retention_count",
         help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
-        default=3,
+        default="3",
+        # NOTE: Would have been better as an `int` but can't change it now.
+        type="string",
     )
 
     parser.addini(
         "tmp_path_retention_policy",
         help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome. "
         "(all/failed/none)",
+        type="string",
         default="all",
     )
 
@@ -265,7 +268,6 @@ def tmp_path(
     yield path
 
     # Remove the tmpdir if the policy is "failed" and the test passed.
-    tmp_path_factory: TempPathFactory = request.session.config._tmp_path_factory  # type: ignore
     policy = tmp_path_factory._retention_policy
     result_dict = request.node.stash[tmppath_result_key]
 

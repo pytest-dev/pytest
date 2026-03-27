@@ -2,7 +2,7 @@
 
 .. sidebar:: **Next Open Trainings and Events**
 
-    - `pytest - simple, rapid and fun testing with Python <https://pretalx.com/pyconde-pydata-2025/talk/PDBAXQ/>`_, at `PyConDE <https://2025.pycon.de/>`_, **April 24th** (1.5), Darmstadt, Germany
+    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 9th -- 11th 2027**, Leipzig (DE) / Remote
 
     Also see :doc:`previous talks and blogposts <talks>`
 
@@ -45,8 +45,6 @@ The ``pytest`` framework makes it easy to write small, readable tests, and can
 scale to support complex functional testing for applications and libraries.
 
 
-``pytest`` requires: Python 3.8+ or PyPy3.
-
 **PyPI package name**: :pypi:`pytest`
 
 A quick example
@@ -69,7 +67,7 @@ To execute it:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -103,7 +101,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) test suites out of the box
 
-- Python 3.8+ or PyPy 3
+- Python 3.10+ or PyPy 3
 
 - Rich plugin architecture, with over 1300+ :ref:`external plugins <plugin-list>` and thriving community
 

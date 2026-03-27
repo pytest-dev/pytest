@@ -589,7 +589,8 @@ def test_log_cli_ini_level(pytester: Pytester) -> None:
 )
 def test_log_cli_auto_enable(pytester: Pytester, cli_args: str) -> None:
     """Check that live logs are enabled if --log-level or --log-cli-level is passed on the CLI.
-    It should not be auto enabled if the same configs are set on the INI file.
+
+    It should not be auto enabled if the same configs are set on the configuration file.
     """
     pytester.makepyfile(
         """

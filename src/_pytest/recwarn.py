@@ -139,7 +139,9 @@ def warns(
         ...         warnings.warn("this is not here", UserWarning)
         Traceback (most recent call last):
           ...
-        Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+        Failed: Regex pattern did not match any of the 1 warnings emitted.
+         Regex: ...
+         Emitted warnings: ...UserWarning...
 
     **Using with** ``pytest.mark.parametrize``
 
@@ -167,7 +169,7 @@ def warns(
             return func(*args[1:], **kwargs)
 
 
-class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
+class WarningsRecorder(warnings.catch_warnings):
     """A context manager to record raised warnings.
 
     Each recorded warning is an instance of :class:`warnings.WarningMessage`.
@@ -226,7 +228,9 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         """Clear the list of recorded warnings."""
         self._list[:] = []
 
-    def __enter__(self) -> Self:
+    # Type ignored because we basically want the `catch_warnings` generic type
+    # parameter to be ourselves but that is not possible(?).
+    def __enter__(self) -> Self:  # type: ignore[override]
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError(f"Cannot enter {self!r} twice")
@@ -319,10 +323,17 @@ class WarningsChecker(WarningsRecorder):
                     f" Emitted warnings: {found_str()}."
                 )
             elif not any(self.matches(w) for w in self):
+                escape_hint = ""
+                if isinstance(self.match_expr, str) and any(
+                    self.match_expr == str(w.message)
+                    for w in self
+                    if issubclass(w.category, self.expected_warning)
+                ):
+                    escape_hint = "\n Did you mean to `re.escape()` the regex?"
                 fail(
-                    f"DID NOT WARN. No warnings of type {self.expected_warning} matching the regex were emitted.\n"
-                    f" Regex: {self.match_expr}\n"
-                    f" Emitted warnings: {found_str()}."
+                    f"Regex pattern did not match any of the {len(self)} warnings emitted.\n"
+                    f" Regex: {self.match_expr!r}\n"
+                    f" Emitted warnings: {found_str()}.{escape_hint}"
                 )
         finally:
             # Whether or not any warnings matched, we want to re-emit all unmatched warnings.

@@ -225,7 +225,7 @@ def _force_symlink(root: Path, target: str | PurePath, link_to: str | Path) -> N
 def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
     """Create a directory with an increased number as suffix for the given prefix."""
     for i in range(10):
-        # try up to 10 times to create the folder
+        # try up to 10 times to create the directory
         max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
         new_number = max_existing + 1
         new_path = root.joinpath(f"{prefix}{new_number}")
@@ -244,7 +244,7 @@ def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
 
 
 def create_cleanup_lock(p: Path) -> Path:
-    """Create a lock to prevent premature folder cleanup."""
+    """Create a lock to prevent premature directory cleanup."""
     lock_path = get_lock_path(p)
     try:
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
@@ -294,7 +294,7 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
     except OSError:
         #  known races:
         #  * other process did a cleanup at the same time
-        #  * deletable folder was found
+        #  * deletable directory was found
         #  * process cwd (Windows)
         return
     finally:
@@ -336,7 +336,7 @@ def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) ->
 
 
 def try_cleanup(path: Path, consider_lock_dead_if_created_before: float) -> None:
-    """Try to cleanup a folder if we can ensure it's deletable."""
+    """Try to cleanup a directory if we can ensure it's deletable."""
     if ensure_deletable(path, consider_lock_dead_if_created_before):
         maybe_delete_a_numbered_dir(path)
 
@@ -348,7 +348,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
     entries = find_prefixed(root, prefix)
     entries, entries2 = itertools.tee(entries)
     numbers = map(parse_num, extract_suffixes(entries2, prefix))
-    for entry, number in zip(entries, numbers):
+    for entry, number in zip(entries, numbers, strict=True):
         if number <= max_delete:
             yield Path(entry)
 
@@ -1053,3 +1053,11 @@ def safe_exists(p: Path) -> bool:
         # ValueError: stat: path too long for Windows
         # OSError: [WinError 123] The filename, directory name, or volume label syntax is incorrect
         return False
+
+
+def samefile_nofollow(p1: Path, p2: Path) -> bool:
+    """Test whether two paths reference the same actual file or directory.
+
+    Unlike Path.samefile(), does not resolve symlinks.
+    """
+    return os.path.samestat(p1.lstat(), p2.lstat())

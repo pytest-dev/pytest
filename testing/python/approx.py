@@ -2,20 +2,21 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import decimal
 from decimal import Decimal
 from fractions import Fraction
+from math import inf
+from math import nan
 from math import sqrt
 import operator
 from operator import eq
 from operator import ne
+import re
 
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
 import pytest
 from pytest import approx
-
-
-inf, nan = float("inf"), float("nan")
 
 
 @pytest.fixture
@@ -76,7 +77,7 @@ def assert_approx_raises_regex(pytestconfig):
         )
 
         for i, (obtained_line, expected_line) in enumerate(
-            zip(obtained_message, expected_message)
+            zip(obtained_message, expected_message, strict=True)
         ):
             regex = re.compile(expected_line)
             assert regex.match(obtained_line) is not None, (
@@ -647,6 +648,15 @@ class TestApprox:
         assert True != approx(False, abs=2)  # noqa: E712
         assert 1 != approx(True)
 
+    def test_expecting_bool_numpy(self) -> None:
+        """Check approx comparing with numpy.bool (#13047)."""
+        np = pytest.importorskip("numpy")
+        assert np.False_ != approx(True)
+        assert np.True_ != approx(False)
+        assert np.True_ == approx(True)
+        assert np.False_ == approx(False)
+        assert np.True_ != approx(False, abs=2)
+
     def test_list(self):
         actual = [1 + 1e-7, 2 + 1e-8]
         expected = [1, 2]
@@ -728,6 +738,17 @@ class TestApprox:
                 r"  Max relative difference: inf",
                 r"  Index \| Obtained\s+\| Expected   ",
                 rf"  foo   | {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}",
+            ],
+        )
+
+    def test_dict_differing_lengths(self, assert_approx_raises_regex):
+        assert_approx_raises_regex(
+            {"a": 0},
+            {"a": 0, "b": 1},
+            [
+                "  ",
+                r"  Impossible to compare mappings with different sizes\.",
+                r"  Lengths: 2 and 1",
             ],
         )
 
@@ -930,7 +951,7 @@ class TestApprox:
         ],
     )
     def test_nonnumeric_false_if_unequal(self, x):
-        """For nonnumeric types, x != pytest.approx(y) reduces to x != y"""
+        """For non-numeric types, x != pytest.approx(y) reduces to x != y"""
         assert "ab" != approx("abc")
         assert ["ab"] != approx(["abc"])
         # in particular, both of these should return False
@@ -1006,6 +1027,11 @@ class TestApprox:
         expected_repr = "approx([1 ± 1.0e-06, 2 ± 2.0e-06, 3 ± 3.0e-06, 4 ± 4.0e-06])"
         assert repr(approx(expected)) == expected_repr
 
+    def test_decimal_approx_repr(self, monkeypatch) -> None:
+        monkeypatch.setitem(decimal.getcontext().traps, decimal.FloatOperation, True)
+        approx_obj = pytest.approx(decimal.Decimal("2.60"))
+        assert decimal.Decimal("2.600001") == approx_obj
+
     def test_allow_ordered_sequences_only(self) -> None:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""
         with pytest.raises(TypeError, match="only supports ordered sequences"):
@@ -1021,6 +1047,60 @@ class TestApprox:
 
         assert b == pytest.approx(a, abs=2)
         assert b != pytest.approx(a, abs=0.5)
+
+    def test_approx_dicts_with_mismatch_on_keys(self) -> None:
+        """https://github.com/pytest-dev/pytest/issues/13816"""
+        expected = {"a": 1, "b": 3}
+        actual = {"a": 1, "c": 3}
+
+        with pytest.raises(
+            AssertionError,
+            match=re.escape(
+                "comparison failed.\n  Mappings has different keys: "
+                "expected dict_keys(['a', 'b']) but got dict_keys(['a', 'c'])"
+            ),
+        ):
+            assert actual == approx(expected)
+
+    def test_approx_on_unordered_mapping_with_mismatch(
+        self, pytester: Pytester
+    ) -> None:
+        """https://github.com/pytest-dev/pytest/issues/12444"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_approx_on_unordered_mapping_with_mismatch():
+                expected = {"a": 1, "b": 2, "c": 3, "d": 4}
+                actual = {"d": 4, "c": 5, "a": 8, "b": 2}
+                assert actual == pytest.approx(expected)
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(failed=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*comparison failed.**Mismatched elements: 2 / 4:*",
+                "*Max absolute difference: 7*",
+                "*Index | Obtained | Expected *",
+                "* a * | 8 * | 1 *",
+                "* c * | 5 * | 3 *",
+            ]
+        )
+
+    def test_approx_on_unordered_mapping_matching(self, pytester: Pytester) -> None:
+        """https://github.com/pytest-dev/pytest/issues/12444"""
+        pytester.makepyfile(
+            """
+            import pytest
+            def test_approx_on_unordered_mapping_matching():
+                expected = {"a": 1, "b": 2, "c": 3, "d": 4}
+                actual = {"d": 4, "c": 3, "a": 1, "b": 2}
+                assert actual == pytest.approx(expected)
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
 
 
 class MyVec3:  # incomplete
@@ -1070,10 +1150,10 @@ class TestRecursiveSequenceMap:
         ]
 
     def test_map_over_mixed_sequence(self):
-        assert _recursive_sequence_map(sqrt, [4, (25, 64), [(49)]]) == [
+        assert _recursive_sequence_map(sqrt, [4, (25, 64), [49]]) == [
             2,
             (5, 8),
-            [(7)],
+            [7],
         ]
 
     def test_map_over_sequence_like(self):

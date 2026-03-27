@@ -9,8 +9,6 @@ Get Started
 Install ``pytest``
 ----------------------------------------
 
-``pytest`` requires: Python 3.8+ or PyPy3.
-
 1. Run the following command in your command line:
 
 .. code-block:: bash
@@ -22,7 +20,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 8.3.5
+    pytest 9.0.2
 
 .. _`simpletest`:
 
@@ -47,7 +45,7 @@ The test
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -75,7 +73,7 @@ The ``[100%]`` refers to the overall progress of running all test cases. After i
 Run multiple tests
 ----------------------------------------------------------
 
-``pytest`` will run all files of the form test_*.py or \*_test.py in the current directory and its subdirectories. More generally, it follows :ref:`standard test discovery rules <test discovery>`.
+``pytest`` will run all files of the form ``test_*.py`` or ``*_test.py`` in the current directory and its subdirectories. More generally, it follows :ref:`standard test discovery rules <test discovery>`.
 
 
 Assert that a certain exception is raised
@@ -201,6 +199,26 @@ This is outlined below:
 
 Note that attributes added at class level are *class attributes*, so they will be shared between tests.
 
+Compare floating-point values with pytest.approx
+--------------------------------------------------------------
+
+``pytest`` also provides a number of utilities to make writing tests easier.
+For example, you can use :func:`pytest.approx` to compare floating-point
+values that may have small rounding errors:
+
+.. code-block:: python
+
+    # content of test_approx.py
+    import pytest
+
+
+    def test_sum():
+        assert (0.1 + 0.2) == pytest.approx(0.3)
+
+This avoids the need for manual tolerance checks or using
+``math.isclose`` and works with scalars, lists, and NumPy arrays.
+
+
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
@@ -244,7 +262,7 @@ Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the c
 
     pytest --fixtures   # shows builtin and custom fixtures
 
-Note that this command omits fixtures with leading ``_`` unless the ``-v`` option is added.
+Note that this command omits fixtures with leading ``_`` unless the :option:`-v` option is added.
 
 Continue reading
 -------------------------------------

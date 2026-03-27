@@ -26,7 +26,7 @@ Thanks to all who contributed to this release, among them:
 * Bruno Oliveira
 * Carlos Jenkins
 * Daniel Hahler
-* Florian Bruhin
+* Freya Bruhin
 * Jason R. Coombs
 * Jeffrey Rackauckas
 * Jordan Speicher

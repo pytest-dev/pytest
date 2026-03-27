@@ -9,7 +9,6 @@ from collections.abc import Iterable
 from collections.abc import Mapping
 from collections.abc import Sequence
 from collections.abc import Set as AbstractSet
-import os
 import pprint
 from typing import Any
 from typing import Literal
@@ -21,6 +20,7 @@ import _pytest._code
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
+from _pytest.compat import running_on_ci
 from _pytest.config import Config
 
 
@@ -131,7 +131,7 @@ def isdict(x: Any) -> bool:
 
 
 def isset(x: Any) -> bool:
-    return isinstance(x, (set, frozenset))
+    return isinstance(x, set | frozenset)
 
 
 def isnamedtuple(obj: Any) -> bool:
@@ -613,9 +613,3 @@ def _notin_text(term: str, text: str, verbose: int = 0) -> list[str]:
         else:
             newdiff.append(line)
     return newdiff
-
-
-def running_on_ci() -> bool:
-    """Check if we're currently running on a CI system."""
-    env_vars = ["CI", "BUILD_NUMBER"]
-    return any(var in os.environ for var in env_vars)

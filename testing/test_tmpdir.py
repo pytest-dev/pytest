@@ -386,7 +386,7 @@ class TestNumberedDir:
         d = tmp_path.joinpath("test")
         d.mkdir()
         lockfile = create_cleanup_lock(d)
-        with pytest.raises(OSError, match="cannot create lockfile in .*"):
+        with pytest.raises(OSError, match=r"cannot create lockfile in .*"):
             create_cleanup_lock(d)
 
         lockfile.unlink()
@@ -450,10 +450,10 @@ class TestNumberedDir:
         self._do_cleanup(tmp_path)
 
     def test_removal_accepts_lock(self, tmp_path):
-        folder = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
-        create_cleanup_lock(folder)
-        maybe_delete_a_numbered_dir(folder)
-        assert folder.is_dir()
+        dir = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+        create_cleanup_lock(dir)
+        maybe_delete_a_numbered_dir(dir)
+        assert dir.is_dir()
 
 
 class TestRmRf:

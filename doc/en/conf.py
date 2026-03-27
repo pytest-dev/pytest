@@ -34,6 +34,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinx_removed_in",
+    "sphinx_inline_tabs",
     "sphinxcontrib_trio",
     "sphinxcontrib.towncrier.ext",  # provides `towncrier-draft-entries` directive
     "sphinx_issues",  # implements `:issue:`, `:pr:` and other GH-related roles
@@ -88,9 +89,13 @@ nitpick_ignore = [
     ("py:class", "_pytest.python_api.RaisesContext"),
     ("py:class", "_pytest.recwarn.WarningsChecker"),
     ("py:class", "_pytest.reports.BaseReport"),
+    # Sphinx bugs(?)
+    ("py:class", "RewriteHook"),
     # Undocumented third parties
     ("py:class", "_tracing.TagTracerSub"),
     ("py:class", "warnings.WarningMessage"),
+    # Python 3.14+ exposes the C accelerator module name.
+    ("py:class", "_py_warnings.WarningMessage"),
     # Undocumented type aliases
     ("py:class", "LEGACY_PATH"),
     ("py:class", "_PluggyPlugin"),
@@ -301,4 +306,24 @@ def setup(app: sphinx.application.Sphinx) -> None:
 
     # legacypath.py monkey-patches pytest.Testdir in. Import the file so
     # that autodoc can discover references to it.
+    # Workaround for Sphinx bug with Python 3.14:
+    # inspect.getsource() returns '\n' instead of raising OSError for classes
+    # whose __module__ doesn't match the file they're defined in, causing
+    # get_type_comment() to crash with IndexError on empty ast.parse result.
+    # See: https://github.com/sphinx-doc/sphinx/issues/14345
+    import sys
+
     import _pytest.legacypath  # noqa: F401
+
+    if sys.version_info >= (3, 14):
+        from sphinx.ext.autodoc._dynamic import _type_comments
+
+        _orig_get_type_comment = _type_comments.get_type_comment
+
+        def _get_type_comment_safe(obj: object, bound_method: bool = False) -> object:
+            try:
+                return _orig_get_type_comment(obj, bound_method)
+            except IndexError:
+                return None
+
+        _type_comments.get_type_comment = _get_type_comment_safe  # type: ignore[assignment]

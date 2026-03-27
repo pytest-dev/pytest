@@ -15,8 +15,10 @@ import os
 from pathlib import Path
 import re
 import sys
-import traceback
+from traceback import extract_tb
+from traceback import format_exception
 from traceback import format_exception_only
+from traceback import FrameSummary
 from types import CodeType
 from types import FrameType
 from types import TracebackType
@@ -28,8 +30,8 @@ from typing import Generic
 from typing import Literal
 from typing import overload
 from typing import SupportsIndex
+from typing import TypeAlias
 from typing import TypeVar
-from typing import Union
 
 import pluggy
 
@@ -52,7 +54,7 @@ if sys.version_info < (3, 11):
 
 TracebackStyle = Literal["long", "short", "line", "no", "native", "value", "auto"]
 
-EXCEPTION_OR_MORE = Union[type[BaseException], tuple[type[BaseException], ...]]
+EXCEPTION_OR_MORE = type[BaseException] | tuple[type[BaseException], ...]
 
 
 class Code:
@@ -208,10 +210,10 @@ class TracebackEntry:
     def lineno(self) -> int:
         return self._rawentry.tb_lineno - 1
 
-    def get_python_framesummary(self) -> traceback.FrameSummary:
+    def get_python_framesummary(self) -> FrameSummary:
         # Python's built-in traceback module implements all the nitty gritty
         # details to get column numbers of out frames.
-        stack_summary = traceback.extract_tb(self._rawentry, limit=1)
+        stack_summary = extract_tb(self._rawentry, limit=1)
         return stack_summary[0]
 
     # Column and end line numbers introduced in python 3.11
@@ -466,7 +468,7 @@ def stringify_exception(
         notes = getattr(exc, "__notes__", [])
     except KeyError:
         # Workaround for https://github.com/python/cpython/issues/98778 on
-        # Python <= 3.9, and some 3.10 and 3.11 patch versions.
+        # some 3.10 and 3.11 patch versions.
         HTTPError = getattr(sys.modules.get("urllib.error", None), "HTTPError", ())
         if sys.version_info < (3, 12) and isinstance(exc, HTTPError):
             notes = []
@@ -694,8 +696,7 @@ class ExceptionInfo(Generic[E]):
         showlocals: bool = False,
         style: TracebackStyle = "long",
         abspath: bool = False,
-        tbfilter: bool
-        | Callable[[ExceptionInfo[BaseException]], _pytest._code.code.Traceback] = True,
+        tbfilter: bool | Callable[[ExceptionInfo[BaseException]], Traceback] = True,
         funcargs: bool = False,
         truncate_locals: bool = True,
         truncate_args: bool = True,
@@ -742,7 +743,7 @@ class ExceptionInfo(Generic[E]):
         if style == "native":
             return ReprExceptionInfo(
                 reprtraceback=ReprTracebackNative(
-                    traceback.format_exception(
+                    format_exception(
                         self.type,
                         self.value,
                         self.traceback[0]._rawentry if self.traceback else None,
@@ -771,7 +772,11 @@ class ExceptionInfo(Generic[E]):
         """
         __tracebackhide__ = True
         value = stringify_exception(self.value)
-        msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
+        msg = (
+            f"Regex pattern did not match.\n"
+            f"  Expected regex: {regexp!r}\n"
+            f"  Actual message: {value!r}"
+        )
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
         assert re.search(regexp, value), msg
@@ -851,6 +856,12 @@ class ExceptionInfo(Generic[E]):
         return self._group_contains(self.value, expected_exception, match, depth)
 
 
+# Type alias for the `tbfilter` setting:
+# bool: If True, it should be filtered using Traceback.filter()
+# callable: A callable that takes an ExceptionInfo and returns the filtered traceback.
+TracebackFilter: TypeAlias = bool | Callable[[ExceptionInfo[BaseException]], Traceback]
+
+
 @dataclasses.dataclass
 class FormattedExcinfo:
     """Presenting information about failing Functions and Generators."""
@@ -862,7 +873,7 @@ class FormattedExcinfo:
     showlocals: bool = False
     style: TracebackStyle = "long"
     abspath: bool = True
-    tbfilter: bool | Callable[[ExceptionInfo[BaseException]], Traceback] = True
+    tbfilter: TracebackFilter = True
     funcargs: bool = False
     truncate_locals: bool = True
     truncate_args: bool = True
@@ -1100,11 +1111,7 @@ class FormattedExcinfo:
         return str(path)
 
     def repr_traceback(self, excinfo: ExceptionInfo[BaseException]) -> ReprTraceback:
-        traceback = excinfo.traceback
-        if callable(self.tbfilter):
-            traceback = self.tbfilter(excinfo)
-        elif self.tbfilter:
-            traceback = traceback.filter(excinfo)
+        traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
 
         if isinstance(excinfo.value, RecursionError):
             traceback, extraline = self._truncate_recursive_traceback(traceback)
@@ -1178,25 +1185,30 @@ class FormattedExcinfo:
                 # Fall back to native traceback as a temporary workaround until
                 # full support for exception groups added to ExceptionInfo.
                 # See https://github.com/pytest-dev/pytest/issues/9159
+                reprtraceback: ReprTraceback | ReprTracebackNative
                 if isinstance(e, BaseExceptionGroup):
-                    reprtraceback: ReprTracebackNative | ReprTraceback = (
-                        ReprTracebackNative(
-                            traceback.format_exception(
-                                type(excinfo_.value),
-                                excinfo_.value,
-                                excinfo_.traceback[0]._rawentry,
-                            )
+                    # don't filter any sub-exceptions since they shouldn't have any internal frames
+                    traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
+                    reprtraceback = ReprTracebackNative(
+                        format_exception(
+                            type(excinfo.value),
+                            excinfo.value,
+                            traceback[0]._rawentry if traceback else None,
                         )
                     )
+                    if not traceback:
+                        reprtraceback.extraline = (
+                            "All traceback entries are hidden. "
+                            "Pass `--full-trace` to see hidden and internal frames."
+                        )
+
                 else:
                     reprtraceback = self.repr_traceback(excinfo_)
                 reprcrash = excinfo_._getreprcrash()
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
-                reprtraceback = ReprTracebackNative(
-                    traceback.format_exception(type(e), e, None)
-                )
+                reprtraceback = ReprTracebackNative(format_exception(type(e), e, None))
                 reprcrash = None
             repr_chain += [(reprtraceback, reprcrash, descr)]
 
@@ -1545,3 +1557,15 @@ def filter_traceback(entry: TracebackEntry) -> bool:
         return False
 
     return True
+
+
+def filter_excinfo_traceback(
+    tbfilter: TracebackFilter, excinfo: ExceptionInfo[BaseException]
+) -> Traceback:
+    """Filter the exception traceback in ``excinfo`` according to ``tbfilter``."""
+    if callable(tbfilter):
+        return tbfilter(excinfo)
+    elif tbfilter:
+        return excinfo.traceback.filter(excinfo)
+    else:
+        return excinfo.traceback

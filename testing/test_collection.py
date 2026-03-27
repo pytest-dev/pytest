@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 from pathlib import Path
 from pathlib import PurePath
@@ -10,7 +11,7 @@ import sys
 import tempfile
 import textwrap
 
-from _pytest.assertion.util import running_on_ci
+from _pytest.compat import running_on_ci
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import _in_venv
@@ -243,20 +244,20 @@ class TestCollectFS:
 
         # executing from rootdir only tests from `testpaths` directories
         # are collected
-        items, reprec = pytester.inline_genitems("-v")
+        items, _reprec = pytester.inline_genitems("-v")
         assert [x.name for x in items] == ["test_b", "test_c"]
 
         # check that explicitly passing directories in the command-line
         # collects the tests
         for dirname in ("a", "b", "c"):
-            items, reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
+            items, _reprec = pytester.inline_genitems(tmp_path.joinpath(dirname))
             assert [x.name for x in items] == [f"test_{dirname}"]
 
         # changing cwd to each subdirectory and running pytest without
         # arguments collects the tests in that directory normally
         for dirname in ("a", "b", "c"):
             monkeypatch.chdir(pytester.path.joinpath(dirname))
-            items, reprec = pytester.inline_genitems()
+            items, _reprec = pytester.inline_genitems()
             assert [x.name for x in items] == [f"test_{dirname}"]
 
     def test_missing_permissions_on_unselected_directory_doesnt_crash(
@@ -640,10 +641,10 @@ class TestSession:
 
     def test_serialization_byid(self, pytester: Pytester) -> None:
         pytester.makepyfile("def test_func(): pass")
-        items, hookrec = pytester.inline_genitems()
+        items, _hookrec = pytester.inline_genitems()
         assert len(items) == 1
         (item,) = items
-        items2, hookrec = pytester.inline_genitems(item.nodeid)
+        items2, _hookrec = pytester.inline_genitems(item.nodeid)
         (item2,) = items2
         assert item2.name == item.name
         assert item2.path == item.path
@@ -673,7 +674,7 @@ class TestSession:
             def test_param(i): ...
             """
         )
-        items, hookrec = pytester.inline_genitems(f"{p}::test_param")
+        items, _hookrec = pytester.inline_genitems(f"{p}::test_param")
         assert len(items) == 3
         assert [item.nodeid for item in items] == [
             "test_collect_parametrized_order.py::test_param[0]",
@@ -732,7 +733,7 @@ class Test_genitems:
         """
         )
         shutil.copy(p, p.parent / (p.stem + "2" + ".py"))
-        items, reprec = pytester.inline_genitems(p.parent)
+        items, _reprec = pytester.inline_genitems(p.parent)
         assert len(items) == 4
         for numi, i in enumerate(items):
             for numj, j in enumerate(items):
@@ -758,7 +759,7 @@ class Test_genitems:
                     pass
         """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         assert len(items) == 4
         assert items[0].name == "testone"
         assert items[1].name == "testmethod_one"
@@ -786,7 +787,7 @@ class Test_genitems:
                     pass
             """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         ids = [x.getmodpath() for x in items]  # type: ignore[attr-defined]
         assert ids == ["TestCase.test_classmethod"]
 
@@ -811,7 +812,7 @@ class Test_genitems:
                     pass
         """
         )
-        items, reprec = pytester.inline_genitems(p)
+        items, _reprec = pytester.inline_genitems(p)
         ids = [x.getmodpath() for x in items]  # type: ignore[attr-defined]
         assert ids == ["MyTestSuite.x_test", "TestCase.test_y"]
 
@@ -1352,7 +1353,7 @@ def test_collect_pyargs_with_testpaths(
 
 
 def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
-    """The testpaths ini option should load conftests in those paths as 'initial' (#10987)."""
+    """The testpaths config option should load conftests in those paths as 'initial' (#10987)."""
     p = pytester.mkdir("some_path")
     p.joinpath("conftest.py").write_text(
         textwrap.dedent(
@@ -1615,7 +1616,7 @@ def test_class_from_parent(request: FixtureRequest) -> None:
             self.x = x
 
         @classmethod
-        def from_parent(cls, parent, *, name, x):
+        def from_parent(cls, parent, *, name, x):  # type: ignore[override]
             return super().from_parent(parent=parent, name=name, x=x)
 
     collector = MyCollector.from_parent(parent=request.session, name="foo", x=10)
@@ -1658,7 +1659,7 @@ class TestImportModeImportlib:
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     def setup_conftest_and_foo(self, pytester: Pytester) -> None:
-        """Setup a tests folder to be used to test if modules in that folder can be imported
+        """Setup a tests directory to be used to test if modules in that directory can be imported
         due to side-effects of --import-mode or not."""
         pytester.makepyfile(
             **{
@@ -1675,14 +1676,14 @@ class TestImportModeImportlib:
         )
 
     def test_modules_importable_as_side_effect(self, pytester: Pytester) -> None:
-        """In import-modes `prepend` and `append`, we are able to import modules from folders
+        """In import-modes `prepend` and `append`, we are able to import modules from directories
         containing conftest.py files due to the side effect of changing sys.path."""
         self.setup_conftest_and_foo(pytester)
         result = pytester.runpytest("-v", "--import-mode=prepend")
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     def test_modules_not_importable_as_side_effect(self, pytester: Pytester) -> None:
-        """In import-mode `importlib`, modules in folders containing conftest.py are not
+        """In import-mode `importlib`, modules in directories containing conftest.py are not
         importable, as don't change sys.path or sys.modules as side effect of importing
         the conftest.py file.
         """
@@ -1780,6 +1781,41 @@ def test_collect_short_file_windows(pytester: Pytester) -> None:
     assert result.parseoutcomes() == {"passed": 1}
 
 
+def test_collect_short_file_windows_multi_level_symlink(
+    pytester: Pytester,
+    request: FixtureRequest,
+) -> None:
+    """Regression test for multi-level Windows short-path comparison with
+    symlinks.
+
+    Previously, when matching collection arguments against collected nodes on
+    Windows, the short path fallback resolved symlinks. With a chain a -> b ->
+    target, comparing 'a' against 'b' would incorrectly succeed because both
+    resolved to 'target', which could cause incorrect matching or duplicate
+    collection.
+    """
+    # Prepare target directory with a test file.
+    short_path = Path(tempfile.mkdtemp())
+    request.addfinalizer(lambda: shutil.rmtree(short_path, ignore_errors=True))
+    target = short_path / "target"
+    target.mkdir()
+    (target / "test_chain.py").write_text("def test_chain(): pass", encoding="UTF-8")
+
+    # Create multi-level symlink chain: a -> b -> target.
+    b = short_path / "b"
+    a = short_path / "a"
+    symlink_or_skip(target, b, target_is_directory=True)
+    symlink_or_skip(b, a, target_is_directory=True)
+
+    # Collect via the first symlink; should find exactly one test.
+    result = pytester.runpytest(a)
+    result.assert_outcomes(passed=1)
+
+    # Collect via the intermediate symlink; also exactly one test.
+    result = pytester.runpytest(b)
+    result.assert_outcomes(passed=1)
+
+
 def test_pyargs_collection_tree(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     """When using `--pyargs`, the collection tree of a pyargs collection
     argument should only include parents in the import path, not up to confcutdir.
@@ -1836,7 +1872,8 @@ def test_do_not_collect_symlink_siblings(
     """
     # Use tmp_path because it creates a symlink with the name "current" next to the directory it creates.
     symlink_path = tmp_path.parent / (tmp_path.name[:-1] + "current")
-    assert symlink_path.is_symlink() is True
+    if not symlink_path.is_symlink():  # pragma: no cover
+        pytest.skip("Symlinks not supported in this environment")
 
     # Create test file.
     tmp_path.joinpath("test_foo.py").write_text("def test(): pass", encoding="UTF-8")
@@ -1895,3 +1932,867 @@ def test_yield_disallowed_in_tests(pytester: Pytester):
     )
     # Assert that no tests were collected
     result.stdout.fnmatch_lines(["*collected 0 items*"])
+
+
+def test_annotations_deferred_future(pytester: Pytester):
+    """Ensure stringified annotations don't raise any errors."""
+    pytester.makepyfile(
+        """
+        from __future__ import annotations
+        import pytest
+
+        @pytest.fixture
+        def func() -> X: ...  # X is undefined
+
+        def test_func():
+            assert True
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 14), reason="Annotations are only skipped on 3.14+"
+)
+def test_annotations_deferred_314(pytester: Pytester):
+    """Ensure annotation eval is deferred."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def func() -> X: ...  # X is undefined
+
+        def test_func():
+            assert True
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+@pytest.mark.parametrize("import_mode", ["prepend", "importlib", "append"])
+def test_namespace_packages(pytester: Pytester, import_mode: str):
+    pytester.makeini(
+        f"""
+        [pytest]
+        consider_namespace_packages = true
+        pythonpath = .
+        python_files = *.py
+        addopts = --import-mode {import_mode}
+    """
+    )
+    pytester.makepyfile(
+        **{
+            "pkg/module1.py": "def test_module1(): pass",
+            "pkg/subpkg_namespace/module2.py": "def test_module1(): pass",
+            "pkg/subpkg_regular/__init__.py": "",
+            "pkg/subpkg_regular/module3": "def test_module3(): pass",
+        }
+    )
+
+    # should collect when called with top-level package correctly
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 3 items",
+            "<Dir pkg>",
+            "  <Module module1.py>",
+            "    <Function test_module1>",
+            "  <Dir subpkg_namespace>",
+            "    <Module module2.py>",
+            "      <Function test_module1>",
+            "  <Package subpkg_regular>",
+            "    <Module module3.py>",
+            "      <Function test_module3>",
+        ]
+    )
+
+    # should also work when called against a more specific subpackage/module
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg.subpkg_namespace")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 1 item",
+            "<Dir pkg>",
+            "  <Dir subpkg_namespace>",
+            "    <Module module2.py>",
+            "      <Function test_module1>",
+        ]
+    )
+
+    result = pytester.runpytest("--collect-only", "--pyargs", "pkg.subpkg_regular")
+    result.stdout.fnmatch_lines(
+        [
+            "collected 1 item",
+            "<Dir pkg>",
+            "  <Package subpkg_regular>",
+            "    <Module module3.py>",
+            "      <Function test_module3>",
+        ]
+    )
+
+
+class TestOverlappingCollectionArguments:
+    """Test that overlapping collection arguments (e.g. `pytest a/b a
+    a/c::TestIt) are handled correctly (#12083)."""
+
+    @pytest.mark.parametrize("args", [("a", "a/b"), ("a/b", "a")])
+    def test_parent_child(self, pytester: Pytester, args: tuple[str, ...]) -> None:
+        """Test that 'pytest a a/b' and `pytest a/b a` collects all tests from 'a'."""
+        pytester.makepyfile(
+            **{
+                "a/test_a.py": """
+                    def test_a1(): pass
+                    def test_a2(): pass
+                """,
+                "a/b/test_b.py": """
+                    def test_b1(): pass
+                    def test_b2(): pass
+                """,
+            }
+        )
+
+        result = pytester.runpytest("--collect-only", *args)
+
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Dir a>",
+                "    <Dir b>",
+                "      <Module test_b.py>",
+                "        <Function test_b1>",
+                "        <Function test_b2>",
+                "    <Module test_a.py>",
+                "      <Function test_a1>",
+                "      <Function test_a2>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_multiple_nested_paths(self, pytester: Pytester) -> None:
+        """Test that 'pytest a/b a a/b/c' collects all tests from 'a'."""
+        pytester.makepyfile(
+            **{
+                "a/test_a.py": """
+                    def test_a(): pass
+                """,
+                "a/b/test_b.py": """
+                    def test_b(): pass
+                """,
+                "a/b/c/test_c.py": """
+                    def test_c(): pass
+                """,
+            }
+        )
+
+        result = pytester.runpytest("--collect-only", "a/b", "a", "a/b/c")
+
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Dir a>",
+                "    <Dir b>",
+                "      <Dir c>",
+                "        <Module test_c.py>",
+                "          <Function test_c>",
+                "      <Module test_b.py>",
+                "        <Function test_b>",
+                "    <Module test_a.py>",
+                "      <Function test_a>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_same_path_twice(self, pytester: Pytester) -> None:
+        """Test that 'pytest a a' doesn't duplicate tests."""
+        pytester.makepyfile(
+            **{
+                "a/test_a.py": """
+                    def test_a(): pass
+                """,
+            }
+        )
+
+        result = pytester.runpytest("--collect-only", "a", "a")
+
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Dir a>",
+                "    <Module test_a.py>",
+                "      <Function test_a>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_keep_duplicates_flag(self, pytester: Pytester) -> None:
+        """Test that --keep-duplicates allows duplication."""
+        pytester.makepyfile(
+            **{
+                "a/test_a.py": """
+                    def test_a(): pass
+                """,
+                "a/b/test_b.py": """
+                    def test_b(): pass
+                """,
+            }
+        )
+
+        result = pytester.runpytest("--collect-only", "--keep-duplicates", "a", "a/b")
+
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Dir a>",
+                "    <Dir b>",
+                "      <Module test_b.py>",
+                "        <Function test_b>",
+                "    <Module test_a.py>",
+                "      <Function test_a>",
+                "    <Dir b>",
+                "      <Module test_b.py>",
+                "        <Function test_b>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_specific_file_then_parent_dir(self, pytester: Pytester) -> None:
+        """Test that 'pytest a/test_a.py a' collects all tests from 'a'."""
+        pytester.makepyfile(
+            **{
+                "a/test_a.py": """
+                    def test_a(): pass
+                """,
+                "a/test_other.py": """
+                    def test_other(): pass
+                """,
+            }
+        )
+
+        result = pytester.runpytest("--collect-only", "a/test_a.py", "a")
+
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Dir a>",
+                "    <Module test_a.py>",
+                "      <Function test_a>",
+                "    <Module test_other.py>",
+                "      <Function test_other>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_package_scope_fixture_with_overlapping_paths(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that package-scoped fixtures work correctly with overlapping paths."""
+        pytester.makepyfile(
+            **{
+                "pkg/__init__.py": "",
+                "pkg/test_pkg.py": """
+                    import pytest
+
+                    counter = {"value": 0}
+
+                    @pytest.fixture(scope="package")
+                    def pkg_fixture():
+                        counter["value"] += 1
+                        return counter["value"]
+
+                    def test_pkg1(pkg_fixture):
+                        assert pkg_fixture == 1
+
+                    def test_pkg2(pkg_fixture):
+                        assert pkg_fixture == 1
+                """,
+                "pkg/sub/__init__.py": "",
+                "pkg/sub/test_sub.py": """
+                    def test_sub(): pass
+                """,
+            }
+        )
+
+        # Package fixture should run only once even with overlapping paths.
+        result = pytester.runpytest("pkg", "pkg/sub", "pkg", "-v")
+        result.assert_outcomes(passed=3)
+
+    def test_execution_order_preserved(self, pytester: Pytester) -> None:
+        """Test that test execution order follows argument order."""
+        pytester.makepyfile(
+            **{
+                "a/test_a.py": """
+                    def test_a(): pass
+                """,
+                "b/test_b.py": """
+                    def test_b(): pass
+                """,
+            }
+        )
+
+        result = pytester.runpytest("--collect-only", "b", "a", "b/test_b.py::test_b")
+
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Dir b>",
+                "    <Module test_b.py>",
+                "      <Function test_b>",
+                "  <Dir a>",
+                "    <Module test_a.py>",
+                "      <Function test_a>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_overlapping_node_ids_class_and_method(self, pytester: Pytester) -> None:
+        """Test that overlapping node IDs are handled correctly."""
+        pytester.makepyfile(
+            test_nodeids="""
+                class TestClass:
+                    def test_method1(self): pass
+                    def test_method2(self): pass
+                    def test_method3(self): pass
+
+                def test_function(): pass
+            """
+        )
+
+        # Class then specific method.
+        result = pytester.runpytest(
+            "--collect-only",
+            "test_nodeids.py::TestClass",
+            "test_nodeids.py::TestClass::test_method2",
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Module test_nodeids.py>",
+                "    <Class TestClass>",
+                "      <Function test_method1>",
+                "      <Function test_method2>",
+                "      <Function test_method3>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        # Specific method then class.
+        result = pytester.runpytest(
+            "--collect-only",
+            "test_nodeids.py::TestClass::test_method3",
+            "test_nodeids.py::TestClass",
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Module test_nodeids.py>",
+                "    <Class TestClass>",
+                "      <Function test_method1>",
+                "      <Function test_method2>",
+                "      <Function test_method3>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_overlapping_node_ids_file_and_class(self, pytester: Pytester) -> None:
+        """Test that file-level and class-level selections work correctly."""
+        pytester.makepyfile(
+            test_file="""
+                class TestClass:
+                    def test_method(self): pass
+
+                class TestOther:
+                    def test_other(self): pass
+
+                def test_function(): pass
+            """
+        )
+
+        # File then class.
+        result = pytester.runpytest(
+            "--collect-only", "test_file.py", "test_file.py::TestClass"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Module test_file.py>",
+                "    <Class TestClass>",
+                "      <Function test_method>",
+                "    <Class TestOther>",
+                "      <Function test_other>",
+                "    <Function test_function>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        # Class then file.
+        result = pytester.runpytest(
+            "--collect-only", "test_file.py::TestClass", "test_file.py"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Module test_file.py>",
+                "    <Class TestClass>",
+                "      <Function test_method>",
+                "    <Class TestOther>",
+                "      <Function test_other>",
+                "    <Function test_function>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_same_node_id_twice(self, pytester: Pytester) -> None:
+        """Test that the same node ID specified twice is collected only once."""
+        pytester.makepyfile(
+            test_dup="""
+                def test_one(): pass
+                def test_two(): pass
+            """
+        )
+
+        result = pytester.runpytest(
+            "--collect-only",
+            "test_dup.py::test_one",
+            "test_dup.py::test_one",
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Module test_dup.py>",
+                "    <Function test_one>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_overlapping_with_parametrization(self, pytester: Pytester) -> None:
+        """Test overlapping with parametrized tests."""
+        pytester.makepyfile(
+            test_param="""
+                import pytest
+
+                @pytest.mark.parametrize("n", [1, 2])
+                def test_param(n): pass
+
+                class TestClass:
+                    @pytest.mark.parametrize("x", ["a", "b"])
+                    def test_method(self, x): pass
+            """
+        )
+
+        result = pytester.runpytest(
+            "--collect-only",
+            "test_param.py::test_param[2]",
+            "test_param.py::TestClass::test_method[a]",
+            "test_param.py",
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Module test_param.py>",
+                "    <Function test_param[1]>",
+                "    <Function test_param[2]>",
+                "    <Class TestClass>",
+                "      <Function test_method[a]>",
+                "      <Function test_method[b]>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest(
+            "--collect-only",
+            "test_param.py::test_param[2]",
+            "test_param.py::test_param",
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Module test_param.py>",
+                "    <Function test_param[1]>",
+                "    <Function test_param[2]>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    @pytest.mark.parametrize("order", [(".", "a"), ("a", ".")])
+    def test_root_and_subdir(self, pytester: Pytester, order: tuple[str, ...]) -> None:
+        """Test that '. a' and 'a .' both collect all tests."""
+        pytester.makepyfile(
+            test_root="""
+                def test_root(): pass
+            """,
+            **{
+                "a/test_a.py": """
+                    def test_a(): pass
+                """,
+            },
+        )
+
+        result = pytester.runpytest("--collect-only", *order)
+
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Dir a>",
+                "    <Module test_a.py>",
+                "      <Function test_a>",
+                "  <Module test_root.py>",
+                "    <Function test_root>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    def test_complex_combined_handling(self, pytester: Pytester) -> None:
+        """Test some scenarios in a complex hierarchy."""
+        pytester.makepyfile(
+            **{
+                "top1/__init__.py": "",
+                "top1/test_1.py": (
+                    """
+                    def test_1(): pass
+
+                    class TestIt:
+                        def test_2(): pass
+
+                    def test_3(): pass
+                    """
+                ),
+                "top1/test_2.py": (
+                    """
+                    def test_1(): pass
+                    """
+                ),
+                "top2/__init__.py": "",
+                "top2/test_1.py": (
+                    """
+                    def test_1(): pass
+                    """
+                ),
+            },
+        )
+
+        result = pytester.runpytest_inprocess("--collect-only", ".")
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top1>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "      <Class TestIt>",
+                "        <Function test_2>",
+                "      <Function test_3>",
+                "    <Module test_2.py>",
+                "      <Function test_1>",
+                "  <Package top2>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess("--collect-only", "top2", "top1")
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top2>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "  <Package top1>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "      <Class TestIt>",
+                "        <Function test_2>",
+                "      <Function test_3>",
+                "    <Module test_2.py>",
+                "      <Function test_1>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess(
+            "--collect-only", "top1", "top1/test_2.py"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top1>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "      <Class TestIt>",
+                "        <Function test_2>",
+                "      <Function test_3>",
+                "    <Module test_2.py>",
+                "      <Function test_1>",
+                # NOTE: Also sensible arguably even without --keep-duplicates.
+                # "    <Module test_2.py>",
+                # "      <Function test_1>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess(
+            "--collect-only", "top1/test_2.py", "top1"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top1>",
+                # NOTE: Ideally test_2 would come before test_1 here.
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "      <Class TestIt>",
+                "        <Function test_2>",
+                "      <Function test_3>",
+                "    <Module test_2.py>",
+                "      <Function test_1>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess(
+            "--collect-only", "--keep-duplicates", "top1/test_2.py", "top1"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top1>",
+                "    <Module test_2.py>",
+                "      <Function test_1>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "      <Class TestIt>",
+                "        <Function test_2>",
+                "      <Function test_3>",
+                "    <Module test_2.py>",
+                "      <Function test_1>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess(
+            "--collect-only", "top1/test_2.py", "top1/test_2.py"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top1>",
+                "    <Module test_2.py>",
+                "      <Function test_1>",
+                # NOTE: Also sensible arguably even without --keep-duplicates.
+                # "    <Module test_2.py>",
+                # "      <Function test_1>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess("--collect-only", "top2/", "top2/")
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top2>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                # NOTE: Also sensible arguably even without --keep-duplicates.
+                # "  <Package top2>",
+                # "    <Module test_1.py>",
+                # "      <Function test_1>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess(
+            "--collect-only", "top2/", "top2/", "top2/test_1.py"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top2>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                # NOTE: Also sensible arguably even without --keep-duplicates.
+                # "  <Package top2>",
+                # "    <Module test_1.py>",
+                # "      <Function test_1>",
+                # "    <Module test_1.py>",
+                # "      <Function test_1>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess(
+            "--collect-only", "top1/test_1.py", "top1/test_1.py::test_3"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top1>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "      <Class TestIt>",
+                "        <Function test_2>",
+                "      <Function test_3>",
+                # NOTE: Also sensible arguably even without --keep-duplicates.
+                # "      <Function test_3>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess(
+            "--collect-only", "top1/test_1.py::test_3", "top1/test_1.py"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top1>",
+                "    <Module test_1.py>",
+                # NOTE: Ideally test_3 would come before the others here.
+                "      <Function test_1>",
+                "      <Class TestIt>",
+                "        <Function test_2>",
+                "      <Function test_3>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+        result = pytester.runpytest_inprocess(
+            "--collect-only",
+            "--keep-duplicates",
+            "top1/test_1.py::test_3",
+            "top1/test_1.py",
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Package top1>",
+                # NOTE: That <Module test_1.py> is duplicated here is not great.
+                "    <Module test_1.py>",
+                "      <Function test_3>",
+                "    <Module test_1.py>",
+                "      <Function test_1>",
+                "      <Class TestIt>",
+                "        <Function test_2>",
+                "      <Function test_3>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+
+@pytest.mark.parametrize(
+    ["x_y", "expected_duplicates"],
+    [
+        (
+            [(1, 1), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (1, 2), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (2, 2), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (2, 2), (1, 2), (2, 1), (1, 1), (2, 1)],
+            ["1-1", "2-1"],
+        ),
+    ],
+)
+@pytest.mark.parametrize("option_name", ["strict_parametrization_ids", "strict"])
+def test_strict_parametrization_ids(
+    pytester: Pytester,
+    x_y: Sequence[tuple[int, int]],
+    expected_duplicates: Sequence[str],
+    option_name: str,
+) -> None:
+    pytester.makeini(
+        f"""
+        [pytest]
+        {option_name} = true
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.mark.parametrize(["x", "y"], {x_y})
+        def test1(x, y):
+            pass
+        """
+    )
+
+    result = pytester.runpytest()
+
+    assert result.ret == ExitCode.INTERRUPTED
+    expected_parametersets = ", ".join(str(list(p)) for p in x_y)
+    expected_ids = ", ".join(f"{x}-{y}" for x, y in x_y)
+    result.stdout.fnmatch_lines(
+        [
+            "Duplicate parametrization IDs detected*",
+            "",
+            "Test name:      *::test1",
+            "Parameters:     x, y",
+            f"Parameter sets: {expected_parametersets}",
+            f"IDs:            {expected_ids}",
+            f"Duplicates:     {', '.join(expected_duplicates)}",
+            "",
+            "You can fix this problem using *",
+        ]
+    )
+
+
+def test_strict_parametrization_ids_with_hidden_param(pytester: Pytester) -> None:
+    pytester.makeini(
+        """
+        [pytest]
+        strict_parametrization_ids = true
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize(["x"], ["a", pytest.param("a", id=pytest.HIDDEN_PARAM), "a"])
+        def test1(x):
+            pass
+        """
+    )
+
+    result = pytester.runpytest()
+
+    assert result.ret == ExitCode.INTERRUPTED
+    result.stdout.fnmatch_lines(
+        [
+            "Duplicate parametrization IDs detected*",
+            "IDs:            a, <hidden>, a",
+            "Duplicates:     a",
+        ]
+    )

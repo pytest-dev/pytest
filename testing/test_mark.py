@@ -59,7 +59,7 @@ def test_marked_class_run_twice(pytester: Pytester) -> None:
     """
     )
     file_name = os.path.basename(py_file)
-    rec = pytester.inline_run(file_name, file_name)
+    rec = pytester.inline_run("--keep-duplicates", file_name, file_name)
     rec.assertoutcome(passed=6)
 
 
@@ -183,7 +183,9 @@ def test_mark_on_pseudo_function(pytester: Pytester) -> None:
     reprec.assertoutcome(passed=1)
 
 
-@pytest.mark.parametrize("option_name", ["--strict-markers", "--strict"])
+@pytest.mark.parametrize(
+    "option_name", ["--strict-markers", "--strict", "strict_markers", "strict"]
+)
 def test_strict_prohibits_unregistered_markers(
     pytester: Pytester, option_name: str
 ) -> None:
@@ -195,7 +197,16 @@ def test_strict_prohibits_unregistered_markers(
             pass
     """
     )
-    result = pytester.runpytest(option_name)
+    if option_name in ("strict_markers", "strict"):
+        pytester.makeini(
+            f"""
+            [pytest]
+            {option_name} = true
+            """
+        )
+        result = pytester.runpytest()
+    else:
+        result = pytester.runpytest(option_name)
     assert result.ret != 0
     result.stdout.fnmatch_lines(
         ["'unregisteredmark' not found in `markers` configuration option"]
@@ -228,7 +239,7 @@ def test_mark_option(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -276,7 +287,7 @@ def test_mark_option_with_kwargs(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -306,7 +317,7 @@ def test_mark_option_custom(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -341,7 +352,7 @@ def test_keyword_option_custom(
     """
     )
     rec = pytester.inline_run("-k", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -373,7 +384,7 @@ def test_keyword_option_parametrize(
     """
     )
     rec = pytester.inline_run("-k", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -388,7 +399,7 @@ def test_parametrize_with_module(pytester: Pytester) -> None:
     """
     )
     rec = pytester.inline_run()
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     expected_id = "test_func[" + pytest.__name__ + "]"
     assert passed[0].nodeid.split("::")[-1] == expected_id
 
@@ -537,7 +548,7 @@ class TestFunctional:
                         assert True
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         for item in items:
             print(item, item.keywords)
             assert [x for x in item.iter_markers() if x.name == "a"]
@@ -560,7 +571,7 @@ class TestFunctional:
                 def test_bar(self): pass
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b"), test_bar=("a",))
 
     def test_mark_should_not_pass_to_siebling_class(self, pytester: Pytester) -> None:
@@ -583,7 +594,7 @@ class TestFunctional:
 
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         base_item, sub_item, sub_item_other = items
         print(items, [x.nodeid for x in items])
         # new api segregates
@@ -611,7 +622,7 @@ class TestFunctional:
                 def test_bar(self): pass
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
 
     def test_mark_closest(self, pytester: Pytester) -> None:
@@ -630,7 +641,7 @@ class TestFunctional:
 
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         has_own, has_inherited = items
         has_own_marker = has_own.get_closest_marker("c")
         has_inherited_marker = has_inherited.get_closest_marker("c")
@@ -826,7 +837,7 @@ class TestKeywordSelection:
 
         def check(keyword, name):
             reprec = pytester.inline_run("-s", "-k", keyword, file_test)
-            passed, skipped, failed = reprec.listoutcomes()
+            _passed, _skipped, failed = reprec.listoutcomes()
             assert len(failed) == 1
             assert failed[0].nodeid.split("::")[-1] == name
             assert len(reprec.getcalls("pytest_deselected")) == 1
@@ -869,7 +880,7 @@ class TestKeywordSelection:
         )
         reprec = pytester.inline_run(p.parent, "-s", "-k", keyword)
         print("keyword", repr(keyword))
-        passed, skipped, failed = reprec.listoutcomes()
+        passed, _skipped, _failed = reprec.listoutcomes()
         assert len(passed) == 1
         assert passed[0].nodeid.endswith("test_2")
         dlist = reprec.getcalls("pytest_deselected")
@@ -885,7 +896,7 @@ class TestKeywordSelection:
         """
         )
         reprec = pytester.inline_run("-k", "mykeyword", p)
-        passed, skipped, failed = reprec.countoutcomes()
+        _passed, _skipped, failed = reprec.countoutcomes()
         assert failed == 1
 
     @pytest.mark.xfail
@@ -1291,3 +1302,45 @@ def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=8)
+
+
+def test_fixture_disallow_on_marked_functions() -> None:
+    """Test that applying @pytest.fixture to a marked function errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.fixture
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
+
+
+def test_fixture_disallow_marks_on_fixtures() -> None:
+    """Test that applying a mark to a fixture errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        @pytest.fixture
+        def foo():
+            raise NotImplementedError()
+
+
+def test_fixture_disallowed_between_marks() -> None:
+    """Test that applying a mark to a fixture errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.fixture
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()

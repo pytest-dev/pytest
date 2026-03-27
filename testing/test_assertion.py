@@ -567,6 +567,11 @@ class TestAssert_reprcompare:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["E         Full diff:"])
 
+        # Setting CI to empty string is same as having it undefined
+        monkeypatch.setenv("CI", "")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["E         Use -v to get more diff"])
+
         monkeypatch.delenv("CI", raising=False)
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["E         Use -v to get more diff"])
@@ -1389,6 +1394,17 @@ class TestTruncateExplanation:
         assert result == expl
         assert "truncated" not in result[-1]
 
+    def test_truncates_full_line_because_of_max_chars(self) -> None:
+        """A line is fully truncated because of the max_chars value."""
+        expl = ["a" * 10, "b" * 71]
+        result = truncate._truncate_explanation(expl, max_lines=10, max_chars=10)
+        assert result == [
+            "a" * 10,
+            "...",
+            "",
+            "...Full output truncated (1 line hidden), use '-vv' to show",
+        ]
+
     def test_truncates_edgecase_when_truncation_message_makes_the_result_longer_for_chars(
         self,
     ) -> None:
@@ -1464,6 +1480,17 @@ class TestTruncateExplanation:
 
         result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(["* 6*"])
+
+        # Setting CI to empty string is same as having it undefined
+        monkeypatch.setenv("CI", "")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*+ 1*",
+                "*+ 3*",
+                f"*truncated ({expected_truncated_lines} lines hidden)*use*-vv*",
+            ]
+        )
 
         monkeypatch.setenv("CI", "1")
         result = pytester.runpytest()
@@ -2182,3 +2209,34 @@ def test_full_output_vvv(pytester: Pytester) -> None:
         ]
     )
     result.stdout.no_fnmatch_line(expected_non_vvv_arg_line)
+
+
+def test_dict_extra_items_preserve_insertion_order(pytester: Pytester) -> None:
+    """Assertion output of dict diff shows keys in insertion order (#13503)."""
+    pytester.makepyfile(
+        test_order="""
+        def test_order():
+            a = {
+                "b": 2,
+                "a": 1,
+                "d": 4,
+                "e": 5,
+                "c": 3,
+            }
+            assert a == {}
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "*Left contains 5 more items:*",
+            "*Full diff:",
+            "* + *'b': 2,",
+            "* + *'a': 1,",
+            "* + *'d': 4,",
+            "* + *'e': 5,",
+            "* + *'c': 3,",
+            "test_order.py:*: AssertionError",
+        ]
+    )

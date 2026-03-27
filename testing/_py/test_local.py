@@ -9,8 +9,9 @@ import time
 from unittest import mock
 import warnings
 
-from py import error
 from py.path import local
+
+from py import error
 
 import pytest
 
@@ -18,8 +19,7 @@ import pytest
 @contextlib.contextmanager
 def ignore_encoding_warning():
     with warnings.catch_warnings():
-        if sys.version_info >= (3, 10):
-            warnings.simplefilter("ignore", EncodingWarning)  # noqa: F821
+        warnings.simplefilter("ignore", EncodingWarning)
         yield
 
 
@@ -207,15 +207,11 @@ class CommonFSTests:
         assert "sampledir" in lst
         assert path1.sep.join(["sampledir", "otherfile"]) not in lst
 
-    @pytest.mark.parametrize(
-        "fil",
-        ["*dir", "*dir", pytest.mark.skip("sys.version_info < (3,6)")(b"*dir")],
-    )
-    def test_visit_filterfunc_is_string(self, path1, fil):
+    def test_visit_filterfunc_is_string(self, path1):
         lst = []
-        for i in path1.visit(fil):
+        for i in path1.visit("*dir"):
             lst.append(i.relto(path1))
-        assert len(lst), 2
+        assert len(lst), 2  # noqa: PLC1802,RUF040
         assert "sampledir" in lst
         assert "otherdir" in lst
 
@@ -463,12 +459,11 @@ class CommonFSTests:
 
         assert fspath(path1) == path1.strpath
 
-    @pytest.mark.skip("sys.version_info < (3,6)")
     def test_fspath_open(self, path1):
-        f = path1.join("opentestfile")
-        open(f)
+        f = path1.join("samplefile")
+        stream = open(f, encoding="utf-8")
+        stream.close()
 
-    @pytest.mark.skip("sys.version_info < (3,6)")
     def test_fspath_fsencode(self, path1):
         from os import fsencode
 
@@ -738,15 +733,11 @@ class TestLocalPath(CommonFSTests):
 
     def test_setmtime(self):
         import tempfile
-        import time
 
+        fd, name = tempfile.mkstemp()
+        os.close(fd)
         try:
-            fd, name = tempfile.mkstemp()
-            os.close(fd)
-        except AttributeError:
-            name = tempfile.mktemp()
-            open(name, "w").close()
-        try:
+            # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
             mtime = int(time.time()) - 100
             path = local(name)
             assert path.mtime() != mtime
@@ -1397,7 +1388,7 @@ class TestPOSIXLocalPath:
 
     def test_stat_non_raising(self, tmpdir):
         path1 = tmpdir.join("file")
-        pytest.raises(error.ENOENT, lambda: path1.stat())
+        pytest.raises(error.ENOENT, path1.stat)
         res = path1.stat(raising=False)
         assert res is None
 
@@ -1405,6 +1396,7 @@ class TestPOSIXLocalPath:
         import time
 
         path = tmpdir.ensure("samplefile")
+        # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
         now = time.time()
         atime1 = path.atime()
         # we could wait here but timer resolution is very

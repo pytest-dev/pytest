@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import email.message
 import io
+from unittest import mock
 
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -91,23 +92,6 @@ class TestPaste:
         return request.config.pluginmanager.getplugin("pastebin")
 
     @pytest.fixture
-    def mocked_urlopen_fail(self, monkeypatch: MonkeyPatch):
-        """Monkeypatch the actual urlopen call to emulate a HTTP Error 400."""
-        calls = []
-
-        import urllib.error
-        import urllib.request
-
-        def mocked(url, data):
-            calls.append((url, data))
-            raise urllib.error.HTTPError(
-                url, 400, "Bad request", email.message.Message(), io.BytesIO()
-            )
-
-        monkeypatch.setattr(urllib.request, "urlopen", mocked)
-        return calls
-
-    @pytest.fixture
     def mocked_urlopen_invalid(self, monkeypatch: MonkeyPatch):
         """Monkeypatch the actual urlopen calls done by the internal plugin
         function that connects to bpaste service, but return a url in an
@@ -158,10 +142,33 @@ class TestPaste:
         )
         assert len(mocked_urlopen_invalid) == 1
 
-    def test_pastebin_http_error(self, pastebin, mocked_urlopen_fail) -> None:
-        result = pastebin.create_new_paste(b"full-paste-contents")
+    def test_pastebin_http_error(self, pastebin) -> None:
+        import urllib.error
+
+        with mock.patch(
+            "urllib.request.urlopen",
+            side_effect=urllib.error.HTTPError(
+                url="https://bpa.st",
+                code=400,
+                msg="Bad request",
+                hdrs=email.message.Message(),
+                fp=io.BytesIO(),
+            ),
+        ) as mock_urlopen:
+            result = pastebin.create_new_paste(b"full-paste-contents")
         assert result == "bad response: HTTP Error 400: Bad request"
-        assert len(mocked_urlopen_fail) == 1
+        assert len(mock_urlopen.mock_calls) == 1
+
+    def test_pastebin_url_error(self, pastebin) -> None:
+        import urllib.error
+
+        with mock.patch(
+            "urllib.request.urlopen",
+            side_effect=urllib.error.URLError("the url was bad"),
+        ) as mock_urlopen:
+            result = pastebin.create_new_paste(b"full-paste-contents")
+        assert result == "bad response: <urlopen error the url was bad>"
+        assert len(mock_urlopen.mock_calls) == 1
 
     def test_create_new_paste(self, pastebin, mocked_urlopen) -> None:
         result = pastebin.create_new_paste(b"full-paste-contents")

@@ -18,17 +18,17 @@ from typing import NamedTuple
 from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
-from typing import Union
 import warnings
 
 from .._code import getfslineno
+from ..compat import deprecated
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import MARKED_FIXTURE
+from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
 from _pytest.outcomes import fail
-from _pytest.raises_group import AbstractRaises
+from _pytest.raises import AbstractRaises
 from _pytest.scope import _ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
 
@@ -61,7 +61,7 @@ def get_empty_parameterset_mark(
 
     argslisting = ", ".join(argnames)
 
-    fs, lineno = getfslineno(func)
+    _fs, lineno = getfslineno(func)
     reason = f"got empty parameter set for ({argslisting})"
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ("", None, "skip"):
@@ -78,6 +78,33 @@ def get_empty_parameterset_mark(
 
 
 class ParameterSet(NamedTuple):
+    """A set of values for a set of parameters along with associated marks and
+    an optional ID for the set.
+
+    Examples::
+
+        pytest.param(1, 2, 3)
+        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+
+        pytest.param("hello", id="greeting")
+        # ParameterSet(values=("hello",), marks=(), id="greeting")
+
+        # Parameter set with marks
+        pytest.param(42, marks=pytest.mark.xfail)
+        # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
+
+        # From parametrize mark (parameter names + list of parameter sets)
+        pytest.mark.parametrize(
+            ("a", "b", "expected"),
+            [
+                (1, 2, 3),
+                pytest.param(40, 2, 42, id="everything"),
+            ],
+        )
+        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+        # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
+    """
+
     values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
     id: str | _HiddenParam | None
@@ -143,8 +170,12 @@ class ParameterSet(NamedTuple):
         **kwargs,
     ) -> tuple[Sequence[str], bool]:
         if isinstance(argnames, str):
+            # A trailing comma indicates tuple-style: "arg," is equivalent to ("arg",)
+            # In this case, argvalues should be a list of tuples, not wrapped values.
+            # See https://github.com/pytest-dev/pytest/issues/719
+            has_trailing_comma = argnames.rstrip().endswith(",")
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            force_tuple = len(argnames) == 1
+            force_tuple = len(argnames) == 1 and not has_trailing_comma
         else:
             force_tuple = False
         return argnames, force_tuple
@@ -167,6 +198,15 @@ class ParameterSet(NamedTuple):
         config: Config,
         nodeid: str,
     ) -> tuple[Sequence[str], list[ParameterSet]]:
+        if not isinstance(argvalues, Collection):
+            warnings.warn(
+                PARAMETRIZE_NON_COLLECTION_ITERABLE.format(
+                    nodeid=nodeid,
+                    type_name=type(argvalues).__name__,
+                ),
+                stacklevel=3,
+            )
+
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -275,7 +315,7 @@ class Mark:
 # A generic parameter designating an object to which a Mark may
 # be applied -- a test function (callable) or class.
 # Note: a lambda is not allowed, but this can't be represented.
-Markable = TypeVar("Markable", bound=Union[Callable[..., object], type])
+Markable = TypeVar("Markable", bound=Callable[..., object] | type)
 
 
 @dataclasses.dataclass
@@ -369,10 +409,10 @@ class MarkDecorator:
             # For staticmethods/classmethods, the marks are eventually fetched from the
             # function object, not the descriptor, so unwrap.
             unwrapped_func = func
-            if isinstance(func, (staticmethod, classmethod)):
+            if isinstance(func, staticmethod | classmethod):
                 unwrapped_func = func.__func__
             if len(args) == 1 and (istestfunc(unwrapped_func) or is_class):
-                store_mark(unwrapped_func, self.mark, stacklevel=3)
+                store_mark(unwrapped_func, self.mark)
                 return func
         return self.with_args(*args, **kwargs)
 
@@ -427,7 +467,7 @@ def normalize_mark_list(
         yield mark_obj
 
 
-def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
+def store_mark(obj, mark: Mark) -> None:
     """Store a Mark on an object.
 
     This is used to implement the Mark declarations/decorators correctly.
@@ -437,7 +477,10 @@ def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
     from ..fixtures import getfixturemarker
 
     if getfixturemarker(obj) is not None:
-        warnings.warn(MARKED_FIXTURE, stacklevel=stacklevel)
+        fail(
+            "Marks cannot be applied to fixtures.\n"
+            "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
+        )
 
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.
@@ -470,7 +513,7 @@ if TYPE_CHECKING:
         @overload
         def __call__(
             self,
-            condition: str | bool = False,
+            condition: str | bool = True,
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
@@ -482,7 +525,25 @@ if TYPE_CHECKING:
         ) -> MarkDecorator: ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
-        def __call__(  # type: ignore[override]
+        @overload  # type: ignore[override,no-overload-impl]
+        def __call__(
+            self,
+            argnames: str | Sequence[str],
+            argvalues: Collection[ParameterSet | Sequence[object] | object],
+            *,
+            indirect: bool | Sequence[str] = ...,
+            ids: Iterable[None | str | float | int | bool]
+            | Callable[[Any], object | None]
+            | None = ...,
+            scope: _ScopeName | None = ...,
+        ) -> MarkDecorator: ...
+
+        @overload
+        @deprecated(
+            "Passing a non-Collection iterable to the 'argvalues' parameter of @pytest.mark.parametrize is deprecated. "
+            "Convert argvalues to a list or tuple.",
+        )
+        def __call__(
             self,
             argnames: str | Sequence[str],
             argvalues: Iterable[ParameterSet | Sequence[object] | object],
@@ -554,16 +615,19 @@ class MarkGenerator:
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.
             if name not in self._markers:
-                if self._config.option.strict_markers or self._config.option.strict:
-                    fail(
-                        f"{name!r} not found in `markers` configuration option",
-                        pytrace=False,
-                    )
-
                 # Raise a specific error for common misspellings of "parametrize".
                 if name in ["parameterize", "parametrise", "parameterise"]:
                     __tracebackhide__ = True
                     fail(f"Unknown '{name}' mark, did you mean 'parametrize'?")
+
+                strict_markers = self._config.getini("strict_markers")
+                if strict_markers is None:
+                    strict_markers = self._config.getini("strict")
+                if strict_markers:
+                    fail(
+                        f"{name!r} not found in `markers` configuration option",
+                        pytrace=False,
+                    )
 
                 warnings.warn(
                     f"Unknown pytest.mark.{name} - is this a typo?  You can register "

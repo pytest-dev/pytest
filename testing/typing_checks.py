@@ -8,12 +8,13 @@ none of the code triggers any mypy errors.
 from __future__ import annotations
 
 import contextlib
-from typing import Optional
+from typing import Literal
 
 from typing_extensions import assert_type
 
 import pytest
 from pytest import MonkeyPatch
+from pytest import TestReport
 
 
 # Issue #7488.
@@ -50,4 +51,17 @@ def check_monkeypatch_typeddict(monkeypatch: MonkeyPatch) -> None:
 def check_raises_is_a_context_manager(val: bool) -> None:
     with pytest.raises(RuntimeError) if val else contextlib.nullcontext() as excinfo:
         pass
-    assert_type(excinfo, Optional[pytest.ExceptionInfo[RuntimeError]])
+    assert_type(excinfo, pytest.ExceptionInfo[RuntimeError] | None)
+
+
+# Issue #12941.
+def check_testreport_attributes(report: TestReport) -> None:
+    assert_type(report.when, Literal["setup", "call", "teardown"])
+    assert_type(report.location, tuple[str, int | None, str])
+
+
+# Test @pytest.mark.parametrize iterator argvalues deprecation.
+# Will be complain about unused type ignore if doesn't work.
+@pytest.mark.parametrize("x", iter(range(10)))  # type: ignore[deprecated]
+def test_it(x: int) -> None:
+    pass

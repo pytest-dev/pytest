@@ -76,19 +76,63 @@ class TestMetafunc:
         assert metafunc.function is func
         assert metafunc.cls is None
 
+    def test_parametrize_single_arg_trailing_comma(self) -> None:
+        """Test that trailing comma in string argnames behaves like tuple argnames.
+
+        Regression test for https://github.com/pytest-dev/pytest/issues/719
+
+        When using a single argument with:
+        - "arg" (string, no comma): argvalues is a list of values
+        - "arg," (string, trailing comma): argvalues is a list of tuples (like tuple form)
+        - ("arg",) (tuple): argvalues is a list of tuples
+        """
+
+        def func(arg):
+            pass  # pragma: no cover
+
+        scenarios = [("a",), ("b",)]
+
+        # Tuple form: argvalues are tuples, unpacked to get the value
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize(("arg",), scenarios)
+        assert metafunc._calls[0].params == {"arg": "a"}
+        assert metafunc._calls[1].params == {"arg": "b"}
+
+        # String with trailing comma: should behave like tuple form
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize("arg,", scenarios)
+        assert metafunc._calls[0].params == {"arg": "a"}
+        assert metafunc._calls[1].params == {"arg": "b"}
+
+        # String without comma: argvalues are values directly (tuples are passed as-is)
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize("arg", scenarios)
+        assert metafunc._calls[0].params == {"arg": ("a",)}
+        assert metafunc._calls[1].params == {"arg": ("b",)}
+
+        # String without comma with plain values: values are used directly
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize("arg", ["a", "b"])
+        assert metafunc._calls[0].params == {"arg": "a"}
+        assert metafunc._calls[1].params == {"arg": "b"}
+
     def test_parametrize_error(self) -> None:
         def func(x, y):
             pass
 
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x", [1, 2])
-        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
-        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("x", [5, 6])
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("x", [5, 6])
         metafunc.parametrize("y", [1, 2])
-        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
-        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("y", [5, 6])
+        with pytest.raises(pytest.Collector.CollectError):
+            metafunc.parametrize("y", [5, 6])
 
-        with pytest.raises(TypeError, match="^ids must be a callable or an iterable$"):
+        with pytest.raises(TypeError, match=r"^ids must be a callable or an iterable$"):
             metafunc.parametrize("y", [5, 6], ids=42)  # type: ignore[arg-type]
 
     def test_parametrize_error_iterator(self) -> None:
@@ -115,7 +159,7 @@ class TestMetafunc:
         with pytest.raises(
             fail.Exception,
             match=(
-                r"In func: ids contains unsupported value Exc\(from_gen\) \(type: <class .*Exc'>\) at index 2. "
+                r"In mock::nodeid: ids contains unsupported value Exc\(from_gen\) \(type: <class .*Exc'>\) at index 2. "
                 r"Supported types are: .*"
             ),
         ):
@@ -296,7 +340,7 @@ class TestMetafunc:
         deadline=400.0
     )  # very close to std deadline and CI boxes are not reliable in CPU power
     def test_idval_hypothesis(self, value) -> None:
-        escaped = IdMaker([], [], None, None, None, None, None)._idval(value, "a", 6)
+        escaped = IdMaker([], [], None, None, None, None)._idval(value, "a", 6)
         assert isinstance(escaped, str)
         escaped.encode("ascii")
 
@@ -319,8 +363,7 @@ class TestMetafunc:
         ]
         for val, expected in values:
             assert (
-                IdMaker([], [], None, None, None, None, None)._idval(val, "a", 6)
-                == expected
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
     def test_unicode_idval_with_config(self) -> None:
@@ -349,7 +392,7 @@ class TestMetafunc:
             ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for val, config, expected in values:
-            actual = IdMaker([], [], None, None, config, None, None)._idval(val, "a", 6)
+            actual = IdMaker([], [], None, None, config, None)._idval(val, "a", 6)
             assert actual == expected
 
     def test_bytes_idval(self) -> None:
@@ -363,8 +406,7 @@ class TestMetafunc:
         ]
         for val, expected in values:
             assert (
-                IdMaker([], [], None, None, None, None, None)._idval(val, "a", 6)
-                == expected
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
     def test_class_or_function_idval(self) -> None:
@@ -380,8 +422,7 @@ class TestMetafunc:
         values = [(TestClass, "TestClass"), (test_function, "test_function")]
         for val, expected in values:
             assert (
-                IdMaker([], [], None, None, None, None, None)._idval(val, "a", 6)
-                == expected
+                IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
     def test_notset_idval(self) -> None:
@@ -390,16 +431,13 @@ class TestMetafunc:
 
         Regression test for #7686.
         """
-        assert (
-            IdMaker([], [], None, None, None, None, None)._idval(NOTSET, "a", 0) == "a0"
-        )
+        assert IdMaker([], [], None, None, None, None)._idval(NOTSET, "a", 0) == "a0"
 
     def test_idmaker_autoname(self) -> None:
         """#250"""
         result = IdMaker(
             ("a", "b"),
             [pytest.param("string", 1.0), pytest.param("st-ring", 2.0)],
-            None,
             None,
             None,
             None,
@@ -414,18 +452,17 @@ class TestMetafunc:
             None,
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["a0-1.0", "a1-b1"]
         # unicode mixing, issue250
         result = IdMaker(
-            ("a", "b"), [pytest.param({}, b"\xc3\xb4")], None, None, None, None, None
+            ("a", "b"), [pytest.param({}, b"\xc3\xb4")], None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["a0-\\xc3\\xb4"]
 
     def test_idmaker_with_bytes_regex(self) -> None:
         result = IdMaker(
-            ("a"), [pytest.param(re.compile(b"foo"), 1.0)], None, None, None, None, None
+            ("a"), [pytest.param(re.compile(b"foo"))], None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["foo"]
 
@@ -447,7 +484,6 @@ class TestMetafunc:
                 pytest.param(b"\xc3\xb4", "other"),
                 pytest.param(1.0j, -2.0j),
             ],
-            None,
             None,
             None,
             None,
@@ -484,7 +520,6 @@ class TestMetafunc:
             None,
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["\\x00-1", "\\x05-2", "\\x00-3", "\\x05-4", "\\t-5", "\\t-6"]
 
@@ -499,7 +534,6 @@ class TestMetafunc:
             None,
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["hello \\x00", "hello \\x05"]
 
@@ -507,7 +541,7 @@ class TestMetafunc:
         enum = pytest.importorskip("enum")
         e = enum.Enum("Foo", "one, two")
         result = IdMaker(
-            ("a", "b"), [pytest.param(e.one, e.two)], None, None, None, None, None
+            ("a", "b"), [pytest.param(e.one, e.two)], None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["Foo.one-Foo.two"]
 
@@ -530,7 +564,6 @@ class TestMetafunc:
             None,
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["10.0-IndexError()", "20-KeyError()", "three-b2"]
 
@@ -548,7 +581,6 @@ class TestMetafunc:
                 pytest.param("three", [1, 2, 3]),
             ],
             ids,
-            None,
             None,
             None,
             None,
@@ -589,7 +621,6 @@ class TestMetafunc:
                 None,
                 config,
                 None,
-                None,
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
@@ -621,7 +652,7 @@ class TestMetafunc:
         ]
         for config, expected in values:
             result = IdMaker(
-                ("a",), [pytest.param("string")], None, ["ação"], config, None, None
+                ("a",), [pytest.param("string")], None, ["ação"], config, None
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
@@ -652,14 +683,13 @@ class TestMetafunc:
                 None,
                 config,
                 None,
-                None,
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
     def test_idmaker_duplicated_empty_str(self) -> None:
         """Regression test for empty strings parametrized more than once (#11563)."""
         result = IdMaker(
-            ("a",), [pytest.param(""), pytest.param("")], None, None, None, None, None
+            ("a",), [pytest.param(""), pytest.param("")], None, None, None, None
         ).make_unique_parameterset_ids()
         assert result == ["0", "1"]
 
@@ -724,7 +754,6 @@ class TestMetafunc:
             ["a", None],
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["a", "3-4"]
 
@@ -736,7 +765,6 @@ class TestMetafunc:
             ["a", None],
             None,
             None,
-            None,
         ).make_unique_parameterset_ids()
         assert result == ["me", "you"]
 
@@ -746,7 +774,6 @@ class TestMetafunc:
             list(map(pytest.param, [1, 2, 3, 4, 5])),
             None,
             ["a", "a", "b", "c", "b"],
-            None,
             None,
             None,
         ).make_unique_parameterset_ids()
@@ -807,7 +834,7 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         with pytest.raises(
             fail.Exception,
-            match="In func: expected Sequence or boolean for indirect, got dict",
+            match="In mock::nodeid: expected Sequence or boolean for indirect, got dict",
         ):
             metafunc.parametrize("x, y", [("a", "b")], indirect={})  # type: ignore[arg-type]
 
@@ -1119,6 +1146,24 @@ class TestMetafunc:
         """
         )
 
+    def test_parametrize_iterator_deprecation(self) -> None:
+        """Test that using iterators for argvalues raises a deprecation warning."""
+
+        def func(x: int) -> None:
+            raise NotImplementedError()
+
+        def data_generator() -> Iterator[int]:
+            yield 1
+            yield 2
+
+        metafunc = self.Metafunc(func)
+
+        with pytest.warns(
+            pytest.PytestRemovedIn10Warning,
+            match=r"Passing a non-Collection iterable to parametrize is deprecated",
+        ):
+            metafunc.parametrize("x", data_generator())
+
 
 class TestMetafuncFunctional:
     def test_attributes(self, pytester: Pytester) -> None:
@@ -1250,6 +1295,41 @@ class TestMetafuncFunctional:
         result.stdout.fnmatch_lines(
             ["*(1, 4)*", "*(1, 5)*", "*(2, 4)*", "*(2, 5)*", "*4 failed*"]
         )
+
+    def test_parametrize_single_arg_trailing_comma_functional(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that trailing comma in string argnames behaves like tuple argnames.
+
+        Regression test for https://github.com/pytest-dev/pytest/issues/719
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            scenarios = [('a',), ('b',)]
+
+            @pytest.mark.parametrize(("arg",), scenarios)
+            def test_tuple_form(arg):
+                # Tuple argnames: values are unpacked from tuples
+                assert arg in ('a', 'b')
+                assert isinstance(arg, str)
+
+            @pytest.mark.parametrize("arg,", scenarios)
+            def test_string_trailing_comma(arg):
+                # String with trailing comma: should behave like tuple form
+                assert arg in ('a', 'b')
+                assert isinstance(arg, str)
+
+            @pytest.mark.parametrize("arg", scenarios)
+            def test_string_no_comma(arg):
+                # String without comma: tuples are passed as-is
+                assert arg in (('a',), ('b',))
+                assert isinstance(arg, tuple)
+        """
+        )
+        result = pytester.runpytest("-v")
+        result.assert_outcomes(passed=6)
 
     def test_parametrize_and_inner_getfixturevalue(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -1409,7 +1489,8 @@ class TestMetafuncFunctional:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
             [
-                "In test_ids_numbers: ids contains unsupported value OSError() (type: <class 'OSError'>) at index 2. "
+                "In test_parametrized_ids_invalid_type.py::test_ids_numbers: ids contains unsupported value "
+                "OSError() (type: <class 'OSError'>) at index 2. "
                 "Supported types are: str, bytes, int, float, complex, bool, enum, regex or anything with a __name__."
             ]
         )
@@ -1675,6 +1756,65 @@ class TestMetafuncFunctional:
                 "*test_1*",
                 "*test_2*",
                 "*test_3*",
+            ]
+        )
+
+    def test_parametrize_generator_multiple_runs(self, pytester: Pytester) -> None:
+        """Test that generators in parametrize work with multiple pytest.main() (deprecated)."""
+        testfile = pytester.makepyfile(
+            """
+            import pytest
+
+            def data_generator():
+                yield 1
+                yield 2
+
+            @pytest.mark.parametrize("bar", data_generator())
+            def test_foo(bar):
+                pass
+
+            if __name__ == '__main__':
+                args = ["-q", "--collect-only"]
+                pytest.main(args)  # First run - should work with warning
+                pytest.main(args)  # Second run - should also work with warning
+            """
+        )
+        result = pytester.run(sys.executable, "-Wdefault", testfile)
+        # Should see the deprecation warnings.
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn10Warning: Passing a non-Collection iterable*",
+                "*PytestRemovedIn10Warning: Passing a non-Collection iterable*",
+            ]
+        )
+
+    def test_parametrize_iterator_class_multiple_tests(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that iterators in parametrize on a class get exhausted (deprecated)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("n", iter(range(2)))
+            class Test:
+                def test_1(self, n):
+                    pass
+
+                def test_2(self, n):
+                    pass
+            """
+        )
+        result = pytester.runpytest("-v", "-Wdefault")
+        # Iterator gets exhausted after first test, second test gets no parameters.
+        # This is deprecated.
+        result.assert_outcomes(passed=2, skipped=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*test_parametrize_iterator_class_multiple_tests.py::Test::test_1[[]0] PASSED*",
+                "*test_parametrize_iterator_class_multiple_tests.py::Test::test_1[[]1] PASSED*",
+                "*test_parametrize_iterator_class_multiple_tests.py::Test::test_2[[]NOTSET] SKIPPED*",
+                "*PytestRemovedIn10Warning: Passing a non-Collection iterable*",
             ]
         )
 
@@ -2222,8 +2362,8 @@ class TestHiddenParam:
                 "",
                 "*= ERRORS =*",
                 "*_ ERROR collecting test_multiple_hidden_param_is_forbidden.py _*",
-                "E   Failed: In test_func: multiple instances of HIDDEN_PARAM cannot be used "
-                "in the same parametrize call, because the tests names need to be unique.",
+                "E   Failed: In test_multiple_hidden_param_is_forbidden.py::test_func: multiple instances of "
+                "HIDDEN_PARAM cannot be used in the same parametrize call, because the tests names need to be unique.",
                 "*! Interrupted: 1 error during collection !*",
                 "*= no tests collected, 1 error in *",
             ]
@@ -2237,10 +2377,14 @@ class TestHiddenParam:
             [pytest.HIDDEN_PARAM, pytest.HIDDEN_PARAM],
             None,
             "some_node_id",
-            None,
         )
         expected = "In some_node_id: multiple instances of HIDDEN_PARAM"
         with pytest.raises(Failed, match=expected):
+            id_maker.make_unique_parameterset_ids()
+
+    def test_idmaker_error_without_nodeid(self) -> None:
+        id_maker = IdMaker(["a"], [pytest.param("a")], None, [object()], None, None)
+        with pytest.raises(Failed, match="ids contains unsupported value"):
             id_maker.make_unique_parameterset_ids()
 
     def test_multiple_parametrize(self, pytester: Pytester) -> None:

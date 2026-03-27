@@ -1,1 +1,0 @@
-Fixed ``repr`` of ``attrs`` objects in assertion failure messages when using ``attrs>=25.2``.

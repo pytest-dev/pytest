@@ -30,8 +30,8 @@ Examples for modifying traceback printing:
     pytest --tb=native  # Python standard library formatting
     pytest --tb=no      # no traceback at all
 
-The ``--full-trace`` causes very long traces to be printed on error (longer
-than ``--tb=long``). It also ensures that a stack trace is printed on
+The :option:`--full-trace` causes very long traces to be printed on error (longer
+than :option:`--tb=long`). It also ensures that a stack trace is printed on
 **KeyboardInterrupt** (Ctrl+C).
 This is very useful if the tests are taking too long and you interrupt them
 with Ctrl+C to find out where the tests are *hanging*. By default no output
@@ -52,8 +52,8 @@ Examples for modifying printing verbosity:
     pytest -vv              # more verbose, display more details from the test output
     pytest -vvv             # not a standard , but may be used for even more detail in certain setups
 
-The ``-v`` flag controls the verbosity of pytest output in various aspects: test session progress, assertion
-details when tests fail, fixtures details with ``--fixtures``, etc.
+The :option:`-v` flag controls the verbosity of pytest output in various aspects: test session progress, assertion
+details when tests fail, fixtures details with :option:`--fixtures`, etc.
 
 .. regendoc:wipe
 
@@ -372,7 +372,7 @@ test inside the file gets its own line in the output.
 Producing a detailed summary report
 --------------------------------------------------
 
-The ``-r`` flag can be used to display a "short test summary info" at the end of the test session,
+The :option:`-r` flag can be used to display a "short test summary info" at the end of the test session,
 making it easy in large test suites to get a clear picture of all failures, skips, xfails, etc.
 
 It defaults to ``fE`` to list failures and errors.
@@ -421,7 +421,7 @@ Example:
 
     $ pytest -ra
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
@@ -447,13 +447,13 @@ Example:
     ================================= XPASSES ==================================
     ========================= short test summary info ==========================
     SKIPPED [1] test_example.py:22: skipping this test
-    XFAIL test_example.py::test_xfail - reason: xfailing this test
+    XFAIL test_example.py::test_xfail - xfailing this test
     XPASS test_example.py::test_xpass - always xfail
     ERROR test_example.py::test_error - assert 0
     FAILED test_example.py::test_fail - assert 0
     == 1 failed, 1 passed, 1 skipped, 1 xfailed, 1 xpassed, 1 error in 0.12s ===
 
-The ``-r`` options accepts a number of characters after it, with ``a`` used
+The :option:`-r` options accepts a number of characters after it, with ``a`` used
 above meaning "all except passes".
 
 Here is the full list of available characters that can be used:
@@ -478,7 +478,7 @@ More than one character can be used, so for example to only see failed and skipp
 
     $ pytest -rfs
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
@@ -513,7 +513,7 @@ captured output:
 
     $ pytest -rpP
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 6 items
 
@@ -547,7 +547,7 @@ captured output:
 .. note::
 
     By default, parametrized variants of skipped tests are grouped together if
-    they share the same skip reason. You can use ``--no-fold-skipped`` to print each skipped test separately.
+    they share the same skip reason. You can use :option:`--no-fold-skipped` to print each skipped test separately.
 
 
 .. _truncation-params:
@@ -558,41 +558,28 @@ Modifying truncation limits
 .. versionadded: 8.4
 
 Default truncation limits are 8 lines or 640 characters, whichever comes first.
-To set custom truncation limits you can use following ``pytest.ini`` file options:
+To set custom truncation limits you can use the following configuration file options:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    truncation_limit_lines = 10
-    truncation_limit_chars = 90
+    .. code-block:: toml
+
+        [pytest]
+        truncation_limit_lines = 10
+        truncation_limit_chars = 90
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        truncation_limit_lines = 10
+        truncation_limit_chars = 90
 
 That will cause pytest to truncate the assertions to 10 lines or 90 characters, whichever comes first.
 
 Setting both :confval:`truncation_limit_lines` and :confval:`truncation_limit_chars` to ``0`` will disable the truncation.
 However, setting only one of those values will disable one truncation mode, but will leave the other one intact.
-
-Creating resultlog format files
---------------------------------------------------
-
-To create plain-text machine-readable result files you can issue:
-
-.. code-block:: bash
-
-    pytest --resultlog=path
-
-and look at the content at the ``path`` location.  Such files are used e.g.
-by the `PyPy-test`_ web page to show test results over several revisions.
-
-.. warning::
-
-    This option is rarely used and is scheduled for removal in pytest 6.0.
-
-    If you use this option, consider using the new `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin instead.
-
-    See :ref:`the deprecation docs <resultlog deprecated>` for more information.
-
-
-.. _`PyPy-test`: http://buildbot.pypy.org/summary
 
 
 Creating JUnitXML format files
@@ -611,10 +598,19 @@ to create an XML file at ``path``.
 
 To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    junit_suite_name = my_suite
+    .. code-block:: toml
+
+        [pytest]
+        junit_suite_name = "my_suite"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_suite_name = my_suite
 
 .. versionadded:: 4.0
 
@@ -625,10 +621,19 @@ should report total test execution times, including setup and teardown
 It is the default pytest behavior. To report just call durations
 instead, configure the ``junit_duration_report`` option like this:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    junit_duration_report = call
+    .. code-block:: toml
+
+        [pytest]
+        junit_duration_report = "call"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_duration_report = call
 
 .. _record_property example:
 
@@ -766,7 +771,7 @@ record_testsuite_property
 
 .. versionadded:: 4.5
 
-If you want to add a properties node at the test-suite level, which may contains properties
+If you want to add a properties node at the test-suite level, which may contain properties
 that are relevant to all tests, you can use the ``record_testsuite_property`` session-scoped fixture:
 
 The ``record_testsuite_property`` session-scoped fixture can be used to add properties relevant
@@ -817,7 +822,7 @@ Sending test report to an online pastebin service
 
 This will submit test run information to a remote Paste service and
 provide a URL for each failure.  You may select tests as usual or add
-for example ``-x`` if you only want to send one particular failure.
+for example :option:`-x` if you only want to send one particular failure.
 
 **Creating a URL for a whole test session log**:
 

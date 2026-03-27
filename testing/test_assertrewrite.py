@@ -132,7 +132,7 @@ class TestAssertionRewrite:
             if isinstance(node, ast.Import):
                 continue
             for n in [node, *ast.iter_child_nodes(node)]:
-                assert isinstance(n, (ast.stmt, ast.expr))
+                assert isinstance(n, ast.stmt | ast.expr)
                 for location in [
                     (n.lineno, n.col_offset),
                     (n.end_lineno, n.end_col_offset),
@@ -1197,7 +1197,23 @@ def test_rewritten():
         )
         # needs to be a subprocess because pytester explicitly disables this warning
         result = pytester.runpytest_subprocess()
-        result.stdout.fnmatch_lines(["*Module already imported*: _pytest"])
+        result.stdout.fnmatch_lines(["*Module already imported*; _pytest"])
+
+    def test_rewrite_warning_ignore(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+            pytest.register_assert_rewrite("_pytest")
+        """
+        )
+        # needs to be a subprocess because pytester explicitly disables this warning
+        result = pytester.runpytest_subprocess(
+            "-W",
+            "ignore:Module already imported so cannot be rewritten; _pytest:pytest.PytestAssertRewriteWarning",
+        )
+        # Previously, when the message pattern used to contain an extra `:`, an error was raised.
+        assert not result.stderr.str().strip()
+        result.stdout.no_fnmatch_line("*Module already imported*; _pytest")
 
     def test_rewrite_module_imported_from_conftest(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -1536,7 +1552,9 @@ class TestIssue2121:
         result.stdout.fnmatch_lines(["*E*assert (1 + 1) == 3"])
 
 
-class TestIssue10743:
+class TestAssertionRewriteWalrusOperator:
+    """See #10743"""
+
     def test_assertion_walrus_operator(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
@@ -1702,6 +1720,22 @@ class TestIssue10743:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+    def test_assertion_namedexpr_compare_left_overwrite(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            def test_namedexpr_compare_left_overwrite():
+                a = "Hello"
+                b = "World"
+                c = "Test"
+                assert (a := b) == c and (a := "Test") == "Test"
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*assert ('World' == 'Test'*"])
 
 
 class TestIssue11028:
@@ -2181,9 +2215,9 @@ class TestAssertionPass:
         ),
     ),
 )
-# fmt: on
 def test_get_assertion_exprs(src, expected) -> None:
     assert _get_assertion_exprs(src) == expected
+# fmt: on
 
 
 def test_try_makedirs(monkeypatch, tmp_path: Path) -> None:
@@ -2247,10 +2281,6 @@ class TestPyCacheDir:
 
         assert get_cache_dir(Path(source)) == Path(expected)
 
-    @pytest.mark.skipif(
-        sys.version_info[:2] == (3, 9) and sys.platform.startswith("win"),
-        reason="#9298",
-    )
     def test_sys_pycache_prefix_integration(
         self, tmp_path, monkeypatch, pytester: Pytester
     ) -> None:

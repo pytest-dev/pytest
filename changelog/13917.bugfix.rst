@@ -1,0 +1,1 @@
+:class:`unittest.SkipTest` is no longer considered an interactive exception, i.e. :hook:`pytest_exception_interact` is no longer called for it.
