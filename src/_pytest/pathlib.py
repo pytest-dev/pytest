@@ -71,7 +71,11 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
 
 
 def _chmod_rwx(p: str) -> bool:
-    """Grant owner read, write, and execute permissions.
+    """Grant owner sufficient permissions for deletion.
+
+    Directories get ``S_IRWXU`` (read+write+exec for traversal).
+    Regular files get ``S_IRUSR | S_IWUSR`` only, to avoid making
+    non-executable files executable as a side effect.
 
     Returns True if permissions were actually changed, False if they were
     already sufficient or couldn't be changed.
@@ -80,8 +84,10 @@ def _chmod_rwx(p: str) -> bool:
 
     try:
         old_mode = os.stat(p).st_mode
-        new_mode = old_mode | stat.S_IRWXU
-        if old_mode == new_mode:
+        perm_mode = stat.S_IMODE(old_mode)
+        bits = stat.S_IRWXU if stat.S_ISDIR(old_mode) else stat.S_IRUSR | stat.S_IWUSR
+        new_mode = perm_mode | bits
+        if perm_mode == new_mode:
             return False
         os.chmod(p, new_mode)
     except OSError:
@@ -123,9 +129,11 @@ def on_rm_rf_error(
         # skips entries after the error handler returns.
         # See: https://github.com/pytest-dev/pytest/issues/7940
         p = Path(path)
+        parent_changed = False
         if p.parent != p:
-            _chmod_rwx(str(p.parent))
-        if not _chmod_rwx(path):
+            parent_changed = _chmod_rwx(str(p.parent))
+        path_changed = _chmod_rwx(path)
+        if not (parent_changed or path_changed):
             return False
         if os.path.isdir(path):
             rm_rf(Path(path))

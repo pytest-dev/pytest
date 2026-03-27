@@ -582,6 +582,26 @@ class TestRmRf:
             assert not adir.exists()
             assert not [x.message for x in w]
 
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_on_rm_rf_error_os_open_parent_perms(self, tmp_path: Path) -> None:
+        """When the PermissionError is caused by the *parent* directory lacking
+        S_IXUSR, fixing the parent is sufficient even if the child already has
+        correct permissions."""
+        parent = tmp_path / "parent"
+        parent.mkdir()
+        child = parent / "child"
+        child.mkdir()
+        (child / "file.txt").touch()
+        # Child has full perms, but parent lacks execute -> os.open(child) fails.
+        os.chmod(str(parent), 0o600)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = PermissionError()
+            result = on_rm_rf_error(os.open, str(child), exc_info, start_path=tmp_path)
+            assert result is True
+            assert not child.exists()
+            assert not [x.message for x in w]
+
 
 def attempt_symlink_to(path, to_path):
     """Try to make a symlink from "path" to "to_path", skipping in case this platform
