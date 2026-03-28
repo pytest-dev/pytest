@@ -36,17 +36,15 @@ RetentionType = Literal["all", "failed", "none"]
 
 
 def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
-    """Verify directory ownership and ensure private permissions (0o700).
-
-    Opens *path* with ``O_NOFOLLOW`` / ``O_DIRECTORY`` (when available) so
-    that symlinks are never followed, then uses fd-based ``fstat`` /
-    ``fchmod`` to eliminate TOCTOU races (CVE-2025-71176).
+    """Verify directory ownership and ensure private permissions (0o700),
+    taking care to avoid TOCTOU races.
 
     Raises:
         OSError: If *path* cannot be safely opened (e.g. it is a symlink)
             or is not owned by *user_id*.
     """
     open_flags = os.O_RDONLY
+    # Never follow symlinks (when these flags are available).
     for _flag in ("O_NOFOLLOW", "O_DIRECTORY"):
         open_flags |= getattr(os, _flag, 0)
     try:
@@ -58,6 +56,7 @@ def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
             "Remove the symlink or directory and try again."
         ) from e
     try:
+        # Use fd-based functions to eliminate TOCTOU races (CVE-2025-71176).
         st = os.fstat(dir_fd)
         if st.st_uid != user_id:
             raise OSError(
