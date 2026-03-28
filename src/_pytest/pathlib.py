@@ -164,7 +164,6 @@ def _check_symlink_attack_safety(path: Path) -> None:
 
     Raises ``OSError`` if *path* is a symlink.
     """
-
     if path.is_symlink():
         # When `avoids_symlink_attacks` is True the platform's rmtree uses fd-based
         # operations that are inherently resistant to symlink races — we only need

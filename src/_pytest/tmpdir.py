@@ -358,7 +358,6 @@ def pytest_sessionfinish(session, exitstatus: int | ExitCode):
             safe_rmtree(basetemp, ignore_errors=True)
 
 
-
 @hookimpl(wrapper=True, tryfirst=True)
 def pytest_runtest_makereport(
     item: Item, call
