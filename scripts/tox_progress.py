@@ -32,6 +32,13 @@ YELLOW = f"{CSI}33m"
 CYAN = f"{CSI}36m"
 DIM = f"{CSI}2m"
 
+_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
+
+
+def strip_ansi(text: str) -> str:
+    """Remove ANSI escape sequences from text."""
+    return _ANSI_RE.sub("", text)
+
 
 @dataclass
 class EnvState:
@@ -49,6 +56,7 @@ class EnvState:
     start_time: float = 0.0
     output_lines: list[str] = field(default_factory=list)
     returncode: int | None = None
+    proc: subprocess.Popen[str] | None = None
 
 
 def parse_collection_line(line: str) -> int | None:
@@ -66,7 +74,7 @@ def parse_progress_char(line: str, state: EnvState) -> None:
     # Also handles percentage output like: "testing/test_foo.py ...... [ 10%]"
 
     # Strip ANSI codes for parsing
-    clean = re.sub(r"\033\[[0-9;]*m", "", line)
+    clean = strip_ansi(line)
 
     # Verbose mode: "PASSED", "FAILED", "ERROR", "SKIPPED"
     if re.search(r"\bPASSED\b", clean):
@@ -104,31 +112,29 @@ def parse_progress_char(line: str, state: EnvState) -> None:
 
 
 def parse_summary_line(line: str, state: EnvState) -> bool:
-    """Parse the final summary line like '1234 passed, 5 failed, 10 skipped in 45.2s'."""
-    clean = re.sub(r"\033\[[0-9;]*m", "", line)
-    # Look for the summary pattern
-    if (
-        re.search(r"\d+ passed", clean)
-        or re.search(r"\d+ failed", clean)
-        or re.search(r"\d+ error", clean)
-    ):
-        m_passed = re.search(r"(\d+) passed", clean)
-        m_failed = re.search(r"(\d+) failed", clean)
-        m_error = re.search(r"(\d+) error", clean)
-        m_skipped = re.search(r"(\d+) skipped", clean)
-        m_warnings = re.search(r"(\d+) warning", clean)
-        if m_passed:
-            state.passed = int(m_passed.group(1))
-        if m_failed:
-            state.failed = int(m_failed.group(1))
-        if m_error:
-            state.errors = int(m_error.group(1))
-        if m_skipped:
-            state.skipped = int(m_skipped.group(1))
-        if m_warnings:
-            state.warnings = int(m_warnings.group(1))
-        return True
-    return False
+    """Parse the final summary line like '= 1234 passed, 5 failed in 45.2s ='."""
+    clean = strip_ansi(line)
+    # pytest summary lines are delimited by '=' and end with 'in X.Xs ='
+    if not re.search(r"=.*\bin\s+[\d.]+s\s*=", clean):
+        return False
+    m_passed = re.search(r"(\d+) passed", clean)
+    m_failed = re.search(r"(\d+) failed", clean)
+    m_error = re.search(r"(\d+) error", clean)
+    m_skipped = re.search(r"(\d+) skipped", clean)
+    m_warnings = re.search(r"(\d+) warning", clean)
+    if not any((m_passed, m_failed, m_error)):
+        return False
+    if m_passed:
+        state.passed = int(m_passed.group(1))
+    if m_failed:
+        state.failed = int(m_failed.group(1))
+    if m_error:
+        state.errors = int(m_error.group(1))
+    if m_skipped:
+        state.skipped = int(m_skipped.group(1))
+    if m_warnings:
+        state.warnings = int(m_warnings.group(1))
+    return True
 
 
 def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
@@ -168,14 +174,15 @@ def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
             bufsize=1,
         )
 
-        assert proc.stdout is not None
+        if proc.stdout is None:
+            raise RuntimeError("Failed to capture subprocess stdout")
         for raw_line in proc.stdout:
             line = raw_line.rstrip("\n")
             state.output_lines.append(line)
             state.elapsed = time.time() - state.start_time
 
             # xdist: detect worker startup
-            clean_check = re.sub(r"\033\[[0-9;]*m", "", line)
+            clean_check = strip_ansi(line)
             if "bringing up nodes" in clean_check:
                 state.status = "collecting"
                 continue
@@ -196,7 +203,7 @@ def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
                 parse_progress_char(line, state)
 
             # Track current file being tested
-            clean = re.sub(r"\033\[[0-9;]*m", "", line)
+            clean = strip_ansi(line)
             m = re.match(r"^(testing/\S+\.py|doc/\S+\.py)", clean)
             if m:
                 state.current_test = m.group(1)
