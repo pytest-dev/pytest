@@ -238,13 +238,15 @@ class TempPathFactory:
                 # platform, fall back to a safe prefix.
                 rootdir_prefix = "pytest-of-unknown-"
                 rootdir = Path(tempfile.mkdtemp(prefix=rootdir_prefix, dir=temproot))
-            # mkdtemp applies the umask; ensure 0o700 unconditionally.
-            os.chmod(rootdir, 0o700)
             # Defense-in-depth: verify ownership and tighten permissions
             # via fd-based ops to eliminate TOCTOU races (CVE-2025-71176).
             uid = get_user_id()
             if uid is not None:
                 _verify_ownership_and_tighten_permissions(rootdir, uid)
+            else:
+                # On Windows (no os.getuid), fall back to path-based chmod.
+                # mkdtemp applies the umask; ensure 0o700 unconditionally.
+                os.chmod(rootdir, 0o700)
             # Each session gets its own mkdtemp rootdir, so use it
             # directly as basetemp — no need for numbered subdirs.
             basetemp = rootdir
