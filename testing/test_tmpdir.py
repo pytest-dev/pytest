@@ -630,6 +630,39 @@ class TestSafeRmtree:
         assert symlink_warnings == []
         assert not target.exists()
 
+    def test_rm_rf_succeeds_when_avoids_symlink_attacks_is_false(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """rm_rf completes removal even when avoids_symlink_attacks is False
+        and warnings are configured as errors (Windows scenario)."""
+        target = tmp_path / "dir"
+        target.mkdir()
+        (target / "file.txt").write_text("data", encoding="utf-8")
+
+        monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
+
+        # Simulate pyproject.toml: filterwarnings = ['error']
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            rm_rf(target)
+        assert not target.exists()
+
+    def test_safe_rmtree_succeeds_when_avoids_symlink_attacks_is_false(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """safe_rmtree completes removal even when avoids_symlink_attacks is
+        False and warnings are configured as errors."""
+        target = tmp_path / "dir"
+        target.mkdir()
+        (target / "file.txt").write_text("data", encoding="utf-8")
+
+        monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            safe_rmtree(target)
+        assert not target.exists()
+
 
 def attempt_symlink_to(path, to_path):
     """Try to make a symlink from "path" to "to_path", skipping in case this platform

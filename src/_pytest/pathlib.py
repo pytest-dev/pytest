@@ -179,13 +179,15 @@ def _check_symlink_attack_safety(path: Path) -> None:
             "path is a symlink, not a real directory."
         )
     if not shutil.rmtree.avoids_symlink_attacks:
-        warnings.warn(
-            PytestWarning(
-                "shutil.rmtree.avoids_symlink_attacks is False on this platform: "
-                "recursive directory removal may be susceptible to symlink attacks."
-            ),
-            stacklevel=3,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("always")
+            warnings.warn(
+                PytestWarning(
+                    "shutil.rmtree.avoids_symlink_attacks is False on this platform: "
+                    "recursive directory removal may be susceptible to symlink attacks."
+                ),
+                stacklevel=3,
+            )
 
 
 def safe_rmtree(path: Path, *, ignore_errors: bool = False) -> None:
