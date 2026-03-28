@@ -541,7 +541,7 @@ class TestRmRf:
 
 
 class TestSafeRmtree:
-    """Tests for safe_rmtree and the avoids_symlink_attacks guard."""
+    """Tests for safe_rmtree and the avoids_symlink_attacks guard (#13669)."""
 
     def test_removes_real_directory(self, tmp_path: Path) -> None:
         """safe_rmtree removes a real (non-symlink) directory."""
