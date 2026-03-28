@@ -13,7 +13,6 @@ from typing import Any
 from typing import final
 from typing import Literal
 
-from .pathlib import cleanup_dead_symlinks
 from .pathlib import make_numbered_dir
 from .pathlib import rm_rf
 from .pathlib import safe_rmtree
@@ -192,7 +191,12 @@ class TempPathFactory:
             p = self.getbasetemp().joinpath(basename)
             p.mkdir(mode=0o700)
         else:
-            p = make_numbered_dir(root=self.getbasetemp(), prefix=basename, mode=0o700)
+            p = make_numbered_dir(
+                root=self.getbasetemp(),
+                prefix=basename,
+                mode=0o700,
+                create_symlink=False,
+            )
             self._trace("mktemp", p)
         return p
 
@@ -353,9 +357,6 @@ def pytest_sessionfinish(session, exitstatus: int | ExitCode):
             # permissions, etc, in which case we ignore it.
             safe_rmtree(basetemp, ignore_errors=True)
 
-    # Remove dead symlinks.
-    if basetemp.is_dir():
-        cleanup_dead_symlinks(basetemp)
 
 
 @hookimpl(wrapper=True, tryfirst=True)
