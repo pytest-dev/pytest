@@ -162,23 +162,21 @@ def get_extended_length_path_str(path: str) -> str:
 def _check_symlink_attack_safety(path: Path) -> None:
     """Guard against symlink attacks before recursive directory removal.
 
-    If ``shutil.rmtree.avoids_symlink_attacks`` is True the platform's
-    rmtree implementation uses fd-based operations that are inherently
-    resistant to symlink races; we only need to verify *path* itself is
-    not a symlink.
-
-    When the attribute is False the platform cannot guarantee safety.  We
-    still refuse to remove a symlink, but a TOCTOU window remains for
-    contents *inside* the tree, so we emit a one-time warning.
-
     Raises ``OSError`` if *path* is a symlink.
     """
+
     if path.is_symlink():
+        # When `avoids_symlink_attacks` is True the platform's rmtree uses fd-based
+        # operations that are inherently resistant to symlink races — we only need
+        # to verify *path* itself is not a symlink (done above).
         raise OSError(
             f"Refusing to recursively remove {path}: "
             "path is a symlink, not a real directory."
         )
     if not shutil.rmtree.avoids_symlink_attacks:
+        # When `avoids_symlink_attacks` is False the platform cannot guarantee safety.  We still refuse
+        # to remove a symlink, but a TOCTOU window remains for contents *inside*
+        # the tree, so we emit a one-time warning.
         with warnings.catch_warnings():
             warnings.simplefilter("always")
             warnings.warn(
@@ -269,7 +267,9 @@ def _force_symlink(root: Path, target: str | PurePath, link_to: str | Path) -> N
         pass
 
 
-def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
+def make_numbered_dir(
+    root: Path, prefix: str, mode: int = 0o700, create_symlink: bool = True
+) -> Path:
     """Create a directory with an increased number as suffix for the given prefix."""
     for i in range(10):
         # try up to 10 times to create the directory
@@ -281,7 +281,8 @@ def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
         except Exception:
             pass
         else:
-            _force_symlink(root, prefix + "current", new_path)
+            if create_symlink:
+                _force_symlink(root, prefix + "current", new_path)
             return new_path
     else:
         raise OSError(
