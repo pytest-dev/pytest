@@ -434,6 +434,16 @@ class TestNumberedDir:
         dir_num = len(list(tmp_path.iterdir()))
         assert dir_num == 0
 
+    def test_make_no_symlink(self, tmp_path):
+        """make_numbered_dir with create_symlink=False must not create a
+        ``{prefix}current`` symlink."""
+        d = make_numbered_dir(
+            root=tmp_path, prefix=self.PREFIX, create_symlink=False
+        )
+        assert d.is_dir()
+        symlink = tmp_path / (self.PREFIX + "current")
+        assert not symlink.exists()
+
     def test_cleanup_locked(self, tmp_path):
         p = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
 
