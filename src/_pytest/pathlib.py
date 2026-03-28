@@ -189,8 +189,9 @@ def _check_symlink_attack_safety(path: Path) -> None:
 def safe_rmtree(path: Path, *, ignore_errors: bool = False) -> None:
     """Remove a directory tree with protection against symlink attacks."""
     try:
-        # Verifies that shutil.rmtree.avoids_symlink_attacks is True (the platform provides a symlink-attack-resistant
-        # implementation) before proceeding.
+        # Raises OSError if path is a symlink.  On platforms where
+        # avoids_symlink_attacks is False, a warning is emitted but
+        # removal still proceeds (best-effort).
         _check_symlink_attack_safety(path)
     except OSError:
         if not ignore_errors:
