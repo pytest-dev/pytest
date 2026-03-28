@@ -454,6 +454,24 @@ def test_check_is_only_called_on_the_group() -> None:
     assert calls == [ExceptionGroup]
 
 
+def test_matches_check_is_only_called_on_the_group() -> None:
+    calls: list[type[BaseException]] = []
+
+    def check(exc_group: ExceptionGroup[ValueError]) -> bool:
+        calls.append(type(exc_group))
+        return False
+
+    matcher = RaisesGroup(ValueError, check=check)
+
+    assert not matcher.matches(ExceptionGroup("", (ValueError(),)))
+    assert matcher.fail_reason == (
+        f"check {repr_callable(check)} did not return True on the ExceptionGroup. "
+        "If you meant to check the sub-exception instead of the group, you might "
+        "want RaisesGroup(RaisesExc(ValueError, check=<...>))"
+    )
+    assert calls == [ExceptionGroup]
+
+
 def test_unwrapped_match_check() -> None:
     def my_check(e: object) -> bool:  # pragma: no cover
         return True
