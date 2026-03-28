@@ -159,7 +159,7 @@ def get_extended_length_path_str(path: str) -> str:
     return long_path_prefix + path
 
 
-def _check_symlink_attack_safety(path: Path) -> None:
+def _check_symlink_attack_safety(path: Path, *, stacklevel: int = 3) -> None:
     """Guard against symlink attacks before recursive directory removal.
 
     Raises ``OSError`` if *path* is a symlink.
@@ -182,7 +182,7 @@ def _check_symlink_attack_safety(path: Path) -> None:
                     "shutil.rmtree.avoids_symlink_attacks is False on this platform: "
                     "recursive directory removal may be susceptible to symlink attacks."
                 ),
-                stacklevel=3,
+                stacklevel=stacklevel,
             )
 
 
