@@ -72,6 +72,14 @@ def _cleanup_old_rootdirs(
     temproot: Path, prefix: str, keep: int, current: Path
 ) -> None:
     """Remove old randomly-named rootdirs, keeping the *keep* most recent."""
+
+    def _mtime(p: Path) -> float:
+        """Return mtime, or inf to sort failed entries to the "keep" end."""
+        try:
+            return p.lstat().st_mtime
+        except OSError:
+            return float("inf")
+
     try:
         candidates = sorted(
             (
