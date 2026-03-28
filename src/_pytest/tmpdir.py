@@ -239,11 +239,11 @@ class TempPathFactory:
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0
-            # keep-1 because the current session's rootdir (excluded from
-            # candidates) already counts toward the retention total.
             _cleanup_old_rootdirs(
                 temproot, rootdir_prefix, max(keep - 1, 0), current=rootdir
             )
+            # `keep-1` because the current session's rootdir (excluded from candidates) already counts toward the
+            # retention total.
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
         self._trace("new basetemp", basetemp)
