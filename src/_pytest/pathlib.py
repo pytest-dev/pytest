@@ -177,7 +177,7 @@ def _check_symlink_attack_safety(path: Path) -> None:
         # to remove a symlink, but a TOCTOU window remains for contents *inside*
         # the tree, so we emit a one-time warning.
         with warnings.catch_warnings():
-            warnings.simplefilter("always")
+            warnings.simplefilter("once")
             warnings.warn(
                 PytestWarning(
                     "shutil.rmtree.avoids_symlink_attacks is False on this platform: "
