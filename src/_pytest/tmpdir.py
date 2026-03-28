@@ -88,24 +88,23 @@ def _cleanup_old_rootdirs(
             return float("inf")
 
     try:
+        # Uses ``os.scandir`` with ``follow_symlinks=False`` so that symlinks
+        # planted under *temproot* are never followed during enumeration —
+        # defense-in-depth against symlink attacks (CVE-2025-71176).
         candidates = sorted(
             (
                 Path(entry.path)
                 for entry in os.scandir(temproot)
-                # Uses ``os.scandir`` with ``follow_symlinks=False`` so that symlinks
-                # planted under *temproot* are never followed during enumeration —
-                # defense-in-depth against symlink attacks (CVE-2025-71176).
                 if entry.is_dir(follow_symlinks=False)
                 and entry.name.startswith(prefix)
-                and Path(entry.path)
-                != current  # `current` is excluded so the running session's rootdir is never removed.
+                and Path(entry.path) != current
             ),
-            key=lambda p: p.lstat().st_mtime,
+            key=_mtime,
             reverse=True,
         )
     except OSError:
-        # Errors are silently ignored (other sessions may hold locks, temproot may not exist, may be unreadable, or an
-        # entry's lstat may fail (e.g. concurrent removal by another session).
+        # temproot may not exist, may be unreadable, or another session
+        # may hold locks — silently give up on cleanup.
         return
     for old in candidates[keep:]:
         safe_rmtree(old, ignore_errors=True)
