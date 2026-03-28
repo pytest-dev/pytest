@@ -165,17 +165,16 @@ def _check_symlink_attack_safety(path: Path) -> None:
     Raises ``OSError`` if *path* is a symlink.
     """
     if path.is_symlink():
-        # When `avoids_symlink_attacks` is True the platform's rmtree uses fd-based
-        # operations that are inherently resistant to symlink races — we only need
-        # to verify *path* itself is not a symlink (done above).
         raise OSError(
             f"Refusing to recursively remove {path}: "
             "path is a symlink, not a real directory."
         )
+    # When `avoids_symlink_attacks` is True the platform's rmtree uses fd-based
+    # operations that are inherently resistant to symlink races — we only need
+    # to verify *path* itself is not a symlink (done above).
+    # When it is False a TOCTOU window remains for contents *inside* the tree,
+    # so we emit a one-time warning.
     if not shutil.rmtree.avoids_symlink_attacks:
-        # When `avoids_symlink_attacks` is False the platform cannot guarantee safety.  We still refuse
-        # to remove a symlink, but a TOCTOU window remains for contents *inside*
-        # the tree, so we emit a one-time warning.
         with warnings.catch_warnings():
             warnings.simplefilter("once")
             warnings.warn(
