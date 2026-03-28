@@ -72,30 +72,26 @@ def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
 def _cleanup_old_rootdirs(
     temproot: Path, prefix: str, keep: int, current: Path
 ) -> None:
-    """Remove old randomly-named rootdirs, keeping the *keep* most recent.
-
-    *current* is excluded so the running session's rootdir is never removed.
-    Errors are silently ignored (other sessions may hold locks, etc.).
-
-    Uses ``os.scandir`` with ``follow_symlinks=False`` so that symlinks
-    planted under *temproot* are never followed during enumeration —
-    defense-in-depth against symlink attacks (CVE-2025-71176).
-    """
+    """Remove old randomly-named rootdirs, keeping the *keep* most recent."""
     try:
         candidates = sorted(
             (
                 Path(entry.path)
                 for entry in os.scandir(temproot)
+                # Uses ``os.scandir`` with ``follow_symlinks=False`` so that symlinks
+                # planted under *temproot* are never followed during enumeration —
+                # defense-in-depth against symlink attacks (CVE-2025-71176).
                 if entry.is_dir(follow_symlinks=False)
                 and entry.name.startswith(prefix)
-                and Path(entry.path) != current
+                and Path(entry.path)
+                != current  # `current` is excluded so the running session's rootdir is never removed.
             ),
             key=lambda p: p.lstat().st_mtime,
             reverse=True,
         )
     except OSError:
-        # temproot may not exist, may be unreadable, or an entry's
-        # lstat may fail (e.g. concurrent removal by another session).
+        # Errors are silently ignored (other sessions may hold locks, temproot may not exist, may be unreadable, or an
+        # entry's lstat may fail (e.g. concurrent removal by another session).
         return
     for old in candidates[keep:]:
         safe_rmtree(old, ignore_errors=True)
