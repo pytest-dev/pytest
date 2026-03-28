@@ -195,7 +195,6 @@ def safe_rmtree(path: Path, *, ignore_errors: bool = False) -> None:
         _check_symlink_attack_safety(path)
     except OSError:
         if not ignore_errors:
-            #   On platforms without this guarantee an explicit symlink check is performed and a warning is emitted.
             raise
         # When *ignore_errors* is True, a symlink at *path* is silently skipped rather than raising.
         return
