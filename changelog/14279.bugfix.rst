@@ -1,5 +1,0 @@
-Temporary directories created by :fixture:`tmp_path` used to be created inside a ``pytest-of-{user}`` root directory within the system's temporary directory. Each session would create a new subdirectory with an incrementing counter -- ``pytest-0``, ``pytest-1``, etc. -- along with a ``pytest-current`` symlink pointing to the current one.
-
-This left the system vulnerable to symlink attacks, so pytest has changed how these directories are created.
-
-Now, each session creates a single ``pytest-of-{user}-{random}`` directory directly inside the system's temporary directory. This makes the directories unpredictable and safe from symlink attacks and `TOCTOU <https://en.wikipedia.org/wiki/Time-of-check_to_time-of-use>`__ races (:cve:`2025-71176`) -- by :user:`laurac8r`.
