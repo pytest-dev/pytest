@@ -171,8 +171,12 @@ Simply remove the ``__init__.py`` file entirely.
 Python 3.3+ natively supports namespace packages without ``__init__.py``.
 
 
+.. _hook-markers:
+
 Configuring hook specs/impls using markers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.2
 
 Before pluggy, pytest's plugin library, was its own package and had a clear API,
 pytest just used ``pytest.mark`` to configure hooks.
