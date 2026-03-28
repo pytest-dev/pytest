@@ -5,6 +5,7 @@ from collections.abc import Callable
 import dataclasses
 import os
 from pathlib import Path
+import shutil
 import stat
 import sys
 import tempfile
@@ -604,8 +605,6 @@ class TestSafeRmtree:
         target = tmp_path / "dir"
         target.mkdir()
 
-        import shutil
-
         monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
 
         with pytest.warns(
@@ -621,8 +620,6 @@ class TestSafeRmtree:
         """No warning when the platform natively guards against symlink attacks."""
         target = tmp_path / "dir"
         target.mkdir()
-
-        import shutil
 
         monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", True)
 
