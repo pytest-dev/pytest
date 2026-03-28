@@ -1,0 +1,1 @@
+Now the markers are considered in the order from near to far, through the mro. `get_closes_marker("usefixtures")` will also return the nearest mark, but the processing of the `usefixtures` goes from the far mark to the near one.

@@ -1682,7 +1682,9 @@ class FixtureManager:
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures applicable to node."""
-        for marker_node, mark in node.iter_markers_with_node(name="usefixtures"):
+        for marker_node, mark in reversed(
+            list(node.iter_markers_with_node(name="usefixtures"))
+        ):
             if not mark.args:
                 marker_node.warn(
                     PytestWarning(
