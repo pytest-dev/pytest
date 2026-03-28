@@ -38,6 +38,13 @@ def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
     """Verify directory ownership and ensure private permissions (0o700),
     taking care to avoid TOCTOU races.
 
+    .. note::
+
+        On POSIX, ``O_NOFOLLOW`` and ``O_DIRECTORY`` ensure the open cannot
+        follow symlinks.  On Windows these flags are unavailable; callers
+        should gate invocation on ``get_user_id() is not None`` (which is
+        ``False`` on Windows) so this function is never reached there.
+
     Raises:
         OSError: If *path* cannot be safely opened (e.g. it is a symlink)
             or is not owned by *user_id*.
