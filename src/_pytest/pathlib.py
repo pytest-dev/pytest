@@ -204,8 +204,8 @@ def safe_rmtree(path: Path, *, ignore_errors: bool = False) -> None:
 def rm_rf(path: Path) -> None:
     """Remove the path contents recursively, even if some elements
     are read-only."""
-    path = ensure_extended_length_path(path)
     _check_symlink_attack_safety(path, stacklevel=2)
+    path = ensure_extended_length_path(path)
     onerror = partial(on_rm_rf_error, start_path=path)
     if sys.version_info >= (3, 12):
         shutil.rmtree(str(path), onexc=onerror)
