@@ -26,7 +26,7 @@ from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
-from _pytest.fixtures import yield_fixture
+from _pytest.fixtures import yield_fixture  # type: ignore[deprecated]
 from _pytest.freeze_support import freeze_includes
 from _pytest.legacypath import TempdirFactory
 from _pytest.legacypath import Testdir

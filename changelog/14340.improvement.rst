@@ -1,0 +1,1 @@
+Marked ``yield_fixture`` as deprecated with ``deprecated`` decorator.
