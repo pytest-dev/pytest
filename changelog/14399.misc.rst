@@ -1,0 +1,1 @@
+Made ``FixtureFunction`` a type alias instead of a type var, as it only ever appears once in any function signature.

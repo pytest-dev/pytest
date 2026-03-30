@@ -82,8 +82,8 @@ if TYPE_CHECKING:
 
 # The value of the fixture -- return/yield of the fixture function (type variable).
 FixtureValue = TypeVar("FixtureValue", covariant=True)
-# The type of the fixture function (type variable).
-FixtureFunction = TypeVar("FixtureFunction", bound=Callable[..., object])
+# The type of the fixture function (type alias).
+FixtureFunction = Callable[..., object]
 # The type of a fixture function (type alias generic in fixture value).
 _FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValue]]
 # The type of FixtureDef.cached_result (type alias generic in fixture value).
