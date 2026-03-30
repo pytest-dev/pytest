@@ -42,7 +42,7 @@ It is of course possible (and common) for tests and fixtures to spawn threads th
 * Make sure to eventually wait on any spawned threads -- for example at the end of a test, or during the teardown of a fixture.
 * Avoid using primitives provided by pytest (:func:`pytest.warns`, :func:`pytest.raises`, etc) from multiple threads, as they are not thread-safe.
 
-If your test suite uses threads and your are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself.
+If your test suite uses threads and you are seeing flaky test results, do not discount the possibility that the test is implicitly using global state in pytest itself.
 
 Related features
 ^^^^^^^^^^^^^^^^

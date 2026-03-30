@@ -16,7 +16,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     env:
-      SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.event.inputs.version }}
+      SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST: ${{ github.event.inputs.version }}
     timeout-minutes: 10
 
     # Required by attest-build-provenance-github.
@@ -25,32 +25,64 @@ jobs:
       attestations: write
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@c52c3a4710070b50470d903818a7b25115dcd076
+      uses: hynek/build-and-inspect-python-package@efb823f52190ad02594531168b7a2d5790e66516
       with:
         attest-build-provenance-github: 'true'
 
-  deploy:
-    if: github.repository == 'pytest-dev/pytest'
+  generate-gh-release-notes:
     needs: [package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.13"
+
+    - name: Install tox
+      run: |
+        python -m pip install --upgrade pip
+        pip install tox
+
+    - name: Generate release notes
+      env:
+        VERSION: ${{ github.event.inputs.version }}
+      run: |
+        tox -e generate-gh-release-notes -- "$VERSION" gh-release-notes.md
+
+    - name: Upload release notes
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: release-notes
+        path: gh-release-notes.md
+        retention-days: 1
+
+  publish-to-pypi:
+    if: github.repository == 'pytest-dev/pytest'
+    # Need generate-gh-release-notes only for ordering.
+    # Don't want to release to PyPI if generating GitHub release notes fails.
+    needs: [package, generate-gh-release-notes]
     runs-on: ubuntu-latest
     environment: deploy
     timeout-minutes: 30
     permissions:
       id-token: write
-      contents: write
     steps:
-    - uses: actions/checkout@v5
-      with:
-        persist-credentials: true
-
     - name: Download Package
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: Packages
         path: dist
@@ -59,6 +91,18 @@ jobs:
       uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
       with:
         attestations: true
+
+  push-tag:
+    needs: [publish-to-pypi]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        fetch-depth: 0
+        persist-credentials: true
 
     - name: Push tag
       env:
@@ -69,48 +113,29 @@ jobs:
         git tag --annotate --message=v"$VERSION" "$VERSION" ${{ github.sha }}
         git push origin "$VERSION"
 
-  release-notes:
-
-    # todo: generate the content in the build  job
-    #       the goal being of using a github action script to push the release data
-    #       after success instead of creating a complete python/tox env
-    needs: [deploy]
+  create-github-release:
+    needs: [push-tag, generate-gh-release-notes]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-        persist-credentials: false
-
     - name: Download Package
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: Packages
         path: dist
 
-    - name: Set up Python
-      uses: actions/setup-python@v6
+    - name: Download release notes
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
-        python-version: "3.11"
-
-    - name: Install tox
-      run: |
-        python -m pip install --upgrade pip
-        pip install --upgrade tox
-
-    - name: Generate release notes
-      env:
-        VERSION: ${{ github.event.inputs.version }}
-      run: |
-        sudo apt-get install pandoc
-        tox -e generate-gh-release-notes -- "$VERSION" scripts/latest-release-notes.md
+        name: release-notes
+        path: .
 
     - name: Publish GitHub Release
       env:
         VERSION: ${{ github.event.inputs.version }}
+        GH_REPO: ${{ github.repository }}
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh release create --notes-file scripts/latest-release-notes.md --verify-tag "$VERSION" dist/*
+        gh release create --notes-file gh-release-notes.md --verify-tag "$VERSION" dist/*

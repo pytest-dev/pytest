@@ -1,0 +1,5 @@
+The test reports are now published to Codecov from GitHub Actions.
+The test statistics is visible `on the web interface
+<https://app.codecov.io/gh/pytest-dev/pytest/tests>`__.
+
+-- by :user:`aleguy02`

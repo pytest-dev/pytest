@@ -20,7 +20,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 8.4.2
+    pytest 9.0.2
 
 .. _`simpletest`:
 
@@ -45,7 +45,7 @@ The test
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -262,7 +262,7 @@ Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the c
 
     pytest --fixtures   # shows builtin and custom fixtures
 
-Note that this command omits fixtures with leading ``_`` unless the ``-v`` option is added.
+Note that this command omits fixtures with leading ``_`` unless the :option:`-v` option is added.
 
 Continue reading
 -------------------------------------

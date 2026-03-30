@@ -18,7 +18,7 @@ Thanks to all who contributed to this release, among them:
     AMiT Kumar
     Bruno Oliveira
     Erik M. Bray
-    Florian Bruhin
+    Freya Bruhin
     Georgy Dyuldin
     Jeff Widman
     Kartik Singhal

@@ -12,17 +12,17 @@ For information on plugin hooks and objects, see :ref:`plugins`.
 
 For information on the ``pytest.mark`` mechanism, see :ref:`mark`.
 
-For information about fixtures, see :ref:`fixtures`. To see a complete list of available fixtures (add ``-v`` to also see fixtures with leading ``_``), type :
+For information about fixtures, see :ref:`fixtures`. To see a complete list of available fixtures (add :option:`-v` to also see fixtures with leading ``_``), type :
 
 .. code-block:: pytest
 
     $ pytest  --fixtures -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collected 0 items
-    cache -- .../_pytest/cacheprovider.py:555
+    cache -- .../_pytest/cacheprovider.py:566
         Return a cache object that can persist state between testing sessions.
 
         cache.get(key, default)
@@ -128,7 +128,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
                 captured = capfdbinary.readouterr()
                 assert captured.out == b"hello\n"
 
-    doctest_namespace [session scope] -- .../_pytest/doctest.py:740
+    doctest_namespace [session scope] -- .../_pytest/doctest.py:722
         Fixture that returns a :py:class:`dict` that will be injected into the
         namespace of doctests.
 
@@ -142,7 +142,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         For more details: :ref:`doctest_namespace`.
 
-    pytestconfig [session scope] -- .../_pytest/fixtures.py:1425
+    pytestconfig [session scope] -- .../_pytest/fixtures.py:1431
         Session-scoped fixture that returns the session's :class:`pytest.Config`
         object.
 
@@ -225,7 +225,7 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
         * caplog.record_tuples   -> list of (logger_name, level, message) tuples
         * caplog.clear()         -> clear captured records and formatted log output string
 
-    monkeypatch -- .../_pytest/monkeypatch.py:31
+    monkeypatch -- .../_pytest/monkeypatch.py:33
         A convenient fixture for monkey-patching.
 
         The fixture provides these methods to modify objects, dictionaries, or
@@ -254,10 +254,13 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
 
         See :ref:`warnings` for information on warning categories.
 
-    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:240
+    subtests -- .../_pytest/subtests.py:129
+        Provides subtests functionality.
+
+    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:243
         Return a :class:`pytest.TempPathFactory` instance for the test session.
 
-    tmp_path -- .../_pytest/tmpdir.py:255
+    tmp_path -- .../_pytest/tmpdir.py:258
         Return a temporary directory (as :class:`pathlib.Path` object)
         which is unique to each test function invocation.
         The temporary directory is created as a subdirectory

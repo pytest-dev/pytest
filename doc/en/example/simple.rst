@@ -11,12 +11,11 @@ every time you use ``pytest``.  For example, if you always want to see
 detailed info on skipped and xfailed tests, as well as have terser "dot"
 progress output, you can write it into a configuration file:
 
-.. code-block:: ini
+.. code-block:: toml
 
-    # content of pytest.ini
+    # content of pytest.toml
     [pytest]
-    addopts = -ra -q
-
+    addopts = ["-ra", "-q"]
 
 Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
 line options while the environment is in use:
@@ -29,7 +28,7 @@ Here's how the command-line is built in the presence of ``addopts`` or the envir
 
 .. code-block:: text
 
-    <pytest.ini:addopts> $PYTEST_ADDOPTS <extra command-line arguments>
+    <configuration file addopts> $PYTEST_ADDOPTS <extra command-line arguments>
 
 So if the user executes in the command-line:
 
@@ -44,7 +43,7 @@ The actual command line executed is:
     pytest -ra -q -v -m slow
 
 Note that as usual for other command-line applications, in case of conflicting options the last one wins, so the example
-above will show verbose output because ``-v`` overwrites ``-q``.
+above will show verbose output because :option:`-v` overwrites :option:`-q`.
 
 
 .. _request example:
@@ -167,6 +166,8 @@ Now we'll get feedback on a bad argument:
     $ pytest -q --cmdopt=type3
     ERROR: usage: pytest [options] [file_or_dir] [file_or_dir] [...]
     pytest: error: argument --cmdopt: invalid choice: 'type3' (choose from type1, type2)
+      inifile: None
+      rootdir: /home/sweet/project
 
 
 If you need to provide more detailed error messages, you can use the
@@ -234,7 +235,7 @@ directory with the above conftest.py:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 0 items
 
@@ -298,7 +299,7 @@ and when running it will see a skipped "slow" test:
 
     $ pytest -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -314,7 +315,7 @@ Or run it including the ``slow`` marked test:
 
     $ pytest --runslow
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -352,7 +353,7 @@ Example:
 
 The ``__tracebackhide__`` setting influences ``pytest`` showing
 of tracebacks: the ``checkconfig`` function will not be shown
-unless the ``--full-trace`` command line option is specified.
+unless the :option:`--full-trace` command line option is specified.
 Let's run our little function:
 
 .. code-block:: pytest
@@ -415,10 +416,10 @@ running from a test you can do this:
 
 
     if os.environ.get("PYTEST_VERSION") is not None:
-        # Things you want to to do if your code is called by pytest.
+        # Things you want to do if your code is called by pytest.
         ...
     else:
-        # Things you want to to do if your code is not called by pytest.
+        # Things you want to do if your code is not called by pytest.
         ...
 
 
@@ -443,7 +444,7 @@ which will add the string to the test header accordingly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     project deps: mylib-1.1
     rootdir: /home/sweet/project
     collected 0 items
@@ -471,7 +472,7 @@ which will add info only when run with "--v":
 
     $ pytest -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     info1: did you know that ...
     did you?
@@ -486,7 +487,7 @@ and nothing when run plainly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 0 items
 
@@ -525,7 +526,7 @@ Now we can profile which test functions execute the slowest:
 
     $ pytest --durations=3
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 3 items
 
@@ -552,12 +553,10 @@ an ``incremental`` marker which is to be used on classes:
 
     # content of conftest.py
 
-    from typing import Dict, Tuple
-
     import pytest
 
     # store history of failures per test class name and per index in parametrize (if parametrize used)
-    _test_failed_incremental: Dict[str, Dict[Tuple[int, ...], str]] = {}
+    _test_failed_incremental: dict[str, dict[tuple[int, ...], str]] = {}
 
 
     def pytest_runtest_makereport(item, call):
@@ -631,7 +630,7 @@ If we run this:
 
     $ pytest -rx
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 4 items
 
@@ -713,7 +712,7 @@ We can run this:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 7 items
 
@@ -727,7 +726,7 @@ We can run this:
     file /home/sweet/project/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
 
     /home/sweet/project/b/test_error.py:1
@@ -774,7 +773,7 @@ The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
 also define a ``db`` fixture in that sister directory's ``conftest.py`` file.
 Note that each fixture is only instantiated if there is a test actually needing
-it (unless you use "autouse" fixture which are always executed ahead of the first test
+it (unless you use "autouse" fixtures which are always executed ahead of the first test
 executing).
 
 
@@ -835,7 +834,7 @@ and run them:
 
     $ pytest test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -882,11 +881,10 @@ here is a little example implemented via a local plugin:
 .. code-block:: python
 
     # content of conftest.py
-    from typing import Dict
     import pytest
     from pytest import StashKey, CollectReport
 
-    phase_report_key = StashKey[Dict[str, CollectReport]]()
+    phase_report_key = StashKey[dict[str, CollectReport]]()
 
 
     @pytest.hookimpl(wrapper=True, tryfirst=True)
@@ -946,7 +944,7 @@ and run it:
 
     $ pytest -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 3 items
 
@@ -997,7 +995,7 @@ information.
 
 
 Sometimes a test session might get stuck and there might be no easy way to figure out
-which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console
+which test got stuck, for example if pytest was run in quiet mode (:option:`-q`) or you don't have access to the console
 output. This is particularly a problem if the problem happens only sporadically, the famous "flaky" kind of tests.
 
 ``pytest`` sets the :envvar:`PYTEST_CURRENT_TEST` environment variable when running tests, which can be inspected

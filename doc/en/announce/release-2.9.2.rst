@@ -17,7 +17,7 @@ Thanks to all who contributed to this release, among them:
       Adam Chainz
       Benjamin Dopplinger
       Bruno Oliveira
-      Florian Bruhin
+      Freya Bruhin
       John Towler
       Martin Prusse
       Meng Jue

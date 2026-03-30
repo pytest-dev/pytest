@@ -71,6 +71,8 @@ from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
+from _pytest.subtests import SubtestReport
+from _pytest.subtests import Subtests
 from _pytest.terminal import TerminalReporter
 from _pytest.terminal import TestShortLogReport
 from _pytest.tmpdir import TempPathFactory
@@ -81,7 +83,6 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
 from _pytest.warning_types import PytestFDWarning
-from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestRemovedIn10Warning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
@@ -133,7 +134,6 @@ __all__ = [
     "PytestExperimentalApiWarning",
     "PytestFDWarning",
     "PytestPluginManager",
-    "PytestRemovedIn9Warning",
     "PytestRemovedIn10Warning",
     "PytestReturnNotNoneWarning",
     "PytestUnhandledThreadExceptionWarning",
@@ -148,6 +148,8 @@ __all__ = [
     "Session",
     "Stash",
     "StashKey",
+    "SubtestReport",
+    "Subtests",
     "TempPathFactory",
     "TempdirFactory",
     "TerminalReporter",

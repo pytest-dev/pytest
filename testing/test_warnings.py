@@ -382,7 +382,7 @@ def test_hide_pytest_internal_warnings(
 def test_option_precedence_cmdline_over_ini(
     pytester: Pytester, ignore_on_cmdline
 ) -> None:
-    """Filters defined in the command-line should take precedence over filters in ini files (#3946)."""
+    """Filters defined in the command-line should take precedence over filters in config files (#3946)."""
     pytester.makeini(
         """
         [pytest]
@@ -562,8 +562,7 @@ class TestDeprecationWarningsByDefault:
         )
 
 
-# In 9.1, uncomment below and change RemovedIn9 -> RemovedIn10.
-# @pytest.mark.skip("not relevant until pytest 10.0")
+@pytest.mark.skip("not relevant until pytest 10.0")
 @pytest.mark.parametrize("change_default", [None, "ini", "cmdline"])
 def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> None:
     """This ensures that PytestRemovedInXWarnings raised by pytest are turned into errors.
@@ -575,7 +574,7 @@ def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> No
         """
         import warnings, pytest
         def test():
-            warnings.warn(pytest.PytestRemovedIn9Warning("some warning"))
+            warnings.warn(pytest.PytestRemovedIn10Warning("some warning"))
     """
     )
     if change_default == "ini":
@@ -583,12 +582,12 @@ def test_removed_in_x_warning_as_error(pytester: Pytester, change_default) -> No
             """
             [pytest]
             filterwarnings =
-                ignore::pytest.PytestRemovedIn9Warning
+                ignore::pytest.PytestRemovedIn10Warning
         """
         )
 
     args = (
-        ("-Wignore::pytest.PytestRemovedIn9Warning",)
+        ("-Wignore::pytest.PytestRemovedIn10Warning",)
         if change_default == "cmdline"
         else ()
     )
@@ -742,10 +741,8 @@ class TestStackLevel:
         assert func == "<module>"  # the above conftest.py
         assert lineno == 4
 
-    def test_issue4445_preparse(self, pytester: Pytester, capwarn) -> None:
-        """#4445: Make sure the warning points to a reasonable location
-        See origin of _issue_warning_captured at: _pytest.config.__init__.py:910
-        """
+    def test_issue4445_initial_conftest(self, pytester: Pytester, capwarn) -> None:
+        """#4445: Make sure the warning points to a reasonable location."""
         pytester.makeconftest(
             """
             import nothing
@@ -761,7 +758,7 @@ class TestStackLevel:
 
         assert "could not load initial conftests" in str(warning.message)
         assert f"config{os.sep}__init__.py" in file
-        assert func == "_preparse"
+        assert func == "parse"
 
     @pytest.mark.filterwarnings("default")
     def test_conftest_warning_captured(self, pytester: Pytester) -> None:

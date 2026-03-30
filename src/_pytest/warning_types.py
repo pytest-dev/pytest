@@ -50,12 +50,6 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     __module__ = "pytest"
 
 
-class PytestRemovedIn9Warning(PytestDeprecationWarning):
-    """Warning class for features that will be removed in pytest 9."""
-
-    __module__ = "pytest"
-
-
 class PytestRemovedIn10Warning(PytestDeprecationWarning):
     """Warning class for features that will be removed in pytest 10."""
 

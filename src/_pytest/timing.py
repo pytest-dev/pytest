@@ -32,12 +32,14 @@ class Instant:
 
     # Creation time of this instant, using time.time(), to measure actual time.
     # Note: using a `lambda` to correctly get the mocked time via `MockTiming`.
-    time: float = dataclasses.field(default_factory=lambda: time(), init=False)
+    # pylint: disable-next=lambda-assignment
+    time: float = dataclasses.field(default_factory=lambda: time(), init=False)  # noqa: PLW0108
 
     # Performance counter tick of the instant, used to measure precise elapsed time.
     # Note: using a `lambda` to correctly get the mocked time via `MockTiming`.
     perf_count: float = dataclasses.field(
-        default_factory=lambda: perf_counter(), init=False
+        default_factory=lambda: perf_counter(),  # noqa: PLW0108
+        init=False,
     )
 
     def elapsed(self) -> Duration:
@@ -84,6 +86,7 @@ class MockTiming:
         return self._current_time
 
     def patch(self, monkeypatch: MonkeyPatch) -> None:
+        # pylint: disable-next=import-self
         from _pytest import timing  # noqa: PLW0406
 
         monkeypatch.setattr(timing, "sleep", self.sleep)

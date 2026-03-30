@@ -1,2 +1,0 @@
-Fixed deprecated :command:`gh pr new` command in :file:`scripts/prepare-release-pr.py`.
-The script now uses :command:`gh pr create` which is compatible with GitHub CLI v2.0+.

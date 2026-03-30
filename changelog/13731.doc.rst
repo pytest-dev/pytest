@@ -1,0 +1,1 @@
+Clarified that capture fixtures (e.g. ``capsys`` and ``capfd``) take precedence over the ``-s`` / ``--capture=no`` command-line options in :ref:`Accessing captured output from a test function <accessing-captured-output>`.

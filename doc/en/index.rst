@@ -2,7 +2,7 @@
 
 .. sidebar:: **Next Open Trainings and Events**
 
-    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 3th -- 5th 2026**, Leipzig (DE) / Remote
+    - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 9th -- 11th 2027**, Leipzig (DE) / Remote
 
     Also see :doc:`previous talks and blogposts <talks>`
 
@@ -67,7 +67,7 @@ To execute it:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 

@@ -16,13 +16,13 @@ keywords = [
 license = "MIT"
 license-files = [ "LICENSE" ]
 authors = [
-    { name = "Holger Krekel" },
-    { name = "Bruno Oliveira" },
-    { name = "Ronny Pfannschmidt" },
-    { name = "Floris Bruynooghe" },
     { name = "Brianna Laugher" },
-    { name = "Florian Bruhin" },
+    { name = "Bruno Oliveira" },
+    { name = "Floris Bruynooghe" },
+    { name = "Freya Bruhin" },
+    { name = "Holger Krekel" },
     { name = "Others (See AUTHORS)" },
+    { name = "Ronny Pfannschmidt" },
 ]
 requires-python = ">=3.10"
 classifiers = [
@@ -161,6 +161,7 @@ lint.ignore = [
     "PLW2901", # for loop variable overwritten by assignment target
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF061", # Use context-manager form of `pytest.raises()`
 ]
 lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
     "B",
@@ -169,6 +170,8 @@ lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
 lint.per-file-ignores."src/_pytest/_version.py" = [
     "I001",
 ]
+# 'Unnecessary membership test on empty collection', always voluntary in tests
+lint.per-file-ignores."testing/**/*.py" = [ "RUF060" ]
 # can't be disabled on a line-by-line basis in file
 lint.per-file-ignores."testing/code/test_source.py" = [
     "F841",
@@ -217,31 +220,30 @@ disable = [
     "comparison-with-callable",
     "comparison-with-itself",                 # PLR0124 from ruff
     "condition-evals-to-constant",
-    "consider-alternative-union-syntax",
     "confusing-consecutive-elif",
+    "consider-alternative-union-syntax",
+    "consider-ternary-expression",
     "consider-using-assignment-expr",
     "consider-using-dict-items",
-    "consider-using-from-import",
+    "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
     "consider-using-f-string",
     "consider-using-in",
     "consider-using-namedtuple-or-dataclass",
     "consider-using-ternary",
     "consider-using-tuple",
     "consider-using-with",
-    "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
-    "consider-ternary-expression",
     "cyclic-import",
-    "differing-param-doc",
-    "docstring-first-line-empty",
     "deprecated-argument",
     "deprecated-attribute",
     "deprecated-class",
+    "differing-param-doc",
     "disallowed-name",                        # foo / bar are used often in tests
+    "docstring-first-line-empty",
     "duplicate-code",
     "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
     "empty-comment",                          # not activated by default, PLR2044 disabled in ruff
-    "eval-used",
     "eq-without-hash",                        # PLW1641 disabled in ruff
+    "eval-used",
     "exec-used",
     "expression-not-assigned",
     "fixme",
@@ -258,13 +260,13 @@ disable = [
     "line-too-long",
     "magic-value-comparison",                 # not activated by default, PLR2004 disabled in ruff
     "method-hidden",
+    "misplaced-bare-raise",                   # PLE0704 from ruff
+    "misplaced-comparison-constant",
     "missing-docstring",
     "missing-param-doc",
     "missing-raises-doc",
     "missing-timeout",
     "missing-type-doc",
-    "misplaced-bare-raise",                   # PLE0704 from ruff
-    "misplaced-comparison-constant",
     "multiple-statements",                    # multiple-statements-on-one-line-colon (E701) from ruff
     "no-else-break",
     "no-else-continue",
@@ -329,10 +331,10 @@ disable = [
     "use-dict-literal",
     "use-implicit-booleaness-not-comparison",
     "use-implicit-booleaness-not-len",
-    "use-set-for-membership",
     "useless-else-on-loop",                   # PLC0414 disabled in ruff
     "useless-import-alias",
     "useless-return",
+    "use-set-for-membership",
     "using-constant-test",
     "while-used",
     "wrong-import-order",                     # handled by isort / ruff
@@ -353,9 +355,9 @@ ignore = "W009"
 indent = 4
 max_supported_python = "3.14"
 
-[tool.pytest.ini_options]
+[tool.pytest]
 minversion = "2.0"
-addopts = "-rfEX -p pytester --strict-markers"
+addopts = [ "-rfEX", "-p", "pytester" ]
 python_files = [
     "test_*.py",
     "*_test.py",
@@ -378,41 +380,41 @@ norecursedirs = [
     "build",
     "dist",
 ]
-xfail_strict = true
+strict = true
 filterwarnings = [
-    "error",
-    "default:Using or importing the ABCs:DeprecationWarning:unittest2.*",
+    'error',
+    'default:Using or importing the ABCs:DeprecationWarning:unittest2.*',
     # produced by older pyparsing<=2.2.0.
-    "default:Using or importing the ABCs:DeprecationWarning:pyparsing.*",
-    "default:the imp module is deprecated in favour of importlib:DeprecationWarning:nose.*",
+    'default:Using or importing the ABCs:DeprecationWarning:pyparsing.*',
+    'default:the imp module is deprecated in favour of importlib:DeprecationWarning:nose.*',
     # distutils is deprecated in 3.10, scheduled for removal in 3.12
-    "ignore:The distutils package is deprecated:DeprecationWarning",
+    'ignore:The distutils package is deprecated:DeprecationWarning',
     # produced by pytest-xdist
-    "ignore:.*type argument to addoption.*:DeprecationWarning",
+    'ignore:.*type argument to addoption.*:DeprecationWarning',
     # produced on execnet (pytest-xdist)
-    "ignore:.*inspect.getargspec.*deprecated, use inspect.signature.*:DeprecationWarning",
+    'ignore:.*inspect.getargspec.*deprecated, use inspect.signature.*:DeprecationWarning',
     # pytest's own futurewarnings
-    "ignore::pytest.PytestExperimentalApiWarning",
+    'ignore::pytest.PytestExperimentalApiWarning',
     # Do not cause SyntaxError for invalid escape sequences in py37.
     # Those are caught/handled by pyupgrade, and not easy to filter with the
     # module being the filename (with .py removed).
-    "default:invalid escape sequence:DeprecationWarning",
+    'default:invalid escape sequence:DeprecationWarning',
     # ignore not yet fixed warnings for hook markers
-    "default:.*not marked using pytest.hook.*",
-    "ignore:.*not marked using pytest.hook.*::xdist.*",
+    'default:.*not marked using pytest.hook.*',
+    'ignore:.*not marked using pytest.hook.*::xdist.*',
     # ignore use of unregistered marks, because we use many to test the implementation
-    "ignore::_pytest.warning_types.PytestUnknownMarkWarning",
+    'ignore::_pytest.warning_types.PytestUnknownMarkWarning',
     # https://github.com/benjaminp/six/issues/341
-    "ignore:_SixMetaPathImporter\\.exec_module\\(\\) not found; falling back to load_module\\(\\):ImportWarning",
+    'ignore:_SixMetaPathImporter\.exec_module\(\) not found; falling back to load_module\(\):ImportWarning',
     # https://github.com/benjaminp/six/pull/352
-    "ignore:_SixMetaPathImporter\\.find_spec\\(\\) not found; falling back to find_module\\(\\):ImportWarning",
+    'ignore:_SixMetaPathImporter\.find_spec\(\) not found; falling back to find_module\(\):ImportWarning',
     # https://github.com/pypa/setuptools/pull/2517
-    "ignore:VendorImporter\\.find_spec\\(\\) not found; falling back to find_module\\(\\):ImportWarning",
+    'ignore:VendorImporter\.find_spec\(\) not found; falling back to find_module\(\):ImportWarning',
     # https://github.com/pytest-dev/execnet/pull/127
-    "ignore:isSet\\(\\) is deprecated, use is_set\\(\\) instead:DeprecationWarning",
+    'ignore:isSet\(\) is deprecated, use is_set\(\) instead:DeprecationWarning',
     # https://github.com/pytest-dev/pytest/issues/2366
     # https://github.com/pytest-dev/pytest/pull/13057
-    "default::pytest.PytestFDWarning",
+    'default::pytest.PytestFDWarning',
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [
@@ -431,6 +433,48 @@ markers = [
     # actually inspects whether the CI environment variable is set.
     "keep_ci_var",
 ]
+
+[tool.coverage.paths]
+source = [
+    'src/',
+    '*/lib/python*/site-packages/',
+    '*/pypy*/site-packages/',
+    '*\Lib\site-packages\',
+]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
+exclude_lines = [
+    '\#\s*pragma: no cover',
+    '^\s*raise NotImplementedError\b',
+    '^\s*return NotImplemented\b',
+    '^\s*assert False(,|$)',
+    '^\s*case unreachable:',
+    '^\s*assert_never\(',
+    '^\s*if TYPE_CHECKING:',
+    '^\s*@overload( |$)',
+    '^\s*def .+: \.\.\.$',
+    '^\s*@pytest\.mark\.xfail',
+]
+
+[tool.coverage.run]
+include = [
+    'src/*',
+    'testing/*',
+    '*/lib/python*/site-packages/_pytest/*',
+    '*/lib/python*/site-packages/pytest.py',
+    '*/pypy*/site-packages/_pytest/*',
+    '*/pypy*/site-packages/pytest.py',
+    '*\Lib\site-packages\_pytest\*',
+    '*\Lib\site-packages\pytest.py',
+]
+parallel = true
+branch = true
+patch = [ "subprocess" ]
+# The sysmon core (default since Python 3.14) is much slower.
+# Perhaps: https://github.com/coveragepy/coveragepy/issues/2082
+core = "ctrace"
 
 [tool.towncrier]
 package = "pytest"
@@ -532,6 +576,7 @@ warn_unreachable = true
 warn_unused_configs = true
 no_implicit_reexport = true
 warn_unused_ignores = true
+enable_error_code = [ "deprecated" ]
 
 [tool.pyright]
 include = [

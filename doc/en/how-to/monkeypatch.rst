@@ -235,7 +235,7 @@ so that any attempts within tests to create http requests will fail.
 
     Be advised that it is not recommended to patch builtin functions such as ``open``,
     ``compile``, etc., because it might break pytest's internals. If that's
-    unavoidable, passing ``--tb=native``, ``--assert=plain`` and ``--capture=no`` might
+    unavoidable, passing :option:`--tb=native`, :option:`--assert=plain` and :option:`--capture=no` might
     help although there's no guarantee.
 
 .. note::
@@ -382,7 +382,7 @@ You can use the :py:meth:`monkeypatch.delitem <MonkeyPatch.delitem>` to remove v
 
 
     def test_missing_user(monkeypatch):
-        # patch the DEFAULT_CONFIG t be missing the 'user' key
+        # patch the DEFAULT_CONFIG to be missing the 'user' key
         monkeypatch.delitem(app.DEFAULT_CONFIG, "user", raising=False)
 
         # Key error expected because a config is not passed, and the

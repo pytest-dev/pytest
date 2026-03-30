@@ -32,8 +32,8 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
+from _pytest.config.argparsing import OverrideIniAction
 from _pytest.config.argparsing import Parser
-from _pytest.config.compat import PathAwareHookProxy
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
@@ -55,7 +55,7 @@ if TYPE_CHECKING:
 
 
 def pytest_addoption(parser: Parser) -> None:
-    group = parser.getgroup("general", "Running and selection options")
+    group = parser.getgroup("general")
     group._addoption(  # private to use reserved lower-case short option
         "-x",
         "--exitfirst",
@@ -75,20 +75,47 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group.addoption(
         "--strict-config",
-        action="store_true",
-        help="Any warnings encountered while parsing the `pytest` section of the "
-        "configuration file raise errors",
+        action=OverrideIniAction,
+        ini_option="strict_config",
+        ini_value="true",
+        help="Enables the strict_config option",
     )
     group.addoption(
         "--strict-markers",
-        action="store_true",
-        help="Markers not registered in the `markers` section of the configuration "
-        "file raise errors",
+        action=OverrideIniAction,
+        ini_option="strict_markers",
+        ini_value="true",
+        help="Enables the strict_markers option",
     )
     group.addoption(
         "--strict",
-        action="store_true",
-        help="(Deprecated) alias to --strict-markers",
+        action=OverrideIniAction,
+        ini_option="strict",
+        ini_value="true",
+        help="Enables the strict option",
+    )
+    parser.addini(
+        "strict_config",
+        "Any warnings encountered while parsing the `pytest` section of the "
+        "configuration file raise errors",
+        type="bool",
+        # None => fallback to `strict`.
+        default=None,
+    )
+    parser.addini(
+        "strict_markers",
+        "Markers not registered in the `markers` section of the configuration "
+        "file raise errors",
+        type="bool",
+        # None => fallback to `strict`.
+        default=None,
+    )
+    parser.addini(
+        "strict",
+        "Enables all strictness options, currently: "
+        "strict_config, strict_markers, strict_xfail, strict_parametrization_ids",
+        type="bool",
+        default=False,
     )
 
     group = parser.getgroup("pytest-warnings")
@@ -699,7 +726,7 @@ class Session(nodes.Collector):
         proxy: pluggy.HookRelay
         if remove_mods:
             # One or more conftests are not in use at this path.
-            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))  # type: ignore[arg-type,assignment]
+            proxy = FSHookProxy(pm, remove_mods)  # type: ignore[assignment]
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook

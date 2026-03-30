@@ -225,13 +225,16 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "tmp_path_retention_count",
         help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
-        default=3,
+        default="3",
+        # NOTE: Would have been better as an `int` but can't change it now.
+        type="string",
     )
 
     parser.addini(
         "tmp_path_retention_policy",
         help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome. "
         "(all/failed/none)",
+        type="string",
         default="all",
     )
 

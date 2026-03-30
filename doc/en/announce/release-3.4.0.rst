@@ -30,7 +30,7 @@ Thanks to all who contributed to this release, among them:
 * Brian Maissy
 * Bruno Oliveira
 * Cyrus Maden
-* Florian Bruhin
+* Freya Bruhin
 * Henk-Jaap Wagenaar
 * Ian Lesperance
 * Jon Dufresne

@@ -253,8 +253,8 @@ class TestRaises:
         msg = "with base 16"
         expr = (
             "Regex pattern did not match.\n"
-            f" Regex: {msg!r}\n"
-            " Input: \"invalid literal for int() with base 10: 'asdf'\""
+            f"  Expected regex: {msg!r}\n"
+            f"  Actual message: \"invalid literal for int() with base 10: 'asdf'\""
         )
         with pytest.raises(AssertionError, match="^" + re.escape(expr) + "$"):
             with pytest.raises(ValueError, match=msg):
@@ -289,7 +289,10 @@ class TestRaises:
             with pytest.raises(AssertionError, match="'foo"):
                 raise AssertionError("'bar")
         (msg,) = excinfo.value.args
-        assert msg == '''Regex pattern did not match.\n Regex: "'foo"\n Input: "'bar"'''
+        assert (
+            msg
+            == '''Regex pattern did not match.\n  Expected regex: "'foo"\n  Actual message: "'bar"'''
+        )
 
     def test_match_failure_exact_string_message(self):
         message = "Oh here is a message with (42) numbers in parameters"
@@ -299,8 +302,8 @@ class TestRaises:
         (msg,) = excinfo.value.args
         assert msg == (
             "Regex pattern did not match.\n"
-            " Regex: 'Oh here is a message with (42) numbers in parameters'\n"
-            " Input: 'Oh here is a message with (42) numbers in parameters'\n"
+            "  Expected regex: 'Oh here is a message with (42) numbers in parameters'\n"
+            "  Actual message: 'Oh here is a message with (42) numbers in parameters'\n"
             " Did you mean to `re.escape()` the regex?"
         )
 
@@ -364,9 +367,7 @@ class TestRaises:
     def test_expected_exception_is_not_a_baseexception(self) -> None:
         with pytest.raises(
             TypeError,
-            match=wrap_escape(
-                "expected exception must be a BaseException type, not 'str'"
-            ),
+            match=wrap_escape("Expected a BaseException type, but got 'str'"),
         ):
             with pytest.raises("hello"):  # type: ignore[call-overload]
                 pass  # pragma: no cover
@@ -377,7 +378,7 @@ class TestRaises:
         with pytest.raises(
             ValueError,
             match=wrap_escape(
-                "expected exception must be a BaseException type, not 'NotAnException'"
+                "Expected a BaseException type, but got 'NotAnException'"
             ),
         ):
             with pytest.raises(NotAnException):  # type: ignore[type-var]
@@ -385,9 +386,7 @@ class TestRaises:
 
         with pytest.raises(
             TypeError,
-            match=wrap_escape(
-                "expected exception must be a BaseException type, not 'str'"
-            ),
+            match=wrap_escape("Expected a BaseException type, but got 'str'"),
         ):
             with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
                 pass  # pragma: no cover
@@ -408,3 +407,35 @@ class TestRaises:
                 code=404, msg="Not Found", fp=io.BytesIO(), hdrs=Message(), url=""
             )
         exc_info.value.close()  # avoid a resource warning
+
+    def test_raises_match_compiled_regex(self) -> None:
+        """Test that compiled regex patterns work with pytest.raises."""
+        # Test with a compiled pattern that matches
+        pattern = re.compile(r"with base \d+")
+        with pytest.raises(ValueError, match=pattern):
+            int("asdf")
+
+        # Test with a compiled pattern that doesn't match
+        pattern_nomatch = re.compile(r"with base 16")
+        expr = (
+            "Regex pattern did not match.\n"
+            f"  Expected regex: {pattern_nomatch.pattern!r}\n"
+            f"  Actual message: \"invalid literal for int() with base 10: 'asdf'\""
+        )
+        with pytest.raises(AssertionError, match="^" + re.escape(expr) + "$"):
+            with pytest.raises(ValueError, match=pattern_nomatch):
+                int("asdf", base=10)
+
+        # Test compiled pattern with flags
+        pattern_with_flags = re.compile(r"INVALID LITERAL", re.IGNORECASE)
+        with pytest.raises(ValueError, match=pattern_with_flags):
+            int("asdf")
+
+    def test_pipe_is_treated_as_regex_metacharacter(self) -> None:
+        """| (pipe) must be recognized as a regex metacharacter."""
+        from _pytest.raises import is_fully_escaped
+        from _pytest.raises import unescape
+
+        assert not is_fully_escaped("foo|bar")
+        assert is_fully_escaped(r"foo\|bar")
+        assert unescape(r"foo\|bar") == "foo|bar"

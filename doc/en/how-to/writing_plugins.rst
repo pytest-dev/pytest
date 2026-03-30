@@ -48,7 +48,7 @@ Plugin discovery order at tool startup
 
 5. by loading all plugins specified through the :envvar:`PYTEST_PLUGINS` environment variable.
 
-6. by loading all "initial ":file:`conftest.py` files:
+6. by loading all "initial" :file:`conftest.py` files:
 
    - determine the test paths: specified on the command line, otherwise in
      :confval:`testpaths` if defined and running from the rootdir, otherwise the
@@ -295,7 +295,7 @@ the plugin manager like this:
     plugin = config.pluginmanager.get_plugin("name_of_plugin")
 
 If you want to look at the names of existing plugins, use
-the ``--trace-config`` option.
+the :option:`--trace-config` option.
 
 
 .. _registering-markers:
@@ -420,13 +420,13 @@ before running pytest on it. This way we can abstract the tested logic to separa
 which is especially useful for longer tests and/or longer ``conftest.py`` files.
 
 Note that for ``pytester.copy_example`` to work we need to set `pytester_example_dir`
-in our ``pytest.ini`` to tell pytest where to look for example files.
+in our configuration file to tell pytest where to look for example files.
 
-.. code-block:: ini
+.. code-block:: toml
 
-  # content of pytest.ini
-  [pytest]
-  pytester_example_dir = .
+    # content of pytest.toml
+    [pytest]
+    pytester_example_dir = "."
 
 
 .. code-block:: python
@@ -446,9 +446,9 @@ in our ``pytest.ini`` to tell pytest where to look for example files.
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
-    configfile: pytest.ini
+    configfile: pytest.toml
     collected 2 items
 
     test_example.py ..                                                   [100%]

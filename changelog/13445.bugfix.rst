@@ -1,1 +1,0 @@
-Made the type annotations of :func:`pytest.skip` and friends more spec-complaint to have them work across more type checkers.

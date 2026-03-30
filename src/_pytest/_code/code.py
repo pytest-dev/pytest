@@ -772,7 +772,11 @@ class ExceptionInfo(Generic[E]):
         """
         __tracebackhide__ = True
         value = stringify_exception(self.value)
-        msg = f"Regex pattern did not match.\n Regex: {regexp!r}\n Input: {value!r}"
+        msg = (
+            f"Regex pattern did not match.\n"
+            f"  Expected regex: {regexp!r}\n"
+            f"  Actual message: {value!r}"
+        )
         if regexp == value:
             msg += "\n Did you mean to `re.escape()` the regex?"
         assert re.search(regexp, value), msg
@@ -1189,9 +1193,15 @@ class FormattedExcinfo:
                         format_exception(
                             type(excinfo.value),
                             excinfo.value,
-                            traceback[0]._rawentry,
+                            traceback[0]._rawentry if traceback else None,
                         )
                     )
+                    if not traceback:
+                        reprtraceback.extraline = (
+                            "All traceback entries are hidden. "
+                            "Pass `--full-trace` to see hidden and internal frames."
+                        )
+
                 else:
                     reprtraceback = self.repr_traceback(excinfo_)
                 reprcrash = excinfo_._getreprcrash()

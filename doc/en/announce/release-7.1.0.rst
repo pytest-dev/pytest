@@ -28,7 +28,7 @@ Thanks to all of the contributors to this release:
 * Elijah DeLee
 * Emmanuel Arias
 * Fabian Egli
-* Florian Bruhin
+* Freya Bruhin
 * Gabor Szabo
 * Hasan Ramezani
 * Hugo van Kemenade

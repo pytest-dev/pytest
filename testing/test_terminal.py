@@ -12,8 +12,7 @@ from types import SimpleNamespace
 from typing import cast
 from typing import Literal
 from typing import NamedTuple
-from unittest.mock import Mock
-from unittest.mock import patch
+from unittest import mock
 
 import pluggy
 
@@ -940,7 +939,7 @@ class TestTerminalFunctional:
         pytester.path.joinpath("tests").mkdir()
         pytester.path.joinpath("gui").mkdir()
 
-        # no ini file
+        # no configuration file
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["rootdir: *test_header0"])
 
@@ -1586,6 +1585,19 @@ class TestGenericReporting:
                 assert "FAILURES" not in s
                 assert "--calling--" not in s
                 assert "IndexError" not in s
+
+    def test_tb_line_show_capture(self, pytester: Pytester, option) -> None:
+        output_to_capture = "help! let me out!"
+        pytester.makepyfile(
+            f"""
+            import pytest
+            def test_fail():
+                print('{output_to_capture}')
+                assert False
+            """
+        )
+        result = pytester.runpytest("--tb=line")
+        result.stdout.fnmatch_lines(["*- Captured stdout call -*", output_to_capture])
 
     def test_tb_crashline(self, pytester: Pytester, option) -> None:
         p = pytester.makepyfile(
@@ -2893,6 +2905,100 @@ def test_format_trimmed() -> None:
     assert _format_trimmed(" ({}) ", msg, len(msg) + 3) == " (unconditional ...) "
 
 
+def test_warning_when_init_trumps_pyproject_toml(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)",
+        ]
+    )
+
+
+def test_warning_when_init_trumps_multiple_files(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    pytester.makeini(
+        """
+        # tox.ini
+        [pytest]
+        minversion = 6.0
+        addopts = -ra -q
+        testpaths =
+            tests
+            integration
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml, tox.ini!)",
+        ]
+    )
+
+
+def test_no_warning_when_init_but_pyproject_toml_has_no_entry(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool]
+        testpaths = ['{tests}']
+    """
+    )
+    pytester.makefile(".ini", pytest="")
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pytest.ini",
+        ]
+    )
+
+
+def test_no_warning_on_terminal_with_a_single_config_file(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression test for #7814."""
+    tests = pytester.path.joinpath("tests")
+    tests.mkdir()
+    pytester.makepyprojecttoml(
+        f"""
+        [tool.pytest.ini_options]
+        testpaths = ['{tests}']
+    """
+    )
+    result = pytester.runpytest()
+    result.stdout.fnmatch_lines(
+        [
+            "configfile: pyproject.toml",
+        ]
+    )
+
+
 class TestFineGrainedTestCase:
     DEFAULT_FILE_CONTENTS = """
             import pytest
@@ -3312,29 +3418,57 @@ class TestTerminalProgressPlugin:
 
     @pytest.fixture
     def mock_tr(self, mock_file: StringIO) -> pytest.TerminalReporter:
-        tr = Mock(spec=pytest.TerminalReporter)
+        tr: pytest.TerminalReporter = mock.create_autospec(pytest.TerminalReporter)
 
-        def write_raw(s: str, *, flush: bool = False) -> None:
-            mock_file.write(s)
+        def write_raw(content: str, *, flush: bool = False) -> None:
+            mock_file.write(content)
 
-        tr.write_raw = write_raw
+        tr.write_raw = write_raw  # type: ignore[method-assign]
         tr._progress_nodeids_reported = set()
         return tr
 
-    def test_plugin_registration(self, pytester: pytest.Pytester) -> None:
-        """Test that the plugin is registered correctly on TTY output."""
-        # The plugin module should be registered as a default plugin.
-        with patch.object(sys.stdout, "isatty", return_value=True):
-            config = pytester.parseconfigure()
-            plugin = config.pluginmanager.get_plugin("terminalprogress")
-            assert plugin is not None
+    @pytest.mark.skipif(sys.platform != "win32", reason="#13896")
+    def test_plugin_registration_enabled_by_default(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that the plugin registration is enabled by default.
 
-    def test_disabled_for_non_tty(self, pytester: pytest.Pytester) -> None:
+        Currently only on Windows (#13896).
+        """
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+        # The plugin module should be registered as a default plugin.
+        config = pytester.parseconfigure()
+        plugin = config.pluginmanager.get_plugin("terminalprogress")
+        assert plugin is not None
+
+    def test_plugin_registred_on_all_platforms_when_explicitly_requested(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that the plugin is registered on any platform if explicitly requested."""
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+        # The plugin module should be registered as a default plugin.
+        config = pytester.parseconfigure("-p", "terminalprogress")
+        plugin = config.pluginmanager.get_plugin("terminalprogress")
+        assert plugin is not None
+
+    def test_disabled_for_non_tty(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
         """Test that plugin is disabled for non-TTY output."""
-        with patch.object(sys.stdout, "isatty", return_value=False):
-            config = pytester.parseconfigure()
-            plugin = config.pluginmanager.get_plugin("terminalprogress")
-            assert plugin is None
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
+        config = pytester.parseconfigure("-p", "terminalprogress")
+        plugin = config.pluginmanager.get_plugin("terminalprogress-plugin")
+        assert plugin is None
+
+    def test_disabled_for_dumb_terminal(
+        self, pytester: pytest.Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Test that plugin is disabled when TERM=dumb."""
+        monkeypatch.setenv("TERM", "dumb")
+        monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+        config = pytester.parseconfigure("-p", "terminalprogress")
+        plugin = config.pluginmanager.get_plugin("terminalprogress-plugin")
+        assert plugin is None
 
     @pytest.mark.parametrize(
         ["state", "progress", "expected"],
@@ -3366,7 +3500,7 @@ class TestTerminalProgressPlugin:
         """Test progress updates during session lifecycle."""
         plugin = TerminalProgressPlugin(mock_tr)
 
-        session = Mock(spec=pytest.Session)
+        session = mock.create_autospec(pytest.Session)
         session.testscollected = 3
 
         # Session start - should emit indeterminate progress.

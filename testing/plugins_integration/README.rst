@@ -1,4 +1,4 @@
-This folder contains tests and support files for smoke testing popular plugins against the current pytest version.
+This directory contains tests and support files for smoke testing popular plugins against the current pytest version.
 
 The objective is to gauge if any intentional or unintentional changes in pytest break plugins.
 

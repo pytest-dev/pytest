@@ -907,7 +907,7 @@ class TestLiterals:
     def test_allow_unicode(self, pytester, config_mode):
         """Test that doctests which output unicode work in all python versions
         tested by pytest when the ALLOW_UNICODE option is used (either in
-        the ini file or by an inline comment).
+        the configuration file or by an inline comment).
         """
         if config_mode == "ini":
             pytester.makeini(
@@ -942,7 +942,7 @@ class TestLiterals:
     def test_allow_bytes(self, pytester, config_mode):
         """Test that doctests which output bytes work in all python versions
         tested by pytest when the ALLOW_BYTES option is used (either in
-        the ini file or by an inline comment)(#1287).
+        the configuration file or by an inline comment)(#1287).
         """
         if config_mode == "ini":
             pytester.makeini(
@@ -1596,7 +1596,14 @@ class Broken:
 
 
 @pytest.mark.parametrize(  # pragma: no branch (lambdas are not called)
-    "stop", [None, _is_mocked, lambda f: None, lambda f: False, lambda f: True]
+    "stop",
+    [
+        None,
+        pytest.param(_is_mocked, id="is_mocked"),
+        pytest.param(lambda f: None, id="lambda_none"),
+        pytest.param(lambda f: False, id="lambda_false"),
+        pytest.param(lambda f: True, id="lambda_true"),
+    ],
 )
 def test_warning_on_unwrap_of_broken_object(
     stop: Callable[[object], object] | None,

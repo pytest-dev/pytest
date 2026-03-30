@@ -69,6 +69,9 @@ KNOWN_TYPES = (
     "xpassed",
     "warnings",
     "error",
+    "subtests passed",
+    "subtests failed",
+    "subtests skipped",
 )
 
 _REPORTCHARS_DEFAULT = "fE"
@@ -186,6 +189,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
     group._addoption(  # private to use reserved lower-case short option
         "-r",
+        "--report-chars",
         action="store",
         dest="reportchars",
         default=_REPORTCHARS_DEFAULT,
@@ -295,9 +299,10 @@ def pytest_configure(config: Config) -> None:
 
         config.trace.root.setprocessor("pytest:config", mywriter)
 
-    if reporter.isatty():
-        plugin = TerminalProgressPlugin(reporter)
-        config.pluginmanager.register(plugin, "terminalprogress")
+    # See terminalprogress.py.
+    # On Windows it's safe to load by default.
+    if sys.platform == "win32":
+        config.pluginmanager.import_plugin("terminalprogress")
 
 
 def getreportopt(config: Config) -> str:
@@ -471,7 +476,7 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
-        fspath = self.config.rootpath / nodeid.split("::")[0]
+        fspath = self.config.rootpath / nodeid.split("::", maxsplit=1)[0]
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
@@ -879,7 +884,12 @@ class TerminalReporter:
         result = [f"rootdir: {config.rootpath}"]
 
         if config.inipath:
-            result.append("configfile: " + bestrelpath(config.rootpath, config.inipath))
+            warning = ""
+            if config._ignored_config_files:
+                warning = f" (WARNING: ignoring pytest config in {', '.join(config._ignored_config_files)}!)"
+            result.append(
+                "configfile: " + bestrelpath(config.rootpath, config.inipath) + warning
+            )
 
         if config.args_source == Config.ArgsSource.TESTPATHS:
             testpaths: list[str] = config.getini("testpaths")
@@ -1024,8 +1034,8 @@ class TerminalReporter:
         # fspath comes from testid which has a "/"-normalized path.
         if fspath:
             res = mkrel(nodeid)
-            if self.verbosity >= 2 and nodeid.split("::")[0] != fspath.replace(
-                "\\", nodes.SEP
+            if self.verbosity >= 2 and (
+                nodeid.split("::", maxsplit=1)[0] != nodes.norm_sep(fspath)
             ):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
@@ -1180,6 +1190,7 @@ class TerminalReporter:
                 if style == "line":
                     for rep in reports:
                         line = self._getcrashline(rep)
+                        self._outrep_summary(rep)
                         self.write_line(line)
                 else:
                     for rep in reports:
@@ -1519,9 +1530,13 @@ def _get_line_with_reprcrash_message(
     line = f"{word} {node}"
     line_width = wcswidth(line)
 
+    msg: str | None
     try:
-        # Type ignored intentionally -- possible AttributeError expected.
-        msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr]
+        if isinstance(rep.longrepr, str):
+            msg = rep.longrepr
+        else:
+            # Type ignored intentionally -- possible AttributeError expected.
+            msg = rep.longrepr.reprcrash.message  # type: ignore[union-attr]
     except AttributeError:
         pass
     else:
@@ -1574,6 +1589,8 @@ _color_for_type = {
     "error": "red",
     "warnings": "yellow",
     "passed": "green",
+    "subtests passed": "green",
+    "subtests failed": "red",
 }
 _color_for_type_default = "yellow"
 

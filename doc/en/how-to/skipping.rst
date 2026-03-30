@@ -21,14 +21,14 @@ it's an **xpass** and will be reported in the test summary.
 
 ``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
-cluttering the output.  You can use the ``-r`` option to see details
+cluttering the output.  You can use the :option:`-r` option to see details
 corresponding to the "short" letters shown in the test progress:
 
 .. code-block:: bash
 
     pytest -rxXs  # show extra info on xfailed, xpassed, and skipped tests
 
-More details on the ``-r`` option can be found by running ``pytest -h``.
+More details on the :option:`-r` option can be found by running ``pytest -h``.
 
 (See :ref:`how to change command line options defaults`)
 
@@ -311,7 +311,7 @@ even executed, use the ``run`` parameter as ``False``:
     @pytest.mark.xfail(run=False)
     def test_function(): ...
 
-This is specially useful for xfailing tests that are crashing the interpreter and should be
+This is particularly useful for xfailing tests that are crashing the interpreter and should be
 investigated later.
 
 .. _`xfail strict tutorial`:
@@ -331,12 +331,21 @@ You can change this by setting the ``strict`` keyword-only parameter to ``True``
 This will make ``XPASS`` ("unexpectedly passing") results from this test to fail the test suite.
 
 You can change the default value of the ``strict`` parameter using the
-``xfail_strict`` ini option:
+``strict_xfail`` ini option:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    xfail_strict=true
+    .. code-block:: toml
+
+        [pytest]
+        xfail_strict = true
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        strict_xfail = true
 
 
 Ignoring xfail

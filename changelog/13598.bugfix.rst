@@ -1,1 +1,0 @@
-Fixed possible collection confusion on Windows when short paths and symlinks are involved.

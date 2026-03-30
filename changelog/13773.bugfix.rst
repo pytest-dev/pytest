@@ -1,1 +1,0 @@
-Fixed the static fixture closure calculation to properly consider transitive dependencies requested by overridden fixtures.

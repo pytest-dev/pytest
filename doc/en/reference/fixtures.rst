@@ -34,7 +34,7 @@ Built-in fixtures
 
    :fixture:`capteesys`
         Capture in the same manner as :fixture:`capsys`, but also pass text
-        through according to ``--capture=``.
+        through according to :option:`--capture`.
 
    :fixture:`capsysbinary`
         Capture, as bytes, output to ``sys.stdout`` and ``sys.stderr``.
@@ -51,6 +51,9 @@ Built-in fixtures
 
    :fixture:`pytestconfig`
         Access to configuration values, pluginmanager and plugin hooks.
+
+   :fixture:`subtests`
+        Enable declaring subtests inside test functions.
 
    :fixture:`record_property`
        Add extra properties to the test.
@@ -274,13 +277,13 @@ the test's search for fixtures would look like:
 pytest will only search for ``a_fix`` and ``b_fix`` in the plugins after
 searching for them first in the scopes inside ``tests/``.
 
-.. note:
+.. note::
 
     pytest can tell you what fixtures are available for a given test if you call
-    ``pytests`` along with the test's name (or the scope it's in), and provide
-    the ``--fixtures`` flag, e.g. ``pytest --fixtures test_something.py``
+    ``pytest`` along with the test's name (or the scope it's in), and provide
+    the :option:`--fixtures` flag, e.g. ``pytest --fixtures test_something.py``
     (fixtures with names that start with ``_`` will only be shown if you also
-    provide the ``-v`` flag).
+    provide the :option:`-v` flag).
 
 
 .. _`fixture order`:
@@ -351,7 +354,7 @@ an order of operations for a given test. If there's any ambiguity, and the order
 of operations can be interpreted more than one way, you should assume pytest
 could go with any one of those interpretations at any point.
 
-For example, if ``d`` didn't request ``c``, i.e.the graph would look like this:
+For example, if ``d`` didn't request ``c``, i.e. the graph would look like this:
 
 .. image:: /example/fixtures/test_fixtures_order_dependencies_unclear.*
     :align: center
@@ -445,10 +448,10 @@ for the tests inside ``TestClassWithoutAutouse``, since they can reference
 can't see ``c3``.
 
 
-.. note:
+.. note::
 
     pytest can tell you what order the fixtures will execute in for a given test
-    if you call ``pytests`` along with the test's name (or the scope it's in),
-    and provide the ``--setup-plan`` flag, e.g.
+    if you call ``pytest`` along with the test's name (or the scope it's in),
+    and provide the :option:`--setup-plan` flag, e.g.
     ``pytest --setup-plan test_something.py`` (fixtures with names that start
-    with ``_`` will only be shown if you also provide the ``-v`` flag).
+    with ``_`` will only be shown if you also provide the :option:`-v` flag).

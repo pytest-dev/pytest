@@ -10,21 +10,21 @@ def test_version_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
     monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
     monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
     result = pytester.runpytest("--version", "--version")
-    assert result.ret == 0
+    assert result.ret == ExitCode.OK
     result.stdout.fnmatch_lines([f"*pytest*{pytest.__version__}*imported from*"])
     if pytestconfig.pluginmanager.list_plugin_distinfo():
         result.stdout.fnmatch_lines(["*registered third-party plugins:", "*at*"])
 
 
-def test_version_less_verbose(pytester: Pytester, pytestconfig, monkeypatch) -> None:
-    monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
-    monkeypatch.delenv("PYTEST_PLUGINS", raising=False)
-    result = pytester.runpytest("--version")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([f"pytest {pytest.__version__}"])
+def test_version_less_verbose(pytester: Pytester) -> None:
+    """Single ``--version`` parameter should display only the pytest version, without loading plugins (#13574)."""
+    pytester.makeconftest("print('This should not be printed')")
+    result = pytester.runpytest_subprocess("--version")
+    assert result.ret == ExitCode.OK
+    assert result.stdout.str().strip() == f"pytest {pytest.__version__}"
 
 
-def test_versions():
+def test_versions() -> None:
     """Regression check for the public version attributes in pytest."""
     assert isinstance(pytest.__version__, str)
     assert isinstance(pytest.version_tuple, tuple)
@@ -32,7 +32,7 @@ def test_versions():
 
 def test_help(pytester: Pytester) -> None:
     result = pytester.runpytest("--help")
-    assert result.ret == 0
+    assert result.ret == ExitCode.OK
     result.stdout.fnmatch_lines(
         """
           -m MARKEXPR           Only run tests matching given mark expression. For
@@ -73,7 +73,7 @@ def test_empty_help_param(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest("--help")
-    assert result.ret == 0
+    assert result.ret == ExitCode.OK
     lines = [
         "  required_plugins (args):",
         "                        Plugins that must be present for pytest to run*",
@@ -81,6 +81,14 @@ def test_empty_help_param(pytester: Pytester) -> None:
         "Environment variables:",
     ]
     result.stdout.fnmatch_lines(lines, consecutive=True)
+
+
+def test_parse_known_args_doesnt_quit_on_help(pytester: Pytester) -> None:
+    """`parse_known_args` shouldn't exit on `--help`, unlike `parse`."""
+    config = pytester.parseconfig()
+    # Doesn't raise or exit!
+    config._parser.parse_known_args(["--help"])
+    config._parser.parse_known_and_unknown_args(["--help"])
 
 
 def test_hookvalidation_unknown(pytester: Pytester) -> None:
@@ -91,7 +99,7 @@ def test_hookvalidation_unknown(pytester: Pytester) -> None:
     """
     )
     result = pytester.runpytest()
-    assert result.ret != 0
+    assert result.ret != ExitCode.OK
     result.stdout.fnmatch_lines(["*unknown hook*pytest_hello*"])
 
 

@@ -15,7 +15,7 @@ Thanks to all of the contributors to this release:
 * Bruno Oliveira
 * Brylie Christopher Oxley
 * Daniel Asztalos
-* Florian Bruhin
+* Freya Bruhin
 * Jason Haugen
 * MapleCCC
 * Michał Górny

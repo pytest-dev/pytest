@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 from pathlib import Path
 from pathlib import PurePath
@@ -1352,7 +1353,7 @@ def test_collect_pyargs_with_testpaths(
 
 
 def test_initial_conftests_with_testpaths(pytester: Pytester) -> None:
-    """The testpaths ini option should load conftests in those paths as 'initial' (#10987)."""
+    """The testpaths config option should load conftests in those paths as 'initial' (#10987)."""
     p = pytester.mkdir("some_path")
     p.joinpath("conftest.py").write_text(
         textwrap.dedent(
@@ -1658,7 +1659,7 @@ class TestImportModeImportlib:
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     def setup_conftest_and_foo(self, pytester: Pytester) -> None:
-        """Setup a tests folder to be used to test if modules in that folder can be imported
+        """Setup a tests directory to be used to test if modules in that directory can be imported
         due to side-effects of --import-mode or not."""
         pytester.makepyfile(
             **{
@@ -1675,14 +1676,14 @@ class TestImportModeImportlib:
         )
 
     def test_modules_importable_as_side_effect(self, pytester: Pytester) -> None:
-        """In import-modes `prepend` and `append`, we are able to import modules from folders
+        """In import-modes `prepend` and `append`, we are able to import modules from directories
         containing conftest.py files due to the side effect of changing sys.path."""
         self.setup_conftest_and_foo(pytester)
         result = pytester.runpytest("-v", "--import-mode=prepend")
         result.stdout.fnmatch_lines(["* 1 passed in *"])
 
     def test_modules_not_importable_as_side_effect(self, pytester: Pytester) -> None:
-        """In import-mode `importlib`, modules in folders containing conftest.py are not
+        """In import-mode `importlib`, modules in directories containing conftest.py are not
         importable, as don't change sys.path or sys.modules as side effect of importing
         the conftest.py file.
         """
@@ -2702,3 +2703,96 @@ class TestOverlappingCollectionArguments:
             ],
             consecutive=True,
         )
+
+
+@pytest.mark.parametrize(
+    ["x_y", "expected_duplicates"],
+    [
+        (
+            [(1, 1), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (1, 2), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (2, 2), (1, 1)],
+            ["1-1"],
+        ),
+        (
+            [(1, 1), (2, 2), (1, 2), (2, 1), (1, 1), (2, 1)],
+            ["1-1", "2-1"],
+        ),
+    ],
+)
+@pytest.mark.parametrize("option_name", ["strict_parametrization_ids", "strict"])
+def test_strict_parametrization_ids(
+    pytester: Pytester,
+    x_y: Sequence[tuple[int, int]],
+    expected_duplicates: Sequence[str],
+    option_name: str,
+) -> None:
+    pytester.makeini(
+        f"""
+        [pytest]
+        {option_name} = true
+        """
+    )
+    pytester.makepyfile(
+        f"""
+        import pytest
+
+        @pytest.mark.parametrize(["x", "y"], {x_y})
+        def test1(x, y):
+            pass
+        """
+    )
+
+    result = pytester.runpytest()
+
+    assert result.ret == ExitCode.INTERRUPTED
+    expected_parametersets = ", ".join(str(list(p)) for p in x_y)
+    expected_ids = ", ".join(f"{x}-{y}" for x, y in x_y)
+    result.stdout.fnmatch_lines(
+        [
+            "Duplicate parametrization IDs detected*",
+            "",
+            "Test name:      *::test1",
+            "Parameters:     x, y",
+            f"Parameter sets: {expected_parametersets}",
+            f"IDs:            {expected_ids}",
+            f"Duplicates:     {', '.join(expected_duplicates)}",
+            "",
+            "You can fix this problem using *",
+        ]
+    )
+
+
+def test_strict_parametrization_ids_with_hidden_param(pytester: Pytester) -> None:
+    pytester.makeini(
+        """
+        [pytest]
+        strict_parametrization_ids = true
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize(["x"], ["a", pytest.param("a", id=pytest.HIDDEN_PARAM), "a"])
+        def test1(x):
+            pass
+        """
+    )
+
+    result = pytester.runpytest()
+
+    assert result.ret == ExitCode.INTERRUPTED
+    result.stdout.fnmatch_lines(
+        [
+            "Duplicate parametrization IDs detected*",
+            "IDs:            a, <hidden>, a",
+            "Duplicates:     a",
+        ]
+    )

@@ -11,7 +11,7 @@ can change the pattern by issuing:
 
     pytest --doctest-glob="*.rst"
 
-on the command line. ``--doctest-glob`` can be given multiple times in the command-line.
+on the command line. :option:`--doctest-glob` can be given multiple times in the command-line.
 
 If you then have a text file like this:
 
@@ -30,7 +30,7 @@ then you can just invoke ``pytest`` directly:
 
     $ pytest
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -39,7 +39,7 @@ then you can just invoke ``pytest`` directly:
     ============================ 1 passed in 0.12s =============================
 
 By default, pytest will collect ``test*.txt`` files looking for doctest directives, but you
-can pass additional globs using the ``--doctest-glob`` option (multi-allowed).
+can pass additional globs using the :option:`--doctest-glob` option (multi-allowed).
 
 In addition to text files, you can also execute doctests directly from docstrings of your classes
 and functions, including from test modules:
@@ -58,7 +58,7 @@ and functions, including from test modules:
 
     $ pytest --doctest-modules
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -68,27 +68,34 @@ and functions, including from test modules:
     ============================ 2 passed in 0.12s =============================
 
 You can make these changes permanent in your project by
-putting them into a pytest.ini file like this:
+putting them into a configuration file like this:
 
-.. code-block:: ini
+.. code-block:: toml
 
-    # content of pytest.ini
+    # content of pytest.toml
     [pytest]
-    addopts = --doctest-modules
-
+    addopts = ["--doctest-modules"]
 
 Encoding
 --------
 
 The default encoding is **UTF-8**, but you can specify the encoding
 that will be used for those doctest files using the
-``doctest_encoding`` ini option:
+:confval:`doctest_encoding` configuration option:
 
-.. code-block:: ini
+.. tab:: toml
 
-    # content of pytest.ini
-    [pytest]
-    doctest_encoding = latin1
+    .. code-block:: toml
+
+        [pytest]
+        doctest_encoding = "latin1"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        doctest_encoding = latin1
 
 .. _using doctest options:
 
@@ -102,10 +109,19 @@ configuration file.
 For example, to make pytest ignore trailing whitespaces and ignore
 lengthy exception stack traces you can just write:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    doctest_optionflags = NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
+    .. code-block:: toml
+
+        [pytest]
+        doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL"]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        doctest_optionflags = NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
 
 Alternatively, options can be enabled by an inline comment in the doc test
 itself:
@@ -169,7 +185,7 @@ Output format
 -------------
 
 You can change the diff output format on failure for your doctests
-by using one of standard doctest modules format in options
+by using one of the standard doctest module's format options
 (see :data:`python:doctest.REPORT_UDIFF`, :data:`python:doctest.REPORT_CDIFF`,
 :data:`python:doctest.REPORT_NDIFF`, :data:`python:doctest.REPORT_ONLY_FIRST_FAILURE`):
 

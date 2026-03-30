@@ -15,149 +15,160 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
-.. _sync-test-async-fixture:
+.. _dynamic-fixture-request-during-teardown:
 
-sync test depending on async fixture
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``request.getfixturevalue()`` during fixture teardown
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 8.4
+.. deprecated:: 9.1
 
-Pytest has for a long time given an error when encountering an asynchronous test function, prompting the user to install
-a plugin that can handle it. It has not given any errors if you have an asynchronous fixture that's depended on by a
-synchronous test. If the fixture was an async function you did get an "unawaited coroutine" warning, but for async yield fixtures you didn't even get that.
-This is a problem even if you do have a plugin installed for handling async tests, as they may require
-special decorators for async fixtures to be handled, and some may not robustly handle if a user accidentally requests an
-async fixture from their sync tests. Fixture values being cached can make this even more unintuitive, where everything will
-"work" if the fixture is first requested by an async test, and then requested by a synchronous test.
+Calling :meth:`request.getfixturevalue() <pytest.FixtureRequest.getfixturevalue>`
+during teardown to request a fixture that was not already requested is deprecated.
 
-Unfortunately there is no 100% reliable method of identifying when a user has made a mistake, versus when they expect an
-unawaited object from their fixture that they will handle on their own. To suppress this warning
-when you in fact did intend to handle this you can wrap your async fixture in a synchronous fixture:
+This pattern is brittle because teardown runs after pytest has started unwinding active scopes.
+Depending on the requested fixture's scope and the current teardown order, the lookup may appear
+to work, or it may fail.
+
+In pytest 10, first-time fixture requests made during teardown will become an error.
+If teardown logic needs another fixture, request it before teardown begins, either by
+declaring it in the fixture signature or by calling ``request.getfixturevalue()`` before
+the fixture yields.
+
+Fixtures that were already requested before teardown started are unaffected and may still
+be retrieved while they remain active, though this is discouraged.
+
+
+.. _config-inicfg:
+
+``config.inicfg``
+~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.0
+
+The private ``config.inicfg`` attribute is deprecated.
+Use :meth:`config.getini() <pytest.Config.getini>` to access configuration values instead.
+
+``config.inicfg`` was never documented and it should have had a ``_`` prefix from the start.
+Pytest performs caching, transformation and aliasing on configuration options which make direct access to the raw ``config.inicfg`` untenable.
+
+**Reading configuration values:**
+
+Instead of accessing ``config.inicfg`` directly, use :meth:`config.getini() <pytest.Config.getini>`:
 
 .. code-block:: python
 
-    import asyncio
-    import pytest
+    # Deprecated
+    value = config.inicfg["some_option"]
+
+    # Use this instead
+    value = config.getini("some_option")
+
+**Setting configuration values:**
+
+Setting or deleting configuration values after initialization is not supported.
+If you need to override configuration values, use the ``-o`` command line option:
+
+.. code-block:: bash
+
+    pytest -o some_option=value
+
+or set them in your configuration file instead.
 
 
-    @pytest.fixture
-    async def unawaited_fixture():
-        return 1
+.. _parametrize-iterators:
 
+Non-Collection iterables in ``@pytest.mark.parametrize``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def test_foo(unawaited_fixture):
-        assert 1 == asyncio.run(unawaited_fixture)
+.. deprecated:: 9.1
 
-should be changed to
+Using non-:class:`~collections.abc.Collection` iterables (such as generators, iterators, or custom iterable objects)
+for the ``argvalues`` parameter in :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>`
+and :meth:`metafunc.parametrize <pytest.Metafunc.parametrize>` is deprecated.
 
+These iterables get exhausted after the first iteration, leading to tests getting unexpectedly skipped in cases such as:
+
+* Running :func:`pytest.main()` multiple times in the same process
+* Using class-level parametrize decorators where the same mark is applied to multiple test methods
+* Collecting tests multiple times
+
+Example of problematic code:
 
 .. code-block:: python
 
-    import asyncio
     import pytest
 
 
-    @pytest.fixture
-    def unawaited_fixture():
-        async def inner_fixture():
-            return 1
-
-        return inner_fixture()
+    def data_generator():
+        yield 1
+        yield 2
 
 
-    def test_foo(unawaited_fixture):
-        assert 1 == asyncio.run(unawaited_fixture)
+    @pytest.mark.parametrize("n", data_generator())
+    class Test:
+        def test_1(self, n):
+            pass
+
+        # test_2 will be skipped because data_generator() is exhausted.
+        def test_2(self, n):
+            pass
+
+You can fix it by converting generators and iterators to lists or tuples:
+
+.. code-block:: python
+
+    import pytest
 
 
-You can also make use of `pytest_fixture_setup` to handle the coroutine/asyncgen before pytest sees it - this is the way current async pytest plugins handle it.
-
-If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file
-containing both synchronous tests and the fixture, they will receive this warning.
-Unless you're using a plugin that specifically handles async fixtures
-with synchronous tests, we strongly recommend against this practice.
-It can lead to unpredictable behavior (with larger scopes, it may appear to "work" if an async
-test is the first to request the fixture, due to value caching) and will generate
-unawaited-coroutine runtime warnings (but only for non-yield fixtures).
-Additionally, it creates ambiguity for other developers about whether the fixture is intended to perform
-setup for synchronous tests.
-
-The `anyio pytest plugin <https://anyio.readthedocs.io/en/stable/testing.html>`_ supports
-synchronous tests with async fixtures, though certain limitations apply.
+    def data_generator():
+        yield 1
+        yield 2
 
 
-.. _import-or-skip-import-error:
+    @pytest.mark.parametrize("n", list(data_generator()))
+    class Test:
+        def test_1(self, n):
+            pass
 
-``pytest.importorskip`` default behavior regarding :class:`ImportError`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        def test_2(self, n):
+            pass
 
-.. deprecated:: 8.2
-
-Traditionally :func:`pytest.importorskip` will capture :class:`ImportError`, with the original intent being to skip
-tests where a dependent module is not installed, for example testing with different dependencies.
-
-However some packages might be installed in the system, but are not importable due to
-some other issue, for example, a compilation error or a broken installation. In those cases :func:`pytest.importorskip`
-would still silently skip the test, but more often than not users would like to see the unexpected
-error so the underlying issue can be fixed.
-
-In ``8.2`` the ``exc_type`` parameter has been added, giving users the ability of passing :class:`ModuleNotFoundError`
-to skip tests only if the module cannot really be found, and not because of some other error.
-
-Catching only :class:`ModuleNotFoundError` by default (and letting other errors propagate) would be the best solution,
-however for backward compatibility, pytest will keep the existing behavior but raise an warning if:
-
-1. The captured exception is of type :class:`ImportError`, and:
-2. The user does not pass ``exc_type`` explicitly.
-
-If the import attempt raises :class:`ModuleNotFoundError` (the usual case), then the module is skipped and no
-warning is emitted.
-
-This way, the usual cases will keep working the same way, while unexpected errors will now issue a warning, with
-users being able to suppress the warning by passing ``exc_type=ImportError`` explicitly.
-
-In ``9.0``, the warning will turn into an error, and in ``9.1`` :func:`pytest.importorskip` will only capture
-:class:`ModuleNotFoundError` by default and no warnings will be issued anymore -- but users can still capture
-:class:`ImportError` by passing it to ``exc_type``.
+Note that :class:`range` objects are ``Collection`` and are not affected by this deprecation.
 
 
-.. _node-ctor-fspath-deprecation:
+.. _monkeypatch-fixup-namespace-packages:
 
-``fspath`` argument for Node constructors replaced with ``pathlib.Path``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``monkeypatch.syspath_prepend`` with legacy namespace packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 7.0
+.. deprecated:: 9.0
 
-In order to support the transition from ``py.path.local`` to :mod:`pathlib`,
-the ``fspath`` argument to :class:`~_pytest.nodes.Node` constructors like
-:func:`pytest.Function.from_parent()` and :func:`pytest.Class.from_parent()`
-is now deprecated.
+When using :meth:`monkeypatch.syspath_prepend() <pytest.MonkeyPatch.syspath_prepend>`,
+pytest automatically calls ``pkg_resources.fixup_namespace_packages()`` if ``pkg_resources`` is imported.
+This is only needed for legacy namespace packages that use ``pkg_resources.declare_namespace()``.
 
-Plugins which construct nodes should pass the ``path`` argument, of type
-:class:`pathlib.Path`, instead of the ``fspath`` argument.
+Legacy namespace packages are deprecated in favor of native namespace packages (:pep:`420`).
+If you are using ``pkg_resources.declare_namespace()`` in your ``__init__.py`` files,
+you should migrate to native namespace packages by removing the ``__init__.py`` files from your namespace packages.
 
-Plugins which implement custom items and collectors are encouraged to replace
-``fspath`` parameters (``py.path.local``) with ``path`` parameters
-(``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
+This deprecation warning will only be issued when:
 
-If possible, plugins with custom items should use :ref:`cooperative
-constructors <uncooperative-constructors-deprecated>` to avoid hardcoding
-arguments they only pass on to the superclass.
+1. ``pkg_resources`` is imported, and
+2. The specific path being prepended contains a declared namespace package (via ``pkg_resources.declare_namespace()``)
 
-.. note::
-    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
-    new attribute being ``path``) is **the opposite** of the situation for
-    hooks, :ref:`outlined below <legacy-path-hooks-deprecated>` (the old
-    argument being ``path``).
+To fix this warning, convert your legacy namespace packages to native namespace packages:
 
-    This is an unfortunate artifact due to historical reasons, which should be
-    resolved in future versions as we slowly get rid of the :pypi:`py`
-    dependency (see :issue:`9283` for a longer discussion).
+**Legacy namespace package** (deprecated):
 
-Due to the ongoing migration of methods like :meth:`~pytest.Item.reportinfo`
-which still is expected to return a ``py.path.local`` object, nodes still have
-both ``fspath`` (``py.path.local``) and ``path`` (``pathlib.Path``) attributes,
-no matter what argument was used in the constructor. We expect to deprecate the
-``fspath`` attribute in a future release.
+.. code-block:: python
+
+    # mypkg/__init__.py
+    __import__("pkg_resources").declare_namespace(__name__)
+
+**Native namespace package** (recommended):
+
+Simply remove the ``__init__.py`` file entirely.
+Python 3.3+ natively supports namespace packages without ``__init__.py``.
 
 
 Configuring hook specs/impls using markers
@@ -200,33 +211,6 @@ Changed ``hookwrapper`` attributes:
 * ``firstresult``
 * ``historic``
 
-
-.. _legacy-path-hooks-deprecated:
-
-``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
-
-*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
-*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
-*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
-*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
-*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
-
-The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
-
-.. note::
-    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
-    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
-    being ``path``) is **the opposite** of the situation for hooks (the old
-    argument being ``path``).
-
-    This is an unfortunate artifact due to historical reasons, which should be
-    resolved in future versions as we slowly get rid of the :pypi:`py`
-    dependency (see :issue:`9283` for a longer discussion).
 
 Directly constructing internal classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -298,10 +282,168 @@ conflicts (such as :class:`pytest.File` now taking ``path`` instead of
 ``fspath``, as :ref:`outlined above <node-ctor-fspath-deprecation>`), a
 deprecation warning is now raised.
 
+
+The ``yield_fixture`` function/decorator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 6.2
+
+``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
+
+It has been so for a very long time, so it can be searched/replaced safely.
+
+
+Removed Features and Breaking Changes
+-------------------------------------
+
+As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
+an appropriate period of deprecation has passed.
+
+Some breaking changes which could not be deprecated are also listed.
+
+
+.. _import-or-skip-import-error:
+
+``pytest.importorskip`` default behavior regarding :class:`ImportError`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.2
+.. versionremoved:: 9.1
+
+Traditionally :func:`pytest.importorskip` captured :class:`ImportError`, with the original intent being to skip
+tests where a dependent module is not installed, for example testing with different dependencies.
+
+However, some packages might be installed in the system but not importable due to some other issue, for example
+a compilation error or a broken installation. In those cases, :func:`pytest.importorskip` would still silently skip
+the test, but more often than not users would rather see the unexpected error so the underlying issue can be fixed.
+
+In ``8.2``, the ``exc_type`` parameter was added, giving users the ability to pass
+:class:`ModuleNotFoundError` to skip tests only if the module cannot really be found, and not because of some other
+error.
+
+As of ``9.1``, :func:`pytest.importorskip` only captures :class:`ModuleNotFoundError` by default.
+If you want to preserve the previous behavior and skip on other :class:`ImportError` exceptions during import,
+pass ``exc_type=ImportError`` explicitly.
+
+
+.. _node-ctor-fspath-deprecation:
+
+``fspath`` argument for Node constructors replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+.. versionremoved:: 9.1
+
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`,
+the ``fspath`` argument to :class:`~_pytest.nodes.Node` constructors like
+:func:`pytest.Function.from_parent()` and :func:`pytest.Class.from_parent()`
+is now deprecated.
+
+Plugins which construct nodes should pass the ``path`` argument, of type
+:class:`pathlib.Path`, instead of the ``fspath`` argument.
+
+Plugins which implement custom items and collectors are encouraged to replace
+``fspath`` parameters (``py.path.local``) with ``path`` parameters
+(``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
+
+If possible, plugins with custom items should use :ref:`cooperative
+constructors <uncooperative-constructors-deprecated>` to avoid hardcoding
+arguments they only pass on to the superclass.
+
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
+    new attribute being ``path``) is **the opposite** of the situation for
+    hooks, :ref:`outlined below <legacy-path-hooks-deprecated>` (the old
+    argument being ``path``).
+
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
+
+Due to the ongoing migration of methods like :meth:`~pytest.Item.reportinfo`
+which still is expected to return a ``py.path.local`` object, nodes still have
+both ``fspath`` (``py.path.local``) and ``path`` (``pathlib.Path``) attributes,
+no matter what argument was used in the constructor. We expect to deprecate the
+``fspath`` attribute in a future release.
+
+
+.. _sync-test-async-fixture:
+
+sync test depending on async fixture
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.4
+.. versionremoved:: 9.0
+
+Pytest has for a long time given an error when encountering an asynchronous test function, prompting the user to install
+a plugin that can handle it. It has not given any errors if you have an asynchronous fixture that's depended on by a
+synchronous test. If the fixture was an async function you did get an "unawaited coroutine" warning, but for async yield fixtures you didn't even get that.
+This is a problem even if you do have a plugin installed for handling async tests, as they may require
+special decorators for async fixtures to be handled, and some may not robustly handle if a user accidentally requests an
+async fixture from their sync tests. Fixture values being cached can make this even more unintuitive, where everything will
+"work" if the fixture is first requested by an async test, and then requested by a synchronous test.
+
+Unfortunately there is no 100% reliable method of identifying when a user has made a mistake, versus when they expect an
+unawaited object from their fixture that they will handle on their own. To suppress this warning
+when you in fact did intend to handle this you can wrap your async fixture in a synchronous fixture:
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+
+    @pytest.fixture
+    async def unawaited_fixture():
+        return 1
+
+
+    def test_foo(unawaited_fixture):
+        assert 1 == asyncio.run(unawaited_fixture)
+
+should be changed to
+
+
+.. code-block:: python
+
+    import asyncio
+    import pytest
+
+
+    @pytest.fixture
+    def unawaited_fixture():
+        async def inner_fixture():
+            return 1
+
+        return inner_fixture()
+
+
+    def test_foo(unawaited_fixture):
+        assert 1 == asyncio.run(unawaited_fixture)
+
+
+You can also make use of `pytest_fixture_setup` to handle the coroutine/asyncgen before pytest sees it - this is the way current async pytest plugins handle it.
+
+If a user has an async fixture with ``autouse=True`` in their ``conftest.py``, or in a file
+containing both synchronous tests and the fixture, they will receive this warning.
+Unless you're using a plugin that specifically handles async fixtures
+with synchronous tests, we strongly recommend against this practice.
+It can lead to unpredictable behavior (with larger scopes, it may appear to "work" if an async
+test is the first to request the fixture, due to value caching) and will generate
+unawaited-coroutine runtime warnings (but only for non-yield fixtures).
+Additionally, it creates ambiguity for other developers about whether the fixture is intended to perform
+setup for synchronous tests.
+
+The `anyio pytest plugin <https://anyio.readthedocs.io/en/stable/testing.html>`_ supports
+synchronous tests with async fixtures, though certain limitations apply.
+
+
+
 Applying a mark to a fixture function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 7.4
+.. versionremoved:: 9.0
 
 Applying a mark to a fixture function never had any effect, but it is a common user error.
 
@@ -315,24 +457,33 @@ Users expected in this case that the ``usefixtures`` mark would have its intende
 
 Now pytest will issue a warning when it encounters this problem, and will raise an error in the future versions.
 
+.. _legacy-path-hooks-deprecated:
 
-The ``yield_fixture`` function/decorator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``py.path.local`` arguments for hooks replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 6.2
+.. deprecated:: 7.0
+.. versionremoved:: 9.0
 
-``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`, the following hooks now receive additional arguments:
 
-It has been so for a very long time, so can be search/replaced safely.
+*  :hook:`pytest_ignore_collect(collection_path: pathlib.Path) <pytest_ignore_collect>` as equivalent to ``path``
+*  :hook:`pytest_collect_file(file_path: pathlib.Path) <pytest_collect_file>` as equivalent to ``path``
+*  :hook:`pytest_pycollect_makemodule(module_path: pathlib.Path) <pytest_pycollect_makemodule>` as equivalent to ``path``
+*  :hook:`pytest_report_header(start_path: pathlib.Path) <pytest_report_header>` as equivalent to ``startdir``
+*  :hook:`pytest_report_collectionfinish(start_path: pathlib.Path) <pytest_report_collectionfinish>` as equivalent to ``startdir``
 
+The accompanying ``py.path.local`` based paths have been deprecated: plugins which manually invoke those hooks should only pass the new ``pathlib.Path`` arguments, and users should change their hook implementations to use the new ``pathlib.Path`` arguments.
 
-Removed Features and Breaking Changes
--------------------------------------
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes,
+    :ref:`outlined above <node-ctor-fspath-deprecation>` (the new attribute
+    being ``path``) is **the opposite** of the situation for hooks (the old
+    argument being ``path``).
 
-As stated in our :ref:`backwards-compatibility` policy, deprecated features are removed only in major releases after
-an appropriate period of deprecation has passed.
-
-Some breaking changes which could not be deprecated are also listed.
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
 
 .. _yield tests deprecated:
 
@@ -554,18 +705,20 @@ removed in pytest 8 (deprecated since pytest 2.4.0):
 - ``parser.addoption(..., type="int/string/float/complex")`` - use ``type=int`` etc. instead.
 
 
-The ``--strict`` command-line option
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``--strict`` command-line option (reintroduced)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. deprecated:: 6.2
-.. versionremoved:: 8.0
+.. versionchanged:: 9.0
 
-The ``--strict`` command-line option has been deprecated in favor of ``--strict-markers``, which
+The ``--strict`` command-line option had been deprecated in favor of ``--strict-markers``, which
 better conveys what the option does.
 
-We have plans to maybe in the future to reintroduce ``--strict`` and make it an encompassing
-flag for all strictness related options (``--strict-markers`` and ``--strict-config``
-at the moment, more might be introduced in the future).
+In version 8.1, we accidentally un-deprecated ``--strict``.
+
+In version 9.0, we changed ``--strict`` to make it set the new :confval:`strict`
+configuration option. It now enables all strictness related options (including
+:confval:`strict_markers`).
 
 
 .. _cmdline-preparse-deprecated:
@@ -737,7 +890,7 @@ The ``pytest._fillfuncargs`` function
 
 This function was kept for backward compatibility with an older plugin.
 
-It's functionality is not meant to be used directly, but if you must replace
+Its functionality is not meant to be used directly, but if you must replace
 it, use `function._request._fillfixtures()` instead, though note this is not
 a public API and may break in the future.
 
@@ -768,7 +921,7 @@ The ``--result-log`` option produces a stream of test reports which can be
 analysed at runtime, but it uses a custom format which requires users to implement their own
 parser.
 
-The  `pytest-reportlog <https://github.com/pytest-dev/pytest-reportlog>`__ plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
+The :pypi:`pytest-reportlog` plugin provides a ``--report-log`` option, a more standard and extensible alternative, producing
 one JSON object per-line, and should cover the same use cases. Please try it out and provide feedback.
 
 The ``pytest-reportlog`` plugin might even be merged into the core
@@ -808,20 +961,38 @@ that manipulate this type of file (for example, Jenkins, Azure Pipelines, etc.).
 Users are recommended to try the new ``xunit2`` format and see if their tooling that consumes the JUnit
 XML file supports it.
 
-To use the new format, update your ``pytest.ini``:
+To use the new format, update your configuration file:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    junit_family=xunit2
+    .. code-block:: toml
+
+        [pytest]
+        junit_family = "xunit2"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_family = xunit2
 
 If you discover that your tooling does not support the new format, and want to keep using the
 legacy version, set the option to ``legacy`` instead:
 
-.. code-block:: ini
+.. tab:: toml
 
-    [pytest]
-    junit_family=legacy
+    .. code-block:: toml
+
+        [pytest]
+        junit_family = "legacy"
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_family = legacy
 
 By using ``legacy`` you will keep using the legacy/xunit1 format when upgrading to
 pytest 6.0, where the default format will be ``xunit2``.

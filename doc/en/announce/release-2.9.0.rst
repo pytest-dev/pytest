@@ -18,7 +18,7 @@ Thanks to all who contributed to this release, among them:
     Bruno Oliveira
     Buck Golemon
     David Vierra
-    Florian Bruhin
+    Freya Bruhin
     Galaczi Endre
     Georgy Dyuldin
     Lukas Bednar

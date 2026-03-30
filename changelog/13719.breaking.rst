@@ -1,1 +1,0 @@
-Support for Python 3.9 is dropped following its end of life.

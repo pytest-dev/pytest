@@ -25,7 +25,7 @@ Thanks to all who contributed to this release, among them:
 * Andras Tim
 * Bruno Oliveira
 * Daniel Hahler
-* Florian Bruhin
+* Freya Bruhin
 * Floris Bruynooghe
 * John Still
 * Jordan Moldow

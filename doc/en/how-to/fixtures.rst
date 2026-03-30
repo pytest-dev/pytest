@@ -433,7 +433,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
 
     $ pytest test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 2 items
 
@@ -471,7 +471,7 @@ marked ``smtp_connection`` fixture function.  Running the test looks like this:
     ============================ 2 failed in 0.12s =============================
 
 You see the two ``assert 0`` failing and more importantly you can also see
-that the **exactly same** ``smtp_connection`` object was passed into the
+that the **exact same** ``smtp_connection`` object was passed into the
 two test functions because pytest shows the incoming argument values in the
 traceback.  As a result, the two test functions using ``smtp_connection`` run
 as quick as a single one because they reuse the same instance.
@@ -773,7 +773,7 @@ For yield fixtures, the first teardown code to run is from the right-most fixtur
 
     $ pytest -s test_finalizers.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -807,7 +807,7 @@ For finalizers, the first fixture to run is last call to `request.addfinalizer`.
 
     $ pytest -s test_finalizers.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -1368,9 +1368,9 @@ different server string is expected than what arrived.
 pytest will build a string that is the test ID for each fixture value
 in a parametrized fixture, e.g. ``test_ehlo[smtp.gmail.com]`` and
 ``test_ehlo[mail.python.org]`` in the above examples.  These IDs can
-be used with ``-k`` to select specific cases to run, and they will
+be used with :option:`-k` to select specific cases to run, and they will
 also identify the specific case when one is failing.  Running pytest
-with ``--collect-only`` will show the generated IDs.
+with :option:`--collect-only` will show the generated IDs.
 
 Numbers, strings, booleans and ``None`` will have their usual string
 representation used in the test ID. For other objects, pytest will
@@ -1419,11 +1419,11 @@ Running the above tests results in the following test IDs being used:
 
    $ pytest --collect-only
    =========================== test session starts ============================
-   platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+   platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
    rootdir: /home/sweet/project
    collected 12 items
 
-   <Dir fixtures.rst-230>
+   <Dir fixtures.rst-233>
      <Module test_anothersmtp.py>
        <Function test_showhelo[smtp.gmail.com]>
        <Function test_showhelo[mail.python.org]>
@@ -1474,7 +1474,7 @@ Running this test will *skip* the invocation of ``data_set`` with value ``2``:
 
     $ pytest test_fixture_marks.py -v
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 3 items
@@ -1524,7 +1524,7 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 2 items
@@ -1604,7 +1604,7 @@ Let's run the tests in verbose mode and with looking at the print-output:
 
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y -- $PYTHON_PREFIX/bin/python
     cachedir: .pytest_cache
     rootdir: /home/sweet/project
     collecting ... collected 8 items
@@ -1645,7 +1645,7 @@ Let's run the tests in verbose mode and with looking at the print-output:
     ============================ 8 passed in 0.12s =============================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
-ordering of test execution that lead to the fewest possible "active" resources.
+ordering of test execution that led to the fewest possible "active" resources.
 The finalizer for the ``mod1`` parametrized resource was executed before the
 ``mod2`` resource was setup.
 
@@ -1654,7 +1654,7 @@ Then test_1 is executed with ``mod1``, then test_2 with ``mod1``, then test_1
 with ``mod2`` and finally test_2 with ``mod2``.
 
 The ``otherarg`` parametrized resource (having function scope) was set up before
-and teared down after every test that used it.
+and torn down after every test that used it.
 
 
 .. _`usefixtures`:
@@ -1736,19 +1736,18 @@ and you may specify fixture usage at the test module level using :globalvar:`pyt
 
 
 It is also possible to put fixtures required by all tests in your project
-into an ini-file:
+into a configuration file:
 
-.. code-block:: ini
+.. code-block:: toml
 
-    # content of pytest.ini
+    # content of pytest.toml
     [pytest]
-    usefixtures = cleandir
-
+    usefixtures = ["cleandir"]
 
 .. warning::
 
-    Note this mark has no effect in **fixture functions**. For example,
-    this **will not work as expected**:
+    ``@pytest.mark.usefixtures`` cannot be used on **fixture functions**. For example,
+    this is an error:
 
     .. code-block:: python
 
@@ -1756,18 +1755,16 @@ into an ini-file:
         @pytest.fixture
         def my_fixture_that_sadly_wont_use_my_other_fixture(): ...
 
-    This generates a deprecation warning, and will become an error in Pytest 8.
-
 .. _`override fixtures`:
 
 Overriding fixtures on various levels
 -------------------------------------
 
-In relatively large test suite, you most likely need to ``override`` a ``global`` or ``root`` fixture with a ``locally``
-defined one, keeping the test code readable and maintainable.
+In a relatively large test suite, you may want to *override* a fixture, to augment
+or change its behavior inside of certain test modules or directories.
 
-Override a fixture on a folder (conftest) level
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Override a fixture on a directory (conftest) level
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Given the tests file structure is:
 
@@ -1787,9 +1784,9 @@ Given the tests file structure is:
             def test_username(username):
                 assert username == 'username'
 
-        subfolder/
+        subdir/
             conftest.py
-                # content of tests/subfolder/conftest.py
+                # content of tests/subdir/conftest.py
                 import pytest
 
                 @pytest.fixture
@@ -1797,11 +1794,11 @@ Given the tests file structure is:
                     return 'overridden-' + username
 
             test_something_else.py
-                # content of tests/subfolder/test_something_else.py
+                # content of tests/subdir/test_something_else.py
                 def test_username(username):
                     assert username == 'overridden-username'
 
-As you can see, a fixture with the same name can be overridden for certain test folder level.
+As you can see, a fixture with the same name can be overridden for a certain test directory level.
 Note that the ``base`` or ``super`` fixture can be accessed from the ``overriding``
 fixture easily - used in the example above.
 
@@ -1843,7 +1840,7 @@ Given the tests file structure is:
             def test_username(username):
                 assert username == 'overridden-else-username'
 
-In the example above, a fixture with the same name can be overridden for certain test module.
+In the example above, a fixture with the same name can be overridden for a certain test module.
 
 
 Override a fixture with direct test parametrization
@@ -1930,7 +1927,7 @@ Given the tests file structure is:
 
 In the example above, a parametrized fixture is overridden with a non-parametrized version, and
 a non-parametrized fixture is overridden with a parametrized version for certain test module.
-The same applies for the test folder level obviously.
+The same applies for the test directory level obviously.
 
 
 Using fixtures from other projects

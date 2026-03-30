@@ -5,18 +5,18 @@ from contextlib import contextmanager
 import decimal
 from decimal import Decimal
 from fractions import Fraction
+from math import inf
+from math import nan
 from math import sqrt
 import operator
 from operator import eq
 from operator import ne
+import re
 
 from _pytest.pytester import Pytester
 from _pytest.python_api import _recursive_sequence_map
 import pytest
 from pytest import approx
-
-
-inf, nan = float("inf"), float("nan")
 
 
 @pytest.fixture
@@ -1047,6 +1047,60 @@ class TestApprox:
 
         assert b == pytest.approx(a, abs=2)
         assert b != pytest.approx(a, abs=0.5)
+
+    def test_approx_dicts_with_mismatch_on_keys(self) -> None:
+        """https://github.com/pytest-dev/pytest/issues/13816"""
+        expected = {"a": 1, "b": 3}
+        actual = {"a": 1, "c": 3}
+
+        with pytest.raises(
+            AssertionError,
+            match=re.escape(
+                "comparison failed.\n  Mappings has different keys: "
+                "expected dict_keys(['a', 'b']) but got dict_keys(['a', 'c'])"
+            ),
+        ):
+            assert actual == approx(expected)
+
+    def test_approx_on_unordered_mapping_with_mismatch(
+        self, pytester: Pytester
+    ) -> None:
+        """https://github.com/pytest-dev/pytest/issues/12444"""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_approx_on_unordered_mapping_with_mismatch():
+                expected = {"a": 1, "b": 2, "c": 3, "d": 4}
+                actual = {"d": 4, "c": 5, "a": 8, "b": 2}
+                assert actual == pytest.approx(expected)
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(failed=1)
+        result.stdout.fnmatch_lines(
+            [
+                "*comparison failed.**Mismatched elements: 2 / 4:*",
+                "*Max absolute difference: 7*",
+                "*Index | Obtained | Expected *",
+                "* a * | 8 * | 1 *",
+                "* c * | 5 * | 3 *",
+            ]
+        )
+
+    def test_approx_on_unordered_mapping_matching(self, pytester: Pytester) -> None:
+        """https://github.com/pytest-dev/pytest/issues/12444"""
+        pytester.makepyfile(
+            """
+            import pytest
+            def test_approx_on_unordered_mapping_matching():
+                expected = {"a": 1, "b": 2, "c": 3, "d": 4}
+                actual = {"d": 4, "c": 3, "a": 1, "b": 2}
+                assert actual == pytest.approx(expected)
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
 
 
 class MyVec3:  # incomplete

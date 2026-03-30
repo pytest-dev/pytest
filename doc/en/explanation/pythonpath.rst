@@ -11,7 +11,7 @@ Import modes
 pytest as a testing framework needs to import test modules and ``conftest.py`` files for execution.
 
 Importing files in Python is a non-trivial process, so aspects of the
-import process can be controlled through the ``--import-mode`` command-line flag, which can assume
+import process can be controlled through the :option:`--import-mode` command-line flag, which can assume
 these values:
 
 .. _`import-mode-prepend`:
@@ -44,12 +44,12 @@ these values:
         pkg_under_test/
 
   the tests will run against the installed version
-  of ``pkg_under_test`` when ``--import-mode=append`` is used whereas
+  of ``pkg_under_test`` when :option:`--import-mode=append` is used whereas
   with ``prepend``, they would pick up the local version. This kind of confusion is why
   we advocate for using :ref:`src-layouts <src-layout>`.
 
   Same as ``prepend``, requires test module names to be unique when the test directory tree is
-  not arranged in packages, because the modules will put in :py:data:`sys.modules` after importing.
+  not arranged in packages, because the modules will be put in :py:data:`sys.modules` after importing.
 
 .. _`import-mode-importlib`:
 
@@ -143,8 +143,8 @@ When executing:
     pytest root/
 
 pytest will find ``foo/bar/tests/test_foo.py`` and realize it is part of a package given that
-there's an ``__init__.py`` file in the same folder. It will then search upwards until it can find the
-last folder which still contains an ``__init__.py`` file in order to find the package *root* (in
+there's an ``__init__.py`` file in the same directory. It will then search upwards until it can find the
+last directory which still contains an ``__init__.py`` file in order to find the package *root* (in
 this case ``foo/``). To load the module, it will insert ``root/``  to the front of
 :py:data:`sys.path` (if not there already) in order to load
 ``test_foo.py`` as the *module* ``foo.bar.tests.test_foo``.
@@ -152,7 +152,7 @@ this case ``foo/``). To load the module, it will insert ``root/``  to the front 
 The same logic applies to the ``conftest.py`` file: it will be imported as ``foo.conftest`` module.
 
 Preserving the full package name is important when tests live in a package to avoid problems
-and allow test modules to have duplicated names. This is also discussed in details in
+and allow test modules to have duplicated names. This is also discussed in detail in
 :ref:`test discovery`.
 
 Standalone test modules / ``conftest.py`` files
@@ -175,14 +175,14 @@ When executing:
     pytest root/
 
 pytest will find ``foo/bar/tests/test_foo.py`` and realize it is NOT part of a package given that
-there's no ``__init__.py`` file in the same folder. It will then add ``root/foo/bar/tests`` to
+there's no ``__init__.py`` file in the same directory. It will then add ``root/foo/bar/tests`` to
 :py:data:`sys.path` in order to import ``test_foo.py`` as the *module* ``test_foo``. The same is done
 with the ``conftest.py`` file by adding ``root/foo`` to :py:data:`sys.path` to import it as ``conftest``.
 
 For this reason this layout cannot have test modules with the same name, as they all will be
 imported in the global import namespace.
 
-This is also discussed in details in :ref:`test discovery`.
+This is also discussed in detail in :ref:`test discovery`.
 
 .. _`pytest vs python -m pytest`:
 

@@ -113,7 +113,7 @@ class TestFixtureRequestSessionScoped:
             _ = session_request.fspath
 
 
-@pytest.mark.parametrize("config_type", ["ini", "pyproject"])
+@pytest.mark.parametrize("config_type", ["ini", "toml"])
 def test_addini_paths(pytester: pytest.Pytester, config_type: str) -> None:
     pytester.makeconftest(
         """
@@ -126,15 +126,15 @@ def test_addini_paths(pytester: pytest.Pytester, config_type: str) -> None:
         inipath = pytester.makeini(
             """
             [pytest]
-            paths=hello world/sub.py
-        """
-        )
-    elif config_type == "pyproject":
-        inipath = pytester.makepyprojecttoml(
+            paths = hello world/sub.py
             """
-            [tool.pytest.ini_options]
-            paths=["hello", "world/sub.py"]
-        """
+        )
+    else:
+        inipath = pytester.maketoml(
+            """
+            [pytest]
+            paths = ["hello", "world/sub.py"]
+            """
         )
     config = pytester.parseconfig()
     values = config.getini("paths")

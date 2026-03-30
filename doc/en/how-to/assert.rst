@@ -29,7 +29,7 @@ you will see the return value of the function call:
 
     $ pytest test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -218,7 +218,7 @@ To specify more details about the contained exception you can use :class:`pytest
         with pytest.RaisesGroup(pytest.RaisesExc(ValueError, match="foo")):
             raise ExceptionGroup("", (ValueError("foo")))
 
-They both supply a method :meth:`pytest.RaisesGroup.matches` :meth:`pytest.RaisesExc.matches` if you want to do matching outside of using it as a contextmanager. This can be helpful when checking ``.__context__`` or ``.__cause__``.
+They both supply a method :meth:`pytest.RaisesGroup.matches` :meth:`pytest.RaisesExc.matches` if you want to do matching outside of using it as a :external+python:std:ref:`context manager <context-managers>`. This can be helpful when checking ``.__context__`` or ``.__cause__``.
 
 .. code-block:: python
 
@@ -404,7 +404,7 @@ if you run this module:
 
     $ pytest test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-8.x.y, pluggy-1.x.y
+    platform linux -- Python 3.x.y, pytest-9.x.y, pluggy-1.x.y
     rootdir: /home/sweet/project
     collected 1 item
 
@@ -435,6 +435,10 @@ Special comparisons are done for a number of cases:
 * comparing long strings: a context diff is shown
 * comparing long sequences: first failing indices
 * comparing dicts: different entries
+
+In string context diffs, lines prefixed with ``-`` come from the left-hand side
+of ``assert left == right``, while lines prefixed with ``+`` come from the
+right-hand side.
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
@@ -599,4 +603,4 @@ If this is the case you have two options:
 * Disable rewriting for a specific module by adding the string
   ``PYTEST_DONT_REWRITE`` to its docstring.
 
-* Disable rewriting for all modules by using ``--assert=plain``.
+* Disable rewriting for all modules by using :option:`--assert=plain`.

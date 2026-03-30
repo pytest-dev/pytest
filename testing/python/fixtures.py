@@ -590,6 +590,40 @@ class TestFillFixtures:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*2 passed*"])
 
+    @pytest.mark.xfail(reason="not handled currently")
+    def test_override_parametrized_fixture_via_transitive_fixture(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that overriding a parametrized fixture works even the super
+        fixture is requested only transitively.
+
+        Regression test for #7737.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=[1, 2])
+            def foo(request):
+                return request.param
+
+            @pytest.fixture
+            def bar(foo):
+                return foo
+
+            class TestIt:
+                @pytest.fixture
+                def foo(self, bar):
+                    return bar * 2
+
+                def test_it(self, foo):
+                    pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=2)
+
     def test_autouse_fixture_plugin(self, pytester: Pytester) -> None:
         # A fixture from a plugin has no baseid set, which screwed up
         # the autouse fixture handling.
@@ -750,7 +784,7 @@ class TestRequestBasic:
             """
             import sys
             import pytest
-            from _pytest.fixtures import PseudoFixtureDef
+            from _pytest.fixtures import RequestFixtureDef
             import gc
 
             @pytest.fixture(autouse=True)
@@ -763,7 +797,7 @@ class TestRequestBasic:
 
                 try:
                     gc.collect()
-                    leaked = [x for _ in gc.garbage if isinstance(_, PseudoFixtureDef)]
+                    leaked = [x for _ in gc.garbage if isinstance(_, RequestFixtureDef)]
                     assert leaked == []
                 finally:
                     gc.set_debug(original)
@@ -836,6 +870,115 @@ class TestRequestBasic:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 2 passed in *"])
+
+    def test_getfixturevalue_teardown_previously_requested_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was previously
+        requested is OK (#12882).
+
+        Note: this is still kinda dubious so don't let this test lock you in to
+        allowing this behavior forever...
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix(request, tmp_path):
+                yield
+                assert request.getfixturevalue("tmp_path") == tmp_path
+
+            def test_it(fix):
+                pass
+        """
+        )
+        result = pytester.runpytest("-Werror")
+        result.assert_outcomes(passed=1)
+
+    def test_getfixturevalue_teardown_new_fixture_deprecated(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises a deprecation warning (#12882).
+
+        Note: this is a case that previously worked but will become a hard
+        error after the deprecation is completed.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="session")
+            def resource():
+                return "value"
+
+            @pytest.fixture
+            def fix(request):
+                yield
+                with pytest.warns(
+                    pytest.PytestRemovedIn10Warning,
+                    match=r'Calling request\\.getfixturevalue\\("resource"\\) during teardown is deprecated',
+                ):
+                    assert request.getfixturevalue("resource") == "value"
+
+            def test_it(fix):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
+    def test_getfixturevalue_teardown_new_inactive_fixture_errors(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises an error (#12882)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix(request):
+                yield
+                request.getfixturevalue("tmp_path")
+
+            def test_it(fix):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                (
+                    '*The fixture value for "tmp_path" is not available during '
+                    "teardown because it was not previously requested.*"
+                ),
+            ]
+        )
+
+    def test_getfixturevalue_teardown_new_inactive_fixture_errors_top_request(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises an error (tricky case) (#12882)."""
+        pytester.makepyfile(
+            """
+            def test_it(request):
+                request.addfinalizer(lambda: request.getfixturevalue("tmp_path"))
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                (
+                    '*The fixture value for "tmp_path" is not available during '
+                    "teardown because it was not previously requested.*"
+                ),
+            ]
+        )
 
     def test_getfixturevalue(self, pytester: Pytester) -> None:
         item = pytester.getitem(
@@ -4185,6 +4328,122 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(pytester: Pytester) -> Non
     )
 
 
+def test_fixture_post_finalizer_called_once(pytester: Pytester) -> None:
+    """Test that pytest_fixture_post_finalizer is called only once per fixture teardown.
+
+    When a fixture depends on multiple parametrized fixtures and all their parameters
+    change at the same time, the dependent fixture should be torn down only once,
+    and pytest_fixture_post_finalizer should be called only once for it.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        finalizer_calls = []
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            finalizer_calls.append(fixturedef.argname)
+
+        @pytest.fixture(autouse=True)
+        def check_finalizer_calls(request):
+            yield
+            # After each test, verify no duplicate finalizer calls.
+            if finalizer_calls:
+                assert len(finalizer_calls) == len(set(finalizer_calls)), (
+                    f"Duplicate finalizer calls detected: {finalizer_calls}"
+                )
+                finalizer_calls.clear()
+        """
+    )
+    pytester.makepyfile(
+        test_fixtures="""
+        import pytest
+
+        @pytest.fixture(scope="session")
+        def foo(request):
+            return request.param
+
+        @pytest.fixture(scope="session")
+        def bar(request):
+            return request.param
+
+        @pytest.fixture(scope="session")
+        def baz(foo, bar):
+            return f"{foo}-{bar}"
+
+        @pytest.mark.parametrize("foo,bar", [(1, 1)], indirect=True)
+        def test_first(foo, bar, baz):
+            assert foo == 1
+            assert bar == 1
+            assert baz == "1-1"
+
+        @pytest.mark.parametrize("foo,bar", [(2, 2)], indirect=True)
+        def test_second(foo, bar, baz):
+            assert foo == 2
+            assert bar == 2
+            assert baz == "2-2"
+        """
+    )
+    result = pytester.runpytest("-v")
+    # The test passes, which means no duplicate finalizer calls were detected
+    # by the check_finalizer_calls autouse fixture.
+    result.assert_outcomes(passed=2)
+
+
+def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
+    """Test that exceptions in pytest_fixture_post_finalizer hook are caught.
+
+    Also verifies that the fixture cache is properly reset even when the
+    post_finalizer hook raises an exception, so the fixture can be rebuilt
+    in subsequent tests.
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            if "test_first" in request.node.nodeid:
+                raise RuntimeError("Error in post finalizer hook")
+
+        @pytest.fixture
+        def my_fixture(request):
+            yield request.node.nodeid
+        """
+    )
+    pytester.makepyfile(
+        test_fixtures="""
+        def test_first(my_fixture):
+            assert "test_first" in my_fixture
+
+        def test_second(my_fixture):
+            assert "test_second" in my_fixture
+        """
+    )
+    result = pytester.runpytest("-v", "--setup-show")
+    result.assert_outcomes(passed=2, errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*test_first*PASSED",
+            "*test_first*ERROR",
+            "*RuntimeError: Error in post finalizer hook*",
+        ]
+    )
+    # Verify fixture is setup twice (rebuilt for test_second despite error).
+    result.stdout.fnmatch_lines(
+        [
+            "test_fixtures.py::test_first ",
+            "        SETUP    F my_fixture",
+            "        test_fixtures.py::test_first (fixtures used: my_fixture, request)PASSED",
+            "test_fixtures.py::test_first ERROR",
+            "test_fixtures.py::test_second ",
+            "        SETUP    F my_fixture",
+            "        test_fixtures.py::test_second (fixtures used: my_fixture, request)PASSED",
+            "        TEARDOWN F my_fixture",
+        ],
+        consecutive=True,
+    )
+
+
 class TestScopeOrdering:
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
@@ -5146,7 +5405,6 @@ def test_fixture_closure_with_overrides(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(reason="not currently handled correctly")
 def test_fixture_closure_with_overrides_and_intermediary(pytester: Pytester) -> None:
     """Test that an item's static fixture closure properly includes transitive
     dependencies through overridden fixtures (#13773).
@@ -5230,6 +5488,165 @@ def test_fixture_closure_with_broken_override_chain(pytester: Pytester) -> None:
                 assert 'db' not in request.node.fixturenames
                 # No dynamic dependencies, should be equal.
                 assert set(request.fixturenames) == set(request.node.fixturenames)
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_closure_handles_circular_dependencies(pytester: Pytester) -> None:
+    """Test that getfixtureclosure properly handles circular dependencies.
+
+    The test will error in the runtest phase due to the fixture loop,
+    but the closure computation still completes.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Direct circular dependency.
+        @pytest.fixture
+        def fix_a(fix_b): pass
+
+        @pytest.fixture
+        def fix_b(fix_a): pass
+
+        # Indirect circular dependency through multiple fixtures.
+        @pytest.fixture
+        def fix_x(fix_y): pass
+
+        @pytest.fixture
+        def fix_y(fix_z): pass
+
+        @pytest.fixture
+        def fix_z(fix_x): pass
+
+        def test_circular_deps(fix_a, fix_x):
+            pass
+        """
+    )
+    items, _hookrec = pytester.inline_genitems()
+    assert isinstance(items[0], Function)
+    assert items[0].fixturenames == ["fix_a", "fix_x", "fix_b", "fix_y", "fix_z"]
+
+
+def test_fixture_closure_handles_diamond_dependencies(pytester: Pytester) -> None:
+    """Test that getfixtureclosure properly handles diamond dependencies."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def user(db): pass
+
+        @pytest.fixture
+        def session(db): pass
+
+        @pytest.fixture
+        def app(user, session): pass
+
+        def test_diamond_deps(request, app):
+            assert request.node.fixturenames == ["request", "app", "user", "db", "session"]
+            assert request.fixturenames == ["request", "app", "user", "db", "session"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_closure_with_complex_override_and_shared_deps(
+    pytester: Pytester,
+) -> None:
+    """Test that shared dependencies in override chains are processed only once."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def cache(): pass
+
+        @pytest.fixture
+        def settings(): pass
+
+        @pytest.fixture
+        def app(db, cache, settings): pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Override app, but also directly use cache and settings.
+        # This creates multiple paths to the same fixtures.
+        @pytest.fixture
+        def app(app, cache, settings): pass
+
+        class TestClass:
+            # Another override that uses both app and cache.
+            @pytest.fixture
+            def app(self, app, cache): pass
+
+            def test_shared_deps(self, request, app):
+                assert request.node.fixturenames == ["request", "app", "db", "cache", "settings"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_closure_with_parametrize_ignore(pytester: Pytester) -> None:
+    """Test that getfixtureclosure properly handles parametrization argnames
+    which override a fixture."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture
+        def fix1(fix2): pass
+
+        @pytest.fixture
+        def fix2(fix3): pass
+
+        @pytest.fixture
+        def fix3(): pass
+
+        @pytest.mark.parametrize('fix2', ['2'])
+        def test_it(request, fix1):
+            assert request.node.fixturenames == ["request", "fix1", "fix2"]
+            assert request.fixturenames == ["request", "fix1", "fix2"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
+    """#11075"""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.fixture(params=["foo"])
+        def fixture_foo(request):
+            yield request.param
+
+        @pytest.fixture
+        def fixture_bar(fixture_foo):
+            yield fixture_foo
+
+        class TestFoobar:
+            @pytest.fixture
+            def fixture_bar(self, fixture_bar):
+                yield fixture_bar
+
+            def test_foobar(self, fixture_bar):
+                assert fixture_bar == "foo"
         """
     )
     result = pytester.runpytest("-v")

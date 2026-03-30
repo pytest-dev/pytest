@@ -10,7 +10,7 @@ The full changelog is available at https://docs.pytest.org/en/stable/changelog.h
 Thanks to all of the contributors to this release:
 
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * John Litborn
 * Kenny Y
 * Ran Benita
