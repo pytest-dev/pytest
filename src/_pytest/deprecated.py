@@ -39,7 +39,7 @@ PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.
 
 
 HOOK_LEGACY_MARKING = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn10Warning,
     "The hook{type} {fullname} uses old-style configuration options (marks or attributes).\n"
     "Please use the pytest.hook{type}({hook_opts}) decorator instead\n"
     " to configure the hooks.\n"
