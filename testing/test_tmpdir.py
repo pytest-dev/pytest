@@ -550,7 +550,7 @@ class TestRmRf:
 
 
 class TestSafeRmtree:
-    """Tests for safe_rmtree and the avoids_symlink_attacks guard (#13669)."""
+    """Tests for safe_rmtree (#13669)."""
 
     def test_removes_real_directory(self, tmp_path: Path) -> None:
         """safe_rmtree removes a real (non-symlink) directory."""
@@ -605,70 +605,27 @@ class TestSafeRmtree:
             rm_rf(link)
         assert real.is_dir()
 
-    def test_warns_when_avoids_symlink_attacks_is_false(
+    def test_no_warning_when_avoids_symlink_attacks_is_false(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        """A warning is emitted when the platform lacks native symlink-attack
-        protection in rmtree."""
+        """No warning is emitted regardless of avoids_symlink_attacks value.
+
+        The is_symlink() root check is the defense; warnings about
+        avoids_symlink_attacks were removed because they are unactionable
+        for users (they cannot upgrade their kernel from pytest config).
+        """
         target = tmp_path / "dir"
         target.mkdir()
 
         monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
-
-        with pytest.warns(
-            pytest.PytestWarning,
-            match="avoids_symlink_attacks is False",
-        ):
-            safe_rmtree(target)
-        assert not target.exists()
-
-    def test_no_warning_when_avoids_symlink_attacks_is_true(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
-        """No warning when the platform natively guards against symlink attacks."""
-        target = tmp_path / "dir"
-        target.mkdir()
-
-        monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", True)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             safe_rmtree(target)
-        symlink_warnings = [x for x in w if "avoids_symlink_attacks" in str(x.message)]
+        symlink_warnings = [
+            x for x in w if "avoids_symlink_attacks" in str(x.message)
+        ]
         assert symlink_warnings == []
-        assert not target.exists()
-
-    def test_rm_rf_succeeds_when_avoids_symlink_attacks_is_false(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
-        """rm_rf completes removal even when avoids_symlink_attacks is False
-        and warnings are configured as errors (Windows scenario)."""
-        target = tmp_path / "dir"
-        target.mkdir()
-        (target / "file.txt").write_text("data", encoding="utf-8")
-
-        monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
-
-        # Simulate pyproject.toml: filterwarnings = ['error']
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            rm_rf(target)
-        assert not target.exists()
-
-    def test_safe_rmtree_succeeds_when_avoids_symlink_attacks_is_false(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
-        """safe_rmtree completes removal even when avoids_symlink_attacks is
-        False and warnings are configured as errors."""
-        target = tmp_path / "dir"
-        target.mkdir()
-        (target / "file.txt").write_text("data", encoding="utf-8")
-
-        monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            safe_rmtree(target)
         assert not target.exists()
 
 
