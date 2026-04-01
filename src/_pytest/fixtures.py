@@ -65,9 +65,9 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
-from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
+from _pytest.scope import ScopeName
 from _pytest.warning_types import PytestWarning
 
 
@@ -401,7 +401,7 @@ class FixtureRequest(abc.ABC):
         raise NotImplementedError()
 
     @property
-    def scope(self) -> _ScopeName:
+    def scope(self) -> ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 
@@ -942,10 +942,10 @@ def _teardown_yield_fixture(fixturefunc, it) -> None:
 
 
 def _eval_scope_callable(
-    scope_callable: Callable[[str, Config], _ScopeName],
+    scope_callable: Callable[[str, Config], ScopeName],
     fixture_name: str,
     config: Config,
-) -> _ScopeName:
+) -> ScopeName:
     try:
         # Type ignored because there is no typing mechanism to specify
         # keyword arguments, currently.
@@ -977,7 +977,7 @@ class FixtureDef(Generic[FixtureValue]):
         baseid: str | None,
         argname: str,
         func: _FixtureFunc[FixtureValue],
-        scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] | None,
+        scope: Scope | ScopeName | Callable[[str, Config], ScopeName] | None,
         params: Sequence[object] | None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         *,
@@ -1034,7 +1034,7 @@ class FixtureDef(Generic[FixtureValue]):
         self._autouse = _autouse
 
     @property
-    def scope(self) -> _ScopeName:
+    def scope(self) -> ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 
@@ -1228,7 +1228,7 @@ def pytest_fixture_setup(
 @final
 @dataclasses.dataclass(frozen=True)
 class FixtureFunctionMarker:
-    scope: _ScopeName | Callable[[str, Config], _ScopeName]
+    scope: ScopeName | Callable[[str, Config], ScopeName]
     params: tuple[object, ...] | None
     autouse: bool = False
     ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None
@@ -1322,7 +1322,7 @@ class FixtureFunctionDefinition:
 def fixture(
     fixture_function: Callable[..., object],
     *,
-    scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
+    scope: ScopeName | Callable[[str, Config], ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
@@ -1334,7 +1334,7 @@ def fixture(
 def fixture(
     fixture_function: None = ...,
     *,
-    scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
+    scope: ScopeName | Callable[[str, Config], ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
@@ -1345,7 +1345,7 @@ def fixture(
 def fixture(
     fixture_function: FixtureFunction | None = None,
     *,
-    scope: _ScopeName | Callable[[str, Config], _ScopeName] = "function",
+    scope: ScopeName | Callable[[str, Config], ScopeName] = "function",
     params: Iterable[object] | None = None,
     autouse: bool = False,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = None,
@@ -1799,7 +1799,7 @@ class FixtureManager:
         name: str,
         func: _FixtureFunc[object],
         nodeid: str | None,
-        scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] = "function",
+        scope: Scope | ScopeName | Callable[[str, Config], ScopeName] = "function",
         params: Sequence[object] | None = None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         autouse: bool = False,

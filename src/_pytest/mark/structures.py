@@ -29,7 +29,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
 from _pytest.outcomes import fail
 from _pytest.raises import AbstractRaises
-from _pytest.scope import _ScopeName
+from _pytest.scope import ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 
@@ -535,7 +535,7 @@ if TYPE_CHECKING:
             ids: Iterable[None | str | float | int | bool]
             | Callable[[Any], object | None]
             | None = ...,
-            scope: _ScopeName | None = ...,
+            scope: ScopeName | None = ...,
         ) -> MarkDecorator: ...
 
         @overload
@@ -552,7 +552,7 @@ if TYPE_CHECKING:
             ids: Iterable[None | str | float | int | bool]
             | Callable[[Any], object | None]
             | None = ...,
-            scope: _ScopeName | None = ...,
+            scope: ScopeName | None = ...,
         ) -> MarkDecorator: ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):

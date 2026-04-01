@@ -71,8 +71,8 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import scandir
-from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
+from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
@@ -1209,7 +1209,7 @@ class Metafunc:
         argvalues: Iterable[ParameterSet | Sequence[object] | object],
         indirect: bool | Sequence[str] = False,
         ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
-        scope: _ScopeName | None = None,
+        scope: ScopeName | None = None,
         *,
         _param_mark: Mark | None = None,
     ) -> None:
