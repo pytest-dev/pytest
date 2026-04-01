@@ -1,0 +1,2 @@
+Marked ``yield_fixture`` as deprecated to type checkers using the ``deprecated`` decorator. Note it
+:ref:`has originally been deprecated <yield-fixture-deprecated>` in pytest 6.2 already.

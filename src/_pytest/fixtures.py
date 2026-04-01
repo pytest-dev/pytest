@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 import warnings
 
+from .compat import deprecated
 import _pytest
 from _pytest import nodes
 from _pytest._code import getfslineno
@@ -1416,6 +1417,10 @@ def fixture(
     return fixture_marker
 
 
+@deprecated(
+    "@pytest.yield_fixture is deprecated. Use @pytest.fixture instead; they are the same.",
+    category=None,  # We have our own runtime warning logic
+)
 def yield_fixture(
     fixture_function=None,
     *args,

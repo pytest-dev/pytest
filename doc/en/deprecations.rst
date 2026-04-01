@@ -287,6 +287,8 @@ conflicts (such as :class:`pytest.File` now taking ``path`` instead of
 deprecation warning is now raised.
 
 
+.. _yield-fixture-deprecated:
+
 The ``yield_fixture`` function/decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
