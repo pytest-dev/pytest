@@ -1,1 +1,1 @@
-:class:`pytest.ScopeName` is now public to allow using it in function signatures.
+`pytest.ScopeName` is now public to allow using it in function signatures.
