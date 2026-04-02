@@ -1587,8 +1587,12 @@ class Config:
         config_filters = self.getini("filterwarnings")
 
         with warnings.catch_warnings(record=True) as records:
+            existing_filters = warnings.filters[:]
             warnings.simplefilter("always", type(warning))
             apply_warning_filters(config_filters, cmdline_filters)
+            for f in existing_filters:
+                if f not in warnings.filters:
+                    warnings.filters.append(f)
             warnings.warn(warning, stacklevel=stacklevel)
 
         if records:
