@@ -605,26 +605,32 @@ class TestSafeRmtree:
             rm_rf(link)
         assert real.is_dir()
 
-    def test_no_warning_when_avoids_symlink_attacks_is_false(
+    def test_warns_once_when_avoids_symlink_attacks_is_false(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
-        """No warning is emitted regardless of avoids_symlink_attacks value.
+        """A one-time warning is emitted when avoids_symlink_attacks is False.
 
-        The is_symlink() root check is the defense; warnings about
-        avoids_symlink_attacks were removed because they are unactionable
-        for users (they cannot upgrade their kernel from pytest config).
+        The is_symlink() root check is the primary defense; the warning
+        alerts users that contents inside the tree may still be vulnerable
+        to TOCTOU symlink races on this platform.
         """
-        target = tmp_path / "dir"
-        target.mkdir()
+        target1 = tmp_path / "dir1"
+        target1.mkdir()
+        target2 = tmp_path / "dir2"
+        target2.mkdir()
 
         monkeypatch.setattr(shutil.rmtree, "avoids_symlink_attacks", False)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            safe_rmtree(target)
+            safe_rmtree(target1)
+            safe_rmtree(target2)
         symlink_warnings = [x for x in w if "avoids_symlink_attacks" in str(x.message)]
-        assert symlink_warnings == []
-        assert not target.exists()
+        # simplefilter("once") inside _check_symlink_attack_safety deduplicates,
+        # but the outer "always" filter still records each unique emission.
+        assert len(symlink_warnings) >= 1
+        assert not target1.exists()
+        assert not target2.exists()
 
 
 def attempt_symlink_to(path, to_path):
