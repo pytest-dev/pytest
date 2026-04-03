@@ -540,20 +540,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         """Start capturing on targetfd using memorized tmpfile."""
         self._assert_state("start", ("initialized",))
         os.dup2(self.tmpfile.fileno(), self.targetfd)
-        # Windows: sync process-level STD_INPUT_HANDLE with fd 0
-        if sys.platform == "win32" and self.targetfd == 0:
-            try:
-                import ctypes
-                import msvcrt
-
-                kernel32 = ctypes.windll.kernel32
-                STD_INPUT_HANDLE = -10
-
-                new_handle = msvcrt.get_osfhandle(self.targetfd)
-                kernel32.SetStdHandle(STD_INPUT_HANDLE, new_handle)
-            except Exception:
-                # Best-effort: ignore failures to avoid breaking capture
-                pass
+        
         self._sync_win32_stdhandle(self.targetfd)
         self.syscapture.start()
         self._state = "started"
