@@ -515,6 +515,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
                 op, self._state, ", ".join(states)
             )
         )
+
     def _sync_win32_stdhandle(self, targetfd: int) -> None:
         if sys.platform != "win32":
             return
@@ -534,6 +535,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
 
         handle = msvcrt.get_osfhandle(targetfd)
         ctypes.windll.kernel32.SetStdHandle(std_id, handle)
+
     def start(self) -> None:
         """Start capturing on targetfd using memorized tmpfile."""
         self._assert_state("start", ("initialized",))
