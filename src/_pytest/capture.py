@@ -515,7 +515,25 @@ class FDCaptureBase(CaptureBase[AnyStr]):
                 op, self._state, ", ".join(states)
             )
         )
+    def _sync_win32_stdhandle(self, targetfd: int) -> None:
+        if sys.platform != "win32":
+            return
 
+        import ctypes
+        import msvcrt
+
+        fd_to_std = {
+            0: -10,  # STD_INPUT_HANDLE
+            1: -11,  # STD_OUTPUT_HANDLE
+            2: -12,  # STD_ERROR_HANDLE
+        }
+
+        std_id = fd_to_std.get(targetfd)
+        if std_id is None:
+            return
+
+        handle = msvcrt.get_osfhandle(targetfd)
+        ctypes.windll.kernel32.SetStdHandle(std_id, handle)
     def start(self) -> None:
         """Start capturing on targetfd using memorized tmpfile."""
         self._assert_state("start", ("initialized",))
@@ -534,6 +552,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             except Exception:
                 # Best-effort: ignore failures to avoid breaking capture
                 pass
+        self._sync_win32_stdhandle(self.targetfd)
         self.syscapture.start()
         self._state = "started"
 
@@ -544,6 +563,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         if self._state == "done":
             return
         os.dup2(self.targetfd_save, self.targetfd)
+        self._sync_win32_stdhandle(self.targetfd)
         os.close(self.targetfd_save)
         if self.targetfd_invalid is not None:
             if self.targetfd_invalid != self.targetfd:
@@ -559,6 +579,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             return
         self.syscapture.suspend()
         os.dup2(self.targetfd_save, self.targetfd)
+        self._sync_win32_stdhandle(self.targetfd)
         self._state = "suspended"
 
     def resume(self) -> None:
@@ -567,6 +588,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
             return
         self.syscapture.resume()
         os.dup2(self.tmpfile.fileno(), self.targetfd)
+        self._sync_win32_stdhandle(self.targetfd)
         self._state = "started"
 
 
