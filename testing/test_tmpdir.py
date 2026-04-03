@@ -927,7 +927,7 @@ class TestCleanupOldRootdirs:
         assert current.is_dir()
 
 
-# -- Direct unit tests for _verify_ownership_and_tighten_permissions context manager --
+# -- Direct unit tests for _safe_open_dir / _verify_ownership_and_tighten_permissions --
 
 
 class TestVerifyOwnershipAndTightenPermissions:

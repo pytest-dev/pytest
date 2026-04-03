@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+import contextlib
 import dataclasses
 import os
 from pathlib import Path
@@ -34,20 +35,19 @@ tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
 
 
-def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
-    """Verify directory ownership and ensure private permissions (0o700),
-    taking care to avoid TOCTOU races.
+@contextlib.contextmanager
+def _safe_open_dir(path: Path) -> Generator[int]:
+    """Open a directory by fd without following symlinks.
 
-    .. note::
+    On POSIX, ``O_NOFOLLOW`` and ``O_DIRECTORY`` ensure the open cannot
+    follow symlinks.  On Windows these flags are unavailable; callers
+    should gate invocation on ``get_user_id() is not None`` (which is
+    ``False`` on Windows) so this function is never reached there.
 
-        On POSIX, ``O_NOFOLLOW`` and ``O_DIRECTORY`` ensure the open cannot
-        follow symlinks.  On Windows these flags are unavailable; callers
-        should gate invocation on ``get_user_id() is not None`` (which is
-        ``False`` on Windows) so this function is never reached there.
+    Yields the file descriptor; closes it on exit.
 
     Raises:
-        OSError: If *path* cannot be safely opened (e.g. it is a symlink)
-            or is not owned by *user_id*.
+        OSError: If *path* cannot be safely opened (e.g. it is a symlink).
     """
     open_flags = os.O_RDONLY
     # Never follow symlinks (when these flags are available).
@@ -62,7 +62,21 @@ def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
             "Remove the symlink or directory and try again."
         ) from e
     try:
-        # Use fd-based functions to eliminate TOCTOU races (CVE-2025-71176).
+        yield dir_fd
+    finally:
+        os.close(dir_fd)
+
+
+def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
+    """Verify directory ownership and ensure private permissions (0o700),
+    taking care to avoid TOCTOU races.
+
+    Raises:
+        OSError: If *path* cannot be safely opened (e.g. it is a symlink)
+            or is not owned by *user_id*.
+    """
+    # Use fd-based functions to eliminate TOCTOU races (CVE-2025-71176).
+    with _safe_open_dir(path) as dir_fd:
         st = os.fstat(dir_fd)
         if st.st_uid != user_id:
             raise OSError(
@@ -71,8 +85,6 @@ def _verify_ownership_and_tighten_permissions(path: Path, user_id: int) -> None:
             )
         if (st.st_mode & 0o077) != 0:
             os.fchmod(dir_fd, st.st_mode & ~0o077)
-    finally:
-        os.close(dir_fd)
 
 
 def _cleanup_old_rootdirs(
