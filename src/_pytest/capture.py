@@ -540,7 +540,7 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         """Start capturing on targetfd using memorized tmpfile."""
         self._assert_state("start", ("initialized",))
         os.dup2(self.tmpfile.fileno(), self.targetfd)
-        
+
         self._sync_win32_stdhandle(self.targetfd)
         self.syscapture.start()
         self._state = "started"
