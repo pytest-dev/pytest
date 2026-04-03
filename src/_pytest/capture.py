@@ -523,8 +523,8 @@ class FDCaptureBase(CaptureBase[AnyStr]):
         # Windows: sync process-level STD_INPUT_HANDLE with fd 0
         if sys.platform == "win32" and self.targetfd == 0:
             try:
-                import msvcrt
                 import ctypes
+                import msvcrt
 
                 kernel32 = ctypes.windll.kernel32
                 STD_INPUT_HANDLE = -10
