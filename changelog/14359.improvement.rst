@@ -1,0 +1,2 @@
+Updated pygments requirement to ``pygments>=2.20``.
+This avoids a regular expression denial-of-service attack described in `CVE-2026-4539 <https://www.cve.org/CVERecord?id=CVE-2026-4539>`__.
