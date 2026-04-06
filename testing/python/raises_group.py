@@ -412,9 +412,12 @@ def test_check() -> None:
         return e is exc
 
     is_exc_repr = repr_callable(is_exc)
+
+    # this should pass (same object)
     with RaisesGroup(ValueError, check=is_exc):
         raise exc
 
+    # this should fail WITHOUT suggestion
     with (
         fails_raises_group(
             f"check {is_exc_repr} did not return True on the ExceptionGroup"
@@ -426,15 +429,27 @@ def test_check() -> None:
     def is_value_error(e: BaseException) -> bool:
         return isinstance(e, ValueError)
 
-    # helpful suggestion if the user thinks the check is for the sub-exception
+    # this should fail WITH suggestion (because check looks like it's for inner exception)
     with (
         fails_raises_group(
-            f"check {is_value_error} did not return True on the ExceptionGroup, but did return True for the expected ValueError. You might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
+            f"check {is_value_error} did not return True on the ExceptionGroup, but the single contained exception matches the expected ValueError. You might want RaisesGroup(RaisesExc(ValueError, check=<...>))"
         ),
         RaisesGroup(ValueError, check=is_value_error),
     ):
         raise ExceptionGroup("", (ValueError(),))
 
+
+def test_check_called_only_with_group() -> None:
+    seen = []
+
+    def check(exc_group: ExceptionGroup[ValueError]) -> bool:
+        seen.append(type(exc_group))
+        return len(exc_group.exceptions) == 1
+
+    with RaisesGroup(ValueError, match="Main message", check=check):
+        raise ExceptionGroup("Main message", [ValueError("foo")])
+
+    assert seen == [ExceptionGroup]
 
 def test_unwrapped_match_check() -> None:
     def my_check(e: object) -> bool:  # pragma: no cover
