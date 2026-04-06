@@ -1767,6 +1767,51 @@ def test_logging_while_collecting(pytester: Pytester) -> None:
     result.stdout.no_fnmatch_line("*during collection*")
 
 
+def test_nested_suspend_in_preserves_outer_suspended_state(
+    pytester: Pytester,
+) -> None:
+    """Black-box regression for #13322.
+
+    A plugin hook that suspends out/err first and then nests a
+    ``suspend_global_capture(in_=True)`` must observe that the matching
+    ``resume_global_capture()`` leaves out/err in their prior suspended
+    state, so that prints from the hook after the resume reach the real
+    terminal *immediately* (i.e. before the summary line).
+
+    On the pre-fix implementation, ``MARK_AFTER_RESUME`` would be
+    re-captured by the buggy resume and only flushed to real stdout at
+    ``stop_global_capturing`` cleanup time, which runs after
+    ``pytest_unconfigure`` and therefore after the ``N passed`` summary
+    line. Asserting the marker appears *before* the summary line is the
+    deterministic discriminator.
+    """
+    pytester.makeconftest("""
+    import pytest
+
+
+    def pytest_terminal_summary(config):
+        capture = config.pluginmanager.getplugin("capturemanager")
+        capture.suspend_global_capture(in_=False)
+        print("MARK_BEFORE_NESTED")
+        capture.suspend_global_capture(in_=True)
+        capture.resume_global_capture()
+        print("MARK_AFTER_RESUME")
+    """)
+    pytester.makepyfile("def test_x(): pass")
+    result = pytester.runpytest_subprocess()
+    # Both marks must appear in order, AND both must appear before the
+    # final summary line. On the buggy code MARK_AFTER_RESUME would only
+    # be flushed at CaptureManager teardown -- i.e. after "1 passed".
+    result.stdout.fnmatch_lines(
+        [
+            "*MARK_BEFORE_NESTED*",
+            "*MARK_AFTER_RESUME*",
+            "*1 passed*",
+        ]
+    )
+    assert result.ret == 0
+
+
 def test_libedit_workaround(pytester: Pytester) -> None:
     pytester.makeconftest("""
     import pytest

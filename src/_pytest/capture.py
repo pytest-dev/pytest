@@ -334,6 +334,7 @@ class CaptureBase(abc.ABC, Generic[AnyStr]):
         raise NotImplementedError()
 
     def is_started(self) -> bool:
+        """Whether actively capturing -- not initialized, suspended, or done."""
         return self._state == "started"
 
 
@@ -633,9 +634,11 @@ else:
 
 class MultiCapture(Generic[AnyStr]):
     _state = None
-    _in_suspended = False
-    _snap_out_was_started = False
-    _snap_err_was_started = False
+    # Snapshot of (out_started, err_started) captured at the moment of the
+    # first nested ``suspend_capturing(in_=True)`` call. ``None`` when no
+    # nested suspend is in progress; non-``None`` iff the matching
+    # ``resume_capturing`` still needs to restore that prior state (#13322).
+    _pre_suspend_state: tuple[bool, bool] | None = None
 
     def __init__(
         self,
@@ -648,12 +651,13 @@ class MultiCapture(Generic[AnyStr]):
         self.err: CaptureBase[AnyStr] | None = err
 
     def __repr__(self) -> str:
-        return (
+        base = (
             f"<MultiCapture out={self.out!r} err={self.err!r} in_={self.in_!r} "
-            f"_state={self._state!r} _in_suspended={self._in_suspended!r} "
-            f"_snap_out_was_started={self._snap_out_was_started!r} "
-            f"_snap_err_was_started={self._snap_err_was_started!r}>"
+            f"_state={self._state!r}"
         )
+        if self._pre_suspend_state is not None:
+            base += f" _pre_suspend_state={self._pre_suspend_state!r}"
+        return base + ">"
 
     def start_capturing(self) -> None:
         self._state = "started"
@@ -676,38 +680,57 @@ class MultiCapture(Generic[AnyStr]):
         return out, err
 
     def suspend_capturing(self, in_: bool = False) -> None:
+        """Suspend out/err (and ``in_`` when ``in_=True``).
+
+        When ``in_=True`` and no nested suspend is already in progress, the
+        prior started/suspended state of out and err is snapshotted so that
+        the matching :meth:`resume_capturing` restores them to that state
+        instead of unconditionally restarting them. This supports plugin
+        hooks that suspend capture once for out/err and then nest a second
+        ``in_=True`` suspend to read user input -- without that snapshot,
+        the resume would re-enable out/err even though the caller intended
+        them to remain suspended (#13322).
+
+        The contract is that ``suspend_capturing(in_=True)`` and
+        :meth:`resume_capturing` are called as a matched pair; nesting is
+        single-depth, not arbitrary.
+        """
         self._state = "suspended"
-        # On the first ``in_=True`` call, remember whether out/err were
-        # already suspended so resume_capturing can leave them that way
-        # instead of unconditionally restarting them (#13322).
-        if in_ and self.in_ is not None and not self._in_suspended:
-            self._snap_out_was_started = self.out is not None and self.out.is_started()
-            self._snap_err_was_started = self.err is not None and self.err.is_started()
+        if in_ and self.in_ is not None and self._pre_suspend_state is None:
+            self._pre_suspend_state = (
+                self.out is not None and self.out.is_started(),
+                self.err is not None and self.err.is_started(),
+            )
             self.in_.suspend()
-            self._in_suspended = True
         if self.out:
             self.out.suspend()
         if self.err:
             self.err.suspend()
 
     def resume_capturing(self) -> None:
+        """Resume out/err (and ``in_`` if a matching nested suspend is active).
+
+        If the matching :meth:`suspend_capturing` was called with
+        ``in_=True``, the snapshot taken at that point determines whether
+        out/err are restored to ``started`` -- streams that were already
+        suspended before the nested suspend remain suspended (#13322).
+        Otherwise, out/err are unconditionally resumed (the original
+        behaviour).
+        """
         self._state = "started"
-        if self._in_suspended:
-            # Restore the snapshot taken in suspend_capturing (#13322).
+        snap = self._pre_suspend_state
+        if snap is not None:
             assert self.in_ is not None
             self.in_.resume()
-            self._in_suspended = False
-            if self._snap_out_was_started and self.out is not None:
-                self.out.resume()
-            if self._snap_err_was_started and self.err is not None:
-                self.err.resume()
-            self._snap_out_was_started = False
-            self._snap_err_was_started = False
+            out_was_started, err_was_started = snap
+            self._pre_suspend_state = None
         else:
-            if self.out:
-                self.out.resume()
-            if self.err:
-                self.err.resume()
+            out_was_started = self.out is not None
+            err_was_started = self.err is not None
+        if out_was_started and self.out is not None:
+            self.out.resume()
+        if err_was_started and self.err is not None:
+            self.err.resume()
 
     def stop_capturing(self) -> None:
         """Stop capturing and reset capturing streams."""
