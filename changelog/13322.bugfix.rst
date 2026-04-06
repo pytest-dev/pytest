@@ -1,1 +1,1 @@
-Fixed :meth:`CaptureManager.resume_global_capture <_pytest.capture.CaptureManager.resume_global_capture>` re-enabling stdout/stderr capture when the matching :meth:`~_pytest.capture.CaptureManager.suspend_global_capture` was called with ``in_=True`` from a context where ``out`` and ``err`` were already suspended.
+Fixed ``CaptureManager.resume_global_capture`` re-enabling stdout/stderr capture when the matching ``CaptureManager.suspend_global_capture`` was called with ``in_=True`` from a context where ``out`` and ``err`` were already suspended.
