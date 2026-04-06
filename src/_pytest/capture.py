@@ -301,6 +301,9 @@ class DontReadFromInput(TextIO):
 
 class CaptureBase(abc.ABC, Generic[AnyStr]):
     EMPTY_BUFFER: AnyStr
+    # Set by stateful subclasses in ``__init__``; left as ``None`` on
+    # stateless implementations such as ``NoCapture``.
+    _state: str | None = None
 
     @abc.abstractmethod
     def __init__(self, fd: int) -> None:
@@ -329,6 +332,9 @@ class CaptureBase(abc.ABC, Generic[AnyStr]):
     @abc.abstractmethod
     def snap(self) -> AnyStr:
         raise NotImplementedError()
+
+    def is_started(self) -> bool:
+        return self._state == "started"
 
 
 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
@@ -628,6 +634,8 @@ else:
 class MultiCapture(Generic[AnyStr]):
     _state = None
     _in_suspended = False
+    _snap_out_was_started = False
+    _snap_err_was_started = False
 
     def __init__(
         self,
@@ -642,7 +650,9 @@ class MultiCapture(Generic[AnyStr]):
     def __repr__(self) -> str:
         return (
             f"<MultiCapture out={self.out!r} err={self.err!r} in_={self.in_!r} "
-            f"_state={self._state!r} _in_suspended={self._in_suspended!r}>"
+            f"_state={self._state!r} _in_suspended={self._in_suspended!r} "
+            f"_snap_out_was_started={self._snap_out_was_started!r} "
+            f"_snap_err_was_started={self._snap_err_was_started!r}>"
         )
 
     def start_capturing(self) -> None:
@@ -667,24 +677,41 @@ class MultiCapture(Generic[AnyStr]):
 
     def suspend_capturing(self, in_: bool = False) -> None:
         self._state = "suspended"
+        # On the first ``in_=True`` call, remember whether out/err were
+        # already suspended so resume_capturing can leave them that way
+        # instead of unconditionally restarting them (#13322).
+        if in_ and self.in_ is not None and not self._in_suspended:
+            self._snap_out_was_started = (
+                self.out is not None and self.out.is_started()
+            )
+            self._snap_err_was_started = (
+                self.err is not None and self.err.is_started()
+            )
+            self.in_.suspend()
+            self._in_suspended = True
         if self.out:
             self.out.suspend()
         if self.err:
             self.err.suspend()
-        if in_ and self.in_:
-            self.in_.suspend()
-            self._in_suspended = True
 
     def resume_capturing(self) -> None:
         self._state = "started"
-        if self.out:
-            self.out.resume()
-        if self.err:
-            self.err.resume()
         if self._in_suspended:
+            # Restore the snapshot taken in suspend_capturing (#13322).
             assert self.in_ is not None
             self.in_.resume()
             self._in_suspended = False
+            if self._snap_out_was_started and self.out is not None:
+                self.out.resume()
+            if self._snap_err_was_started and self.err is not None:
+                self.err.resume()
+            self._snap_out_was_started = False
+            self._snap_err_was_started = False
+        else:
+            if self.out:
+                self.out.resume()
+            if self.err:
+                self.err.resume()
 
     def stop_capturing(self) -> None:
         """Stop capturing and reset capturing streams."""

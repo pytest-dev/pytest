@@ -101,6 +101,67 @@ class TestCaptureManager:
         finally:
             capouter.stop_capturing()
 
+    @pytest.mark.parametrize("method", ["sys", "fd"])
+    def test_suspend_in_preserves_out_err_suspended_state(self, method) -> None:
+        """suspend_global_capture(in_=True) + resume_global_capture() must
+        not re-enable out/err capture if they were already suspended (#13322).
+        """
+        capouter = StdCaptureFD()
+        try:
+            capman = CaptureManager(method)
+            capman.start_global_capturing()
+            mc = capman._global_capturing
+            assert mc is not None
+            assert mc.out is not None
+            assert mc.err is not None
+            assert mc.in_ is not None
+
+            capman.suspend_global_capture(in_=False)
+            assert not mc.out.is_started()
+            assert not mc.err.is_started()
+            assert mc.in_.is_started()
+
+            capman.suspend_global_capture(in_=True)
+            assert not mc.in_.is_started()
+
+            capman.resume_global_capture()
+            assert not mc.out.is_started()
+            assert not mc.err.is_started()
+            assert mc.in_.is_started()
+
+            capman.stop_global_capturing()
+        finally:
+            capouter.stop_capturing()
+
+    @pytest.mark.parametrize("method", ["sys", "fd"])
+    def test_suspend_in_restores_out_err_started_state(self, method) -> None:
+        """suspend_global_capture(in_=True) + resume_global_capture() restores
+        out/err to started when that was their state before the suspend (#13322).
+        """
+        capouter = StdCaptureFD()
+        try:
+            capman = CaptureManager(method)
+            capman.start_global_capturing()
+            mc = capman._global_capturing
+            assert mc is not None
+            assert mc.out is not None
+            assert mc.err is not None
+            assert mc.in_ is not None
+
+            capman.suspend_global_capture(in_=True)
+            assert not mc.out.is_started()
+            assert not mc.err.is_started()
+            assert not mc.in_.is_started()
+
+            capman.resume_global_capture()
+            assert mc.out.is_started()
+            assert mc.err.is_started()
+            assert mc.in_.is_started()
+
+            capman.stop_global_capturing()
+        finally:
+            capouter.stop_capturing()
+
 
 @pytest.mark.parametrize("method", ["fd", "sys"])
 def test_capturing_unicode(pytester: Pytester, method: str) -> None:
