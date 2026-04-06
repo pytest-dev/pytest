@@ -681,12 +681,8 @@ class MultiCapture(Generic[AnyStr]):
         # already suspended so resume_capturing can leave them that way
         # instead of unconditionally restarting them (#13322).
         if in_ and self.in_ is not None and not self._in_suspended:
-            self._snap_out_was_started = (
-                self.out is not None and self.out.is_started()
-            )
-            self._snap_err_was_started = (
-                self.err is not None and self.err.is_started()
-            )
+            self._snap_out_was_started = self.out is not None and self.out.is_started()
+            self._snap_err_was_started = self.err is not None and self.err.is_started()
             self.in_.suspend()
             self._in_suspended = True
         if self.out:
