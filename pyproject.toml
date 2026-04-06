@@ -51,7 +51,7 @@ dependencies = [
     "iniconfig>=1.0.1",
     "packaging>=22",
     "pluggy>=1.5,<2",
-    "pygments>=2.20.0",
+    "pygments>=2.20",
     "tomli>=1; python_version<'3.11'",
 ]
 optional-dependencies.dev = [
