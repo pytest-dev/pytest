@@ -451,6 +451,7 @@ def test_check_called_only_with_group() -> None:
 
     assert seen == [ExceptionGroup]
 
+
 def test_unwrapped_match_check() -> None:
     def my_check(e: object) -> bool:  # pragma: no cover
         return True
