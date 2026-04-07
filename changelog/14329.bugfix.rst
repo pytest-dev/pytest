@@ -1,1 +1,2 @@
-Now the markers are considered in the order from near to far, through the mro. `get_closes_marker("usefixtures")` will also return the nearest mark, but the processing of the `usefixtures` goes from the far mark to the near one.
+Fixed :func:`request.node.get_closest_marker() <_pytest.nodes.Node.get_closest_marker>` (and :func:`iter_markers() <_pytest.nodes.Node.iter_markers>`) traversing MRO in the wrong order (farthest to closest).
+This could also affect :func:`pytest.mark.usefixtures` usage.
