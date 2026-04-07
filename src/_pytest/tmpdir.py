@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 from shutil import rmtree
+import stat
 import tempfile
 from typing import Any
 from typing import final
@@ -170,16 +171,37 @@ class TempPathFactory:
             # Also, to keep things private, fixup any world-readable temp
             # rootdir's permissions. Historically 0o755 was used, so we can't
             # just error out on this, at least for a while.
+            # Don't follow symlinks, otherwise we're open to symlink-swapping
+            # TOCTOU vulnerability.
+            # This check makes us vulnerable to a DoS - a user can `mkdir
+            # /tmp/pytest-of-otheruser` and then `otheruser` will fail this
+            # check. For now we don't consider it a real problem. otheruser can
+            # change their TMPDIR or --basetemp, and maybe give the prankster a
+            # good scolding.
             uid = get_user_id()
             if uid is not None:
-                rootdir_stat = rootdir.stat()
+                stat_follow_symlinks = (
+                    False if os.stat in os.supports_follow_symlinks else True
+                )
+                rootdir_stat = rootdir.stat(follow_symlinks=stat_follow_symlinks)
+                if stat.S_ISLNK(rootdir_stat.st_mode):
+                    raise OSError(
+                        f"The temporary directory {rootdir} is a symbolic link. "
+                        "Fix this and try again."
+                    )
                 if rootdir_stat.st_uid != uid:
                     raise OSError(
                         f"The temporary directory {rootdir} is not owned by the current user. "
                         "Fix this and try again."
                     )
                 if (rootdir_stat.st_mode & 0o077) != 0:
-                    os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
+                    chmod_follow_symlinks = (
+                        False if os.chmod in os.supports_follow_symlinks else True
+                    )
+                    rootdir.chmod(
+                        rootdir_stat.st_mode & ~0o077,
+                        follow_symlinks=chmod_follow_symlinks,
+                    )
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0

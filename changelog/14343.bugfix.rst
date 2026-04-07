@@ -1,0 +1,1 @@
+Fixed use of insecure temporary directory (CVE-2025-71176).
