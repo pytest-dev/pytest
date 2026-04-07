@@ -31,6 +31,58 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 9.0.3 (2026-04-07)
+=========================
+
+Bug fixes
+---------
+
+- `#12444 <https://github.com/pytest-dev/pytest/issues/12444>`_: Fixed :func:`pytest.approx` which now correctly takes into account :class:`~collections.abc.Mapping` keys order to compare them.
+
+
+- `#13634 <https://github.com/pytest-dev/pytest/issues/13634>`_: Blocking a ``conftest.py`` file using the ``-p no:`` option is now explicitly disallowed.
+
+  Previously this resulted in an internal assertion failure during plugin loading.
+
+  Pytest now raises a clear ``UsageError`` explaining that conftest files are not plugins and cannot be disabled via ``-p``.
+
+
+- `#13734 <https://github.com/pytest-dev/pytest/issues/13734>`_: Fixed crash when a test raises an exceptiongroup with ``__tracebackhide__ = True``.
+
+
+- `#14195 <https://github.com/pytest-dev/pytest/issues/14195>`_: Fixed an issue where non-string messages passed to `unittest.TestCase.subTest()` were not printed.
+
+
+- `#14343 <https://github.com/pytest-dev/pytest/issues/14343>`_: Fixed use of insecure temporary directory (CVE-2025-71176).
+
+
+
+Improved documentation
+----------------------
+
+- `#13388 <https://github.com/pytest-dev/pytest/issues/13388>`_: Clarified documentation for ``-p`` vs ``PYTEST_PLUGINS`` plugin loading and fixed an incorrect ``-p`` example.
+
+
+- `#13731 <https://github.com/pytest-dev/pytest/issues/13731>`_: Clarified that capture fixtures (e.g. ``capsys`` and ``capfd``) take precedence over the ``-s`` / ``--capture=no`` command-line options in :ref:`Accessing captured output from a test function <accessing-captured-output>`.
+
+
+- `#14088 <https://github.com/pytest-dev/pytest/issues/14088>`_: Clarified that the default :hook:`pytest_collection` hook sets ``session.items`` before it calls :hook:`pytest_collection_finish`, not after.
+
+
+- `#14255 <https://github.com/pytest-dev/pytest/issues/14255>`_: TOML integer log levels must be quoted: Updating reference documentation.
+
+
+
+Contributor-facing changes
+--------------------------
+
+- `#12689 <https://github.com/pytest-dev/pytest/issues/12689>`_: The test reports are now published to Codecov from GitHub Actions.
+  The test statistics is visible `on the web interface
+  <https://app.codecov.io/gh/pytest-dev/pytest/tests>`__.
+
+  -- by :user:`aleguy02`
+
+
 pytest 9.0.2 (2025-12-06)
 =========================
 
