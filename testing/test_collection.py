@@ -83,6 +83,7 @@ class TestCollector:
         fn = pytester.collect_by_name(cls, "test_foo")
         assert isinstance(fn, pytest.Function)
 
+        assert modcol is not None
         assert fn.getparent(pytest.Module) is modcol
         assert modcol.module is not None
         assert modcol.cls is None
