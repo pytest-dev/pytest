@@ -257,10 +257,10 @@ For information about fixtures, see :ref:`fixtures`. To see a complete list of a
     subtests -- .../_pytest/subtests.py:129
         Provides subtests functionality.
 
-    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:243
+    tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:265
         Return a :class:`pytest.TempPathFactory` instance for the test session.
 
-    tmp_path -- .../_pytest/tmpdir.py:258
+    tmp_path -- .../_pytest/tmpdir.py:280
         Return a temporary directory (as :class:`pathlib.Path` object)
         which is unique to each test function invocation.
         The temporary directory is created as a subdirectory
