@@ -1207,14 +1207,35 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             reason = (
                 cast(str, self._fail_reason) + f" on the {type(exception).__name__}"
             )
+
+            suggest_subexception_check = False
             if (
-                len(actual_exceptions) == len(self.expected_exceptions) == 1
+                self.check is not None
+                and len(actual_exceptions) == len(self.expected_exceptions) == 1
                 and isinstance(expected := self.expected_exceptions[0], type)
-                # we explicitly break typing here :)
-                and self._check_check(actual_exceptions[0])  # type: ignore[arg-type]
+                and isinstance(actual_exceptions[0], expected)
             ):
+                annotations = getattr(self.check, "__annotations__", {})
+                param_names = [name for name in annotations if name != "return"]
+                if param_names:
+                    param_annotation = annotations[param_names[0]]
+
+                    if isinstance(param_annotation, str):
+                        suggest_subexception_check = (
+                            "ExceptionGroup" not in param_annotation
+                            and "BaseExceptionGroup" not in param_annotation
+                        )
+                    else:
+                        origin = get_origin(param_annotation) or param_annotation
+                        if isinstance(origin, type):
+                            suggest_subexception_check = not issubclass(
+                                origin, BaseExceptionGroup
+                            )
+
+            if suggest_subexception_check:
                 self._fail_reason = reason + (
-                    f", but did return True for the expected {self._repr_expected(expected)}."
+                    f", but the single contained exception matches the expected "
+                    f"{self._repr_expected(expected)}."
                     f" You might want RaisesGroup(RaisesExc({expected.__name__}, check=<...>))"
                 )
             else:
