@@ -920,7 +920,7 @@ def test_dontreadfrominput() -> None:
 
     f = DontReadFromInput()
     assert f.buffer is f  # type: ignore[comparison-overlap]
-    assert not f.isatty()
+    assert not f.isatty()  # type: ignore[unreachable]
     pytest.raises(OSError, f.read)
     pytest.raises(OSError, f.readlines)
     iter_f = iter(f)

@@ -148,7 +148,7 @@ class TestExceptionInfo:
     def test_bad_getsource(self) -> None:
         try:
             if False:
-                pass
+                pass  # type: ignore[unreachable]
             else:
                 assert False
         except AssertionError:
@@ -164,7 +164,7 @@ class TestTracebackEntry:
     def test_getsource(self) -> None:
         try:
             if False:
-                pass
+                pass  # type: ignore[unreachable]
             else:
                 assert False
         except AssertionError:

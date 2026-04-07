@@ -1482,8 +1482,7 @@ class ResultHolder:
     def get_result(self, expected: int, actual: int) -> str | None:
         res = self.results[actual][expected]
         assert res is not NotChecked
-        # mypy doesn't support identity checking against anything but None
-        return res  # type: ignore[return-value]
+        return res
 
     def has_result(self, expected: int, actual: int) -> bool:
         return self.results[actual][expected] is not NotChecked
