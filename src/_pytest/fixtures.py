@@ -308,7 +308,7 @@ def traverse_fixture_closure(
     """Statically traverse the fixture dependency closure in DFS order starting
     from initialnames, yielding all requested fixture names (argnames).
 
-    argnames may be yielded more than once.
+    Each argname is only yielded once.
     """
     # Track the index for each fixture name in the simulated stack.
     # Needed for handling override chains correctly, similar to
@@ -318,11 +318,16 @@ def traverse_fixture_closure(
     current_indices: dict[str, int] = {}
 
     def process_argname(argname: str) -> Iterator[str]:
+        index = current_indices.get(argname)
+
         # Optimization: already processed this argname.
-        if current_indices.get(argname) == -1:
+        if index == -1:
             return
 
-        yield argname
+        # Only yield each argname once.
+        if index is None:
+            yield argname
+            current_indices[argname] = -1
 
         fixturedefs = getfixturedefs(argname)
         if not fixturedefs:
@@ -385,15 +390,13 @@ class FuncFixtureInfo:
         tree. In this way the dependency tree can get pruned, and the closure
         of argnames may get reduced.
         """
-        closure: set[str] = set()
-        for argname in traverse_fixture_closure(
-            self.initialnames,
-            getfixturedefs=self.name2fixturedefs.get,
-        ):
-            if argname in self.names_closure:
-                closure.add(argname)
-
-        self.names_closure[:] = sorted(closure, key=self.names_closure.index)
+        closure = set(
+            traverse_fixture_closure(
+                self.initialnames,
+                getfixturedefs=self.name2fixturedefs.get,
+            )
+        )
+        self.names_closure[:] = (name for name in self.names_closure if name in closure)
 
 
 class FixtureRequest(abc.ABC):
@@ -1746,8 +1749,6 @@ class FixtureManager:
         # to re-discover fixturedefs again for each fixturename
         # (discovering matching fixtures for a given name/node is expensive).
 
-        fixturenames_closure = list(initialnames)
-
         arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]] = {}
 
         def getfixturedefs(argname: str) -> Sequence[FixtureDef[Any]] | None:
@@ -1763,11 +1764,12 @@ class FixtureManager:
                 arg2fixturedefs[argname] = fixturedefs
             return fixturedefs
 
+        fixturenames_closure = list(initialnames)
         for argname in traverse_fixture_closure(
             initialnames,
             getfixturedefs=getfixturedefs,
         ):
-            if argname not in fixturenames_closure:
+            if argname not in initialnames:
                 fixturenames_closure.append(argname)
 
         def sort_by_scope(arg_name: str) -> Scope:
@@ -1779,6 +1781,7 @@ class FixtureManager:
                 return fixturedefs[-1]._scope
 
         fixturenames_closure.sort(key=sort_by_scope, reverse=True)
+
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc: Metafunc) -> None:
