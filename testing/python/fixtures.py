@@ -5476,7 +5476,6 @@ def test_fixture_closure_with_overrides_and_intermediary(pytester: Pytester) -> 
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.xfail(reason="#14248 still not fixed")
 def test_fixture_closure_with_overrides_and_parametrization(pytester: Pytester) -> None:
     """Test that an item's static fixture closure properly includes transitive
     dependencies through overridden fixtures (#13773) when also including
