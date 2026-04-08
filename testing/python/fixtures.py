@@ -1178,7 +1178,7 @@ class TestRequestBasic:
     def test_request_fixturenames_dynamic_fixture(self, pytester: Pytester) -> None:
         """Regression test for #3057"""
         pytester.copy_example("fixtures/test_getfixturevalue_dynamic.py")
-        result = pytester.runpytest()
+        result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_setupdecorator_and_xunit(self, pytester: Pytester) -> None:
@@ -4539,8 +4539,8 @@ class TestScopeOrdering:
                 # Actual fixture execution differs from static order: dependent
                 # fixtures must be created first ("my_tmp_path").
                 assert fixture_order == [
-                    "s1",
                     "my_tmp_path_factory",
+                    "s1",
                     "p1",
                     "m1",
                     "my_tmp_path",
@@ -4555,13 +4555,13 @@ class TestScopeOrdering:
         # Static order of fixtures based on their scope and position in the
         # parameter list.
         assert request.fixturenames == [
-            "s1",
             "my_tmp_path_factory",
+            "s1",
             "p1",
             "m1",
             "f1",
-            "f2",
             "my_tmp_path",
+            "f2",
         ]
         result = pytester.runpytest("-vv")
         result.assert_outcomes(passed=1)
@@ -5593,7 +5593,7 @@ def test_fixture_closure_handles_circular_dependencies(pytester: Pytester) -> No
     )
     items, _hookrec = pytester.inline_genitems()
     assert isinstance(items[0], Function)
-    assert items[0].fixturenames == ["fix_a", "fix_x", "fix_b", "fix_y", "fix_z"]
+    assert items[0].fixturenames == ["fix_a", "fix_b", "fix_x", "fix_y", "fix_z"]
 
 
 def test_fixture_closure_handles_diamond_dependencies(pytester: Pytester) -> None:

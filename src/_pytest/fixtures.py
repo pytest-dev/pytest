@@ -1764,14 +1764,6 @@ class FixtureManager:
                 arg2fixturedefs[argname] = fixturedefs
             return fixturedefs
 
-        fixturenames_closure = list(initialnames)
-        for argname in traverse_fixture_closure(
-            initialnames,
-            getfixturedefs=getfixturedefs,
-        ):
-            if argname not in initialnames:
-                fixturenames_closure.append(argname)
-
         def sort_by_scope(arg_name: str) -> Scope:
             try:
                 fixturedefs = arg2fixturedefs[arg_name]
@@ -1780,7 +1772,14 @@ class FixtureManager:
             else:
                 return fixturedefs[-1]._scope
 
-        fixturenames_closure.sort(key=sort_by_scope, reverse=True)
+        fixturenames_closure = sorted(
+            traverse_fixture_closure(
+                initialnames,
+                getfixturedefs=getfixturedefs,
+            ),
+            key=sort_by_scope,
+            reverse=True,
+        )
 
         return fixturenames_closure, arg2fixturedefs
 
