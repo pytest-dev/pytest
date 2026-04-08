@@ -966,11 +966,23 @@ class TerminalReporter:
             ExitCode.INTERRUPTED,
             ExitCode.USAGE_ERROR,
             ExitCode.NO_TESTS_COLLECTED,
+            ExitCode.WARNINGS_ERROR,
         )
         if exitstatus in summary_exit_codes and not self.no_summary:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
+        # Check --max-warnings threshold after all warnings have been collected.
+        max_warnings = self._get_max_warnings()
+        if max_warnings is not None and session.exitstatus == ExitCode.OK:
+            warning_count = len(self.stats.get("warnings", []))
+            if warning_count > max_warnings:
+                session.exitstatus = ExitCode.WARNINGS_ERROR
+                self.write_line(
+                    f"Maximum allowed warnings exceeded: "
+                    f"{warning_count} > {max_warnings}",
+                    red=True,
+                )
         if session.shouldfail:
             self.write_sep("!", str(session.shouldfail), red=True)
         if exitstatus == ExitCode.INTERRUPTED:
@@ -1056,6 +1068,16 @@ class TerminalReporter:
                 return str(rep.longrepr)[:50]
             except AttributeError:
                 return ""
+
+    def _get_max_warnings(self) -> int | None:
+        """Return the max_warnings threshold, from CLI or INI, or None if unset."""
+        value = self.config.option.max_warnings
+        if value is not None:
+            return int(value)
+        ini_value = self.config.getini("max_warnings")
+        if ini_value:
+            return int(ini_value)
+        return None
 
     #
     # Summaries for sessionfinish.
