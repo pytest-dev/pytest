@@ -2424,30 +2424,43 @@ class TestAutouseManagement:
         pytester.makepyfile(
             """
             import pytest
+
             values = []
+
             def pytest_generate_tests(metafunc):
                 if metafunc.cls is None:
                     assert metafunc.function is test_finish
                 if metafunc.cls is not None:
                     metafunc.parametrize("item", [1,2], scope="class")
-            class TestClass(object):
+
+            class TestClass:
                 @pytest.fixture(scope="class", autouse=True)
-                def addteardown(self, item, request):
+                def setup_teardown(self, item):
                     values.append("setup-%d" % item)
-                    request.addfinalizer(lambda: values.append("teardown-%d" % item))
+                    yield
+                    values.append("teardown-%d" % item)
+
                 def test_step1(self, item):
                     values.append("step1-%d" % item)
+
                 def test_step2(self, item):
                     values.append("step2-%d" % item)
 
             def test_finish():
-                print(values)
-                assert values == ["setup-1", "step1-1", "step2-1", "teardown-1",
-                             "setup-2", "step1-2", "step2-2", "teardown-2",]
-        """
+                assert values == [
+                    "setup-1",
+                    "step1-1",
+                    "step2-1",
+                    "teardown-1",
+                    "setup-2",
+                    "step1-2",
+                    "step2-2",
+                    "teardown-2",
+                ]
+            """
         )
-        reprec = pytester.inline_run("-s")
-        reprec.assertoutcome(passed=5)
+        result = pytester.inline_run("-vv")
+        result.assertoutcome(passed=5)
 
     def test_ordering_autouse_before_explicit(self, pytester: Pytester) -> None:
         pytester.makepyfile(
