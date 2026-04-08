@@ -4497,62 +4497,74 @@ class TestScopeOrdering:
         request = TopRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
-    def test_func_closure_with_native_fixtures(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch
-    ) -> None:
-        """Sanity check that verifies the order returned by the closures and the actual fixture execution order:
-        The execution order may differ because of fixture inter-dependencies.
-        """
-        monkeypatch.setattr(pytest, "FIXTURE_ORDER", [], raising=False)
+    def test_func_closure_with_native_fixtures(self, pytester: Pytester) -> None:
+        """Sanity check that verifies the order returned by the closures and the
+        actual fixture execution order: the execution order may differ because
+        of fixture inter-dependencies."""
         pytester.makepyfile(
             """
             import pytest
 
-            FIXTURE_ORDER = pytest.FIXTURE_ORDER
+            fixture_order = []
 
             @pytest.fixture(scope="session")
             def s1():
-                FIXTURE_ORDER.append('s1')
+                fixture_order.append("s1")
 
             @pytest.fixture(scope="package")
             def p1():
-                FIXTURE_ORDER.append('p1')
+                fixture_order.append("p1")
 
             @pytest.fixture(scope="module")
             def m1():
-                FIXTURE_ORDER.append('m1')
+                fixture_order.append("m1")
 
-            @pytest.fixture(scope='session')
+            @pytest.fixture(scope="session")
             def my_tmp_path_factory():
-                FIXTURE_ORDER.append('my_tmp_path_factory')
+                fixture_order.append("my_tmp_path_factory")
 
             @pytest.fixture
             def my_tmp_path(my_tmp_path_factory):
-                FIXTURE_ORDER.append('my_tmp_path')
+                fixture_order.append("my_tmp_path")
 
             @pytest.fixture
             def f1(my_tmp_path):
-                FIXTURE_ORDER.append('f1')
+                fixture_order.append("f1")
 
             @pytest.fixture
             def f2():
-                FIXTURE_ORDER.append('f2')
+                fixture_order.append("f2")
 
-            def test_foo(f1, p1, m1, f2, s1): pass
+            def test_foo(f1, p1, m1, f2, s1):
+                # Actual fixture execution differs from static order: dependent
+                # fixtures must be created first ("my_tmp_path").
+                assert fixture_order == [
+                    "s1",
+                    "my_tmp_path_factory",
+                    "p1",
+                    "m1",
+                    "my_tmp_path",
+                    "f1",
+                    "f2",
+                ]
         """
         )
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        # order of fixtures based on their scope and position in the parameter list
-        assert (
-            request.fixturenames
-            == "s1 my_tmp_path_factory p1 m1 f1 f2 my_tmp_path".split()
-        )
-        pytester.runpytest()
-        # actual fixture execution differs: dependent fixtures must be created first ("my_tmp_path")
-        FIXTURE_ORDER = pytest.FIXTURE_ORDER  # type: ignore[attr-defined]
-        assert FIXTURE_ORDER == "s1 my_tmp_path_factory p1 m1 my_tmp_path f1 f2".split()
+        # Static order of fixtures based on their scope and position in the
+        # parameter list.
+        assert request.fixturenames == [
+            "s1",
+            "my_tmp_path_factory",
+            "p1",
+            "m1",
+            "f1",
+            "f2",
+            "my_tmp_path",
+        ]
+        result = pytester.runpytest("-vv")
+        result.assert_outcomes(passed=1)
 
     def test_func_closure_module(self, pytester: Pytester) -> None:
         pytester.makepyfile(
