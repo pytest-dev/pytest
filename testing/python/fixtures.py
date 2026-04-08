@@ -5451,6 +5451,48 @@ def test_fixture_closure_with_overrides_and_intermediary(pytester: Pytester) -> 
     result.assert_outcomes(passed=1)
 
 
+@pytest.mark.xfail(reason="#14248 still not fixed")
+def test_fixture_closure_with_overrides_and_parametrization(pytester: Pytester) -> None:
+    """Test that an item's static fixture closure properly includes transitive
+    dependencies through overridden fixtures (#13773) when also including
+    parametrization (#14248)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def app(db): pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Overrides conftest-level `app` and requests it.
+        @pytest.fixture
+        def app(app): pass
+
+        class TestClass:
+            # Overrides module-level `app` and requests it.
+            @pytest.fixture
+            def app(self, app): pass
+
+            @pytest.mark.parametrize("a", [1])
+            def test_something(self, request, app, a):
+                # Both dynamic and static fixture closures should include 'db'.
+                assert 'db' in request.fixturenames
+                assert 'db' in request.node.fixturenames
+                # No dynamic dependencies, should be equal.
+                assert set(request.fixturenames) == set(request.node.fixturenames)
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
 def test_fixture_closure_with_broken_override_chain(pytester: Pytester) -> None:
     """Test that an item's static fixture closure properly includes transitive
     dependencies through overridden fixtures (#13773).
