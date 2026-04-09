@@ -5,6 +5,7 @@ import argparse
 import locale
 import os
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -115,6 +116,50 @@ class TestParser:
         assert len(group.options) == 0
         group._addoption("-x", action="store_true")
         assert len(group.options) == 1
+
+    @pytest.mark.parametrize(
+        ("opts", "bad_name"),
+        [
+            (("shuffle",), "shuffle"),  # canonical case from #13817
+            (("",), ""),  # empty string
+            (("a",), "a"),  # bare letter
+            (("--good", "bad"), "bad"),  # mixed: bad name in second position
+        ],
+    )
+    def test_addoption_rejects_non_option_names(
+        self,
+        parser: parseopt.Parser,
+        opts: tuple[str, ...],
+        bad_name: str,
+    ) -> None:
+        """Regression test for #13817: addoption with a name that does not
+        start with a dash should raise a clear ValueError naming the offending
+        token, instead of crashing later with AttributeError or being silently
+        registered as a positional argument. Both the OptionGroup.addoption
+        path and the Parser.addoption path are exercised, and we assert no
+        partial state is left behind on the group."""
+        group = parser.getgroup("hello")
+        with pytest.raises(ValueError, match=re.escape(repr(bad_name))):
+            group.addoption(*opts)
+        # Nothing must be registered when validation fails (all-or-nothing).
+        assert len(group.options) == 0
+        with pytest.raises(ValueError, match=re.escape(repr(bad_name))):
+            parser.addoption(*opts)
+
+    def test_addoption_error_message_includes_did_you_mean(
+        self, parser: parseopt.Parser
+    ) -> None:
+        """The error from #13817 should suggest the corrected long-option form
+        for identifier-like typos, but not for inputs where the suggestion
+        would be nonsense (empty, whitespace, special chars)."""
+        with pytest.raises(ValueError, match=r"Did you mean '--shuffle'\?"):
+            parser.addoption("shuffle")
+        with pytest.raises(ValueError, match=r"Did you mean '--my-flag'\?"):
+            parser.addoption("my-flag")
+        # No "did you mean" hint for nonsense inputs.
+        with pytest.raises(ValueError) as exc_info:
+            parser.addoption("foo bar")
+        assert "Did you mean" not in str(exc_info.value)
 
     def test_parser_addoption(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("custom options")

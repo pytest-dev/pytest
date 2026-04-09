@@ -105,7 +105,10 @@ class Parser:
         """Register a command line option.
 
         :param opts:
-            Option names, can be short or long options.
+            Option names. Each name must be a short option (e.g. ``-X``) or a
+            long option (e.g. ``--long``); names without a leading dash are
+            rejected with :class:`ValueError`, since :meth:`addoption` only
+            registers options, not positional arguments.
         :param attrs:
             Same attributes as the argparse library's :meth:`add_argument()
             <argparse.ArgumentParser.add_argument>` function accepts.
@@ -340,8 +343,11 @@ class OptionGroup:
         accepted **and** the automatic destination is in ``args.twowords``.
 
         :param opts:
-            Option names, can be short or long options.
-            Note that lower-case short options (e.g. `-x`) are reserved.
+            Option names. Each name must be a short option (e.g. ``-X``) or a
+            long option (e.g. ``--long``); names without a leading dash are
+            rejected with :class:`ValueError`, since :meth:`addoption` only
+            registers options, not positional arguments.
+            Note that lower-case short options (e.g. ``-x``) are reserved.
         :param attrs:
             Same attributes as the argparse library's :meth:`add_argument()
             <argparse.ArgumentParser.add_argument>` function accepts.
@@ -361,6 +367,24 @@ class OptionGroup:
     def _addoption_inner(
         self, opts: tuple[str, ...], attrs: dict[str, Any], allow_reserved: bool
     ) -> None:
+        # Reject positional-style names early. Without this, argparse would
+        # silently register them as positionals (and later surface a
+        # confusing parse-time error far from the offending plugin/conftest),
+        # or in older pytest versions trigger an AttributeError from a
+        # half-constructed Argument. See #13817.
+        for opt in opts:
+            if not opt.startswith("-"):
+                hint = ""
+                # Only suggest '--name' for multi-character identifier-like
+                # typos. For a single character like 'a', '-a' is at least as
+                # plausible as '--a', so don't bias toward one.
+                if len(opt) > 1 and opt.replace("-", "").replace("_", "").isalnum():
+                    hint = f" Did you mean '--{opt}'?"
+                raise ValueError(
+                    f"option name {opt!r} is invalid: "
+                    "addoption() registers options only; names must start "
+                    f"with '--' (long option) or '-' (short option).{hint}"
+                )
         if not allow_reserved:
             for opt in opts:
                 if len(opt) >= 2 and opt[0] == "-" and opt[1].islower():

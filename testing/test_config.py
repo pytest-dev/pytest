@@ -747,6 +747,36 @@ class TestConfigCmdlineParsing:
         config = pytester.parseconfig("--config-file", "custom.toml")
         assert config.getini("custom") == "1"
 
+    def test_addoption_non_option_name_in_conftest(self, pytester: Pytester) -> None:
+        """Regression test for #13817: a conftest that calls
+        ``parser.addoption("shuffle")`` (forgetting the leading dashes) must
+        fail config startup with a clear error pointing at the offending
+        ``conftest.py`` line, instead of crashing with a confusing
+        ``AttributeError`` or silently being registered as a positional
+        argument that surfaces a parse-time error far from the bug site."""
+        pytester.makeconftest(
+            """\
+            def pytest_addoption(parser):
+                parser.addoption("shuffle")
+            """
+        )
+        pytester.makepyfile(
+            """\
+            def test_pass():
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        # Conftest load failure exits with code 4 (USAGE_ERROR).
+        assert result.ret != 0
+        # The error is raised from the user's conftest and names the
+        # offending option, with a "did you mean" suggestion.
+        stderr = "\n".join(result.errlines)
+        assert "ValueError" in stderr
+        assert "'shuffle'" in stderr
+        assert "Did you mean '--shuffle'?" in stderr
+        assert 'parser.addoption("shuffle")' in stderr
+
     def test_absolute_win32_path(self, pytester: Pytester) -> None:
         temp_ini_file = pytester.makeini("[pytest]")
         from os.path import normpath
