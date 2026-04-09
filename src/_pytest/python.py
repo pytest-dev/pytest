@@ -55,6 +55,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
+from _pytest.fixtures import FixtureValue
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
@@ -1095,8 +1096,7 @@ class CallSpec2:
     and stored in item.callspec.
     """
 
-    # arg name -> arg value which will be passed to a fixture or pseudo-fixture
-    # of the same name. (indirect or direct parametrization respectively)
+    # arg name -> arg value which will be passed to a fixture of the same name.
     params: dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg index.
     indices: dict[str, int] = dataclasses.field(default_factory=dict)
@@ -1153,8 +1153,30 @@ def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
     return request.param
 
 
-# Used for storing pseudo fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[dict[str, FixtureDef[Any]]]()
+class DirectParamFixtureDef(FixtureDef[FixtureValue]):
+    """A custom FixtureDef for direct parametrization fixtures.
+
+    Each parameter in direct parametrization is desugared to a parametrized
+    fixture which returns the direct parameterization value as its param.
+    We use this custom type as a "marker" for this type of FixtureDef, but
+    usually behaves like any other FixtureDef.
+    """
+
+    def __init__(self, *, config: Config, argname: str, scope: Scope) -> None:
+        super().__init__(
+            config=config,
+            baseid="",
+            argname=argname,
+            func=get_direct_param_fixture_func,
+            scope=scope,
+            params=None,
+            ids=None,
+            _ispytest=True,
+        )
+
+
+# Used for storing fixturedefs for direct parametrization.
+name2directparamfixturedef_key = StashKey[dict[str, DirectParamFixtureDef[object]]]()
 
 
 @final
@@ -1333,14 +1355,14 @@ class Metafunc:
         self._params_directness.update(arg_directness)
 
         # Add direct parametrizations as fixturedefs to arg2fixturedefs by
-        # registering artificial "pseudo" FixtureDef's such that later at test
+        # registering artificial DirectParamFixtureDef's such that later at test
         # setup time we can rely on FixtureDefs to exist for all argnames.
         node = None
-        # For scopes higher than function, a "pseudo" FixtureDef might have
+        # For scopes higher than function, a DirectParamFixtureDef might have
         # already been created for the scope. We thus store and cache the
-        # FixtureDef on the node related to the scope.
+        # DirectParamFixtureDef on the node related to the scope.
         if scope_ is Scope.Function:
-            name2pseudofixturedef = None
+            name2directparamfixturedef = None
         else:
             collector = self.definition.parent
             assert collector is not None
@@ -1357,28 +1379,26 @@ class Metafunc:
                     node = collector.session
                 else:
                     assert False, f"Unhandled missing scope: {scope}"
-            default: dict[str, FixtureDef[Any]] = {}
-            name2pseudofixturedef = node.stash.setdefault(
-                name2pseudofixturedef_key, default
+            default: dict[str, DirectParamFixtureDef[object]] = {}
+            name2directparamfixturedef = node.stash.setdefault(
+                name2directparamfixturedef_key, default
             )
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
-            if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
-                fixturedef = name2pseudofixturedef[argname]
+            if (
+                name2directparamfixturedef is not None
+                and argname in name2directparamfixturedef
+            ):
+                fixturedef = name2directparamfixturedef[argname]
             else:
-                fixturedef = FixtureDef(
+                fixturedef = DirectParamFixtureDef(
                     config=self.config,
-                    baseid="",
                     argname=argname,
-                    func=get_direct_param_fixture_func,
                     scope=scope_,
-                    params=None,
-                    ids=None,
-                    _ispytest=True,
                 )
-                if name2pseudofixturedef is not None:
-                    name2pseudofixturedef[argname] = fixturedef
+                if name2directparamfixturedef is not None:
+                    name2directparamfixturedef[argname] = fixturedef
             self._arg2fixturedefs[argname] = [fixturedef]
 
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
