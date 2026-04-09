@@ -1977,6 +1977,36 @@ def _pretty_fixture_path(invocation_dir: Path, func) -> str:
         return bestrelpath(invocation_dir, loc)
 
 
+def _get_fixtures_per_test(test: nodes.Item) -> Iterator[FixtureDef[object]]:
+    """Returns all fixtures used by the test item except for those created by
+    direct parametrization and those requested dynamically with
+    ``request.getfixturevalue``.
+
+    The justification for excluding fixtures created by direct parametrization
+    is that for users, they are internal implementation detail.
+
+    Dynamically requested fixtures are excluded because they are not known
+    statically.
+    """
+    from _pytest.python import DirectParamFixtureDef
+
+    # Custom Items may not have _fixtureinfo attribute.
+    fixture_info: FuncFixtureInfo | None = getattr(test, "_fixtureinfo", None)
+    if fixture_info is None:
+        return  # pragma: no cover
+
+    # dict key not used in loop but needed for sorting.
+    for argname, fixturedefs in sorted(fixture_info.name2fixturedefs.items()):
+        if not fixturedefs:
+            # Not supposed to be empty, but for safety.
+            continue  # pragma: no cover
+        # Last item is expected to be the one directly used by the test item.
+        fixturedef = fixturedefs[-1]
+        if isinstance(fixturedef, DirectParamFixtureDef):
+            continue
+        yield fixturedef
+
+
 def _show_fixtures_per_test(config: Config, session: Session) -> None:
     import _pytest.config
 
@@ -2009,22 +2039,18 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             tw.line("    no docstring available", red=True)
 
     def write_item(item: nodes.Item) -> None:
-        # Not all items have _fixtureinfo attribute.
-        info: FuncFixtureInfo | None = getattr(item, "_fixtureinfo", None)
-        if info is None or not info.name2fixturedefs:
+        fixturedefs = list(_get_fixtures_per_test(item))
+        if not fixturedefs:
             # This test item does not use any fixtures.
             return
+
         tw.line()
         tw.sep("-", f"fixtures used by {item.name}")
         # TODO: Fix this type ignore.
         tw.sep("-", f"({get_best_relpath(item.function)})")  # type: ignore[attr-defined]
-        # dict key not used in loop but needed for sorting.
-        for _, fixturedefs in sorted(info.name2fixturedefs.items()):
-            assert fixturedefs is not None
-            if not fixturedefs:
-                continue
-            # Last item is expected to be the one used by the test item.
-            write_fixture(fixturedefs[-1])
+
+        for fixturedef in fixturedefs:
+            write_fixture(fixturedef)
 
     for session_item in session.items:
         write_item(session_item)
