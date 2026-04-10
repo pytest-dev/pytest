@@ -1386,6 +1386,15 @@ class TestConfigAPI:
 
         assert report == ["cleanup_first", "raise_1", "raise_2", "cleanup_last"]
 
+    def test_get_terminal_writer_without_terminalreporter(
+        self, pytester: Pytester
+    ) -> None:
+        from _pytest._io import TerminalWriter
+
+        config = pytester.parseconfig()
+        config.pluginmanager.unregister(name="terminalreporter")
+        assert isinstance(config.get_terminal_writer(), TerminalWriter)
+
 
 class TestConfigFromdictargs:
     def test_basic_behavior(self, _sys_snapshot) -> None:

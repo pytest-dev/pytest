@@ -1,0 +1,1 @@
+Fixed :meth:`pytest.Config.get_terminal_writer` crashing with an internal ``AssertionError`` when the terminal reporter plugin has been unregistered (for example, by :pypi:`pytest-tap` in streaming mode). A fresh terminal writer is now created on demand.

@@ -1682,6 +1682,29 @@ class TestSetAssertions:
         )
 
 
+def test_assertrepr_compare_without_terminalreporter(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.hookimpl(trylast=True)
+        def pytest_configure(config):
+            reporter = config.pluginmanager.get_plugin("terminalreporter")
+            config.pluginmanager.unregister(reporter)
+        """
+    )
+    pytester.makepyfile(
+        """
+        def test_hello():
+            assert "actual" == "expected"
+        """
+    )
+    reprec = pytester.inline_run()
+    _passed, _skipped, failed = reprec.listoutcomes()
+    assert len(failed) == 1
+    assert "assert 'actual' == 'expected'" in str(failed[0].longrepr)
+
+
 def test_assertrepr_loaded_per_dir(pytester: Pytester) -> None:
     pytester.makepyfile(test_base=["def test_base(): assert 1 == 2"])
     a = pytester.mkdir("a")
