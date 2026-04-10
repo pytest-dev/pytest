@@ -882,7 +882,7 @@ def insert_missing_modules(modules: dict[str, ModuleType], module_name: str) -> 
                     # a warning and raise ModuleNotFoundError. To avoid the
                     # warning, we check sys.meta_path explicitly and raise the error
                     # ourselves to fall back to creating a dummy module.
-                    if not sys.meta_path:
+                    if not sys.meta_path:  # pragma: no cover
                         raise ModuleNotFoundError
                     # May import an unrelated module on name collision;
                     # callers use the _pytest_shadow_ prefix to avoid this (#12303).
