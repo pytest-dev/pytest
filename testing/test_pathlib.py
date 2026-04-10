@@ -1935,17 +1935,44 @@ class TestTopLevelShadowsExternal:
         monkeypatch.syspath_prepend(tmp_path)
         assert not _top_level_shadows_external("mypkg.sub", tmp_path)
 
+    def test_pathfinder_find_spec_raises(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """When PathFinder.find_spec raises after the initial find_spec
+        returned a local spec, treat as no external shadow (return False)."""
+        from importlib.machinery import PathFinder
+
+        # Set up a local package so find_spec returns a local spec
+        # and the code reaches the PathFinder.find_spec call.
+        pkg = tmp_path / "test"
+        pkg.mkdir()
+        (pkg / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        _top_shadows_external_cached.cache_clear()
+
+        real_pathfinder_find_spec = PathFinder.find_spec
+
+        def _raise(name: str, path: Any = None, target: Any = None) -> Any:
+            if path is not None:
+                # The "behind" search — raise to exercise the except branch.
+                raise ValueError("broken PathFinder")
+            return real_pathfinder_find_spec(name, path, target)
+
+        monkeypatch.setattr(PathFinder, "find_spec", staticmethod(_raise))
+        try:
+            # With PathFinder broken, the function can't find anything
+            # behind the local spec → returns False.
+            assert not _top_level_shadows_external("test.test_demo", tmp_path)
+        finally:
+            _top_shadows_external_cached.cache_clear()
+
     def test_iterdir_oserror(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         """When iterdir raises (e.g. PermissionError), fall through gracefully."""
         (tmp_path / "test").mkdir()
         _top_shadows_external_cached.cache_clear()
 
-        real_iterdir = Path.iterdir
-
         def _broken_iterdir(self: Path) -> Any:
-            if self == tmp_path:
-                raise PermissionError("denied")
-            return real_iterdir(self)
+            raise PermissionError("denied")
 
         monkeypatch.setattr(Path, "iterdir", _broken_iterdir)
         # Should still detect the shadow (stdlib test exists externally)
