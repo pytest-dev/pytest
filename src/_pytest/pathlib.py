@@ -11,6 +11,7 @@ from errno import ELOOP
 from errno import ENOENT
 from errno import ENOTDIR
 import fnmatch
+from functools import lru_cache
 from functools import partial
 from importlib.machinery import ModuleSpec
 from importlib.machinery import PathFinder
@@ -769,11 +770,20 @@ def _top_level_shadows_external(module_name: str, local_root: Path) -> bool:
     with a stdlib or installed package that lives outside *local_root*.
     See #12303."""
     top = module_name.partition(".")[0]
+    return _top_shadows_external_cached(top, local_root)
+
+
+@lru_cache(maxsize=None)
+def _top_shadows_external_cached(top: str, local_root: Path) -> bool:
+    """Cached core of :func:`_top_level_shadows_external`.
+
+    Keyed on the top-level name and root so that every test file under the
+    same directory reuses a single ``find_spec`` + ``iterdir`` result."""
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ImportWarning)
             existing_spec = importlib.util.find_spec(top)
-    except (ImportError, ValueError, ModuleNotFoundError):
+    except (ImportError, ValueError, AttributeError):
         return False
     if existing_spec is None:
         return False
@@ -793,7 +803,7 @@ def _top_level_shadows_external(module_name: str, local_root: Path) -> bool:
                 and child not in local_candidates
             ):
                 local_candidates.append(child)
-    except OSError:  # pragma: no cover
+    except OSError:
         pass
     resolved_candidates = [c.resolve() for c in local_candidates if c.exists()]
 
@@ -807,16 +817,58 @@ def _top_level_shadows_external(module_name: str, local_root: Path) -> bool:
                 pass
         return False
 
+    # Check whether the spec found by find_spec points into local_root.
+    spec_is_local = False
     if existing_spec.origin is not None:
         if _is_local(Path(existing_spec.origin)):
-            return False
-
-    if existing_spec.submodule_search_locations:
+            spec_is_local = True
+    if not spec_is_local and existing_spec.submodule_search_locations:
         for loc in existing_spec.submodule_search_locations:
             if _is_local(Path(loc)):
-                return False
+                spec_is_local = True
+                break
 
-    return True
+    if not spec_is_local:
+        # The module found by find_spec lives outside local_root → shadow.
+        return True
+
+    # find_spec returned the local package (e.g. because the project root is
+    # reachable via '' or an explicit sys.path entry).  An external module
+    # with the same name may still exist behind it.  Search only non-local
+    # sys.path entries via PathFinder so we never modify sys.path.
+    local_root_resolved = local_root.resolve()
+
+    def _is_local_path_entry(entry: str) -> bool:
+        p = Path.cwd() if entry == "" else Path(entry)
+        try:
+            p.resolve().relative_to(local_root_resolved)
+            return True
+        except ValueError:
+            return False
+
+    non_local = [p for p in sys.path if not _is_local_path_entry(p)]
+    try:
+        behind = PathFinder.find_spec(top, path=non_local)
+    except (ImportError, ValueError, AttributeError):
+        behind = None
+
+    if behind is None:
+        return False
+
+    # Guard against namespace packages that span multiple project directories
+    # (e.g. dist1/com + dist2/com).  If the "behind" spec's locations are all
+    # already present in the original spec, it is the same package — not a
+    # genuinely external shadow.
+    def _spec_locations(spec: ModuleSpec) -> set[str]:
+        locs: set[str] = set()
+        if spec.origin is not None:
+            locs.add(str(Path(spec.origin).resolve()))
+        if spec.submodule_search_locations:
+            for loc in spec.submodule_search_locations:
+                locs.add(str(Path(loc).resolve()))
+        return locs
+
+    return bool(_spec_locations(behind) - _spec_locations(existing_spec))
 
 
 # Implement a special _is_same function on Windows which returns True if the two filenames
@@ -889,7 +941,7 @@ def insert_missing_modules(modules: dict[str, ModuleType], module_name: str) -> 
                     parent_module = importlib.import_module(parent_module_name)
                 except ModuleNotFoundError:
                     parent_module = ModuleType(
-                        parent_module_name,
+                        module_name,
                         doc="Empty module created by pytest's importmode=importlib.",
                     )
                 modules[parent_module_name] = parent_module

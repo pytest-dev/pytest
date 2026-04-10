@@ -1,1 +1,7 @@
 Fixed ``--import-mode=importlib`` shadowing stdlib and installed packages when test directories share their name (e.g. ``test/``).
+
+Test modules whose top-level directory collides with an external package are now
+registered in ``sys.modules`` under a ``_pytest_shadow_<name>`` prefix (e.g.
+``_pytest_shadow_test.test_demo`` instead of ``test.test_demo``).  This is an
+internal detail and should not affect test behaviour, but it will appear in
+tracebacks and ``__name__``.

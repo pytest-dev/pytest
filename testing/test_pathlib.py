@@ -21,6 +21,7 @@ from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import _import_module_using_spec
 from _pytest.pathlib import _top_level_shadows_external
+from _pytest.pathlib import _top_shadows_external_cached
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import compute_module_name
@@ -1908,6 +1909,22 @@ class TestTopLevelShadowsExternal:
         (tmp_path / "test").mkdir()
         assert _top_level_shadows_external("test.support", tmp_path)
 
+    def test_external_detected_when_root_on_sys_path(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """When local_root is on sys.path (e.g. via '' / CWD) and test/
+        has __init__.py, find_spec sees the local package first.
+        The function must still detect the stdlib shadow behind it."""
+        test_dir = tmp_path / "test"
+        test_dir.mkdir()
+        (test_dir / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        _top_shadows_external_cached.cache_clear()
+        try:
+            assert _top_level_shadows_external("test.test_demo", tmp_path)
+        finally:
+            _top_shadows_external_cached.cache_clear()
+
     def test_local_package_not_external(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
@@ -1917,6 +1934,29 @@ class TestTopLevelShadowsExternal:
         (pkg / "__init__.py").touch()
         monkeypatch.syspath_prepend(tmp_path)
         assert not _top_level_shadows_external("mypkg.sub", tmp_path)
+
+    def test_iterdir_oserror(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """When iterdir raises (e.g. PermissionError), fall through gracefully."""
+        (tmp_path / "test").mkdir()
+        _top_shadows_external_cached.cache_clear()
+
+        real_iterdir = Path.iterdir
+
+        def _broken_iterdir(self: Path) -> Any:
+            if self == tmp_path:
+                raise PermissionError("denied")
+            return real_iterdir(self)
+
+        monkeypatch.setattr(Path, "iterdir", _broken_iterdir)
+        # Should still detect the shadow (stdlib test exists externally)
+        # even though iterdir failed — the base candidate local_root/top
+        # is added unconditionally before iterdir.
+        try:
+            assert _top_level_shadows_external("test.support", tmp_path)
+        finally:
+            _top_shadows_external_cached.cache_clear()
 
 
 def validate_namespace_package(
