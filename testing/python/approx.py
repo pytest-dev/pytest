@@ -616,6 +616,8 @@ class TestApprox:
             assert a != approx(x, rel=Decimal("5e-7"), abs=0)
             assert approx(x, rel=Decimal("5e-6"), abs=0) == a
             assert approx(x, rel=Decimal("5e-7"), abs=0) != a
+            assert approx(x, rel=0, abs=Decimal("5e-3")) == a
+            assert approx(x, rel=0, abs=Decimal("5e-7")) != a
 
     def test_fraction(self):
         within_1e6 = [

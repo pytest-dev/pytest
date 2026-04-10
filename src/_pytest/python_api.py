@@ -558,7 +558,12 @@ class ApproxDecimal(ApproxScalar):
         return f"{self.expected} ± {tol_str}"
 
 
-def approx(expected, rel=None, abs=None, nan_ok: bool = False) -> ApproxBase:
+def approx(
+    expected: Any,
+    rel: float | Decimal | None = None,
+    abs: float | Decimal | None = None,
+    nan_ok: bool = False,
+) -> ApproxBase:
     """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
     within some tolerance.
 
