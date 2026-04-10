@@ -11,7 +11,7 @@ from errno import ELOOP
 from errno import ENOENT
 from errno import ENOTDIR
 import fnmatch
-from functools import lru_cache
+from functools import cache
 from functools import partial
 from importlib.machinery import ModuleSpec
 from importlib.machinery import PathFinder
@@ -773,7 +773,7 @@ def _top_level_shadows_external(module_name: str, local_root: Path) -> bool:
     return _top_shadows_external_cached(top, local_root)
 
 
-@lru_cache(maxsize=None)
+@cache
 def _top_shadows_external_cached(top: str, local_root: Path) -> bool:
     """Cached core of :func:`_top_level_shadows_external`.
 

@@ -1935,9 +1935,7 @@ class TestTopLevelShadowsExternal:
         monkeypatch.syspath_prepend(tmp_path)
         assert not _top_level_shadows_external("mypkg.sub", tmp_path)
 
-    def test_iterdir_oserror(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch
-    ) -> None:
+    def test_iterdir_oserror(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
         """When iterdir raises (e.g. PermissionError), fall through gracefully."""
         (tmp_path / "test").mkdir()
         _top_shadows_external_cached.cache_clear()
