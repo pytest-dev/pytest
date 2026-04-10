@@ -546,9 +546,7 @@ def import_path(
             with contextlib.suppress(KeyError):
                 return sys.modules[module_name]
 
-            mod = _import_module_using_spec(
-                module_name, path, path.parent, insert_modules=False
-            )
+            mod = _import_module_using_spec(module_name, path, insert_modules=False)
             if mod is not None:
                 return mod
 
@@ -558,9 +556,7 @@ def import_path(
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
 
-        mod = _import_module_using_spec(
-            module_name, path, path.parent, insert_modules=True
-        )
+        mod = _import_module_using_spec(module_name, path, insert_modules=True)
         if mod is None:
             raise ImportError(f"Can't find module {module_name} at location {path}")
         return mod
@@ -613,7 +609,7 @@ def import_path(
 
 
 def _import_module_using_spec(
-    module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
+    module_name: str, module_path: Path, *, insert_modules: bool
 ) -> ModuleType | None:
     """
     Tries to import a module by its canonical name, path, and its parent location.
@@ -626,10 +622,6 @@ def _import_module_using_spec(
         If module is a package, pass the path to the  `__init__.py` of the package.
         If module is a namespace package, pass directory path.
 
-    :param module_location:
-        The parent location of the module.
-        If module is a package, pass the directory containing the `__init__.py` file.
-
     :param insert_modules:
         If True, will call `insert_missing_modules` to create empty intermediate modules
         with made-up module names (when importing test files not reachable from `sys.path`).
@@ -638,29 +630,23 @@ def _import_module_using_spec(
 
         module_name:        "a.b.c.demo"
         module_path:        Path("a/b/c/demo.py")
-        module_location:    Path("a/b/c/")
         if "a.b.c" is package ("a/b/c/__init__.py" exists), then
             parent_module_name:         "a.b.c"
             parent_module_path:         Path("a/b/c/__init__.py")
-            parent_module_location:     Path("a/b/c/")
         else:
             parent_module_name:         "a.b.c"
             parent_module_path:         Path("a/b/c")
-            parent_module_location:     Path("a/b/")
 
     Example 2 of parent_module_*:
 
         module_name:        "a.b.c"
         module_path:        Path("a/b/c/__init__.py")
-        module_location:    Path("a/b/c/")
         if  "a.b" is package ("a/b/__init__.py" exists), then
             parent_module_name:         "a.b"
             parent_module_path:         Path("a/b/__init__.py")
-            parent_module_location:     Path("a/b/")
         else:
             parent_module_name:         "a.b"
             parent_module_path:         Path("a/b/")
-            parent_module_location:     Path("a/")
     """
     # Attempt to import the parent module, seems is our responsibility:
     # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
@@ -687,13 +673,12 @@ def _import_module_using_spec(
             parent_module = _import_module_using_spec(
                 parent_module_name,
                 parent_module_path,
-                parent_module_path.parent,
                 insert_modules=insert_modules,
             )
 
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
-    find_spec_path = [str(module_location)]
+    find_spec_path = [str(module_path.parent)]
     for meta_importer in sys.meta_path:
         spec = meta_importer.find_spec(module_name, find_spec_path)
 

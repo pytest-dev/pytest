@@ -828,7 +828,6 @@ class TestImportLibMode:
         mod = _import_module_using_spec(
             "a.b.c.demo",
             file_path,
-            file_path.parent,
             insert_modules=insert_modules,
         )
 
