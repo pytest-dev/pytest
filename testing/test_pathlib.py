@@ -20,6 +20,7 @@ import unittest.mock
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import _import_module_using_spec
+from _pytest.pathlib import _top_level_shadows_external
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import compute_module_name
@@ -1826,6 +1827,55 @@ def test_compute_module_name(tmp_path: Path) -> None:
         compute_module_name(tmp_path, tmp_path / "src/app/bar/__init__.py")
         == "src.app.bar"
     )
+
+
+class TestTopLevelShadowsExternal:
+    """Unit tests for ``_top_level_shadows_external`` to cover all branches."""
+
+    def test_no_external_module(self, tmp_path: Path) -> None:
+        """When find_spec returns None (no such external module), return False."""
+        (tmp_path / "zzz_nonexistent_pkg").mkdir()
+        assert not _top_level_shadows_external("zzz_nonexistent_pkg.foo", tmp_path)
+
+    def test_builtin_or_frozen(self, tmp_path: Path) -> None:
+        """Built-in/frozen modules (e.g. 'sys', 'os') are always external."""
+        (tmp_path / "sys").mkdir()
+        assert _top_level_shadows_external("sys.something", tmp_path)
+
+    def test_find_spec_raises(self, tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+        """When find_spec raises, treat as no external module (return False)."""
+        import importlib.util
+
+        def _raise(*a: Any, **kw: Any) -> None:
+            raise ValueError("broken")
+
+        monkeypatch.setattr(importlib.util, "find_spec", _raise)
+        assert not _top_level_shadows_external("whatever.foo", tmp_path)
+
+    def test_normalized_dir_name(self, tmp_path: Path) -> None:
+        """A dir named '.tests' normalizes to '_tests' and should be
+        recognized as local, not external."""
+        dot_tests = tmp_path / ".tests"
+        dot_tests.mkdir()
+        (dot_tests / "foo.py").write_text("", encoding="utf-8")
+        # '_tests' is not a real external module, so find_spec returns None.
+        # This just exercises the iterdir + normalization branch.
+        assert not _top_level_shadows_external("_tests.foo", tmp_path)
+
+    def test_external_package_detected(self, tmp_path: Path) -> None:
+        """An installed package at a different location is external."""
+        (tmp_path / "test").mkdir()
+        assert _top_level_shadows_external("test.support", tmp_path)
+
+    def test_local_package_not_external(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A package whose spec resolves inside local_root is not external."""
+        pkg = tmp_path / "mypkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        assert not _top_level_shadows_external("mypkg.sub", tmp_path)
 
 
 def validate_namespace_package(
