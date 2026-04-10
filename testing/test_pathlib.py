@@ -1102,6 +1102,42 @@ class TestImportLibMode:
         # Must NOT be imported as "test.test_demo" (would shadow stdlib).
         assert not mod.__name__.startswith("test.")
 
+    def test_importlib_path1_spec_returns_none_fallback(
+        self, pytester: Pytester, ns_param: bool, monkeypatch: MonkeyPatch
+    ) -> None:
+        """When _import_module_using_spec returns None in path 1 (insert_modules=False),
+        import_path must fall through to path 2 and still import the module (#12303)."""
+        import _pytest.pathlib as pathlib_module
+
+        pkg = pytester.path / "mypkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").touch()
+        test_file = pkg / "test_core.py"
+        test_file.write_text("def test(): pass", encoding="ascii")
+        monkeypatch.syspath_prepend(pytester.path)
+
+        real_fn = pathlib_module._import_module_using_spec
+
+        def _mock(
+            module_name: str,
+            path: Any,
+            module_location: Any,
+            *,
+            insert_modules: bool,
+        ) -> Any:
+            if module_name == "mypkg.test_core" and not insert_modules:
+                return None  # simulate path-1 spec failure → triggers 557->562 branch
+            return real_fn(module_name, path, module_location, insert_modules=insert_modules)
+
+        monkeypatch.setattr(pathlib_module, "_import_module_using_spec", _mock)
+        mod = import_path(
+            test_file,
+            mode=ImportMode.importlib,
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+        assert mod.__name__ == "mypkg.test_core"
+
     def create_installed_doctests_and_tests_dir(
         self, path: Path, monkeypatch: MonkeyPatch
     ) -> tuple[Path, Path, Path]:
@@ -1980,6 +2016,43 @@ class TestTopLevelShadowsExternal:
         # is added unconditionally before iterdir.
         try:
             assert _top_level_shadows_external("test.support", tmp_path)
+        finally:
+            _top_shadows_external_cached.cache_clear()
+
+    def test_spec_locations_degenerate_behind(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """When the 'behind' spec has no origin and no submodule_search_locations
+        (degenerate namespace package), _spec_locations returns an empty set so
+        no genuine external shadow is reported.
+
+        This exercises the False-branch of both
+        ``if spec.origin is not None:`` and ``if spec.submodule_search_locations:``
+        inside _spec_locations (#12303)."""
+        from importlib.machinery import PathFinder
+
+        test_dir = tmp_path / "test"
+        test_dir.mkdir()
+        (test_dir / "__init__.py").touch()
+        monkeypatch.syspath_prepend(tmp_path)
+        _top_shadows_external_cached.cache_clear()
+
+        # A spec with no origin and no submodule_search_locations.
+        degenerate = importlib.machinery.ModuleSpec("test", None, origin=None)
+
+        real_find_spec = PathFinder.find_spec
+
+        def _degenerate_behind(
+            name: str, path: Any = None, target: Any = None
+        ) -> Any:
+            if path is not None:
+                return degenerate
+            return real_find_spec(name, path, target)
+
+        monkeypatch.setattr(PathFinder, "find_spec", staticmethod(_degenerate_behind))
+        try:
+            # _spec_locations(behind) == {} → no new external locations → no shadow.
+            assert not _top_level_shadows_external("test.demo", tmp_path)
         finally:
             _top_shadows_external_cached.cache_clear()
 
