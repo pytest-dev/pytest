@@ -1127,7 +1127,9 @@ class TestImportLibMode:
         ) -> Any:
             if module_name == "mypkg.test_core" and not insert_modules:
                 return None  # simulate path-1 spec failure → triggers 557->562 branch
-            return real_fn(module_name, path, module_location, insert_modules=insert_modules)
+            return real_fn(
+                module_name, path, module_location, insert_modules=insert_modules
+            )
 
         monkeypatch.setattr(pathlib_module, "_import_module_using_spec", _mock)
         mod = import_path(
@@ -2042,9 +2044,7 @@ class TestTopLevelShadowsExternal:
 
         real_find_spec = PathFinder.find_spec
 
-        def _degenerate_behind(
-            name: str, path: Any = None, target: Any = None
-        ) -> Any:
+        def _degenerate_behind(name: str, path: Any = None, target: Any = None) -> Any:
             if path is not None:
                 return degenerate
             return real_find_spec(name, path, target)
