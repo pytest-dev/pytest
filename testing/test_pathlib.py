@@ -1883,15 +1883,25 @@ class TestTopLevelShadowsExternal:
         monkeypatch.setattr(importlib.util, "find_spec", _raise)
         assert not _top_level_shadows_external("whatever.foo", tmp_path)
 
-    def test_normalized_dir_name(self, tmp_path: Path) -> None:
-        """A dir named '.tests' normalizes to '_tests' and should be
-        recognized as local, not external."""
-        dot_tests = tmp_path / ".tests"
-        dot_tests.mkdir()
-        (dot_tests / "foo.py").write_text("", encoding="utf-8")
-        # '_tests' is not a real external module, so find_spec returns None.
-        # This just exercises the iterdir + normalization branch.
-        assert not _top_level_shadows_external("_tests.foo", tmp_path)
+    def test_normalized_dir_name(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """A dir named '.xmod' normalizes to '_xmod' and should be
+        recognized as local when the spec points inside it."""
+        dot_dir = tmp_path / ".xmod"
+        dot_dir.mkdir()
+
+        # Fake an already-imported module whose search location is inside
+        # the normalized dir — this exercises the ``iterdir`` +
+        # ``name.replace(".", "_")`` branch (line 795 of pathlib.py).
+        dummy = ModuleType("_xmod")
+        dummy.__path__ = [str(dot_dir)]
+        spec = importlib.machinery.ModuleSpec("_xmod", None, origin=None)
+        spec.submodule_search_locations = [str(dot_dir)]
+        dummy.__spec__ = spec
+        monkeypatch.setitem(sys.modules, "_xmod", dummy)
+
+        assert not _top_level_shadows_external("_xmod.foo", tmp_path)
 
     def test_external_package_detected(self, tmp_path: Path) -> None:
         """An installed package at a different location is external."""
