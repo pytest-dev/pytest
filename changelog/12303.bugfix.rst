@@ -1,0 +1,1 @@
+Fixed ``--import-mode=importlib`` shadowing stdlib and installed packages when test directories share their name (e.g. ``test/``).

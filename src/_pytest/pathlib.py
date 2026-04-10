@@ -542,19 +542,29 @@ def import_path(
         except CouldNotResolvePathError:
             pass
         else:
-            # If the given module name is already in sys.modules, do not import it again.
-            with contextlib.suppress(KeyError):
-                return sys.modules[module_name]
+            # Skip dotted names that would shadow stdlib/installed packages (#12303).
+            if "." not in module_name or not _top_level_shadows_external(
+                module_name, pkg_root
+            ):
+                # If the given module name is already in sys.modules, do not import it again.
+                with contextlib.suppress(KeyError):
+                    return sys.modules[module_name]
 
-            mod = _import_module_using_spec(
-                module_name, path, pkg_root, insert_modules=False
-            )
-            if mod is not None:
-                return mod
+                mod = _import_module_using_spec(
+                    module_name, path, pkg_root, insert_modules=False
+                )
+                if mod is not None:
+                    return mod
 
         # Could not import the module with the current sys.path, so we fall back
         # to importing the file as a single module, not being a part of a package.
         module_name = module_name_from_path(path, root)
+
+        # Prefix to avoid shadowing stdlib/installed packages (#12303).
+        if "." in module_name and _top_level_shadows_external(module_name, root):
+            top, _, rest = module_name.partition(".")
+            module_name = f"_pytest_shadow_{top}.{rest}"
+
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
 
@@ -754,6 +764,61 @@ def spec_matches_module_path(module_spec: ModuleSpec | None, module_path: Path) 
     return False
 
 
+def _top_level_shadows_external(module_name: str, local_root: Path) -> bool:
+    """Return True if the top-level component of *module_name* would collide
+    with a stdlib or installed package that lives outside *local_root*.
+    See #12303."""
+    top = module_name.partition(".")[0]
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", ImportWarning)
+            existing_spec = importlib.util.find_spec(top)
+    except (ImportError, ValueError, ModuleNotFoundError):
+        return False
+    if existing_spec is None:
+        return False
+
+    # Built-in or frozen modules are always external.
+    if existing_spec.origin in ("built-in", "frozen"):
+        return True
+
+    # Also pick up dirs whose name normalizes to `top` (e.g. ".tests" → "_tests").
+    # Resolve everything so symlinks like /var → /private/var don't trip us up.
+    local_candidates: list[Path] = [local_root / top]
+    try:
+        for child in local_root.iterdir():
+            if (
+                child.is_dir()
+                and child.name.replace(".", "_") == top
+                and child not in local_candidates
+            ):
+                local_candidates.append(child)
+    except OSError:
+        pass
+    resolved_candidates = [c.resolve() for c in local_candidates if c.exists()]
+
+    def _is_local(p: Path) -> bool:
+        rp = p.resolve()
+        for candidate in resolved_candidates:
+            try:
+                rp.relative_to(candidate)
+                return True
+            except ValueError:
+                pass
+        return False
+
+    if existing_spec.origin is not None:
+        if _is_local(Path(existing_spec.origin)):
+            return False
+
+    if existing_spec.submodule_search_locations:
+        for loc in existing_spec.submodule_search_locations:
+            if _is_local(Path(loc)):
+                return False
+
+    return True
+
+
 # Implement a special _is_same function on Windows which returns True if the two filenames
 # compare equal, to circumvent os.path.samefile returning False for mounts in UNC (#7678).
 if sys.platform.startswith("win"):
@@ -819,10 +884,12 @@ def insert_missing_modules(modules: dict[str, ModuleType], module_name: str) -> 
                     # ourselves to fall back to creating a dummy module.
                     if not sys.meta_path:
                         raise ModuleNotFoundError
+                    # May import an unrelated module on name collision;
+                    # callers use the _pytest_shadow_ prefix to avoid this (#12303).
                     parent_module = importlib.import_module(parent_module_name)
                 except ModuleNotFoundError:
                     parent_module = ModuleType(
-                        module_name,
+                        parent_module_name,
                         doc="Empty module created by pytest's importmode=importlib.",
                     )
                 modules[parent_module_name] = parent_module

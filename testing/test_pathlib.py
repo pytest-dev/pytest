@@ -973,9 +973,101 @@ class TestImportLibMode:
             consider_namespace_packages=ns_param,
         )
 
+        # stdlib module must still be the real one, not a local dummy (#12303).
+        stdlib_mod = sys.modules[name]
+        assert not (getattr(stdlib_mod, "__file__", "") or "").startswith(
+            str(pytester.path)
+        )
+
         # E2E test
         result = pytester.runpytest("--import-mode=importlib")
         result.stdout.fnmatch_lines("* 1 passed *")
+
+    @pytest.mark.parametrize("subdir", ["", "subdir/"])
+    def test_importlib_does_not_shadow_stdlib(
+        self, pytester, ns_param: bool, subdir: str
+    ):
+        """Regression test for #12303."""
+        file_path = pytester.path / f"test/{subdir}test_demo.py"
+        file_path.parent.mkdir(parents=True)
+        file_path.write_text(
+            dedent(
+                """
+            import test.support
+
+            def test_stdlib_accessible():
+                assert hasattr(test.support, "verbose")
+                # Must be the real stdlib, not a pytest-generated dummy.
+                assert "site-packages" not in (getattr(test, "__file__", "") or "")
+            """
+            ),
+            encoding="utf-8",
+        )
+
+        ns_opt = str(ns_param).lower()
+        result = pytester.runpytest_subprocess(
+            "--import-mode=importlib",
+            "-o",
+            f"consider_namespace_packages={ns_opt}",
+        )
+        result.stdout.fnmatch_lines("* 1 passed *")
+
+    def test_importlib_does_not_shadow_installed_package(
+        self, pytester, ns_param: bool
+    ):
+        """Regression test for #12303 (installed packages)."""
+        pytest.importorskip("packaging.version")
+
+        file_path = pytester.path / "packaging/test_demo.py"
+        file_path.parent.mkdir(parents=True)
+        file_path.write_text(
+            dedent(
+                """
+            from packaging.version import Version
+
+            def test_installed_pkg():
+                assert str(Version("1.0")) == "1.0"
+            """
+            ),
+            encoding="utf-8",
+        )
+
+        ns_opt = str(ns_param).lower()
+        result = pytester.runpytest_subprocess(
+            "--import-mode=importlib",
+            "-o",
+            f"consider_namespace_packages={ns_opt}",
+        )
+        result.stdout.fnmatch_lines("* 1 passed *")
+
+    def test_importlib_canonical_name_preserved(
+        self, pytester, ns_param: bool, monkeypatch: MonkeyPatch
+    ):
+        """Shadow detection must not fire for real local packages (#12303)."""
+        pkg = pytester.path / "myapp"
+        pkg.mkdir()
+        (pkg / "__init__.py").touch()
+        test_file = pkg / "test_core.py"
+        test_file.write_text(
+            dedent(
+                """
+            def test_canonical():
+                pass
+            """
+            ),
+            encoding="utf-8",
+        )
+        # Make the package importable via sys.path.
+        monkeypatch.syspath_prepend(pytester.path)
+
+        mod = import_path(
+            test_file,
+            mode=ImportMode.importlib,
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+        # Must use the real dotted name, not a shadow-prefixed name.
+        assert mod.__name__ == "myapp.test_core"
 
     def create_installed_doctests_and_tests_dir(
         self, path: Path, monkeypatch: MonkeyPatch
