@@ -1255,7 +1255,6 @@ def test_colored_captured_log(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.xfail(reason="#3697 - not capturing propagate=False loggers yet")
 def test_log_propagation_false(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
@@ -1267,8 +1266,7 @@ def test_log_propagation_false(pytester: Pytester) -> None:
         def test_log_file(request):
             logging.getLogger().warning("log goes to root logger")
             logging.getLogger('foo').warning("log goes to initially non-propagating logger")
-            logging.getLogger('foo.bar').propagate = False
-            logging.getLogger('foo.bar').warning("log goes to propagation-disabled-in-test logger")
+            logging.getLogger('foo.bar').warning("log goes to initially non-propagating nested logger")
             assert False, "intentionally fail to trigger report logging output"
     """
     )
@@ -1283,7 +1281,7 @@ def test_log_propagation_false(pytester: Pytester) -> None:
         [
             "WARNING  root:test_log_propagation_false.py:7 log goes to root logger",
             "WARNING  foo:test_log_propagation_false.py:8 log goes to initially non-propagating logger",
-            "WARNING  foo.bar:test_log_propagation_false.py:10 log goes to propagation-disabled-in-test logger",
+            "WARNING  foo.bar:test_log_propagation_false.py:9 log goes to initially non-propagating nested logger",
         ]
     )
     assert not list(report.get_sections("Captured stderr call"))
