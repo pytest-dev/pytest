@@ -1070,6 +1070,37 @@ class TestImportLibMode:
         # Must use the real dotted name, not a shadow-prefixed name.
         assert mod.__name__ == "myapp.test_core"
 
+    def test_importlib_shadow_skips_standard_import_path(
+        self, pytester, ns_param: bool
+    ):
+        """When test/__init__.py exists AND the name shadows stdlib,
+        the standard-import path (Path 1) must be skipped so that
+        the fallback prefixes the name instead.  This exercises the
+        shadow check inside the ``else`` block of
+        ``resolve_pkg_root_and_module_name`` (#12303)."""
+        test_dir = pytester.path / "test"
+        test_dir.mkdir()
+        (test_dir / "__init__.py").touch()
+        file_path = test_dir / "test_demo.py"
+        file_path.write_text(
+            dedent(
+                """
+            def test_passes():
+                pass
+            """
+            ),
+            encoding="utf-8",
+        )
+
+        mod = import_path(
+            file_path,
+            mode=ImportMode.importlib,
+            root=pytester.path,
+            consider_namespace_packages=ns_param,
+        )
+        # Must NOT be imported as "test.test_demo" (would shadow stdlib).
+        assert not mod.__name__.startswith("test.")
+
     def create_installed_doctests_and_tests_dir(
         self, path: Path, monkeypatch: MonkeyPatch
     ) -> tuple[Path, Path, Path]:

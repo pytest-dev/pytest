@@ -793,7 +793,7 @@ def _top_level_shadows_external(module_name: str, local_root: Path) -> bool:
                 and child not in local_candidates
             ):
                 local_candidates.append(child)
-    except OSError:
+    except OSError:  # pragma: no cover
         pass
     resolved_candidates = [c.resolve() for c in local_candidates if c.exists()]
 
