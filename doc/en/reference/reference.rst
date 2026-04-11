@@ -1632,6 +1632,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: max_warnings
    :type: ``int``
+   
+   .. versionadded:: 9.1
 
    Maximum number of warnings allowed before the test run is considered a failure.
    When all tests pass, but the total number of warnings exceeds this value, pytest exits with
