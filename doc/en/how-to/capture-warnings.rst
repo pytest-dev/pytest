@@ -207,6 +207,8 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
 Setting a maximum number of warnings
 -------------------------------------
 
+.. versionadded:: 9.1
+
 You can use the :option:`--max-warnings` command-line option to fail the test run
 if the total number of warnings exceeds a given threshold:
 
