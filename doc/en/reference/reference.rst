@@ -1634,7 +1634,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    :type: ``int``
 
    Maximum number of warnings allowed before the test run is considered a failure.
-   When the total number of warnings exceeds this value, pytest exits with
+   When all tests pass, but the total number of warnings exceeds this value, pytest exits with
    :class:`pytest.ExitCode` ``WARNINGS_ERROR`` (code ``6``).
 
    .. tab:: toml
@@ -1651,8 +1651,9 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             max_warnings = 10
 
+   Note that :confval:`filtered warnings <filterwarnings>` do not count toward this maximum total.
+
    Can also be set via the :option:`--max-warnings` command-line option.
-   For more information please refer to :ref:`warnings`.
 
 
 .. confval:: junit_duration_report
@@ -3148,7 +3149,7 @@ Warnings
 
 .. option:: --max-warnings=NUM
 
-    Exit with :class:`pytest.ExitCode` ``WARNINGS_ERROR`` (code ``6``) if the number
+    Exit with :class:`pytest.ExitCode` ``WARNINGS_ERROR`` (code ``6``) if all the tests pass, but the number
     of warnings exceeds the given threshold. By default there is no limit.
     Can also be set via the :confval:`max_warnings` configuration option.
 

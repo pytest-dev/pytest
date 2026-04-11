@@ -117,7 +117,7 @@ class ExitCode(enum.IntEnum):
     USAGE_ERROR = 4
     #: pytest couldn't find tests.
     NO_TESTS_COLLECTED = 5
-    #: Maximum number of warnings exceeded.
+    #: All tests pass, but maximum number of warnings exceeded.
     WARNINGS_ERROR = 6
 
     __module__ = "pytest"

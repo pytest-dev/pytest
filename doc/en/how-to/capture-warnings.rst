@@ -212,11 +212,13 @@ if the total number of warnings exceeds a given threshold:
 
 .. code-block:: bash
 
-    pytest --max-warnings 10
+    pytest --max-warnings=10
 
-If the number of warnings exceeds the threshold, pytest will exit with code ``6``
+If all tests pass but the number of warnings exceeds the threshold, pytest will exit with code ``6``
 (:class:`~pytest.ExitCode` ``WARNINGS_ERROR``). This is useful for gradually
 ratcheting down warnings in a codebase.
+
+Note that :confval:`filtered warnings <filterwarnings>` do not count toward this maximum total.
 
 The threshold can also be set in the configuration file using :confval:`max_warnings`:
 

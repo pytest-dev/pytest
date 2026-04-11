@@ -132,7 +132,7 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         metavar="num",
         dest="max_warnings",
-        help="Exit with error if the number of warnings exceeds this threshold",
+        help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
     )
     parser.addini(
         "filterwarnings",
@@ -143,7 +143,7 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "max_warnings",
-        help="Maximum number of warnings allowed before failing the test run",
+        help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
     )
 
     group = parser.getgroup("collect", "collection")

@@ -979,7 +979,7 @@ class TerminalReporter:
             if warning_count > max_warnings:
                 session.exitstatus = ExitCode.WARNINGS_ERROR
                 self.write_line(
-                    f"Maximum allowed warnings exceeded: "
+                    "Tests pass, but maximum allowed warnings exceeded: "
                     f"{warning_count} > {max_warnings}",
                     red=True,
                 )
