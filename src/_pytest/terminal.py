@@ -966,7 +966,7 @@ class TerminalReporter:
             ExitCode.INTERRUPTED,
             ExitCode.USAGE_ERROR,
             ExitCode.NO_TESTS_COLLECTED,
-            ExitCode.WARNINGS_ERROR,
+            ExitCode.MAX_WARNINGS_ERROR,
         )
         if exitstatus in summary_exit_codes and not self.no_summary:
             self.config.hook.pytest_terminal_summary(
@@ -977,7 +977,7 @@ class TerminalReporter:
         if max_warnings is not None and session.exitstatus == ExitCode.OK:
             warning_count = len(self.stats.get("warnings", []))
             if warning_count > max_warnings:
-                session.exitstatus = ExitCode.WARNINGS_ERROR
+                session.exitstatus = ExitCode.MAX_WARNINGS_ERROR
                 self.write_line(
                     "Tests pass, but maximum allowed warnings exceeded: "
                     f"{warning_count} > {max_warnings}",

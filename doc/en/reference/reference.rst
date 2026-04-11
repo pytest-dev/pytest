@@ -1637,7 +1637,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    Maximum number of warnings allowed before the test run is considered a failure.
    When all tests pass, but the total number of warnings exceeds this value, pytest exits with
-   :class:`pytest.ExitCode` ``WARNINGS_ERROR`` (code ``6``).
+   :class:`pytest.ExitCode` ``MAX_WARNINGS_ERROR`` (code ``6``).
 
    .. tab:: toml
 
@@ -3151,7 +3151,7 @@ Warnings
 
 .. option:: --max-warnings=NUM
 
-    Exit with :class:`pytest.ExitCode` ``WARNINGS_ERROR`` (code ``6``) if all the tests pass, but the number
+    Exit with :class:`pytest.ExitCode` ``MAX_WARNINGS_ERROR`` (code ``6``) if all the tests pass, but the number
     of warnings exceeds the given threshold. By default there is no limit.
     Can also be set via the :confval:`max_warnings` configuration option.
 

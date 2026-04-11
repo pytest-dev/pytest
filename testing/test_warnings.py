@@ -917,10 +917,10 @@ class TestMaxWarnings:
 
     @pytest.mark.filterwarnings("default::UserWarning")
     def test_max_warnings_exceeded(self, pytester: Pytester) -> None:
-        """When warning count exceeds threshold, exit code is WARNINGS_ERROR."""
+        """When warning count exceeds threshold, exit code is MAX_WARNINGS_ERROR."""
         pytester.makepyfile(self.PYFILE)
         result = pytester.runpytest("--max-warnings", "1")
-        assert result.ret == ExitCode.WARNINGS_ERROR
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
 
     @pytest.mark.filterwarnings("default::UserWarning")
     def test_max_warnings_equal_to_count(self, pytester: Pytester) -> None:
@@ -935,7 +935,7 @@ class TestMaxWarnings:
         """--max-warnings 0 means no warnings are allowed."""
         pytester.makepyfile(self.PYFILE)
         result = pytester.runpytest("--max-warnings", "0")
-        assert result.ret == ExitCode.WARNINGS_ERROR
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
 
     @pytest.mark.filterwarnings("default::UserWarning")
     def test_max_warnings_exceeded_message(self, pytester: Pytester) -> None:
@@ -957,7 +957,7 @@ class TestMaxWarnings:
         )
         pytester.makepyfile(self.PYFILE)
         result = pytester.runpytest()
-        assert result.ret == ExitCode.WARNINGS_ERROR
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
 
     @pytest.mark.filterwarnings("default::UserWarning")
     def test_max_warnings_with_test_failure(self, pytester: Pytester) -> None:
