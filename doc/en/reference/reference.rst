@@ -1414,6 +1414,12 @@ passed multiple times. The expected format is ``name=value``. For example::
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
 
+   For best results when using `consider_namespace_packages`,
+   pytest needs to be able to import your namespace packages.
+   This is best achieved by installing the packages in your environment,
+   most commonly in `"editable" mode <https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#working-in-development-mode>`_.
+   If you can't install the packages, consider adding the namespace root paths to :confval:`pythonpath`.
+
    .. versionadded:: 8.1
 
 .. confval:: console_output_style
