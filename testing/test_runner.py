@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import sys
 import types
+from typing import cast
 
 from _pytest import outcomes
 from _pytest import reports
@@ -493,6 +494,37 @@ class TestExecutionNonForked(BaseFunctionalTests):
             pass
         else:
             assert False, "did not raise"
+
+    def test_keyboardinterrupt_clears_request_and_funcargs(
+        self, pytester: Pytester
+    ) -> None:
+        """Ensure that an item's fixtures are cleared quickly even if exiting
+        early due to a keyboard interrupt (#13626)."""
+        item = pytester.getitem(
+            """
+            import pytest
+
+            @pytest.fixture
+            def resource():
+                return object()
+
+            def test_func(resource):
+                raise KeyboardInterrupt("fake")
+        """
+        )
+        assert isinstance(item, pytest.Function)
+        assert item._request
+        assert item.funcargs == {}
+
+        try:
+            runner.runtestprotocol(item, log=False)
+        except KeyboardInterrupt:
+            pass
+        else:
+            assert False, "did not raise"
+
+        assert not cast(object, item._request)
+        assert not item.funcargs
 
 
 class TestSessionReports:
