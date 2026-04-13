@@ -198,7 +198,7 @@ class TestRaises:
             with pytest.raises(ValueError):
                 int("0")
         except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE {ValueError!r}"
+            assert e.msg == "DID NOT RAISE ValueError"
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -206,7 +206,7 @@ class TestRaises:
             with pytest.raises(ValueError):
                 pass
         except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE {ValueError!r}"
+            assert e.msg == "DID NOT RAISE ValueError"
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -337,7 +337,7 @@ class TestRaises:
 
         with pytest.raises(
             Failed,
-            match=r"DID NOT RAISE <class 'raises(\..*)*ClassLooksIterableException'>",
+            match=r"DID NOT RAISE ClassLooksIterableException",
         ):
             with pytest.raises(ClassLooksIterableException):
                 ...  # pragma: no cover
