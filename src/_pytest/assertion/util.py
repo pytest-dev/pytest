@@ -174,7 +174,7 @@ def has_default_eq(obj: object) -> bool:
 
 
 def assertrepr_compare(
-    config: Config, op: str, left: object, right: object, use_ascii: bool = False
+    config: Config, op: str, left: object, right: object
 ) -> list[str] | None:
     """Return specialised explanations for some operators/operands."""
     verbose = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
