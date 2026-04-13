@@ -248,8 +248,8 @@ def pytest_collection(session: Session) -> object | None:
 
       1. ``pytest_deselected(items)`` for any deselected items (may be called multiple times)
 
-    3. ``pytest_collection_finish(session)``
-    4. Set ``session.items`` to the list of collected items
+    3. Set ``session.items`` to the list of collected items
+    4. ``pytest_collection_finish(session)``
     5. Set ``session.testscollected`` to the number of collected items
 
     You can implement this hook to only perform some action before collection,
@@ -315,7 +315,6 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
 
     :param collection_path: The path to analyze.
     :type collection_path: pathlib.Path
-    :param path: The path to analyze (deprecated).
     :param config: The pytest config object.
 
     .. versionchanged:: 7.0.0
@@ -373,7 +372,6 @@ def pytest_collect_file(file_path: Path, parent: Collector) -> Collector | None:
 
     :param file_path: The path to analyze.
     :type file_path: pathlib.Path
-    :param path: The path to collect (deprecated).
 
     .. versionchanged:: 7.0.0
         The ``file_path`` parameter was added as a :class:`pathlib.Path`
@@ -492,7 +490,6 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Module | None:
 
     :param module_path: The path of the module to collect.
     :type module_path: pathlib.Path
-    :param path: The path of the module to collect (deprecated).
 
     .. versionchanged:: 7.0.0
         The ``module_path`` parameter was added as a :class:`pathlib.Path`
@@ -1011,7 +1008,6 @@ def pytest_report_header(config: Config, start_path: Path) -> str | list[str]:  
     :param config: The pytest config object.
     :param start_path: The starting dir.
     :type start_path: pathlib.Path
-    :param startdir: The starting dir (deprecated).
 
     .. note::
 
@@ -1047,7 +1043,6 @@ def pytest_report_collectionfinish(  # type: ignore[empty-body]
     :param config: The pytest config object.
     :param start_path: The starting dir.
     :type start_path: pathlib.Path
-    :param startdir: The starting dir (deprecated).
     :param items: List of pytest items that are going to be executed; this list should not be modified.
 
     .. note::

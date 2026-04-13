@@ -34,7 +34,7 @@ Thanks to all of the contributors to this release:
 * Emmanuel Arias
 * Emmanuel Meric de Bellefon
 * Eric Liu
-* Florian Bruhin
+* Freya Bruhin
 * GergelyKalmar
 * Graeme Smecher
 * Harshna

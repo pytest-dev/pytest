@@ -14,7 +14,6 @@ from __future__ import annotations
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
-from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestRemovedIn10Warning
 from _pytest.warning_types import UnformattedWarning
 
@@ -39,16 +38,8 @@ YIELD_FIXTURE = PytestDeprecationWarning(
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
 
-NODE_CTOR_FSPATH_ARG = UnformattedWarning(
-    PytestRemovedIn9Warning,
-    "The (fspath: py.path.local) argument to {node_type_name} is deprecated. "
-    "Please use the (path: pathlib.Path) argument instead.\n"
-    "See https://docs.pytest.org/en/latest/deprecations.html"
-    "#fspath-argument-for-node-constructors-replaced-with-pathlib-path",
-)
-
 HOOK_LEGACY_MARKING = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn10Warning,
     "The hook{type} {fullname} uses old-style configuration options (marks or attributes).\n"
     "Please use the pytest.hook{type}({hook_opts}) decorator instead\n"
     " to configure the hooks.\n"
@@ -74,6 +65,14 @@ PARAMETRIZE_NON_COLLECTION_ITERABLE = UnformattedWarning(
 CONFIG_INICFG = PytestRemovedIn10Warning(
     "config.inicfg is deprecated, use config.getini() to access configuration values instead.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#config-inicfg"
+)
+
+FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    'Calling request.getfixturevalue("{argname}") during teardown is deprecated.\n'
+    "Please request the fixture before teardown begins, either by declaring it in the fixture signature "
+    "or by calling request.getfixturevalue() before the fixture yields.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#dynamic-fixture-request-during-teardown",
 )
 
 # You want to make some `__init__` or function "private".

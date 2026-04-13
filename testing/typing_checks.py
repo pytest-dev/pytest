@@ -14,6 +14,7 @@ from typing_extensions import assert_type
 
 import pytest
 from pytest import MonkeyPatch
+from pytest import ScopeName
 from pytest import TestReport
 
 
@@ -65,3 +66,10 @@ def check_testreport_attributes(report: TestReport) -> None:
 @pytest.mark.parametrize("x", iter(range(10)))  # type: ignore[deprecated]
 def test_it(x: int) -> None:
     pass
+
+
+# Issue #14137.
+def check_scope_typing() -> None:
+
+    custom_scope: ScopeName = "function"
+    assert_type(custom_scope, ScopeName)

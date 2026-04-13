@@ -15,7 +15,7 @@ from functools import total_ordering
 from typing import Literal
 
 
-_ScopeName = Literal["session", "package", "module", "class", "function"]
+ScopeName = Literal["session", "package", "module", "class", "function"]
 
 
 @total_ordering
@@ -60,7 +60,7 @@ class Scope(Enum):
 
     @classmethod
     def from_user(
-        cls, scope_name: _ScopeName, descr: str, where: str | None = None
+        cls, scope_name: ScopeName, descr: str, where: str | None = None
     ) -> Scope:
         """
         Given a scope name from the user, return the equivalent Scope enum. Should be used

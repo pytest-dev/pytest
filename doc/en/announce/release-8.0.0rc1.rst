@@ -31,7 +31,7 @@ Thanks to all of the contributors to this release:
 * Christoph Anton Mitterer
 * DetachHead
 * Erik Hasse
-* Florian Bruhin
+* Freya Bruhin
 * Fraser Stark
 * Ha Pam
 * Hugo van Kemenade

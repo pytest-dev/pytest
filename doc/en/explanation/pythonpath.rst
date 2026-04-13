@@ -143,8 +143,8 @@ When executing:
     pytest root/
 
 pytest will find ``foo/bar/tests/test_foo.py`` and realize it is part of a package given that
-there's an ``__init__.py`` file in the same folder. It will then search upwards until it can find the
-last folder which still contains an ``__init__.py`` file in order to find the package *root* (in
+there's an ``__init__.py`` file in the same directory. It will then search upwards until it can find the
+last directory which still contains an ``__init__.py`` file in order to find the package *root* (in
 this case ``foo/``). To load the module, it will insert ``root/``  to the front of
 :py:data:`sys.path` (if not there already) in order to load
 ``test_foo.py`` as the *module* ``foo.bar.tests.test_foo``.
@@ -175,7 +175,7 @@ When executing:
     pytest root/
 
 pytest will find ``foo/bar/tests/test_foo.py`` and realize it is NOT part of a package given that
-there's no ``__init__.py`` file in the same folder. It will then add ``root/foo/bar/tests`` to
+there's no ``__init__.py`` file in the same directory. It will then add ``root/foo/bar/tests`` to
 :py:data:`sys.path` in order to import ``test_foo.py`` as the *module* ``test_foo``. The same is done
 with the ``conftest.py`` file by adding ``root/foo`` to :py:data:`sys.path` to import it as ``conftest``.
 

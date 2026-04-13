@@ -23,7 +23,7 @@ Thanks to all of the contributors to this release:
 * C. Titus Brown
 * Drew Devereux
 * Faris A Chugthai
-* Florian Bruhin
+* Freya Bruhin
 * Hugo van Kemenade
 * Hynek Schlawack
 * Joseph Lucas

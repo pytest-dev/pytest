@@ -29,7 +29,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
 from _pytest.outcomes import fail
 from _pytest.raises import AbstractRaises
-from _pytest.scope import _ScopeName
+from _pytest.scope import ScopeName
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 
@@ -170,8 +170,12 @@ class ParameterSet(NamedTuple):
         **kwargs,
     ) -> tuple[Sequence[str], bool]:
         if isinstance(argnames, str):
+            # A trailing comma indicates tuple-style: "arg," is equivalent to ("arg",)
+            # In this case, argvalues should be a list of tuples, not wrapped values.
+            # See https://github.com/pytest-dev/pytest/issues/719
+            has_trailing_comma = argnames.rstrip().endswith(",")
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            force_tuple = len(argnames) == 1
+            force_tuple = len(argnames) == 1 and not has_trailing_comma
         else:
             force_tuple = False
         return argnames, force_tuple
@@ -509,7 +513,7 @@ if TYPE_CHECKING:
         @overload
         def __call__(
             self,
-            condition: str | bool = False,
+            condition: str | bool = True,
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
@@ -531,7 +535,7 @@ if TYPE_CHECKING:
             ids: Iterable[None | str | float | int | bool]
             | Callable[[Any], object | None]
             | None = ...,
-            scope: _ScopeName | None = ...,
+            scope: ScopeName | None = ...,
         ) -> MarkDecorator: ...
 
         @overload
@@ -548,7 +552,7 @@ if TYPE_CHECKING:
             ids: Iterable[None | str | float | int | bool]
             | Callable[[Any], object | None]
             | None = ...,
-            scope: _ScopeName | None = ...,
+            scope: ScopeName | None = ...,
         ) -> MarkDecorator: ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):

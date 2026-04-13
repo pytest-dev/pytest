@@ -12,7 +12,7 @@ Thanks to all of the contributors to this release:
 * AD
 * Aditi De
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * John Litborn
 * Liam DeVoe
 * Marc Mueller

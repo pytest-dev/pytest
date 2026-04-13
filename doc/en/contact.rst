@@ -40,7 +40,7 @@ Mail
   in the pytest core team, who can also be contacted individually:
 
   * Bruno Oliveira (:user:`nicoddemus`, `bruno@pytest.org <mailto:bruno@pytest.org>`_)
-  * Florian Bruhin (:user:`The-Compiler`, `florian@pytest.org <mailto:florian@pytest.org>`_)
+  * Freya Bruhin (:user:`The-Compiler`, `freya@pytest.org <mailto:freya@pytest.org>`_)
   * Pierre Sassoulas (:user:`Pierre-Sassoulas`, `pierre@pytest.org <mailto:pierre@pytest.org>`_)
   * Ran Benita (:user:`bluetech`, `ran@pytest.org <mailto:ran@pytest.org>`_)
   * Ronny Pfannschmidt (:user:`RonnyPfannschmidt`, `ronny@pytest.org <mailto:ronny@pytest.org>`_)
@@ -51,7 +51,7 @@ Other
 
 - The :doc:`contribution guide <contributing>` for help on submitting pull
   requests to GitHub.
-- Florian Bruhin (:user:`The-Compiler`) offers pytest professional teaching and
+- Freya Bruhin (:user:`The-Compiler`) offers pytest professional teaching and
   consulting via `Bruhin Software <https://bruhin.software>`_.
 
 .. _`pytest issue tracker`: https://github.com/pytest-dev/pytest/issues

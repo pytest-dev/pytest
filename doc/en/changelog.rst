@@ -16,7 +16,7 @@ with advance notice in the **Deprecations** section of releases.
     fix problems like typo corrections or such.
     To add a new change log entry, please see
     https://pip.pypa.io/en/latest/development/contributing/#news-entries
-    we named the news folder changelog
+    but note that in pytest the "news/" directory is named "changelog/".
 
 
 .. only:: not is_release
@@ -30,6 +30,58 @@ with advance notice in the **Deprecations** section of releases.
    ^^^^^^^^^^^^^^^^^
 
 .. towncrier release notes start
+
+pytest 9.0.3 (2026-04-07)
+=========================
+
+Bug fixes
+---------
+
+- `#12444 <https://github.com/pytest-dev/pytest/issues/12444>`_: Fixed :func:`pytest.approx` which now correctly takes into account :class:`~collections.abc.Mapping` keys order to compare them.
+
+
+- `#13634 <https://github.com/pytest-dev/pytest/issues/13634>`_: Blocking a ``conftest.py`` file using the ``-p no:`` option is now explicitly disallowed.
+
+  Previously this resulted in an internal assertion failure during plugin loading.
+
+  Pytest now raises a clear ``UsageError`` explaining that conftest files are not plugins and cannot be disabled via ``-p``.
+
+
+- `#13734 <https://github.com/pytest-dev/pytest/issues/13734>`_: Fixed crash when a test raises an exceptiongroup with ``__tracebackhide__ = True``.
+
+
+- `#14195 <https://github.com/pytest-dev/pytest/issues/14195>`_: Fixed an issue where non-string messages passed to `unittest.TestCase.subTest()` were not printed.
+
+
+- `#14343 <https://github.com/pytest-dev/pytest/issues/14343>`_: Fixed use of insecure temporary directory (CVE-2025-71176).
+
+
+
+Improved documentation
+----------------------
+
+- `#13388 <https://github.com/pytest-dev/pytest/issues/13388>`_: Clarified documentation for ``-p`` vs ``PYTEST_PLUGINS`` plugin loading and fixed an incorrect ``-p`` example.
+
+
+- `#13731 <https://github.com/pytest-dev/pytest/issues/13731>`_: Clarified that capture fixtures (e.g. ``capsys`` and ``capfd``) take precedence over the ``-s`` / ``--capture=no`` command-line options in :ref:`Accessing captured output from a test function <accessing-captured-output>`.
+
+
+- `#14088 <https://github.com/pytest-dev/pytest/issues/14088>`_: Clarified that the default :hook:`pytest_collection` hook sets ``session.items`` before it calls :hook:`pytest_collection_finish`, not after.
+
+
+- `#14255 <https://github.com/pytest-dev/pytest/issues/14255>`_: TOML integer log levels must be quoted: Updating reference documentation.
+
+
+
+Contributor-facing changes
+--------------------------
+
+- `#12689 <https://github.com/pytest-dev/pytest/issues/12689>`_: The test reports are now published to Codecov from GitHub Actions.
+  The test statistics is visible `on the web interface
+  <https://app.codecov.io/gh/pytest-dev/pytest/tests>`__.
+
+  -- by :user:`aleguy02`
+
 
 pytest 9.0.2 (2025-12-06)
 =========================
@@ -2805,6 +2857,7 @@ Breaking Changes
 
 - `#8246 <https://github.com/pytest-dev/pytest/issues/8246>`_: ``--version`` now writes version information to ``stdout`` rather than ``stderr``.
 
+- `#8592 <https://github.com/pytest-dev/pytest/issues/8592>`_: The ``pytest_cmdline_preparse`` hook has been removed following its deprecation. See :ref:`the deprecation note <cmdline-preparse-deprecated>` for more details.
 
 - `#8733 <https://github.com/pytest-dev/pytest/issues/8733>`_: Drop a workaround for `pyreadline <https://github.com/pyreadline/pyreadline>`__ that made it work with ``--pdb``.
 
@@ -9373,10 +9426,10 @@ time or change existing behaviors in order to make them less surprising/more use
   non-ascii characters. Thanks Bruno Oliveira for the PR.
 
 - fix #1204: another error when collecting with a nasty __getattr__().
-  Thanks Florian Bruhin for the PR.
+  Thanks Freya Bruhin for the PR.
 
 - fix the summary printed when no tests did run.
-  Thanks Florian Bruhin for the PR.
+  Thanks Freya Bruhin for the PR.
 - fix #1185 - ensure MANIFEST.in exactly matches what should go to a sdist
 
 - a number of documentation modernizations wrt good practices.
@@ -9498,7 +9551,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue934: when string comparison fails and a diff is too large to display
   without passing -vv, still show a few lines of the diff.
-  Thanks Florian Bruhin for the report and Bruno Oliveira for the PR.
+  Thanks Freya Bruhin for the report and Bruno Oliveira for the PR.
 
 - fix issue736: Fix a bug where fixture params would be discarded when combined
   with parametrization markers.
@@ -9511,7 +9564,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - parametrize now also generates meaningful test IDs for enum, regex and class
   objects (as opposed to class instances).
-  Thanks to Florian Bruhin for the PR.
+  Thanks to Freya Bruhin for the PR.
 
 - Add 'warns' to assert that warnings are thrown (like 'raises').
   Thanks to Eric Hunsberger for the PR.
@@ -9638,7 +9691,7 @@ time or change existing behaviors in order to make them less surprising/more use
   one will also have a "reprec" attribute with the recorded events/reports.
 
 - fix monkeypatch.setattr("x.y", raising=False) to actually not raise
-  if "y" is not a preexisting attribute. Thanks Florian Bruhin.
+  if "y" is not a preexisting attribute. Thanks Freya Bruhin.
 
 - fix issue741: make running output from testdir.run copy/pasteable
   Thanks Bruno Oliveira.
@@ -9698,7 +9751,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix issue833: --fixtures now shows all fixtures of collected test files, instead of just the
   fixtures declared on the first one.
-  Thanks Florian Bruhin for reporting and Bruno Oliveira for the PR.
+  Thanks Freya Bruhin for reporting and Bruno Oliveira for the PR.
 
 - fix issue863: skipped tests now report the correct reason when a skip/xfail
   condition is met when using multiple markers.

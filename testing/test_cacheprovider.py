@@ -51,7 +51,8 @@ class TestNewAPI:
         config = pytester.parseconfigure()
         assert config.cache is not None
         cache = config.cache
-        pytest.raises(TypeError, lambda: cache.set("key/name", cache))
+        with pytest.raises(TypeError):
+            cache.set("key/name", cache)
         config.cache.set("key/name", 0)
         config.cache._getvaluepath("key/name").write_bytes(b"123invalid")
         val = config.cache.get("key/name", -2)
@@ -143,7 +144,8 @@ class TestNewAPI:
                 val = cache.get("some/thing", None)
                 assert val is None
                 cache.set("some/thing", [1])
-                pytest.raises(TypeError, lambda: cache.get("some/thing"))
+                with pytest.raises(TypeError):
+                    cache.get("some/thing")
                 val = cache.get("some/thing", [])
                 assert val == [1]
         """
@@ -1348,15 +1350,48 @@ def test_does_not_create_boilerplate_in_existing_dirs(pytester: Pytester) -> Non
 def test_cachedir_tag(pytester: Pytester) -> None:
     """Ensure we automatically create CACHEDIR.TAG file in the pytest_cache directory (#4278)."""
     from _pytest.cacheprovider import Cache
-    from _pytest.cacheprovider import CACHEDIR_TAG_CONTENT
+    from _pytest.cacheprovider import CACHEDIR_FILES
 
     config = pytester.parseconfig()
     cache = Cache.for_config(config, _ispytest=True)
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
-    assert cachedir_tag_path.read_bytes() == CACHEDIR_TAG_CONTENT
+    assert cachedir_tag_path.read_bytes() == CACHEDIR_FILES["CACHEDIR.TAG"]
 
 
 def test_clioption_with_cacheshow_and_help(pytester: Pytester) -> None:
     result = pytester.runpytest("--cache-show", "--help")
     assert result.ret == 0
+
+
+def test_make_cachedir_cleans_up_on_base_exception(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    """Ensure _make_cachedir cleans up the temp directory on BaseException.
+
+    When a BaseException (like KeyboardInterrupt) is raised during cache
+    directory creation, the temporary directory should be cleaned up before
+    re-raising the exception.
+    """
+    from _pytest.cacheprovider import _make_cachedir
+
+    target = tmp_path / ".pytest_cache"
+
+    def raise_keyboard_interrupt(self: Path, target: Path) -> None:
+        raise KeyboardInterrupt("simulated interrupt")
+
+    # Patch Path.rename only for the duration of the _make_cachedir call
+    with monkeypatch.context() as m:
+        m.setattr(Path, "rename", raise_keyboard_interrupt)
+
+        # Verify the exception is re-raised
+        with pytest.raises(KeyboardInterrupt, match="simulated interrupt"):
+            _make_cachedir(target)
+
+    # Verify no temp directories were left behind
+    temp_dirs = list(tmp_path.glob("pytest-cache-files-*"))
+    assert temp_dirs == [], f"Temp directories not cleaned up: {temp_dirs}"
+
+    # Verify the target directory was not created
+    assert not target.exists()

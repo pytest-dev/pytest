@@ -21,11 +21,13 @@ class TestRaises:
             pytest.raises(RuntimeError, "int('qwe')")  # type: ignore[call-overload]
 
     def test_raises(self):
-        excinfo = pytest.raises(ValueError, int, "qwe")
+        with pytest.raises(ValueError) as excinfo:
+            int("qwe")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_function(self):
-        excinfo = pytest.raises(ValueError, int, "hello")
+        with pytest.raises(ValueError) as excinfo:
+            int("hello")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_does_not_allow_none(self):
@@ -179,7 +181,8 @@ class TestRaises:
 
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
-            pytest.raises("wrong", lambda: None)  # type: ignore[call-overload]
+            with pytest.raises("wrong"):  # type: ignore[call-overload]
+                ...  # pragma: no cover
 
     def test_invalid_arguments_to_raises(self) -> None:
         with pytest.raises(TypeError, match="unknown"):
@@ -192,7 +195,8 @@ class TestRaises:
 
     def test_no_raise_message(self) -> None:
         try:
-            pytest.raises(ValueError, int, "0")
+            with pytest.raises(ValueError):
+                int("0")
         except pytest.fail.Exception as e:
             assert e.msg == "DID NOT RAISE ValueError"
         else:
@@ -266,7 +270,7 @@ class TestRaises:
             pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
 
-        pytest.raises(TypeError, int, match="invalid")
+        pytest.raises(TypeError, int, match="invalid")  # type: ignore[call-overload]
 
         def tfunc(match):
             raise ValueError(f"match={match}")
@@ -323,10 +327,10 @@ class TestRaises:
     def test_raises_exception_looks_iterable(self):
         class Meta(type):
             def __getitem__(self, item):
-                return 1 / 0
+                return 1 / 0  # pragma: no cover
 
             def __len__(self):
-                return 1
+                return 1  # pragma: no cover
 
         class ClassLooksIterableException(Exception, metaclass=Meta):
             pass
@@ -335,7 +339,8 @@ class TestRaises:
             Failed,
             match=r"DID NOT RAISE ClassLooksIterableException",
         ):
-            pytest.raises(ClassLooksIterableException, lambda: None)
+            with pytest.raises(ClassLooksIterableException):
+                ...  # pragma: no cover
 
     def test_raises_with_raising_dunder_class(self) -> None:
         """Test current behavior with regard to exceptions via __class__ (#4284)."""
@@ -407,3 +412,35 @@ class TestRaises:
                 code=404, msg="Not Found", fp=io.BytesIO(), hdrs=Message(), url=""
             )
         exc_info.value.close()  # avoid a resource warning
+
+    def test_raises_match_compiled_regex(self) -> None:
+        """Test that compiled regex patterns work with pytest.raises."""
+        # Test with a compiled pattern that matches
+        pattern = re.compile(r"with base \d+")
+        with pytest.raises(ValueError, match=pattern):
+            int("asdf")
+
+        # Test with a compiled pattern that doesn't match
+        pattern_nomatch = re.compile(r"with base 16")
+        expr = (
+            "Regex pattern did not match.\n"
+            f"  Expected regex: {pattern_nomatch.pattern!r}\n"
+            f"  Actual message: \"invalid literal for int() with base 10: 'asdf'\""
+        )
+        with pytest.raises(AssertionError, match="^" + re.escape(expr) + "$"):
+            with pytest.raises(ValueError, match=pattern_nomatch):
+                int("asdf", base=10)
+
+        # Test compiled pattern with flags
+        pattern_with_flags = re.compile(r"INVALID LITERAL", re.IGNORECASE)
+        with pytest.raises(ValueError, match=pattern_with_flags):
+            int("asdf")
+
+    def test_pipe_is_treated_as_regex_metacharacter(self) -> None:
+        """| (pipe) must be recognized as a regex metacharacter."""
+        from _pytest.raises import is_fully_escaped
+        from _pytest.raises import unescape
+
+        assert not is_fully_escaped("foo|bar")
+        assert is_fully_escaped(r"foo\|bar")
+        assert unescape(r"foo\|bar") == "foo|bar"

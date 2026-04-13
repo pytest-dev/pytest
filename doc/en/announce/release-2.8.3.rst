@@ -16,7 +16,7 @@ As usual, you can upgrade from pypi via::
 Thanks to all who contributed to this release, among them:
 
         Bruno Oliveira
-        Florian Bruhin
+        Freya Bruhin
         Gabe Hollombe
         Gabriel Reis
         Hartmut Goebel

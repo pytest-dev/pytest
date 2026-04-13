@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import sys
 import types
-import warnings
+from typing import cast
 
 from _pytest import outcomes
 from _pytest import reports
@@ -495,6 +495,37 @@ class TestExecutionNonForked(BaseFunctionalTests):
         else:
             assert False, "did not raise"
 
+    def test_keyboardinterrupt_clears_request_and_funcargs(
+        self, pytester: Pytester
+    ) -> None:
+        """Ensure that an item's fixtures are cleared quickly even if exiting
+        early due to a keyboard interrupt (#13626)."""
+        item = pytester.getitem(
+            """
+            import pytest
+
+            @pytest.fixture
+            def resource():
+                return object()
+
+            def test_func(resource):
+                raise KeyboardInterrupt("fake")
+        """
+        )
+        assert isinstance(item, pytest.Function)
+        assert item._request
+        assert item.funcargs == {}
+
+        try:
+            runner.runtestprotocol(item, log=False)
+        except KeyboardInterrupt:
+            pass
+        else:
+            assert False, "did not raise"
+
+        assert not cast(object, item._request)
+        assert not item.funcargs
+
 
 class TestSessionReports:
     def test_collect_result(self, pytester: Pytester) -> None:
@@ -780,8 +811,10 @@ def test_importorskip(monkeypatch) -> None:
         # check that importorskip reports the actual call
         # in this test the test_runner.py file
         assert path.stem == "test_runner"
-        pytest.raises(SyntaxError, pytest.importorskip, "x y z")
-        pytest.raises(SyntaxError, pytest.importorskip, "x=y")
+        with pytest.raises(SyntaxError):
+            pytest.importorskip("x y z")
+        with pytest.raises(SyntaxError):
+            pytest.importorskip("x=y")
         mod = types.ModuleType("hello123")
         mod.__version__ = "1.3"  # type: ignore
         monkeypatch.setitem(sys.modules, "hello123", mod)
@@ -799,50 +832,29 @@ def test_importorskip_imports_last_module_part() -> None:
 
 
 class TestImportOrSkipExcType:
-    """Tests for #11523."""
+    """Tests for importorskip's exc_type behavior."""
 
-    def test_no_warning(self) -> None:
-        # An attempt on a module which does not exist will raise ModuleNotFoundError, so it will
-        # be skipped normally and no warning will be issued.
-        with warnings.catch_warnings(record=True) as captured:
-            warnings.simplefilter("always")
+    def test_module_not_found_skips_by_default(self) -> None:
+        with pytest.raises(pytest.skip.Exception):
+            pytest.importorskip(
+                "TestImportOrSkipExcType_test_module_not_found_skips_without_warning"
+            )
 
-            with pytest.raises(pytest.skip.Exception):
-                pytest.importorskip("TestImportOrSkipExcType_test_no_warning")
-
-        assert captured == []
-
-    def test_import_error_with_warning(self, pytester: Pytester) -> None:
-        # Create a module which exists and can be imported, however it raises
-        # ImportError due to some other problem. In this case we will issue a warning
-        # about the future behavior change.
+    def test_import_error_is_propagated_by_default(self, pytester: Pytester) -> None:
         fn = pytester.makepyfile("raise ImportError('some specific problem')")
         pytester.syspathinsert()
 
-        with warnings.catch_warnings(record=True) as captured:
-            warnings.simplefilter("always")
+        with pytest.raises(ImportError, match="some specific problem"):
+            pytest.importorskip(fn.stem)
 
-            with pytest.raises(pytest.skip.Exception):
-                pytest.importorskip(fn.stem)
-
-        [warning] = captured
-        assert warning.category is pytest.PytestDeprecationWarning
-
-    def test_import_error_suppress_warning(self, pytester: Pytester) -> None:
-        # Same as test_import_error_with_warning, but we can suppress the warning
-        # by passing ImportError as exc_type.
+    def test_import_error_can_be_captured_explicitly(self, pytester: Pytester) -> None:
         fn = pytester.makepyfile("raise ImportError('some specific problem')")
         pytester.syspathinsert()
 
-        with warnings.catch_warnings(record=True) as captured:
-            warnings.simplefilter("always")
+        with pytest.raises(pytest.skip.Exception):
+            pytest.importorskip(fn.stem, exc_type=ImportError)
 
-            with pytest.raises(pytest.skip.Exception):
-                pytest.importorskip(fn.stem, exc_type=ImportError)
-
-        assert captured == []
-
-    def test_warning_integration(self, pytester: Pytester) -> None:
+    def test_import_error_integration(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
             import pytest
@@ -857,12 +869,9 @@ class TestImportOrSkipExcType:
         )
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(
-            [
-                "*Module 'warning_integration_module' was found, but when imported by pytest it raised:",
-                "*      ImportError('required library foobar not compiled properly')",
-                "*1 skipped, 1 warning*",
-            ]
+            ["*ImportError: required library foobar not compiled properly*"]
         )
+        result.assert_outcomes(failed=1)
 
 
 def test_importorskip_dev_module(monkeypatch) -> None:

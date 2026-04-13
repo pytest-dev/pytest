@@ -160,6 +160,15 @@ You can specify multiple filters with separate decorators:
     def test_one():
         assert api_v1() == 1
 
+You can also pass multiple filters to a single mark by providing multiple arguments:
+
+.. code-block:: python
+
+    # Later arguments take precedence, matching warnings.filterwarnings behavior.
+    @pytest.mark.filterwarnings("error", "ignore:api v1")
+    def test_one():
+        assert api_v1() == 1
+
 .. important::
 
     Regarding decorator order and filter precedence:
@@ -220,7 +229,7 @@ This plugin is enabled by default but can be disabled entirely in your configura
         [pytest]
         addopts = -p no:warnings
 
-Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suites handles warnings
+Or passing ``-p no:warnings`` in the command-line. This might be useful if your test suite handles warnings
 using an external system.
 
 
@@ -354,18 +363,13 @@ Some examples:
     ...
     Traceback (most recent call last):
       ...
-    Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+    Failed: Regex pattern did not match any of the 1 warnings emitted.
+     Regex: ...
+     Emitted warnings: ...UserWarning...
 
     >>> with warns(UserWarning, match=re.escape("issue with foo() func")):
     ...     warnings.warn("issue with foo() func")
     ...
-
-You can also call :func:`pytest.warns` on a function or code string:
-
-.. code-block:: python
-
-    pytest.warns(expected_warning, func, *args, **kwargs)
-    pytest.warns(expected_warning, "func(*args, **kwargs)")
 
 The function also returns a list of all raised warnings (as
 ``warnings.WarningMessage`` objects), which you can query for

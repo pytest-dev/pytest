@@ -117,7 +117,7 @@ To release a version ``MAJOR.MINOR.PATCH``, follow these steps:
 
 #. Create a branch ``release-MAJOR.MINOR.PATCH`` from the ``MAJOR.MINOR.x`` branch.
 
-   Ensure your are updated and in a clean working tree.
+   Ensure your local checkout is up to date and in a clean working tree.
 
 #. Using ``tox``, generate docs, changelog, announcements::
 

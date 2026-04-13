@@ -37,12 +37,12 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@efb823f52190ad02594531168b7a2d5790e66516
+      uses: hynek/build-and-inspect-python-package@fe0a0fb1925ca263d076ca4f2c13e93a6e92a33e
 
   build:
     needs: [package]
@@ -251,19 +251,19 @@ jobs:
     continue-on-error: ${{ matrix.xfail && true || false }}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: Packages
         path: dist
 
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python }}
         check-latest: true
@@ -277,19 +277,31 @@ jobs:
     - name: Test without coverage
       if: "! matrix.use_coverage"
       shell: bash
+      env:
+        _PYTEST_TOX_POSARGS_JUNIT: --junitxml=junit.xml
       run: tox run -e ${{ matrix.tox_env }} --installpkg `find dist/*.tar.gz`
 
     - name: Test with coverage
       if: "matrix.use_coverage"
       shell: bash
+      env:
+        _PYTEST_TOX_POSARGS_JUNIT: --junitxml=junit.xml
       run: tox run -e ${{ matrix.tox_env }}-coverage --installpkg `find dist/*.tar.gz`
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
-      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
+        verbose: true
+
+    - name: Upload JUnit report to Codecov
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+      with:
+        fail_ci_if_error: false
+        files: junit.xml
+        report_type: test_results
         verbose: true
 
   check:  # This job does nothing and is only used for the branch protection
@@ -302,6 +314,6 @@ jobs:
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@2765efec08f0fd63e83ad900f5fd75646be69ff6
+      uses: re-actors/alls-green@a638d6464689bbb24c325bb3fe9404d63a913030
       with:
         jobs: ${{ toJSON(needs) }}

@@ -142,7 +142,7 @@ The test collection would look like this:
     configfile: pytest.toml
     collected 2 items
 
-    <Dir pythoncollection.rst-213>
+    <Dir pythoncollection.rst-214>
       <Module check_myapp.py>
         <Class CheckMyApp>
           <Function simple_check>
@@ -161,7 +161,7 @@ You can check for multiple glob patterns by adding a space between the patterns:
 
 .. note::
 
-   the ``python_functions`` and ``python_classes`` options has no effect
+   the ``python_functions`` and ``python_classes`` options have no effect
    for ``unittest.TestCase`` test discovery because pytest delegates
    discovery of test case methods to unittest code.
 
@@ -205,7 +205,7 @@ You can always peek at the collection tree without running tests like this:
     configfile: pytest.toml
     collected 3 items
 
-    <Dir pythoncollection.rst-213>
+    <Dir pythoncollection.rst-214>
       <Dir CWD>
         <Module pythoncollection.py>
           <Function test_function>

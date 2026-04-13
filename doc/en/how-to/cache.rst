@@ -33,7 +33,7 @@ Other plugins may access the `config.cache`_ object to set/get
 Rerunning only failures or failures first
 -----------------------------------------------
 
-First, let's create 50 test invocation of which only 2 fail:
+First, let's create 50 test invocations of which only 2 fail:
 
 .. code-block:: python
 

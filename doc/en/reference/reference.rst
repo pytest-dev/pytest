@@ -18,7 +18,7 @@ The current pytest version, as a string::
 
     >>> import pytest
     >>> pytest.__version__
-    '7.0.0'
+    '9.0.2'
 
 .. _`hidden-param`:
 
@@ -757,6 +757,7 @@ items, delete or otherwise amend the test items:
     If this hook is implemented in ``conftest.py`` files, it always receives all collected items, not only those
     under the ``conftest.py`` where it is implemented.
 
+.. hook:: pytest_collection_finish
 .. autofunction:: pytest_collection_finish
 
 Test running (runtest) hooks
@@ -1178,77 +1179,77 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set to a non-empty value, pytest acknowledges that is running in a CI process. See also :ref:`ci-pipelines`.
+   When set to a non-empty value, pytest acknowledges that it is running in a CI process. See also :ref:`ci-pipelines`.
 
 .. envvar:: BUILD_NUMBER
 
-When set to a non-empty value, pytest acknowledges that is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
+   When set to a non-empty value, pytest acknowledges that it is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
 
 .. envvar:: PYTEST_ADDOPTS
 
-This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
-by the user, see :ref:`adding default options` for more information.
+   This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
+   by the user, see :ref:`adding default options` for more information.
 
 .. envvar:: PYTEST_VERSION
 
-This environment variable is defined at the start of the pytest session and is undefined afterwards.
-It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
+   This environment variable is defined at the start of the pytest session and is undefined afterwards.
+   It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
 
 .. envvar:: PYTEST_CURRENT_TEST
 
-This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
-processes can inspect it, see :ref:`pytest current test env` for more information.
+   This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
+   processes can inspect it, see :ref:`pytest current test env` for more information.
 
 .. envvar:: PYTEST_DEBUG
 
-When set, pytest will print tracing and debug information.
+   When set, pytest will print tracing and debug information.
 
 .. envvar:: PYTEST_DEBUG_TEMPROOT
 
-Root for temporary directories produced by fixtures like :fixture:`tmp_path`
-as discussed in :ref:`temporary directory location and retention`.
+   Root for temporary directories produced by fixtures like :fixture:`tmp_path`
+   as discussed in :ref:`temporary directory location and retention`.
 
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
-When set, disables plugin auto-loading through :std:doc:`entry point packaging
-metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
-explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
-See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
+   When set, disables plugin auto-loading through :std:doc:`entry point packaging
+   metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
+   explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
+   See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
 
-Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules that should be loaded as plugins:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    export PYTEST_PLUGINS=mymodule.plugin,xdist
+       export PYTEST_PLUGINS=mymodule.plugin,xdist
 
-See also :option:`-p`.
+   See also :option:`-p`.
 
 .. envvar:: PYTEST_THEME
 
-Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
+   Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
 
 .. envvar:: PYTEST_THEME_MODE
 
-Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
+   Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
 
 .. envvar:: PY_COLORS
 
-When set to ``1``, pytest will use color in terminal output.
-When set to ``0``, pytest will not use color.
-``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
+   When set to ``1``, pytest will use color in terminal output.
+   When set to ``0``, pytest will not use color.
+   ``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
 
 .. envvar:: NO_COLOR
 
-When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
-``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
-See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
+   When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
+   ``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
+   See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
 
 .. envvar:: FORCE_COLOR
 
-When set to a non-empty string (regardless of value), pytest will use color in terminal output.
-``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
+   When set to a non-empty string (regardless of value), pytest will use color in terminal output.
+   ``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
 
 Exceptions
 ----------
@@ -1290,7 +1291,7 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestReturnNotNoneWarning
   :show-inheritance:
 
-.. autoclass:: pytest.PytestRemovedIn9Warning
+.. autoclass:: pytest.PytestRemovedIn10Warning
   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnknownMarkWarning
@@ -1314,7 +1315,7 @@ Configuration Options
 Here is a list of builtin configuration options that may be written in a ``pytest.ini`` (or ``.pytest.ini``),
 ``pyproject.toml``, ``tox.ini``, or ``setup.cfg`` file, usually located at the root of your repository.
 
-To see each file format in details, see :ref:`config file formats`.
+To see each file format in detail, see :ref:`config file formats`.
 
 .. warning::
     Usage of ``setup.cfg`` is not recommended except for very simple use cases. ``.cfg``
@@ -1329,6 +1330,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: addopts
+   :type: ``list[str]``
 
    Add the specified ``OPTS`` to the set of command line arguments as if they
    had been specified by the user. Example: if you have this configuration file content:
@@ -1345,19 +1347,20 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         pytest --maxfail=2 -rf test_hello.py
 
-   Default is to add no options.
-
 
 .. confval:: cache_dir
+   :type: ``str``
+   :default: ``".pytest_cache"``
 
-   Sets the directory where the cache plugin's content is stored. Default directory is
-   ``.pytest_cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
-   relative or absolute path. If setting relative path, then directory is created
+   Sets the directory where the cache plugin's content is stored.
+   Directory may be relative or absolute path. If setting relative path, then directory is created
    relative to :ref:`rootdir <rootdir>`. Additionally, a path may contain environment
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
 .. confval:: collect_imported_tests
+   :type: ``bool``
+   :default: ``true``
 
    .. versionadded:: 8.4
 
@@ -1377,8 +1380,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             collect_imported_tests = false
-
-   Default: ``true``
 
    pytest traditionally collects classes/functions in the test module namespace even if they are imported from another file.
 
@@ -1401,9 +1402,11 @@ passed multiple times. The expected format is ``name=value``. For example::
    Set ``collected_imported_tests`` to ``false`` in the configuration file prevents that.
 
 .. confval:: consider_namespace_packages
+   :type: ``bool``
+   :default: ``false``
 
    Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
-   when collecting Python modules. Default is ``False``.
+   when collecting Python modules.
 
    Set to ``True`` if the package you are testing is part of a namespace package.
    Namespace packages are also supported as :option:`--pyargs` target.
@@ -1411,9 +1414,17 @@ passed multiple times. The expected format is ``name=value``. For example::
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
 
+   For best results when using `consider_namespace_packages`,
+   pytest needs to be able to import your namespace packages.
+   This is best achieved by installing the packages in your environment,
+   most commonly in `"editable" mode <https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#working-in-development-mode>`_.
+   If you can't install the packages, consider adding the namespace root paths to :confval:`pythonpath`.
+
    .. versionadded:: 8.1
 
 .. confval:: console_output_style
+   :type: ``str``
+   :default: ``"progress"``
 
    Sets the console output style while running tests:
 
@@ -1423,7 +1434,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    * ``count``: like progress, but shows progress as the number of tests completed instead of a percent.
    * ``times``: show tests duration.
 
-   The default is ``progress``, but you can fallback to ``classic`` if you prefer or
+   You can fallback to ``classic`` if you prefer or
    the new mode is causing unexpected problems:
 
    .. tab:: toml
@@ -1442,6 +1453,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+   :type: ``bool``
+   :default: ``false``
 
    .. versionadded:: 4.4
 
@@ -1469,31 +1482,30 @@ passed multiple times. The expected format is ``name=value``. For example::
    even bugs depending on the OS used and plugins currently installed,
    so use it at your own risk.
 
-   Default: ``False``.
-
    See :ref:`parametrizemark`.
 
 .. confval:: doctest_encoding
-
-
+   :type: ``str``
+   :default: ``"utf-8"``
 
    Default encoding to use to decode text files with docstrings.
    :ref:`See how pytest handles doctests <doctest>`.
 
 
 .. confval:: doctest_optionflags
+   :type: ``list[str]``
 
    One or more doctest flag names from the standard ``doctest`` module.
    :ref:`See how pytest handles doctests <doctest>`.
 
 
 .. confval:: empty_parameter_set_mark
-
-
+    :type: ``str``
+    :default: ``"skip"``
 
     Allows to pick the action for empty parametersets in parameterization
 
-    * ``skip`` skips tests with an empty parameterset (default)
+    * ``skip`` skips tests with an empty parameterset
     * ``xfail`` marks tests with an empty parameterset as xfail(run=False)
     * ``fail_at_collect`` raises an exception if parametrize collects an empty parameter set
 
@@ -1518,6 +1530,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: enable_assertion_pass_hook
+   :type: ``bool``
+   :default: ``false``
 
    Enables the :hook:`pytest_assertion_pass` hook.
    Make sure to delete any previously generated ``.pyc`` cache files.
@@ -1538,13 +1552,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: faulthandler_exit_on_timeout
+   :type: ``bool``
+   :default: ``false``
 
    Exit the pytest process after the per-test timeout is reached by passing
    `exit=True` to the :func:`faulthandler.dump_traceback_later` function. This
    is particularly useful to avoid wasting CI resources for test suites that
    are prone to putting the main Python interpreter into a deadlock state.
-
-   This option is set to 'false' by default.
 
    .. tab:: toml
 
@@ -1565,6 +1579,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: faulthandler_timeout
+   :type: ``float``
+   :default: ``0`` (disabled)
 
    Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
    fixture setup and teardown). Implemented using the :func:`faulthandler.dump_traceback_later` function,
@@ -1585,10 +1601,10 @@ passed multiple times. The expected format is ``name=value``. For example::
             faulthandler_timeout = 5
 
    For more information please refer to :ref:`faulthandler`.
-   For more information please refer to :ref:`faulthandler`.
 
 
 .. confval:: filterwarnings
+   :type: ``list[str]``
 
    Sets a list of filters and actions that should be taken for matched
    warnings. By default all warnings emitted during the test session
@@ -1621,12 +1637,14 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_duration_report
+    :type: ``str``
+    :default: ``"total"``
 
     .. versionadded:: 4.1
 
     Configures how durations are recorded into the JUnit XML report:
 
-    * ``total`` (the default): duration times reported include setup, call, and teardown times.
+    * ``total``: duration times reported include setup, call, and teardown times.
     * ``call``: duration times reported include only call times, excluding setup and teardown.
 
     .. tab:: toml
@@ -1645,6 +1663,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_family
+    :type: ``str``
+    :default: ``"xunit2"``
 
     .. versionadded:: 4.2
     .. versionchanged:: 6.1
@@ -1653,7 +1673,7 @@ passed multiple times. The expected format is ``name=value``. For example::
     Configures the format of the generated JUnit XML file. The possible options are:
 
     * ``xunit1`` (or ``legacy``): produces old style output, compatible with the xunit 1.0 format.
-    * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__, which should be more compatible with latest Jenkins versions.  **This is the default**.
+    * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__, which should be more compatible with latest Jenkins versions.
 
     .. tab:: toml
 
@@ -1671,11 +1691,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_log_passing_tests
+    :type: ``bool``
+    :default: ``true``
 
     .. versionadded:: 4.6
 
     If ``junit_logging != "no"``, configures if the captured output should be written
-    to the JUnit XML file for **passing** tests. Default is ``True``.
+    to the JUnit XML file for **passing** tests.
 
     .. tab:: toml
 
@@ -1693,6 +1715,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_logging
+    :type: ``str``
+    :default: ``"no"``
 
     .. versionadded:: 3.5
     .. versionchanged:: 5.4
@@ -1705,7 +1729,7 @@ passed multiple times. The expected format is ``name=value``. For example::
     * ``system-err``: write captured ``stderr`` contents.
     * ``out-err``: write both captured ``stdout`` and ``stderr`` contents.
     * ``all``: write captured ``logging``, ``stdout`` and ``stderr`` contents.
-    * ``no`` (the default): no captured output is written.
+    * ``no``: no captured output is written.
 
     .. tab:: toml
 
@@ -1723,6 +1747,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_suite_name
+    :type: ``str``
+    :default: ``"pytest"``
 
     To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 
@@ -1741,6 +1767,8 @@ passed multiple times. The expected format is ``name=value``. For example::
             junit_suite_name = my_suite
 
 .. confval:: log_auto_indent
+    :type: ``str``
+    :default: ``"false"``
 
     Allow selective auto-indentation of multiline log messages.
 
@@ -1749,16 +1777,16 @@ passed multiple times. The expected format is ``name=value``. For example::
     auto-indentation behavior for all logging.
 
     ``[value]`` can be:
-        * True or "On" - Dynamically auto-indent multiline log messages
-        * False or "Off" or 0 - Do not auto-indent multiline log messages (the default behavior)
-        * [positive integer] - auto-indent multiline log messages by [value] spaces
+        * "True" or "On" - Dynamically auto-indent multiline log messages
+        * "False" or "Off" or "0" - Do not auto-indent multiline log messages
+        * "[positive integer]" - auto-indent multiline log messages by [value] spaces
 
     .. tab:: toml
 
         .. code-block:: toml
 
             [pytest]
-            log_auto_indent = false
+            log_auto_indent = "false"
 
     .. tab:: ini
 
@@ -1773,9 +1801,10 @@ passed multiple times. The expected format is ``name=value``. For example::
     on the command line or in the config.
 
 .. confval:: log_cli
+    :type: ``bool``
+    :default: ``false``
 
     Enable log display during test run (also known as :ref:`"live logging" <live_logs>`).
-    The default is ``False``.
 
     .. tab:: toml
 
@@ -1792,8 +1821,8 @@ passed multiple times. The expected format is ``name=value``. For example::
             log_cli = true
 
 .. confval:: log_cli_date_format
-
-
+    :type: ``str``
+    :default: Fallback to ``log_date_format``
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for live logging.
 
@@ -1814,8 +1843,8 @@ passed multiple times. The expected format is ``name=value``. For example::
     For more information, see :ref:`live_logs`.
 
 .. confval:: log_cli_format
-
-
+    :type: ``str``
+    :default: Fallback to ``log_format``
 
     Sets a :py:mod:`logging`-compatible string used to format live logging messages.
 
@@ -1837,11 +1866,12 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: log_cli_level
-
-
+    :type: ``str``
+    :default: Fallback to ``log_level``
 
     Sets the minimum log message level that should be captured for live logging. The integer value or
-    the names of the levels can be used.
+    the names of the levels can be used. Note in TOML the integer must be quoted, as there is no support
+    for config parameters of mixed type.
 
     .. tab:: toml
 
@@ -1849,6 +1879,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_cli_level = "INFO"
+            log_cli_level = "10"
 
     .. tab:: ini
 
@@ -1856,13 +1887,14 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_cli_level = INFO
+            log_cli_level = 10
 
     For more information, see :ref:`live_logs`.
 
 
 .. confval:: log_date_format
-
-
+    :type: ``str``
+    :default: ``"%H:%M:%S"``
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for logging capture.
 
@@ -1884,8 +1916,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: log_file
-
-
+    :type: ``str``
 
     Sets a file name relative to the current working directory where log messages should be written to, in addition
     to the other logging facilities that are active.
@@ -1908,8 +1939,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: log_file_date_format
-
-
+    :type: ``str``
+    :default: Fallback to ``log_date_format``
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for the logging file.
 
@@ -1930,8 +1961,8 @@ passed multiple times. The expected format is ``name=value``. For example::
     For more information, see :ref:`logging`.
 
 .. confval:: log_file_format
-
-
+    :type: ``str``
+    :default: Fallback to ``log_format``
 
     Sets a :py:mod:`logging`-compatible string used to format logging messages redirected to the logging file.
 
@@ -1952,11 +1983,11 @@ passed multiple times. The expected format is ``name=value``. For example::
     For more information, see :ref:`logging`.
 
 .. confval:: log_file_level
+    :type: ``str``
+    :default: Fallback to ``log_level``
 
-
-
-    Sets the minimum log message level that should be captured for the logging file. The integer value or
-    the names of the levels can be used.
+    Sets the minimum log message level that should be captured for the logging file.
+    The integer value (in TOML, as a string) or the names of the levels can be used.
 
     .. tab:: toml
 
@@ -1964,6 +1995,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_file_level = "INFO"
+            log_cli_level = "10"
 
     .. tab:: ini
 
@@ -1971,14 +2003,17 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_file_level = INFO
+            log_cli_level = 10
 
     For more information, see :ref:`logging`.
 
 
 .. confval:: log_file_mode
+    :type: ``str``
+    :default: ``"w"``
 
     Sets the mode that the logging file is opened with.
-    The options are ``"w"`` to recreate the file (the default) or ``"a"`` to append to the file.
+    The options are ``"w"`` to recreate the file or ``"a"`` to append to the file.
 
     .. tab:: toml
 
@@ -1998,8 +2033,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: log_format
-
-
+    :type: ``str``
+    :default: ``%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s``
 
     Sets a :py:mod:`logging`-compatible string used to format captured logging messages.
 
@@ -2021,11 +2056,12 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: log_level
+    :type: ``str``
 
-
-
-    Sets the minimum log message level that should be captured for logging capture. The integer value or
-    the names of the levels can be used.
+    Sets the minimum log message level that should be captured for logging capture.
+    Not set by default, so it depends on the root/parent log handler's effective level,
+    where it is ``"WARNING"`` by default.
+    The integer value (in TOML, as a string) or the names of the levels can be used.
 
     .. tab:: toml
 
@@ -2033,6 +2069,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_level = "INFO"
+            log_cli_level = "10"
 
     .. tab:: ini
 
@@ -2040,11 +2077,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
             [pytest]
             log_level = INFO
+            log_cli_level = 10
 
     For more information, see :ref:`logging`.
 
 
 .. confval:: markers
+    :type: ``list[str]``
 
     When the :confval:`strict_markers` configuration option is set,
     only known markers - defined in code by core pytest or some plugin - are allowed.
@@ -2073,6 +2112,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: minversion
+   :type: ``str``
 
    Specifies a minimal pytest version required for running tests.
 
@@ -2092,6 +2132,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: norecursedirs
+   :type: ``list[str]``
+   :default: ``["*.egg", ".*", "_darcs", "build", "CVS", "dist", "node_modules", "venv", "{arch}"]``
 
    Set the directory basename patterns to avoid when recursing
    for test discovery.  The individual (fnmatch-style) patterns are
@@ -2103,8 +2145,6 @@ passed multiple times. The expected format is ``name=value``. For example::
         [seq]   matches any character in seq
         [!seq]  matches any char not in seq
 
-   Default patterns are ``'*.egg'``, ``'.*'``, ``'_darcs'``, ``'build'``,
-   ``'CVS'``, ``'dist'``, ``'node_modules'``, ``'venv'``, ``'{arch}'``.
    Setting a ``norecursedirs`` replaces the default.  Here is an example of
    how to avoid certain directories:
 
@@ -2136,6 +2176,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: python_classes
+   :type: ``list[str]``
+   :default: ``["Test"]``
 
    One or more name prefixes or glob-style patterns determining which classes
    are considered for test collection. Search for multiple glob patterns by
@@ -2163,6 +2205,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: python_files
+   :type: ``list[str]``
+   :default: ``["test_*.py", "*_test.py"]``
 
    One or more Glob-style file patterns determining which python files
    are considered as test modules. Search for multiple glob patterns by
@@ -2192,11 +2236,11 @@ passed multiple times. The expected format is ``name=value``. For example::
                 check_*.py
                 example_*.py
 
-   By default, files matching ``test_*.py`` and ``*_test.py`` will be considered
-   test modules.
 
 
 .. confval:: python_functions
+   :type: ``list[str]``
+   :default: ``["test"]``
 
    One or more name prefixes or glob-patterns determining which test functions
    and methods are considered tests. Search for multiple glob patterns by
@@ -2226,6 +2270,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: pythonpath
+   :type: ``list[str]``
 
    Sets list of directories that should be added to the python search path.
    Directories will be added to the head of :data:`sys.path`.
@@ -2250,6 +2295,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: required_plugins
+   :type: ``list[str]``
 
    A space separated list of plugins that must be present for pytest to run.
    Plugins can be listed with or without version specifiers directly following
@@ -2272,6 +2318,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: strict
+    :type: ``bool``
+    :default: ``false``
 
     If set to ``true``, enable "strict mode", which enables the following options:
 
@@ -2307,6 +2355,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: strict_config
+    :type: ``bool``
+    :default: ``false``
 
     If set to ``true``, any warnings encountered while parsing the ``pytest`` section of the configuration file will raise errors.
 
@@ -2328,6 +2378,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: strict_markers
+    :type: ``bool``
+    :default: ``false``
 
     If set to ``true``, markers not registered in the ``markers`` section of the configuration file will raise errors.
 
@@ -2349,10 +2401,12 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: strict_parametrization_ids
+    :type: ``bool``
+    :default: ``false``
 
     If set to ``true``, pytest emits an error if it detects non-unique parameter set IDs.
 
-    If not set (the default), pytest automatically handles this by adding `0`, `1`, ... to duplicate IDs,
+    If not set, pytest automatically handles this by adding `0`, `1`, ... to duplicate IDs,
     making them unique.
 
     .. tab:: toml
@@ -2399,6 +2453,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: strict_xfail
+    :type: ``bool``
+    :default: ``false``
 
     If set to ``true``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
     test suite.
@@ -2426,6 +2482,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: testpaths
+   :type: ``list[str]``
 
    Sets list of directories that should be searched for tests when
    no specific directories, files or test ids are given in the command line when
@@ -2463,8 +2520,10 @@ passed multiple times. The expected format is ``name=value``. For example::
        pytest testing doc
 
 .. confval:: tmp_path_retention_count
+   :type: ``str``
+   :default: ``"3"``
 
-   How many sessions should we keep the `tmp_path` directories,
+   How many sessions should pytest keep the `tmp_path` directories,
    according to :confval:`tmp_path_retention_policy`.
 
    .. tab:: toml
@@ -2481,12 +2540,10 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             tmp_path_retention_count = 3
 
-   Default: ``3``
-
 
 .. confval:: tmp_path_retention_policy
-
-
+   :type: ``str``
+   :default: ``"all"``
 
    Controls which directories created by the `tmp_path` fixture are kept around,
    based on test outcome.
@@ -2509,10 +2566,10 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             tmp_path_retention_policy = all
 
-   Default: ``all``
-
 
 .. confval:: truncation_limit_chars
+   :type: ``int``
+   :default: ``640``
 
    Controls maximum number of characters to truncate assertion message contents.
 
@@ -2534,16 +2591,16 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
 
-   Default: ``640``
-
    .. note::
 
         If pytest detects it is :ref:`running on CI <ci-pipelines>`, truncation is disabled automatically.
 
 
 .. confval:: truncation_limit_lines
+   :type: ``int``
+   :default: ``8``
 
-   Controls maximum number of linesto truncate assertion message contents.
+   Controls maximum number of lines to truncate assertion message contents.
 
    Setting value to ``0`` disables the lines limit for truncation.
 
@@ -2563,14 +2620,13 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
 
-   Default: ``8``
-
    .. note::
 
         If pytest detects it is :ref:`running on CI <ci-pipelines>`, truncation is disabled automatically.
 
 
 .. confval:: usefixtures
+    :type: ``list[str]``
 
     List of fixtures that will be applied to all test functions; this is semantically the same to apply
     the ``@pytest.mark.usefixtures`` marker to all test functions.
@@ -2593,6 +2649,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: verbosity_assertions
+    :type: ``str``
+    :default: ``"auto"``
 
     Set a verbosity level specifically for assertion related output, overriding the application wide level.
 
@@ -2610,11 +2668,12 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             verbosity_assertions = 2
 
-    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
-    ``"auto"`` can be used to explicitly use the global verbosity level.
+    A special value of ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
 .. confval:: verbosity_subtests
+    :type: ``str``
+    :default: ``"auto"``
 
     Set the verbosity level specifically for **passed** subtests.
 
@@ -2635,13 +2694,14 @@ passed multiple times. The expected format is ``name=value``. For example::
     A value of ``1`` or higher will show output for **passed** subtests (**failed** subtests are always reported).
     Passed subtests output can be suppressed with the value ``0``, which overwrites the :option:`-v` command-line option.
 
-    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
-    ``"auto"`` can be used to explicitly use the global verbosity level.
+    A special value of ``"auto"`` can be used to explicitly use the global verbosity level.
 
     See also: :ref:`subtests`.
 
 
 .. confval:: verbosity_test_cases
+    :type: ``str``
+    :default: ``"auto"``
 
     Set a verbosity level specifically for test case execution related output, overriding the application wide level.
 
@@ -2659,8 +2719,7 @@ passed multiple times. The expected format is ``name=value``. For example::
             [pytest]
             verbosity_test_cases = 2
 
-    If not set, defaults to application wide verbosity level (via the :option:`-v` command-line option). A special value of
-    ``"auto"`` can be used to explicitly use the global verbosity level.
+    A special value of ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
 .. _`command-line-flags`:
@@ -3179,7 +3238,7 @@ See :ref:`logging` for a guide on using these flags.
 
 .. option:: --log-file=PATH
 
-    Path to a file when logging will be written to.
+    Path to a file logging will be written to.
 
 .. option:: --log-file-mode
 

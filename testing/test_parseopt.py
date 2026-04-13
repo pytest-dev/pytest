@@ -24,7 +24,8 @@ def parser() -> parseopt.Parser:
 class TestParser:
     def test_no_help_by_default(self) -> None:
         parser = parseopt.Parser(usage="xyz", _ispytest=True)
-        pytest.raises(UsageError, lambda: parser.parse(["-h"]))
+        with pytest.raises(UsageError):
+            parser.parse(["-h"])
 
     def test_custom_prog(self, parser: parseopt.Parser) -> None:
         """Custom prog can be set for `argparse.ArgumentParser`."""

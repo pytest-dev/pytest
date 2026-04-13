@@ -13,7 +13,7 @@ Thanks to all who contributed to this release, among them:
 
 * Anthony Sottile
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Hynek Schlawack
 * Kevin J. Foley
 * tadashigaki

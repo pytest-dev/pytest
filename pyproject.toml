@@ -16,13 +16,13 @@ keywords = [
 license = "MIT"
 license-files = [ "LICENSE" ]
 authors = [
-    { name = "Holger Krekel" },
-    { name = "Bruno Oliveira" },
-    { name = "Ronny Pfannschmidt" },
-    { name = "Floris Bruynooghe" },
     { name = "Brianna Laugher" },
-    { name = "Florian Bruhin" },
+    { name = "Bruno Oliveira" },
+    { name = "Floris Bruynooghe" },
+    { name = "Freya Bruhin" },
+    { name = "Holger Krekel" },
     { name = "Others (See AUTHORS)" },
+    { name = "Ronny Pfannschmidt" },
 ]
 requires-python = ">=3.10"
 classifiers = [
@@ -161,6 +161,7 @@ lint.ignore = [
     "PLW2901", # for loop variable overwritten by assignment target
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF061", # Use context-manager form of `pytest.raises()`
 ]
 lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
     "B",
@@ -169,6 +170,8 @@ lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
 lint.per-file-ignores."src/_pytest/_version.py" = [
     "I001",
 ]
+# 'Unnecessary membership test on empty collection', always voluntary in tests
+lint.per-file-ignores."testing/**/*.py" = [ "RUF060" ]
 # can't be disabled on a line-by-line basis in file
 lint.per-file-ignores."testing/code/test_source.py" = [
     "F841",
@@ -217,31 +220,30 @@ disable = [
     "comparison-with-callable",
     "comparison-with-itself",                 # PLR0124 from ruff
     "condition-evals-to-constant",
-    "consider-alternative-union-syntax",
     "confusing-consecutive-elif",
+    "consider-alternative-union-syntax",
+    "consider-ternary-expression",
     "consider-using-assignment-expr",
     "consider-using-dict-items",
-    "consider-using-from-import",
+    "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
     "consider-using-f-string",
     "consider-using-in",
     "consider-using-namedtuple-or-dataclass",
     "consider-using-ternary",
     "consider-using-tuple",
     "consider-using-with",
-    "consider-using-from-import",             # not activated by default, PLR0402 disabled in ruff
-    "consider-ternary-expression",
     "cyclic-import",
-    "differing-param-doc",
-    "docstring-first-line-empty",
     "deprecated-argument",
     "deprecated-attribute",
     "deprecated-class",
+    "differing-param-doc",
     "disallowed-name",                        # foo / bar are used often in tests
+    "docstring-first-line-empty",
     "duplicate-code",
     "else-if-used",                           # not activated by default, PLR5501 disabled in ruff
     "empty-comment",                          # not activated by default, PLR2044 disabled in ruff
-    "eval-used",
     "eq-without-hash",                        # PLW1641 disabled in ruff
+    "eval-used",
     "exec-used",
     "expression-not-assigned",
     "fixme",
@@ -258,13 +260,13 @@ disable = [
     "line-too-long",
     "magic-value-comparison",                 # not activated by default, PLR2004 disabled in ruff
     "method-hidden",
+    "misplaced-bare-raise",                   # PLE0704 from ruff
+    "misplaced-comparison-constant",
     "missing-docstring",
     "missing-param-doc",
     "missing-raises-doc",
     "missing-timeout",
     "missing-type-doc",
-    "misplaced-bare-raise",                   # PLE0704 from ruff
-    "misplaced-comparison-constant",
     "multiple-statements",                    # multiple-statements-on-one-line-colon (E701) from ruff
     "no-else-break",
     "no-else-continue",
@@ -329,10 +331,10 @@ disable = [
     "use-dict-literal",
     "use-implicit-booleaness-not-comparison",
     "use-implicit-booleaness-not-len",
-    "use-set-for-membership",
     "useless-else-on-loop",                   # PLC0414 disabled in ruff
     "useless-import-alias",
     "useless-return",
+    "use-set-for-membership",
     "using-constant-test",
     "while-used",
     "wrong-import-order",                     # handled by isort / ruff
@@ -432,24 +434,6 @@ markers = [
     "keep_ci_var",
 ]
 
-[tool.coverage.run]
-include = [
-    'src/*',
-    'testing/*',
-    '*/lib/python*/site-packages/_pytest/*',
-    '*/lib/python*/site-packages/pytest.py',
-    '*/pypy*/site-packages/_pytest/*',
-    '*/pypy*/site-packages/pytest.py',
-    '*\Lib\site-packages\_pytest\*',
-    '*\Lib\site-packages\pytest.py',
-]
-parallel = true
-branch = true
-patch = [ "subprocess" ]
-# The sysmon core (default since Python 3.14) is much slower.
-# Perhaps: https://github.com/coveragepy/coveragepy/issues/2082
-core = "ctrace"
-
 [tool.coverage.paths]
 source = [
     'src/',
@@ -469,10 +453,29 @@ exclude_lines = [
     '^\s*case unreachable:',
     '^\s*assert_never\(',
     '^\s*if TYPE_CHECKING:',
+    '^\s*(el)?if TYPE_CHECKING:',
     '^\s*@overload( |$)',
     '^\s*def .+: \.\.\.$',
     '^\s*@pytest\.mark\.xfail',
 ]
+
+[tool.coverage.run]
+include = [
+    'src/*',
+    'testing/*',
+    '*/lib/python*/site-packages/_pytest/*',
+    '*/lib/python*/site-packages/pytest.py',
+    '*/pypy*/site-packages/_pytest/*',
+    '*/pypy*/site-packages/pytest.py',
+    '*\Lib\site-packages\_pytest\*',
+    '*\Lib\site-packages\pytest.py',
+]
+parallel = true
+branch = true
+patch = [ "subprocess" ]
+# The sysmon core (default since Python 3.14) is much slower.
+# Perhaps: https://github.com/coveragepy/coveragepy/issues/2082
+core = "ctrace"
 
 [tool.towncrier]
 package = "pytest"

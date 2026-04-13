@@ -143,12 +143,17 @@ which are better explained in this excellent `blog post`_ by Ionel Cristian Măr
 
 .. note::
 
-    If you do not use an editable install and not use the ``src`` layout (``mypkg`` directly in the root
+    If you do not use an editable install and do not use the ``src`` layout (``mypkg`` directly in the root
     directory) you can rely on the fact that Python by default puts the current directory in ``sys.path`` to
     import your package and run ``python -m pytest`` to execute the tests against the local copy directly.
 
     See :ref:`pytest vs python -m pytest` for more information about the difference between calling ``pytest`` and
     ``python -m pytest``.
+
+.. seealso::
+
+    :doc:`packaging:discussions/src-layout-vs-flat-layout`
+        The Python Packaging User Guide discusses the trade-offs between the ``src`` layout and ``flat`` layout.
 
 Tests as part of application code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -240,7 +245,7 @@ This results in a drawback compared to the import mode ``importlib``:
 your test files must have **unique names**.
 
 If you need to have test modules with the same name,
-as a workaround you might add ``__init__.py`` files to your ``tests`` folder and subfolders,
+as a workaround you might add ``__init__.py`` files to your ``tests`` directory and subdirectories,
 changing them to packages:
 
 .. code-block:: text
@@ -376,7 +381,7 @@ If you don't want to automatically pick up new options, you can enable options i
         strict_parametrization_ids = true
         strict_xfail = true
 
-If you want to use strict mode but having trouble with a specific option, you can turn it off individually:
+If you want to use strict mode but are having trouble with a specific option, you can turn it off individually:
 
 .. tab:: toml
 

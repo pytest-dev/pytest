@@ -5,6 +5,7 @@ from collections.abc import Callable
 import dataclasses
 import os
 from pathlib import Path
+import shutil
 import stat
 import sys
 from typing import cast
@@ -450,10 +451,10 @@ class TestNumberedDir:
         self._do_cleanup(tmp_path)
 
     def test_removal_accepts_lock(self, tmp_path):
-        folder = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
-        create_cleanup_lock(folder)
-        maybe_delete_a_numbered_dir(folder)
-        assert folder.is_dir()
+        dir = make_numbered_dir(root=tmp_path, prefix=self.PREFIX)
+        create_cleanup_lock(dir)
+        maybe_delete_a_numbered_dir(dir)
+        assert dir.is_dir()
 
 
 class TestRmRf:
@@ -619,3 +620,33 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
 
     # After - fixed.
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
+
+
+@pytest.mark.skipif(
+    not hasattr(os, "getuid") or os.stat not in os.supports_follow_symlinks,
+    reason="checks unix permissions and symlinks",
+)
+def test_tmp_path_factory_doesnt_follow_symlinks(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Verify that if a /tmp/pytest-of-foo directory is a symbolic link,
+    it is rejected (#13669, CVE-2025-71176)."""
+    attacker_controlled = tmp_path / "attacker_controlled"
+    attacker_controlled.mkdir()
+
+    # Use the test's tmp_path as the system temproot (/tmp).
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+
+    # First just get the pytest-of-user path.
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    pytest_of_user = tmp_factory.getbasetemp().parent
+    # Just for safety in the test, before we nuke it.
+    assert "pytest-of-" in str(pytest_of_user)
+    shutil.rmtree(pytest_of_user)
+
+    pytest_of_user.symlink_to(attacker_controlled)
+
+    # This now tries to use the directory when it's a symlink.
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    with pytest.raises(OSError, match=r"temporary directory .* is a symbolic link"):
+        tmp_factory.getbasetemp()

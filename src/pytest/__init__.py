@@ -26,7 +26,7 @@ from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureLookupError
 from _pytest.fixtures import FixtureRequest
-from _pytest.fixtures import yield_fixture
+from _pytest.fixtures import yield_fixture  # type: ignore[deprecated]
 from _pytest.freeze_support import freeze_includes
 from _pytest.legacypath import TempdirFactory
 from _pytest.legacypath import Testdir
@@ -69,6 +69,7 @@ from _pytest.recwarn import warns
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
+from _pytest.scope import ScopeName
 from _pytest.stash import Stash
 from _pytest.stash import StashKey
 from _pytest.subtests import SubtestReport
@@ -83,7 +84,6 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 from _pytest.warning_types import PytestExperimentalApiWarning
 from _pytest.warning_types import PytestFDWarning
-from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestRemovedIn10Warning
 from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
@@ -135,7 +135,6 @@ __all__ = [
     "PytestExperimentalApiWarning",
     "PytestFDWarning",
     "PytestPluginManager",
-    "PytestRemovedIn9Warning",
     "PytestRemovedIn10Warning",
     "PytestReturnNotNoneWarning",
     "PytestUnhandledThreadExceptionWarning",
@@ -147,6 +146,7 @@ __all__ = [
     "RaisesGroup",
     "RecordedHookCall",
     "RunResult",
+    "ScopeName",
     "Session",
     "Stash",
     "StashKey",

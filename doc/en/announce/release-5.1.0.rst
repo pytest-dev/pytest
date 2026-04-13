@@ -27,7 +27,7 @@ Thanks to all who contributed to this release, among them:
 * Bruno Oliveira
 * Daniel Hahler
 * David Röthlisberger
-* Florian Bruhin
+* Freya Bruhin
 * Ilya Stepin
 * Jon Dufresne
 * Kaiqi
