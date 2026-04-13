@@ -205,4 +205,11 @@ def pytest_sessionfinish(session: Session) -> None:
 def pytest_assertrepr_compare(
     config: Config, op: str, left: Any, right: Any
 ) -> list[str] | None:
-    return util.assertrepr_compare(config=config, op=op, left=left, right=right)
+    highlighter = config.get_terminal_writer()._highlight
+    return util.assertrepr_compare(
+        op=op,
+        left=left,
+        right=right,
+        verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
+        highlighter=highlighter,
+    )
