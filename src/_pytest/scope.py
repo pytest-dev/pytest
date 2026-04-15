@@ -64,7 +64,7 @@ class Scope(Enum):
     ) -> Scope:
         """
         Given a scope name from the user, return the equivalent Scope enum. Should be used
-        whenever we want to convert a user provided scope name to its enum object.
+        whenever we want to convert a user-provided scope name to its enum object.
 
         If the scope name is invalid, construct a user friendly message and call pytest.fail.
         """
