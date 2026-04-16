@@ -1,0 +1,1 @@
+Added :option:`--max-warnings` command-line option and :confval:`max_warnings` configuration option to fail the test run when the number of warnings exceeds a given threshold -- by :user:`miketheman`.

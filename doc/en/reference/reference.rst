@@ -1636,6 +1636,34 @@ passed multiple times. The expected format is ``name=value``. For example::
    into errors. For more information please refer to :ref:`warnings`.
 
 
+.. confval:: max_warnings
+   :type: ``int``
+
+   .. versionadded:: 9.1
+
+   Maximum number of warnings allowed before the test run is considered a failure.
+   When all tests pass, but the total number of warnings exceeds this value, pytest exits with
+   :class:`pytest.ExitCode` ``MAX_WARNINGS_ERROR`` (code ``6``).
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+            [pytest]
+            max_warnings = 10
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            max_warnings = 10
+
+   Note that :confval:`filtered warnings <filterwarnings>` do not count toward this maximum total.
+
+   Can also be set via the :option:`--max-warnings` command-line option.
+
+
 .. confval:: junit_duration_report
     :type: ``str``
     :default: ``"total"``
@@ -3127,6 +3155,12 @@ Warnings
     Set which warnings to report, see ``-W`` option of Python itself.
     Can be specified multiple times.
 
+.. option:: --max-warnings=NUM
+
+    Exit with :class:`pytest.ExitCode` ``MAX_WARNINGS_ERROR`` (code ``6``) if all the tests pass, but the number
+    of warnings exceeds the given threshold. By default there is no limit.
+    Can also be set via the :confval:`max_warnings` configuration option.
+
 Doctest
 ~~~~~~~
 
@@ -3415,6 +3449,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       -W, --pythonwarnings PYTHONWARNINGS
                             Set which warnings to report, see -W option of
                             Python itself
+      --max-warnings=num    Exit with error if the number of warnings exceeds
+                            this threshold
 
     collection:
       --collect-only, --co  Only collect tests, don't execute them
@@ -3537,6 +3573,9 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
+      max_warnings (string):
+                            Maximum number of warnings allowed before failing
+                            the test run
       norecursedirs (args): Directory patterns to avoid for recursion
       testpaths (args):     Directories to search for tests when no files or
                             directories are given on the command line

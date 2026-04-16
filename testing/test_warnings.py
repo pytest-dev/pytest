@@ -5,6 +5,7 @@ import os
 import sys
 import warnings
 
+from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.pytester import Pytester
 import pytest
@@ -885,3 +886,155 @@ def test_resource_warning(pytester: Pytester, monkeypatch: pytest.MonkeyPatch) -
         else []
     )
     result.stdout.fnmatch_lines([*expected_extra, "*1 passed*"])
+
+
+class TestMaxWarnings:
+    """Tests for the --max-warnings feature."""
+
+    PYFILE = """
+        import warnings
+        def test_one():
+            warnings.warn(UserWarning("warning one"))
+        def test_two():
+            warnings.warn(UserWarning("warning two"))
+    """
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_not_set(self, pytester: Pytester) -> None:
+        """Without --max-warnings, warnings don't affect exit code."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, warnings=2)
+        assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_not_exceeded(self, pytester: Pytester) -> None:
+        """When warning count is below the threshold, exit code is OK."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "10")
+        result.assert_outcomes(passed=2, warnings=2)
+        assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_exceeded(self, pytester: Pytester) -> None:
+        """When warning count exceeds threshold, exit code is MAX_WARNINGS_ERROR."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "1")
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_equal_to_count(self, pytester: Pytester) -> None:
+        """When warning count equals threshold exactly, exit code is OK."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "2")
+        result.assert_outcomes(passed=2, warnings=2)
+        assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_zero(self, pytester: Pytester) -> None:
+        """--max-warnings 0 means no warnings are allowed."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "0")
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_exceeded_message(self, pytester: Pytester) -> None:
+        """Verify the output message when max warnings is exceeded."""
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest("--max-warnings", "1")
+        result.stdout.fnmatch_lines(
+            ["*Tests pass, but maximum allowed warnings exceeded: 2 > 1*"]
+        )
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_ini_option(self, pytester: Pytester) -> None:
+        """max_warnings can be set via INI configuration."""
+        pytester.makeini(
+            """
+            [pytest]
+            max_warnings = 1
+            """
+        )
+        pytester.makepyfile(self.PYFILE)
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.MAX_WARNINGS_ERROR
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_with_test_failure(self, pytester: Pytester) -> None:
+        """When tests fail AND warnings exceed max, TESTS_FAILED takes priority."""
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_fail():
+                warnings.warn(UserWarning("a warning"))
+                assert False
+            """
+        )
+        result = pytester.runpytest("--max-warnings", "0")
+        assert result.ret == ExitCode.TESTS_FAILED
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_with_filterwarnings_ignore(self, pytester: Pytester) -> None:
+        """Filtered (ignored) warnings don't count toward max_warnings."""
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_one():
+                warnings.warn(UserWarning("counted"))
+                warnings.warn(RuntimeWarning("ignored"))
+            """
+        )
+        result = pytester.runpytest(
+            "--max-warnings",
+            "1",
+            "-W",
+            "ignore::RuntimeWarning",
+        )
+        result.assert_outcomes(passed=1, warnings=1)
+        assert result.ret == ExitCode.OK
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_with_filterwarnings_error(self, pytester: Pytester) -> None:
+        """Warnings turned into errors via filterwarnings don't count as warnings."""
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_one():
+                warnings.warn(UserWarning("still a warning"))
+            def test_two():
+                warnings.warn(RuntimeWarning("becomes an error"))
+            """
+        )
+        result = pytester.runpytest(
+            "--max-warnings",
+            "0",
+            "-W",
+            "error::RuntimeWarning",
+        )
+        # The RuntimeWarning becomes a test error, so TESTS_FAILED takes priority.
+        assert result.ret == ExitCode.TESTS_FAILED
+
+    @pytest.mark.filterwarnings("default::UserWarning")
+    def test_max_warnings_with_filterwarnings_ini_ignore(
+        self, pytester: Pytester
+    ) -> None:
+        """Warnings ignored via ini filterwarnings don't count toward max_warnings."""
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                ignore::RuntimeWarning
+            max_warnings = 1
+            """
+        )
+        pytester.makepyfile(
+            """
+            import warnings
+            def test_one():
+                warnings.warn(UserWarning("counted"))
+                warnings.warn(RuntimeWarning("ignored by ini"))
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, warnings=1)
+        assert result.ret == ExitCode.OK

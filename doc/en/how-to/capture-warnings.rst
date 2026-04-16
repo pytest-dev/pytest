@@ -204,6 +204,46 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
 
 .. _`pytest-warnings`: https://github.com/fschulze/pytest-warnings
 
+Setting a maximum number of warnings
+-------------------------------------
+
+.. versionadded:: 9.1
+
+You can use the :option:`--max-warnings` command-line option to fail the test run
+if the total number of warnings exceeds a given threshold:
+
+.. code-block:: bash
+
+    pytest --max-warnings=10
+
+If all tests pass but the number of warnings exceeds the threshold, pytest will exit with code ``6``
+(:class:`~pytest.ExitCode` ``MAX_WARNINGS_ERROR``). This is useful for gradually
+ratcheting down warnings in a codebase.
+
+Note that :confval:`filtered warnings <filterwarnings>` do not count toward this maximum total.
+
+The threshold can also be set in the configuration file using :confval:`max_warnings`:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        max_warnings = 10
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        max_warnings = 10
+
+.. note::
+
+    If tests fail, the exit code will be ``1`` (:class:`~pytest.ExitCode` ``TESTS_FAILED``)
+    regardless of the warning count. ``MAX_WARNINGS_ERROR`` is only reported when all tests pass
+    but the warning threshold is exceeded.
+
 Disabling warnings summary
 --------------------------
 
