@@ -93,7 +93,8 @@ messages.  This is supported by the ``caplog`` fixture:
 
 By default the level is set on the root logger,
 however as a convenience it is also possible to set the log level of any
-logger:
+logger.  The level set is a threshold level: logging messages which are less
+severe than this level will not be captured.
 
 .. code-block:: python
 
