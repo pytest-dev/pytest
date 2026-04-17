@@ -179,9 +179,7 @@ class TestRaises:
         result.stdout.no_fnmatch_line("*File*")
         result.stdout.no_fnmatch_line("*line*")
 
-    def test_raises_match_failure_uses_direct_cause(
-        self, pytester: Pytester
-    ) -> None:
+    def test_raises_match_failure_uses_direct_cause(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
             import pytest
