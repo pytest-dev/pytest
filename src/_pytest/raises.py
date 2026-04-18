@@ -345,9 +345,20 @@ def _check_raw_type(
 def is_fully_escaped(s: str) -> bool:
     # we know we won't compile with re.VERBOSE, so whitespace doesn't need to be escaped
     metacharacters = "{}()+.*?^$[]|"
-    return not any(
-        c in metacharacters and (i == 0 or s[i - 1] != "\\") for (i, c) in enumerate(s)
-    )
+    for i, c in enumerate(s):
+        if c in metacharacters:
+            # Count consecutive backslashes preceding this metacharacter.
+            # An odd number of backslashes means the metacharacter is escaped
+            # (the last backslash does the escaping); an even number means
+            # it is not escaped (backslashes escape each other in pairs).
+            n_backslashes = 0
+            j = i - 1
+            while j >= 0 and s[j] == "\\":
+                n_backslashes += 1
+                j -= 1
+            if n_backslashes % 2 == 0:
+                return False
+    return True
 
 
 def unescape(s: str) -> str:

@@ -1,0 +1,1 @@
+Fixed ``is_fully_escaped`` not handling consecutive backslashes correctly: an escaped backslash before a metacharacter (e.g. ``\\\\.``) was incorrectly treated as escaping the metacharacter itself, causing ``pytest.raises(match=...)`` to skip the regex diff display when it should have shown one.
