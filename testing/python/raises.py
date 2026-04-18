@@ -456,5 +456,7 @@ class TestRaises:
         # r"\\\." -> three backslashes: pair escapes pair, last escapes dot -> fully escaped
         assert is_fully_escaped(r"\\\.")
         # Same idea with pipe metachar
+        # "\\\\|" is the string \\| (2 backslashes + pipe): even count, pipe is unescaped
         assert not is_fully_escaped("\\\\|")
-        assert is_fully_escaped(r"\\\\|")
+        # r"\\\\|" is the string \\\\| (4 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped(r"\\\\|")
