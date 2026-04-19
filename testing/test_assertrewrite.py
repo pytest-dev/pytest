@@ -1362,6 +1362,39 @@ class TestAssertionRewriteHookDetails:
 
         assert _read_pyc(source, pyc) is None  # no error
 
+    def test_read_pyc_handles_context_manager_oserror(self, tmp_path: Path) -> None:
+        from _pytest.assertion.rewrite import _read_pyc
+
+        source = tmp_path / "source.py"
+        pyc = Path(str(source) + "c")
+        source.write_text("def test(): pass", encoding="utf-8")
+        py_compile.compile(str(source), str(pyc))
+
+        real_open = open
+
+        class FailingContextManager:
+            def __init__(self, fp) -> None:
+                self.fp = fp
+
+            def __enter__(self):
+                return self.fp
+
+            def __exit__(self, exc_type, exc, tb) -> None:
+                self.fp.close()
+                raise OSError(errno.EIO, "Input/output error")
+
+            def __getattr__(self, name):
+                return getattr(self.fp, name)
+
+        def mock_open(file, mode="r", *args, **kwargs):
+            fp = real_open(file, mode, *args, **kwargs)
+            if Path(file) == pyc and mode == "rb":
+                return FailingContextManager(fp)
+            return fp
+
+        with mock.patch("builtins.open", mock_open):
+            assert _read_pyc(source, pyc) is None
+
     def test_read_pyc_success(self, tmp_path: Path, pytester: Pytester) -> None:
         """
         Ensure that the _rewrite_test() -> _write_pyc() produces a pyc file
