@@ -1175,8 +1175,9 @@ class Config:
         terminalreporter: TerminalReporter | None = self.pluginmanager.get_plugin(
             "terminalreporter"
         )
-        assert terminalreporter is not None
-        return terminalreporter._tw
+        if terminalreporter is not None:
+            return terminalreporter._tw
+        return create_terminal_writer(self)
 
     def pytest_cmdline_parse(
         self, pluginmanager: PytestPluginManager, args: list[str]

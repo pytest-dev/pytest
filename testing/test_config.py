@@ -13,6 +13,7 @@ import textwrap
 from typing import Any
 
 import _pytest._code
+from _pytest._io import TerminalWriter
 from _pytest.config import _get_plugin_specs_as_list
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool
@@ -1717,6 +1718,64 @@ def test_plugin_loading_order(pytester: Pytester) -> None:
     pytester.syspathinsert()
     result = pytester.runpytest("-p", "myplugin", str(p1))
     assert result.ret == 0
+
+
+def test_get_terminal_writer_falls_back_without_terminalreporter(
+    pytester: Pytester,
+) -> None:
+    config = pytester.parseconfigure("--color=no", "--code-highlight=no")
+    terminalreporter = config.pluginmanager.get_plugin("terminalreporter")
+    assert terminalreporter is not None
+
+    config.pluginmanager.unregister(terminalreporter)
+
+    writer = config.get_terminal_writer()
+    assert isinstance(writer, TerminalWriter)
+    assert writer.hasmarkup is False
+    assert writer.code_highlight is False
+
+
+def test_assertion_rewriting_works_without_terminalreporter(
+    pytester: Pytester,
+) -> None:
+    pytester.makeconftest(
+        """
+        import pathlib
+        import pytest
+
+        @pytest.hookimpl(trylast=True)
+        def pytest_configure(config):
+            reporter = config.pluginmanager.get_plugin("terminalreporter")
+            assert reporter is not None
+            config.pluginmanager.unregister(reporter)
+
+        def pytest_runtest_logreport(report):
+            if report.when == "call" and report.failed:
+                pathlib.Path("report.txt").write_text(
+                    str(report.longrepr), encoding="utf-8"
+                )
+        """
+    )
+    pytester.makepyfile(
+        helper="""
+        def run():
+            assert "actual" == "expected"
+        """,
+        test_foo="""
+        from helper import run
+
+        def test_foo():
+            run()
+        """,
+    )
+
+    result = pytester.runpytest()
+    assert result.ret == ExitCode.TESTS_FAILED
+
+    report = pytester.path.joinpath("report.txt").read_text(encoding="utf-8")
+    assert '"actual" == "expected"' in report
+    assert "helper.py:2: AssertionError" in report
+    assert "terminalreporter is not None" not in report
 
 
 def test_invalid_options_show_extra_information(pytester: Pytester) -> None:

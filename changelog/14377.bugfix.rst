@@ -1,0 +1,1 @@
+Fixed :meth:`Config.get_terminal_writer() <pytest.Config.get_terminal_writer>` to fall back gracefully when the ``terminalreporter`` plugin has been unregistered, avoiding an internal ``AssertionError`` in plugin setups that still need assertion rendering.
