@@ -702,11 +702,17 @@ class MultiCapture(Generic[AnyStr]):
         """Whether actively capturing -- not suspended or stopped."""
         return self._state == "started"
 
+    def _empty_buffer(self) -> AnyStr:
+        for capture in (self.out, self.err, self.in_):
+            if capture is not None:
+                return capture.EMPTY_BUFFER
+        return cast(AnyStr, "")
+
     def readouterr(self) -> CaptureResult[AnyStr]:
-        out = self.out.snap() if self.out else ""
-        err = self.err.snap() if self.err else ""
-        # TODO: This type error is real, need to fix.
-        return CaptureResult(out, err)  # type: ignore[arg-type]
+        empty = self._empty_buffer()
+        out = self.out.snap() if self.out else empty
+        err = self.err.snap() if self.err else empty
+        return CaptureResult(out, err)
 
 
 def _get_multicapture(method: _CaptureMethod) -> MultiCapture[str]:

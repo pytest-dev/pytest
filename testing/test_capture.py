@@ -1476,6 +1476,23 @@ def test_capturing_and_logging_fundamentals(pytester: Pytester, method: str) -> 
     assert "atexit" not in result.stderr.str()
 
 
+def test_multicapture_binary_readouterr_uses_bytes_for_missing_stream() -> None:
+    with saved_fd(2):
+        cap = capture.MultiCapture(
+            in_=None,
+            out=None,
+            err=capture.FDCaptureBinary(2),
+        )
+        cap.start_capturing()
+        try:
+            os.write(2, b"hello")
+            outerr = cap.readouterr()
+        finally:
+            cap.stop_capturing()
+
+    assert outerr == CaptureResult(b"", b"hello")
+
+
 def test_error_attribute_issue555(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
