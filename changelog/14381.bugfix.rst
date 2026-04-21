@@ -1,0 +1,1 @@
+Fixed ``-V`` (short form of ``--version``) to properly display the current version.
