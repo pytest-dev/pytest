@@ -180,9 +180,12 @@ def main(
 
     :returns: An exit code.
     """
-    # Handle a single `--version` argument early to avoid starting up the entire pytest infrastructure.
+    # Handle a single `--version`/`-V` argument early to avoid starting up the entire pytest infrastructure.
     new_args = sys.argv[1:] if args is None else args
-    if isinstance(new_args, Sequence) and new_args.count("--version") == 1:
+    if (
+        isinstance(new_args, Sequence)
+        and (new_args.count("--version") + new_args.count("-V")) == 1
+    ):
         sys.stdout.write(f"pytest {__version__}\n")
         return ExitCode.OK
 
