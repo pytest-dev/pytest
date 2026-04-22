@@ -162,9 +162,7 @@ class TestTerminal:
         assert "0.000us" not in output
         assert "0.00s" not in output
         # Each subtest sleeps for 0.05s so we expect at least 40ms in the output.
-        result.stdout.re_match_lines(
-            [r".*SUBPASSED\[0\] .*[4-9][0-9]\.[0-9]+ms"]
-        )
+        result.stdout.re_match_lines([r".*SUBPASSED\[0\] .*[4-9][0-9]\.[0-9]+ms"])
 
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
