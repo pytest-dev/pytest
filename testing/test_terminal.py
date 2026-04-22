@@ -140,6 +140,32 @@ class TestTerminal:
         combined = "\n".join(result.stdout.lines + result.stderr.lines)
         assert "INTERNALERROR" not in combined
 
+    def test_console_output_style_times_subtests(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                import time
+                def test_example(subtests):
+                    for i in range(2):
+                        with subtests.test(msg=str(i)):
+                            time.sleep(0.05)
+            """,
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-v",
+            "-o",
+            "console_output_style=times",
+        )
+        result.assert_outcomes(passed=1)
+        # Verify that subtest timing is non-zero (not 0.00s/0.000us).
+        output = result.stdout.str()
+        assert "0.000us" not in output
+        assert "0.00s" not in output
+        # Each subtest sleeps for 0.05s so we expect at least 40ms in the output.
+        result.stdout.re_match_lines(
+            [r".*SUBPASSED\[0\] .*[4-9][0-9]\.[0-9]+ms"]
+        )
+
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)

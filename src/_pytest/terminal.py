@@ -401,7 +401,7 @@ class TerminalReporter:
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[str] = set()
-        self._timing_nodeids_reported: set[str] = set()
+        self._timing_reports_reported: set[int] = set()
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -737,11 +737,14 @@ class TerminalReporter:
                 + self._get_reports_to_display("xfailed")
                 + self._get_reports_to_display("skipped")
                 + self._get_reports_to_display("error")
+                + self._get_reports_to_display("subtests passed")
+                + self._get_reports_to_display("subtests failed")
+                + self._get_reports_to_display("subtests skipped")
                 + self._get_reports_to_display("")
             )
             current_location = all_reports[-1].location[0]
             not_reported = [
-                r for r in all_reports if r.nodeid not in self._timing_nodeids_reported
+                r for r in all_reports if id(r) not in self._timing_reports_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
@@ -753,7 +756,7 @@ class TerminalReporter:
             )
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
-                self._timing_nodeids_reported.update(r.nodeid for r in not_reported)
+                self._timing_reports_reported.update(id(r) for r in not_reported)
                 return format_node_duration(
                     sum(r.duration for r in not_reported if isinstance(r, TestReport))
                 )
