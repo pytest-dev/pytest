@@ -1189,11 +1189,18 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
             reason = (
                 cast(str, self._fail_reason) + f" on the {type(exception).__name__}"
             )
+            # Determine whether the check would also match the inner exception,
+            # to produce a helpful hint. Guard against check callbacks that
+            # assume a group-like interface (e.g. accessing .exceptions), since
+            # per the RaisesGroup contract the callback receives the group.
+            try:
+                inner_check_passes = self._check_check(actual_exceptions[0])  # type: ignore[arg-type]
+            except AttributeError:
+                inner_check_passes = False
             if (
                 len(actual_exceptions) == len(self.expected_exceptions) == 1
                 and isinstance(expected := self.expected_exceptions[0], type)
-                # we explicitly break typing here :)
-                and self._check_check(actual_exceptions[0])  # type: ignore[arg-type]
+                and inner_check_passes
             ):
                 self._fail_reason = reason + (
                     f", but did return True for the expected {self._repr_expected(expected)}."
