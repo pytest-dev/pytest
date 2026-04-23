@@ -1718,3 +1718,24 @@ def test_abstract_testcase_is_not_collected(pytester: Pytester) -> None:
     result = pytester.runpytest()
     assert result.ret == ExitCode.OK
     result.assert_outcomes(passed=1)
+
+def test_unittest_skip_alias_misuse_fails(pytester):
+    pytester.makepyfile(
+        """
+        import unittest
+
+        broken = unittest.skip("broken")
+
+        class MyTests(unittest.TestCase):
+            @broken
+            def test_good(self):
+                assert True
+
+            @broken("bar")
+            def test_bad(self):
+                assert False
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1, skipped=0)
