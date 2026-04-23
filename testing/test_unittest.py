@@ -1719,6 +1719,7 @@ def test_abstract_testcase_is_not_collected(pytester: Pytester) -> None:
     assert result.ret == ExitCode.OK
     result.assert_outcomes(passed=1)
 
+
 def test_unittest_skip_alias_misuse_fails(pytester):
     pytester.makepyfile(
         """
