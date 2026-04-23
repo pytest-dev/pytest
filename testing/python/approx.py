@@ -1109,27 +1109,31 @@ class TestApproxDatetime:
     """Tests for datetime/timedelta support in approx (issue #8395)."""
 
     def test_datetime_exactly_equal(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt = datetime(2024, 1, 1, 12, 0, 0)
         assert dt == approx(dt, abs=timedelta(seconds=1))
 
     def test_datetime_within_tolerance(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt1 = datetime(2024, 1, 1, 12, 0, 0)
         dt2 = datetime(2024, 1, 1, 12, 0, 0, 500000)  # +0.5s
         assert dt1 == approx(dt2, abs=timedelta(seconds=1))
 
     def test_datetime_outside_tolerance(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt1 = datetime(2024, 1, 1, 12, 0, 0)
         dt2 = datetime(2024, 1, 1, 12, 0, 2)  # +2s
         assert dt1 != approx(dt2, abs=timedelta(seconds=1))
 
     def test_datetime_negative_difference(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt1 = datetime(2024, 1, 1, 12, 0, 1)
         dt2 = datetime(2024, 1, 1, 12, 0, 0)  # dt2 < dt1
@@ -1157,7 +1161,8 @@ class TestApproxDatetime:
             approx(datetime(2024, 1, 1))
 
     def test_rejects_rel(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         with pytest.raises(TypeError, match="does not support relative tolerance"):
             approx(datetime(2024, 1, 1), rel=0.1, abs=timedelta(seconds=1))
@@ -1169,13 +1174,15 @@ class TestApproxDatetime:
             approx(datetime(2024, 1, 1), abs=1.0)
 
     def test_rejects_nan_ok(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         with pytest.raises(TypeError, match="does not support nan_ok"):
             approx(datetime(2024, 1, 1), abs=timedelta(seconds=1), nan_ok=True)
 
     def test_datetime_repr(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt = datetime(2024, 1, 1, 12, 0, 0)
         result = repr(approx(dt, abs=timedelta(seconds=1)))
@@ -1191,8 +1198,9 @@ class TestApproxDatetime:
         assert "0:00:01" in result  # 1 second tolerance
 
     def test_datetime_symmetry(self):
-        """approx comparison should work on both sides of ==."""
-        from datetime import datetime, timedelta
+        """Approx comparison should work on both sides of ==."""
+        from datetime import datetime
+        from datetime import timedelta
 
         dt1 = datetime(2024, 1, 1, 12, 0, 0)
         dt2 = datetime(2024, 1, 1, 12, 0, 0, 500000)
@@ -1201,7 +1209,8 @@ class TestApproxDatetime:
         assert approx(dt2, abs=tol) == dt1
 
     def test_datetime_ne_operator(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt1 = datetime(2024, 1, 1, 12, 0, 0)
         dt2 = datetime(2024, 1, 1, 12, 0, 5)
@@ -1210,7 +1219,9 @@ class TestApproxDatetime:
         assert not (dt1 == approx(dt2, abs=tol))
 
     def test_datetime_with_timezone(self):
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime
+        from datetime import timedelta
+        from datetime import timezone
 
         tz = timezone.utc
         dt1 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=tz)
@@ -1218,7 +1229,8 @@ class TestApproxDatetime:
         assert dt1 == approx(dt2, abs=timedelta(seconds=1))
 
     def test_datetime_error_message(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt1 = datetime(2024, 1, 1, 12, 0, 0)
         dt2 = datetime(2024, 1, 1, 12, 0, 5)  # 5 seconds off
@@ -1234,14 +1246,16 @@ class TestApproxDatetime:
 
     def test_datetime_boundary_exact(self):
         """Test that values exactly at the tolerance boundary are equal."""
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt1 = datetime(2024, 1, 1, 12, 0, 0)
         dt2 = datetime(2024, 1, 1, 12, 0, 1)  # exactly 1 second
         assert dt1 == approx(dt2, abs=timedelta(seconds=1))
 
     def test_datetime_microsecond_tolerance(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt1 = datetime(2024, 1, 1, 12, 0, 0, 0)
         dt2 = datetime(2024, 1, 1, 12, 0, 0, 100)  # +100 microseconds
@@ -1249,21 +1263,24 @@ class TestApproxDatetime:
         assert dt1 != approx(dt2, abs=timedelta(microseconds=50))
 
     def test_bool_context_raises(self):
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         with pytest.raises(AssertionError, match="boolean context"):
             bool(approx(datetime(2024, 1, 1), abs=timedelta(seconds=1)))
 
     def test_wrong_type_comparison(self):
         """Comparing a datetime approx with a non-datetime should return False."""
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         assert 42 != approx(datetime(2024, 1, 1), abs=timedelta(seconds=1))
         assert "string" != approx(datetime(2024, 1, 1), abs=timedelta(seconds=1))
 
     def test_yield_comparisons(self):
         """Test that _yield_comparisons yields (actual, expected) pairs."""
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         dt = datetime(2024, 1, 1, 12, 0, 0)
         a = approx(dt, abs=timedelta(seconds=1))
@@ -1273,7 +1290,8 @@ class TestApproxDatetime:
 
     def test_repr_compare_with_incompatible_type(self):
         """_repr_compare handles TypeError when actual is not a datetime."""
-        from datetime import datetime, timedelta
+        from datetime import datetime
+        from datetime import timedelta
 
         a = approx(datetime(2024, 1, 1), abs=timedelta(seconds=1))
         result = a._repr_compare("not a datetime")
