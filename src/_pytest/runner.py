@@ -158,7 +158,7 @@ def show_test_item(item: Item) -> None:
     tw.write(item.nodeid)
     used_fixtures = sorted(getattr(item, "fixturenames", []))
     if used_fixtures:
-        tw.write(" (fixtures used: {})".format(", ".join(used_fixtures)))
+        tw.write(f" (fixtures used: {', '.join(used_fixtures)})")
     tw.flush()
 
 
