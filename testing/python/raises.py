@@ -444,3 +444,19 @@ class TestRaises:
         assert not is_fully_escaped("foo|bar")
         assert is_fully_escaped(r"foo\|bar")
         assert unescape(r"foo\|bar") == "foo|bar"
+
+    def test_consecutive_backslashes_in_escape_check(self) -> None:
+        """Consecutive backslashes escape each other, leaving the metachar unescaped."""
+        from _pytest.raises import is_fully_escaped
+
+        # r"\."  -> one backslash escapes the dot -> fully escaped
+        assert is_fully_escaped(r"\.")
+        # r"\\." -> two backslashes: the first escapes the second, dot is unescaped
+        assert not is_fully_escaped(r"\\.")
+        # r"\\\." -> three backslashes: pair escapes pair, last escapes dot -> fully escaped
+        assert is_fully_escaped(r"\\\.")
+        # Same idea with pipe metachar
+        # "\\\\|" is the string \\| (2 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped("\\\\|")
+        # r"\\\\|" is the string \\\\| (4 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped(r"\\\\|")

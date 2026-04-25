@@ -1,0 +1,1 @@
+Fixed a bug in :func:`pytest.raises(match=...) <pytest.raises>` "fully escaped" detection, causing the regex diff display to be shown in some instances when the raw string diff display should be shown instead.
