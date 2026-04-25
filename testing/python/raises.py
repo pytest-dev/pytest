@@ -179,7 +179,9 @@ class TestRaises:
         result.stdout.no_fnmatch_line("*File*")
         result.stdout.no_fnmatch_line("*line*")
 
-    def test_raises_match_failure_uses_direct_cause(self, pytester: Pytester) -> None:
+    def test_raises_match_failure_suppresses_exception_context(
+        self, pytester: Pytester
+    ) -> None:
         pytester.makepyfile(
             """
             import pytest
@@ -193,10 +195,12 @@ class TestRaises:
         assert result.ret == 1
         result.stdout.fnmatch_lines(
             [
-                "*ValueError: actual",
-                "*The above exception was the direct cause of the following exception:*",
                 "*E*AssertionError: Regex pattern did not match.*",
             ]
+        )
+        result.stdout.no_fnmatch_line("*ValueError: actual")
+        result.stdout.no_fnmatch_line(
+            "*The above exception was the direct cause of the following exception:*"
         )
         result.stdout.no_fnmatch_line(
             "*During handling of the above exception, another exception occurred:*"
