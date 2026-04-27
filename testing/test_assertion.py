@@ -84,6 +84,12 @@ class TestMockConfig:
         with pytest.raises(KeyError):
             config.get_verbosity("--- NOT A VERBOSITY LEVEL ---")
 
+    def test_getini_unsupported_error(self):
+        config = mock_config()
+
+        with pytest.raises(KeyError, match="Not mocked out: --- NOT AN INI ---"):
+            config.getini("--- NOT AN INI ---")
+
 
 class TestImportHookInstallation:
     @pytest.mark.parametrize("initial_conftest", [True, False])
