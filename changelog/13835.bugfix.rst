@@ -1,0 +1,1 @@
+:func:`get_user` now correctly returns ``None`` when :func:`getpass.getuser` raises :exc:`OSError`, which Python 3.13 introduced when no username environment variable is set (previously only :exc:`ImportError` and :exc:`KeyError` were caught).
