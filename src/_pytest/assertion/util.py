@@ -61,7 +61,7 @@ def dummy_highlighter(source: str, lexer: Literal["diff", "python"] = "python") 
 
 
 def get_assertion_text_diff_style(config: Config) -> str:
-    style = config.getini(ASSERTION_TEXT_DIFF_STYLE_INI)
+    style = str(config.getini(ASSERTION_TEXT_DIFF_STYLE_INI))
     if style not in ASSERTION_TEXT_DIFF_STYLE_CHOICES:
         choices = ", ".join(
             repr(choice) for choice in ASSERTION_TEXT_DIFF_STYLE_CHOICES
