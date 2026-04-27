@@ -482,62 +482,53 @@ class TestAssert_reprcompare:
         assert "+ spam" in diff
 
     def test_multiline_text_diff_block(self) -> None:
-        assert (
-            callequal(
-                "foo\nspam\nbar",
-                "foo\neggs\nbar",
-                assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
-            )
-            == [
-                r"'foo\nspam\nbar' == 'foo\neggs\nbar'",
-                "",
-                "Left:",
-                "  foo",
-                "  spam",
-                "  bar",
-                "",
-                "Right:",
-                "  foo",
-                "  eggs",
-                "  bar",
-            ]
-        )
+        assert callequal(
+            "foo\nspam\nbar",
+            "foo\neggs\nbar",
+            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+        ) == [
+            r"'foo\nspam\nbar' == 'foo\neggs\nbar'",
+            "",
+            "Left:",
+            "  foo",
+            "  spam",
+            "  bar",
+            "",
+            "Right:",
+            "  foo",
+            "  eggs",
+            "  bar",
+        ]
 
     def test_multiline_text_diff_block_preserves_blank_lines(self) -> None:
-        assert (
-            callequal(
-                "\nfoo\n",
-                "\nbar",
-                assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
-            )
-            == [
-                r"'\nfoo\n' == '\nbar'",
-                "",
-                "Left:",
-                "  ",
-                "  foo",
-                "  ",
-                "",
-                "Right:",
-                "  ",
-                "  bar",
-            ]
-        )
+        assert callequal(
+            "\nfoo\n",
+            "\nbar",
+            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+        ) == [
+            r"'\nfoo\n' == '\nbar'",
+            "",
+            "Left:",
+            "  ",
+            "  foo",
+            "  ",
+            "",
+            "Right:",
+            "  ",
+            "  bar",
+        ]
 
     def test_single_line_text_diff_block_falls_back_to_ndiff(self) -> None:
-        assert (
-            callequal(
-                "spam",
-                "eggs",
-                assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
-            )
-            == [
-                "'spam' == 'eggs'",
-                "",
-                "- eggs",
-                "+ spam",
-            ]
-        )
+        assert callequal(
+            "spam",
+            "eggs",
+            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+        ) == [
+            "'spam' == 'eggs'",
+            "",
+            "- eggs",
+            "+ spam",
+        ]
 
     def test_bytes_diff_normal(self) -> None:
         """Check special handling for bytes diff (#5260)"""
