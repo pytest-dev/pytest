@@ -179,6 +179,33 @@ class TestRaises:
         result.stdout.no_fnmatch_line("*File*")
         result.stdout.no_fnmatch_line("*line*")
 
+    def test_raises_match_failure_suppresses_exception_context(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_raises_match_failure():
+                with pytest.raises(ValueError, match="expected"):
+                    raise ValueError("actual")
+            """
+        )
+        result = pytester.runpytest("--tb=short")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(
+            [
+                "*E*AssertionError: Regex pattern did not match.*",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*ValueError: actual")
+        result.stdout.no_fnmatch_line(
+            "*The above exception was the direct cause of the following exception:*"
+        )
+        result.stdout.no_fnmatch_line(
+            "*During handling of the above exception, another exception occurred:*"
+        )
+
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
             with pytest.raises("wrong"):  # type: ignore[call-overload]
@@ -444,3 +471,19 @@ class TestRaises:
         assert not is_fully_escaped("foo|bar")
         assert is_fully_escaped(r"foo\|bar")
         assert unescape(r"foo\|bar") == "foo|bar"
+
+    def test_consecutive_backslashes_in_escape_check(self) -> None:
+        """Consecutive backslashes escape each other, leaving the metachar unescaped."""
+        from _pytest.raises import is_fully_escaped
+
+        # r"\."  -> one backslash escapes the dot -> fully escaped
+        assert is_fully_escaped(r"\.")
+        # r"\\." -> two backslashes: the first escapes the second, dot is unescaped
+        assert not is_fully_escaped(r"\\.")
+        # r"\\\." -> three backslashes: pair escapes pair, last escapes dot -> fully escaped
+        assert is_fully_escaped(r"\\\.")
+        # Same idea with pipe metachar
+        # "\\\\|" is the string \\| (2 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped("\\\\|")
+        # r"\\\\|" is the string \\\\| (4 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped(r"\\\\|")

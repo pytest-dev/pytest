@@ -345,9 +345,10 @@ def _check_raw_type(
 def is_fully_escaped(s: str) -> bool:
     # we know we won't compile with re.VERBOSE, so whitespace doesn't need to be escaped
     metacharacters = "{}()+.*?^$[]|"
-    return not any(
-        c in metacharacters and (i == 0 or s[i - 1] != "\\") for (i, c) in enumerate(s)
-    )
+    # Strip all escape sequences (backslash + any char), then check if any
+    # metacharacter remains unescaped in the resulting string.
+    stripped = re.sub(r"\\.", "", s)
+    return not any(c in metacharacters for c in stripped)
 
 
 def unescape(s: str) -> str:
@@ -698,7 +699,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         if not self.matches(exc_val):
             if self._just_propagate:
                 return False
-            raise AssertionError(self._fail_reason)
+            raise AssertionError(self._fail_reason) from None
 
         # Cast to narrow the exception type now that it's verified....
         # even though the TypeGuard in self.matches should be narrowing
