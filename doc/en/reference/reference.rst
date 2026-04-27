@@ -2699,6 +2699,32 @@ passed multiple times. The expected format is ``name=value``. For example::
     A special value of ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
+.. confval:: assertion_text_diff_style
+    :type: ``str``
+    :default: ``"ndiff"``
+
+    Set how pytest renders diffs for string equality assertions.
+
+    Supported values are:
+
+    * ``ndiff``: use the default inline diff rendering.
+    * ``block``: render multiline string comparisons as separate ``Left:`` and ``Right:`` blocks.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            assertion_text_diff_style = "block"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            assertion_text_diff_style = block
+
+
 .. confval:: verbosity_subtests
     :type: ``str``
     :default: ``"auto"``

@@ -19,7 +19,11 @@ from _pytest.pytester import Pytester
 import pytest
 
 
-def mock_config(verbose: int = 0, assertion_override: int | None = None):
+def mock_config(
+    verbose: int = 0,
+    assertion_override: int | None = None,
+    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+):
     class TerminalWriter:
         def _highlight(self, source, lexer="python"):
             return source
@@ -37,6 +41,11 @@ def mock_config(verbose: int = 0, assertion_override: int | None = None):
                 return verbose
 
             raise KeyError(f"Not mocked out: {verbosity_type}")
+
+        def getini(self, name: str) -> str:
+            if name == util.ASSERTION_TEXT_DIFF_STYLE_INI:
+                return assertion_text_diff_style
+            raise KeyError(f"Not mocked out: {name}")
 
     return Config()
 
@@ -404,13 +413,33 @@ class TestBinReprIntegration:
         result.stdout.fnmatch_lines(["*test_hello*FAIL*", "*test_check*PASS*"])
 
 
-def callop(op: str, left: Any, right: Any, verbose: int = 0) -> list[str] | None:
-    config = mock_config(verbose=verbose)
+def callop(
+    op: str,
+    left: Any,
+    right: Any,
+    verbose: int = 0,
+    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+) -> list[str] | None:
+    config = mock_config(
+        verbose=verbose,
+        assertion_text_diff_style=assertion_text_diff_style,
+    )
     return plugin.pytest_assertrepr_compare(config, op, left, right)
 
 
-def callequal(left: Any, right: Any, verbose: int = 0) -> list[str] | None:
-    return callop("==", left, right, verbose)
+def callequal(
+    left: Any,
+    right: Any,
+    verbose: int = 0,
+    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+) -> list[str] | None:
+    return callop(
+        "==",
+        left,
+        right,
+        verbose,
+        assertion_text_diff_style=assertion_text_diff_style,
+    )
 
 
 class TestAssert_reprcompare:
@@ -451,6 +480,64 @@ class TestAssert_reprcompare:
         assert diff is not None
         assert "- eggs" in diff
         assert "+ spam" in diff
+
+    def test_multiline_text_diff_block(self) -> None:
+        assert (
+            callequal(
+                "foo\nspam\nbar",
+                "foo\neggs\nbar",
+                assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+            )
+            == [
+                r"'foo\nspam\nbar' == 'foo\neggs\nbar'",
+                "",
+                "Left:",
+                "  foo",
+                "  spam",
+                "  bar",
+                "",
+                "Right:",
+                "  foo",
+                "  eggs",
+                "  bar",
+            ]
+        )
+
+    def test_multiline_text_diff_block_preserves_blank_lines(self) -> None:
+        assert (
+            callequal(
+                "\nfoo\n",
+                "\nbar",
+                assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+            )
+            == [
+                r"'\nfoo\n' == '\nbar'",
+                "",
+                "Left:",
+                "  ",
+                "  foo",
+                "  ",
+                "",
+                "Right:",
+                "  ",
+                "  bar",
+            ]
+        )
+
+    def test_single_line_text_diff_block_falls_back_to_ndiff(self) -> None:
+        assert (
+            callequal(
+                "spam",
+                "eggs",
+                assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+            )
+            == [
+                "'spam' == 'eggs'",
+                "",
+                "- eggs",
+                "+ spam",
+            ]
+        )
 
     def test_bytes_diff_normal(self) -> None:
         """Check special handling for bytes diff (#5260)"""
@@ -2174,6 +2261,65 @@ def test_fine_grained_assertion_verbosity(pytester: Pytester):
             "E         +     '4': 4,",
             "E           }",
             f"E       AssertionError: assert 'hello world' in '{long_text}'",
+        ]
+    )
+
+
+def test_assertion_text_diff_style_block_for_multiline_strings(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        r"""
+        actual = "alpha\n  beta\n"
+        expected = "alpha\n    beta"
+
+        def test_text_diff():
+            assert actual == expected
+        """
+    )
+    pytester.makeini(
+        f"""
+        [pytest]
+        assertion_text_diff_style = {util.ASSERTION_TEXT_DIFF_STYLE_BLOCK}
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+
+    result.stdout.fnmatch_lines(
+        [
+            "E         Left:",
+            "E           alpha",
+            "E             beta",
+            "E           ",
+            "E         Right:",
+            "E           alpha",
+            "E               beta",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*?     -*")
+
+
+def test_assertion_text_diff_style_invalid(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_ok():
+            pass
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        assertion_text_diff_style = side-by-side
+        """
+    )
+
+    result = pytester.runpytest()
+
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            "*ERROR: assertion_text_diff_style must be one of 'ndiff', 'block'; got 'side-by-side'"
         ]
     )
 

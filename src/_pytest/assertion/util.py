@@ -22,6 +22,7 @@ from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.compat import running_on_ci
 from _pytest.config import Config
+from _pytest.config import UsageError
 
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -37,6 +38,14 @@ _assertion_pass: Callable[[int, str, str], None] | None = None
 # Config object which is assigned during pytest_runtest_protocol.
 _config: Config | None = None
 
+ASSERTION_TEXT_DIFF_STYLE_INI = "assertion_text_diff_style"
+ASSERTION_TEXT_DIFF_STYLE_NDIFF = "ndiff"
+ASSERTION_TEXT_DIFF_STYLE_BLOCK = "block"
+ASSERTION_TEXT_DIFF_STYLE_CHOICES = (
+    ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+    ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+)
+
 
 class _HighlightFunc(Protocol):
     def __call__(self, source: str, lexer: Literal["diff", "python"] = "python") -> str:
@@ -49,6 +58,20 @@ def dummy_highlighter(source: str, lexer: Literal["diff", "python"] = "python") 
     Needed for _notin_text, as the diff gets post-processed to only show the "+" part.
     """
     return source
+
+
+def get_assertion_text_diff_style(config: Config) -> str:
+    style = config.getini(ASSERTION_TEXT_DIFF_STYLE_INI)
+    if style not in ASSERTION_TEXT_DIFF_STYLE_CHOICES:
+        choices = ", ".join(repr(choice) for choice in ASSERTION_TEXT_DIFF_STYLE_CHOICES)
+        raise UsageError(
+            f"{ASSERTION_TEXT_DIFF_STYLE_INI} must be one of {choices}; got {style!r}"
+        )
+    return style
+
+
+def validate_assertion_text_diff_style(config: Config) -> None:
+    get_assertion_text_diff_style(config)
 
 
 def format_explanation(explanation: str) -> str:
@@ -180,6 +203,7 @@ def assertrepr_compare(
 ) -> list[str] | None:
     """Return specialised explanations for some operators/operands."""
     verbose = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
+    assertion_text_diff_style = get_assertion_text_diff_style(config)
 
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.
@@ -208,7 +232,13 @@ def assertrepr_compare(
     explanation = None
     try:
         if op == "==":
-            explanation = _compare_eq_any(left, right, highlighter, verbose)
+            explanation = _compare_eq_any(
+                left,
+                right,
+                highlighter,
+                verbose,
+                assertion_text_diff_style,
+            )
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
@@ -246,11 +276,21 @@ def assertrepr_compare(
 
 
 def _compare_eq_any(
-    left: Any, right: Any, highlighter: _HighlightFunc, verbose: int = 0
+    left: Any,
+    right: Any,
+    highlighter: _HighlightFunc,
+    verbose: int = 0,
+    assertion_text_diff_style: str = ASSERTION_TEXT_DIFF_STYLE_NDIFF,
 ) -> list[str]:
     explanation = []
     if istext(left) and istext(right):
-        explanation = _diff_text(left, right, highlighter, verbose)
+        explanation = _compare_eq_text(
+            left,
+            right,
+            highlighter,
+            verbose,
+            assertion_text_diff_style,
+        )
     else:
         from _pytest.python_api import ApproxBase
 
@@ -280,6 +320,40 @@ def _compare_eq_any(
             explanation.extend(expl)
 
     return explanation
+
+
+def _compare_eq_text(
+    left: str,
+    right: str,
+    highlighter: _HighlightFunc,
+    verbose: int,
+    assertion_text_diff_style: str,
+) -> list[str]:
+    if (
+        assertion_text_diff_style == ASSERTION_TEXT_DIFF_STYLE_BLOCK
+        and _is_multiline_text(left, right)
+        and not (left.isspace() or right.isspace())
+    ):
+        return _diff_text_block(left, right)
+    return _diff_text(left, right, highlighter, verbose)
+
+
+def _is_multiline_text(*texts: str) -> bool:
+    return any("\n" in text or "\r" in text for text in texts)
+
+
+def _diff_text_block(left: str, right: str) -> list[str]:
+    return [
+        "Left:",
+        *_format_text_block_lines(left),
+        "",
+        "Right:",
+        *_format_text_block_lines(right),
+    ]
+
+
+def _format_text_block_lines(text: str) -> list[str]:
+    return [f"  {line}" for line in text.split("\n")]
 
 
 def _diff_text(
