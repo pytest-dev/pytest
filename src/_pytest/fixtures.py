@@ -69,6 +69,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
+from _pytest.warning_types import PytestRemovedIn10Warning
 from _pytest.warning_types import PytestWarning
 
 
@@ -989,6 +990,15 @@ class FixtureDef(Generic[FixtureValue]):
         node: nodes.Node | None = None,
     ) -> None:
         check_ispytest(_ispytest)
+        # Emit deprecation warning if baseid string is used when node could be provided.
+        # baseid=None (global plugins) and baseid="" (synthetic fixtures) are fine.
+        if baseid and node is None:
+            warnings.warn(
+                "Passing baseid to FixtureDef is deprecated. "
+                "Pass node instead for fixture scoping.",
+                PytestRemovedIn10Warning,
+                stacklevel=2,
+            )
         # The node where this fixture was defined, if available.
         # Used for node-based matching which is more robust than string matching.
         self.node: Final = node
@@ -1830,7 +1840,7 @@ class FixtureManager:
         :param func:
             The fixture's implementation function.
         :param nodeid:
-            The visibility of the fixture (legacy, prefer node).
+            The visibility of the fixture (deprecated, use node instead).
             The fixture will be available to the node with this nodeid and
             its children in the collection tree. None means global visibility.
         :param node:
@@ -1845,6 +1855,15 @@ class FixtureManager:
         :param autouse:
             Whether this is an autouse fixture.
         """
+        # Emit deprecation warning if nodeid string is used when node could be provided.
+        # nodeid=None (global plugins) is fine.
+        if nodeid and node is None:
+            warnings.warn(
+                "Passing nodeid to _register_fixture is deprecated. "
+                "Pass node instead for fixture scoping.",
+                PytestRemovedIn10Warning,
+                stacklevel=2,
+            )
         fixture_def = FixtureDef(
             config=self.config,
             baseid=nodeid if node is None else None,
@@ -1932,6 +1951,14 @@ class FixtureManager:
             raise TypeError("parsefactories() requires holder or node_or_obj")
         elif nodeid is not NOTSET:
             # Legacy: parsefactories(obj, nodeid) - string-based scoping only
+            # Only warn if a non-None nodeid string is passed (None means global plugin)
+            if nodeid is not None:
+                warnings.warn(
+                    "Passing nodeid string to parsefactories is deprecated. "
+                    "Use parsefactories(holder=obj, node=node) instead.",
+                    PytestRemovedIn10Warning,
+                    stacklevel=2,
+                )
             holderobj = node_or_obj
             effective_nodeid = nodeid
         else:
