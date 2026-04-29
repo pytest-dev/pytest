@@ -604,7 +604,7 @@ class TestAssert_reprcompare:
         # 检查新的结构化差异信息是否存在
         assert any("差异路径:" in line for line in diff)
         # 检查差异值（l2 在索引 3 有额外元素）
-        assert f"[3]" in "".join(diff)
+        assert "[3]" in "".join(diff)
 
         diff = callequal(l2, l1, verbose=True)
         # 检查原有关键内容是否存在
@@ -614,7 +614,7 @@ class TestAssert_reprcompare:
         # 检查新的结构化差异信息是否存在
         assert any("差异路径:" in line for line in diff)
         # 检查差异值（l2 在索引 3 有额外元素）
-        assert f"[3]" in "".join(diff)
+        assert "[3]" in "".join(diff)
 
     def test_list_wrap_for_width_rewrap_same_length(self) -> None:
         long_a = "a" * 30
@@ -2193,11 +2193,11 @@ class TestStructuredDiff:
         """Test structured diff for simple dict comparison."""
         expected = {"name": "John", "age": 30, "city": "New York"}
         actual = {"name": "John", "age": 25, "city": "New York"}
-        
+
         lines = callequal(actual, expected)
         assert lines is not None
-        
-        structured_diff_line = "差异路径: [\"age\"]  期望值: 30  实际值: 25"
+
+        structured_diff_line = '差异路径: ["age"]  期望值: 30  实际值: 25'
         assert structured_diff_line in lines
 
     def test_nested_dict_diff(self) -> None:
@@ -2205,26 +2205,22 @@ class TestStructuredDiff:
         expected = {
             "user": {
                 "name": "John",
-                "details": {
-                    "age": 30,
-                    "email": "john@example.com"
-                }
+                "details": {"age": 30, "email": "john@example.com"},
             }
         }
         actual = {
             "user": {
                 "name": "John",
-                "details": {
-                    "age": 25,
-                    "email": "john@example.com"
-                }
+                "details": {"age": 25, "email": "john@example.com"},
             }
         }
-        
+
         lines = callequal(actual, expected)
         assert lines is not None
-        
-        structured_diff_line = "差异路径: [\"user\"][\"details\"][\"age\"]  期望值: 30  实际值: 25"
+
+        structured_diff_line = (
+            '差异路径: ["user"]["details"]["age"]  期望值: 30  实际值: 25'
+        )
         assert structured_diff_line in lines
 
     def test_mixed_list_dict_diff(self) -> None:
@@ -2232,16 +2228,16 @@ class TestStructuredDiff:
         expected = [
             {"id": 1, "name": "Alice"},
             {"id": 2, "name": "Bob"},
-            {"id": 3, "name": "Charlie"}
+            {"id": 3, "name": "Charlie"},
         ]
         actual = [
             {"id": 1, "name": "Alice"},
             {"id": 2, "name": "Bobby"},
-            {"id": 3, "name": "Charlie"}
+            {"id": 3, "name": "Charlie"},
         ]
-        
+
         lines = callequal(actual, expected)
         assert lines is not None
-        
+
         structured_diff_line = "差异路径: [1][\"name\"]  期望值: 'Bob'  实际值: 'Bobby'"
         assert structured_diff_line in lines

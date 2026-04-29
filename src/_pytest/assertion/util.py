@@ -180,25 +180,25 @@ def _find_first_diff_path(
 ) -> tuple[str, Any, Any] | None:
     """
     递归查找第一个不同值的路径，返回 (路径字符串, 期望值, 实际值) 或 None。
-    
+
     路径格式示例：
     - 字典: ["key1"]["key2"]
     - 列表: [0][1]
     - 混合: ["users"][0]["name"]
-    
+
     限制深度 ≤10 层嵌套。
     """
     if path is None:
         path = []
-    
+
     # 限制深度
     if depth > 10:
         return None
-    
+
     # 如果相等，没有差异
     if left == right:
         return None
-    
+
     # 比较两个字典
     if isdict(left) and isdict(right):
         # 检查共有键的差异
@@ -209,30 +209,22 @@ def _find_first_diff_path(
             )
             if result is not None:
                 return result
-        
+
         # 检查左独有的键
         left_only = set(left.keys()) - set(right.keys())
         if left_only:
             key = sorted(left_only, key=lambda x: str(x))[0]
-            return (
-                "".join(path) + f'["{key}"]',
-                left[key],
-                None
-            )
-        
+            return ("".join(path) + f'["{key}"]', left[key], None)
+
         # 检查右独有的键
         right_only = set(right.keys()) - set(left.keys())
         if right_only:
             key = sorted(right_only, key=lambda x: str(x))[0]
-            return (
-                "".join(path) + f'["{key}"]',
-                None,
-                right[key]
-            )
-        
+            return ("".join(path) + f'["{key}"]', None, right[key])
+
         # 所有键相同但值不同（理论上不会到这里，因为之前已经比较过值）
         return None
-    
+
     # 比较两个序列（列表等）
     if issequence(left) and issequence(right):
         min_len = min(len(left), len(right))
@@ -242,50 +234,42 @@ def _find_first_diff_path(
             )
             if result is not None:
                 return result
-        
+
         # 检查长度差异
         if len(left) > len(right):
-            return (
-                "".join(path) + f"[{len(right)}]",
-                left[len(right)],
-                None
-            )
+            return ("".join(path) + f"[{len(right)}]", left[len(right)], None)
         elif len(right) > len(left):
-            return (
-                "".join(path) + f"[{len(left)}]",
-                None,
-                right[len(left)]
-            )
-        
+            return ("".join(path) + f"[{len(left)}]", None, right[len(left)])
+
         # 所有元素相同但整体不同（理论上不会到这里）
         return None
-    
+
     # 直接不同的基本值
     if left != right:
         if path:
             return ("".join(path), right, left)  # right 是期望值，left 是实际值
         else:
             return ("", right, left)
-    
+
     return None
 
 
-def _format_structured_diff(
-    expected: Any, actual: Any
-) -> list[str]:
+def _format_structured_diff(expected: Any, actual: Any) -> list[str]:
     """
     格式化结构化差异信息，返回要追加到断言消息中的行列表。
     """
-    result = _find_first_diff_path(actual, expected)  # 注意参数顺序：actual 是 left，expected 是 right
+    result = _find_first_diff_path(
+        actual, expected
+    )  # 注意参数顺序：actual 是 left，expected 是 right
     if result is None:
         return []
-    
+
     diff_path, expected_val, actual_val = result
-    
+
     # 格式化值的表示
     expected_repr = saferepr(expected_val) if expected_val is not None else "不存在"
     actual_repr = saferepr(actual_val) if actual_val is not None else "不存在"
-    
+
     return [
         "",
         f"差异路径: {diff_path}  期望值: {expected_repr}  实际值: {actual_repr}",
@@ -359,18 +343,19 @@ def assertrepr_compare(
 
     if explanation[0] != "":
         explanation = ["", *explanation]
-    
+
     # 当 == 断言失败且对象为 dict/list 时，追加结构化差异信息
     # 只对 dict 和 list 添加，排除 bytes、tuple 等其他序列类型
-    is_dict_or_list = (
-        (isinstance(left, dict) or isinstance(left, list))
-        and (isinstance(right, dict) or isinstance(right, list))
+    is_dict_or_list = (isinstance(left, dict) or isinstance(left, list)) and (
+        isinstance(right, dict) or isinstance(right, list)
     )
     if op == "==" and is_dict_or_list:
-        structured_diff = _format_structured_diff(right, left)  # right 是 expected，left 是 actual
+        structured_diff = _format_structured_diff(
+            right, left
+        )  # right 是 expected，left 是 actual
         if structured_diff:
             explanation.extend(structured_diff)
-    
+
     return [summary, *explanation]
 
 
