@@ -1,0 +1,1 @@
+Added support for :class:`~datetime.datetime` and :class:`~datetime.timedelta` comparisons with :func:`pytest.approx`. An explicit ``abs`` tolerance as a :class:`~datetime.timedelta` is required; relative tolerance is not supported for time-based comparisons -- by :user:`hamza-mobeen`.

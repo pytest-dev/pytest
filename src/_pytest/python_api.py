@@ -1,10 +1,13 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import builtins
 from collections.abc import Collection
 from collections.abc import Mapping
 from collections.abc import Sequence
 from collections.abc import Sized
+from datetime import datetime
+from datetime import timedelta
 from decimal import Decimal
 import math
 from numbers import Complex
@@ -558,10 +561,87 @@ class ApproxDecimal(ApproxScalar):
         return f"{self.expected} ± {tol_str}"
 
 
+class ApproxTimedelta(ApproxBase):
+    """Perform approximate comparisons where the expected value is a
+    datetime or timedelta.
+
+    Requires an explicit absolute tolerance as a timedelta.
+    Relative tolerance is not supported for time-based comparisons.
+    """
+
+    def __init__(self, expected, rel=None, abs=None, nan_ok: bool = False) -> None:
+        __tracebackhide__ = True
+        if rel is not None:
+            raise TypeError(
+                "pytest.approx() does not support relative tolerance for "
+                "datetime/timedelta comparisons. Use abs=timedelta(...) instead."
+            )
+        if nan_ok:
+            raise TypeError(
+                "pytest.approx() does not support nan_ok for "
+                "datetime/timedelta comparisons."
+            )
+        if abs is None:
+            raise TypeError(
+                "pytest.approx() requires an absolute tolerance for "
+                "datetime/timedelta comparisons: "
+                "e.g. approx(expected, abs=timedelta(seconds=1))"
+            )
+        if not isinstance(abs, timedelta):
+            raise TypeError(
+                f"absolute tolerance for datetime/timedelta must be a "
+                f"timedelta, got {type(abs).__name__}"
+            )
+        # Store the timedelta tolerance directly.
+        self.expected = expected
+        self._tolerance = abs
+        # Call grandparent init to set up basic state without _check_type.
+        self.abs = abs
+        self.rel = None
+        self.nan_ok = False
+
+    def __repr__(self) -> str:
+        return f"{self.expected} ± {self._tolerance}"
+
+    def __eq__(self, actual) -> bool:
+        try:
+            return bool(builtins.abs(self.expected - actual) <= self._tolerance)
+        except (TypeError, OverflowError):
+            return False
+
+    __hash__ = None
+
+    def __ne__(self, actual) -> bool:
+        return not (actual == self)
+
+    def __bool__(self):
+        __tracebackhide__ = True
+        raise AssertionError(
+            "approx() is not supported in a boolean context.\n"
+            "Did you mean: `assert a == approx(b)`?"
+        )
+
+    def _yield_comparisons(self, actual):
+        yield actual, self.expected
+
+    def _repr_compare(self, other_side: Any) -> list[str]:
+        try:
+            abs_diff = builtins.abs(self.expected - other_side)
+        except (TypeError, OverflowError):
+            abs_diff = "N/A"
+        return [
+            "comparison failed",
+            f"Obtained: {other_side}",
+            f"Expected: {self.expected} ± {self._tolerance}",
+            f"Absolute difference: {abs_diff}",
+            f"Tolerance: {self._tolerance}",
+        ]
+
+
 def approx(
     expected: Any,
     rel: float | Decimal | None = None,
-    abs: float | Decimal | None = None,
+    abs: float | Decimal | timedelta | None = None,
     nan_ok: bool = False,
 ) -> ApproxBase:
     """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
@@ -677,6 +757,23 @@ def approx(
         >>> ["foo", 1.0000005] == approx([None,1])
         False
 
+    **datetime and timedelta**
+
+    You can also use ``approx`` to compare :class:`~datetime.datetime` and
+    :class:`~datetime.timedelta` objects by specifying an absolute tolerance
+    as a :class:`~datetime.timedelta`::
+
+        >>> from datetime import datetime, timedelta
+        >>> dt1 = datetime(2024, 1, 1, 12, 0, 0)
+        >>> dt2 = datetime(2024, 1, 1, 12, 0, 0, 500000)
+        >>> dt1 == approx(dt2, abs=timedelta(seconds=1))
+        True
+
+    Note that ``rel`` is not supported for datetime/timedelta comparisons,
+    and ``abs`` must be explicitly provided as a ``timedelta`` object.
+
+    .. versionadded:: 8.4
+
     If you're thinking about using ``approx``, then you might want to know how
     it compares to other good ways of comparing floating-point numbers.  All of
     these algorithms are based on relative and absolute tolerances and should
@@ -785,6 +882,8 @@ def approx(
     elif isinstance(expected, Collection) and not isinstance(expected, str | bytes):
         msg = f"pytest.approx() only supports ordered sequences, but got: {expected!r}"
         raise TypeError(msg)
+    elif isinstance(expected, (datetime, timedelta)):
+        cls = ApproxTimedelta
     else:
         cls = ApproxScalar
 

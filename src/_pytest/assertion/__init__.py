@@ -57,6 +57,15 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         help=("Set threshold of CHARS after which truncation will take effect"),
     )
+    parser.addini(
+        "assertion_text_diff_style",
+        default=util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+        help=(
+            "Choose how pytest renders diffs for string equality assertions: "
+            f"{util.ASSERTION_TEXT_DIFF_STYLE_NDIFF} or "
+            f"{util.ASSERTION_TEXT_DIFF_STYLE_BLOCK} for multiline strings"
+        ),
+    )
 
     Config._add_verbosity_ini(
         parser,
@@ -66,6 +75,10 @@ def pytest_addoption(parser: Parser) -> None:
             "Higher levels will provide more detailed explanation when an assertion fails."
         ),
     )
+
+
+def pytest_configure(config: Config) -> None:
+    util.validate_assertion_text_diff_style(config)
 
 
 def register_assert_rewrite(*names: str) -> None:

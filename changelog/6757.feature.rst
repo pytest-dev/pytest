@@ -1,0 +1,3 @@
+Added the :confval:`assertion_text_diff_style` configuration option, allowing
+multiline string equality failures to be rendered as separate ``Left:`` and
+``Right:`` blocks instead of ``ndiff`` output.
