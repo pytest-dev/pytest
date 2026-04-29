@@ -1483,6 +1483,8 @@ class Config:
                     + args
                 )
 
+        # At this point, self.option contains only defaults from the _processopt
+        # callback.
         ns = self._parser.parse_known_args(args, namespace=copy.copy(self.option))
         rootpath, inipath, inicfg, ignored_config_files = determine_setup(
             inifile=ns.inifilename,
@@ -1533,7 +1535,12 @@ class Config:
         # are going to be loaded.
         self.pluginmanager.consider_env()
 
-        self._parser.parse_known_args(args, namespace=self.known_args_namespace)
+        # Parse again, now including options added in pytest_addoption
+        # by third-party plugins loaded above. This way they're available
+        # on early_config in the pytest_load_initial_conftests hook call below.
+        self.known_args_namespace = self._parser.parse_known_args(
+            args, namespace=copy.copy(self.option)
+        )
 
         self._validate_plugins()
         self._warn_about_skipped_plugins()
