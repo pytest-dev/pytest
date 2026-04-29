@@ -1624,14 +1624,20 @@ class FixtureManager:
         #       explain.
         self._arg2fixturedefs: Final[dict[str, list[FixtureDef[Any]]]] = {}
         self._holderobjseen: Final[set[object]] = set()
-        # A mapping from a nodeid to a list of autouse fixtures it defines.
-        self._nodeid_autousenames: Final[dict[str, list[str]]] = {
-            "": self.config.getini("usefixtures"),
+        # A mapping from a node to a list of autouse fixture names it defines.
+        # The Session entry holds global usefixtures from config.
+        self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
+            session: list(self.config.getini("usefixtures")),
         }
         # Pending conftest modules waiting to be parsed when their Directory is collected.
         # Maps directory path -> conftest plugin module.
         self._pending_conftests: Final[dict[Path, object]] = {}
         session.config.pluginmanager.register(self, "funcmanage")
+        # Flush initial conftests from directories above rootpath immediately.
+        # These will never get a Directory collector, so they need Session scope.
+        # This must happen here (not in pytest_make_collect_report) because
+        # collection may fail before Session collection starts (e.g. bad args).
+        self._flush_pending_conftests_to_session(session)
 
     def getfixtureinfo(
         self,
@@ -1691,9 +1697,6 @@ class FixtureManager:
     def pytest_make_collect_report(
         self, collector: nodes.Collector
     ) -> Generator[None, CollectReport, CollectReport]:
-        # For Directory collectors, conftest modules are loaded during collection.
-        # After collection, we parse any conftest fixtures that were registered
-        # for this Directory. This ensures fixtures are scoped to the Directory's nodeid.
         result = yield
         if isinstance(collector, nodes.Directory):
             plugin = self._pending_conftests.pop(collector.path, None)
@@ -1701,10 +1704,36 @@ class FixtureManager:
                 self.parsefactories(holder=plugin, node=collector)
         return result
 
+    def _flush_pending_conftests_to_session(self, session: Session) -> None:
+        """Assign Session scope to initial conftests whose directories won't
+        be collected as Directory nodes (e.g. ancestors above rootdir)."""
+        rootpath = session.config.rootpath
+        orphaned: list[tuple[Path, object]] = []
+        for conftest_dir, plugin in list(self._pending_conftests.items()):
+            # If the conftest dir is not under rootpath, it will never get
+            # a Directory collector — assign it to Session now.
+            try:
+                conftest_dir.relative_to(rootpath)
+            except ValueError:
+                orphaned.append((conftest_dir, plugin))
+        for conftest_dir, plugin in orphaned:
+            del self._pending_conftests[conftest_dir]
+            self.parsefactories(holder=plugin, node=session)
+
+    def pytest_collection_finish(self) -> None:
+        """Clean up any conftests that were never collected by a Directory.
+
+        After __init__ flushes above-rootdir conftests and collection pops
+        under-rootdir ones, remaining entries mean collection was interrupted
+        (e.g. UsageError for a bad path). These conftests' fixtures aren't
+        needed since their directories' tests weren't collected either.
+        """
+        self._pending_conftests.clear()
+
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to node."""
         for parentnode in node.listchain():
-            basenames = self._nodeid_autousenames.get(parentnode.nodeid)
+            basenames = self._node_autousenames.get(parentnode)
             if basenames:
                 yield from basenames
 
@@ -1888,9 +1917,11 @@ class FixtureManager:
             i = len([f for f in faclist if not f.has_location])
             faclist.insert(i, fixture_def)
         if autouse:
-            # Use node.nodeid when available, fall back to nodeid string
-            effective_nodeid = node.nodeid if node is not None else (nodeid or "")
-            self._nodeid_autousenames.setdefault(effective_nodeid, []).append(name)
+            if node is not None:
+                self._node_autousenames.setdefault(node, []).append(name)
+            else:
+                # Global plugin autouse fixtures go under Session.
+                self._node_autousenames.setdefault(self.session, []).append(name)
 
     @overload
     def parsefactories(
