@@ -4433,11 +4433,11 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
         [
             "test_fixtures.py::test_first ",
             "        SETUP    F my_fixture",
-            "        test_fixtures.py::test_first (fixtures used: my_fixture, request)PASSED",
+            "        test_fixtures.py::test_first (fixtures used: my_fixture, request) PASSED",
             "test_fixtures.py::test_first ERROR",
             "test_fixtures.py::test_second ",
             "        SETUP    F my_fixture",
-            "        test_fixtures.py::test_second (fixtures used: my_fixture, request)PASSED",
+            "        test_fixtures.py::test_second (fixtures used: my_fixture, request) PASSED",
             "        TEARDOWN F my_fixture",
         ],
         consecutive=True,
