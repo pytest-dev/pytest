@@ -341,3 +341,28 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("COMP_POINT", str(len("pytest " + arg)))
     result = pytester.run("bash", str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
+
+
+def test_argument_repr_uninitialized() -> None:
+    """Argument.__repr__ should not crash if _action is not set yet."""
+    arg = parseopt.Argument.__new__(parseopt.Argument)
+    result = repr(arg)
+    assert result == "Argument(<uninitialized>)"
+
+
+def test_argument_repr_initialized(parser: parseopt.Parser) -> None:
+    """Argument.__repr__ works normally when properly initialized."""
+    parser.addoption("--myflag", dest="myflag", help="test flag")
+    option = parser._anonymous.options[-1]
+    result = repr(option)
+    assert "opts:" in result
+    assert "dest:" in result
+
+
+def test_argument_repr_with_type(parser: parseopt.Parser) -> None:
+    """Argument.__repr__ includes type when set."""
+    parser.addoption("--count", type=int, dest="count", help="count")
+    option = parser._anonymous.options[-1]
+    result = repr(option)
+    assert "type:" in result
+    assert "int" in result
