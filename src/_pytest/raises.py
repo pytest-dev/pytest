@@ -699,7 +699,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         if not self.matches(exc_val):
             if self._just_propagate:
                 return False
-            raise AssertionError(self._fail_reason)
+            raise AssertionError(self._fail_reason) from None
 
         # Cast to narrow the exception type now that it's verified....
         # even though the TypeGuard in self.matches should be narrowing
