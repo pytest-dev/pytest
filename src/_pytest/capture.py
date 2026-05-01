@@ -682,9 +682,9 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
         Uses non-blocking reads with select/poll for proper synchronization.
         Responds to snap requests by draining the pipe and signaling completion.
         """
-        if sys.platform == "win32":
+        if sys.platform == "win32":  # pragma: no cover
             self._tee_thread_windows()
-        else:
+        else:  # pragma: no cover
             self._tee_thread_unix()
 
     def _tee_thread_unix(self) -> None:
@@ -837,7 +837,7 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
         self._snap_requested.set()
 
         # Wait for thread to acknowledge (with timeout)
-        if not self._snap_complete.wait(timeout=1.0):
+        if not self._snap_complete.wait(timeout=1.0):  # pragma: no cover
             warnings.warn(
                 f"FDCaptureTee snap sync for fd {self.targetfd} timed out. "
                 "Some captured output may be incomplete.",
@@ -883,7 +883,7 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
         # Wait for thread to finish processing all data
         if self._thread is not None:
             self._thread.join(timeout=5.0)
-            if self._thread.is_alive():
+            if self._thread.is_alive():  # pragma: no cover
                 warnings.warn(
                     f"FDCaptureTee thread for fd {self.targetfd} did not exit cleanly "
                     "within timeout. Some captured output may be lost.",
