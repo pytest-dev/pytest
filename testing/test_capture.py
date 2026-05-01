@@ -1319,8 +1319,7 @@ class TestFDCaptureTee:
         cap = capture.FDCaptureTee(fd)
         cap.start()
 
-        results = []
-        errors = []
+        errors: list[Exception] = []
 
         def writer(thread_id: int, count: int) -> None:
             try:
