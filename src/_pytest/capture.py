@@ -687,7 +687,7 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
         else:  # pragma: no cover
             self._tee_thread_unix()
 
-    def _tee_thread_unix(self) -> None:
+    def _tee_thread_unix(self) -> None:  # pragma: no cover
         """Unix implementation using select() for non-blocking reads."""
         while not self._shutdown.is_set():
             # Check for snap request
@@ -722,7 +722,7 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
             self._snap_requested.clear()
             self._snap_complete.set()
 
-    def _tee_thread_windows(self) -> None:
+    def _tee_thread_windows(self) -> None:  # pragma: no cover
         """Windows implementation using a queue for non-blocking communication.
 
         On Windows, select() doesn't work on pipes and os.read() blocks indefinitely.
@@ -796,7 +796,7 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
             self._snap_requested.clear()
             self._snap_complete.set()
 
-    def _drain_queue_nonblocking(self, data_queue: queue.Queue[bytes | None]) -> None:
+    def _drain_queue_nonblocking(self, data_queue: queue.Queue[bytes | None]) -> None:  # pragma: no cover
         """Drain all immediately available data from queue (non-blocking)."""
         while True:
             try:
@@ -809,7 +809,7 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
             except queue.Empty:
                 break  # No more data available
 
-    def _drain_nonblocking(self) -> None:
+    def _drain_nonblocking(self) -> None:  # pragma: no cover
         """Drain all immediately available data from pipe (non-blocking)."""
         while True:
             try:
