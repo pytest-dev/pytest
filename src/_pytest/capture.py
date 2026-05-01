@@ -797,7 +797,7 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
             self._snap_requested.clear()
             self._snap_complete.set()
 
-    def _drain_queue_nonblocking(self, data_queue: "queue.Queue[bytes | None]") -> None:
+    def _drain_queue_nonblocking(self, data_queue: queue.Queue[bytes | None]) -> None:
         """Drain all immediately available data from queue (non-blocking)."""
         import queue
 
