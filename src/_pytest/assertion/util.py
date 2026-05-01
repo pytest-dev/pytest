@@ -174,11 +174,14 @@ def has_default_eq(obj: object) -> bool:
 
 
 def assertrepr_compare(
-    config: Config, op: str, left: object, right: object
+    op: str,
+    left: object,
+    right: object,
+    *,
+    verbose: int,
+    highlighter: _HighlightFunc,
 ) -> list[str] | None:
     """Return specialised explanations for some operators/operands."""
-    verbose = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
-
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.
     use_ascii = (
@@ -201,7 +204,6 @@ def assertrepr_compare(
         right_repr = saferepr(right, maxsize=maxsize, use_ascii=use_ascii)
 
     summary = f"{left_repr} {op} {right_repr}"
-    highlighter = config.get_terminal_writer()._highlight
 
     explanation = None
     try:
