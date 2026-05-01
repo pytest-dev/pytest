@@ -521,6 +521,20 @@ class TestCaptureFixture:
         # The captured subprocess output should appear in the report
         result.stdout.fnmatch_lines(["*subprocess_out*"])
 
+    def test_capteefdbinary(self, pytester: Pytester) -> None:
+        """Test that capteefdbinary fixture captures binary output."""
+        p = pytester.makepyfile(
+            """\
+            import os
+            def test_binary(capteefdbinary):
+                os.write(1, b"binary_output")
+                out, err = capteefdbinary.readouterr()
+                assert out == b"binary_output"
+            """
+        )
+        result = pytester.runpytest(p)
+        assert result.ret == ExitCode.OK
+
     def test_capsyscapfd(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """\
@@ -1325,7 +1339,7 @@ class TestFDCaptureTee:
             try:
                 for i in range(count):
                     os.write(fd, f"t{thread_id}:{i}\n".encode())
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 errors.append(e)
 
         # Spawn multiple writer threads
