@@ -132,9 +132,10 @@ def runtestprotocol(
         rep = call_and_report(item, "setup", log)
         reports = [rep]
         if rep.passed:
+            setup_only = item.config.getoption("setuponly", False)
             if item.config.getoption("setupshow", False):
-                show_test_item(item)
-            if not item.config.getoption("setuponly", False):
+                show_test_item(item, add_space=not setup_only)
+            if not setup_only:
                 reports.append(call_and_report(item, "call", log))
         # If the session is about to fail or stop, teardown everything - this is
         # necessary to correctly report fixture teardown errors (see #11706)
@@ -150,7 +151,7 @@ def runtestprotocol(
     return reports
 
 
-def show_test_item(item: Item) -> None:
+def show_test_item(item: Item, *, add_space: bool) -> None:
     """Show test function, parameters and the fixtures of the test item."""
     tw = item.config.get_terminal_writer()
     tw.line()
@@ -159,6 +160,8 @@ def show_test_item(item: Item) -> None:
     used_fixtures = sorted(getattr(item, "fixturenames", []))
     if used_fixtures:
         tw.write(f" (fixtures used: {', '.join(used_fixtures)})")
+    if add_space:
+        tw.write(" ")
     tw.flush()
 
 
