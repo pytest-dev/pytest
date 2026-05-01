@@ -1301,7 +1301,9 @@ class TestFDCaptureTee:
         # Read from the saved fd (which points to the original file)
         os.lseek(saved_fd, 0, os.SEEK_SET)
         tee_output = os.read(saved_fd, 1024)
-        assert tee_output == b"realtime_data", "Output should appear in real-time before snap()"
+        assert tee_output == b"realtime_data", (
+            "Output should appear in real-time before snap()"
+        )
 
         # Now snap should also have the data
         captured = cap.snap()

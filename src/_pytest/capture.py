@@ -18,6 +18,7 @@ import threading
 from types import TracebackType
 import warnings
 
+
 # Platform-specific imports for non-blocking I/O
 if sys.platform != "win32":
     import fcntl
@@ -796,7 +797,7 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
             self._snap_requested.clear()
             self._snap_complete.set()
 
-    def _drain_queue_nonblocking(self, data_queue: "queue.Queue[bytes | None]") -> None:
+    def _drain_queue_nonblocking(self, data_queue: queue.Queue[bytes | None]) -> None:
         """Drain all immediately available data from queue (non-blocking)."""
         import queue
 
@@ -944,7 +945,6 @@ class FDCaptureBinaryTee(FDCaptureTeeBase[bytes]):
 
         This prevents duplicate output when pop_outerr_to_orig() replays captured data.
         """
-        pass
 
 
 class FDCaptureTee(FDCaptureTeeBase[str]):
@@ -970,7 +970,6 @@ class FDCaptureTee(FDCaptureTeeBase[str]):
 
         This prevents duplicate output when pop_outerr_to_orig() replays captured data.
         """
-        pass
 
 
 # MultiCapture
@@ -1093,9 +1092,7 @@ def _get_multicapture(method: _CaptureMethod) -> MultiCapture[str]:
             in_=None, out=SysCapture(1, tee=True), err=SysCapture(2, tee=True)
         )
     elif method == "tee-fd":
-        return MultiCapture(
-            in_=None, out=FDCaptureTee(1), err=FDCaptureTee(2)
-        )
+        return MultiCapture(in_=None, out=FDCaptureTee(1), err=FDCaptureTee(2))
     raise ValueError(f"unknown capturing method: {method!r}")
 
 
