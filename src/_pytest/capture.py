@@ -12,6 +12,7 @@ import contextlib
 import io
 from io import UnsupportedOperation
 import os
+import queue
 import sys
 from tempfile import TemporaryFile
 import threading
@@ -728,8 +729,6 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
         We use a separate reader thread that pushes data to a queue, allowing the
         main tee thread to respond to snap requests without blocking.
         """
-        import queue
-
         data_queue: queue.Queue[bytes | None] = queue.Queue()
         reader_shutdown = threading.Event()
 
@@ -799,8 +798,6 @@ class FDCaptureTeeBase(CaptureBase[AnyStr]):
 
     def _drain_queue_nonblocking(self, data_queue: queue.Queue[bytes | None]) -> None:
         """Drain all immediately available data from queue (non-blocking)."""
-        import queue
-
         while True:
             try:
                 data = data_queue.get_nowait()
