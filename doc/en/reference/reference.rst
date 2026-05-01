@@ -422,6 +422,26 @@ capteesys
 .. autofunction:: _pytest.capture.capteesys()
     :no-auto-options:
 
+.. fixture:: capteefd
+
+capteefd
+~~~~~~~~
+
+**Tutorial**: :ref:`captures`
+
+.. autofunction:: _pytest.capture.capteefd()
+    :no-auto-options:
+
+.. fixture:: capteefdbinary
+
+capteefdbinary
+~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`captures`
+
+.. autofunction:: _pytest.capture.capteefdbinary()
+    :no-auto-options:
+
 .. fixture:: capsysbinary
 
 capsysbinary
@@ -3111,7 +3131,8 @@ Output Capture
     * ``fd``: capture at file descriptor level (default)
     * ``sys``: capture at sys level
     * ``no``: don't capture output
-    * ``tee-sys``: capture but also show output on terminal
+    * ``tee-sys``: capture sys level but also show output on terminal
+    * ``tee-fd``: capture fd level but also show output on terminal
 
     See :ref:`captures`.
 

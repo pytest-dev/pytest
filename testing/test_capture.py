@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import textwrap
+import threading
 from typing import BinaryIO
 from typing import cast
 from typing import TextIO
@@ -478,6 +479,47 @@ class TestCaptureFixture:
         assert result.ret == ExitCode.OK
         result.stdout.fnmatch_lines(["sTdoUt", "sTdeRr"])  # no tee, just reported
         assert not result.stderr.lines
+
+    def test_capteefd(self, pytester: Pytester) -> None:
+        """Test that capteefd captures FD-level output with tee passthrough."""
+        p = pytester.makepyfile(
+            """\
+            import os
+            def test_one(capteefd):
+                os.write(1, b"fDoUt")
+                os.write(2, b"fDeRr")
+                out, err = capteefd.readouterr()
+                assert out == "fDoUt"
+                assert err == "fDeRr"
+            """
+        )
+        # First test: just verify the capture works
+        result = pytester.runpytest(p, "--capture=fd")
+        assert result.ret == ExitCode.OK
+
+        # Test with tee-fd: capture should work and output should be tee'd
+        result = pytester.runpytest(p, "--capture=tee-fd", "-rA")
+        assert result.ret == ExitCode.OK
+        # The captured output should appear in the report
+        result.stdout.fnmatch_lines(["*fDoUt*", "*fDeRr*"])
+
+    def test_capteefd_subprocess(self, pytester: Pytester) -> None:
+        """Test that capteefd captures subprocess output."""
+        p = pytester.makepyfile(
+            """\
+            import subprocess
+            import sys
+            def test_subprocess(capteefd):
+                subprocess.run([sys.executable, "-c", "print('subprocess_out')"])
+                out, err = capteefd.readouterr()
+                assert "subprocess_out" in out
+            """
+        )
+        # Test that subprocess output is captured (the key feature of FD-level capture)
+        result = pytester.runpytest(p, "--capture=tee-fd", "-rA")
+        assert result.ret == ExitCode.OK
+        # The captured subprocess output should appear in the report
+        result.stdout.fnmatch_lines(["*subprocess_out*"])
 
     def test_capsyscapfd(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
@@ -1107,6 +1149,210 @@ class TestFDCapture:
 
     def test_capfd_sys_stdout_mode(self, capfd) -> None:
         assert "b" not in sys.stdout.mode
+
+
+class TestFDCaptureTee:
+    """Tests for FDCaptureTee - FD-level capture with real-time tee."""
+
+    def test_simple(self) -> None:
+        """Test basic capture and tee functionality."""
+        with saved_fd(1):
+            cap = capture.FDCaptureTee(1)
+            cap.start()
+            os.write(1, b"hello")
+            s = cap.snap()
+            cap.done()
+            assert s == "hello"
+
+    def test_tee_passthrough(self, tmpfile: BinaryIO) -> None:
+        """Test that output is passed through to original FD."""
+        fd = tmpfile.fileno()
+        cap = capture.FDCaptureTee(fd)
+        cap.start()
+        os.write(fd, b"hello")
+        s = cap.snap()
+        cap.done()
+        assert s == "hello"
+        # Check that output was tee'd to original file
+        tmpfile.seek(0)
+        tee_output = tmpfile.read()
+        assert tee_output == b"hello"
+
+    def test_suspend_resume(self) -> None:
+        """Test suspend and resume functionality."""
+        with saved_fd(1):
+            cap = capture.FDCaptureTee(1)
+            cap.start()
+            os.write(1, b"before")
+            s = cap.snap()
+            assert s == "before"
+            cap.suspend()
+            os.write(1, b"during_suspend")
+            assert not cap.snap()
+            cap.resume()
+            os.write(1, b"after")
+            s = cap.snap()
+            assert s == "after"
+            cap.done()
+
+    def test_binary(self) -> None:
+        """Test FDCaptureBinaryTee returns bytes."""
+        with saved_fd(1):
+            cap = capture.FDCaptureBinaryTee(1)
+            cap.start()
+            os.write(1, b"hello")
+            s = cap.snap()
+            cap.done()
+            assert s == b"hello"
+            assert isinstance(s, bytes)
+
+    def test_large_output(self, tmpfile: BinaryIO) -> None:
+        """Test handling of large output that exceeds pipe buffer."""
+        fd = tmpfile.fileno()
+        cap = capture.FDCaptureTee(fd)
+        cap.start()
+        # Write more than typical pipe buffer (64KB on many systems)
+        large_data = b"x" * 100000
+        os.write(fd, large_data)
+        s = cap.snap()
+        cap.done()
+        assert len(s) == 100000
+        assert s == "x" * 100000
+        # Verify tee'd output
+        tmpfile.seek(0)
+        tee_output = tmpfile.read()
+        assert tee_output == large_data
+
+    def test_capture_and_tee_match(self, tmpfile: BinaryIO) -> None:
+        """Test that captured output matches tee'd output exactly."""
+        fd = tmpfile.fileno()
+        cap = capture.FDCaptureTee(fd)
+        cap.start()
+        # Write multiple chunks
+        for i in range(10):
+            os.write(fd, f"chunk{i}\n".encode())
+        captured = cap.snap()
+        cap.done()
+        # Verify captured matches tee'd
+        tmpfile.seek(0)
+        tee_output = tmpfile.read().decode()
+        assert captured == tee_output
+
+    def test_output_pending_at_done(self, tmpfile: BinaryIO) -> None:
+        """Test that output written just before done() is still captured and tee'd."""
+        fd = tmpfile.fileno()
+        cap = capture.FDCaptureTee(fd)
+        cap.start()
+        os.write(fd, b"final_output")
+        # Call done() immediately - data should still be captured
+        s = cap.snap()
+        cap.done()
+        assert s == "final_output"
+        # Verify it was also tee'd
+        tmpfile.seek(0)
+        tee_output = tmpfile.read()
+        assert tee_output == b"final_output"
+
+    def test_stderr_capture(self) -> None:
+        """Test capturing stderr with tee."""
+        with saved_fd(2):
+            cap = capture.FDCaptureTee(2)
+            cap.start()
+            os.write(2, b"stderr_output")
+            s = cap.snap()
+            cap.done()
+            assert s == "stderr_output"
+
+    def test_writeorg_is_noop(self, tmpfile: BinaryIO) -> None:
+        """Test that writeorg() is a no-op to prevent duplicate output."""
+        fd = tmpfile.fileno()
+        cap = capture.FDCaptureTee(fd)
+        cap.start()
+        os.write(fd, b"hello")
+        s = cap.snap()
+        # writeorg should be a no-op since data was already tee'd
+        cap.writeorg("should_not_appear")
+        cap.done()
+        assert s == "hello"
+        # Verify only original data was tee'd, not the writeorg call
+        tmpfile.seek(0)
+        tee_output = tmpfile.read()
+        assert tee_output == b"hello"
+        assert b"should_not_appear" not in tee_output
+
+    def test_realtime_passthrough(self, tmpfile: BinaryIO) -> None:
+        """Test that output is passed through in real-time, before snap() is called."""
+        import time
+
+        fd = tmpfile.fileno()
+        # Save the original fd so we can read from it later
+        saved_fd = os.dup(fd)
+
+        cap = capture.FDCaptureTee(fd)
+        cap.start()
+
+        # Write data
+        os.write(fd, b"realtime_data")
+
+        # Give the tee thread time to process (it runs in background)
+        time.sleep(0.05)
+
+        # Check that data was tee'd BEFORE calling snap()
+        # Read from the saved fd (which points to the original file)
+        os.lseek(saved_fd, 0, os.SEEK_SET)
+        tee_output = os.read(saved_fd, 1024)
+        assert tee_output == b"realtime_data", "Output should appear in real-time before snap()"
+
+        # Now snap should also have the data
+        captured = cap.snap()
+        cap.done()
+        os.close(saved_fd)
+        assert captured == "realtime_data"
+
+    def test_concurrent_writes(self, tmpfile: BinaryIO) -> None:
+        """Test handling of concurrent writes from multiple threads."""
+        import time
+
+        fd = tmpfile.fileno()
+        cap = capture.FDCaptureTee(fd)
+        cap.start()
+
+        results = []
+        errors = []
+
+        def writer(thread_id: int, count: int) -> None:
+            try:
+                for i in range(count):
+                    os.write(fd, f"t{thread_id}:{i}\n".encode())
+            except Exception as e:
+                errors.append(e)
+
+        # Spawn multiple writer threads
+        threads = []
+        for i in range(3):
+            t = threading.Thread(target=writer, args=(i, 10))
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        # Small delay for all data to flow through
+        time.sleep(0.1)
+
+        captured = cap.snap()
+        cap.done()
+
+        assert not errors, f"Writer threads had errors: {errors}"
+
+        # Verify all writes were captured (30 lines total)
+        lines = captured.strip().split("\n")
+        assert len(lines) == 30, f"Expected 30 lines, got {len(lines)}"
+
+        # Verify tee'd output matches captured
+        tmpfile.seek(0)
+        tee_output = tmpfile.read().decode()
+        assert tee_output == captured
 
 
 @contextlib.contextmanager
