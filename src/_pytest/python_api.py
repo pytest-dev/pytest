@@ -592,34 +592,16 @@ class ApproxTimedelta(ApproxBase):
                 f"absolute tolerance for datetime/timedelta must be a "
                 f"timedelta, got {type(abs).__name__}"
             )
-        # Store the timedelta tolerance directly.
-        self.expected = expected
-        self._tolerance = abs
-        # Call grandparent init to set up basic state without _check_type.
-        self.abs = abs
-        self.rel = None
-        self.nan_ok = False
+        super().__init__(expected, rel=None, abs=abs, nan_ok=False)
 
     def __repr__(self) -> str:
-        return f"{self.expected} ± {self._tolerance}"
+        return f"{self.expected} ± {self.abs}"
 
     def __eq__(self, actual) -> bool:
         try:
-            return bool(builtins.abs(self.expected - actual) <= self._tolerance)
+            return bool(builtins.abs(self.expected - actual) <= self.abs)
         except (TypeError, OverflowError):
             return False
-
-    __hash__ = None
-
-    def __ne__(self, actual) -> bool:
-        return not (actual == self)
-
-    def __bool__(self):
-        __tracebackhide__ = True
-        raise AssertionError(
-            "approx() is not supported in a boolean context.\n"
-            "Did you mean: `assert a == approx(b)`?"
-        )
 
     def _yield_comparisons(self, actual):
         yield actual, self.expected
@@ -632,9 +614,9 @@ class ApproxTimedelta(ApproxBase):
         return [
             "comparison failed",
             f"Obtained: {other_side}",
-            f"Expected: {self.expected} ± {self._tolerance}",
+            f"Expected: {self.expected} ± {self.abs}",
             f"Absolute difference: {abs_diff}",
-            f"Tolerance: {self._tolerance}",
+            f"Tolerance: {self.abs}",
         ]
 
 
