@@ -1760,9 +1760,17 @@ class LineMatcher:
     def _no_match_line(
         self, pat: str, match_func: Callable[[str, str], bool], match_nickname: str
     ) -> None:
-        """Ensure captured lines does not have a the given pattern, using ``fnmatch.fnmatch``.
+        """Underlying implementation of ``no_fnmatch_line`` and ``no_re_match_line``.
 
-        :param str pat: The pattern to match lines.
+        :param str pat:
+            The pattern to match lines.
+        :param match_func:
+            A callable ``match_func(line, pattern)`` where line is the
+            captured line from stdout/stderr and pattern is the matching
+            pattern.
+        :param match_nickname:
+            The nickname for the match function that will be logged to stdout
+            when a match occurs.
         """
         __tracebackhide__ = True
         nomatch_printed = False
