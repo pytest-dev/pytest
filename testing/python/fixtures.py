@@ -1178,7 +1178,7 @@ class TestRequestBasic:
     def test_request_fixturenames_dynamic_fixture(self, pytester: Pytester) -> None:
         """Regression test for #3057"""
         pytester.copy_example("fixtures/test_getfixturevalue_dynamic.py")
-        result = pytester.runpytest()
+        result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_setupdecorator_and_xunit(self, pytester: Pytester) -> None:
@@ -2424,30 +2424,43 @@ class TestAutouseManagement:
         pytester.makepyfile(
             """
             import pytest
+
             values = []
+
             def pytest_generate_tests(metafunc):
                 if metafunc.cls is None:
                     assert metafunc.function is test_finish
                 if metafunc.cls is not None:
                     metafunc.parametrize("item", [1,2], scope="class")
-            class TestClass(object):
+
+            class TestClass:
                 @pytest.fixture(scope="class", autouse=True)
-                def addteardown(self, item, request):
+                def setup_teardown(self, item):
                     values.append("setup-%d" % item)
-                    request.addfinalizer(lambda: values.append("teardown-%d" % item))
+                    yield
+                    values.append("teardown-%d" % item)
+
                 def test_step1(self, item):
                     values.append("step1-%d" % item)
+
                 def test_step2(self, item):
                     values.append("step2-%d" % item)
 
             def test_finish():
-                print(values)
-                assert values == ["setup-1", "step1-1", "step2-1", "teardown-1",
-                             "setup-2", "step1-2", "step2-2", "teardown-2",]
-        """
+                assert values == [
+                    "setup-1",
+                    "step1-1",
+                    "step2-1",
+                    "teardown-1",
+                    "setup-2",
+                    "step1-2",
+                    "step2-2",
+                    "teardown-2",
+                ]
+            """
         )
-        reprec = pytester.inline_run("-s")
-        reprec.assertoutcome(passed=5)
+        result = pytester.inline_run("-vv")
+        result.assertoutcome(passed=5)
 
     def test_ordering_autouse_before_explicit(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -4484,62 +4497,74 @@ class TestScopeOrdering:
         request = TopRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
-    def test_func_closure_with_native_fixtures(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch
-    ) -> None:
-        """Sanity check that verifies the order returned by the closures and the actual fixture execution order:
-        The execution order may differ because of fixture inter-dependencies.
-        """
-        monkeypatch.setattr(pytest, "FIXTURE_ORDER", [], raising=False)
+    def test_func_closure_with_native_fixtures(self, pytester: Pytester) -> None:
+        """Sanity check that verifies the order returned by the closures and the
+        actual fixture execution order: the execution order may differ because
+        of fixture inter-dependencies."""
         pytester.makepyfile(
             """
             import pytest
 
-            FIXTURE_ORDER = pytest.FIXTURE_ORDER
+            fixture_order = []
 
             @pytest.fixture(scope="session")
             def s1():
-                FIXTURE_ORDER.append('s1')
+                fixture_order.append("s1")
 
             @pytest.fixture(scope="package")
             def p1():
-                FIXTURE_ORDER.append('p1')
+                fixture_order.append("p1")
 
             @pytest.fixture(scope="module")
             def m1():
-                FIXTURE_ORDER.append('m1')
+                fixture_order.append("m1")
 
-            @pytest.fixture(scope='session')
+            @pytest.fixture(scope="session")
             def my_tmp_path_factory():
-                FIXTURE_ORDER.append('my_tmp_path_factory')
+                fixture_order.append("my_tmp_path_factory")
 
             @pytest.fixture
             def my_tmp_path(my_tmp_path_factory):
-                FIXTURE_ORDER.append('my_tmp_path')
+                fixture_order.append("my_tmp_path")
 
             @pytest.fixture
             def f1(my_tmp_path):
-                FIXTURE_ORDER.append('f1')
+                fixture_order.append("f1")
 
             @pytest.fixture
             def f2():
-                FIXTURE_ORDER.append('f2')
+                fixture_order.append("f2")
 
-            def test_foo(f1, p1, m1, f2, s1): pass
+            def test_foo(f1, p1, m1, f2, s1):
+                # Actual fixture execution differs from static order: dependent
+                # fixtures must be created first ("my_tmp_path").
+                assert fixture_order == [
+                    "my_tmp_path_factory",
+                    "s1",
+                    "p1",
+                    "m1",
+                    "my_tmp_path",
+                    "f1",
+                    "f2",
+                ]
         """
         )
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        # order of fixtures based on their scope and position in the parameter list
-        assert (
-            request.fixturenames
-            == "s1 my_tmp_path_factory p1 m1 f1 f2 my_tmp_path".split()
-        )
-        pytester.runpytest()
-        # actual fixture execution differs: dependent fixtures must be created first ("my_tmp_path")
-        FIXTURE_ORDER = pytest.FIXTURE_ORDER  # type: ignore[attr-defined]
-        assert FIXTURE_ORDER == "s1 my_tmp_path_factory p1 m1 my_tmp_path f1 f2".split()
+        # Static order of fixtures based on their scope and position in the
+        # parameter list.
+        assert request.fixturenames == [
+            "my_tmp_path_factory",
+            "s1",
+            "p1",
+            "m1",
+            "f1",
+            "my_tmp_path",
+            "f2",
+        ]
+        result = pytester.runpytest("-vv")
+        result.assert_outcomes(passed=1)
 
     def test_func_closure_module(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -5451,6 +5476,47 @@ def test_fixture_closure_with_overrides_and_intermediary(pytester: Pytester) -> 
     result.assert_outcomes(passed=1)
 
 
+def test_fixture_closure_with_overrides_and_parametrization(pytester: Pytester) -> None:
+    """Test that an item's static fixture closure properly includes transitive
+    dependencies through overridden fixtures (#13773) when also including
+    parametrization (#14248)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def app(db): pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Overrides conftest-level `app` and requests it.
+        @pytest.fixture
+        def app(app): pass
+
+        class TestClass:
+            # Overrides module-level `app` and requests it.
+            @pytest.fixture
+            def app(self, app): pass
+
+            @pytest.mark.parametrize("a", [1])
+            def test_something(self, request, app, a):
+                # Both dynamic and static fixture closures should include 'db'.
+                assert 'db' in request.fixturenames
+                assert 'db' in request.node.fixturenames
+                # No dynamic dependencies, should be equal.
+                assert set(request.fixturenames) == set(request.node.fixturenames)
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
 def test_fixture_closure_with_broken_override_chain(pytester: Pytester) -> None:
     """Test that an item's static fixture closure properly includes transitive
     dependencies through overridden fixtures (#13773).
@@ -5527,7 +5593,7 @@ def test_fixture_closure_handles_circular_dependencies(pytester: Pytester) -> No
     )
     items, _hookrec = pytester.inline_genitems()
     assert isinstance(items[0], Function)
-    assert items[0].fixturenames == ["fix_a", "fix_x", "fix_b", "fix_y", "fix_z"]
+    assert items[0].fixturenames == ["fix_a", "fix_b", "fix_x", "fix_y", "fix_z"]
 
 
 def test_fixture_closure_handles_diamond_dependencies(pytester: Pytester) -> None:
