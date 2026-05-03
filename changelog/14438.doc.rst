@@ -1,1 +1,0 @@
-Fixed a typo and inaccurate ``fnmatch.fnmatch`` reference in ``LineMatcher._no_match_line`` docstring.
