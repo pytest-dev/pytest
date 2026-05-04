@@ -1,0 +1,1 @@
+The tmpdir user detection fallback is covered for Python 3.13+ environments where ``getpass.getuser()`` raises ``OSError``.

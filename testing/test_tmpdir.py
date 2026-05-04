@@ -422,14 +422,30 @@ def test_get_user_uid_not_found():
     assert get_user() is None
 
 
-@pytest.mark.skipif(not sys.platform.startswith("win"), reason="win only")
-def test_get_user(monkeypatch):
-    """Test that get_user() function works even if environment variables
-    required by getpass module are missing from the environment on Windows
-    (#1010).
+def test_get_user_handles_oserror(monkeypatch: MonkeyPatch) -> None:
+    """Test that get_user() handles getpass.getuser() raising OSError.
+
+    Python 3.13+ consistently raises OSError when no username can be
+    determined from the environment (for example on Windows with no username
+    environment variables set).
     """
-    monkeypatch.delenv("USER", raising=False)
-    monkeypatch.delenv("USERNAME", raising=False)
+
+    def raise_oserror() -> str:
+        raise OSError("No username set in the environment")
+
+    monkeypatch.setattr("getpass.getuser", raise_oserror)
+
+    assert get_user() is None
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="win only")
+def test_get_user(monkeypatch: MonkeyPatch) -> None:
+    """Test that get_user() works even if the environment variables
+    required by getpass are missing from the environment on Windows (#1010,
+    #13835).
+    """
+    for envvar in ("LOGNAME", "USER", "LNAME", "USERNAME"):
+        monkeypatch.delenv(envvar, raising=False)
     assert get_user() is None
 
 
