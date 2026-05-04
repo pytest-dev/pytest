@@ -53,6 +53,7 @@ from _pytest.compat import signature
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN
@@ -68,6 +69,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
+from _pytest.warning_types import PytestRemovedIn10Warning
 from _pytest.warning_types import PytestWarning
 
 
@@ -79,6 +81,7 @@ if TYPE_CHECKING:
     from _pytest.python import CallSpec2
     from _pytest.python import Function
     from _pytest.python import Metafunc
+    from _pytest.reports import CollectReport
 
 
 # The value of the fixture -- return/yield of the fixture function (type variable).
@@ -1029,8 +1032,21 @@ class FixtureDef(Generic[FixtureValue]):
         _ispytest: bool = False,
         # only used in a deprecationwarning msg, can be removed in pytest9
         _autouse: bool = False,
+        node: nodes.Node | None = None,
     ) -> None:
         check_ispytest(_ispytest)
+        # Emit deprecation warning if baseid string is used when node could be provided.
+        # baseid=None (global plugins) and baseid="" (synthetic fixtures) are fine.
+        if baseid and node is None:
+            warnings.warn(
+                "Passing baseid to FixtureDef is deprecated. "
+                "Pass node instead for fixture scoping.",
+                PytestRemovedIn10Warning,
+                stacklevel=2,
+            )
+        # The node where this fixture was defined, if available.
+        # Used for node-based matching which is more robust than string matching.
+        self.node: Final = node
         # The "base" node ID for the fixture.
         #
         # This is a node ID prefix. A fixture is only available to a node (e.g.
@@ -1044,11 +1060,12 @@ class FixtureDef(Generic[FixtureValue]):
         # directory path relative to the rootdir.
         #
         # For other plugins, the baseid is the empty string (always matches).
-        self.baseid: Final = baseid or ""
+        # When node is available, baseid is derived from node.nodeid.
+        self.baseid: Final = node.nodeid if node is not None else (baseid or "")
         # Whether the fixture was found from a node or a conftest in the
         # collection tree. Will be false for fixtures defined in non-conftest
         # plugins.
-        self.has_location: Final = baseid is not None
+        self.has_location: Final = node is not None or baseid is not None
         # The fixture factory function.
         self.func: Final = func
         # The name by which the fixture may be requested.
@@ -1059,7 +1076,7 @@ class FixtureDef(Generic[FixtureValue]):
             scope = _eval_scope_callable(scope, argname, config)
         if isinstance(scope, str):
             scope = Scope.from_user(
-                scope, descr=f"Fixture '{func.__name__}'", where=baseid
+                scope, descr=f"Fixture '{func.__name__}'", where=self.baseid
             )
         self._scope: Final = scope
         # If the fixture is directly parametrized, the parameter values.
@@ -1652,11 +1669,20 @@ class FixtureManager:
         #       explain.
         self._arg2fixturedefs: Final[dict[str, list[FixtureDef[Any]]]] = {}
         self._holderobjseen: Final[set[object]] = set()
-        # A mapping from a nodeid to a list of autouse fixtures it defines.
-        self._nodeid_autousenames: Final[dict[str, list[str]]] = {
-            "": self.config.getini("usefixtures"),
+        # A mapping from a node to a list of autouse fixture names it defines.
+        # The Session entry holds global usefixtures from config.
+        self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
+            session: list(self.config.getini("usefixtures")),
         }
+        # Pending conftest modules waiting to be parsed when their Directory is collected.
+        # Maps directory path -> conftest plugin module.
+        self._pending_conftests: Final[dict[Path, object]] = {}
         session.config.pluginmanager.register(self, "funcmanage")
+        # Flush initial conftests from directories above rootpath immediately.
+        # These will never get a Directory collector, so they need Session scope.
+        # This must happen here (not in pytest_make_collect_report) because
+        # collection may fail before Session collection starts (e.g. bad args).
+        self._flush_pending_conftests_to_session(session)
 
     def getfixtureinfo(
         self,
@@ -1697,31 +1723,62 @@ class FixtureManager:
     def pytest_plugin_registered(self, plugin: _PluggyPlugin, plugin_name: str) -> None:
         # Fixtures defined in conftest plugins are only visible to within the
         # conftest's directory. This is unlike fixtures in non-conftest plugins
-        # which have global visibility. So for conftests, construct the base
-        # nodeid from the plugin name (which is the conftest path).
+        # which have global visibility. Conftest fixtures are deferred until
+        # their Directory is collected, so we can use the Directory's nodeid.
         if plugin_name and plugin_name.endswith("conftest.py"):
             # Note: we explicitly do *not* use `plugin.__file__` here -- The
             # difference is that plugin_name has the correct capitalization on
             # case-insensitive systems (Windows) and other normalization issues
             # (issue #11816).
             conftestpath = absolutepath(plugin_name)
-            try:
-                nodeid = str(conftestpath.parent.relative_to(self.config.rootpath))
-            except ValueError:
-                nodeid = ""
-            if nodeid == ".":
-                nodeid = ""
-            elif nodeid:
-                nodeid = nodes.norm_sep(nodeid)
+            conftest_dir = conftestpath.parent
+            # Store conftest for deferred parsing when its Directory is collected.
+            self._pending_conftests[conftest_dir] = plugin
         else:
-            nodeid = None
+            # Non-conftest plugins have global visibility (nodeid=None).
+            self.parsefactories(plugin, None)
 
-        self.parsefactories(plugin, nodeid)
+    @hookimpl(wrapper=True)
+    def pytest_make_collect_report(
+        self, collector: nodes.Collector
+    ) -> Generator[None, CollectReport, CollectReport]:
+        result = yield
+        if isinstance(collector, nodes.Directory):
+            plugin = self._pending_conftests.pop(collector.path, None)
+            if plugin is not None:
+                self.parsefactories(holder=plugin, node=collector)
+        return result
+
+    def _flush_pending_conftests_to_session(self, session: Session) -> None:
+        """Assign Session scope to initial conftests whose directories won't
+        be collected as Directory nodes (e.g. ancestors above rootdir)."""
+        rootpath = session.config.rootpath
+        orphaned: list[tuple[Path, object]] = []
+        for conftest_dir, plugin in list(self._pending_conftests.items()):
+            # If the conftest dir is not under rootpath, it will never get
+            # a Directory collector — assign it to Session now.
+            try:
+                conftest_dir.relative_to(rootpath)
+            except ValueError:
+                orphaned.append((conftest_dir, plugin))
+        for conftest_dir, plugin in orphaned:
+            del self._pending_conftests[conftest_dir]
+            self.parsefactories(holder=plugin, node=session)
+
+    def pytest_collection_finish(self) -> None:
+        """Clean up any conftests that were never collected by a Directory.
+
+        After __init__ flushes above-rootdir conftests and collection pops
+        under-rootdir ones, remaining entries mean collection was interrupted
+        (e.g. UsageError for a bad path). These conftests' fixtures aren't
+        needed since their directories' tests weren't collected either.
+        """
+        self._pending_conftests.clear()
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to node."""
         for parentnode in node.listchain():
-            basenames = self._nodeid_autousenames.get(parentnode.nodeid)
+            basenames = self._node_autousenames.get(parentnode)
             if basenames:
                 yield from basenames
 
@@ -1824,11 +1881,12 @@ class FixtureManager:
         *,
         name: str,
         func: _FixtureFunc[object],
-        nodeid: str | None,
+        nodeid: str | None = None,
         scope: Scope | ScopeName | Callable[[str, Config], ScopeName] = "function",
         params: Sequence[object] | None = None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         autouse: bool = False,
+        node: nodes.Node | None = None,
     ) -> None:
         """Register a fixture
 
@@ -1837,10 +1895,12 @@ class FixtureManager:
         :param func:
             The fixture's implementation function.
         :param nodeid:
-            The visibility of the fixture. The fixture will be available to the
-            node with this nodeid and its children in the collection tree.
-            None means that the fixture is visible to the entire collection tree,
-            e.g. a fixture defined for general use in a plugin.
+            The visibility of the fixture (deprecated, use node instead).
+            The fixture will be available to the node with this nodeid and
+            its children in the collection tree. None means global visibility.
+        :param node:
+            The node where the fixture is defined (preferred over nodeid).
+            When provided, enables node-based matching which is more robust.
         :param scope:
             The fixture's scope.
         :param params:
@@ -1850,9 +1910,18 @@ class FixtureManager:
         :param autouse:
             Whether this is an autouse fixture.
         """
+        # Emit deprecation warning if nodeid string is used when node could be provided.
+        # nodeid=None (global plugins) is fine.
+        if nodeid and node is None:
+            warnings.warn(
+                "Passing nodeid to _register_fixture is deprecated. "
+                "Pass node instead for fixture scoping.",
+                PytestRemovedIn10Warning,
+                stacklevel=2,
+            )
         fixture_def = FixtureDef(
             config=self.config,
-            baseid=nodeid,
+            baseid=nodeid if node is None else None,
             argname=name,
             func=func,
             scope=scope,
@@ -1860,6 +1929,7 @@ class FixtureManager:
             ids=ids,
             _ispytest=True,
             _autouse=autouse,
+            node=node,
         )
 
         faclist = self._arg2fixturedefs.setdefault(name, [])
@@ -1873,7 +1943,11 @@ class FixtureManager:
             i = len([f for f in faclist if not f.has_location])
             faclist.insert(i, fixture_def)
         if autouse:
-            self._nodeid_autousenames.setdefault(nodeid or "", []).append(name)
+            if node is not None:
+                self._node_autousenames.setdefault(node, []).append(name)
+            else:
+                # Global plugin autouse fixtures go under Session.
+                self._node_autousenames.setdefault(self.session, []).append(name)
 
     @overload
     def parsefactories(
@@ -1890,32 +1964,65 @@ class FixtureManager:
     ) -> None:
         raise NotImplementedError()
 
+    @overload
     def parsefactories(
         self,
-        node_or_obj: nodes.Node | object,
+        node_or_obj: None = ...,
+        nodeid: None = ...,
+        *,
+        holder: object,
+        node: nodes.Node,
+    ) -> None:
+        raise NotImplementedError()
+
+    def parsefactories(
+        self,
+        node_or_obj: nodes.Node | object | None = None,
         nodeid: str | NotSetType | None = NOTSET,
+        *,
+        holder: object | None = None,
+        node: nodes.Node | None = None,
     ) -> None:
         """Collect fixtures from a collection node or object.
 
         Found fixtures are parsed into `FixtureDef`s and saved.
 
-        If `node_or_object` is a collection node (with an underlying Python
-        object), the node's object is traversed and the node's nodeid is used to
-        determine the fixtures' visibility. `nodeid` must not be specified in
-        this case.
+        The preferred API uses keyword-only arguments:
+        - ``holder``: The object to scan for fixtures.
+        - ``node``: The node determining fixture visibility scope.
 
-        If `node_or_object` is an object (e.g. a plugin), the object is
-        traversed and the given `nodeid` is used to determine the fixtures'
-        visibility. `nodeid` must be specified in this case; None and "" mean
-        total visibility.
+        Legacy positional API (translated internally):
+        - ``parsefactories(node)``: Uses node.obj as holder, node for scope.
+        - ``parsefactories(obj, nodeid)``: Uses obj as holder, nodeid string for scope.
         """
-        if nodeid is not NOTSET:
+        # Translate legacy API to holder/node sources of truth
+        # Either effective_node or effective_nodeid will be set, not both
+        effective_node: nodes.Node | None = None
+        effective_nodeid: str | None = None
+
+        if holder is not None:
+            # New API: holder and node explicitly provided
+            holderobj = holder
+            effective_node = node
+        elif node_or_obj is None:
+            raise TypeError("parsefactories() requires holder or node_or_obj")
+        elif nodeid is not NOTSET:
+            # Legacy: parsefactories(obj, nodeid) - string-based scoping only
+            # Only warn if a non-None nodeid string is passed (None means global plugin)
+            if nodeid is not None:
+                warnings.warn(
+                    "Passing nodeid string to parsefactories is deprecated. "
+                    "Use parsefactories(holder=obj, node=node) instead.",
+                    PytestRemovedIn10Warning,
+                    stacklevel=2,
+                )
             holderobj = node_or_obj
+            effective_nodeid = nodeid
         else:
+            # Legacy: parsefactories(node) - node has .obj attribute
             assert isinstance(node_or_obj, nodes.Node)
             holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]
-            assert isinstance(node_or_obj.nodeid, str)
-            nodeid = node_or_obj.nodeid
+            effective_node = node_or_obj
         if holderobj in self._holderobjseen:
             return
 
@@ -1948,12 +2055,13 @@ class FixtureManager:
 
                 self._register_fixture(
                     name=fixture_name,
-                    nodeid=nodeid,
                     func=func,
                     scope=marker.scope,
                     params=marker.params,
                     ids=marker.ids,
                     autouse=marker.autouse,
+                    node=effective_node,
+                    nodeid=effective_nodeid,
                 )
 
     def getfixturedefs(
@@ -1979,9 +2087,17 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
     ) -> Iterator[FixtureDef[Any]]:
-        parentnodeids = {n.nodeid for n in node.iter_parents()}
+        # Collect parent nodes and their IDs for matching
+        parent_nodes = set(node.iter_parents())
+        parentnodeids = {n.nodeid for n in parent_nodes}
+
         for fixturedef in fixturedefs:
-            if fixturedef.baseid in parentnodeids:
+            if fixturedef.node is not None:
+                # Node-based matching: check if fixture's node is a parent
+                if fixturedef.node in parent_nodes:
+                    yield fixturedef
+            elif fixturedef.baseid in parentnodeids:
+                # Fallback to string-based matching for legacy/plugins
                 yield fixturedef
 
 

@@ -1,0 +1,7 @@
+Fixed conftest.py fixture scoping when ``testpaths`` points outside ``rootdir``.
+
+Previously, fixtures from nested conftest.py files would incorrectly leak to sibling directories
+when using a relative ``testpaths`` like ``../tests/sdk``.
+
+Conftest fixtures are now parsed during Directory collection, using the Directory node's
+nodeid for proper scoping.
