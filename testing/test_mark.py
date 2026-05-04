@@ -651,6 +651,40 @@ class TestFunctional:
         assert has_inherited_marker.kwargs == {"location": "class"}
         assert has_own.get_closest_marker("missing") is None
 
+    def test_mark_closest_mro(self, pytester: Pytester) -> None:
+        """Marks should be collected from MRO from nearest to furthest (#14329)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+
+            @pytest.mark.foo(0)
+            class TestParent:
+                def test_only_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 0
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [0]
+
+                @pytest.mark.foo(1)
+                def test_function_and_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 1
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [1, 0]
+
+
+            @pytest.mark.foo(2)
+            class TestChild(TestParent):
+                def test_only_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 2
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [2, 0]
+
+                @pytest.mark.foo(3)
+                def test_function_and_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 3
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [3, 2, 0]
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=4)
+
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(
             """
@@ -1229,7 +1263,7 @@ def test_mark_mro() -> None:
 
     all_marks = get_unpacked_marks(C)
 
-    assert all_marks == [xfail("b").mark, xfail("a").mark, xfail("c").mark]
+    assert all_marks == [xfail("c").mark, xfail("a").mark, xfail("b").mark]
 
     assert get_unpacked_marks(C, consider_mro=False) == [xfail("c").mark]
 
