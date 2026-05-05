@@ -102,6 +102,67 @@ class TestCaptureManager:
         finally:
             capouter.stop_capturing()
 
+    @pytest.mark.parametrize("method", ["sys", "fd"])
+    def test_suspend_in_preserves_out_err_suspended_state(self, method) -> None:
+        """suspend_global_capture(in_=True) + resume_global_capture() must
+        not re-enable out/err capture if they were already suspended (#13322).
+        """
+        capouter = StdCaptureFD()
+        try:
+            capman = CaptureManager(method)
+            capman.start_global_capturing()
+            mc = capman._global_capturing
+            assert mc is not None
+            assert mc.out is not None
+            assert mc.err is not None
+            assert mc.in_ is not None
+
+            capman.suspend_global_capture(in_=False)
+            assert not mc.out.is_started()
+            assert not mc.err.is_started()
+            assert mc.in_.is_started()
+
+            capman.suspend_global_capture(in_=True)
+            assert not mc.in_.is_started()
+
+            capman.resume_global_capture()
+            assert not mc.out.is_started()
+            assert not mc.err.is_started()
+            assert mc.in_.is_started()
+
+            capman.stop_global_capturing()
+        finally:
+            capouter.stop_capturing()
+
+    @pytest.mark.parametrize("method", ["sys", "fd"])
+    def test_suspend_in_restores_out_err_started_state(self, method) -> None:
+        """suspend_global_capture(in_=True) + resume_global_capture() restores
+        out/err to started when that was their state before the suspend (#13322).
+        """
+        capouter = StdCaptureFD()
+        try:
+            capman = CaptureManager(method)
+            capman.start_global_capturing()
+            mc = capman._global_capturing
+            assert mc is not None
+            assert mc.out is not None
+            assert mc.err is not None
+            assert mc.in_ is not None
+
+            capman.suspend_global_capture(in_=True)
+            assert not mc.out.is_started()
+            assert not mc.err.is_started()
+            assert not mc.in_.is_started()
+
+            capman.resume_global_capture()
+            assert mc.out.is_started()
+            assert mc.err.is_started()
+            assert mc.in_.is_started()
+
+            capman.stop_global_capturing()
+        finally:
+            capouter.stop_capturing()
+
 
 @pytest.mark.parametrize("method", ["fd", "sys"])
 def test_capturing_unicode(pytester: Pytester, method: str) -> None:
@@ -1721,6 +1782,51 @@ def test_logging_while_collecting(pytester: Pytester) -> None:
     )
     result.stdout.no_fnmatch_line("*Captured stderr call*")
     result.stdout.no_fnmatch_line("*during collection*")
+
+
+def test_nested_suspend_in_preserves_outer_suspended_state(
+    pytester: Pytester,
+) -> None:
+    """Black-box regression for #13322.
+
+    A plugin hook that suspends out/err first and then nests a
+    ``suspend_global_capture(in_=True)`` must observe that the matching
+    ``resume_global_capture()`` leaves out/err in their prior suspended
+    state, so that prints from the hook after the resume reach the real
+    terminal *immediately* (i.e. before the summary line).
+
+    On the pre-fix implementation, ``MARK_AFTER_RESUME`` would be
+    re-captured by the buggy resume and only flushed to real stdout at
+    ``stop_global_capturing`` cleanup time, which runs after
+    ``pytest_unconfigure`` and therefore after the ``N passed`` summary
+    line. Asserting the marker appears *before* the summary line is the
+    deterministic discriminator.
+    """
+    pytester.makeconftest("""
+    import pytest
+
+
+    def pytest_terminal_summary(config):
+        capture = config.pluginmanager.getplugin("capturemanager")
+        capture.suspend_global_capture(in_=False)
+        print("MARK_BEFORE_NESTED")
+        capture.suspend_global_capture(in_=True)
+        capture.resume_global_capture()
+        print("MARK_AFTER_RESUME")
+    """)
+    pytester.makepyfile("def test_x(): pass")
+    result = pytester.runpytest_subprocess()
+    # Both marks must appear in order, AND both must appear before the
+    # final summary line. On the buggy code MARK_AFTER_RESUME would only
+    # be flushed at CaptureManager teardown -- i.e. after "1 passed".
+    result.stdout.fnmatch_lines(
+        [
+            "*MARK_BEFORE_NESTED*",
+            "*MARK_AFTER_RESUME*",
+            "*1 passed*",
+        ]
+    )
+    assert result.ret == 0
 
 
 def test_libedit_workaround(pytester: Pytester) -> None:
