@@ -414,8 +414,6 @@ def pytest_make_collect_report(collector: Collector) -> CollectReport:
     else:
         skip_exceptions = [Skipped]
         unittest = sys.modules.get("unittest")
-        if unittest is not None:
-            skip_exceptions.append(unittest.SkipTest)
         if isinstance(call.excinfo.value, tuple(skip_exceptions)):
             outcome = "skipped"
             r_ = collector._repr_failure_py(call.excinfo, "line")
