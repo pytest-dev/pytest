@@ -86,9 +86,14 @@ def collect_unraisable(config: Config) -> None:
 def cleanup(
     *, config: Config, prev_hook: Callable[[sys.UnraisableHookArgs], object]
 ) -> None:
-    # A single collection doesn't necessarily collect everything.
-    # Constant determined experimentally by the Trio project.
-    gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
+    # On PyPy, objects (e.g. coroutines) can survive GC rounds because executing
+    # their __del__ can resurrect them. The Trio project determined experimentally
+    # that 5 passes are needed on PyPy to flush everything. On CPython, reference
+    # counting handles most cleanup immediately, so 1 pass is sufficient.
+    _default_gc_collect_iterations = 5 if hasattr(sys, "pypy_version_info") else 1
+    gc_collect_iterations = config.stash.get(
+        gc_collect_iterations_key, _default_gc_collect_iterations
+    )
     try:
         try:
             gc_collect_harder(gc_collect_iterations)
