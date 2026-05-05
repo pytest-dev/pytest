@@ -1875,16 +1875,19 @@ class Config:
 
         :param name: Name of the option. You may also specify
             the literal ``--OPT`` option instead of the "dest" option name.
-        :param default: Fallback value if no option of that name is **declared** via :hook:`pytest_addoption`.
-            Note this parameter will be ignored when the option is **declared** even if the option's value is ``None``.
+        :param default: Fallback value if no option of that name is **declared** via :hook:`pytest_addoption`,
+            or if the option's value is ``None``.
         :param skip: If ``True``, raise :func:`pytest.skip` if option is undeclared or has a ``None`` value.
             Note that even if ``True``, if a default was specified it will be returned instead of a skip.
         """
         name = self._parser._opt2dest.get(name, name)
         try:
             val = getattr(self.option, name)
-            if val is None and skip:
-                raise AttributeError(name)
+            if val is None:
+                if default is not NOTSET:
+                    return default
+                if skip:
+                    raise AttributeError(name)
             return val
         except AttributeError as e:
             if default is not NOTSET:
