@@ -1,0 +1,1 @@
+Fixed ``rm_rf`` failing to remove directories when the ``S_IXUSR`` (owner execute) permission bit is missing -- supersedes :pr:`7941`.
