@@ -585,11 +585,14 @@ class LogCaptureFixture:
 
         .. versionadded:: 7.5
         """
-        self.handler.addFilter(filter_)
+        already_present = filter_ in self.handler.filters
+        if not already_present:
+            self.handler.addFilter(filter_)
         try:
             yield
         finally:
-            self.handler.removeFilter(filter_)
+            if not already_present:
+                self.handler.removeFilter(filter_)
 
 
 @fixture
