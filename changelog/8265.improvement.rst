@@ -1,0 +1,4 @@
+Emit a ``PytestCollectionWarning`` when a module-level ``__getattr__`` returns ``None`` for ``pytestmark`` instead of raising ``AttributeError``.
+
+Previously this caused a cryptic ``TypeError: got None instead of Mark`` error.
+Now pytest issues a helpful warning and continues collecting the module normally.
