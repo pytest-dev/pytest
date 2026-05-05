@@ -1232,6 +1232,12 @@ class Config:
             base_path_part, *nodeid_part = nodeid.split("::")
             # Only process path part
             fullpath = self.rootpath / base_path_part
+            if not fullpath.exists():
+                # nodeid was resolved relative to an initial path rather than
+                # to rootpath (see ``_check_initialpaths_for_relpath`` in
+                # ``nodes.py``), so joining rootpath with it gives a phantom
+                # path that doesn't exist. Leave the nodeid alone (#13254).
+                return nodeid
             relative_path = bestrelpath(self.invocation_params.dir, fullpath)
 
             nodeid = "::".join([relative_path, *nodeid_part])

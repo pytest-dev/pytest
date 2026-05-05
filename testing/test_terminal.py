@@ -3408,6 +3408,45 @@ class TestNodeIDHandling:
             ]
         )
 
+    def test_nodeid_outside_rootpath_not_synthesized(self, pytester: Pytester) -> None:
+        """Regression test for #13254.
+
+        When tests collected from a path outside ``rootpath`` are reported,
+        ``Config.cwd_relative_nodeid`` should not synthesize a path by joining
+        ``rootpath`` with the bare nodeid, since that produces a string that
+        does not point to a real file (e.g. ``aa/test_b.py`` when the test
+        is actually at ``../b/bb/test_b.py``).
+        """
+        # Put pytest.ini under ``a/aa`` so ``rootpath`` is ``a/aa``.
+        (pytester.path / "a" / "aa").mkdir(parents=True)
+        (pytester.path / "a" / "aa" / "pytest.ini").write_text(
+            "[pytest]\n", encoding="utf-8"
+        )
+        (pytester.path / "a" / "aa" / "test_a.py").write_text(
+            "def test_a():\n    pass\n", encoding="utf-8"
+        )
+        # And a test file living *outside* rootpath.
+        (pytester.path / "b" / "bb").mkdir(parents=True)
+        (pytester.path / "b" / "bb" / "test_b.py").write_text(
+            "def test_b():\n    pass\n", encoding="utf-8"
+        )
+
+        # Invoke pytest from ``a`` so ``invocation_params.dir`` differs from
+        # ``rootpath`` and both invocation paths straddle the rootpath.
+        os.chdir(pytester.path / "a")
+        result = pytester.runpytest("./aa", "../b/bb", "-vv")
+
+        result.assert_outcomes(passed=2)
+        # The in-rootpath test keeps its cwd-relative nodeid.
+        result.stdout.re_match_lines([r".*aa[\\/]test_a\.py::test_a .*PASSED.*"])
+        # The out-of-rootpath test must be reported by its bare nodeid
+        # (plus the ``<-`` location hint), never as ``aa/test_b.py`` which
+        # would be a phantom path that does not exist.
+        result.stdout.re_match_lines(
+            [r"^test_b\.py::test_b <- .*b[\\/]bb[\\/]test_b\.py .*PASSED.*"]
+        )
+        result.stdout.no_re_match_line(r".*aa[\\/]test_b\.py::test_b.*")
+
 
 class TestTerminalProgressPlugin:
     """Tests for the TerminalProgressPlugin."""
