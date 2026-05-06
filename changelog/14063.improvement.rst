@@ -1,0 +1,1 @@
+Truncated short test summary to first line of error message if not in verbose mode.
