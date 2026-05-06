@@ -1,0 +1,1 @@
+Fixed a regression where ``--strict-markers`` and ``--strict-config`` specified through ``addopts`` were silently ignored.
