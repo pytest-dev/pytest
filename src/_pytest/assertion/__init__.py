@@ -110,6 +110,7 @@ class AssertionState:
     def __init__(self, config: Config, mode) -> None:
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
+        self.invocation_path = str(config.invocation_params.dir)
         self.hook: rewrite.AssertionRewritingHook | None = None
 
 
