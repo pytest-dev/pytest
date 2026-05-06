@@ -109,8 +109,8 @@ class TestTerminal:
             )
         elif option.verbosity == 0:
             result.stdout.fnmatch_lines(["*test_pass_skip_fail.py .sF*"])
-        else:
-            result.stdout.fnmatch_lines([".sF*"])
+        else:  # verbosity < 0 (quiet): no progress dots
+            result.stdout.no_fnmatch_line(".sF*")
         result.stdout.fnmatch_lines(
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )
@@ -2101,7 +2101,8 @@ class TestClassicOutputStyle:
 
     def test_quiet(self, pytester: Pytester, test_files) -> None:
         result = pytester.runpytest("-o", "console_output_style=classic", "-q")
-        result.stdout.fnmatch_lines([".F..F", "*2 failed, 3 passed in*"])
+        result.stdout.fnmatch_lines(["*2 failed, 3 passed in*"])
+        result.stdout.no_fnmatch_line(".[.sFExX]*")
 
 
 class TestProgressOutputStyle:

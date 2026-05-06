@@ -1,0 +1,2 @@
+When ``-q`` / ``--quiet`` is given, per-test progress characters (dots and letters)
+are no longer printed. Only the final summary and failure details are shown.
