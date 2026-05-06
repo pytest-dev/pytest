@@ -48,16 +48,16 @@ dynamic = [
 dependencies = [
     "colorama>=0.4; sys_platform=='win32'",
     "exceptiongroup>=1; python_version<'3.11'",
-    "iniconfig>=1.0.1",
-    "packaging>=22",
+    "iniconfig>=2",
+    "packaging>=24",
     "pluggy>=1.5,<2",
-    "pygments>=2.7.2",
-    "tomli>=1; python_version<'3.11'",
+    "pygments>=2.15",
+    "tomli>=2; python_version<'3.11'",
 ]
 optional-dependencies.dev = [
     "argcomplete",
-    "attrs>=19.2",
-    "hypothesis>=3.56",
+    "attrs>=23.1",
+    "hypothesis>=6.75",
     "mock",
     "requests",
     "setuptools",
@@ -71,6 +71,26 @@ urls.Source = "https://github.com/pytest-dev/pytest"
 urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
 scripts."py.test" = "pytest:console_main"
 scripts.pytest = "pytest:console_main"
+
+[dependency-groups]
+dev = [
+    # Core test dependencies
+    "argcomplete",
+    "asynctest; python_version<'3.11'",
+    "attrs>=23.1",
+    # Test execution and coverage
+    "coverage>=7.5",
+    "hypothesis>=6.75",
+    "mock",
+    "numpy>=1.26",
+    "pexpect>=4.9",
+    "pytest-xdist>=3.5",
+    # Additional test dependencies
+    "pyyaml",
+    "requests",
+    "setuptools",
+    "xmlschema",
+]
 
 [tool.setuptools.package-data]
 "_pytest" = [
