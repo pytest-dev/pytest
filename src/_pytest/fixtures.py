@@ -649,6 +649,19 @@ class FixtureRequest(abc.ABC):
             raise FixtureLookupError(argname, self)
         fixturedef = fixturedefs[index]
 
+        # When an autouse fixture shadows a broader-scoped autouse fixture
+        # with the same name (e.g., class-level "setup" shadows module-level
+        # "setup"), both should run -- the broader-scoped one first.
+        # If the closer fixture doesn't explicitly request its super (i.e.,
+        # argname not in its own argnames), the broader-scoped autouse
+        # fixture would never be activated. Ensure it runs here. (#11281)
+        if (
+            fixturedef._autouse
+            and argname not in fixturedef.argnames
+            and len(fixturedefs) > 1
+        ):
+            self._ensure_autouse_super_fixtures(argname, fixturedefs, index)
+
         # Prepare a SubRequest object for calling the fixture.
         try:
             callspec = self._pyfuncitem.callspec
@@ -689,6 +702,42 @@ class FixtureRequest(abc.ABC):
 
         self._fixture_defs[argname] = fixturedef
         return fixturedef
+
+    def _ensure_autouse_super_fixtures(
+        self,
+        argname: str,
+        fixturedefs: Sequence[FixtureDef[Any]],
+        index: int,
+    ) -> None:
+        """Ensure broader-scoped autouse fixtures in the override chain are executed.
+
+        When an autouse fixture at a closer scope (e.g., class) shadows an
+        autouse fixture at a broader scope (e.g., module) with the same name,
+        the broader-scoped fixture would not run because the closer one does
+        not explicitly request it. This method activates the broader-scoped
+        autouse fixtures so they run first, preserving the documented behavior
+        that higher-scoped fixtures execute first.
+
+        See issue #11281.
+        """
+        # fixturedefs is ordered from broadest to closest scope.
+        # index is negative (-1 = closest). We want to activate all
+        # broader-scoped autouse fixtures that come before the active one.
+        active_pos = len(fixturedefs) + index
+        for i in range(active_pos):
+            super_fixturedef = fixturedefs[i]
+            if not super_fixturedef._autouse:
+                continue
+            if super_fixturedef.cached_result is not None:
+                # Already executed (e.g., by a module-level test).
+                continue
+            # Execute the broader-scoped autouse fixture.
+            super_scope = super_fixturedef._scope
+            self._check_scope(super_fixturedef, super_scope)
+            super_subrequest = SubRequest(
+                self, super_scope, NOTSET, 0, super_fixturedef, _ispytest=True
+            )
+            super_fixturedef.execute(request=super_subrequest)
 
     def _check_fixturedef_without_param(self, fixturedef: FixtureDef[object]) -> None:
         """Check that this request is allowed to execute this fixturedef without

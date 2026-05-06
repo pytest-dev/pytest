@@ -5717,3 +5717,72 @@ def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
+
+
+def test_autouse_same_name_module_and_class_both_run(pytester: Pytester) -> None:
+    """When module-scope and class-scope autouse fixtures share the same name,
+    both should execute for tests inside the class, with the module-scoped
+    fixture running first (higher scope executes first).
+
+    Regression test for https://github.com/pytest-dev/pytest/issues/11281
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        call_order = []
+
+        @pytest.fixture(scope="module", autouse=True)
+        def setup():
+            call_order.append("MODULE")
+
+        class TestFoo:
+            @pytest.fixture(scope="class", autouse=True)
+            def setup(self):
+                call_order.append("CLASS")
+
+            def test_in_class(self):
+                assert call_order == ["MODULE", "CLASS"]
+
+        def test_module():
+            # Module-level test only sees the module fixture.
+            assert "MODULE" in call_order
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=2)
+
+
+def test_autouse_same_name_conftest_and_module_both_run(pytester: Pytester) -> None:
+    """When a conftest autouse fixture and a module autouse fixture share the
+    same name, both should execute, with the conftest (broader scope) running
+    first.
+
+    Regression test for https://github.com/pytest-dev/pytest/issues/11281
+    """
+    pytester.makeconftest(
+        """
+        import pytest
+
+        call_order = []
+
+        @pytest.fixture(scope="session", autouse=True)
+        def setup():
+            call_order.append("SESSION")
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        from conftest import call_order
+
+        @pytest.fixture(scope="module", autouse=True)
+        def setup():
+            call_order.append("MODULE")
+
+        def test_both_run():
+            assert call_order == ["SESSION", "MODULE"]
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)

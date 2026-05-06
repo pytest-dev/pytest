@@ -1,0 +1,3 @@
+Fixed autouse fixtures with the same name at different scopes (e.g., module and class)
+so that all of them execute. Previously, only the closest-scoped fixture would run,
+silently skipping broader-scoped autouse fixtures with the same name.
