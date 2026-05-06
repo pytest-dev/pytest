@@ -273,6 +273,20 @@ def _compare_eq_any(
             explanation = _compare_eq_set(left, right, highlighter, verbose)
         elif isdict(left) and isdict(right):
             explanation = _compare_eq_dict(left, right, highlighter, verbose)
+        elif (
+            type(left) is type(right)
+            and hasattr(left, "__repr__")
+            and hasattr(right, "__repr__")
+            # When both are iterable, we will show a explanation based on iteration
+            and not (isiterable(left) and isiterable(right))
+        ):
+            left_repr = repr(left)
+            right_repr = repr(right)
+            explanation = [
+                "",
+                "Diff of repr():",
+            ]
+            explanation.extend(_diff_text(left_repr, right_repr, highlighter, verbose))
 
         if isiterable(left) and isiterable(right):
             expl = _compare_eq_iterable(left, right, highlighter, verbose)
