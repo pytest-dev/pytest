@@ -1,0 +1,1 @@
+Added ``--collect-only-tree`` (``--co-tree``) flag to display collected tests as a tree with box-drawing characters.
