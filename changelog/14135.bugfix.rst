@@ -1,0 +1,1 @@
+Pytest now warns when ``-p`` loads a module with no pytest hooks but a ``pytest11`` entry-point exists in one of its submodules, helping catch wrong plugin names when plugin autoloading is disabled.
