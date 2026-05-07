@@ -1,0 +1,2 @@
+Documented a safe ``pytestconfig.cache`` access pattern when the
+``cacheprovider`` plugin is disabled.

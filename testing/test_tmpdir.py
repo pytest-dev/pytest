@@ -96,6 +96,73 @@ class TestConfigTmpPath:
         assert mytemp.exists()
         assert not mytemp.joinpath("hello").exists()
 
+    def test_policy_none_delete_all(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_1(tmp_path):
+                assert 0 == 0
+        """
+        )
+        p_failed = pytester.makepyfile(
+            another_file_name="""
+            def test_1(tmp_path):
+                assert 0 == 1
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "none"
+        """
+        )
+
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+
+        root = pytester._test_tmproot
+        for child in root.iterdir():
+            base_dir = list(child.iterdir())
+            # Check the base dir itself is gone without depending on test results
+            assert base_dir == []
+
+    @pytest.mark.parametrize("policy", ['"failed"', '"all"'])
+    @pytest.mark.parametrize("count", [0, 1, 3])
+    def test_retention_count(self, pytester: Pytester, policy, count) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_1(tmp_path):
+                assert 0 == 0
+        """
+        )
+        p_failed = pytester.makepyfile(
+            another_file_name="""
+            def test_1(tmp_path):
+                assert 0 == 1
+        """
+        )
+
+        pytester.makepyprojecttoml(
+            f"""
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = {policy}
+            tmp_path_retention_count = {count}
+        """
+        )
+
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+
+        root = pytester._test_tmproot
+        for child in root.iterdir():
+            base_dir = filter(lambda x: not x.is_symlink(), child.iterdir())
+            assert len(list(base_dir)) == count
+
     def test_policy_failed_removes_only_passed_dir(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
@@ -183,10 +250,8 @@ class TestConfigTmpPath:
         # Check if the whole directory is removed
         root = pytester._test_tmproot
         for child in root.iterdir():
-            base_dir = list(
-                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
-            )
-            assert len(base_dir) == 0
+            base_dir = list(child.iterdir())
+            assert base_dir == []
 
     # issue #10502
     def test_policy_all_keeps_dir_when_skipped_from_fixture(
