@@ -622,7 +622,7 @@ class ApproxTimedelta(ApproxBase):
 
 def approx(
     expected: Any,
-    rel: float | Decimal | None = None,
+    rel: float | Decimal | timedelta | None = None,
     abs: float | Decimal | timedelta | None = None,
     nan_ok: bool = False,
 ) -> ApproxBase:
