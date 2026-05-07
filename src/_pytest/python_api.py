@@ -751,8 +751,8 @@ def approx(
         >>> dt1 == approx(dt2, abs=timedelta(seconds=1))
         True
 
-    Note that ``rel`` is not supported for datetime/timedelta comparisons,
-    and ``abs`` must be explicitly provided as a ``timedelta`` object.
+    Note that ``rel`` is not supported for datetime comparisons,
+    and ``abs`` or ``rel`` must be explicitly provided as a ``timedelta`` object.
 
     .. versionadded:: 8.4
 
