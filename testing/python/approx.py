@@ -1167,24 +1167,47 @@ class TestApproxDatetime:
         td2 = timedelta(seconds=102)
         assert td1 != approx(td2, abs=timedelta(seconds=1))
 
-    def test_requires_abs(self):
+    def test_timedelta_rel_within_tolerance(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=100.5)
+        assert td1 == approx(td2, rel=timedelta(seconds=1))
+
+    def test_timedelta_rel_outside_tolerance(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=102)
+        assert td1 != approx(td2, rel=timedelta(seconds=1))
+
+    def test_requires_tolerance(self):
         from datetime import datetime
 
-        with pytest.raises(TypeError, match="requires an absolute tolerance"):
+        with pytest.raises(TypeError, match="requires an explicit tolerance"):
             approx(datetime(2024, 1, 1))
 
-    def test_rejects_rel(self):
+    def test_datetime_rejects_rel(self):
         from datetime import datetime
         from datetime import timedelta
 
         with pytest.raises(TypeError, match="does not support relative tolerance"):
             approx(datetime(2024, 1, 1), rel=0.1, abs=timedelta(seconds=1))
 
+        with pytest.raises(TypeError, match="does not support relative tolerance"):
+            approx(datetime(2024, 1, 1), rel=timedelta(seconds=1))
+
     def test_abs_must_be_timedelta(self):
         from datetime import datetime
 
         with pytest.raises(TypeError, match="must be a timedelta"):
             approx(datetime(2024, 1, 1), abs=1.0)
+
+    def test_timedelta_rel_must_be_timedelta(self):
+        from datetime import timedelta
+
+        with pytest.raises(TypeError, match="must be a timedelta"):
+            approx(timedelta(seconds=1), rel=0.1)
 
     def test_rejects_nan_ok(self):
         from datetime import datetime
