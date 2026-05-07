@@ -50,6 +50,7 @@ from .exceptions import UsageError as UsageError
 from .findpaths import ConfigDict
 from .findpaths import ConfigValue
 from .findpaths import determine_setup
+from .findpaths import parse_override_ini
 from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
@@ -1520,6 +1521,8 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
+        self._inicfg.update(parse_override_ini(self.known_args_namespace.override_ini))
+        self._inicache.clear()
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()
@@ -1541,7 +1544,6 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
-
         self._validate_plugins()
         self._warn_about_skipped_plugins()
 

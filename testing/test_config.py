@@ -491,6 +491,20 @@ class TestParseIni:
         result.stderr.fnmatch_lines("ERROR: Unknown config option: unknown_option")
         assert result.ret == pytest.ExitCode.USAGE_ERROR
 
+    def test_strict_config_from_addopts(self, pytester: Pytester) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            addopts = --strict-config
+            unknown_option = 1
+            """
+        )
+
+        result = pytester.runpytest()
+
+        result.stderr.fnmatch_lines(["ERROR: Unknown config option: unknown_option"])
+        assert result.ret == pytest.ExitCode.USAGE_ERROR
+
     @pytest.mark.filterwarnings("default::pytest.PytestConfigWarning")
     def test_disable_warnings_plugin_disables_config_warnings(
         self, pytester: Pytester

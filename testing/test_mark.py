@@ -213,6 +213,31 @@ def test_strict_prohibits_unregistered_markers(
     )
 
 
+def test_strict_markers_from_addopts(pytester: Pytester) -> None:
+    pytester.makeini(
+        """
+        [pytest]
+        addopts = --strict-markers
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.unregisteredmark
+        def test_hello():
+            pass
+        """
+    )
+
+    result = pytester.runpytest()
+
+    result.stdout.fnmatch_lines(
+        ["'unregisteredmark' not found in `markers` configuration option"]
+    )
+    assert result.ret == pytest.ExitCode.INTERRUPTED
+
+
 @pytest.mark.parametrize(
     ("expr", "expected_passed"),
     [
