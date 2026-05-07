@@ -346,23 +346,17 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
 def test_argument_repr_uninitialized() -> None:
     """Argument.__repr__ should not crash if _action is not set yet."""
     arg = parseopt.Argument.__new__(parseopt.Argument)
-    result = repr(arg)
-    assert result == "Argument(<uninitialized>)"
+    assert repr(arg) == "Argument(<uninitialized>)"
 
 
 def test_argument_repr_initialized(parser: parseopt.Parser) -> None:
-    """Argument.__repr__ works normally when properly initialized."""
+    """Argument.__repr__ with properly initialized options."""
+    # Without type
     parser.addoption("--myflag", dest="myflag", help="test flag")
     option = parser._anonymous.options[-1]
-    result = repr(option)
-    assert "opts:" in result
-    assert "dest:" in result
+    assert repr(option) == "Argument(opts: ['--myflag'], dest: 'myflag', default: None)"
 
-
-def test_argument_repr_with_type(parser: parseopt.Parser) -> None:
-    """Argument.__repr__ includes type when set."""
+    # With type
     parser.addoption("--count", type=int, dest="count", help="count")
     option = parser._anonymous.options[-1]
-    result = repr(option)
-    assert "type:" in result
-    assert "int" in result
+    assert repr(option) == "Argument(opts: ['--count'], dest: 'count', type: <class 'int'>, default: None)"
