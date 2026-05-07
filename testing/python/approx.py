@@ -1104,6 +1104,19 @@ class TestApprox:
         result = pytester.runpytest()
         result.assert_outcomes(passed=1)
 
+    def test_assertion_rewriting_works_with_approx_on_lhs(
+        self, pytestconfig: pytest.Config
+    ) -> None:
+        """Assertion rewriting works also when approx() is on the left-hand side."""
+        with temporary_verbosity(pytestconfig, verbosity=0):
+            with pytest.raises(AssertionError) as e:
+                assert pytest.approx(1) == 2
+        obtained_message = str(e.value).splitlines()[-2:]
+        assert obtained_message == [
+            "  Obtained: 2",
+            "  Expected: 1 ± 1.0e-06",
+        ]
+
 
 class TestApproxDatetime:
     """Tests for datetime/timedelta support in approx (issue #8395)."""

@@ -1,0 +1,1 @@
+Fixed crash in `Config.get_terminal_writer` when an assertion fails with the ``terminalreporter`` plugin disabled.
