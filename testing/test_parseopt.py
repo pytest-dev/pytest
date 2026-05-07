@@ -359,4 +359,7 @@ def test_argument_repr_initialized(parser: parseopt.Parser) -> None:
     # With type
     parser.addoption("--count", type=int, dest="count", help="count")
     option = parser._anonymous.options[-1]
-    assert repr(option) == "Argument(opts: ['--count'], dest: 'count', type: <class 'int'>, default: None)"
+    assert (
+        repr(option)
+        == "Argument(opts: ['--count'], dest: 'count', type: <class 'int'>, default: None)"
+    )
