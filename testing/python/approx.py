@@ -1118,6 +1118,223 @@ class TestApprox:
         ]
 
 
+class TestApproxDatetime:
+    """Tests for datetime/timedelta support in approx (issue #8395)."""
+
+    def test_datetime_exactly_equal(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt = datetime(2024, 1, 1, 12, 0, 0)
+        assert dt == approx(dt, abs=timedelta(seconds=1))
+
+    def test_datetime_within_tolerance(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt1 = datetime(2024, 1, 1, 12, 0, 0)
+        dt2 = datetime(2024, 1, 1, 12, 0, 0, 500000)  # +0.5s
+        assert dt1 == approx(dt2, abs=timedelta(seconds=1))
+
+    def test_datetime_outside_tolerance(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt1 = datetime(2024, 1, 1, 12, 0, 0)
+        dt2 = datetime(2024, 1, 1, 12, 0, 2)  # +2s
+        assert dt1 != approx(dt2, abs=timedelta(seconds=1))
+
+    def test_datetime_negative_difference(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt1 = datetime(2024, 1, 1, 12, 0, 1)
+        dt2 = datetime(2024, 1, 1, 12, 0, 0)  # dt2 < dt1
+        assert dt1 == approx(dt2, abs=timedelta(seconds=2))
+        assert dt1 != approx(dt2, abs=timedelta(milliseconds=500))
+
+    def test_timedelta_within_tolerance(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=100.5)
+        assert td1 == approx(td2, abs=timedelta(seconds=1))
+
+    def test_timedelta_outside_tolerance(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=102)
+        assert td1 != approx(td2, abs=timedelta(seconds=1))
+
+    def test_timedelta_rel_within_tolerance(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=100.5)
+        assert td1 == approx(td2, rel=timedelta(seconds=1))
+
+    def test_timedelta_rel_outside_tolerance(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=102)
+        assert td1 != approx(td2, rel=timedelta(seconds=1))
+
+    def test_requires_tolerance(self):
+        from datetime import datetime
+
+        with pytest.raises(TypeError, match="requires an explicit tolerance"):
+            approx(datetime(2024, 1, 1))
+
+    def test_datetime_rejects_rel(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        with pytest.raises(TypeError, match="does not support relative tolerance"):
+            approx(datetime(2024, 1, 1), rel=0.1, abs=timedelta(seconds=1))
+
+        with pytest.raises(TypeError, match="does not support relative tolerance"):
+            approx(datetime(2024, 1, 1), rel=timedelta(seconds=1))
+
+    def test_abs_must_be_timedelta(self):
+        from datetime import datetime
+
+        with pytest.raises(TypeError, match="must be a timedelta"):
+            approx(datetime(2024, 1, 1), abs=1.0)
+
+    def test_timedelta_rel_must_be_timedelta(self):
+        from datetime import timedelta
+
+        with pytest.raises(TypeError, match="must be a timedelta"):
+            approx(timedelta(seconds=1), rel=0.1)
+
+    def test_rejects_nan_ok(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        with pytest.raises(TypeError, match="does not support nan_ok"):
+            approx(datetime(2024, 1, 1), abs=timedelta(seconds=1), nan_ok=True)
+
+    def test_datetime_repr(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt = datetime(2024, 1, 1, 12, 0, 0)
+        result = repr(approx(dt, abs=timedelta(seconds=1)))
+        assert "2024-01-01 12:00:00" in result
+        assert "0:00:01" in result
+
+    def test_timedelta_repr(self):
+        from datetime import timedelta
+
+        td = timedelta(seconds=100)
+        result = repr(approx(td, abs=timedelta(seconds=1)))
+        assert "0:01:40" in result  # 100 seconds
+        assert "0:00:01" in result  # 1 second tolerance
+
+    def test_datetime_symmetry(self):
+        """Approx comparison should work on both sides of ==."""
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt1 = datetime(2024, 1, 1, 12, 0, 0)
+        dt2 = datetime(2024, 1, 1, 12, 0, 0, 500000)
+        tol = timedelta(seconds=1)
+        assert dt1 == approx(dt2, abs=tol)
+        assert approx(dt2, abs=tol) == dt1
+
+    def test_datetime_ne_operator(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt1 = datetime(2024, 1, 1, 12, 0, 0)
+        dt2 = datetime(2024, 1, 1, 12, 0, 5)
+        tol = timedelta(seconds=1)
+        assert dt1 != approx(dt2, abs=tol)
+        assert not (dt1 == approx(dt2, abs=tol))
+
+    def test_datetime_with_timezone(self):
+        from datetime import datetime
+        from datetime import timedelta
+        from datetime import timezone
+
+        tz = timezone.utc
+        dt1 = datetime(2024, 1, 1, 12, 0, 0, tzinfo=tz)
+        dt2 = datetime(2024, 1, 1, 12, 0, 0, 500000, tzinfo=tz)
+        assert dt1 == approx(dt2, abs=timedelta(seconds=1))
+
+    def test_datetime_error_message(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt1 = datetime(2024, 1, 1, 12, 0, 0)
+        dt2 = datetime(2024, 1, 1, 12, 0, 5)  # 5 seconds off
+        with pytest.raises(AssertionError, match="comparison failed"):
+            assert dt1 == approx(dt2, abs=timedelta(seconds=1))
+
+    def test_timedelta_zero(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=0)
+        td2 = timedelta(seconds=0)
+        assert td1 == approx(td2, abs=timedelta(seconds=1))
+
+    def test_datetime_boundary_exact(self):
+        """Test that values exactly at the tolerance boundary are equal."""
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt1 = datetime(2024, 1, 1, 12, 0, 0)
+        dt2 = datetime(2024, 1, 1, 12, 0, 1)  # exactly 1 second
+        assert dt1 == approx(dt2, abs=timedelta(seconds=1))
+
+    def test_datetime_microsecond_tolerance(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt1 = datetime(2024, 1, 1, 12, 0, 0, 0)
+        dt2 = datetime(2024, 1, 1, 12, 0, 0, 100)  # +100 microseconds
+        assert dt1 == approx(dt2, abs=timedelta(microseconds=200))
+        assert dt1 != approx(dt2, abs=timedelta(microseconds=50))
+
+    def test_bool_context_raises(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        with pytest.raises(AssertionError, match="boolean context"):
+            bool(approx(datetime(2024, 1, 1), abs=timedelta(seconds=1)))
+
+    def test_wrong_type_comparison(self):
+        """Comparing a datetime approx with a non-datetime should return False."""
+        from datetime import datetime
+        from datetime import timedelta
+
+        assert 42 != approx(datetime(2024, 1, 1), abs=timedelta(seconds=1))
+        assert "string" != approx(datetime(2024, 1, 1), abs=timedelta(seconds=1))
+
+    def test_yield_comparisons(self):
+        """Test that _yield_comparisons yields (actual, expected) pairs."""
+        from datetime import datetime
+        from datetime import timedelta
+
+        dt = datetime(2024, 1, 1, 12, 0, 0)
+        a = approx(dt, abs=timedelta(seconds=1))
+        actual = datetime(2024, 1, 1, 12, 0, 0, 500000)
+        pairs = list(a._yield_comparisons(actual))
+        assert pairs == [(actual, dt)]
+
+    def test_repr_compare_with_incompatible_type(self):
+        """_repr_compare handles TypeError when actual is not a datetime."""
+        from datetime import datetime
+        from datetime import timedelta
+
+        a = approx(datetime(2024, 1, 1), abs=timedelta(seconds=1))
+        result = a._repr_compare("not a datetime")
+        assert "comparison failed" in result[0]
+        assert "N/A" in result[3]
+
+
 class MyVec3:  # incomplete
     """sequence like"""
 
