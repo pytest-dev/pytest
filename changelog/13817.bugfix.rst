@@ -1,0 +1,1 @@
+Fixed a secondary `AttributeError` masking the original error when an option argument fails to initialize.
