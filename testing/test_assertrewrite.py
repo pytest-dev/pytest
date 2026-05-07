@@ -1847,6 +1847,57 @@ class TestIssue11239:
 
 
 @pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="walrus operator not available in py<38"
+)
+class TestIssue14445WalrusDoubleEval:
+    """Test that walrus operator (:=) is not evaluated twice by assertion rewriting.
+
+    The rewriter must not re-evaluate NamedExpr nodes when building the
+    failure message, as that causes side effects to fire twice.
+    """
+
+    def test_walrus_operator_not_double_evaluated(self, pytester: Pytester) -> None:
+        """Walrus assigns wrong value when rewriter evaluates := twice."""
+        pytester.makepyfile(
+            """
+            class Counter:
+                def __init__(self):
+                    self.value = 0
+
+                def increment(self):
+                    self.value += 1
+
+            def test_walrus_basic():
+                c = Counter()
+                assert (before := c.value) == 0
+                c.increment()
+                assert before != (after := c.value)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_walrus_operator_cumulative_not_doubled(self, pytester: Pytester) -> None:
+        """Cumulative walrus increments should not fire twice."""
+        pytester.makepyfile(
+            """
+            def test_walrus_running_counter():
+                count = 0
+                items = []
+                items.append("a")
+                assert (count := count + 1) == len(items)
+                items.append("b")
+                assert (count := count + 1) == len(items)
+                items.append("c")
+                assert (count := count + 1) == len(items)
+                assert count == 3
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+
+@pytest.mark.skipif(
     sys.maxsize <= (2**31 - 1), reason="Causes OverflowError on 32bit systems"
 )
 @pytest.mark.parametrize("offset", [-1, +1])
