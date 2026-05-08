@@ -766,3 +766,175 @@ def check():
     x = 10
     assert (y := x * 2) == 100
 """)
+
+
+# ---------------------------------------------------------------------------
+# Single-evaluation tests: ensure no expression is evaluated multiple times
+# ---------------------------------------------------------------------------
+
+
+class TestSingleEvaluation:
+    """Verify the rewriter doesn't cause double-evaluation of side effects.
+
+    Each test uses a counter to track how many times a side-effecting
+    expression is evaluated. The rewritten assert should evaluate each
+    expression exactly once, regardless of whether the assertion passes or fails.
+    """
+
+    def test_call_in_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def side_effect():
+        counter[0] += 1
+        return 42
+    assert side_effect() == 100
+""")
+
+    def test_call_in_boolean_and_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def side_effect():
+        counter[0] += 1
+        return True
+    assert side_effect() and False
+""")
+
+    def test_call_in_boolean_or_short_circuit(self) -> None:
+        # With `or`, if first is truthy, second is NOT evaluated
+        assert_single_evaluation(
+            """
+def check():
+    def first():
+        counter[0] += 1
+        return False
+    def second():
+        counter[0] += 1
+        return False
+    assert first() or second()
+""",
+            expected_call_count=2,
+        )
+
+    def test_call_in_unary_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def side_effect():
+        counter[0] += 1
+        return True
+    assert not side_effect()
+""")
+
+    def test_call_in_binop_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def side_effect():
+        counter[0] += 1
+        return 5
+    assert side_effect() + 1 == 100
+""")
+
+    def test_attribute_access_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    class Obj:
+        @property
+        def prop(self):
+            counter[0] += 1
+            return 42
+    obj = Obj()
+    assert obj.prop == 100
+""")
+
+    def test_subscript_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    class CountingDict(dict):
+        def __getitem__(self, key):
+            counter[0] += 1
+            return super().__getitem__(key)
+    d = CountingDict(a=1)
+    assert d["a"] == 100
+""")
+
+    def test_walrus_in_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def side_effect():
+        counter[0] += 1
+        return 42
+    assert (x := side_effect()) == 100
+""")
+
+    def test_walrus_in_boolean_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def side_effect():
+        counter[0] += 1
+        return 42
+    assert (x := side_effect()) and False
+""")
+
+    def test_walrus_in_chained_compare_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def side_effect():
+        counter[0] += 1
+        return 5
+    assert 1 < (x := side_effect()) < 3
+""")
+
+    def test_method_call_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    class Obj:
+        def compute(self):
+            counter[0] += 1
+            return 42
+    obj = Obj()
+    assert obj.compute() == 100
+""")
+
+    def test_nested_calls_each_evaluated_once(self) -> None:
+        assert_single_evaluation(
+            """
+def check():
+    def outer(x):
+        counter[0] += 1
+        return x + 1
+    def inner():
+        counter[0] += 1
+        return 5
+    assert outer(inner()) == 100
+""",
+            expected_call_count=2,
+        )
+
+    def test_multiple_comparators_evaluated_once_each(self) -> None:
+        assert_single_evaluation(
+            """
+def check():
+    def make_val(n):
+        counter[0] += 1
+        return n
+    assert make_val(1) < make_val(5) < make_val(3)
+""",
+            expected_call_count=3,
+        )
+
+    def test_ifexp_condition_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def cond():
+        counter[0] += 1
+        return True
+    assert (0 if cond() else 1) == 1
+""")
+
+    def test_comprehension_generator_evaluated_once(self) -> None:
+        assert_single_evaluation("""
+def check():
+    def items():
+        counter[0] += 1
+        return [1, 2, 3]
+    assert [x * 2 for x in items()] == [2, 4, 7]
+""")
