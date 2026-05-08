@@ -295,3 +295,474 @@ def check():
     x = [1, 2, 3]
     assert len(x) == 3
 """)
+
+
+# ---------------------------------------------------------------------------
+# Introspection matrix: verify what information each expression type exposes
+# ---------------------------------------------------------------------------
+
+
+class TestIntrospectionCompare:
+    """Comparisons (==, !=, <, >, <=, >=, in, not in, is, is not)."""
+
+    def test_simple_equality(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = 3
+    assert x == 5
+""",
+            must_contain=["assert 3 == 5"],
+        )
+
+    def test_chained_compare(self) -> None:
+        # Chained compares only show the failing pair
+        assert_introspects(
+            """
+def check():
+    x = 10
+    assert 1 < x < 5
+""",
+            must_contain=["assert 10 < 5"],
+        )
+
+    def test_in_operator(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = 4
+    assert x in [1, 2, 3]
+""",
+            must_contain=["assert 4 in [1, 2, 3]"],
+        )
+
+    def test_not_in_operator(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = 2
+    assert x not in [1, 2, 3]
+""",
+            must_contain=["assert 2 not in [1, 2, 3]"],
+        )
+
+    def test_is_operator(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = []
+    y = []
+    assert x is y
+""",
+            must_contain=["assert [] is []"],
+        )
+
+
+class TestIntrospectionBoolOp:
+    """Boolean operations (and, or) with short-circuit."""
+
+    def test_and_both_shown(self) -> None:
+        assert_introspects(
+            """
+def check():
+    a = True
+    b = False
+    assert a and b
+""",
+            must_contain=["(True and False)"],
+        )
+
+    def test_or_both_shown(self) -> None:
+        assert_introspects(
+            """
+def check():
+    a = False
+    b = False
+    assert a or b
+""",
+            must_contain=["(False or False)"],
+        )
+
+    def test_and_short_circuit(self) -> None:
+        assert_introspects(
+            """
+def check():
+    a = False
+    assert a and explode
+""",
+            must_contain=["False"],
+        )
+
+
+class TestIntrospectionUnaryOp:
+    """Unary operations (not, ~, -, +)."""
+
+    def test_not(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = True
+    assert not x
+""",
+            must_contain=["assert not True"],
+        )
+
+    def test_invert(self) -> None:
+        # ~(-1) == 0, which is falsy
+        assert_introspects(
+            """
+def check():
+    x = -1
+    assert ~x
+""",
+            must_contain=["assert ~-1"],
+        )
+
+
+class TestIntrospectionBinOp:
+    """Binary operations (+, -, *, /, etc.)."""
+
+    def test_addition(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = 3
+    y = 4
+    assert x + y == 10
+""",
+            must_contain=["(3 + 4)"],
+        )
+
+    def test_subtraction(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = 3
+    y = 4
+    assert x - y == 10
+""",
+            must_contain=["(3 - 4)"],
+        )
+
+
+class TestIntrospectionCall:
+    """Function/method calls."""
+
+    def test_simple_call_shows_result(self) -> None:
+        # Currently local functions show full repr in the "where" line
+        assert_introspects(
+            """
+def check():
+    def f():
+        return 42
+    assert f() == 100
+""",
+            must_contain=["where 42 = ", "()"],
+        )
+
+    def test_call_with_args_shows_result(self) -> None:
+        assert_introspects(
+            """
+def check():
+    def f(x):
+        return x * 2
+    assert f(3) == 10
+""",
+            must_contain=["where 6 = ", "(3)"],
+        )
+
+    @pytest.mark.xfail(
+        reason="Local function calls show full <function ...> repr: blind spot"
+    )
+    def test_simple_call_clean_name(self) -> None:
+        """Ideally the message should show 'f()' not '<function ... at 0x...>()'."""
+        assert_introspects(
+            """
+def check():
+    def f():
+        return 42
+    assert f() == 100
+""",
+            must_contain=["where 42 = f()"],
+            must_not_contain=["<function"],
+        )
+
+    def test_method_call_shows_result(self) -> None:
+        assert_introspects(
+            """
+def check():
+    class Obj:
+        def method(self):
+            return 42
+    obj = Obj()
+    assert obj.method() == 100
+""",
+            must_contain=["42", "100"],
+        )
+
+
+class TestIntrospectionAttribute:
+    """Attribute access."""
+
+    def test_attribute_access(self) -> None:
+        assert_introspects(
+            """
+def check():
+    class Obj:
+        x = 3
+        def __repr__(self):
+            return "Obj()"
+    obj = Obj()
+    assert obj.x == 5
+""",
+            must_contain=["where 3 = Obj().x"],
+        )
+
+
+class TestIntrospectionName:
+    """Variable name display."""
+
+    def test_local_variable_shown(self) -> None:
+        assert_introspects(
+            """
+def check():
+    result = 42
+    assert result == 100
+""",
+            must_contain=["assert 42 == 100"],
+        )
+
+
+class TestIntrospectionSubscript:
+    """Subscript / indexing — currently hits generic_visit."""
+
+    @pytest.mark.xfail(reason="Subscript not introspected: blind spot")
+    def test_dict_subscript_shows_key_and_container(self) -> None:
+        assert_introspects(
+            """
+def check():
+    d = {"a": 1, "b": 2}
+    assert d["a"] == 99
+""",
+            must_contain=["where 1 = ", '["a"]'],
+        )
+
+    @pytest.mark.xfail(reason="Subscript not introspected: blind spot")
+    def test_list_subscript_shows_index_and_container(self) -> None:
+        assert_introspects(
+            """
+def check():
+    items = [10, 20, 30]
+    assert items[1] == 99
+""",
+            must_contain=["where 20 = ", "[1]"],
+        )
+
+    def test_subscript_semantics_preserved(self) -> None:
+        assert_semantically_equivalent("""
+def check():
+    d = {"key": "value"}
+    assert d["key"] == "wrong"
+""")
+
+    def test_subscript_in_compare_shows_value(self) -> None:
+        """Even without decomposition, the value is shown in comparisons."""
+        assert_introspects(
+            """
+def check():
+    d = {"a": 1}
+    assert d["a"] == 99
+""",
+            must_contain=["assert 1 == 99"],
+        )
+
+
+class TestIntrospectionIfExp:
+    """Ternary / if-expression — currently hits generic_visit."""
+
+    @pytest.mark.xfail(reason="IfExp not introspected: blind spot")
+    def test_ifexp_shows_condition_and_branch(self) -> None:
+        assert_introspects(
+            """
+def check():
+    flag = True
+    assert (0 if flag else 1) == 1
+""",
+            must_contain=["flag", "True"],
+        )
+
+    def test_ifexp_semantics_preserved(self) -> None:
+        assert_semantically_equivalent("""
+def check():
+    flag = True
+    assert (0 if flag else 1) == 1
+""")
+
+    def test_ifexp_in_compare_shows_result(self) -> None:
+        assert_introspects(
+            """
+def check():
+    flag = True
+    assert (0 if flag else 1) == 99
+""",
+            must_contain=["assert 0 == 99"],
+        )
+
+
+class TestIntrospectionContainerLiteral:
+    """Container literals ([...], {...}, {k:v}) — currently hits generic_visit."""
+
+    @pytest.mark.xfail(reason="Container literals not introspected: blind spot")
+    def test_list_literal_shows_elements(self) -> None:
+        assert_introspects(
+            """
+def check():
+    def f():
+        return 99
+    assert [f(), 2, 3] == [1, 2, 3]
+""",
+            must_contain=["where 99 = f()"],
+        )
+
+    def test_list_literal_semantics_preserved(self) -> None:
+        assert_semantically_equivalent("""
+def check():
+    assert [1, 2, 3] == [1, 2, 4]
+""")
+
+    def test_dict_literal_semantics_preserved(self) -> None:
+        assert_semantically_equivalent("""
+def check():
+    assert {"a": 1} == {"a": 2}
+""")
+
+
+class TestIntrospectionComprehension:
+    """Comprehensions — currently hits generic_visit."""
+
+    def test_listcomp_semantics_preserved(self) -> None:
+        assert_semantically_equivalent("""
+def check():
+    assert [x * 2 for x in range(3)] == [0, 2, 5]
+""")
+
+    def test_listcomp_in_compare_shows_result(self) -> None:
+        assert_introspects(
+            """
+def check():
+    assert [x * 2 for x in range(3)] == [0, 2, 5]
+""",
+            must_contain=["[0, 2, 4]"],
+        )
+
+
+class TestIntrospectionFString:
+    """F-string expressions — currently hits generic_visit."""
+
+    def test_fstring_semantics_preserved(self) -> None:
+        assert_semantically_equivalent("""
+def check():
+    x = 42
+    assert f"value={x}" == "value=99"
+""")
+
+    def test_fstring_in_compare_shows_result(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = 42
+    assert f"value={x}" == "value=99"
+""",
+            must_contain=["value=42"],
+        )
+
+
+class TestIntrospectionMethodCall:
+    """Method calls — bound method intermediate display."""
+
+    def test_method_call_result_shown(self) -> None:
+        assert_introspects(
+            """
+def check():
+    class Obj:
+        def compute(self):
+            return 42
+        def __repr__(self):
+            return "Obj()"
+    obj = Obj()
+    assert obj.compute() == 100
+""",
+            must_contain=["where 42 = "],
+        )
+
+    @pytest.mark.xfail(
+        reason="Method call shows noisy bound-method intermediate: blind spot"
+    )
+    def test_method_call_no_bound_method_noise(self) -> None:
+        """The 'where method = obj.method' line is noisy and unhelpful."""
+        msg = get_failure_message("""
+def check():
+    class Obj:
+        def compute(self):
+            return 42
+        def __repr__(self):
+            return "Obj()"
+    obj = Obj()
+    assert obj.compute() == 100
+""")
+        lines = msg.splitlines()
+        # Ideally the message should NOT have a separate "where compute = ..."
+        # line showing the bound method object — it adds noise without value
+        for line in lines:
+            assert "where compute = " not in line, (
+                f"Noisy bound-method intermediate found:\n{msg}"
+            )
+
+    def test_callable_variable_shows_result(self) -> None:
+        # Current behavior: shows full function repr, not variable name
+        assert_introspects(
+            """
+def check():
+    def factory():
+        return 42
+    fn = factory
+    assert fn() == 100
+""",
+            must_contain=["where 42 = ", "()"],
+        )
+
+    @pytest.mark.xfail(reason="Callable variables show <function ...> repr: blind spot")
+    def test_callable_variable_clean_name(self) -> None:
+        """Ideally should show 'fn()' not '<function factory at 0x...>()'."""
+        assert_introspects(
+            """
+def check():
+    def factory():
+        return 42
+    fn = factory
+    assert fn() == 100
+""",
+            must_contain=["where 42 = fn()"],
+            must_not_contain=["<function"],
+        )
+
+
+class TestIntrospectionWalrus:
+    """Walrus operator (:=) — has dedicated visitor."""
+
+    def test_walrus_in_compare(self) -> None:
+        assert_introspects(
+            """
+def check():
+    x = 10
+    assert (y := x * 2) == 100
+""",
+            must_contain=["assert 20 == 100"],
+        )
+
+    def test_walrus_semantics_preserved(self) -> None:
+        assert_semantically_equivalent("""
+def check():
+    x = 10
+    assert (y := x * 2) == 100
+""")
