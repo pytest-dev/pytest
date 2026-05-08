@@ -576,17 +576,16 @@ def check():
 
 
 class TestIntrospectionIfExp:
-    """Ternary / if-expression — currently hits generic_visit."""
+    """Ternary / if-expression — now has dedicated visitor."""
 
-    @pytest.mark.xfail(reason="IfExp not introspected: blind spot")
-    def test_ifexp_shows_condition_and_branch(self) -> None:
+    def test_ifexp_shows_condition_value(self) -> None:
         assert_introspects(
             """
 def check():
     flag = True
     assert (0 if flag else 1) == 1
 """,
-            must_contain=["flag", "True"],
+            must_contain=["if True else"],
         )
 
     def test_ifexp_semantics_preserved(self) -> None:
@@ -603,8 +602,24 @@ def check():
     flag = True
     assert (0 if flag else 1) == 99
 """,
-            must_contain=["assert 0 == 99"],
+            must_contain=["assert 0 == 99", "if True else"],
         )
+
+    def test_ifexp_short_circuit_true(self) -> None:
+        """Orelse branch must NOT be evaluated when condition is True."""
+        assert_passes_when_true("""
+def check():
+    flag = True
+    assert (1 if flag else (1/0)) == 1
+""")
+
+    def test_ifexp_short_circuit_false(self) -> None:
+        """Body branch must NOT be evaluated when condition is False."""
+        assert_passes_when_true("""
+def check():
+    flag = False
+    assert (1/0 if flag else 1) == 1
+""")
 
 
 class TestIntrospectionContainerLiteral:

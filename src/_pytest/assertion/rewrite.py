@@ -1072,6 +1072,20 @@ class AssertionRewriter(ast.NodeVisitor):
         new_starred = ast.Starred(res, starred.ctx)
         return new_starred, "*" + expl
 
+    def visit_IfExp(self, ifexp: ast.IfExp) -> tuple[ast.Name, str]:
+        # Introspect the condition but keep branches as-is to preserve
+        # short-circuit semantics (only the selected branch is evaluated).
+        cond_res, cond_expl = self.visit(ifexp.test)
+        # Reconstruct the IfExp with the rewritten condition but original
+        # branches to avoid evaluating both sides.
+        res = self.assign(
+            ast.copy_location(ast.IfExp(cond_res, ifexp.body, ifexp.orelse), ifexp)
+        )
+        res_expl = self.explanation_param(self.display(res))
+        pat = "%s\n{%s = (... if %s else ...)\n}"
+        expl = pat % (res_expl, res_expl, cond_expl)
+        return res, expl
+
     def visit_Subscript(self, subscript: ast.Subscript) -> tuple[ast.Name, str]:
         if not isinstance(subscript.ctx, ast.Load):
             return self.generic_visit(subscript)
