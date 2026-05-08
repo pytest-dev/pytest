@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import atexit
 from collections.abc import Generator
+from contextlib import ExitStack
 import dataclasses
 import os
 from pathlib import Path
@@ -74,6 +76,9 @@ class TempPathFactory:
         self._retention_count = retention_count
         self._retention_policy = retention_policy
         self._basetemp = basetemp
+        # Register cleanups for session finish. Also called atexit as a last
+        # resort if sessionfinish for some reason doesn't happen.
+        self._exit_stack = ExitStack()
 
     @classmethod
     def from_config(
@@ -211,7 +216,13 @@ class TempPathFactory:
                 keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
+                register=self._exit_stack.callback,
             )
+            # Ensure that the cleanup is called on exit (#1120 possibly?).
+            # But if the exit stack is closed manually (as it normally should),
+            # unregister the atexit to avoid pile up.
+            atexit.register(self._exit_stack.close)
+            self._exit_stack.callback(atexit.unregister, self._exit_stack.close)
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
         self._trace("new basetemp", basetemp)
@@ -324,6 +335,9 @@ def pytest_sessionfinish(session, exitstatus: int | ExitCode):
     # Remove dead symlinks.
     if basetemp.is_dir():
         cleanup_dead_symlinks(basetemp)
+
+    # Run the numbered dirs and lock file cleanups registered on the ExitStack.
+    tmp_path_factory._exit_stack.close()
 
 
 @hookimpl(wrapper=True, tryfirst=True)

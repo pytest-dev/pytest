@@ -28,7 +28,13 @@ def mock_config(
         def _highlight(self, source, lexer="python"):
             return source
 
+    class PluginManager:
+        def has_plugin(self, name: str) -> bool:
+            return True
+
     class Config:
+        pluginmanager = PluginManager()
+
         def get_terminal_writer(self):
             return TerminalWriter()
 

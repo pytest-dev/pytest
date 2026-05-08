@@ -1,0 +1,1 @@
+Fixed direct parametrization causing the static fixture closure (as reflected in :data:`request.fixturenames <pytest.FixtureRequest.fixturenames>`) to omit fixtures that are requested transitively from overridden fixtures.

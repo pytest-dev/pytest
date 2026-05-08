@@ -300,6 +300,54 @@ def reorder_items_atscope(
     return items_done
 
 
+def traverse_fixture_closure(
+    initialnames: Iterable[str],
+    *,
+    getfixturedefs: Callable[[str], Sequence[FixtureDef[Any]] | None],
+) -> Iterator[str]:
+    """Statically traverse the fixture dependency closure in DFS order starting
+    from initialnames, yielding all requested fixture names (argnames).
+
+    Each argname is only yielded once.
+    """
+    # Track the index for each fixture name in the simulated stack.
+    # Needed for handling override chains correctly, similar to
+    # FixtureRequest._get_active_fixturedef.
+    # Using negative indices: -1 is the most specific (last), -2 is second to
+    # last, etc.
+    current_indices: dict[str, int] = {}
+
+    def process_argname(argname: str) -> Iterator[str]:
+        index = current_indices.get(argname)
+
+        # Optimization: already processed this argname.
+        if index == -1:
+            return
+
+        # Only yield each argname once.
+        if index is None:
+            yield argname
+            current_indices[argname] = -1
+
+        fixturedefs = getfixturedefs(argname)
+        if not fixturedefs:
+            return
+
+        index = current_indices.get(argname, -1)
+        if -index > len(fixturedefs):
+            # Exhausted the override chain (will error during runtest).
+            return
+        fixturedef = fixturedefs[index]
+
+        current_indices[argname] = index - 1
+        for dep in fixturedef.argnames:
+            yield from process_argname(dep)
+        current_indices[argname] = index
+
+    for argname in initialnames:
+        yield from process_argname(argname)
+
+
 @dataclasses.dataclass(frozen=True)
 class FuncFixtureInfo:
     """Fixture-related information for a fixture-requesting item (e.g. test
@@ -342,16 +390,13 @@ class FuncFixtureInfo:
         tree. In this way the dependency tree can get pruned, and the closure
         of argnames may get reduced.
         """
-        closure: set[str] = set()
-        working_set = set(self.initialnames)
-        while working_set:
-            argname = working_set.pop()
-            if argname not in closure and argname in self.names_closure:
-                closure.add(argname)
-                if argname in self.name2fixturedefs:
-                    working_set.update(self.name2fixturedefs[argname][-1].argnames)
-
-        self.names_closure[:] = sorted(closure, key=self.names_closure.index)
+        closure = set(
+            traverse_fixture_closure(
+                self.initialnames,
+                getfixturedefs=self.name2fixturedefs.get,
+            )
+        )
+        self.names_closure[:] = (name for name in self.names_closure if name in closure)
 
 
 class FixtureRequest(abc.ABC):
@@ -1704,47 +1749,20 @@ class FixtureManager:
         # to re-discover fixturedefs again for each fixturename
         # (discovering matching fixtures for a given name/node is expensive).
 
-        fixturenames_closure = list(initialnames)
-
         arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]] = {}
 
-        # Track the index for each fixture name in the simulated stack.
-        # Needed for handling override chains correctly, similar to _get_active_fixturedef.
-        # Using negative indices: -1 is the most specific (last), -2 is second to last, etc.
-        current_indices: dict[str, int] = {}
-
-        def process_argname(argname: str) -> None:
-            # Optimization: already processed this argname.
-            if current_indices.get(argname) == -1:
-                return
-
-            if argname not in fixturenames_closure:
-                fixturenames_closure.append(argname)
-
+        def getfixturedefs(argname: str) -> Sequence[FixtureDef[Any]] | None:
             if argname in ignore_args:
-                return
+                return None
 
             fixturedefs = arg2fixturedefs.get(argname)
             if not fixturedefs:
                 fixturedefs = self.getfixturedefs(argname, parentnode)
                 if not fixturedefs:
                     # Fixture not defined or not visible (will error during runtest).
-                    return
+                    return None
                 arg2fixturedefs[argname] = fixturedefs
-
-            index = current_indices.get(argname, -1)
-            if -index > len(fixturedefs):
-                # Exhausted the override chain (will error during runtest).
-                return
-            fixturedef = fixturedefs[index]
-
-            current_indices[argname] = index - 1
-            for dep in fixturedef.argnames:
-                process_argname(dep)
-            current_indices[argname] = index
-
-        for name in initialnames:
-            process_argname(name)
+            return fixturedefs
 
         def sort_by_scope(arg_name: str) -> Scope:
             try:
@@ -1754,7 +1772,15 @@ class FixtureManager:
             else:
                 return fixturedefs[-1]._scope
 
-        fixturenames_closure.sort(key=sort_by_scope, reverse=True)
+        fixturenames_closure = sorted(
+            traverse_fixture_closure(
+                initialnames,
+                getfixturedefs=getfixturedefs,
+            ),
+            key=sort_by_scope,
+            reverse=True,
+        )
+
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc: Metafunc) -> None:

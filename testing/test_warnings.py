@@ -1038,3 +1038,12 @@ class TestMaxWarnings:
         result = pytester.runpytest()
         result.assert_outcomes(passed=1, warnings=1)
         assert result.ret == ExitCode.OK
+
+
+def test_pythonwarnings_not_duplicated(pytester: Pytester) -> None:
+    """Regression test for #13484: -W values should not be duplicated in
+    known_args_namespace due to the arg parser being called multiple times."""
+    config = pytester.parseconfig("-W", "error")
+    warnings_list = config.known_args_namespace.pythonwarnings
+    assert warnings_list is not None
+    assert warnings_list == ["error"]

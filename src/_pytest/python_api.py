@@ -565,61 +565,49 @@ class ApproxTimedelta(ApproxBase):
     """Perform approximate comparisons where the expected value is a
     datetime or timedelta.
 
-    Requires an explicit absolute tolerance as a timedelta.
-    Relative tolerance is not supported for time-based comparisons.
+    Requires an explicit tolerance as a timedelta.
+    Relative tolerance is not supported for datetime comparisons.
     """
 
     def __init__(self, expected, rel=None, abs=None, nan_ok: bool = False) -> None:
         __tracebackhide__ = True
-        if rel is not None:
+        if isinstance(expected, datetime) and rel is not None:
             raise TypeError(
                 "pytest.approx() does not support relative tolerance for "
-                "datetime/timedelta comparisons. Use abs=timedelta(...) instead."
+                "datetime comparisons. Use abs=timedelta(...) instead."
             )
         if nan_ok:
             raise TypeError(
                 "pytest.approx() does not support nan_ok for "
                 "datetime/timedelta comparisons."
             )
-        if abs is None:
+        if abs is None and rel is None:
             raise TypeError(
-                "pytest.approx() requires an absolute tolerance for "
+                "pytest.approx() requires an explicit tolerance for "
                 "datetime/timedelta comparisons: "
                 "e.g. approx(expected, abs=timedelta(seconds=1))"
             )
-        if not isinstance(abs, timedelta):
+        if abs is not None and not isinstance(abs, timedelta):
             raise TypeError(
                 f"absolute tolerance for datetime/timedelta must be a "
                 f"timedelta, got {type(abs).__name__}"
             )
-        # Store the timedelta tolerance directly.
-        self.expected = expected
-        self._tolerance = abs
-        # Call grandparent init to set up basic state without _check_type.
-        self.abs = abs
-        self.rel = None
-        self.nan_ok = False
+        if rel is not None and not isinstance(rel, timedelta):
+            raise TypeError(
+                f"relative tolerance for timedelta must be a "
+                f"timedelta, got {type(rel).__name__}"
+            )
+        tolerance = max(t for t in (abs, rel) if t is not None)
+        super().__init__(expected, rel=None, abs=tolerance, nan_ok=False)
 
     def __repr__(self) -> str:
-        return f"{self.expected} ± {self._tolerance}"
+        return f"{self.expected} ± {self.abs}"
 
     def __eq__(self, actual) -> bool:
         try:
-            return bool(builtins.abs(self.expected - actual) <= self._tolerance)
+            return bool(builtins.abs(self.expected - actual) <= self.abs)
         except (TypeError, OverflowError):
             return False
-
-    __hash__ = None
-
-    def __ne__(self, actual) -> bool:
-        return not (actual == self)
-
-    def __bool__(self):
-        __tracebackhide__ = True
-        raise AssertionError(
-            "approx() is not supported in a boolean context.\n"
-            "Did you mean: `assert a == approx(b)`?"
-        )
 
     def _yield_comparisons(self, actual):
         yield actual, self.expected
@@ -632,15 +620,15 @@ class ApproxTimedelta(ApproxBase):
         return [
             "comparison failed",
             f"Obtained: {other_side}",
-            f"Expected: {self.expected} ± {self._tolerance}",
+            f"Expected: {self.expected} ± {self.abs}",
             f"Absolute difference: {abs_diff}",
-            f"Tolerance: {self._tolerance}",
+            f"Tolerance: {self.abs}",
         ]
 
 
 def approx(
     expected: Any,
-    rel: float | Decimal | None = None,
+    rel: float | Decimal | timedelta | None = None,
     abs: float | Decimal | timedelta | None = None,
     nan_ok: bool = False,
 ) -> ApproxBase:
@@ -769,8 +757,8 @@ def approx(
         >>> dt1 == approx(dt2, abs=timedelta(seconds=1))
         True
 
-    Note that ``rel`` is not supported for datetime/timedelta comparisons,
-    and ``abs`` must be explicitly provided as a ``timedelta`` object.
+    Note that ``rel`` is not supported for datetime comparisons,
+    and ``abs`` or ``rel`` must be explicitly provided as a ``timedelta`` object.
 
     .. versionadded:: 8.4
 

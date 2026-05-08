@@ -276,7 +276,7 @@ def test_show_fixtures_and_execute_test(pytester: Pytester) -> None:
     assert result.ret == 1
 
     result.stdout.fnmatch_lines(
-        ["*SETUP    F arg*", "*test_arg (fixtures used: arg)F*", "*TEARDOWN F arg*"]
+        ["*SETUP    F arg*", "*test_arg (fixtures used: arg) F*", "*TEARDOWN F arg*"]
     )
 
 

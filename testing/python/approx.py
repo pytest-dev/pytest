@@ -1104,6 +1104,19 @@ class TestApprox:
         result = pytester.runpytest()
         result.assert_outcomes(passed=1)
 
+    def test_assertion_rewriting_works_with_approx_on_lhs(
+        self, pytestconfig: pytest.Config
+    ) -> None:
+        """Assertion rewriting works also when approx() is on the left-hand side."""
+        with temporary_verbosity(pytestconfig, verbosity=0):
+            with pytest.raises(AssertionError) as e:
+                assert pytest.approx(1) == 2
+        obtained_message = str(e.value).splitlines()[-2:]
+        assert obtained_message == [
+            "  Obtained: 2",
+            "  Expected: 1 ± 1.0e-06",
+        ]
+
 
 class TestApproxDatetime:
     """Tests for datetime/timedelta support in approx (issue #8395)."""
@@ -1154,24 +1167,47 @@ class TestApproxDatetime:
         td2 = timedelta(seconds=102)
         assert td1 != approx(td2, abs=timedelta(seconds=1))
 
-    def test_requires_abs(self):
+    def test_timedelta_rel_within_tolerance(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=100.5)
+        assert td1 == approx(td2, rel=timedelta(seconds=1))
+
+    def test_timedelta_rel_outside_tolerance(self):
+        from datetime import timedelta
+
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=102)
+        assert td1 != approx(td2, rel=timedelta(seconds=1))
+
+    def test_requires_tolerance(self):
         from datetime import datetime
 
-        with pytest.raises(TypeError, match="requires an absolute tolerance"):
+        with pytest.raises(TypeError, match="requires an explicit tolerance"):
             approx(datetime(2024, 1, 1))
 
-    def test_rejects_rel(self):
+    def test_datetime_rejects_rel(self):
         from datetime import datetime
         from datetime import timedelta
 
         with pytest.raises(TypeError, match="does not support relative tolerance"):
             approx(datetime(2024, 1, 1), rel=0.1, abs=timedelta(seconds=1))
 
+        with pytest.raises(TypeError, match="does not support relative tolerance"):
+            approx(datetime(2024, 1, 1), rel=timedelta(seconds=1))
+
     def test_abs_must_be_timedelta(self):
         from datetime import datetime
 
         with pytest.raises(TypeError, match="must be a timedelta"):
             approx(datetime(2024, 1, 1), abs=1.0)
+
+    def test_timedelta_rel_must_be_timedelta(self):
+        from datetime import timedelta
+
+        with pytest.raises(TypeError, match="must be a timedelta"):
+            approx(timedelta(seconds=1), rel=0.1)
 
     def test_rejects_nan_ok(self):
         from datetime import datetime
@@ -1297,8 +1333,6 @@ class TestApproxDatetime:
         result = a._repr_compare("not a datetime")
         assert "comparison failed" in result[0]
         assert "N/A" in result[3]
-
-
 class MyVec3:  # incomplete
     """sequence like"""
 
