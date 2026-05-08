@@ -1,0 +1,1 @@
+Assertion rewriting no longer evaluates walrus operator (``:=``) expressions more than once, which reported results the test never computed when the expression had side effects.
