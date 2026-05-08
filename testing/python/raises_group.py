@@ -1237,8 +1237,7 @@ def test_assert_matches() -> None:
         match=wrap_escape(
             "`ValueError()` is not an instance of `TypeError`\n"
             "assert False\n"
-            " +  where False = matches(ValueError())\n"
-            " +    where matches = RaisesExc(TypeError).matches"
+            " +  where False = RaisesExc(TypeError).matches(ValueError())"
         ),
     ):
         # you'd need to do this arcane incantation

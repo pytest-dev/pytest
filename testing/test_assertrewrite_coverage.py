@@ -13,6 +13,7 @@ from __future__ import annotations
 import ast
 from collections.abc import Callable
 from collections.abc import Mapping
+import copy
 import sys
 import textwrap
 from typing import cast
@@ -185,11 +186,11 @@ def assert_semantically_equivalent(
     """
     src = textwrap.dedent(src)
 
-    # Run without rewriting
+    # Run without rewriting — use deepcopy of extra_ns to isolate mutable state
     plain_code = compile(src, "<test-plain>", "exec")
     plain_ns: dict[str, object] = {}
     if extra_ns is not None:
-        plain_ns.update(extra_ns)
+        plain_ns.update(copy.deepcopy(dict(extra_ns)))
     exec(plain_code, plain_ns)
     plain_func = cast(Callable[[], None], plain_ns["check"])
     plain_raised = False
@@ -198,12 +199,12 @@ def assert_semantically_equivalent(
     except AssertionError:
         plain_raised = True
 
-    # Run with rewriting
+    # Run with rewriting — fresh deepcopy so mutations from first run don't leak
     mod = _rewrite_source(src)
     rewritten_code = compile(mod, "<test-rewritten>", "exec")
     rewritten_ns: dict[str, object] = {}
     if extra_ns is not None:
-        rewritten_ns.update(extra_ns)
+        rewritten_ns.update(copy.deepcopy(dict(extra_ns)))
     exec(rewritten_code, rewritten_ns)
     rewritten_func = cast(Callable[[], None], rewritten_ns["check"])
     rewritten_raised = False
