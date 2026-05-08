@@ -1929,7 +1929,6 @@ class TestIssue14445:
         result = pytester.runpytest()
         assert result.ret == 0
 
-    @pytest.mark.xfail(reason="Chained compare re-evaluates walrus with same target")
     def test_walrus_no_double_eval_chained_compare(self, pytester: Pytester) -> None:
         """Same walrus target in chained comparison must evaluate each once."""
         pytester.makepyfile(
