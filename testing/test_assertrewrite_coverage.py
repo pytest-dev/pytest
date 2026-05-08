@@ -691,9 +691,10 @@ def check():
 
 
 class TestIntrospectionMethodCall:
-    """Method calls — bound method intermediate display."""
+    """Method calls — flat obj.method() display without bound-method noise."""
 
-    def test_method_call_result_shown(self) -> None:
+    def test_method_call_flat_format(self) -> None:
+        """Method calls show 'where result = obj.method()' in one line."""
         assert_introspects(
             """
 def check():
@@ -705,14 +706,11 @@ def check():
     obj = Obj()
     assert obj.compute() == 100
 """,
-            must_contain=["where 42 = "],
+            must_contain=["where 42 = Obj().compute()"],
         )
 
-    @pytest.mark.xfail(
-        reason="Method call shows noisy bound-method intermediate: blind spot"
-    )
     def test_method_call_no_bound_method_noise(self) -> None:
-        """The 'where method = obj.method' line is noisy and unhelpful."""
+        """No separate 'where compute = obj.compute' line."""
         msg = get_failure_message("""
 def check():
     class Obj:
@@ -724,8 +722,6 @@ def check():
     assert obj.compute() == 100
 """)
         lines = msg.splitlines()
-        # Ideally the message should NOT have a separate "where compute = ..."
-        # line showing the bound method object — it adds noise without value
         for line in lines:
             assert "where compute = " not in line, (
                 f"Noisy bound-method intermediate found:\n{msg}"

@@ -1043,6 +1043,12 @@ class AssertionRewriter(ast.NodeVisitor):
         return res, explanation
 
     def visit_Call(self, call: ast.Call) -> tuple[ast.Name, str]:
+        # For method calls (obj.method()), produce a flat explanation like
+        # "where result = obj.method(args)" instead of nesting the attribute
+        # access as a separate "where method = obj.method" line.
+        if isinstance(call.func, ast.Attribute) and isinstance(call.func.ctx, ast.Load):
+            return self._visit_method_call(call)
+
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
         new_args = []
@@ -1065,6 +1071,43 @@ class AssertionRewriter(ast.NodeVisitor):
         res_expl = self.explanation_param(self.display(res))
         outer_expl = f"{res_expl}\n{{{res_expl} = {expl}\n}}"
         return res, outer_expl
+
+    def _visit_method_call(self, call: ast.Call) -> tuple[ast.Name, str]:
+        r"""Handle obj.method(...) calls with a flat explanation format.
+
+        Produces: "result\n{result = obj_repr.method(args)\n}"
+        instead of nesting the bound-method intermediate.
+        """
+        attr = call.func
+        assert isinstance(attr, ast.Attribute)
+
+        # Visit the object (receiver) for introspection.
+        obj_res, obj_expl = self.visit(attr.value)
+
+        # Visit arguments.
+        arg_expls = []
+        new_args = []
+        new_kwargs = []
+        for arg in call.args:
+            res, expl = self.visit(arg)
+            arg_expls.append(expl)
+            new_args.append(res)
+        for keyword in call.keywords:
+            res, expl = self.visit(keyword.value)
+            new_kwargs.append(ast.keyword(keyword.arg, res))
+            if keyword.arg:
+                arg_expls.append(keyword.arg + "=" + expl)
+            else:
+                arg_expls.append("**" + expl)
+
+        # Build the call using the rewritten object's attribute.
+        new_func = ast.Attribute(obj_res, attr.attr, ast.Load())
+        new_call = ast.copy_location(ast.Call(new_func, new_args, new_kwargs), call)
+        res = self.assign(new_call)
+        res_expl = self.explanation_param(self.display(res))
+        args_str = ", ".join(arg_expls)
+        expl = f"{res_expl}\n{{{res_expl} = {obj_expl}.{attr.attr}({args_str})\n}}"
+        return res, expl
 
     def visit_Starred(self, starred: ast.Starred) -> tuple[ast.Starred, str]:
         # A Starred node can appear in a function call.
