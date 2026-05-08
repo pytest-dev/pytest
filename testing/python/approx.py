@@ -1333,6 +1333,8 @@ class TestApproxDatetime:
         result = a._repr_compare("not a datetime")
         assert "comparison failed" in result[0]
         assert "N/A" in result[3]
+
+
 class MyVec3:  # incomplete
     """sequence like"""
 
