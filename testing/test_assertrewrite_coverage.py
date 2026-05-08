@@ -534,9 +534,8 @@ def check():
 
 
 class TestIntrospectionSubscript:
-    """Subscript / indexing — currently hits generic_visit."""
+    """Subscript / indexing — now has dedicated visitor."""
 
-    @pytest.mark.xfail(reason="Subscript not introspected: blind spot")
     def test_dict_subscript_shows_key_and_container(self) -> None:
         assert_introspects(
             """
@@ -544,10 +543,9 @@ def check():
     d = {"a": 1, "b": 2}
     assert d["a"] == 99
 """,
-            must_contain=["where 1 = ", '["a"]'],
+            must_contain=["where 1 = ", "['a']"],
         )
 
-    @pytest.mark.xfail(reason="Subscript not introspected: blind spot")
     def test_list_subscript_shows_index_and_container(self) -> None:
         assert_introspects(
             """
