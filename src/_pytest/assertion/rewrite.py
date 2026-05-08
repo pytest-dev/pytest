@@ -985,12 +985,13 @@ class AssertionRewriter(ast.NodeVisitor):
             call = ast.Call(app, [expl_format], [])
             self.expl_stmts.append(ast.Expr(call))
             if i < levels:
-                cond: ast.expr = res
+                # Use res_var (already assigned above) rather than res directly,
+                # so that NamedExpr operands aren't evaluated a second time.
+                cond: ast.expr = ast.Name(res_var, ast.Load())
                 if is_or:
                     cond = ast.UnaryOp(ast.Not(), cond)
-                # Capture the condition in a temp variable so the explanation
-                # path (which runs after walrus operators may have modified
-                # the original variable) sees the correct truthiness.
+                # Capture the condition in a stable temp for the explanation
+                # path — res_var is overwritten by subsequent operands.
                 cond_var = self.variable()
                 body.append(ast.Assign([ast.Name(cond_var, ast.Store())], cond))
                 expl_cond: ast.expr = ast.Name(cond_var, ast.Load())  # noqa: F841
