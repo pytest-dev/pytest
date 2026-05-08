@@ -1910,7 +1910,6 @@ class TestIssue14445:
         result = pytester.runpytest()
         assert result.ret == 0
 
-    @pytest.mark.xfail(reason="BoolOp condition re-evaluates walrus operand")
     def test_walrus_no_double_eval_in_boolop(self, pytester: Pytester) -> None:
         """Bare walrus as a BoolOp operand must not be evaluated twice."""
         pytester.makepyfile(
