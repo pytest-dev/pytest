@@ -1095,6 +1095,11 @@ class AssertionRewriter(ast.NodeVisitor):
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, ast.Compare | ast.BoolOp):
                 next_expl = f"({next_expl})"
+            # Assign NamedExpr comparators to a temp so each walrus evaluates
+            # exactly once — critical for chained comparisons where the same
+            # node would otherwise be re-evaluated as left_res next iteration.
+            if isinstance(next_res, ast.NamedExpr):
+                next_res = self.assign(next_res)
             results.append(next_res)
             sym = BINOP_MAP[op.__class__]
             syms.append(ast.Constant(sym))
@@ -1103,12 +1108,6 @@ class AssertionRewriter(ast.NodeVisitor):
             res_expr = ast.copy_location(ast.Compare(left_res, [op], [next_res]), comp)
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
-        # Replace NamedExpr entries in results with their target variable
-        # to avoid re-evaluating walrus operators in the explanation path.
-        results = [
-            ast.Name(r.target.id, ast.Load()) if isinstance(r, ast.NamedExpr) else r
-            for r in results
-        ]
         # Use pytest.assertion.util._reprcompare if that's available.
         expl_call = self.helper(
             "_call_reprcompare",
