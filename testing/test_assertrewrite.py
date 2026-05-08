@@ -1910,6 +1910,46 @@ class TestIssue14445:
         result = pytester.runpytest()
         assert result.ret == 0
 
+    @pytest.mark.xfail(reason="BoolOp condition re-evaluates walrus operand")
+    def test_walrus_no_double_eval_in_boolop(self, pytester: Pytester) -> None:
+        """Bare walrus as a BoolOp operand must not be evaluated twice."""
+        pytester.makepyfile(
+            """
+            call_count = 0
+
+            def side_effect():
+                global call_count
+                call_count += 1
+                return call_count
+
+            def test_walrus_boolop():
+                assert (x := side_effect()) and x == 1
+                assert call_count == 1
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    @pytest.mark.xfail(reason="Chained compare re-evaluates walrus with same target")
+    def test_walrus_no_double_eval_chained_compare(self, pytester: Pytester) -> None:
+        """Same walrus target in chained comparison must evaluate each once."""
+        pytester.makepyfile(
+            """
+            call_count = 0
+
+            def track(value):
+                global call_count
+                call_count += 1
+                return value
+
+            def test_walrus_chained():
+                assert (x := track(1)) < (x := track(3)) < (x := track(5))
+                assert call_count == 3
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
 
 @pytest.mark.skipif(
     sys.maxsize <= (2**31 - 1), reason="Causes OverflowError on 32bit systems"
