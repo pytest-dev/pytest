@@ -947,3 +947,193 @@ def check():
         return [1, 2, 3]
     assert [x * 2 for x in items()] == [2, 4, 7]
 """)
+
+
+# ---------------------------------------------------------------------------
+# Edge cases: combinations of new visitors with existing ones
+# ---------------------------------------------------------------------------
+
+
+class TestEdgeCases:
+    """Regression and edge-case tests combining multiple expression types."""
+
+    def test_subscript_with_variable_key(self) -> None:
+        """Subscript where the key is a variable (not constant)."""
+        assert_introspects(
+            """
+def check():
+    d = {"hello": 42}
+    key = "hello"
+    assert d[key] == 100
+""",
+            must_contain=["where 42 = ", "['hello']"],
+        )
+
+    def test_subscript_with_call_key(self) -> None:
+        """Subscript where the key is a function call."""
+        assert_introspects(
+            """
+def check():
+    d = {0: "zero", 1: "one"}
+    def get_key():
+        return 0
+    assert d[get_key()] == "wrong"
+""",
+            must_contain=["'zero'", "'wrong'"],
+        )
+
+    def test_nested_subscript(self) -> None:
+        """Nested subscript: d[k1][k2]."""
+        assert_introspects(
+            """
+def check():
+    d = {"a": {"b": 42}}
+    assert d["a"]["b"] == 100
+""",
+            must_contain=["42", "100"],
+        )
+
+    def test_method_call_with_args(self) -> None:
+        """Method call with arguments shows flat format."""
+        assert_introspects(
+            """
+def check():
+    class Calculator:
+        def add(self, a, b):
+            return a + b
+        def __repr__(self):
+            return "Calc()"
+    c = Calculator()
+    assert c.add(2, 3) == 10
+""",
+            must_contain=["where 5 = Calc().add(2, 3)"],
+        )
+
+    def test_chained_method_calls(self) -> None:
+        """Chained method call: obj.method1().method2()."""
+        assert_introspects(
+            """
+def check():
+    class Builder:
+        def __init__(self, val=0):
+            self.val = val
+        def add(self, n):
+            return Builder(self.val + n)
+        def result(self):
+            return self.val
+        def __repr__(self):
+            return f"Builder({self.val})"
+    b = Builder()
+    assert b.add(5).result() == 100
+""",
+            must_contain=["where 5 = ", ".result()"],
+        )
+
+    def test_subscript_on_method_result(self) -> None:
+        """Subscript on method return value: obj.method()[key]."""
+        assert_introspects(
+            """
+def check():
+    class Store:
+        def get_data(self):
+            return {"x": 42}
+        def __repr__(self):
+            return "Store()"
+    s = Store()
+    assert s.get_data()["x"] == 100
+""",
+            must_contain=["42", "100"],
+        )
+
+    def test_ifexp_with_call_condition(self) -> None:
+        """IfExp where condition is a function call."""
+        assert_introspects(
+            """
+def check():
+    def is_ready():
+        return False
+    assert (1 if is_ready() else 0) == 1
+""",
+            must_contain=["if False else"],
+        )
+
+    def test_walrus_in_subscript(self) -> None:
+        """Walrus operator used as subscript key."""
+        assert_semantically_equivalent("""
+def check():
+    d = {1: "one", 2: "two"}
+    x = 1
+    assert d[(y := x + 1)] == "wrong"
+""")
+
+    def test_method_call_single_evaluation(self) -> None:
+        """Method with side effects is only called once."""
+        assert_single_evaluation("""
+def check():
+    class Obj:
+        def compute(self):
+            counter[0] += 1
+            return 42
+    obj = Obj()
+    assert obj.compute() == 100
+""")
+
+    def test_subscript_single_evaluation(self) -> None:
+        """Custom __getitem__ with side effects is only called once."""
+        assert_single_evaluation("""
+def check():
+    class CountingList:
+        def __init__(self, items):
+            self.items = items
+        def __getitem__(self, idx):
+            counter[0] += 1
+            return self.items[idx]
+        def __repr__(self):
+            return repr(self.items)
+    lst = CountingList([10, 20, 30])
+    assert lst[1] == 99
+""")
+
+    def test_ifexp_condition_single_evaluation(self) -> None:
+        """IfExp condition with side effects is only evaluated once."""
+        assert_single_evaluation("""
+def check():
+    def check_flag():
+        counter[0] += 1
+        return True
+    assert (0 if check_flag() else 1) == 99
+""")
+
+    def test_complex_assertion_semantics(self) -> None:
+        """Complex assertion combining multiple new visitors."""
+        assert_semantically_equivalent("""
+def check():
+    class Config:
+        def __init__(self):
+            self.data = {"timeout": 30}
+        def get(self, key):
+            return self.data[key]
+    cfg = Config()
+    flag = True
+    assert (cfg.get("timeout") if flag else 0) > 60
+""")
+
+    def test_assert_with_message_still_works(self) -> None:
+        """Assert with a custom message still works with new visitors."""
+        msg = get_failure_message("""
+def check():
+    d = {"key": 42}
+    assert d["key"] == 100, "custom failure message"
+""")
+        assert "custom failure message" in msg
+
+    def test_method_call_on_global(self) -> None:
+        """Method call on a global/module-level object."""
+        assert_introspects(
+            """
+items = [1, 2, 3]
+def check():
+    assert items.count(99) == 1
+""",
+            must_contain=["where 0 = [1, 2, 3].count(99)"],
+        )
