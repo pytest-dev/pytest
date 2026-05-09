@@ -2028,11 +2028,73 @@ class TestRootdir:
             override_ini=None,
             args=[str(tmp_path)],
             rootdir_cmd_arg=None,
-            invocation_dir=Path.cwd(),
+            invocation_dir=tmp_path,
         )
         assert rootpath == tmp_path
         assert inipath == p
         assert ini_config["x"] == ConfigValue("10", origin="file", mode="ini")
+
+    def test_config_in_subdir_does_not_change_rootdir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Config file in a subdir should not move rootdir to that subdir (#13246)."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        inipath = config_dir / "pytest.ini"
+        inipath.touch()
+        monkeypatch.chdir(tmp_path)
+
+        rootpath, found_inipath, *_ = determine_setup(
+            inifile=str(inipath),
+            override_ini=None,
+            args=[],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
+        assert rootpath == tmp_path, (
+            f"rootdir should be invocation_dir ({tmp_path}), "
+            f"got {rootpath}"
+        )
+        assert found_inipath == inipath
+
+    def test_rootdir_warning_when_config_in_subdir(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """When -c points to a subdir, a warning should be logged (#13246)."""
+        import logging
+
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        inipath = config_dir / "pytest.ini"
+        inipath.touch()
+
+        caplog.set_level(logging.WARNING)
+        Config.fromdictargs(
+            {"inifilename": str(inipath)},  # -c config/pytest.ini
+            [],
+        )
+
+        assert len(caplog.records) >= 1
+        assert "rootdir was set to" in caplog.records[0].message
+        assert "--rootdir" in caplog.records[0].message
+
+    def test_no_warning_when_config_in_rootdir(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """When -c points to the invocation dir itself, no warning needed (#13246)."""
+        import logging
+
+        inipath = tmp_path / "pytest.ini"
+        inipath.touch()
+        monkeypatch.chdir(tmp_path)
+
+        caplog.set_level(logging.WARNING)
+        Config.fromdictargs(
+            {"inifilename": str(inipath)},
+            [],
+        )
+
+        assert len(caplog.records) == 0
 
     def test_explicit_config_file_sets_rootdir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

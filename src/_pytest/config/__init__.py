@@ -77,6 +77,10 @@ from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from _pytest.assertion.rewrite import AssertionRewritingHook
@@ -1500,6 +1504,14 @@ class Config:
         self._inicfg = inicfg
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)
+
+        if ns.inifilename and not ns.rootdir:
+            if inipath is not None and inipath.parent != self.invocation_params.dir:
+                log.warning(
+                    "rootdir was set to %s because -c was given without --rootdir. "
+                    "Use --rootdir to explicitly disambiguate.",
+                    self.invocation_params.dir,
+                )
 
         self._parser.addini("addopts", "Extra command line options", "args")
         self._parser.addini("minversion", "Minimally required pytest version")
