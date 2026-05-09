@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Iterator
+from contextlib import contextmanager
 from enum import auto
 from enum import Enum
 import inspect
@@ -17,6 +19,7 @@ from typing import Any
 from typing import TYPE_CHECKING
 from unittest import TestCase
 
+from _pytest import timing
 import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest.compat import assert_never
@@ -224,6 +227,7 @@ class TestCaseFunction(Function):
     def setup(self) -> None:
         # A bound method to be called during teardown() if set (see 'runtest()').
         self._explicit_tearDown: Callable[[], None] | None = None
+        self._subtest_durations: deque[timing.Duration] = deque()
         super().setup()
         if sys.version_info < (3, 11):
             # A cache of the subTest errors and non-subtest skips in self._outcome.
@@ -365,30 +369,52 @@ class TestCaseFunction(Function):
 
         maybe_wrap_pytest_function_for_tracing(self)
 
-        # Let the unittest framework handle async functions.
-        if is_async_function(self.obj):
-            testcase(result=self)
-        else:
-            # When --pdb is given, we want to postpone calling tearDown() otherwise
-            # when entering the pdb prompt, tearDown() would have probably cleaned up
-            # instance variables, which makes it difficult to debug.
-            # Arguably we could always postpone tearDown(), but this changes the moment where the
-            # TestCase instance interacts with the results object, so better to only do it
-            # when absolutely needed.
-            # We need to consider if the test itself is skipped, or the whole class.
-            assert isinstance(self.parent, UnitTestCase)
-            skipped = _is_skipped(self.obj) or _is_skipped(self.parent.obj)
-            if self.config.getoption("usepdb") and not skipped:
-                self._explicit_tearDown = testcase.tearDown
-                setattr(testcase, "tearDown", lambda *args: None)
+        original_subtest = testcase.subTest
+        had_instance_subtest = "subTest" in testcase.__dict__
+        original_instance_subtest = testcase.__dict__.get("subTest")
 
-            # We need to update the actual bound method with self.obj, because
-            # wrap_pytest_function_for_tracing replaces self.obj by a wrapper.
-            setattr(testcase, self.name, self.obj)
-            try:
+        # unittest only reports subtests after they finish, so measure the public
+        # subTest() context manager boundary to provide accurate SubtestReport durations.
+        @contextmanager
+        def timed_subtest(*args, **kwargs):
+            instant = timing.Instant()
+            with original_subtest(*args, **kwargs) as subtest:
+                try:
+                    yield subtest
+                finally:
+                    self._subtest_durations.append(instant.elapsed())
+
+        setattr(testcase, "subTest", timed_subtest)
+        try:
+            # Let the unittest framework handle async functions.
+            if is_async_function(self.obj):
                 testcase(result=self)
-            finally:
-                delattr(testcase, self.name)
+            else:
+                # When --pdb is given, we want to postpone calling tearDown() otherwise
+                # when entering the pdb prompt, tearDown() would have probably cleaned up
+                # instance variables, which makes it difficult to debug.
+                # Arguably we could always postpone tearDown(), but this changes the moment where the
+                # TestCase instance interacts with the results object, so better to only do it
+                # when absolutely needed.
+                # We need to consider if the test itself is skipped, or the whole class.
+                assert isinstance(self.parent, UnitTestCase)
+                skipped = _is_skipped(self.obj) or _is_skipped(self.parent.obj)
+                if self.config.getoption("usepdb") and not skipped:
+                    self._explicit_tearDown = testcase.tearDown
+                    setattr(testcase, "tearDown", lambda *args: None)
+
+                # We need to update the actual bound method with self.obj, because
+                # wrap_pytest_function_for_tracing replaces self.obj by a wrapper.
+                setattr(testcase, self.name, self.obj)
+                try:
+                    testcase(result=self)
+                finally:
+                    delattr(testcase, self.name)
+        finally:
+            if had_instance_subtest:
+                setattr(testcase, "subTest", original_instance_subtest)
+            else:
+                delattr(testcase, "subTest")
 
     def _traceback_filter(
         self, excinfo: _pytest._code.ExceptionInfo[BaseException]
@@ -422,12 +448,22 @@ class TestCaseFunction(Function):
             case unreachable:
                 assert_never(unreachable)
 
+        if self._subtest_durations:
+            duration = self._subtest_durations.popleft()
+            start = duration.start.time
+            stop = duration.stop.time
+            duration_seconds = duration.seconds
+        else:
+            start = 0
+            stop = 0
+            duration_seconds = 0
+
         call_info = CallInfo[None](
             None,
             exception_info,
-            start=0,
-            stop=0,
-            duration=0,
+            start=start,
+            stop=stop,
+            duration=duration_seconds,
             when="call",
             _ispytest=True,
         )

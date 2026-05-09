@@ -6,6 +6,7 @@ import sys
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
+from _pytest.subtests import SubtestReport
 import pytest
 
 
@@ -47,6 +48,72 @@ def test_runTest_method(pytester: Pytester) -> None:
         *2 passed*
     """
     )
+
+
+def test_restores_instance_level_subtest(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+
+        @pytest.hookimpl(wrapper=True)
+        def pytest_runtest_call(item):
+            yield
+            original_subtest = item.instance.__dict__["subTest"]
+            assert original_subtest._pytest_test_restored
+        """
+    )
+    testpath = pytester.makepyfile(
+        """
+        import unittest
+
+
+        class MyTestCase(unittest.TestCase):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+
+                def custom_subtest(*args, **kwargs):
+                    return unittest.TestCase.subTest(self, *args, **kwargs)
+
+                custom_subtest._pytest_test_restored = True
+                self.subTest = custom_subtest
+
+            def test_subtest(self):
+                with self.subTest():
+                    pass
+        """
+    )
+    reprec = pytester.inline_run(testpath)
+    reprec.assertoutcome(passed=2)
+
+
+def test_addsubtest_without_recorded_duration_uses_zero_duration(
+    pytester: Pytester,
+) -> None:
+    testpath = pytester.makepyfile(
+        """
+        import unittest
+
+
+        class ManualSubTest:
+            _message = "manual"
+            params = {}
+
+
+        class MyTestCase(unittest.TestCase):
+            def test_subtest(self):
+                self._outcome.result.addSubTest(self, ManualSubTest(), None)
+        """
+    )
+    reprec = pytester.inline_run(testpath)
+    reports = [
+        report
+        for report in reprec.getreports("pytest_runtest_logreport")
+        if isinstance(report, SubtestReport)
+    ]
+    assert len(reports) == 1
+    assert reports[0].duration == 0
+    reprec.assertoutcome(passed=2)
 
 
 def test_isclasscheck_issue53(pytester: Pytester) -> None:

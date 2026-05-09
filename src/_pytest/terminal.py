@@ -660,7 +660,7 @@ class TerminalReporter:
             # printing here and not in logfinish, except for the 100% which
             # should only be printed after all teardowns are finished.
             if self._show_progress_info and not self._is_last_item:
-                self._write_progress_information_if_past_edge()
+                self._write_progress_information_if_past_edge(rep)
         else:
             line = self._locationline(rep.nodeid, *rep.location)
             running_xdist = hasattr(rep, "node")
@@ -683,13 +683,13 @@ class TerminalReporter:
                     if reason and formatted_reason is not None:
                         self.wrap_write(formatted_reason)
                 if self._show_progress_info:
-                    self._write_progress_information_filling_space()
+                    self._write_progress_information_filling_space(rep)
             else:
                 self.ensure_newline()
                 self._tw.write(f"[{rep.node.gateway.id}]")
                 if self._show_progress_info:
                     self._tw.write(
-                        self._get_progress_information_message() + " ", cyan=True
+                        self._get_progress_information_message(rep) + " ", cyan=True
                     )
                 else:
                     self._tw.write(" ")
@@ -717,7 +717,9 @@ class TerminalReporter:
 
         return result
 
-    def _get_progress_information_message(self) -> str:
+    def _get_progress_information_message(
+        self, report: TestReport | None = None
+    ) -> str:
         assert self._session
         collected = self._session.testscollected
         if self._show_progress_info == "count":
@@ -730,6 +732,8 @@ class TerminalReporter:
         if self._show_progress_info == "times":
             if not collected:
                 return ""
+            if report is not None and self._is_subtest_report(report):
+                return format_node_duration(report.duration)
             all_reports = (
                 self._get_reports_to_display("passed")
                 + self._get_reports_to_display("xpassed")
@@ -762,7 +766,15 @@ class TerminalReporter:
             return f" [{self.reported_progress * 100 // collected:3d}%]"
         return " [100%]"
 
-    def _write_progress_information_if_past_edge(self) -> None:
+    @staticmethod
+    def _is_subtest_report(report: TestReport) -> bool:
+        from _pytest.subtests import SubtestReport
+
+        return isinstance(report, SubtestReport)
+
+    def _write_progress_information_if_past_edge(
+        self, report: TestReport | None = None
+    ) -> None:
         w = self._width_of_current_line
         if self._show_progress_info == "count":
             assert self._session
@@ -775,12 +787,14 @@ class TerminalReporter:
         past_edge = w + progress_length + 1 >= self._screen_width
         if past_edge:
             main_color, _ = self._get_main_color()
-            msg = self._get_progress_information_message()
+            msg = self._get_progress_information_message(report)
             self._tw.write(msg + "\n", **{main_color: True})
 
-    def _write_progress_information_filling_space(self) -> None:
+    def _write_progress_information_filling_space(
+        self, report: TestReport | None = None
+    ) -> None:
         color, _ = self._get_main_color()
-        msg = self._get_progress_information_message()
+        msg = self._get_progress_information_message(report)
         w = self._width_of_current_line
         fill = self._tw.fullwidth - w - 1
         self.write(msg.rjust(fill), flush=True, **{color: True})

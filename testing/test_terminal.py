@@ -2324,6 +2324,37 @@ class TestProgressOutputStyle:
             ]
         )
 
+    def test_verbose_times_with_duplicate_unittest_subtests(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import time
+            import unittest
+
+
+            class Test(unittest.TestCase):
+                def test_subtests(self):
+                    for _ in range(2):
+                        with self.subTest():
+                            time.sleep(0.05)
+            """
+        )
+        pytester.makeini(
+            """
+            [pytest]
+            console_output_style = times
+            """
+        )
+        output = pytester.runpytest("-v")
+        duration_re = r"(?!0\.000us)(?:\d+(\.\d+)?(?:us|ms|s)|\d+m \d+s|\d+h \d+m)"
+        output.stdout.re_match_lines(
+            [
+                rf".*::Test::test_subtests SUBPASSED\(<subtest>\)\s+{duration_re}",
+                rf".*::Test::test_subtests SUBPASSED\(<subtest>\)\s+{duration_re}",
+            ]
+        )
+
     def test_xdist_normal(
         self, many_tests_files, pytester: Pytester, monkeypatch
     ) -> None:

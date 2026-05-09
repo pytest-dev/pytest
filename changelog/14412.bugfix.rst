@@ -1,0 +1,1 @@
+Fixed ``console_output_style = times`` reporting ``0.000us`` for unittest subtests.
