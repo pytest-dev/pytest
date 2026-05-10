@@ -2052,8 +2052,7 @@ class TestRootdir:
             invocation_dir=Path.cwd(),
         )
         assert rootpath == tmp_path, (
-            f"rootdir should be invocation_dir ({tmp_path}), "
-            f"got {rootpath}"
+            f"rootdir should be invocation_dir ({tmp_path}), got {rootpath}"
         )
         assert found_inipath == inipath
 

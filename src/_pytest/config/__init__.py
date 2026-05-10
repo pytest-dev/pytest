@@ -22,6 +22,7 @@ import glob
 import importlib
 import importlib.metadata
 import inspect
+import logging
 import os
 import pathlib
 import re
@@ -77,7 +78,6 @@ from _pytest.stash import Stash
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
-import logging
 
 log = logging.getLogger(__name__)
 
