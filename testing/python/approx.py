@@ -993,6 +993,30 @@ class TestApprox:
         with pytest.raises(TypeError):
             op(1, approx(1, rel=1e-6, abs=1e-12))
 
+    def test_numpy_array_via_interface_protocol(self):
+        """Objects implementing __array_interface__ without __array__ should work (#14456)."""
+        np = pytest.importorskip("numpy")
+
+        class ArrayViaInterface:
+            def __init__(self, value):
+                self.value = value
+
+            @property
+            def __array_interface__(self):
+                return {
+                    "shape": (),
+                    "typestr": "<f8",
+                    "data": (np.array(self.value).ctypes.data, False),
+                    "version": 3,
+                }
+
+        expected = 1.0
+        actual = 1.0 + 1e-7
+        assert ArrayViaInterface(actual) == approx(expected, rel=1e-6, abs=0)
+
+        # Also works on the left side of the comparison
+        assert approx(expected, rel=1e-6, abs=0) == ArrayViaInterface(actual)
+
     def test_numpy_array_with_scalar(self):
         np = pytest.importorskip("numpy")
 
