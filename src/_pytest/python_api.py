@@ -93,9 +93,11 @@ class ApproxBase:
     def __ne__(self, actual) -> bool:
         return not (actual == self)
 
-    def _approx_scalar(self, x) -> ApproxScalar:
+    def _approx_scalar(self, x) -> ApproxBase:
         if isinstance(x, Decimal):
             return ApproxDecimal(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
+        if isinstance(x, (datetime, timedelta)):
+            return ApproxTimedelta(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
     def _yield_comparisons(self, actual):
@@ -585,7 +587,8 @@ class ApproxTimedelta(ApproxBase):
             raise TypeError(
                 "pytest.approx() requires an explicit tolerance for "
                 "datetime/timedelta comparisons: "
-                "e.g. approx(expected, abs=timedelta(seconds=1))"
+                "e.g. approx(expected, abs=timedelta(seconds=1)) "
+                "or approx(expected, rel=0.01)"
             )
         if abs is not None and not isinstance(abs, timedelta):
             raise TypeError(

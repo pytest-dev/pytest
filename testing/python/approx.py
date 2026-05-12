@@ -1380,6 +1380,29 @@ class TestApproxDatetime:
         assert "comparison failed" in result[0]
         assert "N/A" in result[3]
 
+    def test_timedelta_in_sequence(self):
+        from datetime import timedelta
+
+        assert [timedelta(seconds=105)] == approx(
+            [timedelta(seconds=100)], rel=0.05
+        )
+        assert [timedelta(seconds=110)] != approx(
+            [timedelta(seconds=100)], rel=0.05
+        )
+        assert [timedelta(seconds=105)] == approx(
+            [timedelta(seconds=100)], abs=timedelta(seconds=10)
+        )
+
+    def test_timedelta_in_mapping(self):
+        from datetime import timedelta
+
+        assert {"x": timedelta(seconds=105)} == approx(
+            {"x": timedelta(seconds=100)}, rel=0.05
+        )
+        assert {"x": timedelta(seconds=110)} != approx(
+            {"x": timedelta(seconds=100)}, rel=0.05
+        )
+
 
 class MyVec3:  # incomplete
     """sequence like"""
