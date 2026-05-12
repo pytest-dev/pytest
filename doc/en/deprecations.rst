@@ -15,6 +15,19 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _pastebin-deprecated:
+
+The ``--pastebin`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+The :option:`--pastebin` option has been deprecated due to being very niche, being the only feature in core pytest relying on an external service and having low usage.
+
+The plugin which implements ``--pastebin`` has been extracted to a separate package, :pypi:`pytest-pastebin`.
+Please install ``pytest-pastebin`` if you want to keep using ``--pastebin``.
+
+
 .. _dynamic-fixture-request-during-teardown:
 
 ``request.getfixturevalue()`` during fixture teardown
