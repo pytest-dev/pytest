@@ -1172,14 +1172,14 @@ class TestApproxDatetime:
 
         td1 = timedelta(seconds=100)
         td2 = timedelta(seconds=100.5)
-        assert td1 == approx(td2, rel=timedelta(seconds=1))
+        assert td1 == approx(td2, rel=0.01)
 
     def test_timedelta_rel_outside_tolerance(self):
         from datetime import timedelta
 
         td1 = timedelta(seconds=100)
         td2 = timedelta(seconds=102)
-        assert td1 != approx(td2, rel=timedelta(seconds=1))
+        assert td1 != approx(td2, rel=0.01)
 
     def test_requires_tolerance(self):
         from datetime import datetime
@@ -1203,11 +1203,39 @@ class TestApproxDatetime:
         with pytest.raises(TypeError, match="must be a timedelta"):
             approx(datetime(2024, 1, 1), abs=1.0)
 
-    def test_timedelta_rel_must_be_timedelta(self):
+    def test_timedelta_rel_must_be_number(self):
         from datetime import timedelta
 
-        with pytest.raises(TypeError, match="must be a timedelta"):
-            approx(timedelta(seconds=1), rel=0.1)
+        with pytest.raises(TypeError, match="must be a number"):
+            approx(timedelta(seconds=1), rel=timedelta(seconds=1))
+
+    def test_timedelta_rel_with_abs(self):
+        from datetime import timedelta
+
+        # rel=0.05 gives 5s tolerance, abs=timedelta(seconds=1) gives 1s.
+        # max(1s, 5s) = 5s tolerance.
+        td1 = timedelta(seconds=100)
+        td2 = timedelta(seconds=104)
+        assert td1 == approx(td2, rel=0.05, abs=timedelta(seconds=1))
+
+    def test_timedelta_rel_zero(self):
+        from datetime import timedelta
+
+        # rel=0 means exact match required (0 * expected = 0)
+        td1 = timedelta(seconds=100)
+        assert td1 == approx(td1, rel=0.0, abs=timedelta(seconds=0))
+        assert td1 != approx(timedelta(seconds=101), rel=0.0, abs=timedelta(seconds=0))
+
+    def test_timedelta_rel_scales_with_expected(self):
+        from datetime import timedelta
+
+        # Same rel=0.1, but different expected values.
+        # 10% of 100s = 10s, 10% of 200s = 20s.
+        assert timedelta(seconds=109) == approx(timedelta(seconds=100), rel=0.1)
+        assert timedelta(seconds=218) == approx(timedelta(seconds=200), rel=0.1)
+        # 11s is > 10% of 100s, but < 10% of 200s
+        assert timedelta(seconds=111) != approx(timedelta(seconds=100), rel=0.1)
+        assert timedelta(seconds=211) == approx(timedelta(seconds=200), rel=0.1)
 
     def test_rejects_nan_ok(self):
         from datetime import datetime

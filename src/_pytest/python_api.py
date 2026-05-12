@@ -565,7 +565,7 @@ class ApproxTimedelta(ApproxBase):
     """Perform approximate comparisons where the expected value is a
     datetime or timedelta.
 
-    Requires an explicit tolerance as a timedelta.
+    Requires an explicit tolerance as a timedelta for abs, or a float for rel.
     Relative tolerance is not supported for datetime comparisons.
     """
 
@@ -592,13 +592,26 @@ class ApproxTimedelta(ApproxBase):
                 f"absolute tolerance for datetime/timedelta must be a "
                 f"timedelta, got {type(abs).__name__}"
             )
-        if rel is not None and not isinstance(rel, timedelta):
-            raise TypeError(
-                f"relative tolerance for timedelta must be a "
-                f"timedelta, got {type(rel).__name__}"
-            )
-        tolerance = max(t for t in (abs, rel) if t is not None)
-        super().__init__(expected, rel=None, abs=tolerance, nan_ok=False)
+        if rel is not None:
+            if isinstance(expected, datetime):
+                raise TypeError(
+                    "pytest.approx() does not support relative tolerance for "
+                    "datetime comparisons. Use abs=timedelta(...) instead."
+                )
+            if not isinstance(rel, (int, float)):
+                raise TypeError(
+                    f"relative tolerance for timedelta must be a "
+                    f"number, got {type(rel).__name__}"
+                )
+        # Compute the effective tolerance. abs_tolerance is a timedelta, rel * expected
+        # gives a timedelta (timedelta * float works in Python).
+        abs_tolerance = abs
+        rel_tolerance = rel * builtins.abs(expected) if rel is not None else None
+        if abs_tolerance is not None and rel_tolerance is not None:
+            tolerance = max(abs_tolerance, rel_tolerance)
+        else:
+            tolerance = abs_tolerance if abs_tolerance is not None else rel_tolerance
+        super().__init__(expected, rel=rel, abs=tolerance, nan_ok=False)
 
     def __repr__(self) -> str:
         return f"{self.expected} ± {self.abs}"
@@ -757,8 +770,10 @@ def approx(
         >>> dt1 == approx(dt2, abs=timedelta(seconds=1))
         True
 
-    Note that ``rel`` is not supported for datetime comparisons,
-    and ``abs`` or ``rel`` must be explicitly provided as a ``timedelta`` object.
+    Note that ``rel`` is not supported for datetime comparisons.
+    For timedelta comparisons, ``rel`` is a number (not a timedelta) that
+    represents a relative tolerance -- a fraction of the expected value.
+    ``abs`` must be a ``timedelta`` object in both cases.
 
     .. versionadded:: 8.4
 

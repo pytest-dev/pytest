@@ -1,0 +1,1 @@
+Fixed ``rel`` parameter in :func:`pytest.approx` for :class:`~datetime.timedelta` comparisons -- it was being treated as an absolute tolerance instead of a relative one.
