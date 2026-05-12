@@ -1383,12 +1383,8 @@ class TestApproxDatetime:
     def test_timedelta_in_sequence(self):
         from datetime import timedelta
 
-        assert [timedelta(seconds=105)] == approx(
-            [timedelta(seconds=100)], rel=0.05
-        )
-        assert [timedelta(seconds=110)] != approx(
-            [timedelta(seconds=100)], rel=0.05
-        )
+        assert [timedelta(seconds=105)] == approx([timedelta(seconds=100)], rel=0.05)
+        assert [timedelta(seconds=110)] != approx([timedelta(seconds=100)], rel=0.05)
         assert [timedelta(seconds=105)] == approx(
             [timedelta(seconds=100)], abs=timedelta(seconds=10)
         )
