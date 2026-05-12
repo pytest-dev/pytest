@@ -1255,6 +1255,38 @@ def test_colored_captured_log(pytester: Pytester) -> None:
     )
 
 
+def test_log_propagation_false(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        import logging
+
+        logging.getLogger('foo').propagate = False
+
+        def test_log_file():
+            logging.getLogger().warning("log goes to root logger")
+            logging.getLogger('foo').warning("log goes to initially non-propagating logger")
+            logging.getLogger('foo.bar').warning("log goes to initially non-propagating nested logger")
+            assert False, "intentionally fail to trigger report logging output"
+    """
+    )
+
+    reprec = pytester.inline_run()
+    reports = reprec.getfailures()
+    assert len(reports) == 1
+    report = reports[0]
+    sections = list(report.get_sections("Captured log call"))
+    assert len(sections) == 1
+    assert sections[0][1] == "\n".join(
+        [
+            "WARNING  root:test_log_propagation_false.py:7 log goes to root logger",
+            "WARNING  foo:test_log_propagation_false.py:8 log goes to initially non-propagating logger",
+            "WARNING  foo.bar:test_log_propagation_false.py:9 log goes to initially non-propagating nested logger",
+        ]
+    )
+    assert not list(report.get_sections("Captured stderr call"))
+
+
 def test_colored_ansi_esc_caplogtext(pytester: Pytester) -> None:
     """Make sure that caplog.text does not contain ANSI escape sequences."""
     pytester.makepyfile(

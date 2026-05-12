@@ -50,6 +50,7 @@ from .exceptions import UsageError as UsageError
 from .findpaths import ConfigDict
 from .findpaths import ConfigValue
 from .findpaths import determine_setup
+from .findpaths import parse_override_ini
 from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
@@ -1520,6 +1521,12 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
+        if addopts:
+            # addopts may have added overrides (especially via OverrideIniAction).
+            # The thing can be endlessly circular but we only do one level (#14442).
+            if overrides := parse_override_ini(self.known_args_namespace.override_ini):
+                self._inicfg.update(overrides)
+                self._inicache.clear()
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()

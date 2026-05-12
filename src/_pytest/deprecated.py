@@ -75,6 +75,12 @@ FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#dynamic-fixture-request-during-teardown",
 )
 
+PASTEBIN = PytestRemovedIn10Warning(
+    "The --pastebin option is deprecated. "
+    "The functionality is now available in an external plugin package, pytest-pastebin.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#the-pastebin-option"
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):
