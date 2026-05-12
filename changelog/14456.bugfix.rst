@@ -1,0 +1,1 @@
+Fixed ``hasattr`` call in ``_as_numpy_array`` that incorrectly used the string literal ``"obj"`` instead of the variable ``obj`` when checking for ``__array_interface__``, causing objects implementing only ``__array_interface__`` to not be recognized as numpy-like arrays by ``pytest.approx``.
