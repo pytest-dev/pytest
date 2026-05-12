@@ -1398,6 +1398,31 @@ class TestApproxDatetime:
         assert {"x": timedelta(seconds=110)} != approx(
             {"x": timedelta(seconds=100)}, rel=0.05
         )
+        assert {"x": timedelta(seconds=105)} == approx(
+            {"x": timedelta(seconds=100)}, abs=timedelta(seconds=10)
+        )
+
+    def test_datetime_in_sequence(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        assert [datetime(2024, 1, 1, 12, 0, 0, 500_000)] == approx(
+            [datetime(2024, 1, 1, 12, 0, 0)], abs=timedelta(seconds=1)
+        )
+        assert [datetime(2024, 1, 1, 12, 0, 5)] != approx(
+            [datetime(2024, 1, 1, 12, 0, 0)], abs=timedelta(seconds=1)
+        )
+
+    def test_datetime_in_mapping(self):
+        from datetime import datetime
+        from datetime import timedelta
+
+        assert {"t": datetime(2024, 1, 1, 12, 0, 0, 500_000)} == approx(
+            {"t": datetime(2024, 1, 1, 12, 0, 0)}, abs=timedelta(seconds=1)
+        )
+        assert {"t": datetime(2024, 1, 1, 12, 0, 5)} != approx(
+            {"t": datetime(2024, 1, 1, 12, 0, 0)}, abs=timedelta(seconds=1)
+        )
 
 
 class MyVec3:  # incomplete

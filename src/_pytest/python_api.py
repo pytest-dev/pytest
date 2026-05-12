@@ -598,11 +598,6 @@ class ApproxTimedelta(ApproxBase):
         if abs is not None and abs < timedelta(0):
             raise ValueError(f"absolute tolerance can't be negative: {abs}")
         if rel is not None:
-            if isinstance(expected, datetime):
-                raise TypeError(
-                    "pytest.approx() does not support relative tolerance for "
-                    "datetime comparisons. Use abs=timedelta(...) instead."
-                )
             if not isinstance(rel, (int, float)):
                 raise TypeError(
                     f"relative tolerance for timedelta must be a "
