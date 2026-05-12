@@ -592,6 +592,10 @@ class ApproxTimedelta(ApproxBase):
                 f"absolute tolerance for datetime/timedelta must be a "
                 f"timedelta, got {type(abs).__name__}"
             )
+        if abs is not None and abs < timedelta(0):
+            raise ValueError(
+                f"absolute tolerance can't be negative: {abs}"
+            )
         if rel is not None:
             if isinstance(expected, datetime):
                 raise TypeError(
@@ -603,6 +607,12 @@ class ApproxTimedelta(ApproxBase):
                     f"relative tolerance for timedelta must be a "
                     f"number, got {type(rel).__name__}"
                 )
+            if rel < 0:
+                raise ValueError(
+                    f"relative tolerance can't be negative: {rel}"
+                )
+            if math.isnan(rel):
+                raise ValueError("relative tolerance can't be NaN.")
         # Compute the effective tolerance. abs_tolerance is a timedelta, rel * expected
         # gives a timedelta (timedelta * float works in Python).
         abs_tolerance = abs

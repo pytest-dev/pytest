@@ -1209,6 +1209,24 @@ class TestApproxDatetime:
         with pytest.raises(TypeError, match="must be a number"):
             approx(timedelta(seconds=1), rel=timedelta(seconds=1))
 
+    def test_timedelta_rel_must_be_non_negative(self):
+        from datetime import timedelta
+
+        with pytest.raises(ValueError, match="relative tolerance can't be negative"):
+            approx(timedelta(seconds=1), rel=-0.1)
+
+    def test_timedelta_rel_must_not_be_nan(self):
+        from datetime import timedelta
+
+        with pytest.raises(ValueError, match="relative tolerance can't be NaN"):
+            approx(timedelta(seconds=1), rel=float("nan"))
+
+    def test_timedelta_abs_must_be_non_negative(self):
+        from datetime import timedelta
+
+        with pytest.raises(ValueError, match="absolute tolerance can't be negative"):
+            approx(timedelta(seconds=1), abs=timedelta(seconds=-1))
+
     def test_timedelta_rel_with_abs(self):
         from datetime import timedelta
 
