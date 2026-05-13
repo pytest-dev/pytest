@@ -1,1 +1,1 @@
-Fixed a regression where ``-k`` and ``-m`` expressions containing both backslash characters in identifiers and string literal arguments would incorrectly raise a ``SyntaxError`` about escaping -- the backslash check was searching the entire input instead of only the string literal value.
+Fixed a regression where ``-k`` and ``-m`` expressions containing both backslash characters in identifiers and string literal arguments would incorrectly raise a ``SyntaxError`` about escaping.
