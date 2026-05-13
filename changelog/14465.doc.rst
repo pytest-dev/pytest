@@ -1,0 +1,1 @@
+Updated the xdist ``newhooks.py`` link in the hooks how-to documentation to point to the current ``master`` branch with the updated ``src`` layout.
