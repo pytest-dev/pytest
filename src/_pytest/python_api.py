@@ -925,6 +925,6 @@ def _as_numpy_array(obj: object) -> ndarray | None:
             return None
         elif isinstance(obj, np.ndarray):
             return obj
-        elif hasattr(obj, "__array__") or hasattr("obj", "__array_interface__"):
+        elif hasattr(obj, "__array__") or hasattr(obj, "__array_interface__"):
             return np.asarray(obj)
     return None
