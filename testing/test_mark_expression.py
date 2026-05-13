@@ -93,7 +93,7 @@ def test_backslash_in_identifier_with_string_literal() -> None:
     current string literal value."""
 
     def matcher(name: str, /, **kwargs: str | int | bool | None) -> bool:
-        return {r"\nfoo\n"}.__contains__(name)
+        return {r"\nfoo\n", r"test\case", "mark"}.__contains__(name)
 
     assert evaluate(r'\nfoo\n and mark(x="y")', matcher)
     assert evaluate(r'mark(x="y") and \nfoo\n', matcher)
