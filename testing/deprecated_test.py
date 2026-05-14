@@ -1,12 +1,13 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import re
+
 from _pytest import deprecated
+from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
 import pytest
 from pytest import PytestDeprecationWarning
-import re
-from _pytest.compat import legacy_path
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
