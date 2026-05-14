@@ -1,0 +1,2 @@
+Assertion diffs now use mapping-specific output for objects implementing
+:class:`collections.abc.Mapping`, not only concrete :class:`dict` instances.
