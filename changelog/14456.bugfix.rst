@@ -1,1 +1,1 @@
-Fixed a bug in :func:`pytest.approx` where ``_as_numpy_array`` incorrectly used a string literal ``"obj"`` instead of the variable ``obj`` when checking for ``__array_interface__``, causing objects implementing only ``__array_interface__`` (without ``__array__``) to not be recognized as numpy-like arrays.
+Fixed :func:`pytest.approx` not recognizing types with ``__array_interface__`` as numpy-like arrays.
