@@ -86,6 +86,20 @@ def test_backslash_not_treated_specially() -> None:
         evaluate("\nfoo\n", matcher)
 
 
+def test_backslash_in_identifier_with_string_literal() -> None:
+    r"""Backslashes in identifiers should not cause false rejections when the
+    expression also contains string literals. Regression test for a bug where
+    the scanner searched the entire input for backslashes instead of only the
+    current string literal value."""
+
+    def matcher(name: str, /, **kwargs: str | int | bool | None) -> bool:
+        return {r"\nfoo\n", r"test\case", "mark"}.__contains__(name)
+
+    assert evaluate(r'\nfoo\n and mark(x="y")', matcher)
+    assert evaluate(r'mark(x="y") and \nfoo\n', matcher)
+    assert evaluate(r'test\case and mark(x="y")', matcher)
+
+
 @pytest.mark.parametrize(
     ("expr", "column", "message"),
     (

@@ -85,3 +85,24 @@ def test_private_is_deprecated() -> None:
 
     # Doesn't warn.
     PrivateInit(10, _ispytest=True)
+
+
+def test_class_scope_instance_method_is_deprecated(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.fixture(scope="class")
+            def fix(self):
+                self.attr = True
+
+            def test_foo(self, fix):
+                pass
+        """
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        ["*PytestRemovedIn10Warning: Class-scoped fixture defined as instance method*"]
+    )
