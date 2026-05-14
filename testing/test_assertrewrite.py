@@ -2404,3 +2404,22 @@ class TestSafereprUnbounded:
             _saferepr(self.Help)
             == f"<class '{Path(__file__).stem}.{self.__class__.__name__}.Help'>"
         )
+
+
+def test_assertion_failure_when_terminalreporter_is_disabled(
+    pytester: Pytester,
+) -> None:
+    """Assertion rewriting doesn't crash when the terminalreporter plugin is
+    disabled (#14378)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test():
+            with pytest.raises(AssertionError) as excinfo:
+                assert 0 == 1
+            assert excinfo.value.args[0] == 'assert 0 == 1'
+        """
+    )
+    reprec = pytester.inline_run("-p", "no:terminalreporter")
+    reprec.assertoutcome(passed=1)

@@ -24,7 +24,13 @@ def mock_config(verbose: int = 0, assertion_override: int | None = None):
         def _highlight(self, source, lexer="python"):
             return source
 
+    class PluginManager:
+        def has_plugin(self, name: str) -> bool:
+            return True
+
     class Config:
+        pluginmanager = PluginManager()
+
         def get_terminal_writer(self):
             return TerminalWriter()
 
@@ -2209,3 +2215,34 @@ def test_full_output_vvv(pytester: Pytester) -> None:
         ]
     )
     result.stdout.no_fnmatch_line(expected_non_vvv_arg_line)
+
+
+def test_dict_extra_items_preserve_insertion_order(pytester: Pytester) -> None:
+    """Assertion output of dict diff shows keys in insertion order (#13503)."""
+    pytester.makepyfile(
+        test_order="""
+        def test_order():
+            a = {
+                "b": 2,
+                "a": 1,
+                "d": 4,
+                "e": 5,
+                "c": 3,
+            }
+            assert a == {}
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+    result.stdout.fnmatch_lines(
+        [
+            "*Left contains 5 more items:*",
+            "*Full diff:",
+            "* + *'b': 2,",
+            "* + *'a': 1,",
+            "* + *'d': 4,",
+            "* + *'e': 5,",
+            "* + *'c': 3,",
+            "test_order.py:*: AssertionError",
+        ]
+    )

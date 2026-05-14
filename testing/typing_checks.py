@@ -14,6 +14,7 @@ from typing_extensions import assert_type
 
 import pytest
 from pytest import MonkeyPatch
+from pytest import ScopeName
 from pytest import TestReport
 
 
@@ -60,8 +61,21 @@ def check_testreport_attributes(report: TestReport) -> None:
     assert_type(report.location, tuple[str, int | None, str])
 
 
+# Issue #14234.
+@pytest.mark.parametrize("x", [1, 2], ids=[pytest.HIDDEN_PARAM, "visible"])
+def test_hidden_param(x: int) -> None:
+    pass
+
+
 # Test @pytest.mark.parametrize iterator argvalues deprecation.
 # Will be complain about unused type ignore if doesn't work.
 @pytest.mark.parametrize("x", iter(range(10)))  # type: ignore[deprecated]
 def test_it(x: int) -> None:
     pass
+
+
+# Issue #14137.
+def check_scope_typing() -> None:
+
+    custom_scope: ScopeName = "function"
+    assert_type(custom_scope, ScopeName)

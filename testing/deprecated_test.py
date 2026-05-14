@@ -1,10 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-import re
-
 from _pytest import deprecated
-from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
 import pytest
 from pytest import PytestDeprecationWarning
@@ -71,7 +68,7 @@ def test_hookimpl_via_function_attributes_are_deprecated():
 def test_yield_fixture_is_deprecated() -> None:
     with pytest.warns(DeprecationWarning, match=r"yield_fixture is deprecated"):
 
-        @pytest.yield_fixture
+        @pytest.yield_fixture  # type: ignore[deprecated]
         def fix():
             assert False
 

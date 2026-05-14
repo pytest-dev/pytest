@@ -24,7 +24,8 @@ def parser() -> parseopt.Parser:
 class TestParser:
     def test_no_help_by_default(self) -> None:
         parser = parseopt.Parser(usage="xyz", _ispytest=True)
-        pytest.raises(UsageError, lambda: parser.parse(["-h"]))
+        with pytest.raises(UsageError):
+            parser.parse(["-h"])
 
     def test_custom_prog(self, parser: parseopt.Parser) -> None:
         """Custom prog can be set for `argparse.ArgumentParser`."""
@@ -340,3 +341,25 @@ def test_argcomplete(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("COMP_POINT", str(len("pytest " + arg)))
     result = pytester.run("bash", str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
+
+
+def test_argument_repr_uninitialized() -> None:
+    """Argument.__repr__ should not crash if _action is not set yet."""
+    arg = parseopt.Argument.__new__(parseopt.Argument)
+    assert repr(arg) == "Argument(<uninitialized>)"
+
+
+def test_argument_repr_initialized(parser: parseopt.Parser) -> None:
+    """Argument.__repr__ with properly initialized options."""
+    # Without type
+    parser.addoption("--myflag", dest="myflag", help="test flag")
+    option = parser._anonymous.options[-1]
+    assert repr(option) == "Argument(opts: ['--myflag'], dest: 'myflag', default: None)"
+
+    # With type
+    parser.addoption("--count", type=int, dest="count", help="count")
+    option = parser._anonymous.options[-1]
+    assert (
+        repr(option)
+        == "Argument(opts: ['--count'], dest: 'count', type: <class 'int'>, default: None)"
+    )

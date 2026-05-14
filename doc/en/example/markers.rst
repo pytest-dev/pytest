@@ -411,7 +411,7 @@ A test file using this local plugin:
     def test_basic_db_operation():
         pass
 
-and an example invocations specifying a different environment than what
+and an example invocation specifying a different environment than what
 the test needs:
 
 .. code-block:: pytest

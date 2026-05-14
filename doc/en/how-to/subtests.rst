@@ -26,7 +26,7 @@ Subtests are an alternative to parametrization, particularly useful when the exa
 
 Each assertion failure or error is caught by the context manager and reported individually:
 
-.. code-block:: pytest
+.. code-block:: text
 
     $ pytest -q test_subtest.py
     uuuuuF                                                               [100%]
@@ -63,6 +63,8 @@ Each assertion failure or error is caught by the context manager and reported in
 
 In the output above:
 
+* The compact progress output uses ``u`` for both passed and failed subtests;
+  see the short test summary for each failed subtest.
 * Subtest failures are reported as ``SUBFAILED``.
 * Subtests are reported first and the "top-level" test is reported at the end on its own.
 
@@ -136,4 +138,4 @@ Subtests
 
     This feature was originally implemented as a separate plugin in `pytest-subtests <https://github.com/pytest-dev/pytest-subtests>`__, but since ``9.0`` has been merged into the core.
 
-    The core implementation should be compatible to the plugin implementation, except it does not contain custom command-line options to control subtest output.
+    The core implementation should be compatible with the plugin implementation, except it does not contain custom command-line options to control subtest output.

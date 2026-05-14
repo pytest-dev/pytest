@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import islice
 import pprint
 import reprlib
 
@@ -77,7 +78,31 @@ class SafeRepr(reprlib.Repr):
             s = _format_repr_exception(exc, x)
         if self.maxsize is not None:
             s = _ellipsize(s, self.maxsize)
+
         return s
+
+    def repr_dict(self, x: dict[object, object], level: int) -> str:
+        """Represent a dict while preserving its insertion order.
+
+        Differs from ``reprlib.Repr.repr_dict`` by iterating directly over ``x``
+        rather than using the stdlib's sorting helper.
+        """
+        fillvalue = "..."
+        n = len(x)
+        if n == 0:
+            return "{}"
+        if level <= 0:
+            return "{" + fillvalue + "}"
+        newlevel = level - 1
+        repr1 = self.repr1
+        pieces = []
+        for key in islice(x, self.maxdict):
+            keyrepr = repr1(key, newlevel)
+            valrepr = repr1(x[key], newlevel)
+            pieces.append(f"{keyrepr}: {valrepr}")
+        if n > self.maxdict:
+            pieces.append(fillvalue)
+        return "{" + ", ".join(pieces) + "}"
 
 
 def safeformat(obj: object) -> str:

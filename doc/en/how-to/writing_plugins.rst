@@ -48,7 +48,7 @@ Plugin discovery order at tool startup
 
 5. by loading all plugins specified through the :envvar:`PYTEST_PLUGINS` environment variable.
 
-6. by loading all "initial ":file:`conftest.py` files:
+6. by loading all "initial" :file:`conftest.py` files:
 
    - determine the test paths: specified on the command line, otherwise in
      :confval:`testpaths` if defined and running from the rootdir, otherwise the

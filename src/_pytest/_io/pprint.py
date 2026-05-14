@@ -162,7 +162,7 @@ class PrettyPrinter:
     ) -> None:
         write = stream.write
         write("{")
-        items = sorted(object.items(), key=_safe_tuple)
+        items = object.items()
         self._format_dict_items(items, stream, indent, allowance, context, level)
         write("}")
 
@@ -608,7 +608,7 @@ class PrettyPrinter:
             components: list[str] = []
             append = components.append
             level += 1
-            for k, v in sorted(object.items(), key=_safe_tuple):
+            for k, v in object.items():
                 krepr = self._safe_repr(k, context, maxlevels, level)
                 vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")

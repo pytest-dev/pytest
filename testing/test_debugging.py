@@ -324,12 +324,13 @@ class TestPDB:
             def globalfunc():
                 pass
             def test_1():
-                pytest.raises(ValueError, globalfunc)
+                with pytest.raises(ValueError):
+                    globalfunc()
         """
         )
         child = pytester.spawn_pytest(f"--pdb {p1}")
         child.expect(".*def test_1")
-        child.expect(".*pytest.raises.*globalfunc")
+        child.expect(r"with pytest.raises\(ValueError\)")
         child.expect("Pdb")
         child.sendline("globalfunc")
         child.expect(".*function")
