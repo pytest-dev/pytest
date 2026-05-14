@@ -1,7 +1,9 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Mapping
 from collections.abc import MutableSequence
+
 import sys
 import textwrap
 from typing import Any
@@ -718,6 +720,34 @@ class TestAssert_reprcompare:
             "-     'new': 1,",
             "  }",
         ]
+
+    def test_Mapping(self) -> None:
+        # Test comparing with a Mapping implementation that is not a dict subclass.
+        class TestMapping(Mapping[str, int]):
+            def __init__(self, values: dict[str, int]) -> None:
+                self.values = values
+
+            def __getitem__(self, key: str) -> int:
+                return self.values[key]
+
+            def __iter__(self):
+                return iter(self.values)
+
+            def __len__(self) -> int:
+                return len(self.values)
+
+        lines = callequal(
+            TestMapping({"a": 0, "b": 1}),
+            TestMapping({"a": 1, "b": 1}),
+        )
+
+        assert lines is not None
+        assert any(
+            line.startswith("Omitting 1 identical item")
+            for line in lines
+        )
+        assert "Differing items:" in lines
+        assert "{'a': 0} != {'a': 1}" in lines
 
     def test_dict(self) -> None:
         expl = callequal({"a": 0}, {"a": 1})

@@ -127,8 +127,8 @@ def istext(x: object) -> TypeGuard[str]:
     return isinstance(x, str)
 
 
-def isdict(x: object) -> TypeGuard[dict[object, object]]:
-    return isinstance(x, dict)
+def isdict(x: object) -> TypeGuard[Mapping[object, object]]:
+    return isinstance(x, Mapping)
 
 
 def isset(x: object) -> TypeGuard[set[object] | frozenset[object]]:
