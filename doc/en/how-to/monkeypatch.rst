@@ -241,7 +241,14 @@ so that any attempts within tests to create http requests will fail.
 .. note::
 
     Mind that patching ``stdlib`` functions and some third-party libraries used by pytest
-    might break pytest itself, therefore in those cases it is recommended to use
+    might break pytest itself. Prefer patching the reference that your code uses
+    instead of patching the original object in the standard library. For example,
+    if your module does ``from os import getcwd``, patch ``mymodule.getcwd``
+    rather than ``os.getcwd``.
+
+    For code that you control, a safer long-term pattern is to make dependencies
+    explicit so they can be passed into the code under test instead of patched
+    globally. When patching a stdlib object is unavoidable, use
     :meth:`MonkeyPatch.context` to limit the patching to the block you want tested:
 
     .. code-block:: python
