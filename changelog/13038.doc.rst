@@ -1,0 +1,1 @@
+Document that doctests do not support parametrized fixtures, including parametrized autouse fixtures.
