@@ -1,0 +1,1 @@
+Fixed ``bin_xml_escape`` in junitxml incorrectly escaping supplementary plane characters (U+10000 and above, including emoji) due to using ``\u`` instead of ``\U`` for the supplementary plane range in the ``illegal_xml_re`` regex.

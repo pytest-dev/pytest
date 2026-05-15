@@ -1122,8 +1122,7 @@ def test_invalid_xml_escape() -> None:
         0xFFFE,
         0x0FFFF,
     )  # , 0x110000)
-    valid = (0x9, 0xA, 0x20)
-    # 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
+    valid = (0x9, 0xA, 0x20, 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
 
     for i in invalid:
         got = bin_xml_escape(chr(i))
@@ -1134,6 +1133,13 @@ def test_invalid_xml_escape() -> None:
         assert got == expected
     for i in valid:
         assert chr(i) == bin_xml_escape(chr(i))
+
+
+def test_bin_xml_escape_supplementary_plane() -> None:
+    assert bin_xml_escape(chr(0x1F600)) == chr(0x1F600)
+    assert bin_xml_escape("test_😀") == "test_😀"
+    assert bin_xml_escape("test_𠀀") == "test_𠀀"
+    assert bin_xml_escape("test_𝄞") == "test_𝄞"
 
 
 def test_logxml_path_expansion(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
