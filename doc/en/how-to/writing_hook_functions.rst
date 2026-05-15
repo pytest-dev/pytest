@@ -161,6 +161,16 @@ Here is the order of execution:
 It's possible to use ``tryfirst`` and ``trylast`` also on hook wrappers
 in which case it will influence the ordering of hook wrappers among each other.
 
+.. note::
+
+    pytest only searches for hook implementations whose names start with
+    ``pytest_``.  The ``specname`` argument to ``@pytest.hookimpl`` can be used
+    to give an implementation a different suffix, for example
+    ``pytest_collection_modifyitems_tryfirst``, but the function name still
+    needs to start with ``pytest_``.  A hook implementation named
+    ``my_collection_modifyitems`` is ignored even if it is decorated with
+    ``@pytest.hookimpl(specname="pytest_collection_modifyitems")``.
+
 .. _`declaringhooks`:
 
 Declaring new hooks
