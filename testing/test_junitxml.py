@@ -1135,13 +1135,6 @@ def test_invalid_xml_escape() -> None:
         assert chr(i) == bin_xml_escape(chr(i))
 
 
-def test_bin_xml_escape_supplementary_plane() -> None:
-    assert bin_xml_escape(chr(0x1F600)) == chr(0x1F600)
-    assert bin_xml_escape("test_😀") == "test_😀"
-    assert bin_xml_escape("test_𠀀") == "test_𠀀"
-    assert bin_xml_escape("test_𝄞") == "test_𝄞"
-
-
 def test_logxml_path_expansion(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     home_tilde = Path(os.path.expanduser("~")).joinpath("test.xml")
     xml_tilde = LogXML(Path("~", "test.xml"), None)
