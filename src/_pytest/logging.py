@@ -449,7 +449,10 @@ class LogCaptureFixture:
     @property
     def handler(self) -> LogCaptureHandler:
         """Get the logging handler used by the fixture."""
-        return self._item.stash[caplog_handler_key]
+        handler = self._item.stash.get(caplog_handler_key, None)
+        if handler is None:
+            raise RuntimeError("caplog handler was not initialized for this test item")
+        return handler
 
     def get_records(
         self, when: Literal["setup", "call", "teardown"]
