@@ -1,0 +1,1 @@
+Raise a descriptive :class:`RuntimeError` instead of a :class:`KeyError` when accessing ``caplog.handler`` before it has been initialized.
