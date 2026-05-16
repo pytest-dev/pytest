@@ -511,7 +511,7 @@ def test_log_report_captures_according_to_config_option_upon_failure(
     assert result.ret == 1
 
 
-def test_caplog_missing_handler_raises_error(caplog):
+def test_caplog_missing_handler_raises_error(caplog: pytest.LogCaptureFixture) -> None:
     del caplog._item.stash[caplog_handler_key]
 
     with pytest.raises(RuntimeError, match="caplog handler was not initialized"):
