@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterator
 import logging
 
-from _pytest.logging import caplog_handler_key, caplog_records_key
+from _pytest.logging import caplog_handler_key
+from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
 import pytest
 
@@ -508,6 +509,7 @@ def test_log_report_captures_according_to_config_option_upon_failure(
         ["*Print message*", "*INFO log message*", "*WARNING log message*"]
     )
     assert result.ret == 1
+
 
 def test_caplog_missing_handler_raises_error(caplog):
     del caplog._item.stash[caplog_handler_key]
