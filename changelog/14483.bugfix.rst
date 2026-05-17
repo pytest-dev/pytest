@@ -1,0 +1,1 @@
+Preserved valid supplementary-plane Unicode characters, such as emoji, in JUnit XML output instead of visually escaping them as invalid XML.
