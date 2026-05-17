@@ -22,7 +22,6 @@ import glob
 import importlib
 import importlib.metadata
 import inspect
-import logging
 import os
 import pathlib
 import re
@@ -79,7 +78,6 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
 
-log = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
@@ -1507,10 +1505,11 @@ class Config:
 
         if ns.inifilename and not ns.rootdir:
             if inipath is not None and inipath.parent != self.invocation_params.dir:
-                log.warning(
-                    "rootdir was set to %s because -c was given without --rootdir. "
-                    "Use --rootdir to explicitly disambiguate.",
-                    self.invocation_params.dir,
+                from pathlib import Path
+                rootdir_str = str(self.invocation_params.dir) if isinstance(self.invocation_params.dir, Path) else self.invocation_params.dir
+                self._parser.extra_info["rootdir-warning"] = (
+                    f"rootdir set to {rootdir_str} because -c was given without --rootdir. "
+                    "Use --rootdir to explicitly disambiguate."
                 )
 
         self._parser.addini("addopts", "Extra command line options", "args")

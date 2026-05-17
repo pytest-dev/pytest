@@ -2057,43 +2057,40 @@ class TestRootdir:
         assert found_inipath == inipath
 
     def test_rootdir_warning_when_config_in_subdir(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+        self, tmp_path: Path
     ) -> None:
-        """When -c points to a subdir, a warning should be logged (#13246)."""
-        import logging
+        """When -c points to a subdir, a warning should be shown (#13246)."""
 
         config_dir = tmp_path / "config"
         config_dir.mkdir()
         inipath = config_dir / "pytest.ini"
         inipath.touch()
 
-        caplog.set_level(logging.WARNING)
-        Config.fromdictargs(
+        config = Config.fromdictargs(
             {"inifilename": str(inipath)},  # -c config/pytest.ini
             [],
         )
 
-        assert len(caplog.records) >= 1
-        assert "rootdir was set to" in caplog.records[0].message
-        assert "--rootdir" in caplog.records[0].message
+        assert "rootdir-warning" in config._parser.extra_info
+        warning_text = config._parser.extra_info["rootdir-warning"]
+        assert "-c was given without --rootdir" in warning_text
+        assert "--rootdir" in warning_text
 
     def test_no_warning_when_config_in_rootdir(
-        self, tmp_path: Path, monkeypatch: MonkeyPatch, caplog: pytest.LogCaptureFixture
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
         """When -c points to the invocation dir itself, no warning needed (#13246)."""
-        import logging
 
         inipath = tmp_path / "pytest.ini"
         inipath.touch()
         monkeypatch.chdir(tmp_path)
 
-        caplog.set_level(logging.WARNING)
-        Config.fromdictargs(
+        config = Config.fromdictargs(
             {"inifilename": str(inipath)},
             [],
         )
 
-        assert len(caplog.records) == 0
+        assert "rootdir-warning" not in config._parser.extra_info
 
     def test_explicit_config_file_sets_rootdir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
