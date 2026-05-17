@@ -115,6 +115,13 @@ def test_code_getargs() -> None:
     c4 = Code.from_function(f4)
     assert c4.getargs(var=True) == ("x", "y", "z")
 
+    def f5(x, *y, **z):
+        a1 = a2 = a3 = a4 = a5 = a6 = 1
+        raise NotImplementedError()
+
+    c5 = Code.from_function(f5)
+    assert c5.getargs(var=True) == ("x", "y", "z")
+
 
 def test_frame_getargs() -> None:
     def f1(x) -> FrameType:

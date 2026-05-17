@@ -1,0 +1,1 @@
+Fixed ``Code.getargs()`` incorrectly including local variable names in the returned argument tuple for functions with ``*args`` and/or ``**kwargs``. The method was using ``co_flags`` bitmask values (``4`` and ``8``) directly as counts instead of converting them to ``1`` via ``bool()``.
