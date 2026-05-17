@@ -78,8 +78,6 @@ from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
 
 
-
-
 if TYPE_CHECKING:
     from _pytest.assertion.rewrite import AssertionRewritingHook
     from _pytest.cacheprovider import Cache
@@ -1506,7 +1504,12 @@ class Config:
         if ns.inifilename and not ns.rootdir:
             if inipath is not None and inipath.parent != self.invocation_params.dir:
                 from pathlib import Path
-                rootdir_str = str(self.invocation_params.dir) if isinstance(self.invocation_params.dir, Path) else self.invocation_params.dir
+
+                rootdir_str = (
+                    str(self.invocation_params.dir)
+                    if isinstance(self.invocation_params.dir, Path)
+                    else self.invocation_params.dir
+                )
                 self._parser.extra_info["rootdir-warning"] = (
                     f"rootdir set to {rootdir_str} because -c was given without --rootdir. "
                     "Use --rootdir to explicitly disambiguate."

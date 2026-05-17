@@ -2056,11 +2056,8 @@ class TestRootdir:
         )
         assert found_inipath == inipath
 
-    def test_rootdir_warning_when_config_in_subdir(
-        self, tmp_path: Path
-    ) -> None:
+    def test_rootdir_warning_when_config_in_subdir(self, tmp_path: Path) -> None:
         """When -c points to a subdir, a warning should be shown (#13246)."""
-
         config_dir = tmp_path / "config"
         config_dir.mkdir()
         inipath = config_dir / "pytest.ini"
@@ -2080,7 +2077,6 @@ class TestRootdir:
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
         """When -c points to the invocation dir itself, no warning needed (#13246)."""
-
         inipath = tmp_path / "pytest.ini"
         inipath.touch()
         monkeypatch.chdir(tmp_path)
