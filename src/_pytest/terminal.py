@@ -651,18 +651,20 @@ class TerminalReporter:
             else:
                 markup = {}
         self._progress_nodeids_reported.add(rep.nodeid)
-        verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
-        if verbosity == 0:
-            self._tw.write(letter, **markup)
-            # When running in xdist, the logreport and logfinish of multiple
-            # items are interspersed, e.g. `logreport`, `logreport`,
-            # `logfinish`, `logfinish`. To avoid the "past edge" calculation
-            # from getting confused and overflowing (#7166), do the past edge
-            # printing here and not in logfinish, except for the 100% which
-            # should only be printed after all teardowns are finished.
-            if self._show_progress_info and not self._is_last_item:
-                self._write_progress_information_if_past_edge()
-        elif verbosity > 0:
+        test_cases_verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
+        global_verbosity = self.config.option.verbose
+        if test_cases_verbosity <= 0:
+            if global_verbosity > -2:
+                self._tw.write(letter, **markup)
+                # When running in xdist, the logreport and logfinish of multiple
+                # items are interspersed, e.g. `logreport`, `logreport`,
+                # `logfinish`, `logfinish`. To avoid the "past edge" calculation
+                # from getting confused and overflowing (#7166), do the past edge
+                # printing here and not in logfinish, except for the 100% which
+                # should only be printed after all teardowns are finished.
+                if self._show_progress_info and not self._is_last_item:
+                    self._write_progress_information_if_past_edge()
+        else:
             line = self._locationline(rep.nodeid, *rep.location)
             running_xdist = hasattr(rep, "node")
             if not running_xdist:
@@ -710,7 +712,8 @@ class TerminalReporter:
 
         # Write the final/100% progress -- deferred until the loop is complete.
         if (
-            self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) == 0
+            self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0
+            and self.config.option.verbose > -2
             and self._show_progress_info
             and self.reported_progress
         ):
