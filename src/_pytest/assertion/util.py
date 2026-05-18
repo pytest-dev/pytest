@@ -286,7 +286,7 @@ def _compare_eq_any(
     right: object,
     highlighter: _HighlightFunc,
     verbose: int = 0,
-    assertion_text_diff_style: str = ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+    assertion_text_diff_style: str,
 ) -> list[str]:
     explanation = []
     if istext(left) and istext(right):
