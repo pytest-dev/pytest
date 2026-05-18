@@ -21,11 +21,13 @@ class TestRaises:
             pytest.raises(RuntimeError, "int('qwe')")  # type: ignore[call-overload]
 
     def test_raises(self):
-        excinfo = pytest.raises(ValueError, int, "qwe")
+        with pytest.raises(ValueError) as excinfo:
+            int("qwe")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_function(self):
-        excinfo = pytest.raises(ValueError, int, "hello")
+        with pytest.raises(ValueError) as excinfo:
+            int("hello")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_does_not_allow_none(self):
@@ -177,9 +179,37 @@ class TestRaises:
         result.stdout.no_fnmatch_line("*File*")
         result.stdout.no_fnmatch_line("*line*")
 
+    def test_raises_match_failure_suppresses_exception_context(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_raises_match_failure():
+                with pytest.raises(ValueError, match="expected"):
+                    raise ValueError("actual")
+            """
+        )
+        result = pytester.runpytest("--tb=short")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(
+            [
+                "*E*AssertionError: Regex pattern did not match.*",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*ValueError: actual")
+        result.stdout.no_fnmatch_line(
+            "*The above exception was the direct cause of the following exception:*"
+        )
+        result.stdout.no_fnmatch_line(
+            "*During handling of the above exception, another exception occurred:*"
+        )
+
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
-            pytest.raises("wrong", lambda: None)  # type: ignore[call-overload]
+            with pytest.raises("wrong"):  # type: ignore[call-overload]
+                ...  # pragma: no cover
 
     def test_invalid_arguments_to_raises(self) -> None:
         with pytest.raises(TypeError, match="unknown"):
@@ -192,9 +222,10 @@ class TestRaises:
 
     def test_no_raise_message(self) -> None:
         try:
-            pytest.raises(ValueError, int, "0")
+            with pytest.raises(ValueError):
+                int("0")
         except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE {ValueError!r}"
+            assert e.msg == "DID NOT RAISE ValueError"
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -202,7 +233,7 @@ class TestRaises:
             with pytest.raises(ValueError):
                 pass
         except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE {ValueError!r}"
+            assert e.msg == "DID NOT RAISE ValueError"
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -266,7 +297,7 @@ class TestRaises:
             pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
 
-        pytest.raises(TypeError, int, match="invalid")
+        pytest.raises(TypeError, int, match="invalid")  # type: ignore[call-overload]
 
         def tfunc(match):
             raise ValueError(f"match={match}")
@@ -323,19 +354,20 @@ class TestRaises:
     def test_raises_exception_looks_iterable(self):
         class Meta(type):
             def __getitem__(self, item):
-                return 1 / 0
+                return 1 / 0  # pragma: no cover
 
             def __len__(self):
-                return 1
+                return 1  # pragma: no cover
 
         class ClassLooksIterableException(Exception, metaclass=Meta):
             pass
 
         with pytest.raises(
             Failed,
-            match=r"DID NOT RAISE <class 'raises(\..*)*ClassLooksIterableException'>",
+            match=r"DID NOT RAISE ClassLooksIterableException",
         ):
-            pytest.raises(ClassLooksIterableException, lambda: None)
+            with pytest.raises(ClassLooksIterableException):
+                ...  # pragma: no cover
 
     def test_raises_with_raising_dunder_class(self) -> None:
         """Test current behavior with regard to exceptions via __class__ (#4284)."""
@@ -430,3 +462,28 @@ class TestRaises:
         pattern_with_flags = re.compile(r"INVALID LITERAL", re.IGNORECASE)
         with pytest.raises(ValueError, match=pattern_with_flags):
             int("asdf")
+
+    def test_pipe_is_treated_as_regex_metacharacter(self) -> None:
+        """| (pipe) must be recognized as a regex metacharacter."""
+        from _pytest.raises import is_fully_escaped
+        from _pytest.raises import unescape
+
+        assert not is_fully_escaped("foo|bar")
+        assert is_fully_escaped(r"foo\|bar")
+        assert unescape(r"foo\|bar") == "foo|bar"
+
+    def test_consecutive_backslashes_in_escape_check(self) -> None:
+        """Consecutive backslashes escape each other, leaving the metachar unescaped."""
+        from _pytest.raises import is_fully_escaped
+
+        # r"\."  -> one backslash escapes the dot -> fully escaped
+        assert is_fully_escaped(r"\.")
+        # r"\\." -> two backslashes: the first escapes the second, dot is unescaped
+        assert not is_fully_escaped(r"\\.")
+        # r"\\\." -> three backslashes: pair escapes pair, last escapes dot -> fully escaped
+        assert is_fully_escaped(r"\\\.")
+        # Same idea with pipe metachar
+        # "\\\\|" is the string \\| (2 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped("\\\\|")
+        # r"\\\\|" is the string \\\\| (4 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped(r"\\\\|")

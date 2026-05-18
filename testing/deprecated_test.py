@@ -1,10 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
-import re
-
 from _pytest import deprecated
-from _pytest.compat import legacy_path
 from _pytest.pytester import Pytester
 import pytest
 from pytest import PytestDeprecationWarning
@@ -71,7 +68,7 @@ def test_hookimpl_via_function_attributes_are_deprecated():
 def test_yield_fixture_is_deprecated() -> None:
     with pytest.warns(DeprecationWarning, match=r"yield_fixture is deprecated"):
 
-        @pytest.yield_fixture
+        @pytest.yield_fixture  # type: ignore[deprecated]
         def fix():
             assert False
 
@@ -90,20 +87,22 @@ def test_private_is_deprecated() -> None:
     PrivateInit(10, _ispytest=True)
 
 
-def test_node_ctor_fspath_argument_is_deprecated(pytester: Pytester) -> None:
-    mod = pytester.getmodulecol("")
+def test_class_scope_instance_method_is_deprecated(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
 
-    class MyFile(pytest.File):
-        def collect(self):
-            raise NotImplementedError()
+        class TestClass:
+            @pytest.fixture(scope="class")
+            def fix(self):
+                self.attr = True
 
-    with pytest.warns(
-        pytest.PytestDeprecationWarning,
-        match=re.escape(
-            "The (fspath: py.path.local) argument to MyFile is deprecated."
-        ),
-    ):
-        MyFile.from_parent(
-            parent=mod.parent,
-            fspath=legacy_path("bla"),
-        )
+            def test_foo(self, fix):
+                pass
+        """
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        ["*PytestRemovedIn10Warning: Class-scoped fixture defined as instance method*"]
+    )

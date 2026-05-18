@@ -31,8 +31,6 @@ from _pytest.compat import LEGACY_PATH
 from _pytest.compat import signature
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
-from _pytest.config.compat import _check_path
-from _pytest.deprecated import NODE_CTOR_FSPATH_ARG
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
@@ -69,27 +67,6 @@ tracebackcutdir = Path(_pytest.__file__).parent
 
 
 _T = TypeVar("_T")
-
-
-def _imply_path(
-    node_type: type[Node],
-    path: Path | None,
-    fspath: LEGACY_PATH | None,
-) -> Path:
-    if fspath is not None:
-        warnings.warn(
-            NODE_CTOR_FSPATH_ARG.format(
-                node_type_name=node_type.__name__,
-            ),
-            stacklevel=6,
-        )
-    if path is not None:
-        if fspath is not None:
-            _check_path(path, fspath)
-        return path
-    else:
-        assert fspath is not None
-        return Path(fspath)
 
 
 _NodeType = TypeVar("_NodeType", bound="Node")
@@ -173,7 +150,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         parent: Node | None = None,
         config: Config | None = None,
         session: Session | None = None,
-        fspath: LEGACY_PATH | None = None,
+        fspath: None = None,
         path: Path | None = None,
         nodeid: str | None = None,
     ) -> None:
@@ -199,10 +176,11 @@ class Node(abc.ABC, metaclass=NodeMeta):
                 raise TypeError("session or parent must be provided")
             self.session = parent.session
 
-        if path is None and fspath is None:
-            path = getattr(parent, "path", None)
-        #: Filesystem path where this node was collected from (can be None).
-        self.path: pathlib.Path = _imply_path(type(self), path, fspath=fspath)
+        if path is None:
+            assert parent is not None
+            path = parent.path
+        #: Filesystem path where this node was collected from.
+        self.path: pathlib.Path = path
 
         # The explicit annotation is to avoid publicly exposing NodeKeywords.
         #: Keywords/markers collected from all scopes.
@@ -248,7 +226,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
 
     @property
     def ihook(self) -> pluggy.HookRelay:
-        """fspath-sensitive hook proxy used to call pytest hooks."""
+        """Path-sensitive hook proxy used to call pytest hooks."""
         return self.session.gethookproxy(self.path)
 
     def __repr__(self) -> str:
@@ -576,7 +554,7 @@ class FSCollector(Collector, abc.ABC):
 
     def __init__(
         self,
-        fspath: LEGACY_PATH | None = None,
+        fspath: None = None,
         path_or_parent: Path | Node | None = None,
         path: Path | None = None,
         name: str | None = None,
@@ -592,8 +570,8 @@ class FSCollector(Collector, abc.ABC):
             elif isinstance(path_or_parent, Path):
                 assert path is None
                 path = path_or_parent
+        assert path is not None
 
-        path = _imply_path(type(self), path, fspath=fspath)
         if name is None:
             name = path.name
             if parent is not None and parent.path != path:
@@ -633,7 +611,7 @@ class FSCollector(Collector, abc.ABC):
         cls,
         parent,
         *,
-        fspath: LEGACY_PATH | None = None,
+        fspath: None = None,
         path: Path | None = None,
         **kw,
     ) -> Self:

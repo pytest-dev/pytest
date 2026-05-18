@@ -306,10 +306,13 @@ class Argument:
         return self._action.type
 
     def __repr__(self) -> str:
+        action = getattr(self, "_action", None)
+        if action is None:
+            return "Argument(<uninitialized>)"
         args: list[str] = []
         args += ["opts: " + repr(self.names())]
         args += ["dest: " + repr(self.dest)]
-        if self._action.type:
+        if action.type:
             args += ["type: " + repr(self.type)]
         args += ["default: " + repr(self.default)]
         return "Argument({})".format(", ".join(args))

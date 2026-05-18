@@ -58,7 +58,12 @@ your own domain specific testing language this way.
     will be reported as a (red) string.
 
 ``reportinfo()`` is used for representing the test location and is also
-consulted when reporting in ``verbose`` mode:
+consulted when reporting in ``verbose`` mode. It should return a tuple
+``(path, lineno, description)``, where:
+
+* ``path`` is the path shown in reports (usually ``self.path`` or ``self.fspath``).
+* ``lineno`` is a zero-based line number, or ``0`` when no specific line applies.
+* ``description`` is a short label shown for the collected item:
 
 .. code-block:: pytest
 

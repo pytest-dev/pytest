@@ -103,6 +103,10 @@ pyproject.toml
             "integration",
         ]
 
+    For projects that still run pytest versions older than 6.0, keep
+    ``minversion`` in ``pytest.ini`` or ``setup.cfg`` too. Those versions
+    do not read ``pyproject.toml``.
+
 tox.ini
 ~~~~~~~
 

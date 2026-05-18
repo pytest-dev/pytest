@@ -1,0 +1,1 @@
+When using ``--setup-show``, a space is now printed after the test name (and possibly used fixtures), to separate it from the test result.
