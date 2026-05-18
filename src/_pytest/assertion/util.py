@@ -360,7 +360,7 @@ def _diff_text_block(left: str, right: str) -> list[str]:
 
 
 def _format_text_block_lines(text: str) -> list[str]:
-    return [f"  {line}" for line in text.splitlines()]
+    return [f"  {line}" for line in text.split("\n")]
 
 
 def _diff_text(
