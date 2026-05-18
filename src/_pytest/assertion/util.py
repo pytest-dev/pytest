@@ -40,8 +40,9 @@ _assertion_pass: Callable[[int, str, str], None] | None = None
 _config: Config | None = None
 
 ASSERTION_TEXT_DIFF_STYLE_INI = "assertion_text_diff_style"
-ASSERTION_TEXT_DIFF_STYLE_NDIFF = "ndiff"
-ASSERTION_TEXT_DIFF_STYLE_BLOCK = "block"
+_AssertionTextDiffStyle = Literal["ndiff", "block"]
+ASSERTION_TEXT_DIFF_STYLE_NDIFF: Literal["ndiff"] = "ndiff"
+ASSERTION_TEXT_DIFF_STYLE_BLOCK: Literal["block"] = "block"
 ASSERTION_TEXT_DIFF_STYLE_CHOICES = (
     ASSERTION_TEXT_DIFF_STYLE_NDIFF,
     ASSERTION_TEXT_DIFF_STYLE_BLOCK,
@@ -61,16 +62,18 @@ def dummy_highlighter(source: str, lexer: Literal["diff", "python"] = "python") 
     return source
 
 
-def get_assertion_text_diff_style(config: Config) -> str:
+def get_assertion_text_diff_style(config: Config) -> _AssertionTextDiffStyle:
     style = str(config.getini(ASSERTION_TEXT_DIFF_STYLE_INI))
-    if style not in ASSERTION_TEXT_DIFF_STYLE_CHOICES:
-        choices = ", ".join(
-            repr(choice) for choice in ASSERTION_TEXT_DIFF_STYLE_CHOICES
-        )
-        raise UsageError(
-            f"{ASSERTION_TEXT_DIFF_STYLE_INI} must be one of {choices}; got {style!r}"
-        )
-    return style
+    match style:
+        case "ndiff" | "block":
+            return style
+        case _:
+            choices = ", ".join(
+                repr(choice) for choice in ASSERTION_TEXT_DIFF_STYLE_CHOICES
+            )
+            raise UsageError(
+                f"{ASSERTION_TEXT_DIFF_STYLE_INI} must be one of {choices}; got {style!r}"
+            )
 
 
 def validate_assertion_text_diff_style(config: Config) -> None:
@@ -205,13 +208,9 @@ def assertrepr_compare(
     *,
     verbose: int,
     highlighter: _HighlightFunc,
+    assertion_text_diff_style: _AssertionTextDiffStyle,
 ) -> list[str] | None:
     """Return specialised explanations for some operators/operands."""
-    assertion_text_diff_style = (
-        get_assertion_text_diff_style(_config)
-        if _config is not None
-        else ASSERTION_TEXT_DIFF_STYLE_NDIFF
-    )
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.
     use_ascii = (
@@ -285,8 +284,8 @@ def _compare_eq_any(
     left: object,
     right: object,
     highlighter: _HighlightFunc,
-    verbose: int = 0,
-    assertion_text_diff_style: str,
+    verbose: int,
+    assertion_text_diff_style: _AssertionTextDiffStyle,
 ) -> list[str]:
     explanation = []
     if istext(left) and istext(right):
@@ -312,7 +311,13 @@ def _compare_eq_any(
             # field values, not the type or field names. But this branch
             # intentionally only handles the same-type case, which was often
             # used in older code bases before dataclasses/attrs were available.
-            explanation = _compare_eq_cls(left, right, highlighter, verbose)
+            explanation = _compare_eq_cls(
+                left,
+                right,
+                highlighter,
+                verbose,
+                assertion_text_diff_style,
+            )
         elif issequence(left) and issequence(right):
             explanation = _compare_eq_sequence(left, right, highlighter, verbose)
         elif isset(left) and isset(right):
@@ -332,19 +337,13 @@ def _compare_eq_text(
     right: str,
     highlighter: _HighlightFunc,
     verbose: int,
-    assertion_text_diff_style: str,
+    assertion_text_diff_style: _AssertionTextDiffStyle,
 ) -> list[str]:
-    if (
-        assertion_text_diff_style == ASSERTION_TEXT_DIFF_STYLE_BLOCK
-        and _is_multiline_text(left, right)
-        and not (left.isspace() or right.isspace())
-    ):
-        return _diff_text_block(left, right)
-    return _diff_text(left, right, highlighter, verbose)
-
-
-def _is_multiline_text(*texts: str) -> bool:
-    return any("\n" in text or "\r" in text for text in texts)
+    match assertion_text_diff_style:
+        case "block":
+            return _diff_text_block(left, right)
+        case "ndiff":
+            return _diff_text(left, right, highlighter, verbose)
 
 
 def _diff_text_block(left: str, right: str) -> list[str]:
@@ -621,7 +620,11 @@ def _compare_eq_dict(
 
 
 def _compare_eq_cls(
-    left: object, right: object, highlighter: _HighlightFunc, verbose: int
+    left: object,
+    right: object,
+    highlighter: _HighlightFunc,
+    verbose: int,
+    assertion_text_diff_style: _AssertionTextDiffStyle,
 ) -> list[str]:
     if not has_default_eq(left):
         return []
@@ -667,7 +670,11 @@ def _compare_eq_cls(
             explanation += [
                 indent + line
                 for line in _compare_eq_any(
-                    field_left, field_right, highlighter, verbose
+                    field_left,
+                    field_right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
                 )
             ]
     return explanation

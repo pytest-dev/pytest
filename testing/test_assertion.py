@@ -530,7 +530,7 @@ class TestAssert_reprcompare:
             "  bar",
         ]
 
-    def test_single_line_text_diff_block_falls_back_to_ndiff(self) -> None:
+    def test_single_line_text_diff_block(self) -> None:
         assert callequal(
             "spam",
             "eggs",
@@ -538,8 +538,11 @@ class TestAssert_reprcompare:
         ) == [
             "'spam' == 'eggs'",
             "",
-            "- eggs",
-            "+ spam",
+            "Left:",
+            "  spam",
+            "",
+            "Right:",
+            "  eggs",
         ]
 
     def test_bytes_diff_normal(self) -> None:
@@ -2301,6 +2304,35 @@ def test_assertion_text_diff_style_block_for_multiline_strings(
         ]
     )
     result.stdout.no_fnmatch_line("*?     -*")
+
+
+def test_assertion_text_diff_style_block_for_single_line_strings(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        def test_text_diff():
+            assert "spam" == "eggs"
+        """
+    )
+    pytester.makeini(
+        f"""
+        [pytest]
+        assertion_text_diff_style = {util.ASSERTION_TEXT_DIFF_STYLE_BLOCK}
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+
+    result.stdout.fnmatch_lines(
+        [
+            "E         Left:",
+            "E           spam",
+            "E         Right:",
+            "E           eggs",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*- eggs*")
 
 
 def test_assertion_text_diff_style_invalid(pytester: Pytester) -> None:

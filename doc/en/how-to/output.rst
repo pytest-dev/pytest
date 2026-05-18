@@ -366,7 +366,7 @@ the file is shown by a single character in the output.
 :confval:`assertion_text_diff_style`: Controls how pytest renders ``str == str`` failures.
 
   * ``ndiff`` (the default) outputs the differences using inline diff markers.
-  * ``block`` prints multiline string comparisons as separate ``Left:`` and ``Right:`` blocks, which can be easier to read when whitespace or indentation differences dominate.
+  * ``block`` prints string comparisons as separate ``Left:`` and ``Right:`` blocks, which can be easier to read when whitespace or indentation differences dominate.
 
   Note that it is possible to set this option (as any other configuration option) directly in the command line using ``-o assertion_text_diff_style=block``.
 

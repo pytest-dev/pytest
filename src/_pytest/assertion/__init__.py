@@ -63,7 +63,7 @@ def pytest_addoption(parser: Parser) -> None:
         help=(
             "Choose how pytest renders diffs for string equality assertions: "
             f"{util.ASSERTION_TEXT_DIFF_STYLE_NDIFF} or "
-            f"{util.ASSERTION_TEXT_DIFF_STYLE_BLOCK} for multiline strings"
+            f"{util.ASSERTION_TEXT_DIFF_STYLE_BLOCK}"
         ),
     )
 
@@ -223,15 +223,11 @@ def pytest_assertrepr_compare(
     else:
         # Keep it plaintext when not using terminalrepoterer (#14377).
         highlighter = util.dummy_highlighter
-    saved_config = util._config
-    util._config = config
-    try:
-        return util.assertrepr_compare(
-            op=op,
-            left=left,
-            right=right,
-            verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
-            highlighter=highlighter,
-        )
-    finally:
-        util._config = saved_config
+    return util.assertrepr_compare(
+        op=op,
+        left=left,
+        right=right,
+        verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
+        highlighter=highlighter,
+        assertion_text_diff_style=util.get_assertion_text_diff_style(config),
+    )
