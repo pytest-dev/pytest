@@ -344,6 +344,8 @@ def _compare_eq_text(
             return _diff_text_block(left, right)
         case "ndiff":
             return _diff_text(left, right, highlighter, verbose)
+        case unreachable:
+            assert_never(unreachable)    
 
 
 def _diff_text_block(left: str, right: str) -> list[str]:
@@ -357,7 +359,7 @@ def _diff_text_block(left: str, right: str) -> list[str]:
 
 
 def _format_text_block_lines(text: str) -> list[str]:
-    return [f"  {line}" for line in text.split("\n")]
+    return [f"  {line}" for line in text.splitlines()]
 
 
 def _diff_text(
