@@ -2707,7 +2707,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     Supported values are:
 
-    * ``ndiff``: use the default inline diff rendering.
+    * ``ndiff``: use the inline diff rendering markers.
     * ``block``: render multiline string comparisons as separate ``Left:`` and ``Right:`` blocks.
 
     .. tab:: toml
