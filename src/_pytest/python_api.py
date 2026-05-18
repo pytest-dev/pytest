@@ -93,9 +93,11 @@ class ApproxBase:
     def __ne__(self, actual) -> bool:
         return not (actual == self)
 
-    def _approx_scalar(self, x) -> ApproxScalar:
+    def _approx_scalar(self, x) -> ApproxBase:
         if isinstance(x, Decimal):
             return ApproxDecimal(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
+        if isinstance(x, (datetime, timedelta)):
+            return ApproxTimedelta(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
     def _yield_comparisons(self, actual):
@@ -565,7 +567,7 @@ class ApproxTimedelta(ApproxBase):
     """Perform approximate comparisons where the expected value is a
     datetime or timedelta.
 
-    Requires an explicit tolerance as a timedelta.
+    Requires an explicit tolerance as a timedelta for abs, or a float for rel.
     Relative tolerance is not supported for datetime comparisons.
     """
 
@@ -585,20 +587,35 @@ class ApproxTimedelta(ApproxBase):
             raise TypeError(
                 "pytest.approx() requires an explicit tolerance for "
                 "datetime/timedelta comparisons: "
-                "e.g. approx(expected, abs=timedelta(seconds=1))"
+                "e.g. approx(expected, abs=timedelta(seconds=1)) "
+                "or approx(expected, rel=0.01)"
             )
         if abs is not None and not isinstance(abs, timedelta):
             raise TypeError(
                 f"absolute tolerance for datetime/timedelta must be a "
                 f"timedelta, got {type(abs).__name__}"
             )
-        if rel is not None and not isinstance(rel, timedelta):
-            raise TypeError(
-                f"relative tolerance for timedelta must be a "
-                f"timedelta, got {type(rel).__name__}"
-            )
-        tolerance = max(t for t in (abs, rel) if t is not None)
-        super().__init__(expected, rel=None, abs=tolerance, nan_ok=False)
+        if abs is not None and abs < timedelta(0):
+            raise ValueError(f"absolute tolerance can't be negative: {abs}")
+        if rel is not None:
+            if not isinstance(rel, (int, float)):
+                raise TypeError(
+                    f"relative tolerance for timedelta must be a "
+                    f"number, got {type(rel).__name__}"
+                )
+            if rel < 0:
+                raise ValueError(f"relative tolerance can't be negative: {rel}")
+            if math.isnan(rel):
+                raise ValueError("relative tolerance can't be NaN.")
+        # Compute the effective tolerance. abs_tolerance is a timedelta, rel * expected
+        # gives a timedelta (timedelta * float works in Python).
+        abs_tolerance = abs
+        rel_tolerance = rel * builtins.abs(expected) if rel is not None else None
+        if abs_tolerance is not None and rel_tolerance is not None:
+            tolerance = max(abs_tolerance, rel_tolerance)
+        else:
+            tolerance = abs_tolerance if abs_tolerance is not None else rel_tolerance
+        super().__init__(expected, rel=rel, abs=tolerance, nan_ok=False)
 
     def __repr__(self) -> str:
         return f"{self.expected} ± {self.abs}"
@@ -757,8 +774,10 @@ def approx(
         >>> dt1 == approx(dt2, abs=timedelta(seconds=1))
         True
 
-    Note that ``rel`` is not supported for datetime comparisons,
-    and ``abs`` or ``rel`` must be explicitly provided as a ``timedelta`` object.
+    Note that ``rel`` is not supported for datetime comparisons.
+    For timedelta comparisons, ``rel`` is a number (not a timedelta) that
+    represents a relative tolerance -- a fraction of the expected value.
+    ``abs`` must be a ``timedelta`` object in both cases.
 
     .. versionadded:: 8.4
 
@@ -906,6 +925,6 @@ def _as_numpy_array(obj: object) -> ndarray | None:
             return None
         elif isinstance(obj, np.ndarray):
             return obj
-        elif hasattr(obj, "__array__") or hasattr("obj", "__array_interface__"):
+        elif hasattr(obj, "__array__") or hasattr(obj, "__array_interface__"):
             return np.asarray(obj)
     return None

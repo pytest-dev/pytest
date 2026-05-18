@@ -1,0 +1,3 @@
+Added a deprecation warning for class-scoped fixtures defined as instance methods (without ``@classmethod``). Such fixtures set attributes on a different instance than the test methods use, leading to unexpected behavior. Use ``@classmethod`` decorator instead -- by :user:`yastcher`.
+
+See :issue:`10819` and :issue:`14011`.

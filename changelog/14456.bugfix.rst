@@ -1,0 +1,1 @@
+Fixed :func:`pytest.approx` not recognizing types with ``__array_interface__`` as numpy-like arrays.

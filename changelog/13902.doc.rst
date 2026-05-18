@@ -1,0 +1,1 @@
+Clarified how subtest progress markers are shown in the documentation.
