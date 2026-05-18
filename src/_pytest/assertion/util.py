@@ -345,7 +345,7 @@ def _compare_eq_text(
         case "ndiff":
             return _diff_text(left, right, highlighter, verbose)
         case unreachable:
-            assert_never(unreachable)    
+            assert_never(unreachable)
 
 
 def _diff_text_block(left: str, right: str) -> list[str]:
