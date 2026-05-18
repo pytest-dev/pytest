@@ -363,9 +363,12 @@ This is done by setting a verbosity level in the configuration file for the spec
 ``pytest --no-header`` with a value of ``2`` would have the same output as the previous example, but each test inside
 the file is shown by a single character in the output.
 
-:confval:`assertion_text_diff_style`: Controls how pytest renders ``str == str`` failures. The default ``ndiff`` output
-keeps the existing inline diff markers. Setting it to ``block`` prints multiline string comparisons as separate
-``Left:`` and ``Right:`` blocks, which can be easier to read when whitespace or indentation differences dominate.
+:confval:`assertion_text_diff_style`: Controls how pytest renders ``str == str`` failures. 
+
+  * ``ndiff`` (the default) outputs the differences using inline diff markers.
+  * ``block`` prints multiline string comparisons as separate ``Left:`` and ``Right:`` blocks, which can be easier to read when whitespace or indentation differences dominate.
+  
+  Note that it is possible to set this option (as any other configuration option) directly in the command line using ``-o assertion_text_diff_style=block``.
 
 :confval:`verbosity_test_cases`: Controls how verbose the test execution output should be when pytest is executed.
 Running ``pytest --no-header`` with a value of ``2`` would have the same output as the first verbosity example, but each
