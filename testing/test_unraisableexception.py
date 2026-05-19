@@ -317,6 +317,10 @@ def test_create_task_raises_unraisable_warning_filter(pytester: Pytester) -> Non
 
     # TODO: Should be a test failure or error. Currently the exception
     # propagates all the way to the top resulting in exit code 1.
+    # Note: since #14263, the propagated class is the bare RuntimeWarning
+    # rather than the wrapping PytestUnraisableExceptionWarning, because
+    # -Werror activates an error filter that matches RuntimeWarning's
+    # category and the new unwrap path in collect_unraisable fires.
     assert result.ret == 1
 
     result.assert_outcomes(passed=1)
@@ -400,6 +404,131 @@ def test_refcycle_resource_warning_filter(pytester: Pytester) -> None:
     # makes this a contract test for #14263 rather than an exit-code check.
     result.stderr.fnmatch_lines("*ResourceWarning: unclosed file*")
     result.stderr.no_fnmatch_line("*PytestUnraisableExceptionWarning*")
+
+
+def test_refcycle_userwarning_filter(pytester: Pytester) -> None:
+    # Companion to test_refcycle_resource_warning_filter. Covers the unwrap
+    # path for a non-built-in Warning subclass (UserWarning here) and a
+    # finalizer that calls ``warnings.warn(...)`` directly rather than
+    # leaking a resource. Confirms the fix is not specific to ResourceWarning.
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            error::UserWarning
+        """
+    )
+    pytester.makepyfile(
+        test_it="""
+        import gc; gc.disable()
+        import warnings
+
+        class Leaky:
+            def __init__(self):
+                self.self = self  # cycle so __del__ defers to session-end gc
+
+            def __del__(self):
+                warnings.warn("leak detected", UserWarning)
+
+        def test_it():
+            Leaky()
+        """
+    )
+
+    result = pytester.runpytest_subprocess()
+
+    # TODO: should be a test failure or error. Currently the exception
+    # propagates all the way to the top resulting in exit code 1.
+    assert result.ret == 1
+    result.assert_outcomes(passed=1)
+    result.stderr.fnmatch_lines("*UserWarning: leak detected*")
+    result.stderr.no_fnmatch_line("*PytestUnraisableExceptionWarning*")
+
+
+def test_unraisable_warning_without_filter_still_wraps(pytester: Pytester) -> None:
+    # Regression guard for the scope of the #14263 fix. A Warning raised
+    # from ``__del__`` *without* a matching error filter must still be
+    # wrapped in PytestUnraisableExceptionWarning rather than propagated
+    # directly. Otherwise the fix would change behavior for users who
+    # haven't set any filter (suites that previously logged would start
+    # failing unconditionally).
+    pytester.makepyfile(
+        test_it="""
+        class RaisingDel:
+            def __del__(self):
+                raise UserWarning("oops")
+
+        def test_it():
+            obj = RaisingDel()
+            del obj
+        """
+    )
+
+    # Subprocess so we don't inherit the outer pytest's filterwarnings
+    # (which is ``error`` in pyproject.toml; that would falsely trigger
+    # the unwrap path). ``-Wdefault::pytest.PytestUnraisableExceptionWarning``
+    # makes the wrapping warning visible on stderr regardless of whether
+    # ``__del__`` fires inside the test or during later GC (PyPy).
+    result = pytester.runpytest_subprocess(
+        "-Wdefault::pytest.PytestUnraisableExceptionWarning"
+    )
+
+    assert result.ret == 0
+    result.assert_outcomes(passed=1)
+    # Wrap path fired: the unraisable hook emitted
+    # PytestUnraisableExceptionWarning rather than propagating UserWarning.
+    # The warning lands in the warnings-summary section of stdout on
+    # CPython (where ``__del__`` fires inside the test) and on stderr on
+    # PyPy (where it fires during later GC). Check both rather than the
+    # outcomes counter, which is timing-dependent.
+    combined = "\n".join(result.outlines + result.errlines)
+    assert "PytestUnraisableExceptionWarning" in combined
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="add_note requires Python 3.11+")
+def test_unraisable_warning_filter_add_note_dedups(pytester: Pytester) -> None:
+    # Covers the duplicate-note guard in the unwrap path. When the same
+    # Warning instance reaches sys.unraisablehook twice (which happens
+    # for singleton/cached warnings), the cause note must be appended
+    # once, not duplicated.
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            error::UserWarning
+        """
+    )
+    pytester.makepyfile(
+        test_it="""
+        import sys
+        import types
+
+        cached = UserWarning("cached")
+
+        def test_emit_same_instance_twice():
+            for _ in range(2):
+                sys.unraisablehook(
+                    types.SimpleNamespace(
+                        exc_type=UserWarning,
+                        exc_value=cached,
+                        exc_traceback=None,
+                        err_msg=None,
+                        object=None,
+                    )
+                )
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    # The unwrap path raises the UserWarning, so the test fails.
+    assert result.ret == 1
+    # Two errors land in the ExceptionGroup (one per hook call). With the
+    # dedup guard, ``cached.__notes__`` holds the cause note once, so the
+    # formatted group prints it twice (once per entry). Without the
+    # guard it would print four times.
+    note_count = sum(
+        1 for ln in result.outlines + result.errlines if "Exception ignored in" in ln
+    )
+    assert note_count == 2, f"expected 2 cause-note lines, saw {note_count}"
 
 
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")

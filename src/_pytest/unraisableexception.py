@@ -33,6 +33,17 @@ def gc_collect_harder(iterations: int) -> None:
         gc.collect()
 
 
+def _warning_class_has_error_filter(category: type[Warning]) -> bool:
+    """Return True if an active ``error`` filter matches ``category`` by class.
+
+    Approximate match: ``message``/``module``/``lineno`` filter fields are ignored.
+    """
+    for action, _msg, filt_category, _mod, _lineno in warnings.filters:
+        if action == "error" and issubclass(category, filt_category):
+            return True
+    return False
+
+
 class UnraisableMeta(NamedTuple):
     msg: str
     cause_msg: str
@@ -46,7 +57,7 @@ unraisable_exceptions: StashKey[collections.deque[UnraisableMeta | BaseException
 
 def collect_unraisable(config: Config) -> None:
     pop_unraisable = config.stash[unraisable_exceptions].pop
-    errors: list[pytest.PytestUnraisableExceptionWarning | RuntimeError] = []
+    errors: list[Warning | RuntimeError] = []
     meta = None
     hook_error = None
     try:
@@ -60,6 +71,17 @@ def collect_unraisable(config: Config) -> None:
                 hook_error = RuntimeError("Failed to process unraisable exception")
                 hook_error.__cause__ = meta
                 errors.append(hook_error)
+                continue
+
+            if isinstance(meta.exc_value, Warning) and _warning_class_has_error_filter(
+                type(meta.exc_value)
+            ):
+                # Honor the user's error filter on the inner warning class
+                # rather than wrapping in PytestUnraisableExceptionWarning. See #14263.
+                if sys.version_info >= (3, 11):
+                    if meta.cause_msg not in getattr(meta.exc_value, "__notes__", []):
+                        meta.exc_value.add_note(meta.cause_msg)
+                errors.append(meta.exc_value)
                 continue
 
             msg = meta.msg
