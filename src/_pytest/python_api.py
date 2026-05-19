@@ -98,6 +98,10 @@ class ApproxBase:
             return ApproxDecimal(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
         if isinstance(x, (datetime, timedelta)):
             return ApproxTimedelta(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
+        if isinstance(x, Mapping):
+            return ApproxMapping(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
+        if _is_sequence_like(x):
+            return ApproxSequenceLike(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
     def _yield_comparisons(self, actual):
