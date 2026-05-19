@@ -359,6 +359,49 @@ def test_refcycle_unraisable_warning_filter_default(pytester: Pytester) -> None:
     result.stderr.fnmatch_lines("ValueError: del is broken")
 
 
+def test_refcycle_resource_warning_filter(pytester: Pytester) -> None:
+    # Regression test for https://github.com/pytest-dev/pytest/issues/14263.
+    # A reference cycle holds a file alive past test return; only the cyclic
+    # GC at session end frees it. The file finalizer emits ResourceWarning.
+    # With ``filterwarnings = error::ResourceWarning`` the user has expressed
+    # intent that resource leaks should fail tests. Before the fix, the
+    # ResourceWarning was captured by sys.unraisablehook (the timing piece
+    # was already correct since #13057), but ``collect_unraisable`` wrapped
+    # it in a ``PytestUnraisableExceptionWarning``. Since the user had no
+    # error filter on the wrapping class, the failure was silently logged
+    # as a warning and the test passed.
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            error::ResourceWarning
+        """
+    )
+    pytester.makepyfile(
+        test_it="""
+        # Disable gc so the cycle survives until session-end gc_collect_harder.
+        import gc; gc.disable()
+
+        def test_it():
+            f = open(__file__)
+            cycle = [f]
+            cycle.append(cycle)
+        """
+    )
+
+    result = pytester.runpytest_subprocess()
+
+    # TODO: should be a test failure or error. Currently the exception
+    # propagates all the way to the top resulting in exit code 1.
+    assert result.ret == 1
+    result.assert_outcomes(passed=1)
+    # The unwrap path: stderr shows the ResourceWarning directly, NOT wrapped
+    # in PytestUnraisableExceptionWarning. The negative assertion is what
+    # makes this a contract test for #14263 rather than an exit-code check.
+    result.stderr.fnmatch_lines("*ResourceWarning: unclosed file*")
+    result.stderr.no_fnmatch_line("*PytestUnraisableExceptionWarning*")
+
+
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
 def test_possibly_none_excinfo(pytester: Pytester) -> None:
     pytester.makepyfile(
