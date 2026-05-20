@@ -169,6 +169,10 @@ def pytest_unconfigure(config: Config) -> None:
     # still active. This decouples the GC step from plugin registration order.
     # A single collection doesn't necessarily collect everything; the
     # iteration count was determined experimentally by the Trio project.
+    if unraisable_exceptions not in config.stash:
+        # ``pytest_configure`` did not complete (e.g. a usage error raised
+        # in another plugin's configure). Nothing to drain.
+        return
     gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
     gc_collect_harder(gc_collect_iterations)
     collect_unraisable(config)
