@@ -108,22 +108,8 @@ def collect_unraisable(config: Config) -> None:
 def cleanup(
     *, config: Config, prev_hook: Callable[[sys.UnraisableHookArgs], object]
 ) -> None:
-    # On PyPy, objects (e.g. coroutines) can survive GC rounds because executing
-    # their __del__ can resurrect them. The Trio project determined experimentally
-    # that 5 passes are needed on PyPy to flush everything. On CPython, reference
-    # counting handles most cleanup immediately, so 1 pass is sufficient.
-    _default_gc_collect_iterations = 5 if sys.implementation.name == "pypy" else 1
-    gc_collect_iterations = config.stash.get(
-        gc_collect_iterations_key, _default_gc_collect_iterations
-    )
-    try:
-        try:
-            gc_collect_harder(gc_collect_iterations)
-            collect_unraisable(config)
-        finally:
-            sys.unraisablehook = prev_hook
-    finally:
-        del config.stash[unraisable_exceptions]
+    sys.unraisablehook = prev_hook
+    del config.stash[unraisable_exceptions]
 
 
 def unraisable_hook(
@@ -173,6 +159,19 @@ def pytest_configure(config: Config) -> None:
     config.stash[unraisable_exceptions] = deque
     config.add_cleanup(functools.partial(cleanup, config=config, prev_hook=prev_hook))
     sys.unraisablehook = functools.partial(unraisable_hook, append=deque.append)
+
+
+def pytest_unconfigure(config: Config) -> None:
+    # Run GC and drain the unraisable queue here rather than from the
+    # ``config.add_cleanup`` callback. ``pytest_unconfigure`` fires before
+    # ``_cleanup_stack.close()``, so warning filters managed via the cleanup
+    # stack (e.g. the ``warnings`` plugin's ``catch_warnings`` context) are
+    # still active. This decouples the GC step from plugin registration order.
+    # A single collection doesn't necessarily collect everything; the
+    # iteration count was determined experimentally by the Trio project.
+    gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
+    gc_collect_harder(gc_collect_iterations)
+    collect_unraisable(config)
 
 
 @pytest.hookimpl(trylast=True)
