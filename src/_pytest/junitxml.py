@@ -579,6 +579,11 @@ class LogXML:
                     # schema.
                     self.finalize(close_report)
                     self.cnt_double_fail_tests += 1
+                elif (
+                    report.nodeid,
+                    getattr(report, "node", None),
+                ) in self.node_reporters:
+                    self.cnt_double_fail_tests += 1
             reporter = self._opentestcase(report)
             if report.when == "call":
                 reporter.append_failure(report)

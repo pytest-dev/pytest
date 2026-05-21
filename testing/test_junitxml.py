@@ -383,6 +383,7 @@ class TestPython:
         result, dom = run_and_parse(family=xunit_family)
         assert result.ret
         node = dom.get_first_by_tag("testsuite")
+        node.assert_attr(errors=1, tests=1)
         tnode = node.get_first_by_tag("testcase")
         tnode.assert_attr(classname="test_teardown_error", name="test_function")
         fnode = tnode.get_first_by_tag("error")

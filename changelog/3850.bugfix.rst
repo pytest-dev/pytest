@@ -1,0 +1,1 @@
+Fixed the JUnit XML ``tests`` count for tests that pass during call but fail during teardown.
