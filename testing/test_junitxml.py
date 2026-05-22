@@ -390,6 +390,59 @@ class TestPython:
         fnode.assert_attr(message='failed on teardown with "ValueError: Error reason"')
         assert "ValueError" in fnode.toxml()
 
+    def test_teardown_error_after_pass_counts_as_one_test(
+        self, pytester: Pytester
+    ) -> None:
+        path = pytester.path.joinpath("test_teardown_error_after_pass.xml")
+        log = LogXML(str(path), None)
+        call_report = TestReport(
+            nodeid="test_mod.py::test_function",
+            location=("test_mod.py", 1, "test_function"),
+            keywords={},
+            outcome="passed",
+            longrepr=None,
+            when="call",
+        )
+        teardown_report = TestReport(
+            nodeid=call_report.nodeid,
+            location=call_report.location,
+            keywords={},
+            outcome="failed",
+            longrepr="ValueError: Error reason",
+            when="teardown",
+        )
+
+        log.pytest_sessionstart()
+        log.pytest_runtest_logreport(call_report)
+        log.pytest_runtest_logreport(teardown_report)
+        log.pytest_sessionfinish()
+
+        testsuite = minidom.parse(str(path)).getElementsByTagName("testsuite")[0]
+        assert testsuite.getAttribute("errors") == "1"
+        assert testsuite.getAttribute("tests") == "1"
+
+    def test_teardown_error_without_open_report_counts_as_one_test(
+        self, pytester: Pytester
+    ) -> None:
+        path = pytester.path.joinpath("test_teardown_error_without_open_report.xml")
+        log = LogXML(str(path), None)
+        teardown_report = TestReport(
+            nodeid="test_mod.py::test_function",
+            location=("test_mod.py", 1, "test_function"),
+            keywords={},
+            outcome="failed",
+            longrepr="ValueError: Error reason",
+            when="teardown",
+        )
+
+        log.pytest_sessionstart()
+        log.pytest_runtest_logreport(teardown_report)
+        log.pytest_sessionfinish()
+
+        testsuite = minidom.parse(str(path)).getElementsByTagName("testsuite")[0]
+        assert testsuite.getAttribute("errors") == "1"
+        assert testsuite.getAttribute("tests") == "1"
+
     @parametrize_families
     def test_call_failure_teardown_error(
         self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: str
