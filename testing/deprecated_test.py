@@ -106,3 +106,184 @@ def test_class_scope_instance_method_is_deprecated(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         ["*PytestRemovedIn10Warning: Class-scoped fixture defined as instance method*"]
     )
+
+
+def test_class_scope_classmethod_fixture_not_deprecated(pytester: Pytester) -> None:
+    """A class-scoped fixture defined as @classmethod does NOT warn."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.fixture(scope="class")
+            @classmethod
+            def fix(cls):
+                cls.attr = True
+
+            def test_foo(self, fix):
+                assert type(self).attr is True
+        """
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(passed=1)
+
+
+class TestFixtureNodeidDeprecations:
+    """Tests for deprecated baseid/nodeid string APIs in fixture registration.
+
+    AI-generated coverage tests for legacy paths that will be removed in
+    pytest 10. These exist solely to maintain patch coverage until the
+    deprecated code is deleted.
+
+    Legacy paths covered:
+    - parsefactories(obj, nodeid_string) deprecation warning
+    - parsefactories(obj, None) does NOT warn (standard plugin pattern)
+    - parsefactories() with no args raises TypeError
+    - _register_fixture(nodeid=string) deprecation warning
+    - _nodeid_autousenames population and _getautousenames yield
+    - _matchfactories string-based fallback (match + non-match branches)
+    """
+
+    def test_parsefactories_nodeid_deprecation(self, pytester: Pytester) -> None:
+        """parsefactories(obj, "path") warns; parsefactories(obj, None) does not."""
+        pytester.makeconftest(
+            """
+            import pytest
+            import types
+            import warnings
+
+            def pytest_collection_modifyitems(session, items):
+                fm = session._fixturemanager
+
+                @pytest.fixture
+                def fix_a():
+                    return "a"
+
+                @pytest.fixture
+                def fix_b():
+                    return "b"
+
+                mod_with_path = types.ModuleType("plugin_path")
+                mod_with_path.fix_a = fix_a
+                mod_none = types.ModuleType("plugin_none")
+                mod_none.fix_b = fix_b
+
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    fm.parsefactories(mod_with_path, "some/nodeid")
+                    fm.parsefactories(mod_none, None)
+
+                nodeid_warns = [x for x in w if "parsefactories" in str(x.message)]
+                assert len(nodeid_warns) == 1, f"Expected 1 warning, got: {w}"
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_global_fix(fix_b):
+                assert fix_b == "b"
+            """
+        )
+        result = pytester.runpytest("-W", "default::pytest.PytestRemovedIn10Warning")
+        result.assert_outcomes(passed=1)
+
+    def test_parsefactories_no_args_raises_typeerror(self, pytester: Pytester) -> None:
+        """parsefactories() with no holder and no node_or_obj raises TypeError."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collection_modifyitems(session, items):
+                fm = session._fixturemanager
+                with pytest.raises(TypeError, match="requires holder or node_or_obj"):
+                    fm.parsefactories()
+            """
+        )
+        pytester.makepyfile("def test_pass(): pass")
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
+    def test_register_fixture_nodeid_and_autouse_legacy(
+        self, pytester: Pytester
+    ) -> None:
+        """_register_fixture(nodeid=string) warns and autouse populates/yields.
+
+        Covers end-to-end:
+        - Deprecation warning on _register_fixture(nodeid=...)
+        - _nodeid_autousenames populated for autouse + non-empty nodeid
+        - _getautousenames yields from nodeid_basenames at lookup time
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+            import warnings
+
+            _done = False
+
+            def pytest_collectstart(collector):
+                global _done
+                if _done or not hasattr(collector.session, "_fixturemanager"):
+                    return
+                if collector.nodeid == "":
+                    return
+                _done = True
+                fm = collector.session._fixturemanager
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    fm._register_fixture(
+                        name="legacy_autouse",
+                        func=lambda: None,
+                        nodeid=collector.nodeid,
+                        autouse=True,
+                    )
+                assert any("_register_fixture" in str(x.message) for x in w)
+                assert "legacy_autouse" in fm._nodeid_autousenames[collector.nodeid]
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_autouse_yielded(request):
+                assert "legacy_autouse" in request.fixturenames
+            """
+        )
+        result = pytester.runpytest("-W", "default::pytest.PytestRemovedIn10Warning")
+        result.assert_outcomes(passed=1)
+
+    def test_matchfactories_string_fallback(self, pytester: Pytester) -> None:
+        """_matchfactories uses baseid string matching for legacy fixtures.
+
+        Exercises both branches:
+        - baseid="" matches all nodes (global fixture)
+        - baseid="nonexistent/path" matches nothing (scoped fixture invisible)
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+            import warnings
+
+            def pytest_collection_modifyitems(session, items):
+                fm = session._fixturemanager
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    fm._register_fixture(
+                        name="global_legacy", func=lambda: "ok", nodeid=""
+                    )
+                    fm._register_fixture(
+                        name="scoped_legacy", func=lambda: "nope",
+                        nodeid="nonexistent/path",
+                    )
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test_global_visible(global_legacy):
+                assert global_legacy == "ok"
+
+            def test_scoped_invisible(request):
+                defs = request.session._fixturemanager.getfixturedefs(
+                    "scoped_legacy", request._pyfuncitem
+                )
+                assert defs == ()
+            """
+        )
+        result = pytester.runpytest("-W", "ignore::pytest.PytestRemovedIn10Warning")
+        result.assert_outcomes(passed=2)
