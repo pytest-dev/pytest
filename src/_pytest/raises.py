@@ -1198,10 +1198,9 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
                 cast(str, self._fail_reason) + f" on the {type(exception).__name__}"
             )
             subexception_matches_check = False
-            if (
-                len(actual_exceptions) == len(self.expected_exceptions) == 1
-                and isinstance(expected := self.expected_exceptions[0], type)
-            ):
+            if len(actual_exceptions) == len(
+                self.expected_exceptions
+            ) == 1 and isinstance(expected := self.expected_exceptions[0], type):
                 old_reason = self._fail_reason
                 try:
                     # We probe the contained exception to improve the error message,
