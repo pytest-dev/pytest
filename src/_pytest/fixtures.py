@@ -57,7 +57,10 @@ from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import CLASS_FIXTURE_INSTANCE_METHOD
+from _pytest.deprecated import FIXTURE_BASEID_DEPRECATED
 from _pytest.deprecated import FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN
+from _pytest.deprecated import FIXTURE_NODEID_DEPRECATED
+from _pytest.deprecated import PARSEFACTORIES_NODEID_DEPRECATED
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
@@ -70,7 +73,6 @@ from _pytest.pathlib import bestrelpath
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
-from _pytest.warning_types import PytestRemovedIn10Warning
 from _pytest.warning_types import PytestWarning
 
 
@@ -1039,12 +1041,7 @@ class FixtureDef(Generic[FixtureValue]):
         # Emit deprecation warning if baseid string is used when node could be provided.
         # baseid=None (global plugins) and baseid="" (synthetic fixtures) are fine.
         if baseid and node is None:
-            warnings.warn(
-                "Passing baseid to FixtureDef is deprecated. "
-                "Pass node instead for fixture scoping.",
-                PytestRemovedIn10Warning,
-                stacklevel=2,
-            )
+            warnings.warn(FIXTURE_BASEID_DEPRECATED, stacklevel=2)
         # The node where this fixture was defined, if available.
         # Used for node-based matching which is more robust than string matching.
         self.node: Final = node
@@ -1685,6 +1682,9 @@ class FixtureManager:
         self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
             session: list(self.config.getini("usefixtures")),
         }
+        # Legacy fallback: nodeid string -> autouse names, for plugins still
+        # using the deprecated nodeid-based API without a node reference.
+        self._nodeid_autousenames: Final[dict[str, list[str]]] = {}
         # Pending conftest modules waiting to be parsed when their Directory is collected.
         # Maps directory path -> conftest plugin module.
         self._pending_conftests: Final[dict[Path, object]] = {}
@@ -1792,6 +1792,10 @@ class FixtureManager:
             basenames = self._node_autousenames.get(parentnode)
             if basenames:
                 yield from basenames
+            # Legacy fallback: check string-based nodeid autouse names.
+            nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
+            if nodeid_basenames:
+                yield from nodeid_basenames
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures applicable to node."""
@@ -1924,12 +1928,7 @@ class FixtureManager:
         # Emit deprecation warning if nodeid string is used when node could be provided.
         # nodeid=None (global plugins) is fine.
         if nodeid and node is None:
-            warnings.warn(
-                "Passing nodeid to _register_fixture is deprecated. "
-                "Pass node instead for fixture scoping.",
-                PytestRemovedIn10Warning,
-                stacklevel=2,
-            )
+            warnings.warn(FIXTURE_NODEID_DEPRECATED, stacklevel=2)
         fixture_def = FixtureDef(
             config=self.config,
             baseid=nodeid if node is None else None,
@@ -1956,6 +1955,9 @@ class FixtureManager:
         if autouse:
             if node is not None:
                 self._node_autousenames.setdefault(node, []).append(name)
+            elif nodeid:
+                # Legacy: plugin passed nodeid string without node reference.
+                self._nodeid_autousenames.setdefault(nodeid, []).append(name)
             else:
                 # Global plugin autouse fixtures go under Session.
                 self._node_autousenames.setdefault(self.session, []).append(name)
@@ -2021,12 +2023,7 @@ class FixtureManager:
             # Legacy: parsefactories(obj, nodeid) - string-based scoping only
             # Only warn if a non-None nodeid string is passed (None means global plugin)
             if nodeid is not None:
-                warnings.warn(
-                    "Passing nodeid string to parsefactories is deprecated. "
-                    "Use parsefactories(holder=obj, node=node) instead.",
-                    PytestRemovedIn10Warning,
-                    stacklevel=2,
-                )
+                warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED, stacklevel=2)
             holderobj = node_or_obj
             effective_nodeid = nodeid
         else:

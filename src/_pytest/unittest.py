@@ -101,7 +101,9 @@ class UnitTestCase(Class):
             self._register_unittest_setup_class_fixture(cls)
             self._register_setup_class_fixture()
 
-        self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
+        self.session._fixturemanager.parsefactories(
+            holder=self.newinstance(), node=self
+        )
 
         loader = TestLoader()
         foundsomething = False
@@ -170,7 +172,7 @@ class UnitTestCase(Class):
             # Use a unique name to speed up lookup.
             name=f"_unittest_setUpClass_fixture_{cls.__qualname__}",
             func=unittest_setup_class_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="class",
             autouse=True,
         )
@@ -200,7 +202,7 @@ class UnitTestCase(Class):
             # Use a unique name to speed up lookup.
             name=f"_unittest_setup_method_fixture_{cls.__qualname__}",
             func=unittest_setup_method_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="function",
             autouse=True,
         )
