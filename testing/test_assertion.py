@@ -1072,6 +1072,158 @@ class TestAssert_reprcompare:
         ]
 
 
+class TestAssert_reprcompare_mapping_types:
+    """Tests for non-dict Mapping types getting structured dict diff (#14461).
+
+    isdict() was changed from isinstance(x, dict) to
+    isinstance(x, collections.abc.Mapping) so that non-dict mappings
+    get the same "Omitting/Differing/Left contains/Right contains" output.
+    """
+
+    # -- stdlib types: these should all produce structured diffs now ----------
+
+    def test_mapping_proxy_differing(self) -> None:
+        from types import MappingProxyType
+
+        lines = callequal(
+            MappingProxyType({"a": 0, "b": 1}),
+            MappingProxyType({"a": 1, "b": 1}),
+        )
+        assert lines is not None
+        assert any("Omitting 1 identical item" in line for line in lines)
+        assert any("Differing items" in line for line in lines)
+
+    def test_mapping_proxy_extra_keys(self) -> None:
+        from types import MappingProxyType
+
+        lines = callequal(
+            MappingProxyType({"a": 1}),
+            MappingProxyType({"a": 1, "b": 2}),
+        )
+        assert lines is not None
+        assert any("Right contains 1 more item" in line for line in lines)
+
+    def test_chainmap_differing(self) -> None:
+        from collections import ChainMap
+
+        lines = callequal(
+            ChainMap({"x": 1, "y": 2}),
+            ChainMap({"x": 1, "y": 3}),
+        )
+        assert lines is not None
+        assert any("Differing items" in line for line in lines)
+
+    def test_chainmap_extra_keys(self) -> None:
+        from collections import ChainMap
+
+        lines = callequal(
+            ChainMap({"a": 1}),
+            ChainMap({"a": 1, "b": 2}),
+        )
+        assert lines is not None
+        assert any("Right contains 1 more item" in line for line in lines)
+
+    def test_userdict_differing(self) -> None:
+        from collections import UserDict
+
+        lines = callequal(
+            UserDict({"key": "old"}),
+            UserDict({"key": "new"}),
+        )
+        assert lines is not None
+        assert any("Differing items" in line for line in lines)
+
+    def test_custom_mapping(self) -> None:
+        """A minimal Mapping implementation gets structured diff."""
+        import collections.abc
+
+        class FrozenMap(collections.abc.Mapping[str, object]):
+            def __init__(self, data: dict[str, object]) -> None:
+                self._data = dict(data)
+
+            def __getitem__(self, key):
+                return self._data[key]
+
+            def __iter__(self):
+                return iter(self._data)
+
+            def __len__(self):
+                return len(self._data)
+
+            def __repr__(self):
+                return f"FrozenMap({self._data!r})"
+
+        lines = callequal(
+            FrozenMap({"host": "localhost", "port": 5432}),
+            FrozenMap({"host": "localhost", "port": 3306}),
+        )
+        assert lines is not None
+        assert any("Omitting 1 identical item" in line for line in lines)
+        assert any("Differing items" in line for line in lines)
+
+    # -- external types: xfail for known-problematic patterns ----------------
+    # These document cases where _compare_eq_dict's set(keys) approach
+    # diverges from the mapping's own key equality semantics.
+
+    @pytest.mark.xfail(
+        reason=(
+            "CaseInsensitiveDict iterates original-cased keys, so "
+            "set(left) & set(right) finds no common keys even when "
+            "the mappings are equal (#14461)"
+        ),
+    )
+    def test_requests_case_insensitive_dict(self) -> None:
+        structures = pytest.importorskip("requests.structures")
+        CaseInsensitiveDict = structures.CaseInsensitiveDict
+
+        lines = callequal(
+            CaseInsensitiveDict({"Content-Type": "json"}),
+            CaseInsensitiveDict({"content-type": "xml"}),
+        )
+        assert lines is not None
+        # Should find the common key and report differing values,
+        # but currently reports both keys as "extra" because
+        # 'Content-Type' != 'content-type' in set intersection.
+        assert any("Differing items" in line for line in lines)
+
+    @pytest.mark.xfail(
+        reason=(
+            "MultiDict has duplicate keys: set() collapses them and "
+            "__getitem__ returns only the first value, so differences "
+            "in duplicate entries are invisible (#14461)"
+        ),
+    )
+    def test_multidict_duplicate_keys(self) -> None:
+        multidict = pytest.importorskip("multidict")
+
+        lines = callequal(
+            multidict.MultiDict([("a", 1), ("b", 2), ("a", 3)]),
+            multidict.MultiDict([("a", 1), ("b", 2), ("a", 999)]),
+        )
+        assert lines is not None
+        # Should report that the second "a" value differs (3 vs 999),
+        # but currently set() collapses the duplicate "a" keys and
+        # __getitem__("a") returns only 1 for both sides → "no diff".
+        assert any("Differing items" in line for line in lines)
+
+    @pytest.mark.xfail(
+        reason=(
+            "CIMultiDict combines case-insensitive keys with duplicate "
+            "key support — both problems at once (#14461)"
+        ),
+    )
+    def test_multidict_ci_case_insensitive(self) -> None:
+        multidict = pytest.importorskip("multidict")
+
+        left = multidict.CIMultiDict({"Content-Type": "json"})
+        right = multidict.CIMultiDict({"content-type": "json"})
+        # These are equal, so assertrepr_compare should return None
+        # (no explanation needed for equal objects).
+        # But set() sees different keys → would produce a misleading diff.
+        lines = callequal(left, right)
+        assert lines is None
+
+
 class TestAssert_reprcompare_dataclass:
     def test_dataclasses(self, pytester: Pytester) -> None:
         p = pytester.copy_example("dataclasses/test_compare_dataclasses.py")
