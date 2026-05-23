@@ -1615,7 +1615,7 @@ def test_get_exception_on_teardown_failure(pytester: Pytester) -> None:
     # results in a double-reporting.
     result.assert_outcomes(passed=1, errors=1)
 
-    
+
 def test_stop_iteration_from_collect(pytester: Pytester) -> None:
     pytester.makepyfile(test_it="raise StopIteration('hello')")
     result = pytester.runpytest()
