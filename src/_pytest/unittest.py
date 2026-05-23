@@ -190,7 +190,7 @@ class UnitTestCase(Class):
         self.session._fixturemanager._register_fixture(
             name=f"_unittest_skip_fixture_{cls.__qualname__}",
             func=unittest_skip_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="class",
             autouse=True,
         )
