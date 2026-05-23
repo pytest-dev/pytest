@@ -726,6 +726,10 @@ class TestApprox:
         assert {"a": 1.0, "b": 1} != pytest.approx({"a": 1.0, "b": None})
         assert {"a": 1.0, "b": True} != pytest.approx({"a": 1.0, "b": False}, abs=2)
 
+    def test_dict_with_list_values(self):
+        assert {"a": [1.0, 2.0 + 1e-7]} == approx({"a": [1.0, 2.0]}, abs=1e-5)
+        assert {"a": [1.0, 2.0 + 1e-4]} != approx({"a": [1.0, 2.0]}, abs=1e-5)
+
     def test_dict_vs_other(self):
         assert 1 != approx({"a": 0})
 

@@ -1,0 +1,1 @@
+Fixed ``pytest.approx()`` silently falling back to exact equality when a dict value is itself a list or dict. Nested sequences and mappings are now compared with the same tolerance as top-level ones.
