@@ -156,8 +156,8 @@ def istext(x: object) -> TypeGuard[str]:
     return isinstance(x, str)
 
 
-def isdict(x: object) -> TypeGuard[dict[object, object]]:
-    return isinstance(x, dict)
+def ismapping(x: object) -> TypeGuard[Mapping[object, object]]:
+    return isinstance(x, Mapping)
 
 
 def isset(x: object) -> TypeGuard[set[object] | frozenset[object]]:
@@ -323,8 +323,8 @@ def _compare_eq_any(
             explanation = _compare_eq_sequence(left, right, highlighter, verbose)
         elif isset(left) and isset(right):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
-        elif isdict(left) and isdict(right):
-            explanation = _compare_eq_dict(left, right, highlighter, verbose)
+        elif ismapping(left) and ismapping(right):
+            explanation = _compare_eq_mapping(left, right, highlighter, verbose)
 
         if isiterable(left) and isiterable(right):
             expl = _compare_eq_iterable(left, right, highlighter, verbose)
@@ -576,7 +576,7 @@ def _set_one_sided_diff(
     return explanation
 
 
-def _compare_eq_dict(
+def _compare_eq_mapping(
     left: Mapping[object, object],
     right: Mapping[object, object],
     highlighter: _HighlightFunc,
