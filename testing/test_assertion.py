@@ -899,7 +899,7 @@ class TestAssert_reprcompare:
             def __iter__(self) -> Iterator[str]:
                 return iter(self._values)
 
-            def __len__(self) -> int:
+            def __len__(self) -> int:  # pragma: no cover
                 return len(self._values)
 
             def __repr__(self) -> str:
