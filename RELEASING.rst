@@ -117,7 +117,7 @@ To release a version ``MAJOR.MINOR.PATCH``, follow these steps:
 
 #. Create a branch ``release-MAJOR.MINOR.PATCH`` from the ``MAJOR.MINOR.x`` branch.
 
-   Ensure your are updated and in a clean working tree.
+   Ensure your local checkout is up to date and in a clean working tree.
 
 #. Using ``tox``, generate docs, changelog, announcements::
 
@@ -133,14 +133,22 @@ Releasing
 
 Both automatic and manual processes described above follow the same steps from this point onward.
 
-#. After all tests pass and the PR has been approved, trigger the ``deploy`` job
+#. After all tests pass and the PR has been approved, trigger the ``deploy`` workflow
    in https://github.com/pytest-dev/pytest/actions/workflows/deploy.yml, using the ``release-MAJOR.MINOR.PATCH`` branch
    as source.
+
+   Using the command-line::
+
+     $ gh workflow run deploy.yml -R pytest-dev/pytest --ref=release-{VERSION} -f version={VERSION}
 
    This job will require approval from ``pytest-dev/core``, after which it will publish to PyPI
    and tag the repository.
 
 #. Merge the PR. **Make sure it's not squash-merged**, so that the tagged commit ends up in the main branch.
+
+#. For major and minor releases (or the first prerelease of it),
+   in the `ReadTheDocs admin page <https://app.readthedocs.org/projects/pytest/>`__, click "Add Version" on the top right,
+   choose the new branch, then set the new version as active.
 
 #. Cherry-pick the CHANGELOG / announce files to the ``main`` branch::
 
@@ -164,8 +172,10 @@ Both automatic and manual processes described above follow the same steps from t
 
    To the following mailing lists:
 
-   * pytest-dev@python.org (all releases)
-   * python-announce-list@python.org (all releases)
-   * testing-in-python@lists.idyll.org (only major/minor releases)
+   * python-announce-list@python.org
 
-   And announce it on `Twitter <https://twitter.com/>`_ with the ``#pytest`` hashtag.
+   And announce it with the ``#pytest`` hashtag on:
+
+   * `Bluesky <https://bsky.app>`_
+   * `Fosstodon <https://fosstodon.org>`_
+   * `Twitter/X <https://x.com>`_

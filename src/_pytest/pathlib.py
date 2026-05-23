@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-import atexit
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
 import contextlib
 from enum import Enum
 from errno import EBADF
@@ -26,9 +28,6 @@ import sys
 import types
 from types import ModuleType
 from typing import Any
-from typing import Callable
-from typing import Iterable
-from typing import Iterator
 from typing import TypeVar
 import uuid
 import warnings
@@ -225,7 +224,7 @@ def _force_symlink(root: Path, target: str | PurePath, link_to: str | Path) -> N
 def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
     """Create a directory with an increased number as suffix for the given prefix."""
     for i in range(10):
-        # try up to 10 times to create the folder
+        # try up to 10 times to create the directory
         max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
         new_number = max_existing + 1
         new_path = root.joinpath(f"{prefix}{new_number}")
@@ -244,7 +243,7 @@ def make_numbered_dir(root: Path, prefix: str, mode: int = 0o700) -> Path:
 
 
 def create_cleanup_lock(p: Path) -> Path:
-    """Create a lock to prevent premature folder cleanup."""
+    """Create a lock to prevent premature directory cleanup."""
     lock_path = get_lock_path(p)
     try:
         fd = os.open(str(lock_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
@@ -260,10 +259,8 @@ def create_cleanup_lock(p: Path) -> Path:
         return lock_path
 
 
-def register_cleanup_lock_removal(
-    lock_path: Path, register: Any = atexit.register
-) -> Any:
-    """Register a cleanup function for removing a lock, by default on atexit."""
+def register_cleanup_lock_removal(lock_path: Path, register: Any) -> Any:
+    """Register a cleanup function for removing a lock."""
     pid = os.getpid()
 
     def cleanup_on_exit(lock_path: Path = lock_path, original_pid: int = pid) -> None:
@@ -294,7 +291,7 @@ def maybe_delete_a_numbered_dir(path: Path) -> None:
     except OSError:
         #  known races:
         #  * other process did a cleanup at the same time
-        #  * deletable folder was found
+        #  * deletable directory was found
         #  * process cwd (Windows)
         return
     finally:
@@ -336,7 +333,7 @@ def ensure_deletable(path: Path, consider_lock_dead_if_created_before: float) ->
 
 
 def try_cleanup(path: Path, consider_lock_dead_if_created_before: float) -> None:
-    """Try to cleanup a folder if we can ensure it's deletable."""
+    """Try to cleanup a directory if we can ensure it's deletable."""
     if ensure_deletable(path, consider_lock_dead_if_created_before):
         maybe_delete_a_numbered_dir(path)
 
@@ -348,7 +345,7 @@ def cleanup_candidates(root: Path, prefix: str, keep: int) -> Iterator[Path]:
     entries = find_prefixed(root, prefix)
     entries, entries2 = itertools.tee(entries)
     numbers = map(parse_num, extract_suffixes(entries2, prefix))
-    for entry, number in zip(entries, numbers):
+    for entry, number in zip(entries, numbers, strict=True):
         if number <= max_delete:
             yield Path(entry)
 
@@ -375,13 +372,29 @@ def cleanup_numbered_dir(
 
 
 def make_numbered_dir_with_cleanup(
+    *,
     root: Path,
     prefix: str,
+    mode: int,
     keep: int,
     lock_timeout: float,
-    mode: int,
+    register: Any,
 ) -> Path:
-    """Create a numbered dir with a cleanup lock and remove old ones."""
+    """Create a numbered dir and register its cleanup.
+
+    Similar to make_numbered_dir, but also maintains a lock file indicating that
+    the directory is currently in use, and registers the cleanup of the lock and
+    of stale numbered directories.
+
+    :param keep:
+        The number of sessions to retain the directory.
+    :param lock_timeout:
+        In case of a crash, the lock remains "stuck". The timeout is a time
+        limit after which the lock is considered stale and can be removed.
+    :param register:
+        Called as register(cleanup_func, params...). Should schedule to call
+        passed cleanup functions on session finish.
+    """
     e = None
     for i in range(10):
         try:
@@ -389,13 +402,13 @@ def make_numbered_dir_with_cleanup(
             # Only lock the current dir when keep is not 0
             if keep != 0:
                 lock_path = create_cleanup_lock(p)
-                register_cleanup_lock_removal(lock_path)
+                register_cleanup_lock_removal(lock_path, register)
         except Exception as exc:
             e = exc
         else:
             consider_lock_dead_if_created_before = p.stat().st_mtime - lock_timeout
             # Register a cleanup for program exit
-            atexit.register(
+            register(
                 cleanup_numbered_dir,
                 root,
                 prefix,
@@ -536,7 +549,7 @@ def import_path(
         # Try to import this module using the standard import mechanisms, but
         # without touching sys.path.
         try:
-            pkg_root, module_name = resolve_pkg_root_and_module_name(
+            _, module_name = resolve_pkg_root_and_module_name(
                 path, consider_namespace_packages=consider_namespace_packages
             )
         except CouldNotResolvePathError:
@@ -546,9 +559,7 @@ def import_path(
             with contextlib.suppress(KeyError):
                 return sys.modules[module_name]
 
-            mod = _import_module_using_spec(
-                module_name, path, pkg_root, insert_modules=False
-            )
+            mod = _import_module_using_spec(module_name, path, insert_modules=False)
             if mod is not None:
                 return mod
 
@@ -558,9 +569,7 @@ def import_path(
         with contextlib.suppress(KeyError):
             return sys.modules[module_name]
 
-        mod = _import_module_using_spec(
-            module_name, path, path.parent, insert_modules=True
-        )
+        mod = _import_module_using_spec(module_name, path, insert_modules=True)
         if mod is None:
             raise ImportError(f"Can't find module {module_name} at location {path}")
         return mod
@@ -613,7 +622,7 @@ def import_path(
 
 
 def _import_module_using_spec(
-    module_name: str, module_path: Path, module_location: Path, *, insert_modules: bool
+    module_name: str, module_path: Path, *, insert_modules: bool
 ) -> ModuleType | None:
     """
     Tries to import a module by its canonical name, path, and its parent location.
@@ -626,10 +635,6 @@ def _import_module_using_spec(
         If module is a package, pass the path to the  `__init__.py` of the package.
         If module is a namespace package, pass directory path.
 
-    :param module_location:
-        The parent location of the module.
-        If module is a package, pass the directory containing the `__init__.py` file.
-
     :param insert_modules:
         If True, will call `insert_missing_modules` to create empty intermediate modules
         with made-up module names (when importing test files not reachable from `sys.path`).
@@ -638,29 +643,23 @@ def _import_module_using_spec(
 
         module_name:        "a.b.c.demo"
         module_path:        Path("a/b/c/demo.py")
-        module_location:    Path("a/b/c/")
         if "a.b.c" is package ("a/b/c/__init__.py" exists), then
             parent_module_name:         "a.b.c"
             parent_module_path:         Path("a/b/c/__init__.py")
-            parent_module_location:     Path("a/b/c/")
         else:
             parent_module_name:         "a.b.c"
             parent_module_path:         Path("a/b/c")
-            parent_module_location:     Path("a/b/")
 
     Example 2 of parent_module_*:
 
         module_name:        "a.b.c"
         module_path:        Path("a/b/c/__init__.py")
-        module_location:    Path("a/b/c/")
         if  "a.b" is package ("a/b/__init__.py" exists), then
             parent_module_name:         "a.b"
             parent_module_path:         Path("a/b/__init__.py")
-            parent_module_location:     Path("a/b/")
         else:
             parent_module_name:         "a.b"
             parent_module_path:         Path("a/b/")
-            parent_module_location:     Path("a/")
     """
     # Attempt to import the parent module, seems is our responsibility:
     # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
@@ -668,7 +667,10 @@ def _import_module_using_spec(
     parent_module: ModuleType | None = None
     if parent_module_name:
         parent_module = sys.modules.get(parent_module_name)
-        if parent_module is None:
+        # If the parent_module lacks the `__path__` attribute, AttributeError when finding a submodule's spec,
+        # requiring re-import according to the path.
+        need_reimport = not hasattr(parent_module, "__path__")
+        if parent_module is None or need_reimport:
             # Get parent_location based on location, get parent_path based on path.
             if module_path.name == "__init__.py":
                 # If the current module is in a package,
@@ -684,16 +686,15 @@ def _import_module_using_spec(
             parent_module = _import_module_using_spec(
                 parent_module_name,
                 parent_module_path,
-                parent_module_path.parent,
                 insert_modules=insert_modules,
             )
 
     # Checking with sys.meta_path first in case one of its hooks can import this module,
     # such as our own assertion-rewrite hook.
+    find_spec_path = [str(module_path.parent)]
     for meta_importer in sys.meta_path:
-        spec = meta_importer.find_spec(
-            module_name, [str(module_location), str(module_path)]
-        )
+        spec = meta_importer.find_spec(module_name, find_spec_path)
+
         if spec_matches_module_path(spec, module_path):
             break
     else:
@@ -701,7 +702,7 @@ def _import_module_using_spec(
         if module_path.is_dir():
             # The `spec_from_file_location` matches a loader based on the file extension by default.
             # For a namespace package, need to manually specify a loader.
-            loader = NamespaceLoader(name, module_path, PathFinder())
+            loader = NamespaceLoader(name, module_path, PathFinder())  # type: ignore[arg-type]
 
         spec = importlib.util.spec_from_file_location(
             module_name, str(module_path), loader=loader
@@ -945,17 +946,24 @@ def scandir(
 
     The returned entries are sorted according to the given key.
     The default is to sort by name.
+    If the directory does not exist, return an empty list.
     """
     entries = []
-    with os.scandir(path) as s:
-        # Skip entries with symlink loops and other brokenness, so the caller
-        # doesn't have to deal with it.
+    # Attempt to create a scandir iterator for the given path.
+    try:
+        scandir_iter = os.scandir(path)
+    except FileNotFoundError:
+        # If the directory does not exist, return an empty list.
+        return []
+    # Use the scandir iterator in a context manager to ensure it is properly closed.
+    with scandir_iter as s:
         for entry in s:
             try:
                 entry.is_file()
             except OSError as err:
                 if _ignore_error(err):
                     continue
+                # Reraise non-ignorable errors to avoid hiding issues.
                 raise
             entries.append(entry)
     entries.sort(key=sort_key)  # type: ignore[arg-type]
@@ -1036,3 +1044,11 @@ def safe_exists(p: Path) -> bool:
         # ValueError: stat: path too long for Windows
         # OSError: [WinError 123] The filename, directory name, or volume label syntax is incorrect
         return False
+
+
+def samefile_nofollow(p1: Path, p2: Path) -> bool:
+    """Test whether two paths reference the same actual file or directory.
+
+    Unlike Path.samefile(), does not resolve symlinks.
+    """
+    return os.path.samestat(p1.lstat(), p2.lstat())

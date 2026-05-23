@@ -30,7 +30,7 @@ Thanks to all of the contributors to this release:
 * Cserna Zsolt
 * Dominic Mortlock
 * Emiel van de Laar
-* Florian Bruhin
+* Freya Bruhin
 * Garvit Shubham
 * Gustavo Camargo
 * Hugo Martins

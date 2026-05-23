@@ -1,19 +1,20 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 from io import StringIO
 import os
 from pprint import pprint
+import sys
 from typing import Any
 from typing import cast
 from typing import final
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
-from typing import Mapping
 from typing import NoReturn
-from typing import Sequence
 from typing import TYPE_CHECKING
 
 from _pytest._code.code import ExceptionChainRepr
@@ -33,6 +34,10 @@ from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
+
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
 
 
 if TYPE_CHECKING:
@@ -188,7 +193,7 @@ class BaseReport:
             even in patch releases.
         """
         if self.location is not None:
-            fspath, lineno, domain = self.location
+            _fspath, _lineno, domain = self.location
             return domain
         return None
 
@@ -251,7 +256,52 @@ def _report_unserialization_failure(
     raise RuntimeError(stream.getvalue())
 
 
-@final
+def _format_failed_longrepr(
+    item: Item, call: CallInfo[None], excinfo: ExceptionInfo[BaseException]
+):
+    if call.when == "call":
+        longrepr = item.repr_failure(excinfo)
+    else:
+        # Exception in setup or teardown.
+        longrepr = item._repr_failure_py(
+            excinfo, style=item.config.getoption("tbstyle", "auto")
+        )
+    return longrepr
+
+
+def _format_exception_group_all_skipped_longrepr(
+    item: Item,
+    excinfo: ExceptionInfo[BaseExceptionGroup[BaseException | BaseExceptionGroup]],
+) -> tuple[str, int, str]:
+    r = excinfo._getreprcrash()
+    assert r is not None, (
+        "There should always be a traceback entry for skipping a test."
+    )
+    if all(
+        getattr(skip, "_use_item_location", False) for skip in excinfo.value.exceptions
+    ):
+        path, line = item.reportinfo()[:2]
+        assert line is not None
+        loc = (os.fspath(path), line + 1)
+        default_msg = "skipped"
+    else:
+        loc = (str(r.path), r.lineno)
+        default_msg = r.message
+
+    # Get all unique skip messages.
+    msgs: list[str] = []
+    for exception in excinfo.value.exceptions:
+        m = getattr(exception, "msg", None) or (
+            exception.args[0] if exception.args else None
+        )
+        if m and m not in msgs:
+            msgs.append(m)
+
+    reason = "; ".join(msgs) if msgs else default_msg
+    longrepr = (*loc, reason)
+    return longrepr
+
+
 class TestReport(BaseReport):
     """Basic test report object (also used for setup and teardown calls if
     they fail).
@@ -260,6 +310,7 @@ class TestReport(BaseReport):
     """
 
     __test__ = False
+
     # Defined by skipping plugin.
     # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
     wasxfail: str
@@ -304,7 +355,7 @@ class TestReport(BaseReport):
         self.longrepr = longrepr
 
         #: One of 'setup', 'call', 'teardown' to indicate runtest phase.
-        self.when = when
+        self.when: Literal["setup", "call", "teardown"] = when
 
         #: User properties is a list of tuples (name, value) that holds user
         #: defined properties of the test.
@@ -361,23 +412,30 @@ class TestReport(BaseReport):
             elif isinstance(excinfo.value, skip.Exception):
                 outcome = "skipped"
                 r = excinfo._getreprcrash()
-                assert (
-                    r is not None
-                ), "There should always be a traceback entry for skipping a test."
+                assert r is not None, (
+                    "There should always be a traceback entry for skipping a test."
+                )
                 if excinfo.value._use_item_location:
                     path, line = item.reportinfo()[:2]
                     assert line is not None
-                    longrepr = os.fspath(path), line + 1, r.message
+                    longrepr = (os.fspath(path), line + 1, r.message)
                 else:
                     longrepr = (str(r.path), r.lineno, r.message)
+            elif isinstance(excinfo.value, BaseExceptionGroup) and (
+                excinfo.value.split(skip.Exception)[1] is None
+            ):
+                # All exceptions in the group are skip exceptions.
+                outcome = "skipped"
+                excinfo = cast(
+                    ExceptionInfo[
+                        BaseExceptionGroup[BaseException | BaseExceptionGroup]
+                    ],
+                    excinfo,
+                )
+                longrepr = _format_exception_group_all_skipped_longrepr(item, excinfo)
             else:
                 outcome = "failed"
-                if call.when == "call":
-                    longrepr = item.repr_failure(excinfo)
-                else:  # exception in setup or teardown
-                    longrepr = item._repr_failure_py(
-                        excinfo, style=item.config.getoption("tbstyle", "auto")
-                    )
+                longrepr = _format_failed_longrepr(item, call, excinfo)
         for rwhen, key, content in item._report_sections:
             sections.append((f"Captured {key} {rwhen}", content))
         return cls(
@@ -458,7 +516,7 @@ class CollectErrorRepr(TerminalRepr):
 def pytest_report_to_serializable(
     report: CollectReport | TestReport,
 ) -> dict[str, Any] | None:
-    if isinstance(report, (TestReport, CollectReport)):
+    if isinstance(report, TestReport | CollectReport):
         data = report._to_json()
         data["$report_type"] = report.__class__.__name__
         return data

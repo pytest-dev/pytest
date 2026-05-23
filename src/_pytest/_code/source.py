@@ -3,12 +3,12 @@ from __future__ import annotations
 
 import ast
 from bisect import bisect_right
+from collections.abc import Iterable
+from collections.abc import Iterator
 import inspect
 import textwrap
 import tokenize
 import types
-from typing import Iterable
-from typing import Iterator
 from typing import overload
 import warnings
 
@@ -22,12 +22,16 @@ class Source:
     def __init__(self, obj: object = None) -> None:
         if not obj:
             self.lines: list[str] = []
+            self.raw_lines: list[str] = []
         elif isinstance(obj, Source):
             self.lines = obj.lines
-        elif isinstance(obj, (tuple, list)):
+            self.raw_lines = obj.raw_lines
+        elif isinstance(obj, tuple | list):
             self.lines = deindent(x.rstrip("\n") for x in obj)
+            self.raw_lines = list(x.rstrip("\n") for x in obj)
         elif isinstance(obj, str):
             self.lines = deindent(obj.split("\n"))
+            self.raw_lines = obj.split("\n")
         else:
             try:
                 rawcode = getrawcode(obj)
@@ -35,6 +39,7 @@ class Source:
             except TypeError:
                 src = inspect.getsource(obj)  # type: ignore[arg-type]
             self.lines = deindent(src.split("\n"))
+            self.raw_lines = src.split("\n")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Source):
@@ -58,6 +63,7 @@ class Source:
                 raise IndexError("cannot slice a Source with a step")
             newsource = Source()
             newsource.lines = self.lines[key.start : key.stop]
+            newsource.raw_lines = self.raw_lines[key.start : key.stop]
             return newsource
 
     def __iter__(self) -> Iterator[str]:
@@ -74,6 +80,7 @@ class Source:
         while end > start and not self.lines[end - 1].strip():
             end -= 1
         source = Source()
+        source.raw_lines = self.raw_lines
         source.lines[:] = self.lines[start:end]
         return source
 
@@ -81,6 +88,7 @@ class Source:
         """Return a copy of the source object with all lines indented by the
         given indent-string."""
         newsource = Source()
+        newsource.raw_lines = self.raw_lines
         newsource.lines = [(indent + line) for line in self.lines]
         return newsource
 
@@ -95,13 +103,14 @@ class Source:
         which containing the given lineno."""
         if not (0 <= lineno < len(self)):
             raise IndexError("lineno out of range")
-        ast, start, end = getstatementrange_ast(lineno, self)
+        _ast, start, end = getstatementrange_ast(lineno, self)
         return start, end
 
     def deindent(self) -> Source:
         """Return a new Source object deindented."""
         newsource = Source()
         newsource.lines[:] = deindent(self.lines)
+        newsource.raw_lines = self.raw_lines
         return newsource
 
     def __str__(self) -> str:
@@ -120,6 +129,7 @@ def findsource(obj) -> tuple[Source | None, int]:
         return None, -1
     source = Source()
     source.lines = [line.rstrip() for line in sourcelines]
+    source.raw_lines = sourcelines
     return source, lineno
 
 
@@ -145,9 +155,9 @@ def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None
     # AST's line numbers start indexing at 1.
     values: list[int] = []
     for x in ast.walk(node):
-        if isinstance(x, (ast.stmt, ast.ExceptHandler)):
+        if isinstance(x, ast.stmt | ast.ExceptHandler):
             # The lineno points to the class/def, so need to include the decorators.
-            if isinstance(x, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(x, ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
                 for d in x.decorator_list:
                     values.append(d.lineno - 1)
             values.append(x.lineno - 1)
@@ -158,6 +168,8 @@ def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None
                     values.append(val[0].lineno - 1 - 1)
     values.sort()
     insert_index = bisect_right(values, lineno)
+    if insert_index == 0:
+        return 0, None
     start = values[insert_index - 1]
     if insert_index >= len(values):
         end = None
@@ -206,6 +218,7 @@ def getstatementrange_ast(
             pass
 
     # The end might still point to a comment or empty line, correct it.
+    end = min(end, len(source.lines))
     while end:
         line = source.lines[end - 1].lstrip()
         if line.startswith("#") or not line:

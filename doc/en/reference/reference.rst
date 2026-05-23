@@ -18,8 +18,18 @@ The current pytest version, as a string::
 
     >>> import pytest
     >>> pytest.__version__
-    '7.0.0'
+    '9.0.2'
 
+.. _`hidden-param`:
+
+pytest.HIDDEN_PARAM
+~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 8.4
+
+Can be passed to ``ids`` of :py:func:`Metafunc.parametrize <pytest.Metafunc.parametrize>`
+or to ``id`` of :func:`pytest.param` to hide a parameter set from the test name.
+Can only be used at most 1 time, as test names need to be unique.
 
 .. _`version-tuple`:
 
@@ -176,7 +186,7 @@ Add warning filters to marked test items.
 
         .. code-block:: python
 
-            @pytest.mark.filterwarnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
+            @pytest.mark.filterwarnings(r"ignore:.*usage will be deprecated.*:DeprecationWarning")
             def test_foo(): ...
 
 
@@ -251,7 +261,7 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=xfail_strict)
+.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=strict_xfail)
 
     :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
@@ -276,7 +286,7 @@ Marks a test function as *expected to fail*.
           that are always failing and there should be a clear indication if they unexpectedly start to pass (for example
           a new release of a library fixes a known bug).
 
-        Defaults to :confval:`xfail_strict`, which is ``False`` by default.
+        Defaults to :confval:`strict_xfail`, which is ``False`` by default.
 
 
 Custom marks
@@ -401,6 +411,16 @@ capsys
 
 .. autoclass:: pytest.CaptureFixture()
     :members:
+
+.. fixture:: capteesys
+
+capteesys
+~~~~~~~~~
+
+**Tutorial**: :ref:`captures`
+
+.. autofunction:: _pytest.capture.capteesys()
+    :no-auto-options:
 
 .. fixture:: capsysbinary
 
@@ -549,6 +569,19 @@ request
 The ``request`` fixture is a special fixture providing information of the requesting test function.
 
 .. autoclass:: pytest.FixtureRequest()
+    :members:
+
+
+.. fixture:: subtests
+
+subtests
+~~~~~~~~
+
+The ``subtests`` fixture enables declaring subtests inside test functions.
+
+**Tutorial**: :ref:`subtests`
+
+.. autoclass:: pytest.Subtests()
     :members:
 
 
@@ -724,6 +757,7 @@ items, delete or otherwise amend the test items:
     If this hook is implemented in ``conftest.py`` files, it always receives all collected items, not only those
     under the ``conftest.py`` where it is implemented.
 
+.. hook:: pytest_collection_finish
 .. autofunction:: pytest_collection_finish
 
 Test running (runtest) hooks
@@ -1014,6 +1048,23 @@ PytestPluginManager
     :inherited-members:
     :show-inheritance:
 
+RaisesExc
+~~~~~~~~~
+
+.. autoclass:: pytest.RaisesExc()
+    :members:
+
+    .. autoattribute:: fail_reason
+
+RaisesGroup
+~~~~~~~~~~~
+**Tutorial**: :ref:`assert-matching-exception-groups`
+
+.. autoclass:: pytest.RaisesGroup()
+    :members:
+
+    .. autoattribute:: fail_reason
+
 TerminalReporter
 ~~~~~~~~~~~~~~~~
 
@@ -1128,74 +1179,77 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: CI
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to ``BUILD_NUMBER`` variable. See also :ref:`ci-pipelines`.
+   When set to a non-empty value, pytest acknowledges that it is running in a CI process. See also :ref:`ci-pipelines`.
 
 .. envvar:: BUILD_NUMBER
 
-When set (regardless of value), pytest acknowledges that is running in a CI process. Alternative to CI variable. See also :ref:`ci-pipelines`.
+   When set to a non-empty value, pytest acknowledges that it is running in a CI process. Alternative to :envvar:`CI`. See also :ref:`ci-pipelines`.
 
 .. envvar:: PYTEST_ADDOPTS
 
-This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
-by the user, see :ref:`adding default options` for more information.
+   This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
+   by the user, see :ref:`adding default options` for more information.
 
 .. envvar:: PYTEST_VERSION
 
-This environment variable is defined at the start of the pytest session and is undefined afterwards.
-It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
+   This environment variable is defined at the start of the pytest session and is undefined afterwards.
+   It contains the value of ``pytest.__version__``, and among other things can be used to easily check if a code is running from within a pytest run.
 
 .. envvar:: PYTEST_CURRENT_TEST
 
-This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
-processes can inspect it, see :ref:`pytest current test env` for more information.
+   This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
+   processes can inspect it, see :ref:`pytest current test env` for more information.
 
 .. envvar:: PYTEST_DEBUG
 
-When set, pytest will print tracing and debug information.
+   When set, pytest will print tracing and debug information.
 
 .. envvar:: PYTEST_DEBUG_TEMPROOT
 
-Root for temporary directories produced by fixtures like :fixture:`tmp_path`
-as discussed in :ref:`temporary directory location and retention`.
+   Root for temporary directories produced by fixtures like :fixture:`tmp_path`
+   as discussed in :ref:`temporary directory location and retention`.
 
 .. envvar:: PYTEST_DISABLE_PLUGIN_AUTOLOAD
 
-When set, disables plugin auto-loading through :std:doc:`entry point packaging
-metadata <packaging:guides/creating-and-discovering-plugins>`. Only explicitly
-specified plugins will be loaded.
+   When set, disables plugin auto-loading through :std:doc:`entry point packaging
+   metadata <packaging:guides/creating-and-discovering-plugins>`. Only plugins
+   explicitly specified in :envvar:`PYTEST_PLUGINS` or with :option:`-p` will be loaded.
+   See also :ref:`--disable-plugin-autoload <disable_plugin_autoload>`.
 
 .. envvar:: PYTEST_PLUGINS
 
-Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules that should be loaded as plugins:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-    export PYTEST_PLUGINS=mymodule.plugin,xdist
+       export PYTEST_PLUGINS=mymodule.plugin,xdist
+
+   See also :option:`-p`.
 
 .. envvar:: PYTEST_THEME
 
-Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
+   Sets a `pygment style <https://pygments.org/docs/styles/>`_ to use for the code output.
 
 .. envvar:: PYTEST_THEME_MODE
 
-Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
+   Sets the :envvar:`PYTEST_THEME` to be either *dark* or *light*.
 
 .. envvar:: PY_COLORS
 
-When set to ``1``, pytest will use color in terminal output.
-When set to ``0``, pytest will not use color.
-``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
+   When set to ``1``, pytest will use color in terminal output.
+   When set to ``0``, pytest will not use color.
+   ``PY_COLORS`` takes precedence over ``NO_COLOR`` and ``FORCE_COLOR``.
 
 .. envvar:: NO_COLOR
 
-When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
-``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
-See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
+   When set to a non-empty string (regardless of value), pytest will not use color in terminal output.
+   ``PY_COLORS`` takes precedence over ``NO_COLOR``, which takes precedence over ``FORCE_COLOR``.
+   See `no-color.org <https://no-color.org/>`__ for other libraries supporting this community standard.
 
 .. envvar:: FORCE_COLOR
 
-When set to a non-empty string (regardless of value), pytest will use color in terminal output.
-``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
+   When set to a non-empty string (regardless of value), pytest will use color in terminal output.
+   ``PY_COLORS`` and ``NO_COLOR`` take precedence over ``FORCE_COLOR``.
 
 Exceptions
 ----------
@@ -1234,7 +1288,10 @@ Custom warnings generated in some situations such as improper usage or deprecate
 .. autoclass:: pytest.PytestExperimentalApiWarning
    :show-inheritance:
 
-.. autoclass:: pytest.PytestRemovedIn9Warning
+.. autoclass:: pytest.PytestReturnNotNoneWarning
+  :show-inheritance:
+
+.. autoclass:: pytest.PytestRemovedIn10Warning
   :show-inheritance:
 
 .. autoclass:: pytest.PytestUnknownMarkWarning
@@ -1258,13 +1315,13 @@ Configuration Options
 Here is a list of builtin configuration options that may be written in a ``pytest.ini`` (or ``.pytest.ini``),
 ``pyproject.toml``, ``tox.ini``, or ``setup.cfg`` file, usually located at the root of your repository.
 
-To see each file format in details, see :ref:`config file formats`.
+To see each file format in detail, see :ref:`config file formats`.
 
 .. warning::
     Usage of ``setup.cfg`` is not recommended except for very simple use cases. ``.cfg``
     files use a different parser than ``pytest.ini`` and ``tox.ini`` which might cause hard to track
     down problems.
-    When possible, it is recommended to use the latter files, or ``pyproject.toml``, to hold your pytest configuration.
+    When possible, it is recommended to use the latter files, or ``pytest.toml`` or ``pyproject.toml``, to hold your pytest configuration.
 
 Configuration options may be overwritten in the command-line by using ``-o/--override-ini``, which can also be
 passed multiple times. The expected format is ``name=value``. For example::
@@ -1273,15 +1330,16 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: addopts
+   :type: ``list[str]``
 
    Add the specified ``OPTS`` to the set of command line arguments as if they
-   had been specified by the user. Example: if you have this ini file content:
+   had been specified by the user. Example: if you have this configuration file content:
 
-   .. code-block:: ini
+   .. code-block:: toml
 
-        # content of pytest.ini
+        # content of pytest.toml
         [pytest]
-        addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
+        addopts = ["--maxfail=2", "-rf"]  # exit after 2 failures, report fail info
 
    issuing ``pytest test_hello.py`` actually means:
 
@@ -1289,31 +1347,84 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         pytest --maxfail=2 -rf test_hello.py
 
-   Default is to add no options.
-
 
 .. confval:: cache_dir
+   :type: ``str``
+   :default: ``".pytest_cache"``
 
-   Sets the directory where the cache plugin's content is stored. Default directory is
-   ``.pytest_cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
-   relative or absolute path. If setting relative path, then directory is created
+   Sets the directory where the cache plugin's content is stored.
+   Directory may be relative or absolute path. If setting relative path, then directory is created
    relative to :ref:`rootdir <rootdir>`. Additionally, a path may contain environment
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
+.. confval:: collect_imported_tests
+   :type: ``bool``
+   :default: ``true``
+
+   .. versionadded:: 8.4
+
+   Setting this to ``false`` will make pytest collect classes/functions from test
+   files **only** if they are defined in that file (as opposed to imported there).
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+            [pytest]
+            collect_imported_tests = false
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            collect_imported_tests = false
+
+   pytest traditionally collects classes/functions in the test module namespace even if they are imported from another file.
+
+   For example:
+
+   .. code-block:: python
+
+       # contents of src/domain.py
+       class Testament: ...
+
+
+       # contents of tests/test_testament.py
+       from domain import Testament
+
+
+       def test_testament(): ...
+
+   In this scenario, with the default options, pytest will collect the class `Testament` from `tests/test_testament.py` because it starts with `Test`, even though in this case it is a production class being imported in the test module namespace.
+
+   Set ``collected_imported_tests`` to ``false`` in the configuration file prevents that.
+
 .. confval:: consider_namespace_packages
+   :type: ``bool``
+   :default: ``false``
 
    Controls if pytest should attempt to identify `namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages>`__
-   when collecting Python modules. Default is ``False``.
+   when collecting Python modules.
 
    Set to ``True`` if the package you are testing is part of a namespace package.
+   Namespace packages are also supported as :option:`--pyargs` target.
 
    Only `native namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#native-namespace-packages>`__
    are supported, with no plans to support `legacy namespace packages <https://packaging.python.org/en/latest/guides/packaging-namespace-packages/#legacy-namespace-packages>`__.
 
+   For best results when using `consider_namespace_packages`,
+   pytest needs to be able to import your namespace packages.
+   This is best achieved by installing the packages in your environment,
+   most commonly in `"editable" mode <https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#working-in-development-mode>`_.
+   If you can't install the packages, consider adding the namespace root paths to :confval:`pythonpath`.
+
    .. versionadded:: 8.1
 
 .. confval:: console_output_style
+   :type: ``str``
+   :default: ``"progress"``
 
    Sets the console output style while running tests:
 
@@ -1321,18 +1432,29 @@ passed multiple times. The expected format is ``name=value``. For example::
    * ``progress``: like classic pytest output, but with a progress indicator.
    * ``progress-even-when-capture-no``: allows the use of the progress indicator even when ``capture=no``.
    * ``count``: like progress, but shows progress as the number of tests completed instead of a percent.
+   * ``times``: show tests duration.
 
-   The default is ``progress``, but you can fallback to ``classic`` if you prefer or
+   You can fallback to ``classic`` if you prefer or
    the new mode is causing unexpected problems:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        console_output_style = classic
+       .. code-block:: toml
+
+            [pytest]
+            console_output_style = "classic"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            console_output_style = classic
 
 
 .. confval:: disable_test_id_escaping_and_forfeit_all_rights_to_community_support
+   :type: ``bool``
+   :default: ``false``
 
    .. versionadded:: 4.4
 
@@ -1340,50 +1462,66 @@ passed multiple times. The expected format is ``name=value``. For example::
    for the parametrization because it has several downsides.
    If however you would like to use unicode strings in parametrization
    and see them in the terminal as is (non-escaped), use this option
-   in your ``pytest.ini``:
+   in your configuration file:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-       [pytest]
-       disable_test_id_escaping_and_forfeit_all_rights_to_community_support = True
+       .. code-block:: toml
+
+           [pytest]
+           disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+           [pytest]
+           disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 
    Keep in mind however that this might cause unwanted side effects and
    even bugs depending on the OS used and plugins currently installed,
    so use it at your own risk.
 
-   Default: ``False``.
-
    See :ref:`parametrizemark`.
 
 .. confval:: doctest_encoding
-
-
+   :type: ``str``
+   :default: ``"utf-8"``
 
    Default encoding to use to decode text files with docstrings.
    :ref:`See how pytest handles doctests <doctest>`.
 
 
 .. confval:: doctest_optionflags
+   :type: ``list[str]``
 
    One or more doctest flag names from the standard ``doctest`` module.
    :ref:`See how pytest handles doctests <doctest>`.
 
 
 .. confval:: empty_parameter_set_mark
-
-
+    :type: ``str``
+    :default: ``"skip"``
 
     Allows to pick the action for empty parametersets in parameterization
 
-    * ``skip`` skips tests with an empty parameterset (default)
+    * ``skip`` skips tests with an empty parameterset
     * ``xfail`` marks tests with an empty parameterset as xfail(run=False)
     * ``fail_at_collect`` raises an exception if parametrize collects an empty parameter set
 
-    .. code-block:: ini
+    .. tab:: toml
 
-      # content of pytest.ini
-      [pytest]
-      empty_parameter_set_mark = xfail
+        .. code-block:: toml
+
+            [pytest]
+            empty_parameter_set_mark = "xfail"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            empty_parameter_set_mark = xfail
 
     .. note::
 
@@ -1391,56 +1529,170 @@ passed multiple times. The expected format is ``name=value``. For example::
       as this is considered less error prone, see :issue:`3155` for more details.
 
 
+.. confval:: enable_assertion_pass_hook
+   :type: ``bool``
+   :default: ``false``
+
+   Enables the :hook:`pytest_assertion_pass` hook.
+   Make sure to delete any previously generated ``.pyc`` cache files.
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+            [pytest]
+            enable_assertion_pass_hook = true
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            enable_assertion_pass_hook = true
+
+
+.. confval:: faulthandler_exit_on_timeout
+   :type: ``bool``
+   :default: ``false``
+
+   Exit the pytest process after the per-test timeout is reached by passing
+   `exit=True` to the :func:`faulthandler.dump_traceback_later` function. This
+   is particularly useful to avoid wasting CI resources for test suites that
+   are prone to putting the main Python interpreter into a deadlock state.
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+            [pytest]
+            faulthandler_timeout = 5
+            faulthandler_exit_on_timeout = true
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            faulthandler_timeout = 5
+            faulthandler_exit_on_timeout = true
+
+
+
 .. confval:: faulthandler_timeout
+   :type: ``float``
+   :default: ``0`` (disabled)
 
    Dumps the tracebacks of all threads if a test takes longer than ``X`` seconds to run (including
    fixture setup and teardown). Implemented using the :func:`faulthandler.dump_traceback_later` function,
    so all caveats there apply.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        faulthandler_timeout=5
+       .. code-block:: toml
+
+            [pytest]
+            faulthandler_timeout = 5
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            faulthandler_timeout = 5
 
    For more information please refer to :ref:`faulthandler`.
 
+
 .. confval:: filterwarnings
-
-
+   :type: ``list[str]``
 
    Sets a list of filters and actions that should be taken for matched
    warnings. By default all warnings emitted during the test session
    will be displayed in a summary at the end of the test session.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        filterwarnings =
-            error
-            ignore::DeprecationWarning
+       .. code-block:: toml
+
+            [pytest]
+            filterwarnings = [
+                'error',
+                'ignore::DeprecationWarning',
+                # Note the use of single quote below to denote "raw" strings in TOML.
+                'ignore:function ham\(\) should not be used:UserWarning',
+            ]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            filterwarnings =
+                error
+                ignore::DeprecationWarning
+                ignore:function ham\(\) should not be used:UserWarning
 
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
 
 
+.. confval:: max_warnings
+   :type: ``int``
+
+   .. versionadded:: 9.1
+
+   Maximum number of warnings allowed before the test run is considered a failure.
+   When all tests pass, but the total number of warnings exceeds this value, pytest exits with
+   :class:`pytest.ExitCode` ``MAX_WARNINGS_ERROR`` (code ``6``).
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+            [pytest]
+            max_warnings = 10
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            max_warnings = 10
+
+   Note that :confval:`filtered warnings <filterwarnings>` do not count toward this maximum total.
+
+   Can also be set via the :option:`--max-warnings` command-line option.
+
+
 .. confval:: junit_duration_report
+    :type: ``str``
+    :default: ``"total"``
 
     .. versionadded:: 4.1
 
     Configures how durations are recorded into the JUnit XML report:
 
-    * ``total`` (the default): duration times reported include setup, call, and teardown times.
+    * ``total``: duration times reported include setup, call, and teardown times.
     * ``call``: duration times reported include only call times, excluding setup and teardown.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_duration_report = call
+        .. code-block:: toml
+
+            [pytest]
+            junit_duration_report = "call"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_duration_report = call
 
 
 .. confval:: junit_family
+    :type: ``str``
+    :default: ``"xunit2"``
 
     .. versionadded:: 4.2
     .. versionchanged:: 6.1
@@ -1449,15 +1701,50 @@ passed multiple times. The expected format is ``name=value``. For example::
     Configures the format of the generated JUnit XML file. The possible options are:
 
     * ``xunit1`` (or ``legacy``): produces old style output, compatible with the xunit 1.0 format.
-    * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__, which should be more compatible with latest Jenkins versions.  **This is the default**.
+    * ``xunit2``: produces `xunit 2.0 style output <https://github.com/jenkinsci/xunit-plugin/blob/xunit-2.3.2/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd>`__, which should be more compatible with latest Jenkins versions.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_family = xunit2
+        .. code-block:: toml
+
+            [pytest]
+            junit_family = "xunit2"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_family = xunit2
+
+
+.. confval:: junit_log_passing_tests
+    :type: ``bool``
+    :default: ``true``
+
+    .. versionadded:: 4.6
+
+    If ``junit_logging != "no"``, configures if the captured output should be written
+    to the JUnit XML file for **passing** tests.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            junit_log_passing_tests = false
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_log_passing_tests = False
 
 
 .. confval:: junit_logging
+    :type: ``str``
+    :default: ``"no"``
 
     .. versionadded:: 3.5
     .. versionchanged:: 5.4
@@ -1470,53 +1757,71 @@ passed multiple times. The expected format is ``name=value``. For example::
     * ``system-err``: write captured ``stderr`` contents.
     * ``out-err``: write both captured ``stdout`` and ``stderr`` contents.
     * ``all``: write captured ``logging``, ``stdout`` and ``stderr`` contents.
-    * ``no`` (the default): no captured output is written.
+    * ``no``: no captured output is written.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_logging = system-out
+        .. code-block:: toml
 
+            [pytest]
+            junit_logging = "system-out"
 
-.. confval:: junit_log_passing_tests
+    .. tab:: ini
 
-    .. versionadded:: 4.6
+        .. code-block:: ini
 
-    If ``junit_logging != "no"``, configures if the captured output should be written
-    to the JUnit XML file for **passing** tests. Default is ``True``.
-
-    .. code-block:: ini
-
-        [pytest]
-        junit_log_passing_tests = False
+            [pytest]
+            junit_logging = system-out
 
 
 .. confval:: junit_suite_name
+    :type: ``str``
+    :default: ``"pytest"``
 
     To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        junit_suite_name = my_suite
+        .. code-block:: toml
+
+            [pytest]
+            junit_suite_name = "my_suite"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            junit_suite_name = my_suite
 
 .. confval:: log_auto_indent
+    :type: ``str``
+    :default: ``"false"``
 
     Allow selective auto-indentation of multiline log messages.
 
-    Supports command line option ``--log-auto-indent [value]``
+    Supports command line option :option:`--log-auto-indent=[value]`
     and config option ``log_auto_indent = [value]`` to set the
     auto-indentation behavior for all logging.
 
     ``[value]`` can be:
-        * True or "On" - Dynamically auto-indent multiline log messages
-        * False or "Off" or 0 - Do not auto-indent multiline log messages (the default behavior)
-        * [positive integer] - auto-indent multiline log messages by [value] spaces
+        * "True" or "On" - Dynamically auto-indent multiline log messages
+        * "False" or "Off" or "0" - Do not auto-indent multiline log messages
+        * "[positive integer]" - auto-indent multiline log messages by [value] spaces
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_auto_indent = False
+        .. code-block:: toml
+
+            [pytest]
+            log_auto_indent = "false"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_auto_indent = false
 
     Supports passing kwarg ``extra={"auto_indent": [value]}`` to
     calls to ``logging.log()`` to specify auto-indentation behavior for
@@ -1524,190 +1829,339 @@ passed multiple times. The expected format is ``name=value``. For example::
     on the command line or in the config.
 
 .. confval:: log_cli
+    :type: ``bool``
+    :default: ``false``
 
     Enable log display during test run (also known as :ref:`"live logging" <live_logs>`).
-    The default is ``False``.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_cli = True
+        .. code-block:: toml
+
+            [pytest]
+            log_cli = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_cli = true
 
 .. confval:: log_cli_date_format
-
-
+    :type: ``str``
+    :default: Fallback to ``log_date_format``
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for live logging.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_cli_date_format = %Y-%m-%d %H:%M:%S
+        .. code-block:: toml
+
+            [pytest]
+            log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_cli_date_format = %Y-%m-%d %H:%M:%S
 
     For more information, see :ref:`live_logs`.
 
 .. confval:: log_cli_format
-
-
+    :type: ``str``
+    :default: Fallback to ``log_format``
 
     Sets a :py:mod:`logging`-compatible string used to format live logging messages.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_cli_format = %(asctime)s %(levelname)s %(message)s
+        .. code-block:: toml
+
+            [pytest]
+            log_cli_format = "%(asctime)s %(levelname)s %(message)s"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_cli_format = %(asctime)s %(levelname)s %(message)s
 
     For more information, see :ref:`live_logs`.
 
 
 .. confval:: log_cli_level
-
-
+    :type: ``str``
+    :default: Fallback to ``log_level``
 
     Sets the minimum log message level that should be captured for live logging. The integer value or
-    the names of the levels can be used.
+    the names of the levels can be used. Note in TOML the integer must be quoted, as there is no support
+    for config parameters of mixed type.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_cli_level = INFO
+        .. code-block:: toml
+
+            [pytest]
+            log_cli_level = "INFO"
+            log_cli_level = "10"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_cli_level = INFO
+            log_cli_level = 10
 
     For more information, see :ref:`live_logs`.
 
 
 .. confval:: log_date_format
-
-
+    :type: ``str``
+    :default: ``"%H:%M:%S"``
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for logging capture.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_date_format = %Y-%m-%d %H:%M:%S
+        .. code-block:: toml
+
+            [pytest]
+            log_date_format = "%Y-%m-%d %H:%M:%S"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_date_format = %Y-%m-%d %H:%M:%S
 
     For more information, see :ref:`logging`.
 
 
 .. confval:: log_file
-
-
+    :type: ``str``
 
     Sets a file name relative to the current working directory where log messages should be written to, in addition
     to the other logging facilities that are active.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_file = logs/pytest-logs.txt
+        .. code-block:: toml
+
+            [pytest]
+            log_file = "logs/pytest-logs.txt"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file = logs/pytest-logs.txt
 
     For more information, see :ref:`logging`.
 
 
 .. confval:: log_file_date_format
-
-
+    :type: ``str``
+    :default: Fallback to ``log_date_format``
 
     Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for the logging file.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_file_date_format = %Y-%m-%d %H:%M:%S
+        .. code-block:: toml
+
+            [pytest]
+            log_file_date_format = "%Y-%m-%d %H:%M:%S"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_date_format = %Y-%m-%d %H:%M:%S
 
     For more information, see :ref:`logging`.
 
 .. confval:: log_file_format
-
-
+    :type: ``str``
+    :default: Fallback to ``log_format``
 
     Sets a :py:mod:`logging`-compatible string used to format logging messages redirected to the logging file.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_file_format = %(asctime)s %(levelname)s %(message)s
+        .. code-block:: toml
+
+            [pytest]
+            log_file_format = "%(asctime)s %(levelname)s %(message)s"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_format = %(asctime)s %(levelname)s %(message)s
 
     For more information, see :ref:`logging`.
 
 .. confval:: log_file_level
+    :type: ``str``
+    :default: Fallback to ``log_level``
+
+    Sets the minimum log message level that should be captured for the logging file.
+    The integer value (in TOML, as a string) or the names of the levels can be used.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            log_file_level = "INFO"
+            log_cli_level = "10"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_level = INFO
+            log_cli_level = 10
+
+    For more information, see :ref:`logging`.
 
 
+.. confval:: log_file_mode
+    :type: ``str``
+    :default: ``"w"``
 
-    Sets the minimum log message level that should be captured for the logging file. The integer value or
-    the names of the levels can be used.
+    Sets the mode that the logging file is opened with.
+    The options are ``"w"`` to recreate the file or ``"a"`` to append to the file.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_file_level = INFO
+        .. code-block:: toml
+
+            [pytest]
+            log_file_mode = "a"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_file_mode = a
 
     For more information, see :ref:`logging`.
 
 
 .. confval:: log_format
-
-
+    :type: ``str``
+    :default: ``%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s``
 
     Sets a :py:mod:`logging`-compatible string used to format captured logging messages.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        log_format = %(asctime)s %(levelname)s %(message)s
+        .. code-block:: toml
+
+            [pytest]
+            log_format = "%(asctime)s %(levelname)s %(message)s"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_format = %(asctime)s %(levelname)s %(message)s
 
     For more information, see :ref:`logging`.
 
 
 .. confval:: log_level
+    :type: ``str``
 
+    Sets the minimum log message level that should be captured for logging capture.
+    Not set by default, so it depends on the root/parent log handler's effective level,
+    where it is ``"WARNING"`` by default.
+    The integer value (in TOML, as a string) or the names of the levels can be used.
 
+    .. tab:: toml
 
-    Sets the minimum log message level that should be captured for logging capture. The integer value or
-    the names of the levels can be used.
+        .. code-block:: toml
 
-    .. code-block:: ini
+            [pytest]
+            log_level = "INFO"
+            log_cli_level = "10"
 
-        [pytest]
-        log_level = INFO
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            log_level = INFO
+            log_cli_level = 10
 
     For more information, see :ref:`logging`.
 
 
 .. confval:: markers
+    :type: ``list[str]``
 
-    When the ``--strict-markers`` or ``--strict`` command-line arguments are used,
+    When the :confval:`strict_markers` configuration option is set,
     only known markers - defined in code by core pytest or some plugin - are allowed.
 
     You can list additional markers in this setting to add them to the whitelist,
-    in which case you probably want to add ``--strict-markers`` to ``addopts``
+    in which case you probably want to set :confval:`strict_markers` to ``true``
     to avoid future regressions:
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        addopts = --strict-markers
-        markers =
-            slow
-            serial
+        .. code-block:: toml
 
-    .. note::
-        The use of ``--strict-markers`` is highly preferred. ``--strict`` was kept for
-        backward compatibility only and may be confusing for others as it only applies to
-        markers and not to other options.
+            [pytest]
+            addopts = ["--strict-markers"]
+            markers = ["slow", "serial"]
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_markers = true
+            markers =
+                slow
+                serial
+
 
 .. confval:: minversion
+   :type: ``str``
 
    Specifies a minimal pytest version required for running tests.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        # content of pytest.ini
-        [pytest]
-        minversion = 3.0  # will fail if we run with pytest-2.8
+       .. code-block:: toml
+
+            [pytest]
+            minversion = 3.0  # will fail if we run with pytest-2.8
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            minversion = 3.0  # will fail if we run with pytest-2.8
 
 
 .. confval:: norecursedirs
+   :type: ``list[str]``
+   :default: ``["*.egg", ".*", "_darcs", "build", "CVS", "dist", "node_modules", "venv", "{arch}"]``
 
    Set the directory basename patterns to avoid when recursing
    for test discovery.  The individual (fnmatch-style) patterns are
@@ -1719,15 +2173,22 @@ passed multiple times. The expected format is ``name=value``. For example::
         [seq]   matches any character in seq
         [!seq]  matches any char not in seq
 
-   Default patterns are ``'*.egg'``, ``'.*'``, ``'_darcs'``, ``'build'``,
-   ``'CVS'``, ``'dist'``, ``'node_modules'``, ``'venv'``, ``'{arch}'``.
    Setting a ``norecursedirs`` replaces the default.  Here is an example of
    how to avoid certain directories:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        norecursedirs = .svn _build tmp*
+       .. code-block:: toml
+
+            [pytest]
+            norecursedirs = [".svn", "_build", "tmp*"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            norecursedirs = .svn _build tmp*
 
    This would tell ``pytest`` to not look into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
@@ -1735,7 +2196,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    Additionally, ``pytest`` will attempt to intelligently identify and ignore
    a virtualenv.  Any directory deemed to be the root of a virtual environment
    will not be considered during test collection unless
-   ``--collect-in-virtualenv`` is given.  Note also that ``norecursedirs``
+   :option:`--collect-in-virtualenv` is given.  Note also that ``norecursedirs``
    takes precedence over ``--collect-in-virtualenv``; e.g. if you intend to
    run tests in a virtualenv with a base directory that matches ``'.*'`` you
    *must* override ``norecursedirs`` in addition to using the
@@ -1743,6 +2204,8 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: python_classes
+   :type: ``list[str]``
+   :default: ``["Test"]``
 
    One or more name prefixes or glob-style patterns determining which classes
    are considered for test collection. Search for multiple glob patterns by
@@ -1750,10 +2213,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    class prefixed with ``Test`` as a test collection.  Here is an example of how
    to collect tests from classes that end in ``Suite``:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        python_classes = *Suite
+       .. code-block:: toml
+
+            [pytest]
+            python_classes = ["*Suite"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            python_classes = *Suite
 
    Note that ``unittest.TestCase`` derived classes are always collected
    regardless of this option, as ``unittest``'s own collection framework is used
@@ -1761,31 +2233,42 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: python_files
+   :type: ``list[str]``
+   :default: ``["test_*.py", "*_test.py"]``
 
    One or more Glob-style file patterns determining which python files
    are considered as test modules. Search for multiple glob patterns by
    adding a space between patterns:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        python_files = test_*.py check_*.py example_*.py
+       .. code-block:: toml
 
-   Or one per line:
+            [pytest]
+            python_files = ["test_*.py", "check_*.py", "example_*.py"]
 
-   .. code-block:: ini
+   .. tab:: ini
 
-        [pytest]
-        python_files =
-            test_*.py
-            check_*.py
-            example_*.py
+       .. code-block:: ini
 
-   By default, files matching ``test_*.py`` and ``*_test.py`` will be considered
-   test modules.
+            [pytest]
+            python_files = test_*.py check_*.py example_*.py
+
+       Or one per line:
+
+       .. code-block:: ini
+
+            [pytest]
+            python_files =
+                test_*.py
+                check_*.py
+                example_*.py
+
 
 
 .. confval:: python_functions
+   :type: ``list[str]``
+   :default: ``["test"]``
 
    One or more name prefixes or glob-patterns determining which test functions
    and methods are considered tests. Search for multiple glob patterns by
@@ -1793,10 +2276,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    function prefixed with ``test`` as a test.  Here is an example of how
    to collect test functions and methods that end in ``_test``:
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        python_functions = *_test
+       .. code-block:: toml
+
+            [pytest]
+            python_functions = ["*_test"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            python_functions = *_test
 
    Note that this has no effect on methods that live on a ``unittest.TestCase``
    derived class, as ``unittest``'s own collection framework is used
@@ -1806,6 +2298,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: pythonpath
+   :type: ``list[str]``
 
    Sets list of directories that should be added to the python search path.
    Directories will be added to the head of :data:`sys.path`.
@@ -1814,26 +2307,210 @@ passed multiple times. The expected format is ``name=value``. For example::
    Paths are relative to the :ref:`rootdir <rootdir>` directory.
    Directories remain in path for the duration of the test session.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        pythonpath = src1 src2
+       .. code-block:: toml
+
+            [pytest]
+            pythonpath = ["src1", "src2"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            pythonpath = src1 src2
 
 
 .. confval:: required_plugins
+   :type: ``list[str]``
 
    A space separated list of plugins that must be present for pytest to run.
    Plugins can be listed with or without version specifiers directly following
    their name. Whitespace between different version specifiers is not allowed.
    If any one of the plugins is not found, emit an error.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-       [pytest]
-       required_plugins = pytest-django>=3.0.0,<4.0.0 pytest-html pytest-xdist>=1.0.0
+       .. code-block:: toml
+
+           [pytest]
+           required_plugins = ["pytest-django>=3.0.0,<4.0.0", "pytest-html", "pytest-xdist>=1.0.0"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+           [pytest]
+           required_plugins = pytest-django>=3.0.0,<4.0.0 pytest-html pytest-xdist>=1.0.0
+
+
+.. confval:: strict
+    :type: ``bool``
+    :default: ``false``
+
+    If set to ``true``, enable "strict mode", which enables the following options:
+
+    * :confval:`strict_config`
+    * :confval:`strict_markers`
+    * :confval:`strict_parametrization_ids`
+    * :confval:`strict_xfail`
+
+    Plugins may also enable their own strictness options.
+
+    If you explicitly set an individual strictness option, it takes precedence over ``strict``.
+
+    .. note::
+        If pytest adds new strictness options in the future, they will also be enabled in strict mode.
+        Therefore, you should only enable strict mode if you use a pinned/locked version of pytest,
+        or if you want to proactively adopt new strictness options as they are added.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict = true
+
+    .. versionadded:: 9.0
+
+
+.. confval:: strict_config
+    :type: ``bool``
+    :default: ``false``
+
+    If set to ``true``, any warnings encountered while parsing the ``pytest`` section of the configuration file will raise errors.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict_config = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_config = true
+
+    You can also enable this option via the :confval:`strict` option.
+
+
+.. confval:: strict_markers
+    :type: ``bool``
+    :default: ``false``
+
+    If set to ``true``, markers not registered in the ``markers`` section of the configuration file will raise errors.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict_markers = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_markers = true
+
+    You can also enable this option via the :confval:`strict` option.
+
+
+.. confval:: strict_parametrization_ids
+    :type: ``bool``
+    :default: ``false``
+
+    If set to ``true``, pytest emits an error if it detects non-unique parameter set IDs.
+
+    If not set, pytest automatically handles this by adding `0`, `1`, ... to duplicate IDs,
+    making them unique.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict_parametrization_ids = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_parametrization_ids = true
+
+    You can also enable this option via the :confval:`strict` option.
+
+    For example,
+
+    .. code-block:: python
+
+        import pytest
+
+
+        @pytest.mark.parametrize("letter", ["a", "a"])
+        def test_letter_is_ascii(letter):
+            assert letter.isascii()
+
+    will emit an error because both cases (parameter sets) have the same auto-generated ID "a".
+
+    To fix the error, if you decide to keep the duplicates, explicitly assign unique IDs:
+
+    .. code-block:: python
+
+        import pytest
+
+
+        @pytest.mark.parametrize("letter", ["a", "a"], ids=["a0", "a1"])
+        def test_letter_is_ascii(letter):
+            assert letter.isascii()
+
+    See :func:`parametrize <pytest.Metafunc.parametrize>` and :func:`pytest.param` for other ways to set IDs.
+
+
+.. confval:: strict_xfail
+    :type: ``bool``
+    :default: ``false``
+
+    If set to ``true``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
+    test suite.
+    For more information, see :ref:`xfail strict tutorial`.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            strict_xfail = true
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            strict_xfail = true
+
+    You can also enable this option via the :confval:`strict` option.
+
+    .. versionchanged:: 9.0
+        Renamed from ``xfail_strict`` to ``strict_xfail``.
+        ``xfail_strict`` is accepted as an alias for ``strict_xfail``.
 
 
 .. confval:: testpaths
+   :type: ``list[str]``
 
    Sets list of directories that should be searched for tests when
    no specific directories, files or test ids are given in the command line when
@@ -1844,10 +2521,19 @@ passed multiple times. The expected format is ``name=value``. For example::
    Useful when all project tests are in a known location to speed up
    test collection and to avoid picking up undesired tests by accident.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        testpaths = testing doc
+       .. code-block:: toml
+
+            [pytest]
+            testpaths = ["testing", "doc"]
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            testpaths = testing doc
 
    This configuration means that executing:
 
@@ -1861,25 +2547,31 @@ passed multiple times. The expected format is ``name=value``. For example::
 
        pytest testing doc
 
-
 .. confval:: tmp_path_retention_count
+   :type: ``str``
+   :default: ``"3"``
 
+   How many sessions should pytest keep the `tmp_path` directories,
+   according to :confval:`tmp_path_retention_policy`.
 
+   .. tab:: toml
 
-   How many sessions should we keep the `tmp_path` directories,
-   according to `tmp_path_retention_policy`.
+       .. code-block:: toml
 
-   .. code-block:: ini
+            [pytest]
+            tmp_path_retention_count = "3"
 
-        [pytest]
-        tmp_path_retention_count = 3
+   .. tab:: ini
 
-   Default: ``3``
+       .. code-block:: ini
+
+            [pytest]
+            tmp_path_retention_count = 3
 
 
 .. confval:: tmp_path_retention_policy
-
-
+   :type: ``str``
+   :default: ``"all"``
 
    Controls which directories created by the `tmp_path` fixture are kept around,
    based on test outcome.
@@ -1888,28 +2580,44 @@ passed multiple times. The expected format is ``name=value``. For example::
     * `failed`: retains directories only for tests with outcome `error` or `failed`.
     * `none`: directories are always removed after each test ends, regardless of the outcome.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-        [pytest]
-        tmp_path_retention_policy = all
+       .. code-block:: toml
 
-   Default: ``all``
+            [pytest]
+            tmp_path_retention_policy = "all"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            tmp_path_retention_policy = all
 
 
 .. confval:: truncation_limit_chars
+   :type: ``int``
+   :default: ``640``
 
    Controls maximum number of characters to truncate assertion message contents.
 
    Setting value to ``0`` disables the character limit for truncation.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-       [pytest]
-       truncation_limit_chars = 640
+       .. code-block:: toml
+
+            [pytest]
+            truncation_limit_chars = 640
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            truncation_limit_chars = 640
 
    pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
-
-   Default: ``640``
 
    .. note::
 
@@ -1917,19 +2625,28 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_lines
+   :type: ``int``
+   :default: ``8``
 
-   Controls maximum number of linesto truncate assertion message contents.
+   Controls maximum number of lines to truncate assertion message contents.
 
    Setting value to ``0`` disables the lines limit for truncation.
 
-   .. code-block:: ini
+   .. tab:: toml
 
-       [pytest]
-       truncation_limit_lines = 8
+       .. code-block:: toml
+
+            [pytest]
+            truncation_limit_lines = 8
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            truncation_limit_lines = 8
 
    pytest truncates the assert messages to a certain limit by default to prevent comparison with large data to overload the console output.
-
-   Default: ``8``
 
    .. note::
 
@@ -1937,55 +2654,126 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: usefixtures
+    :type: ``list[str]``
 
     List of fixtures that will be applied to all test functions; this is semantically the same to apply
     the ``@pytest.mark.usefixtures`` marker to all test functions.
 
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        usefixtures =
-            clean_db
+        .. code-block:: toml
+
+            [pytest]
+            usefixtures = ["clean_db"]
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            usefixtures =
+                clean_db
 
 
 .. confval:: verbosity_assertions
+    :type: ``str``
+    :default: ``"auto"``
 
     Set a verbosity level specifically for assertion related output, overriding the application wide level.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        verbosity_assertions = 2
+        .. code-block:: toml
 
-    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
-    "auto" can be used to explicitly use the global verbosity level.
+            [pytest]
+            verbosity_assertions = "2"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            verbosity_assertions = 2
+
+    A special value of ``"auto"`` can be used to explicitly use the global verbosity level.
+
+
+.. confval:: assertion_text_diff_style
+    :type: ``str``
+    :default: ``"ndiff"``
+
+    Set how pytest renders diffs for string equality assertions.
+
+    Supported values are:
+
+    * ``ndiff``: use the inline diff rendering markers.
+    * ``block``: render each string in separate ``Left:`` and ``Right:`` blocks.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            assertion_text_diff_style = "block"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            assertion_text_diff_style = block
+
+
+.. confval:: verbosity_subtests
+    :type: ``str``
+    :default: ``"auto"``
+
+    Set the verbosity level specifically for **passed** subtests.
+
+    .. tab:: toml
+
+        .. code-block:: toml
+
+            [pytest]
+            verbosity_subtests = "1"
+
+    .. tab:: ini
+
+        .. code-block:: ini
+
+            [pytest]
+            verbosity_subtests = 1
+
+    A value of ``1`` or higher will show output for **passed** subtests (**failed** subtests are always reported).
+    Passed subtests output can be suppressed with the value ``0``, which overwrites the :option:`-v` command-line option.
+
+    A special value of ``"auto"`` can be used to explicitly use the global verbosity level.
+
+    See also: :ref:`subtests`.
 
 
 .. confval:: verbosity_test_cases
+    :type: ``str``
+    :default: ``"auto"``
 
     Set a verbosity level specifically for test case execution related output, overriding the application wide level.
 
-    .. code-block:: ini
+    .. tab:: toml
 
-        [pytest]
-        verbosity_test_cases = 2
+        .. code-block:: toml
 
-    Defaults to application wide verbosity level (via the ``-v`` command-line option). A special value of
-    "auto" can be used to explicitly use the global verbosity level.
+            [pytest]
+            verbosity_test_cases = "2"
 
+    .. tab:: ini
 
-.. confval:: xfail_strict
+        .. code-block:: ini
 
-    If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
-    test suite.
-    For more information, see :ref:`xfail strict tutorial`.
+            [pytest]
+            verbosity_test_cases = 2
 
-
-    .. code-block:: ini
-
-        [pytest]
-        xfail_strict = True
+    A special value of ``"auto"`` can be used to explicitly use the global verbosity level.
 
 
 .. _`command-line-flags`:
@@ -1993,7 +2781,582 @@ passed multiple times. The expected format is ``name=value``. For example::
 Command-line Flags
 ------------------
 
-All the command-line flags can be obtained by running ``pytest --help``::
+This section documents all command-line options provided by pytest's core plugins.
+
+.. note::
+
+    External plugins can add their own command-line options.
+    This reference documents only the options from pytest's core plugins.
+    To see all available options including those from installed plugins, run ``pytest --help``.
+
+Test Selection
+~~~~~~~~~~~~~~
+
+.. option:: -k EXPRESSION
+
+    Only run tests which match the given substring expression.
+    An expression is a Python evaluable expression where all names are substring-matched against test names and their parent classes.
+
+    Examples::
+
+        pytest -k "test_method or test_other"  # matches names containing 'test_method' OR 'test_other'
+        pytest -k "not test_method"            # matches names NOT containing 'test_method'
+        pytest -k "not test_method and not test_other"  # excludes both
+
+    The matching is case-insensitive.
+    Keywords are also matched to classes and functions containing extra names in their ``extra_keyword_matches`` set.
+
+    See :ref:`select-tests` for more information and examples.
+
+.. option:: -m MARKEXPR
+
+    Only run tests matching given mark expression.
+    Supports ``and``, ``or``, and ``not`` operators.
+
+    Examples::
+
+        pytest -m slow                  # run tests marked with @pytest.mark.slow
+        pytest -m "not slow"            # run tests NOT marked slow
+        pytest -m "mark1 and not mark2" # run tests marked mark1 but not mark2
+
+    See :ref:`mark` for more information on markers.
+
+.. option:: --markers
+
+    Show all available markers (builtin, plugin, and per-project markers defined in configuration).
+
+Test Execution Control
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. option:: -x, --exitfirst
+
+    Exit instantly on first error or failed test.
+
+.. option:: --maxfail=NUM
+
+    Exit after first ``num`` failures or errors.
+    Useful for CI environments where you want to fail fast but see a few failures.
+
+.. option:: --last-failed, --lf
+
+    Rerun only the tests that failed at the last run.
+    If no tests failed (or no cached data exists), all tests are run.
+    See also :confval:`cache_dir` and :ref:`cache`.
+
+.. option:: --failed-first, --ff
+
+    Run all tests, but run the last failures first.
+    This may re-order tests and thus lead to repeated fixture setup/teardown.
+
+.. option:: --new-first, --nf
+
+    Run tests from new files first, then the rest of the tests sorted by file modification time.
+
+.. option:: --stepwise, --sw
+
+    Exit on test failure and continue from last failing test next time.
+    Useful for fixing multiple test failures one at a time.
+
+    See :ref:`cache stepwise` for more information.
+
+.. option:: --stepwise-skip, --sw-skip
+
+    Ignore the first failing test but stop on the next failing test.
+    Implicitly enables :option:`--stepwise`.
+
+.. option:: --stepwise-reset, --sw-reset
+
+    Resets stepwise state, restarting the stepwise workflow.
+    Implicitly enables :option:`--stepwise`.
+
+.. option:: --last-failed-no-failures, --lfnf
+
+    With :option:`--last-failed`, determines whether to execute tests when there are no previously known failures or when no cached ``lastfailed`` data was found.
+
+    * ``all`` (default): runs the full test suite again
+    * ``none``: just emits a message about no known failures and exits successfully
+
+.. option:: --runxfail
+
+    Report the results of xfail tests as if they were not marked.
+    Useful for debugging xfailed tests.
+    See :ref:`xfail`.
+
+Collection
+~~~~~~~~~~
+
+.. option:: --collect-only, --co
+
+    Only collect tests, don't execute them.
+    Shows which tests would be collected and run.
+
+.. option:: --pyargs
+
+    Try to interpret all arguments as Python packages.
+    Useful for running tests of installed packages::
+
+        pytest --pyargs pkg.testing
+
+.. option:: --ignore=PATH
+
+    Ignore path during collection (multi-allowed).
+    Can be specified multiple times.
+
+.. option:: --ignore-glob=PATTERN
+
+    Ignore path pattern during collection (multi-allowed).
+    Supports glob patterns.
+
+.. option:: --deselect=NODEID_PREFIX
+
+    Deselect item (via node id prefix) during collection (multi-allowed).
+
+.. option:: --confcutdir=DIR
+
+    Only load ``conftest.py`` files relative to specified directory.
+
+.. option:: --noconftest
+
+    Don't load any ``conftest.py`` files.
+
+.. option:: --keep-duplicates
+
+    Keep duplicate tests. By default, pytest removes duplicate test items.
+
+.. option:: --collect-in-virtualenv
+
+    Don't ignore tests in a local virtualenv directory.
+    By default, pytest skips tests in virtualenv directories.
+
+.. option:: --continue-on-collection-errors
+
+    Force test execution even if collection errors occur.
+
+.. option:: --import-mode
+
+    Prepend/append to sys.path when importing test modules and conftest files.
+
+    * ``prepend`` (default): prepend to sys.path
+    * ``append``: append to sys.path
+    * ``importlib``: use importlib to import test modules
+
+    See :ref:`pythonpath` for more information.
+
+Fixtures
+~~~~~~~~
+
+.. option:: --fixtures, --funcargs
+
+    Show available fixtures, sorted by plugin appearance.
+    Fixtures with leading ``_`` are only shown with :option:`--verbose`.
+
+.. option:: --fixtures-per-test
+
+    Show fixtures per test.
+
+.. option:: --setup-only
+
+    Only setup fixtures, do not execute tests.
+    See :ref:`how-to-fixtures`.
+
+.. option:: --setup-show
+
+    Show setup of fixtures while executing tests.
+
+.. option:: --setup-plan
+
+    Show what fixtures and tests would be executed but don't execute anything.
+
+Debugging
+~~~~~~~~~
+
+.. option:: --pdb
+
+    Start the interactive Python debugger on errors or KeyboardInterrupt.
+    See :ref:`pdb-option`.
+
+.. option:: --pdbcls=MODULENAME:CLASSNAME
+
+    Specify a custom interactive Python debugger for use with :option:`--pdb`.
+
+    Example::
+
+        pytest --pdbcls=IPython.terminal.debugger:TerminalPdb
+
+.. option:: --trace
+
+    Immediately break when running each test.
+
+    See :ref:`trace-option` for more information.
+
+.. option:: --full-trace
+
+    Don't cut any tracebacks (default is to cut).
+
+    See :ref:`how-to-modifying-python-tb-printing` for more information.
+
+.. option:: --debug, --debug=DEBUG_FILE_NAME
+
+    Store internal tracing debug information in this log file.
+    This file is opened with ``'w'`` and truncated as a result, care advised.
+    Default file name if not specified: ``pytestdebug.log``.
+
+.. option:: --trace-config
+
+    Trace considerations of conftest.py files.
+
+Output and Reporting
+~~~~~~~~~~~~~~~~~~~~
+
+.. option:: -v, --verbose
+
+    Increase verbosity.
+    Can be specified multiple times (e.g., ``-vv``) for even more verbose output.
+
+    See :ref:`pytest.fine_grained_verbosity` for fine-grained control over verbosity.
+
+.. option:: -q, --quiet
+
+    Decrease verbosity.
+
+.. option:: --verbosity=NUM
+
+    Set verbosity level explicitly. Default: 0.
+
+.. option:: -r CHARS, --report-chars=CHARS
+
+    Show extra test summary info as specified by chars:
+
+    * ``f``: failed
+    * ``E``: error
+    * ``s``: skipped
+    * ``x``: xfailed
+    * ``X``: xpassed
+    * ``p``: passed
+    * ``P``: passed with output
+    * ``a``: all except passed (p/P)
+    * ``A``: all
+    * ``w``: warnings (enabled by default)
+    * ``N``: resets the list
+
+    Default: ``'fE'``
+
+    Examples::
+
+        pytest -rA           # show all outcomes
+        pytest -rfE          # show only failed and errors (default)
+        pytest -rfs          # show failed and skipped
+
+    See :ref:`pytest.detailed_failed_tests_usage` for more information.
+
+.. option:: --no-header
+
+    Disable header.
+
+.. option:: --no-summary
+
+    Disable summary.
+
+.. option:: --no-fold-skipped
+
+    Do not fold skipped tests in short summary.
+
+.. option:: --force-short-summary
+
+    Force condensed summary output regardless of verbosity level.
+
+.. option:: -l, --showlocals
+
+    Show locals in tracebacks (disabled by default).
+
+.. option:: --no-showlocals
+
+    Hide locals in tracebacks (negate :option:`--showlocals` passed through addopts).
+
+.. option:: --tb=STYLE
+
+    Traceback print mode:
+
+    * ``auto``: intelligent traceback formatting (default)
+    * ``long``: exhaustive, informative traceback formatting
+    * ``short``: shorter traceback format
+    * ``line``: only the failing line
+    * ``native``: Python's standard traceback
+    * ``no``: no traceback
+
+    See :ref:`how-to-modifying-python-tb-printing` for examples.
+
+.. option:: --xfail-tb
+
+    Show tracebacks for xfail (as long as :option:`--tb` != ``no``).
+
+.. option:: --show-capture
+
+    Controls how captured stdout/stderr/log is shown on failed tests.
+
+    * ``no``: don't show captured output
+    * ``stdout``: show captured stdout
+    * ``stderr``: show captured stderr
+    * ``log``: show captured logging
+    * ``all`` (default): show all captured output
+
+.. option:: --color=WHEN
+
+    Color terminal output:
+
+    * ``yes``: always use color
+    * ``no``: never use color
+    * ``auto`` (default): use color if terminal supports it
+
+.. option:: --code-highlight={yes,no}
+
+    Whether code should be highlighted (only if :option:`--color` is also enabled).
+    Default: ``yes``.
+
+.. option:: --pastebin=MODE
+
+    Send failed|all info to bpaste.net pastebin service.
+
+.. option:: --durations=NUM
+
+    Show N slowest setup/test durations (N=0 for all).
+    See :ref:`durations`.
+
+.. option:: --durations-min=NUM
+
+    Minimal duration in seconds for inclusion in slowest list.
+    Default: 0.005 (or 0.0 if ``-vv`` is given).
+
+Output Capture
+~~~~~~~~~~~~~~
+
+.. option:: --capture=METHOD
+
+    Per-test capturing method:
+
+    * ``fd``: capture at file descriptor level (default)
+    * ``sys``: capture at sys level
+    * ``no``: don't capture output
+    * ``tee-sys``: capture but also show output on terminal
+
+    See :ref:`captures`.
+
+.. option:: -s
+
+    Shortcut for :option:`--capture=no`.
+
+JUnit XML
+~~~~~~~~~
+
+.. option:: --junit-xml=PATH, --junitxml=PATH
+
+    Create junit-xml style report file at given path.
+
+.. option:: --junit-prefix=STR, --junitprefix=STR
+
+    Prepend prefix to classnames in junit-xml output.
+
+Cache
+~~~~~
+
+.. option:: --cache-show[=PATTERN]
+
+    Show cache contents, don't perform collection or tests.
+    Default glob pattern: ``'*'``.
+
+.. option:: --cache-clear
+
+    Remove all cache contents at start of test run.
+    See :ref:`cache`.
+
+Warnings
+~~~~~~~~
+
+.. option:: --disable-pytest-warnings, --disable-warnings
+
+    Disable warnings summary.
+
+.. option:: -W WARNING, --pythonwarnings=WARNING
+
+    Set which warnings to report, see ``-W`` option of Python itself.
+    Can be specified multiple times.
+
+.. option:: --max-warnings=NUM
+
+    Exit with :class:`pytest.ExitCode` ``MAX_WARNINGS_ERROR`` (code ``6``) if all the tests pass, but the number
+    of warnings exceeds the given threshold. By default there is no limit.
+    Can also be set via the :confval:`max_warnings` configuration option.
+
+Doctest
+~~~~~~~
+
+.. option:: --doctest-modules
+
+    Run doctests in all .py modules.
+
+    See :ref:`doctest` for more information on using doctests with pytest.
+
+.. option:: --doctest-report
+
+    Choose another output format for diffs on doctest failure:
+
+    * ``none``
+    * ``cdiff``
+    * ``ndiff``
+    * ``udiff``
+    * ``only_first_failure``
+
+.. option:: --doctest-glob=PATTERN
+
+    Doctests file matching pattern.
+    Default: ``test*.txt``.
+
+.. option:: --doctest-ignore-import-errors
+
+    Ignore doctest collection errors.
+
+.. option:: --doctest-continue-on-failure
+
+    For a given doctest, continue to run after the first failure.
+
+Configuration
+~~~~~~~~~~~~~
+
+.. option:: -c FILE, --config-file=FILE
+
+    Load configuration from ``FILE`` instead of trying to locate one of the implicit configuration files.
+
+.. option:: --rootdir=ROOTDIR
+
+    Define root directory for tests.
+    Can be relative path: ``'root_dir'``, ``'./root_dir'``, ``'root_dir/another_dir/'``; absolute path: ``'/home/user/root_dir'``; path with variables: ``'$HOME/root_dir'``.
+
+.. option:: --basetemp=DIR
+
+    Base temporary directory for this test run.
+    Warning: this directory is removed if it exists.
+
+    See :ref:`temporary directory location and retention` for more information.
+
+.. option:: -o OPTION=VALUE, --override-ini=OPTION=VALUE
+
+    Override configuration option with ``option=value`` style.
+    Can be specified multiple times.
+
+    Example::
+
+        pytest -o strict_xfail=true -o cache_dir=cache
+
+.. option:: --strict-config
+
+    Enables the :confval:`strict_config` option.
+
+.. option:: --strict-markers
+
+    Enables the :confval:`strict_markers` option.
+
+.. option:: --strict
+
+    Enables the :confval:`strict` option (which enables all strictness options).
+
+.. option:: --assert=MODE
+
+    Control assertion debugging tools:
+
+    * ``plain``: performs no assertion debugging
+    * ``rewrite`` (default): rewrites assert statements in test modules on import to provide assert expression information
+
+Logging
+~~~~~~~
+
+See :ref:`logging` for a guide on using these flags.
+
+.. option:: --log-level=LEVEL
+
+    Level of messages to catch/display.
+    Not set by default, so it depends on the root/parent log handler's effective level, where it is ``WARNING`` by default.
+
+.. option:: --log-format=FORMAT
+
+    Log format used by the logging module.
+
+.. option:: --log-date-format=FORMAT
+
+    Log date format used by the logging module.
+
+.. option:: --log-cli-level=LEVEL
+
+    CLI logging level. See :ref:`live_logs`.
+
+.. option:: --log-cli-format=FORMAT
+
+    Log format used by the logging module for CLI output.
+
+.. option:: --log-cli-date-format=FORMAT
+
+    Log date format used by the logging module for CLI output.
+
+.. option:: --log-file=PATH
+
+    Path to a file logging will be written to.
+
+.. option:: --log-file-mode
+
+    Log file open mode:
+
+    * ``w`` (default): recreate the file
+    * ``a``: append to the file
+
+.. option:: --log-file-level=LEVEL
+
+    Log file logging level.
+
+.. option:: --log-file-format=FORMAT
+
+    Log format used by the logging module for the log file.
+
+.. option:: --log-file-date-format=FORMAT
+
+    Log date format used by the logging module for the log file.
+
+.. option:: --log-auto-indent=VALUE
+
+    Auto-indent multiline messages passed to the logging module.
+    Accepts ``true|on``, ``false|off`` or an integer.
+
+.. option:: --log-disable=LOGGER
+
+    Disable a logger by name. Can be passed multiple times.
+
+Plugin and Extension Management
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. option:: -p NAME
+
+    Early-load given plugin module name or entry point (multi-allowed).
+    To avoid loading of plugins, use the ``no:`` prefix, e.g. ``no:doctest``.
+    See also :option:`--disable-plugin-autoload`.
+
+.. option:: --disable-plugin-autoload
+
+    Disable plugin auto-loading through entry point packaging metadata.
+    Only plugins explicitly specified in :option:`-p` or env var :envvar:`PYTEST_PLUGINS` will be loaded.
+
+Version and Help
+~~~~~~~~~~~~~~~~
+
+.. option:: -V, --version
+
+    Display pytest version and information about plugins. When given twice, also display information about plugins.
+
+.. option:: -h, --help
+
+    Show help message and configuration info.
+
+Complete Help Output
+~~~~~~~~~~~~~~~~~~~~
+
+All the command-line flags can also be obtained by running ``pytest --help``::
 
     $ pytest --help
     usage: pytest [options] [file_or_dir] [file_or_dir] [...]
@@ -2021,6 +3384,10 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             example: -m 'mark1 and not mark2'.
       --markers             show markers (builtin, plugin and per-project ones).
       -x, --exitfirst       Exit instantly on first error or failed test
+      --maxfail=num         Exit after first num failures or errors
+      --strict-config       Enables the strict_config option
+      --strict-markers      Enables the strict_markers option
+      --strict              Enables the strict option
       --fixtures, --funcargs
                             Show available fixtures, sorted by plugin appearance
                             (fixtures with leading '_' are only shown with '-v')
@@ -2047,7 +3414,7 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Show cache contents, don't perform collection or
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
-      --lfnf={all,none}, --last-failed-no-failures={all,none}
+      --lfnf, --last-failed-no-failures={all,none}
                             With ``--lf``, determines whether to execute tests
                             when there are no previously (known) failures or
                             when no cached ``lastfailed`` data was found.
@@ -2059,15 +3426,21 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --sw-skip, --stepwise-skip
                             Ignore the first failing test but stop on the next
                             failing test. Implicitly enables --stepwise.
+      --sw-reset, --stepwise-reset
+                            Resets stepwise state, restarting the stepwise
+                            workflow. Implicitly enables --stepwise.
 
     Reporting:
       --durations=N         Show N slowest setup/test durations (N=0 for all)
       --durations-min=N     Minimal duration in seconds for inclusion in slowest
-                            list. Default: 0.005.
+                            list. Default: 0.005 (or 0.0 if -vv is given).
       -v, --verbose         Increase verbosity
       --no-header           Disable header
       --no-summary          Disable summary
       --no-fold-skipped     Do not fold skipped tests in short summary.
+      --force-short-summary
+                            Force condensed summary output regardless of
+                            verbosity level.
       -q, --quiet           Decrease verbosity
       --verbosity=VERBOSE   Set verbosity. Default: 0.
       -r chars              Show extra test summary info as specified by chars:
@@ -2093,29 +3466,17 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Whether code should be highlighted (only if --color
                             is also enabled). Default: yes.
       --pastebin=mode       Send failed|all info to bpaste.net pastebin service
-      --junit-xml=path      Create junit-xml style report file at given path
-      --junit-prefix=str    Prepend prefix to classnames in junit-xml output
+      --junitxml, --junit-xml=path
+                            Create junit-xml style report file at given path
+      --junitprefix, --junit-prefix=str
+                            Prepend prefix to classnames in junit-xml output
 
     pytest-warnings:
-      -W PYTHONWARNINGS, --pythonwarnings=PYTHONWARNINGS
+      -W, --pythonwarnings PYTHONWARNINGS
                             Set which warnings to report, see -W option of
                             Python itself
-      --maxfail=num         Exit after first num failures or errors
-      --strict-config       Any warnings encountered while parsing the `pytest`
-                            section of the configuration file raise errors
-      --strict-markers      Markers not registered in the `markers` section of
-                            the configuration file raise errors
-      --strict              (Deprecated) alias to --strict-markers
-      -c FILE, --config-file=FILE
-                            Load configuration from `FILE` instead of trying to
-                            locate one of the implicit configuration files.
-      --continue-on-collection-errors
-                            Force test execution even if collection errors occur
-      --rootdir=ROOTDIR     Define root directory for tests. Can be relative
-                            path: 'root_dir', './root_dir',
-                            'root_dir/another_dir/'; absolute path:
-                            '/home/user/root_dir'; path with variables:
-                            '$HOME/root_dir'.
+      --max-warnings=num    Exit with error if the number of warnings exceeds
+                            this threshold
 
     collection:
       --collect-only, --co  Only collect tests, don't execute them
@@ -2131,6 +3492,8 @@ All the command-line flags can be obtained by running ``pytest --help``::
       --keep-duplicates     Keep duplicate tests
       --collect-in-virtualenv
                             Don't ignore tests in a local virtualenv directory
+      --continue-on-collection-errors
+                            Force test execution even if collection errors occur
       --import-mode={prepend,append,importlib}
                             Prepend/append to sys.path when importing test
                             modules and conftest files. Default: prepend.
@@ -2146,6 +3509,14 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             failure
 
     test session debugging and configuration:
+      -c, --config-file FILE
+                            Load configuration from `FILE` instead of trying to
+                            locate one of the implicit configuration files.
+      --rootdir=ROOTDIR     Define root directory for tests. Can be relative
+                            path: 'root_dir', './root_dir',
+                            'root_dir/another_dir/'; absolute path:
+                            '/home/user/root_dir'; path with variables:
+                            '$HOME/root_dir'.
       --basetemp=dir        Base temporary directory for this test run.
                             (Warning: this directory is removed if it exists.)
       -V, --version         Display pytest version and information about
@@ -2154,15 +3525,22 @@ All the command-line flags can be obtained by running ``pytest --help``::
       -h, --help            Show help message and configuration info
       -p name               Early-load given plugin module name or entry point
                             (multi-allowed). To avoid loading of plugins, use
-                            the `no:` prefix, e.g. `no:doctest`.
+                            the `no:` prefix, e.g. `no:doctest`. See also
+                            --disable-plugin-autoload.
+      --disable-plugin-autoload
+                            Disable plugin auto-loading through entry point
+                            packaging metadata. Only plugins explicitly
+                            specified in -p or env var PYTEST_PLUGINS will be
+                            loaded.
       --trace-config        Trace considerations of conftest.py files
       --debug=[DEBUG_FILE_NAME]
                             Store internal tracing debug information in this log
                             file. This file is opened with 'w' and truncated as
                             a result, care advised. Default: pytestdebug.log.
-      -o OVERRIDE_INI, --override-ini=OVERRIDE_INI
-                            Override ini option with "option=value" style, e.g.
-                            `-o xfail_strict=True -o cache_dir=cache`.
+      -o, --override-ini OVERRIDE_INI
+                            Override configuration option with "option=value"
+                            style, e.g. `-o strict_xfail=True -o
+                            cache_dir=cache`.
       --assert=MODE         Control assertion debugging tools.
                             'plain' performs no assertion debugging.
                             'rewrite' (the default) rewrites assert statements
@@ -2204,18 +3582,32 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Disable a logger by name. Can be passed multiple
                             times.
 
-    [pytest] ini-options in the first pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
+    [pytest] configuration options in the first pytest.toml|pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
       markers (linelist):   Register new markers for test functions
       empty_parameter_set_mark (string):
                             Default marker for empty parametersets
-      norecursedirs (args): Directory patterns to avoid for recursion
-      testpaths (args):     Directories to search for tests when no files or
-                            directories are given on the command line
+      strict_config (bool): Any warnings encountered while parsing the `pytest`
+                            section of the configuration file raise errors
+      strict_markers (bool):
+                            Markers not registered in the `markers` section of
+                            the configuration file raise errors
+      strict (bool):        Enables all strictness options, currently:
+                            strict_config, strict_markers, strict_xfail,
+                            strict_parametrization_ids
       filterwarnings (linelist):
                             Each line specifies a pattern for
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
+      max_warnings (string):
+                            Maximum number of warnings allowed before failing
+                            the test run
+      norecursedirs (args): Directory patterns to avoid for recursion
+      testpaths (args):     Directories to search for tests when no files or
+                            directories are given on the command line
+      collect_imported_tests (bool):
+                            Whether to collect tests in imported modules outside
+                            `testpaths`
       consider_namespace_packages (bool):
                             Consider namespace packages when resolving module
                             names during import
@@ -2232,6 +3624,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
       disable_test_id_escaping_and_forfeit_all_rights_to_community_support (bool):
                             Disable string escape non-ASCII characters, might
                             cause unwanted side effects(use at your own risk)
+      strict_parametrization_ids (bool):
+                            Emit an error if non-unique parameter set IDs are
+                            detected
       console_output_style (string):
                             Console output: "classic", or with additional
                             progress information ("progress" (percentage) |
@@ -2242,8 +3637,9 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             overriding the main level. Higher levels will
                             provide more detailed information about each test
                             case executed.
-      xfail_strict (bool):  Default for the strict parameter of xfail markers
-                            when not given explicitly (default: False)
+      strict_xfail (bool):  Default for the strict parameter of xfail markers
+                            when not given explicitly (default: False) (alias:
+                            xfail_strict)
       tmp_path_retention_count (string):
                             How many sessions should we keep the `tmp_path`
                             directories, according to
@@ -2255,6 +3651,12 @@ All the command-line flags can be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
+      truncation_limit_lines (string):
+                            Set threshold of LINES after which truncation will
+                            take effect
+      truncation_limit_chars (string):
+                            Set threshold of CHARS after which truncation will
+                            take effect
       verbosity_assertions (string):
                             Specify a verbosity level for assertions, overriding
                             the main level. Higher levels will provide more
@@ -2299,22 +3701,32 @@ All the command-line flags can be obtained by running ``pytest --help``::
                             Default value for --log-file-date-format
       log_auto_indent (string):
                             Default value for --log-auto-indent
-      pythonpath (paths):   Add paths to sys.path
       faulthandler_timeout (string):
                             Dump the traceback of all threads if a test takes
                             more than TIMEOUT seconds to finish
+      faulthandler_exit_on_timeout (bool):
+                            Exit the test process if a test takes more than
+                            faulthandler_timeout seconds to finish
+      verbosity_subtests (string):
+                            Specify verbosity level for subtests. Higher levels
+                            will generate output for passed subtests. Failed
+                            subtests are always reported.
       addopts (args):       Extra command line options
       minversion (string):  Minimally required pytest version
+      pythonpath (paths):   Add paths to sys.path
       required_plugins (args):
                             Plugins that must be present for pytest to run
 
     Environment variables:
-      CI                       When set (regardless of value), pytest knows it is running in a CI process and does not truncate summary info
+      CI                       When set to a non-empty value, pytest knows it is running in a CI process and does not truncate summary info
       BUILD_NUMBER             Equivalent to CI
       PYTEST_ADDOPTS           Extra command line options
       PYTEST_PLUGINS           Comma-separated plugins to load during startup
       PYTEST_DISABLE_PLUGIN_AUTOLOAD Set to disable plugin auto-loading
       PYTEST_DEBUG             Set to enable debug tracing of pytest's internals
+      PYTEST_DEBUG_TEMPROOT    Override the system temporary directory
+      PYTEST_THEME             The Pygments style to use for code output
+      PYTEST_THEME_MODE        Set the PYTEST_THEME to be either 'dark' or 'light'
 
 
     to see available markers type: pytest --markers

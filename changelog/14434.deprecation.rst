@@ -1,0 +1,3 @@
+The :option:`--pastebin` option is now deprecated.
+The same functionality is now available in an external plugin, :pypi:`pytest-pastebin`.
+See :ref:`pastebin-deprecated` for more details.

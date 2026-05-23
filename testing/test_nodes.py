@@ -3,11 +3,9 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-from typing import cast
 import warnings
 
 from _pytest import nodes
-from _pytest.compat import legacy_path
 from _pytest.outcomes import OutcomeException
 from _pytest.pytester import Pytester
 from _pytest.warning_types import PytestWarning
@@ -25,10 +23,10 @@ def test_node_direct_construction_deprecated() -> None:
     with pytest.raises(
         OutcomeException,
         match=(
-            "Direct construction of _pytest.nodes.Node has been deprecated, please "
-            "use _pytest.nodes.Node.from_parent.\nSee "
-            "https://docs.pytest.org/en/stable/deprecations.html#node-construction-changed-to-node-from-parent"
-            " for more details."
+            r"Direct construction of _pytest\.nodes\.Node has been deprecated, please "
+            r"use _pytest\.nodes\.Node\.from_parent.\nSee "
+            r"https://docs\.pytest\.org/en/stable/deprecations\.html#node-construction-changed-to-node-from-parent"
+            r" for more details\."
         ),
     ):
         nodes.Node(None, session=None)  # type: ignore[arg-type]
@@ -37,18 +35,14 @@ def test_node_direct_construction_deprecated() -> None:
 def test_subclassing_both_item_and_collector_deprecated(
     request, tmp_path: Path
 ) -> None:
-    """
-    Verifies we warn on diamond inheritance as well as correctly managing legacy
-    inheritance constructors with missing args as found in plugins.
-    """
-    # We do not expect any warnings messages to issued during class definition.
+    """Verifies we warn on diamond inheritance from both Item and Collector."""
+    # We do not expect any warnings messages to be issued during class definition.
     with warnings.catch_warnings():
         warnings.simplefilter("error")
 
         class SoWrong(nodes.Item, nodes.File):
-            def __init__(self, fspath, parent):
-                """Legacy ctor with legacy call # don't wana see"""
-                super().__init__(fspath, parent)
+            def __init__(self, parent: nodes.Collector, path: Path) -> None:
+                super().__init__(name="broken", parent=parent, path=path)
 
             def collect(self):
                 raise NotImplementedError()
@@ -57,9 +51,7 @@ def test_subclassing_both_item_and_collector_deprecated(
                 raise NotImplementedError()
 
     with pytest.warns(PytestWarning) as rec:
-        SoWrong.from_parent(
-            request.session, fspath=legacy_path(tmp_path / "broken.txt")
-        )
+        SoWrong.from_parent(request.session, path=tmp_path / "broken.txt")
     messages = [str(x.message) for x in rec]
     assert any(
         re.search(".*SoWrong.* not using a cooperative constructor.*", x)
@@ -99,28 +91,50 @@ def test_node_warning_enforces_warning_types(pytester: Pytester) -> None:
         items[0].warn(Exception("ok"))  # type: ignore[arg-type]
 
 
+class TestNormSep:
+    """Tests for the norm_sep helper function."""
+
+    def test_forward_slashes_unchanged(self) -> None:
+        """Forward slashes pass through unchanged."""
+        assert nodes.norm_sep("a/b/c") == "a/b/c"
+
+    def test_backslashes_converted(self) -> None:
+        """Backslashes are converted to forward slashes."""
+        assert nodes.norm_sep("a\\b\\c") == "a/b/c"
+
+    def test_mixed_separators(self) -> None:
+        """Mixed separators are all normalized to forward slashes."""
+        assert nodes.norm_sep("a\\b/c\\d") == "a/b/c/d"
+
+    def test_pathlike_input(self, tmp_path: Path) -> None:
+        """PathLike objects are converted to string with normalized separators."""
+        # Create a path and verify it's normalized
+        result = nodes.norm_sep(tmp_path / "subdir" / "file.py")
+        assert "\\" not in result
+        assert "subdir/file.py" in result
+
+    def test_empty_string(self) -> None:
+        """Empty string returns empty string."""
+        assert nodes.norm_sep("") == ""
+
+    def test_windows_absolute_path(self) -> None:
+        """Windows absolute paths have backslashes converted."""
+        assert nodes.norm_sep("C:\\Users\\test\\project") == "C:/Users/test/project"
+
+
 def test__check_initialpaths_for_relpath() -> None:
     """Ensure that it handles dirs, and does not always use dirname."""
     cwd = Path.cwd()
 
-    class FakeSession1:
-        _initialpaths = frozenset({cwd})
+    initial_paths = frozenset({cwd})
 
-    session = cast(pytest.Session, FakeSession1)
-
-    assert nodes._check_initialpaths_for_relpath(session, cwd) == ""
+    assert nodes._check_initialpaths_for_relpath(initial_paths, cwd) == ""
 
     sub = cwd / "file"
-
-    class FakeSession2:
-        _initialpaths = frozenset({cwd})
-
-    session = cast(pytest.Session, FakeSession2)
-
-    assert nodes._check_initialpaths_for_relpath(session, sub) == "file"
+    assert nodes._check_initialpaths_for_relpath(initial_paths, sub) == "file"
 
     outside = Path("/outside-this-does-not-exist")
-    assert nodes._check_initialpaths_for_relpath(session, outside) is None
+    assert nodes._check_initialpaths_for_relpath(initial_paths, outside) is None
 
 
 def test_failure_with_changed_cwd(pytester: Pytester) -> None:

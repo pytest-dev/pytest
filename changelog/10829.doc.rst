@@ -1,1 +1,0 @@
-Improve documentation on the current handling of the ``--basetemp`` option and its lack of retention functionality (:ref:`temporary directory location and retention`).

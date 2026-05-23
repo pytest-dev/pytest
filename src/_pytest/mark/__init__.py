@@ -3,27 +3,27 @@
 from __future__ import annotations
 
 import collections
+from collections.abc import Collection
+from collections.abc import Iterable
+from collections.abc import Set as AbstractSet
 import dataclasses
-from typing import AbstractSet
-from typing import Collection
-from typing import Iterable
-from typing import Optional
 from typing import TYPE_CHECKING
 
 from .expression import Expression
-from .expression import ParseError
+from .structures import _HiddenParam
 from .structures import EMPTY_PARAMETERSET_OPTION
 from .structures import get_empty_parameterset_mark
+from .structures import HIDDEN_PARAM
 from .structures import Mark
 from .structures import MARK_GEN
 from .structures import MarkDecorator
 from .structures import MarkGenerator
 from .structures import ParameterSet
+from _pytest.compat import NOTSET
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
-from _pytest.config.argparsing import NOT_SET
 from _pytest.config.argparsing import Parser
 from _pytest.stash import StashKey
 
@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "HIDDEN_PARAM",
     "MARK_GEN",
     "Mark",
     "MarkDecorator",
@@ -42,13 +43,13 @@ __all__ = [
 ]
 
 
-old_mark_config_key = StashKey[Optional[Config]]()
+old_mark_config_key = StashKey[Config | None]()
 
 
 def param(
     *values: object,
     marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
-    id: str | None = None,
+    id: str | _HiddenParam | None = None,
 ) -> ParameterSet:
     """Specify a parameter in `pytest.mark.parametrize`_ calls or
     :ref:`parametrized fixtures <fixture-parametrize-marks>`.
@@ -72,14 +73,21 @@ def param(
 
         :ref:`pytest.mark.usefixtures <pytest.mark.usefixtures ref>` cannot be added via this parameter.
 
-    :param id: The id to attribute to this parameter set.
+    :type id: str | Literal[pytest.HIDDEN_PARAM] | None
+    :param id:
+        The id to attribute to this parameter set.
+
+        .. versionadded:: 8.4
+            :ref:`hidden-param` means to hide the parameter set
+            from the test name. Can only be used at most 1 time, as
+            test names need to be unique.
     """
     return ParameterSet.param(*values, marks=marks, id=id)
 
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-k",
         action="store",
         dest="keyword",
@@ -99,7 +107,7 @@ def pytest_addoption(parser: Parser) -> None:
         "The matching is case-insensitive.",
     )
 
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-m",
         action="store",
         dest="markexpr",
@@ -239,7 +247,7 @@ class MarkMatcher:
             return False
 
         for mark in matches:  # pylint: disable=consider-using-any-or-all
-            if all(mark.kwargs.get(k, NOT_SET) == v for k, v in kwargs.items()):
+            if all(mark.kwargs.get(k, NOTSET) == v for k, v in kwargs.items()):
                 return True
         return False
 
@@ -265,8 +273,10 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
 def _parse_expression(expr: str, exc_message: str) -> Expression:
     try:
         return Expression.compile(expr)
-    except ParseError as e:
-        raise UsageError(f"{exc_message}: {expr}: {e}") from None
+    except SyntaxError as e:
+        raise UsageError(
+            f"{exc_message}: {e.text}: at column {e.offset}: {e.msg}"
+        ) from None
 
 
 def pytest_collection_modifyitems(items: list[Item], config: Config) -> None:

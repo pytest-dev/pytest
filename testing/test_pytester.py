@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-import time
 from types import ModuleType
 
 from _pytest.config import ExitCode
@@ -16,6 +15,7 @@ from _pytest.pytester import LineMatcher
 from _pytest.pytester import Pytester
 from _pytest.pytester import SysModulesSnapshot
 from _pytest.pytester import SysPathsSnapshot
+import _pytest.timing
 import pytest
 
 
@@ -71,7 +71,8 @@ def test_make_hook_recorder(pytester: Pytester) -> None:
     recorder.unregister()  # type: ignore[attr-defined]
     recorder.clear()
     recorder.hook.pytest_runtest_logreport(report=rep3)  # type: ignore[attr-defined]
-    pytest.raises(ValueError, recorder.getfailures)
+    with pytest.raises(ValueError):
+        recorder.getfailures()
 
 
 def test_parseconfig(pytester: Pytester) -> None:
@@ -196,7 +197,8 @@ def test_hookrecorder_basic(holder) -> None:
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
-    pytest.raises(pytest.fail.Exception, rec.popcall, "abc")
+    with pytest.raises(pytest.fail.Exception):
+        rec.popcall("abc")
     pm.hook.pytest_xyz_noarg()
     call = rec.popcall("pytest_xyz_noarg")
     assert call._name == "pytest_xyz_noarg"
@@ -451,13 +453,12 @@ def test_pytester_run_with_timeout(pytester: Pytester) -> None:
 
     timeout = 120
 
-    start = time.time()
+    instant = _pytest.timing.Instant()
     result = pytester.runpytest_subprocess(testfile, timeout=timeout)
-    end = time.time()
-    duration = end - start
+    duration = instant.elapsed()
 
     assert result.ret == ExitCode.OK
-    assert duration < timeout
+    assert duration.seconds < timeout
 
 
 def test_pytester_run_timeout_expires(pytester: Pytester) -> None:
@@ -800,7 +801,7 @@ def test_pytester_makefile_dot_prefixes_extension_with_warning(
 ) -> None:
     with pytest.raises(
         ValueError,
-        match="pytester.makefile expects a file extension, try .foo.bar instead of foo.bar",
+        match=r"pytester\.makefile expects a file extension, try \.foo\.bar instead of foo\.bar",
     ):
         pytester.makefile("foo.bar", "")
 
@@ -835,3 +836,25 @@ def test_pytester_outcomes_deselected(pytester: Pytester) -> None:
     result.assert_outcomes(passed=1, deselected=1)
     # If deselected is not passed, it is not checked at all.
     result.assert_outcomes(passed=1)
+
+
+def test_pytester_subprocess_with_string_plugins(pytester: Pytester) -> None:
+    """Test that pytester.runpytest_subprocess is OK with named (string)
+    `.plugins`."""
+    pytester.plugins = ["pytester"]
+
+    result = pytester.runpytest_subprocess()
+    assert result.ret == ExitCode.NO_TESTS_COLLECTED
+
+
+def test_pytester_subprocess_with_non_string_plugins(pytester: Pytester) -> None:
+    """Test that pytester.runpytest_subprocess fails with a proper error given
+    non-string `.plugins`."""
+
+    class MyPlugin:
+        pass
+
+    pytester.plugins = [MyPlugin()]
+
+    with pytest.raises(ValueError, match="plugins as objects is not supported"):
+        pytester.runpytest_subprocess()

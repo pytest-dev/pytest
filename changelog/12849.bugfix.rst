@@ -1,1 +1,0 @@
-ANSI escape codes for colored output now handled correctly in :func:`pytest.fail` with `pytrace=False`.

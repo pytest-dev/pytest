@@ -1,0 +1,1 @@
+The :ref:`ini options ref` section of the API Reference now specified the type and default value of every configuration option.

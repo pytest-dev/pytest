@@ -16,7 +16,7 @@ Thanks to all of the contributors to this release:
 * Bruno Oliveira
 * Christian Clauss
 * Eugene Mwangi
-* Florian Bruhin
+* Freya Bruhin
 * GTowers1
 * Nauman Ahmed
 * Pierre Sassoulas

@@ -16,7 +16,7 @@ Thanks to all who contributed to this release, among them:
 * Andy Freeland
 * Brian Maissy
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Jason R. Coombs
 * Marcin Bachry
 * Pedro Algarvio

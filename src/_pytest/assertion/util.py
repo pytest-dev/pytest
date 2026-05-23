@@ -4,16 +4,16 @@
 from __future__ import annotations
 
 import collections.abc
-import os
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
+import dataclasses
 import pprint
-from typing import AbstractSet
-from typing import Any
-from typing import Callable
-from typing import Iterable
 from typing import Literal
-from typing import Mapping
 from typing import Protocol
-from typing import Sequence
+from typing import TypeGuard
 from unicodedata import normalize
 
 from _pytest import outcomes
@@ -21,7 +21,10 @@ import _pytest._code
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
+from _pytest.compat import assert_never
+from _pytest.compat import running_on_ci
 from _pytest.config import Config
+from _pytest.config import UsageError
 
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -37,10 +40,45 @@ _assertion_pass: Callable[[int, str, str], None] | None = None
 # Config object which is assigned during pytest_runtest_protocol.
 _config: Config | None = None
 
+ASSERTION_TEXT_DIFF_STYLE_INI = "assertion_text_diff_style"
+_AssertionTextDiffStyle = Literal["ndiff", "block"]
+ASSERTION_TEXT_DIFF_STYLE_NDIFF: Literal["ndiff"] = "ndiff"
+ASSERTION_TEXT_DIFF_STYLE_BLOCK: Literal["block"] = "block"
+ASSERTION_TEXT_DIFF_STYLE_CHOICES = (
+    ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+    ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+)
+
 
 class _HighlightFunc(Protocol):
     def __call__(self, source: str, lexer: Literal["diff", "python"] = "python") -> str:
         """Apply highlighting to the given source."""
+
+
+def dummy_highlighter(source: str, lexer: Literal["diff", "python"] = "python") -> str:
+    """Dummy highlighter that returns the text unprocessed.
+
+    Needed for _notin_text, as the diff gets post-processed to only show the "+" part.
+    """
+    return source
+
+
+def get_assertion_text_diff_style(config: Config) -> _AssertionTextDiffStyle:
+    style = str(config.getini(ASSERTION_TEXT_DIFF_STYLE_INI))
+    match style:
+        case "ndiff" | "block":
+            return style
+        case _:
+            choices = ", ".join(
+                repr(choice) for choice in ASSERTION_TEXT_DIFF_STYLE_CHOICES
+            )
+            raise UsageError(
+                f"{ASSERTION_TEXT_DIFF_STYLE_INI} must be one of {choices}; got {style!r}"
+            )
+
+
+def validate_assertion_text_diff_style(config: Config) -> None:
+    get_assertion_text_diff_style(config)
 
 
 def format_explanation(explanation: str) -> str:
@@ -110,45 +148,42 @@ def _format_lines(lines: Sequence[str]) -> list[str]:
     return result
 
 
-def issequence(x: Any) -> bool:
+def issequence(x: object) -> TypeGuard[collections.abc.Sequence[object]]:
     return isinstance(x, collections.abc.Sequence) and not isinstance(x, str)
 
 
-def istext(x: Any) -> bool:
+def istext(x: object) -> TypeGuard[str]:
     return isinstance(x, str)
 
 
-def isdict(x: Any) -> bool:
-    return isinstance(x, dict)
+def ismapping(x: object) -> TypeGuard[Mapping[object, object]]:
+    return isinstance(x, Mapping)
 
 
-def isset(x: Any) -> bool:
-    return isinstance(x, (set, frozenset))
+def isset(x: object) -> TypeGuard[set[object] | frozenset[object]]:
+    return isinstance(x, set | frozenset)
 
 
-def isnamedtuple(obj: Any) -> bool:
+def isnamedtuple(obj: object) -> bool:
     return isinstance(obj, tuple) and getattr(obj, "_fields", None) is not None
 
 
-def isdatacls(obj: Any) -> bool:
-    return getattr(obj, "__dataclass_fields__", None) is not None
+isdatacls = dataclasses.is_dataclass
 
 
-def isattrs(obj: Any) -> bool:
+def isattrs(obj: object) -> bool:
     return getattr(obj, "__attrs_attrs__", None) is not None
 
 
-def isiterable(obj: Any) -> bool:
+def isiterable(obj: object) -> TypeGuard[collections.abc.Iterable[object]]:
     try:
-        iter(obj)
+        iter(obj)  # type: ignore[call-overload]
         return not istext(obj)
     except Exception:
         return False
 
 
-def has_default_eq(
-    obj: object,
-) -> bool:
+def has_default_eq(obj: object) -> bool:
     """Check if an instance of an object contains the default eq
 
     First, we check if the object's __eq__ attribute has __code__,
@@ -161,18 +196,22 @@ def has_default_eq(
         code_filename = obj.__eq__.__code__.co_filename
 
         if isattrs(obj):
-            return "attrs generated eq" in code_filename
+            return "attrs generated " in code_filename
 
         return code_filename == "<string>"  # data class
     return True
 
 
 def assertrepr_compare(
-    config, op: str, left: Any, right: Any, use_ascii: bool = False
+    op: str,
+    left: object,
+    right: object,
+    *,
+    verbose: int,
+    highlighter: _HighlightFunc,
+    assertion_text_diff_style: _AssertionTextDiffStyle,
 ) -> list[str] | None:
     """Return specialised explanations for some operators/operands."""
-    verbose = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
-
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.
     use_ascii = (
@@ -195,12 +234,17 @@ def assertrepr_compare(
         right_repr = saferepr(right, maxsize=maxsize, use_ascii=use_ascii)
 
     summary = f"{left_repr} {op} {right_repr}"
-    highlighter = config.get_terminal_writer()._highlight
 
     explanation = None
     try:
         if op == "==":
-            explanation = _compare_eq_any(left, right, highlighter, verbose)
+            explanation = _compare_eq_any(
+                left,
+                right,
+                highlighter,
+                verbose,
+                assertion_text_diff_style,
+            )
         elif op == "not in":
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
@@ -238,20 +282,29 @@ def assertrepr_compare(
 
 
 def _compare_eq_any(
-    left: Any, right: Any, highlighter: _HighlightFunc, verbose: int = 0
+    left: object,
+    right: object,
+    highlighter: _HighlightFunc,
+    verbose: int,
+    assertion_text_diff_style: _AssertionTextDiffStyle,
 ) -> list[str]:
     explanation = []
     if istext(left) and istext(right):
-        explanation = _diff_text(left, right, verbose)
+        explanation = _compare_eq_text(
+            left,
+            right,
+            highlighter,
+            verbose,
+            assertion_text_diff_style,
+        )
     else:
         from _pytest.python_api import ApproxBase
 
-        if isinstance(left, ApproxBase) or isinstance(right, ApproxBase):
-            # Although the common order should be obtained == expected, this ensures both ways
-            approx_side = left if isinstance(left, ApproxBase) else right
-            other_side = right if isinstance(left, ApproxBase) else left
-
-            explanation = approx_side._repr_compare(other_side)
+        # Although the common order should be obtained == approx(...), allow both ways.
+        if isinstance(right, ApproxBase):
+            explanation = right._repr_compare(left)
+        elif isinstance(left, ApproxBase):
+            explanation = left._repr_compare(right)
         elif type(left) is type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
@@ -259,13 +312,19 @@ def _compare_eq_any(
             # field values, not the type or field names. But this branch
             # intentionally only handles the same-type case, which was often
             # used in older code bases before dataclasses/attrs were available.
-            explanation = _compare_eq_cls(left, right, highlighter, verbose)
+            explanation = _compare_eq_cls(
+                left,
+                right,
+                highlighter,
+                verbose,
+                assertion_text_diff_style,
+            )
         elif issequence(left) and issequence(right):
             explanation = _compare_eq_sequence(left, right, highlighter, verbose)
         elif isset(left) and isset(right):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
-        elif isdict(left) and isdict(right):
-            explanation = _compare_eq_dict(left, right, highlighter, verbose)
+        elif ismapping(left) and ismapping(right):
+            explanation = _compare_eq_mapping(left, right, highlighter, verbose)
 
         if isiterable(left) and isiterable(right):
             expl = _compare_eq_iterable(left, right, highlighter, verbose)
@@ -274,7 +333,39 @@ def _compare_eq_any(
     return explanation
 
 
-def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
+def _compare_eq_text(
+    left: str,
+    right: str,
+    highlighter: _HighlightFunc,
+    verbose: int,
+    assertion_text_diff_style: _AssertionTextDiffStyle,
+) -> list[str]:
+    match assertion_text_diff_style:
+        case "block":
+            return _diff_text_block(left, right)
+        case "ndiff":
+            return _diff_text(left, right, highlighter, verbose)
+        case unreachable:
+            assert_never(unreachable)
+
+
+def _diff_text_block(left: str, right: str) -> list[str]:
+    return [
+        "Left:",
+        *_format_text_block_lines(left),
+        "",
+        "Right:",
+        *_format_text_block_lines(right),
+    ]
+
+
+def _format_text_block_lines(text: str) -> list[str]:
+    return [f"  {line}" for line in text.split("\n")]
+
+
+def _diff_text(
+    left: str, right: str, highlighter: _HighlightFunc, verbose: int = 0
+) -> list[str]:
     """Return the explanation for the diff between text.
 
     Unless --verbose is used this will skip leading and trailing
@@ -315,16 +406,21 @@ def _diff_text(left: str, right: str, verbose: int = 0) -> list[str]:
         explanation += ["Strings contain only whitespace, escaping them using repr()"]
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
-    explanation += [
-        line.strip("\n")
-        for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
-    ]
+    explanation.extend(
+        highlighter(
+            "\n".join(
+                line.strip("\n")
+                for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
+            ),
+            lexer="diff",
+        ).splitlines()
+    )
     return explanation
 
 
 def _compare_eq_iterable(
-    left: Iterable[Any],
-    right: Iterable[Any],
+    left: Iterable[object],
+    right: Iterable[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> list[str]:
@@ -352,8 +448,8 @@ def _compare_eq_iterable(
 
 
 def _compare_eq_sequence(
-    left: Sequence[Any],
-    right: Sequence[Any],
+    left: Sequence[object],
+    right: Sequence[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> list[str]:
@@ -372,8 +468,8 @@ def _compare_eq_sequence(
                 # 102
                 # >>> s[0:1]
                 # b'f'
-                left_value = left[i : i + 1]
-                right_value = right[i : i + 1]
+                left_value: object = left[i : i + 1]
+                right_value: object = right[i : i + 1]
             else:
                 left_value = left[i]
                 right_value = right[i]
@@ -406,15 +502,14 @@ def _compare_eq_sequence(
             ]
         else:
             explanation += [
-                "%s contains %d more items, first extra item: %s"
-                % (dir_with_more, len_diff, highlighter(extra))
+                f"{dir_with_more} contains {len_diff} more items, first extra item: {highlighter(extra)}"
             ]
     return explanation
 
 
 def _compare_eq_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
+    left: AbstractSet[object],
+    right: AbstractSet[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> list[str]:
@@ -425,8 +520,8 @@ def _compare_eq_set(
 
 
 def _compare_gt_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
+    left: AbstractSet[object],
+    right: AbstractSet[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> list[str]:
@@ -437,8 +532,8 @@ def _compare_gt_set(
 
 
 def _compare_lt_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
+    left: AbstractSet[object],
+    right: AbstractSet[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> list[str]:
@@ -449,8 +544,8 @@ def _compare_lt_set(
 
 
 def _compare_gte_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
+    left: AbstractSet[object],
+    right: AbstractSet[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> list[str]:
@@ -458,8 +553,8 @@ def _compare_gte_set(
 
 
 def _compare_lte_set(
-    left: AbstractSet[Any],
-    right: AbstractSet[Any],
+    left: AbstractSet[object],
+    right: AbstractSet[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> list[str]:
@@ -468,8 +563,8 @@ def _compare_lte_set(
 
 def _set_one_sided_diff(
     posn: str,
-    set1: AbstractSet[Any],
-    set2: AbstractSet[Any],
+    set1: AbstractSet[object],
+    set2: AbstractSet[object],
     highlighter: _HighlightFunc,
 ) -> list[str]:
     explanation = []
@@ -481,9 +576,9 @@ def _set_one_sided_diff(
     return explanation
 
 
-def _compare_eq_dict(
-    left: Mapping[Any, Any],
-    right: Mapping[Any, Any],
+def _compare_eq_mapping(
+    left: Mapping[object, object],
+    right: Mapping[object, object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
 ) -> list[str]:
@@ -510,8 +605,7 @@ def _compare_eq_dict(
     len_extra_left = len(extra_left)
     if len_extra_left:
         explanation.append(
-            "Left contains %d more item%s:"
-            % (len_extra_left, "" if len_extra_left == 1 else "s")
+            f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
         )
         explanation.extend(
             highlighter(pprint.pformat({k: left[k] for k in extra_left})).splitlines()
@@ -520,8 +614,7 @@ def _compare_eq_dict(
     len_extra_right = len(extra_right)
     if len_extra_right:
         explanation.append(
-            "Right contains %d more item%s:"
-            % (len_extra_right, "" if len_extra_right == 1 else "s")
+            f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
         )
         explanation.extend(
             highlighter(pprint.pformat({k: right[k] for k in extra_right})).splitlines()
@@ -530,20 +623,22 @@ def _compare_eq_dict(
 
 
 def _compare_eq_cls(
-    left: Any, right: Any, highlighter: _HighlightFunc, verbose: int
+    left: object,
+    right: object,
+    highlighter: _HighlightFunc,
+    verbose: int,
+    assertion_text_diff_style: _AssertionTextDiffStyle,
 ) -> list[str]:
     if not has_default_eq(left):
         return []
     if isdatacls(left):
-        import dataclasses
-
         all_fields = dataclasses.fields(left)
         fields_to_check = [info.name for info in all_fields if info.compare]
     elif isattrs(left):
-        all_fields = left.__attrs_attrs__
+        all_fields = left.__attrs_attrs__  # type: ignore[attr-defined]
         fields_to_check = [field.name for field in all_fields if getattr(field, "eq")]
     elif isnamedtuple(left):
-        fields_to_check = left._fields
+        fields_to_check = left._fields  # type: ignore[attr-defined]
     else:
         assert False
 
@@ -578,7 +673,11 @@ def _compare_eq_cls(
             explanation += [
                 indent + line
                 for line in _compare_eq_any(
-                    field_left, field_right, highlighter, verbose
+                    field_left,
+                    field_right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
                 )
             ]
     return explanation
@@ -589,7 +688,7 @@ def _notin_text(term: str, text: str, verbose: int = 0) -> list[str]:
     head = text[:index]
     tail = text[index + len(term) :]
     correct_text = head + tail
-    diff = _diff_text(text, correct_text, verbose)
+    diff = _diff_text(text, correct_text, dummy_highlighter, verbose)
     newdiff = [f"{saferepr(term, maxsize=42)} is contained here:"]
     for line in diff:
         if line.startswith("Skipping"):
@@ -601,9 +700,3 @@ def _notin_text(term: str, text: str, verbose: int = 0) -> list[str]:
         else:
             newdiff.append(line)
     return newdiff
-
-
-def running_on_ci() -> bool:
-    """Check if we're currently running on a CI system."""
-    env_vars = ["CI", "BUILD_NUMBER"]
-    return any(var in os.environ for var in env_vars)

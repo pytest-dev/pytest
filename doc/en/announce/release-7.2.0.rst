@@ -33,7 +33,7 @@ Thanks to all of the contributors to this release:
 * EmptyRabbit
 * Ezio Melotti
 * Florian Best
-* Florian Bruhin
+* Freya Bruhin
 * Fredrik Berndtsson
 * Gabriel Landau
 * Gergely Kalmár

@@ -1,0 +1,1 @@
+Improved :func:`pytest.raises(..., match=...) <pytest.raises>` failures to suppress the mismatched exception as a cause of the resulting ``AssertionError``.

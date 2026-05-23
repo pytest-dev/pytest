@@ -15,7 +15,7 @@ Thanks to all who contributed to this release, among them:
 * Andreu Vallbona Plazas
 * Anthony Sottile
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Michael Moore
 * Niklas Meinzer
 * Thomas Grainger

@@ -2,8 +2,8 @@
 # mypy: disallow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
 import logging
-from typing import Iterator
 
 from _pytest.logging import caplog_records_key
 from _pytest.pytester import Pytester
@@ -409,6 +409,33 @@ def test_can_override_global_log_level(pytester: Pytester) -> None:
 
     result = pytester.runpytest()
     assert result.ret == 0
+
+
+def test_can_capture_non_propagating_logger(pytester: Pytester) -> None:
+    """Logs emitted by non-propagating loggers are still captured (#3697)."""
+    pytester.makepyfile(
+        """
+        import logging
+
+        logger = logging.getLogger("catchlog")
+        logger.propagate = False
+        child_logger = logging.getLogger("catchlog.child")
+
+        def test_non_propagating_logger(caplog):
+            caplog.set_level(logging.INFO)
+
+            logger.info("parent logger message")
+            child_logger.info("child logger message")
+
+            assert caplog.record_tuples == [
+                ("catchlog", logging.INFO, "parent logger message"),
+                ("catchlog.child", logging.INFO, "child logger message"),
+            ]
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
 
 
 def test_captures_despite_exception(pytester: Pytester) -> None:

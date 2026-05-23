@@ -1,13 +1,12 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Sequence
 import os
 from pathlib import Path
 import textwrap
 from typing import cast
-from typing import Generator
-from typing import List
-from typing import Sequence
 
 from _pytest.config import ExitCode
 from _pytest.config import PytestPluginManager
@@ -459,7 +458,7 @@ def test_conftest_import_order(pytester: Pytester, monkeypatch: MonkeyPatch) -> 
         rootpath=pytester.path,
         consider_namespace_packages=False,
     )
-    mods = cast(List[Path], conftest._getconftestmodules(sub))
+    mods = cast(list[Path], conftest._getconftestmodules(sub))
     expected = [ct1, ct2]
     assert mods == expected
 
@@ -655,7 +654,7 @@ class TestConftestVisibility:
 def test_search_conftest_up_to_inifile(
     pytester: Pytester, confcutdir: str, passed: int, error: int
 ) -> None:
-    """Test that conftest files are detected only up to an ini file, unless
+    """Test that conftest files are detected only up to a configuration file, unless
     an explicit --confcutdir option is given.
     """
     root = pytester.path
@@ -700,9 +699,9 @@ def test_search_conftest_up_to_inifile(
     result = pytester.runpytest(*args)
     match = ""
     if passed:
-        match += "*%d passed*" % passed
+        match += f"*{passed} passed*"
     if error:
-        match += "*%d error*" % error
+        match += f"*{error} error*"
     result.stdout.fnmatch_lines(match)
 
 
@@ -763,6 +762,131 @@ def test_hook_proxy(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         ["*test_foo1.py*", "*test_foo3.py*", "*test_foo4.py*", "*3 passed*"]
     )
+
+
+def test_conftest_fixture_scoping_with_testpaths_outside_rootdir(
+    pytester: Pytester,
+) -> None:
+    """Regression test for #14004.
+
+    When testpaths points to a directory outside rootdir, conftest fixtures
+    from nested directories should not leak to sibling test directories.
+
+    Layout:
+        sdk/
+            pyproject.toml      (rootdir, testpaths = ["../tests/sdk"])
+        tests/
+            sdk/
+                conftest.py     (outer fixture)
+                test_outer.py
+                inner/
+                    conftest.py (inner fixture - should NOT be visible in test_outer)
+                    test_inner.py
+    """
+    root = pytester.path
+    sdk = root / "sdk"
+    sdk.mkdir()
+    sdk.joinpath("pyproject.toml").write_text(
+        textwrap.dedent("""\
+            [tool.pytest.ini_options]
+            testpaths = ["../tests/sdk"]
+        """),
+        encoding="utf-8",
+    )
+
+    tests_sdk = root / "tests" / "sdk"
+    tests_sdk.mkdir(parents=True)
+    tests_sdk.joinpath("conftest.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def outer_fixture():
+                pass
+        """),
+        encoding="utf-8",
+    )
+    tests_sdk.joinpath("test_outer.py").write_text(
+        textwrap.dedent("""\
+            def test_outer(request):
+                fixturenames = request.fixturenames
+                assert "outer_fixture" in fixturenames
+                assert "inner_fixture" not in fixturenames
+        """),
+        encoding="utf-8",
+    )
+
+    inner = tests_sdk / "inner"
+    inner.mkdir()
+    inner.joinpath("conftest.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def inner_fixture():
+                pass
+        """),
+        encoding="utf-8",
+    )
+    inner.joinpath("test_inner.py").write_text(
+        textwrap.dedent("""\
+            def test_inner(request):
+                fixturenames = request.fixturenames
+                assert "outer_fixture" in fixturenames
+                assert "inner_fixture" in fixturenames
+        """),
+        encoding="utf-8",
+    )
+
+    result = pytester.runpytest("--rootdir", str(sdk), "-v")
+    result.stdout.fnmatch_lines(
+        [
+            "*test_inner*PASSED*",
+            "*test_outer*PASSED*",
+            "*2 passed*",
+        ]
+    )
+
+
+def test_conftest_fixture_from_ancestor_above_rootdir(
+    pytester: Pytester,
+) -> None:
+    """Conftests from ancestor directories above rootdir that are loaded as
+    initial conftests get Session (global) visibility.
+
+    Layout:
+        project/
+            conftest.py         (defines ancestor_fixture)
+            sub/
+                pyproject.toml  (rootdir)
+                test_it.py      (should see ancestor_fixture)
+    """
+    root = pytester.path
+    root.joinpath("conftest.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+
+            @pytest.fixture
+            def ancestor_fixture():
+                return "from-ancestor"
+        """),
+        encoding="utf-8",
+    )
+    sub = root / "sub"
+    sub.mkdir()
+    sub.joinpath("pyproject.toml").write_text(
+        "[tool.pytest.ini_options]\n", encoding="utf-8"
+    )
+    sub.joinpath("test_it.py").write_text(
+        textwrap.dedent("""\
+            def test_uses_ancestor(ancestor_fixture):
+                assert ancestor_fixture == "from-ancestor"
+        """),
+        encoding="utf-8",
+    )
+
+    result = pytester.runpytest("--rootdir", str(sub), "--confcutdir", str(root), "-v")
+    result.stdout.fnmatch_lines(["*test_uses_ancestor*PASSED*", "*1 passed*"])
 
 
 def test_required_option_help(pytester: Pytester) -> None:

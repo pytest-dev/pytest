@@ -3,22 +3,24 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterator
 from pprint import pformat
 import re
 from types import TracebackType
 from typing import Any
-from typing import Callable
 from typing import final
-from typing import Generator
-from typing import Iterator
 from typing import overload
-from typing import Pattern
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
 
 if TYPE_CHECKING:
+    from typing_extensions import ParamSpec
     from typing_extensions import Self
+
+    P = ParamSpec("P")
 
 import warnings
 
@@ -44,11 +46,13 @@ def recwarn() -> Generator[WarningsRecorder]:
 
 
 @overload
-def deprecated_call(*, match: str | Pattern[str] | None = ...) -> WarningsRecorder: ...
+def deprecated_call(
+    *, match: str | re.Pattern[str] | None = ...
+) -> WarningsRecorder: ...
 
 
 @overload
-def deprecated_call(func: Callable[..., T], *args: Any, **kwargs: Any) -> T: ...
+def deprecated_call(func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T: ...
 
 
 def deprecated_call(
@@ -66,46 +70,46 @@ def deprecated_call(
         >>> import pytest
         >>> with pytest.deprecated_call():
         ...    assert api_call_v2() == 200
+        >>> with pytest.deprecated_call(match="^use v3 of this api$") as warning_messages:
+        ...    assert api_call_v2() == 200
 
-    It can also be used by passing a function and ``*args`` and ``**kwargs``,
-    in which case it will ensure calling ``func(*args, **kwargs)`` produces one of
-    the warnings types above. The return value is the return value of the function.
-
-    In the context manager form you may use the keyword argument ``match`` to assert
+    You may use the keyword argument ``match`` to assert
     that the warning matches a text or regex.
 
-    The context manager produces a list of :class:`warnings.WarningMessage` objects,
-    one for each warning raised.
+    The return value is a list of :class:`warnings.WarningMessage` objects,
+    one for each warning emitted
+    (regardless of whether it is an ``expected_warning`` or not).
     """
     __tracebackhide__ = True
-    if func is not None:
-        args = (func, *args)
-    return warns(
-        (DeprecationWarning, PendingDeprecationWarning, FutureWarning), *args, **kwargs
-    )
+    dep_warnings = (DeprecationWarning, PendingDeprecationWarning, FutureWarning)
+    if func is None:
+        return warns(dep_warnings, *args, **kwargs)
+
+    with warns(dep_warnings):
+        return func(*args, **kwargs)
 
 
 @overload
 def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...] = ...,
     *,
-    match: str | Pattern[str] | None = ...,
+    match: str | re.Pattern[str] | None = ...,
 ) -> WarningsChecker: ...
 
 
 @overload
 def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...],
-    func: Callable[..., T],
-    *args: Any,
-    **kwargs: Any,
+    func: Callable[P, T],
+    *args: P.args,
+    **kwargs: P.kwargs,
 ) -> T: ...
 
 
 def warns(
     expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
+    func: Callable[..., object] | None = None,
     *args: Any,
-    match: str | Pattern[str] | None = None,
     **kwargs: Any,
 ) -> WarningsChecker | Any:
     r"""Assert that code raises a particular class of warning.
@@ -118,13 +122,13 @@ def warns(
     each warning emitted (regardless of whether it is an ``expected_warning`` or not).
     Since pytest 8.0, unmatched warnings are also re-emitted when the context closes.
 
-    This function can be used as a context manager::
+    This function should be used as a context manager::
 
         >>> import pytest
         >>> with pytest.warns(RuntimeWarning):
         ...    warnings.warn("my warning", RuntimeWarning)
 
-    In the context manager form you may use the keyword argument ``match`` to assert
+    The ``match`` keyword argument can be used to assert
     that the warning matches a text or regex::
 
         >>> with pytest.warns(UserWarning, match='must be 0 or None'):
@@ -138,7 +142,9 @@ def warns(
         ...         warnings.warn("this is not here", UserWarning)
         Traceback (most recent call last):
           ...
-        Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+        Failed: Regex pattern did not match any of the 1 warnings emitted.
+         Regex: ...
+         Emitted warnings: ...UserWarning...
 
     **Using with** ``pytest.mark.parametrize``
 
@@ -150,7 +156,8 @@ def warns(
 
     """
     __tracebackhide__ = True
-    if not args:
+    if func is None and not args:
+        match: str | re.Pattern[str] | None = kwargs.pop("match", None)
         if kwargs:
             argnames = ", ".join(sorted(kwargs))
             raise TypeError(
@@ -159,14 +166,13 @@ def warns(
             )
         return WarningsChecker(expected_warning, match_expr=match, _ispytest=True)
     else:
-        func = args[0]
         if not callable(func):
             raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
         with WarningsChecker(expected_warning, _ispytest=True):
-            return func(*args[1:], **kwargs)
+            return func(*args, **kwargs)
 
 
-class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
+class WarningsRecorder(warnings.catch_warnings):
     """A context manager to record raised warnings.
 
     Each recorded warning is an instance of :class:`warnings.WarningMessage`.
@@ -225,7 +231,9 @@ class WarningsRecorder(warnings.catch_warnings):  # type:ignore[type-arg]
         """Clear the list of recorded warnings."""
         self._list[:] = []
 
-    def __enter__(self) -> Self:
+    # Type ignored because we basically want the `catch_warnings` generic type
+    # parameter to be ourselves but that is not possible(?).
+    def __enter__(self) -> Self:  # type: ignore[override]
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError(f"Cannot enter {self!r} twice")
@@ -258,7 +266,7 @@ class WarningsChecker(WarningsRecorder):
     def __init__(
         self,
         expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
-        match_expr: str | Pattern[str] | None = None,
+        match_expr: str | re.Pattern[str] | None = None,
         *,
         _ispytest: bool = False,
     ) -> None:
@@ -318,10 +326,17 @@ class WarningsChecker(WarningsRecorder):
                     f" Emitted warnings: {found_str()}."
                 )
             elif not any(self.matches(w) for w in self):
+                escape_hint = ""
+                if isinstance(self.match_expr, str) and any(
+                    self.match_expr == str(w.message)
+                    for w in self
+                    if issubclass(w.category, self.expected_warning)
+                ):
+                    escape_hint = "\n Did you mean to `re.escape()` the regex?"
                 fail(
-                    f"DID NOT WARN. No warnings of type {self.expected_warning} matching the regex were emitted.\n"
-                    f" Regex: {self.match_expr}\n"
-                    f" Emitted warnings: {found_str()}."
+                    f"Regex pattern did not match any of the {len(self)} warnings emitted.\n"
+                    f" Regex: {self.match_expr!r}\n"
+                    f" Emitted warnings: {found_str()}.{escape_hint}"
                 )
         finally:
             # Whether or not any warnings matched, we want to re-emit all unmatched warnings.

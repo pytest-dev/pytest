@@ -20,7 +20,7 @@ Thanks to all of the contributors to this release:
 
 * Bruno Oliveira
 * Daniel Miller
-* Florian Bruhin
+* Freya Bruhin
 * HolyMagician03-UMich
 * John Litborn
 * Levon Saldamli

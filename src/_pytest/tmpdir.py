@@ -3,16 +3,18 @@
 
 from __future__ import annotations
 
+import atexit
+from collections.abc import Generator
+from contextlib import ExitStack
 import dataclasses
 import os
 from pathlib import Path
 import re
 from shutil import rmtree
+import stat
 import tempfile
 from typing import Any
-from typing import Dict
 from typing import final
-from typing import Generator
 from typing import Literal
 
 from .pathlib import cleanup_dead_symlinks
@@ -34,7 +36,7 @@ from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 
 
-tmppath_result_key = StashKey[Dict[str, bool]]()
+tmppath_result_key = StashKey[dict[str, bool]]()
 RetentionType = Literal["all", "failed", "none"]
 
 
@@ -74,6 +76,9 @@ class TempPathFactory:
         self._retention_count = retention_count
         self._retention_policy = retention_policy
         self._basetemp = basetemp
+        # Register cleanups for session finish. Also called atexit as a last
+        # resort if sessionfinish for some reason doesn't happen.
+        self._exit_stack = ExitStack()
 
     @classmethod
     def from_config(
@@ -171,16 +176,37 @@ class TempPathFactory:
             # Also, to keep things private, fixup any world-readable temp
             # rootdir's permissions. Historically 0o755 was used, so we can't
             # just error out on this, at least for a while.
+            # Don't follow symlinks, otherwise we're open to symlink-swapping
+            # TOCTOU vulnerability.
+            # This check makes us vulnerable to a DoS - a user can `mkdir
+            # /tmp/pytest-of-otheruser` and then `otheruser` will fail this
+            # check. For now we don't consider it a real problem. otheruser can
+            # change their TMPDIR or --basetemp, and maybe give the prankster a
+            # good scolding.
             uid = get_user_id()
             if uid is not None:
-                rootdir_stat = rootdir.stat()
+                stat_follow_symlinks = (
+                    False if os.stat in os.supports_follow_symlinks else True
+                )
+                rootdir_stat = rootdir.stat(follow_symlinks=stat_follow_symlinks)
+                if stat.S_ISLNK(rootdir_stat.st_mode):
+                    raise OSError(
+                        f"The temporary directory {rootdir} is a symbolic link. "
+                        "Fix this and try again."
+                    )
                 if rootdir_stat.st_uid != uid:
                     raise OSError(
                         f"The temporary directory {rootdir} is not owned by the current user. "
                         "Fix this and try again."
                     )
                 if (rootdir_stat.st_mode & 0o077) != 0:
-                    os.chmod(rootdir, rootdir_stat.st_mode & ~0o077)
+                    chmod_follow_symlinks = (
+                        False if os.chmod in os.supports_follow_symlinks else True
+                    )
+                    rootdir.chmod(
+                        rootdir_stat.st_mode & ~0o077,
+                        follow_symlinks=chmod_follow_symlinks,
+                    )
             keep = self._retention_count
             if self._retention_policy == "none":
                 keep = 0
@@ -190,7 +216,13 @@ class TempPathFactory:
                 keep=keep,
                 lock_timeout=LOCK_TIMEOUT,
                 mode=0o700,
+                register=self._exit_stack.callback,
             )
+            # Ensure that the cleanup is called on exit (#1120 possibly?).
+            # But if the exit stack is closed manually (as it normally should),
+            # unregister the atexit to avoid pile up.
+            atexit.register(self._exit_stack.close)
+            self._exit_stack.callback(atexit.unregister, self._exit_stack.close)
         assert basetemp is not None, basetemp
         self._basetemp = basetemp
         self._trace("new basetemp", basetemp)
@@ -226,13 +258,16 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "tmp_path_retention_count",
         help="How many sessions should we keep the `tmp_path` directories, according to `tmp_path_retention_policy`.",
-        default=3,
+        default="3",
+        # NOTE: Would have been better as an `int` but can't change it now.
+        type="string",
     )
 
     parser.addini(
         "tmp_path_retention_policy",
         help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome. "
         "(all/failed/none)",
+        type="string",
         default="all",
     )
 
@@ -266,7 +301,6 @@ def tmp_path(
     yield path
 
     # Remove the tmpdir if the policy is "failed" and the test passed.
-    tmp_path_factory: TempPathFactory = request.session.config._tmp_path_factory  # type: ignore
     policy = tmp_path_factory._retention_policy
     result_dict = request.node.stash[tmppath_result_key]
 
@@ -301,6 +335,9 @@ def pytest_sessionfinish(session, exitstatus: int | ExitCode):
     # Remove dead symlinks.
     if basetemp.is_dir():
         cleanup_dead_symlinks(basetemp)
+
+    # Run the numbered dirs and lock file cleanups registered on the ExitStack.
+    tmp_path_factory._exit_stack.close()
 
 
 @hookimpl(wrapper=True, tryfirst=True)

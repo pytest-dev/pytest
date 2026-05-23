@@ -1,1 +1,0 @@
-Fix ambiguous docstring of :func:`pytest.Config.getoption`.

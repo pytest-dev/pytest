@@ -14,7 +14,7 @@ Thanks to all who contributed to this release, among them:
 * Andreas Pelme
 * ApaDoctor
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Ronny Pfannschmidt
 * Segev Finer
 

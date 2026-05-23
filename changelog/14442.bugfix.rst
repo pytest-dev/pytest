@@ -1,0 +1,3 @@
+Fixed a regression in pytest 9.0 where :option:`--strict-markers` and :option:`--strict-config` specified through :confval:`addopts` were silently ignored.
+
+Note that when targeting pytest >= 9.0, it's nicer to use :confval:`strict_markers` and :confval:`strict_config`, or :ref:`strict mode <strict mode>`.

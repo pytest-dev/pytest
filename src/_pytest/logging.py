@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
+from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 from contextlib import contextmanager
 from contextlib import nullcontext
 from datetime import datetime
@@ -16,14 +19,9 @@ import os
 from pathlib import Path
 import re
 from types import TracebackType
-from typing import AbstractSet
-from typing import Dict
 from typing import final
-from typing import Generator
 from typing import Generic
-from typing import List
 from typing import Literal
-from typing import Mapping
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
@@ -53,7 +51,7 @@ DEFAULT_LOG_FORMAT = "%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 _ANSI_ESCAPE_SEQ = re.compile(r"\x1b\[[\d;]+m")
 caplog_handler_key = StashKey["LogCaptureHandler"]()
-caplog_records_key = StashKey[Dict[str, List[logging.LogRecord]]]()
+caplog_records_key = StashKey[dict[str, list[logging.LogRecord]]]()
 
 
 def _remove_ansi_escape_sequences(text: str) -> str:
@@ -344,18 +342,34 @@ _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 class catching_logs(Generic[_HandlerType]):
     """Context manager that prepares the whole logging machinery properly."""
 
-    __slots__ = ("handler", "level", "orig_level")
+    __slots__ = ("attached_loggers", "handler", "level", "orig_level")
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
         self.handler = handler
         self.level = level
+        self.attached_loggers: list[logging.Logger] = []
 
     def __enter__(self) -> _HandlerType:
         root_logger = logging.getLogger()
         if self.level is not None:
             self.handler.setLevel(self.level)
+        # Attach to root logger.
         root_logger.addHandler(self.handler)
+        self.attached_loggers.append(root_logger)
+        # Attach to all non-propagating loggers (won't reach root).
+        # Note that will miss loggers that *become* non-propagating
+        # after the `__enter__`. Not worth the trouble for now.
+        for logger in root_logger.manager.loggerDict.values():
+            if (
+                isinstance(logger, logging.Logger)
+                and not logger.propagate
+                and logger is not root_logger
+            ):
+                logger.addHandler(self.handler)
+                self.attached_loggers.append(logger)
         if self.level is not None:
+            # Non-propagating loggers still inherit the level (unless a logger
+            # explicitly set level), so only do this on the root logger.
             self.orig_level = root_logger.level
             root_logger.setLevel(min(self.orig_level, self.level))
         return self.handler
@@ -369,7 +383,9 @@ class catching_logs(Generic[_HandlerType]):
         root_logger = logging.getLogger()
         if self.level is not None:
             root_logger.setLevel(self.orig_level)
-        root_logger.removeHandler(self.handler)
+        for logger in self.attached_loggers:
+            logger.removeHandler(self.handler)
+        self.attached_loggers.clear()
 
 
 class LogCaptureHandler(logging_StreamHandler):
@@ -515,7 +531,7 @@ class LogCaptureFixture:
 
         if isinstance(level, str):
             # Try to translate the level string to an int for `logging.disable()`
-            level = logging.getLevelName(level)
+            level = logging.getLevelName(level)  # type: ignore[deprecated]
 
         if not isinstance(level, int):
             # The level provided was not valid, so just un-disable all logging.
@@ -811,15 +827,19 @@ class LoggingPlugin:
     def pytest_runtest_logreport(self) -> None:
         self.log_cli_handler.set_when("logreport")
 
+    @contextmanager
     def _runtest_for(self, item: nodes.Item, when: str) -> Generator[None]:
         """Implement the internals of the pytest_runtest_xxx() hooks."""
-        with catching_logs(
-            self.caplog_handler,
-            level=self.log_level,
-        ) as caplog_handler, catching_logs(
-            self.report_handler,
-            level=self.log_level,
-        ) as report_handler:
+        with (
+            catching_logs(
+                self.caplog_handler,
+                level=self.log_level,
+            ) as caplog_handler,
+            catching_logs(
+                self.report_handler,
+                level=self.log_level,
+            ) as report_handler,
+        ):
             caplog_handler.reset()
             report_handler.reset()
             item.stash[caplog_records_key][when] = caplog_handler.records
@@ -837,20 +857,23 @@ class LoggingPlugin:
 
         empty: dict[str, list[logging.LogRecord]] = {}
         item.stash[caplog_records_key] = empty
-        yield from self._runtest_for(item, "setup")
+        with self._runtest_for(item, "setup"):
+            yield
 
     @hookimpl(wrapper=True)
     def pytest_runtest_call(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("call")
 
-        yield from self._runtest_for(item, "call")
+        with self._runtest_for(item, "call"):
+            yield
 
     @hookimpl(wrapper=True)
     def pytest_runtest_teardown(self, item: nodes.Item) -> Generator[None]:
         self.log_cli_handler.set_when("teardown")
 
         try:
-            yield from self._runtest_for(item, "teardown")
+            with self._runtest_for(item, "teardown"):
+                yield
         finally:
             del item.stash[caplog_records_key]
             del item.stash[caplog_handler_key]

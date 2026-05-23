@@ -4,21 +4,21 @@
 from __future__ import annotations
 
 import bdb
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Sequence
 from contextlib import contextmanager
 import functools
 import inspect
 import os
 from pathlib import Path
 import platform
+import re
 import sys
 import traceback
 import types
 from typing import Any
-from typing import Callable
-from typing import Generator
-from typing import Iterable
-from typing import Pattern
-from typing import Sequence
 from typing import TYPE_CHECKING
 import warnings
 
@@ -324,7 +324,7 @@ class DoctestItem(Item):
             Sequence[doctest.DocTestFailure | doctest.UnexpectedException] | None
         ) = None
         if isinstance(
-            excinfo.value, (doctest.DocTestFailure, doctest.UnexpectedException)
+            excinfo.value, doctest.DocTestFailure | doctest.UnexpectedException
         ):
             failures = [excinfo.value]
         elif isinstance(excinfo.value, MultipleDoctestFailures):
@@ -353,7 +353,7 @@ class DoctestItem(Item):
                 # add line numbers to the left of the error message
                 assert test.lineno is not None
                 lines = [
-                    "%03d %s" % (i + test.lineno + 1, x) for (i, x) in enumerate(lines)
+                    f"{i + test.lineno + 1:03d} {x}" for (i, x) in enumerate(lines)
                 ]
                 # trim docstring error lines to 10
                 lines = lines[max(example.lineno - 9, 0) : example.lineno + 1]
@@ -530,24 +530,6 @@ class DoctestModule(Module):
                         source_lines,
                     )
 
-            if sys.version_info < (3, 10):
-
-                def _find(
-                    self, tests, obj, name, module, source_lines, globs, seen
-                ) -> None:
-                    """Override _find to work around issue in stdlib.
-
-                    https://github.com/pytest-dev/pytest/issues/3456
-                    https://github.com/python/cpython/issues/69718
-                    """
-                    if _is_mocked(obj):
-                        return  # pragma: no cover
-                    with _patch_unwrap_mock_aware():
-                        # Type ignored because this is a private function.
-                        super()._find(  # type:ignore[misc]
-                            tests, obj, name, module, source_lines, globs, seen
-                        )
-
             if sys.version_info < (3, 13):
 
                 def _from_module(self, module, object):
@@ -593,7 +575,6 @@ class DoctestModule(Module):
 
 def _init_checker_class() -> type[doctest.OutputChecker]:
     import doctest
-    import re
 
     class LiteralsOutputChecker(doctest.OutputChecker):
         # Based on doctest_nose_plugin.py from the nltk project
@@ -636,7 +617,7 @@ def _init_checker_class() -> type[doctest.OutputChecker]:
             if not allow_unicode and not allow_bytes and not allow_number:
                 return False
 
-            def remove_prefixes(regex: Pattern[str], txt: str) -> str:
+            def remove_prefixes(regex: re.Pattern[str], txt: str) -> str:
                 return re.sub(regex, r"\1\2", txt)
 
             if allow_unicode:
@@ -658,7 +639,7 @@ def _init_checker_class() -> type[doctest.OutputChecker]:
             if len(wants) != len(gots):
                 return got
             offset = 0
-            for w, g in zip(wants, gots):
+            for w, g in zip(wants, gots, strict=True):
                 fraction: str | None = w.group("fraction")
                 exponent: str | None = w.group("exponent1")
                 if exponent is None:

@@ -14,7 +14,7 @@ Thanks to all who contributed to this release, among them:
 * Anthony Sottile
 * Barney Gale
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Floris Bruynooghe
 * Ionel Cristian Mărieș
 * Katerina Koukiou

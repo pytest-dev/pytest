@@ -5,19 +5,16 @@ import enum
 from functools import cached_property
 from functools import partial
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import Literal
+import warnings
 
-from _pytest.compat import _PytestWrapper
 from _pytest.compat import assert_never
+from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
 import pytest
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 
 def test_real_func_loop_limit() -> None:
@@ -38,10 +35,7 @@ def test_real_func_loop_limit() -> None:
 
     with pytest.raises(
         ValueError,
-        match=(
-            "could not find real function of <Evil left=800>\n"
-            "stopped at <Evil left=800>"
-        ),
+        match=("wrapper loop when unwrapping <Evil left=998>"),
     ):
         get_real_func(evil)
 
@@ -65,10 +59,13 @@ def test_get_real_func() -> None:
     wrapped_func2 = decorator(decorator(wrapped_func))
     assert get_real_func(wrapped_func2) is func
 
-    # special case for __pytest_wrapped__ attribute: used to obtain the function up until the point
-    # a function was wrapped by pytest itself
-    wrapped_func2.__pytest_wrapped__ = _PytestWrapper(wrapped_func)
-    assert get_real_func(wrapped_func2) is wrapped_func
+    # obtain the function up until the point a function was wrapped by pytest itself
+    @pytest.fixture
+    def wrapped_func3():
+        pass  # pragma: no cover
+
+    wrapped_func4 = decorator(wrapped_func3)
+    assert get_real_func(wrapped_func4) is wrapped_func3._get_wrapped_function()
 
 
 def test_get_real_func_partial() -> None:
@@ -193,3 +190,15 @@ def test_assert_never_literal() -> None:
         pass
     else:
         assert_never(x)
+
+
+def test_deprecated() -> None:
+    # This test is mostly for coverage.
+
+    @deprecated("This is deprecated!")
+    def old_way() -> str:
+        return "human intelligence"
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        assert old_way() == "human intelligence"  # type: ignore[deprecated]

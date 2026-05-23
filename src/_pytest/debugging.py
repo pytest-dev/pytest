@@ -5,13 +5,13 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
+from collections.abc import Generator
 import functools
+import importlib
 import sys
 import types
 from typing import Any
-from typing import Callable
-from typing import Generator
-import unittest
 
 from _pytest import outcomes
 from _pytest._code import ExceptionInfo
@@ -40,13 +40,13 @@ def _validate_usepdb_cls(value: str) -> tuple[str, str]:
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
-    group._addoption(
+    group.addoption(
         "--pdb",
         dest="usepdb",
         action="store_true",
         help="Start the interactive Python debugger on errors or KeyboardInterrupt",
     )
-    group._addoption(
+    group.addoption(
         "--pdbcls",
         dest="usepdb_cls",
         metavar="modulename:classname",
@@ -54,7 +54,7 @@ def pytest_addoption(parser: Parser) -> None:
         help="Specify a custom interactive Python debugger for use with --pdb."
         "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb",
     )
-    group._addoption(
+    group.addoption(
         "--trace",
         dest="trace",
         action="store_true",
@@ -123,8 +123,7 @@ class pytestPDB:
             modname, classname = usepdb_cls
 
             try:
-                __import__(modname)
-                mod = sys.modules[modname]
+                mod = importlib.import_module(modname)
 
                 # Handle --pdbcls=pdb:pdb.Pdb (useful e.g. with pdbpp).
                 parts = classname.split(".")
@@ -159,6 +158,9 @@ class pytestPDB:
                 cls._recursive_debug -= 1
                 return ret
 
+            if hasattr(pdb_cls, "do_debug"):
+                do_debug.__doc__ = pdb_cls.do_debug.__doc__
+
             def do_continue(self, arg):
                 ret = super().do_continue(arg)
                 if cls._recursive_debug == 0:
@@ -185,21 +187,26 @@ class pytestPDB:
                 self._continued = True
                 return ret
 
+            if hasattr(pdb_cls, "do_continue"):
+                do_continue.__doc__ = pdb_cls.do_continue.__doc__
+
             do_c = do_cont = do_continue
 
             def do_quit(self, arg):
-                """Raise Exit outcome when quit command is used in pdb.
-
-                This is a bit of a hack - it would be better if BdbQuit
-                could be handled, but this would require to wrap the
-                whole pytest run, and adjust the report etc.
-                """
+                # Raise Exit outcome when quit command is used in pdb.
+                #
+                # This is a bit of a hack - it would be better if BdbQuit
+                # could be handled, but this would require to wrap the
+                # whole pytest run, and adjust the report etc.
                 ret = super().do_quit(arg)
 
                 if cls._recursive_debug == 0:
                     outcomes.exit("Quitting debugger")
 
                 return ret
+
+            if hasattr(pdb_cls, "do_quit"):
+                do_quit.__doc__ = pdb_cls.do_quit.__doc__
 
             do_q = do_quit
             do_exit = do_quit
@@ -287,9 +294,7 @@ class PdbInvoke:
             sys.stdout.write(out)
             sys.stdout.write(err)
         assert call.excinfo is not None
-
-        if not isinstance(call.excinfo.value, unittest.SkipTest):
-            _enter_pdb(node, call.excinfo, report)
+        _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excinfo: ExceptionInfo[BaseException]) -> None:
         exc_or_tb = _postmortem_exc_or_tb(excinfo)

@@ -1,0 +1,3 @@
+Fixed :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` not unpacking single-element tuple values when using a string argnames with a trailing comma (e.g., ``"arg,"``).
+
+The trailing comma form now correctly behaves like the tuple form ``("arg",)``, treating argvalues as a list of tuples to unpack.

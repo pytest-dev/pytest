@@ -14,7 +14,7 @@ Thanks to all who contributed to this release, among them:
 * Anthony Sottile
 * Bruno Oliveira
 * Daniel Hahler
-* Florian Bruhin
+* Freya Bruhin
 * Hugo van Kemenade
 * Ran Benita
 * Ronny Pfannschmidt

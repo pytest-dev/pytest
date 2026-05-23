@@ -10,6 +10,7 @@ from typing import IO
 from _pytest.config import Config
 from _pytest.config import create_terminal_writer
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import PASTEBIN
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
 import pytest
@@ -20,7 +21,7 @@ pastebinfile_key = StashKey[IO[bytes]]()
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting")
-    group._addoption(
+    group.addoption(
         "--pastebin",
         metavar="mode",
         action="store",
@@ -33,6 +34,9 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config: Config) -> None:
+    if config.option.pastebin:
+        config.issue_config_time_warning(PASTEBIN, 2)
+
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin("terminalreporter")
         # If no terminal reporter plugin is present, nothing we can do here;
@@ -76,6 +80,7 @@ def create_new_paste(contents: str | bytes) -> str:
     :returns: URL to the pasted contents, or an error message.
     """
     import re
+    from urllib.error import HTTPError
     from urllib.parse import urlencode
     from urllib.request import urlopen
 
@@ -85,8 +90,11 @@ def create_new_paste(contents: str | bytes) -> str:
         response: str = (
             urlopen(url, data=urlencode(params).encode("ascii")).read().decode("utf-8")
         )
-    except OSError as exc_info:  # urllib errors
-        return f"bad response: {exc_info}"
+    except HTTPError as e:
+        with e:  # HTTPErrors are also http responses that must be closed!
+            return f"bad response: {e}"
+    except OSError as e:  # eg urllib.error.URLError
+        return f"bad response: {e}"
     m = re.search(r'href="/raw/(\w+)"', response)
     if m:
         return f"{url}/show/{m.group(1)}"

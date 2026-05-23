@@ -50,8 +50,8 @@ class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     __module__ = "pytest"
 
 
-class PytestRemovedIn9Warning(PytestDeprecationWarning):
-    """Warning class for features that will be removed in pytest 9."""
+class PytestRemovedIn10Warning(PytestDeprecationWarning):
+    """Warning class for features that will be removed in pytest 10."""
 
     __module__ = "pytest"
 
@@ -69,6 +69,17 @@ class PytestExperimentalApiWarning(PytestWarning, FutureWarning):
     @classmethod
     def simple(cls, apiname: str) -> PytestExperimentalApiWarning:
         return cls(f"{apiname} is an experimental api that may change over time")
+
+
+@final
+class PytestReturnNotNoneWarning(PytestWarning):
+    """
+    Warning emitted when a test function returns a value other than ``None``.
+
+    See :ref:`return-not-none` for details.
+    """
+
+    __module__ = "pytest"
 
 
 @final
@@ -121,6 +132,13 @@ class UnformattedWarning(Generic[_W]):
     def format(self, **kwargs: Any) -> _W:
         """Return an instance of the warning category, formatted with given kwargs."""
         return self.category(self.template.format(**kwargs))
+
+
+@final
+class PytestFDWarning(PytestWarning):
+    """When the lsof plugin finds leaked fds."""
+
+    __module__ = "pytest"
 
 
 def warn_explicit_for(method: FunctionType, message: PytestWarning) -> None:
