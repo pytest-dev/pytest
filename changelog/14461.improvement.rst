@@ -1,0 +1,1 @@
+Improved assertion failure explanations for equality comparisons between mapping objects that are not ``dict`` instances.
