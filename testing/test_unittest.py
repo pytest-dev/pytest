@@ -244,6 +244,27 @@ def test_unittest_skip_issue148(pytester: Pytester) -> None:
     reprec.assertoutcome(skipped=1)
 
 
+def test_unittest_skip_with_autouse_fixture(pytester: Pytester) -> None:
+    """Autouse fixtures inside a @unittest.skipIf class should not run (#13885)."""
+    pytester.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        @unittest.skipIf(True, "skip reason")
+        class TestSkipped(unittest.TestCase):
+            @pytest.fixture(autouse=True)
+            def my_fixture(self):
+                raise RuntimeError("fixture should not run")
+
+            def test_one(self):
+                pass
+    """
+    )
+    reprec = pytester.inline_run()
+    reprec.assertoutcome(skipped=1)
+
+
 def test_method_and_teardown_failing_reporting(pytester: Pytester) -> None:
     pytester.makepyfile(
         """
