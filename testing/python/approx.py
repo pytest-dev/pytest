@@ -679,6 +679,10 @@ class TestApprox:
         assert [1, 2] != approx([1])
         assert [1, 2] != approx([1, 2, 3])
 
+    def test_list_with_dict_elements(self):
+        assert [{"a": 1.0 + 1e-7}] == approx([{"a": 1.0}], abs=1e-5)
+        assert [{"a": 1.0 + 1e-4}] != approx([{"a": 1.0}], abs=1e-5)
+
     def test_tuple(self):
         actual = (1 + 1e-7, 2 + 1e-8)
         expected = (1, 2)
