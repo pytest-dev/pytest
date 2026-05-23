@@ -15,6 +15,33 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _fixture-nodeid-deprecated:
+
+Passing ``baseid``/``nodeid`` strings to fixture registration APIs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+Passing ``baseid`` to :class:`~pytest.FixtureDef` or ``nodeid`` strings to
+``FixtureManager._register_fixture`` and ``FixtureManager.parsefactories``
+is deprecated. These are internal pytest APIs that are used by some plugins.
+
+Use the ``node`` parameter instead for fixture scoping. This enables more robust
+node-based matching instead of fragile string prefix matching.
+
+.. code-block:: python
+
+    # Deprecated
+    fixture_manager.parsefactories(plugin_obj, nodeid="tests/sub")
+    fixture_manager._register_fixture(name="fix", func=func, nodeid="tests/sub")
+
+    # Use instead
+    fixture_manager.parsefactories(holder=plugin_obj, node=directory_node)
+    fixture_manager._register_fixture(name="fix", func=func, node=directory_node)
+
+In pytest 10, the ``baseid`` and ``nodeid`` string parameters will be removed.
+
+
 .. _pastebin-deprecated:
 
 The ``--pastebin`` option
