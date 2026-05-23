@@ -578,14 +578,17 @@ class LogXML:
                     # call and error in teardown in order to follow junit
                     # schema.
                     self.finalize(close_report)
-                elif (
-                    report.nodeid,
-                    getattr(report, "node", None),
-                ) in self.node_reporters:
+                else:
                     # A passing call with a teardown error creates separate
                     # terminal reports, but JUnit XML keeps one testcase
                     # element for that item (#3850).
-                    self.cnt_double_fail_tests += 1
+                    self.cnt_double_fail_tests += int(
+                        (
+                            report.nodeid,
+                            getattr(report, "node", None),
+                        )
+                        in self.node_reporters
+                    )
             reporter = self._opentestcase(report)
             if report.when == "call":
                 reporter.append_failure(report)
