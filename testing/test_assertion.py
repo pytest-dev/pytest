@@ -1,6 +1,8 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
+from collections.abc import Mapping
 from collections.abc import MutableSequence
 import sys
 import textwrap
@@ -884,6 +886,38 @@ class TestAssert_reprcompare:
             "?      ^   ^",
             "+     'c': 2,",
             "  }",
+        ]
+
+    def test_mapping_different_items(self) -> None:
+        class SimpleMapping(Mapping[str, int]):
+            def __init__(self, values: dict[str, int]) -> None:
+                self._values = values
+
+            def __getitem__(self, key: str) -> int:
+                return self._values[key]
+
+            def __iter__(self) -> Iterator[str]:
+                return iter(self._values)
+
+            def __len__(self) -> int:
+                return len(self._values)
+
+            def __repr__(self) -> str:
+                return f"SimpleMapping({self._values!r})"
+
+        lines = callequal(
+            SimpleMapping({"a": 0, "b": 1}),
+            SimpleMapping({"a": 1, "b": 1, "c": 2}),
+        )
+
+        assert lines is not None
+        assert lines[2:] == [
+            "Omitting 1 identical items, use -vv to show",
+            "Differing items:",
+            "{'a': 0} != {'a': 1}",
+            "Right contains 1 more item:",
+            "{'c': 2}",
+            "Use -v to get more diff",
         ]
 
     def test_sequence_different_items(self) -> None:
