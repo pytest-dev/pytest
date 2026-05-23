@@ -16,7 +16,7 @@ As usual, you can upgrade from pypi via::
 Thanks to all who contributed to this release, among them:
 
   Bruno Oliveira
-  Florian Bruhin
+  Freya Bruhin
   Jeff Widman
   Mehdy Khoshnoody
   Nicholas Chammas
@@ -43,10 +43,10 @@ The py.test Development Team
   non-ascii characters. Thanks Bruno Oliveira for the PR.
 
 - fix #1204: another error when collecting with a nasty __getattr__().
-  Thanks Florian Bruhin for the PR.
+  Thanks Freya Bruhin for the PR.
 
 - fix the summary printed when no tests did run.
-  Thanks Florian Bruhin for the PR.
+  Thanks Freya Bruhin for the PR.
 
 - a number of documentation modernizations wrt good practices.
   Thanks Bruno Oliveira for the PR.

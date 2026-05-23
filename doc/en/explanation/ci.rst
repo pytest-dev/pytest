@@ -8,7 +8,7 @@ Rationale
 
 The goal of testing in a CI pipeline is different from testing locally. Indeed,
 you can quickly edit some code and run your tests again on your computer, but
-it is not possible with CI pipeline. They run on a separate server and are
+it is not possible with CI pipelines. They run on a separate server and are
 triggered by specific actions.
 
 From that observation, pytest can detect when it is in a CI environment and
@@ -17,11 +17,10 @@ adapt some of its behaviours.
 How CI is detected
 ------------------
 
-Pytest knows it is in a CI environment when either one of these environment variables are set,
-regardless of their value:
+Pytest knows it is in a CI environment when either one of these environment variables is set to a non-empty value:
 
-* `CI`: used by many CI systems.
-* `BUILD_NUMBER`: used by Jenkins.
+* :envvar:`CI`: used by many CI systems.
+* :envvar:`BUILD_NUMBER`: used by Jenkins.
 
 Effects on CI
 -------------
@@ -51,7 +50,7 @@ Running this locally, without any extra options, will output:
      $ pytest test_ci.py
      ...
      ========================= short test summary info ==========================
-     FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately f...
+     FAILED test_ci.py::test_db_initialized - Failed: deliberately f...
 
 *(Note the truncated text)*
 
@@ -64,7 +63,7 @@ While running this on CI will output:
      $ pytest test_ci.py
      ...
      ========================= short test summary info ==========================
-     FAILED test_backends.py::test_db_initialized[d2] - Failed: deliberately failing
+     FAILED test_ci.py::test_db_initialized - Failed: deliberately failing
      for demo purpose, Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras
      facilisis, massa in suscipit dignissim, mauris lacus molestie nisi, quis varius
      metus nulla ut ipsum.

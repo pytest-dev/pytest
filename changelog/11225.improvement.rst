@@ -1,0 +1,1 @@
+:func:`pytest.warns` now shows "Regex pattern did not match" instead of "DID NOT WARN" when warnings were emitted but the ``match`` pattern did not match.

@@ -16,6 +16,7 @@ Core pytest functionality
    fixtures
    mark
    parametrize
+   subtests
    tmp_path
    monkeypatch
    doctest

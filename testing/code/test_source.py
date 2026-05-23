@@ -1,21 +1,20 @@
 # mypy: allow-untyped-defs
-# flake8: noqa
-# disable flake check on this file because some constructs are strange
-# or redundant on purpose and can't be disable on a line-by-line basis
+from __future__ import annotations
+
 import inspect
 import linecache
+from pathlib import Path
 import sys
 import textwrap
-from pathlib import Path
 from typing import Any
-from typing import Dict
+from unittest.mock import patch
 
-import pytest
 from _pytest._code import Code
 from _pytest._code import Frame
 from _pytest._code import getfslineno
 from _pytest._code import Source
 from _pytest.pathlib import import_path
+import pytest
 
 
 def test_source_str_function() -> None:
@@ -212,7 +211,8 @@ class TestSourceParsing:
 
     def test_getstatementrange_with_syntaxerror_issue7(self) -> None:
         source = Source(":")
-        pytest.raises(SyntaxError, lambda: source.getstatementrange(0))
+        with pytest.raises(SyntaxError):
+            source.getstatementrange(0)
 
 
 def test_getstartingblock_singleline() -> None:
@@ -336,7 +336,7 @@ def test_findsource(monkeypatch) -> None:
     assert src is not None
     assert "if 1:" in str(src)
 
-    d: Dict[str, Any] = {}
+    d: dict[str, Any] = {}
     eval(co, d)
     src, lineno = findsource(d["x"])
     assert src is not None
@@ -381,7 +381,8 @@ def test_code_of_object_instance_with_call() -> None:
     class A:
         pass
 
-    pytest.raises(TypeError, lambda: Source(A()))
+    with pytest.raises(TypeError):
+        Source(A())
 
     class WithCall:
         def __call__(self) -> None:
@@ -394,14 +395,15 @@ def test_code_of_object_instance_with_call() -> None:
         def __call__(self) -> None:
             pass
 
-    pytest.raises(TypeError, lambda: Code.from_function(Hello))
+    with pytest.raises(TypeError):
+        Code.from_function(Hello)
 
 
 def getstatement(lineno: int, source) -> Source:
     from _pytest._code.source import getstatementrange_ast
 
     src = Source(source)
-    ast, start, end = getstatementrange_ast(lineno, src)
+    _ast, start, end = getstatementrange_ast(lineno, src)
     return src[start:end]
 
 
@@ -420,7 +422,7 @@ def test_comment_and_no_newline_at_end() -> None:
             "# vim: filetype=pyopencl:fdm=marker",
         ]
     )
-    ast, start, end = getstatementrange_ast(1, source)
+    _ast, _start, end = getstatementrange_ast(1, source)
     assert end == 2
 
 
@@ -464,7 +466,6 @@ def test_comment_in_statement() -> None:
 
 def test_source_with_decorator() -> None:
     """Test behavior with Source / Code().source with regard to decorators."""
-    from _pytest.compat import get_real_func
 
     @pytest.mark.foo
     def deco_mark():
@@ -478,14 +479,14 @@ def test_source_with_decorator() -> None:
     def deco_fixture():
         assert False
 
-    src = inspect.getsource(deco_fixture)
+    src = inspect.getsource(deco_fixture._get_wrapped_function())
     assert src == "    @pytest.fixture\n    def deco_fixture():\n        assert False\n"
-    # currently Source does not unwrap decorators, testing the
-    # existing behavior here for explicitness, but perhaps we should revisit/change this
-    # in the future
-    assert str(Source(deco_fixture)).startswith("@functools.wraps(function)")
+    # Make sure the decorator is not a wrapped function
+    assert not str(Source(deco_fixture)).startswith("@functools.wraps(function)")
     assert (
-        textwrap.indent(str(Source(get_real_func(deco_fixture))), "    ") + "\n" == src
+        textwrap.indent(str(Source(deco_fixture._get_wrapped_function())), "    ")
+        + "\n"
+        == src
     )
 
 
@@ -650,3 +651,27 @@ def test_getstartingblock_multiline() -> None:
     # fmt: on
     values = [i for i in x.source.lines if i.strip()]
     assert len(values) == 4
+
+
+def test_patched_compile() -> None:
+    # ensure Source doesn't break
+    # when compile() modifies code dynamically
+    from builtins import compile
+
+    def patched_compile1(_, *args, **kwargs):
+        return compile("", *args, **kwargs)
+
+    with patch("builtins.compile", new=patched_compile1):
+        Source(patched_compile1).getstatement(1)
+
+    # fmt: off
+    def patched_compile2(_, *args, **kwargs):
+
+        # first line of this function (the one above this one) must be empty
+        # LINES must be equal or higher than number of lines of this function
+        LINES = 99
+        return compile("\ndef a():\n" + "\n" * LINES + "    pass", *args, **kwargs)
+    # fmt: on
+
+    with patch("builtins.compile", new=patched_compile2):
+        Source(patched_compile2).getstatement(1)

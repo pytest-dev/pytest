@@ -235,13 +235,20 @@ so that any attempts within tests to create http requests will fail.
 
     Be advised that it is not recommended to patch builtin functions such as ``open``,
     ``compile``, etc., because it might break pytest's internals. If that's
-    unavoidable, passing ``--tb=native``, ``--assert=plain`` and ``--capture=no`` might
+    unavoidable, passing :option:`--tb=native`, :option:`--assert=plain` and :option:`--capture=no` might
     help although there's no guarantee.
 
 .. note::
 
     Mind that patching ``stdlib`` functions and some third-party libraries used by pytest
-    might break pytest itself, therefore in those cases it is recommended to use
+    might break pytest itself. Prefer patching the reference that your code uses
+    instead of patching the original object in the standard library. For example,
+    if your module does ``from os import getcwd``, patch ``mymodule.getcwd``
+    rather than ``os.getcwd``.
+
+    For code that you control, a safer long-term pattern is to make dependencies
+    explicit so they can be passed into the code under test instead of patched
+    globally. When patching a stdlib object is unavoidable, use
     :meth:`MonkeyPatch.context` to limit the patching to the block you want tested:
 
     .. code-block:: python
@@ -382,7 +389,7 @@ You can use the :py:meth:`monkeypatch.delitem <MonkeyPatch.delitem>` to remove v
 
 
     def test_missing_user(monkeypatch):
-        # patch the DEFAULT_CONFIG t be missing the 'user' key
+        # patch the DEFAULT_CONFIG to be missing the 'user' key
         monkeypatch.delitem(app.DEFAULT_CONFIG, "user", raising=False)
 
         # Key error expected because a config is not passed, and the

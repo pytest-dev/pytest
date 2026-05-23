@@ -2,32 +2,35 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Callable
+from collections.abc import Collection
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import MutableMapping
+from collections.abc import Sequence
 import dataclasses
+import enum
 import inspect
 from typing import Any
-from typing import Callable
-from typing import Collection
 from typing import final
-from typing import Iterable
-from typing import Iterator
-from typing import Mapping
-from typing import MutableMapping
 from typing import NamedTuple
 from typing import overload
-from typing import Sequence
 from typing import TYPE_CHECKING
 from typing import TypeVar
-from typing import Union
 import warnings
 
 from .._code import getfslineno
+from ..compat import deprecated
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
-from _pytest.deprecated import MARKED_FIXTURE
+from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
 from _pytest.outcomes import fail
-from _pytest.scope import _ScopeName
+from _pytest.raises import AbstractRaises
+from _pytest.scope import ScopeName
+from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 
@@ -36,6 +39,16 @@ if TYPE_CHECKING:
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
+
+
+# Singleton type for HIDDEN_PARAM, as described in:
+# https://www.python.org/dev/peps/pep-0484/#support-for-singleton-types-in-unions
+class _HiddenParam(enum.Enum):
+    token = 0
+
+
+#: Can be used as a parameter set id to hide it from the test name.
+HIDDEN_PARAM = _HiddenParam.token
 
 
 def istestfunc(func) -> bool:
@@ -47,24 +60,18 @@ def get_empty_parameterset_mark(
 ) -> MarkDecorator:
     from ..nodes import Collector
 
-    fs, lineno = getfslineno(func)
-    reason = "got empty parameter set %r, function %s at %s:%d" % (
-        argnames,
-        func.__name__,
-        fs,
-        lineno,
-    )
+    argslisting = ", ".join(argnames)
 
+    _fs, lineno = getfslineno(func)
+    reason = f"got empty parameter set for ({argslisting})"
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ("", None, "skip"):
         mark = MARK_GEN.skip(reason=reason)
     elif requested_mark == "xfail":
         mark = MARK_GEN.xfail(reason=reason, run=False)
     elif requested_mark == "fail_at_collect":
-        f_name = func.__name__
-        _, lineno = getfslineno(func)
         raise Collector.CollectError(
-            "Empty parameter set in '%s' at line %d" % (f_name, lineno + 1)
+            f"Empty parameter set in '{func.__name__}' at line {lineno + 1}"
         )
     else:
         raise LookupError(requested_mark)
@@ -72,16 +79,43 @@ def get_empty_parameterset_mark(
 
 
 class ParameterSet(NamedTuple):
+    """A set of values for a set of parameters along with associated marks and
+    an optional ID for the set.
+
+    Examples::
+
+        pytest.param(1, 2, 3)
+        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+
+        pytest.param("hello", id="greeting")
+        # ParameterSet(values=("hello",), marks=(), id="greeting")
+
+        # Parameter set with marks
+        pytest.param(42, marks=pytest.mark.xfail)
+        # ParameterSet(values=(42,), marks=(MarkDecorator(...),), id=None)
+
+        # From parametrize mark (parameter names + list of parameter sets)
+        pytest.mark.parametrize(
+            ("a", "b", "expected"),
+            [
+                (1, 2, 3),
+                pytest.param(40, 2, 42, id="everything"),
+            ],
+        )
+        # ParameterSet(values=(1, 2, 3), marks=(), id=None)
+        # ParameterSet(values=(40, 2, 42), marks=(), id="everything")
+    """
+
     values: Sequence[object | NotSetType]
     marks: Collection[MarkDecorator | Mark]
-    id: str | None
+    id: str | _HiddenParam | None
 
     @classmethod
     def param(
         cls,
         *values: object,
         marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),
-        id: str | None = None,
+        id: str | _HiddenParam | None = None,
     ) -> ParameterSet:
         if isinstance(marks, MarkDecorator):
             marks = (marks,)
@@ -94,8 +128,11 @@ class ParameterSet(NamedTuple):
             )
 
         if id is not None:
-            if not isinstance(id, str):
-                raise TypeError(f"Expected id to be a string, got {type(id)}: {id!r}")
+            if not isinstance(id, str) and id is not HIDDEN_PARAM:
+                raise TypeError(
+                    "Expected id to be a string or a `pytest.HIDDEN_PARAM` sentinel, "
+                    f"got {type(id)}: {id!r}",
+                )
         return cls(values, marks, id)
 
     @classmethod
@@ -134,8 +171,12 @@ class ParameterSet(NamedTuple):
         **kwargs,
     ) -> tuple[Sequence[str], bool]:
         if isinstance(argnames, str):
+            # A trailing comma indicates tuple-style: "arg," is equivalent to ("arg",)
+            # In this case, argvalues should be a list of tuples, not wrapped values.
+            # See https://github.com/pytest-dev/pytest/issues/719
+            has_trailing_comma = argnames.rstrip().endswith(",")
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            force_tuple = len(argnames) == 1
+            force_tuple = len(argnames) == 1 and not has_trailing_comma
         else:
             force_tuple = False
         return argnames, force_tuple
@@ -158,6 +199,15 @@ class ParameterSet(NamedTuple):
         config: Config,
         nodeid: str,
     ) -> tuple[Sequence[str], list[ParameterSet]]:
+        if not isinstance(argvalues, Collection):
+            warnings.warn(
+                PARAMETRIZE_NON_COLLECTION_ITERABLE.format(
+                    nodeid=nodeid,
+                    type_name=type(argvalues).__name__,
+                ),
+                stacklevel=3,
+            )
+
         argnames, force_tuple = cls._parse_parametrize_args(argnames, argvalues)
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
@@ -187,7 +237,9 @@ class ParameterSet(NamedTuple):
             # parameter set with NOTSET values, with the "empty parameter set" mark applied to it.
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
-                ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
+                ParameterSet(
+                    values=(NOTSET,) * len(argnames), marks=[mark], id="NOTSET"
+                )
             )
         return argnames, parameters
 
@@ -264,7 +316,7 @@ class Mark:
 # A generic parameter designating an object to which a Mark may
 # be applied -- a test function (callable) or class.
 # Note: a lambda is not allowed, but this can't be represented.
-Markable = TypeVar("Markable", bound=Union[Callable[..., object], type])
+Markable = TypeVar("Markable", bound=Callable[..., object] | type)
 
 
 @dataclasses.dataclass
@@ -355,8 +407,13 @@ class MarkDecorator:
         if args and not kwargs:
             func = args[0]
             is_class = inspect.isclass(func)
-            if len(args) == 1 and (istestfunc(func) or is_class):
-                store_mark(func, self.mark, stacklevel=3)
+            # For staticmethods/classmethods, the marks are eventually fetched from the
+            # function object, not the descriptor, so unwrap.
+            unwrapped_func = func
+            if isinstance(func, staticmethod | classmethod):
+                unwrapped_func = func.__func__
+            if len(args) == 1 and (istestfunc(unwrapped_func) or is_class):
+                store_mark(unwrapped_func, self.mark)
                 return func
         return self.with_args(*args, **kwargs)
 
@@ -387,7 +444,18 @@ def get_unpacked_marks(
                 mark_list.append(item)
     else:
         mark_attribute = getattr(obj, "pytestmark", [])
-        if isinstance(mark_attribute, list):
+        if mark_attribute is None:
+            warnings.warn(
+                "Module defines a `__getattr__` which returns None for "
+                "'pytestmark' instead of raising AttributeError. "
+                "Make sure `__getattr__` raises AttributeError for "
+                "attributes it does not provide. "
+                "See https://github.com/pytest-dev/pytest/issues/8265",
+                PytestCollectionWarning,
+                stacklevel=2,
+            )
+            mark_list = []
+        elif isinstance(mark_attribute, list):
             mark_list = mark_attribute
         else:
             mark_list = [mark_attribute]
@@ -411,7 +479,7 @@ def normalize_mark_list(
         yield mark_obj
 
 
-def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
+def store_mark(obj, mark: Mark) -> None:
     """Store a Mark on an object.
 
     This is used to implement the Mark declarations/decorators correctly.
@@ -421,7 +489,10 @@ def store_mark(obj, mark: Mark, *, stacklevel: int = 2) -> None:
     from ..fixtures import getfixturemarker
 
     if getfixturemarker(obj) is not None:
-        warnings.warn(MARKED_FIXTURE, stacklevel=stacklevel)
+        fail(
+            "Marks cannot be applied to fixtures.\n"
+            "See docs: https://docs.pytest.org/en/stable/deprecations.html#applying-a-mark-to-a-fixture-function"
+        )
 
     # Always reassign name to avoid updating pytestmark in a reference that
     # was only borrowed.
@@ -454,16 +525,37 @@ if TYPE_CHECKING:
         @overload
         def __call__(
             self,
-            condition: str | bool = False,
+            condition: str | bool = True,
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
-            raises: None | type[BaseException] | tuple[type[BaseException], ...] = ...,
+            raises: None
+            | type[BaseException]
+            | tuple[type[BaseException], ...]
+            | AbstractRaises[BaseException] = ...,
             strict: bool = ...,
         ) -> MarkDecorator: ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
-        def __call__(  # type: ignore[override]
+        @overload  # type: ignore[override,no-overload-impl]
+        def __call__(
+            self,
+            argnames: str | Sequence[str],
+            argvalues: Collection[ParameterSet | Sequence[object] | object],
+            *,
+            indirect: bool | Sequence[str] = ...,
+            ids: Iterable[None | str | float | int | bool | _HiddenParam]
+            | Callable[[Any], object | None]
+            | None = ...,
+            scope: ScopeName | None = ...,
+        ) -> MarkDecorator: ...
+
+        @overload
+        @deprecated(
+            "Passing a non-Collection iterable to the 'argvalues' parameter of @pytest.mark.parametrize is deprecated. "
+            "Convert argvalues to a list or tuple.",
+        )
+        def __call__(
             self,
             argnames: str | Sequence[str],
             argvalues: Iterable[ParameterSet | Sequence[object] | object],
@@ -472,7 +564,7 @@ if TYPE_CHECKING:
             ids: Iterable[None | str | float | int | bool]
             | Callable[[Any], object | None]
             | None = ...,
-            scope: _ScopeName | None = ...,
+            scope: ScopeName | None = ...,
         ) -> MarkDecorator: ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):
@@ -535,16 +627,19 @@ class MarkGenerator:
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.
             if name not in self._markers:
-                if self._config.option.strict_markers or self._config.option.strict:
-                    fail(
-                        f"{name!r} not found in `markers` configuration option",
-                        pytrace=False,
-                    )
-
                 # Raise a specific error for common misspellings of "parametrize".
                 if name in ["parameterize", "parametrise", "parameterise"]:
                     __tracebackhide__ = True
                     fail(f"Unknown '{name}' mark, did you mean 'parametrize'?")
+
+                strict_markers = self._config.getini("strict_markers")
+                if strict_markers is None:
+                    strict_markers = self._config.getini("strict")
+                if strict_markers:
+                    fail(
+                        f"{name!r} not found in `markers` configuration option",
+                        pytrace=False,
+                    )
 
                 warnings.warn(
                     f"Unknown pytest.mark.{name} - is this a typo?  You can register "
@@ -562,7 +657,7 @@ MARK_GEN = MarkGenerator(_ispytest=True)
 
 @final
 class NodeKeywords(MutableMapping[str, Any]):
-    __slots__ = ("node", "parent", "_markers")
+    __slots__ = ("_markers", "node", "parent")
 
     def __init__(self, node: Node) -> None:
         self.node = node
@@ -584,10 +679,8 @@ class NodeKeywords(MutableMapping[str, Any]):
     # below and use the collections.abc fallback, but that would be slow.
 
     def __contains__(self, key: object) -> bool:
-        return (
-            key in self._markers
-            or self.parent is not None
-            and key in self.parent.keywords
+        return key in self._markers or (
+            self.parent is not None and key in self.parent.keywords
         )
 
     def update(  # type: ignore[override]

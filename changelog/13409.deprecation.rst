@@ -1,0 +1,8 @@
+Using non-:class:`~collections.abc.Collection` iterables (such as generators, iterators, or custom iterable objects) for the ``argvalues`` parameter in :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` and :meth:`metafunc.parametrize <pytest.Metafunc.parametrize>` is now deprecated.
+
+These iterables get exhausted after the first iteration,
+leading to tests getting unexpectedly skipped in cases such as running :func:`pytest.main()` multiple times,
+using class-level parametrize decorators,
+or collecting tests multiple times.
+
+See :ref:`parametrize-iterators` for details and suggestions.

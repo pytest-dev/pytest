@@ -1,0 +1,2 @@
+The method of configuring hooks using markers, deprecated since pytest 7.2, is now scheduled to be removed in pytest 10.
+See :ref:`hook-markers` for more details.

@@ -1,0 +1,3 @@
+Logging capture now works for non-propagating loggers.
+Previously only logs which reached the root logger were captured.
+This includes :fixture:`caplog` and the "Captured log calls" test reporting.

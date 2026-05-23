@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import dataclasses
 import fnmatch
 import functools
@@ -11,15 +16,9 @@ import importlib.util
 import os
 from pathlib import Path
 import sys
-from typing import AbstractSet
-from typing import Callable
-from typing import Dict
 from typing import final
-from typing import Iterable
-from typing import Iterator
 from typing import Literal
 from typing import overload
-from typing import Sequence
 from typing import TYPE_CHECKING
 import warnings
 
@@ -33,13 +32,14 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config import UsageError
+from _pytest.config.argparsing import OverrideIniAction
 from _pytest.config.argparsing import Parser
-from _pytest.config.compat import PathAwareHookProxy
 from _pytest.outcomes import exit
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import safe_exists
+from _pytest.pathlib import samefile_nofollow
 from _pytest.pathlib import scandir
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -55,31 +55,8 @@ if TYPE_CHECKING:
 
 
 def pytest_addoption(parser: Parser) -> None:
-    parser.addini(
-        "norecursedirs",
-        "Directory patterns to avoid for recursion",
-        type="args",
-        default=[
-            "*.egg",
-            ".*",
-            "_darcs",
-            "build",
-            "CVS",
-            "dist",
-            "node_modules",
-            "venv",
-            "{arch}",
-        ],
-    )
-    parser.addini(
-        "testpaths",
-        "Directories to search for tests when no files or directories are given on the "
-        "command line",
-        type="args",
-        default=[],
-    )
-    group = parser.getgroup("general", "Running and selection options")
-    group._addoption(
+    group = parser.getgroup("general")
+    group._addoption(  # private to use reserved lower-case short option
         "-x",
         "--exitfirst",
         action="store_const",
@@ -87,21 +64,7 @@ def pytest_addoption(parser: Parser) -> None:
         const=1,
         help="Exit instantly on first error or failed test",
     )
-    group = parser.getgroup("pytest-warnings")
     group.addoption(
-        "-W",
-        "--pythonwarnings",
-        action="append",
-        help="Set which warnings to report, see -W option of Python itself",
-    )
-    parser.addini(
-        "filterwarnings",
-        type="linelist",
-        help="Each line specifies a pattern for "
-        "warnings.filterwarnings. "
-        "Processed after -W/--pythonwarnings.",
-    )
-    group._addoption(
         "--maxfail",
         metavar="num",
         action="store",
@@ -110,46 +73,77 @@ def pytest_addoption(parser: Parser) -> None:
         default=0,
         help="Exit after first num failures or errors",
     )
-    group._addoption(
+    group.addoption(
         "--strict-config",
-        action="store_true",
-        help="Any warnings encountered while parsing the `pytest` section of the "
-        "configuration file raise errors",
+        action=OverrideIniAction,
+        ini_option="strict_config",
+        ini_value="true",
+        help="Enables the strict_config option",
     )
-    group._addoption(
+    group.addoption(
         "--strict-markers",
-        action="store_true",
-        help="Markers not registered in the `markers` section of the configuration "
-        "file raise errors",
+        action=OverrideIniAction,
+        ini_option="strict_markers",
+        ini_value="true",
+        help="Enables the strict_markers option",
     )
-    group._addoption(
+    group.addoption(
         "--strict",
-        action="store_true",
-        help="(Deprecated) alias to --strict-markers",
+        action=OverrideIniAction,
+        ini_option="strict",
+        ini_value="true",
+        help="Enables the strict option",
     )
-    group._addoption(
-        "-c",
-        "--config-file",
-        metavar="FILE",
-        type=str,
-        dest="inifilename",
-        help="Load configuration from `FILE` instead of trying to locate one of the "
-        "implicit configuration files.",
+    parser.addini(
+        "strict_config",
+        "Any warnings encountered while parsing the `pytest` section of the "
+        "configuration file raise errors",
+        type="bool",
+        # None => fallback to `strict`.
+        default=None,
     )
-    group._addoption(
-        "--continue-on-collection-errors",
-        action="store_true",
+    parser.addini(
+        "strict_markers",
+        "Markers not registered in the `markers` section of the configuration "
+        "file raise errors",
+        type="bool",
+        # None => fallback to `strict`.
+        default=None,
+    )
+    parser.addini(
+        "strict",
+        "Enables all strictness options, currently: "
+        "strict_config, strict_markers, strict_xfail, strict_parametrization_ids",
+        type="bool",
         default=False,
-        dest="continue_on_collection_errors",
-        help="Force test execution even if collection errors occur",
     )
-    group._addoption(
-        "--rootdir",
+
+    group = parser.getgroup("pytest-warnings")
+    group.addoption(
+        "-W",
+        "--pythonwarnings",
+        action="append",
+        help="Set which warnings to report, see -W option of Python itself",
+    )
+    group.addoption(
+        "--max-warnings",
         action="store",
-        dest="rootdir",
-        help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
-        "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
-        "'$HOME/root_dir'.",
+        type=int,
+        default=None,
+        metavar="num",
+        dest="max_warnings",
+        help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
+    )
+    parser.addini(
+        "filterwarnings",
+        type="linelist",
+        help="Each line specifies a pattern for "
+        "warnings.filterwarnings. "
+        "Processed after -W/--pythonwarnings.",
+    )
+    parser.addini(
+        "max_warnings",
+        help="Exit with error if all tests pass but the number of warnings exceeds this threshold",
     )
 
     group = parser.getgroup("collect", "collection")
@@ -214,12 +208,48 @@ def pytest_addoption(parser: Parser) -> None:
         help="Don't ignore tests in a local virtualenv directory",
     )
     group.addoption(
+        "--continue-on-collection-errors",
+        action="store_true",
+        default=False,
+        dest="continue_on_collection_errors",
+        help="Force test execution even if collection errors occur",
+    )
+    group.addoption(
         "--import-mode",
         default="prepend",
         choices=["prepend", "append", "importlib"],
         dest="importmode",
         help="Prepend/append to sys.path when importing test modules and conftest "
         "files. Default: prepend.",
+    )
+    parser.addini(
+        "norecursedirs",
+        "Directory patterns to avoid for recursion",
+        type="args",
+        default=[
+            "*.egg",
+            ".*",
+            "_darcs",
+            "build",
+            "CVS",
+            "dist",
+            "node_modules",
+            "venv",
+            "{arch}",
+        ],
+    )
+    parser.addini(
+        "testpaths",
+        "Directories to search for tests when no files or directories are given on the "
+        "command line",
+        type="args",
+        default=[],
+    )
+    parser.addini(
+        "collect_imported_tests",
+        "Whether to collect tests in imported modules outside `testpaths`",
+        type="bool",
+        default=True,
     )
     parser.addini(
         "consider_namespace_packages",
@@ -229,6 +259,23 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
     group = parser.getgroup("debugconfig", "test session debugging and configuration")
+    group._addoption(  # private to use reserved lower-case short option
+        "-c",
+        "--config-file",
+        metavar="FILE",
+        type=str,
+        dest="inifilename",
+        help="Load configuration from `FILE` instead of trying to locate one of the "
+        "implicit configuration files.",
+    )
+    group.addoption(
+        "--rootdir",
+        action="store",
+        dest="rootdir",
+        help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
+        "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
+        "'$HOME/root_dir'.",
+    )
     group.addoption(
         "--basetemp",
         dest="basetemp",
@@ -350,8 +397,7 @@ def pytest_collection(session: Session) -> None:
 def pytest_runtestloop(session: Session) -> bool:
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
         raise session.Interrupted(
-            "%d error%s during collection"
-            % (session.testsfailed, "s" if session.testsfailed != 1 else "")
+            f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
         )
 
     if session.config.option.collectonly:
@@ -476,7 +522,7 @@ class Failed(Exception):
 
 
 @dataclasses.dataclass
-class _bestrelpath_cache(Dict[Path, str]):
+class _bestrelpath_cache(dict[Path, str]):
     __slots__ = ("path",)
 
     path: Path
@@ -586,13 +632,12 @@ class Session(nodes.Collector):
         return session
 
     def __repr__(self) -> str:
-        return "<%s %s exitstatus=%r testsfailed=%d testscollected=%d>" % (
-            self.__class__.__name__,
-            self.name,
-            getattr(self, "exitstatus", "<UNSET>"),
-            self.testsfailed,
-            self.testscollected,
-        )
+        return (
+            f"<{self.__class__.__name__} {self.name} "
+            f"exitstatus=%r "
+            f"testsfailed={self.testsfailed} "
+            f"testscollected={self.testscollected}>"
+        ) % getattr(self, "exitstatus", "<UNSET>")
 
     @property
     def shouldstop(self) -> bool | str:
@@ -655,7 +700,7 @@ class Session(nodes.Collector):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self.testsfailed >= maxfail:
-                self.shouldfail = "stopping after %d failures" % (self.testsfailed)
+                self.shouldfail = f"stopping after {self.testsfailed} failures"
 
     pytest_collectreport = pytest_runtest_logreport
 
@@ -694,7 +739,7 @@ class Session(nodes.Collector):
         proxy: pluggy.HookRelay
         if remove_mods:
             # One or more conftests are not in use at this path.
-            proxy = PathAwareHookProxy(FSHookProxy(pm, remove_mods))  # type: ignore[arg-type,assignment]
+            proxy = FSHookProxy(pm, remove_mods)  # type: ignore[assignment]
         else:
             # All plugins are active for this fspath.
             proxy = self.config.hook
@@ -770,16 +815,31 @@ class Session(nodes.Collector):
         self._collection_cache = {}
         self.items = []
         items: Sequence[nodes.Item | nodes.Collector] = self.items
+        consider_namespace_packages: bool = self.config.getini(
+            "consider_namespace_packages"
+        )
         try:
             initialpaths: list[Path] = []
             initialpaths_with_parents: list[Path] = []
-            for arg in args:
-                collection_argument = resolve_collection_argument(
+
+            collection_args = [
+                resolve_collection_argument(
                     self.config.invocation_params.dir,
                     arg,
+                    i,
                     as_pypath=self.config.option.pyargs,
+                    consider_namespace_packages=consider_namespace_packages,
                 )
-                self._initial_parts.append(collection_argument)
+                for i, arg in enumerate(args)
+            ]
+
+            if not self.config.getoption("keepduplicates"):
+                # Normalize the collection arguments -- remove duplicates and overlaps.
+                self._initial_parts = normalize_collection_arguments(collection_args)
+            else:
+                self._initial_parts = collection_args
+
+            for collection_argument in self._initial_parts:
                 initialpaths.append(collection_argument.path)
                 initialpaths_with_parents.append(collection_argument.path)
                 initialpaths_with_parents.extend(collection_argument.path.parents)
@@ -850,6 +910,7 @@ class Session(nodes.Collector):
 
             argpath = collection_argument.path
             names = collection_argument.parts
+            parametrization = collection_argument.parametrization
             module_name = collection_argument.module_name
 
             # resolve_collection_argument() ensures this.
@@ -927,23 +988,25 @@ class Session(nodes.Collector):
                         is_match = node.path == matchparts[0]
                         if sys.platform == "win32" and not is_match:
                             # In case the file paths do not match, fallback to samefile() to
-                            # account for short-paths on Windows (#11895).
-                            same_file = os.path.samefile(node.path, matchparts[0])
-                            # We don't want to match links to the current node,
-                            # otherwise we would match the same file more than once (#12039).
-                            is_match = same_file and (
-                                os.path.islink(node.path)
-                                == os.path.islink(matchparts[0])
-                            )
+                            # account for short-paths on Windows (#11895). But use a version
+                            # which doesn't resolve symlinks, otherwise we might match the
+                            # same file more than once (#12039).
+                            is_match = samefile_nofollow(node.path, matchparts[0])
 
                     # Name part e.g. `TestIt` in `/a/b/test_file.py::TestIt::test_it`.
                     else:
-                        # TODO: Remove parametrized workaround once collection structure contains
-                        # parametrization.
-                        is_match = (
-                            node.name == matchparts[0]
-                            or node.name.split("[")[0] == matchparts[0]
-                        )
+                        if len(matchparts) == 1:
+                            # This the last part, one parametrization goes.
+                            if parametrization is not None:
+                                # A parametrized arg must match exactly.
+                                is_match = node.name == matchparts[0] + parametrization
+                            else:
+                                # A non-parameterized arg matches all parametrizations (if any).
+                                # TODO: Remove the hacky split once the collection structure
+                                # contains parametrization.
+                                is_match = node.name.split("[")[0] == matchparts[0]
+                        else:
+                            is_match = node.name == matchparts[0]
                     if is_match:
                         work.append((node, matchparts[1:]))
                         any_matched_in_collector = True
@@ -964,12 +1027,9 @@ class Session(nodes.Collector):
             yield node
         else:
             assert isinstance(node, nodes.Collector)
-            keepduplicates = self.config.getoption("keepduplicates")
             # For backward compat, dedup only applies to files.
-            handle_dupes = not (keepduplicates and isinstance(node, nodes.File))
+            handle_dupes = not isinstance(node, nodes.File)
             rep, duplicate = self._collect_one_node(node, handle_dupes)
-            if duplicate and not keepduplicates:
-                return
             if rep.passed:
                 for subnode in rep.result:
                     yield from self.genitems(subnode)
@@ -977,7 +1037,9 @@ class Session(nodes.Collector):
                 node.ihook.pytest_collectreport(report=rep)
 
 
-def search_pypath(module_name: str) -> str | None:
+def search_pypath(
+    module_name: str, *, consider_namespace_packages: bool = False
+) -> str | None:
     """Search sys.path for the given a dotted module name, and return its file
     system path if found."""
     try:
@@ -987,12 +1049,28 @@ def search_pypath(module_name: str) -> str | None:
     # ValueError: not a module name
     except (AttributeError, ImportError, ValueError):
         return None
-    if spec is None or spec.origin is None or spec.origin == "namespace":
+
+    if spec is None:
         return None
-    elif spec.submodule_search_locations:
-        return os.path.dirname(spec.origin)
-    else:
+
+    if (
+        spec.submodule_search_locations is None
+        or len(spec.submodule_search_locations) == 0
+    ):
+        # Must be a simple module.
         return spec.origin
+
+    if consider_namespace_packages:
+        # If submodule_search_locations is set, it's a package (regular or namespace).
+        # Typically there is a single entry, but documentation claims it can be empty too
+        #  (e.g. if the package has no physical location).
+        return spec.submodule_search_locations[0]
+
+    if spec.origin is None:
+        # This is only the case for namespace packages
+        return None
+
+    return os.path.dirname(spec.origin)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -1001,11 +1079,18 @@ class CollectionArgument:
 
     path: Path
     parts: Sequence[str]
+    parametrization: str | None
     module_name: str | None
+    original_index: int
 
 
 def resolve_collection_argument(
-    invocation_path: Path, arg: str, *, as_pypath: bool = False
+    invocation_path: Path,
+    arg: str,
+    arg_index: int,
+    *,
+    as_pypath: bool = False,
+    consider_namespace_packages: bool = False,
 ) -> CollectionArgument:
     """Parse path arguments optionally containing selection parts and return (fspath, names).
 
@@ -1025,7 +1110,7 @@ def resolve_collection_argument(
     When as_pypath is True, expects that the command-line argument actually contains
     module paths instead of file-system paths:
 
-        "pkg.tests.test_foo::TestClass::test_foo"
+        "pkg.tests.test_foo::TestClass::test_foo[a,b]"
 
     In which case we search sys.path for a matching module, and then return the *path* to the
     found module, which may look like this:
@@ -1033,19 +1118,23 @@ def resolve_collection_argument(
         CollectionArgument(
             path=Path("/home/u/myvenv/lib/site-packages/pkg/tests/test_foo.py"),
             parts=["TestClass", "test_foo"],
+            parametrization="[a,b]",
             module_name="pkg.tests.test_foo",
         )
 
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
     """
-    base, squacket, rest = str(arg).partition("[")
+    base, squacket, rest = arg.partition("[")
     strpath, *parts = base.split("::")
-    if parts:
-        parts[-1] = f"{parts[-1]}{squacket}{rest}"
+    if squacket and not parts:
+        raise UsageError(f"path cannot contain [] parametrization: {arg}")
+    parametrization = f"{squacket}{rest}" if squacket else None
     module_name = None
     if as_pypath:
-        pyarg_strpath = search_pypath(strpath)
+        pyarg_strpath = search_pypath(
+            strpath, consider_namespace_packages=consider_namespace_packages
+        )
         if pyarg_strpath is not None:
             module_name = strpath
             strpath = pyarg_strpath
@@ -1068,5 +1157,59 @@ def resolve_collection_argument(
     return CollectionArgument(
         path=fspath,
         parts=parts,
+        parametrization=parametrization,
         module_name=module_name,
+        original_index=arg_index,
     )
+
+
+def is_collection_argument_subsumed_by(
+    arg: CollectionArgument, by: CollectionArgument
+) -> bool:
+    """Check if `arg` is subsumed (contained) by `by`."""
+    # First check path subsumption.
+    if by.path != arg.path:
+        # `by` subsumes `arg` if `by` is a parent directory of `arg` and has no
+        # parts (collects everything in that directory).
+        if not by.parts:
+            return arg.path.is_relative_to(by.path)
+        return False
+    # Paths are equal, check parts.
+    # For example: ("TestClass",) is a prefix of ("TestClass", "test_method").
+    if len(by.parts) > len(arg.parts) or arg.parts[: len(by.parts)] != by.parts:
+        return False
+    # Paths and parts are equal, check parametrization.
+    # A `by` without parametrization (None) matches everything, e.g.
+    # `pytest x.py::test_it` matches `x.py::test_it[0]`. Otherwise must be
+    # exactly equal.
+    if by.parametrization is not None and by.parametrization != arg.parametrization:
+        return False
+    return True
+
+
+def normalize_collection_arguments(
+    collection_args: Sequence[CollectionArgument],
+) -> list[CollectionArgument]:
+    """Normalize collection arguments to eliminate overlapping paths and parts.
+
+    Detects when collection arguments overlap in either paths or parts and only
+    keeps the shorter prefix, or the earliest argument if duplicate, preserving
+    order. The result is prefix-free.
+    """
+    # A quadratic algorithm is not acceptable since large inputs are possible.
+    # So this uses an O(n*log(n)) algorithm which takes advantage of the
+    # property that after sorting, a collection argument will immediately
+    # precede collection arguments it subsumes. An O(n) algorithm is not worth
+    # it.
+    collection_args_sorted = sorted(
+        collection_args,
+        key=lambda arg: (arg.path, arg.parts, arg.parametrization or ""),
+    )
+    normalized: list[CollectionArgument] = []
+    last_kept = None
+    for arg in collection_args_sorted:
+        if last_kept is None or not is_collection_argument_subsumed_by(arg, last_kept):
+            normalized.append(arg)
+            last_kept = arg
+    normalized.sort(key=lambda arg: arg.original_index)
+    return normalized

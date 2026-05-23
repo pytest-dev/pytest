@@ -3,8 +3,8 @@ tools."""
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 import types
-from typing import Iterator
 
 
 def freeze_includes() -> list[str]:

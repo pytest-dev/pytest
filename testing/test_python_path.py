@@ -92,8 +92,8 @@ def test_module_not_found(pytester: Pytester, file_structure) -> None:
     result.stdout.fnmatch_lines([expected_error])
 
 
-def test_no_ini(pytester: Pytester, file_structure) -> None:
-    """If no ini file, test should error."""
+def test_no_config_file(pytester: Pytester, file_structure) -> None:
+    """If no configuration file, test should error."""
     result = pytester.runpytest("test_foo.py")
     assert result.ret == pytest.ExitCode.INTERRUPTED
     result.assert_outcomes(errors=1)

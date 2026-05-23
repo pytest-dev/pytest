@@ -16,14 +16,14 @@
 from __future__ import annotations
 
 import collections as _collections
+from collections.abc import Callable
+from collections.abc import Iterator
 import dataclasses as _dataclasses
 from io import StringIO as _StringIO
 import re
 import types as _types
 from typing import Any
-from typing import Callable
 from typing import IO
-from typing import Iterator
 
 
 class _safe_key:
@@ -111,15 +111,15 @@ class PrettyPrinter:
             p(self, object, stream, indent, allowance, context, level + 1)
             context.remove(objid)
         elif (
-            _dataclasses.is_dataclass(object)  # type:ignore[unreachable]
+            _dataclasses.is_dataclass(object)
             and not isinstance(object, type)
-            and object.__dataclass_params__.repr
+            and object.__dataclass_params__.repr  # type:ignore[attr-defined]
             and
             # Check dataclass has generated repr method.
             hasattr(object.__repr__, "__wrapped__")
             and "__create_fn__" in object.__repr__.__wrapped__.__qualname__
         ):
-            context.add(objid)  # type:ignore[unreachable]
+            context.add(objid)
             self._pprint_dataclass(
                 object, stream, indent, allowance, context, level + 1
             )
@@ -162,7 +162,7 @@ class PrettyPrinter:
     ) -> None:
         write = stream.write
         write("{")
-        items = sorted(object.items(), key=_safe_tuple)
+        items = object.items()
         self._format_dict_items(items, stream, indent, allowance, context, level)
         write("}")
 
@@ -540,7 +540,7 @@ class PrettyPrinter:
     ) -> None:
         stream.write(object.__class__.__name__ + "(")
         if object.maxlen is not None:
-            stream.write("maxlen=%d, " % object.maxlen)
+            stream.write(f"maxlen={object.maxlen}, ")
         stream.write("[")
 
         self._format_items(object, stream, indent, allowance + 1, context, level)
@@ -608,7 +608,7 @@ class PrettyPrinter:
             components: list[str] = []
             append = components.append
             level += 1
-            for k, v in sorted(object.items(), key=_safe_tuple):
+            for k, v in object.items():
                 krepr = self._safe_repr(k, context, maxlevels, level)
                 vrepr = self._safe_repr(v, context, maxlevels, level)
                 append(f"{krepr}: {vrepr}")

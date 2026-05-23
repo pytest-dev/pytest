@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
-from argparse import Action
+import argparse
+from collections.abc import Generator
+from collections.abc import Sequence
 import os
 import sys
-from typing import Generator
+from typing import Any
 
 from _pytest.config import Config
 from _pytest.config import ExitCode
@@ -16,53 +18,63 @@ from _pytest.terminal import TerminalReporter
 import pytest
 
 
-class HelpAction(Action):
-    """An argparse Action that will raise an exception in order to skip the
-    rest of the argument parsing when --help is passed.
+class HelpAction(argparse.Action):
+    """An argparse Action that will raise a PrintHelp exception in order to skip
+    the rest of the argument parsing when --help is passed.
 
-    This prevents argparse from quitting due to missing required arguments
-    when any are defined, for example by ``pytest_addoption``.
-    This is similar to the way that the builtin argparse --help option is
-    implemented by raising SystemExit.
+    This prevents argparse from raising UsageError when `--help` is used along
+    with missing required arguments when any are defined, for example by
+    ``pytest_addoption``. This is similar to the way that the builtin argparse
+    --help option is implemented by raising SystemExit.
+
+    To opt in to this behavior, the parse caller must set
+    `namespace._raise_print_help = True`. Otherwise it just sets the option.
     """
 
-    def __init__(self, option_strings, dest=None, default=False, help=None):
+    def __init__(
+        self, option_strings: Sequence[str], dest: str, *, help: str | None = None
+    ) -> None:
         super().__init__(
             option_strings=option_strings,
             dest=dest,
-            const=True,
-            default=default,
             nargs=0,
+            const=True,
+            default=False,
             help=help,
         )
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
+    ) -> None:
         setattr(namespace, self.dest, self.const)
 
-        # We should only skip the rest of the parsing after preparse is done.
-        if getattr(parser._parser, "after_preparse", False):
+        if getattr(namespace, "_raise_print_help", False):
             raise PrintHelp
 
 
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("debugconfig")
     group.addoption(
-        "--version",
         "-V",
+        "--version",
         action="count",
         default=0,
         dest="version",
         help="Display pytest version and information about plugins. "
         "When given twice, also display information about plugins.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-h",
         "--help",
         action=HelpAction,
         dest="help",
         help="Show help message and configuration info",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-p",
         action="append",
         dest="plugins",
@@ -70,7 +82,14 @@ def pytest_addoption(parser: Parser) -> None:
         metavar="name",
         help="Early-load given plugin module name or entry point (multi-allowed). "
         "To avoid loading of plugins, use the `no:` prefix, e.g. "
-        "`no:doctest`.",
+        "`no:doctest`. See also --disable-plugin-autoload.",
+    )
+    group.addoption(
+        "--disable-plugin-autoload",
+        action="store_true",
+        default=False,
+        help="Disable plugin auto-loading through entry point packaging metadata. "
+        "Only plugins explicitly specified in -p or env var PYTEST_PLUGINS will be loaded.",
     )
     group.addoption(
         "--traceconfig",
@@ -90,13 +109,13 @@ def pytest_addoption(parser: Parser) -> None:
         "This file is opened with 'w' and truncated as a result, care advised. "
         "Default: pytestdebug.log.",
     )
-    group._addoption(
+    group._addoption(  # private to use reserved lower-case short option
         "-o",
         "--override-ini",
         dest="override_ini",
         action="append",
-        help='Override ini option with "option=value" style, '
-        "e.g. `-o xfail_strict=True -o cache_dir=cache`.",
+        help='Override configuration option with "option=value" style, '
+        "e.g. `-o strict_xfail=True -o cache_dir=cache`.",
     )
 
 
@@ -133,28 +152,28 @@ def pytest_cmdline_parse() -> Generator[None, Config, Config]:
     return config
 
 
-def showversion(config: Config) -> None:
-    if config.option.version > 1:
-        sys.stdout.write(
-            f"This is pytest version {pytest.__version__}, imported from {pytest.__file__}\n"
-        )
-        plugininfo = getpluginversioninfo(config)
-        if plugininfo:
-            for line in plugininfo:
-                sys.stdout.write(line + "\n")
-    else:
-        sys.stdout.write(f"pytest {pytest.__version__}\n")
+def show_version_verbose(config: Config) -> None:
+    """Show verbose pytest version installation, including plugins."""
+    sys.stdout.write(
+        f"This is pytest version {pytest.__version__}, imported from {pytest.__file__}\n"
+    )
+    plugininfo = getpluginversioninfo(config)
+    if plugininfo:
+        for line in plugininfo:
+            sys.stdout.write(line + "\n")
 
 
 def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
-    if config.option.version > 0:
-        showversion(config)
-        return 0
+    # Note: a single `--version` argument is handled directly by `Config.main()` to avoid starting up the entire
+    # pytest infrastructure just to display the version (#13574).
+    if config.option.version > 1:
+        show_version_verbose(config)
+        return ExitCode.OK
     elif config.option.help:
         config._do_configure()
         showhelp(config)
         config._ensure_unconfigure()
-        return 0
+        return ExitCode.OK
     return None
 
 
@@ -169,18 +188,16 @@ def showhelp(config: Config) -> None:
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line(
-        "[pytest] ini-options in the first "
-        "pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
+        "[pytest] configuration options in the first "
+        "pytest.toml|pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:"
     )
     tw.line()
 
     columns = tw.fullwidth  # costly call
     indent_len = 24  # based on argparse's max_help_position=24
     indent = " " * indent_len
-    for name in config._parser._ininames:
-        help, type, default = config._parser._inidict[name]
-        if type is None:
-            type = "string"
+    for name in config._parser._inidict:
+        help, type, _default = config._parser._inidict[name]
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
         spec = f"{name} ({type}):"
@@ -214,7 +231,7 @@ def showhelp(config: Config) -> None:
     vars = [
         (
             "CI",
-            "When set (regardless of value), pytest knows it is running in a "
+            "When set to a non-empty value, pytest knows it is running in a "
             "CI process and does not truncate summary info",
         ),
         ("BUILD_NUMBER", "Equivalent to CI"),
@@ -222,6 +239,9 @@ def showhelp(config: Config) -> None:
         ("PYTEST_PLUGINS", "Comma-separated plugins to load during startup"),
         ("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "Set to disable plugin auto-loading"),
         ("PYTEST_DEBUG", "Set to enable debug tracing of pytest's internals"),
+        ("PYTEST_DEBUG_TEMPROOT", "Override the system temporary directory"),
+        ("PYTEST_THEME", "The Pygments style to use for code output"),
+        ("PYTEST_THEME_MODE", "Set the PYTEST_THEME to be either 'dark' or 'light'"),
     ]
     for name, help in vars:
         tw.line(f"  {name:<24} {help}")
@@ -238,9 +258,6 @@ def showhelp(config: Config) -> None:
 
     for warningreport in reporter.stats.get("warnings", []):
         tw.line("warning : " + warningreport.message, red=True)
-
-
-conftest_options = [("pytest_plugins", "list of plugin names to load")]
 
 
 def getpluginversioninfo(config: Config) -> list[str]:

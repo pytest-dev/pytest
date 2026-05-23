@@ -15,7 +15,7 @@ from functools import total_ordering
 from typing import Literal
 
 
-_ScopeName = Literal["session", "package", "module", "class", "function"]
+ScopeName = Literal["session", "package", "module", "class", "function"]
 
 
 @total_ordering
@@ -33,11 +33,11 @@ class Scope(Enum):
     """
 
     # Scopes need to be listed from lower to higher.
-    Function: _ScopeName = "function"
-    Class: _ScopeName = "class"
-    Module: _ScopeName = "module"
-    Package: _ScopeName = "package"
-    Session: _ScopeName = "session"
+    Function = "function"
+    Class = "class"
+    Module = "module"
+    Package = "package"
+    Session = "session"
 
     def next_lower(self) -> Scope:
         """Return the next lower scope."""
@@ -60,7 +60,7 @@ class Scope(Enum):
 
     @classmethod
     def from_user(
-        cls, scope_name: _ScopeName, descr: str, where: str | None = None
+        cls, scope_name: ScopeName, descr: str, where: str | None = None
     ) -> Scope:
         """
         Given a scope name from the user, return the equivalent Scope enum. Should be used

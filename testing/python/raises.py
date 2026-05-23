@@ -1,12 +1,18 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import io
 import re
 import sys
 
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestWarning
 import pytest
+
+
+def wrap_escape(s: str) -> str:
+    return "^" + re.escape(s) + "$"
 
 
 class TestRaises:
@@ -15,21 +21,42 @@ class TestRaises:
             pytest.raises(RuntimeError, "int('qwe')")  # type: ignore[call-overload]
 
     def test_raises(self):
-        excinfo = pytest.raises(ValueError, int, "qwe")
+        with pytest.raises(ValueError) as excinfo:
+            int("qwe")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_function(self):
-        excinfo = pytest.raises(ValueError, int, "hello")
+        with pytest.raises(ValueError) as excinfo:
+            int("hello")
         assert "invalid literal" in str(excinfo.value)
 
     def test_raises_does_not_allow_none(self):
-        with pytest.raises(ValueError, match="Expected an exception type or"):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape("You must specify at least one parameter to match on."),
+        ):
             # We're testing that this invalid usage gives a helpful error,
             # so we can ignore Mypy telling us that None is invalid.
             pytest.raises(expected_exception=None)  # type: ignore
 
+    # it's unclear if this message is helpful, and if it is, should it trigger more
+    # liberally? Usually you'd get a TypeError here
+    def test_raises_false_and_arg(self):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape(
+                "Expected an exception type or a tuple of exception types, but got `False`. "
+                "Raising exceptions is already understood as failing the test, so you don't need "
+                "any special code to say 'this should never raise an exception'."
+            ),
+        ):
+            pytest.raises(False, int)  # type: ignore[call-overload]
+
     def test_raises_does_not_allow_empty_tuple(self):
-        with pytest.raises(ValueError, match="Expected an exception type or"):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape("You must specify at least one parameter to match on."),
+        ):
             pytest.raises(expected_exception=())
 
     def test_raises_callable_no_exception(self) -> None:
@@ -152,9 +179,37 @@ class TestRaises:
         result.stdout.no_fnmatch_line("*File*")
         result.stdout.no_fnmatch_line("*line*")
 
+    def test_raises_match_failure_suppresses_exception_context(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            def test_raises_match_failure():
+                with pytest.raises(ValueError, match="expected"):
+                    raise ValueError("actual")
+            """
+        )
+        result = pytester.runpytest("--tb=short")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(
+            [
+                "*E*AssertionError: Regex pattern did not match.*",
+            ]
+        )
+        result.stdout.no_fnmatch_line("*ValueError: actual")
+        result.stdout.no_fnmatch_line(
+            "*The above exception was the direct cause of the following exception:*"
+        )
+        result.stdout.no_fnmatch_line(
+            "*During handling of the above exception, another exception occurred:*"
+        )
+
     def test_noclass(self) -> None:
         with pytest.raises(TypeError):
-            pytest.raises("wrong", lambda: None)  # type: ignore[call-overload]
+            with pytest.raises("wrong"):  # type: ignore[call-overload]
+                ...  # pragma: no cover
 
     def test_invalid_arguments_to_raises(self) -> None:
         with pytest.raises(TypeError, match="unknown"):
@@ -167,9 +222,10 @@ class TestRaises:
 
     def test_no_raise_message(self) -> None:
         try:
-            pytest.raises(ValueError, int, "0")
+            with pytest.raises(ValueError):
+                int("0")
         except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE {ValueError!r}"
+            assert e.msg == "DID NOT RAISE ValueError"
         else:
             assert False, "Expected pytest.raises.Exception"
 
@@ -177,11 +233,13 @@ class TestRaises:
             with pytest.raises(ValueError):
                 pass
         except pytest.fail.Exception as e:
-            assert e.msg == f"DID NOT RAISE {ValueError!r}"
+            assert e.msg == "DID NOT RAISE ValueError"
         else:
             assert False, "Expected pytest.raises.Exception"
 
-    @pytest.mark.parametrize("method", ["function", "function_match", "with"])
+    @pytest.mark.parametrize(
+        "method", ["function", "function_match", "with", "with_raisesexc", "with_group"]
+    )
     def test_raises_cyclic_reference(self, method):
         """Ensure pytest.raises does not leave a reference cycle (#1965)."""
         import gc
@@ -197,9 +255,17 @@ class TestRaises:
             pytest.raises(ValueError, t)
         elif method == "function_match":
             pytest.raises(ValueError, t).match("^$")
-        else:
+        elif method == "with":
             with pytest.raises(ValueError):
                 t()
+        elif method == "with_raisesexc":
+            with pytest.RaisesExc(ValueError):
+                t()
+        elif method == "with_group":
+            with pytest.RaisesGroup(ValueError, allow_unwrapped=True):
+                t()
+        else:  # pragma: no cover
+            raise AssertionError("bad parametrization")
 
         # ensure both forms of pytest.raises don't leave exceptions in sys.exc_info()
         assert sys.exc_info() == (None, None, None)
@@ -218,10 +284,10 @@ class TestRaises:
         msg = "with base 16"
         expr = (
             "Regex pattern did not match.\n"
-            f" Regex: {msg!r}\n"
-            " Input: \"invalid literal for int() with base 10: 'asdf'\""
+            f"  Expected regex: {msg!r}\n"
+            f"  Actual message: \"invalid literal for int() with base 10: 'asdf'\""
         )
-        with pytest.raises(AssertionError, match="(?m)" + re.escape(expr)):
+        with pytest.raises(AssertionError, match="^" + re.escape(expr) + "$"):
             with pytest.raises(ValueError, match=msg):
                 int("asdf", base=10)
 
@@ -231,7 +297,7 @@ class TestRaises:
             pytest.raises(ValueError, int, "asdf").match(msg)
         assert str(excinfo.value) == expr
 
-        pytest.raises(TypeError, int, match="invalid")
+        pytest.raises(TypeError, int, match="invalid")  # type: ignore[call-overload]
 
         def tfunc(match):
             raise ValueError(f"match={match}")
@@ -239,12 +305,25 @@ class TestRaises:
         pytest.raises(ValueError, tfunc, match="asdf").match("match=asdf")
         pytest.raises(ValueError, tfunc, match="").match("match=")
 
+        # empty string matches everything, which is probably not what the user wants
+        with pytest.warns(
+            PytestWarning,
+            match=wrap_escape(
+                "matching against an empty string will *always* pass. If you want to check for an empty message you "
+                "need to pass '^$'. If you don't want to match you should pass `None` or leave out the parameter."
+            ),
+        ):
+            pytest.raises(match="")
+
     def test_match_failure_string_quoting(self):
         with pytest.raises(AssertionError) as excinfo:
             with pytest.raises(AssertionError, match="'foo"):
                 raise AssertionError("'bar")
         (msg,) = excinfo.value.args
-        assert msg == '''Regex pattern did not match.\n Regex: "'foo"\n Input: "'bar"'''
+        assert (
+            msg
+            == '''Regex pattern did not match.\n  Expected regex: "'foo"\n  Actual message: "'bar"'''
+        )
 
     def test_match_failure_exact_string_message(self):
         message = "Oh here is a message with (42) numbers in parameters"
@@ -254,8 +333,8 @@ class TestRaises:
         (msg,) = excinfo.value.args
         assert msg == (
             "Regex pattern did not match.\n"
-            " Regex: 'Oh here is a message with (42) numbers in parameters'\n"
-            " Input: 'Oh here is a message with (42) numbers in parameters'\n"
+            "  Expected regex: 'Oh here is a message with (42) numbers in parameters'\n"
+            "  Actual message: 'Oh here is a message with (42) numbers in parameters'\n"
             " Did you mean to `re.escape()` the regex?"
         )
 
@@ -265,26 +344,30 @@ class TestRaises:
         pytest should throw the unexpected exception - the pattern match is not
         really relevant if we got a different exception.
         """
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape("invalid literal for int() with base 10: 'asdf'"),
+        ):
             with pytest.raises(IndexError, match="nomatch"):
                 int("asdf")
 
     def test_raises_exception_looks_iterable(self):
         class Meta(type):
             def __getitem__(self, item):
-                return 1 / 0
+                return 1 / 0  # pragma: no cover
 
             def __len__(self):
-                return 1
+                return 1  # pragma: no cover
 
         class ClassLooksIterableException(Exception, metaclass=Meta):
             pass
 
         with pytest.raises(
             Failed,
-            match=r"DID NOT RAISE <class 'raises(\..*)*ClassLooksIterableException'>",
+            match=r"DID NOT RAISE ClassLooksIterableException",
         ):
-            pytest.raises(ClassLooksIterableException, lambda: None)
+            with pytest.raises(ClassLooksIterableException):
+                ...  # pragma: no cover
 
     def test_raises_with_raising_dunder_class(self) -> None:
         """Test current behavior with regard to exceptions via __class__ (#4284)."""
@@ -301,39 +384,132 @@ class TestRaises:
         assert "via __class__" in excinfo.value.args[0]
 
     def test_raises_context_manager_with_kwargs(self):
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(expected_exception=ValueError):
+            raise ValueError
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape(
+                "Unexpected keyword arguments passed to pytest.raises: foo\n"
+                "Use context-manager form instead?"
+            ),
+        ):
             with pytest.raises(OSError, foo="bar"):  # type: ignore[call-overload]
                 pass
-        assert "Unexpected keyword arguments" in str(excinfo.value)
 
     def test_expected_exception_is_not_a_baseexception(self) -> None:
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape("Expected a BaseException type, but got 'str'"),
+        ):
             with pytest.raises("hello"):  # type: ignore[call-overload]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not str" in str(excinfo.value)
 
         class NotAnException:
             pass
 
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            ValueError,
+            match=wrap_escape(
+                "Expected a BaseException type, but got 'NotAnException'"
+            ),
+        ):
             with pytest.raises(NotAnException):  # type: ignore[type-var]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not NotAnException" in str(excinfo.value)
 
-        with pytest.raises(TypeError) as excinfo:
+        with pytest.raises(
+            TypeError,
+            match=wrap_escape("Expected a BaseException type, but got 'str'"),
+        ):
             with pytest.raises(("hello", NotAnException)):  # type: ignore[arg-type]
                 pass  # pragma: no cover
-        assert "must be a BaseException type, not str" in str(excinfo.value)
 
     def test_issue_11872(self) -> None:
         """Regression test for #11872.
 
-        urllib.error.HTTPError on Python<=3.9 raises KeyError instead of
-        AttributeError on invalid attribute access.
+        urllib.error.HTTPError on some Python 3.10/11 minor releases raises
+        KeyError instead of AttributeError on invalid attribute access.
 
         https://github.com/python/cpython/issues/98778
         """
+        from email.message import Message
         from urllib.error import HTTPError
 
-        with pytest.raises(HTTPError, match="Not Found"):
-            raise HTTPError(code=404, msg="Not Found", fp=None, hdrs=None, url="")  # type: ignore [arg-type]
+        with pytest.raises(HTTPError, match="Not Found") as exc_info:
+            raise HTTPError(
+                code=404, msg="Not Found", fp=io.BytesIO(), hdrs=Message(), url=""
+            )
+        exc_info.value.close()  # avoid a resource warning
+
+    def test_raises_match_compiled_regex(self) -> None:
+        """Test that compiled regex patterns work with pytest.raises."""
+        # Test with a compiled pattern that matches
+        pattern = re.compile(r"with base \d+")
+        with pytest.raises(ValueError, match=pattern):
+            int("asdf")
+
+        # Test with a compiled pattern that doesn't match
+        pattern_nomatch = re.compile(r"with base 16")
+        expr = (
+            "Regex pattern did not match.\n"
+            f"  Expected regex: {pattern_nomatch.pattern!r}\n"
+            f"  Actual message: \"invalid literal for int() with base 10: 'asdf'\""
+        )
+        with pytest.raises(AssertionError, match="^" + re.escape(expr) + "$"):
+            with pytest.raises(ValueError, match=pattern_nomatch):
+                int("asdf", base=10)
+
+        # Test compiled pattern with flags
+        pattern_with_flags = re.compile(r"INVALID LITERAL", re.IGNORECASE)
+        with pytest.raises(ValueError, match=pattern_with_flags):
+            int("asdf")
+
+    def test_pipe_is_treated_as_regex_metacharacter(self) -> None:
+        """| (pipe) must be recognized as a regex metacharacter."""
+        from _pytest.raises import is_fully_escaped
+        from _pytest.raises import unescape
+
+        assert not is_fully_escaped("foo|bar")
+        assert is_fully_escaped(r"foo\|bar")
+        assert unescape(r"foo\|bar") == "foo|bar"
+
+    def test_consecutive_backslashes_in_escape_check(self) -> None:
+        """Consecutive backslashes escape each other, leaving the metachar unescaped."""
+        from _pytest.raises import is_fully_escaped
+
+        # r"\."  -> one backslash escapes the dot -> fully escaped
+        assert is_fully_escaped(r"\.")
+        # r"\\." -> two backslashes: the first escapes the second, dot is unescaped
+        assert not is_fully_escaped(r"\\.")
+        # r"\\\." -> three backslashes: pair escapes pair, last escapes dot -> fully escaped
+        assert is_fully_escaped(r"\\\.")
+        # Same idea with pipe metachar
+        # "\\\\|" is the string \\| (2 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped("\\\\|")
+        # r"\\\\|" is the string \\\\| (4 backslashes + pipe): even count, pipe is unescaped
+        assert not is_fully_escaped(r"\\\\|")
+
+    def test_raises_match_verbose_diff(self, pytester: Pytester) -> None:
+        """Test that -v flag shows full diff in raises match failure (#14214)."""
+        pytester.makepyfile(
+            """
+            import re
+            import pytest
+
+            def test_raises_v_hint():
+                prefix = "A" * 60
+                expected = prefix + " expected_ending"
+                actual = prefix + " actual_ending"
+
+                with pytest.raises(
+                    ValueError, match=f"^{re.escape(expected)}$"
+                ):
+                    raise ValueError(actual)
+            """
+        )
+        # Without -v: should show "Skipping ... identical leading characters"
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(["*Skipping*identical leading*"])
+
+        # With -v: should NOT show "Skipping" — full diff shown
+        result_v = pytester.runpytest("-v")
+        assert "Skipping" not in result_v.stdout.str()

@@ -1,0 +1,3 @@
+Calling :meth:`request.getfixturevalue() <pytest.FixtureRequest.getfixturevalue>` during teardown to request a fixture that was not already requested is now deprecated and will become an error in pytest 10.
+
+See :ref:`dynamic-fixture-request-during-teardown` for details.

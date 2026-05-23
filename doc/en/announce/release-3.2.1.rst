@@ -13,7 +13,7 @@ Thanks to all who contributed to this release, among them:
 
 * Alex Gaynor
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Ronny Pfannschmidt
 * Srinivas Reddy Thatiparthy
 

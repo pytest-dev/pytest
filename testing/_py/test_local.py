@@ -9,8 +9,9 @@ import time
 from unittest import mock
 import warnings
 
-from py import error
 from py.path import local
+
+from py import error
 
 import pytest
 
@@ -18,8 +19,7 @@ import pytest
 @contextlib.contextmanager
 def ignore_encoding_warning():
     with warnings.catch_warnings():
-        if sys.version_info > (3, 10):
-            warnings.simplefilter("ignore", EncodingWarning)  # noqa: F821
+        warnings.simplefilter("ignore", EncodingWarning)
         yield
 
 
@@ -207,15 +207,11 @@ class CommonFSTests:
         assert "sampledir" in lst
         assert path1.sep.join(["sampledir", "otherfile"]) not in lst
 
-    @pytest.mark.parametrize(
-        "fil",
-        ["*dir", "*dir", pytest.mark.skip("sys.version_info < (3,6)")(b"*dir")],
-    )
-    def test_visit_filterfunc_is_string(self, path1, fil):
+    def test_visit_filterfunc_is_string(self, path1):
         lst = []
-        for i in path1.visit(fil):
+        for i in path1.visit("*dir"):
             lst.append(i.relto(path1))
-        assert len(lst), 2
+        assert len(lst), 2  # noqa: PLC1802,RUF040
         assert "sampledir" in lst
         assert "otherdir" in lst
 
@@ -463,12 +459,11 @@ class CommonFSTests:
 
         assert fspath(path1) == path1.strpath
 
-    @pytest.mark.skip("sys.version_info < (3,6)")
     def test_fspath_open(self, path1):
-        f = path1.join("opentestfile")
-        open(f)
+        f = path1.join("samplefile")
+        stream = open(f, encoding="utf-8")
+        stream.close()
 
-    @pytest.mark.skip("sys.version_info < (3,6)")
     def test_fspath_fsencode(self, path1):
         from os import fsencode
 
@@ -555,9 +550,9 @@ def batch_make_numbered_dirs(rootdir, repeats):
         file_ = dir_.join("foo")
         file_.write_text(f"{i}", encoding="utf-8")
         actual = int(file_.read_text(encoding="utf-8"))
-        assert (
-            actual == i
-        ), f"int(file_.read_text(encoding='utf-8')) is {actual} instead of {i}"
+        assert actual == i, (
+            f"int(file_.read_text(encoding='utf-8')) is {actual} instead of {i}"
+        )
         dir_.join(".lock").remove(ignore_errors=True)
     return True
 
@@ -625,7 +620,8 @@ class TestLocalPath(CommonFSTests):
         p = path1.ensure("dir_to_be_removed", dir=1)
         p.chdir()
         p.remove()
-        pytest.raises(error.ENOENT, local)
+        with pytest.raises(error.ENOENT):
+            local()
         assert path1.chdir() is None
         assert os.getcwd() == str(path1)
 
@@ -738,15 +734,11 @@ class TestLocalPath(CommonFSTests):
 
     def test_setmtime(self):
         import tempfile
-        import time
 
+        fd, name = tempfile.mkstemp()
+        os.close(fd)
         try:
-            fd, name = tempfile.mkstemp()
-            os.close(fd)
-        except AttributeError:
-            name = tempfile.mktemp()
-            open(name, "w").close()
-        try:
+            # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
             mtime = int(time.time()) - 100
             path = local(name)
             assert path.mtime() != mtime
@@ -855,7 +847,7 @@ class TestLocalPath(CommonFSTests):
         assert b.fnmatch(pattern)
 
     def test_sysfind(self):
-        name = sys.platform == "win32" and "cmd" or "test"
+        name = (sys.platform == "win32" and "cmd") or "test"
         x = local.sysfind(name)
         assert x.check(file=1)
         assert local.sysfind("jaksdkasldqwe") is None
@@ -948,7 +940,7 @@ class TestExecution:
                 prefix="base.", rootdir=tmpdir, keep=2, lock_timeout=0
             )
             assert numdir.check()
-            assert numdir.basename == "base.%d" % i
+            assert numdir.basename == f"base.{i}"
             if i >= 1:
                 assert numdir.new(ext=str(i - 1)).check()
             if i >= 2:
@@ -993,13 +985,15 @@ class TestExecution:
         for i in range(10):
             numdir = local.make_numbered_dir(prefix="base2.", rootdir=tmpdir, keep=2)
             assert numdir.check()
-            assert numdir.basename == "base2.%d" % i
+            assert numdir.basename == f"base2.{i}"
             for j in range(i):
                 assert numdir.new(ext=str(j)).check()
 
     def test_error_preservation(self, path1):
-        pytest.raises(EnvironmentError, path1.join("qwoeqiwe").mtime)
-        pytest.raises(EnvironmentError, path1.join("qwoeqiwe").read)
+        with pytest.raises(EnvironmentError):
+            path1.join("qwoeqiwe").mtime()
+        with pytest.raises(EnvironmentError):
+            path1.join("qwoeqiwe").read()
 
     # def test_parentdirmatch(self):
     #    local.parentdirmatch('std', startmodule=__name__)
@@ -1099,7 +1093,8 @@ class TestImport:
         pseudopath = tmpdir.ensure(name + "123.py")
         mod.__file__ = str(pseudopath)
         monkeypatch.setitem(sys.modules, name, mod)
-        excinfo = pytest.raises(pseudopath.ImportMismatchError, p.pyimport)
+        with pytest.raises(pseudopath.ImportMismatchError) as excinfo:
+            p.pyimport()
         modname, modfile, orig = excinfo.value.args
         assert modname == name
         assert modfile == pseudopath
@@ -1250,7 +1245,7 @@ class TestWINLocalPath:
     def test_chmod_simple_int(self, path1):
         mode = path1.stat().mode
         # Ensure that we actually change the mode to something different.
-        path1.chmod(mode == 0 and 1 or 0)
+        path1.chmod((mode == 0 and 1) or 0)
         try:
             print(path1.stat().mode)
             print(mode)
@@ -1397,7 +1392,8 @@ class TestPOSIXLocalPath:
 
     def test_stat_non_raising(self, tmpdir):
         path1 = tmpdir.join("file")
-        pytest.raises(error.ENOENT, lambda: path1.stat())
+        with pytest.raises(error.ENOENT):
+            path1.stat()
         res = path1.stat(raising=False)
         assert res is None
 
@@ -1405,6 +1401,7 @@ class TestPOSIXLocalPath:
         import time
 
         path = tmpdir.ensure("samplefile")
+        # Do not use _pytest.timing here, as we do not want time mocking to affect this test.
         now = time.time()
         atime1 = path.atime()
         # we could wait here but timer resolution is very

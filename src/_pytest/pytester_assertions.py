@@ -6,7 +6,7 @@
 # module to not be already imported.
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -26,11 +26,11 @@ def assertoutcome(
 
     realpassed, realskipped, realfailed = outcomes
     obtained = {
+        "failed": len(realfailed),
         "passed": len(realpassed),
         "skipped": len(realskipped),
-        "failed": len(realfailed),
     }
-    expected = {"passed": passed, "skipped": skipped, "failed": failed}
+    expected = {"failed": failed, "passed": passed, "skipped": skipped}
     assert obtained == expected, outcomes
 
 

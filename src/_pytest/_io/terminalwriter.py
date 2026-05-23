@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 import shutil
 import sys
 from typing import final
 from typing import Literal
-from typing import Sequence
 from typing import TextIO
-from typing import TYPE_CHECKING
+
+import pygments
+from pygments.formatters.terminal import TerminalFormatter
+from pygments.lexer import Lexer
+from pygments.lexers.diff import DiffLexer
+from pygments.lexers.python import PythonLexer
 
 from ..compat import assert_never
 from .wcwidth import wcswidth
-
-
-if TYPE_CHECKING:
-    from pygments.formatter import Formatter
-    from pygments.lexer import Lexer
 
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
@@ -161,20 +161,23 @@ class TerminalWriter:
 
             msg = self.markup(msg, **markup)
 
-            try:
-                self._file.write(msg)
-            except UnicodeEncodeError:
-                # Some environments don't support printing general Unicode
-                # strings, due to misconfiguration or otherwise; in that case,
-                # print the string escaped to ASCII.
-                # When the Unicode situation improves we should consider
-                # letting the error propagate instead of masking it (see #7475
-                # for one brief attempt).
-                msg = msg.encode("unicode-escape").decode("ascii")
-                self._file.write(msg)
+            self.write_raw(msg, flush=flush)
 
-            if flush:
-                self.flush()
+    def write_raw(self, msg: str, *, flush: bool = False) -> None:
+        try:
+            self._file.write(msg)
+        except UnicodeEncodeError:
+            # Some environments don't support printing general Unicode
+            # strings, due to misconfiguration or otherwise; in that case,
+            # print the string escaped to ASCII.
+            # When the Unicode situation improves we should consider
+            # letting the error propagate instead of masking it (see #7475
+            # for one brief attempt).
+            msg = msg.encode("unicode-escape").decode("ascii")
+            self._file.write(msg)
+
+        if flush:
+            self.flush()
 
     def line(self, s: str = "", **markup: bool) -> None:
         self.write(s, **markup)
@@ -198,40 +201,26 @@ class TerminalWriter:
             indents = [""] * len(lines)
         source = "\n".join(lines)
         new_lines = self._highlight(source).splitlines()
-        for indent, new_line in zip(indents, new_lines):
+        # Would be better to strict=True but that fails some CI jobs.
+        for indent, new_line in zip(indents, new_lines, strict=False):
             self.line(indent + new_line)
 
-    def _get_pygments_lexer(self, lexer: Literal["python", "diff"]) -> Lexer | None:
-        try:
-            if lexer == "python":
-                from pygments.lexers.python import PythonLexer
+    def _get_pygments_lexer(self, lexer: Literal["python", "diff"]) -> Lexer:
+        if lexer == "python":
+            return PythonLexer()
+        elif lexer == "diff":
+            return DiffLexer()
+        else:
+            assert_never(lexer)
 
-                return PythonLexer()
-            elif lexer == "diff":
-                from pygments.lexers.diff import DiffLexer
-
-                return DiffLexer()
-            else:
-                assert_never(lexer)
-        except ModuleNotFoundError:
-            return None
-
-    def _get_pygments_formatter(self) -> Formatter | None:
-        try:
-            import pygments.util
-        except ModuleNotFoundError:
-            return None
-
+    def _get_pygments_formatter(self) -> TerminalFormatter:
         from _pytest.config.exceptions import UsageError
 
         theme = os.getenv("PYTEST_THEME")
         theme_mode = os.getenv("PYTEST_THEME_MODE", "dark")
 
         try:
-            from pygments.formatters.terminal import TerminalFormatter
-
             return TerminalFormatter(bg=theme_mode, style=theme)
-
         except pygments.util.ClassNotFound as e:
             raise UsageError(
                 f"PYTEST_THEME environment variable has an invalid value: '{theme}'. "
@@ -251,16 +240,11 @@ class TerminalWriter:
             return source
 
         pygments_lexer = self._get_pygments_lexer(lexer)
-        if pygments_lexer is None:
-            return source
-
         pygments_formatter = self._get_pygments_formatter()
-        if pygments_formatter is None:
-            return source
 
-        from pygments import highlight
-
-        highlighted: str = highlight(source, pygments_lexer, pygments_formatter)
+        highlighted: str = pygments.highlight(
+            source, pygments_lexer, pygments_formatter
+        )
         # pygments terminal formatter may add a newline when there wasn't one.
         # We don't want this, remove.
         if highlighted[-1] == "\n" and source[-1] != "\n":

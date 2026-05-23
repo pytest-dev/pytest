@@ -59,7 +59,7 @@ def test_marked_class_run_twice(pytester: Pytester) -> None:
     """
     )
     file_name = os.path.basename(py_file)
-    rec = pytester.inline_run(file_name, file_name)
+    rec = pytester.inline_run("--keep-duplicates", file_name, file_name)
     rec.assertoutcome(passed=6)
 
 
@@ -183,10 +183,17 @@ def test_mark_on_pseudo_function(pytester: Pytester) -> None:
     reprec.assertoutcome(passed=1)
 
 
-@pytest.mark.parametrize("option_name", ["--strict-markers", "--strict"])
-def test_strict_prohibits_unregistered_markers(
-    pytester: Pytester, option_name: str
-) -> None:
+@pytest.mark.parametrize(
+    "option",
+    [
+        "--strict-markers",
+        "--strict",
+        "strict_markers = true",
+        "strict = true",
+        "addopts = --strict-markers",
+    ],
+)
+def test_strict_prohibits_unregistered_markers(pytester: Pytester, option: str) -> None:
     pytester.makepyfile(
         """
         import pytest
@@ -195,7 +202,16 @@ def test_strict_prohibits_unregistered_markers(
             pass
     """
     )
-    result = pytester.runpytest(option_name)
+    if option.startswith("-"):
+        result = pytester.runpytest(option)
+    else:
+        pytester.makeini(
+            f"""
+            [pytest]
+            {option}
+            """
+        )
+        result = pytester.runpytest()
     assert result.ret != 0
     result.stdout.fnmatch_lines(
         ["'unregisteredmark' not found in `markers` configuration option"]
@@ -228,7 +244,7 @@ def test_mark_option(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -276,7 +292,7 @@ def test_mark_option_with_kwargs(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -306,7 +322,7 @@ def test_mark_option_custom(
     """
     )
     rec = pytester.inline_run("-m", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -341,7 +357,7 @@ def test_keyword_option_custom(
     """
     )
     rec = pytester.inline_run("-k", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -373,7 +389,7 @@ def test_keyword_option_parametrize(
     """
     )
     rec = pytester.inline_run("-k", expr)
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     passed_str = [x.nodeid.split("::")[-1] for x in passed]
     assert passed_str == expected_passed
 
@@ -388,7 +404,7 @@ def test_parametrize_with_module(pytester: Pytester) -> None:
     """
     )
     rec = pytester.inline_run()
-    passed, skipped, fail = rec.listoutcomes()
+    passed, _skipped, _fail = rec.listoutcomes()
     expected_id = "test_func[" + pytest.__name__ + "]"
     assert passed[0].nodeid.split("::")[-1] == expected_id
 
@@ -537,7 +553,7 @@ class TestFunctional:
                         assert True
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         for item in items:
             print(item, item.keywords)
             assert [x for x in item.iter_markers() if x.name == "a"]
@@ -560,7 +576,7 @@ class TestFunctional:
                 def test_bar(self): pass
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b"), test_bar=("a",))
 
     def test_mark_should_not_pass_to_siebling_class(self, pytester: Pytester) -> None:
@@ -583,7 +599,7 @@ class TestFunctional:
 
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         base_item, sub_item, sub_item_other = items
         print(items, [x.nodeid for x in items])
         # new api segregates
@@ -611,7 +627,7 @@ class TestFunctional:
                 def test_bar(self): pass
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         self.assert_markers(items, test_foo=("a", "b", "c"), test_bar=("a", "b", "d"))
 
     def test_mark_closest(self, pytester: Pytester) -> None:
@@ -630,7 +646,7 @@ class TestFunctional:
 
         """
         )
-        items, rec = pytester.inline_genitems(p)
+        items, _rec = pytester.inline_genitems(p)
         has_own, has_inherited = items
         has_own_marker = has_own.get_closest_marker("c")
         has_inherited_marker = has_inherited.get_closest_marker("c")
@@ -724,8 +740,8 @@ class TestFunctional:
                 session.add_marker("mark1")
                 session.add_marker(pytest.mark.mark2)
                 session.add_marker(pytest.mark.mark3)
-                pytest.raises(ValueError, lambda:
-                        session.add_marker(10))
+                with pytest.raises(ValueError):
+                    session.add_marker(10)
         """
         )
         pytester.makepyfile(
@@ -826,7 +842,7 @@ class TestKeywordSelection:
 
         def check(keyword, name):
             reprec = pytester.inline_run("-s", "-k", keyword, file_test)
-            passed, skipped, failed = reprec.listoutcomes()
+            _passed, _skipped, failed = reprec.listoutcomes()
             assert len(failed) == 1
             assert failed[0].nodeid.split("::")[-1] == name
             assert len(reprec.getcalls("pytest_deselected")) == 1
@@ -869,7 +885,7 @@ class TestKeywordSelection:
         )
         reprec = pytester.inline_run(p.parent, "-s", "-k", keyword)
         print("keyword", repr(keyword))
-        passed, skipped, failed = reprec.listoutcomes()
+        passed, _skipped, _failed = reprec.listoutcomes()
         assert len(passed) == 1
         assert passed[0].nodeid.endswith("test_2")
         dlist = reprec.getcalls("pytest_deselected")
@@ -885,7 +901,7 @@ class TestKeywordSelection:
         """
         )
         reprec = pytester.inline_run("-k", "mykeyword", p)
-        passed, skipped, failed = reprec.countoutcomes()
+        _passed, _skipped, failed = reprec.countoutcomes()
         assert failed == 1
 
     @pytest.mark.xfail
@@ -1048,6 +1064,32 @@ def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
     assert result.ret == ExitCode.INTERRUPTED
 
 
+def test_paramset_empty_no_idfunc(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An empty parameter set should not call the user provided id function (#13031)."""
+    p1 = pytester.makepyfile(
+        """
+        import pytest
+
+        def idfunc(value):
+            raise ValueError()
+        @pytest.mark.parametrize("param", [], ids=idfunc)
+        def test(param):
+            pass
+        """
+    )
+    result = pytester.runpytest(p1, "-v", "-rs")
+    result.stdout.fnmatch_lines(
+        [
+            "* collected 1 item",
+            "test_paramset_empty_no_idfunc* SKIPPED *",
+            "SKIPPED [1] test_paramset_empty_no_idfunc.py:5: got empty parameter set for (param)",
+            "*= 1 skipped in *",
+        ]
+    )
+
+
 def test_parameterset_for_parametrize_bad_markname(pytester: Pytester) -> None:
     with pytest.raises(pytest.UsageError):
         test_parameterset_for_parametrize_marks(pytester, "bad")
@@ -1144,7 +1186,11 @@ def test_pytest_param_id_requires_string() -> None:
     with pytest.raises(TypeError) as excinfo:
         pytest.param(id=True)  # type: ignore[arg-type]
     (msg,) = excinfo.value.args
-    assert msg == "Expected id to be a string, got <class 'bool'>: True"
+    expected = (
+        "Expected id to be a string or a `pytest.HIDDEN_PARAM` sentinel, "
+        "got <class 'bool'>: True"
+    )
+    assert msg == expected
 
 
 @pytest.mark.parametrize("s", (None, "hello world"))
@@ -1226,3 +1272,108 @@ def test_mark_fixture_order_mro(pytester: Pytester):
     )
     result = pytester.runpytest(foo)
     result.assert_outcomes(passed=1)
+
+
+def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
+    """Check that applying marks works as intended on classmethods and staticmethods.
+
+    Regression test for #12863.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.mark.parametrize("value", [1, 2])
+            @classmethod
+            def test_classmethod_wrapper(cls, value: int):
+                assert value in [1, 2]
+
+            @classmethod
+            @pytest.mark.parametrize("value", [1, 2])
+            def test_classmethod_wrapper_on_top(cls, value: int):
+                assert value in [1, 2]
+
+            @pytest.mark.parametrize("value", [1, 2])
+            @staticmethod
+            def test_staticmethod_wrapper(value: int):
+                assert value in [1, 2]
+
+            @staticmethod
+            @pytest.mark.parametrize("value", [1, 2])
+            def test_staticmethod_wrapper_on_top(value: int):
+                assert value in [1, 2]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=8)
+
+
+def test_fixture_disallow_on_marked_functions() -> None:
+    """Test that applying @pytest.fixture to a marked function errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.fixture
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
+
+
+def test_fixture_disallow_marks_on_fixtures() -> None:
+    """Test that applying a mark to a fixture errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.mark.usefixtures("tmp_path")
+        @pytest.fixture
+        def foo():
+            raise NotImplementedError()
+
+
+def test_fixture_disallowed_between_marks() -> None:
+    """Test that applying a mark to a fixture errors (#3364)."""
+    with pytest.raises(
+        pytest.fail.Exception,
+        match=r"Marks cannot be applied to fixtures",
+    ):
+
+        @pytest.mark.parametrize("example", ["hello"])
+        @pytest.fixture
+        @pytest.mark.usefixtures("tmp_path")
+        def foo():
+            raise NotImplementedError()
+
+
+def test_module_getattr_without_attributeerror(pytester: Pytester) -> None:
+    """
+    Test that a helpful warning is emitted when a module-level
+    __getattr__ returns None instead of raising AttributeError.
+
+    Regression test for https://github.com/pytest-dev/pytest/issues/8265
+    """
+    pytester.makepyfile(
+        """
+        def __getattr__(key):
+            # Bug: should raise AttributeError, but returns None
+            return None
+
+        def test_something():
+            assert True
+        """
+    )
+    result = pytester.runpytest("-W", "always::pytest.PytestCollectionWarning")
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestCollectionWarning*__getattr__*returns None*AttributeError*",
+        ]
+    )
+    # The module is buggy (__getattr__ returns None for all attributes),
+    # so no tests are collected, but pytest should NOT crash with a TypeError.
+    assert result.ret != ExitCode.INTERNAL_ERROR

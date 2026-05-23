@@ -16,31 +16,36 @@ The semantics are:
 
 - Empty expression evaluates to False.
 - ident evaluates to True or False according to a provided matcher function.
-- or/and/not evaluate according to the usual boolean semantics.
 - ident with parentheses and keyword arguments evaluates to True or False according to a provided matcher function.
+- or/and/not evaluate according to the usual boolean semantics.
 """
 
 from __future__ import annotations
 
 import ast
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import enum
 import keyword
 import re
 import types
-from typing import Iterator
+from typing import Final
+from typing import final
 from typing import Literal
-from typing import Mapping
 from typing import NoReturn
 from typing import overload
 from typing import Protocol
-from typing import Sequence
 
 
 __all__ = [
     "Expression",
-    "ParseError",
+    "ExpressionMatcher",
 ]
+
+
+FILE_NAME: Final = "<pytest match expression>"
 
 
 class TokenType(enum.Enum):
@@ -58,31 +63,17 @@ class TokenType(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class Token:
-    __slots__ = ("type", "value", "pos")
+    __slots__ = ("pos", "type", "value")
     type: TokenType
     value: str
     pos: int
 
 
-class ParseError(Exception):
-    """The expression contains invalid syntax.
-
-    :param column: The column in the line where the error occurred (1-based).
-    :param message: A description of the error.
-    """
-
-    def __init__(self, column: int, message: str) -> None:
-        self.column = column
-        self.message = message
-
-    def __str__(self) -> str:
-        return f"at column {self.column}: {self.message}"
-
-
 class Scanner:
-    __slots__ = ("tokens", "current")
+    __slots__ = ("current", "input", "tokens")
 
     def __init__(self, input: str) -> None:
+        self.input = input
         self.tokens = self.lex(input)
         self.current = next(self.tokens)
 
@@ -106,15 +97,15 @@ class Scanner:
             elif (quote_char := input[pos]) in ("'", '"'):
                 end_quote_pos = input.find(quote_char, pos + 1)
                 if end_quote_pos == -1:
-                    raise ParseError(
-                        pos + 1,
+                    raise SyntaxError(
                         f'closing quote "{quote_char}" is missing',
+                        (FILE_NAME, 1, pos + 1, input),
                     )
                 value = input[pos : end_quote_pos + 1]
-                if (backslash_pos := input.find("\\")) != -1:
-                    raise ParseError(
-                        backslash_pos + 1,
+                if (backslash_pos := value.find("\\")) != -1:
+                    raise SyntaxError(
                         r'escaping with "\" not supported in marker expression',
+                        (FILE_NAME, 1, pos + backslash_pos + 1, input),
                     )
                 yield Token(TokenType.STRING, value, pos)
                 pos += len(value)
@@ -132,9 +123,9 @@ class Scanner:
                         yield Token(TokenType.IDENT, value, pos)
                     pos += len(value)
                 else:
-                    raise ParseError(
-                        pos + 1,
+                    raise SyntaxError(
                         f'unexpected character "{input[pos]}"',
+                        (FILE_NAME, 1, pos + 1, input),
                     )
         yield Token(TokenType.EOF, "", pos)
 
@@ -157,12 +148,12 @@ class Scanner:
         return None
 
     def reject(self, expected: Sequence[TokenType]) -> NoReturn:
-        raise ParseError(
-            self.current.pos + 1,
+        raise SyntaxError(
             "expected {}; got {}".format(
                 " OR ".join(type.value for type in expected),
                 self.current.type.value,
             ),
+            (FILE_NAME, 1, self.current.pos + 1, self.input),
         )
 
 
@@ -223,14 +214,14 @@ BUILTIN_MATCHERS = {"True": True, "False": False, "None": None}
 def single_kwarg(s: Scanner) -> ast.keyword:
     keyword_name = s.accept(TokenType.IDENT, reject=True)
     if not keyword_name.value.isidentifier():
-        raise ParseError(
-            keyword_name.pos + 1,
+        raise SyntaxError(
             f"not a valid python identifier {keyword_name.value}",
+            (FILE_NAME, 1, keyword_name.pos + 1, s.input),
         )
     if keyword.iskeyword(keyword_name.value):
-        raise ParseError(
-            keyword_name.pos + 1,
+        raise SyntaxError(
             f"unexpected reserved python keyword `{keyword_name.value}`",
+            (FILE_NAME, 1, keyword_name.pos + 1, s.input),
         )
     s.accept(TokenType.EQUAL, reject=True)
 
@@ -238,18 +229,16 @@ def single_kwarg(s: Scanner) -> ast.keyword:
         value: str | int | bool | None = value_token.value[1:-1]  # strip quotes
     else:
         value_token = s.accept(TokenType.IDENT, reject=True)
-        if (
-            (number := value_token.value).isdigit()
-            or number.startswith("-")
-            and number[1:].isdigit()
+        if (number := value_token.value).isdigit() or (
+            number.startswith("-") and number[1:].isdigit()
         ):
             value = int(number)
         elif value_token.value in BUILTIN_MATCHERS:
             value = BUILTIN_MATCHERS[value_token.value]
         else:
-            raise ParseError(
-                value_token.pos + 1,
+            raise SyntaxError(
                 f'unexpected character/s "{value_token.value}"',
+                (FILE_NAME, 1, value_token.pos + 1, s.input),
             )
 
     ret = ast.keyword(keyword_name.value, ast.Constant(value))
@@ -263,13 +252,36 @@ def all_kwargs(s: Scanner) -> list[ast.keyword]:
     return ret
 
 
-class MatcherCall(Protocol):
+class ExpressionMatcher(Protocol):
+    """A callable which, given an identifier and optional kwargs, should return
+    whether it matches in an :class:`Expression` evaluation.
+
+    Should be prepared to handle arbitrary strings as input.
+
+    If no kwargs are provided, the expression of the form `foo`.
+    If kwargs are provided, the expression is of the form `foo(1, b=True, "s")`.
+
+    If the expression is not supported (e.g. don't want to accept the kwargs
+    syntax variant), should raise :class:`~pytest.UsageError`.
+
+    Example::
+
+        def matcher(name: str, /, **kwargs: str | int | bool | None) -> bool:
+            # Match `cat`.
+            if name == "cat" and not kwargs:
+                return True
+            # Match `dog(barks=True)`.
+            if name == "dog" and kwargs == {"barks": False}:
+                return True
+            return False
+    """
+
     def __call__(self, name: str, /, **kwargs: str | int | bool | None) -> bool: ...
 
 
 @dataclasses.dataclass
 class MatcherNameAdapter:
-    matcher: MatcherCall
+    matcher: ExpressionMatcher
     name: str
 
     def __bool__(self) -> bool:
@@ -282,7 +294,7 @@ class MatcherNameAdapter:
 class MatcherAdapter(Mapping[str, MatcherNameAdapter]):
     """Adapts a matcher function to a locals mapping as required by eval()."""
 
-    def __init__(self, matcher: MatcherCall) -> None:
+    def __init__(self, matcher: ExpressionMatcher) -> None:
         self.matcher = matcher
 
     def __getitem__(self, key: str) -> MatcherNameAdapter:
@@ -295,39 +307,47 @@ class MatcherAdapter(Mapping[str, MatcherNameAdapter]):
         raise NotImplementedError()
 
 
+@final
 class Expression:
     """A compiled match expression as used by -k and -m.
 
     The expression can be evaluated against different matchers.
     """
 
-    __slots__ = ("code",)
+    __slots__ = ("_code", "input")
 
-    def __init__(self, code: types.CodeType) -> None:
-        self.code = code
+    def __init__(self, input: str, code: types.CodeType) -> None:
+        #: The original input line, as a string.
+        self.input: Final = input
+        self._code: Final = code
 
     @classmethod
-    def compile(self, input: str) -> Expression:
+    def compile(cls, input: str) -> Expression:
         """Compile a match expression.
 
         :param input: The input expression - one line.
+
+        :raises SyntaxError: If the expression is malformed.
         """
         astexpr = expression(Scanner(input))
-        code: types.CodeType = compile(
+        code = compile(
             astexpr,
             filename="<pytest match expression>",
             mode="eval",
         )
-        return Expression(code)
+        return Expression(input, code)
 
-    def evaluate(self, matcher: MatcherCall) -> bool:
+    def evaluate(self, matcher: ExpressionMatcher) -> bool:
         """Evaluate the match expression.
 
         :param matcher:
-            Given an identifier, should return whether it matches or not.
-            Should be prepared to handle arbitrary strings as input.
+            A callback which determines whether an identifier matches or not.
+            See the :class:`ExpressionMatcher` protocol for details and example.
 
         :returns: Whether the expression matches or not.
+
+        :raises UsageError:
+            If the matcher doesn't support the expression. Cannot happen if the
+            matcher supports all expressions.
         """
-        ret: bool = bool(eval(self.code, {"__builtins__": {}}, MatcherAdapter(matcher)))
-        return ret
+        return bool(eval(self._code, {"__builtins__": {}}, MatcherAdapter(matcher)))

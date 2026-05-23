@@ -17,7 +17,7 @@ Thanks to all who contributed to this release, among them:
 * Daniel Hahler
 * Daniil Galiev
 * David Szotten
-* Florian Bruhin
+* Freya Bruhin
 * Patrick Harmon
 * Ran Benita
 * Zac Hatfield-Dodds

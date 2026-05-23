@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from _pytest._code.code import TracebackStyle
 
 if sys.version_info < (3, 11):
+    from exceptiongroup import BaseExceptionGroup
     from exceptiongroup import ExceptionGroup
 
 
@@ -221,17 +222,18 @@ class TestTraceback_f_g_h:
             g()
             #
 
-        excinfo = pytest.raises(ValueError, h)
+        with pytest.raises(ValueError) as excinfo:
+            h()
         traceback = excinfo.traceback
         ntraceback = traceback.filter(excinfo)
         print(f"old: {traceback!r}")
         print(f"new: {ntraceback!r}")
 
         if matching:
-            assert len(ntraceback) == len(traceback) - 2
-        else:
             # -1 because of the __tracebackhide__ in pytest.raises
             assert len(ntraceback) == len(traceback) - 1
+        else:
+            assert len(ntraceback) == len(traceback)
 
     def test_traceback_recursion_index(self):
         def f(n):
@@ -239,7 +241,8 @@ class TestTraceback_f_g_h:
                 n += 1
             f(n)
 
-        excinfo = pytest.raises(RecursionError, f, 8)
+        with pytest.raises(RecursionError) as excinfo:
+            f(8)
         traceback = excinfo.traceback
         recindex = traceback.recursionindex()
         assert recindex == 3
@@ -250,7 +253,8 @@ class TestTraceback_f_g_h:
                 raise RuntimeError("hello")
             f(n - 1)
 
-        excinfo = pytest.raises(RuntimeError, f, 25)
+        with pytest.raises(RuntimeError) as excinfo:
+            f(25)
         monkeypatch.delattr(excinfo.traceback.__class__, "recursionindex")
         repr = excinfo.getrepr()
         assert "RuntimeError: hello" in str(repr.reprcrash)
@@ -262,7 +266,7 @@ class TestTraceback_f_g_h:
         def reraise_me() -> None:
             import sys
 
-            exc, val, tb = sys.exc_info()
+            _exc, val, tb = sys.exc_info()
             assert val is not None
             raise val.with_traceback(tb)
 
@@ -272,8 +276,8 @@ class TestTraceback_f_g_h:
             except BaseException:
                 reraise_me()
 
-        excinfo = pytest.raises(RuntimeError, f, 8)
-        assert excinfo is not None
+        with pytest.raises(RuntimeError) as excinfo:
+            f(8)
         traceback = excinfo.traceback
         recindex = traceback.recursionindex()
         assert recindex is None
@@ -293,7 +297,8 @@ class TestTraceback_f_g_h:
 
         fail = log(log(fail))
 
-        excinfo = pytest.raises(ValueError, fail)
+        with pytest.raises(ValueError) as excinfo:
+            fail()
         assert excinfo.traceback.recursionindex() is None
 
     def test_getreprcrash(self):
@@ -311,7 +316,8 @@ class TestTraceback_f_g_h:
         def f():
             g()
 
-        excinfo = pytest.raises(ValueError, f)
+        with pytest.raises(ValueError) as excinfo:
+            f()
         reprcrash = excinfo._getreprcrash()
         assert reprcrash is not None
         co = _pytest._code.Code.from_function(h)
@@ -319,6 +325,8 @@ class TestTraceback_f_g_h:
         assert reprcrash.lineno == co.firstlineno + 1 + 1
 
     def test_getreprcrash_empty(self):
+        __tracebackhide__ = True
+
         def g():
             __tracebackhide__ = True
             raise ValueError
@@ -327,12 +335,14 @@ class TestTraceback_f_g_h:
             __tracebackhide__ = True
             g()
 
-        excinfo = pytest.raises(ValueError, f)
+        with pytest.raises(ValueError) as excinfo:
+            f()
         assert excinfo._getreprcrash() is None
 
 
 def test_excinfo_exconly():
-    excinfo = pytest.raises(ValueError, h)
+    with pytest.raises(ValueError) as excinfo:
+        h()
     assert excinfo.exconly().startswith("ValueError")
     with pytest.raises(ValueError) as excinfo:
         raise ValueError("hello\nworld")
@@ -342,7 +352,8 @@ def test_excinfo_exconly():
 
 
 def test_excinfo_repr_str() -> None:
-    excinfo1 = pytest.raises(ValueError, h)
+    with pytest.raises(ValueError) as excinfo1:
+        h()
     assert repr(excinfo1) == "<ExceptionInfo ValueError() tblen=4>"
     assert str(excinfo1) == "<ExceptionInfo ValueError() tblen=4>"
 
@@ -353,7 +364,8 @@ def test_excinfo_repr_str() -> None:
     def raises() -> None:
         raise CustomException()
 
-    excinfo2 = pytest.raises(CustomException, raises)
+    with pytest.raises(CustomException) as excinfo2:
+        raises()
     assert repr(excinfo2) == "<ExceptionInfo custom_repr tblen=2>"
     assert str(excinfo2) == "<ExceptionInfo custom_repr tblen=2>"
 
@@ -365,7 +377,8 @@ def test_excinfo_for_later() -> None:
 
 
 def test_excinfo_errisinstance():
-    excinfo = pytest.raises(ValueError, h)
+    with pytest.raises(ValueError) as excinfo:
+        h()
     assert excinfo.errisinstance(ValueError)
 
 
@@ -389,7 +402,8 @@ def test_excinfo_no_python_sourcecode(tmp_path: Path) -> None:
     loader = jinja2.FileSystemLoader(str(tmp_path))
     env = jinja2.Environment(loader=loader)
     template = env.get_template("test.txt")
-    excinfo = pytest.raises(ValueError, template.render, h=h)
+    with pytest.raises(ValueError) as excinfo:
+        template.render(h=h)
     for item in excinfo.traceback:
         print(item)  # XXX: for some reason jinja.Template.render is printed in full
         _ = item.source  # shouldn't fail
@@ -441,9 +455,9 @@ def test_match_raises_error(pytester: Pytester) -> None:
     assert result.ret != 0
 
     match = [
-        r"E .* AssertionError: Regex pattern did not match.",
-        r"E .* Regex: '\[123\]\+'",
-        r"E .* Input: 'division by zero'",
+        r"E\s+AssertionError: Regex pattern did not match.",
+        r"E\s+Expected regex: '\[123\]\+'",
+        r"E\s+Actual message: 'division by zero'",
     ]
     result.stdout.re_match_lines(match)
     result.stdout.no_fnmatch_line("*__tracebackhide__ = True*")
@@ -451,6 +465,39 @@ def test_match_raises_error(pytester: Pytester) -> None:
     result = pytester.runpytest("--fulltrace")
     assert result.ret != 0
     result.stdout.re_match_lines([r".*__tracebackhide__ = True.*", *match])
+
+
+def test_raises_accepts_generic_group() -> None:
+    with pytest.raises(ExceptionGroup[Exception]) as exc_info:
+        raise ExceptionGroup("", [RuntimeError()])
+    assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_accepts_generic_base_group() -> None:
+    with pytest.raises(BaseExceptionGroup[BaseException]) as exc_info:
+        raise ExceptionGroup("", [RuntimeError()])
+    assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_rejects_specific_generic_group() -> None:
+    with pytest.raises(ValueError):
+        pytest.raises(ExceptionGroup[RuntimeError])
+
+
+def test_raises_accepts_generic_group_in_tuple() -> None:
+    with pytest.raises((ValueError, ExceptionGroup[Exception])) as exc_info:
+        raise ExceptionGroup("", [RuntimeError()])
+    assert exc_info.group_contains(RuntimeError)
+
+
+def test_raises_exception_escapes_generic_group() -> None:
+    try:
+        with pytest.raises(ExceptionGroup[Exception]):
+            raise ValueError("my value error")
+    except ValueError as e:
+        assert str(e) == "my value error"
+    else:
+        pytest.fail("Expected ValueError to be raised")
 
 
 class TestGroupContains:
@@ -720,7 +767,8 @@ raise ValueError()
                 raise ValueError("hello\\nworld")
         """
         )
-        excinfo = pytest.raises(ValueError, mod.func1, "m" * 500)
+        with pytest.raises(ValueError) as excinfo:
+            mod.func1("m" * 500)
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True, truncate_args=True)
@@ -734,7 +782,7 @@ raise ValueError()
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
         assert reprfuncargs.args[0] == ("m", repr("m" * 500))
-        assert "..." not in cast(str, reprfuncargs.args[0][1])
+        assert "..." not in reprfuncargs.args[0][1]
 
     def test_repr_tracebackentry_lines(self, importasmod) -> None:
         mod = importasmod(
@@ -743,7 +791,8 @@ raise ValueError()
                 raise ValueError("hello\\nworld")
         """
         )
-        excinfo = pytest.raises(ValueError, mod.func1)
+        with pytest.raises(ValueError) as excinfo:
+            mod.func1()
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         p = FormattedExcinfo()
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
@@ -776,7 +825,8 @@ raise ValueError()
                 raise ValueError("hello\\nworld")
         """
         )
-        excinfo = pytest.raises(ValueError, mod.func1, "m" * 90, 5, 13, "z" * 120)
+        with pytest.raises(ValueError) as excinfo:
+            mod.func1("m" * 90, 5, 13, "z" * 120)
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
@@ -803,7 +853,8 @@ raise ValueError()
                 raise ValueError("hello\\nworld")
         """
         )
-        excinfo = pytest.raises(ValueError, mod.func1, "a", "b", c="d")
+        with pytest.raises(ValueError) as excinfo:
+            mod.func1("a", "b", c="d")
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
@@ -829,7 +880,8 @@ raise ValueError()
                 func1()
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
         p = FormattedExcinfo(style="short")
         reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
         lines = reprtb.lines
@@ -849,6 +901,38 @@ raise ValueError()
         assert basename in str(reprtb.reprfileloc.path)
         assert reprtb.reprfileloc.lineno == 3
 
+    @pytest.mark.skipif(
+        "sys.version_info < (3,11)",
+        reason="Column level traceback info added in python 3.11",
+    )
+    def test_repr_traceback_entry_short_carets(self, importasmod) -> None:
+        mod = importasmod(
+            """
+            def div_by_zero():
+                return 1 / 0
+            def func1():
+                return 42 + div_by_zero()
+            def entry():
+                func1()
+        """
+        )
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            mod.entry()
+        p = FormattedExcinfo(style="short")
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-3])
+        assert len(reprtb.lines) == 1
+        assert reprtb.lines[0] == "    func1()"
+
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
+        assert len(reprtb.lines) == 2
+        assert reprtb.lines[0] == "    return 42 + div_by_zero()"
+        assert reprtb.lines[1] == "                ^^^^^^^^^^^^^"
+
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
+        assert len(reprtb.lines) == 2
+        assert reprtb.lines[0] == "    return 1 / 0"
+        assert reprtb.lines[1] == "           ^^^^^"
+
     def test_repr_tracebackentry_no(self, importasmod):
         mod = importasmod(
             """
@@ -858,7 +942,8 @@ raise ValueError()
                 func1()
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
         p = FormattedExcinfo(style="no")
         p.repr_traceback_entry(excinfo.traceback[-2])
 
@@ -869,6 +954,7 @@ raise ValueError()
         assert not lines[1:]
 
     def test_repr_traceback_tbfilter(self, importasmod):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f(x):
@@ -877,7 +963,8 @@ raise ValueError()
                 f(0)
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
         p = FormattedExcinfo(tbfilter=True)
         reprtb = p.repr_traceback(excinfo)
         assert len(reprtb.reprentries) == 2
@@ -898,7 +985,8 @@ raise ValueError()
                 func1()
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
         from _pytest._code.code import Code
 
         with monkeypatch.context() as mp:
@@ -915,6 +1003,7 @@ raise ValueError()
         assert last_lines[1] == "E   ValueError: hello"
 
     def test_repr_traceback_and_excinfo(self, importasmod) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f(x):
@@ -923,7 +1012,8 @@ raise ValueError()
                 f(0)
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
 
         styles: tuple[TracebackStyle, ...] = ("long", "short")
         for style in styles:
@@ -943,6 +1033,7 @@ raise ValueError()
             assert repr.reprcrash.message == "ValueError: 0"
 
     def test_repr_traceback_with_invalid_cwd(self, importasmod, monkeypatch) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f(x):
@@ -951,7 +1042,8 @@ raise ValueError()
                 f(0)
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
 
         p = FormattedExcinfo(abspath=False)
 
@@ -964,8 +1056,8 @@ raise ValueError()
             upframe = sys._getframe().f_back
             assert upframe is not None
             if upframe.f_code.co_name == "_makepath":
-                # Only raise with expected calls, but not via e.g. inspect for
-                # py38-windows.
+                # Only raise with expected calls, and not accidentally via 'inspect'
+                # See 79ae86cc3f76d69460e1c7beca4ce95e68ab80a6
                 raised += 1
                 raise OSError(2, "custom_oserror")
             return orig_path_cwd()
@@ -1000,7 +1092,8 @@ raise ValueError()
                 raise ValueError()
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
         repr = excinfo.getrepr()
         repr.addsection("title", "content")
         repr.toterminal(tw_mock)
@@ -1014,7 +1107,8 @@ raise ValueError()
                 raise ValueError()
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
         repr = excinfo.getrepr()
         assert repr.reprcrash is not None
         assert repr.reprcrash.path.endswith("mod.py")
@@ -1033,7 +1127,8 @@ raise ValueError()
                 rec1(42)
         """
         )
-        excinfo = pytest.raises(RuntimeError, mod.entry)
+        with pytest.raises(RuntimeError) as excinfo:
+            mod.entry()
 
         for style in ("short", "long", "no"):
             p = FormattedExcinfo(style="short")
@@ -1050,7 +1145,8 @@ raise ValueError()
                 f(0)
         """
         )
-        excinfo = pytest.raises(ValueError, mod.entry)
+        with pytest.raises(ValueError) as excinfo:
+            mod.entry()
 
         styles: tuple[TracebackStyle, ...] = ("short", "long", "no")
         for style in styles:
@@ -1073,6 +1169,7 @@ raise ValueError()
         assert x == "я"
 
     def test_toterminal_long(self, importasmod, tw_mock):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def g(x):
@@ -1081,7 +1178,8 @@ raise ValueError()
                 g(3)
         """
         )
-        excinfo = pytest.raises(ValueError, mod.f)
+        with pytest.raises(ValueError) as excinfo:
+            mod.f()
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
         repr.toterminal(tw_mock)
@@ -1106,6 +1204,7 @@ raise ValueError()
     def test_toterminal_long_missing_source(
         self, importasmod, tmp_path: Path, tw_mock
     ) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def g(x):
@@ -1114,7 +1213,8 @@ raise ValueError()
                 g(3)
         """
         )
-        excinfo = pytest.raises(ValueError, mod.f)
+        with pytest.raises(ValueError) as excinfo:
+            mod.f()
         tmp_path.joinpath("mod.py").unlink()
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
@@ -1138,6 +1238,7 @@ raise ValueError()
     def test_toterminal_long_incomplete_source(
         self, importasmod, tmp_path: Path, tw_mock
     ) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def g(x):
@@ -1146,7 +1247,8 @@ raise ValueError()
                 g(3)
         """
         )
-        excinfo = pytest.raises(ValueError, mod.f)
+        with pytest.raises(ValueError) as excinfo:
+            mod.f()
         tmp_path.joinpath("mod.py").write_text("asdf", encoding="utf-8")
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         repr = excinfo.getrepr()
@@ -1170,13 +1272,15 @@ raise ValueError()
     def test_toterminal_long_filenames(
         self, importasmod, tw_mock, monkeypatch: MonkeyPatch
     ) -> None:
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f():
                 raise ValueError()
         """
         )
-        excinfo = pytest.raises(ValueError, mod.f)
+        with pytest.raises(ValueError) as excinfo:
+            mod.f()
         path = Path(mod.__file__)
         monkeypatch.chdir(path.parent)
         repr = excinfo.getrepr(abspath=False)
@@ -1193,6 +1297,24 @@ raise ValueError()
         assert msg == str(path)
         line = tw_mock.lines[-1]
         assert line == ":3: ValueError"
+
+    def test_toterminal_value(self, importasmod, tw_mock):
+        mod = importasmod(
+            """
+            def g(x):
+                raise ValueError(x)
+            def f():
+                g('some_value')
+        """
+        )
+        with pytest.raises(ValueError) as excinfo:
+            mod.f()
+        excinfo.traceback = excinfo.traceback.filter(excinfo)
+        repr = excinfo.getrepr(style="value")
+        repr.toterminal(tw_mock)
+
+        assert tw_mock.get_write_msg(0) == "some_value"
+        assert tw_mock.get_write_msg(1) == "\n"
 
     @pytest.mark.parametrize(
         "reproptions",
@@ -1230,6 +1352,7 @@ raise ValueError()
         assert file.getvalue()
 
     def test_traceback_repr_style(self, importasmod, tw_mock):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             def f():
@@ -1242,7 +1365,8 @@ raise ValueError()
                 raise ValueError()
         """
         )
-        excinfo = pytest.raises(ValueError, mod.f)
+        with pytest.raises(ValueError) as excinfo:
+            mod.f()
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         excinfo.traceback = _pytest._code.Traceback(
             entry if i not in (1, 2) else entry.with_repr_style("short")
@@ -1277,6 +1401,7 @@ raise ValueError()
         assert tw_mock.lines[20] == ":9: ValueError"
 
     def test_exc_chain_repr(self, importasmod, tw_mock):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             class Err(Exception):
@@ -1292,10 +1417,11 @@ raise ValueError()
                 raise ValueError()
 
             def h():
-                raise AttributeError()
+                if True: raise AttributeError()
         """
         )
-        excinfo = pytest.raises(AttributeError, mod.f)
+        with pytest.raises(AttributeError) as excinfo:
+            mod.f()
         r = excinfo.getrepr(style="long")
         r.toterminal(tw_mock)
         for line in tw_mock.lines:
@@ -1353,12 +1479,22 @@ raise ValueError()
         assert tw_mock.lines[40] == ("_ ", None)
         assert tw_mock.lines[41] == ""
         assert tw_mock.lines[42] == "    def h():"
-        assert tw_mock.lines[43] == ">       raise AttributeError()"
-        assert tw_mock.lines[44] == "E       AttributeError"
-        assert tw_mock.lines[45] == ""
-        line = tw_mock.get_write_msg(46)
-        assert line.endswith("mod.py")
-        assert tw_mock.lines[47] == ":15: AttributeError"
+        # On python 3.11 and greater, check for carets in the traceback.
+        if sys.version_info >= (3, 11):
+            assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
+            assert tw_mock.lines[44] == "                 ^^^^^^^^^^^^^^^^^^^^^^"
+            assert tw_mock.lines[45] == "E       AttributeError"
+            assert tw_mock.lines[46] == ""
+            line = tw_mock.get_write_msg(47)
+            assert line.endswith("mod.py")
+            assert tw_mock.lines[48] == ":15: AttributeError"
+        else:
+            assert tw_mock.lines[43] == ">       if True: raise AttributeError()"
+            assert tw_mock.lines[44] == "E       AttributeError"
+            assert tw_mock.lines[45] == ""
+            line = tw_mock.get_write_msg(46)
+            assert line.endswith("mod.py")
+            assert tw_mock.lines[47] == ":15: AttributeError"
 
     @pytest.mark.parametrize("mode", ["from_none", "explicit_suppress"])
     def test_exc_repr_chain_suppression(self, importasmod, mode, tw_mock):
@@ -1366,6 +1502,7 @@ raise ValueError()
         - When the exception is raised with "from None"
         - Explicitly suppressed with "chain=False" to ExceptionInfo.getrepr().
         """
+        __tracebackhide__ = True
         raise_suffix = " from None" if mode == "from_none" else ""
         mod = importasmod(
             f"""
@@ -1378,7 +1515,8 @@ raise ValueError()
                 raise ValueError()
         """
         )
-        excinfo = pytest.raises(AttributeError, mod.f)
+        with pytest.raises(AttributeError) as excinfo:
+            mod.f()
         r = excinfo.getrepr(style="long", chain=mode != "explicit_suppress")
         r.toterminal(tw_mock)
         for line in tw_mock.lines:
@@ -1455,6 +1593,7 @@ raise ValueError()
         )
 
     def test_exc_chain_repr_cycle(self, importasmod, tw_mock):
+        __tracebackhide__ = True
         mod = importasmod(
             """
             class Err(Exception):
@@ -1473,27 +1612,49 @@ raise ValueError()
                     raise e.__cause__
         """
         )
-        excinfo = pytest.raises(ZeroDivisionError, mod.unreraise)
+        with pytest.raises(ZeroDivisionError) as excinfo:
+            mod.unreraise()
         r = excinfo.getrepr(style="short")
         r.toterminal(tw_mock)
         out = "\n".join(line for line in tw_mock.lines if isinstance(line, str))
-        expected_out = textwrap.dedent(
-            """\
-            :13: in unreraise
-                reraise()
-            :10: in reraise
-                raise Err() from e
-            E   test_exc_chain_repr_cycle0.mod.Err
+        # Assert highlighting carets in python3.11+
+        if sys.version_info >= (3, 11):
+            expected_out = textwrap.dedent(
+                """\
+                :13: in unreraise
+                    reraise()
+                :10: in reraise
+                    raise Err() from e
+                E   test_exc_chain_repr_cycle0.mod.Err
 
-            During handling of the above exception, another exception occurred:
-            :15: in unreraise
-                raise e.__cause__
-            :8: in reraise
-                fail()
-            :5: in fail
-                return 0 / 0
-            E   ZeroDivisionError: division by zero"""
-        )
+                During handling of the above exception, another exception occurred:
+                :15: in unreraise
+                    raise e.__cause__
+                :8: in reraise
+                    fail()
+                :5: in fail
+                    return 0 / 0
+                           ^^^^^
+                E   ZeroDivisionError: division by zero"""
+            )
+        else:
+            expected_out = textwrap.dedent(
+                """\
+                :13: in unreraise
+                    reraise()
+                :10: in reraise
+                    raise Err() from e
+                E   test_exc_chain_repr_cycle0.mod.Err
+
+                During handling of the above exception, another exception occurred:
+                :15: in unreraise
+                    raise e.__cause__
+                :8: in reraise
+                    fail()
+                :5: in fail
+                    return 0 / 0
+                E   ZeroDivisionError: division by zero"""
+            )
         assert out == expected_out
 
     def test_exec_type_error_filter(self, importasmod):
@@ -1684,6 +1845,9 @@ def _exceptiongroup_common(
             rf"FAILED test_excgroup.py::test - {pre_catch}BaseExceptionGroup: Oops \(2.*"
         )
     result.stdout.re_match_lines(match_lines)
+    # Check for traceback filtering of pytest internals.
+    result.stdout.no_fnmatch_line("*, line *, in pytest_pyfunc_call")
+    result.stdout.no_fnmatch_line("*, line *, in pytest_runtest_call")
 
 
 @pytest.mark.skipif(
@@ -1703,20 +1867,101 @@ def test_exceptiongroup(pytester: Pytester, outer_chain, inner_chain) -> None:
     _exceptiongroup_common(pytester, outer_chain, inner_chain, native=False)
 
 
-@pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
-def test_all_entries_hidden(pytester: Pytester, tbstyle: str) -> None:
-    """Regression test for #10903."""
+def test_exceptiongroup_short_summary_info(pytester: Pytester):
     pytester.makepyfile(
         """
+        import sys
+
+        if sys.version_info < (3, 11):
+            from exceptiongroup import BaseExceptionGroup, ExceptionGroup
+
+        def test_base() -> None:
+            raise BaseExceptionGroup("NOT IN SUMMARY", [SystemExit("a" * 10)])
+
+        def test_nonbase() -> None:
+            raise ExceptionGroup("NOT IN SUMMARY", [ValueError("a" * 10)])
+
+        def test_nested() -> None:
+            raise ExceptionGroup(
+                "NOT DISPLAYED", [
+                    ExceptionGroup("NOT IN SUMMARY", [ValueError("a" * 10)])
+                ]
+            )
+
+        def test_multiple() -> None:
+            raise ExceptionGroup(
+                "b" * 10,
+                [
+                    ValueError("NOT IN SUMMARY"),
+                    TypeError("NOT IN SUMMARY"),
+                ]
+            )
+
+        def test_nested_multiple() -> None:
+            raise ExceptionGroup(
+                "b" * 10,
+                [
+                    ExceptionGroup(
+                        "c" * 10,
+                        [
+                            ValueError("NOT IN SUMMARY"),
+                            TypeError("NOT IN SUMMARY"),
+                        ]
+                    )
+                ]
+            )
+        """
+    )
+    # run with -vv to not truncate summary info, default width in tests is very low
+    result = pytester.runpytest("-vv")
+    assert result.ret == 1
+    backport_str = "exceptiongroup." if sys.version_info < (3, 11) else ""
+    result.stdout.fnmatch_lines(
+        [
+            "*= short test summary info =*",
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_base - "
+                "SystemExit('aaaaaaaaaa') [single exception in BaseExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nonbase - "
+                "ValueError('aaaaaaaaaa') [single exception in ExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nested - "
+                "ValueError('aaaaaaaaaa') [single exception in ExceptionGroup]"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_multiple - "
+                f"{backport_str}ExceptionGroup: bbbbbbbbbb (2 sub-exceptions)"
+            ),
+            (
+                "FAILED test_exceptiongroup_short_summary_info.py::test_nested_multiple - "
+                f"{backport_str}ExceptionGroup: bbbbbbbbbb (1 sub-exception)"
+            ),
+            "*= 5 failed in *",
+        ]
+    )
+
+
+@pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
+@pytest.mark.parametrize("group", (True, False), ids=("group", "bare"))
+def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> None:
+    """Regression test for #10903."""
+    pytester.makepyfile(
+        f"""
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
         def test():
             __tracebackhide__ = True
-            1 / 0
+            raise {'ExceptionGroup("", [ValueError("bar")])' if group else 'ValueError("bar")'}
     """
     )
     result = pytester.runpytest("--tb", tbstyle)
     assert result.ret == 1
     if tbstyle != "line":
-        result.stdout.fnmatch_lines(["*ZeroDivisionError: division by zero"])
+        result.stdout.fnmatch_lines(["*ValueError: bar"])
     if tbstyle not in ("line", "native"):
         result.stdout.fnmatch_lines(["All traceback entries are hidden.*"])
 

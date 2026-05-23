@@ -14,7 +14,7 @@ Thanks to all of the contributors to this release:
 * Anthony Sottile
 * Bruno Oliveira
 * Christian Maurer
-* Florian Bruhin
+* Freya Bruhin
 * Ran Benita
 
 

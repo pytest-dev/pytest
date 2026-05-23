@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 import bdb
+from collections.abc import Callable
 import dataclasses
 import os
 import sys
 import types
-from typing import Callable
 from typing import cast
 from typing import final
 from typing import Generic
@@ -16,6 +16,7 @@ from typing import Literal
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
+from .config import Config
 from .reports import BaseReport
 from .reports import CollectErrorRepr
 from .reports import CollectReport
@@ -61,10 +62,10 @@ def pytest_addoption(parser: Parser) -> None:
         "--durations-min",
         action="store",
         type=float,
-        default=0.005,
+        default=None,
         metavar="N",
         help="Minimal duration in seconds for inclusion in slowest list. "
-        "Default: 0.005.",
+        "Default: 0.005 (or 0.0 if -vv is given).",
     )
 
 
@@ -74,6 +75,8 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
     verbose = terminalreporter.config.get_verbosity()
     if durations is None:
         return
+    if durations_min is None:
+        durations_min = 0.005 if verbose < 2 else 0.0
     tr = terminalreporter
     dlist = []
     for replist in tr.stats.values():
@@ -90,11 +93,13 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter) -> None:
         dlist = dlist[:durations]
 
     for i, rep in enumerate(dlist):
-        if verbose < 2 and rep.duration < durations_min:
+        if rep.duration < durations_min:
             tr.write_line("")
-            tr.write_line(
-                f"({len(dlist) - i} durations < {durations_min:g}s hidden.  Use -vv to show these durations.)"
-            )
+            message = f"({len(dlist) - i} durations < {durations_min:g}s hidden."
+            if terminalreporter.config.option.durations_min is None:
+                message += "  Use -vv to show these durations."
+            message += ")"
+            tr.write_line(message)
             break
         tr.write_line(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}")
 
@@ -123,27 +128,30 @@ def runtestprotocol(
         # This only happens if the item is re-run, as is done by
         # pytest-rerunfailures.
         item._initrequest()  # type: ignore[attr-defined]
-    rep = call_and_report(item, "setup", log)
-    reports = [rep]
-    if rep.passed:
-        if item.config.getoption("setupshow", False):
-            show_test_item(item)
-        if not item.config.getoption("setuponly", False):
-            reports.append(call_and_report(item, "call", log))
-    # If the session is about to fail or stop, teardown everything - this is
-    # necessary to correctly report fixture teardown errors (see #11706)
-    if item.session.shouldfail or item.session.shouldstop:
-        nextitem = None
-    reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
-    # After all teardown hooks have been called
-    # want funcargs and request info to go away.
-    if hasrequest:
-        item._request = False  # type: ignore[attr-defined]
-        item.funcargs = None  # type: ignore[attr-defined]
+    try:
+        rep = call_and_report(item, "setup", log)
+        reports = [rep]
+        if rep.passed:
+            setup_only = item.config.getoption("setuponly", False)
+            if item.config.getoption("setupshow", False):
+                show_test_item(item, add_space=not setup_only)
+            if not setup_only:
+                reports.append(call_and_report(item, "call", log))
+        # If the session is about to fail or stop, teardown everything - this is
+        # necessary to correctly report fixture teardown errors (see #11706)
+        if item.session.shouldfail or item.session.shouldstop:
+            nextitem = None
+        reports.append(call_and_report(item, "teardown", log, nextitem=nextitem))
+    finally:
+        # After all teardown hooks have been called (or an exception was reraised)
+        # want funcargs and request info to go away.
+        if hasrequest:
+            item._request = False  # type: ignore[attr-defined]
+            item.funcargs = None  # type: ignore[attr-defined]
     return reports
 
 
-def show_test_item(item: Item) -> None:
+def show_test_item(item: Item, *, add_space: bool) -> None:
     """Show test function, parameters and the fixtures of the test item."""
     tw = item.config.get_terminal_writer()
     tw.line()
@@ -151,7 +159,9 @@ def show_test_item(item: Item) -> None:
     tw.write(item.nodeid)
     used_fixtures = sorted(getattr(item, "fixturenames", []))
     if used_fixtures:
-        tw.write(" (fixtures used: {})".format(", ".join(used_fixtures)))
+        tw.write(f" (fixtures used: {', '.join(used_fixtures)})")
+    if add_space:
+        tw.write(" ")
     tw.flush()
 
 
@@ -235,11 +245,11 @@ def call_and_report(
         runtest_hook = ihook.pytest_runtest_teardown
     else:
         assert False, f"Unhandled runtest hook case: {when}"
-    reraise: tuple[type[BaseException], ...] = (Exit,)
-    if not item.config.getoption("usepdb", False):
-        reraise += (KeyboardInterrupt,)
+
     call = CallInfo.from_call(
-        lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+        lambda: runtest_hook(item=item, **kwds),
+        when=when,
+        reraise=get_reraise_exceptions(item.config),
     )
     report: TestReport = ihook.pytest_runtest_makereport(item=item, call=call)
     if log:
@@ -247,6 +257,14 @@ def call_and_report(
     if check_interactive_exception(call, report):
         ihook.pytest_exception_interact(node=item, call=call, report=report)
     return report
+
+
+def get_reraise_exceptions(config: Config) -> tuple[type[BaseException], ...]:
+    """Return exception types that should not be suppressed in general."""
+    reraise: tuple[type[BaseException], ...] = (Exit,)
+    if not config.getoption("usepdb", False):
+        reraise += (KeyboardInterrupt,)
+    return reraise
 
 
 def check_interactive_exception(call: CallInfo[object], report: BaseReport) -> bool:
@@ -258,7 +276,10 @@ def check_interactive_exception(call: CallInfo[object], report: BaseReport) -> b
     if hasattr(report, "wasxfail"):
         # Exception was expected.
         return False
-    if isinstance(call.excinfo.value, (Skipped, bdb.BdbQuit)):
+    unittest = sys.modules.get("unittest")
+    if isinstance(call.excinfo.value, Skipped | bdb.BdbQuit) or (
+        unittest is not None and isinstance(call.excinfo.value, unittest.SkipTest)
+    ):
         # Special control flow exception.
         return False
     return True
@@ -335,8 +356,7 @@ class CallInfo(Generic[TResult]):
             function, instead of being wrapped in the CallInfo.
         """
         excinfo = None
-        start = timing.time()
-        precise_start = timing.perf_counter()
+        instant = timing.Instant()
         try:
             result: TResult | None = func()
         except BaseException:
@@ -344,14 +364,11 @@ class CallInfo(Generic[TResult]):
             if reraise is not None and isinstance(excinfo.value, reraise):
                 raise
             result = None
-        # use the perf counter
-        precise_stop = timing.perf_counter()
-        duration = precise_stop - precise_start
-        stop = timing.time()
+        duration = instant.elapsed()
         return cls(
-            start=start,
-            stop=stop,
-            duration=duration,
+            start=duration.start.time,
+            stop=duration.stop.time,
+            duration=duration.seconds,
             when=when,
             result=result,
             excinfo=excinfo,
@@ -495,6 +512,11 @@ class SetupState:
             ],
         ] = {}
 
+    def is_node_active(self, node: Node) -> bool:
+        """Check if a node is currently active in the stack -- set up and not
+        torn down yet."""
+        return node in self.stack
+
     def setup(self, item: Item) -> None:
         """Setup objects along the collector chain to the item."""
         needed_collectors = item.listchain()
@@ -533,7 +555,7 @@ class SetupState:
         When nextitem is None (meaning we're at the last item), the entire
         stack is torn down.
         """
-        needed_collectors = nextitem and nextitem.listchain() or []
+        needed_collectors = (nextitem and nextitem.listchain()) or []
         exceptions: list[BaseException] = []
         while self.stack:
             if list(self.stack.keys()) == needed_collectors[: len(self.stack)]:

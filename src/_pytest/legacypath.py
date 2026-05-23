@@ -304,16 +304,11 @@ class LegacyTmpdirPlugin:
     @staticmethod
     @fixture
     def tmpdir(tmp_path: Path) -> LEGACY_PATH:
-        """Return a temporary directory path object which is unique to each test
-        function invocation, created as a sub directory of the base temporary
-        directory.
-
-        By default, a new base temporary directory is created each test session,
-        and old bases are removed after 3 sessions, to aid in debugging. If
-        ``--basetemp`` is used then it is cleared each session. See
-        :ref:`temporary directory location and retention`.
-
-        The returned object is a `legacy_path`_ object.
+        """Return a temporary directory (as `legacy_path`_ object)
+        which is unique to each test function invocation.
+        The temporary directory is created as a subdirectory
+        of the base temporary directory, with configurable retention,
+        as discussed in :ref:`temporary directory location and retention`.
 
         .. note::
             These days, it is preferred to use ``tmp_path``.

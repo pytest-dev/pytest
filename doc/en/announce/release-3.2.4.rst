@@ -15,7 +15,7 @@ Thanks to all who contributed to this release, among them:
 * Christian Boelsen
 * Christoph Buchner
 * Daw-Ran Liou
-* Florian Bruhin
+* Freya Bruhin
 * Franck Michea
 * Leonard Lausen
 * Matty G

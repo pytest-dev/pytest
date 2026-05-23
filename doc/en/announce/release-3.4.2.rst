@@ -13,7 +13,7 @@ Thanks to all who contributed to this release, among them:
 
 * Allan Feldman
 * Bruno Oliveira
-* Florian Bruhin
+* Freya Bruhin
 * Jason R. Coombs
 * Kyle Altendorf
 * Maik Figura

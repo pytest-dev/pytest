@@ -7,6 +7,8 @@ from typing import final
 class UsageError(Exception):
     """Error in pytest usage or invocation."""
 
+    __module__ = "pytest"
+
 
 class PrintHelp(Exception):
     """Raised when pytest should print its help to skip the rest of the

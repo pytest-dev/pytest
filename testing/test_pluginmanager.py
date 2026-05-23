@@ -268,8 +268,10 @@ class TestPytestPluginManager:
         assert pm.is_registered(mod)
         values = pm.get_plugins()
         assert mod in values
-        pytest.raises(ValueError, pm.register, mod)
-        pytest.raises(ValueError, lambda: pm.register(mod))
+        with pytest.raises(ValueError):
+            pm.register(mod)
+        with pytest.raises(ValueError):
+            pm.register(mod)
         # assert not pm.is_registered(mod2)
         assert pm.get_plugins() == values
 
@@ -376,8 +378,10 @@ class TestPytestPluginManager:
     def test_import_plugin_importname(
         self, pytester: Pytester, pytestpm: PytestPluginManager
     ) -> None:
-        pytest.raises(ImportError, pytestpm.import_plugin, "qweqwex.y")
-        pytest.raises(ImportError, pytestpm.import_plugin, "pytest_qweqwx.y")
+        with pytest.raises(ImportError):
+            pytestpm.import_plugin("qweqwex.y")
+        with pytest.raises(ImportError):
+            pytestpm.import_plugin("pytest_qweqwx.y")
 
         pytester.syspathinsert()
         pluginname = "pytest_hello"
@@ -396,8 +400,10 @@ class TestPytestPluginManager:
     def test_import_plugin_dotted_name(
         self, pytester: Pytester, pytestpm: PytestPluginManager
     ) -> None:
-        pytest.raises(ImportError, pytestpm.import_plugin, "qweqwex.y")
-        pytest.raises(ImportError, pytestpm.import_plugin, "pytest_qweqwex.y")
+        with pytest.raises(ImportError):
+            pytestpm.import_plugin("qweqwex.y")
+        with pytest.raises(ImportError):
+            pytestpm.import_plugin("pytest_qweqwex.y")
 
         pytester.syspathinsert()
         pytester.mkpydir("pkg").joinpath("plug.py").write_text("x=3", encoding="utf-8")
@@ -423,9 +429,8 @@ class TestPytestPluginManager:
 
 class TestPytestPluginManagerBootstrapping:
     def test_preparse_args(self, pytestpm: PytestPluginManager) -> None:
-        pytest.raises(
-            ImportError, lambda: pytestpm.consider_preparse(["xyz", "-p", "hello123"])
-        )
+        with pytest.raises(ImportError):
+            pytestpm.consider_preparse(["xyz", "-p", "hello123"])
 
         # Handles -p without space (#3532).
         with pytest.raises(ImportError) as excinfo:
@@ -436,7 +441,7 @@ class TestPytestPluginManagerBootstrapping:
         # Handles -p without following arg (when used without argparse).
         pytestpm.consider_preparse(["-p"])
 
-        with pytest.raises(UsageError, match="^plugin main cannot be disabled$"):
+        with pytest.raises(UsageError, match=r"^plugin main cannot be disabled$"):
             pytestpm.consider_preparse(["-p", "no:main"])
 
     def test_plugin_prevent_register(self, pytestpm: PytestPluginManager) -> None:
