@@ -1,0 +1,1 @@
+Fixed :meth:`monkeypatch.setattr() <pytest.MonkeyPatch.setattr>` leaving a stale entry on the undo stack when the underlying ``setattr()`` call fails (e.g. on immutable targets), causing an ``AttributeError`` crash during teardown.

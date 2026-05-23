@@ -1,0 +1,1 @@
+fix missing type annotations on ``Pytester.makepyfile`` and ``Pytester.maketxtfile`` methods.
