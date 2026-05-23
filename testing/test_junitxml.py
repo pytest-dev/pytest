@@ -49,7 +49,11 @@ class RunAndParse:
             with xml_path.open(encoding="utf-8") as f:
                 self.schema.validate(f)
         xmldoc = minidom.parse(str(xml_path))
-        return result, DomDocument(xmldoc)
+        doc = DomDocument(xmldoc)
+        testcase_nodes = doc.find_by_tag("testcase")
+        test_suite_node = doc.get_first_by_tag("testsuite")
+        test_suite_node.assert_attr(tests=len(testcase_nodes))
+        return result, doc
 
 
 @pytest.fixture
@@ -390,58 +394,26 @@ class TestPython:
         fnode.assert_attr(message='failed on teardown with "ValueError: Error reason"')
         assert "ValueError" in fnode.toxml()
 
+    @parametrize_families
     def test_teardown_error_after_pass_counts_as_one_test(
-        self, pytester: Pytester
+        self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: str
     ) -> None:
-        path = pytester.path.joinpath("test_teardown_error_after_pass.xml")
-        log = LogXML(str(path), None)
-        call_report = TestReport(
-            nodeid="test_mod.py::test_function",
-            location=("test_mod.py", 1, "test_function"),
-            keywords={},
-            outcome="passed",
-            longrepr=None,
-            when="call",
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                yield
+                raise ValueError('Error reason')
+            def test_function(arg):
+                pass
+        """
         )
-        teardown_report = TestReport(
-            nodeid=call_report.nodeid,
-            location=call_report.location,
-            keywords={},
-            outcome="failed",
-            longrepr="ValueError: Error reason",
-            when="teardown",
-        )
-
-        log.pytest_sessionstart()
-        log.pytest_runtest_logreport(call_report)
-        log.pytest_runtest_logreport(teardown_report)
-        log.pytest_sessionfinish()
-
-        testsuite = minidom.parse(str(path)).getElementsByTagName("testsuite")[0]
-        assert testsuite.getAttribute("errors") == "1"
-        assert testsuite.getAttribute("tests") == "1"
-
-    def test_teardown_error_without_open_report_counts_as_one_test(
-        self, pytester: Pytester
-    ) -> None:
-        path = pytester.path.joinpath("test_teardown_error_without_open_report.xml")
-        log = LogXML(str(path), None)
-        teardown_report = TestReport(
-            nodeid="test_mod.py::test_function",
-            location=("test_mod.py", 1, "test_function"),
-            keywords={},
-            outcome="failed",
-            longrepr="ValueError: Error reason",
-            when="teardown",
-        )
-
-        log.pytest_sessionstart()
-        log.pytest_runtest_logreport(teardown_report)
-        log.pytest_sessionfinish()
-
-        testsuite = minidom.parse(str(path)).getElementsByTagName("testsuite")[0]
-        assert testsuite.getAttribute("errors") == "1"
-        assert testsuite.getAttribute("tests") == "1"
+        result, dom = run_and_parse(family=xunit_family)
+        assert result.ret
+        node = dom.get_first_by_tag("testsuite")
+        node.assert_attr(errors=1, tests=1)
 
     @parametrize_families
     def test_call_failure_teardown_error(
@@ -462,7 +434,7 @@ class TestPython:
         result, dom = run_and_parse(family=xunit_family)
         assert result.ret
         node = dom.get_first_by_tag("testsuite")
-        node.assert_attr(errors=1, failures=1, tests=1)
+        node.assert_attr(errors=1, failures=1, tests=2)
         first, second = dom.find_by_tag("testcase")
         assert first
         assert second
