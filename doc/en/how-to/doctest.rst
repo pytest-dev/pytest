@@ -224,6 +224,12 @@ unless explicitly configured by :confval:`python_files`.
 Also, the :ref:`usefixtures <usefixtures>` mark and fixtures marked as :ref:`autouse <autouse>` are supported
 when executing text doctest files.
 
+Doctests do not support fixtures that depend on parametrization, because doctest
+collection does not perform the same test generation as normal test functions.
+This includes parametrized autouse fixtures. If you need to run doctests against
+multiple backends or configurations, consider moving those checks into normal
+test functions or a dedicated doctest plugin.
+
 
 .. _`doctest_namespace`:
 

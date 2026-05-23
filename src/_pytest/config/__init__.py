@@ -50,6 +50,7 @@ from .exceptions import UsageError as UsageError
 from .findpaths import ConfigDict
 from .findpaths import ConfigValue
 from .findpaths import determine_setup
+from .findpaths import parse_override_ini
 from _pytest import __version__
 import _pytest._code
 from _pytest._code import ExceptionInfo
@@ -117,6 +118,8 @@ class ExitCode(enum.IntEnum):
     USAGE_ERROR = 4
     #: pytest couldn't find tests.
     NO_TESTS_COLLECTED = 5
+    #: All tests pass, but maximum number of warnings exceeded.
+    MAX_WARNINGS_ERROR = 6
 
     __module__ = "pytest"
 
@@ -182,9 +185,12 @@ def main(
 
     :returns: An exit code.
     """
-    # Handle a single `--version` argument early to avoid starting up the entire pytest infrastructure.
+    # Handle a single `--version`/`-V` argument early to avoid starting up the entire pytest infrastructure.
     new_args = sys.argv[1:] if args is None else args
-    if isinstance(new_args, Sequence) and new_args.count("--version") == 1:
+    if (
+        isinstance(new_args, Sequence)
+        and (new_args.count("--version") + new_args.count("-V")) == 1
+    ):
         sys.stdout.write(f"pytest {__version__}\n")
         return ExitCode.OK
 
@@ -589,7 +595,8 @@ class PytestPluginManager(PluginManager):
         )
         self._noconftest = noconftest
         self._using_pyargs = pyargs
-        foundanchor = False
+
+        anchors = []
         for initial_path in args:
             path = str(initial_path)
             # remove node-id syntax
@@ -601,16 +608,18 @@ class PytestPluginManager(PluginManager):
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
             if safe_exists(anchor):
-                self._try_load_conftest(
-                    anchor,
-                    importmode,
-                    rootpath,
-                    consider_namespace_packages=consider_namespace_packages,
-                )
-                foundanchor = True
-        if not foundanchor:
-            self._try_load_conftest(
-                invocation_dir,
+                anchors.append(anchor)
+                # Let's also consider test* subdirs.
+                if anchor.is_dir():
+                    for x in anchor.glob("test*"):
+                        if x.is_dir():
+                            anchors.append(x)
+        if not anchors:
+            anchors = [invocation_dir]
+
+        for anchor in anchors:
+            self._loadconftestmodules(
+                anchor,
                 importmode,
                 rootpath,
                 consider_namespace_packages=consider_namespace_packages,
@@ -630,31 +639,6 @@ class PytestPluginManager(PluginManager):
         # in out-of-source trees.
         # (see #9767 for a regression where the logic was inverted).
         return path not in self._confcutdir.parents
-
-    def _try_load_conftest(
-        self,
-        anchor: pathlib.Path,
-        importmode: str | ImportMode,
-        rootpath: pathlib.Path,
-        *,
-        consider_namespace_packages: bool,
-    ) -> None:
-        self._loadconftestmodules(
-            anchor,
-            importmode,
-            rootpath,
-            consider_namespace_packages=consider_namespace_packages,
-        )
-        # let's also consider test* subdirs
-        if anchor.is_dir():
-            for x in anchor.glob("test*"):
-                if x.is_dir():
-                    self._loadconftestmodules(
-                        x,
-                        importmode,
-                        rootpath,
-                        consider_namespace_packages=consider_namespace_packages,
-                    )
 
     def _loadconftestmodules(
         self,
@@ -1500,6 +1484,8 @@ class Config:
                     + args
                 )
 
+        # At this point, self.option contains only defaults from the _processopt
+        # callback.
         ns = self._parser.parse_known_args(args, namespace=copy.copy(self.option))
         rootpath, inipath, inicfg, ignored_config_files = determine_setup(
             inifile=ns.inifilename,
@@ -1535,6 +1521,12 @@ class Config:
         self.known_args_namespace = self._parser.parse_known_args(
             args, namespace=copy.copy(self.option)
         )
+        if addopts:
+            # addopts may have added overrides (especially via OverrideIniAction).
+            # The thing can be endlessly circular but we only do one level (#14442).
+            if overrides := parse_override_ini(self.known_args_namespace.override_ini):
+                self._inicfg.update(overrides)
+                self._inicache.clear()
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()
@@ -1550,7 +1542,12 @@ class Config:
         # are going to be loaded.
         self.pluginmanager.consider_env()
 
-        self._parser.parse_known_args(args, namespace=self.known_args_namespace)
+        # Parse again, now including options added in pytest_addoption
+        # by third-party plugins loaded above. This way they're available
+        # on early_config in the pytest_load_initial_conftests hook call below.
+        self.known_args_namespace = self._parser.parse_known_args(
+            args, namespace=copy.copy(self.option)
+        )
 
         self._validate_plugins()
         self._warn_about_skipped_plugins()

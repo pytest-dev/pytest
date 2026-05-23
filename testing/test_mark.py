@@ -184,11 +184,16 @@ def test_mark_on_pseudo_function(pytester: Pytester) -> None:
 
 
 @pytest.mark.parametrize(
-    "option_name", ["--strict-markers", "--strict", "strict_markers", "strict"]
+    "option",
+    [
+        "--strict-markers",
+        "--strict",
+        "strict_markers = true",
+        "strict = true",
+        "addopts = --strict-markers",
+    ],
 )
-def test_strict_prohibits_unregistered_markers(
-    pytester: Pytester, option_name: str
-) -> None:
+def test_strict_prohibits_unregistered_markers(pytester: Pytester, option: str) -> None:
     pytester.makepyfile(
         """
         import pytest
@@ -197,16 +202,16 @@ def test_strict_prohibits_unregistered_markers(
             pass
     """
     )
-    if option_name in ("strict_markers", "strict"):
+    if option.startswith("-"):
+        result = pytester.runpytest(option)
+    else:
         pytester.makeini(
             f"""
             [pytest]
-            {option_name} = true
+            {option}
             """
         )
         result = pytester.runpytest()
-    else:
-        result = pytester.runpytest(option_name)
     assert result.ret != 0
     result.stdout.fnmatch_lines(
         ["'unregisteredmark' not found in `markers` configuration option"]
@@ -735,8 +740,8 @@ class TestFunctional:
                 session.add_marker("mark1")
                 session.add_marker(pytest.mark.mark2)
                 session.add_marker(pytest.mark.mark3)
-                pytest.raises(ValueError, lambda:
-                        session.add_marker(10))
+                with pytest.raises(ValueError):
+                    session.add_marker(10)
         """
         )
         pytester.makepyfile(
