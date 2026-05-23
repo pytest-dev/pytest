@@ -32,7 +32,7 @@ Here is a little annotated list for some popular plugins:
 
 * :pypi:`pytest-xdist`:
   to distribute tests to CPUs and remote hosts, to run in boxed
-  mode which allows to survive segmentation faults, to run in
+  mode that allows pytest to survive segmentation faults, to run in
   looponfailing mode, automatically re-running failing tests
   on file changes.
 

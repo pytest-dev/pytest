@@ -161,6 +161,16 @@ Here is the order of execution:
 It's possible to use ``tryfirst`` and ``trylast`` also on hook wrappers
 in which case it will influence the ordering of hook wrappers among each other.
 
+.. note::
+
+    pytest only searches for hook implementations whose names start with
+    ``pytest_``.  The ``specname`` argument to ``@pytest.hookimpl`` can be used
+    to give an implementation a different suffix, for example
+    ``pytest_collection_modifyitems_tryfirst``, but the function name still
+    needs to start with ``pytest_``.  A hook implementation named
+    ``my_collection_modifyitems`` is ignored even if it is decorated with
+    ``@pytest.hookimpl(specname="pytest_collection_modifyitems")``.
+
 .. _`declaringhooks`:
 
 Declaring new hooks
@@ -205,7 +215,7 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
 
 For a real world example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
 
-.. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/974bd566c599dc6a9ea291838c6f226197208b46/xdist/newhooks.py
+.. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/v3.8.0/src/xdist/newhooks.py
 
 Hooks may be called both from fixtures or from other hooks. In both cases, hooks are called
 through the ``hook`` object, available in the ``config`` object. Most hooks receive a

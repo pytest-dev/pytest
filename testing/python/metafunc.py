@@ -801,7 +801,7 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x, y", [("a", "b")], indirect=["x"])
         assert metafunc._calls[0].params == dict(x="a", y="b")
-        # Since `y` is a direct parameter, its pseudo-fixture would
+        # Since `y` is a direct parameter, its DirectParamFixtureDef would
         # be registered.
         assert list(metafunc._arg2fixturedefs.keys()) == ["y"]
 

@@ -1,0 +1,1 @@
+Document that ``@pytest.hookimpl(specname=...)`` only works for function names starting with ``pytest_``.

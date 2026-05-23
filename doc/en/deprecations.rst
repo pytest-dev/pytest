@@ -15,6 +15,69 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _fixture-nodeid-deprecated:
+
+Passing ``baseid``/``nodeid`` strings to fixture registration APIs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+Passing ``baseid`` to :class:`~pytest.FixtureDef` or ``nodeid`` strings to
+``FixtureManager._register_fixture`` and ``FixtureManager.parsefactories``
+is deprecated. These are internal pytest APIs that are used by some plugins.
+
+Use the ``node`` parameter instead for fixture scoping. This enables more robust
+node-based matching instead of fragile string prefix matching.
+
+.. code-block:: python
+
+    # Deprecated
+    fixture_manager.parsefactories(plugin_obj, nodeid="tests/sub")
+    fixture_manager._register_fixture(name="fix", func=func, nodeid="tests/sub")
+
+    # Use instead
+    fixture_manager.parsefactories(holder=plugin_obj, node=directory_node)
+    fixture_manager._register_fixture(name="fix", func=func, node=directory_node)
+
+In pytest 10, the ``baseid`` and ``nodeid`` string parameters will be removed.
+
+
+.. _pastebin-deprecated:
+
+The ``--pastebin`` option
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+The :option:`--pastebin` option has been deprecated due to being very niche, being the only feature in core pytest relying on an external service and having low usage.
+
+The plugin which implements ``--pastebin`` has been extracted to a separate package, :pypi:`pytest-pastebin`.
+Please install ``pytest-pastebin`` if you want to keep using ``--pastebin``.
+
+
+.. _dynamic-fixture-request-during-teardown:
+
+``request.getfixturevalue()`` during fixture teardown
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+Calling :meth:`request.getfixturevalue() <pytest.FixtureRequest.getfixturevalue>`
+during teardown to request a fixture that was not already requested is deprecated.
+
+This pattern is brittle because teardown runs after pytest has started unwinding active scopes.
+Depending on the requested fixture's scope and the current teardown order, the lookup may appear
+to work, or it may fail.
+
+In pytest 10, first-time fixture requests made during teardown will become an error.
+If teardown logic needs another fixture, request it before teardown begins, either by
+declaring it in the fixture signature or by calling ``request.getfixturevalue()`` before
+the fixture yields.
+
+Fixtures that were already requested before teardown started are unaffected and may still
+be retrieved while they remain active, though this is discouraged.
+
+
 .. _config-inicfg:
 
 ``config.inicfg``
@@ -113,6 +176,53 @@ You can fix it by converting generators and iterators to lists or tuples:
 Note that :class:`range` objects are ``Collection`` and are not affected by this deprecation.
 
 
+.. _class-scoped-fixture-as-instance-method:
+
+Class-scoped fixture as instance method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+Defining a class-scoped fixture as an instance method (without ``@classmethod``) is deprecated
+and will be removed in pytest 10.0.
+
+When a class-scoped fixture is defined as an instance method, any attributes set on ``self``
+will not be visible to test methods. This happens because pytest creates a new instance of the
+test class for each test method, while the fixture runs only once per class on a different instance.
+
+**Before** (deprecated):
+
+.. code-block:: python
+
+    class TestExample:
+        @pytest.fixture(scope="class")
+        def setup_data(self):
+            self.data = [1, 2, 3]  # This won't be visible to tests!
+
+        def test_something(self, setup_data):
+            assert self.data == [
+                1,
+                2,
+                3,
+            ]  # AttributeError: 'TestExample' object has no attribute 'data'
+
+**After** (recommended):
+
+.. code-block:: python
+
+    class TestExample:
+        @pytest.fixture(scope="class")
+        @classmethod
+        def setup_data(cls):
+            cls.data = [1, 2, 3]
+
+        def test_something(self, setup_data):
+            assert self.data == [1, 2, 3]  # Works correctly
+
+Using ``@classmethod`` ensures attributes are set on the class itself, making them accessible
+to all test methods.
+
+
 .. _monkeypatch-fixup-namespace-packages:
 
 ``monkeypatch.syspath_prepend`` with legacy namespace packages
@@ -148,83 +258,12 @@ Simply remove the ``__init__.py`` file entirely.
 Python 3.3+ natively supports namespace packages without ``__init__.py``.
 
 
-.. _import-or-skip-import-error:
-
-``pytest.importorskip`` default behavior regarding :class:`ImportError`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 8.2
-
-Traditionally :func:`pytest.importorskip` will capture :class:`ImportError`, with the original intent being to skip
-tests where a dependent module is not installed, for example testing with different dependencies.
-
-However some packages might be installed in the system, but are not importable due to
-some other issue, for example, a compilation error or a broken installation. In those cases :func:`pytest.importorskip`
-would still silently skip the test, but more often than not users would like to see the unexpected
-error so the underlying issue can be fixed.
-
-In ``8.2`` the ``exc_type`` parameter has been added, giving users the ability of passing :class:`ModuleNotFoundError`
-to skip tests only if the module cannot really be found, and not because of some other error.
-
-Catching only :class:`ModuleNotFoundError` by default (and letting other errors propagate) would be the best solution,
-however for backward compatibility, pytest will keep the existing behavior but raise a warning if:
-
-1. The captured exception is of type :class:`ImportError`, and:
-2. The user does not pass ``exc_type`` explicitly.
-
-If the import attempt raises :class:`ModuleNotFoundError` (the usual case), then the module is skipped and no
-warning is emitted.
-
-This way, the usual cases will keep working the same way, while unexpected errors will now issue a warning, with
-users being able to suppress the warning by passing ``exc_type=ImportError`` explicitly.
-
-In ``9.0``, the warning will turn into an error, and in ``9.1`` :func:`pytest.importorskip` will only capture
-:class:`ModuleNotFoundError` by default and no warnings will be issued anymore -- but users can still capture
-:class:`ImportError` by passing it to ``exc_type``.
-
-
-.. _node-ctor-fspath-deprecation:
-
-``fspath`` argument for Node constructors replaced with ``pathlib.Path``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. deprecated:: 7.0
-
-In order to support the transition from ``py.path.local`` to :mod:`pathlib`,
-the ``fspath`` argument to :class:`~_pytest.nodes.Node` constructors like
-:func:`pytest.Function.from_parent()` and :func:`pytest.Class.from_parent()`
-is now deprecated.
-
-Plugins which construct nodes should pass the ``path`` argument, of type
-:class:`pathlib.Path`, instead of the ``fspath`` argument.
-
-Plugins which implement custom items and collectors are encouraged to replace
-``fspath`` parameters (``py.path.local``) with ``path`` parameters
-(``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
-
-If possible, plugins with custom items should use :ref:`cooperative
-constructors <uncooperative-constructors-deprecated>` to avoid hardcoding
-arguments they only pass on to the superclass.
-
-.. note::
-    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
-    new attribute being ``path``) is **the opposite** of the situation for
-    hooks, :ref:`outlined below <legacy-path-hooks-deprecated>` (the old
-    argument being ``path``).
-
-    This is an unfortunate artifact due to historical reasons, which should be
-    resolved in future versions as we slowly get rid of the :pypi:`py`
-    dependency (see :issue:`9283` for a longer discussion).
-
-Due to the ongoing migration of methods like :meth:`~pytest.Item.reportinfo`
-which still is expected to return a ``py.path.local`` object, nodes still have
-both ``fspath`` (``py.path.local``) and ``path`` (``pathlib.Path``) attributes,
-no matter what argument was used in the constructor. We expect to deprecate the
-``fspath`` attribute in a future release.
-
+.. _hook-markers:
 
 Configuring hook specs/impls using markers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.2
 
 Before pluggy, pytest's plugin library, was its own package and had a clear API,
 pytest just used ``pytest.mark`` to configure hooks.
@@ -335,6 +374,8 @@ conflicts (such as :class:`pytest.File` now taking ``path`` instead of
 deprecation warning is now raised.
 
 
+.. _yield-fixture-deprecated:
+
 The ``yield_fixture`` function/decorator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -352,6 +393,72 @@ As stated in our :ref:`backwards-compatibility` policy, deprecated features are 
 an appropriate period of deprecation has passed.
 
 Some breaking changes which could not be deprecated are also listed.
+
+
+.. _import-or-skip-import-error:
+
+``pytest.importorskip`` default behavior regarding :class:`ImportError`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 8.2
+.. versionremoved:: 9.1
+
+Traditionally :func:`pytest.importorskip` captured :class:`ImportError`, with the original intent being to skip
+tests where a dependent module is not installed, for example testing with different dependencies.
+
+However, some packages might be installed in the system but not importable due to some other issue, for example
+a compilation error or a broken installation. In those cases, :func:`pytest.importorskip` would still silently skip
+the test, but more often than not users would rather see the unexpected error so the underlying issue can be fixed.
+
+In ``8.2``, the ``exc_type`` parameter was added, giving users the ability to pass
+:class:`ModuleNotFoundError` to skip tests only if the module cannot really be found, and not because of some other
+error.
+
+As of ``9.1``, :func:`pytest.importorskip` only captures :class:`ModuleNotFoundError` by default.
+If you want to preserve the previous behavior and skip on other :class:`ImportError` exceptions during import,
+pass ``exc_type=ImportError`` explicitly.
+
+
+.. _node-ctor-fspath-deprecation:
+
+``fspath`` argument for Node constructors replaced with ``pathlib.Path``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 7.0
+.. versionremoved:: 9.1
+
+In order to support the transition from ``py.path.local`` to :mod:`pathlib`,
+the ``fspath`` argument to :class:`~_pytest.nodes.Node` constructors like
+:func:`pytest.Function.from_parent()` and :func:`pytest.Class.from_parent()`
+is now deprecated.
+
+Plugins which construct nodes should pass the ``path`` argument, of type
+:class:`pathlib.Path`, instead of the ``fspath`` argument.
+
+Plugins which implement custom items and collectors are encouraged to replace
+``fspath`` parameters (``py.path.local``) with ``path`` parameters
+(``pathlib.Path``), and drop any other usage of the ``py`` library if possible.
+
+If possible, plugins with custom items should use :ref:`cooperative
+constructors <uncooperative-constructors-deprecated>` to avoid hardcoding
+arguments they only pass on to the superclass.
+
+.. note::
+    The name of the :class:`~_pytest.nodes.Node` arguments and attributes (the
+    new attribute being ``path``) is **the opposite** of the situation for
+    hooks, :ref:`outlined below <legacy-path-hooks-deprecated>` (the old
+    argument being ``path``).
+
+    This is an unfortunate artifact due to historical reasons, which should be
+    resolved in future versions as we slowly get rid of the :pypi:`py`
+    dependency (see :issue:`9283` for a longer discussion).
+
+Due to the ongoing migration of methods like :meth:`~pytest.Item.reportinfo`
+which still is expected to return a ``py.path.local`` object, nodes still have
+both ``fspath`` (``py.path.local``) and ``path`` (``pathlib.Path``) attributes,
+no matter what argument was used in the constructor. We expect to deprecate the
+``fspath`` attribute in a future release.
+
 
 .. _sync-test-async-fixture:
 

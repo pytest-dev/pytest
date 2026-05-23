@@ -14,7 +14,6 @@ from __future__ import annotations
 from warnings import warn
 
 from _pytest.warning_types import PytestDeprecationWarning
-from _pytest.warning_types import PytestRemovedIn9Warning
 from _pytest.warning_types import PytestRemovedIn10Warning
 from _pytest.warning_types import UnformattedWarning
 
@@ -35,20 +34,20 @@ YIELD_FIXTURE = PytestDeprecationWarning(
     "Use @pytest.fixture instead; they are the same."
 )
 
+CLASS_FIXTURE_INSTANCE_METHOD = PytestRemovedIn10Warning(
+    "Class-scoped fixture defined as instance method is deprecated.\n"
+    "Instance attributes set in this fixture will NOT be visible to test methods,\n"
+    "as each test gets a new instance while the fixture runs only once per class.\n"
+    "Use @classmethod decorator and set attributes on cls instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#class-scoped-fixture-as-instance-method"
+)
+
 # This deprecation is never really meant to be removed.
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 
 
-NODE_CTOR_FSPATH_ARG = UnformattedWarning(
-    PytestRemovedIn9Warning,
-    "The (fspath: py.path.local) argument to {node_type_name} is deprecated. "
-    "Please use the (path: pathlib.Path) argument instead.\n"
-    "See https://docs.pytest.org/en/latest/deprecations.html"
-    "#fspath-argument-for-node-constructors-replaced-with-pathlib-path",
-)
-
 HOOK_LEGACY_MARKING = UnformattedWarning(
-    PytestDeprecationWarning,
+    PytestRemovedIn10Warning,
     "The hook{type} {fullname} uses old-style configuration options (marks or attributes).\n"
     "Please use the pytest.hook{type}({hook_opts}) decorator instead\n"
     " to configure the hooks.\n"
@@ -76,6 +75,20 @@ CONFIG_INICFG = PytestRemovedIn10Warning(
     "See https://docs.pytest.org/en/stable/deprecations.html#config-inicfg"
 )
 
+FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    'Calling request.getfixturevalue("{argname}") during teardown is deprecated.\n'
+    "Please request the fixture before teardown begins, either by declaring it in the fixture signature "
+    "or by calling request.getfixturevalue() before the fixture yields.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#dynamic-fixture-request-during-teardown",
+)
+
+PASTEBIN = PytestRemovedIn10Warning(
+    "The --pastebin option is deprecated. "
+    "The functionality is now available in an external plugin package, pytest-pastebin.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#the-pastebin-option"
+)
+
 # You want to make some `__init__` or function "private".
 #
 #   def my_private_function(some, args):
@@ -93,6 +106,21 @@ CONFIG_INICFG = PytestRemovedIn10Warning(
 #
 # All other calls will get the default _ispytest=False and trigger
 # the warning (possibly error in the future).
+
+
+FIXTURE_BASEID_DEPRECATED = PytestRemovedIn10Warning(
+    "Passing baseid to FixtureDef is deprecated. Pass node instead for fixture scoping."
+)
+
+FIXTURE_NODEID_DEPRECATED = PytestRemovedIn10Warning(
+    "Passing nodeid to _register_fixture is deprecated. "
+    "Pass node instead for fixture scoping."
+)
+
+PARSEFACTORIES_NODEID_DEPRECATED = PytestRemovedIn10Warning(
+    "Passing nodeid string to parsefactories is deprecated. "
+    "Use parsefactories(holder=obj, node=node) instead."
+)
 
 
 def check_ispytest(ispytest: bool) -> None:

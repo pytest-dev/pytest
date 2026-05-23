@@ -85,10 +85,8 @@ def test_code_from_func() -> None:
 def test_unicode_handling() -> None:
     value = "ąć".encode()
 
-    def f() -> None:
-        raise ValueError(value)
-
-    excinfo = pytest.raises(ValueError, f)
+    with pytest.raises(Exception) as excinfo:
+        raise Exception(value)
     str(excinfo)
 
 
@@ -148,7 +146,7 @@ class TestExceptionInfo:
     def test_bad_getsource(self) -> None:
         try:
             if False:
-                pass
+                pass  # type: ignore[unreachable]
             else:
                 assert False
         except AssertionError:
@@ -164,7 +162,7 @@ class TestTracebackEntry:
     def test_getsource(self) -> None:
         try:
             if False:
-                pass
+                pass  # type: ignore[unreachable]
             else:
                 assert False
         except AssertionError:

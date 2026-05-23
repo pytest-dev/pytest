@@ -1,0 +1,1 @@
+`pytest.ScopeName` is now public to allow using it in function signatures.
