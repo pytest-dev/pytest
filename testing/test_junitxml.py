@@ -39,7 +39,10 @@ class RunAndParse:
         self.schema = schema
 
     def __call__(
-        self, *args: str | os.PathLike[str], family: str | None = "xunit1"
+        self,
+        *args: str | os.PathLike[str],
+        family: str | None = "xunit1",
+        suite_name: str = "pytest",
     ) -> tuple[RunResult, DomDocument]:
         if family:
             args = ("-o", "junit_family=" + family, *args)
@@ -52,7 +55,7 @@ class RunAndParse:
         doc = DomDocument(xmldoc)
         testcase_nodes = doc.find_by_tag("testcase")
         test_suite_node = doc.get_first_by_tag("testsuite")
-        test_suite_node.assert_attr(tests=len(testcase_nodes))
+        test_suite_node.assert_attr(name=suite_name, tests=len(testcase_nodes))
         return result, doc
 
 
@@ -1712,7 +1715,7 @@ def test_set_suite_name(
             pass
     """
     )
-    result, dom = run_and_parse(family=xunit_family)
+    result, dom = run_and_parse(family=xunit_family, suite_name=expected)
     assert result.ret == 0
     node = dom.get_first_by_tag("testsuite")
     node.assert_attr(name=expected)
