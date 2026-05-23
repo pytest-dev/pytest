@@ -205,7 +205,7 @@ class or module can then be passed to the ``pluginmanager`` using the ``pytest_a
 
 For a real world example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
 
-.. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/master/src/xdist/newhooks.py
+.. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/v3.8.0/src/xdist/newhooks.py
 
 Hooks may be called both from fixtures or from other hooks. In both cases, hooks are called
 through the ``hook`` object, available in the ``config`` object. Most hooks receive a
