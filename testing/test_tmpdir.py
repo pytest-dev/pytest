@@ -716,6 +716,7 @@ def test_tmp_path_factory_doesnt_follow_symlinks(
     with pytest.raises(OSError, match=r"temporary directory .* is a symbolic link"):
         tmp_factory.getbasetemp()
 
+
 def test_get_user_handles_getpass_oserror(monkeypatch: MonkeyPatch) -> None:
     """Regression test: get_user() should return None when getpass.getuser()
     raises OSError (Python 3.13+ behavior, #13835)."""
