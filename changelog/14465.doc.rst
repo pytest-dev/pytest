@@ -1,0 +1,1 @@
+Updated the hooks how-to page to link the current ``newhooks.py`` file in ``pytest-xdist`` on the ``master`` branch, instead of a pinned commit under the old layout. This keeps the example up to date with how ``pytest-xdist`` organises its hooks today.
