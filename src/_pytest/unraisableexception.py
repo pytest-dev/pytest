@@ -90,7 +90,7 @@ def cleanup(
     # their __del__ can resurrect them. The Trio project determined experimentally
     # that 5 passes are needed on PyPy to flush everything. On CPython, reference
     # counting handles most cleanup immediately, so 1 pass is sufficient.
-    _default_gc_collect_iterations = 5 if hasattr(sys, "pypy_version_info") else 1
+    _default_gc_collect_iterations = 5 if sys.implementation.name == "pypy" else 1
     gc_collect_iterations = config.stash.get(
         gc_collect_iterations_key, _default_gc_collect_iterations
     )
