@@ -122,8 +122,6 @@ class ItemLocation(NamedTuple):
 def getlocation(
     function,
     relative_to: Path | None,
-    *,
-    allow_escape: bool = False,
 ) -> CodeLocation:
     """Return the source location (file path, line number) of *function*.
 
@@ -131,24 +129,16 @@ def getlocation(
         The function (or wrapped function) to locate.
     :param relative_to:
         If given, the returned path is made relative to this directory.
-    :param allow_escape:
-        When *True* the relative path may contain ``..`` components
-        (i.e. the function is allowed to live outside *relative_to*).
-        When *False* (the default), only strict sub-paths are
-        relativised; everything else keeps its absolute path.
+        Only strict sub-paths are relativised; everything else keeps
+        its absolute path.
     """
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
     lineindex = function.__code__.co_firstlineno - 1
 
     if relative_to is not None:
-        from .pathlib import bestrelpath
-
         try:
-            if allow_escape:
-                relfn = Path(bestrelpath(relative_to, fn))
-            else:
-                relfn = fn.relative_to(relative_to)
+            relfn = fn.relative_to(relative_to)
         except ValueError:
             pass
         else:
