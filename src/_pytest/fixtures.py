@@ -2182,7 +2182,7 @@ _PYTEST_DIR = Path(_pytest.__file__).parent
 
 
 def _pretty_fixture_path(invocation_dir: Path, func: object) -> str:
-    location = getlocation(func, relative_to=invocation_dir, allow_escape=False)
+    location = getlocation(func, relative_to=invocation_dir)
     prefix = Path("...", "_pytest")
     try:
         return f"{prefix / location.path.relative_to(_PYTEST_DIR)}:{location.lineno}"
