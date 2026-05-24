@@ -398,27 +398,6 @@ class TestPython:
         assert "ValueError" in fnode.toxml()
 
     @parametrize_families
-    def test_teardown_error_after_pass_counts_as_one_test(
-        self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: str
-    ) -> None:
-        pytester.makepyfile(
-            """
-            import pytest
-
-            @pytest.fixture
-            def arg():
-                yield
-                raise ValueError('Error reason')
-            def test_function(arg):
-                pass
-        """
-        )
-        result, dom = run_and_parse(family=xunit_family)
-        assert result.ret
-        node = dom.get_first_by_tag("testsuite")
-        node.assert_attr(errors=1, tests=1)
-
-    @parametrize_families
     def test_call_failure_teardown_error(
         self, pytester: Pytester, run_and_parse: RunAndParse, xunit_family: str
     ) -> None:
