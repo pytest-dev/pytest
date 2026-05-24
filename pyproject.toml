@@ -69,8 +69,8 @@ urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
 urls.Homepage = "https://docs.pytest.org/en/latest/"
 urls.Source = "https://github.com/pytest-dev/pytest"
 urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
-scripts."py.test" = "pytest:console_main"
-scripts.pytest = "pytest:console_main"
+scripts."py.test" = "_pytest.config:_console_main"
+scripts.pytest = "_pytest.config:_console_main"
 
 [tool.setuptools.package-data]
 "_pytest" = [

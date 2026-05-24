@@ -19,6 +19,7 @@ from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
+from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
 from _pytest.config.argparsing import get_ini_default_for_type
@@ -3132,3 +3133,12 @@ class TestProgName:
         """Usage line should show 'python -m pytest' when called from CLI subprocess."""
         result = pytester.runpytest_subprocess("--help")
         result.stdout.fnmatch_lines(["usage: python -m pytest *"])
+
+    def test_console_main_deprecated(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Calling pytest.console_main() should emit a deprecation warning."""
+        monkeypatch.setattr("_pytest.config._console_main", lambda: 0)
+        with pytest.warns(
+            pytest.PytestRemovedIn10Warning,
+            match="pytest.console_main.*is deprecated",
+        ):
+            console_main()

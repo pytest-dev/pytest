@@ -243,10 +243,10 @@ def _main(
             os.environ["PYTEST_VERSION"] = old_pytest_version
 
 
-def console_main() -> int:
-    """The CLI entry point of pytest.
+def _console_main() -> int:
+    """The CLI entry point of pytest (internal).
 
-    This function is not meant for programmable use; use `main()` instead.
+    This is the real implementation used by entry points and ``__main__.py``.
     """
     # https://docs.python.org/3/library/signal.html#note-on-sigpipe
     try:
@@ -259,6 +259,21 @@ def console_main() -> int:
         devnull = os.open(os.devnull, os.O_WRONLY)
         os.dup2(devnull, sys.stdout.fileno())
         return 1  # Python exits with error code 1 on EPIPE
+
+
+def console_main() -> int:
+    """The CLI entry point of pytest.
+
+    .. deprecated:: 9.1
+        This function is slated for removal in pytest 10.
+        It is not meant for programmable use; use :func:`pytest.main` instead.
+    """
+    import warnings
+
+    from _pytest.deprecated import CONSOLE_MAIN
+
+    warnings.warn(CONSOLE_MAIN, stacklevel=2)
+    return _console_main()
 
 
 class cmdline:  # compatibility namespace
