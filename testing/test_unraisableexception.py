@@ -397,7 +397,9 @@ def test_refcycle_resource_warning_filter(pytester: Pytester) -> None:
 
     # TODO: should be a test failure or error. Currently the exception
     # propagates all the way to the top resulting in exit code 1.
-    assert result.ret == 1
+    assert result.ret == 1, (
+        "surfaced ResourceWarning should propagate to a non-zero session exit"
+    )
     result.assert_outcomes(passed=1)
     # The unwrap path: stderr shows the ResourceWarning directly, NOT wrapped
     # in PytestUnraisableExceptionWarning. The negative assertion is what
@@ -439,7 +441,9 @@ def test_refcycle_userwarning_filter(pytester: Pytester) -> None:
 
     # TODO: should be a test failure or error. Currently the exception
     # propagates all the way to the top resulting in exit code 1.
-    assert result.ret == 1
+    assert result.ret == 1, (
+        "surfaced UserWarning should propagate to a non-zero session exit"
+    )
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("*UserWarning: leak detected*")
     result.stderr.no_fnmatch_line("*PytestUnraisableExceptionWarning*")
@@ -520,7 +524,7 @@ def test_unraisable_warning_filter_add_note_dedups(pytester: Pytester) -> None:
     )
     result = pytester.runpytest_subprocess()
     # The unwrap path raises the UserWarning, so the test fails.
-    assert result.ret == 1
+    assert result.ret == 1, "re-raised UserWarning should make the run exit non-zero"
     # Two errors land in the ExceptionGroup (one per hook call). With the
     # dedup guard, ``cached.__notes__`` holds the cause note once, so the
     # formatted group prints it twice (once per entry). Without the
@@ -580,7 +584,10 @@ def test_unraisable_decouples_from_cleanup_stack_order(pytester: Pytester) -> No
 
     result = pytester.runpytest_subprocess()
 
-    assert result.ret == 1
+    assert result.ret == 1, (
+        "filter is still installed at GC time, so the leak exits non-zero "
+        "regardless of cleanup-stack pop order"
+    )
     result.assert_outcomes(passed=1)
     result.stderr.fnmatch_lines("*ResourceWarning: unclosed file*")
     result.stderr.no_fnmatch_line("*PytestUnraisableExceptionWarning*")
@@ -609,7 +616,9 @@ def test_pytest_unconfigure_survives_failed_pytest_configure(
 
     result = pytester.runpytest_subprocess()
 
-    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    assert result.ret == pytest.ExitCode.USAGE_ERROR, (
+        "the UsageError must surface as USAGE_ERROR, not a KeyError INTERNALERROR"
+    )
     result.stderr.fnmatch_lines("*ERROR: simulated bad config*")
     result.stderr.no_fnmatch_line("*INTERNALERROR*")
     result.stderr.no_fnmatch_line("*KeyError*")
