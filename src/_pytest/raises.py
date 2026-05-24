@@ -1009,30 +1009,27 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         expected: str,
     ) -> type[BaseExcT_co] | RaisesExc[BaseExcT_1] | RaisesGroup[BaseExcT_2]:
         # verify exception type and set `self.is_baseexception`
-        if isinstance(exc, RaisesGroup):
-            if self.flatten_subgroups:
+        match exc:
+            case RaisesGroup() if self.flatten_subgroups:
                 raise ValueError(
                     "You cannot specify a nested structure inside a RaisesGroup with"
                     " `flatten_subgroups=True`. The parameter will flatten subgroups"
                     " in the raised exceptiongroup before matching, which would never"
                     " match a nested structure.",
                 )
-            self.is_baseexception |= exc.is_baseexception
-            exc._nested = True
-            return exc
-        elif isinstance(exc, RaisesExc):
-            self.is_baseexception |= exc.is_baseexception
-            exc._nested = True
-            return exc
-        elif isinstance(exc, tuple):
-            raise TypeError(
-                f"Expected {expected}, but got {type(exc).__name__!r}.\n"
-                "RaisesGroup does not support tuples of exception types when expecting one of "
-                "several possible exception types like RaisesExc.\n"
-                "If you meant to expect a group with multiple exceptions, list them as separate arguments."
-            )
-        else:
-            return super()._parse_exc(exc, expected)
+            case RaisesGroup() | RaisesExc():
+                self.is_baseexception |= exc.is_baseexception
+                exc._nested = True
+                return exc
+            case tuple():
+                raise TypeError(
+                    f"Expected {expected}, but got {type(exc).__name__!r}.\n"
+                    "RaisesGroup does not support tuples of exception types when expecting one of "
+                    "several possible exception types like RaisesExc.\n"
+                    "If you meant to expect a group with multiple exceptions, list them as separate arguments."
+                )
+            case _:
+                return super()._parse_exc(exc, expected)
 
     @overload
     def __enter__(
