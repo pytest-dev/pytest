@@ -586,6 +586,35 @@ def test_unraisable_decouples_from_cleanup_stack_order(pytester: Pytester) -> No
     result.stderr.no_fnmatch_line("*PytestUnraisableExceptionWarning*")
 
 
+def test_pytest_unconfigure_survives_failed_pytest_configure(
+    pytester: Pytester,
+) -> None:
+    # Regression test for the guard against an unset stash key. When
+    # another plugin's pytest_configure raises pytest.UsageError, pluggy
+    # stops calling the remaining configure hooks; the unraisable plugin's
+    # pytest_configure never runs and config.stash[unraisable_exceptions]
+    # stays unset. pytest_unconfigure still fires for partially-configured
+    # runs, so without a presence check the unraisable plugin's
+    # pytest_unconfigure raises KeyError and pytest reports INTERNALERROR
+    # instead of USAGE_ERROR.
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_configure(config):
+            raise pytest.UsageError("simulated bad config")
+        """
+    )
+    pytester.makepyfile(test_it="def test_it(): pass")
+
+    result = pytester.runpytest_subprocess()
+
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines("*ERROR: simulated bad config*")
+    result.stderr.no_fnmatch_line("*INTERNALERROR*")
+    result.stderr.no_fnmatch_line("*KeyError*")
+
+
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
 def test_possibly_none_excinfo(pytester: Pytester) -> None:
     pytester.makepyfile(
