@@ -1,1 +1,1 @@
-Added regression test ensuring :func:`get_user` returns ``None`` when :func:`getpass.getuser` raises :exc:`OSError` on Python 3.13+ -- #13835.
+Added regression test ensuring ``get_user`` returns ``None`` when ``getpass.getuser`` raises ``OSError`` on Python 3.13+ -- #13835.
