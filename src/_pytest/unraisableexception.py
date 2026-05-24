@@ -167,12 +167,16 @@ def pytest_unconfigure(config: Config) -> None:
     # ``catch_warnings``) are still installed when garbage-collected
     # finalizers fire. A ``config.add_cleanup`` callback would instead
     # couple correctness to LIFO pop order across plugins' cleanups.
-    # Iteration count of 5 is from the Trio project (experimentally derived).
     if unraisable_exceptions not in config.stash:
         # ``pytest_configure`` did not complete (e.g. a usage error raised
         # in another plugin's configure), so the queue stash was never set.
         return
-    gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
+    # PyPy can resurrect objects in __del__, so it needs several GC passes
+    # (5, per the Trio project); CPython frees cycles in one pass. See #14441.
+    _default_gc_collect_iterations = 5 if sys.implementation.name == "pypy" else 1
+    gc_collect_iterations = config.stash.get(
+        gc_collect_iterations_key, _default_gc_collect_iterations
+    )
     gc_collect_harder(gc_collect_iterations)
     collect_unraisable(config)
 
