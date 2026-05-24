@@ -24,6 +24,7 @@ from pathlib import Path
 from pathlib import PurePath
 from posixpath import sep as posix_sep
 import shutil
+import stat
 import sys
 import types
 from types import ModuleType
@@ -79,8 +80,6 @@ def _chmod_rwx(p: str) -> bool:
     Returns True if permissions were actually changed, False if they were
     already sufficient or couldn't be changed.
     """
-    import stat
-
     try:
         old_mode = os.stat(p).st_mode
         perm_mode = stat.S_IMODE(old_mode)
@@ -124,18 +123,19 @@ def on_rm_rf_error(
 
     if func in (os.open, os.scandir):
         # Directory traversal failed (e.g. missing S_IXUSR). Fix permissions
-        # on the path and its parent, then remove it ourselves since rmtree
-        # skips entries after the error handler returns.
+        # on the path and its parent (bounded by start_path), then remove it
+        # ourselves since rmtree skips entries after the error handler returns.
         # See: https://github.com/pytest-dev/pytest/issues/7940
         p = Path(path)
         parent_changed = False
-        if p.parent != p:
-            parent_changed = _chmod_rwx(str(p.parent))
+        parent = p.parent
+        if parent not in (p, start_path):
+            parent_changed = _chmod_rwx(str(parent))
         path_changed = _chmod_rwx(path)
         if not (parent_changed or path_changed):
             return False
-        if os.path.isdir(path):
-            rm_rf(Path(path))
+        if p.is_dir():
+            rm_rf(p)
         else:
             try:
                 os.unlink(path)
