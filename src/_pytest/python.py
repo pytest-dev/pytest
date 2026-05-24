@@ -117,6 +117,12 @@ def pytest_addoption(parser: Parser) -> None:
         default=None,
         help="Emit an error if non-unique parameter set IDs are detected",
     )
+    parser.addini(
+        "python_dotted_filenames",
+        type="bool",
+        default=False,
+        help="Replace dots in test file names with underscores when computing module names",
+    )
 
 
 def pytest_generate_tests(metafunc: Metafunc) -> None:
@@ -510,6 +516,7 @@ def importtestmodule(
             mode=importmode,
             root=config.rootpath,
             consider_namespace_packages=config.getini("consider_namespace_packages"),
+            dotted_filenames=config.getini("python_dotted_filenames"),
         )
     except SyntaxError as e:
         raise nodes.Collector.CollectError(

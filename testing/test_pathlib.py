@@ -242,6 +242,43 @@ class TestImportPath:
         module = import_path(path, root=tmp_path, consider_namespace_packages=ns_param)
         assert module.__name__ == "foo__init__"
 
+    def test_dotted_filename(self, tmp_path: Path, ns_param: bool) -> None:
+        """import_path handles dotted filenames when dotted_filenames=True."""
+        # Create a package so resolve_pkg_root_and_module_name works.
+        pkg = tmp_path / "pkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").touch()
+        p = pkg / "test.bar.py"
+        p.touch()
+        mod = import_path(
+            p,
+            root=tmp_path,
+            mode=ImportMode.importlib,
+            consider_namespace_packages=ns_param,
+            dotted_filenames=True,
+        )
+        assert mod.__name__ == "pkg.test_bar"
+        # Without dotted_filenames, the dot is kept in the module name.
+        mod2 = import_path(
+            p,
+            root=tmp_path,
+            mode=ImportMode.importlib,
+            consider_namespace_packages=ns_param,
+            dotted_filenames=False,
+        )
+        assert mod2.__name__ == "pkg.test.bar"
+
+    def test_dotted_filename_ini(self, pytester: Pytester) -> None:
+        """python_dotted_filenames ini option replaces dots in test file names."""
+        pytester.makeini("[pytest]\npython_dotted_filenames = true\npython_files = test_*.py *.py\n")
+        pkg = pytester.path / "pkg"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text("")
+        (pkg / "test.bar.py").write_text("def test_foo(): pass\n")
+        result = pytester.runpytest("-v", "--import-mode=importlib")
+        result.assert_outcomes(passed=1)
+        result.stdout.fnmatch_lines(["*pkg/test.bar.py::test_foo PASSED*"])
+
     def test_dir(self, tmp_path: Path, ns_param: bool) -> None:
         p = tmp_path / "hello_123"
         p.mkdir()
@@ -1732,6 +1769,16 @@ def test_compute_module_name(tmp_path: Path) -> None:
     assert (
         compute_module_name(tmp_path, tmp_path / "src/app/bar/__init__.py")
         == "src.app.bar"
+    )
+
+    # dotted_filenames replaces dots in file names with underscores.
+    assert (
+        compute_module_name(tmp_path, tmp_path / "src/app/test.bar.py", dotted_filenames=True)
+        == "src.app.test_bar"
+    )
+    assert (
+        compute_module_name(tmp_path, tmp_path / "src/app/test.bar.py", dotted_filenames=False)
+        == "src.app.test.bar"
     )
 
 

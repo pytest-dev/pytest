@@ -1,0 +1,1 @@
+Added ``python_dotted_filenames`` ini option to replace dots in test file names with underscores when computing module names, enabling pytest to collect tests from files like ``test.foo.py``.
