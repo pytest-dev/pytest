@@ -531,6 +531,61 @@ def test_unraisable_warning_filter_add_note_dedups(pytester: Pytester) -> None:
     assert note_count == 2, f"expected 2 cause-note lines, saw {note_count}"
 
 
+@pytest.mark.skipif(PYPY, reason="garbage-collection differences make this flaky")
+def test_unraisable_decouples_from_cleanup_stack_order(pytester: Pytester) -> None:
+    # Regression test for the structural fix. The garbage-collection step
+    # that surfaces queued unraisables must run before _cleanup_stack.close()
+    # so warning filters installed via cleanup-stack-managed contexts are
+    # still in effect when finalizers fire. Otherwise correctness depends
+    # on the order in which plugins register their cleanups under LIFO.
+    #
+    # The conftest uses ``@hookimpl(trylast=True)`` so its pytest_configure
+    # runs after all built-in pytest_configures. Its
+    # ``warnings.resetwarnings`` cleanup then lands on the cleanup stack
+    # last and pops first under LIFO. Under the pre-fix layout, where
+    # garbage collection runs inside unraisableexception's own cleanup
+    # callback, that pop clears the user's ``error::ResourceWarning``
+    # filter before the leaking finalizer fires; ``warnings.warn`` emits
+    # the ResourceWarning silently rather than promoting it, and the suite
+    # exits 0. Under the post-fix layout, ``pytest_unconfigure`` does the
+    # garbage collection and queue processing before the cleanup stack
+    # starts closing, so the conftest's reset has no effect.
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            error::ResourceWarning
+        """
+    )
+    pytester.makeconftest(
+        """
+        import warnings
+        import pytest
+
+        @pytest.hookimpl(trylast=True)
+        def pytest_configure(config):
+            config.add_cleanup(warnings.resetwarnings)
+        """
+    )
+    pytester.makepyfile(
+        test_it="""
+        import gc; gc.disable()
+
+        def test_it():
+            f = open(__file__)
+            cycle = [f]
+            cycle.append(cycle)
+        """
+    )
+
+    result = pytester.runpytest_subprocess()
+
+    assert result.ret == 1
+    result.assert_outcomes(passed=1)
+    result.stderr.fnmatch_lines("*ResourceWarning: unclosed file*")
+    result.stderr.no_fnmatch_line("*PytestUnraisableExceptionWarning*")
+
+
 @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
 def test_possibly_none_excinfo(pytester: Pytester) -> None:
     pytester.makepyfile(
