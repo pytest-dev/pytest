@@ -180,27 +180,24 @@ class PercentStyleMultiline(logging.PercentStyle):
             0 (auto-indent turned off) or
             >0 (explicitly set indentation position).
         """
-        if auto_indent_option is None:
-            return 0
-        elif isinstance(auto_indent_option, bool):
-            if auto_indent_option:
+        match auto_indent_option:
+            case None | False:
+                return 0
+            case True:
                 return -1
-            else:
-                return 0
-        elif isinstance(auto_indent_option, int):
-            return int(auto_indent_option)
-        elif isinstance(auto_indent_option, str):
-            try:
+            case int():
                 return int(auto_indent_option)
-            except ValueError:
-                pass
-            try:
-                if _strtobool(auto_indent_option):
-                    return -1
-            except ValueError:
+            case str():
+                try:
+                    return int(auto_indent_option)
+                except ValueError:
+                    pass
+                try:
+                    if _strtobool(auto_indent_option):
+                        return -1
+                except ValueError:
+                    return 0
                 return 0
-
-        return 0
 
     def format(self, record: logging.LogRecord) -> str:
         if "\n" in record.message:
