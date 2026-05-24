@@ -77,13 +77,46 @@ class CodeLocation(NamedTuple):
     """A source code location: file path and line number.
 
     Converts to a ``path:lineno`` string representation.
+
+    The stored ``lineindex`` is 0-based; use the ``lineno`` property
+    for the conventional 1-based line number.
     """
 
     path: Path
-    lineno: int
+    lineindex: int
+
+    @property
+    def lineno(self) -> int:
+        """1-based line number for display."""
+        return self.lineindex + 1
 
     def __str__(self) -> str:
         return f"{self.path}:{self.lineno}"
+
+
+class ItemLocation(NamedTuple):
+    """Location of a test item: relative path, line index, and test name.
+
+    Returned by :attr:`Item.location <pytest.Item.location>` and stored
+    on :class:`TestReport <pytest.TestReport>`.
+
+    The stored ``lineindex`` is 0-based (matching ``reportinfo()``);
+    use the ``lineno`` property for the conventional 1-based number.
+    """
+
+    path: str
+    lineindex: int | None
+    testname: str
+
+    @property
+    def lineno(self) -> int | None:
+        """1-based line number for display, or *None*."""
+        return self.lineindex + 1 if self.lineindex is not None else None
+
+    def __str__(self) -> str:
+        if self.lineno is not None:
+            return f"{self.path}:{self.lineno}"
+        return self.path
 
 
 def getlocation(
@@ -106,7 +139,7 @@ def getlocation(
     """
     function = get_real_func(function)
     fn = Path(inspect.getfile(function))
-    lineno = function.__code__.co_firstlineno
+    lineindex = function.__code__.co_firstlineno - 1
 
     if relative_to is not None:
         from .pathlib import bestrelpath
@@ -119,8 +152,8 @@ def getlocation(
         except ValueError:
             pass
         else:
-            return CodeLocation(relfn, lineno + 1)
-    return CodeLocation(fn, lineno + 1)
+            return CodeLocation(relfn, lineindex)
+    return CodeLocation(fn, lineindex)
 
 
 def num_mock_patch_args(function) -> int:
