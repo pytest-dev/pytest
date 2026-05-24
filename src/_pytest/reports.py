@@ -616,6 +616,8 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
             d[name] = os.fspath(d[name])
         elif name == "result":
             d[name] = None  # for now
+    if "location" in d and isinstance(d["location"], ItemLocation):
+        d["location"] = tuple(d["location"])
     return d
 
 
