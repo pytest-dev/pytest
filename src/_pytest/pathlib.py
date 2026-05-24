@@ -850,7 +850,10 @@ def resolve_package_path(path: Path) -> Path | None:
 
 
 def resolve_pkg_root_and_module_name(
-    path: Path, *, consider_namespace_packages: bool = False, dotted_filenames: bool = False
+    path: Path,
+    *,
+    consider_namespace_packages: bool = False,
+    dotted_filenames: bool = False,
 ) -> tuple[Path, str]:
     """
     Return the path to the directory of the root package that contains the
@@ -879,14 +882,18 @@ def resolve_pkg_root_and_module_name(
     if consider_namespace_packages:
         start = pkg_root if pkg_root is not None else path.parent
         for candidate in (start, *start.parents):
-            module_name = compute_module_name(candidate, path, dotted_filenames=dotted_filenames)
+            module_name = compute_module_name(
+                candidate, path, dotted_filenames=dotted_filenames
+            )
             if module_name and is_importable(module_name, path):
                 # Point the pkg_root to the root of the namespace package.
                 pkg_root = candidate
                 break
 
     if pkg_root is not None:
-        module_name = compute_module_name(pkg_root, path, dotted_filenames=dotted_filenames)
+        module_name = compute_module_name(
+            pkg_root, path, dotted_filenames=dotted_filenames
+        )
         if module_name:
             return pkg_root, module_name
 
@@ -919,7 +926,9 @@ def is_importable(module_name: str, module_path: Path) -> bool:
         return spec_matches_module_path(spec, module_path)
 
 
-def compute_module_name(root: Path, module_path: Path, *, dotted_filenames: bool = False) -> str | None:
+def compute_module_name(
+    root: Path, module_path: Path, *, dotted_filenames: bool = False
+) -> str | None:
     """Compute a module name based on a path and a root anchor."""
     try:
         path_without_suffix = module_path.with_suffix("")

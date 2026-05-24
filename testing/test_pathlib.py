@@ -270,7 +270,9 @@ class TestImportPath:
 
     def test_dotted_filename_ini(self, pytester: Pytester) -> None:
         """python_dotted_filenames ini option replaces dots in test file names."""
-        pytester.makeini("[pytest]\npython_dotted_filenames = true\npython_files = test_*.py *.py\n")
+        pytester.makeini(
+            "[pytest]\npython_dotted_filenames = true\npython_files = test_*.py *.py\n"
+        )
         pkg = pytester.path / "pkg"
         pkg.mkdir()
         (pkg / "__init__.py").write_text("")
@@ -1773,11 +1775,15 @@ def test_compute_module_name(tmp_path: Path) -> None:
 
     # dotted_filenames replaces dots in file names with underscores.
     assert (
-        compute_module_name(tmp_path, tmp_path / "src/app/test.bar.py", dotted_filenames=True)
+        compute_module_name(
+            tmp_path, tmp_path / "src/app/test.bar.py", dotted_filenames=True
+        )
         == "src.app.test_bar"
     )
     assert (
-        compute_module_name(tmp_path, tmp_path / "src/app/test.bar.py", dotted_filenames=False)
+        compute_module_name(
+            tmp_path, tmp_path / "src/app/test.bar.py", dotted_filenames=False
+        )
         == "src.app.test.bar"
     )
 
