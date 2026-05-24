@@ -3850,7 +3850,7 @@ class TestShowFixtures:
             """
             *tmp_path -- *
             *fixtures defined from*
-            *arg1 -- test_show_fixtures_testmodule.py:6*
+            *arg1 -- test_show_fixtures_testmodule.py:5*
             *hello world*
         """
         )
@@ -3910,10 +3910,10 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_trimmed_doc *
-                arg2 -- test_show_fixtures_trimmed_doc.py:10
+                arg1 -- test_show_fixtures_trimmed_doc.py:2
                     line1
                     line2
-                arg1 -- test_show_fixtures_trimmed_doc.py:3
+                arg2 -- test_show_fixtures_trimmed_doc.py:9
                     line1
                     line2
                 """
@@ -3939,7 +3939,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_doc *
-                fixture1 -- test_show_fixtures_indented_doc.py:3
+                fixture1 -- test_show_fixtures_indented_doc.py:2
                     line1
                         indented line
                 """
@@ -3967,7 +3967,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_doc_first_line_unindented *
-                fixture1 -- test_show_fixtures_indented_doc_first_line_unindented.py:3
+                fixture1 -- test_show_fixtures_indented_doc_first_line_unindented.py:2
                     line1
                     line2
                         indented line
@@ -3995,7 +3995,7 @@ class TestShowFixtures:
             textwrap.dedent(
                 """\
                 * fixtures defined from test_show_fixtures_indented_in_class *
-                fixture1 -- test_show_fixtures_indented_in_class.py:4
+                fixture1 -- test_show_fixtures_indented_in_class.py:3
                     line1
                     line2
                         indented line
@@ -4035,11 +4035,11 @@ class TestShowFixtures:
         result.stdout.fnmatch_lines(
             """
             * fixtures defined from test_a *
-            fix_a -- test_a.py:4
+            fix_a -- test_a.py:3
                 Fixture A
 
             * fixtures defined from test_b *
-            fix_b -- test_b.py:4
+            fix_b -- test_b.py:3
                 Fixture B
         """
         )
@@ -4075,11 +4075,11 @@ class TestShowFixtures:
         result.stdout.fnmatch_lines(
             """
             * fixtures defined from conftest *
-            arg1 -- conftest.py:3
+            arg1 -- conftest.py:2
                 Hello World in conftest.py
 
             * fixtures defined from test_show_fixtures_with_same_name *
-            arg1 -- test_show_fixtures_with_same_name.py:3
+            arg1 -- test_show_fixtures_with_same_name.py:2
                 Hi from test module
         """
         )
@@ -4247,7 +4247,7 @@ class TestParameterizedSubRequest:
                 "The requested fixture has no parameter defined for test:",
                 "    test_call_from_fixture.py::test_foo",
                 "Requested fixture 'fix_with_param' defined in:",
-                "test_call_from_fixture.py:4",
+                "test_call_from_fixture.py:3",
                 "Requested here:",
                 "test_call_from_fixture.py:9",
                 "*1 error in*",
@@ -4273,7 +4273,7 @@ class TestParameterizedSubRequest:
                 "The requested fixture has no parameter defined for test:",
                 "    test_call_from_test.py::test_foo",
                 "Requested fixture 'fix_with_param' defined in:",
-                "test_call_from_test.py:4",
+                "test_call_from_test.py:3",
                 "Requested here:",
                 "test_call_from_test.py:8",
                 "*1 failed*",
@@ -4304,7 +4304,7 @@ class TestParameterizedSubRequest:
                 "    test_external_fixture.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                "conftest.py:4",
+                "conftest.py:3",
                 "Requested here:",
                 "test_external_fixture.py:2",
                 "*1 failed*",
@@ -4350,7 +4350,7 @@ class TestParameterizedSubRequest:
                 "    test_foos.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                f"{fixfile}:4",
+                f"{fixfile}:3",
                 "Requested here:",
                 "test_foos.py:4",
                 "*1 failed*",
@@ -4367,7 +4367,7 @@ class TestParameterizedSubRequest:
                 "    test_foos.py::test_foo",
                 "",
                 "Requested fixture 'fix_with_param' defined in:",
-                f"{fixfile}:4",
+                f"{fixfile}:3",
                 "Requested here:",
                 f"{testfile}:4",
                 "*1 failed*",
@@ -5021,7 +5021,7 @@ def test_fixture_named_request(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*'request' is a reserved word for fixtures, use another name:",
-            "  *test_fixture_named_request.py:8",
+            "  *test_fixture_named_request.py:7",
         ]
     )
 

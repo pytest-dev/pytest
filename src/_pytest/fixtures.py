@@ -2255,9 +2255,7 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
 
         tw.line()
         tw.sep("-", f"fixtures used by {item.name}")
-        # TODO: Fix this type ignore.
-        loc = getlocation(item.function, relative_to=invocation_dir)  # type: ignore[attr-defined]
-        tw.sep("-", f"({loc})")
+        tw.sep("-", f"({item.location})")
 
         for fixturedef in fixturedefs:
             write_fixture(fixturedef)
