@@ -3088,53 +3088,22 @@ class TestInicfgDeprecation:
 class TestProgName:
     """Test program name display in help and error messages (issue #1764)."""
 
-    def test_get_prog_name_programmatic_invocation(self) -> None:
-        """When invoked programmatically, prog should be 'pytest.main()'."""
-        # Regardless of what argv[0] is, programmatic invocation should
-        # always show pytest.main()
-        assert (
-            _get_prog_name(invoked_from_console=False, _argv=["setup.py", "test"])
-            == "pytest.main()"
-        )
-        assert (
-            _get_prog_name(invoked_from_console=False, _argv=["my_script.py"])
-            == "pytest.main()"
-        )
+    def test_get_prog_name_direct_pytest(self) -> None:
+        """When argv[0] is a pytest entry point, prog should be 'pytest'."""
+        assert _get_prog_name(["/usr/bin/pytest", "--help"]) == "pytest"
+        assert _get_prog_name(["pytest", "-v"]) == "pytest"
 
-    def test_get_prog_name_console_pytest(self) -> None:
-        """When invoked via 'pytest' CLI, prog should be 'pytest'."""
+    def test_get_prog_name_python_m_pytest(self) -> None:
+        """When argv[0] is __main__.py, prog should be 'python -m pytest'."""
         assert (
-            _get_prog_name(
-                invoked_from_console=True, _argv=["/usr/bin/pytest", "--help"]
-            )
-            == "pytest"
-        )
-        assert (
-            _get_prog_name(invoked_from_console=True, _argv=["pytest", "-v"])
-            == "pytest"
-        )
-
-    def test_get_prog_name_console_python_m_pytest(self) -> None:
-        """When invoked via 'python -m pytest', prog should be 'python -m pytest'."""
-        # When running as python -m pytest, argv[0] is the path to __main__.py
-        assert (
-            _get_prog_name(
-                invoked_from_console=True,
-                _argv=["/path/to/site-packages/pytest/__main__.py", "--help"],
-            )
+            _get_prog_name(["/path/to/site-packages/pytest/__main__.py", "--help"])
             == "python -m pytest"
         )
-        assert (
-            _get_prog_name(invoked_from_console=True, _argv=["__main__.py", "-v"])
-            == "python -m pytest"
-        )
+        assert _get_prog_name(["__main__.py", "-v"]) == "python -m pytest"
 
     def test_get_prog_name_empty_argv(self) -> None:
-        """When argv is empty, should handle gracefully."""
-        # Empty argv with console invocation should default to pytest
-        assert _get_prog_name(invoked_from_console=True, _argv=[]) == "pytest"
-        # Empty argv with programmatic invocation should show pytest.main()
-        assert _get_prog_name(invoked_from_console=False, _argv=[]) == "pytest.main()"
+        """When argv is empty, should default to 'pytest'."""
+        assert _get_prog_name([]) == "pytest"
 
     def test_prog_in_error_message_programmatic(self, pytester: Pytester) -> None:
         """Error messages should show 'pytest.main()' when called programmatically.

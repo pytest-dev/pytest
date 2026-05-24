@@ -172,23 +172,14 @@ def print_usage_error(e: UsageError, file: TextIO) -> None:
         tw.line(f"ERROR: {msg}\n", red=True)
 
 
-def _get_prog_name(
-    *, invoked_from_console: bool, _argv: list[str] | None = None
-) -> str:
-    """Determine the appropriate program name for argparse based on invocation context.
+def _get_prog_name(argv: Sequence[str]) -> str:
+    """Determine the CLI program name from the argument vector.
 
-    :param invoked_from_console: Whether pytest was invoked from the CLI entry point.
-    :param _argv: Optional argv list for testing; defaults to sys.argv.
-    :returns: The program name to display in help and error messages.
+    :param argv: The argument vector (typically ``sys.argv``).
+    :returns: ``"python -m pytest"`` when invoked via ``python -m``,
+              ``"pytest"`` otherwise.
     """
-    if not invoked_from_console:
-        # Called programmatically via pytest.main()
-        return "pytest.main()"
-
-    # Called from CLI - check if it's `python -m pytest` or direct `pytest`
-    argv = sys.argv if _argv is None else _argv
     argv0 = argv[0] if argv else ""
-    # When running as `python -m pytest`, argv[0] is the path to __main__.py
     if os.path.basename(argv0) == "__main__.py":
         return "python -m pytest"
     return "pytest"
@@ -197,8 +188,6 @@ def _get_prog_name(
 def main(
     args: list[str] | os.PathLike[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
-    *,
-    _invoked_from_console: bool = False,
 ) -> int | ExitCode:
     """Perform an in-process test run.
 
@@ -209,6 +198,15 @@ def main(
 
     :returns: An exit code.
     """
+    return _main(args=args, plugins=plugins, prog="pytest.main()")
+
+
+def _main(
+    *,
+    args: list[str] | os.PathLike[str] | None = None,
+    plugins: Sequence[str | _PluggyPlugin] | None = None,
+    prog: str,
+) -> int | ExitCode:
     # Handle a single `--version`/`-V` argument early to avoid starting up the entire pytest infrastructure.
     new_args = sys.argv[1:] if args is None else args
     if (
@@ -217,8 +215,6 @@ def main(
     ):
         sys.stdout.write(f"pytest {__version__}\n")
         return ExitCode.OK
-
-    prog = _get_prog_name(invoked_from_console=_invoked_from_console)
 
     old_pytest_version = os.environ.get("PYTEST_VERSION")
     try:
@@ -254,7 +250,7 @@ def console_main() -> int:
     """
     # https://docs.python.org/3/library/signal.html#note-on-sigpipe
     try:
-        code = main(_invoked_from_console=True)
+        code = _main(prog=_get_prog_name(sys.argv))
         sys.stdout.flush()
         return code
     except BrokenPipeError:
@@ -1117,10 +1113,9 @@ class Config:
         self._parser = Parser(
             usage=f"%(prog)s [options] [{FILE_OR_DIR}] [{FILE_OR_DIR}] [...]",
             processopt=self._processopt,
+            prog=prog,
             _ispytest=True,
         )
-        if prog is not None:
-            self._parser.prog = prog
         self.pluginmanager = pluginmanager
         """The plugin manager handles plugin registration and hook invocation.
 
