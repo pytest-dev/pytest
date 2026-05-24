@@ -162,16 +162,15 @@ def pytest_configure(config: Config) -> None:
 
 
 def pytest_unconfigure(config: Config) -> None:
-    # Run GC and drain the unraisable queue here rather than from the
-    # ``config.add_cleanup`` callback. ``pytest_unconfigure`` fires before
-    # ``_cleanup_stack.close()``, so warning filters managed via the cleanup
-    # stack (e.g. the ``warnings`` plugin's ``catch_warnings`` context) are
-    # still active. This decouples the GC step from plugin registration order.
-    # A single collection doesn't necessarily collect everything; the
-    # iteration count was determined experimentally by the Trio project.
+    # Runs before ``_cleanup_stack.close()``, so warning filters from
+    # cleanup-stack-managed contexts (notably the ``warnings`` plugin's
+    # ``catch_warnings``) are still installed when garbage-collected
+    # finalizers fire. A ``config.add_cleanup`` callback would instead
+    # couple correctness to LIFO pop order across plugins' cleanups.
+    # Iteration count of 5 is from the Trio project (experimentally derived).
     if unraisable_exceptions not in config.stash:
         # ``pytest_configure`` did not complete (e.g. a usage error raised
-        # in another plugin's configure). Nothing to drain.
+        # in another plugin's configure), so the queue stash was never set.
         return
     gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
     gc_collect_harder(gc_collect_iterations)
