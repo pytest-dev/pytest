@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from _pytest._io.saferepr import saferepr
+from _pytest.assertion._highlight import dummy_highlighter
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.compat import assert_never
@@ -92,9 +93,6 @@ def _diff_text(
 
 
 def _notin_text(term: str, text: str, verbose: int = 0) -> list[str]:
-    # Deferred import to avoid a cycle: util.py imports from this module.
-    from _pytest.assertion.util import dummy_highlighter
-
     index = text.find(term)
     head = text[:index]
     tail = text[index + len(term) :]

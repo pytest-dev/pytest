@@ -28,6 +28,7 @@ from _pytest.assertion._guards import isnamedtuple
 from _pytest.assertion._guards import issequence
 from _pytest.assertion._guards import isset
 from _pytest.assertion._guards import istext
+from _pytest.assertion._highlight import dummy_highlighter as dummy_highlighter
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.config import Config
@@ -54,14 +55,6 @@ ASSERTION_TEXT_DIFF_STYLE_CHOICES = (
     ASSERTION_TEXT_DIFF_STYLE_NDIFF,
     ASSERTION_TEXT_DIFF_STYLE_BLOCK,
 )
-
-
-def dummy_highlighter(source: str, lexer: Literal["diff", "python"] = "python") -> str:
-    """Dummy highlighter that returns the text unprocessed.
-
-    Needed for _notin_text, as the diff gets post-processed to only show the "+" part.
-    """
-    return source
 
 
 def get_assertion_text_diff_style(config: Config) -> _AssertionTextDiffStyle:
