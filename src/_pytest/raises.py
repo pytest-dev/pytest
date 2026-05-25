@@ -492,8 +492,8 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             else ""
         )
         if isinstance(self.rawmatch, str):
+            from _pytest.assertion._compare_text import _diff_text
             from _pytest.assertion.util import _config
-            from _pytest.assertion.util import _diff_text
             from _pytest.assertion.util import dummy_highlighter
             from _pytest.config import Config
 

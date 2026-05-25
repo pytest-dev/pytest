@@ -15,6 +15,7 @@ from _pytest import outcomes
 import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.assertion._compare_text import _compare_eq_text
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -475,7 +476,7 @@ class TestAssert_reprcompare:
         ]
 
     def test_text_diff_ndiff_style(self) -> None:
-        assert util._compare_eq_text(
+        assert _compare_eq_text(
             "spam",
             "eggs",
             util.dummy_highlighter,
