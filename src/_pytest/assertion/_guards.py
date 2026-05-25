@@ -1,25 +1,12 @@
 from __future__ import annotations
 
 import collections.abc
-from collections.abc import Mapping
 import dataclasses
 from typing import TypeGuard
 
 
 def issequence(x: object) -> TypeGuard[collections.abc.Sequence[object]]:
     return isinstance(x, collections.abc.Sequence) and not isinstance(x, str)
-
-
-def istext(x: object) -> TypeGuard[str]:
-    return isinstance(x, str)
-
-
-def ismapping(x: object) -> TypeGuard[Mapping[object, object]]:
-    return isinstance(x, Mapping)
-
-
-def isset(x: object) -> TypeGuard[set[object] | frozenset[object]]:
-    return isinstance(x, set | frozenset)
 
 
 def isnamedtuple(obj: object) -> bool:
@@ -36,7 +23,7 @@ def isattrs(obj: object) -> bool:
 def isiterable(obj: object) -> TypeGuard[collections.abc.Iterable[object]]:
     try:
         iter(obj)  # type: ignore[call-overload]
-        return not istext(obj)
+        return not isinstance(obj, str)
     except Exception:
         return False
 
