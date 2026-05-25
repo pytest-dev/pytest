@@ -229,3 +229,37 @@ def test_saferepr_dict_fillvalue_when_level_is_zero() -> None:
 def test_saferepr_dict_empty() -> None:
     s = SafeRepr(maxsize=None)
     assert s.repr_dict({}, level=1) == "{}"
+
+
+def test_custom_non_exception_baseexception_in_repr() -> None:
+    class CustomBase(BaseException):
+        pass
+
+    class Obj:
+        def __repr__(self):
+            raise CustomBase("custom")
+
+    s = saferepr(Obj())
+    assert "CustomBase" in s
+    assert "custom" in s
+
+
+def test_repr_returns_non_str() -> None:
+    class NonStrRepr:
+        def __repr__(self):
+            return 42  # type: ignore[return-value]
+
+    s = saferepr(NonStrRepr())
+    assert "TypeError" in s
+    assert "non-string" in s
+
+
+def test_deeply_nested_truncation_boundaries() -> None:
+    obj = [[[[["hello"]]]]]
+    assert saferepr(obj, maxsize=3) == "..."
+    assert saferepr(obj, maxsize=4) == "...]"
+    assert saferepr(obj, maxsize=5) == "[...]"
+
+    very_deep = [[[[[[[[[1]]]]]]]]]
+    assert saferepr(very_deep, maxsize=10) == "[[[...]]]]"
+    assert saferepr(very_deep, maxsize=15) == "[[[[[[...]]]]]]"
