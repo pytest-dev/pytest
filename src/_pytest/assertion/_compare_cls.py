@@ -3,6 +3,10 @@ from __future__ import annotations
 import dataclasses
 import pprint
 
+from _pytest.assertion._guards import has_default_eq
+from _pytest.assertion._guards import isattrs
+from _pytest.assertion._guards import isdatacls
+from _pytest.assertion._guards import isnamedtuple
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 
@@ -16,10 +20,6 @@ def _compare_eq_cls(
 ) -> list[str]:
     # Deferred import to avoid a cycle: util.py imports from this module.
     from _pytest.assertion.util import _compare_eq_any
-    from _pytest.assertion.util import has_default_eq
-    from _pytest.assertion.util import isattrs
-    from _pytest.assertion.util import isdatacls
-    from _pytest.assertion.util import isnamedtuple
 
     if not has_default_eq(left):
         return []
