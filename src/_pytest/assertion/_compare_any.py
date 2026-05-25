@@ -64,7 +64,7 @@ def _compare_eq_any(
         elif isset(left) and isset(right):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
         elif ismapping(left) and ismapping(right):
-            explanation = _compare_eq_mapping(left, right, highlighter, verbose)
+            explanation = list(_compare_eq_mapping(left, right, highlighter, verbose))
 
         if isiterable(left) and isiterable(right):
             expl = _compare_eq_iterable(left, right, highlighter, verbose)
