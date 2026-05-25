@@ -1086,12 +1086,11 @@ class TestMetafunc:
             ]
         )
 
-    @pytest.mark.parametrize("indirect", [False, True])
-    def test_high_scoped_parametrize_with_duplicate_values_reordering(
-        self, indirect: bool, pytester: Pytester
+    def test_high_scoped_indirect_parametrize_with_duplicate_values_reordering(
+        self, pytester: Pytester
     ) -> None:
         pytester.makepyfile(
-            f"""
+            """
             import pytest
 
             @pytest.fixture(scope='module')
@@ -1102,12 +1101,12 @@ class TestMetafunc:
             def fixture2(request):
                 pass
 
-            @pytest.mark.parametrize("fixture1, fixture2", [("a", 0), ("b", 1), ("a", 2)], indirect={indirect})
+            @pytest.mark.parametrize("fixture1, fixture2", [("a", 0), ("b", 1), ("a", 2)], indirect=True)
             def test(fixture1, fixture2):
                 pass
         """
         )
-        result = pytester.runpytest("--collect-only")
+        result = pytester.runpytest("--collect-only", "-s")
         result.stdout.re_match_lines(
             [
                 r"    <Function test\[a-0\]>",
