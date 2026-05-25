@@ -42,6 +42,31 @@ node-based matching instead of fragile string prefix matching.
 In pytest 10, the ``baseid`` and ``nodeid`` string parameters will be removed.
 
 
+.. _console-main:
+
+``pytest.console_main()``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+:func:`pytest.console_main` is deprecated and will be removed in pytest 10.
+
+This function is the CLI entry point used internally by the ``pytest`` console script
+and ``python -m pytest``. It was never intended for programmatic use, and exposing it
+in the public API led to confusion with :func:`pytest.main`, which is the correct way
+to invoke pytest from Python code.
+
+If you are calling ``pytest.console_main()`` in your code, replace it with :func:`pytest.main`:
+
+.. code-block:: python
+
+    # Deprecated
+    pytest.console_main()
+
+    # Use this instead
+    exit_code = pytest.main()
+
+
 .. _pastebin-deprecated:
 
 The ``--pastebin`` option

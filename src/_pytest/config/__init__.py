@@ -172,6 +172,19 @@ def print_usage_error(e: UsageError, file: TextIO) -> None:
         tw.line(f"ERROR: {msg}\n", red=True)
 
 
+def _get_prog_name(argv: Sequence[str]) -> str:
+    """Determine the CLI program name from the argument vector.
+
+    :param argv: The argument vector (typically ``sys.argv``).
+    :returns: ``"python -m pytest"`` when invoked via ``python -m``,
+              ``"pytest"`` otherwise.
+    """
+    argv0 = argv[0] if argv else ""
+    if os.path.basename(argv0) == "__main__.py":
+        return "python -m pytest"
+    return "pytest"
+
+
 def main(
     args: list[str] | os.PathLike[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
@@ -185,6 +198,15 @@ def main(
 
     :returns: An exit code.
     """
+    return _main(args=args, plugins=plugins, prog="pytest.main()")
+
+
+def _main(
+    *,
+    args: list[str] | os.PathLike[str] | None = None,
+    plugins: Sequence[str | _PluggyPlugin] | None = None,
+    prog: str,
+) -> int | ExitCode:
     # Handle a single `--version`/`-V` argument early to avoid starting up the entire pytest infrastructure.
     new_args = sys.argv[1:] if args is None else args
     if (
@@ -198,7 +220,7 @@ def main(
     try:
         os.environ["PYTEST_VERSION"] = __version__
         try:
-            config = _prepareconfig(new_args, plugins)
+            config = _prepareconfig(new_args, plugins, prog=prog)
         except ConftestImportFailure as e:
             print_conftest_import_error(e, file=sys.stderr)
             return ExitCode.USAGE_ERROR
@@ -221,14 +243,14 @@ def main(
             os.environ["PYTEST_VERSION"] = old_pytest_version
 
 
-def console_main() -> int:
-    """The CLI entry point of pytest.
+def _console_main() -> int:
+    """The CLI entry point of pytest (internal).
 
-    This function is not meant for programmable use; use `main()` instead.
+    This is the real implementation used by entry points and ``__main__.py``.
     """
     # https://docs.python.org/3/library/signal.html#note-on-sigpipe
     try:
-        code = main()
+        code = _main(prog=_get_prog_name(sys.argv))
         sys.stdout.flush()
         return code
     except BrokenPipeError:
@@ -237,6 +259,21 @@ def console_main() -> int:
         devnull = os.open(os.devnull, os.O_WRONLY)
         os.dup2(devnull, sys.stdout.fileno())
         return 1  # Python exits with error code 1 on EPIPE
+
+
+def console_main() -> int:
+    """The CLI entry point of pytest.
+
+    .. deprecated:: 9.1
+        This function is slated for removal in pytest 10.
+        It is not meant for programmable use; use :func:`pytest.main` instead.
+    """
+    import warnings
+
+    from _pytest.deprecated import CONSOLE_MAIN
+
+    warnings.warn(CONSOLE_MAIN, stacklevel=2)
+    return _console_main()
 
 
 class cmdline:  # compatibility namespace
@@ -314,6 +351,8 @@ builtin_plugins = {
 def get_config(
     args: Iterable[str] | None = None,
     plugins: Sequence[str | _PluggyPlugin] | None = None,
+    *,
+    prog: str | None = None,
 ) -> Config:
     # Subsequent calls to main will create a fresh instance.
     pluginmanager = PytestPluginManager()
@@ -322,7 +361,7 @@ def get_config(
         plugins=plugins,
         dir=pathlib.Path.cwd(),
     )
-    config = Config(pluginmanager, invocation_params=invocation_params)
+    config = Config(pluginmanager, invocation_params=invocation_params, prog=prog)
 
     if invocation_params.args:
         # Handle any "-p no:plugin" args.
@@ -348,6 +387,8 @@ def get_plugin_manager() -> PytestPluginManager:
 def _prepareconfig(
     args: list[str] | os.PathLike[str],
     plugins: Sequence[str | _PluggyPlugin] | None = None,
+    *,
+    prog: str | None = None,
 ) -> Config:
     if isinstance(args, os.PathLike):
         args = [os.fspath(args)]
@@ -357,7 +398,7 @@ def _prepareconfig(
         )
         raise TypeError(msg.format(args, type(args)))
 
-    initial_config = get_config(args, plugins)
+    initial_config = get_config(args, plugins, prog=prog)
     pluginmanager = initial_config.pluginmanager
     try:
         if plugins:
@@ -1065,6 +1106,7 @@ class Config:
         pluginmanager: PytestPluginManager,
         *,
         invocation_params: InvocationParams | None = None,
+        prog: str | None = None,
     ) -> None:
         if invocation_params is None:
             invocation_params = self.InvocationParams(
@@ -1086,6 +1128,7 @@ class Config:
         self._parser = Parser(
             usage=f"%(prog)s [options] [{FILE_OR_DIR}] [{FILE_OR_DIR}] [...]",
             processopt=self._processopt,
+            prog=prog,
             _ispytest=True,
         )
         self.pluginmanager = pluginmanager
