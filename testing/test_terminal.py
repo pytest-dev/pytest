@@ -2180,8 +2180,7 @@ class TestClassicOutputStyle:
 
     def test_quiet(self, pytester: Pytester, test_files) -> None:
         result = pytester.runpytest("-o", "console_output_style=classic", "-q")
-        result.stdout.fnmatch_lines(["*2 failed, 3 passed in*"])
-        result.stdout.fnmatch_lines([".F..F"])
+        result.stdout.fnmatch_lines([".F..F", "*2 failed, 3 passed in*"])
 
 
 class TestProgressOutputStyle:
