@@ -121,12 +121,13 @@ def on_rm_rf_error(
         )
         return False
 
+    p = Path(path)
+
     if func in (os.open, os.scandir):
         # Directory traversal failed (e.g. missing S_IXUSR). Fix permissions
         # on the path and its parent (bounded by start_path), then remove it
         # ourselves since rmtree skips entries after the error handler returns.
         # See: https://github.com/pytest-dev/pytest/issues/7940
-        p = Path(path)
         parent_changed = False
         parent = p.parent
         if parent not in (p, start_path):
@@ -154,7 +155,6 @@ def on_rm_rf_error(
     # Chmod + retry.
     # For files, we need to recursively go upwards in the directories to
     # ensure they all are also accessible and writable.
-    p = Path(path)
     if p.is_file():
         for parent in p.parents:  # pragma: no branch
             _chmod_rwx(str(parent))
