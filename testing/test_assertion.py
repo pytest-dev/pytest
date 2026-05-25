@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import MutableSequence
+import dataclasses
 import sys
 import textwrap
 from typing import Any
@@ -15,6 +16,8 @@ from _pytest import outcomes
 import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.assertion._compare_any import _compare_eq_cls
+from _pytest.assertion.compare_text import _compare_eq_text
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -475,7 +478,7 @@ class TestAssert_reprcompare:
         ]
 
     def test_text_diff_ndiff_style(self) -> None:
-        assert util._compare_eq_text(
+        assert _compare_eq_text(
             "spam",
             "eggs",
             util.dummy_highlighter,
@@ -492,6 +495,15 @@ class TestAssert_reprcompare:
         assert "Skipping" in lines[2]
         for line in lines:
             assert "a" * 50 not in line
+
+    def test_text_skipping_trailing(self) -> None:
+        # Same length, differ at index 1, then ~50 identical trailing chars.
+        # Exercises the trailing-skip branch in ``_diff_text``.
+        lines = callequal("a" + "x" + "z" * 50, "a" + "y" + "z" * 50)
+        assert lines is not None
+        assert any("identical trailing" in line for line in lines)
+        for line in lines:
+            assert "z" * 50 not in line
 
     def test_text_skipping_verbose(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=1)
@@ -1734,6 +1746,42 @@ def test_reprcompare_notin() -> None:
     ]
 
 
+def test_reprcompare_notin_nontext() -> None:
+    # ``not in`` with non-text operands has no specialised explanation.
+    assert callop("not in", 1, [1, 2]) is None
+
+
+def test_reprcompare_notin_long_text() -> None:
+    # Long enough surrounding context to make the underlying ``_diff_text`` call
+    # emit a "Skipping ... identical leading characters" line, which
+    # ``_notin_text`` filters out.
+    lines = callop("not in", "x", "a" * 50 + "x")
+    assert lines is not None
+    assert not any("Skipping" in line for line in lines)
+
+
+def test_compare_eq_cls_no_comparable_fields() -> None:
+    # A dataclass with no compared fields always compares equal, so the
+    # comparison hook is never reached via a failed assertion. Call the
+    # helper directly to exercise the "nothing to report" path.
+    @dataclasses.dataclass
+    class NoCompare:
+        x: int = dataclasses.field(default=0, compare=False)
+
+    assert (
+        list(
+            _compare_eq_cls(
+                NoCompare(1),
+                NoCompare(2),
+                util.dummy_highlighter,
+                0,
+                util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+            )
+        )
+        == []
+    )
+
+
 def test_reprcompare_whitespaces() -> None:
     assert callequal("\r\n", "\n") == [
         r"'\r\n' == '\n'",
@@ -2142,10 +2190,12 @@ def test_issue_1944(pytester: Pytester) -> None:
 
 
 def test_exit_from_assertrepr_compare(monkeypatch) -> None:
+    from _pytest.assertion import _compare_any
+
     def raise_exit(obj):
         outcomes.exit("Quitting debugger")
 
-    monkeypatch.setattr(util, "istext", raise_exit)
+    monkeypatch.setattr(_compare_any, "istext", raise_exit)
 
     with pytest.raises(outcomes.Exit, match="Quitting debugger"):
         callequal(1, 1)
