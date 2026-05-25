@@ -9,10 +9,6 @@ def issequence(x: object) -> TypeGuard[collections.abc.Sequence[object]]:
     return isinstance(x, collections.abc.Sequence) and not isinstance(x, str)
 
 
-def istext(x: object) -> TypeGuard[str]:
-    return isinstance(x, str)
-
-
 def isnamedtuple(obj: object) -> bool:
     return isinstance(obj, tuple) and getattr(obj, "_fields", None) is not None
 
@@ -27,7 +23,7 @@ def isattrs(obj: object) -> bool:
 def isiterable(obj: object) -> TypeGuard[collections.abc.Iterable[object]]:
     try:
         iter(obj)  # type: ignore[call-overload]
-        return not istext(obj)
+        return not isinstance(obj, str)
     except Exception:
         return False
 
