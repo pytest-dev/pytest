@@ -715,3 +715,15 @@ def test_tmp_path_factory_doesnt_follow_symlinks(
     tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
     with pytest.raises(OSError, match=r"temporary directory .* is a symbolic link"):
         tmp_factory.getbasetemp()
+
+
+def test_get_user_handles_getpass_oserror(monkeypatch: MonkeyPatch) -> None:
+    """Regression test: get_user() should return None when getpass.getuser()
+    raises OSError (Python 3.13+ behavior, #13835)."""
+    import getpass
+
+    def _raise_oserror():
+        raise OSError("No username set in the environment")
+
+    monkeypatch.setattr(getpass, "getuser", _raise_oserror)
+    assert get_user() is None
