@@ -17,7 +17,6 @@ from _pytest.assertion._guards import isattrs
 from _pytest.assertion._guards import isdatacls
 from _pytest.assertion._guards import isiterable
 from _pytest.assertion._guards import isnamedtuple
-from _pytest.assertion._guards import issequence
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion.compare_text import _compare_eq_text
@@ -46,6 +45,12 @@ def _compare_eq_any(
                     left, right, highlighter, verbose, assertion_text_diff_style
                 )
             )
+        # ``str`` is also a ``Sequence``; without this case the asymmetric
+        # ``str == <other-sequence>`` (or vice versa) would match the
+        # ``(Sequence(), "==", Sequence())`` arm below and produce a
+        # nonsensical per-index sequence diff.
+        case (str(), "==", _) | (_, "==", str()):
+            explanation = []
         # Although the common order should be obtained == approx(...), allow both ways.
         case (_, "==", ApproxBase() as approx):
             explanation = approx._repr_compare(left)
@@ -63,9 +68,10 @@ def _compare_eq_any(
                     left, right, highlighter, verbose, assertion_text_diff_style
                 )
             )
-        # ``Sequence`` matches ``str`` too; the guard excludes those after the
-        # ``(str(), "==", str())`` case above has handled the text case.
-        case (Sequence(), "==", Sequence()) if issequence(left) and issequence(right):
+        # ``str`` is a ``Sequence`` too, but the ``(str(), "==", str())``
+        # case above has already caught the both-string case before reaching
+        # here.
+        case (Sequence(), "==", Sequence()):
             explanation = list(_compare_eq_sequence(left, right, highlighter, verbose))
         case (AbstractSet(), "==", AbstractSet()):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
