@@ -7,7 +7,6 @@ from _pytest.assertion._compare_mapping import _compare_eq_mapping
 from _pytest.assertion._compare_sequence import _compare_eq_iterable
 from _pytest.assertion._compare_sequence import _compare_eq_sequence
 from _pytest.assertion._compare_set import _compare_eq_set
-from _pytest.assertion._compare_text import _compare_eq_text
 from _pytest.assertion._guards import has_default_eq
 from _pytest.assertion._guards import isattrs
 from _pytest.assertion._guards import isdatacls
@@ -19,6 +18,7 @@ from _pytest.assertion._guards import isset
 from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
+from _pytest.assertion.compare_text import _compare_eq_text
 
 
 def _compare_eq_any(

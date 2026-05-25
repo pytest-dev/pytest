@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from _pytest._io.saferepr import saferepr
-from _pytest.assertion._highlight import dummy_highlighter
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
+from _pytest.assertion.highlight import dummy_highlighter
 from _pytest.compat import assert_never
 
 

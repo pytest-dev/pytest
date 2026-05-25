@@ -14,12 +14,12 @@ from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.assertion._compare_any import _compare_eq_any
 from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
-from _pytest.assertion._compare_text import _notin_text
 from _pytest.assertion._guards import isset
 from _pytest.assertion._guards import istext
-from _pytest.assertion._highlight import dummy_highlighter as dummy_highlighter
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
+from _pytest.assertion.compare_text import _notin_text
+from _pytest.assertion.highlight import dummy_highlighter as dummy_highlighter
 from _pytest.config import Config
 from _pytest.config import UsageError
 
