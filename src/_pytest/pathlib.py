@@ -156,7 +156,7 @@ def on_rm_rf_error(
     # ensure they all are also accessible and writable.
     p = Path(path)
     if p.is_file():
-        for parent in p.parents:
+        for parent in p.parents:  # pragma: no branch
             _chmod_rwx(str(parent))
             # Stop when we reach the original path passed to rm_rf.
             if parent == start_path:

@@ -523,6 +523,10 @@ class TestNumberedDir:
         assert dir.is_dir()
 
 
+def _raise_oserror(*args: object, **kwargs: object) -> None:
+    raise OSError("simulated failure")
+
+
 class TestRmRf:
     def test_rm_rf(self, tmp_path):
         adir = tmp_path / "adir"
@@ -577,7 +581,7 @@ class TestRmRf:
         p = tmp_path / "foo" / "bar" / "baz"
         p.parent.mkdir(parents=True)
         p.touch(mode=0)
-        for parent in p.parents:
+        for parent in p.parents:  # pragma: no branch
             if parent == tmp_path:
                 break
             parent.chmod(mode=0)
@@ -697,6 +701,40 @@ class TestRmRf:
         result = on_rm_rf_error(os.open, str(adir), exc_info, start_path=tmp_path)
         assert result is False
         assert adir.exists()
+
+    def test_on_rm_rf_error_os_open_unlink_fails(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """os.open handler returns False when chmod succeeds but os.unlink
+        still raises OSError (e.g. sandbox or other mechanism)."""
+        fn = tmp_path / "stubborn.txt"
+        fn.touch(mode=0)
+
+        monkeypatch.setattr(os, "unlink", _raise_oserror)
+
+        exc_info = PermissionError()
+        result = on_rm_rf_error(os.open, str(fn), exc_info, start_path=tmp_path)
+        assert result is False
+        assert fn.exists()
+
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_on_rm_rf_error_chmod_retry_walks_parents(self, tmp_path: Path) -> None:
+        """The os.rmdir/os.unlink handler walks up through multiple parent
+        directories to fix permissions before retrying."""
+        deep = tmp_path / "a" / "b" / "c"
+        deep.mkdir(parents=True)
+        fn = deep / "file.txt"
+        fn.touch()
+        # Remove write from intermediate dirs (keep exec so traversal works,
+        # but os.unlink needs write on the parent).
+        for parent in fn.parents:  # pragma: no branch
+            if parent == tmp_path:
+                break
+            parent.chmod(0o555)
+
+        exc_info = PermissionError()
+        on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
+        assert not fn.exists()
 
 
 def attempt_symlink_to(path, to_path):
