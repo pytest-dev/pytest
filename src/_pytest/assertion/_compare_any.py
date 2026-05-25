@@ -30,12 +30,14 @@ def _compare_eq_any(
 ) -> list[str]:
     explanation = []
     if istext(left) and istext(right):
-        explanation = _compare_eq_text(
-            left,
-            right,
-            highlighter,
-            verbose,
-            assertion_text_diff_style,
+        explanation = list(
+            _compare_eq_text(
+                left,
+                right,
+                highlighter,
+                verbose,
+                assertion_text_diff_style,
+            )
         )
     else:
         from _pytest.python_api import ApproxBase

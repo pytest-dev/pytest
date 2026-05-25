@@ -478,12 +478,14 @@ class TestAssert_reprcompare:
         ]
 
     def test_text_diff_ndiff_style(self) -> None:
-        assert _compare_eq_text(
-            "spam",
-            "eggs",
-            util.dummy_highlighter,
-            0,
-            util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+        assert list(
+            _compare_eq_text(
+                "spam",
+                "eggs",
+                util.dummy_highlighter,
+                0,
+                util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+            )
         ) == [
             "- eggs",
             "+ spam",

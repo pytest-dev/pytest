@@ -502,8 +502,10 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                 if _config is not None
                 else 0
             )
-            diff = _diff_text(
-                self.rawmatch, stringified_exception, dummy_highlighter, verbose
+            diff = list(
+                _diff_text(
+                    self.rawmatch, stringified_exception, dummy_highlighter, verbose
+                )
             )
             self._fail_reason = ("\n" if diff[0][0] == "-" else "") + "\n".join(diff)
             return False
