@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 from typing import Literal
 from unicodedata import normalize
 
@@ -14,8 +15,6 @@ from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.assertion._compare_any import _compare_eq_any
 from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
-from _pytest.assertion._guards import isset
-from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion.compare_text import _notin_text
@@ -164,25 +163,29 @@ def assertrepr_compare(
 
     summary = f"{left_repr} {op} {right_repr}"
 
-    explanation = None
+    explanation: list[str] | None
     try:
-        if op == "==":
-            explanation = _compare_eq_any(
-                left,
-                right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
-            )
-        elif op == "not in":
-            if istext(left) and istext(right):
+        match (left, op, right):
+            case (_, "==", _):
+                explanation = _compare_eq_any(
+                    left,
+                    right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
+                )
+            case (str(), "not in", str()):
                 explanation = list(_notin_text(left, right, verbose))
-        elif op in {"!=", ">=", "<=", ">", "<"}:
-            if isset(left) and isset(right):
+            case (
+                AbstractSet(),
+                "!=" | ">=" | "<=" | ">" | "<",
+                AbstractSet(),
+            ):
                 explanation = SET_COMPARISON_FUNCTIONS[op](
                     left, right, highlighter, verbose
                 )
-
+            case _:
+                explanation = None
     except outcomes.Exit:
         raise
     except Exception:
