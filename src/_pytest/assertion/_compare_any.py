@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import dataclasses
 import pprint
 
@@ -12,11 +15,8 @@ from _pytest.assertion._guards import has_default_eq
 from _pytest.assertion._guards import isattrs
 from _pytest.assertion._guards import isdatacls
 from _pytest.assertion._guards import isiterable
-from _pytest.assertion._guards import ismapping
 from _pytest.assertion._guards import isnamedtuple
 from _pytest.assertion._guards import issequence
-from _pytest.assertion._guards import isset
-from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion.compare_text import _compare_eq_text
@@ -29,26 +29,26 @@ def _compare_eq_any(
     verbose: int,
     assertion_text_diff_style: _AssertionTextDiffStyle,
 ) -> list[str]:
-    explanation = []
-    if istext(left) and istext(right):
-        explanation = list(
-            _compare_eq_text(
-                left,
-                right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
-            )
-        )
-    else:
-        from _pytest.python_api import ApproxBase
+    from _pytest.python_api import ApproxBase
 
+    explanation: list[str] = []
+    match (left, right):
+        case (str(), str()):
+            explanation = list(
+                _compare_eq_text(
+                    left,
+                    right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
+                )
+            )
         # Although the common order should be obtained == approx(...), allow both ways.
-        if isinstance(right, ApproxBase):
-            explanation = right._repr_compare(left)
-        elif isinstance(left, ApproxBase):
-            explanation = left._repr_compare(right)
-        elif type(left) is type(right) and (
+        case (_, ApproxBase() as approx):
+            explanation = approx._repr_compare(left)
+        case (ApproxBase() as approx, _):
+            explanation = approx._repr_compare(right)
+        case _ if type(left) is type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
             # Note: unlike dataclasses/attrs, namedtuples compare only the
@@ -64,16 +64,18 @@ def _compare_eq_any(
                     assertion_text_diff_style,
                 )
             )
-        elif issequence(left) and issequence(right):
+        # ``Sequence`` matches ``str`` too; the guard excludes those after the
+        # ``(str(), str())`` case above has handled the text case.
+        case (Sequence(), Sequence()) if issequence(left) and issequence(right):
             explanation = list(_compare_eq_sequence(left, right, highlighter, verbose))
-        elif isset(left) and isset(right):
+        case (AbstractSet(), AbstractSet()):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
-        elif ismapping(left) and ismapping(right):
+        case (Mapping(), Mapping()):
             explanation = list(_compare_eq_mapping(left, right, highlighter, verbose))
 
-        if isiterable(left) and isiterable(right):
-            expl = _compare_eq_iterable(left, right, highlighter, verbose)
-            explanation.extend(expl)
+    if isiterable(left) and isiterable(right):
+        expl = _compare_eq_iterable(left, right, highlighter, verbose)
+        explanation.extend(expl)
 
     return explanation
 
