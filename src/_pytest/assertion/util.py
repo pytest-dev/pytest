@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from collections.abc import Sequence
-from collections.abc import Set as AbstractSet
 from typing import Literal
 from unicodedata import normalize
 
@@ -14,10 +13,8 @@ import _pytest._code
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.assertion._compare_any import _compare_eq_any
-from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
-from _pytest.assertion.compare_text import _notin_text
 from _pytest.assertion.highlight import dummy_highlighter as dummy_highlighter
 from _pytest.config import Config
 from _pytest.config import UsageError
@@ -163,29 +160,10 @@ def assertrepr_compare(
 
     summary = f"{left_repr} {op} {right_repr}"
 
-    explanation: list[str] | None
     try:
-        match (left, op, right):
-            case (_, "==", _):
-                explanation = _compare_eq_any(
-                    left,
-                    right,
-                    highlighter,
-                    verbose,
-                    assertion_text_diff_style,
-                )
-            case (str(), "not in", str()):
-                explanation = list(_notin_text(left, right, verbose))
-            case (
-                AbstractSet(),
-                "!=" | ">=" | "<=" | ">" | "<",
-                AbstractSet(),
-            ):
-                explanation = SET_COMPARISON_FUNCTIONS[op](
-                    left, right, highlighter, verbose
-                )
-            case _:
-                explanation = None
+        explanation = _compare_eq_any(
+            op, left, right, highlighter, verbose, assertion_text_diff_style
+        )
     except outcomes.Exit:
         raise
     except Exception:

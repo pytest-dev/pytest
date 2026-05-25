@@ -11,6 +11,7 @@ from _pytest.assertion._compare_mapping import _compare_eq_mapping
 from _pytest.assertion._compare_sequence import _compare_eq_iterable
 from _pytest.assertion._compare_sequence import _compare_eq_sequence
 from _pytest.assertion._compare_set import _compare_eq_set
+from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
 from _pytest.assertion._guards import has_default_eq
 from _pytest.assertion._guards import isattrs
 from _pytest.assertion._guards import isdatacls
@@ -20,35 +21,37 @@ from _pytest.assertion._guards import issequence
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion.compare_text import _compare_eq_text
+from _pytest.assertion.compare_text import _notin_text
 
 
 def _compare_eq_any(
+    op: str,
     left: object,
     right: object,
     highlighter: _HighlightFunc,
     verbose: int,
     assertion_text_diff_style: _AssertionTextDiffStyle,
-) -> list[str]:
+) -> list[str] | None:
+    """Return the per-line explanation for ``left op right`` (without summary).
+
+    Returns ``None`` when no specialised explanation applies.
+    """
     from _pytest.python_api import ApproxBase
 
-    explanation: list[str] = []
-    match (left, right):
-        case (str(), str()):
+    explanation: list[str]
+    match (left, op, right):
+        case (str(), "==", str()):
             explanation = list(
                 _compare_eq_text(
-                    left,
-                    right,
-                    highlighter,
-                    verbose,
-                    assertion_text_diff_style,
+                    left, right, highlighter, verbose, assertion_text_diff_style
                 )
             )
         # Although the common order should be obtained == approx(...), allow both ways.
-        case (_, ApproxBase() as approx):
+        case (_, "==", ApproxBase() as approx):
             explanation = approx._repr_compare(left)
-        case (ApproxBase() as approx, _):
+        case (ApproxBase() as approx, "==", _):
             explanation = approx._repr_compare(right)
-        case _ if type(left) is type(right) and (
+        case (_, "==", _) if type(left) is type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
             # Note: unlike dataclasses/attrs, namedtuples compare only the
@@ -57,26 +60,32 @@ def _compare_eq_any(
             # used in older code bases before dataclasses/attrs were available.
             explanation = list(
                 _compare_eq_cls(
-                    left,
-                    right,
-                    highlighter,
-                    verbose,
-                    assertion_text_diff_style,
+                    left, right, highlighter, verbose, assertion_text_diff_style
                 )
             )
         # ``Sequence`` matches ``str`` too; the guard excludes those after the
-        # ``(str(), str())`` case above has handled the text case.
-        case (Sequence(), Sequence()) if issequence(left) and issequence(right):
+        # ``(str(), "==", str())`` case above has handled the text case.
+        case (Sequence(), "==", Sequence()) if issequence(left) and issequence(right):
             explanation = list(_compare_eq_sequence(left, right, highlighter, verbose))
-        case (AbstractSet(), AbstractSet()):
+        case (AbstractSet(), "==", AbstractSet()):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
-        case (Mapping(), Mapping()):
+        case (Mapping(), "==", Mapping()):
             explanation = list(_compare_eq_mapping(left, right, highlighter, verbose))
+        case (_, "==", _):
+            # No specialised ``==`` diff, but the iterable extension below may
+            # still apply.
+            explanation = []
+        case (str(), "not in", str()):
+            return list(_notin_text(left, right, verbose))
+        case (AbstractSet(), "!=" | ">=" | "<=" | ">" | "<", AbstractSet()):
+            return SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
+        case _:
+            return None
 
+    # Only the ``==`` cases reach here (others returned above); add the iterable
+    # extension when applicable.
     if isiterable(left) and isiterable(right):
-        expl = _compare_eq_iterable(left, right, highlighter, verbose)
-        explanation.extend(expl)
-
+        explanation.extend(_compare_eq_iterable(left, right, highlighter, verbose))
     return explanation
 
 
@@ -125,11 +134,15 @@ def _compare_eq_cls(
             yield ""
             yield f"Drill down into differing attribute {field}:"
             yield f"{indent}{field}: {highlighter(repr(field_left))} != {highlighter(repr(field_right))}"
-            for line in _compare_eq_any(
-                field_left,
-                field_right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
+            for line in (
+                _compare_eq_any(
+                    "==",
+                    field_left,
+                    field_right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
+                )
+                or []
             ):
                 yield indent + line
