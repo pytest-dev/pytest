@@ -60,7 +60,7 @@ def _compare_eq_any(
                 assertion_text_diff_style,
             )
         elif issequence(left) and issequence(right):
-            explanation = _compare_eq_sequence(left, right, highlighter, verbose)
+            explanation = list(_compare_eq_sequence(left, right, highlighter, verbose))
         elif isset(left) and isset(right):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
         elif ismapping(left) and ismapping(right):
