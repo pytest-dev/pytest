@@ -14,6 +14,7 @@ import warnings
 from _pytest import pathlib
 from _pytest.config import Config
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pathlib import _chmod_rwx
 from _pytest.pathlib import cleanup_numbered_dir
 from _pytest.pathlib import create_cleanup_lock
 from _pytest.pathlib import make_numbered_dir
@@ -667,6 +668,35 @@ class TestRmRf:
             assert result is True
             assert not child.exists()
             assert not [x.message for x in w]
+
+    def test_chmod_rwx_returns_false_on_nonexistent_path(self, tmp_path: Path) -> None:
+        """_chmod_rwx returns False when the path doesn't exist (OSError)."""
+        nonexistent = tmp_path / "does_not_exist"
+        assert _chmod_rwx(str(nonexistent)) is False
+
+    def test_chmod_rwx_returns_false_when_already_sufficient(
+        self, tmp_path: Path
+    ) -> None:
+        """_chmod_rwx returns False when permissions are already sufficient."""
+        d = tmp_path / "dir"
+        d.mkdir(mode=0o700)
+        assert _chmod_rwx(str(d)) is False
+
+        f = tmp_path / "file"
+        f.touch(mode=0o600)
+        assert _chmod_rwx(str(f)) is False
+
+    def test_on_rm_rf_error_os_open_returns_false_when_chmod_ineffective(
+        self, tmp_path: Path
+    ) -> None:
+        """os.open handler returns False when neither parent nor path chmod
+        changes anything (recursion guard)."""
+        adir = tmp_path / "dir"
+        adir.mkdir(mode=0o700)
+        exc_info = PermissionError()
+        result = on_rm_rf_error(os.open, str(adir), exc_info, start_path=tmp_path)
+        assert result is False
+        assert adir.exists()
 
 
 def attempt_symlink_to(path, to_path):
