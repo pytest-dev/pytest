@@ -1202,7 +1202,7 @@ def resolve_values_indices_in_parametersets(
                 argname_indices.append(argvalues_count[argname])
                 argvalues_count[argname] += 1
         indices.append(argname_indices)
-    return list(zip(*indices))
+    return list(zip(*indices, strict=True))
 
 
 class DirectParamFixtureDef(FixtureDef[FixtureValue]):
