@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 import dataclasses
 import pprint
 
@@ -54,12 +55,14 @@ def _compare_eq_any(
             # field values, not the type or field names. But this branch
             # intentionally only handles the same-type case, which was often
             # used in older code bases before dataclasses/attrs were available.
-            explanation = _compare_eq_cls(
-                left,
-                right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
+            explanation = list(
+                _compare_eq_cls(
+                    left,
+                    right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
+                )
             )
         elif issequence(left) and issequence(right):
             explanation = list(_compare_eq_sequence(left, right, highlighter, verbose))
@@ -81,9 +84,9 @@ def _compare_eq_cls(
     highlighter: _HighlightFunc,
     verbose: int,
     assertion_text_diff_style: _AssertionTextDiffStyle,
-) -> list[str]:
+) -> Iterator[str]:
     if not has_default_eq(left):
-        return []
+        return
     if isdatacls(left):
         all_fields = dataclasses.fields(left)
         fields_to_check = [info.name for info in all_fields if info.compare]
@@ -104,33 +107,27 @@ def _compare_eq_cls(
         else:
             diff.append(field)
 
-    explanation = []
     if same or diff:
-        explanation += [""]
+        yield ""
     if same and verbose < 2:
-        explanation.append(f"Omitting {len(same)} identical items, use -vv to show")
+        yield f"Omitting {len(same)} identical items, use -vv to show"
     elif same:
-        explanation += ["Matching attributes:"]
-        explanation += highlighter(pprint.pformat(same)).splitlines()
+        yield "Matching attributes:"
+        yield from highlighter(pprint.pformat(same)).splitlines()
     if diff:
-        explanation += ["Differing attributes:"]
-        explanation += highlighter(pprint.pformat(diff)).splitlines()
+        yield "Differing attributes:"
+        yield from highlighter(pprint.pformat(diff)).splitlines()
         for field in diff:
             field_left = getattr(left, field)
             field_right = getattr(right, field)
-            explanation += [
-                "",
-                f"Drill down into differing attribute {field}:",
-                f"{indent}{field}: {highlighter(repr(field_left))} != {highlighter(repr(field_right))}",
-            ]
-            explanation += [
-                indent + line
-                for line in _compare_eq_any(
-                    field_left,
-                    field_right,
-                    highlighter,
-                    verbose,
-                    assertion_text_diff_style,
-                )
-            ]
-    return explanation
+            yield ""
+            yield f"Drill down into differing attribute {field}:"
+            yield f"{indent}{field}: {highlighter(repr(field_left))} != {highlighter(repr(field_right))}"
+            for line in _compare_eq_any(
+                field_left,
+                field_right,
+                highlighter,
+                verbose,
+                assertion_text_diff_style,
+            ):
+                yield indent + line
