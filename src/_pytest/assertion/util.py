@@ -12,20 +12,9 @@ from _pytest import outcomes
 import _pytest._code
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
-from _pytest.assertion._compare_cls import _compare_eq_cls
-from _pytest.assertion._compare_mapping import _compare_eq_mapping
-from _pytest.assertion._compare_sequence import _compare_eq_iterable
-from _pytest.assertion._compare_sequence import _compare_eq_sequence
-from _pytest.assertion._compare_set import _compare_eq_set
+from _pytest.assertion._compare_any import _compare_eq_any
 from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
-from _pytest.assertion._compare_text import _compare_eq_text
 from _pytest.assertion._compare_text import _notin_text
-from _pytest.assertion._guards import isattrs
-from _pytest.assertion._guards import isdatacls
-from _pytest.assertion._guards import isiterable
-from _pytest.assertion._guards import ismapping
-from _pytest.assertion._guards import isnamedtuple
-from _pytest.assertion._guards import issequence
 from _pytest.assertion._guards import isset
 from _pytest.assertion._guards import istext
 from _pytest.assertion._highlight import dummy_highlighter as dummy_highlighter
@@ -209,55 +198,3 @@ def assertrepr_compare(
     if explanation[0] != "":
         explanation = ["", *explanation]
     return [summary, *explanation]
-
-
-def _compare_eq_any(
-    left: object,
-    right: object,
-    highlighter: _HighlightFunc,
-    verbose: int,
-    assertion_text_diff_style: _AssertionTextDiffStyle,
-) -> list[str]:
-    explanation = []
-    if istext(left) and istext(right):
-        explanation = _compare_eq_text(
-            left,
-            right,
-            highlighter,
-            verbose,
-            assertion_text_diff_style,
-        )
-    else:
-        from _pytest.python_api import ApproxBase
-
-        # Although the common order should be obtained == approx(...), allow both ways.
-        if isinstance(right, ApproxBase):
-            explanation = right._repr_compare(left)
-        elif isinstance(left, ApproxBase):
-            explanation = left._repr_compare(right)
-        elif type(left) is type(right) and (
-            isdatacls(left) or isattrs(left) or isnamedtuple(left)
-        ):
-            # Note: unlike dataclasses/attrs, namedtuples compare only the
-            # field values, not the type or field names. But this branch
-            # intentionally only handles the same-type case, which was often
-            # used in older code bases before dataclasses/attrs were available.
-            explanation = _compare_eq_cls(
-                left,
-                right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
-            )
-        elif issequence(left) and issequence(right):
-            explanation = _compare_eq_sequence(left, right, highlighter, verbose)
-        elif isset(left) and isset(right):
-            explanation = _compare_eq_set(left, right, highlighter, verbose)
-        elif ismapping(left) and ismapping(right):
-            explanation = _compare_eq_mapping(left, right, highlighter, verbose)
-
-        if isiterable(left) and isiterable(right):
-            expl = _compare_eq_iterable(left, right, highlighter, verbose)
-            explanation.extend(expl)
-
-    return explanation

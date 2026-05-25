@@ -2143,10 +2143,12 @@ def test_issue_1944(pytester: Pytester) -> None:
 
 
 def test_exit_from_assertrepr_compare(monkeypatch) -> None:
+    from _pytest.assertion import _compare_any
+
     def raise_exit(obj):
         outcomes.exit("Quitting debugger")
 
-    monkeypatch.setattr(util, "istext", raise_exit)
+    monkeypatch.setattr(_compare_any, "istext", raise_exit)
 
     with pytest.raises(outcomes.Exit, match="Quitting debugger"):
         callequal(1, 1)
