@@ -595,7 +595,7 @@ class Module(nodes.File, PyCollector):
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_module_fixture_{self.obj.__name__}",
             func=xunit_setup_module_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="module",
             autouse=True,
         )
@@ -631,7 +631,7 @@ class Module(nodes.File, PyCollector):
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_function_fixture_{self.obj.__name__}",
             func=xunit_setup_function_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="function",
             autouse=True,
         )
@@ -779,7 +779,9 @@ class Class(PyCollector):
         self._register_setup_class_fixture()
         self._register_setup_method_fixture()
 
-        self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
+        self.session._fixturemanager.parsefactories(
+            holder=self.newinstance(), node=self
+        )
 
         return super().collect()
 
@@ -809,7 +811,7 @@ class Class(PyCollector):
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_class_fixture_{self.obj.__qualname__}",
             func=xunit_setup_class_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="class",
             autouse=True,
         )
@@ -843,7 +845,7 @@ class Class(PyCollector):
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_method_fixture_{self.obj.__qualname__}",
             func=xunit_setup_method_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="function",
             autouse=True,
         )

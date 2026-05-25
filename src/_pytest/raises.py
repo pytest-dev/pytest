@@ -492,12 +492,19 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             else ""
         )
         if isinstance(self.rawmatch, str):
-            # TODO: it instructs to use `-v` to print leading text, but that doesn't work
-            # I also don't know if this is the proper entry point, or tool to use at all
+            from _pytest.assertion.util import _config
             from _pytest.assertion.util import _diff_text
             from _pytest.assertion.util import dummy_highlighter
+            from _pytest.config import Config
 
-            diff = _diff_text(self.rawmatch, stringified_exception, dummy_highlighter)
+            verbose = (
+                _config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
+                if _config is not None
+                else 0
+            )
+            diff = _diff_text(
+                self.rawmatch, stringified_exception, dummy_highlighter, verbose
+            )
             self._fail_reason = ("\n" if diff[0][0] == "-" else "") + "\n".join(diff)
             return False
 
@@ -1002,30 +1009,27 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         expected: str,
     ) -> type[BaseExcT_co] | RaisesExc[BaseExcT_1] | RaisesGroup[BaseExcT_2]:
         # verify exception type and set `self.is_baseexception`
-        if isinstance(exc, RaisesGroup):
-            if self.flatten_subgroups:
+        match exc:
+            case RaisesGroup() if self.flatten_subgroups:
                 raise ValueError(
                     "You cannot specify a nested structure inside a RaisesGroup with"
                     " `flatten_subgroups=True`. The parameter will flatten subgroups"
                     " in the raised exceptiongroup before matching, which would never"
                     " match a nested structure.",
                 )
-            self.is_baseexception |= exc.is_baseexception
-            exc._nested = True
-            return exc
-        elif isinstance(exc, RaisesExc):
-            self.is_baseexception |= exc.is_baseexception
-            exc._nested = True
-            return exc
-        elif isinstance(exc, tuple):
-            raise TypeError(
-                f"Expected {expected}, but got {type(exc).__name__!r}.\n"
-                "RaisesGroup does not support tuples of exception types when expecting one of "
-                "several possible exception types like RaisesExc.\n"
-                "If you meant to expect a group with multiple exceptions, list them as separate arguments."
-            )
-        else:
-            return super()._parse_exc(exc, expected)
+            case RaisesGroup() | RaisesExc():
+                self.is_baseexception |= exc.is_baseexception
+                exc._nested = True
+                return exc
+            case tuple():
+                raise TypeError(
+                    f"Expected {expected}, but got {type(exc).__name__!r}.\n"
+                    "RaisesGroup does not support tuples of exception types when expecting one of "
+                    "several possible exception types like RaisesExc.\n"
+                    "If you meant to expect a group with multiple exceptions, list them as separate arguments."
+                )
+            case _:
+                return super()._parse_exc(exc, expected)
 
     @overload
     def __enter__(

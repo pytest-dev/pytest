@@ -881,8 +881,8 @@ def approx(
         cls: type[ApproxBase] = ApproxDecimal
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
-    elif _is_numpy_array(expected):
-        expected = _as_numpy_array(expected)
+    elif (np_array := _as_numpy_array(expected)) is not None:
+        expected = np_array
         cls = ApproxNumpy
     elif _is_sequence_like(expected):
         cls = ApproxSequenceLike
@@ -903,14 +903,6 @@ def _is_sequence_like(expected: object) -> bool:
         and isinstance(expected, Sized)
         and not isinstance(expected, str | bytes)
     )
-
-
-def _is_numpy_array(obj: object) -> bool:
-    """
-    Return true if the given object is implicitly convertible to ndarray,
-    and numpy is already imported.
-    """
-    return _as_numpy_array(obj) is not None
 
 
 def _as_numpy_array(obj: object) -> ndarray | None:

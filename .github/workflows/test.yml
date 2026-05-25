@@ -290,14 +290,14 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
-      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
         verbose: true
 
     - name: Upload JUnit report to Codecov
-      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354
       with:
         fail_ci_if_error: false
         files: junit.xml

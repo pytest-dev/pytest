@@ -108,6 +108,21 @@ PASTEBIN = PytestRemovedIn10Warning(
 # the warning (possibly error in the future).
 
 
+FIXTURE_BASEID_DEPRECATED = PytestRemovedIn10Warning(
+    "Passing baseid to FixtureDef is deprecated. Pass node instead for fixture scoping."
+)
+
+FIXTURE_NODEID_DEPRECATED = PytestRemovedIn10Warning(
+    "Passing nodeid to _register_fixture is deprecated. "
+    "Pass node instead for fixture scoping."
+)
+
+PARSEFACTORIES_NODEID_DEPRECATED = PytestRemovedIn10Warning(
+    "Passing nodeid string to parsefactories is deprecated. "
+    "Use parsefactories(holder=obj, node=node) instead."
+)
+
+
 def check_ispytest(ispytest: bool) -> None:
     if not ispytest:
         warn(PRIVATE, stacklevel=3)

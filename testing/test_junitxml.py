@@ -39,7 +39,10 @@ class RunAndParse:
         self.schema = schema
 
     def __call__(
-        self, *args: str | os.PathLike[str], family: str | None = "xunit1"
+        self,
+        *args: str | os.PathLike[str],
+        family: str | None = "xunit1",
+        suite_name: str = "pytest",
     ) -> tuple[RunResult, DomDocument]:
         if family:
             args = ("-o", "junit_family=" + family, *args)
@@ -49,7 +52,13 @@ class RunAndParse:
             with xml_path.open(encoding="utf-8") as f:
                 self.schema.validate(f)
         xmldoc = minidom.parse(str(xml_path))
-        return result, DomDocument(xmldoc)
+        # Ensure the tests attribute of the ``<testsuite>`` element
+        # always matches the number of ``<testcase>`` elements (#3580).
+        doc = DomDocument(xmldoc)
+        testcase_nodes = doc.find_by_tag("testcase")
+        test_suite_node = doc.get_first_by_tag("testsuite")
+        test_suite_node.assert_attr(name=suite_name, tests=len(testcase_nodes))
+        return result, doc
 
 
 @pytest.fixture
@@ -383,6 +392,7 @@ class TestPython:
         result, dom = run_and_parse(family=xunit_family)
         assert result.ret
         node = dom.get_first_by_tag("testsuite")
+        node.assert_attr(errors=1, tests=1)
         tnode = node.get_first_by_tag("testcase")
         tnode.assert_attr(classname="test_teardown_error", name="test_function")
         fnode = tnode.get_first_by_tag("error")
@@ -408,7 +418,7 @@ class TestPython:
         result, dom = run_and_parse(family=xunit_family)
         assert result.ret
         node = dom.get_first_by_tag("testsuite")
-        node.assert_attr(errors=1, failures=1, tests=1)
+        node.assert_attr(errors=1, failures=1, tests=2)
         first, second = dom.find_by_tag("testcase")
         assert first
         assert second
@@ -1686,7 +1696,7 @@ def test_set_suite_name(
             pass
     """
     )
-    result, dom = run_and_parse(family=xunit_family)
+    result, dom = run_and_parse(family=xunit_family, suite_name=expected)
     assert result.ret == 0
     node = dom.get_first_by_tag("testsuite")
     node.assert_attr(name=expected)
