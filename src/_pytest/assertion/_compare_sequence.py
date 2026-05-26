@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Iterator
 from collections.abc import Sequence
 
 from _pytest._io.pprint import PrettyPrinter
@@ -14,28 +15,26 @@ def _compare_eq_iterable(
     right: Iterable[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
-) -> list[str]:
+) -> Iterator[str]:
     if verbose <= 0 and not running_on_ci():
-        return ["Use -v to get more diff"]
+        yield "Use -v to get more diff"
+        return
     # dynamic import to speedup pytest
     import difflib
 
     left_formatting = PrettyPrinter().pformat(left).splitlines()
     right_formatting = PrettyPrinter().pformat(right).splitlines()
 
-    explanation = ["", "Full diff:"]
+    yield ""
+    yield "Full diff:"
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
-    explanation.extend(
-        highlighter(
-            "\n".join(
-                line.rstrip()
-                for line in difflib.ndiff(right_formatting, left_formatting)
-            ),
-            lexer="diff",
-        ).splitlines()
-    )
-    return explanation
+    yield from highlighter(
+        "\n".join(
+            line.rstrip() for line in difflib.ndiff(right_formatting, left_formatting)
+        ),
+        lexer="diff",
+    ).splitlines()
 
 
 def _compare_eq_sequence(
@@ -43,9 +42,8 @@ def _compare_eq_sequence(
     right: Sequence[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
-) -> list[str]:
+) -> Iterator[str]:
     comparing_bytes = isinstance(left, bytes) and isinstance(right, bytes)
-    explanation: list[str] = []
     len_left = len(left)
     len_right = len(right)
     for i in range(min(len_left, len_right)):
@@ -65,7 +63,7 @@ def _compare_eq_sequence(
                 left_value = left[i]
                 right_value = right[i]
 
-            explanation.append(
+            yield (
                 f"At index {i} diff:"
                 f" {highlighter(repr(left_value))} != {highlighter(repr(right_value))}"
             )
@@ -74,8 +72,7 @@ def _compare_eq_sequence(
     if comparing_bytes:
         # when comparing bytes, it doesn't help to show the "sides contain one or more
         # items" longer explanation, so skip it
-
-        return explanation
+        return
 
     len_diff = len_left - len_right
     if len_diff:
@@ -88,11 +85,6 @@ def _compare_eq_sequence(
             extra = saferepr(right[len_left])
 
         if len_diff == 1:
-            explanation += [
-                f"{dir_with_more} contains one more item: {highlighter(extra)}"
-            ]
+            yield f"{dir_with_more} contains one more item: {highlighter(extra)}"
         else:
-            explanation += [
-                f"{dir_with_more} contains {len_diff} more items, first extra item: {highlighter(extra)}"
-            ]
-    return explanation
+            yield f"{dir_with_more} contains {len_diff} more items, first extra item: {highlighter(extra)}"

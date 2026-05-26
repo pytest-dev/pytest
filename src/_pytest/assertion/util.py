@@ -176,7 +176,7 @@ def assertrepr_compare(
             )
         elif op == "not in":
             if istext(left) and istext(right):
-                explanation = _notin_text(left, right, verbose)
+                explanation = list(_notin_text(left, right, verbose))
         elif op in {"!=", ">=", "<=", ">", "<"}:
             if isset(left) and isset(right):
                 explanation = SET_COMPARISON_FUNCTIONS[op](
