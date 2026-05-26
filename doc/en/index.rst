@@ -2,6 +2,7 @@
 
 .. sidebar:: **Next Open Trainings and Events**
 
+    - `pytest development sprint <https://github.com/pytest-dev/sprint>`_, **July 20th -- 24th**, Klaus (AT), sign-up open until June 15th
     - `Professional Testing with Python <https://python-academy.com/courses/python_course_testing.html>`_, via `Python Academy <https://www.python-academy.com/>`_ (3 day in-depth training), **March 9th -- 11th 2027**, Leipzig (DE) / Remote
 
     Also see :doc:`previous talks and blogposts <talks>`
