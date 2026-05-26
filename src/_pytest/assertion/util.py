@@ -179,8 +179,8 @@ def assertrepr_compare(
                 explanation = list(_notin_text(left, right, verbose))
         elif op in {"!=", ">=", "<=", ">", "<"}:
             if isset(left) and isset(right):
-                explanation = SET_COMPARISON_FUNCTIONS[op](
-                    left, right, highlighter, verbose
+                explanation = list(
+                    SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
                 )
 
     except outcomes.Exit:

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
 from collections.abc import Set as AbstractSet
 from typing import TypeAlias
 
@@ -13,14 +15,12 @@ def _set_one_sided_diff(
     set1: AbstractSet[object],
     set2: AbstractSet[object],
     highlighter: _HighlightFunc,
-) -> list[str]:
-    explanation = []
+) -> Iterator[str]:
     diff = set1 - set2
     if diff:
-        explanation.append(f"Extra items in the {posn} set:")
+        yield f"Extra items in the {posn} set:"
         for item in diff:
-            explanation.append(highlighter(saferepr(item)))
-    return explanation
+            yield highlighter(saferepr(item))
 
 
 def _compare_eq_set(
@@ -28,35 +28,9 @@ def _compare_eq_set(
     right: AbstractSet[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
-) -> list[str]:
-    explanation = []
-    explanation.extend(_set_one_sided_diff("left", left, right, highlighter))
-    explanation.extend(_set_one_sided_diff("right", right, left, highlighter))
-    return explanation
-
-
-def _compare_gt_set(
-    left: AbstractSet[object],
-    right: AbstractSet[object],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    explanation = _compare_gte_set(left, right, highlighter)
-    if not explanation:
-        return ["Both sets are equal"]
-    return explanation
-
-
-def _compare_lt_set(
-    left: AbstractSet[object],
-    right: AbstractSet[object],
-    highlighter: _HighlightFunc,
-    verbose: int = 0,
-) -> list[str]:
-    explanation = _compare_lte_set(left, right, highlighter)
-    if not explanation:
-        return ["Both sets are equal"]
-    return explanation
+) -> Iterator[str]:
+    yield from _set_one_sided_diff("left", left, right, highlighter)
+    yield from _set_one_sided_diff("right", right, left, highlighter)
 
 
 def _compare_gte_set(
@@ -64,8 +38,8 @@ def _compare_gte_set(
     right: AbstractSet[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
-) -> list[str]:
-    return _set_one_sided_diff("right", right, left, highlighter)
+) -> Iterator[str]:
+    yield from _set_one_sided_diff("right", right, left, highlighter)
 
 
 def _compare_lte_set(
@@ -73,13 +47,37 @@ def _compare_lte_set(
     right: AbstractSet[object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
-) -> list[str]:
-    return _set_one_sided_diff("left", left, right, highlighter)
+) -> Iterator[str]:
+    yield from _set_one_sided_diff("left", left, right, highlighter)
+
+
+def _compare_gt_set(
+    left: AbstractSet[object],
+    right: AbstractSet[object],
+    highlighter: _HighlightFunc,
+    verbose: int = 0,
+) -> Iterator[str]:
+    if left == right:
+        yield "Both sets are equal"
+    else:
+        yield from _set_one_sided_diff("right", right, left, highlighter)
+
+
+def _compare_lt_set(
+    left: AbstractSet[object],
+    right: AbstractSet[object],
+    highlighter: _HighlightFunc,
+    verbose: int = 0,
+) -> Iterator[str]:
+    if left == right:
+        yield "Both sets are equal"
+    else:
+        yield from _set_one_sided_diff("left", left, right, highlighter)
 
 
 SetComparisonFunction: TypeAlias = Callable[
     [AbstractSet[object], AbstractSet[object], _HighlightFunc, int],
-    list[str],
+    Iterable[str],
 ]
 
 SET_COMPARISON_FUNCTIONS: dict[str, SetComparisonFunction] = {
