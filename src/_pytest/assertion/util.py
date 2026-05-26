@@ -164,15 +164,17 @@ def assertrepr_compare(
 
     summary = f"{left_repr} {op} {right_repr}"
 
-    explanation = None
+    explanation: list[str] | None = None
     try:
         if op == "==":
-            explanation = _compare_eq_any(
-                left,
-                right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
+            explanation = list(
+                _compare_eq_any(
+                    left,
+                    right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
+                )
             )
         elif op == "not in":
             if istext(left) and istext(right):
