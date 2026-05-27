@@ -1851,13 +1851,13 @@ class TestBinXmlEscapeSupplementaryPlane:
     def test_supplementary_plane_valid_chars(self) -> None:
         """Various supplementary plane code points should not be escaped."""
         valid_supplementary = [
-            0x10000,   # First supplementary char (Linear B Syllable B008 A)
+            0x10000,  # First supplementary char (Linear B Syllable B008 A)
             0x10FFFF,  # Last valid Unicode code point
-            0x1F600,   # Grinning face emoji
-            0x20000,   # CJK Extension B first char
-            0x2F800,   # CJK Compatibility Ideographs Supplement
-            0x1D400,   # Mathematical Bold Capital A
-            0x1F0A1,   # Playing card ace of spades
+            0x1F600,  # Grinning face emoji
+            0x20000,  # CJK Extension B first char
+            0x2F800,  # CJK Compatibility Ideographs Supplement
+            0x1D400,  # Mathematical Bold Capital A
+            0x1F0A1,  # Playing card ace of spades
         ]
         for cp in valid_supplementary:
             char = chr(cp)
