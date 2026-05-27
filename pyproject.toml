@@ -415,6 +415,8 @@ filterwarnings = [
     # https://github.com/pytest-dev/pytest/issues/2366
     # https://github.com/pytest-dev/pytest/pull/13057
     'default::pytest.PytestFDWarning',
+    # https://github.com/pexpect/pexpect/issues/827
+    'ignore:.*use of forkpty\(\) may lead to deadlocks in the child:DeprecationWarning:ptyprocess.*',
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [
