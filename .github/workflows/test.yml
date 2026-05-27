@@ -65,6 +65,7 @@ jobs:
           "windows-py312",
           "windows-py313",
           "windows-py314",
+          "windows-py315",
 
           "ubuntu-py310-unittest-asynctest",
           "ubuntu-py310-unittest-twisted24",
@@ -77,12 +78,14 @@ jobs:
           "ubuntu-py312",
           "ubuntu-py313-pexpect",
           "ubuntu-py314",
+          "ubuntu-py315",
           "ubuntu-pypy3-xdist",
 
           "macos-py310",
           "macos-py312",
           "macos-py313",
           "macos-py314",
+          "macos-py315",
 
           "doctesting",
           "plugins",
@@ -140,6 +143,11 @@ jobs:
             os: windows-latest
             tox_env: "py314"
             use_coverage: true
+
+          - name: "windows-py315"
+            python: "3.15"
+            os: windows-latest
+            tox_env: "py315"
 
           # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
           - name: "ubuntu-py310-unittest-asynctest"
@@ -208,6 +216,12 @@ jobs:
             tox_env: "py314"
             use_coverage: true
 
+          - name: "ubuntu-py315"
+            python: "3.15"
+            os: ubuntu-latest
+            tox_env: "py315"
+            use_coverage: true
+
           - name: "ubuntu-pypy3-xdist"
             python: "pypy-3.10"
             os: ubuntu-latest
@@ -235,6 +249,11 @@ jobs:
             python: "3.14"
             os: macos-latest
             tox_env: "py314-xdist"
+
+          - name: "macos-py315"
+            python: "3.15"
+            os: macos-latest
+            tox_env: "py315-xdist"
 
           - name: "plugins"
             python: "3.12"
