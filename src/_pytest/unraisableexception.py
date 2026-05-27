@@ -33,17 +33,6 @@ def gc_collect_harder(iterations: int) -> None:
         gc.collect()
 
 
-def _warning_class_has_error_filter(category: type[Warning]) -> bool:
-    """Return True if an active ``error`` filter matches ``category`` by class.
-
-    Approximate match: ``message``/``module``/``lineno`` filter fields are ignored.
-    """
-    for action, _msg, filt_category, _mod, _lineno in warnings.filters:
-        if action == "error" and issubclass(category, filt_category):
-            return True
-    return False
-
-
 class UnraisableMeta(NamedTuple):
     msg: str
     cause_msg: str
@@ -57,7 +46,7 @@ unraisable_exceptions: StashKey[collections.deque[UnraisableMeta | BaseException
 
 def collect_unraisable(config: Config) -> None:
     pop_unraisable = config.stash[unraisable_exceptions].pop
-    errors: list[Warning | RuntimeError] = []
+    errors: list[pytest.PytestUnraisableExceptionWarning | RuntimeError] = []
     meta = None
     hook_error = None
     try:
@@ -71,17 +60,6 @@ def collect_unraisable(config: Config) -> None:
                 hook_error = RuntimeError("Failed to process unraisable exception")
                 hook_error.__cause__ = meta
                 errors.append(hook_error)
-                continue
-
-            if isinstance(meta.exc_value, Warning) and _warning_class_has_error_filter(
-                type(meta.exc_value)
-            ):
-                # Honor the user's error filter on the inner warning class
-                # rather than wrapping in PytestUnraisableExceptionWarning. See #14263.
-                if sys.version_info >= (3, 11):
-                    if meta.cause_msg not in getattr(meta.exc_value, "__notes__", []):
-                        meta.exc_value.add_note(meta.cause_msg)
-                errors.append(meta.exc_value)
                 continue
 
             msg = meta.msg
@@ -108,8 +86,22 @@ def collect_unraisable(config: Config) -> None:
 def cleanup(
     *, config: Config, prev_hook: Callable[[sys.UnraisableHookArgs], object]
 ) -> None:
-    sys.unraisablehook = prev_hook
-    del config.stash[unraisable_exceptions]
+    # On PyPy, objects (e.g. coroutines) can survive GC rounds because executing
+    # their __del__ can resurrect them. The Trio project determined experimentally
+    # that 5 passes are needed on PyPy to flush everything. On CPython, reference
+    # counting handles most cleanup immediately, so 1 pass is sufficient.
+    _default_gc_collect_iterations = 5 if sys.implementation.name == "pypy" else 1
+    gc_collect_iterations = config.stash.get(
+        gc_collect_iterations_key, _default_gc_collect_iterations
+    )
+    try:
+        try:
+            gc_collect_harder(gc_collect_iterations)
+            collect_unraisable(config)
+        finally:
+            sys.unraisablehook = prev_hook
+    finally:
+        del config.stash[unraisable_exceptions]
 
 
 def unraisable_hook(
