@@ -177,7 +177,7 @@ def assertrepr_compare(
 
     try:
         if op == "==":
-            source: Iterator[str] = _compare_eq_any(
+            source = _compare_eq_any(
                 left,
                 right,
                 highlighter,
@@ -187,9 +187,7 @@ def assertrepr_compare(
         elif op == "not in" and istext(left) and istext(right):
             source = _notin_text(left, right, verbose)
         elif op in {"!=", ">=", "<=", ">", "<"} and isset(left) and isset(right):
-            source = iter(
-                SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
-            )
+            source = SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
         else:
             source = iter(())
 
