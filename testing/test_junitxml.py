@@ -1831,3 +1831,51 @@ def test_no_message_quiet(pytester: Pytester) -> None:
 
     result = pytester.runpytest("--junitxml=pytest.xml", "--quiet")
     result.stdout.no_fnmatch_line("* generated xml file: *")
+
+
+class TestBinXmlEscapeSupplementaryPlane:
+    """Tests for bin_xml_escape with supplementary plane characters (U+10000+).
+
+    Regression test for issue #14483: \\u10000 was parsed as \\u1000 + '0'
+    instead of the intended U+10000, breaking all supplementary plane chars.
+    """
+
+    def test_emoji_not_escaped(self) -> None:
+        """Emoji (U+1F600) should pass through, not be escaped."""
+        assert bin_xml_escape("test_😀_passes") == "test_😀_passes"
+
+    def test_cjk_extension_b_not_escaped(self) -> None:
+        """CJK Extension B (U+20000) should pass through."""
+        assert bin_xml_escape("test_𠀀") == "test_𠀀"
+
+    def test_supplementary_plane_valid_chars(self) -> None:
+        """Various supplementary plane code points should not be escaped."""
+        valid_supplementary = [
+            0x10000,   # First supplementary char (Linear B Syllable B008 A)
+            0x10FFFF,  # Last valid Unicode code point
+            0x1F600,   # Grinning face emoji
+            0x20000,   # CJK Extension B first char
+            0x2F800,   # CJK Compatibility Ideographs Supplement
+            0x1D400,   # Mathematical Bold Capital A
+            0x1F0A1,   # Playing card ace of spades
+        ]
+        for cp in valid_supplementary:
+            char = chr(cp)
+            result = bin_xml_escape(char)
+            assert result == char, f"U+{cp:04X} should not be escaped, got: {result!r}"
+
+    def test_ascii_still_works(self) -> None:
+        """Basic ASCII should still pass through unchanged."""
+        assert bin_xml_escape("hello world") == "hello world"
+
+    def test_null_byte_still_escaped(self) -> None:
+        """Invalid XML chars like null byte should still be escaped."""
+        result = bin_xml_escape("test\x00null")
+        assert "#x00" in result
+
+    def test_surrogates_still_escaped(self) -> None:
+        """Surrogate code points should still be escaped."""
+        # Surrogates are U+D800 to U+DFFF
+        for cp in [0xD800, 0xDFFF]:
+            result = bin_xml_escape(chr(cp))
+            assert result != chr(cp), f"Surrogate U+{cp:04X} should be escaped"
