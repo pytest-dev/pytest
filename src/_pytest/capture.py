@@ -449,6 +449,8 @@ class SysCapture(SysCaptureBase[str]):
 
     def snap(self) -> str:
         self._assert_state("snap", ("started", "suspended"))
+        if getattr(self.tmpfile, "closed", False):
+            return self.EMPTY_BUFFER
         assert isinstance(self.tmpfile, CaptureIO)
         res = self.tmpfile.getvalue()
         self.tmpfile.seek(0)
@@ -566,6 +568,8 @@ class FDCaptureBinary(FDCaptureBase[bytes]):
 
     def snap(self) -> bytes:
         self._assert_state("snap", ("started", "suspended"))
+        if getattr(self.tmpfile, "closed", False):
+            return self.EMPTY_BUFFER
         self.tmpfile.seek(0)
         res = self.tmpfile.buffer.read()
         self.tmpfile.seek(0)
@@ -588,6 +592,8 @@ class FDCapture(FDCaptureBase[str]):
 
     def snap(self) -> str:
         self._assert_state("snap", ("started", "suspended"))
+        if getattr(self.tmpfile, "closed", False):
+            return self.EMPTY_BUFFER
         self.tmpfile.seek(0)
         res = self.tmpfile.read()
         self.tmpfile.seek(0)
