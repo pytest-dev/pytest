@@ -1752,29 +1752,28 @@ def test_libedit_workaround(pytester: Pytester) -> None:
     assert match.group(1) == "hi"
 
 
-
 def test_snap_on_closed_tmpfile() -> None:
     """Regression test for #14528: snap() should not crash when tmpfile is closed."""
     # FDCapture
     cap = capture.FDCapture(1)
     cap.start()
     cap.done()
-    assert cap.snap() == ''
+    assert cap.snap() == ""
 
     # FDCaptureBinary
     capb = capture.FDCaptureBinary(1)
     capb.start()
     capb.done()
-    assert capb.snap() == b''
+    assert capb.snap() == b""
 
     # SysCapture
     caps = capture.SysCapture(1)
     caps.start()
     caps.done()
-    assert caps.snap() == ''
+    assert caps.snap() == ""
 
     # SysCaptureBinary
     capsb = capture.SysCaptureBinary(1)
     capsb.start()
     capsb.done()
-    assert capsb.snap() == b''
+    assert capsb.snap() == b""
