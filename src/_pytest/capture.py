@@ -26,6 +26,7 @@ from typing import Literal
 from typing import NamedTuple
 from typing import TextIO
 from typing import TYPE_CHECKING
+import warnings
 
 
 if TYPE_CHECKING:
@@ -41,6 +42,7 @@ from _pytest.nodes import Collector
 from _pytest.nodes import File
 from _pytest.nodes import Item
 from _pytest.reports import CollectReport
+from _pytest.warning_types import PytestWarning
 
 
 _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
@@ -566,6 +568,17 @@ class FDCaptureBinary(FDCaptureBase[bytes]):
 
     def snap(self) -> bytes:
         self._assert_state("snap", ("started", "suspended"))
+        if self.tmpfile.closed:
+            warnings.warn(
+                PytestWarning(
+                    "capture tmpfile was closed before snap() -- "
+                    "captured output may be lost "
+                    "(likely caused by Python 3.14.0-3.14.4 incremental GC; "
+                    "upgrade to 3.14.5+)"
+                ),
+                stacklevel=1,
+            )
+            return self.EMPTY_BUFFER
         self.tmpfile.seek(0)
         res = self.tmpfile.buffer.read()
         self.tmpfile.seek(0)
@@ -588,6 +601,17 @@ class FDCapture(FDCaptureBase[str]):
 
     def snap(self) -> str:
         self._assert_state("snap", ("started", "suspended"))
+        if self.tmpfile.closed:
+            warnings.warn(
+                PytestWarning(
+                    "capture tmpfile was closed before snap() -- "
+                    "captured output may be lost "
+                    "(likely caused by Python 3.14.0-3.14.4 incremental GC; "
+                    "upgrade to 3.14.5+)"
+                ),
+                stacklevel=1,
+            )
+            return self.EMPTY_BUFFER
         self.tmpfile.seek(0)
         res = self.tmpfile.read()
         self.tmpfile.seek(0)

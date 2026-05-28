@@ -1,0 +1,1 @@
+Fixed ``ValueError: I/O operation on closed file`` crash during capture teardown when the underlying temporary file has been prematurely closed (e.g. by Python 3.14's incremental garbage collector).

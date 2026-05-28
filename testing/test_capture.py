@@ -1129,6 +1129,40 @@ class TestFDCapture:
         assert "b" not in sys.stdout.mode
 
 
+class TestFDCaptureClosedTmpfile:
+    """Regression tests for #14528: snap() on a prematurely closed tmpfile."""
+
+    @pytest.fixture
+    def pipe_fd(self) -> Generator[int]:
+        """Create a throwaway FD via os.pipe() so we don't touch real stdio."""
+        r, w = os.pipe()
+        os.close(r)
+        yield w
+        try:
+            os.close(w)
+        except OSError:
+            pass
+
+    @pytest.mark.parametrize(
+        "cls, empty",
+        [
+            (capture.FDCapture, ""),
+            (capture.FDCaptureBinary, b""),
+        ],
+        ids=["text", "binary"],
+    )
+    def test_snap_returns_empty_on_closed_tmpfile(
+        self, pipe_fd: int, cls: type, empty: str | bytes
+    ) -> None:
+        cap = cls(pipe_fd)
+        cap.start()
+        cap.tmpfile.close()
+        with pytest.warns(pytest.PytestWarning, match="capture tmpfile was closed"):
+            result = cap.snap()
+        assert result == empty
+        cap.done()
+
+
 @contextlib.contextmanager
 def saved_fd(fd):
     new_fd = os.dup(fd)
