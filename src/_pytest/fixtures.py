@@ -60,6 +60,7 @@ from _pytest.deprecated import CLASS_FIXTURE_INSTANCE_METHOD
 from _pytest.deprecated import FIXTURE_BASEID_DEPRECATED
 from _pytest.deprecated import FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN
 from _pytest.deprecated import FIXTURE_NODEID_DEPRECATED
+from _pytest.deprecated import FIXTUREDEF_HAS_LOCATION_DEPRECATED
 from _pytest.deprecated import PARSEFACTORIES_NODEID_DEPRECATED
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
@@ -1094,7 +1095,9 @@ class FixtureDef(Generic[FixtureValue]):
         # Whether the fixture was found from a node or a conftest in the
         # collection tree. Will be false for fixtures defined in non-conftest
         # plugins.
-        self.has_location: Final = node is not None or baseid is not None
+        #
+        # Deprecated: kept only to back the deprecated ``has_location`` property.
+        self._has_location: Final = node is not None or baseid is not None
         # The fixture factory function.
         self.func: Final = func
         # The name by which the fixture may be requested.
@@ -1128,6 +1131,11 @@ class FixtureDef(Generic[FixtureValue]):
     def scope(self) -> ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
+
+    @property
+    def has_location(self) -> bool:
+        warnings.warn(FIXTUREDEF_HAS_LOCATION_DEPRECATED, stacklevel=2)
+        return self._has_location
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._finalizers.append(finalizer)

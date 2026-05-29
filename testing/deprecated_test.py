@@ -287,3 +287,26 @@ class TestFixtureNodeidDeprecations:
         )
         result = pytester.runpytest("-W", "ignore::pytest.PytestRemovedIn10Warning")
         result.assert_outcomes(passed=2)
+
+    def test_fixturedef_has_location_deprecated(self, pytester: Pytester) -> None:
+        """Accessing FixtureDef.has_location warns."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix():
+                return 1
+
+            def test_it(request):
+                fixturedef = request._fixturemanager.getfixturedefs(
+                    "fix", request._pyfuncitem
+                )[0]
+                with pytest.warns(
+                    pytest.PytestRemovedIn10Warning, match="has_location"
+                ):
+                    assert fixturedef.has_location is True
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)

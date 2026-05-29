@@ -20,7 +20,7 @@ Below is a complete list of all pytest features which are considered deprecated.
 Passing ``baseid``/``nodeid`` strings to fixture registration APIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. deprecated:: 9.2
+.. deprecated:: 9.1
 
 Passing ``baseid`` to :class:`~pytest.FixtureDef` or ``nodeid`` strings to
 ``FixtureManager._register_fixture`` and ``FixtureManager.parsefactories``
@@ -40,6 +40,20 @@ node-based matching instead of fragile string prefix matching.
     fixture_manager._register_fixture(name="fix", func=func, node=directory_node)
 
 In pytest 10, the ``baseid`` and ``nodeid`` string parameters will be removed.
+
+
+.. _fixturedef-has-location-deprecated:
+
+``FixtureDef.has_location``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+The private ``FixtureDef.has_location`` attribute is deprecated and will be removed in pytest 10.
+
+It indicated whether a fixture was found from a node or a conftest in the collection tree (as opposed to a non-conftest plugin).
+It was used to determine the override order of fixtures, pushing fixtures with "no location" to the front of the override chain (such that they are chosen last).
+The override order is now determined by the visibility of the fixtures in the collection tree, making this distinction obsolete.
 
 
 .. _console-main:
