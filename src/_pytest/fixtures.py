@@ -133,6 +133,32 @@ def get_scope_package(
     return node.session
 
 
+def is_visibility_more_specific(
+    candidate: FixtureDef[Any], other: FixtureDef[Any]
+) -> bool:
+    """Return whether the visibility of ``candidate`` is strictly more specific
+    than that of ``other``, i.e. ``candidate`` is defined on a strict descendant
+    in the collection tree of where ``other`` is defined."""
+    if candidate.node is None or other.node is None:
+        # Fallback for fixtures registered with a string nodeid (deprecated) or
+        # with global visibility (no node). In this case compare baseids, which
+        # are nodeid prefixes.
+        # This branch can be removed once baseid deprecation is done (pytest 10).
+        if candidate.baseid == other.baseid:
+            return False
+        if other.baseid == "":
+            return True
+        # `candidate.baseid` must continue with a node separator for it to be a
+        # true descendant.
+        return candidate.baseid.startswith(other.baseid) and candidate.baseid[
+            len(other.baseid)
+        ] in ("/", ":")
+
+    return (
+        candidate.node is not other.node and other.node in candidate.node.iter_parents()
+    )
+
+
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
     """Get the closest parent node (including self) which matches the given
     scope.
@@ -1948,15 +1974,23 @@ class FixtureManager:
         )
 
         faclist = self._arg2fixturedefs.setdefault(name, [])
-        if fixture_def.has_location:
-            faclist.append(fixture_def)
+        # Insert the fixturedef into the list while maintaining a partial order
+        # based on visibility: a fixturedef whose visibility is more specific
+        # sorts after a more general one, so that it takes precedence in the
+        # override chain (the last applicable fixturedef in the list is used
+        # first, see getfixturedefs).
+        # fixturedefs with the same visibility keep registration order, i.e. the
+        # last registered wins.
+        # The order between non-comparable fixturedefs doesn't matter since they
+        # cannot be visible together.
+        # The idea is that a fixture that is defined closer to the item should
+        # take precedence.
+        for i, existing in enumerate(faclist):
+            if is_visibility_more_specific(existing, fixture_def):
+                faclist.insert(i, fixture_def)
+                break
         else:
-            # fixturedefs with no location are at the front
-            # so this inserts the current fixturedef after the
-            # existing fixturedefs from external plugins but
-            # before the fixturedefs provided in conftests.
-            i = len([f for f in faclist if not f.has_location])
-            faclist.insert(i, fixture_def)
+            faclist.append(fixture_def)
         if autouse:
             if node is not None:
                 self._node_autousenames.setdefault(node, []).append(name)
