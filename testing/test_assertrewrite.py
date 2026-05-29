@@ -1082,9 +1082,10 @@ def test_rewritten():
             """
             import os
             def test_no_bytecode():
-                assert "__pycache__" in __cached__
-                assert not os.path.exists(__cached__)
-                assert not os.path.exists(os.path.dirname(__cached__))"""
+                assert "__pycache__" in __spec__.cached
+                assert not os.path.exists(__spec__.cached)
+                assert not os.path.exists(os.path.dirname(__spec__.cached))
+            """
         )
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         assert pytester.runpytest_subprocess().ret == 0

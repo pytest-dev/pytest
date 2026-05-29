@@ -14,10 +14,12 @@ from typing import Any
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list
+from _pytest.config import _get_prog_name
 from _pytest.config import _iter_rewritable_modules
 from _pytest.config import _strtobool
 from _pytest.config import Config
 from _pytest.config import ConftestImportFailure
+from _pytest.config import console_main
 from _pytest.config import ExitCode
 from _pytest.config import parse_warning_filter
 from _pytest.config.argparsing import get_ini_default_for_type
@@ -3082,3 +3084,61 @@ class TestInicfgDeprecation:
 
         result = pytester.runpytest()
         assert result.ret == 0
+
+
+class TestProgName:
+    """Test program name display in help and error messages (issue #1764)."""
+
+    def test_get_prog_name_direct_pytest(self) -> None:
+        """When argv[0] is a pytest entry point, prog should be 'pytest'."""
+        assert _get_prog_name(["/usr/bin/pytest", "--help"]) == "pytest"
+        assert _get_prog_name(["pytest", "-v"]) == "pytest"
+
+    def test_get_prog_name_python_m_pytest(self) -> None:
+        """When argv[0] is __main__.py, prog should be 'python -m pytest'."""
+        assert (
+            _get_prog_name(["/path/to/site-packages/pytest/__main__.py", "--help"])
+            == "python -m pytest"
+        )
+        assert _get_prog_name(["__main__.py", "-v"]) == "python -m pytest"
+
+    def test_get_prog_name_empty_argv(self) -> None:
+        """When argv is empty, should default to 'pytest'."""
+        assert _get_prog_name([]) == "pytest"
+
+    def test_prog_in_error_message_programmatic(self, pytester: Pytester) -> None:
+        """Error messages should show 'pytest.main()' when called programmatically.
+
+        runpytest_inprocess calls pytest.main() directly, so it should show
+        pytest.main() as the program name.
+        """
+        result = pytester.runpytest_inprocess("--invalid-option-xyz")
+        result.stderr.fnmatch_lines(["*pytest.main(): error:*invalid-option-xyz*"])
+
+    def test_prog_in_error_message_cli(self, pytester: Pytester) -> None:
+        """Error messages should show 'python -m pytest' when called from CLI subprocess.
+
+        runpytest_subprocess runs pytest via 'python -m pytest', so it should
+        show 'python -m pytest' as the program name.
+        """
+        result = pytester.runpytest_subprocess("--invalid-option-xyz")
+        result.stderr.fnmatch_lines(["*python -m pytest: error:*invalid-option-xyz*"])
+
+    def test_prog_in_usage_programmatic(self, pytester: Pytester) -> None:
+        """Usage line should show 'pytest.main()' when called programmatically."""
+        result = pytester.runpytest_inprocess("--help")
+        result.stdout.fnmatch_lines(["usage: pytest.main() *"])
+
+    def test_prog_in_usage_cli(self, pytester: Pytester) -> None:
+        """Usage line should show 'python -m pytest' when called from CLI subprocess."""
+        result = pytester.runpytest_subprocess("--help")
+        result.stdout.fnmatch_lines(["usage: python -m pytest *"])
+
+    def test_console_main_deprecated(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Calling pytest.console_main() should emit a deprecation warning."""
+        monkeypatch.setattr("_pytest.config._console_main", lambda: 0)
+        with pytest.warns(
+            pytest.PytestRemovedIn10Warning,
+            match="pytest.console_main.*is deprecated",
+        ):
+            console_main()

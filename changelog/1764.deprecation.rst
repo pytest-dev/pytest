@@ -1,0 +1,2 @@
+:func:`pytest.console_main` is now deprecated and will be removed in pytest 10.
+It was never intended for programmatic use; use :func:`pytest.main` instead.

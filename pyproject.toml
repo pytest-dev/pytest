@@ -38,6 +38,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Testing",
     "Topic :: Utilities",
@@ -69,8 +70,8 @@ urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
 urls.Homepage = "https://docs.pytest.org/en/latest/"
 urls.Source = "https://github.com/pytest-dev/pytest"
 urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
-scripts."py.test" = "pytest:console_main"
-scripts.pytest = "pytest:console_main"
+scripts."py.test" = "_pytest.config:_console_main"
+scripts.pytest = "_pytest.config:_console_main"
 
 [tool.setuptools.package-data]
 "_pytest" = [
@@ -353,7 +354,7 @@ ignore = "W009"
 
 [tool.pyproject-fmt]
 indent = 4
-max_supported_python = "3.14"
+max_supported_python = "3.15"
 
 [tool.pytest]
 minversion = "2.0"
@@ -415,6 +416,8 @@ filterwarnings = [
     # https://github.com/pytest-dev/pytest/issues/2366
     # https://github.com/pytest-dev/pytest/pull/13057
     'default::pytest.PytestFDWarning',
+    # https://github.com/pexpect/pexpect/issues/827
+    'ignore:.*use of forkpty\(\) may lead to deadlocks in the child:DeprecationWarning:ptyprocess.*',
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [

@@ -117,6 +117,8 @@ nitpick_ignore = [
     ("py:class", "ScopeName"),
     ("py:class", "BaseExcT_1"),
     ("py:class", "ExcT_1"),
+    # Deprecated, intentionally not added to reference docs.
+    ("py:func", "pytest.console_main"),
 ]
 
 add_module_names = False

@@ -492,9 +492,9 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             else ""
         )
         if isinstance(self.rawmatch, str):
+            from _pytest.assertion.compare_text import _diff_text
+            from _pytest.assertion.highlight import dummy_highlighter
             from _pytest.assertion.util import _config
-            from _pytest.assertion.util import _diff_text
-            from _pytest.assertion.util import dummy_highlighter
             from _pytest.config import Config
 
             verbose = (
@@ -502,8 +502,10 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
                 if _config is not None
                 else 0
             )
-            diff = _diff_text(
-                self.rawmatch, stringified_exception, dummy_highlighter, verbose
+            diff = list(
+                _diff_text(
+                    self.rawmatch, stringified_exception, dummy_highlighter, verbose
+                )
             )
             self._fail_reason = ("\n" if diff[0][0] == "-" else "") + "\n".join(diff)
             return False
