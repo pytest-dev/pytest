@@ -17,6 +17,7 @@ import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 from _pytest.assertion._compare_any import _compare_eq_cls
+from _pytest.assertion._diff import ndiff_too_slow
 from _pytest.assertion.compare_text import _compare_eq_text
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
@@ -459,6 +460,19 @@ def callequal(
     )
 
 
+class TestNdiffTooSlow:
+    """Heuristic guarding against pathologically slow diffs (#8998)."""
+
+    def test_small_input_uses_ndiff(self) -> None:
+        assert ndiff_too_slow(["spam"], ["eggs"]) is False
+
+    def test_many_characters_is_too_slow(self) -> None:
+        assert ndiff_too_slow(["a" * 6000], ["b" * 6000]) is True
+
+    def test_many_lines_is_too_slow(self) -> None:
+        assert ndiff_too_slow(["x"] * 1001, ["y"]) is True
+
+
 class TestAssert_reprcompare:
     def test_different_types(self) -> None:
         assert callequal([0, 1], "foo") is None
@@ -512,6 +526,32 @@ class TestAssert_reprcompare:
         assert lines is not None
         assert "- " + "a" * 50 + "eggs" in lines
         assert "+ " + "a" * 50 + "spam" in lines
+
+    def test_text_diff_large_input_skips_ndiff(self) -> None:
+        # A single huge differing line is above the character cutoff and falls
+        # back to a fast line-level diff instead of the pathologically slow
+        # ndiff (#8998).
+        left = "a" + "x" * 20000
+        right = "b" + "y" * 20000
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert any("Diff too large to compute in full" in line for line in lines)
+        # The character-level "?" guide lines produced by ndiff must not appear.
+        assert not any(line.startswith("? ") for line in lines)
+
+    def test_text_diff_many_lines_skips_ndiff(self) -> None:
+        # Many lines are above the line cutoff and fall back, capping the
+        # number of lines actually diffed (#8998).
+        left = "\n".join(f"left line {i}" for i in range(2000))
+        right = "\n".join(f"right line {i}" for i in range(2000))
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert any("Diff too large to compute in full" in line for line in lines)
+        assert any("Diffing only the first 1000 lines" in line for line in lines)
+        assert not any(line.startswith("? ") for line in lines)
+        # The fallback still shows which lines differ.
+        assert "-right line 0" in lines
+        assert "+left line 0" in lines
 
     def test_multiline_text_diff(self) -> None:
         left = "foo\nspam\nbar"
@@ -672,6 +712,17 @@ class TestAssert_reprcompare:
             "At index 0 diff: 1 != 10",
             "Use -v to get more diff",
         ]
+
+    def test_iterable_large_input_skips_ndiff(self) -> None:
+        # Large iterables fall back to a fast line-level diff instead of the
+        # pathologically slow ndiff over their pprint output (#8998).
+        left = [f"item-{i}" for i in range(2000)]
+        right = [f"other-{i}" for i in range(2000)]
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert "Full diff:" in lines
+        assert any("Diff too large to compute in full" in line for line in lines)
+        assert not any(line.startswith("? ") for line in lines)
 
     def test_iterable_full_diff_ci(
         self, monkeypatch: MonkeyPatch, pytester: Pytester

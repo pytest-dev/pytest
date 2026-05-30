@@ -6,6 +6,8 @@ from collections.abc import Sequence
 
 from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
+from _pytest.assertion._diff import fast_unified_diff
+from _pytest.assertion._diff import ndiff_too_slow
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.compat import running_on_ci
 
@@ -27,6 +29,9 @@ def _compare_eq_iterable(
 
     yield ""
     yield "Full diff:"
+    if ndiff_too_slow(left_formatting, right_formatting):
+        yield from fast_unified_diff(left_formatting, right_formatting, highlighter)
+        return
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     yield from highlighter(
