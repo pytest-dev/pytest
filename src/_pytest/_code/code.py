@@ -8,8 +8,6 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 import dataclasses
 import inspect
-from inspect import CO_VARARGS
-from inspect import CO_VARKEYWORDS
 from io import StringIO
 import os
 from pathlib import Path
@@ -87,10 +85,11 @@ class Code:
     def path(self) -> Path | str:
         """Return a path object pointing to source code, or an ``str`` in
         case of ``OSError`` / non-existing file."""
-        if not self.raw.co_filename:
+        filename = inspect.getfile(self.raw)
+        if not filename:
             return ""
         try:
-            p = absolutepath(self.raw.co_filename)
+            p = absolutepath(filename)
             # maybe don't try this checking
             if not p.exists():
                 raise OSError("path check failed.")
@@ -98,7 +97,7 @@ class Code:
         except OSError:
             # XXX maybe try harder like the weird logic
             # in the standard lib [linecache.updatecache] does?
-            return self.raw.co_filename
+            return filename
 
     @property
     def fullsource(self) -> Source | None:
@@ -117,14 +116,17 @@ class Code:
         If 'var' is set True also return the names of the variable and
         keyword arguments when present.
         """
-        # Handy shortcut for getting args.
-        raw = self.raw
-        argcount = raw.co_argcount
-        if var:
-            argcount += raw.co_kwonlyargcount
-            argcount += bool(raw.co_flags & CO_VARARGS)
-            argcount += bool(raw.co_flags & CO_VARKEYWORDS)
-        return raw.co_varnames[:argcount]
+        # inspect.getargs merges positional and kwonly into a single list;
+        # co_argcount is needed to exclude kwonly when var=False.
+        args, varargs, varkw = inspect.getargs(self.raw)
+        if not var:
+            return tuple(args[: self.raw.co_argcount])
+        result = list(args)
+        if varargs is not None:
+            result.append(varargs)
+        if varkw is not None:
+            result.append(varkw)
+        return tuple(result)
 
 
 class Frame:
