@@ -115,6 +115,20 @@ def test_code_getargs() -> None:
     c4 = Code.from_function(f4)
     assert c4.getargs(var=True) == ("x", "y", "z")
 
+    def f5(x, *y, **z):
+        a1 = a2 = a3 = a4 = a5 = a6 = 1  # noqa: F841
+
+    c5 = Code.from_function(f5)
+    f5(1, 2, 3, z=4)  # cover function body
+    assert c5.getargs(var=True) == ("x", "y", "z")
+
+    def f6(x, *y, kw=1, **z):
+        a1 = a2 = a3 = a4 = a5 = a6 = 1  # noqa: F841
+
+    c6 = Code.from_function(f6)
+    f6(1, 2, kw=3, z=4)  # cover function body
+    assert c6.getargs(var=True) == ("x", "kw", "y", "z")
+
 
 def test_frame_getargs() -> None:
     def f1(x) -> FrameType:

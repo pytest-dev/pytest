@@ -121,8 +121,9 @@ class Code:
         raw = self.raw
         argcount = raw.co_argcount
         if var:
-            argcount += raw.co_flags & CO_VARARGS
-            argcount += raw.co_flags & CO_VARKEYWORDS
+            argcount += raw.co_kwonlyargcount
+            argcount += bool(raw.co_flags & CO_VARARGS)
+            argcount += bool(raw.co_flags & CO_VARKEYWORDS)
         return raw.co_varnames[:argcount]
 
 
