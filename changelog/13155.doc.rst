@@ -1,0 +1,1 @@
+Clarified how the ``request`` fixture provides indirect parametrization values via ``request.param``.

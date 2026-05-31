@@ -370,6 +370,11 @@ test:
     def test_indirect(fixt):
         assert len(fixt) == 3
 
+The ``request`` argument used by the fixture is pytest's built-in
+:py:class:`FixtureRequest <pytest.FixtureRequest>` fixture. For indirect
+parametrization, the value supplied to the test parameter is passed to the
+fixture and made available as ``request.param``.
+
 This can be used, for example, to do more expensive setup at test run time in
 the fixture, rather than having to run those setup steps at collection time.
 
