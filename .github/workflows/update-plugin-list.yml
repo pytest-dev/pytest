@@ -59,6 +59,77 @@ jobs:
           draft: true
 
       - name: Instruct the maintainers to trigger CI by undrafting the PR
+        if: steps.pr.outputs.pull-request-number
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
+        run: >-
+          gh pr comment
+          --body 'Please mark the PR as ready for review to trigger PR checks.'
+          --repo '${{ github.repository }}'
+          "$PULL_REQUEST_NUMBER"
+
+  update-plugin-list-stable:
+    if: github.repository_owner == 'pytest-dev'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Find current maintenance branch
+        id: find-branch
+        run: |
+          branch=$(git ls-remote --heads https://github.com/pytest-dev/pytest.git \
+            | grep -oE 'refs/heads/[0-9]+\.[0-9]+\.x' \
+            | sed 's|refs/heads/||' \
+            | sort -t. -k1,1n -k2,2n \
+            | tail -1)
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ steps.find-branch.outputs.branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: requests-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/pytest-plugin-list/
+          key: plugins-http-cache-${{ github.run_id }}
+          restore-keys: plugins-http-cache-
+
+      - name: Install tox
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+
+      - name: Update Plugin List
+        run: tox -e update-plugin-list
+
+      - name: Create Pull Request
+        id: pr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
+        with:
+          commit-message: '[automated] Update plugin list'
+          author: 'pytest bot <pytestbot@users.noreply.github.com>'
+          base: ${{ steps.find-branch.outputs.branch }}
+          branch: update-plugin-list/patch-stable
+          delete-branch: true
+          branch-suffix: short-commit-hash
+          title: '[automated] Update plugin list (${{ steps.find-branch.outputs.branch }})'
+          body: '[automated] Update plugin list for the ${{ steps.find-branch.outputs.branch }} maintenance branch (keeps stable docs current).'
+          draft: true
+
+      - name: Instruct the maintainers to trigger CI by undrafting the PR
+        if: steps.pr.outputs.pull-request-number
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
