@@ -10,6 +10,7 @@ import os
 import platform
 import sys
 import traceback
+from typing import NoReturn
 
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -244,6 +245,12 @@ def evaluate_xfail_marks(item: Item) -> Xfail | None:
 xfailed_key = StashKey[Xfail | None]()
 
 
+def _xfail_not_run(reason: str) -> NoReturn:
+    exc = xfail.Exception("[NOTRUN] " + reason)
+    exc._pytest_xfail_not_run = True  # type: ignore[attr-defined]
+    raise exc
+
+
 @hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: Item) -> None:
     skipped = evaluate_skip_marks(item)
@@ -252,7 +259,7 @@ def pytest_runtest_setup(item: Item) -> None:
 
     item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
     if xfailed and not item.config.option.runxfail and not xfailed.run:
-        xfail("[NOTRUN] " + xfailed.reason)
+        _xfail_not_run(xfailed.reason)
 
 
 @hookimpl(wrapper=True)
@@ -262,7 +269,7 @@ def pytest_runtest_call(item: Item) -> Generator[None]:
         item.stash[xfailed_key] = xfailed = evaluate_xfail_marks(item)
 
     if xfailed and not item.config.option.runxfail and not xfailed.run:
-        xfail("[NOTRUN] " + xfailed.reason)
+        _xfail_not_run(xfailed.reason)
 
     try:
         return (yield)

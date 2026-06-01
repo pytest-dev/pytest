@@ -453,6 +453,28 @@ class TestXFail:
             ]
         )
 
+    def test_xfail_not_run_does_not_format_traceback(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail(run=False, reason="noway")
+            def test_func():
+                assert 0
+        """
+        )
+
+        def repr_failure(*args, **kwargs):
+            raise AssertionError("xfail(run=False) should not format a traceback")
+
+        item.repr_failure = repr_failure  # type: ignore[method-assign]
+        item._repr_failure_py = repr_failure  # type: ignore[method-assign]
+
+        reports = runtestprotocol(item, log=False)
+
+        assert reports[0].skipped
+        assert reports[0].wasxfail == "[NOTRUN] noway"
+        assert reports[0].longrepr == "[NOTRUN] noway"
+
     def test_xfail_not_run_no_setup_run(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             test_one="""

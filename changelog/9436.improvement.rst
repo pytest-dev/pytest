@@ -1,0 +1,1 @@
+Avoid formatting tracebacks for tests marked with ``xfail(run=False)``.

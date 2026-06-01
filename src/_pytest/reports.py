@@ -435,7 +435,10 @@ class TestReport(BaseReport):
                 longrepr = _format_exception_group_all_skipped_longrepr(item, excinfo)
             else:
                 outcome = "failed"
-                longrepr = _format_failed_longrepr(item, call, excinfo)
+                if getattr(excinfo.value, "_pytest_xfail_not_run", False):
+                    longrepr = str(excinfo.value)
+                else:
+                    longrepr = _format_failed_longrepr(item, call, excinfo)
         for rwhen, key, content in item._report_sections:
             sections.append((f"Captured {key} {rwhen}", content))
         return cls(
