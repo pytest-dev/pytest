@@ -600,6 +600,24 @@ class TestDoctests:
         reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
 
+    def test_doctestmodule_does_not_hide_module_fixtures(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def foo_fixture():
+                return 1
+
+            def test_foo(foo_fixture):
+                assert foo_fixture
+        """
+        )
+        result = pytester.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=1)
+
     def test_doctestmodule_three_tests(self, pytester: Pytester):
         p = pytester.makepyfile(
             """

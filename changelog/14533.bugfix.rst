@@ -1,0 +1,1 @@
+Fixed a regression where enabling :option:`--doctest-modules` could make fixtures defined in a Python module unavailable to normal tests collected from the same module.

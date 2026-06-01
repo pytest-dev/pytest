@@ -1676,7 +1676,7 @@ class FixtureManager:
         # TODO: The order of the FixtureDefs list of each arg is significant,
         #       explain.
         self._arg2fixturedefs: Final[dict[str, list[FixtureDef[Any]]]] = {}
-        self._holderobjseen: Final[set[object]] = set()
+        self._holderobjseen: Final[set[tuple[object, nodes.Node | str | None]]] = set()
         # A mapping from a node to a list of autouse fixture names it defines.
         # The Session entry holds global usefixtures from config.
         self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
@@ -2031,7 +2031,10 @@ class FixtureManager:
             assert isinstance(node_or_obj, nodes.Node)
             holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]
             effective_node = node_or_obj
-        if holderobj in self._holderobjseen:
+        # The same holder may be parsed with different visibility scopes, e.g.
+        # a module collected as both DoctestModule and Module.
+        holderobj_key = (holderobj, effective_node or effective_nodeid)
+        if holderobj_key in self._holderobjseen:
             return
 
         # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
@@ -2040,7 +2043,7 @@ class FixtureManager:
         else:
             holderobj_tp = holderobj
 
-        self._holderobjseen.add(holderobj)
+        self._holderobjseen.add(holderobj_key)
         for name in dir(holderobj):
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getattr() ignores such exceptions.
