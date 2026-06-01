@@ -7,7 +7,6 @@ from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
 from _pytest.skipping import evaluate_xfail_marks
-from _pytest.skipping import pytest_runtest_call
 from _pytest.skipping import pytest_runtest_setup
 import pytest
 
@@ -477,6 +476,8 @@ class TestXFail:
         assert reports[0].longrepr == "[NOTRUN] noway"
 
     def test_xfail_not_run_call_phase_marks_exception(self, pytester: Pytester) -> None:
+        from _pytest.skipping import pytest_runtest_call
+
         item = pytester.getitem(
             """
             import pytest
