@@ -475,6 +475,19 @@ class TestXFail:
         assert reports[0].wasxfail == "[NOTRUN] noway"
         assert reports[0].longrepr == "[NOTRUN] noway"
 
+    def test_regular_failure_still_formats_traceback(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            def test_func():
+                raise ValueError("boom")
+        """
+        )
+
+        reports = runtestprotocol(item, log=False)
+
+        assert reports[1].failed
+        assert "ValueError: boom" in reports[1].longreprtext
+
     def test_xfail_not_run_call_phase_marks_exception(self, pytester: Pytester) -> None:
         from _pytest.skipping import pytest_runtest_call
 
