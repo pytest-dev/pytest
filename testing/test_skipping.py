@@ -7,6 +7,7 @@ from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
 from _pytest.skipping import evaluate_xfail_marks
+from _pytest.skipping import pytest_runtest_call
 from _pytest.skipping import pytest_runtest_setup
 import pytest
 
@@ -474,6 +475,24 @@ class TestXFail:
         assert reports[0].skipped
         assert reports[0].wasxfail == "[NOTRUN] noway"
         assert reports[0].longrepr == "[NOTRUN] noway"
+
+    def test_xfail_not_run_call_phase_marks_exception(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail(run=False, reason="call phase")
+            def test_func():
+                assert 0
+        """
+        )
+
+        runtest_call = pytest_runtest_call(item)
+
+        with pytest.raises(pytest.xfail.Exception) as excinfo:
+            next(runtest_call)
+
+        assert excinfo.value.msg == "[NOTRUN] call phase"
+        assert excinfo.value._pytest_xfail_not_run is True  # type: ignore[attr-defined]
 
     def test_xfail_not_run_no_setup_run(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
