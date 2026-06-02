@@ -464,7 +464,9 @@ class TestXFail:
         )
 
         def repr_failure(*args, **kwargs):
-            raise AssertionError("xfail(run=False) should not format a traceback")
+            raise AssertionError(  # pragma: no cover
+                "xfail(run=False) should not format a traceback"
+            )
 
         item.repr_failure = repr_failure  # type: ignore[method-assign]
         item._repr_failure_py = repr_failure  # type: ignore[method-assign]
