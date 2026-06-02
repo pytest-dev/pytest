@@ -237,9 +237,7 @@ class ParameterSet(NamedTuple):
             # parameter set with NOTSET values, with the "empty parameter set" mark applied to it.
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
-                ParameterSet(
-                    values=(NOTSET,) * len(argnames), marks=[mark], id=None
-                )
+                ParameterSet(values=(NOTSET,) * len(argnames), marks=[mark], id=None)
             )
         return argnames, parameters
 
