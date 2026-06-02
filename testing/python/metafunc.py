@@ -1475,6 +1475,21 @@ class TestMetafuncFunctional:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 1 skipped *"])
 
+    def test_parametrize_empty_argvalues_callable_ids(self, pytester: Pytester) -> None:
+        """Callable ids with empty argvalues must not crash or leak 'NOTSET' (#13235)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("x", [], ids=lambda x: x.id)
+            def test_foo(x):
+                pass
+        """
+        )
+        result = pytester.runpytest("-v")
+        result.stdout.no_fnmatch_line("*NOTSET*")
+        result.stdout.fnmatch_lines(["* 1 skipped *"])
+
     def test_parametrized_ids_invalid_type(self, pytester: Pytester) -> None:
         """Test error with non-strings/non-ints, without generator (#1857)."""
         pytester.makepyfile(

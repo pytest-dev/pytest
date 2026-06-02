@@ -238,7 +238,7 @@ class ParameterSet(NamedTuple):
             mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(
                 ParameterSet(
-                    values=(NOTSET,) * len(argnames), marks=[mark], id="NOTSET"
+                    values=(NOTSET,) * len(argnames), marks=[mark], id=None
                 )
             )
         return argnames, parameters

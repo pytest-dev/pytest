@@ -1013,6 +1013,8 @@ class IdMaker:
         user-provided id callable, if given."""
         if self.idfn is None:
             return None
+        if val is NOTSET:
+            return None
         try:
             id = self.idfn(val)
         except Exception as e:

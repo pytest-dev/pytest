@@ -1,0 +1,5 @@
+Fixed :func:`pytest.mark.parametrize` with an empty ``argvalues`` list and a
+callable ``ids`` parameter leaking the internal ``NOTSET`` string as the test
+ID (e.g. ``test_foo[NOTSET]``). The callable is no longer invoked for the
+placeholder parameterset, and the generated ID now follows the standard
+auto-naming convention (e.g. ``test_foo[x0]``).
