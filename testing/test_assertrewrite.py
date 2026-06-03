@@ -1689,7 +1689,7 @@ class TestAssertionRewriteWalrusOperator:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert not (False and False is False)"])
+        result.stdout.fnmatch_lines(["*assert not (True and False is False)"])
 
     def test_assertion_walrus_operator_boolean_none_fails(
         self, pytester: Pytester
@@ -1703,7 +1703,7 @@ class TestAssertionRewriteWalrusOperator:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert not (None and None is None)"])
+        result.stdout.fnmatch_lines(["*assert not (True and None is None)"])
 
     def test_assertion_walrus_operator_value_changes_cleared_after_each_test(
         self, pytester: Pytester
@@ -1947,6 +1947,24 @@ class TestIssue14445:
         )
         result = pytester.runpytest()
         assert result.ret == 0
+
+    def test_walrus_boolop_same_target_correct_explanation(
+        self, pytester: Pytester
+    ) -> None:
+        """Multiple walrus operators to the same name in a BoolOp must show
+        each operand's value at evaluation time, not the final value."""
+        pytester.makepyfile(
+            """
+            def side_effect():
+                return True
+
+            def test_walrus_boolop():
+                assert (x := side_effect()) and (x := False)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*assert (True and False)"])
 
 
 @pytest.mark.skipif(

@@ -940,9 +940,8 @@ class AssertionRewriter(ast.NodeVisitor):
 
     def visit_NamedExpr(self, name: ast.NamedExpr) -> tuple[ast.NamedExpr, str]:
         # Return the NamedExpr as-is so it evaluates in its natural position
-        # (preserving left-to-right evaluation order). For the explanation,
-        # reference the target variable (already assigned by the walrus) to
-        # avoid re-evaluating the expression.
+        # (preserving left-to-right evaluation order in function calls, etc.).
+        # For the explanation, reference the target variable.
         locs = ast.Call(self.builtin("locals"), [], [])
         target_id = name.target.id
         target_name = ast.Name(target_id, ast.Load())
@@ -981,12 +980,17 @@ class AssertionRewriter(ast.NodeVisitor):
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
+            # For Name/NamedExpr operands, track the value in a stable
+            # @py_assert variable so the explanation shows the value at
+            # evaluation time — even if a later walrus overwrites the name.
+            if isinstance(v, ast.NamedExpr | ast.Name):
+                tracked = self.assign(ast.Name(res_var, ast.Load()))
+                for key in self.stack[-1]:
+                    self.stack[-1][key] = self.display(tracked)
             expl_format = self.pop_format_context(ast.Constant(expl))
             call = ast.Call(app, [expl_format], [])
             self.expl_stmts.append(ast.Expr(call))
             if i < levels:
-                # Use res_var (already assigned above) rather than res directly,
-                # so that NamedExpr operands aren't evaluated a second time.
                 cond: ast.expr = ast.Name(res_var, ast.Load())
                 if is_or:
                     cond = ast.UnaryOp(ast.Not(), cond)
@@ -1069,8 +1073,6 @@ class AssertionRewriter(ast.NodeVisitor):
         left_res, left_expl = self.visit(comp.left)
         if isinstance(comp.left, ast.Compare | ast.BoolOp):
             left_expl = f"({left_expl})"
-        # If the left operand is a NamedExpr, assign it to a temp so the
-        # walrus executes before any right-side expressions are hoisted.
         if isinstance(left_res, ast.NamedExpr):
             left_res = self.assign(left_res)
         res_variables = [self.variable() for i in range(len(comp.ops))]
@@ -1095,9 +1097,6 @@ class AssertionRewriter(ast.NodeVisitor):
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, ast.Compare | ast.BoolOp):
                 next_expl = f"({next_expl})"
-            # Assign NamedExpr comparators to a temp so each walrus evaluates
-            # exactly once — critical for chained comparisons where the same
-            # node would otherwise be re-evaluated as left_res next iteration.
             if isinstance(next_res, ast.NamedExpr):
                 next_res = self.assign(next_res)
             results.append(next_res)
