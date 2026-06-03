@@ -969,40 +969,56 @@ class AssertionRewriter(ast.NodeVisitor):
         body = save = self.statements
         fail_save = self.expl_stmts
         levels = len(boolop.values) - 1
+        # Pre-scan: for each operand position, collect the set of variable
+        # names that a *later* operand's walrus operator will overwrite.
+        # An operand needs a snapshot only when its value references a name
+        # in this set (otherwise the explanation would show the post-walrus
+        # value instead of the value at evaluation time).
+        later_walrus_targets: list[set[str]] = [set() for _ in boolop.values]
+        seen: set[str] = set()
+        for idx in range(len(boolop.values) - 1, -1, -1):
+            later_walrus_targets[idx] = set(seen)
+            for node in ast.walk(boolop.values[idx]):
+                if isinstance(node, ast.NamedExpr):
+                    seen.add(node.target.id)
         self.push_format_context()
-        # Process each operand, short-circuiting if needed.
+        # Process each operand, short-circuiting as needed.
         for i, v in enumerate(boolop.values):
             if i:
                 fail_inner: list[ast.stmt] = []
-                # expl_cond is set in a prior loop iteration below
-                self.expl_stmts.append(ast.If(expl_cond, fail_inner, []))  # noqa: F821
+                # cond is set in a prior loop iteration below
+                self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa: F821
                 self.expl_stmts = fail_inner
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
-            # For Name/NamedExpr operands, track the value in a stable
-            # @py_assert variable so the explanation shows the value at
-            # evaluation time — even if a later walrus overwrites the name.
-            if isinstance(v, ast.NamedExpr | ast.Name):
-                tracked = self.assign(ast.Name(res_var, ast.Load()))
+            # Snapshot when the raw ``res`` node would be unsafe to reuse
+            # as a condition or explanation reference:
+            #  - NamedExpr (non-last): reusing the node re-evaluates the
+            #    walrus expression including any side effects.
+            #  - Name whose variable a later walrus overwrites: the
+            #    explanation would show the post-walrus value.
+            needs_snapshot = (isinstance(v, ast.NamedExpr) and i < levels) or (
+                isinstance(v, ast.Name) and v.id in later_walrus_targets[i]
+            )
+            if needs_snapshot:
+                snapshot = self.assign(ast.Name(res_var, ast.Load()))
+                res = snapshot
                 for key in self.stack[-1]:
-                    self.stack[-1][key] = self.display(tracked)
+                    self.stack[-1][key] = self.display(snapshot)
             expl_format = self.pop_format_context(ast.Constant(expl))
             call = ast.Call(app, [expl_format], [])
             self.expl_stmts.append(ast.Expr(call))
             if i < levels:
-                cond: ast.expr = ast.Name(res_var, ast.Load())
+                # Short-circuit: and → continue if truthy; or → if falsy.
+                # ``res`` is a stable reference (Name vars are only
+                # snapshotted when a later walrus would corrupt them;
+                # calls/compares return @py_assert vars from assign()).
+                cond: ast.expr = res
                 if is_or:
                     cond = ast.UnaryOp(ast.Not(), cond)
-                # Capture the condition in a stable temp for the explanation
-                # path — res_var is overwritten by subsequent operands.
-                cond_var = self.variable()
-                body.append(ast.Assign([ast.Name(cond_var, ast.Store())], cond))
-                expl_cond: ast.expr = ast.Name(cond_var, ast.Load())  # noqa: F841
                 inner: list[ast.stmt] = []
-                self.statements.append(
-                    ast.If(ast.Name(cond_var, ast.Load()), inner, [])
-                )
+                self.statements.append(ast.If(cond, inner, []))
                 self.statements = body = inner
         self.statements = save
         self.expl_stmts = fail_save
