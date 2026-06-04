@@ -1177,7 +1177,7 @@ class FormattedExcinfo:
         repr_chain: list[tuple[ReprTraceback, ReprFileLocation | None, str | None]] = []
         e: BaseException | None = excinfo.value
         excinfo_: ExceptionInfo[BaseException] | None = excinfo
-        descr = None
+        description = None
         seen: set[int] = set()
         while e is not None and id(e) not in seen:
             seen.add(id(e))
@@ -1212,18 +1212,18 @@ class FormattedExcinfo:
                 # ExceptionInfo objects require a full traceback to work.
                 reprtraceback = ReprTracebackNative(format_exception(type(e), e, None))
                 reprcrash = None
-            repr_chain += [(reprtraceback, reprcrash, descr)]
+            repr_chain.append((reprtraceback, reprcrash, description))
 
             if e.__cause__ is not None and self.chain:
                 e = e.__cause__
                 excinfo_ = ExceptionInfo.from_exception(e) if e.__traceback__ else None
-                descr = "The above exception was the direct cause of the following exception:"
+                description = "The above exception was the direct cause of the following exception:"
             elif (
                 e.__context__ is not None and not e.__suppress_context__ and self.chain
             ):
                 e = e.__context__
                 excinfo_ = ExceptionInfo.from_exception(e) if e.__traceback__ else None
-                descr = "During handling of the above exception, another exception occurred:"
+                description = "During handling of the above exception, another exception occurred:"
             else:
                 e = None
         repr_chain.reverse()
@@ -1283,11 +1283,11 @@ class ExceptionChainRepr(ExceptionRepr):
         self.chain = chain
 
     def toterminal(self, tw: TerminalWriter) -> None:
-        for element in self.chain:
-            element[0].toterminal(tw)
-            if element[2] is not None:
+        for reprtraceback, reprcrash, description in self.chain:
+            reprtraceback.toterminal(tw)
+            if description is not None:
                 tw.line("")
-                tw.line(element[2], yellow=True)
+                tw.line(description, yellow=True)
         super().toterminal(tw)
 
 
