@@ -1114,9 +1114,6 @@ def test_invalid_xml_escape() -> None:
     # Test some more invalid xml chars, the full range should be
     # tested really but let's just test the edges of the ranges
     # instead.
-    # XXX This only tests low unicode character points for now as
-    #     there are some issues with the testing infrastructure for
-    #     the higher ones.
     # XXX Testing 0xD (\r) is tricky as it overwrites the just written
     #     line in the output, so we skip it too.
     invalid = (
@@ -1131,9 +1128,8 @@ def test_invalid_xml_escape() -> None:
         0xDFFF,
         0xFFFE,
         0x0FFFF,
-    )  # , 0x110000)
-    valid = (0x9, 0xA, 0x20)
-    # 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
+    )
+    valid = (0x9, 0xA, 0x20, 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
 
     for i in invalid:
         got = bin_xml_escape(chr(i))

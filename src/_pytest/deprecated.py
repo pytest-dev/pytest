@@ -70,6 +70,12 @@ PARAMETRIZE_NON_COLLECTION_ITERABLE = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#parametrize-iterators",
 )
 
+CONSOLE_MAIN = PytestRemovedIn10Warning(
+    "pytest.console_main() is deprecated and will be removed in pytest 10.\n"
+    "It was never intended for programmatic use; use pytest.main() instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#console-main"
+)
+
 CONFIG_INICFG = PytestRemovedIn10Warning(
     "config.inicfg is deprecated, use config.getini() to access configuration values instead.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#config-inicfg"

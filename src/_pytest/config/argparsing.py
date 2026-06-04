@@ -34,6 +34,7 @@ class Parser:
         usage: str | None = None,
         processopt: Callable[[Argument], None] | None = None,
         *,
+        prog: str | None = None,
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
@@ -42,7 +43,7 @@ class Parser:
 
         self._processopt = processopt
         self.extra_info: dict[str, Any] = {}
-        self.optparser = PytestArgumentParser(usage, self.extra_info)
+        self.optparser = PytestArgumentParser(usage, self.extra_info, prog=prog)
         anonymous_arggroup = self.optparser.add_argument_group("Custom options")
         self._anonymous = OptionGroup(
             anonymous_arggroup, "_anonymous", self, _ispytest=True
@@ -383,9 +384,12 @@ class PytestArgumentParser(argparse.ArgumentParser):
         self,
         usage: str | None,
         extra_info: dict[str, str],
+        *,
+        prog: str | None = None,
     ) -> None:
         super().__init__(
             usage=usage,
+            prog=prog,
             add_help=False,
             formatter_class=DropShorterLongHelpFormatter,
             allow_abbrev=False,
