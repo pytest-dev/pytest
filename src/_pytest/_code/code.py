@@ -1190,18 +1190,19 @@ class FormattedExcinfo:
                 if isinstance(e, BaseExceptionGroup):
                     # don't filter any sub-exceptions since they shouldn't have any internal frames
                     traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
+                    extraline = (
+                        "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames."
+                        if not traceback
+                        else None
+                    )
                     reprtraceback = ReprTracebackNative(
                         format_exception(
                             type(excinfo.value),
                             excinfo.value,
                             traceback[0]._rawentry if traceback else None,
-                        )
+                        ),
+                        extraline=extraline,
                     )
-                    if not traceback:
-                        reprtraceback.extraline = (
-                            "All traceback entries are hidden. "
-                            "Pass `--full-trace` to see hidden and internal frames."
-                        )
 
                 else:
                     reprtraceback = self.repr_traceback(excinfo_)
@@ -1323,9 +1324,9 @@ class ReprTraceback(TerminalRepr):
 
 
 class ReprTracebackNative(ReprTraceback):
-    def __init__(self, tblines: Sequence[str]) -> None:
+    def __init__(self, tblines: Sequence[str], *, extraline: str | None = None) -> None:
         self.reprentries = [ReprEntryNative(tblines)]
-        self.extraline = None
+        self.extraline = extraline
         self.style = "native"
 
 
