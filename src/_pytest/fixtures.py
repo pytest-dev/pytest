@@ -37,7 +37,7 @@ import _pytest
 from _pytest import nodes
 from _pytest._code import getfslineno
 from _pytest._code import Source
-from _pytest._code.code import FormattedExcinfo
+from _pytest._code.code import ExceptionInfoFormatter
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
@@ -944,12 +944,12 @@ class FixtureLookupErrorRepr(TerminalRepr):
         lines = self.errorstring.split("\n")
         if lines:
             tw.line(
-                f"{FormattedExcinfo.fail_marker}       {lines[0].strip()}",
+                f"{ExceptionInfoFormatter.fail_marker}       {lines[0].strip()}",
                 red=True,
             )
             for line in lines[1:]:
                 tw.line(
-                    f"{FormattedExcinfo.flow_marker}       {line.strip()}",
+                    f"{ExceptionInfoFormatter.flow_marker}       {line.strip()}",
                     red=True,
                 )
         tw.line()

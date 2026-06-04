@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 import _pytest._code
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionInfo
-from _pytest._code.code import FormattedExcinfo
+from _pytest._code.code import ExceptionInfoFormatter
 from _pytest._io import TerminalWriter
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import bestrelpath
@@ -586,7 +586,7 @@ class TestGroupContains:
         )
 
 
-class TestFormattedExcinfo:
+class TestExceptionInfoFormatter:
     @pytest.fixture
     def importasmod(self, tmp_path: Path, _sys_snapshot):
         def importasmod(source):
@@ -602,7 +602,7 @@ class TestFormattedExcinfo:
         return importasmod
 
     def test_repr_source(self):
-        pr = FormattedExcinfo()
+        pr = ExceptionInfoFormatter()
         source = _pytest._code.Source(
             """\
             def f(x):
@@ -616,7 +616,7 @@ class TestFormattedExcinfo:
         assert lines[1] == "        pass"
 
     def test_repr_source_out_of_bounds(self):
-        pr = FormattedExcinfo()
+        pr = ExceptionInfoFormatter()
         source = _pytest._code.Source(
             """\
             def f(x):
@@ -647,7 +647,7 @@ class TestFormattedExcinfo:
         else:
             assert False, "did not raise"
 
-        pr = FormattedExcinfo()
+        pr = ExceptionInfoFormatter()
         source = pr._getentrysource(excinfo.traceback[-1])
         assert source is not None
         lines = pr.get_source(source, 1, excinfo)
@@ -660,7 +660,7 @@ class TestFormattedExcinfo:
         ]
 
     def test_repr_source_not_existing(self):
-        pr = FormattedExcinfo()
+        pr = ExceptionInfoFormatter()
         co = compile("raise ValueError()", "", "exec")
         try:
             exec(co)
@@ -671,7 +671,7 @@ class TestFormattedExcinfo:
         assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_many_line_source_not_existing(self):
-        pr = FormattedExcinfo()
+        pr = ExceptionInfoFormatter()
         co = compile(
             """
 a = 1
@@ -689,7 +689,7 @@ raise ValueError()
         assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_source_failing_fullsource(self, monkeypatch) -> None:
-        pr = FormattedExcinfo()
+        pr = ExceptionInfoFormatter()
 
         try:
             _ = 1 / 0
@@ -704,7 +704,7 @@ raise ValueError()
         assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
     def test_repr_local(self) -> None:
-        p = FormattedExcinfo(showlocals=True)
+        p = ExceptionInfoFormatter(showlocals=True)
         loc = {"y": 5, "z": 7, "x": 3, "@x": 2, "__builtins__": {}}
         reprlocals = p.repr_locals(loc)
         assert reprlocals is not None
@@ -719,7 +719,7 @@ raise ValueError()
             def __repr__(self):
                 raise NotImplementedError
 
-        p = FormattedExcinfo(showlocals=True, truncate_locals=False)
+        p = ExceptionInfoFormatter(showlocals=True, truncate_locals=False)
         loc = {"x": ObjWithErrorInRepr(), "__builtins__": {}}
         reprlocals = p.repr_locals(loc)
         assert reprlocals is not None
@@ -738,7 +738,7 @@ raise ValueError()
             def __repr__(self):
                 raise ExceptionWithBrokenClass()
 
-        p = FormattedExcinfo(showlocals=True, truncate_locals=False)
+        p = ExceptionInfoFormatter(showlocals=True, truncate_locals=False)
         loc = {"x": ObjWithErrorInRepr(), "__builtins__": {}}
         reprlocals = p.repr_locals(loc)
         assert reprlocals is not None
@@ -748,13 +748,13 @@ raise ValueError()
 
     def test_repr_local_truncated(self) -> None:
         loc = {"l": [i for i in range(10)]}
-        p = FormattedExcinfo(showlocals=True)
+        p = ExceptionInfoFormatter(showlocals=True)
         truncated_reprlocals = p.repr_locals(loc)
         assert truncated_reprlocals is not None
         assert truncated_reprlocals.lines
         assert truncated_reprlocals.lines[0] == "l          = [0, 1, 2, 3, 4, 5, ...]"
 
-        q = FormattedExcinfo(showlocals=True, truncate_locals=False)
+        q = ExceptionInfoFormatter(showlocals=True, truncate_locals=False)
         full_reprlocals = q.repr_locals(loc)
         assert full_reprlocals is not None
         assert full_reprlocals.lines
@@ -771,14 +771,14 @@ raise ValueError()
             mod.func1("m" * 500)
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
-        p = FormattedExcinfo(funcargs=True, truncate_args=True)
+        p = ExceptionInfoFormatter(funcargs=True, truncate_args=True)
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
         arg1 = cast(str, reprfuncargs.args[0][1])
         assert len(arg1) < 500
         assert "..." in arg1
         # again without truncate
-        p = FormattedExcinfo(funcargs=True, truncate_args=False)
+        p = ExceptionInfoFormatter(funcargs=True, truncate_args=False)
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
         assert reprfuncargs.args[0] == ("m", repr("m" * 500))
@@ -794,7 +794,7 @@ raise ValueError()
         with pytest.raises(ValueError) as excinfo:
             mod.func1()
         excinfo.traceback = excinfo.traceback.filter(excinfo)
-        p = FormattedExcinfo()
+        p = ExceptionInfoFormatter()
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
 
         # test as intermittent entry
@@ -803,7 +803,7 @@ raise ValueError()
         assert lines[1] == '>       raise ValueError("hello\\nworld")'
 
         # test as last entry
-        p = FormattedExcinfo(showlocals=True)
+        p = ExceptionInfoFormatter(showlocals=True)
         repr_entry = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
         lines = repr_entry.lines
         assert lines[0] == "    def func1():"
@@ -829,7 +829,7 @@ raise ValueError()
             mod.func1("m" * 90, 5, 13, "z" * 120)
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
-        p = FormattedExcinfo(funcargs=True)
+        p = ExceptionInfoFormatter(funcargs=True)
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
         assert reprfuncargs.args[0] == ("m", repr("m" * 90))
@@ -837,7 +837,7 @@ raise ValueError()
         assert reprfuncargs.args[2] == ("y", "13")
         assert reprfuncargs.args[3] == ("z", repr("z" * 120))
 
-        p = FormattedExcinfo(funcargs=True)
+        p = ExceptionInfoFormatter(funcargs=True)
         repr_entry = p.repr_traceback_entry(entry)
         assert repr_entry.reprfuncargs is not None
         assert repr_entry.reprfuncargs.args == reprfuncargs.args
@@ -857,14 +857,14 @@ raise ValueError()
             mod.func1("a", "b", c="d")
         excinfo.traceback = excinfo.traceback.filter(excinfo)
         entry = excinfo.traceback[-1]
-        p = FormattedExcinfo(funcargs=True)
+        p = ExceptionInfoFormatter(funcargs=True)
         reprfuncargs = p.repr_args(entry)
         assert reprfuncargs is not None
         assert reprfuncargs.args[0] == ("x", repr("a"))
         assert reprfuncargs.args[1] == ("y", repr(("b",)))
         assert reprfuncargs.args[2] == ("z", repr({"c": "d"}))
 
-        p = FormattedExcinfo(funcargs=True)
+        p = ExceptionInfoFormatter(funcargs=True)
         repr_entry = p.repr_traceback_entry(entry)
         assert repr_entry.reprfuncargs
         assert repr_entry.reprfuncargs.args == reprfuncargs.args
@@ -882,7 +882,7 @@ raise ValueError()
         )
         with pytest.raises(ValueError) as excinfo:
             mod.entry()
-        p = FormattedExcinfo(style="short")
+        p = ExceptionInfoFormatter(style="short")
         reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
         lines = reprtb.lines
         basename = Path(mod.__file__).name
@@ -892,7 +892,7 @@ raise ValueError()
         assert reprtb.reprfileloc.lineno == 5
 
         # test last entry
-        p = FormattedExcinfo(style="short")
+        p = ExceptionInfoFormatter(style="short")
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
         lines = reprtb.lines
         assert lines[0] == '    raise ValueError("hello")'
@@ -918,7 +918,7 @@ raise ValueError()
         )
         with pytest.raises(ZeroDivisionError) as excinfo:
             mod.entry()
-        p = FormattedExcinfo(style="short")
+        p = ExceptionInfoFormatter(style="short")
         reprtb = p.repr_traceback_entry(excinfo.traceback[-3])
         assert len(reprtb.lines) == 1
         assert reprtb.lines[0] == "    func1()"
@@ -944,10 +944,10 @@ raise ValueError()
         )
         with pytest.raises(ValueError) as excinfo:
             mod.entry()
-        p = FormattedExcinfo(style="no")
+        p = ExceptionInfoFormatter(style="no")
         p.repr_traceback_entry(excinfo.traceback[-2])
 
-        p = FormattedExcinfo(style="no")
+        p = ExceptionInfoFormatter(style="no")
         reprentry = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
         lines = reprentry.lines
         assert lines[0] == "E   ValueError: hello"
@@ -965,10 +965,10 @@ raise ValueError()
         )
         with pytest.raises(ValueError) as excinfo:
             mod.entry()
-        p = FormattedExcinfo(tbfilter=True)
+        p = ExceptionInfoFormatter(tbfilter=True)
         reprtb = p.repr_traceback(excinfo)
         assert len(reprtb.reprentries) == 2
-        p = FormattedExcinfo(tbfilter=False)
+        p = ExceptionInfoFormatter(tbfilter=False)
         reprtb = p.repr_traceback(excinfo)
         assert len(reprtb.reprentries) == 3
 
@@ -991,10 +991,10 @@ raise ValueError()
 
         with monkeypatch.context() as mp:
             mp.setattr(Code, "path", "bogus")
-            p = FormattedExcinfo(style="short")
+            p = ExceptionInfoFormatter(style="short")
             reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
             lines = reprtb.lines
-            last_p = FormattedExcinfo(style="short")
+            last_p = ExceptionInfoFormatter(style="short")
             last_reprtb = last_p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
             last_lines = last_reprtb.lines
         assert lines[0] == "    func1()"
@@ -1017,7 +1017,7 @@ raise ValueError()
 
         styles: tuple[TracebackStyle, ...] = ("long", "short")
         for style in styles:
-            p = FormattedExcinfo(style=style)
+            p = ExceptionInfoFormatter(style=style)
             reprtb = p.repr_traceback(excinfo)
             assert len(reprtb.reprentries) == 2
             assert reprtb.style == style
@@ -1045,7 +1045,7 @@ raise ValueError()
         with pytest.raises(ValueError) as excinfo:
             mod.entry()
 
-        p = FormattedExcinfo(abspath=False)
+        p = ExceptionInfoFormatter(abspath=False)
 
         raised = 0
 
@@ -1131,7 +1131,7 @@ raise ValueError()
             mod.entry()
 
         for style in ("short", "long", "no"):
-            p = FormattedExcinfo(style="short")
+            p = ExceptionInfoFormatter(style="short")
             reprtb = p.repr_traceback(excinfo)
             assert reprtb.extraline == "!!! Recursion detected (same locals & position)"
             assert str(reprtb)
@@ -1682,7 +1682,7 @@ def test_repr_traceback_with_unicode(style, encoding):
         raise RuntimeError(msg)
     except RuntimeError:
         e_info = ExceptionInfo.from_current()
-    formatter = FormattedExcinfo(style=style)
+    formatter = ExceptionInfoFormatter(style=style)
     repr_traceback = formatter.repr_traceback(e_info)
     assert repr_traceback is not None
 

@@ -753,7 +753,7 @@ class ExceptionInfo(Generic[E]):
                 reprcrash=self._getreprcrash(),
             )
 
-        fmt = FormattedExcinfo(
+        fmt = ExceptionInfoFormatter(
             showlocals=showlocals,
             style=style,
             abspath=abspath,
@@ -864,8 +864,12 @@ TracebackFilter: TypeAlias = bool | Callable[[ExceptionInfo[BaseException]], Tra
 
 
 @dataclasses.dataclass
-class FormattedExcinfo:
-    """Presenting information about failing Functions and Generators."""
+class ExceptionInfoFormatter:
+    """Helper object to format ExceptionInfo's and individual exception parts
+    into TerminalRepr's.
+
+    See :func:`ExceptionInfo.getrepr` for parameters.
+    """
 
     # for traceback entries
     flow_marker: ClassVar = ">"
@@ -879,6 +883,7 @@ class FormattedExcinfo:
     truncate_locals: bool = True
     truncate_args: bool = True
     chain: bool = True
+
     astcache: dict[str | Path, ast.AST] = dataclasses.field(
         default_factory=dict, init=False, repr=False
     )
@@ -1376,7 +1381,7 @@ class ReprEntry(TerminalRepr):
         # separate indents and source lines that are not failures: we want to
         # highlight the code but not the indentation, which may contain markers
         # such as ">   assert 0"
-        fail_marker = f"{FormattedExcinfo.fail_marker}   "
+        fail_marker = f"{ExceptionInfoFormatter.fail_marker}   "
         indent_size = len(fail_marker)
         indents: list[str] = []
         source_lines: list[str] = []
