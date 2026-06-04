@@ -666,7 +666,7 @@ class ExceptionInfo(Generic[E]):
         ):
             return f"{subexc!r} [single exception in {type(self.value).__name__}]"
 
-        lines = format_exception_only(self.type, self.value)
+        lines = format_exception_only(self.value)
         text = "".join(lines)
         text = text.rstrip()
         if tryshort:
