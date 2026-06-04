@@ -64,8 +64,6 @@ it is printed alongside the assertion introspection in the traceback.
 
 See :ref:`assert-details` for more information on assertion introspection.
 
-.. _`assertraises`:
-
 Assertions about approximate equality
 -------------------------------------
 
@@ -92,6 +90,8 @@ errors are common. Instead of using ``assert abs(a - b) < tol`` or
 It also supports comparisons involving NaNs.
 
 See :func:`pytest.approx` for details.
+
+.. _`assertraises`:
 
 Assertions about expected exceptions
 ------------------------------------------
