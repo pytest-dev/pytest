@@ -1,0 +1,1 @@
+The ``help`` text of ini options registered with :func:`parser.addini() <pytest.Parser.addini>` now substitutes ``%(default)s`` with the option's default value, mirroring the behavior already available for command-line options added with ``addoption``.

@@ -84,6 +84,20 @@ def test_empty_help_param(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(lines, consecutive=True)
 
 
+def test_addini_default_substitution(pytester: Pytester) -> None:
+    """``%(default)s`` in an ini help string is replaced by its default (#9244)."""
+    pytester.makeconftest(
+        """
+        def pytest_addoption(parser):
+            parser.addini("test_ini", "Help text, defaults to %(default)s", default="hello")
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(["*test_ini (string):*Help text, defaults to hello*"])
+    assert "%(default)s" not in result.stdout.str()
+
+
 def test_parse_known_args_doesnt_quit_on_help(pytester: Pytester) -> None:
     """`parse_known_args` shouldn't exit on `--help`, unlike `parse`."""
     config = pytester.parseconfig()
