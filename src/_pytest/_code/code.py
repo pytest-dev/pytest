@@ -1292,9 +1292,6 @@ class ExceptionChainRepr(ExceptionRepr):
 
 @dataclasses.dataclass(eq=False)
 class ReprExceptionInfo(ExceptionRepr):
-    reprtraceback: ReprTraceback
-    reprcrash: ReprFileLocation | None
-
     def toterminal(self, tw: TerminalWriter) -> None:
         self.reprtraceback.toterminal(tw)
         super().toterminal(tw)
