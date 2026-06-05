@@ -2072,6 +2072,39 @@ class TestAssertionPass:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines("*Assertion Passed: f() 1")
 
+    def test_assertrepr_compare_called_for_pass_hook(
+        self, pytester: Pytester, flag_on
+    ) -> None:
+        pytester.makeconftest(
+            """\
+            def pytest_assertrepr_compare(config, op, left, right):
+                config.rootpath.joinpath("reprcompare.txt").write_text(
+                    f"{op}:{left}:{right}", encoding="utf-8"
+                )
+                return ["custom pass comparison"]
+
+            def pytest_assertion_pass(item, lineno, orig, expl):
+                item.config.rootpath.joinpath("assertion-pass.txt").write_text(
+                    expl, encoding="utf-8"
+                )
+            """
+        )
+        pytester.makepyfile(
+            """\
+            def test_simple():
+                assert 1 == 1
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+        assert pytester.path.joinpath("reprcompare.txt").read_text(
+            encoding="utf-8"
+        ) == "==:1:1"
+        assert (
+            pytester.path.joinpath("assertion-pass.txt").read_text(encoding="utf-8")
+            == "custom pass comparison"
+        )
+
     def test_hook_not_called_without_hookimpl(
         self, pytester: Pytester, monkeypatch, flag_on
     ) -> None:

@@ -934,7 +934,12 @@ def pytest_unconfigure(config: Config) -> None:
 def pytest_assertrepr_compare(
     config: Config, op: str, left: object, right: object
 ) -> list[str] | None:
-    """Return explanation for comparisons in failing assert expressions.
+    """Return explanation for comparisons in assert expressions.
+
+    By default, this hook is used only for failing assertions. It can also
+    be called for passing assertions when the :confval:`enable_assertion_pass_hook`
+    option is enabled and a :hook:`pytest_assertion_pass` hook implementation is
+    active, because pytest needs an assertion explanation to pass to that hook.
 
     Return None for no custom explanation, otherwise return a list
     of strings. The strings will be joined by newlines but any newlines
