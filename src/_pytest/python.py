@@ -1048,9 +1048,12 @@ class IdMaker:
             pass
         elif isinstance(val, enum.Enum):
             return str(val)
-        elif isinstance(getattr(val, "__name__", None), str):
+        try:
+            name = getattr(val, "__name__", None)
+        except (AttributeError, KeyError):
+            name = None
+        if isinstance(name, str):
             # Name of a class, function, module, etc.
-            name: str = getattr(val, "__name__")
             return name
         return None
 

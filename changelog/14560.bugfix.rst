@@ -1,0 +1,1 @@
+Fixed a crash when parametrized tests used custom classes with a ``__getattr__`` that raises ``KeyError`` instead of ``AttributeError`` during test id generation.

@@ -425,6 +425,24 @@ class TestMetafunc:
                 IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
+    def test_idval_custom_class_getattr_keyerror(self) -> None:
+        """Regression test for #14560.
+
+        Custom classes with a ``__getattr__`` that raises ``KeyError``
+        (instead of ``AttributeError``) should not crash id generation.
+        """
+
+        class CustomDict:
+            def __init__(self, data: dict) -> None:
+                self._data = data
+
+            def __getattr__(self, item: str) -> object:
+                return self._data[item]
+
+        val = CustomDict({"a": 1})
+        result = IdMaker([], [], None, None, None, None)._idval(val, "a", 6)
+        assert result == "a6"
+
     def test_notset_idval(self) -> None:
         """Test that a NOTSET value (used by an empty parameterset) generates
         a proper ID.
