@@ -2097,9 +2097,10 @@ class TestAssertionPass:
         )
         result = pytester.runpytest()
         result.assert_outcomes(passed=1)
-        assert pytester.path.joinpath("reprcompare.txt").read_text(
-            encoding="utf-8"
-        ) == "==:1:1"
+        assert (
+            pytester.path.joinpath("reprcompare.txt").read_text(encoding="utf-8")
+            == "==:1:1"
+        )
         assert (
             pytester.path.joinpath("assertion-pass.txt").read_text(encoding="utf-8")
             == "custom pass comparison"
