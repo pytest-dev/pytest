@@ -39,6 +39,8 @@ node-based matching instead of fragile string prefix matching.
     fixture_manager.parsefactories(holder=plugin_obj, node=directory_node)
     fixture_manager._register_fixture(name="fix", func=func, node=directory_node)
 
+The equivalent of passing ``nodeid=None`` (global visibility) is ``node=session``.
+
 In pytest 10, the ``baseid`` and ``nodeid`` string parameters will be removed.
 
 

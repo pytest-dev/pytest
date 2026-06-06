@@ -174,7 +174,7 @@ class TestFixtureNodeidDeprecations:
                     fm.parsefactories(mod_none, None)
 
                 nodeid_warns = [x for x in w if "parsefactories" in str(x.message)]
-                assert len(nodeid_warns) == 1, f"Expected 1 warning, got: {w}"
+                assert len(nodeid_warns) == 2, f"Expected 2 warning, got: {w}"
             """
         )
         pytester.makepyfile(

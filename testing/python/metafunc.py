@@ -10,6 +10,7 @@ import sys
 import textwrap
 from typing import Any
 from typing import cast
+from typing import ClassVar
 
 import hypothesis
 from hypothesis import strategies
@@ -44,7 +45,9 @@ class TestMetafunc:
 
         @dataclasses.dataclass
         class SessionMock:
+            config: Any
             _fixturemanager: FixtureManagerMock
+            nodeid: ClassVar = ""
 
         @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
@@ -55,7 +58,7 @@ class TestMetafunc:
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
         definition._fixtureinfo = fixtureinfo
-        definition.session = SessionMock(FixtureManagerMock({}))
+        definition.session = SessionMock(config, FixtureManagerMock({}))
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
     def test_no_funcargs(self) -> None:
