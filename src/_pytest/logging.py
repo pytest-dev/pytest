@@ -7,18 +7,17 @@ from collections.abc import Generator
 from collections.abc import Mapping
 from collections.abc import Set as AbstractSet
 from contextlib import contextmanager
-from contextlib import nullcontext
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 import io
 from io import StringIO
-import sys
 import logging
 from logging import LogRecord
 import os
 from pathlib import Path
 import re
+import sys
 from types import TracebackType
 from typing import final
 from typing import Generic
@@ -939,33 +938,9 @@ class _LiveLoggingStreamHandler(logging_StreamHandler):
             self._test_outcome_written = False
 
     def emit(self, record: logging.LogRecord) -> None:
-        # Determine if we need to redirect output to original stdout.
-        # In real usage, self.stream is TerminalReporter or TerminalWriter,
-        # and we need to bypass capture to avoid race conditions with
-        # background threads. In tests, self.stream may be a mock
-        # (DummyTerminal), so we write to it directly.
-        tw = getattr(self.stream, "_tw", None)
-        if tw is not None:
-            # self.stream is TerminalReporter, tw is TerminalWriter
-            original_file = tw._file
-            try:
-                tw._file = sys.__stdout__
-                self._emit_with_formatting(record)
-            finally:
-                tw._file = original_file
-        elif isinstance(self.stream, TerminalWriter):
-            # self.stream is TerminalWriter
-            original_file = self.stream._file
-            try:
-                self.stream._file = sys.__stdout__
-                self._emit_with_formatting(record)
-            finally:
-                self.stream._file = original_file
-        else:
-            # Test mock or other stream - write directly
-            self._emit_with_formatting(record)
-
-    def _emit_with_formatting(self, record: logging.LogRecord) -> None:
+        # Avoid race conditions with background threads by not changing
+        # sys.stdout globally. TerminalWriter already writes to the
+        # correct file (terminal in real runs, capture buffer in tests).
         if not self._first_record_emitted:
             self.stream.write("\n")
             self._first_record_emitted = True

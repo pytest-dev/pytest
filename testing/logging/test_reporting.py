@@ -192,7 +192,7 @@ def test_log_cli_enabled_disabled(pytester: Pytester, enabled: bool) -> None:
             log_cli=true
         """
         )
-    result = pytester.runpytest()
+    result = pytester.runpytest_subprocess("-s")
     if enabled:
         result.stdout.fnmatch_lines(
             [
@@ -226,7 +226,7 @@ def test_log_cli_default_level(pytester: Pytester) -> None:
     """
     )
 
-    result = pytester.runpytest()
+    result = pytester.runpytest_subprocess("-s")
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines(
@@ -263,7 +263,7 @@ def test_log_cli_default_level_multiple_tests(
     """
     )
 
-    result = pytester.runpytest()
+    result = pytester.runpytest_subprocess("-s")
     result.stdout.fnmatch_lines(
         [
             f"{filename}::test_log_1 ",
@@ -969,6 +969,7 @@ def test_live_logging_writes_to_stream(
     assert MockCaptureManager.calls == []
     # Output goes to the stream regardless of capture manager.
     assert cast(io.StringIO, out_file).getvalue() == "\nsome message\n"
+
 
 def test_collection_live_logging(pytester: Pytester) -> None:
     pytester.makepyfile(
