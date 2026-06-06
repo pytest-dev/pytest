@@ -869,6 +869,8 @@ class AssertionRewriter(ast.NodeVisitor):
         self.statements: list[ast.stmt] = []
         self.variables: list[str] = []
         self.variable_counter = itertools.count()
+        self.variables_overwrite[self.scope] = {}
+        self.variable_restore_names: list[tuple[str, str]] = []
 
         if self.enable_assertion_pass_hook:
             self.format_variables: list[str] = []
@@ -880,6 +882,15 @@ class AssertionRewriter(ast.NodeVisitor):
         top_condition, explanation = self.visit(assert_.test)
 
         negation = ast.UnaryOp(ast.Not(), top_condition)
+
+        def restore_walrus_targets() -> list[ast.Assign]:
+            return [
+                ast.Assign(
+                    [ast.Name(target_id, ast.Store())],
+                    ast.Name(temp_id, ast.Load()),
+                )
+                for target_id, temp_id in self.variable_restore_names
+            ]
 
         if self.enable_assertion_pass_hook:  # Experimental pytest_assertion_pass hook
             msg = self.pop_format_context(ast.Constant(explanation))
@@ -899,6 +910,7 @@ class AssertionRewriter(ast.NodeVisitor):
             raise_ = ast.Raise(exc, None)
             statements_fail = []
             statements_fail.extend(self.expl_stmts)
+            statements_fail.extend(restore_walrus_targets())
             statements_fail.append(raise_)
 
             # Passed
@@ -918,7 +930,10 @@ class AssertionRewriter(ast.NodeVisitor):
                 [*self.expl_stmts, hook_call_pass],
                 [],
             )
-            statements_pass: list[ast.stmt] = [hook_impl_test]
+            statements_pass: list[ast.stmt] = [
+                hook_impl_test,
+                *restore_walrus_targets(),
+            ]
 
             # Test for assertion condition
             main_test = ast.If(negation, statements_fail, statements_pass)
@@ -947,7 +962,9 @@ class AssertionRewriter(ast.NodeVisitor):
             exc = ast.Call(err_name, [fmt], [])
             raise_ = ast.Raise(exc, None)
 
+            body.extend(restore_walrus_targets())
             body.append(raise_)
+            self.statements.extend(restore_walrus_targets())
 
         # Clear temporary variables by setting them to None.
         if self.variables:
@@ -1001,6 +1018,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 # cond is set in a prior loop iteration below
                 self.expl_stmts.append(ast.If(cond, fail_inner, []))  # noqa: F821
                 self.expl_stmts = fail_inner
+                restore_after_operand: tuple[str, str] | None = None
                 match v:
                     # Check if the left operand is an ast.NamedExpr and the value has already been visited
                     case ast.Compare(
@@ -1012,9 +1030,14 @@ class AssertionRewriter(ast.NodeVisitor):
                         self.variables_overwrite[self.scope][target_id] = v.left  # type:ignore[assignment]
                         # mypy's false positive, we're checking that the 'target' attribute exists.
                         v.left.target.id = pytest_temp  # type:ignore[attr-defined]
+                        restore_after_operand = (target_id, pytest_temp)
+            else:
+                restore_after_operand = None
             self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
+            if restore_after_operand is not None:
+                self.variable_restore_names.append(restore_after_operand)
             expl_format = self.pop_format_context(ast.Constant(expl))
             call = ast.Call(app, [expl_format], [])
             self.expl_stmts.append(ast.Expr(call))
@@ -1119,13 +1142,16 @@ class AssertionRewriter(ast.NodeVisitor):
         syms: list[ast.expr] = []
         results = [left_res]
         for i, op, next_operand in it:
+            restore_after_compare: tuple[str, str] | None = None
             match (next_operand, left_res):
                 case (
                     ast.NamedExpr(target=ast.Name(id=target_id)),
                     ast.Name(id=name_id),
                 ) if target_id == name_id:
-                    next_operand.target.id = self.variable()
+                    temp_id = self.variable()
+                    next_operand.target.id = temp_id
                     self.variables_overwrite[self.scope][name_id] = next_operand  # type: ignore[assignment]
+                    restore_after_compare = (name_id, temp_id)
 
             next_res, next_expl = self.visit(next_operand)
             if isinstance(next_operand, ast.Compare | ast.BoolOp):
@@ -1137,6 +1163,8 @@ class AssertionRewriter(ast.NodeVisitor):
             expls.append(ast.Constant(expl))
             res_expr = ast.copy_location(ast.Compare(left_res, [op], [next_res]), comp)
             self.statements.append(ast.Assign([store_names[i]], res_expr))
+            if restore_after_compare is not None:
+                self.variable_restore_names.append(restore_after_compare)
             left_res, left_expl = next_res, next_expl
         # Use pytest.assertion.util._reprcompare if that's available.
         expl_call = self.helper(

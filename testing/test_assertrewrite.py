@@ -1722,6 +1722,55 @@ class TestAssertionRewriteWalrusOperator:
         result = pytester.runpytest()
         assert result.ret == 0
 
+    def test_assertion_walrus_operator_value_changes_cleared_after_each_assert(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            """
+            class Counter:
+                def __init__(self):
+                    self.value = 0
+
+                def increment(self):
+                    self.value += 1
+
+            def test_walrus_operator_change_value_between_asserts():
+                counter = Counter()
+                assert (before := counter.value) == 0
+                counter.increment()
+                assert before != (after := counter.value)
+                assert before == 0
+                assert after == 1
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_assertion_walrus_operator_restore_with_assertion_pass_hook(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeini("[pytest]\nenable_assertion_pass_hook = True\n")
+        pytester.makepyfile(
+            """
+            def test_walrus_operator_pass_compare_restore():
+                a = "Hello"
+                assert a != (a := a.lower())
+                assert a == "hello"
+
+            def test_walrus_operator_pass_bool_restore():
+                a = True
+                assert a and ((a := False) is False) and (a is False)
+                assert a is False
+
+            def test_walrus_operator_fail_compare_explanation():
+                a = "Hello"
+                assert a == (a := a.lower())
+        """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2, failed=1)
+        result.stdout.fnmatch_lines(["*assert 'Hello' == 'hello'"])
+
     def test_assertion_namedexpr_compare_left_overwrite(
         self, pytester: Pytester
     ) -> None:

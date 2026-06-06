@@ -1,0 +1,1 @@
+Fixed assertion rewriting leaking walrus operator state into later assertions in the same function.
