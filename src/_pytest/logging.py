@@ -17,7 +17,6 @@ from logging import LogRecord
 import os
 from pathlib import Path
 import re
-import sys
 from types import TracebackType
 from typing import final
 from typing import Generic
