@@ -13,6 +13,7 @@ from datetime import timedelta
 from datetime import timezone
 import io
 from io import StringIO
+import sys
 import logging
 from logging import LogRecord
 import os
@@ -938,23 +939,45 @@ class _LiveLoggingStreamHandler(logging_StreamHandler):
             self._test_outcome_written = False
 
     def emit(self, record: logging.LogRecord) -> None:
-        ctx_manager = (
-            self.capture_manager.global_and_fixture_disabled()
-            if self.capture_manager
-            else nullcontext()
-        )
-        with ctx_manager:
-            if not self._first_record_emitted:
+        # Determine if we need to redirect output to original stdout.
+        # In real usage, self.stream is TerminalReporter or TerminalWriter,
+        # and we need to bypass capture to avoid race conditions with
+        # background threads. In tests, self.stream may be a mock
+        # (DummyTerminal), so we write to it directly.
+        tw = getattr(self.stream, "_tw", None)
+        if tw is not None:
+            # self.stream is TerminalReporter, tw is TerminalWriter
+            original_file = tw._file
+            try:
+                tw._file = sys.__stdout__
+                self._emit_with_formatting(record)
+            finally:
+                tw._file = original_file
+        elif isinstance(self.stream, TerminalWriter):
+            # self.stream is TerminalWriter
+            original_file = self.stream._file
+            try:
+                self.stream._file = sys.__stdout__
+                self._emit_with_formatting(record)
+            finally:
+                self.stream._file = original_file
+        else:
+            # Test mock or other stream - write directly
+            self._emit_with_formatting(record)
+
+    def _emit_with_formatting(self, record: logging.LogRecord) -> None:
+        if not self._first_record_emitted:
+            self.stream.write("\n")
+            self._first_record_emitted = True
+        elif self._when in ("teardown", "finish"):
+            if not self._test_outcome_written:
+                self._test_outcome_written = True
                 self.stream.write("\n")
-                self._first_record_emitted = True
-            elif self._when in ("teardown", "finish"):
-                if not self._test_outcome_written:
-                    self._test_outcome_written = True
-                    self.stream.write("\n")
-            if not self._section_name_shown and self._when:
-                self.stream.section("live log " + self._when, sep="-", bold=True)
-                self._section_name_shown = True
-            super().emit(record)
+        if not self._section_name_shown and self._when:
+            self.stream.section("live log " + self._when, sep="-", bold=True)
+            self._section_name_shown = True
+        super().emit(record)
+        self.stream.flush()
 
     def handleError(self, record: logging.LogRecord) -> None:
         # Handled by LogCaptureHandler.

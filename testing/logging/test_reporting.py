@@ -923,10 +923,10 @@ def test_log_file_unicode(pytester: Pytester) -> None:
 
 
 @pytest.mark.parametrize("has_capture_manager", [True, False])
-def test_live_logging_suspends_capture(
+def test_live_logging_writes_to_stream(
     has_capture_manager: bool, request: FixtureRequest
 ) -> None:
-    """Test that capture manager is suspended when we emitting messages for live logging.
+    """Test that live logging writes to the stream without suspending capture.
 
     This tests the implementation calls instead of behavior because it is difficult/impossible to do it using
     ``pytester`` facilities because they do their own capturing.
@@ -960,17 +960,15 @@ def test_live_logging_suspends_capture(
     handler = _LiveLoggingStreamHandler(out_file, capture_manager)
     handler.set_when("call")
 
-    logger = logging.getLogger(__name__ + ".test_live_logging_suspends_capture")
+    logger = logging.getLogger(__name__ + ".test_live_logging_writes_to_stream")
     logger.addHandler(handler)
     request.addfinalizer(partial(logger.removeHandler, handler))
 
     logger.critical("some message")
-    if has_capture_manager:
-        assert MockCaptureManager.calls == ["enter disabled", "exit disabled"]
-    else:
-        assert MockCaptureManager.calls == []
+    # Capture is no longer suspended during emit().
+    assert MockCaptureManager.calls == []
+    # Output goes to the stream regardless of capture manager.
     assert cast(io.StringIO, out_file).getvalue() == "\nsome message\n"
-
 
 def test_collection_live_logging(pytester: Pytester) -> None:
     pytester.makepyfile(
