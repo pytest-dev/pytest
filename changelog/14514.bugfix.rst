@@ -1,0 +1,1 @@
+Fixed importlib-mode module names for dotted test filenames such as ``foo.test.py`` so they are imported as valid Python module names.

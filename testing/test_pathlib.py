@@ -788,6 +788,42 @@ class TestImportLibMode:
             "app.core.models",
         )
 
+    def test_resolve_pkg_root_and_module_name_dotted_filename(
+        self, tmp_path: Path
+    ) -> None:
+        (tmp_path / "pkg").mkdir()
+        (tmp_path / "pkg/__init__.py").touch()
+        foo_test_py = tmp_path / "pkg/foo.test.py"
+        foo_test_py.touch()
+
+        assert resolve_pkg_root_and_module_name(foo_test_py) == (
+            tmp_path,
+            "pkg.foo_test",
+        )
+
+    def test_import_path_importlib_dotted_filename_in_package(
+        self, tmp_path: Path
+    ) -> None:
+        (tmp_path / "pkg").mkdir()
+        (tmp_path / "pkg/__init__.py").write_text("", encoding="ascii")
+        (tmp_path / "pkg/foo.py").write_text("value = 1\n", encoding="ascii")
+        foo_test_py = tmp_path / "pkg/foo.test.py"
+        foo_test_py.write_text(
+            "import pkg.foo\n"
+            "imported_value = pkg.foo.value\n",
+            encoding="ascii",
+        )
+
+        mod = import_path(
+            foo_test_py,
+            mode="importlib",
+            root=tmp_path,
+            consider_namespace_packages=False,
+        )
+
+        assert mod.__name__ == "pkg.foo_test"
+        assert mod.imported_value == 1
+
     def test_insert_missing_modules(
         self, monkeypatch: MonkeyPatch, tmp_path: Path
     ) -> None:
@@ -1732,6 +1768,9 @@ def test_compute_module_name(tmp_path: Path) -> None:
     assert (
         compute_module_name(tmp_path, tmp_path / "src/app/bar/__init__.py")
         == "src.app.bar"
+    )
+    assert compute_module_name(tmp_path, tmp_path / "src/app/foo.test.py") == (
+        "src.app.foo_test"
     )
 
 
