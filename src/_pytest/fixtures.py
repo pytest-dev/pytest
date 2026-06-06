@@ -1785,8 +1785,8 @@ class FixtureManager:
             # Store conftest for deferred parsing when its Directory is collected.
             self._pending_conftests[conftest_dir] = plugin
         else:
-            # Non-conftest plugins have global visibility (nodeid=None).
-            self.parsefactories(plugin, None)
+            # Non-conftest plugins have global visibility.
+            self.parsefactories(holder=plugin, node=self.session)
 
     @hookimpl(wrapper=True)
     def pytest_make_collect_report(
