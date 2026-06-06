@@ -809,8 +809,7 @@ class TestImportLibMode:
         (tmp_path / "pkg/foo.py").write_text("value = 1\n", encoding="ascii")
         foo_test_py = tmp_path / "pkg/foo.test.py"
         foo_test_py.write_text(
-            "import pkg.foo\n"
-            "imported_value = pkg.foo.value\n",
+            "import pkg.foo\nimported_value = pkg.foo.value\n",
             encoding="ascii",
         )
 
