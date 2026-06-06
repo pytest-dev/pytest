@@ -59,6 +59,11 @@ Plugin discovery order at tool startup
      After a ``conftest.py`` file is loaded, recursively load all plugins specified
      in its :globalvar:`pytest_plugins` variable if present.
 
+   These initial conftest files are loaded before collection starts. Conftest
+   files discovered later during collection can still implement hooks, but they
+   are not available for hooks which run before collection, such as
+   :hook:`pytest_sessionstart` and :hook:`pytest_report_header`.
+
 
 .. _`conftest.py plugins`:
 .. _`localplugin`:

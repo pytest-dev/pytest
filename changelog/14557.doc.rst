@@ -1,0 +1,1 @@
+Clarified that conftest files discovered during collection are not available for hooks which run before collection, such as :hook:`pytest_sessionstart` and :hook:`pytest_report_header`.
