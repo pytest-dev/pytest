@@ -37,7 +37,7 @@ node-based matching instead of fragile string prefix matching.
 
     # Use instead
     fixture_manager.parsefactories(holder=plugin_obj, node=directory_node)
-    fixture_manager._register_fixture(name="fix", func=func, node=directory_node)
+    pytest.register_fixture(name="fix", func=func, node=directory_node)
 
 The equivalent of passing ``nodeid=None`` (global visibility) is ``node=session``.
 
