@@ -1048,10 +1048,11 @@ class IdMaker:
             pass
         elif isinstance(val, enum.Enum):
             return str(val)
-        elif isinstance(getattr(val, "__name__", None), str):
-            # Name of a class, function, module, etc.
-            name: str = getattr(val, "__name__")
-            return name
+        else:
+            name: str | None = safe_getattr(val, "__name__", None)
+            if isinstance(name, str):
+                # Name of a class, function, module, etc.
+                return name
         return None
 
     def _idval_from_value_required(self, val: object, idx: int) -> str:

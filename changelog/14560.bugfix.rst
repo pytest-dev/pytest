@@ -1,0 +1,1 @@
+Fixed automatic parametrization ID generation crashing when a parameter object raises an exception while accessing ``__name__``.

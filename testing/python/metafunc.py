@@ -425,6 +425,18 @@ class TestMetafunc:
                 IdMaker([], [], None, None, None, None)._idval(val, "a", 6) == expected
             )
 
+    def test_idval_ignores_broken_name_attribute(self) -> None:
+        """Use the fallback ID for values that reject __name__ lookup."""
+
+        class DictWrapper(dict[str, object]):
+            def __getattr__(self, name: str) -> object:
+                return self[name]
+
+        assert (
+            IdMaker([], [], None, None, None, None)._idval(DictWrapper(), "a", 6)
+            == "a6"
+        )
+
     def test_notset_idval(self) -> None:
         """Test that a NOTSET value (used by an empty parameterset) generates
         a proper ID.
