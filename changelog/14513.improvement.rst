@@ -1,0 +1,5 @@
+The order in which fixture definitions overriding each other are resolved is now determined first by their *visibility* in the collection tree rather than by the order in which they are registered.
+
+A fixture defined for a more specific node (e.g. a module or an item) now always takes precedence over one with the same name defined for a more general node (e.g. the session), even when the more general one was registered later.
+Fixtures with non-comparable visibility or the same visibility keep the existing behavior of "last registered wins".
+This change is supposed to only affect plugins which register multiple fixtures programmatically with the same name.
