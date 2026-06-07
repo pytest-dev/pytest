@@ -137,6 +137,60 @@ def test__check_initialpaths_for_relpath() -> None:
     assert nodes._check_initialpaths_for_relpath(initial_paths, outside) is None
 
 
+def test__check_initialpaths_for_relpath_keeps_single_outside_file(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    outside = tmp_path / "test_outside.py"
+    outside.write_text("", encoding="utf-8")
+
+    assert (
+        nodes._check_initialpaths_for_relpath(frozenset({outside}), outside, root) == ""
+    )
+
+
+def test__check_initialpaths_for_relpath_keeps_inside_file(tmp_path: Path) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    inside = root / "test_inside.py"
+    inside.write_text("", encoding="utf-8")
+
+    assert (
+        nodes._check_initialpaths_for_relpath(frozenset({inside}), inside, root) == ""
+    )
+
+
+def test__check_initialpaths_for_relpath_keeps_initial_directory(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+
+    assert (
+        nodes._check_initialpaths_for_relpath(frozenset({tmp_path}), tmp_path, root)
+        == ""
+    )
+
+
+def test__check_initialpaths_for_relpath_disambiguates_outside_files(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    outside_1 = tmp_path / "test_outside_1.py"
+    outside_1.write_text("", encoding="utf-8")
+    outside_2 = tmp_path / "test_outside_2.py"
+    outside_2.write_text("", encoding="utf-8")
+
+    nodeid = nodes._check_initialpaths_for_relpath(
+        frozenset({outside_1, outside_2}), outside_1, root
+    )
+
+    assert nodeid is not None
+    assert nodes.norm_sep(nodeid) == "../test_outside_1.py"
+
+
 def test_failure_with_changed_cwd(pytester: Pytester) -> None:
     """
     Test failure lines should use absolute paths if cwd has changed since

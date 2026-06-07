@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+import json
 import os
 from pathlib import Path
 from pathlib import PurePath
@@ -260,6 +261,95 @@ class TestCollectFS:
             monkeypatch.chdir(pytester.path.joinpath(dirname))
             items, _reprec = pytester.inline_genitems()
             assert [x.name for x in items] == [f"test_{dirname}"]
+
+    def test_config_outside_test_paths_keeps_unique_lastfailed_nodeids(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #9703."""
+        test_dir = pytester.mkdir("test")
+        test_dir.joinpath("test_file1.py").write_text(
+            "def test_same():\n    assert False\n",
+            encoding="utf-8",
+        )
+        test_dir.joinpath("test_file2.py").write_text(
+            "def test_same():\n    assert False\n",
+            encoding="utf-8",
+        )
+        config_dir = pytester.mkdir("config")
+        config_dir.joinpath("pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+
+        result = pytester.runpytest(
+            "-c",
+            "config/pytest.ini",
+            "test/test_file1.py",
+            "test/test_file2.py",
+        )
+
+        result.assert_outcomes(failed=2)
+        lastfailed = json.loads(
+            config_dir.joinpath(".pytest_cache", "v", "cache", "lastfailed").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert set(lastfailed) == {
+            "../test/test_file1.py::test_same",
+            "../test/test_file2.py::test_same",
+        }
+
+    def test_config_outside_test_paths_keeps_file_scoped_autouse(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #9703."""
+        test_dir = pytester.mkdir("test")
+        test_dir.joinpath("test_file1.py").write_text(
+            textwrap.dedent(
+                """
+                import pytest
+
+                @pytest.fixture(autouse=True)
+                def some_fixture():
+                    print("Fixture called")
+
+                def test_in_file1(request):
+                    print("test_in_file1")
+                    assert request.node.nodeid == "../test/test_file1.py::test_in_file1"
+                """
+            ),
+            encoding="utf-8",
+        )
+        test_dir.joinpath("test_file2.py").write_text(
+            textwrap.dedent(
+                """
+                def test_in_file2(request):
+                    print("test_in_file2")
+                    assert "some_fixture" not in request.fixturenames
+                    assert request.node.nodeid == "../test/test_file2.py::test_in_file2"
+                """
+            ),
+            encoding="utf-8",
+        )
+        config_dir = pytester.mkdir("config")
+        config_dir.joinpath("pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+
+        result = pytester.runpytest(
+            "-c",
+            "config/pytest.ini",
+            "-s",
+            "-v",
+            "test/test_file1.py",
+            "test/test_file2.py",
+        )
+
+        result.assert_outcomes(passed=2)
+        result.stdout.fnmatch_lines(
+            [
+                f"test{os.sep}test_file1.py::test_in_file1 Fixture called",
+                "test_in_file1",
+                "PASSED",
+                f"test{os.sep}test_file2.py::test_in_file2 test_in_file2",
+                "PASSED",
+            ]
+        )
 
     def test_missing_permissions_on_unselected_directory_doesnt_crash(
         self, pytester: Pytester

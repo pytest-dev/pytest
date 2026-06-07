@@ -1,0 +1,3 @@
+Fixed collection node IDs for explicitly requested test files outside the configured
+``rootdir``, avoiding duplicate last-failed cache entries and preserving file-scoped
+fixture visibility when using ``-c`` with a config file in another directory.

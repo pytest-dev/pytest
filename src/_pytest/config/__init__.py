@@ -1275,7 +1275,7 @@ class Config:
         if self.invocation_params.dir != self.rootpath:
             base_path_part, *nodeid_part = nodeid.split("::")
             # Only process path part
-            fullpath = self.rootpath / base_path_part
+            fullpath = absolutepath(self.rootpath / base_path_part)
             relative_path = bestrelpath(self.invocation_params.dir, fullpath)
 
             nodeid = "::".join([relative_path, *nodeid_part])

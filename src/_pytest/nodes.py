@@ -36,6 +36,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
+from _pytest.pathlib import bestrelpath
 from _pytest.stash import Stash
 from _pytest.warning_types import PytestWarning
 
@@ -537,9 +538,13 @@ class Collector(Node, abc.ABC):
 
 @lru_cache(maxsize=1000)
 def _check_initialpaths_for_relpath(
-    initial_paths: frozenset[Path], path: Path
+    initial_paths: frozenset[Path], path: Path, rootpath: Path | None = None
 ) -> str | None:
     if path in initial_paths:
+        if rootpath is not None and _has_multiple_outside_initial_files(
+            initial_paths, rootpath
+        ):
+            return bestrelpath(rootpath, path)
         return ""
 
     for parent in path.parents:
@@ -547,6 +552,24 @@ def _check_initialpaths_for_relpath(
             return str(path.relative_to(parent))
 
     return None
+
+
+def _has_multiple_outside_initial_files(
+    initial_paths: frozenset[Path], rootpath: Path
+) -> bool:
+    outside_file_count = 0
+    for initial_path in initial_paths:
+        if not initial_path.is_file():
+            continue
+
+        try:
+            initial_path.relative_to(rootpath)
+        except ValueError:
+            outside_file_count += 1
+            if outside_file_count > 1:
+                return True
+
+    return False
 
 
 class FSCollector(Collector, abc.ABC):
@@ -592,7 +615,9 @@ class FSCollector(Collector, abc.ABC):
             try:
                 nodeid = str(self.path.relative_to(session.config.rootpath))
             except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
+                nodeid = _check_initialpaths_for_relpath(
+                    session._initialpaths, path, session.config.rootpath
+                )
 
             if nodeid:
                 nodeid = norm_sep(nodeid)
