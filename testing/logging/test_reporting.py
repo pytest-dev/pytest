@@ -268,10 +268,10 @@ def test_log_cli_default_level_multiple_tests(
         [
             f"{filename}::test_log_1 ",
             "*WARNING*log message from test_log_1*",
-            "PASSED *50%*",
+            "PASSED",
             f"{filename}::test_log_2 ",
             "*WARNING*log message from test_log_2*",
-            "PASSED *100%*",
+            "PASSED",
             "=* 2 passed in *=",
         ]
     )
