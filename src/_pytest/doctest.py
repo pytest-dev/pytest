@@ -552,8 +552,7 @@ class DoctestModule(Module):
             else:
                 raise
 
-        # While doctests currently don't support fixtures directly, we still
-        # need to pick up autouse fixtures.
+        # doctests supports fixtures via `getfixture` and autouse.
         self.session._fixturemanager.parsefactories(self)
 
         # Uses internal doctest module parsing mechanism.

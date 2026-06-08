@@ -600,6 +600,37 @@ class TestDoctests:
         reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
 
+    def test_module_fixture_available_to_normal_test_with_doctestmodules(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #14533.
+
+        Module-level fixtures collected with ``--doctest-modules`` are available
+        both to normal tests and doctests in the same file.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix():
+                return "fix"
+
+            def test(fix):
+                assert fix == "fix"
+
+            def func():
+                '''My function.
+
+                >>> getfixture("fix")
+                'fix'
+                '''
+            """
+        )
+
+        result = pytester.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=2)
+
     def test_doctestmodule_three_tests(self, pytester: Pytester):
         p = pytester.makepyfile(
             """
@@ -1301,6 +1332,37 @@ class TestDoctestAutoUseFixtures:
         )
         result = pytester.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines(["*2 passed*"])
+
+    def test_doctest_and_python_fixtures_not_shared(self, pytester: Pytester) -> None:
+        """Fixture scopes are not shared between doctest and python modules.
+
+        This test is not meant as a hard behavioral test -- sharing scope is
+        also an acceptable behavior (see #14533). But this test ensures and
+        behavior change is done knowingly.
+        """
+        pytester.makepyfile(
+            r"""
+            import pytest
+
+            @pytest.fixture(scope="session", autouse=True)
+            def auto():
+                with open("out", "a", encoding="utf-8") as f:
+                    f.write("RUN\n")
+
+            def test():
+                pass
+
+            def func():
+                '''My function.
+
+                >>> 1 + 1
+                2
+                '''
+        """
+        )
+        result = pytester.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=2)
+        assert Path("out").read_text("utf-8").split() == ["RUN"] * 2
 
     @pytest.mark.parametrize("scope", SCOPES)
     @pytest.mark.parametrize("enable_doctest", [True, False])

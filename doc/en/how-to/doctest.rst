@@ -42,7 +42,7 @@ By default, pytest will collect ``test*.txt`` files looking for doctest directiv
 can pass additional globs using the :option:`--doctest-glob` option (multi-allowed).
 
 In addition to text files, you can also execute doctests directly from docstrings of your classes
-and functions, including from test modules:
+and functions, including from test modules, using the :option:`--doctest-modules` option:
 
 .. code-block:: python
 
@@ -223,6 +223,9 @@ unless explicitly configured by :confval:`python_files`.
 
 Also, the :ref:`usefixtures <usefixtures>` mark and fixtures marked as :ref:`autouse <autouse>` are supported
 when executing text doctest files.
+
+Python doctest modules are collected independently from Python test files.
+Fixture scope is not shared between the two.
 
 Doctests do not support fixtures that depend on parametrization, because doctest
 collection does not perform the same test generation as normal test functions.
