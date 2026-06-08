@@ -1870,6 +1870,38 @@ class TestSetAssertions:
             ]
         )
 
+    @pytest.mark.parametrize("op", [">=", "<="])
+    def test_dict_items_view_subset(self, op, pytester: Pytester) -> None:
+        """dict.items() supports set-like comparisons; assert diff should show the missing items."""
+        if op == ">=":
+            pytester.makepyfile(
+                """
+                def test_hello():
+                    x = {"a": 1, "b": 2}
+                    y = {"a": 1, "b": 2, "c": 3}
+                    assert x.items() >= y.items()
+            """
+            )
+        else:
+            pytester.makepyfile(
+                """
+                def test_hello():
+                    x = {"a": 1, "b": 2, "c": 3}
+                    y = {"a": 1, "b": 2}
+                    assert x.items() <= y.items()
+            """
+            )
+        result = pytester.runpytest()
+        side = "right" if op == ">=" else "left"
+        result.stdout.fnmatch_lines(
+            [
+                "*def test_hello():*",
+                f"*assert x.items() {op} y.items()*",
+                f"*E*Extra items in the {side} set:*",
+                "*E*('c', 3)*",
+            ]
+        )
+
 
 def test_assertrepr_loaded_per_dir(pytester: Pytester) -> None:
     pytester.makepyfile(test_base=["def test_base(): assert 1 == 2"])
