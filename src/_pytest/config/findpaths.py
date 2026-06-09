@@ -456,7 +456,11 @@ def determine_setup(
             inicfg = {}
         if rootdir_cmd_arg is None:
             if inipath_.is_file():
-                rootdir = inipath_.parent
+                rootdir = (
+                    get_common_ancestor(invocation_dir, [inipath_.parent, *dirs])
+                    if dirs
+                    else inipath_.parent
+                )
             else:
                 # Such a path also says nothing about where the project lives,
                 # so the rootdir must not be derived from it -- otherwise
