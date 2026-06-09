@@ -2068,6 +2068,97 @@ class TestRootdir:
         assert rootpath == tmp_path
         assert found_inipath == inipath
 
+    def test_explicit_config_file_uses_args_for_rootdir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        inipath = config_dir / "pytest.ini"
+        inipath.touch()
+
+        monkeypatch.chdir(tmp_path)
+
+        rootpath, found_inipath, *_ = determine_setup(
+            inifile=str(inipath),
+            override_ini=None,
+            args=[str(tests_dir)],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
+        assert rootpath == tmp_path
+        assert found_inipath == inipath
+
+    def test_explicit_config_file_without_args_uses_config_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        inipath = config_dir / "pytest.ini"
+        inipath.touch()
+
+        monkeypatch.chdir(tmp_path)
+
+        rootpath, found_inipath, *_ = determine_setup(
+            inifile=str(inipath),
+            override_ini=None,
+            args=[],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
+        assert rootpath == config_dir
+        assert found_inipath == inipath
+
+    def test_explicit_config_file_uses_args_for_nodeids(
+        self, pytester: Pytester
+    ) -> None:
+        tests_dir = pytester.mkdir("tests")
+        tests_dir.joinpath("test_file1.py").write_text(
+            textwrap.dedent(
+                """
+                import pytest
+
+                @pytest.fixture(autouse=True)
+                def some_fixture():
+                    print("Fixture called")
+
+                def test_in_file1():
+                    print("test_in_file1")
+                """
+            ),
+            encoding="utf-8",
+        )
+        tests_dir.joinpath("test_file2.py").write_text(
+            textwrap.dedent(
+                """
+                def test_in_file2():
+                    print("test_in_file2")
+                """
+            ),
+            encoding="utf-8",
+        )
+        config_dir = pytester.mkdir("config")
+        config_dir.joinpath("pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+
+        result = pytester.runpytest(
+            "-c",
+            "config/pytest.ini",
+            "-s",
+            "-v",
+            "tests/test_file1.py",
+            "tests/test_file2.py",
+        )
+
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(
+            [
+                "tests/test_file1.py::test_in_file1 Fixture called",
+                "tests/test_file2.py::test_in_file2 test_in_file2",
+            ]
+        )
+        result.stdout.no_fnmatch_line("tests/test_file2.py::test_in_file2 Fixture*")
+
     def test_with_arg_outside_cwd_without_inifile(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:

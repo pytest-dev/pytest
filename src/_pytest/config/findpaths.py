@@ -308,7 +308,11 @@ def determine_setup(
         inipath: Path | None = inipath_
         inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
-            rootdir = inipath_.parent
+            rootdir = (
+                get_common_ancestor(invocation_dir, [inipath_.parent, *dirs])
+                if dirs
+                else inipath_.parent
+            )
     else:
         ancestor = get_common_ancestor(invocation_dir, dirs)
         rootdir, inipath, inicfg, ignored_config_files = locate_config(
