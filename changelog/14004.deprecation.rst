@@ -2,5 +2,6 @@ Passing ``baseid`` to :class:`~pytest.FixtureDef` or ``nodeid`` strings to fixtu
 
 Use the ``node`` parameter instead for fixture scoping. This enables more robust node-based
 matching instead of string prefix matching.
+If you've used ``nodeid=None``, pass ``node=session`` instead.
 
 This will be removed in pytest 10.

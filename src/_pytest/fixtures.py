@@ -32,7 +32,6 @@ from typing import TYPE_CHECKING
 from typing import TypeVar
 import warnings
 
-from .compat import deprecated
 import _pytest
 from _pytest import nodes
 from _pytest._code import getfslineno
@@ -41,6 +40,7 @@ from _pytest._code.code import ExceptionInfoFormatter
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
+from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
@@ -60,6 +60,7 @@ from _pytest.deprecated import CLASS_FIXTURE_INSTANCE_METHOD
 from _pytest.deprecated import FIXTURE_BASEID_DEPRECATED
 from _pytest.deprecated import FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN
 from _pytest.deprecated import FIXTURE_NODEID_DEPRECATED
+from _pytest.deprecated import FIXTUREDEF_HAS_LOCATION_DEPRECATED
 from _pytest.deprecated import PARSEFACTORIES_NODEID_DEPRECATED
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
@@ -140,9 +141,8 @@ def is_visibility_more_specific(
     than that of ``other``, i.e. ``candidate`` is defined on a strict descendant
     in the collection tree of where ``other`` is defined."""
     if candidate.node is None or other.node is None:
-        # Fallback for fixtures registered with a string nodeid (deprecated) or
-        # with global visibility (no node). In this case compare baseids, which
-        # are nodeid prefixes.
+        # Fallback for fixtures registered with a string nodeid (deprecated).
+        # In this case compare baseids, which are nodeid prefixes.
         # This branch can be removed once baseid deprecation is done (pytest 10).
         if candidate.baseid == other.baseid:
             return False
@@ -1056,26 +1056,27 @@ class FixtureDef(Generic[FixtureValue]):
     def __init__(
         self,
         config: Config,
-        baseid: str | None,
+        baseid: str | None | NotSetType,
         argname: str,
         func: _FixtureFunc[FixtureValue],
         scope: Scope | ScopeName | Callable[[str, Config], ScopeName] | None,
         params: Sequence[object] | None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         *,
-        _ispytest: bool = False,
+        node: nodes.Node | NotSetType = NOTSET,
         # only used in a deprecationwarning msg, can be removed in pytest9
         _autouse: bool = False,
-        node: nodes.Node | None = None,
+        _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
-        # Emit deprecation warning if baseid string is used when node could be provided.
-        # baseid=None (global plugins) and baseid="" (synthetic fixtures) are fine.
-        if baseid and node is None:
+        # Emit deprecation warning if deprecated baseid string is used.
+        if node is NOTSET:
             warnings.warn(FIXTURE_BASEID_DEPRECATED, stacklevel=2)
+        if baseid is NOTSET:
+            baseid = None
         # The node where this fixture was defined, if available.
         # Used for node-based matching which is more robust than string matching.
-        self.node: Final = node
+        self.node: Final = node if node is not NOTSET else None
         # The "base" node ID for the fixture.
         #
         # This is a node ID prefix. A fixture is only available to a node (e.g.
@@ -1090,11 +1091,15 @@ class FixtureDef(Generic[FixtureValue]):
         #
         # For other plugins, the baseid is the empty string (always matches).
         # When node is available, baseid is derived from node.nodeid.
-        self.baseid: Final = node.nodeid if node is not None else (baseid or "")
+        #
+        # Deprecated: replaced by ``node``.
+        self.baseid: Final = node.nodeid if node is not NOTSET else (baseid or "")
         # Whether the fixture was found from a node or a conftest in the
         # collection tree. Will be false for fixtures defined in non-conftest
         # plugins.
-        self.has_location: Final = node is not None or baseid is not None
+        #
+        # Deprecated: kept only to back the deprecated ``has_location`` property.
+        self._has_location: Final = node is not NOTSET or baseid is not None
         # The fixture factory function.
         self.func: Final = func
         # The name by which the fixture may be requested.
@@ -1128,6 +1133,11 @@ class FixtureDef(Generic[FixtureValue]):
     def scope(self) -> ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
+
+    @property
+    def has_location(self) -> bool:
+        warnings.warn(FIXTUREDEF_HAS_LOCATION_DEPRECATED, stacklevel=2)
+        return self._has_location
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._finalizers.append(finalizer)
@@ -1243,11 +1253,12 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
     def __init__(self, request: FixtureRequest) -> None:
         super().__init__(
             config=request.config,
-            baseid=None,
+            baseid=NOTSET,
             argname="request",
             func=lambda: request,
             scope=Scope.Function,
             params=None,
+            node=request.node,
             _ispytest=True,
         )
         self.cached_result = (request, [0], None)
@@ -1776,8 +1787,8 @@ class FixtureManager:
             # Store conftest for deferred parsing when its Directory is collected.
             self._pending_conftests[conftest_dir] = plugin
         else:
-            # Non-conftest plugins have global visibility (nodeid=None).
-            self.parsefactories(plugin, None)
+            # Non-conftest plugins have global visibility.
+            self.parsefactories(holder=plugin, node=self.session)
 
     @hookimpl(wrapper=True)
     def pytest_make_collect_report(
@@ -1926,12 +1937,12 @@ class FixtureManager:
         *,
         name: str,
         func: _FixtureFunc[object],
-        nodeid: str | None = None,
+        nodeid: str | None | NotSetType = NOTSET,
         scope: Scope | ScopeName | Callable[[str, Config], ScopeName] = "function",
         params: Sequence[object] | None = None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         autouse: bool = False,
-        node: nodes.Node | None = None,
+        node: nodes.Node | NotSetType = NOTSET,
     ) -> None:
         """Register a fixture
 
@@ -1955,13 +1966,12 @@ class FixtureManager:
         :param autouse:
             Whether this is an autouse fixture.
         """
-        # Emit deprecation warning if nodeid string is used when node could be provided.
-        # nodeid=None (global plugins) is fine.
-        if nodeid and node is None:
+        # Emit deprecation warning if nodeid string.
+        if nodeid is not NOTSET or node is NOTSET:
             warnings.warn(FIXTURE_NODEID_DEPRECATED, stacklevel=2)
         fixture_def = FixtureDef(
             config=self.config,
-            baseid=nodeid if node is None else None,
+            baseid=nodeid,
             argname=name,
             func=func,
             scope=scope,
@@ -1991,9 +2001,9 @@ class FixtureManager:
         else:
             faclist.append(fixture_def)
         if autouse:
-            if node is not None:
+            if node is not NOTSET:
                 self._node_autousenames.setdefault(node, []).append(name)
-            elif nodeid:
+            elif nodeid is not NOTSET and nodeid is not None:
                 # Legacy: plugin passed nodeid string without node reference.
                 self._nodeid_autousenames.setdefault(nodeid, []).append(name)
             else:
@@ -2008,6 +2018,9 @@ class FixtureManager:
         raise NotImplementedError()
 
     @overload
+    @deprecated(
+        "parsefactories(obj, nodeid) is deprecated, use parsefactories(holder=obj, node=node) instead"
+    )
     def parsefactories(
         self,
         node_or_obj: object,
@@ -2018,8 +2031,8 @@ class FixtureManager:
     @overload
     def parsefactories(
         self,
-        node_or_obj: None = ...,
-        nodeid: None = ...,
+        node_or_obj: NotSetType = ...,
+        nodeid: NotSetType = ...,
         *,
         holder: object,
         node: nodes.Node,
@@ -2028,11 +2041,11 @@ class FixtureManager:
 
     def parsefactories(
         self,
-        node_or_obj: nodes.Node | object | None = None,
-        nodeid: str | NotSetType | None = NOTSET,
+        node_or_obj: nodes.Node | object | NotSetType = NOTSET,
+        nodeid: str | None | NotSetType = NOTSET,
         *,
-        holder: object | None = None,
-        node: nodes.Node | None = None,
+        holder: object | NotSetType = NOTSET,
+        node: nodes.Node | NotSetType = NOTSET,
     ) -> None:
         """Collect fixtures from a collection node or object.
 
@@ -2040,7 +2053,7 @@ class FixtureManager:
 
         The preferred API uses keyword-only arguments:
         - ``holder``: The object to scan for fixtures.
-        - ``node``: The node determining fixture visibility scope.
+        - ``node``: The node determining fixture visibility.
 
         Legacy positional API (translated internally):
         - ``parsefactories(node)``: Uses node.obj as holder, node for scope.
@@ -2048,24 +2061,22 @@ class FixtureManager:
         """
         # Translate legacy API to holder/node sources of truth
         # Either effective_node or effective_nodeid will be set, not both
-        effective_node: nodes.Node | None = None
-        effective_nodeid: str | None = None
+        effective_node: nodes.Node | NotSetType = NOTSET
+        effective_nodeid: str | None | NotSetType = NOTSET
 
-        if holder is not None:
+        if holder is not NOTSET:
             # New API: holder and node explicitly provided
             holderobj = holder
             effective_node = node
-        elif node_or_obj is None:
+        elif node_or_obj is NOTSET:
             raise TypeError("parsefactories() requires holder or node_or_obj")
         elif nodeid is not NOTSET:
-            # Legacy: parsefactories(obj, nodeid) - string-based scoping only
-            # Only warn if a non-None nodeid string is passed (None means global plugin)
-            if nodeid is not None:
-                warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED, stacklevel=2)
+            # Legacy: parsefactories(obj, nodeid) - string-based scoping only.
+            warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED, stacklevel=2)
             holderobj = node_or_obj
             effective_nodeid = nodeid
         else:
-            # Legacy: parsefactories(node) - node has .obj attribute
+            # parsefactories(node) - node has .obj attribute
             assert isinstance(node_or_obj, nodes.Node)
             holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]
             effective_node = node_or_obj

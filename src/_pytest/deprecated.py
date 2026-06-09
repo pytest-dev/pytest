@@ -123,6 +123,11 @@ FIXTURE_NODEID_DEPRECATED = PytestRemovedIn10Warning(
     "Pass node instead for fixture scoping."
 )
 
+FIXTUREDEF_HAS_LOCATION_DEPRECATED = PytestRemovedIn10Warning(
+    "FixtureDef.has_location is deprecated and will be removed in pytest 10. "
+    "See https://docs.pytest.org/en/stable/deprecations.html#fixturedef-has-location-deprecated"
+)
+
 PARSEFACTORIES_NODEID_DEPRECATED = PytestRemovedIn10Warning(
     "Passing nodeid string to parsefactories is deprecated. "
     "Use parsefactories(holder=obj, node=node) instead."

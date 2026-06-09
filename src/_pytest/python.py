@@ -1164,15 +1164,16 @@ class DirectParamFixtureDef(FixtureDef[FixtureValue]):
     usually behaves like any other FixtureDef.
     """
 
-    def __init__(self, *, config: Config, argname: str, scope: Scope) -> None:
+    def __init__(self, *, node: nodes.Node, argname: str, scope: Scope) -> None:
         super().__init__(
-            config=config,
-            baseid="",
+            config=node.config,
+            baseid=NOTSET,
             argname=argname,
             func=get_direct_param_fixture_func,
             scope=scope,
             params=None,
             ids=None,
+            node=node,
             _ispytest=True,
         )
 
@@ -1395,7 +1396,7 @@ class Metafunc:
                 fixturedef = name2directparamfixturedef[argname]
             else:
                 fixturedef = DirectParamFixtureDef(
-                    config=self.config,
+                    node=self.definition.session,
                     argname=argname,
                     scope=scope_,
                 )
