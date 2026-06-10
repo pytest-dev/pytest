@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 import dataclasses
 import pprint
 
@@ -8,47 +11,52 @@ from _pytest.assertion._compare_mapping import _compare_eq_mapping
 from _pytest.assertion._compare_sequence import _compare_eq_iterable
 from _pytest.assertion._compare_sequence import _compare_eq_sequence
 from _pytest.assertion._compare_set import _compare_eq_set
+from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
 from _pytest.assertion._guards import has_default_eq
 from _pytest.assertion._guards import isattrs
 from _pytest.assertion._guards import isdatacls
 from _pytest.assertion._guards import isiterable
-from _pytest.assertion._guards import ismapping
 from _pytest.assertion._guards import isnamedtuple
-from _pytest.assertion._guards import issequence
-from _pytest.assertion._guards import isset
-from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion.compare_text import _compare_eq_text
+from _pytest.assertion.compare_text import _notin_text
 
 
 def _compare_eq_any(
+    op: str,
     left: object,
     right: object,
     highlighter: _HighlightFunc,
     verbose: int,
     assertion_text_diff_style: _AssertionTextDiffStyle,
-) -> list[str]:
-    explanation = []
-    if istext(left) and istext(right):
-        explanation = list(
-            _compare_eq_text(
-                left,
-                right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
-            )
-        )
-    else:
-        from _pytest.python_api import ApproxBase
+) -> list[str] | None:
+    """Return the per-line explanation for ``left op right`` (without summary).
 
+    Returns ``None`` when no specialised explanation applies.
+    """
+    from _pytest.python_api import ApproxBase
+
+    explanation: list[str]
+    match (left, op, right):
+        case (str(), "==", str()):
+            explanation = list(
+                _compare_eq_text(
+                    left, right, highlighter, verbose, assertion_text_diff_style
+                )
+            )
+        # ``str`` is also a ``Sequence``; without this case the asymmetric
+        # ``str == <other-sequence>`` (or vice versa) would match the
+        # ``(Sequence(), "==", Sequence())`` arm below and produce a
+        # nonsensical per-index sequence diff.
+        case (str(), "==", _) | (_, "==", str()):
+            explanation = []
         # Although the common order should be obtained == approx(...), allow both ways.
-        if isinstance(right, ApproxBase):
-            explanation = right._repr_compare(left)
-        elif isinstance(left, ApproxBase):
-            explanation = left._repr_compare(right)
-        elif type(left) is type(right) and (
+        case (_, "==", ApproxBase() as approx):
+            explanation = approx._repr_compare(left)
+        case (ApproxBase() as approx, "==", _):
+            explanation = approx._repr_compare(right)
+        case (_, "==", _) if type(left) is type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
             # Note: unlike dataclasses/attrs, namedtuples compare only the
@@ -57,24 +65,33 @@ def _compare_eq_any(
             # used in older code bases before dataclasses/attrs were available.
             explanation = list(
                 _compare_eq_cls(
-                    left,
-                    right,
-                    highlighter,
-                    verbose,
-                    assertion_text_diff_style,
+                    left, right, highlighter, verbose, assertion_text_diff_style
                 )
             )
-        elif issequence(left) and issequence(right):
+        # ``str`` is a ``Sequence`` too, but the ``(str(), "==", str())``
+        # case above has already caught the both-string case before reaching
+        # here.
+        case (Sequence(), "==", Sequence()):
             explanation = list(_compare_eq_sequence(left, right, highlighter, verbose))
-        elif isset(left) and isset(right):
+        case (AbstractSet(), "==", AbstractSet()):
             explanation = _compare_eq_set(left, right, highlighter, verbose)
-        elif ismapping(left) and ismapping(right):
+        case (Mapping(), "==", Mapping()):
             explanation = list(_compare_eq_mapping(left, right, highlighter, verbose))
+        case (_, "==", _):
+            # No specialised ``==`` diff, but the iterable extension below may
+            # still apply.
+            explanation = []
+        case (str(), "not in", str()):
+            return list(_notin_text(left, right, verbose))
+        case (AbstractSet(), "!=" | ">=" | "<=" | ">" | "<", AbstractSet()):
+            return SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
+        case _:
+            return None
 
-        if isiterable(left) and isiterable(right):
-            expl = _compare_eq_iterable(left, right, highlighter, verbose)
-            explanation.extend(expl)
-
+    # Only the ``==`` cases reach here (others returned above); add the iterable
+    # extension when applicable.
+    if isiterable(left) and isiterable(right):
+        explanation.extend(_compare_eq_iterable(left, right, highlighter, verbose))
     return explanation
 
 
@@ -123,11 +140,15 @@ def _compare_eq_cls(
             yield ""
             yield f"Drill down into differing attribute {field}:"
             yield f"{indent}{field}: {highlighter(repr(field_left))} != {highlighter(repr(field_right))}"
-            for line in _compare_eq_any(
-                field_left,
-                field_right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
+            for line in (
+                _compare_eq_any(
+                    "==",
+                    field_left,
+                    field_right,
+                    highlighter,
+                    verbose,
+                    assertion_text_diff_style,
+                )
+                or []
             ):
                 yield indent + line

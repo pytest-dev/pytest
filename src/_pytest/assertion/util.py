@@ -13,12 +13,8 @@ import _pytest._code
 from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest.assertion._compare_any import _compare_eq_any
-from _pytest.assertion._compare_set import SET_COMPARISON_FUNCTIONS
-from _pytest.assertion._guards import isset
-from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
-from _pytest.assertion.compare_text import _notin_text
 from _pytest.assertion.highlight import dummy_highlighter as dummy_highlighter
 from _pytest.config import Config
 from _pytest.config import UsageError
@@ -164,25 +160,10 @@ def assertrepr_compare(
 
     summary = f"{left_repr} {op} {right_repr}"
 
-    explanation = None
     try:
-        if op == "==":
-            explanation = _compare_eq_any(
-                left,
-                right,
-                highlighter,
-                verbose,
-                assertion_text_diff_style,
-            )
-        elif op == "not in":
-            if istext(left) and istext(right):
-                explanation = list(_notin_text(left, right, verbose))
-        elif op in {"!=", ">=", "<=", ">", "<"}:
-            if isset(left) and isset(right):
-                explanation = SET_COMPARISON_FUNCTIONS[op](
-                    left, right, highlighter, verbose
-                )
-
+        explanation = _compare_eq_any(
+            op, left, right, highlighter, verbose, assertion_text_diff_style
+        )
     except outcomes.Exit:
         raise
     except Exception:
