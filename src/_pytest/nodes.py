@@ -754,7 +754,7 @@ class Item(Node, abc.ABC):
     @cached_property
     def location(self) -> ItemLocation:
         """
-        Returns an :class:`ItemLocation` of ``(path, lineindex, testname)``
+        Returns an :class:`ItemLocation <pytest.ItemLocation>` of ``(path, lineindex, testname)``
         for this item where ``path`` is relative to ``config.rootpath``
         and ``lineindex`` is a 0-based line number.
         """
