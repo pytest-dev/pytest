@@ -364,7 +364,7 @@ class TestReport(BaseReport):
         #: Normalized collection nodeid.
         self._id = coerce_node_id(nodeid)
 
-        #: An :class:`ItemLocation` (filesystempath, lineindex, domaininfo)
+        #: An :class:`ItemLocation <pytest.ItemLocation>` (filesystempath, lineindex, domaininfo)
         #: indicating the actual location of a test item - it might be
         #: different from the collected one e.g. if a method is inherited
         #: from a different module.
