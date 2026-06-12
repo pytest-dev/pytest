@@ -144,14 +144,13 @@ def assertrepr_compare(
     """Yield specialised explanations for some operators/operands.
 
     The first line yielded is always the summary (``left op right``);
-    subsequent lines are the per-line explanation. Yields nothing when no
+    subsequent lines are the detailed explanation. Yields nothing when no
     specialised explanation applies, which lets consumers map an empty
     iterator to "no explanation" without materialising anything.
 
-    The iterator is lazy on purpose: a streaming consumer (e.g. the
-    truncator in ``pytest_assertrepr_compare``) can stop pulling lines as
-    soon as it has enough to show, so an enormous diff doesn't have to be
-    built in full just to be thrown away.
+    The iterator is lazy on purpose: a streaming consumer can stop pulling
+    lines as soon as it has enough to show, so an enormous diff doesn't
+    have to be built in full just to be thrown away.
     """
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.
@@ -176,7 +175,6 @@ def assertrepr_compare(
 
     summary = f"{left_repr} {op} {right_repr}"
 
-    summary_yielded = False
     try:
         if op == "==":
             source: Iterator[str] = _compare_eq_any(
@@ -195,6 +193,9 @@ def assertrepr_compare(
         else:
             source = iter(())
 
+        # Only yield the summary if there is a detailed explanation.
+        # Make sure there's a separating empty line after the summary.
+        summary_yielded = False
         for line in source:
             if not summary_yielded:
                 yield summary
