@@ -591,7 +591,7 @@ class Module(nodes.File, PyCollector):
             if teardown_module is not None:
                 _call_with_optional_argument(teardown_module, module)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_module_fixture_{self.obj.__name__}",
             func=xunit_setup_module_fixture,
@@ -627,7 +627,7 @@ class Module(nodes.File, PyCollector):
             if teardown_function is not None:
                 _call_with_optional_argument(teardown_function, function)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_function_fixture_{self.obj.__name__}",
             func=xunit_setup_function_fixture,
@@ -807,7 +807,7 @@ class Class(PyCollector):
                 func = getimfunc(teardown_class)
                 _call_with_optional_argument(func, cls)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_class_fixture_{self.obj.__qualname__}",
             func=xunit_setup_class_fixture,
@@ -841,7 +841,7 @@ class Class(PyCollector):
                 func = getattr(instance, teardown_name)
                 _call_with_optional_argument(func, method)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_method_fixture_{self.obj.__qualname__}",
             func=xunit_setup_method_fixture,
@@ -1164,15 +1164,16 @@ class DirectParamFixtureDef(FixtureDef[FixtureValue]):
     usually behaves like any other FixtureDef.
     """
 
-    def __init__(self, *, config: Config, argname: str, scope: Scope) -> None:
+    def __init__(self, *, node: nodes.Node, argname: str, scope: Scope) -> None:
         super().__init__(
-            config=config,
-            baseid="",
+            config=node.config,
+            baseid=NOTSET,
             argname=argname,
             func=get_direct_param_fixture_func,
             scope=scope,
             params=None,
             ids=None,
+            node=node,
             _ispytest=True,
         )
 
@@ -1395,7 +1396,7 @@ class Metafunc:
                 fixturedef = name2directparamfixturedef[argname]
             else:
                 fixturedef = DirectParamFixtureDef(
-                    config=self.config,
+                    node=self.definition.session,
                     argname=argname,
                     scope=scope_,
                 )

@@ -139,6 +139,11 @@ pytest.register_assert_rewrite
 
 .. autofunction:: pytest.register_assert_rewrite
 
+pytest.register_fixture
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: pytest.register_fixture
+
 pytest.warns
 ~~~~~~~~~~~~
 

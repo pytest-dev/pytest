@@ -17,6 +17,7 @@ from typing import Any
 from typing import TYPE_CHECKING
 from unittest import TestCase
 
+from _pytest import fixtures
 import _pytest._code
 from _pytest._code import ExceptionInfo
 from _pytest.compat import assert_never
@@ -170,7 +171,7 @@ class UnitTestCase(Class):
                 cleanup()
                 process_teardown_exceptions()
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_unittest_setUpClass_fixture_{cls.__qualname__}",
             func=unittest_setup_class_fixture,
@@ -187,7 +188,7 @@ class UnitTestCase(Class):
             reason = getattr(cls, "__unittest_skip_why__", "")
             raise skip.Exception(reason, _use_item_location=True)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             name=f"_unittest_skip_fixture_{cls.__qualname__}",
             func=unittest_skip_fixture,
             node=self,
@@ -216,7 +217,7 @@ class UnitTestCase(Class):
             if teardown is not None:
                 teardown(self, request.function)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_unittest_setup_method_fixture_{cls.__qualname__}",
             func=unittest_setup_method_fixture,
