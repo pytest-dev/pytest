@@ -32,6 +32,7 @@ from _pytest.main import Session
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
+from _pytest.subtests import SubtestReport
 
 
 CACHEDIR_FILES: dict[str, bytes] = {
@@ -319,6 +320,7 @@ class LFPlugin:
         self.active = any(config.getoption(key) for key in active_keys)
         assert config.cache
         self.lastfailed: dict[str, bool] = config.cache.get("cache/lastfailed", {})
+        self._tests_with_failed_subtests: set[str] = set()
         self._previously_failed_count: int | None = None
         self._report_status: str | None = None
         self._skipped_files = 0  # count skipped files during collection due to --lf
@@ -346,7 +348,18 @@ class LFPlugin:
         return None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
-        if (report.when == "call" and report.passed) or report.skipped:
+        if report.when == "setup":
+            self._tests_with_failed_subtests.discard(report.nodeid)
+
+        if isinstance(report, SubtestReport):
+            if report.failed:
+                self._tests_with_failed_subtests.add(report.nodeid)
+                self.lastfailed[report.nodeid] = True
+            return
+
+        if (
+            (report.when == "call" and report.passed) or report.skipped
+        ) and report.nodeid not in self._tests_with_failed_subtests:
             self.lastfailed.pop(report.nodeid, None)
         elif report.failed:
             self.lastfailed[report.nodeid] = True
