@@ -520,7 +520,8 @@ class TestWarns:
         """
         pkg = pytester.mkpydir("regr_pkg")
         pkg.joinpath("inner.py").write_text(
-            "import warnings\ndef emit(msg):\n    warnings.warn(msg, UserWarning)\n"
+            "import warnings\ndef emit(msg):\n    warnings.warn(msg, UserWarning)\n",
+            encoding="utf-8",
         )
         pytester.makepyfile(
             test_module=r"""
