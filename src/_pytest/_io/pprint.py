@@ -125,7 +125,10 @@ class PrettyPrinter:
             chunks.append(chunk)
             if max_chars is not None:
                 n_chars += len(chunk)
-            if max_lines is not None:
+            if max_lines is not None and "\n" in chunk:
+                # Guard the count: most chunks (brackets, indents, item
+                # reprs) have no newline, and skipping the call on them
+                # is meaningfully cheaper than counting every chunk.
                 n_lines += chunk.count("\n")
             if (max_lines is not None and n_lines >= max_lines) or (
                 max_chars is not None and n_chars >= max_chars
