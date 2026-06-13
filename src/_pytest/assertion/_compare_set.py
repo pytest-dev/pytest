@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Set as AbstractSet
 from typing import TypeAlias
@@ -77,14 +76,24 @@ def _compare_lt_set(
 
 SetComparisonFunction: TypeAlias = Callable[
     [AbstractSet[object], AbstractSet[object], _HighlightFunc, int],
-    Iterable[str],
+    Iterator[str],
 ]
+
+
+def _both_sets_are_equal(
+    left: AbstractSet[object],
+    right: AbstractSet[object],
+    highlighter: _HighlightFunc,
+    verbose: int = 0,
+) -> Iterator[str]:
+    yield "Both sets are equal"
+
 
 SET_COMPARISON_FUNCTIONS: dict[str, SetComparisonFunction] = {
     # == can't be done here without a prior refactor because there's an additional
     # explanation for iterable in _compare_eq_any
     # "==": _compare_eq_set,
-    "!=": lambda *a, **kw: ["Both sets are equal"],
+    "!=": _both_sets_are_equal,
     ">=": _compare_gte_set,
     "<=": _compare_lte_set,
     ">": _compare_gt_set,
