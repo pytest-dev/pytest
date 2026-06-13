@@ -3,6 +3,14 @@
 # (https://github.com/python/cpython/) at commit
 # c5140945c723ae6c4b7ee81ff720ac8ea4b52cfd (python3.12).
 #
+# It has since been adapted to emit its output lazily as a stream of
+# string chunks (``_format`` and the per-type helpers are generators)
+# rather than writing to a file-like object. This lets ``pformat_lines``
+# stop formatting as soon as a line/char budget is reached, so a huge
+# collection a caller is going to truncate anyway is never fully built.
+# As a result this copy has diverged structurally from upstream and is
+# no longer kept in sync with it.
+#
 #
 #  Original Author:      Fred L. Drake, Jr.
 #                        fdrake@acm.org
@@ -17,13 +25,12 @@ from __future__ import annotations
 
 import collections as _collections
 from collections.abc import Callable
+from collections.abc import Iterable
 from collections.abc import Iterator
 import dataclasses as _dataclasses
-from io import StringIO as _StringIO
 import re
 import types as _types
 from typing import Any
-from typing import IO
 
 
 class _safe_key:
@@ -87,28 +94,62 @@ class PrettyPrinter:
         self._width = width
 
     def pformat(self, object: Any) -> str:
-        sio = _StringIO()
-        self._format(object, sio, 0, 0, set(), 0)
-        return sio.getvalue()
+        return "".join(self._format(object, 0, 0, set(), 0))
+
+    def pformat_lines(
+        self,
+        object: Any,
+        max_lines: int | None = None,
+        max_chars: int | None = None,
+    ) -> list[str]:
+        """Pretty-print ``object`` and return its lines.
+
+        ``_format`` yields the output as a stream of chunks, so this can
+        stop pulling from it as soon as a budget is reached — useful when
+        a downstream truncator is going to drop everything past that
+        budget anyway.
+
+        ``max_lines`` / ``max_chars`` bound the two truncation dimensions
+        independently; either may be ``None`` to leave that dimension
+        unbounded. With both ``None`` the whole object is formatted. The
+        budget is a stopping condition, not a precise cut: formatting
+        stops on the first chunk that reaches it, so the result may
+        slightly overshoot (the caller truncates to the exact limit).
+        """
+        if max_lines is None and max_chars is None:
+            return self.pformat(object).splitlines()
+        n_lines = 0
+        n_chars = 0
+        chunks: list[str] = []
+        for chunk in self._format(object, 0, 0, set(), 0):
+            chunks.append(chunk)
+            if max_chars is not None:
+                n_chars += len(chunk)
+            if max_lines is not None:
+                n_lines += chunk.count("\n")
+            if (max_lines is not None and n_lines >= max_lines) or (
+                max_chars is not None and n_chars >= max_chars
+            ):
+                break
+        return "".join(chunks).splitlines()
 
     def _format(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
+    ) -> Iterator[str]:
         objid = id(object)
         if objid in context:
-            stream.write(_recursion(object))
+            yield _recursion(object)
             return
 
         p = self._dispatch.get(type(object).__repr__, None)
         if p is not None:
             context.add(objid)
-            p(self, object, stream, indent, allowance, context, level + 1)
+            yield from p(self, object, indent, allowance, context, level + 1)
             context.remove(objid)
         elif (
             _dataclasses.is_dataclass(object)
@@ -120,125 +161,126 @@ class PrettyPrinter:
             and "__create_fn__" in object.__repr__.__wrapped__.__qualname__
         ):
             context.add(objid)
-            self._pprint_dataclass(
-                object, stream, indent, allowance, context, level + 1
+            yield from self._pprint_dataclass(
+                object, indent, allowance, context, level + 1
             )
             context.remove(objid)
         else:
-            stream.write(self._repr(object, context, level))
+            yield self._repr(object, context, level)
 
     def _pprint_dataclass(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
+    ) -> Iterator[str]:
         cls_name = object.__class__.__name__
         items = [
             (f.name, getattr(object, f.name))
             for f in _dataclasses.fields(object)
             if f.repr
         ]
-        stream.write(cls_name + "(")
-        self._format_namespace_items(items, stream, indent, allowance, context, level)
-        stream.write(")")
+        yield cls_name + "("
+        yield from self._format_namespace_items(
+            items, indent, allowance, context, level
+        )
+        yield ")"
 
     _dispatch: dict[
         Callable[..., str],
-        Callable[[PrettyPrinter, Any, IO[str], int, int, set[int], int], None],
+        Callable[[PrettyPrinter, Any, int, int, set[int], int], Iterator[str]],
     ] = {}
 
     def _pprint_dict(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        write = stream.write
-        write("{")
-        items = object.items()
-        self._format_dict_items(items, stream, indent, allowance, context, level)
-        write("}")
+    ) -> Iterator[str]:
+        yield "{"
+        yield from self._format_dict_items(
+            object.items(), indent, allowance, context, level
+        )
+        yield "}"
 
     _dispatch[dict.__repr__] = _pprint_dict
 
     def _pprint_ordered_dict(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
+    ) -> Iterator[str]:
         if not len(object):
-            stream.write(repr(object))
+            yield repr(object)
             return
         cls = object.__class__
-        stream.write(cls.__name__ + "(")
-        self._pprint_dict(object, stream, indent, allowance, context, level)
-        stream.write(")")
+        yield cls.__name__ + "("
+        yield from self._pprint_dict(object, indent, allowance, context, level)
+        yield ")"
 
     _dispatch[_collections.OrderedDict.__repr__] = _pprint_ordered_dict
 
     def _pprint_list(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        stream.write("[")
-        self._format_items(object, stream, indent, allowance, context, level)
-        stream.write("]")
+    ) -> Iterator[str]:
+        yield "["
+        yield from self._format_items(object, indent, allowance, context, level)
+        yield "]"
 
     _dispatch[list.__repr__] = _pprint_list
 
     def _pprint_tuple(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        stream.write("(")
-        self._format_items(object, stream, indent, allowance, context, level)
-        stream.write(")")
+    ) -> Iterator[str]:
+        yield "("
+        yield from self._format_items(object, indent, allowance, context, level)
+        yield ")"
 
     _dispatch[tuple.__repr__] = _pprint_tuple
 
     def _pprint_set(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
+    ) -> Iterator[str]:
         if not len(object):
-            stream.write(repr(object))
+            yield repr(object)
             return
         typ = object.__class__
         if typ is set:
-            stream.write("{")
+            yield "{"
             endchar = "}"
         else:
-            stream.write(typ.__name__ + "({")
+            yield typ.__name__ + "({"
             endchar = "})"
-        object = sorted(object, key=_safe_key)
-        self._format_items(object, stream, indent, allowance, context, level)
-        stream.write(endchar)
+        try:
+            object = sorted(object)
+        except TypeError:
+            # Heterogeneous element types — fall back to a key that
+            # tolerates unorderable pairs by string-comparing their types.
+            object = sorted(object, key=_safe_key)
+        yield from self._format_items(object, indent, allowance, context, level)
+        yield endchar
 
     _dispatch[set.__repr__] = _pprint_set
     _dispatch[frozenset.__repr__] = _pprint_set
@@ -246,15 +288,13 @@ class PrettyPrinter:
     def _pprint_str(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        write = stream.write
+    ) -> Iterator[str]:
         if not len(object):
-            write(repr(object))
+            yield repr(object)
             return
         chunks = []
         lines = object.splitlines(True)
@@ -289,90 +329,84 @@ class PrettyPrinter:
                 if current:
                     chunks.append(repr(current))
         if len(chunks) == 1:
-            write(rep)
+            yield rep
             return
         if level == 1:
-            write("(")
+            yield "("
         for i, rep in enumerate(chunks):
             if i > 0:
-                write("\n" + " " * indent)
-            write(rep)
+                yield "\n" + " " * indent
+            yield rep
         if level == 1:
-            write(")")
+            yield ")"
 
     _dispatch[str.__repr__] = _pprint_str
 
     def _pprint_bytes(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        write = stream.write
+    ) -> Iterator[str]:
         if len(object) <= 4:
-            write(repr(object))
+            yield repr(object)
             return
         parens = level == 1
         if parens:
             indent += 1
             allowance += 1
-            write("(")
+            yield "("
         delim = ""
         for rep in _wrap_bytes_repr(object, self._width - indent, allowance):
-            write(delim)
-            write(rep)
+            yield delim
+            yield rep
             if not delim:
                 delim = "\n" + " " * indent
         if parens:
-            write(")")
+            yield ")"
 
     _dispatch[bytes.__repr__] = _pprint_bytes
 
     def _pprint_bytearray(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        write = stream.write
-        write("bytearray(")
-        self._pprint_bytes(
-            bytes(object), stream, indent + 10, allowance + 1, context, level + 1
+    ) -> Iterator[str]:
+        yield "bytearray("
+        yield from self._pprint_bytes(
+            bytes(object), indent + 10, allowance + 1, context, level + 1
         )
-        write(")")
+        yield ")"
 
     _dispatch[bytearray.__repr__] = _pprint_bytearray
 
     def _pprint_mappingproxy(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        stream.write("mappingproxy(")
-        self._format(object.copy(), stream, indent, allowance, context, level)
-        stream.write(")")
+    ) -> Iterator[str]:
+        yield "mappingproxy("
+        yield from self._format(object.copy(), indent, allowance, context, level)
+        yield ")"
 
     _dispatch[_types.MappingProxyType.__repr__] = _pprint_mappingproxy
 
     def _pprint_simplenamespace(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
+    ) -> Iterator[str]:
         if type(object) is _types.SimpleNamespace:
             # The SimpleNamespace repr is "namespace" instead of the class
             # name, so we do the same here. For subclasses; use the class name.
@@ -380,95 +414,89 @@ class PrettyPrinter:
         else:
             cls_name = object.__class__.__name__
         items = object.__dict__.items()
-        stream.write(cls_name + "(")
-        self._format_namespace_items(items, stream, indent, allowance, context, level)
-        stream.write(")")
+        yield cls_name + "("
+        yield from self._format_namespace_items(
+            items, indent, allowance, context, level
+        )
+        yield ")"
 
     _dispatch[_types.SimpleNamespace.__repr__] = _pprint_simplenamespace
 
     def _format_dict_items(
         self,
-        items: list[tuple[Any, Any]],
-        stream: IO[str],
+        items: Iterable[tuple[Any, Any]],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        if not items:
-            return
-
-        write = stream.write
+    ) -> Iterator[str]:
         item_indent = indent + self._indent_per_level
         delimnl = "\n" + " " * item_indent
+        emitted = False
         for key, ent in items:
-            write(delimnl)
-            write(self._repr(key, context, level))
-            write(": ")
-            self._format(ent, stream, item_indent, 1, context, level)
-            write(",")
+            emitted = True
+            yield delimnl
+            yield self._repr(key, context, level)
+            yield ": "
+            yield from self._format(ent, item_indent, 1, context, level)
+            yield ","
 
-        write("\n" + " " * indent)
+        if emitted:
+            yield "\n" + " " * indent
 
     def _format_namespace_items(
         self,
-        items: list[tuple[Any, Any]],
-        stream: IO[str],
+        items: Iterable[tuple[Any, Any]],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        if not items:
-            return
-
-        write = stream.write
+    ) -> Iterator[str]:
         item_indent = indent + self._indent_per_level
         delimnl = "\n" + " " * item_indent
+        emitted = False
         for key, ent in items:
-            write(delimnl)
-            write(key)
-            write("=")
+            emitted = True
+            yield delimnl
+            yield key
+            yield "="
             if id(ent) in context:
                 # Special-case representation of recursion to match standard
                 # recursive dataclass repr.
-                write("...")
+                yield "..."
             else:
-                self._format(
+                yield from self._format(
                     ent,
-                    stream,
                     item_indent + len(key) + 1,
                     1,
                     context,
                     level,
                 )
 
-            write(",")
+            yield ","
 
-        write("\n" + " " * indent)
+        if emitted:
+            yield "\n" + " " * indent
 
     def _format_items(
         self,
-        items: list[Any],
-        stream: IO[str],
+        items: Iterable[Any],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        if not items:
-            return
-
-        write = stream.write
+    ) -> Iterator[str]:
         item_indent = indent + self._indent_per_level
         delimnl = "\n" + " " * item_indent
-
+        emitted = False
         for item in items:
-            write(delimnl)
-            self._format(item, stream, item_indent, 1, context, level)
-            write(",")
+            emitted = True
+            yield delimnl
+            yield from self._format(item, item_indent, 1, context, level)
+            yield ","
 
-        write("\n" + " " * indent)
+        if emitted:
+            yield "\n" + " " * indent
 
     def _repr(self, object: Any, context: set[int], level: int) -> str:
         return self._safe_repr(object, context.copy(), self._depth, level)
@@ -476,114 +504,107 @@ class PrettyPrinter:
     def _pprint_default_dict(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
+    ) -> Iterator[str]:
         rdf = self._repr(object.default_factory, context, level)
-        stream.write(f"{object.__class__.__name__}({rdf}, ")
-        self._pprint_dict(object, stream, indent, allowance, context, level)
-        stream.write(")")
+        yield f"{object.__class__.__name__}({rdf}, "
+        yield from self._pprint_dict(object, indent, allowance, context, level)
+        yield ")"
 
     _dispatch[_collections.defaultdict.__repr__] = _pprint_default_dict
 
     def _pprint_counter(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        stream.write(object.__class__.__name__ + "(")
+    ) -> Iterator[str]:
+        yield object.__class__.__name__ + "("
 
         if object:
-            stream.write("{")
+            yield "{"
             items = object.most_common()
-            self._format_dict_items(items, stream, indent, allowance, context, level)
-            stream.write("}")
+            yield from self._format_dict_items(items, indent, allowance, context, level)
+            yield "}"
 
-        stream.write(")")
+        yield ")"
 
     _dispatch[_collections.Counter.__repr__] = _pprint_counter
 
     def _pprint_chain_map(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
+    ) -> Iterator[str]:
         if not len(object.maps) or (len(object.maps) == 1 and not len(object.maps[0])):
-            stream.write(repr(object))
+            yield repr(object)
             return
 
-        stream.write(object.__class__.__name__ + "(")
-        self._format_items(object.maps, stream, indent, allowance, context, level)
-        stream.write(")")
+        yield object.__class__.__name__ + "("
+        yield from self._format_items(object.maps, indent, allowance, context, level)
+        yield ")"
 
     _dispatch[_collections.ChainMap.__repr__] = _pprint_chain_map
 
     def _pprint_deque(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        stream.write(object.__class__.__name__ + "(")
+    ) -> Iterator[str]:
+        yield object.__class__.__name__ + "("
         if object.maxlen is not None:
-            stream.write(f"maxlen={object.maxlen}, ")
-        stream.write("[")
+            yield f"maxlen={object.maxlen}, "
+        yield "["
 
-        self._format_items(object, stream, indent, allowance + 1, context, level)
-        stream.write("])")
+        yield from self._format_items(object, indent, allowance + 1, context, level)
+        yield "])"
 
     _dispatch[_collections.deque.__repr__] = _pprint_deque
 
     def _pprint_user_dict(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        self._format(object.data, stream, indent, allowance, context, level - 1)
+    ) -> Iterator[str]:
+        yield from self._format(object.data, indent, allowance, context, level - 1)
 
     _dispatch[_collections.UserDict.__repr__] = _pprint_user_dict
 
     def _pprint_user_list(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        self._format(object.data, stream, indent, allowance, context, level - 1)
+    ) -> Iterator[str]:
+        yield from self._format(object.data, indent, allowance, context, level - 1)
 
     _dispatch[_collections.UserList.__repr__] = _pprint_user_list
 
     def _pprint_user_string(
         self,
         object: Any,
-        stream: IO[str],
         indent: int,
         allowance: int,
         context: set[int],
         level: int,
-    ) -> None:
-        self._format(object.data, stream, indent, allowance, context, level - 1)
+    ) -> Iterator[str]:
+        yield from self._format(object.data, indent, allowance, context, level - 1)
 
     _dispatch[_collections.UserString.__repr__] = _pprint_user_string
 

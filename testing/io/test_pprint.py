@@ -406,3 +406,87 @@ class DataclassWithTwoItems:
 )
 def test_consistent_pretty_printer(data: Any, expected: str) -> None:
     assert PrettyPrinter().pformat(data) == textwrap.dedent(expected).strip()
+
+
+class TestPformatLines:
+    """``pformat_lines`` returns the pretty-printed lines, pulling from
+    the lazy formatter only until a line/char budget is reached so an
+    input a downstream truncator will clip anyway is never fully built.
+    """
+
+    def test_no_budget_matches_pformat_splitlines(self) -> None:
+        pp = PrettyPrinter()
+        data = list(range(50))
+        assert pp.pformat_lines(data) == pp.pformat(data).splitlines()
+
+    def test_under_budget_is_complete_and_a_prefix(self) -> None:
+        # When the whole thing fits, the result is the full pformat,
+        # regardless of how the budget was reached.
+        pp = PrettyPrinter()
+        data = list(range(5))
+        full = pp.pformat(data).splitlines()
+        assert pp.pformat_lines(data, max_lines=11) == full
+        assert pp.pformat_lines(data, max_chars=10_000) == full
+
+    def test_line_budget_stops_early(self) -> None:
+        pp = PrettyPrinter()
+        # 50 scalars, one per line, budget well below 50.
+        full = pp.pformat(list(range(50))).splitlines()
+        lines = pp.pformat_lines(list(range(50)), max_lines=11)
+        assert len(lines) <= 11 + 1  # budget, plus a trailing partial line
+        # everything but the last line (which may stop mid-line) is a
+        # prefix of the full output
+        assert lines[:-1] == full[: len(lines) - 1]
+
+    def test_char_budget_stops_early(self) -> None:
+        # A *flat* container of huge strings has few lines but explodes on
+        # chars; a line-only budget wouldn't stop it. The char budget must.
+        pp = PrettyPrinter()
+        data = ["x" * 100_000, "y" * 100_000, "z" * 100_000]
+        lines = pp.pformat_lines(data, max_chars=640)
+        assert sum(len(line) for line in lines) < 200_000  # bailed, didn't format all 3
+
+    def test_nested_element_respects_line_budget(self) -> None:
+        # ``len(object)`` is only a *lower* bound on the line count: a
+        # single nested element expands to many lines. The lazy pull must
+        # stop regardless of the container's element count.
+        pp = PrettyPrinter()
+        for data in ([{i: "x" * 40 for i in range(50)}], {1: list(range(100))}):
+            lines = pp.pformat_lines(data, max_lines=11)
+            assert len(lines) <= 11 + 1
+
+    def test_nested_dataclass_element_respects_line_budget(self) -> None:
+        @dataclass
+        class Many:
+            a: int
+            b: int
+            c: int
+            d: int
+            e: int
+            f: int
+            g: int
+            h: int
+
+        pp = PrettyPrinter()
+        lines = pp.pformat_lines([Many(*range(8))], max_lines=4)
+        assert len(lines) <= 4 + 1
+        assert len(lines) < len(pp.pformat([Many(*range(8))]).splitlines())
+
+    def test_sized_non_iterable_does_not_raise(self) -> None:
+        class Sized:
+            def __len__(self) -> int:
+                return 3
+
+        pp = PrettyPrinter()
+        obj = Sized()
+        assert pp.pformat_lines(obj, max_lines=5) == pp.pformat(obj).splitlines()
+
+
+def test_pformat_sorts_heterogeneous_set() -> None:
+    # The set sort tries a natural sort first and falls back to a key
+    # that compares the element types' names only for unorderable
+    # mixes; both must succeed.
+    pp = PrettyPrinter()
+    assert pp.pformat({3, 1, 2}) == "{\n    1,\n    2,\n    3,\n}"
+    # Mixed unorderable types must not raise.
+    pp.pformat({1, "a", 2, "b"})
