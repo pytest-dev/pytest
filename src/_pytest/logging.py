@@ -186,10 +186,10 @@ class PercentStyleMultiline(logging.PercentStyle):
             case True:
                 return -1
             case int():
-                return auto_indent_option
+                return max(auto_indent_option, 0)
             case str():
                 try:
-                    return int(auto_indent_option)
+                    return max(int(auto_indent_option), 0)
                 except ValueError:
                     pass
                 try:
