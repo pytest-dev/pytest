@@ -963,6 +963,117 @@ def test_misordering_example() -> None:
         )
 
 
+def test_ordered() -> None:
+    # by default the order of the exceptions does not matter
+    with RaisesGroup(ValueError, TypeError):
+        raise ExceptionGroup("", [TypeError(), ValueError()])
+
+    # with ordered=True the exceptions must be in the specified order
+    with RaisesGroup(ValueError, TypeError, ordered=True):
+        raise ExceptionGroup("", [ValueError(), TypeError()])
+
+    # a group in the wrong order fails to match when ordered=True, and the failure
+    # message points at the offending position.
+    with (
+        fails_raises_group(
+            "At index 0: `TypeError()` is not an instance of `ValueError`",
+        ),
+        RaisesGroup(ValueError, TypeError, ordered=True),
+    ):
+        raise ExceptionGroup("", [TypeError(), ValueError()])
+
+    # a wrong number of exceptions also fails with ordered=True
+    with (
+        fails_raises_group(
+            "Expected 2 exceptions in ordered group, but got 1: [ValueError()]",
+        ),
+        RaisesGroup(ValueError, TypeError, ordered=True),
+    ):
+        raise ExceptionGroup("", [ValueError()])
+
+    # ordered=True does positional matching so it disables the greedy-algorithm
+    # reordering that test_misordering_example relies on. Here the first expected
+    # matches the first raised positionally, so it succeeds where the unordered
+    # greedy algorithm would have failed.
+    with RaisesGroup(RaisesExc(ValueError, match="foo"), ValueError, ordered=True):
+        raise ExceptionGroup("", [ValueError("foo"), ValueError("bar")])
+
+    # ordered=True also works with nested groups and RaisesExc
+    with RaisesGroup(
+        RaisesExc(ValueError, match="a"),
+        RaisesGroup(TypeError),
+        ordered=True,
+    ):
+        raise ExceptionGroup(
+            "",
+            [ValueError("a"), ExceptionGroup("", [TypeError()])],
+        )
+
+    # with a single expected exception the failure message is identical to the
+    # unordered single-exception case (no "At index" prefix)
+    with (
+        fails_raises_group("`TypeError()` is not an instance of `ValueError`"),
+        RaisesGroup(ValueError, ordered=True),
+    ):
+        raise ExceptionGroup("", [TypeError()])
+
+    # when an expected entry produces a multi-line failure (e.g. a nested
+    # RaisesGroup that fails to match), the "At index N" prefix goes on its own
+    # line so the nested report stays readable
+    with (
+        fails_raises_group(
+            "At index 0:\n"
+            "\n"
+            "RaisesGroup(ValueError, ValueError): \n"
+            "  The following expected exceptions did not find a match:\n"
+            "    ValueError\n"
+            "    ValueError\n"
+            "  The following raised exceptions did not find a match\n"
+            "    TypeError():\n"
+            "      `TypeError()` is not an instance of `ValueError`\n"
+            "      `TypeError()` is not an instance of `ValueError`\n"
+            "    KeyError():\n"
+            "      `KeyError()` is not an instance of `ValueError`\n"
+            "      `KeyError()` is not an instance of `ValueError`"
+        ),
+        RaisesGroup(RaisesGroup(ValueError, ValueError), KeyError, ordered=True),
+    ):
+        raise ExceptionGroup(
+            "", [ExceptionGroup("inner", [TypeError(), KeyError()]), KeyError()]
+        )
+
+
+def test_ordered_nested_toggles() -> None:
+    # a nested RaisesGroup enforces its own `ordered` independently of the outer
+    # group: inner ordered=True with the right order passes
+    with RaisesGroup(RaisesGroup(ValueError, TypeError, ordered=True), ordered=True):
+        raise ExceptionGroup("", [ExceptionGroup("", [ValueError(), TypeError()])])
+
+    # inner ordered=True with the wrong order fails, even though the outer group matches
+    with (
+        fails_raises_group(
+            "RaisesGroup(ValueError, TypeError, ordered=True): "
+            "At index 0: `TypeError()` is not an instance of `ValueError`"
+        ),
+        RaisesGroup(RaisesGroup(ValueError, TypeError, ordered=True), ordered=True),
+    ):
+        raise ExceptionGroup("", [ExceptionGroup("", [TypeError(), ValueError()])])
+
+    # inner group left unordered (the default): its order does not matter even when
+    # the outer group is ordered
+    with RaisesGroup(RaisesGroup(ValueError, TypeError), ordered=True):
+        raise ExceptionGroup("", [ExceptionGroup("", [TypeError(), ValueError()])])
+
+
+def test_ordered_repr() -> None:
+    assert (
+        repr(RaisesGroup(ValueError, ordered=True))
+        == "RaisesGroup(ValueError, ordered=True)"
+    )
+    # ordered=False is the default and should not show up in the repr
+    assert repr(RaisesGroup(ValueError, ordered=False)) == "RaisesGroup(ValueError)"
+
+
 def test_brief_error_on_one_fail() -> None:
     """If only one raised and one expected fail to match up, we print a full table iff
     the raised exception would match one of the expected that previously got matched"""
