@@ -20,7 +20,7 @@ Install ``pytest``
 .. code-block:: bash
 
     $ pytest --version
-    pytest 9.0.3
+    pytest 9.1.0
 
 .. _`simpletest`:
 

@@ -1,4 +1,0 @@
-The private ``config.inicfg`` attribute is now deprecated.
-Use :meth:`config.getini() <pytest.Config.getini>` to access configuration values instead.
-
-See :ref:`config-inicfg` for more details.
