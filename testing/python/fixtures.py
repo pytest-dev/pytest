@@ -4970,6 +4970,39 @@ def test_fixture_param_shadowing(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*::test_indirect[[]1[]]*"])
 
 
+def test_indirect_parametrize_overrides_fixture_params(pytester: Pytester) -> None:
+    """Indirect parametrization should override fixture params (#14591)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class MyFixture:
+            def __init__(self, mode):
+                self.mode = mode
+
+        @pytest.fixture(params=['first_mode', 'second_mode'])
+        def myfixture(request):
+            yield MyFixture(request.param)
+
+        def test_myfixture_default(myfixture):
+            assert isinstance(myfixture, MyFixture)
+            assert myfixture.mode in {'first_mode', 'second_mode'}
+
+        @pytest.mark.parametrize('myfixture', ['first_mode'], indirect=True)
+        def test_myfixture_single_mode1(myfixture):
+            assert isinstance(myfixture, MyFixture)
+            assert myfixture.mode == 'first_mode'
+
+        @pytest.mark.parametrize('myfixture', ['second_mode'], indirect=True)
+        def test_myfixture_single_mode2(myfixture):
+            assert isinstance(myfixture, MyFixture)
+            assert myfixture.mode == 'second_mode'
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=4)
+
+
 def test_fixture_named_request(pytester: Pytester) -> None:
     pytester.copy_example("fixtures/test_fixture_named_request.py")
     result = pytester.runpytest()
