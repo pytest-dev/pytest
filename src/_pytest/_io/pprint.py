@@ -99,22 +99,21 @@ class PrettyPrinter:
     def pformat_lines(
         self,
         object: Any,
+        *,
         max_lines: int | None = None,
         max_chars: int | None = None,
     ) -> list[str]:
         """Pretty-print ``object`` and return its lines.
 
-        ``_format`` yields the output as a stream of chunks, so this can
-        stop pulling from it as soon as a budget is reached — useful when
-        a downstream truncator is going to drop everything past that
-        budget anyway.
-
-        ``max_lines`` / ``max_chars`` bound the two truncation dimensions
+        ``max_lines`` / ``max_chars`` bound the two output dimensions
         independently; either may be ``None`` to leave that dimension
-        unbounded. With both ``None`` the whole object is formatted. The
-        budget is a stopping condition, not a precise cut: formatting
-        stops on the first chunk that reaches it, so the result may
-        slightly overshoot (the caller truncates to the exact limit).
+        unbounded, and with both ``None`` the whole object is formatted.
+        When a bound is given the object is only formatted far enough to
+        reach it, so a huge object costs O(budget) rather than O(N).
+
+        The budget is a stopping condition, not a precise cut: formatting
+        stops on the first piece of output that reaches it, so the result
+        may slightly overshoot the bound.
         """
         if max_lines is None and max_chars is None:
             return self.pformat(object).splitlines()
@@ -277,6 +276,8 @@ class PrettyPrinter:
             yield typ.__name__ + "({"
             endchar = "})"
         try:
+            # Try a direct sort first; it is faster than the fallback and
+            # works for the common homogeneous, orderable case.
             object = sorted(object)
         except TypeError:
             # Heterogeneous element types — fall back to a key that

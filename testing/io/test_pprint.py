@@ -488,5 +488,6 @@ def test_pformat_sorts_heterogeneous_set() -> None:
     # mixes; both must succeed.
     pp = PrettyPrinter()
     assert pp.pformat({3, 1, 2}) == "{\n    1,\n    2,\n    3,\n}"
-    # Mixed unorderable types must not raise.
-    pp.pformat({1, "a", 2, "b"})
+    # Mixed unorderable types must not raise; the fallback orders by type
+    # name (ints before strs), then by value.
+    assert pp.pformat({1, "a", 2, "b"}) == "{\n    1,\n    2,\n    'a',\n    'b',\n}"
