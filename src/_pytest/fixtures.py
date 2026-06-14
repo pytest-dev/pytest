@@ -2036,69 +2036,54 @@ class FixtureManager:
         """
         from _pytest.compat import safe_getattr
 
-        # Skip mock objects (they have _mock_name attribute)
+        # Skip mock objects to avoid false positives when traversing
+        # their wrapper chains (they have a _mock_name attribute).
         if safe_getattr(obj, "_mock_name", None) is not None:
             return None
 
         current = obj
-        seen = set()  # Track object IDs to detect loops
-        max_depth = 100  # Prevent infinite loops even if ID tracking fails
+        seen: set[int] = set()
 
-        for _ in range(max_depth):
+        for _ in range(100):
             if current is None:
                 break
 
-            # Check for wrapper loops by object identity
             current_id = id(current)
             if current_id in seen:
                 return None
             seen.add(current_id)
 
-            # Check if current is a FixtureFunctionDefinition
-            # Use try/except to handle objects with problematic __class__ properties
             try:
                 if isinstance(current, FixtureFunctionDefinition):
                     return current
             except Exception:
-                # Can't check isinstance - probably a proxy object
                 return None
 
-            # Try to get the next wrapped object using safe_getattr to handle
-            # "evil objects" that raise on attribute access (see issue #214)
-            wrapped = safe_getattr(current, "__wrapped__", None)
-            if wrapped is None:
-                break
-
-            current = wrapped
+            # safe_getattr handles "evil objects" that raise on attribute
+            # access (see pytest#214).
+            current = safe_getattr(current, "__wrapped__", None)
 
         return None
 
     def _check_for_wrapped_fixture(
-        self, holder: object, name: str, obj: object, nodeid: str | None
+        self, holder: object, name: str, obj: object
     ) -> None:
         """Check if an object might be a fixture wrapped in decorators and warn if so."""
-        # Only check objects that are not None
         if obj is None:
             return
 
-        # Try to find a FixtureFunctionDefinition in the wrapper chain
         fixture_def = self._find_wrapped_fixture_def(obj)
 
-        # If we found a fixture definition and it's not the top-level object,
-        # it means the fixture is wrapped in decorators
         if fixture_def is not None and fixture_def is not obj:
+            from types import FunctionType
+
+            from _pytest.warning_types import PytestWarning
+            from _pytest.warning_types import warn_explicit_for
+
             fixture_func = fixture_def._get_wrapped_function()
-            self._issue_fixture_wrapped_warning(name, nodeid, fixture_func)
-
-    def _issue_fixture_wrapped_warning(
-        self, fixture_name: str, nodeid: str | None, fixture_func: Any
-    ) -> None:
-        """Issue a warning about a fixture that cannot be discovered due to decorators."""
-        from _pytest.warning_types import PytestWarning
-        from _pytest.warning_types import warn_explicit_for
-
-        msg = f"cannot discover {fixture_name} due to being wrapped in decorators"
-        warn_explicit_for(fixture_func, PytestWarning(msg))
+            if isinstance(fixture_func, FunctionType):
+                msg = f"cannot discover {name} due to being wrapped in decorators"
+                warn_explicit_for(fixture_func, PytestWarning(msg))
 
     @overload
     def parsefactories(
@@ -2209,7 +2194,7 @@ class FixtureManager:
                 )
             else:
                 # Check if this might be a wrapped fixture that we can't discover
-                self._check_for_wrapped_fixture(holderobj, name, obj_ub, nodeid)
+                self._check_for_wrapped_fixture(holderobj, name, obj_ub)
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node
