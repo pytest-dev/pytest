@@ -2624,6 +2624,32 @@ class TestFixtureMarker:
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_override_parametrized_fixture_with_indirect(
+        self, pytester: Pytester
+    ) -> None:
+        """Make sure a parametrized argument can override a parametrized fixture.
+
+        This was a regression introduced in the fix for #736.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=["a"])
+            def fixt(request):
+                return request.param * 2
+
+            def test_fixt(fixt):
+                assert fixt == "aa"
+
+            @pytest.mark.parametrize("fixt", ['b'], indirect=True)
+            def test_indirect(fixt):
+                assert fixt == "bb"
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=2)
+
     def test_scope_session(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
