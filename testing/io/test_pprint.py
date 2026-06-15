@@ -675,9 +675,7 @@ class _HashableList(list):
     ("key", "expected"),
     [
         pytest.param(_HashableDict(), "{\n    {}: 0,\n}", id="empty-dict-key"),
-        pytest.param(
-            _HashableDict({"a": 1}), "{\n    {'a': 1}: 0,\n}", id="dict-key"
-        ),
+        pytest.param(_HashableDict({"a": 1}), "{\n    {'a': 1}: 0,\n}", id="dict-key"),
         pytest.param(_HashableList(), "{\n    []: 0,\n}", id="empty-list-key"),
         pytest.param(_HashableList([1, 2]), "{\n    [1, 2]: 0,\n}", id="list-key"),
     ],
