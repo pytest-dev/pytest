@@ -330,7 +330,7 @@ class PrettyPrinter:
                         current = part
                     else:
                         current = candidate
-                if current:
+                if current:  # pragma: no branch - a wrapped line always ends with a pending chunk
                     chunks.append(repr(current))
         if len(chunks) == 1:
             yield rep

@@ -5,12 +5,17 @@ from collections import Counter
 from collections import defaultdict
 from collections import deque
 from collections import OrderedDict
+from collections import UserDict
+from collections import UserList
+from collections import UserString
 from dataclasses import dataclass
 import textwrap
 from types import MappingProxyType
 from types import SimpleNamespace
 from typing import Any
 
+from _pytest._io.pprint import _safe_tuple
+from _pytest._io.pprint import _wrap_bytes_repr
 from _pytest._io.pprint import PrettyPrinter
 import pytest
 
@@ -329,6 +334,112 @@ class DataclassWithTwoItems:
             """,
             id="deque-maxlen",
         ),
+        pytest.param(frozenset(), "frozenset()", id="frozenset-empty"),
+        pytest.param(
+            frozenset({1, 2, 3}),
+            """
+            frozenset({
+                1,
+                2,
+                3,
+            })
+            """,
+            id="frozenset-items",
+        ),
+        pytest.param(UserDict(), "{}", id="userdict-empty"),
+        pytest.param(
+            UserDict({"one": 1, "two": 2}),
+            """
+            {
+                'one': 1,
+                'two': 2,
+            }
+            """,
+            id="userdict-items",
+        ),
+        pytest.param(UserList(), "[]", id="userlist-empty"),
+        pytest.param(
+            UserList([1, 2]),
+            """
+            [
+                1,
+                2,
+            ]
+            """,
+            id="userlist-items",
+        ),
+        pytest.param(UserString("hello world"), "'hello world'", id="userstring"),
+        pytest.param(b"short", "(b'short')", id="bytes-short"),
+        pytest.param(
+            b"x" * 100,
+            "(b'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'\n"
+            " b'xxxxxxxxxxxxxxxxxxxxxxxx')",
+            id="bytes-long",
+        ),
+        pytest.param(
+            # Length not a multiple of 4 so the final 4-byte group lands
+            # exactly on ``last`` and exercises the allowance trim.
+            b"z" * 102,
+            "(b'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'\n"
+            " b'zzzzzzzzzzzzzzzzzzzzzzzzzz')",
+            id="bytes-long-unaligned",
+        ),
+        pytest.param(bytearray(b"short"), "bytearray(b'short')", id="bytearray-short"),
+        pytest.param(
+            bytearray(b"y" * 100),
+            "bytearray(b'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy'\n"
+            "          b'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy')",
+            id="bytearray-long",
+        ),
+        pytest.param(
+            "word " * 30,
+            "('word word word word word word word word word word word word word word word '\n"
+            " 'word word word word word word word word word word word word word word word ')",
+            id="str-long-wrap",
+        ),
+        pytest.param(
+            "line1\nline2\nline3",
+            "('line1\\n'\n 'line2\\n'\n 'line3')",
+            id="str-multiline",
+        ),
+        pytest.param("", "''", id="str-empty"),
+        pytest.param("hello", "'hello'", id="str-single-chunk"),
+        pytest.param(
+            ["word " * 30],
+            "[\n"
+            "    'word word word word word word word word word word word word word word '\n"
+            "    'word word word word word word word word word word word word word word '\n"
+            "    'word word ',\n"
+            "]",
+            id="str-nested-wrap",
+        ),
+        pytest.param(b"abc", "b'abc'", id="bytes-le-4"),
+        pytest.param(
+            "word " * 30 + "\nshort",
+            "('word word word word word word word word word word word word word word word '\n"
+            " 'word word word word word word word word word word word word word word word \\n'\n"
+            " 'short')",
+            id="str-wrap-then-line",
+        ),
+        pytest.param({(): 0}, "{\n    (): 0,\n}", id="dict-empty-tuple-key"),
+        pytest.param(
+            {(1, 2): 0},
+            """
+            {
+                (1, 2): 0,
+            }
+            """,
+            id="dict-tuple-key",
+        ),
+        pytest.param(
+            {(1,): 0},
+            """
+            {
+                (1,): 0,
+            }
+            """,
+            id="dict-singleton-tuple-key",
+        ),
         pytest.param(
             {
                 "chainmap": ChainMap({"one": 1}, {"two": 2}),
@@ -491,3 +602,112 @@ def test_pformat_sorts_heterogeneous_set() -> None:
     # Mixed unorderable types must not raise; the fallback orders by type
     # name (ints before strs), then by value.
     assert pp.pformat({1, "a", 2, "b"}) == "{\n    1,\n    2,\n    'a',\n    'b',\n}"
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        pytest.param({"indent": -1}, id="indent-negative"),
+        pytest.param({"depth": 0}, id="depth-zero"),
+        pytest.param({"width": 0}, id="width-zero"),
+    ],
+)
+def test_invalid_constructor_args_raise(kwargs: dict[str, int]) -> None:
+    with pytest.raises(ValueError):
+        PrettyPrinter(**kwargs)
+
+
+def test_recursive_list_shows_recursion_marker() -> None:
+    pp = PrettyPrinter()
+    a: list[Any] = [1]
+    a.append(a)
+    out = pp.pformat(a)
+    assert f"<Recursion on list with id={id(a)}>" in out
+
+
+def test_recursive_namespace_shows_ellipsis() -> None:
+    # A self-referential namespace must render the cycle as ``...`` rather
+    # than recursing forever.
+    ns = SimpleNamespace(x=1)
+    ns.self = ns
+    out = PrettyPrinter().pformat(ns)
+    assert "self=..." in out
+
+
+def test_depth_limit_truncates_nested_container() -> None:
+    # ``depth`` caps nesting in the ``_safe_repr`` fallback: containers
+    # past the limit collapse to ``...``.
+    pp = PrettyPrinter(depth=1)
+    assert pp.pformat({((1, 2),): 0}) == "{\n    (...,): 0,\n}"
+
+
+def test_simplenamespace_subclass_uses_class_name() -> None:
+    # Plain ``SimpleNamespace`` prints as ``namespace(...)``; a subclass
+    # uses its own class name instead.
+    class MyNamespace(SimpleNamespace):
+        pass
+
+    pp = PrettyPrinter()
+    assert pp.pformat(MyNamespace(one=1)) == "MyNamespace(\n    one=1,\n)"
+
+
+def test_safe_tuple_sorts_unorderable_pairs() -> None:
+    # ``_safe_tuple`` wraps each element of a 2-tuple in ``_safe_key`` so a
+    # list of pairs with unorderable elements can be sorted without raising.
+    pairs = [(2, "b"), (1, "a"), ("z", 3)]
+    assert sorted(pairs, key=_safe_tuple)  # does not raise
+
+
+class _HashableDict(dict):
+    # ``dict`` subclasses that are hashable can be used as dict keys, which
+    # is the only way the ``_safe_repr`` ``dict`` branch is reached.
+    def __hash__(self) -> int:
+        return id(self)
+
+
+class _HashableList(list):
+    # Likewise for ``list`` and the ``_safe_repr`` ``list`` branch.
+    def __hash__(self) -> int:
+        return id(self)
+
+
+@pytest.mark.parametrize(
+    ("key", "expected"),
+    [
+        pytest.param(_HashableDict(), "{\n    {}: 0,\n}", id="empty-dict-key"),
+        pytest.param(
+            _HashableDict({"a": 1}), "{\n    {'a': 1}: 0,\n}", id="dict-key"
+        ),
+        pytest.param(_HashableList(), "{\n    []: 0,\n}", id="empty-list-key"),
+        pytest.param(_HashableList([1, 2]), "{\n    [1, 2]: 0,\n}", id="list-key"),
+    ],
+)
+def test_hashable_container_subclass_as_key(key: Any, expected: str) -> None:
+    # A hashable ``dict``/``list`` subclass key is rendered via the
+    # ``_safe_repr`` fallback rather than a per-type dispatcher.
+    assert PrettyPrinter().pformat({key: 0}) == expected
+
+
+def test_safe_repr_depth_limit_on_dict_key() -> None:
+    pp = PrettyPrinter(depth=1)
+    assert pp.pformat({_HashableDict({"a": 1}): 0}) == "{\n    {...}: 0,\n}"
+
+
+def test_safe_repr_recursion_marker() -> None:
+    # Self-referential containers reached through ``_safe_repr`` (as dict
+    # keys) must terminate with a recursion marker, for both the ``dict``
+    # branch and the ``tuple``/``list`` branch.
+    hd = _HashableDict()
+    hd["self"] = hd
+    assert "<Recursion on _HashableDict" in PrettyPrinter().pformat({hd: 0})
+
+    hl = _HashableList()
+    hl.append(hl)
+    assert "<Recursion on _HashableList" in PrettyPrinter().pformat({(hl,): 0})
+
+
+def test_wrap_bytes_repr_edges() -> None:
+    # Empty input yields nothing; a width too small for a group still
+    # emits each group rather than dropping bytes.
+    assert list(_wrap_bytes_repr(b"", 80, 0)) == []
+    assert list(_wrap_bytes_repr(b"abcdefgh", 6, 0)) == ["b'abcd'", "b'efgh'"]
