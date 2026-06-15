@@ -1246,6 +1246,9 @@ class ExceptionInfoFormatter:
         return ExceptionChainRepr(repr_chain)
 
 
+_ANSI_ESCAPE_RE: Final = re.compile(r"\x1b\[[0-9;]*m")
+
+
 @dataclasses.dataclass(eq=False)
 class TerminalRepr:
     """Base class for terminal representations -- pieces of data that display
@@ -1257,7 +1260,13 @@ class TerminalRepr:
         io = StringIO()
         tw = TerminalWriter(file=io)
         self.toterminal(tw)
-        return io.getvalue().strip()
+        text = io.getvalue().strip()
+        # Strip ANSI escape sequences that may have been pre-baked into the
+        # repr data by Pygments-highlighted assertion diffs or by a
+        # TerminalWriter running with forced markup (PY_COLORS / FORCE_COLOR).
+        # Plain-text consumers such as JUnit XML and pytest-xdist serialization
+        # should never see raw escape codes.  See #12365.
+        return _ANSI_ESCAPE_RE.sub("", text)
 
     def __repr__(self) -> str:
         return f"<{self.__class__} instance at {id(self):0x}>"
