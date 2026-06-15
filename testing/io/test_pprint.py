@@ -475,7 +475,7 @@ class TestPformatLines:
     def test_sized_non_iterable_does_not_raise(self) -> None:
         class Sized:
             def __len__(self) -> int:
-                return 3
+                return 3  # pragma: no cover - exists only to make the type Sized
 
         pp = PrettyPrinter()
         obj = Sized()
