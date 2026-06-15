@@ -1842,7 +1842,6 @@ def test_no_message_quiet(pytester: Pytester) -> None:
     result.stdout.no_fnmatch_line("* generated xml file: *")
 
 
-
 def test_ansi_escape_codes_stripped_from_junitxml(
     pytester: Pytester, run_and_parse: RunAndParse
 ) -> None:
