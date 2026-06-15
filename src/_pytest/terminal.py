@@ -1218,10 +1218,14 @@ class TerminalReporter:
                 self.write_sep("=", sep_title)
                 if style == "line":
                     for rep in reports:
-                        line = self._getcrashline(rep)
                         if not self.config.option.name_only:
+                            line = self._getcrashline(rep)
                             self._outrep_summary(rep)
-                        self.write_line(line)
+                            self.write_line(line)
+                        else:
+                            self._tw.line(
+                                self._getfailureheadline(rep), red=True, bold=True
+                            )
                 else:
                     for rep in reports:
                         msg = self._getfailureheadline(rep)

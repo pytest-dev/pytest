@@ -89,6 +89,52 @@ class TestNameOnly:
         result.stdout.fnmatch_lines(
             [
                 "=* FAILURES *=",
-                "*test_name_only_with_tb_line.py*: assert False",
+                "test_fail",
             ]
         )
+        output = result.stdout.str()
+        failures_part = output.split("FAILURES")[1].split("short test summary info")[0]
+        assert "test_fail" in failures_part
+        assert "assert False" not in failures_part
+
+    def test_name_only_with_verbose(self, pytester: pytest.Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_fail():
+                assert False
+            """
+        )
+        result = pytester.runpytest("--name-only", "-v")
+        result.stdout.fnmatch_lines(
+            [
+                "=* FAILURES *=",
+                "test_fail",
+                "=* short test summary info *=",
+            ]
+        )
+        output = result.stdout.str()
+        failures_part = output.split("FAILURES")[1].split("short test summary info")[0]
+        assert "test_fail" in failures_part
+        assert "assert False" not in failures_part
+
+    def test_name_only_with_show_capture_no(self, pytester: pytest.Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_fail():
+                print("captured output")
+                assert False
+            """
+        )
+        result = pytester.runpytest("--name-only", "--show-capture=no")
+        result.stdout.fnmatch_lines(
+            [
+                "=* FAILURES *=",
+                "test_fail",
+                "=* short test summary info *=",
+            ]
+        )
+        output = result.stdout.str()
+        failures_part = output.split("FAILURES")[1].split("short test summary info")[0]
+        assert "test_fail" in failures_part
+        assert "assert False" not in failures_part
+        assert "captured output" not in failures_part
