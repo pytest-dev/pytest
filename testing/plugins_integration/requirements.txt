@@ -1,5 +1,5 @@
 anyio[trio]==4.13.0
-django==6.0.5
+django==6.0.6
 pytest-asyncio==1.4.0
 pytest-bdd==8.1.0
 pytest-cov==7.1.0
