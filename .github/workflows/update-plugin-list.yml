@@ -22,11 +22,12 @@ jobs:
       - name: Find current maintenance branch
         id: find-branch
         run: |
-          branch=$(git ls-remote --heads https://github.com/pytest-dev/pytest.git \
-            | grep -oE 'refs/heads/[0-9]+\.[0-9]+\.x' \
-            | sed 's|refs/heads/||' \
-            | sort -t. -k1,1n -k2,2n \
-            | tail -1)
+          branch=$(git ls-remote --heads --sort=v:refname https://github.com/pytest-dev/pytest.git 'refs/heads/*.x' \
+            | sed '$!d;s|.*\trefs/heads/||')
+          if [ -z "$branch" ]; then
+            echo "No maintenance branch matching *.x was found" >&2
+            exit 1
+          fi
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
@@ -69,7 +70,7 @@ jobs:
           draft: true
 
       - name: Add backport label for maintenance branch
-        if: steps.pr.outputs.pull-request-number
+        if: steps.pr.outputs.pull-request-number && steps.find-branch.outputs.branch
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
