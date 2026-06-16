@@ -73,10 +73,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
+          BRANCH_NAME: ${{ steps.find-branch.outputs.branch }}
         run: >-
-          gh pr label add ${{ env.PULL_REQUEST_NUMBER }}
+          gh pr label add "$PULL_REQUEST_NUMBER"
           --repo '${{ github.repository }}'
-          --labels 'backport ${{ steps.find-branch.outputs.branch }}'
+          --labels "backport $BRANCH_NAME"
 
       - name: Instruct the maintainers to trigger CI by undrafting the PR
         if: steps.pr.outputs.pull-request-number
