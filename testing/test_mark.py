@@ -1084,7 +1084,7 @@ def test_paramset_empty_no_idfunc(
         [
             "* collected 1 item",
             "test_paramset_empty_no_idfunc* SKIPPED *",
-            "SKIPPED [1] test_paramset_empty_no_idfunc.py:5: got empty parameter set for (param)",
+            "SKIPPED [[]1[]] test_paramset_empty_no_idfunc.py::test[[]NOTSET[]] - got empty parameter set for (param)",
             "*= 1 skipped in *",
         ]
     )
