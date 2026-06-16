@@ -129,7 +129,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> tuple[bool,
             msglines = [
                 f"Error evaluating {mark.name!r} condition",
                 "    " + condition,
-                *traceback.format_exception_only(type(exc), exc),
+                *traceback.format_exception_only(exc),
             ]
             fail("\n".join(msglines), pytrace=False)
 
@@ -140,7 +140,7 @@ def evaluate_condition(item: Item, mark: Mark, condition: object) -> tuple[bool,
         except Exception as exc:
             msglines = [
                 f"Error evaluating {mark.name!r} condition as a boolean",
-                *traceback.format_exception_only(type(exc), exc),
+                *traceback.format_exception_only(exc),
             ]
             fail("\n".join(msglines), pytrace=False)
 

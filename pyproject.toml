@@ -377,6 +377,7 @@ testpaths = [
 ]
 norecursedirs = [
     "testing/example_scripts",
+    "testing/plugins_integration",
     ".*",
     "build",
     "dist",

@@ -429,7 +429,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
 
         def test_raises_doesnt(self):
     >       raises(OSError, int, "3")
-    E       Failed: DID NOT RAISE <class 'OSError'>
+    E       Failed: DID NOT RAISE OSError
 
     failure_demo.py:171: Failed
     __________________________ TestRaises.test_raise ___________________________
@@ -574,12 +574,12 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E        +  where False = <built-in method startswith of str object at 0xdeadbeef0027>('456')
     E        +    where <built-in method startswith of str object at 0xdeadbeef0027> = '123'.startswith
     E        +      where '123' = <function TestMoreErrors.test_startswith_nested.<locals>.f at 0xdeadbeef0029>()
-    E        +    and   '456' = <function TestMoreErrors.test_startswith_nested.<locals>.g at 0xdeadbeef002a>()
+    E        +    and   '456' = <function TestMoreErrors.test_startswith_nested.<locals>.g at 0xdeadbeef0002>()
 
     failure_demo.py:237: AssertionError
     _____________________ TestMoreErrors.test_global_func ______________________
 
-    self = <failure_demo.TestMoreErrors object at 0xdeadbeef002b>
+    self = <failure_demo.TestMoreErrors object at 0xdeadbeef002a>
 
         def test_global_func(self):
     >       assert isinstance(globf(42), float)
@@ -590,18 +590,18 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     failure_demo.py:240: AssertionError
     _______________________ TestMoreErrors.test_instance _______________________
 
-    self = <failure_demo.TestMoreErrors object at 0xdeadbeef002c>
+    self = <failure_demo.TestMoreErrors object at 0xdeadbeef002b>
 
         def test_instance(self):
             self.x = 6 * 7
     >       assert self.x != 42
     E       assert 42 != 42
-    E        +  where 42 = <failure_demo.TestMoreErrors object at 0xdeadbeef002c>.x
+    E        +  where 42 = <failure_demo.TestMoreErrors object at 0xdeadbeef002b>.x
 
     failure_demo.py:244: AssertionError
     _______________________ TestMoreErrors.test_compare ________________________
 
-    self = <failure_demo.TestMoreErrors object at 0xdeadbeef002d>
+    self = <failure_demo.TestMoreErrors object at 0xdeadbeef002c>
 
         def test_compare(self):
     >       assert globf(10) < 5
@@ -611,7 +611,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     failure_demo.py:247: AssertionError
     _____________________ TestMoreErrors.test_try_finally ______________________
 
-    self = <failure_demo.TestMoreErrors object at 0xdeadbeef002e>
+    self = <failure_demo.TestMoreErrors object at 0xdeadbeef002d>
 
         def test_try_finally(self):
             x = 1
@@ -622,7 +622,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     failure_demo.py:252: AssertionError
     ___________________ TestCustomAssertMsg.test_single_line ___________________
 
-    self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef002f>
+    self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef002e>
 
         def test_single_line(self):
             class A:
@@ -637,7 +637,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     failure_demo.py:263: AssertionError
     ____________________ TestCustomAssertMsg.test_multiline ____________________
 
-    self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef0030>
+    self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef002f>
 
         def test_multiline(self):
             class A:
@@ -656,7 +656,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     failure_demo.py:270: AssertionError
     ___________________ TestCustomAssertMsg.test_custom_repr ___________________
 
-    self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef0031>
+    self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef0030>
 
         def test_custom_repr(self):
             class JSON:

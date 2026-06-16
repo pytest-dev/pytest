@@ -139,6 +139,11 @@ pytest.register_assert_rewrite
 
 .. autofunction:: pytest.register_assert_rewrite
 
+pytest.register_fixture
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: pytest.register_fixture
+
 pytest.warns
 ~~~~~~~~~~~~
 
@@ -3443,7 +3448,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             verbosity level.
       -q, --quiet           Decrease verbosity
       --verbosity=VERBOSE   Set verbosity. Default: 0.
-      -r chars              Show extra test summary info as specified by chars:
+      -r, --report-chars chars
+                            Show extra test summary info as specified by chars:
                             (f)ailed, (E)rror, (s)kipped, (x)failed, (X)passed,
                             (p)assed, (P)assed with output, (a)ll except passed
                             (p/P), or (A)ll. (w)arnings are enabled by default
@@ -3475,8 +3481,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       -W, --pythonwarnings PYTHONWARNINGS
                             Set which warnings to report, see -W option of
                             Python itself
-      --max-warnings=num    Exit with error if the number of warnings exceeds
-                            this threshold
+      --max-warnings=num    Exit with error if all tests pass but the number of
+                            warnings exceeds this threshold
 
     collection:
       --collect-only, --co  Only collect tests, don't execute them
@@ -3600,8 +3606,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
       max_warnings (string):
-                            Maximum number of warnings allowed before failing
-                            the test run
+                            Exit with error if all tests pass but the number of
+                            warnings exceeds this threshold
       norecursedirs (args): Directory patterns to avoid for recursion
       testpaths (args):     Directories to search for tests when no files or
                             directories are given on the command line
@@ -3657,6 +3663,9 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       truncation_limit_chars (string):
                             Set threshold of CHARS after which truncation will
                             take effect
+      assertion_text_diff_style (string):
+                            Choose how pytest renders diffs for string equality
+                            assertions: ndiff or block
       verbosity_assertions (string):
                             Specify a verbosity level for assertions, overriding
                             the main level. Higher levels will provide more

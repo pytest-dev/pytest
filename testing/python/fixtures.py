@@ -1903,6 +1903,38 @@ class TestFixtureManagerParseFactories:
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
+    def test_register_fixture_ordered_by_visibility(self, pytester: Pytester) -> None:
+        """A fixturedef registered for a more specific node takes precedence
+        over one registered for a more general (ancestor) node, regardless of
+        the order in which they were registered (#14513)."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.hookimpl(wrapper=True)
+            def pytest_collection(session):
+                result = yield
+                item = session.items[0]
+                pytest.register_fixture(name="fix", func=lambda: "session1", node=session)
+                # For coverage; can be removed once nodeid= deprecation is over.
+                fm = session._fixturemanager
+                fm._register_fixture(name="fix", func=lambda: "session-legacy", nodeid="")
+                fm._register_fixture(name="fix", func=lambda: "broken-legacy", nodeid="broken")
+                pytest.register_fixture(name="fix", func=lambda fix: f"item1-{fix}", node=item)
+                pytest.register_fixture(name="fix", func=lambda fix: f"item2-{fix}", node=item)
+                pytest.register_fixture(name="fix", func=lambda: "session2", node=session)
+                return result
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test(fix):
+                assert fix == "item2-item1-session2"
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_parsefactories_relative_node_ids(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
@@ -2588,6 +2620,32 @@ class TestFixtureMarker:
             def test_foo(fixt, val):
                 pass
         """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_override_parametrized_fixture_with_indirect(
+        self, pytester: Pytester
+    ) -> None:
+        """Make sure a parametrized argument can override a parametrized fixture.
+
+        This was a regression introduced in the fix for #736.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=["a"])
+            def fixt(request):
+                return request.param * 2
+
+            def test_fixt(fixt):
+                assert fixt == "aa"
+
+            @pytest.mark.parametrize("fixt", ['b'], indirect=True)
+            def test_indirect(fixt):
+                assert fixt == "bb"
+            """
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
