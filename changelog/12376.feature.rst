@@ -1,7 +1,0 @@
-Added :func:`pytest.register_fixture()` to register fixtures using an imperative interface.
-
-This is an advanced function intended for use by plugins.
-
-Normally, fixtures should be registered declaratively using the :func:`@pytest.fixture <pytest.fixture>` decorator.
-Pytest looks for these fixture definitions during the collection phase and registers them automatically.
-For some plugin usecases the declarative interface can be cumbersome or unviable, in which case this imperative interface can be used.

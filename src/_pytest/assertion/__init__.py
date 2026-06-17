@@ -223,11 +223,14 @@ def pytest_assertrepr_compare(
     else:
         # Keep it plaintext when not using terminalrepoterer (#14377).
         highlighter = util.dummy_highlighter
-    return util.assertrepr_compare(
-        op=op,
-        left=left,
-        right=right,
-        verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
-        highlighter=highlighter,
-        assertion_text_diff_style=util.get_assertion_text_diff_style(config),
+    explanation = list(
+        util.assertrepr_compare(
+            op=op,
+            left=left,
+            right=right,
+            verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
+            highlighter=highlighter,
+            assertion_text_diff_style=util.get_assertion_text_diff_style(config),
+        )
     )
+    return explanation or None

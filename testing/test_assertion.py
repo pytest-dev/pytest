@@ -1106,7 +1106,9 @@ class TestAssert_reprcompare:
         assert expl is not None
         assert expl[0].startswith("{} == <[ValueError")
         assert "raised in repr" in expl[0]
-        assert expl[2:] == [
+        # Streaming explanation: any per-line output produced before the
+        # bad repr is preserved, then the failure notice is appended.
+        assert expl[-2:] == [
             "(pytest_assertion plugin: representation of details failed:"
             f" {__file__}:{A.__repr__.__code__.co_firstlineno + 1}: ValueError: 42.",
             " Probably an object has a faulty __repr__.)",
