@@ -192,9 +192,9 @@ class TestMetafunc:
         ):
             metafunc.parametrize("request", [1])
 
-    def test_find_parametrized_scope(self) -> None:
-        """Unit test for _find_parametrized_scope (#3941)."""
-        from _pytest.python import _find_parametrized_scope
+    def test_infer_parametrize_scope(self) -> None:
+        """Unit test for _infer_parameterize_scope (#3941)."""
+        from _pytest.python import _infer_parametrize_scope
 
         @dataclasses.dataclass
         class DummyFixtureDef:
@@ -215,7 +215,7 @@ class TestMetafunc:
         # use arguments to determine narrow scope; the cause of the bug is that it would look on all
         # fixture defs given to the method
         def find_scope(argnames, indirect):
-            return _find_parametrized_scope(argnames, fixtures_defs, indirect=indirect)
+            return _infer_parametrize_scope(argnames, fixtures_defs, indirect=indirect)
 
         assert find_scope(["func_fix"], indirect=True) == Scope.Function
         assert find_scope(["class_fix"], indirect=True) == Scope.Class
