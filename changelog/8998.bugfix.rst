@@ -1,3 +1,3 @@
 Assertion failures comparing very large strings, lists, or dataclasses no longer hang for a long time (sometimes minutes) while building the diff.
 
-When the inputs are large enough that :func:`difflib.ndiff` would be pathologically slow, pytest now falls back to a faster line-level diff and notes this in the output.
+When the inputs are large enough that :func:`difflib.ndiff` would be pathologically slow, pytest now runs it over a bounded prefix of the input instead, so the detailed (character-level) diff is kept for the part shown while the rest is truncated with a note.
