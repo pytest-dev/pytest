@@ -479,6 +479,27 @@ class TestNdiffTooSlow:
         assert ndiff_too_slow_for_text("a\nb\nc\nd\ne", "f") is True
         assert ndiff_too_slow_for_lines(["a", "b", "c", "d"], ["e"]) is True
 
+    def test_bounded_prefix(self) -> None:
+        # All lines fit within both limits: everything is kept.
+        assert _diff._bounded_prefix(["a", "b"], max_lines=10, max_chars=100) == [
+            "a",
+            "b",
+        ]
+        # The line limit stops collection.
+        assert _diff._bounded_prefix(["a", "b", "c"], max_lines=2, max_chars=100) == [
+            "a",
+            "b",
+        ]
+        # The line crossing the character limit is kept truncated.
+        assert _diff._bounded_prefix(["abc", "defgh"], max_lines=10, max_chars=4) == [
+            "abc",
+            "d",
+        ]
+        # When the character limit is exactly full, the next line is dropped.
+        assert _diff._bounded_prefix(["abcd", "e"], max_lines=10, max_chars=4) == [
+            "abcd"
+        ]
+
 
 class TestAssert_reprcompare:
     def test_different_types(self) -> None:
