@@ -1333,7 +1333,7 @@ class Metafunc:
                 scope, descr=f"parametrize() call in {self.function.__name__}"
             )
         else:
-            scope_ = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
+            scope_ = _infer_parametrize_scope(argnames, self._arg2fixturedefs, indirect)
 
         self._validate_if_using_arg_names(argnames, indirect)
 
@@ -1526,12 +1526,13 @@ class Metafunc:
                     callspec.indices[argname] = i
 
 
-def _find_parametrized_scope(
+def _infer_parametrize_scope(
     argnames: Sequence[str],
     arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
     indirect: bool | Sequence[str],
 ) -> Scope:
-    """Find the most appropriate scope for a parametrized call based on its arguments.
+    """Infer the most appropriate scope for a parametrize() call based on its
+    arguments, for when the scope is not explicitly specified.
 
     When there's at least one direct argument, always use "function" scope.
 
@@ -1546,13 +1547,14 @@ def _find_parametrized_scope(
         all_arguments_are_fixtures = bool(indirect)
 
     if all_arguments_are_fixtures:
-        fixturedefs = arg2fixturedefs or {}
-        used_scopes = [
-            fixturedef[-1]._scope
-            for name, fixturedef in fixturedefs.items()
-            if name in argnames
-        ]
         # Takes the most narrow scope from used fixtures.
+        used_scopes = (
+            # Higher scope can't request lower scope, so it's OK to only
+            # look at the first fixturedef in the override chain.
+            arg2fixturedefs[argname][-1]._scope
+            for argname in argnames
+            if argname in arg2fixturedefs
+        )
         return min(used_scopes, default=Scope.Function)
 
     return Scope.Function
