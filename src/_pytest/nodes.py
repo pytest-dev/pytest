@@ -330,6 +330,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def iter_markers(self, name: str | None = None) -> Iterator[Mark]:
         """Iterate over all markers of the node.
 
+        The markers are returned from closest to farthest.
+
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of the markers of the node.
         """
@@ -340,13 +342,47 @@ class Node(abc.ABC, metaclass=NodeMeta):
     ) -> Iterator[tuple[Node, Mark]]:
         """Iterate over all markers of the node.
 
+        The markers are returned from closest to farthest.
+
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
+        yield from self._iter_markers_with_node(name)
+
+    def _iter_markers_with_node(
+        self, name: str | None = None, *, closest_first: bool = True
+    ) -> Iterator[tuple[Node, Mark]]:
+        """Iterate over all markers of the node, as (node, mark) tuples.
+
+        The collection chain is always walked from closest to farthest.
+        ``closest_first`` only selects how a single node's own markers are
+        ordered: closest-first (the default, what :meth:`iter_markers` and
+        :meth:`get_closest_marker` want) or in ``own_markers`` storage order.
+
+        The two differ only on nodes that inherit markers -- a
+        :class:`~pytest.Class` and its MRO -- where storage order is
+        base-first. Consumers that compose markers rather than look one up,
+        such as ``usefixtures`` and ``parametrize``, want storage order so
+        that the composition keeps running base-first.
+        """
         for node in self.iter_parents():
-            for mark in node.own_markers:
+            marks = (
+                node._iter_own_markers_closest_first()
+                if closest_first
+                else node.own_markers
+            )
+            for mark in marks:
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
+
+    def _iter_own_markers_closest_first(self) -> Iterable[Mark]:
+        """Yield own markers in closest-first order.
+
+        For most nodes this is just own_markers in order.
+        Overridden by nodes whose own_markers contain markers from
+        multiple levels (e.g. Class nodes with MRO-inherited markers).
+        """
+        return self.own_markers
 
     @overload
     def get_closest_marker(self, name: str) -> Mark | None: ...
