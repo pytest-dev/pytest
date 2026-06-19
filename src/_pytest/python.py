@@ -751,6 +751,28 @@ class Class(PyCollector):
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
 
+    def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
+        """own_markers stores MRO markers in base-first order
+        (construction order). For closest-first iteration, reverse at the
+        MRO class-group level while preserving decorator order within
+        each class."""
+        from _pytest.mark.structures import normalize_mark_list
+
+        # Walk MRO in natural order (closest first: Child, Parent, ...)
+        # yielding each class's marks in their decorator-stacking order.
+        mro_mark_ids: set[int] = set()
+        for cls in self.obj.__mro__:
+            cls_marks = cls.__dict__.get("pytestmark", [])
+            if not isinstance(cls_marks, list):
+                cls_marks = [cls_marks]
+            for mark in normalize_mark_list(cls_marks):
+                mro_mark_ids.add(id(mark))
+                yield mark
+        # Yield any dynamically added markers (via add_marker) not from MRO.
+        for mark in self.own_markers:
+            if id(mark) not in mro_mark_ids:
+                yield mark
+
     def newinstance(self):
         return self.obj()
 
