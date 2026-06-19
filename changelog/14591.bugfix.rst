@@ -1,1 +1,0 @@
-Fixed a regression in pytest 9.1.0 which caused overriding a parametrized fixture with an indirect `@pytest.mark.parametrize` to fail with "duplicate parametrization of '<fixture name>'".
