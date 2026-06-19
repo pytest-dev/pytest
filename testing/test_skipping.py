@@ -1056,6 +1056,53 @@ def test_skipif_class(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*2 skipped*"])
 
 
+def test_xfail_subclass_mark_beats_base_class(pytester: Pytester) -> None:
+    """A subclass' ``xfail`` shadows its base class', the way a method's
+    already shadowed its class' (#14329).
+
+    Before #14329 the base class' strict ``xfail`` won, failing the test.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.xfail(strict=True, raises=ValueError)
+        class TestBase:
+            pass
+
+        @pytest.mark.xfail(reason="child")
+        class TestChild(TestBase):
+            def test_unexpected_pass(self):
+                pass
+        """
+    )
+    result = pytester.runpytest("-rX")
+    result.assert_outcomes(xpassed=1)
+    result.stdout.fnmatch_lines(["XPASS*test_unexpected_pass - child"])
+
+
+def test_skipif_subclass_mark_beats_base_class(pytester: Pytester) -> None:
+    """The first ``skipif`` evaluated is the subclass', so its reason is the
+    one reported (#14329)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.skipif(True, reason="base")
+        class TestBase:
+            pass
+
+        @pytest.mark.skipif(True, reason="child")
+        class TestChild(TestBase):
+            def test_it(self):
+                pass
+        """
+    )
+    result = pytester.runpytest("-rs")
+    result.assert_outcomes(skipped=1)
+    result.stdout.fnmatch_lines(["SKIPPED*child"])
+
+
 def test_skipped_reasons_functional(pytester: Pytester) -> None:
     pytester.makepyfile(
         test_one="""

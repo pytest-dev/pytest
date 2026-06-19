@@ -425,6 +425,30 @@ def test_option_precedence_mark(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["* 1 failed in*"])
 
 
+def test_filterwarnings_subclass_mark_beats_base_class(pytester: Pytester) -> None:
+    """Closest-first marker lookup must not hand precedence to the base class.
+
+    The filter applied last wins, so ``filterwarnings`` keeps applying the MRO
+    base-first, as it did before #14329.
+    """
+    pytester.makepyfile(
+        """
+        import pytest, warnings
+
+        @pytest.mark.filterwarnings("error")
+        class TestBase:
+            pass
+
+        @pytest.mark.filterwarnings("ignore")
+        class TestChild(TestBase):
+            def test_it(self):
+                warnings.warn(UserWarning("boom"))
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_accept_unknown_category(pytester: Pytester) -> None:
     """Category types that can't be imported don't cause failure (#13732)."""
     pytester.makeini(

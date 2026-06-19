@@ -34,7 +34,11 @@ def catch_warnings_for_item(
         # apply filters from "filterwarnings" marks
         nodeid = "" if item is None else item.nodeid
         if item is not None:
-            for mark in item.iter_markers(name="filterwarnings"):
+            # Storage order, not closest-first: the filter applied last wins, and
+            # within a class that has to stay the subclass' (#14329).
+            for _node, mark in item._iter_markers_with_node(
+                name="filterwarnings", closest_first=False
+            ):
                 for arg in mark.args:
                     warnings.filterwarnings(*parse_warning_filter(arg, escape=False))
 
