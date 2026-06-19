@@ -119,6 +119,36 @@ class TestMetafunc:
         assert metafunc._calls[0].params == {"arg": "a"}
         assert metafunc._calls[1].params == {"arg": "b"}
 
+    def test_parametrize_trailing_comma_scalar_parameter_set(self) -> None:
+        def func(arg):
+            pass  # pragma: no cover
+
+        metafunc = self.Metafunc(func)
+
+        with pytest.raises(fail.Exception) as excinfo:
+            metafunc.parametrize("arg,", [None])
+
+        assert str(excinfo.value) == (
+            'mock::nodeid: in "parametrize" the parameter set at index 0 '
+            "needs to be a sequence, but got None"
+        )
+
+    def test_parametrize_string_parameter_set_error_shows_sequence(self) -> None:
+        def func(arg):
+            pass  # pragma: no cover
+
+        metafunc = self.Metafunc(func)
+
+        with pytest.raises(fail.Exception) as excinfo:
+            metafunc.parametrize("arg,", ["foo"])
+
+        assert str(excinfo.value) == (
+            'mock::nodeid: in "parametrize" the number of names (1):\n'
+            "  ['arg']\n"
+            "must be equal to the number of values (3):\n"
+            "  ['f', 'o', 'o']"
+        )
+
     def test_parametrize_error(self) -> None:
         def func(x, y):
             pass

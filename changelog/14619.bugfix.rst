@@ -1,0 +1,1 @@
+Improved ``parametrize`` collection errors for tuple-style parameter names with invalid scalar values.
