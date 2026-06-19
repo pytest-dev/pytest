@@ -658,16 +658,16 @@ def test_safe_tuple_sorts_unorderable_pairs() -> None:
     assert sorted(pairs, key=_safe_tuple)  # does not raise
 
 
-class _HashableDict(dict):
+class _HashableDict(dict[Any, Any]):
     # ``dict`` subclasses that are hashable can be used as dict keys, which
     # is the only way the ``_safe_repr`` ``dict`` branch is reached.
-    def __hash__(self) -> int:
+    def __hash__(self) -> int:  # type: ignore[override]
         return id(self)
 
 
-class _HashableList(list):
+class _HashableList(list[Any]):
     # Likewise for ``list`` and the ``_safe_repr`` ``list`` branch.
-    def __hash__(self) -> int:
+    def __hash__(self) -> int:  # type: ignore[override]
         return id(self)
 
 
