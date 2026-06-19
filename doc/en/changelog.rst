@@ -31,6 +31,21 @@ with advance notice in the **Deprecations** section of releases.
 
 .. towncrier release notes start
 
+pytest 9.1.1 (2026-06-19)
+=========================
+
+Bug fixes
+---------
+
+- `#14220 <https://github.com/pytest-dev/pytest/issues/14220>`_: Fixed a logic bug in :class:`pytest.RaisesGroup` which would might cause it to display incorrect "It matches `FooError()` which was paired with `BarError`" messages.
+
+
+- `#14591 <https://github.com/pytest-dev/pytest/issues/14591>`_: Fixed a regression in pytest 9.1.0 which caused overriding a parametrized fixture with an indirect `@pytest.mark.parametrize` to fail with "duplicate parametrization of '<fixture name>'".
+
+
+- `#14606 <https://github.com/pytest-dev/pytest/issues/14606>`_: Fixed ``list-item`` typing errors from mypy in :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` ``argvalues`` parameter.
+
+
 pytest 9.1.0 (2026-06-13)
 =========================
 

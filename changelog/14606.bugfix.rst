@@ -1,1 +1,0 @@
-Fixed ``list-item`` typing errors from mypy in :ref:`@pytest.mark.parametrize <pytest.mark.parametrize ref>` ``argvalues`` parameter.
