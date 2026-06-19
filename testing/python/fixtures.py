@@ -1185,10 +1185,13 @@ class TestRequestBasic:
         pytester.makepyfile(
             """
             import pytest
+
             values = []
+
             @pytest.fixture(scope='module', autouse=True)
             def setup_module():
                 values.append("module")
+
             @pytest.fixture(autouse=True)
             def setup_function():
                 values.append("function")
@@ -1196,18 +1199,28 @@ class TestRequestBasic:
             def test_func():
                 pass
 
-            class TestClass(object):
+            class TestClass:
                 @pytest.fixture(scope="class", autouse=True)
-                def setup_class(self):
+                @classmethod
+                def setup_class(cls):
                     values.append("class")
+
                 @pytest.fixture(autouse=True)
                 def setup_method(self):
                     values.append("method")
+
                 def test_method(self):
                     pass
+
             def test_all():
-                assert values == ["module", "function", "class",
-                             "function", "method", "function"]
+                assert values == [
+                    "module",
+                    "function",
+                    "class",
+                    "function",
+                    "method",
+                    "function",
+                ]
         """
         )
         reprec = pytester.inline_run("-v")
@@ -2467,7 +2480,8 @@ class TestAutouseManagement:
 
             class TestClass:
                 @pytest.fixture(scope="class", autouse=True)
-                def setup_teardown(self, item):
+                @classmethod
+                def setup_teardown(cls, item):
                     values.append("setup-%d" % item)
                     yield
                     values.append("teardown-%d" % item)
@@ -2620,6 +2634,32 @@ class TestFixtureMarker:
             def test_foo(fixt, val):
                 pass
         """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_override_parametrized_fixture_with_indirect(
+        self, pytester: Pytester
+    ) -> None:
+        """Make sure a parametrized argument can override a parametrized fixture.
+
+        This was a regression introduced in the fix for #736.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=["a"])
+            def fixt(request):
+                return request.param * 2
+
+            def test_fixt(fixt):
+                assert fixt == "aa"
+
+            @pytest.mark.parametrize("fixt", ['b'], indirect=True)
+            def test_indirect(fixt):
+                assert fixt == "bb"
+            """
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
@@ -3246,21 +3286,26 @@ class TestFixtureMarker:
             values = []
 
             class TestClass(object):
-                @classmethod
                 @pytest.fixture(scope="class", autouse=True)
-                def setup1(self, request, param1):
+                @classmethod
+                def setup1(cls, request, param1):
                     values.append(1)
-                    request.addfinalizer(self.teardown1)
+                    request.addfinalizer(cls.teardown1)
+
                 @classmethod
                 def teardown1(self):
                     assert values.pop() == 1
+
                 @pytest.fixture(scope="class", autouse=True)
-                def setup2(self, request, param1):
-                    values.append(2)
-                    request.addfinalizer(self.teardown2)
                 @classmethod
-                def teardown2(self):
+                def setup2(cls, request, param1):
+                    values.append(2)
+                    request.addfinalizer(cls.teardown2)
+
+                @classmethod
+                def teardown2(cls):
                     assert values.pop() == 2
+
                 def test(self):
                     pass
 
