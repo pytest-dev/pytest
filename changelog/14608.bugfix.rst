@@ -1,0 +1,2 @@
+Fixed a regression in pytest 9.1.0 where ``conftest.py`` files located in ``<invocation dir>/test*`` were no longer loaded as initial conftests when invoked without arguments.
+This could cause certain hooks (like :hook:`pytest_addoption`) in these files to not fire.

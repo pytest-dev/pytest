@@ -645,18 +645,18 @@ class PytestPluginManager(PluginManager):
             if i != -1:
                 path = path[:i]
             anchor = absolutepath(invocation_dir / path)
-
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
-            if safe_exists(anchor):
-                anchors.append(anchor)
-                # Let's also consider test* subdirs.
-                if anchor.is_dir():
-                    for x in anchor.glob("test*"):
-                        if x.is_dir():
-                            anchors.append(x)
+            if not safe_exists(anchor):
+                continue
+
+            anchors.append(anchor)
+            # Let's also consider test* subdirs.
+            if anchor.is_dir():
+                anchors.extend(x for x in anchor.glob("test*") if x.is_dir())
         if not anchors:
-            anchors = [invocation_dir]
+            anchors.append(invocation_dir)
+            anchors.extend(x for x in invocation_dir.glob("test*") if x.is_dir())
 
         for anchor in anchors:
             self._loadconftestmodules(

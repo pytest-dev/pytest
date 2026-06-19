@@ -440,6 +440,28 @@ def test_conftest_existing_junitxml(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*--xyz*"])
 
 
+def test_conftests_in_invocation_dir_tests_is_initial(pytester: Pytester) -> None:
+    """An option registered in a conftest under ``test*`` subdir of the
+    invocation dir is loaded as initial when no command-line arguments
+    or `testpaths` are given (#14608).
+    """
+    pytester.makepyfile(
+        **{
+            "tests/conftest.py": """
+                def pytest_addoption(parser):
+                    parser.addoption("--db-url")
+            """,
+            "test_it.py": """
+                def test_it(request):
+                    assert request.config.getoption("--db-url") == "scheme://host/db"
+            """,
+        }
+    )
+    result = pytester.runpytest("--db-url", "scheme://host/db")
+    assert result.ret == ExitCode.OK
+    result.assert_outcomes(passed=1)
+
+
 def test_conftest_import_order(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     ct1 = pytester.makeconftest("")
     sub = pytester.mkdir("sub")
