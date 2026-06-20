@@ -59,12 +59,10 @@ class ApproxBase:
     __array_priority__ = 100
 
     def __init__(self, expected, rel=None, abs=None, nan_ok: bool = False) -> None:
-        __tracebackhide__ = True
         self.expected = expected
         self.abs = abs
         self.rel = rel
         self.nan_ok = nan_ok
-        self._check_type()
 
     def __repr__(self) -> str:
         raise NotImplementedError
@@ -106,14 +104,6 @@ class ApproxBase:
         This is used to implement the `__eq__` method.
         """
         raise NotImplementedError
-
-    def _check_type(self) -> None:
-        """Raise a TypeError if the expected value is not a valid type."""
-        # This is only a concern if the expected value is a sequence.  In every
-        # other case, the approx() function ensures that the expected value has
-        # a numeric type.  For this reason, the default is to do nothing.  The
-        # classes that deal with sequences should reimplement this method to
-        # raise if there are any non-numeric elements in the sequence.
 
 
 def _recursive_sequence_map(f, x):
@@ -235,6 +225,16 @@ class ApproxMapping(ApproxBase):
     """Perform approximate comparisons where the expected value is a mapping
     with numeric values (the keys can be anything)."""
 
+    def __init__(self, expected, rel=None, abs=None, nan_ok: bool = False) -> None:
+        __tracebackhide__ = True
+
+        for key, value in expected.items():
+            if isinstance(value, type(expected)):
+                msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
+                raise TypeError(msg.format(key, value, pprint.pformat(expected)))
+
+        super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
+
     def __repr__(self) -> str:
         return f"approx({ ({k: self._approx_scalar(v) for k, v in self.expected.items()})!r})"
 
@@ -310,16 +310,19 @@ class ApproxMapping(ApproxBase):
         for k in self.expected.keys():
             yield actual[k], self.expected[k]
 
-    def _check_type(self) -> None:
-        __tracebackhide__ = True
-        for key, value in self.expected.items():
-            if isinstance(value, type(self.expected)):
-                msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
-                raise TypeError(msg.format(key, value, pprint.pformat(self.expected)))
-
 
 class ApproxSequenceLike(ApproxBase):
     """Perform approximate comparisons where the expected value is a sequence of numbers."""
+
+    def __init__(self, expected, rel=None, abs=None, nan_ok: bool = False) -> None:
+        __tracebackhide__ = True
+
+        for index, x in enumerate(expected):
+            if isinstance(x, type(expected)):
+                msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
+                raise TypeError(msg.format(x, index, pprint.pformat(expected)))
+
+        super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 
     def __repr__(self) -> str:
         seq_type = type(self.expected)
@@ -382,13 +385,6 @@ class ApproxSequenceLike(ApproxBase):
 
     def _yield_comparisons(self, actual):
         return zip(actual, self.expected, strict=True)
-
-    def _check_type(self) -> None:
-        __tracebackhide__ = True
-        for index, x in enumerate(self.expected):
-            if isinstance(x, type(self.expected)):
-                msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
-                raise TypeError(msg.format(x, index, pprint.pformat(self.expected)))
 
 
 class ApproxScalar(ApproxBase):
