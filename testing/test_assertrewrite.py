@@ -2424,3 +2424,48 @@ def test_assertion_failure_when_terminalreporter_is_disabled(
     )
     reprec = pytester.inline_run("-p", "no:terminalreporter")
     reprec.assertoutcome(passed=1)
+
+
+def test_rewrite_hook_reentrancy_guard(pytestconfig, pytester: Pytester) -> None:
+    """AssertionRewritingHook.find_spec returns None when called recursively,
+    e.g. when PYTHON_LAZY_IMPORTS=all triggers an import inside find_spec (#14632)."""
+    hook = AssertionRewritingHook(pytestconfig)
+
+    # Simulate a recursive find_spec call from inside the hook body, as would happen
+    # when PYTHON_LAZY_IMPORTS=all causes a lazy-import resolution mid-find_spec.
+    original_early_bailout = hook._early_rewrite_bailout
+    recursive_call_returned_none = []
+
+    def spy_early_bailout(name, state):
+        # Attempt a nested find_spec call; the re-entrancy guard must return None.
+        result = hook.find_spec("fnmatch")
+        recursive_call_returned_none.append(result is None)
+        return original_early_bailout(name, state)
+
+    hook._early_rewrite_bailout = spy_early_bailout  # type: ignore[method-assign]
+    pytester.syspathinsert()
+    pytester.makepyfile(test_foo="def test_foo(): pass")
+    hook.find_spec("test_foo")
+
+    assert recursive_call_returned_none == [True], (
+        "Recursive find_spec call should return None (re-entrancy guard)"
+    )
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 15),
+    reason="PYTHON_LAZY_IMPORTS requires Python 3.15+",
+)
+def test_lazy_imports_all_does_not_crash_pytest(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """pytest does not crash with PYTHON_LAZY_IMPORTS=all (#14632)."""
+    pytester.makepyfile(
+        """
+        def test_foo():
+            assert 1 == 1
+        """
+    )
+    monkeypatch.setenv("PYTHON_LAZY_IMPORTS", "all")
+    result = pytester.runpytest_subprocess()
+    assert result.ret == 0
