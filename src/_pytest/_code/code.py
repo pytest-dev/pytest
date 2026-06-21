@@ -1246,7 +1246,12 @@ class ExceptionInfoFormatter:
         return ExceptionChainRepr(repr_chain)
 
 
-_ANSI_ESCAPE_RE: Final = re.compile(r"\x1b\[[0-9;]*m")
+# Matches all ANSI escape sequences per ECMA-48: CSI sequences (SGR colour
+# codes ending in "m", but also cursor moves and line clears such as
+# "\x1b[K" / "\x1b[2K") and two-character escapes.  Plain-text consumers
+# (JUnit XML, pytest-xdist serialization, resultlog) must never receive raw
+# escape codes.  See #12365.
+_ANSI_ESCAPE_RE: Final = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
 @dataclasses.dataclass(eq=False)
@@ -1260,13 +1265,10 @@ class TerminalRepr:
         io = StringIO()
         tw = TerminalWriter(file=io)
         self.toterminal(tw)
-        text = io.getvalue().strip()
-        # Strip ANSI escape sequences that may have been pre-baked into the
-        # repr data by Pygments-highlighted assertion diffs or by a
-        # TerminalWriter running with forced markup (PY_COLORS / FORCE_COLOR).
-        # Plain-text consumers such as JUnit XML and pytest-xdist serialization
-        # should never see raw escape codes.  See #12365.
-        return _ANSI_ESCAPE_RE.sub("", text)
+        # Strip ANSI escape codes that may have been pre-baked into the repr
+        # data (e.g. by Pygments-highlighted assertion diffs under
+        # --color=yes) so plain-text consumers never see them.  See #12365.
+        return _ANSI_ESCAPE_RE.sub("", io.getvalue().strip())
 
     def __repr__(self) -> str:
         return f"<{self.__class__} instance at {id(self):0x}>"
