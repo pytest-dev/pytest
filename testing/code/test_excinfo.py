@@ -2057,3 +2057,20 @@ def test_check_error_notes_failure(
     with pytest.raises(AssertionError):
         with pytest.raises(type(error), match=match):
             raise error
+
+
+def test_terminalrepr_strips_all_ansi_escape_codes() -> None:
+    r"""TerminalRepr.__str__ must strip every ANSI escape code, not just SGR.
+
+    Regression guard for #12365: a narrow ``\x1b[...m`` regex let non-SGR CSI
+    sequences (cursor moves, line clears) leak into plain-text consumers such
+    as JUnit XML.
+    """
+    from _pytest._code.code import TerminalRepr
+
+    class _Repr(TerminalRepr):
+        def toterminal(self, tw: TerminalWriter) -> None:
+            # SGR colour codes plus a line-clear and a cursor-up move.
+            tw.write("\x1b[31mred\x1b[0m \x1b[2Kcleared \x1b[1Aup")
+
+    assert str(_Repr()) == "red cleared up"
