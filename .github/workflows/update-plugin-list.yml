@@ -19,6 +19,17 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Find current maintenance branch
+        id: find-branch
+        run: |
+          branch=$(git ls-remote --heads --sort=v:refname https://github.com/pytest-dev/pytest.git 'refs/heads/*.x' \
+            | sed '$!d;s|.*\trefs/heads/||')
+          if [ -z "$branch" ]; then
+            echo "No maintenance branch matching *.x was found" >&2
+            exit 1
+          fi
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
@@ -58,7 +69,19 @@ jobs:
           body: '[automated] Update plugin list'
           draft: true
 
+      - name: Add backport label for maintenance branch
+        if: steps.pr.outputs.pull-request-number && steps.find-branch.outputs.branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
+          BRANCH_NAME: ${{ steps.find-branch.outputs.branch }}
+        run: >-
+          gh pr edit "$PULL_REQUEST_NUMBER"
+          --repo '${{ github.repository }}'
+          --add-label "backport $BRANCH_NAME"
+
       - name: Instruct the maintainers to trigger CI by undrafting the PR
+        if: steps.pr.outputs.pull-request-number
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
