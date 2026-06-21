@@ -1,0 +1,1 @@
+Fixed ANSI escape codes (for example from syntax-highlighted assertion diffs produced under ``--color=yes``) leaking into JUnit XML reports and other plain-text outputs. :class:`~_pytest._code.code.TerminalRepr` now strips all ANSI escape sequences from its string representation.
