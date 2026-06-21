@@ -2426,30 +2426,17 @@ def test_assertion_failure_when_terminalreporter_is_disabled(
     reprec.assertoutcome(passed=1)
 
 
-def test_rewrite_hook_reentrancy_guard(pytestconfig, pytester: Pytester) -> None:
-    """AssertionRewritingHook.find_spec returns None when called recursively,
-    e.g. when PYTHON_LAZY_IMPORTS=all triggers an import inside find_spec (#14632)."""
+def test_rewrite_hook_stdlib_modules_skipped(pytestconfig: pytest.Config) -> None:
+    """AssertionRewritingHook.find_spec returns None for stdlib modules early
+    (via sys.stdlib_module_names in _early_rewrite_bailout) to prevent
+    recursion with PYTHON_LAZY_IMPORTS=all (#14632)."""
     hook = AssertionRewritingHook(pytestconfig)
-
-    # Simulate a recursive find_spec call from inside the hook body, as would happen
-    # when PYTHON_LAZY_IMPORTS=all causes a lazy-import resolution mid-find_spec.
-    original_early_bailout = hook._early_rewrite_bailout
-    recursive_call_returned_none = []
-
-    def spy_early_bailout(name, state):
-        # Attempt a nested find_spec call; the re-entrancy guard must return None.
-        result = hook.find_spec("fnmatch")
-        recursive_call_returned_none.append(result is None)
-        return original_early_bailout(name, state)
-
-    hook._early_rewrite_bailout = spy_early_bailout  # type: ignore[method-assign]
-    pytester.syspathinsert()
-    pytester.makepyfile(test_foo="def test_foo(): pass")
-    hook.find_spec("test_foo")
-
-    assert recursive_call_returned_none == [True], (
-        "Recursive find_spec call should return None (re-entrancy guard)"
-    )
+    # stdlib modules are always skipped; this also breaks the recursion that
+    # PYTHON_LAZY_IMPORTS=all would cause when fnmatch resolves lazily inside
+    # _early_rewrite_bailout.
+    assert hook.find_spec("fnmatch") is None
+    assert hook.find_spec("os") is None
+    assert hook.find_spec("re") is None
 
 
 @pytest.mark.skipif(

@@ -88,9 +88,6 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         # flag to guard against trying to rewrite a pyc file while we are already writing another pyc file,
         # which might result in infinite recursion (#3506)
         self._writing_pyc = False
-        # flag to guard against recursive find_spec calls, e.g. triggered by PYTHON_LAZY_IMPORTS=all
-        # where accessing a lazily-imported name inside find_spec triggers another find_spec call (#14632)
-        self._in_find_spec = False
         self._basenames_to_check_rewrite = {"conftest"}
         self._marked_for_rewrite_cache: dict[str, bool] = {}
         self._session_paths_checked = False
@@ -110,46 +107,38 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
     ) -> importlib.machinery.ModuleSpec | None:
         if self._writing_pyc:
             return None
-        if self._in_find_spec:
-            # Guard against recursive find_spec calls, e.g. triggered by PYTHON_LAZY_IMPORTS=all
-            # where accessing a lazily-imported name inside find_spec triggers another find_spec call.
+        state = self.config.stash[assertstate_key]
+        if self._early_rewrite_bailout(name, state):
             return None
-        self._in_find_spec = True
-        try:
-            state = self.config.stash[assertstate_key]
-            if self._early_rewrite_bailout(name, state):
-                return None
-            state.trace(f"find_module called for: {name}")
+        state.trace(f"find_module called for: {name}")
 
-            # Type ignored because mypy is confused about the `self` binding here.
-            spec = self._find_spec(name, path)  # type: ignore
+        # Type ignored because mypy is confused about the `self` binding here.
+        spec = self._find_spec(name, path)  # type: ignore
 
-            if (
-                # the import machinery could not find a file to import
-                spec is None
-                # this is a namespace package (without `__init__.py`)
-                # there's nothing to rewrite there
-                or spec.origin is None
-                # we can only rewrite source files
-                or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
-                # if the file doesn't exist, we can't rewrite it
-                or not os.path.exists(spec.origin)
-            ):
-                return None
-            else:
-                fn = spec.origin
+        if (
+            # the import machinery could not find a file to import
+            spec is None
+            # this is a namespace package (without `__init__.py`)
+            # there's nothing to rewrite there
+            or spec.origin is None
+            # we can only rewrite source files
+            or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
+            # if the file doesn't exist, we can't rewrite it
+            or not os.path.exists(spec.origin)
+        ):
+            return None
+        else:
+            fn = spec.origin
 
-            if not self._should_rewrite(name, fn, state):
-                return None
+        if not self._should_rewrite(name, fn, state):
+            return None
 
-            return importlib.util.spec_from_file_location(
-                name,
-                fn,
-                loader=self,
-                submodule_search_locations=spec.submodule_search_locations,
-            )
-        finally:
-            self._in_find_spec = False
+        return importlib.util.spec_from_file_location(
+            name,
+            fn,
+            loader=self,
+            submodule_search_locations=spec.submodule_search_locations,
+        )
 
     def create_module(
         self, spec: importlib.machinery.ModuleSpec
@@ -206,6 +195,12 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         tries to filter what we're sure won't be rewritten before getting to
         it.
         """
+        # stdlib modules are never rewritten; bail out early to avoid calling
+        # fnmatch_ex, which can trigger lazy import resolution and cause
+        # recursion with PYTHON_LAZY_IMPORTS=all (#14632).
+        if name.partition(".")[0] in sys.stdlib_module_names:
+            return True
+
         if self.session is not None and not self._session_paths_checked:
             self._session_paths_checked = True
             for initial_path in self.session._initialpaths:
