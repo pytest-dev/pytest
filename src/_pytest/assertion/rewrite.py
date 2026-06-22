@@ -391,7 +391,7 @@ def _read_pyc(
             return None
         try:
             co = marshal.load(fp)
-        except Exception as e:
+        except (EOFError, ValueError, TypeError, OSError) as e:
             trace(f"_read_pyc({source}): marshal.load error {e}")
             return None
         if not isinstance(co, types.CodeType):

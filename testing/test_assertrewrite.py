@@ -1430,6 +1430,37 @@ class TestAssertionRewriteHookDetails:
         pyc.write_bytes(magic + flags + mtime + b"\x99\x00\x00\x00" + code)
         assert _read_pyc(source, pyc, print) is None
 
+    def test_read_pyc_truncated_marshal(self, tmp_path: Path) -> None:
+        """Truncated code section triggers marshal.EOFError; _read_pyc
+        must return None without re-raising."""
+        from _pytest.assertion.rewrite import _read_pyc
+
+        source = tmp_path / "source.py"
+        pyc = tmp_path / "source.pyc"
+
+        source_bytes = b"def test(): pass\n"
+        source.write_bytes(source_bytes)
+
+        magic = importlib.util.MAGIC_NUMBER
+        flags = b"\x00\x00\x00\x00"
+
+        mtime = b"\x58\x3c\xb0\x5f"
+        mtime_int = int.from_bytes(mtime, "little")
+        os.utime(source, (mtime_int, mtime_int))
+
+        size = len(source_bytes).to_bytes(4, "little")
+
+        # Truncated code section: only 1 byte of marshal data so marshal.load
+        # raises EOFError ("EOF read where not expected").
+        pyc.write_bytes(magic + flags + mtime + size + b"\xe3")
+        assert _read_pyc(source, pyc, print) is None
+
+        # Valid marshal header followed by an unrecognised type code so
+        # marshal.load raises ValueError ("bad marshal data (unknown type
+        # code)").
+        pyc.write_bytes(magic + flags + mtime + size + b"\xff\x00\x00\x00\x00")
+        assert _read_pyc(source, pyc, print) is None
+
     def test_reload_is_same_and_reloads(self, pytester: Pytester) -> None:
         """Reloading a (collected) module after change picks up the change."""
         pytester.makeini(
