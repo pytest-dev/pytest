@@ -409,7 +409,7 @@ class ApproxScalar(ApproxBase):
         # tolerances, i.e. non-numerics and infinities. Need to call abs to
         # handle complex numbers, e.g. (inf + 1j).
         if (
-            isinstance(self.expected, bool)
+            _is_bool(self.expected)
             or (not isinstance(self.expected, Complex | Decimal))
             or math.isinf(abs(self.expected))
         ):
@@ -437,15 +437,6 @@ class ApproxScalar(ApproxBase):
     def __eq__(self, actual) -> bool:
         """Return whether the given value is equal to the expected value
         within the pre-specified tolerance."""
-
-        def is_bool(val: Any) -> bool:
-            # Check if `val` is a native bool or numpy bool.
-            if isinstance(val, bool):
-                return True
-            if np := sys.modules.get("numpy"):
-                return isinstance(val, np.bool_)
-            return False
-
         asarray = _as_numpy_array(actual)
         if asarray is not None:
             # Call ``__eq__()`` manually to prevent infinite-recursion with
@@ -453,7 +444,7 @@ class ApproxScalar(ApproxBase):
             return all(self.__eq__(a) for a in asarray.flat)
 
         # Short-circuit exact equality, except for bool and np.bool_
-        if is_bool(self.expected) and not is_bool(actual):
+        if _is_bool(self.expected) and not _is_bool(actual):
             return False
         elif actual == self.expected:
             return True
@@ -462,7 +453,7 @@ class ApproxScalar(ApproxBase):
         # NB: we need Complex, rather than just Number, to ensure that __abs__,
         # __sub__, and __float__ are defined. Also, consider bool to be
         # non-numeric, even though it has the required arithmetic.
-        if is_bool(self.expected) or not (
+        if _is_bool(self.expected) or not (
             isinstance(self.expected, Complex | Decimal)
             and isinstance(actual, Complex | Decimal)
         ):
@@ -920,3 +911,12 @@ def _as_numpy_array(obj: object) -> ndarray | None:
         elif hasattr(obj, "__array__") or hasattr(obj, "__array_interface__"):
             return np.asarray(obj)
     return None
+
+
+def _is_bool(val: Any) -> bool:
+    # Check if `val` is a native bool or numpy bool.
+    if isinstance(val, bool):
+        return True
+    if np := sys.modules.get("numpy"):
+        return isinstance(val, np.bool_)
+    return False
