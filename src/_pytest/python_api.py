@@ -483,13 +483,11 @@ class ApproxScalar(ApproxBase):
         This could be either an absolute tolerance or a relative tolerance,
         depending on what the user specified or which would be larger.
         """
-
-        def set_default(x, default):
-            return x if x is not None else default
-
         # Figure out what the absolute tolerance should be.  ``self.abs`` is
         # either None or a value specified by the user.
-        absolute_tolerance = set_default(self.abs, self.DEFAULT_ABSOLUTE_TOLERANCE)
+        absolute_tolerance = (
+            self.abs if self.abs is not None else self.DEFAULT_ABSOLUTE_TOLERANCE
+        )
 
         if absolute_tolerance < 0:
             raise ValueError(
@@ -509,8 +507,8 @@ class ApproxScalar(ApproxBase):
         # we've made sure the user didn't ask for an absolute tolerance only,
         # because we don't want to raise errors about the relative tolerance if
         # we aren't even going to use it.
-        relative_tolerance = set_default(
-            self.rel, self.DEFAULT_RELATIVE_TOLERANCE
+        relative_tolerance = (
+            self.rel if self.rel is not None else self.DEFAULT_RELATIVE_TOLERANCE
         ) * abs(self.expected)
 
         if relative_tolerance < 0:
