@@ -44,7 +44,7 @@ def _compare_eq_any(
             assertion_text_diff_style,
         )
     else:
-        from _pytest.python_api import Approx
+        from _pytest.approx import Approx
 
         # Although the common order should be obtained == approx(...), allow both ways.
         if isinstance(right, Approx):

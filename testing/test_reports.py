@@ -5,9 +5,9 @@ from collections.abc import Sequence
 
 from _pytest._code.code import ExceptionChainRepr
 from _pytest._code.code import ExceptionRepr
+from _pytest.approx import approx
 from _pytest.config import Config
 from _pytest.pytester import Pytester
-from _pytest.python_api import approx
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 import pytest

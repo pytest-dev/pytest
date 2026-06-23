@@ -14,8 +14,8 @@ from operator import eq
 from operator import ne
 import re
 
+from _pytest.approx import _recursive_sequence_map
 from _pytest.pytester import Pytester
-from _pytest.python_api import _recursive_sequence_map
 import pytest
 from pytest import approx
 

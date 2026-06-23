@@ -1,3 +1,5 @@
+"""The implementation of pytest.approx()."""
+
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
@@ -26,9 +28,6 @@ if TYPE_CHECKING:
     from numpy import ndarray
 else:
     ndarray = object
-
-
-# builtin pytest.approx helper
 
 
 def _compare_approx(
