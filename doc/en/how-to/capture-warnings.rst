@@ -327,6 +327,54 @@ See :ref:`@pytest.mark.filterwarnings <filterwarnings>` and
     by calling :func:`warnings.simplefilter` (see :issue:`2430` for an example of that).
 
 
+.. _`resourcewarning`:
+
+ResourceWarning
+---------------
+
+:class:`ResourceWarning` is emitted by Python's garbage collector when a resource, such as
+an open file, is destroyed without being explicitly closed. Unlike most warnings, it is
+reported by the garbage collector at the moment the leaked object is finalized, not at the
+point in your code where the resource was actually leaked.
+
+This makes it behave unexpectedly together with warning filters:
+
+* The warning surfaces whenever the offending object happens to be collected, which may be
+  during an unrelated test, or even after the test session has finished.
+* Because of this, filters that target ``ResourceWarning`` directly may never catch the leak
+  as expected. This applies to the :confval:`filterwarnings` option, a
+  :ref:`@pytest.mark.filterwarnings <filterwarnings>` mark, and ``-W error::ResourceWarning``
+  alike.
+
+When a warning is turned into an error during garbage collection, the resulting exception
+cannot propagate normally, so it becomes an *unraisable* exception. pytest collects such
+exceptions and reports them as :class:`pytest.PytestUnraisableExceptionWarning` at a point
+where the configured warning filters are applied. To reliably fail the test run when a
+resource is leaked, add a filter that turns that warning into an error:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        filterwarnings = [
+            'error::pytest.PytestUnraisableExceptionWarning',
+        ]
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        filterwarnings =
+            error::pytest.PytestUnraisableExceptionWarning
+
+.. seealso::
+
+    :ref:`resource-warnings` for how to obtain more information about the source of a
+    :class:`ResourceWarning` using the :mod:`tracemalloc` module.
+
+
 .. _`ensuring a function triggers a deprecation warning`:
 
 .. _ensuring_function_triggers:
