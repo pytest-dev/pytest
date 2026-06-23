@@ -61,9 +61,16 @@ T = TypeVar("T")
 ExpectedT = TypeVar("ExpectedT", covariant=True)
 
 
-class ApproxBase(abc.ABC, Generic[ExpectedT]):
-    """Provide shared utilities for making approximate comparisons between
-    numbers or sequences of numbers."""
+class Approx(abc.ABC, Generic[ExpectedT]):
+    """The return type of :func:`pytest.approx`.
+
+    ``Approx`` objects support (approximate) equality comparisons and ``repr``,
+    and can also be used with ``isinstance(..., pytest.Approx)``.
+
+    .. versionadded:: 9.2
+    """
+
+    __module__ = "pytest"
 
     # Tell numpy to use our `__eq__` operator instead of its.
     __array_ufunc__ = None
@@ -76,9 +83,13 @@ class ApproxBase(abc.ABC, Generic[ExpectedT]):
         abs: float | Decimal | timedelta | None,
         nan_ok: bool,
     ) -> None:
+        #: The expected value passed.
         self.expected = expected
-        self.abs = abs
+        #: The relative tolerance.
         self.rel = rel
+        #: The absolute tolerance.
+        self.abs = abs
+        #: Whether NaNs compare equal to NaN.
         self.nan_ok = nan_ok
 
     @abc.abstractmethod
@@ -135,7 +146,7 @@ def _recursive_sequence_map(f, x):
         return f(x)
 
 
-class ApproxNumpy(ApproxBase[ndarray]):
+class ApproxNumpy(Approx[ndarray]):
     """Perform approximate comparisons where the expected value is numpy array."""
 
     def __repr__(self) -> str:
@@ -239,7 +250,7 @@ class ApproxNumpy(ApproxBase[ndarray]):
                 yield actual[i].item(), self.expected[i].item()
 
 
-class ApproxMapping(ApproxBase[Mapping[Any, Any]]):
+class ApproxMapping(Approx[Mapping[Any, Any]]):
     """Perform approximate comparisons where the expected value is a mapping
     with numeric values (the keys can be anything)."""
 
@@ -338,7 +349,7 @@ class ApproxMapping(ApproxBase[Mapping[Any, Any]]):
             yield actual[k], self.expected[k]
 
 
-class ApproxSequenceLike(ApproxBase[Sequence[Any]]):
+class ApproxSequenceLike(Approx[Sequence[Any]]):
     """Perform approximate comparisons where the expected value is a sequence of numbers."""
 
     def __init__(
@@ -420,7 +431,7 @@ class ApproxSequenceLike(ApproxBase[Sequence[Any]]):
         return zip(actual, self.expected, strict=True)
 
 
-class ApproxScalar(ApproxBase[ExpectedT]):
+class ApproxScalar(Approx[ExpectedT]):
     """Perform approximate comparisons where the expected value is a single number."""
 
     # Using Real should be better than this Union, but not possible yet:
@@ -620,7 +631,7 @@ class ApproxDecimal(ApproxScalar[Decimal]):
         return f"{self.expected} ± {tol_str}"
 
 
-class ApproxTimedelta(ApproxBase[datetime | timedelta]):
+class ApproxTimedelta(Approx[datetime | timedelta]):
     """Perform approximate comparisons where the expected value is a
     datetime or timedelta.
 
@@ -716,7 +727,7 @@ def approx(
     rel: float | Decimal | timedelta | None = None,
     abs: float | Decimal | timedelta | None = None,
     nan_ok: bool = False,
-) -> ApproxBase[T]:
+) -> Approx[T]:
     """Assert that two numbers (or two ordered sequences of numbers) are equal to each other
     within some tolerance.
 

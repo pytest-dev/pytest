@@ -60,6 +60,7 @@ from _pytest.python import Function
 from _pytest.python import Metafunc
 from _pytest.python import Module
 from _pytest.python import Package
+from _pytest.python_api import Approx
 from _pytest.python_api import approx
 from _pytest.raises import raises
 from _pytest.raises import RaisesExc
@@ -98,6 +99,7 @@ set_trace = __pytestPDB.set_trace
 
 __all__ = [
     "HIDDEN_PARAM",
+    "Approx",
     "Cache",
     "CallInfo",
     "CaptureFixture",
