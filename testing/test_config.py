@@ -164,6 +164,23 @@ class TestParseIni:
         config = pytester.parseconfig()
         assert config.getini("minversion") == "3.36"
 
+    @pytest.mark.parametrize("name", ["pytest.toml", ".pytest.toml"])
+    def test_toml_config_names_without_section(
+        self, pytester: Pytester, name: str
+    ) -> None:
+        pytester.path.joinpath(name).write_text(
+            textwrap.dedent(
+                """
+            minversion = "3.36"
+            addopts = ["-v"]
+        """
+            ),
+            encoding="utf-8",
+        )
+        config = pytester.parseconfig()
+        assert config.getini("minversion") == "3.36"
+        assert config.getini("addopts") == ["-v"]
+
     def test_pyproject_toml(self, pytester: Pytester) -> None:
         pyproject_toml = pytester.makepyprojecttoml(
             """

@@ -1,0 +1,1 @@
+Top-level options in ``pytest.toml`` and ``.pytest.toml`` files are now read as pytest configuration instead of being silently ignored.
