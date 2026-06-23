@@ -411,7 +411,7 @@ class ApproxScalar(ApproxBase):
         if (
             isinstance(self.expected, bool)
             or (not isinstance(self.expected, Complex | Decimal))
-            or math.isinf(abs(self.expected) or isinstance(self.expected, bool))
+            or math.isinf(abs(self.expected))
         ):
             return str(self.expected)
 
