@@ -19,26 +19,26 @@ USAGE_MSG = "use '-vv' to show"
 
 def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
     """Truncate this assertion explanation if the given test item is eligible."""
-    should_truncate, budget = _get_truncation_parameters(item)
+    should_truncate, budget = _get_truncation_parameters(item.config)
     if should_truncate:
         return _truncate_explanation(explanation, budget)
     return explanation
 
 
-def _get_truncation_parameters(item: Item) -> tuple[bool, TruncationBudget]:
-    """Return the truncation parameters related to the given item, as (should truncate, budget)."""
+def _get_truncation_parameters(config: Config) -> tuple[bool, TruncationBudget]:
+    """Return the truncation parameters from the given config, as (should truncate, budget)."""
     # We do not need to truncate if one of conditions is met:
     # 1. Verbosity level is 2 or more;
     # 2. Test is being run in CI environment;
     # 3. Both truncation_limit_lines and truncation_limit_chars
     #    .ini parameters are set to 0 explicitly.
-    max_lines = item.config.getini("truncation_limit_lines")
+    max_lines = config.getini("truncation_limit_lines")
     max_lines = int(max_lines if max_lines is not None else DEFAULT_MAX_LINES)
 
-    max_chars = item.config.getini("truncation_limit_chars")
+    max_chars = config.getini("truncation_limit_chars")
     max_chars = int(max_chars if max_chars is not None else DEFAULT_MAX_CHARS)
 
-    verbose = item.config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
+    verbose = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
 
     should_truncate = verbose < 2 and not running_on_ci()
     should_truncate = should_truncate and (max_lines > 0 or max_chars > 0)
