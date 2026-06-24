@@ -217,6 +217,20 @@ class TestParseIni:
         config = pytester.parseconfig()
         assert config.inipath == pytest_toml
 
+    @pytest.mark.parametrize("name", ["pytest.toml", ".pytest.toml"])
+    def test_headerless_pytest_toml(self, pytester: Pytester, name: str) -> None:
+        """Top-level keys in pytest.toml are treated as pytest config (#14638)."""
+        pytester.path.joinpath(name).write_text(
+            textwrap.dedent(
+                """
+            minversion = "9.0"
+        """
+            ),
+            encoding="utf-8",
+        )
+        config = pytester.parseconfig()
+        assert config.getini("minversion") == "9.0"
+
     def test_pytest_toml_trumps_pyproject_toml(self, pytester: Pytester) -> None:
         """A pytest.toml always takes precedence over a pyproject.toml file."""
         pytester.makepyprojecttoml(

@@ -106,8 +106,15 @@ def load_config_dict_from_file(
             raise UsageError(f"{filepath}: {exc}") from exc
 
         # pytest.toml and .pytest.toml use [pytest] table directly.
+        # Top-level non-table keys are also treated as pytest config,
+        # since the filename already identifies the context and TOML
+        # sections are optional.
         if filepath.name in ("pytest.toml", ".pytest.toml"):
-            pytest_config = config.get("pytest", {})
+            top_config = {
+                k: v for k, v in config.items()
+                if not isinstance(v, dict)
+            }
+            pytest_config = {**top_config, **config.get("pytest", {})}
             if pytest_config:
                 # TOML mode - preserve native TOML types.
                 return {
