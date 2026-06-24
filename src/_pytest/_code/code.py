@@ -1212,10 +1212,10 @@ class ExceptionInfoFormatter:
                         if not traceback
                         else None
                     )
-                    te = TracebackException.from_exception(excinfo.value)
-                    _filter_tracebackexception(te, excinfo.value, self.tbfilter)
+                    tb_exc = TracebackException.from_exception(excinfo.value)
+                    _filter_tracebackexception(tb_exc, excinfo.value, self.tbfilter)
                     reprtraceback = ReprTracebackNative(
-                        list(te.format()),
+                        list(tb_exc.format()),
                         extraline=extraline,
                     )
 
@@ -1632,7 +1632,7 @@ def filter_excinfo_traceback(
 
 
 def _filter_tracebackexception(
-    te: TracebackException,
+    tb_exc: TracebackException,
     e: BaseException,
     tbfilter: TracebackFilter,
 ) -> None:
@@ -1653,14 +1653,14 @@ def _filter_tracebackexception(
             (str(entry.frame.code.path), entry._rawentry.tb_lineno)
             for entry in filtered
         }
-        te.stack = StackSummary.from_list(
-            [fs for fs in te.stack if (fs.filename, fs.lineno) in kept]
+        tb_exc.stack = StackSummary.from_list(
+            [fs for fs in tb_exc.stack if (fs.filename, fs.lineno) in kept]
         )
     if isinstance(e, BaseExceptionGroup):
-        sub_tes = getattr(te, "exceptions", None) or []
-        for sub_te, sub_e in zip(sub_tes, e.exceptions, strict=True):
-            _filter_tracebackexception(sub_te, sub_e, tbfilter)
-    if te.__cause__ is not None and e.__cause__ is not None:
-        _filter_tracebackexception(te.__cause__, e.__cause__, tbfilter)
-    if te.__context__ is not None and e.__context__ is not None:
-        _filter_tracebackexception(te.__context__, e.__context__, tbfilter)
+        sub_tb_excs = getattr(tb_exc, "exceptions", None) or []
+        for sub_tb_exc, sub_e in zip(sub_tb_excs, e.exceptions, strict=True):
+            _filter_tracebackexception(sub_tb_exc, sub_e, tbfilter)
+    if tb_exc.__cause__ is not None and e.__cause__ is not None:
+        _filter_tracebackexception(tb_exc.__cause__, e.__cause__, tbfilter)
+    if tb_exc.__context__ is not None and e.__context__ is not None:
+        _filter_tracebackexception(tb_exc.__context__, e.__context__, tbfilter)
