@@ -110,10 +110,7 @@ def load_config_dict_from_file(
         # since the filename already identifies the context and TOML
         # sections are optional.
         if filepath.name in ("pytest.toml", ".pytest.toml"):
-            top_config = {
-                k: v for k, v in config.items()
-                if not isinstance(v, dict)
-            }
+            top_config = {k: v for k, v in config.items() if not isinstance(v, dict)}
             pytest_config = {**top_config, **config.get("pytest", {})}
             if pytest_config:
                 # TOML mode - preserve native TOML types.
