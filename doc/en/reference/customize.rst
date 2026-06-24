@@ -31,13 +31,13 @@ pytest.toml
 ``pytest.toml`` files take precedence over other files, even when empty.
 
 Alternatively, the hidden version ``.pytest.toml`` can be used.
-Options can be placed at the top level of the file, or under a ``[pytest]`` table.
 
 .. tab:: toml
 
     .. code-block:: toml
 
         # pytest.toml or .pytest.toml
+        [pytest]
         minversion = "9.0"
         addopts = ["-ra", "-q"]
         testpaths = [

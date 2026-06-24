@@ -1,1 +1,1 @@
-Top-level options in ``pytest.toml`` and ``.pytest.toml`` files are now read as pytest configuration instead of being silently ignored.
+Top-level options in ``pytest.toml`` and ``.pytest.toml`` files now raise an error instead of being silently ignored when no ``[pytest]`` table is present.
