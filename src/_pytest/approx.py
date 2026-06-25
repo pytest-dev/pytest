@@ -116,9 +116,6 @@ class Approx(abc.ABC, Generic[ExpectedT]):
     # Ignore type because of https://github.com/python/mypy/issues/4266.
     __hash__ = None  # type: ignore
 
-    def __ne__(self, actual: object) -> bool:
-        return not (actual == self)
-
     def _approx_scalar(self, x) -> ApproxScalar[Any] | ApproxTimedelta:
         if isinstance(x, Decimal):
             return ApproxDecimal(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
