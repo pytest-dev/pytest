@@ -951,6 +951,11 @@ Objects
 Objects accessible from :ref:`fixtures <fixture>` or :ref:`hooks <hook-reference>`
 or importable from ``pytest``.
 
+Approx
+~~~~~~
+
+.. autoclass:: pytest.Approx()
+    :members:
 
 CallInfo
 ~~~~~~~~
