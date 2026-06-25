@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import datetime
 import decimal
 from decimal import Decimal
 from fractions import Fraction
@@ -13,8 +14,8 @@ from operator import eq
 from operator import ne
 import re
 
+from _pytest.approx import _recursive_sequence_map
 from _pytest.pytester import Pytester
-from _pytest.python_api import _recursive_sequence_map
 import pytest
 from pytest import approx
 
@@ -1034,6 +1035,16 @@ class TestApprox:
         approx_obj = pytest.approx(decimal.Decimal("2.60"))
         assert decimal.Decimal("2.600001") == approx_obj
 
+    def test_decimal_approx_float_rel(self) -> None:
+        approx_obj = pytest.approx(decimal.Decimal("2.60"), rel=0.01)
+        assert decimal.Decimal("2.600001") == approx_obj
+        assert repr(approx_obj) == "2.60 ± 1.0e-2"
+
+    def test_decimal_approx_float_abs(self) -> None:
+        approx_obj = pytest.approx(decimal.Decimal("2.60"), abs=0.01)
+        assert decimal.Decimal("2.600001") == approx_obj
+        assert repr(approx_obj) == "2.60 ± 1.0e-2"
+
     def test_allow_ordered_sequences_only(self) -> None:
         """pytest.approx() should raise an error on unordered sequences (#9692)."""
         with pytest.raises(TypeError, match="only supports ordered sequences"):
@@ -1116,6 +1127,25 @@ class TestApprox:
             "  Obtained: 2",
             "  Expected: 1 ± 1.0e-06",
         ]
+
+    def test_scalar_rel_type_validation(self) -> None:
+        with pytest.raises(
+            TypeError, match=r"relative tolerance for a scalar value must"
+        ):
+            pytest.approx(0, rel=datetime.timedelta(1))
+
+    def test_scalar_rel_abs_expected_validation(self) -> None:
+        with pytest.raises(
+            TypeError,
+            match=re.escape("expected value must support abs(...) when relative"),
+        ):
+            pytest.approx(object(), rel=1)
+
+    def test_scalar_abs_type_validation(self) -> None:
+        with pytest.raises(
+            TypeError, match=r"absolute tolerance for a scalar value must"
+        ):
+            pytest.approx(0, abs=datetime.timedelta(1))
 
 
 class TestApproxDatetime:

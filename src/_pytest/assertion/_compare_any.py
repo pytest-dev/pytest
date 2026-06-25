@@ -44,12 +44,12 @@ def _compare_eq_any(
             assertion_text_diff_style,
         )
     else:
-        from _pytest.python_api import ApproxBase
+        from _pytest.approx import Approx
 
         # Although the common order should be obtained == approx(...), allow both ways.
-        if isinstance(right, ApproxBase):
+        if isinstance(right, Approx):
             yield from right._repr_compare(left)
-        elif isinstance(left, ApproxBase):
+        elif isinstance(left, Approx):
             yield from left._repr_compare(right)
         elif type(left) is type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
