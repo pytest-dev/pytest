@@ -1,0 +1,1 @@
+Clarified that :fixture:`recwarn` resets the warnings filter after each test.
