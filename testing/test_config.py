@@ -164,6 +164,28 @@ class TestParseIni:
         config = pytester.parseconfig()
         assert config.getini("minversion") == "3.36"
 
+    @pytest.mark.parametrize("name", ["pytest.toml", ".pytest.toml"])
+    def test_toml_config_names_without_section_errors(
+        self, pytester: Pytester, name: str
+    ) -> None:
+        config_path = pytester.path.joinpath(name)
+        config_path.write_text(
+            textwrap.dedent(
+                """
+            minversion = "3.36"
+            addopts = ["-v"]
+        """
+            ),
+            encoding="utf-8",
+        )
+        with pytest.raises(UsageError) as excinfo:
+            pytester.parseconfig()
+        assert str(excinfo.value) == (
+            f"{config_path}: "
+            "pytest configuration must be under a [pytest] table "
+            "(found top-level options: minversion, addopts)"
+        )
+
     def test_pyproject_toml(self, pytester: Pytester) -> None:
         pyproject_toml = pytester.makepyprojecttoml(
             """
