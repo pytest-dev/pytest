@@ -507,6 +507,14 @@ class TestAssert_reprcompare:
         for line in lines:
             assert "z" * 50 not in line
 
+    def test_text_skipping_trailing_when_prefix_differs(self) -> None:
+        # The trailing-skip branch must still work when the first characters differ.
+        lines = callequal("x" + "z" * 50, "y" + "z" * 50)
+        assert lines is not None
+        assert any("identical trailing" in line for line in lines)
+        for line in lines:
+            assert "z" * 50 not in line
+
     def test_text_skipping_verbose(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=1)
         assert lines is not None
