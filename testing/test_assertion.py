@@ -17,6 +17,7 @@ import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 from _pytest.assertion._compare_any import _compare_eq_cls
+from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _compare_eq_text
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
@@ -1520,17 +1521,23 @@ class TestTruncateExplanation:
 
     def test_doesnt_truncate_when_input_is_empty_list(self) -> None:
         expl: list[str] = []
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=100)
+        )
         assert result == expl
 
     def test_doesnt_truncate_at_when_input_is_5_lines_and_LT_max_chars(self) -> None:
         expl = ["a" * 100 for x in range(5)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=8 * 80)
+        )
         assert result == expl
 
     def test_truncates_at_8_lines_when_given_list_of_empty_strings(self) -> None:
         expl = ["" for x in range(50)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=100)
+        )
         assert len(result) != len(expl)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
@@ -1542,7 +1549,9 @@ class TestTruncateExplanation:
     def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self) -> None:
         total_lines = 100
         expl = ["a" for x in range(total_lines)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=8 * 80)
+        )
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1553,14 +1562,18 @@ class TestTruncateExplanation:
     def test_truncates_at_8_lines_when_there_is_one_line_to_remove(self) -> None:
         """The number of line in the result is 9, the same number as if we truncated."""
         expl = ["a" for x in range(9)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=8 * 80)
+        )
         assert result == expl
         assert "truncated" not in result[-1]
 
     def test_truncates_full_line_because_of_max_chars(self) -> None:
         """A line is fully truncated because of the max_chars value."""
         expl = ["a" * 10, "b" * 71]
-        result = truncate._truncate_explanation(expl, max_lines=10, max_chars=10)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=10, max_chars=10)
+        )
         assert result == [
             "a" * 10,
             "...",
@@ -1573,7 +1586,9 @@ class TestTruncateExplanation:
     ) -> None:
         line = "a" * 10
         expl = [line, line]
-        result = truncate._truncate_explanation(expl, max_lines=10, max_chars=10)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=10, max_chars=10)
+        )
         assert result == [line, line]
 
     def test_truncates_edgecase_when_truncation_message_makes_the_result_longer_for_lines(
@@ -1581,12 +1596,16 @@ class TestTruncateExplanation:
     ) -> None:
         line = "a" * 10
         expl = [line, line]
-        result = truncate._truncate_explanation(expl, max_lines=1, max_chars=100)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=1, max_chars=100)
+        )
         assert result == [line, line]
 
     def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self) -> None:
         expl = [chr(97 + x) * 80 for x in range(16)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=8 * 80)
+        )
         assert result != expl
         assert len(result) == 16 - 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1596,7 +1615,9 @@ class TestTruncateExplanation:
 
     def test_truncates_at_4_lines_when_first_4_lines_are_GT_max_chars(self) -> None:
         expl = ["a" * 250 for x in range(10)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=999)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=999)
+        )
         assert result != expl
         assert len(result) == 4 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1606,7 +1627,9 @@ class TestTruncateExplanation:
 
     def test_truncates_at_1_line_when_first_line_is_GT_max_chars(self) -> None:
         expl = ["a" * 250 for x in range(1000)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=100)
+        )
         assert result != expl
         assert len(result) == 1 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]

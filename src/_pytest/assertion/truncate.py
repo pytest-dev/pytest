@@ -6,6 +6,7 @@ terminal lines, unless running with an assertions verbosity level of at least 2 
 
 from __future__ import annotations
 
+from _pytest.assertion._typing import TruncationBudget
 from _pytest.compat import running_on_ci
 from _pytest.config import Config
 from _pytest.nodes import Item
@@ -18,18 +19,14 @@ USAGE_MSG = "use '-vv' to show"
 
 def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
     """Truncate this assertion explanation if the given test item is eligible."""
-    should_truncate, max_lines, max_chars = _get_truncation_parameters(item)
+    should_truncate, budget = _get_truncation_parameters(item)
     if should_truncate:
-        return _truncate_explanation(
-            explanation,
-            max_lines=max_lines,
-            max_chars=max_chars,
-        )
+        return _truncate_explanation(explanation, budget)
     return explanation
 
 
-def _get_truncation_parameters(item: Item) -> tuple[bool, int, int]:
-    """Return the truncation parameters related to the given item, as (should truncate, max lines, max chars)."""
+def _get_truncation_parameters(item: Item) -> tuple[bool, TruncationBudget]:
+    """Return the truncation parameters related to the given item, as (should truncate, budget)."""
     # We do not need to truncate if one of conditions is met:
     # 1. Verbosity level is 2 or more;
     # 2. Test is being run in CI environment;
@@ -46,19 +43,18 @@ def _get_truncation_parameters(item: Item) -> tuple[bool, int, int]:
     should_truncate = verbose < 2 and not running_on_ci()
     should_truncate = should_truncate and (max_lines > 0 or max_chars > 0)
 
-    return should_truncate, max_lines, max_chars
+    return should_truncate, TruncationBudget(max_lines=max_lines, max_chars=max_chars)
 
 
 def _truncate_explanation(
     input_lines: list[str],
-    max_lines: int,
-    max_chars: int,
+    budget: TruncationBudget,
 ) -> list[str]:
     """Truncate given list of strings that makes up the assertion explanation.
 
-    Truncates to either max_lines, or max_chars - whichever the input reaches
-    first, taking the truncation explanation into account. The remaining lines
-    will be replaced by a usage message.
+    Truncates to either ``budget.max_lines`` or ``budget.max_chars`` -
+    whichever the input reaches first, taking the truncation explanation into
+    account. The remaining lines will be replaced by a usage message.
 
     If max_chars=0, no truncation by character count is performed.
     If max_lines=0, no truncation by line count is performed.
@@ -78,24 +74,27 @@ def _truncate_explanation(
     # But if there's more than 100 lines it's very likely that we're going to
     # truncate, so we don't need the exact value using log10.
     tolerable_max_chars = (
-        max_chars + 70  # 64 + 1 (for plural) + 2 (for '99') + 3 for '...'
+        budget.max_chars + 70  # 64 + 1 (for plural) + 2 (for '99') + 3 for '...'
     )
     # The truncation explanation add two lines to the output
-    if max_lines == 0 or len(input_lines) <= max_lines + 2:
-        if max_chars == 0 or sum(len(s) for s in input_lines) <= tolerable_max_chars:
+    if budget.max_lines == 0 or len(input_lines) <= budget.max_lines + 2:
+        if (
+            budget.max_chars == 0
+            or sum(len(s) for s in input_lines) <= tolerable_max_chars
+        ):
             return input_lines
         truncated_explanation = input_lines
     else:
         # Truncate first to max_lines, and then truncate to max_chars if necessary
-        truncated_explanation = input_lines[:max_lines]
+        truncated_explanation = input_lines[: budget.max_lines]
     # We reevaluate the need to truncate chars following removal of some lines
     need_to_truncate_char = (
-        max_chars > 0
+        budget.max_chars > 0
         and sum(len(e) for e in truncated_explanation) > tolerable_max_chars
     )
     if need_to_truncate_char:
         truncated_explanation = _truncate_by_char_count(
-            truncated_explanation, max_chars
+            truncated_explanation, budget.max_chars
         )
     # Something was truncated, adding '...' at the end to show that
     truncated_explanation[-1] += "..."
