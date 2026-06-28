@@ -26,11 +26,7 @@ def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
 
 
 def _get_truncation_parameters(item: Item) -> tuple[bool, TruncationBudget]:
-    """Return the truncation parameters related to the given item, as (should truncate, budget).
-
-    The budget carries the ``truncation_limit_lines`` / ``truncation_limit_chars``
-    ini values verbatim, where ``0`` means the matching dimension is unbounded.
-    """
+    """Return the truncation parameters related to the given item, as (should truncate, budget)."""
     # We do not need to truncate if one of conditions is met:
     # 1. Verbosity level is 2 or more;
     # 2. Test is being run in CI environment;

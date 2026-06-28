@@ -15,9 +15,6 @@ class TruncationBudget:
     ``max_lines`` / ``max_chars`` mirror the ``truncation_limit_lines`` /
     ``truncation_limit_chars`` ini values: a positive limit bounds that
     dimension; ``0`` leaves it unbounded (the limit is disabled).
-
-    Constructed keyword-only so the two limits can never be silently
-    swapped at a call site.
     """
 
     max_lines: int
