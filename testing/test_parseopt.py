@@ -123,6 +123,28 @@ class TestParser:
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
 
+    def test_group_addoption_rejects_implicit_dest_conflict(
+        self, parser: parseopt.Parser
+    ) -> None:
+        group = parser.getgroup("hello")
+        group._addoption("-k", dest="keyword", action="store")
+
+        with pytest.raises(ValueError) as err:
+            group.addoption("--keyword", action="store")
+
+        assert "option dest 'keyword' already used by ['-k']" in str(err.value)
+
+    def test_group_addoption_allows_explicit_dest_conflict(
+        self, parser: parseopt.Parser
+    ) -> None:
+        group = parser.getgroup("hello")
+        group.addoption("--capture", action="store", default="fd")
+        group._addoption("-s", dest="capture", action="store_const", const="no")
+
+        args = parser.parse(["-s"])
+
+        assert args.capture == "no"
+
     def test_parse(self, parser: parseopt.Parser) -> None:
         parser.addoption("--hello", dest="hello", action="store")
         args = parser.parse(["--hello", "world"])
