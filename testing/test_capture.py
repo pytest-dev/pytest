@@ -30,6 +30,10 @@ import pytest
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 
 
+def test_capture_manager_is_public_api() -> None:
+    assert pytest.CaptureManager is CaptureManager
+
+
 def StdCaptureFD(
     out: bool = True, err: bool = True, in_: bool = True
 ) -> MultiCapture[str]:
