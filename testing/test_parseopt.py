@@ -74,6 +74,11 @@ class TestParser:
         argument = parseopt.Argument(action)
         assert argument.type is str
 
+    def test_get_argparse_dest(self) -> None:
+        assert parseopt._get_argparse_dest(("--keyword",)) == "keyword"
+        assert parseopt._get_argparse_dest(("-x",)) == "x"
+        assert parseopt._get_argparse_dest(("-x", "--exit-first")) == "exit_first"
+
     def test_group_add_and_get(self, parser: parseopt.Parser) -> None:
         group = parser.getgroup("hello")
         assert group.name == "hello"
