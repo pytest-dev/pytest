@@ -369,8 +369,9 @@ class OptionGroup:
                     if option.dest == dest:
                         raise ValueError(
                             f"option dest {dest!r} already used by "
-                            f"{option.names()!r}; pass dest=... explicitly "
-                            "to share the same destination"
+                            f"{option.names()!r} (this is the option that maps to "
+                            f"dest {dest!r}); pass dest={dest!r} explicitly "
+                            "to share the destination"
                         )
         self._addoption_inner(opts, attrs, allow_reserved=False)
 

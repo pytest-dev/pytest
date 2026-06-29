@@ -137,7 +137,11 @@ class TestParser:
         with pytest.raises(ValueError) as err:
             group.addoption("--keyword", action="store")
 
-        assert "option dest 'keyword' already used by ['-k']" in str(err.value)
+        assert str(err.value) == (
+            "option dest 'keyword' already used by ['-k'] "
+            "(this is the option that maps to dest 'keyword'); "
+            "pass dest='keyword' explicitly to share the destination"
+        )
 
     def test_group_addoption_allows_explicit_dest_conflict(
         self, parser: parseopt.Parser
