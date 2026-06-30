@@ -598,8 +598,7 @@ warning categories:
 
     @pytest.mark.filterwarnings("error::ResourceWarning")
     @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
-    def test_resource_cleanup():
-        ...
+    def test_resource_cleanup(): ...
 
 Additional information of the source of a :class:`ResourceWarning` can be obtained when captured by pytest if
 :mod:`tracemalloc` module is enabled.
