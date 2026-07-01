@@ -435,6 +435,19 @@ def test_check() -> None:
     ):
         raise ExceptionGroup("", (ValueError(),))
 
+    def has_multiple_exceptions(e: ExceptionGroup[ValueError]) -> bool:
+        return len(e.exceptions) > 1
+
+    with (
+        fails_raises_group(
+            "check "
+            f"{repr_callable(has_multiple_exceptions)} did not return True "
+            "on the ExceptionGroup"
+        ),
+        RaisesGroup(ValueError, check=has_multiple_exceptions),
+    ):
+        raise ExceptionGroup("", (ValueError(),))
+
 
 def test_unwrapped_match_check() -> None:
     def my_check(e: object) -> bool:  # pragma: no cover
