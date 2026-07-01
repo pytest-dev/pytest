@@ -807,10 +807,7 @@ class LoggingPlugin:
         if session.config.option.collectonly:
             return (yield)
 
-        if (
-            self._log_cli_enabled()
-            and self._config.get_verbosity() < 1
-        ):
+        if self._log_cli_enabled() and self._config.get_verbosity() < 1:
             if self._config.getoption("--log-cli-level") is None:
                 # The verbose flag is needed to avoid messy test progress output.
                 self._config.option.verbose = 1
@@ -945,9 +942,7 @@ class _LiveLoggingStreamHandler(logging_StreamHandler):
     def set_show_test_item(self, show_test_item: bool) -> None:
         self._show_test_item = show_test_item
 
-    def set_test_item(
-        self, nodeid: str, location: tuple[str, int | None, str]
-    ) -> None:
+    def set_test_item(self, nodeid: str, location: tuple[str, int | None, str]) -> None:
         fspath, lineno, domain = location
         self._test_item_line = self.stream._locationline(nodeid, fspath, lineno, domain)
 
@@ -998,9 +993,7 @@ class _LiveLoggingNullHandler(logging.NullHandler):
     def set_show_test_item(self, show_test_item: bool) -> None:
         pass
 
-    def set_test_item(
-        self, nodeid: str, location: tuple[str, int | None, str]
-    ) -> None:
+    def set_test_item(self, nodeid: str, location: tuple[str, int | None, str]) -> None:
         pass
 
     def set_when(self, when: str) -> None:
