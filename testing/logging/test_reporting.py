@@ -4,11 +4,14 @@ from __future__ import annotations
 import io
 import os
 import re
+from types import SimpleNamespace
 from typing import cast
 
 from _pytest.capture import CaptureManager
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
+from _pytest.logging import LoggingPlugin
+from _pytest.main import Session
 from _pytest.pytester import Pytester
 from _pytest.terminal import TerminalReporter
 import pytest
@@ -615,13 +618,15 @@ def test_log_cli_auto_enable(pytester: Pytester, cli_args: str) -> None:
     if cli_args == "--log-cli-level=WARNING":
         result.stdout.fnmatch_lines(
             [
-                "*::test_log_1 ",
+                "test_log_cli_auto_enable.py ",
                 "*-- live log call --*",
                 "*WARNING*log message from test_log_1*",
-                "PASSED *100%*",
+                ". *100%*",
                 "=* 1 passed in *=",
             ]
         )
+        result.stdout.no_fnmatch_line("*::test_log_1*")
+        result.stdout.no_fnmatch_line("PASSED *100%*")
         assert "INFO" not in stdout
     else:
         result.stdout.fnmatch_lines(
@@ -629,6 +634,64 @@ def test_log_cli_auto_enable(pytester: Pytester, cli_args: str) -> None:
         )
         assert "INFO" not in stdout
         assert "WARNING" not in stdout
+
+
+def test_log_cli_level_does_not_increase_verbosity(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import logging
+
+        def test_log():
+            logging.getLogger(__name__).warning("visible log")
+
+        def test_quiet_progress():
+            pass
+    """
+    )
+
+    result = pytester.runpytest("--log-cli-level=WARNING")
+
+    result.stdout.fnmatch_lines(
+        [
+            "*-- live log call --*",
+            "*WARNING*visible log*",
+            "*2 passed in *",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*::test_log*")
+    result.stdout.no_fnmatch_line("*::test_quiet_progress*")
+    result.stdout.no_fnmatch_line("PASSED *100%*")
+
+
+@pytest.mark.parametrize(
+    ("cli_args", "expected_verbose"),
+    [
+        (("--log-cli-level=WARNING",), 0),
+        ((), 1),
+    ],
+)
+def test_log_cli_level_option_keeps_default_verbosity(
+    pytester: Pytester, cli_args: tuple[str, ...], expected_verbose: int
+) -> None:
+    if not cli_args:
+        pytester.makeini(
+            """
+            [pytest]
+            log_cli=true
+            """
+        )
+    config = pytester.parseconfigure(*cli_args)
+    plugin = config.pluginmanager.getplugin("logging-plugin")
+    assert isinstance(plugin, LoggingPlugin)
+
+    session = cast(Session, SimpleNamespace(config=config))
+    hook = plugin.pytest_runtestloop(session)
+    try:
+        next(hook)
+    finally:
+        hook.close()
+
+    assert config.option.verbose == expected_verbose
 
 
 def test_log_file_cli(pytester: Pytester) -> None:
