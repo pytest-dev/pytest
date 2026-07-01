@@ -140,6 +140,36 @@ class TestTerminal:
         combined = "\n".join(result.stdout.lines + result.stderr.lines)
         assert "INTERNALERROR" not in combined
 
+    def test_console_output_style_times_with_subtests(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_repro="""
+                def test_subtests(subtests):
+                    for i in range(2):
+                        with subtests.test(i=i):
+                            pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-v",
+            "-o",
+            "console_output_style=times",
+            "-o",
+            "verbosity_subtests=1",
+        )
+
+        # Check that we got positive/non-zero timing info for subtests and the parent PASSED line.
+        # We check that it does not show "0.000us".
+        lines = result.stdout.lines
+        subpassed_lines = [l for l in lines if "SUBPASSED" in l]
+        passed_lines = [l for l in lines if "PASSED" in l and "SUBPASSED" not in l]
+        assert len(subpassed_lines) == 2
+        assert len(passed_lines) == 1
+        for line in subpassed_lines + passed_lines:
+            assert "0.000us" not in line
+
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
