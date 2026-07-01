@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
 import re
 from types import SimpleNamespace
@@ -10,6 +11,8 @@ from typing import cast
 from _pytest.capture import CaptureManager
 from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
+from _pytest.logging import _LiveLoggingNullHandler
+from _pytest.logging import _LiveLoggingStreamHandler
 from _pytest.logging import LoggingPlugin
 from _pytest.main import Session
 from _pytest.pytester import Pytester
@@ -692,6 +695,40 @@ def test_log_cli_level_option_keeps_default_verbosity(
         hook.close()
 
     assert config.option.verbose == expected_verbose
+
+
+def test_log_cli_level_writes_current_test_item_once(pytester: Pytester) -> None:
+    config = pytester.parseconfigure("--log-cli-level=WARNING")
+    stream = io.StringIO()
+    terminal_reporter = TerminalReporter(config, file=stream)
+    handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager=None)
+    handler.set_show_test_item(True)
+    handler.set_test_item(
+        "test_log_cli.py::test_log", ("test_log_cli.py", 2, "test_log")
+    )
+    handler.set_when("call")
+    record = logging.LogRecord(
+        "test_log_cli", logging.WARNING, "test_log_cli.py", 4, "visible log", (), None
+    )
+
+    handler.emit(record)
+    handler.emit(record)
+
+    output = stream.getvalue()
+    assert output.count("test_log_cli.py::test_log") == 1
+    assert "live log call" in output
+    assert output.count("visible log") == 2
+
+
+def test_live_logging_null_handler_accepts_test_item_hooks() -> None:
+    handler = _LiveLoggingNullHandler()
+
+    handler.reset()
+    handler.set_show_test_item(True)
+    handler.set_test_item(
+        "test_log_cli.py::test_log", ("test_log_cli.py", 2, "test_log")
+    )
+    handler.set_when("start")
 
 
 def test_log_file_cli(pytester: Pytester) -> None:
