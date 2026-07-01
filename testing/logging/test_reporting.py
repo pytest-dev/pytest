@@ -619,13 +619,13 @@ def test_log_cli_auto_enable(pytester: Pytester, cli_args: str) -> None:
         result.stdout.fnmatch_lines(
             [
                 "test_log_cli_auto_enable.py ",
+                "*::test_log_1 ",
                 "*-- live log call --*",
                 "*WARNING*log message from test_log_1*",
                 ". *100%*",
                 "=* 1 passed in *=",
             ]
         )
-        result.stdout.no_fnmatch_line("*::test_log_1*")
         result.stdout.no_fnmatch_line("PASSED *100%*")
         assert "INFO" not in stdout
     else:
@@ -653,12 +653,12 @@ def test_log_cli_level_does_not_increase_verbosity(pytester: Pytester) -> None:
 
     result.stdout.fnmatch_lines(
         [
+            "*::test_log ",
             "*-- live log call --*",
             "*WARNING*visible log*",
             "*2 passed in *",
         ]
     )
-    result.stdout.no_fnmatch_line("*::test_log*")
     result.stdout.no_fnmatch_line("*::test_quiet_progress*")
     result.stdout.no_fnmatch_line("PASSED *100%*")
 

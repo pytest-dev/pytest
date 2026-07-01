@@ -810,18 +810,23 @@ class LoggingPlugin:
         if (
             self._log_cli_enabled()
             and self._config.get_verbosity() < 1
-            and self._config.getoption("--log-cli-level") is None
         ):
-            # The verbose flag is needed to avoid messy test progress output.
-            self._config.option.verbose = 1
+            if self._config.getoption("--log-cli-level") is None:
+                # The verbose flag is needed to avoid messy test progress output.
+                self._config.option.verbose = 1
+            else:
+                self.log_cli_handler.set_show_test_item(True)
 
         with catching_logs(self.log_cli_handler, level=self.log_cli_level):
             with catching_logs(self.log_file_handler, level=self.log_file_level):
                 return (yield)  # Run all the tests.
 
     @hookimpl
-    def pytest_runtest_logstart(self) -> None:
+    def pytest_runtest_logstart(
+        self, nodeid: str, location: tuple[str, int | None, str]
+    ) -> None:
         self.log_cli_handler.reset()
+        self.log_cli_handler.set_test_item(nodeid, location)
         self.log_cli_handler.set_when("start")
 
     @hookimpl
@@ -929,10 +934,22 @@ class _LiveLoggingStreamHandler(logging_StreamHandler):
         self.reset()
         self.set_when(None)
         self._test_outcome_written = False
+        self._show_test_item = False
+        self._test_item_line: str | None = None
 
     def reset(self) -> None:
         """Reset the handler; should be called before the start of each test."""
         self._first_record_emitted = False
+        self._test_item_written = False
+
+    def set_show_test_item(self, show_test_item: bool) -> None:
+        self._show_test_item = show_test_item
+
+    def set_test_item(
+        self, nodeid: str, location: tuple[str, int | None, str]
+    ) -> None:
+        fspath, lineno, domain = location
+        self._test_item_line = self.stream._locationline(nodeid, fspath, lineno, domain)
 
     def set_when(self, when: str | None) -> None:
         """Prepare for the given test phase (setup/call/teardown)."""
@@ -949,6 +966,13 @@ class _LiveLoggingStreamHandler(logging_StreamHandler):
         )
         with ctx_manager:
             if not self._first_record_emitted:
+                if (
+                    self._show_test_item
+                    and self._test_item_line
+                    and not self._test_item_written
+                ):
+                    self.stream.write_ensure_prefix(self._test_item_line, "")
+                    self._test_item_written = True
                 self.stream.write("\n")
                 self._first_record_emitted = True
             elif self._when in ("teardown", "finish"):
@@ -969,6 +993,14 @@ class _LiveLoggingNullHandler(logging.NullHandler):
     """A logging handler used when live logging is disabled."""
 
     def reset(self) -> None:
+        pass
+
+    def set_show_test_item(self, show_test_item: bool) -> None:
+        pass
+
+    def set_test_item(
+        self, nodeid: str, location: tuple[str, int | None, str]
+    ) -> None:
         pass
 
     def set_when(self, when: str) -> None:
