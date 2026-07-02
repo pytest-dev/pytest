@@ -140,9 +140,7 @@ class TestTerminal:
         combined = "\n".join(result.stdout.lines + result.stderr.lines)
         assert "INTERNALERROR" not in combined
 
-    def test_console_output_style_times_with_subtests(
-        self, pytester: Pytester
-    ) -> None:
+    def test_console_output_style_times_with_subtests(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             test_repro="""
                 def test_subtests(subtests):
@@ -163,12 +161,48 @@ class TestTerminal:
         # Check that we got positive/non-zero timing info for subtests and the parent PASSED line.
         # We check that it does not show "0.000us".
         lines = result.stdout.lines
-        subpassed_lines = [l for l in lines if "SUBPASSED" in l]
-        passed_lines = [l for l in lines if "PASSED" in l and "SUBPASSED" not in l]
+        subpassed_lines = [
+            line_content for line_content in lines if "SUBPASSED" in line_content
+        ]
+        passed_lines = [
+            line_content
+            for line_content in lines
+            if "PASSED" in line_content and "SUBPASSED" not in line_content
+        ]
         assert len(subpassed_lines) == 2
         assert len(passed_lines) == 1
         for line in subpassed_lines + passed_lines:
             assert "0.000us" not in line
+
+    def test_progress_information_message_no_current_report(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        item = pytester.getitem("def test_func(): pass")
+        tr = TerminalReporter(item.config)
+        monkeypatch.setattr(tr.config, "get_verbosity", lambda *args, **kwargs: 1)
+        tr._show_progress_info = "times"
+
+        class MockSession:
+            testscollected = 1
+            items = [item]
+
+        tr._session = MockSession()  # type: ignore[assignment]
+
+        from _pytest.reports import TestReport
+
+        rep = TestReport(
+            nodeid=item.nodeid,
+            location=item.location,
+            keywords={},
+            outcome="passed",
+            longrepr=None,
+            when="call",
+            duration=0.123,
+        )
+        tr.stats.setdefault("passed", []).append(rep)
+
+        msg = tr._get_progress_information_message()
+        assert msg == " 123.0ms"
 
     def test_internalerror(self, pytester: Pytester, linecomp) -> None:
         modcol = pytester.getmodulecol("def test_one(): pass")

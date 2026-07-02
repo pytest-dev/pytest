@@ -402,6 +402,7 @@ class TerminalReporter:
         self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[str] = set()
         self._timing_nodeids_reported: set[int] = set()
+        self._current_logreport: TestReport | None = None
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -744,7 +745,7 @@ class TerminalReporter:
                 if key.startswith("subtests "):
                     all_reports.extend(self._get_reports_to_display(key))
 
-            report = getattr(self, "_current_logreport", None)
+            report = self._current_logreport
             if report is not None:
                 current_location = report.location[0]
             else:
