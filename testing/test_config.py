@@ -2111,6 +2111,26 @@ class TestRootdir:
         assert rootpath == tmp_path
         assert found_inipath == Path(os.devnull)
 
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason="requires a /dev/null-like character device"
+    )
+    def test_explicit_config_file_non_regular_file_fs_root_args(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Same as above, but when the common ancestor of the arguments is the
+        filesystem root, fall back to the invocation directory (#11502)."""
+        monkeypatch.chdir(tmp_path)
+
+        rootpath, found_inipath, *_ = determine_setup(
+            inifile=os.devnull,
+            override_ini=None,
+            args=["/"],
+            rootdir_cmd_arg=None,
+            invocation_dir=Path.cwd(),
+        )
+        assert rootpath == tmp_path
+        assert found_inipath == Path(os.devnull)
+
     def test_with_arg_outside_cwd_without_inifile(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
     ) -> None:
