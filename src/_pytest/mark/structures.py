@@ -214,6 +214,26 @@ class ParameterSet(NamedTuple):
         if parameters:
             # Check all parameter sets have the correct number of values.
             for param in parameters:
+                # A scalar argvalues entry (e.g. `None` or `42`) slips
+                # through `extract_from` as-is when argnames has a
+                # trailing comma, because the trailing comma means
+                # force_tuple=False and the value isn't a ParameterSet.
+                # `len()` then raises `TypeError: object of type
+                # 'NoneType' has no len()` from inside pytest internals,
+                # which is hard to track back to the offending test.
+                # Detect the non-Sized case explicitly and surface a
+                # clear error message that names the test and tells the
+                # user how to fix it.
+                if not isinstance(param.values, collections.abc.Sized):
+                    fail(
+                        f'{nodeid}: in "parametrize" argnames {argnames!r} declares '
+                        f'{len(argnames)} parameter(s) but argvalues contains an entry '
+                        f"of type {type(param.values).__name__} ({param.values!r}), "
+                        "which is not a sequence. Each entry of argvalues must be "
+                        "a sequence with one element per declared argname; wrap "
+                        "scalars in a tuple (e.g. `(value,)`) or use `pytest.param`.",
+                        pytrace=False,
+                    )
                 if len(param.values) != len(argnames):
                     msg = (
                         '{nodeid}: in "parametrize" the number of names ({names_len}):\n'

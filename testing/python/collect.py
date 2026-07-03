@@ -15,6 +15,7 @@ from _pytest.pytester import Pytester
 from _pytest.python import Class
 from _pytest.python import Function
 import pytest
+import re
 
 
 class TestModule:
@@ -822,6 +823,30 @@ class TestFunction:
                 "*= 1 passed in *",
             ]
         )
+
+    def test_parametrize_non_sized_argvalues_entry_clear_error(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #14619: a non-Sized entry in argvalues
+        (e.g. ``None`` from a bare scalar) used to surface as the
+        opaque ``TypeError: object of type 'NoneType' has no len()``
+        from inside pytest internals. The error must now point at
+        the offending parametrize and explain the wrapper requirement.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.parametrize("x,", [None, "foo", "bar"])
+            def test(x): ...
+            """
+        )
+        result = pytester.runpytest("--collect-only")
+        assert result.ret != 0
+        stdout = str(result.stdout)
+        assert "in \"parametrize\" argnames ['x']" in stdout
+        assert "is not a sequence" in stdout
+        assert "NoneType (None)" in stdout
 
 
 class TestSorting:
