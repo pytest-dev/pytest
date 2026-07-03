@@ -227,7 +227,7 @@ class ParameterSet(NamedTuple):
                 if not isinstance(param.values, collections.abc.Sized):
                     fail(
                         f'{nodeid}: in "parametrize" argnames {argnames!r} declares '
-                        f'{len(argnames)} parameter(s) but argvalues contains an entry '
+                        f"{len(argnames)} parameter(s) but argvalues contains an entry "
                         f"of type {type(param.values).__name__} ({param.values!r}), "
                         "which is not a sequence. Each entry of argvalues must be "
                         "a sequence with one element per declared argname; wrap "

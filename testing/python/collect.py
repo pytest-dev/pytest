@@ -15,7 +15,6 @@ from _pytest.pytester import Pytester
 from _pytest.python import Class
 from _pytest.python import Function
 import pytest
-import re
 
 
 class TestModule:
