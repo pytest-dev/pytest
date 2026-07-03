@@ -1064,6 +1064,91 @@ def test_ordered_nested_toggles() -> None:
     with RaisesGroup(RaisesGroup(ValueError, TypeError), ordered=True):
         raise ExceptionGroup("", [ExceptionGroup("", [TypeError(), ValueError()])])
 
+    # outer ordered=True with multiple entries: the nested group must sit at the
+    # expected position, so swapping the subgroups fails at the outer level even
+    # though both inner groups are unordered
+    with (
+        fails_raises_group(
+            "At index 0: RaisesGroup(ValueError): "
+            "`TypeError()` is not an instance of `ValueError`"
+        ),
+        RaisesGroup(RaisesGroup(ValueError), RaisesGroup(TypeError), ordered=True),
+    ):
+        raise ExceptionGroup(
+            "", [ExceptionGroup("", [TypeError()]), ExceptionGroup("", [ValueError()])]
+        )
+
+    # outer ordered=True and inner ordered=True fail independently: here the outer
+    # position is correct, so the failure is reported by the inner ordered check
+    with (
+        fails_raises_group(
+            "At index 0: RaisesGroup(ValueError, TypeError, ordered=True): "
+            "At index 0: `TypeError()` is not an instance of `ValueError`"
+        ),
+        RaisesGroup(
+            RaisesGroup(ValueError, TypeError, ordered=True),
+            RaisesExc(ValueError, match="a"),
+            ordered=True,
+        ),
+    ):
+        raise ExceptionGroup(
+            "",
+            [
+                ExceptionGroup("", [TypeError(), ValueError()]),
+                ValueError("a"),
+            ],
+        )
+
+    # outer group left unordered: the outer entries may be reordered freely, while
+    # an inner ordered=True group still enforces the order within its subgroup
+    with RaisesGroup(
+        RaisesGroup(ValueError, TypeError, ordered=True), RaisesGroup(KeyError)
+    ):
+        raise ExceptionGroup(
+            "",
+            [
+                ExceptionGroup("", [KeyError()]),
+                ExceptionGroup("", [ValueError(), TypeError()]),
+            ],
+        )
+
+    # ... and the inner ordered=True group fails on wrong inner order even though
+    # the unordered outer group would have been free to reorder
+    with (
+        fails_raises_group(
+            "RaisesGroup(ValueError, TypeError, ordered=True): "
+            "At index 0: `TypeError()` is not an instance of `ValueError`"
+        ),
+        RaisesGroup(RaisesGroup(ValueError, TypeError, ordered=True)),
+    ):
+        raise ExceptionGroup("", [ExceptionGroup("", [TypeError(), ValueError()])])
+
+    # with an unordered outer group, inner ordered=True constrains which subgroup
+    # each expected group can pair up with: two ordered groups with opposite orders
+    # each find their (only) fitting counterpart
+    with RaisesGroup(
+        RaisesGroup(ValueError, TypeError, ordered=True),
+        RaisesGroup(TypeError, ValueError, ordered=True),
+    ):
+        raise ExceptionGroup(
+            "",
+            [
+                ExceptionGroup("", [TypeError(), ValueError()]),
+                ExceptionGroup("", [ValueError(), TypeError()]),
+            ],
+        )
+
+    # fully unordered baseline: with both toggles at the default, both the outer
+    # entries and the inner exceptions may be arbitrarily reordered
+    with RaisesGroup(RaisesGroup(ValueError, TypeError), RaisesGroup(KeyError)):
+        raise ExceptionGroup(
+            "",
+            [
+                ExceptionGroup("", [KeyError()]),
+                ExceptionGroup("", [TypeError(), ValueError()]),
+            ],
+        )
+
 
 def test_ordered_repr() -> None:
     assert (
