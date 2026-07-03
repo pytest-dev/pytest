@@ -221,6 +221,8 @@ class ParameterSet(NamedTuple):
                 if values_len is None:
                     fail(
                         f'{nodeid}: in "parametrize" expected a sequence of values, '
+                        "for a single value use a one-element tuple like "
+                        "('value',), "
                         f"got {type(param.values).__name__}:\n"
                         f"  {param.values}",
                         pytrace=False,

@@ -511,7 +511,9 @@ def test_parametrized_collect_with_non_sequence_values(pytester: Pytester) -> No
     result.stdout.fnmatch_lines(
         [
             "test_parametrized_collect_with_non_sequence_values.py::test_func: "
-            'in "parametrize" expected a sequence of values, got NoneType:',
+            'in "parametrize" expected a sequence of values, '
+            "for a single value use a one-element tuple like ('value',), "
+            "got NoneType:",
             "  None",
         ]
     )
