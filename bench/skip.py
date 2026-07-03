@@ -8,11 +8,6 @@ SKIP = True
 
 @pytest.mark.parametrize("x", range(5000))
 def test_foo(x):
-    """Test Foo.
-
-    Args:
-        x: Description of x.
-
-    """
+    """Document test foo."""
     if SKIP:
         pytest.skip("heh")
