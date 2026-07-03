@@ -282,15 +282,7 @@ if IS_RELEASE_ON_RTD:
 
 
 def setup(app: sphinx.application.Sphinx) -> None:
-    """Setup.
-
-    Args:
-        app: Description of app.
-
-    Returns:
-        Description of return value.
-
-    """
+    """Document setup."""
     app.add_crossref_type(
         "fixture",
         "fixture",
