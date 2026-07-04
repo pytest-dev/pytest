@@ -28,7 +28,8 @@ def test_setattr() -> None:
         x = 1
 
     monkeypatch = MonkeyPatch()
-    pytest.raises(AttributeError, monkeypatch.setattr, A, "notexists", 2)
+    with pytest.raises(AttributeError):
+        monkeypatch.setattr(A, "notexists", 2)
     monkeypatch.setattr(A, "y", 2, raising=False)
     assert A.y == 2  # type: ignore
     monkeypatch.undo()
@@ -89,6 +90,22 @@ class TestSetattrWithImportPath:
             mp.setattr("os.path.qweqwe", 42, raising=False)
             assert os.path.qweqwe == 42  # type: ignore
 
+    def test_setattr_failure_does_not_corrupt_undo(
+        self, monkeypatch: MonkeyPatch
+    ) -> None:
+        """If setattr() raises (e.g. target doesn't support attribute
+        setting), the undo stack should not contain a stale entry that
+        crashes during teardown (#14161)."""
+
+        class Immutable:
+            __slots__ = ()
+
+        target = Immutable()
+        with pytest.raises(AttributeError):
+            monkeypatch.setattr(target, "x", 42, raising=False)
+        # undo() must not raise — no entry should be on the undo stack.
+        monkeypatch.undo()
+
     def test_delattr(self, monkeypatch: MonkeyPatch) -> None:
         with monkeypatch.context() as mp:
             mp.delattr("os.path.abspath")
@@ -109,7 +126,8 @@ def test_delattr() -> None:
 
     monkeypatch = MonkeyPatch()
     monkeypatch.delattr(A, "x")
-    pytest.raises(AttributeError, monkeypatch.delattr, A, "y")
+    with pytest.raises(AttributeError):
+        monkeypatch.delattr(A, "y")
     monkeypatch.delattr(A, "y", raising=False)
     monkeypatch.setattr(A, "x", 5, raising=False)
     assert A.x == 5
@@ -166,7 +184,8 @@ def test_delitem() -> None:
     monkeypatch.delitem(d, "x")
     assert "x" not in d
     monkeypatch.delitem(d, "y", raising=False)
-    pytest.raises(KeyError, monkeypatch.delitem, d, "y")
+    with pytest.raises(KeyError):
+        monkeypatch.delitem(d, "y")
     assert not d
     monkeypatch.setitem(d, "y", 1700)
     assert d["y"] == 1700
@@ -192,7 +211,8 @@ def test_delenv() -> None:
     name = "xyz1234"
     assert name not in os.environ
     monkeypatch = MonkeyPatch()
-    pytest.raises(KeyError, monkeypatch.delenv, name, raising=True)
+    with pytest.raises(KeyError):
+        monkeypatch.delenv(name, raising=True)
     monkeypatch.delenv(name, raising=False)
     monkeypatch.undo()
     os.environ[name] = "1"

@@ -55,6 +55,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
+from _pytest.fixtures import FixtureValue
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
@@ -71,8 +72,8 @@ from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import scandir
-from _pytest.scope import _ScopeName
 from _pytest.scope import Scope
+from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
@@ -590,11 +591,11 @@ class Module(nodes.File, PyCollector):
             if teardown_module is not None:
                 _call_with_optional_argument(teardown_module, module)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_module_fixture_{self.obj.__name__}",
             func=xunit_setup_module_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="module",
             autouse=True,
         )
@@ -626,11 +627,11 @@ class Module(nodes.File, PyCollector):
             if teardown_function is not None:
                 _call_with_optional_argument(teardown_function, function)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_function_fixture_{self.obj.__name__}",
             func=xunit_setup_function_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="function",
             autouse=True,
         )
@@ -778,7 +779,9 @@ class Class(PyCollector):
         self._register_setup_class_fixture()
         self._register_setup_method_fixture()
 
-        self.session._fixturemanager.parsefactories(self.newinstance(), self.nodeid)
+        self.session._fixturemanager.parsefactories(
+            holder=self.newinstance(), node=self
+        )
 
         return super().collect()
 
@@ -804,11 +807,11 @@ class Class(PyCollector):
                 func = getimfunc(teardown_class)
                 _call_with_optional_argument(func, cls)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_class_fixture_{self.obj.__qualname__}",
             func=xunit_setup_class_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="class",
             autouse=True,
         )
@@ -838,11 +841,11 @@ class Class(PyCollector):
                 func = getattr(instance, teardown_name)
                 _call_with_optional_argument(func, method)
 
-        self.session._fixturemanager._register_fixture(
+        fixtures.register_fixture(
             # Use a unique name to speed up lookup.
             name=f"_xunit_setup_method_fixture_{self.obj.__qualname__}",
             func=xunit_setup_method_fixture,
-            nodeid=self.nodeid,
+            node=self,
             scope="function",
             autouse=True,
         )
@@ -1095,8 +1098,7 @@ class CallSpec2:
     and stored in item.callspec.
     """
 
-    # arg name -> arg value which will be passed to a fixture or pseudo-fixture
-    # of the same name. (indirect or direct parametrization respectively)
+    # arg name -> arg value which will be passed to a fixture of the same name.
     params: dict[str, object] = dataclasses.field(default_factory=dict)
     # arg name -> arg index.
     indices: dict[str, int] = dataclasses.field(default_factory=dict)
@@ -1153,8 +1155,31 @@ def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
     return request.param
 
 
-# Used for storing pseudo fixturedefs for direct parametrization.
-name2pseudofixturedef_key = StashKey[dict[str, FixtureDef[Any]]]()
+class DirectParamFixtureDef(FixtureDef[FixtureValue]):
+    """A custom FixtureDef for direct parametrization fixtures.
+
+    Each parameter in direct parametrization is desugared to a parametrized
+    fixture which returns the direct parameterization value as its param.
+    We use this custom type as a "marker" for this type of FixtureDef, but
+    usually behaves like any other FixtureDef.
+    """
+
+    def __init__(self, *, node: nodes.Node, argname: str, scope: Scope) -> None:
+        super().__init__(
+            config=node.config,
+            baseid=NOTSET,
+            argname=argname,
+            func=get_direct_param_fixture_func,
+            scope=scope,
+            params=None,
+            ids=None,
+            node=node,
+            _ispytest=True,
+        )
+
+
+# Used for storing fixturedefs for direct parametrization.
+name2directparamfixturedef_key = StashKey[dict[str, DirectParamFixtureDef[object]]]()
 
 
 @final
@@ -1209,7 +1234,7 @@ class Metafunc:
         argvalues: Iterable[ParameterSet | Sequence[object] | object],
         indirect: bool | Sequence[str] = False,
         ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
-        scope: _ScopeName | None = None,
+        scope: ScopeName | None = None,
         *,
         _param_mark: Mark | None = None,
     ) -> None:
@@ -1308,7 +1333,7 @@ class Metafunc:
                 scope, descr=f"parametrize() call in {self.function.__name__}"
             )
         else:
-            scope_ = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
+            scope_ = _infer_parametrize_scope(argnames, self._arg2fixturedefs, indirect)
 
         self._validate_if_using_arg_names(argnames, indirect)
 
@@ -1333,14 +1358,14 @@ class Metafunc:
         self._params_directness.update(arg_directness)
 
         # Add direct parametrizations as fixturedefs to arg2fixturedefs by
-        # registering artificial "pseudo" FixtureDef's such that later at test
+        # registering artificial DirectParamFixtureDef's such that later at test
         # setup time we can rely on FixtureDefs to exist for all argnames.
         node = None
-        # For scopes higher than function, a "pseudo" FixtureDef might have
+        # For scopes higher than function, a DirectParamFixtureDef might have
         # already been created for the scope. We thus store and cache the
-        # FixtureDef on the node related to the scope.
+        # DirectParamFixtureDef on the node related to the scope.
         if scope_ is Scope.Function:
-            name2pseudofixturedef = None
+            name2directparamfixturedef = None
         else:
             collector = self.definition.parent
             assert collector is not None
@@ -1357,28 +1382,26 @@ class Metafunc:
                     node = collector.session
                 else:
                     assert False, f"Unhandled missing scope: {scope}"
-            default: dict[str, FixtureDef[Any]] = {}
-            name2pseudofixturedef = node.stash.setdefault(
-                name2pseudofixturedef_key, default
+            default: dict[str, DirectParamFixtureDef[object]] = {}
+            name2directparamfixturedef = node.stash.setdefault(
+                name2directparamfixturedef_key, default
             )
         for argname in argnames:
             if arg_directness[argname] == "indirect":
                 continue
-            if name2pseudofixturedef is not None and argname in name2pseudofixturedef:
-                fixturedef = name2pseudofixturedef[argname]
+            if (
+                name2directparamfixturedef is not None
+                and argname in name2directparamfixturedef
+            ):
+                fixturedef = name2directparamfixturedef[argname]
             else:
-                fixturedef = FixtureDef(
-                    config=self.config,
-                    baseid="",
+                fixturedef = DirectParamFixtureDef(
+                    node=self.definition.session,
                     argname=argname,
-                    func=get_direct_param_fixture_func,
                     scope=scope_,
-                    params=None,
-                    ids=None,
-                    _ispytest=True,
                 )
-                if name2pseudofixturedef is not None:
-                    name2pseudofixturedef[argname] = fixturedef
+                if name2directparamfixturedef is not None:
+                    name2directparamfixturedef[argname] = fixturedef
             self._arg2fixturedefs[argname] = [fixturedef]
 
         # Create the new calls: if we are parametrize() multiple times (by applying the decorator
@@ -1503,12 +1526,13 @@ class Metafunc:
                     callspec.indices[argname] = i
 
 
-def _find_parametrized_scope(
+def _infer_parametrize_scope(
     argnames: Sequence[str],
     arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
     indirect: bool | Sequence[str],
 ) -> Scope:
-    """Find the most appropriate scope for a parametrized call based on its arguments.
+    """Infer the most appropriate scope for a parametrize() call based on its
+    arguments, for when the scope is not explicitly specified.
 
     When there's at least one direct argument, always use "function" scope.
 
@@ -1523,13 +1547,14 @@ def _find_parametrized_scope(
         all_arguments_are_fixtures = bool(indirect)
 
     if all_arguments_are_fixtures:
-        fixturedefs = arg2fixturedefs or {}
-        used_scopes = [
-            fixturedef[-1]._scope
-            for name, fixturedef in fixturedefs.items()
-            if name in argnames
-        ]
         # Takes the most narrow scope from used fixtures.
+        used_scopes = (
+            # Higher scope can't request lower scope, so it's OK to only
+            # look at the first fixturedef in the override chain.
+            arg2fixturedefs[argname][-1]._scope
+            for argname in argnames
+            if argname in arg2fixturedefs
+        )
         return min(used_scopes, default=Scope.Function)
 
     return Scope.Function

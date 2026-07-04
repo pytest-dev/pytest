@@ -37,12 +37,12 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         fetch-depth: 0
         persist-credentials: false
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@efb823f52190ad02594531168b7a2d5790e66516
+      uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df
 
   build:
     needs: [package]
@@ -65,6 +65,7 @@ jobs:
           "windows-py312",
           "windows-py313",
           "windows-py314",
+          "windows-py315",
 
           "ubuntu-py310-unittest-asynctest",
           "ubuntu-py310-unittest-twisted24",
@@ -77,12 +78,14 @@ jobs:
           "ubuntu-py312",
           "ubuntu-py313-pexpect",
           "ubuntu-py314",
+          "ubuntu-py315",
           "ubuntu-pypy3-xdist",
 
           "macos-py310",
           "macos-py312",
           "macos-py313",
           "macos-py314",
+          "macos-py315",
 
           "doctesting",
           "plugins",
@@ -140,6 +143,11 @@ jobs:
             os: windows-latest
             tox_env: "py314"
             use_coverage: true
+
+          - name: "windows-py315"
+            python: "3.15"
+            os: windows-latest
+            tox_env: "py315"
 
           # Use separate jobs for different unittest flavors (twisted, asynctest) to ensure proper coverage.
           - name: "ubuntu-py310-unittest-asynctest"
@@ -208,6 +216,12 @@ jobs:
             tox_env: "py314"
             use_coverage: true
 
+          - name: "ubuntu-py315"
+            python: "3.15"
+            os: ubuntu-latest
+            tox_env: "py315"
+            use_coverage: true
+
           - name: "ubuntu-pypy3-xdist"
             python: "pypy-3.10"
             os: ubuntu-latest
@@ -236,6 +250,11 @@ jobs:
             os: macos-latest
             tox_env: "py314-xdist"
 
+          - name: "macos-py315"
+            python: "3.15"
+            os: macos-latest
+            tox_env: "py315-xdist"
+
           - name: "plugins"
             python: "3.12"
             os: ubuntu-latest
@@ -251,13 +270,13 @@ jobs:
     continue-on-error: ${{ matrix.xfail && true || false }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         fetch-depth: 0
         persist-credentials: false
 
     - name: Download Package
-      uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: Packages
         path: dist
@@ -290,14 +309,14 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: "matrix.use_coverage"
-      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354
       with:
         fail_ci_if_error: false
         files: ./coverage.xml
         verbose: true
 
     - name: Upload JUnit report to Codecov
-      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354
       with:
         fail_ci_if_error: false
         files: junit.xml

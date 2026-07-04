@@ -1094,9 +1094,7 @@ def test_raisesexc() -> None:
     with RaisesExc(ValueError):
         raise ValueError
 
-    # FIXME: leaving this one formatted differently for now to not change
-    # tests in python/raises.py
-    with pytest.raises(Failed, match=wrap_escape("DID NOT RAISE <class 'ValueError'>")):
+    with pytest.raises(Failed, match=wrap_escape("DID NOT RAISE ValueError")):
         with RaisesExc(ValueError):
             ...
 
@@ -1105,11 +1103,8 @@ def test_raisesexc() -> None:
             ...
 
     with pytest.raises(
-        # FIXME: do we want repr(type) or type.__name__ ?
         Failed,
-        match=wrap_escape(
-            "DID NOT RAISE any of (<class 'ValueError'>, <class 'TypeError'>)"
-        ),
+        match=wrap_escape("DID NOT RAISE any of (ValueError, TypeError)"),
     ):
         with RaisesExc((ValueError, TypeError)):
             ...
@@ -1355,3 +1350,21 @@ def test_tuples() -> None:
         ),
     ):
         RaisesGroup((ValueError, IndexError))  # type: ignore[call-overload]
+
+
+def test_expected_matching_only_on_matching() -> None:
+    """Regression test for #14220, logic error which caused the "which was
+    paired with" message to appear for wrong pairs."""
+    with (
+        fails_raises_group(
+            "\n"
+            "1 matched exception. \n"
+            "Too few exceptions raised!\n"
+            "The following expected exceptions did not find a match:\n"
+            "  ValueError\n"
+            "  TypeError\n"
+            "    It matches `TypeError()` which was paired with `TypeError`",
+        ),
+        RaisesGroup(TypeError, ValueError, TypeError),
+    ):
+        raise ExceptionGroup("", [TypeError()])

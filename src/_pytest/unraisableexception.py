@@ -86,9 +86,14 @@ def collect_unraisable(config: Config) -> None:
 def cleanup(
     *, config: Config, prev_hook: Callable[[sys.UnraisableHookArgs], object]
 ) -> None:
-    # A single collection doesn't necessarily collect everything.
-    # Constant determined experimentally by the Trio project.
-    gc_collect_iterations = config.stash.get(gc_collect_iterations_key, 5)
+    # On PyPy, objects (e.g. coroutines) can survive GC rounds because executing
+    # their __del__ can resurrect them. The Trio project determined experimentally
+    # that 5 passes are needed on PyPy to flush everything. On CPython, reference
+    # counting handles most cleanup immediately, so 1 pass is sufficient.
+    _default_gc_collect_iterations = 5 if sys.implementation.name == "pypy" else 1
+    gc_collect_iterations = config.stash.get(
+        gc_collect_iterations_key, _default_gc_collect_iterations
+    )
     try:
         try:
             gc_collect_harder(gc_collect_iterations)
@@ -146,6 +151,26 @@ def pytest_configure(config: Config) -> None:
     config.stash[unraisable_exceptions] = deque
     config.add_cleanup(functools.partial(cleanup, config=config, prev_hook=prev_hook))
     sys.unraisablehook = functools.partial(unraisable_hook, append=deque.append)
+
+
+def pytest_unconfigure(config: Config) -> None:
+    # Runs before ``_cleanup_stack.close()``, so warning filters from
+    # cleanup-stack-managed contexts (notably the ``warnings`` plugin's
+    # ``catch_warnings``) are still installed when garbage-collected
+    # finalizers fire. A ``config.add_cleanup`` callback would instead
+    # couple correctness to LIFO pop order across plugins' cleanups.
+    if unraisable_exceptions not in config.stash:
+        # ``pytest_configure`` did not complete (e.g. a usage error raised
+        # in another plugin's configure), so the queue stash was never set.
+        return
+    # PyPy can resurrect objects in __del__, so it needs several GC passes
+    # (5, per the Trio project); CPython frees cycles in one pass. See #14441.
+    _default_gc_collect_iterations = 5 if sys.implementation.name == "pypy" else 1
+    gc_collect_iterations = config.stash.get(
+        gc_collect_iterations_key, _default_gc_collect_iterations
+    )
+    gc_collect_harder(gc_collect_iterations)
+    collect_unraisable(config)
 
 
 @pytest.hookimpl(trylast=True)

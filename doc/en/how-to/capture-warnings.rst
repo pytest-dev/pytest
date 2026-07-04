@@ -204,6 +204,46 @@ decorator or to all tests in a module by setting the :globalvar:`pytestmark` var
 
 .. _`pytest-warnings`: https://github.com/fschulze/pytest-warnings
 
+Setting a maximum number of warnings
+-------------------------------------
+
+.. versionadded:: 9.1
+
+You can use the :option:`--max-warnings` command-line option to fail the test run
+if the total number of warnings exceeds a given threshold:
+
+.. code-block:: bash
+
+    pytest --max-warnings=10
+
+If all tests pass but the number of warnings exceeds the threshold, pytest will exit with code ``6``
+(:class:`~pytest.ExitCode` ``MAX_WARNINGS_ERROR``). This is useful for gradually
+ratcheting down warnings in a codebase.
+
+Note that :confval:`filtered warnings <filterwarnings>` do not count toward this maximum total.
+
+The threshold can also be set in the configuration file using :confval:`max_warnings`:
+
+.. tab:: toml
+
+    .. code-block:: toml
+
+        [pytest]
+        max_warnings = 10
+
+.. tab:: ini
+
+    .. code-block:: ini
+
+        [pytest]
+        max_warnings = 10
+
+.. note::
+
+    If tests fail, the exit code will be ``1`` (:class:`~pytest.ExitCode` ``TESTS_FAILED``)
+    regardless of the warning count. ``MAX_WARNINGS_ERROR`` is only reported when all tests pass
+    but the warning threshold is exceeded.
+
 Disabling warnings summary
 --------------------------
 
@@ -363,18 +403,13 @@ Some examples:
     ...
     Traceback (most recent call last):
       ...
-    Failed: DID NOT WARN. No warnings of type ...UserWarning... were emitted...
+    Failed: Regex pattern did not match any of the 1 warnings emitted.
+     Regex: ...
+     Emitted warnings: ...UserWarning...
 
     >>> with warns(UserWarning, match=re.escape("issue with foo() func")):
     ...     warnings.warn("issue with foo() func")
     ...
-
-You can also call :func:`pytest.warns` on a function or code string:
-
-.. code-block:: python
-
-    pytest.warns(expected_warning, func, *args, **kwargs)
-    pytest.warns(expected_warning, "func(*args, **kwargs)")
 
 The function also returns a list of all raised warnings (as
 ``warnings.WarningMessage`` objects), which you can query for
@@ -394,8 +429,7 @@ Alternatively, you can examine raised warnings in detail using the
 :fixture:`recwarn` fixture (see :ref:`below <recwarn>`).
 
 
-The :fixture:`recwarn` fixture automatically ensures to reset the warnings
-filter at the end of the test, so no global state is leaked.
+The :fixture:`recwarn` fixture automatically resets the warnings filter at the end of the test, so no global state is leaked.
 
 .. _`recording warnings`:
 

@@ -20,7 +20,8 @@ import pytest
 class TestModule:
     def test_failing_import(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol("import alksdjalskdjalkjals")
-        pytest.raises(Collector.CollectError, modcol.collect)
+        with pytest.raises(Collector.CollectError):
+            modcol.collect()
 
     def test_import_duplicate(self, pytester: Pytester) -> None:
         a = pytester.mkdir("a")
@@ -72,12 +73,15 @@ class TestModule:
 
     def test_syntax_error_in_module(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol("this is a syntax error")
-        pytest.raises(modcol.CollectError, modcol.collect)
-        pytest.raises(modcol.CollectError, modcol.collect)
+        with pytest.raises(modcol.CollectError):
+            modcol.collect()
+        with pytest.raises(modcol.CollectError):
+            modcol.collect()
 
     def test_module_considers_pluginmanager_at_import(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol("pytest_plugins='xasdlkj',")
-        pytest.raises(ImportError, lambda: modcol.obj)
+        with pytest.raises(ImportError):
+            modcol.obj()
 
     def test_invalid_test_module_name(self, pytester: Pytester) -> None:
         a = pytester.mkdir("a")

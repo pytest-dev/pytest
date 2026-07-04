@@ -10,6 +10,7 @@ import sys
 import textwrap
 from typing import Any
 from typing import cast
+from typing import ClassVar
 
 import hypothesis
 from hypothesis import strategies
@@ -44,7 +45,9 @@ class TestMetafunc:
 
         @dataclasses.dataclass
         class SessionMock:
+            config: Any
             _fixturemanager: FixtureManagerMock
+            nodeid: ClassVar = ""
 
         @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
@@ -55,7 +58,7 @@ class TestMetafunc:
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
         definition._fixtureinfo = fixtureinfo
-        definition.session = SessionMock(FixtureManagerMock({}))
+        definition.session = SessionMock(config, FixtureManagerMock({}))
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
     def test_no_funcargs(self) -> None:
@@ -189,9 +192,9 @@ class TestMetafunc:
         ):
             metafunc.parametrize("request", [1])
 
-    def test_find_parametrized_scope(self) -> None:
-        """Unit test for _find_parametrized_scope (#3941)."""
-        from _pytest.python import _find_parametrized_scope
+    def test_infer_parametrize_scope(self) -> None:
+        """Unit test for _infer_parameterize_scope (#3941)."""
+        from _pytest.python import _infer_parametrize_scope
 
         @dataclasses.dataclass
         class DummyFixtureDef:
@@ -212,7 +215,7 @@ class TestMetafunc:
         # use arguments to determine narrow scope; the cause of the bug is that it would look on all
         # fixture defs given to the method
         def find_scope(argnames, indirect):
-            return _find_parametrized_scope(argnames, fixtures_defs, indirect=indirect)
+            return _infer_parametrize_scope(argnames, fixtures_defs, indirect=indirect)
 
         assert find_scope(["func_fix"], indirect=True) == Scope.Function
         assert find_scope(["class_fix"], indirect=True) == Scope.Class
@@ -801,7 +804,7 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x, y", [("a", "b")], indirect=["x"])
         assert metafunc._calls[0].params == dict(x="a", y="b")
-        # Since `y` is a direct parameter, its pseudo-fixture would
+        # Since `y` is a direct parameter, its DirectParamFixtureDef would
         # be registered.
         assert list(metafunc._arg2fixturedefs.keys()) == ["y"]
 
@@ -1740,7 +1743,8 @@ class TestMetafuncFunctional:
 
             class Test:
                 @pytest.fixture(scope="class")
-                def fixture(self, fixture):
+                @classmethod
+                def fixture(cls, fixture):
                     pass
 
                 @pytest.mark.parametrize("fixture", [0], indirect=True)

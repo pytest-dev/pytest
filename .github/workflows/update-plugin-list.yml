@@ -19,8 +19,19 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Find current maintenance branch
+        id: find-branch
+        run: |
+          branch=$(git ls-remote --heads --sort=v:refname https://github.com/pytest-dev/pytest.git 'refs/heads/*.x' \
+            | sed '$!d;s|.*\trefs/heads/||')
+          if [ -z "$branch" ]; then
+            echo "No maintenance branch matching *.x was found" >&2
+            exit 1
+          fi
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -31,7 +42,7 @@ jobs:
           python-version: "3.13"
 
       - name: requests-cache
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.cache/pytest-plugin-list/
           key: plugins-http-cache-${{ github.run_id }} # Can use time based key as well
@@ -47,7 +58,7 @@ jobs:
 
       - name: Create Pull Request
         id: pr
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
         with:
           commit-message: '[automated] Update plugin list'
           author: 'pytest bot <pytestbot@users.noreply.github.com>'
@@ -58,7 +69,19 @@ jobs:
           body: '[automated] Update plugin list'
           draft: true
 
+      - name: Add backport label for maintenance branch
+        if: steps.pr.outputs.pull-request-number && steps.find-branch.outputs.branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
+          BRANCH_NAME: ${{ steps.find-branch.outputs.branch }}
+        run: >-
+          gh pr edit "$PULL_REQUEST_NUMBER"
+          --repo '${{ github.repository }}'
+          --add-label "backport $BRANCH_NAME"
+
       - name: Instruct the maintainers to trigger CI by undrafting the PR
+        if: steps.pr.outputs.pull-request-number
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PULL_REQUEST_NUMBER: ${{ steps.pr.outputs.pull-request-number }}

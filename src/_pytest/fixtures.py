@@ -36,10 +36,11 @@ import _pytest
 from _pytest import nodes
 from _pytest._code import getfslineno
 from _pytest._code import Source
-from _pytest._code.code import FormattedExcinfo
+from _pytest._code.code import ExceptionInfoFormatter
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
+from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
 from _pytest.compat import getfuncargnames
 from _pytest.compat import getimfunc
@@ -52,10 +53,18 @@ from _pytest.compat import signature
 from _pytest.config import _PluggyPlugin
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import CLASS_FIXTURE_INSTANCE_METHOD
+from _pytest.deprecated import FIXTURE_BASEID_DEPRECATED
+from _pytest.deprecated import FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN
+from _pytest.deprecated import FIXTURE_NODEID_DEPRECATED
+from _pytest.deprecated import FIXTUREDEF_HAS_LOCATION_DEPRECATED
+from _pytest.deprecated import PARSEFACTORIES_NODEID_DEPRECATED
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
+from _pytest.mark import Mark
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
@@ -63,9 +72,9 @@ from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
-from _pytest.scope import _ScopeName
 from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
+from _pytest.scope import ScopeName
 from _pytest.warning_types import PytestWarning
 
 
@@ -77,12 +86,13 @@ if TYPE_CHECKING:
     from _pytest.python import CallSpec2
     from _pytest.python import Function
     from _pytest.python import Metafunc
+    from _pytest.reports import CollectReport
 
 
 # The value of the fixture -- return/yield of the fixture function (type variable).
 FixtureValue = TypeVar("FixtureValue", covariant=True)
-# The type of the fixture function (type variable).
-FixtureFunction = TypeVar("FixtureFunction", bound=Callable[..., object])
+# The type of the fixture function (type alias).
+FixtureFunction = Callable[..., object]
 # The type of a fixture function (type alias generic in fixture value).
 _FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValue]]
 # The type of FixtureDef.cached_result (type alias generic in fixture value).
@@ -115,9 +125,39 @@ def get_scope_package(
     from _pytest.python import Package
 
     for parent in node.iter_parents():
-        if isinstance(parent, Package) and parent.nodeid == fixturedef.baseid:
-            return parent
+        if isinstance(parent, Package):
+            if fixturedef.node is not None:
+                if parent == fixturedef.node:
+                    return parent
+            else:
+                if parent.nodeid == fixturedef.baseid:
+                    return parent
     return node.session
+
+
+def is_visibility_more_specific(
+    candidate: FixtureDef[Any], other: FixtureDef[Any]
+) -> bool:
+    """Return whether the visibility of ``candidate`` is strictly more specific
+    than that of ``other``, i.e. ``candidate`` is defined on a strict descendant
+    in the collection tree of where ``other`` is defined."""
+    if candidate.node is None or other.node is None:
+        # Fallback for fixtures registered with a string nodeid (deprecated).
+        # In this case compare baseids, which are nodeid prefixes.
+        # This branch can be removed once baseid deprecation is done (pytest 10).
+        if candidate.baseid == other.baseid:
+            return False
+        if other.baseid == "":
+            return True
+        # `candidate.baseid` must continue with a node separator for it to be a
+        # true descendant.
+        return candidate.baseid.startswith(other.baseid) and candidate.baseid[
+            len(other.baseid)
+        ] in ("/", ":")
+
+    return (
+        candidate.node is not other.node and other.node in candidate.node.iter_parents()
+    )
 
 
 def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
@@ -298,6 +338,54 @@ def reorder_items_atscope(
     return items_done
 
 
+def traverse_fixture_closure(
+    initialnames: Iterable[str],
+    *,
+    getfixturedefs: Callable[[str], Sequence[FixtureDef[Any]] | None],
+) -> Iterator[str]:
+    """Statically traverse the fixture dependency closure in DFS order starting
+    from initialnames, yielding all requested fixture names (argnames).
+
+    Each argname is only yielded once.
+    """
+    # Track the index for each fixture name in the simulated stack.
+    # Needed for handling override chains correctly, similar to
+    # FixtureRequest._get_active_fixturedef.
+    # Using negative indices: -1 is the most specific (last), -2 is second to
+    # last, etc.
+    current_indices: dict[str, int] = {}
+
+    def process_argname(argname: str) -> Iterator[str]:
+        index = current_indices.get(argname)
+
+        # Optimization: already processed this argname.
+        if index == -1:
+            return
+
+        # Only yield each argname once.
+        if index is None:
+            yield argname
+            current_indices[argname] = -1
+
+        fixturedefs = getfixturedefs(argname)
+        if not fixturedefs:
+            return
+
+        index = current_indices.get(argname, -1)
+        if -index > len(fixturedefs):
+            # Exhausted the override chain (will error during runtest).
+            return
+        fixturedef = fixturedefs[index]
+
+        current_indices[argname] = index - 1
+        for dep in fixturedef.argnames:
+            yield from process_argname(dep)
+        current_indices[argname] = index
+
+    for argname in initialnames:
+        yield from process_argname(argname)
+
+
 @dataclasses.dataclass(frozen=True)
 class FuncFixtureInfo:
     """Fixture-related information for a fixture-requesting item (e.g. test
@@ -340,16 +428,13 @@ class FuncFixtureInfo:
         tree. In this way the dependency tree can get pruned, and the closure
         of argnames may get reduced.
         """
-        closure: set[str] = set()
-        working_set = set(self.initialnames)
-        while working_set:
-            argname = working_set.pop()
-            if argname not in closure and argname in self.names_closure:
-                closure.add(argname)
-                if argname in self.name2fixturedefs:
-                    working_set.update(self.name2fixturedefs[argname][-1].argnames)
-
-        self.names_closure[:] = sorted(closure, key=self.names_closure.index)
+        closure = set(
+            traverse_fixture_closure(
+                self.initialnames,
+                getfixturedefs=self.name2fixturedefs.get,
+            )
+        )
+        self.names_closure[:] = (name for name in self.names_closure if name in closure)
 
 
 class FixtureRequest(abc.ABC):
@@ -363,7 +448,7 @@ class FixtureRequest(abc.ABC):
         self,
         pyfuncitem: Function,
         fixturename: str | None,
-        arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]],
+        arg2fixturedefs: Mapping[str, Sequence[FixtureDef[Any]]],
         fixture_defs: dict[str, FixtureDef[Any]],
         *,
         _ispytest: bool = False,
@@ -372,10 +457,9 @@ class FixtureRequest(abc.ABC):
         #: Fixture for which this request is being performed.
         self.fixturename: Final = fixturename
         self._pyfuncitem: Final = pyfuncitem
-        # The FixtureDefs for each fixture name requested by this item.
-        # Starts from the statically-known fixturedefs resolved during
-        # collection. Dynamically requested fixtures (using
-        # `request.getfixturevalue("foo")`) are added dynamically.
+        # The FixtureDefs for each fixture name statically requested by this
+        # item (computed during collection). Dynamically requested fixtures
+        # (using `request.getfixturevalue("foo")`) are not included here.
         self._arg2fixturedefs: Final = arg2fixturedefs
         # The evaluated argnames so far, mapping to the FixtureDef they resolved
         # to.
@@ -400,7 +484,7 @@ class FixtureRequest(abc.ABC):
         raise NotImplementedError()
 
     @property
-    def scope(self) -> _ScopeName:
+    def scope(self) -> ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
 
@@ -507,6 +591,16 @@ class FixtureRequest(abc.ABC):
         """
         raise FixtureLookupError(None, self, msg)
 
+    def _raise_teardown_lookup_error(self, argname: str) -> NoReturn:
+        msg = (
+            f'The fixture value for "{argname}" is not available during teardown '
+            "because it was not previously requested.\n"
+            "Only fixtures that were already active can be retrieved during teardown.\n"
+            "Request the fixture before teardown begins by declaring it in the fixture "
+            "signature or by calling request.getfixturevalue() before the fixture yields."
+        )
+        raise FixtureLookupError(argname, self, msg)
+
     def getfixturevalue(self, argname: str) -> Any:
         """Dynamically run a named fixture function.
 
@@ -516,8 +610,12 @@ class FixtureRequest(abc.ABC):
         or test function body.
 
         This method can be used during the test setup phase or the test run
-        phase, but during the test teardown phase a fixture's value may not
-        be available.
+        phase. Avoid using it during the teardown phase.
+
+        .. versionchanged:: 9.1
+            Calling ``request.getfixturevalue()`` during teardown to request a
+            fixture that was not already requested
+            :ref:`is deprecated <dynamic-fixture-request-during-teardown>`.
 
         :param argname:
             The fixture name.
@@ -564,8 +662,6 @@ class FixtureRequest(abc.ABC):
             # getfixturevalue(argname) which was naturally
             # not known at parsing/collection time.
             fixturedefs = self._fixturemanager.getfixturedefs(argname, self._pyfuncitem)
-            if fixturedefs is not None:
-                self._arg2fixturedefs[argname] = fixturedefs
         # No fixtures defined with this name.
         if fixturedefs is None:
             raise FixtureLookupError(argname, self)
@@ -615,6 +711,16 @@ class FixtureRequest(abc.ABC):
         subrequest = SubRequest(
             self, scope, param, param_index, fixturedef, _ispytest=True
         )
+
+        if not self.session._setupstate.is_node_active(self.node):
+            # TODO(pytest10.1): Remove the `warn` and `if` and call
+            # _raise_teardown_lookup_error unconditionally.
+            warnings.warn(
+                FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN.format(argname=argname),
+                stacklevel=3,
+            )
+            if subrequest.node not in self.session._setupstate.stack:
+                self._raise_teardown_lookup_error(argname)
 
         # Make sure the fixture value is cached, running it if it isn't
         fixturedef.execute(request=subrequest)
@@ -669,7 +775,7 @@ class TopRequest(FixtureRequest):
         super().__init__(
             fixturename=None,
             pyfuncitem=pyfuncitem,
-            arg2fixturedefs=pyfuncitem._fixtureinfo.name2fixturedefs.copy(),
+            arg2fixturedefs=pyfuncitem._fixtureinfo.name2fixturedefs,
             fixture_defs={},
             _ispytest=_ispytest,
         )
@@ -726,22 +832,11 @@ class SubRequest(FixtureRequest):
             _ispytest=_ispytest,
         )
         self._parent_request: Final[FixtureRequest] = request
-        self._scope_field: Final = scope
         self._fixturedef: Final[FixtureDef[object]] = fixturedef
         if param is not NOTSET:
             self.param = param
         self.param_index: Final = param_index
-
-    def __repr__(self) -> str:
-        return f"<SubRequest {self.fixturename!r} for {self._pyfuncitem!r}>"
-
-    @property
-    def _scope(self) -> Scope:
-        return self._scope_field
-
-    @property
-    def node(self):
-        scope = self._scope
+        self._scope_field: Final = scope
         if scope is Scope.Function:
             # This might also be a non-function Item despite its attribute name.
             node: nodes.Node | None = self._pyfuncitem
@@ -755,7 +850,18 @@ class SubRequest(FixtureRequest):
         assert node, (
             f'Could not obtain a node for scope "{scope}" for function {self._pyfuncitem!r}'
         )
-        return node
+        self._node: Final = node
+
+    def __repr__(self) -> str:
+        return f"<SubRequest {self.fixturename!r} for {self._pyfuncitem!r}>"
+
+    @property
+    def _scope(self) -> Scope:
+        return self._scope_field
+
+    @property
+    def node(self):
+        return self._node
 
     def _check_scope(
         self,
@@ -808,16 +914,7 @@ class FixtureLookupError(LookupError):
         stack = [self.request._pyfuncitem.obj]
         stack.extend(map(lambda x: x.func, self.fixturestack))
         msg = self.msg
-        # This function currently makes an assumption that a non-None msg means we
-        # have a non-empty `self.fixturestack`. This is currently true, but if
-        # somebody at some point want to extend the use of FixtureLookupError to
-        # new cases it might break.
-        # Add the assert to make it clearer to developer that this will fail, otherwise
-        # it crashes because `fspath` does not get set due to `stack` being empty.
-        assert self.msg is None or self.fixturestack, (
-            "formatrepr assumptions broken, rewrite it to handle it"
-        )
-        if msg is not None:
+        if msg is not None and len(stack) > 1:
             # The last fixture raise an error, let's present
             # it at the requesting side.
             stack = stack[:-1]
@@ -879,12 +976,12 @@ class FixtureLookupErrorRepr(TerminalRepr):
         lines = self.errorstring.split("\n")
         if lines:
             tw.line(
-                f"{FormattedExcinfo.fail_marker}       {lines[0].strip()}",
+                f"{ExceptionInfoFormatter.fail_marker}       {lines[0].strip()}",
                 red=True,
             )
             for line in lines[1:]:
                 tw.line(
-                    f"{FormattedExcinfo.flow_marker}       {line.strip()}",
+                    f"{ExceptionInfoFormatter.flow_marker}       {line.strip()}",
                     red=True,
                 )
         tw.line()
@@ -928,10 +1025,10 @@ def _teardown_yield_fixture(fixturefunc, it) -> None:
 
 
 def _eval_scope_callable(
-    scope_callable: Callable[[str, Config], _ScopeName],
+    scope_callable: Callable[[str, Config], ScopeName],
     fixture_name: str,
     config: Config,
-) -> _ScopeName:
+) -> ScopeName:
     try:
         # Type ignored because there is no typing mechanism to specify
         # keyword arguments, currently.
@@ -960,18 +1057,27 @@ class FixtureDef(Generic[FixtureValue]):
     def __init__(
         self,
         config: Config,
-        baseid: str | None,
+        baseid: str | None | NotSetType,
         argname: str,
         func: _FixtureFunc[FixtureValue],
-        scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] | None,
+        scope: Scope | ScopeName | Callable[[str, Config], ScopeName] | None,
         params: Sequence[object] | None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         *,
-        _ispytest: bool = False,
+        node: nodes.Node | NotSetType = NOTSET,
         # only used in a deprecationwarning msg, can be removed in pytest9
         _autouse: bool = False,
+        _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
+        # Emit deprecation warning if deprecated baseid string is used.
+        if node is NOTSET:
+            warnings.warn(FIXTURE_BASEID_DEPRECATED, stacklevel=2)
+        if baseid is NOTSET:
+            baseid = None
+        # The node where this fixture was defined, if available.
+        # Used for node-based matching which is more robust than string matching.
+        self.node: Final = node if node is not NOTSET else None
         # The "base" node ID for the fixture.
         #
         # This is a node ID prefix. A fixture is only available to a node (e.g.
@@ -985,11 +1091,16 @@ class FixtureDef(Generic[FixtureValue]):
         # directory path relative to the rootdir.
         #
         # For other plugins, the baseid is the empty string (always matches).
-        self.baseid: Final = baseid or ""
+        # When node is available, baseid is derived from node.nodeid.
+        #
+        # Deprecated: replaced by ``node``.
+        self.baseid: Final = node.nodeid if node is not NOTSET else (baseid or "")
         # Whether the fixture was found from a node or a conftest in the
         # collection tree. Will be false for fixtures defined in non-conftest
         # plugins.
-        self.has_location: Final = baseid is not None
+        #
+        # Deprecated: kept only to back the deprecated ``has_location`` property.
+        self._has_location: Final = node is not NOTSET or baseid is not None
         # The fixture factory function.
         self.func: Final = func
         # The name by which the fixture may be requested.
@@ -1000,7 +1111,7 @@ class FixtureDef(Generic[FixtureValue]):
             scope = _eval_scope_callable(scope, argname, config)
         if isinstance(scope, str):
             scope = Scope.from_user(
-                scope, descr=f"Fixture '{func.__name__}'", where=baseid
+                scope, descr=f"Fixture '{func.__name__}'", where=self.baseid
             )
         self._scope: Final = scope
         # If the fixture is directly parametrized, the parameter values.
@@ -1020,9 +1131,14 @@ class FixtureDef(Generic[FixtureValue]):
         self._autouse = _autouse
 
     @property
-    def scope(self) -> _ScopeName:
+    def scope(self) -> ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
         return self._scope.value
+
+    @property
+    def has_location(self) -> bool:
+        warnings.warn(FIXTUREDEF_HAS_LOCATION_DEPRECATED, stacklevel=2)
+        return self._has_location
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._finalizers.append(finalizer)
@@ -1138,11 +1254,12 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
     def __init__(self, request: FixtureRequest) -> None:
         super().__init__(
             config=request.config,
-            baseid=None,
+            baseid=NOTSET,
             argname="request",
             func=lambda: request,
             scope=Scope.Function,
             params=None,
+            node=request.node,
             _ispytest=True,
         )
         self.cached_result = (request, [0], None)
@@ -1161,6 +1278,16 @@ def resolve_fixture_function(
     # request.instance so that code working with "fixturedef" behaves
     # as expected.
     instance = request.instance
+
+    if fixturedef._scope is Scope.Class:
+        # Check if fixture is an instance method (bound to instance, not class)
+        if hasattr(fixturefunc, "__self__"):
+            bound_to = fixturefunc.__self__
+            # classmethod: bound_to is the class itself (a type)
+            # instance method: bound_to is an instance (not a type)
+            if not isinstance(bound_to, type):
+                warnings.warn(CLASS_FIXTURE_INSTANCE_METHOD, stacklevel=2)
+
     if instance is not None:
         # Handle the case where fixture is defined not in a test class, but some other class
         # (for example a plugin class with a fixture), see #2270.
@@ -1214,7 +1341,7 @@ def pytest_fixture_setup(
 @final
 @dataclasses.dataclass(frozen=True)
 class FixtureFunctionMarker:
-    scope: _ScopeName | Callable[[str, Config], _ScopeName]
+    scope: ScopeName | Callable[[str, Config], ScopeName]
     params: tuple[object, ...] | None
     autouse: bool = False
     ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None
@@ -1308,7 +1435,7 @@ class FixtureFunctionDefinition:
 def fixture(
     fixture_function: Callable[..., object],
     *,
-    scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
+    scope: ScopeName | Callable[[str, Config], ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
@@ -1320,7 +1447,7 @@ def fixture(
 def fixture(
     fixture_function: None = ...,
     *,
-    scope: _ScopeName | Callable[[str, Config], _ScopeName] = ...,
+    scope: ScopeName | Callable[[str, Config], ScopeName] = ...,
     params: Iterable[object] | None = ...,
     autouse: bool = ...,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = ...,
@@ -1331,7 +1458,7 @@ def fixture(
 def fixture(
     fixture_function: FixtureFunction | None = None,
     *,
-    scope: _ScopeName | Callable[[str, Config], _ScopeName] = "function",
+    scope: ScopeName | Callable[[str, Config], ScopeName] = "function",
     params: Iterable[object] | None = None,
     autouse: bool = False,
     ids: Sequence[object | None] | Callable[[Any], object | None] | None = None,
@@ -1403,6 +1530,10 @@ def fixture(
     return fixture_marker
 
 
+@deprecated(
+    "@pytest.yield_fixture is deprecated. Use @pytest.fixture instead; they are the same.",
+    category=None,  # We have our own runtime warning logic
+)
 def yield_fixture(
     fixture_function=None,
     *args,
@@ -1588,12 +1719,23 @@ class FixtureManager:
         # TODO: The order of the FixtureDefs list of each arg is significant,
         #       explain.
         self._arg2fixturedefs: Final[dict[str, list[FixtureDef[Any]]]] = {}
-        self._holderobjseen: Final[set[object]] = set()
-        # A mapping from a nodeid to a list of autouse fixtures it defines.
-        self._nodeid_autousenames: Final[dict[str, list[str]]] = {
-            "": self.config.getini("usefixtures"),
+        # A mapping from a node to a list of autouse fixture names it defines.
+        # The Session entry holds global usefixtures from config.
+        self._node_autousenames: Final[dict[nodes.Node, list[str]]] = {
+            session: list(self.config.getini("usefixtures")),
         }
+        # Legacy fallback: nodeid string -> autouse names, for plugins still
+        # using the deprecated nodeid-based API without a node reference.
+        self._nodeid_autousenames: Final[dict[str, list[str]]] = {}
+        # Pending conftest modules waiting to be parsed when their Directory is collected.
+        # Maps directory path -> conftest plugin module.
+        self._pending_conftests: Final[dict[Path, object]] = {}
         session.config.pluginmanager.register(self, "funcmanage")
+        # Flush initial conftests from directories above rootpath immediately.
+        # These will never get a Directory collector, so they need Session scope.
+        # This must happen here (not in pytest_make_collect_report) because
+        # collection may fail before Session collection starts (e.g. bad args).
+        self._flush_pending_conftests_to_session(session)
 
     def getfixtureinfo(
         self,
@@ -1634,33 +1776,68 @@ class FixtureManager:
     def pytest_plugin_registered(self, plugin: _PluggyPlugin, plugin_name: str) -> None:
         # Fixtures defined in conftest plugins are only visible to within the
         # conftest's directory. This is unlike fixtures in non-conftest plugins
-        # which have global visibility. So for conftests, construct the base
-        # nodeid from the plugin name (which is the conftest path).
+        # which have global visibility. Conftest fixtures are deferred until
+        # their Directory is collected, so we can use the Directory's nodeid.
         if plugin_name and plugin_name.endswith("conftest.py"):
             # Note: we explicitly do *not* use `plugin.__file__` here -- The
             # difference is that plugin_name has the correct capitalization on
             # case-insensitive systems (Windows) and other normalization issues
             # (issue #11816).
             conftestpath = absolutepath(plugin_name)
-            try:
-                nodeid = str(conftestpath.parent.relative_to(self.config.rootpath))
-            except ValueError:
-                nodeid = ""
-            if nodeid == ".":
-                nodeid = ""
-            elif nodeid:
-                nodeid = nodes.norm_sep(nodeid)
+            conftest_dir = conftestpath.parent
+            # Store conftest for deferred parsing when its Directory is collected.
+            self._pending_conftests[conftest_dir] = plugin
         else:
-            nodeid = None
+            # Non-conftest plugins have global visibility.
+            self.parsefactories(holder=plugin, node=self.session)
 
-        self.parsefactories(plugin, nodeid)
+    @hookimpl(wrapper=True)
+    def pytest_make_collect_report(
+        self, collector: nodes.Collector
+    ) -> Generator[None, CollectReport, CollectReport]:
+        result = yield
+        if isinstance(collector, nodes.Directory):
+            plugin = self._pending_conftests.pop(collector.path, None)
+            if plugin is not None:
+                self.parsefactories(holder=plugin, node=collector)
+        return result
+
+    def _flush_pending_conftests_to_session(self, session: Session) -> None:
+        """Assign Session scope to initial conftests whose directories won't
+        be collected as Directory nodes (e.g. ancestors above rootdir)."""
+        rootpath = session.config.rootpath
+        orphaned: list[tuple[Path, object]] = []
+        for conftest_dir, plugin in list(self._pending_conftests.items()):
+            # If the conftest dir is not under rootpath, it will never get
+            # a Directory collector — assign it to Session now.
+            try:
+                conftest_dir.relative_to(rootpath)
+            except ValueError:
+                orphaned.append((conftest_dir, plugin))
+        for conftest_dir, plugin in orphaned:
+            del self._pending_conftests[conftest_dir]
+            self.parsefactories(holder=plugin, node=session)
+
+    def pytest_collection_finish(self) -> None:
+        """Clean up any conftests that were never collected by a Directory.
+
+        After __init__ flushes above-rootdir conftests and collection pops
+        under-rootdir ones, remaining entries mean collection was interrupted
+        (e.g. UsageError for a bad path). These conftests' fixtures aren't
+        needed since their directories' tests weren't collected either.
+        """
+        self._pending_conftests.clear()
 
     def _getautousenames(self, node: nodes.Node) -> Iterator[str]:
         """Return the names of autouse fixtures applicable to node."""
         for parentnode in node.listchain():
-            basenames = self._nodeid_autousenames.get(parentnode.nodeid)
+            basenames = self._node_autousenames.get(parentnode)
             if basenames:
                 yield from basenames
+            # Legacy fallback: check string-based nodeid autouse names.
+            nodeid_basenames = self._nodeid_autousenames.get(parentnode.nodeid)
+            if nodeid_basenames:
+                yield from nodeid_basenames
 
     def _getusefixturesnames(self, node: nodes.Item) -> Iterator[str]:
         """Return the names of usefixtures fixtures applicable to node."""
@@ -1686,47 +1863,20 @@ class FixtureManager:
         # to re-discover fixturedefs again for each fixturename
         # (discovering matching fixtures for a given name/node is expensive).
 
-        fixturenames_closure = list(initialnames)
-
         arg2fixturedefs: dict[str, Sequence[FixtureDef[Any]]] = {}
 
-        # Track the index for each fixture name in the simulated stack.
-        # Needed for handling override chains correctly, similar to _get_active_fixturedef.
-        # Using negative indices: -1 is the most specific (last), -2 is second to last, etc.
-        current_indices: dict[str, int] = {}
-
-        def process_argname(argname: str) -> None:
-            # Optimization: already processed this argname.
-            if current_indices.get(argname) == -1:
-                return
-
-            if argname not in fixturenames_closure:
-                fixturenames_closure.append(argname)
-
+        def getfixturedefs(argname: str) -> Sequence[FixtureDef[Any]] | None:
             if argname in ignore_args:
-                return
+                return None
 
             fixturedefs = arg2fixturedefs.get(argname)
             if not fixturedefs:
                 fixturedefs = self.getfixturedefs(argname, parentnode)
                 if not fixturedefs:
                     # Fixture not defined or not visible (will error during runtest).
-                    return
+                    return None
                 arg2fixturedefs[argname] = fixturedefs
-
-            index = current_indices.get(argname, -1)
-            if -index > len(fixturedefs):
-                # Exhausted the override chain (will error during runtest).
-                return
-            fixturedef = fixturedefs[index]
-
-            current_indices[argname] = index - 1
-            for dep in fixturedef.argnames:
-                process_argname(dep)
-            current_indices[argname] = index
-
-        for name in initialnames:
-            process_argname(name)
+            return fixturedefs
 
         def sort_by_scope(arg_name: str) -> Scope:
             try:
@@ -1736,14 +1886,35 @@ class FixtureManager:
             else:
                 return fixturedefs[-1]._scope
 
-        fixturenames_closure.sort(key=sort_by_scope, reverse=True)
+        fixturenames_closure = sorted(
+            traverse_fixture_closure(
+                initialnames,
+                getfixturedefs=getfixturedefs,
+            ),
+            key=sort_by_scope,
+            reverse=True,
+        )
+
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc: Metafunc) -> None:
         """Generate new tests based on parametrized fixtures used by the given metafunc"""
+
+        def get_parametrize_mark_argnames(mark: Mark) -> Sequence[str]:
+            args, _ = ParameterSet._parse_parametrize_args(*mark.args, **mark.kwargs)
+            return args
+
         for argname in metafunc.fixturenames:
             # Get the FixtureDefs for the argname.
             fixture_defs = metafunc._arg2fixturedefs.get(argname, ())
+
+            # If the test itself parametrizes using this argname, give it
+            # precedence.
+            if any(
+                argname in get_parametrize_mark_argnames(mark)
+                for mark in metafunc.definition.iter_markers("parametrize")
+            ):
+                continue
 
             # In the common case we only look at the fixture def with the
             # closest scope (last in the list). But if the fixture overrides
@@ -1780,11 +1951,12 @@ class FixtureManager:
         *,
         name: str,
         func: _FixtureFunc[object],
-        nodeid: str | None,
-        scope: Scope | _ScopeName | Callable[[str, Config], _ScopeName] = "function",
+        nodeid: str | None | NotSetType = NOTSET,
+        scope: Scope | ScopeName | Callable[[str, Config], ScopeName] = "function",
         params: Sequence[object] | None = None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
         autouse: bool = False,
+        node: nodes.Node | NotSetType = NOTSET,
     ) -> None:
         """Register a fixture
 
@@ -1793,10 +1965,12 @@ class FixtureManager:
         :param func:
             The fixture's implementation function.
         :param nodeid:
-            The visibility of the fixture. The fixture will be available to the
-            node with this nodeid and its children in the collection tree.
-            None means that the fixture is visible to the entire collection tree,
-            e.g. a fixture defined for general use in a plugin.
+            The visibility of the fixture (deprecated, use node instead).
+            The fixture will be available to the node with this nodeid and
+            its children in the collection tree. None means global visibility.
+        :param node:
+            The node where the fixture is defined (preferred over nodeid).
+            When provided, enables node-based matching which is more robust.
         :param scope:
             The fixture's scope.
         :param params:
@@ -1806,6 +1980,9 @@ class FixtureManager:
         :param autouse:
             Whether this is an autouse fixture.
         """
+        # Emit deprecation warning if nodeid string.
+        if nodeid is not NOTSET or node is NOTSET:
+            warnings.warn(FIXTURE_NODEID_DEPRECATED, stacklevel=2)
         fixture_def = FixtureDef(
             config=self.config,
             baseid=nodeid,
@@ -1816,20 +1993,36 @@ class FixtureManager:
             ids=ids,
             _ispytest=True,
             _autouse=autouse,
+            node=node,
         )
 
         faclist = self._arg2fixturedefs.setdefault(name, [])
-        if fixture_def.has_location:
-            faclist.append(fixture_def)
+        # Insert the fixturedef into the list while maintaining a partial order
+        # based on visibility: a fixturedef whose visibility is more specific
+        # sorts after a more general one, so that it takes precedence in the
+        # override chain (the last applicable fixturedef in the list is used
+        # first, see getfixturedefs).
+        # fixturedefs with the same visibility keep registration order, i.e. the
+        # last registered wins.
+        # The order between non-comparable fixturedefs doesn't matter since they
+        # cannot be visible together.
+        # The idea is that a fixture that is defined closer to the item should
+        # take precedence.
+        for i, existing in enumerate(faclist):
+            if is_visibility_more_specific(existing, fixture_def):
+                faclist.insert(i, fixture_def)
+                break
         else:
-            # fixturedefs with no location are at the front
-            # so this inserts the current fixturedef after the
-            # existing fixturedefs from external plugins but
-            # before the fixturedefs provided in conftests.
-            i = len([f for f in faclist if not f.has_location])
-            faclist.insert(i, fixture_def)
+            faclist.append(fixture_def)
         if autouse:
-            self._nodeid_autousenames.setdefault(nodeid or "", []).append(name)
+            if node is not NOTSET:
+                self._node_autousenames.setdefault(node, []).append(name)
+            elif nodeid is not NOTSET and nodeid is not None:
+                # Legacy: plugin passed nodeid string without node reference.
+                self._nodeid_autousenames.setdefault(nodeid, []).append(name)
+            else:
+                # Global plugin autouse fixtures go under Session.
+                self._node_autousenames.setdefault(self.session, []).append(name)
 
     @overload
     def parsefactories(
@@ -1839,6 +2032,9 @@ class FixtureManager:
         raise NotImplementedError()
 
     @overload
+    @deprecated(
+        "parsefactories(obj, nodeid) is deprecated, use parsefactories(holder=obj, node=node) instead"
+    )
     def parsefactories(
         self,
         node_or_obj: object,
@@ -1846,34 +2042,58 @@ class FixtureManager:
     ) -> None:
         raise NotImplementedError()
 
+    @overload
     def parsefactories(
         self,
-        node_or_obj: nodes.Node | object,
-        nodeid: str | NotSetType | None = NOTSET,
+        node_or_obj: NotSetType = ...,
+        nodeid: NotSetType = ...,
+        *,
+        holder: object,
+        node: nodes.Node,
+    ) -> None:
+        raise NotImplementedError()
+
+    def parsefactories(
+        self,
+        node_or_obj: nodes.Node | object | NotSetType = NOTSET,
+        nodeid: str | None | NotSetType = NOTSET,
+        *,
+        holder: object | NotSetType = NOTSET,
+        node: nodes.Node | NotSetType = NOTSET,
     ) -> None:
         """Collect fixtures from a collection node or object.
 
         Found fixtures are parsed into `FixtureDef`s and saved.
 
-        If `node_or_object` is a collection node (with an underlying Python
-        object), the node's object is traversed and the node's nodeid is used to
-        determine the fixtures' visibility. `nodeid` must not be specified in
-        this case.
+        The preferred API uses keyword-only arguments:
+        - ``holder``: The object to scan for fixtures.
+        - ``node``: The node determining fixture visibility.
 
-        If `node_or_object` is an object (e.g. a plugin), the object is
-        traversed and the given `nodeid` is used to determine the fixtures'
-        visibility. `nodeid` must be specified in this case; None and "" mean
-        total visibility.
+        Legacy positional API (translated internally):
+        - ``parsefactories(node)``: Uses node.obj as holder, node for scope.
+        - ``parsefactories(obj, nodeid)``: Uses obj as holder, nodeid string for scope.
         """
-        if nodeid is not NOTSET:
+        # Translate legacy API to holder/node sources of truth
+        # Either effective_node or effective_nodeid will be set, not both
+        effective_node: nodes.Node | NotSetType = NOTSET
+        effective_nodeid: str | None | NotSetType = NOTSET
+
+        if holder is not NOTSET:
+            # New API: holder and node explicitly provided
+            holderobj = holder
+            effective_node = node
+        elif node_or_obj is NOTSET:
+            raise TypeError("parsefactories() requires holder or node_or_obj")
+        elif nodeid is not NOTSET:
+            # Legacy: parsefactories(obj, nodeid) - string-based scoping only.
+            warnings.warn(PARSEFACTORIES_NODEID_DEPRECATED, stacklevel=2)
             holderobj = node_or_obj
+            effective_nodeid = nodeid
         else:
+            # parsefactories(node) - node has .obj attribute
             assert isinstance(node_or_obj, nodes.Node)
             holderobj = cast(object, node_or_obj.obj)  # type: ignore[attr-defined]
-            assert isinstance(node_or_obj.nodeid, str)
-            nodeid = node_or_obj.nodeid
-        if holderobj in self._holderobjseen:
-            return
+            effective_node = node_or_obj
 
         # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
         if not safe_isclass(holderobj) and not isinstance(holderobj, types.ModuleType):
@@ -1881,7 +2101,6 @@ class FixtureManager:
         else:
             holderobj_tp = holderobj
 
-        self._holderobjseen.add(holderobj)
         for name in dir(holderobj):
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getattr() ignores such exceptions.
@@ -1904,12 +2123,13 @@ class FixtureManager:
 
                 self._register_fixture(
                     name=fixture_name,
-                    nodeid=nodeid,
                     func=func,
                     scope=marker.scope,
                     params=marker.params,
                     ids=marker.ids,
                     autouse=marker.autouse,
+                    node=effective_node,
+                    nodeid=effective_nodeid,
                 )
 
     def getfixturedefs(
@@ -1935,9 +2155,17 @@ class FixtureManager:
     def _matchfactories(
         self, fixturedefs: Iterable[FixtureDef[Any]], node: nodes.Node
     ) -> Iterator[FixtureDef[Any]]:
-        parentnodeids = {n.nodeid for n in node.iter_parents()}
+        # Collect parent nodes and their IDs for matching
+        parent_nodes = set(node.iter_parents())
+        parentnodeids = {n.nodeid for n in parent_nodes}
+
         for fixturedef in fixturedefs:
-            if fixturedef.baseid in parentnodeids:
+            if fixturedef.node is not None:
+                # Node-based matching: check if fixture's node is a parent
+                if fixturedef.node in parent_nodes:
+                    yield fixturedef
+            elif fixturedef.baseid in parentnodeids:
+                # Fallback to string-based matching for legacy/plugins
                 yield fixturedef
 
 
@@ -1957,6 +2185,36 @@ def _pretty_fixture_path(invocation_dir: Path, func) -> str:
         return str(prefix / loc.relative_to(_PYTEST_DIR))
     except ValueError:
         return bestrelpath(invocation_dir, loc)
+
+
+def _get_fixtures_per_test(test: nodes.Item) -> Iterator[FixtureDef[object]]:
+    """Returns all fixtures used by the test item except for those created by
+    direct parametrization and those requested dynamically with
+    ``request.getfixturevalue``.
+
+    The justification for excluding fixtures created by direct parametrization
+    is that for users, they are internal implementation detail.
+
+    Dynamically requested fixtures are excluded because they are not known
+    statically.
+    """
+    from _pytest.python import DirectParamFixtureDef
+
+    # Custom Items may not have _fixtureinfo attribute.
+    fixture_info: FuncFixtureInfo | None = getattr(test, "_fixtureinfo", None)
+    if fixture_info is None:
+        return  # pragma: no cover
+
+    # dict key not used in loop but needed for sorting.
+    for argname, fixturedefs in sorted(fixture_info.name2fixturedefs.items()):
+        if not fixturedefs:
+            # Not supposed to be empty, but for safety.
+            continue  # pragma: no cover
+        # Last item is expected to be the one directly used by the test item.
+        fixturedef = fixturedefs[-1]
+        if isinstance(fixturedef, DirectParamFixtureDef):
+            continue
+        yield fixturedef
 
 
 def _show_fixtures_per_test(config: Config, session: Session) -> None:
@@ -1991,22 +2249,18 @@ def _show_fixtures_per_test(config: Config, session: Session) -> None:
             tw.line("    no docstring available", red=True)
 
     def write_item(item: nodes.Item) -> None:
-        # Not all items have _fixtureinfo attribute.
-        info: FuncFixtureInfo | None = getattr(item, "_fixtureinfo", None)
-        if info is None or not info.name2fixturedefs:
+        fixturedefs = list(_get_fixtures_per_test(item))
+        if not fixturedefs:
             # This test item does not use any fixtures.
             return
+
         tw.line()
         tw.sep("-", f"fixtures used by {item.name}")
         # TODO: Fix this type ignore.
         tw.sep("-", f"({get_best_relpath(item.function)})")  # type: ignore[attr-defined]
-        # dict key not used in loop but needed for sorting.
-        for _, fixturedefs in sorted(info.name2fixturedefs.items()):
-            assert fixturedefs is not None
-            if not fixturedefs:
-                continue
-            # Last item is expected to be the one used by the test item.
-            write_fixture(fixturedefs[-1])
+
+        for fixturedef in fixturedefs:
+            write_fixture(fixturedef)
 
     for session_item in session.items:
         write_item(session_item)
@@ -2078,3 +2332,62 @@ def _showfixtures_main(config: Config, session: Session) -> None:
 def write_docstring(tw: TerminalWriter, doc: str, indent: str = "    ") -> None:
     for line in doc.split("\n"):
         tw.line(indent + line)
+
+
+def register_fixture(
+    *,
+    name: str,
+    func: _FixtureFunc[object],
+    node: nodes.Node,
+    scope: ScopeName | Callable[[str, Config], ScopeName] = "function",
+    params: Sequence[object] | None = None,
+    ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
+    autouse: bool = False,
+) -> None:
+    """Register a fixture imperatively.
+
+    This is an advanced function intended for use by plugins.
+
+    Normally, fixtures should be registered declaratively using the
+    :func:`@pytest.fixture <pytest.fixture>` decorator. Pytest looks for these
+    fixture definitions during the collection phase and registers them
+    automatically. For some plugin usecases the declarative interface can be
+    cumbersome or nonviable, in which case the imperative interface can be used.
+
+    Fixture registration is expected to happen during the collection phase, and
+    this is the only sanctioned use. However, to allow for more creative uses,
+    this is not enforced. But do so at your own risk!
+
+    .. versionadded: 9.1
+
+    :param name:
+        The fixture's name.
+    :param func:
+        The fixture's implementation function.
+    :param node:
+        The visibility of the fixture.
+
+        Only items that are descendents of this node in the collection tree will
+        be able to request this fixture. You can think of this as the place
+        where you would put the `@pytest.fixture`.
+
+        For global visibility, pass the :class:`session <pytest.Session>` node,
+        which is the root of the collection tree.
+    :param scope:
+        The fixture's scope.
+    :param params:
+        The fixture's parametrization params.
+    :param ids:
+        The fixture's IDs.
+    :param autouse:
+        Whether this is an autouse fixture.
+    """
+    node.session._fixturemanager._register_fixture(
+        name=name,
+        func=func,
+        node=node,
+        scope=scope,
+        params=params,
+        ids=ids,
+        autouse=autouse,
+    )

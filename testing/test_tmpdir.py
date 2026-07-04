@@ -5,6 +5,7 @@ from collections.abc import Callable
 import dataclasses
 import os
 from pathlib import Path
+import shutil
 import stat
 import sys
 from typing import cast
@@ -95,6 +96,73 @@ class TestConfigTmpPath:
         assert mytemp.exists()
         assert not mytemp.joinpath("hello").exists()
 
+    def test_policy_none_delete_all(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_1(tmp_path):
+                assert 0 == 0
+        """
+        )
+        p_failed = pytester.makepyfile(
+            another_file_name="""
+            def test_1(tmp_path):
+                assert 0 == 1
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = "none"
+        """
+        )
+
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+
+        root = pytester._test_tmproot
+        for child in root.iterdir():
+            base_dir = list(child.iterdir())
+            # Check the base dir itself is gone without depending on test results
+            assert base_dir == []
+
+    @pytest.mark.parametrize("policy", ['"failed"', '"all"'])
+    @pytest.mark.parametrize("count", [0, 1, 3])
+    def test_retention_count(self, pytester: Pytester, policy, count) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_1(tmp_path):
+                assert 0 == 0
+        """
+        )
+        p_failed = pytester.makepyfile(
+            another_file_name="""
+            def test_1(tmp_path):
+                assert 0 == 1
+        """
+        )
+
+        pytester.makepyprojecttoml(
+            f"""
+            [tool.pytest.ini_options]
+            tmp_path_retention_policy = {policy}
+            tmp_path_retention_count = {count}
+        """
+        )
+
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+        pytester.inline_run(p)
+        pytester.inline_run(p_failed)
+
+        root = pytester._test_tmproot
+        for child in root.iterdir():
+            base_dir = filter(lambda x: not x.is_symlink(), child.iterdir())
+            assert len(list(base_dir)) == count
+
     def test_policy_failed_removes_only_passed_dir(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
             """
@@ -182,10 +250,8 @@ class TestConfigTmpPath:
         # Check if the whole directory is removed
         root = pytester._test_tmproot
         for child in root.iterdir():
-            base_dir = list(
-                filter(lambda x: x.is_dir() and not x.is_symlink(), child.iterdir())
-            )
-            assert len(base_dir) == 0
+            base_dir = list(child.iterdir())
+            assert base_dir == []
 
     # issue #10502
     def test_policy_all_keeps_dir_when_skipped_from_fixture(
@@ -619,3 +685,45 @@ def test_tmp_path_factory_fixes_up_world_readable_permissions(
 
     # After - fixed.
     assert (basetemp.parent.stat().st_mode & 0o077) == 0
+
+
+@pytest.mark.skipif(
+    not hasattr(os, "getuid") or os.stat not in os.supports_follow_symlinks,
+    reason="checks unix permissions and symlinks",
+)
+def test_tmp_path_factory_doesnt_follow_symlinks(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """Verify that if a /tmp/pytest-of-foo directory is a symbolic link,
+    it is rejected (#13669, CVE-2025-71176)."""
+    attacker_controlled = tmp_path / "attacker_controlled"
+    attacker_controlled.mkdir()
+
+    # Use the test's tmp_path as the system temproot (/tmp).
+    monkeypatch.setenv("PYTEST_DEBUG_TEMPROOT", str(tmp_path))
+
+    # First just get the pytest-of-user path.
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    pytest_of_user = tmp_factory.getbasetemp().parent
+    # Just for safety in the test, before we nuke it.
+    assert "pytest-of-" in str(pytest_of_user)
+    shutil.rmtree(pytest_of_user)
+
+    pytest_of_user.symlink_to(attacker_controlled)
+
+    # This now tries to use the directory when it's a symlink.
+    tmp_factory = TempPathFactory(None, 3, "all", lambda *args: None, _ispytest=True)
+    with pytest.raises(OSError, match=r"temporary directory .* is a symbolic link"):
+        tmp_factory.getbasetemp()
+
+
+def test_get_user_handles_getpass_oserror(monkeypatch: MonkeyPatch) -> None:
+    """Regression test: get_user() should return None when getpass.getuser()
+    raises OSError (Python 3.13+ behavior, #13835)."""
+    import getpass
+
+    def _raise_oserror():
+        raise OSError("No username set in the environment")
+
+    monkeypatch.setattr(getpass, "getuser", _raise_oserror)
+    assert get_user() is None

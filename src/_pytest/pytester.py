@@ -10,6 +10,7 @@ import collections.abc
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
+from collections.abc import Mapping
 from collections.abc import Sequence
 import contextlib
 from fnmatch import fnmatch
@@ -645,6 +646,9 @@ class SysPathsSnapshot:
         sys.path[:], sys.meta_path[:] = self.__saved
 
 
+_FileContent = tuple[str | bytes, ...] | list[str | bytes] | str | bytes
+
+
 @final
 class Pytester:
     """
@@ -756,7 +760,7 @@ class Pytester:
         self,
         ext: str,
         lines: Sequence[Any | bytes],
-        files: dict[str, str],
+        files: Mapping[str, _FileContent],
         encoding: str = "utf-8",
     ) -> Path:
         items = list(files.items())
@@ -862,7 +866,7 @@ class Pytester:
         """
         return self.makefile(".toml", pyproject=source)
 
-    def makepyfile(self, *args, **kwargs) -> Path:
+    def makepyfile(self, *args: _FileContent, **kwargs: _FileContent) -> Path:
         r"""Shortcut for .makefile() with a .py extension.
 
         Defaults to the test name with a '.py' extension, e.g test_foobar.py, overwriting
@@ -882,7 +886,7 @@ class Pytester:
         """
         return self._makefile(".py", args, kwargs)
 
-    def maketxtfile(self, *args, **kwargs) -> Path:
+    def maketxtfile(self, *args: _FileContent, **kwargs: _FileContent) -> Path:
         r"""Shortcut for .makefile() with a .txt extension.
 
         Defaults to the test name with a '.txt' extension, e.g test_foobar.txt, overwriting
@@ -1760,9 +1764,17 @@ class LineMatcher:
     def _no_match_line(
         self, pat: str, match_func: Callable[[str, str], bool], match_nickname: str
     ) -> None:
-        """Ensure captured lines does not have a the given pattern, using ``fnmatch.fnmatch``.
+        """Underlying implementation of ``no_fnmatch_line`` and ``no_re_match_line``.
 
-        :param str pat: The pattern to match lines.
+        :param str pat:
+            The pattern to match lines.
+        :param match_func:
+            A callable ``match_func(line, pattern)`` where line is the
+            captured line from stdout/stderr and pattern is the matching
+            pattern.
+        :param match_nickname:
+            The nickname for the match function that will be logged to stdout
+            when a match occurs.
         """
         __tracebackhide__ = True
         nomatch_printed = False

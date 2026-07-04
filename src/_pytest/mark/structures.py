@@ -21,7 +21,6 @@ from typing import TypeVar
 import warnings
 
 from .._code import getfslineno
-from ..compat import deprecated
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
@@ -29,7 +28,8 @@ from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
 from _pytest.outcomes import fail
 from _pytest.raises import AbstractRaises
-from _pytest.scope import _ScopeName
+from _pytest.scope import ScopeName
+from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 
 
@@ -443,7 +443,18 @@ def get_unpacked_marks(
                 mark_list.append(item)
     else:
         mark_attribute = getattr(obj, "pytestmark", [])
-        if isinstance(mark_attribute, list):
+        if mark_attribute is None:
+            warnings.warn(
+                "Module defines a `__getattr__` which returns None for "
+                "'pytestmark' instead of raising AttributeError. "
+                "Make sure `__getattr__` raises AttributeError for "
+                "attributes it does not provide. "
+                "See https://github.com/pytest-dev/pytest/issues/8265",
+                PytestCollectionWarning,
+                stacklevel=2,
+            )
+            mark_list = []
+        elif isinstance(mark_attribute, list):
             mark_list = mark_attribute
         else:
             mark_list = [mark_attribute]
@@ -525,34 +536,19 @@ if TYPE_CHECKING:
         ) -> MarkDecorator: ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,no-overload-impl]
-        def __call__(
-            self,
-            argnames: str | Sequence[str],
-            argvalues: Collection[ParameterSet | Sequence[object] | object],
-            *,
-            indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool]
-            | Callable[[Any], object | None]
-            | None = ...,
-            scope: _ScopeName | None = ...,
-        ) -> MarkDecorator: ...
-
-        @overload
-        @deprecated(
-            "Passing a non-Collection iterable to the 'argvalues' parameter of @pytest.mark.parametrize is deprecated. "
-            "Convert argvalues to a list or tuple.",
-        )
-        def __call__(
+        def __call__(  # type: ignore[override]
             self,
             argnames: str | Sequence[str],
             argvalues: Iterable[ParameterSet | Sequence[object] | object],
+            # TODO(pytest10): Change to below after PARAMETRIZE_NON_COLLECTION_ITERABLE deprecation.
+            #                 Overload doesn't work, see #14606.
+            # argvalues: Collection[ParameterSet | Sequence[object] | object],
             *,
             indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool]
+            ids: Iterable[None | str | float | int | bool | _HiddenParam]
             | Callable[[Any], object | None]
             | None = ...,
-            scope: _ScopeName | None = ...,
+            scope: ScopeName | None = ...,
         ) -> MarkDecorator: ...
 
     class _UsefixturesMarkDecorator(MarkDecorator):

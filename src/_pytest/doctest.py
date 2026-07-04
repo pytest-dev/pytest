@@ -27,6 +27,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import ReprFileLocation
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest.approx import approx
 from _pytest.compat import safe_getattr
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
@@ -38,7 +39,6 @@ from _pytest.outcomes import OutcomeException
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
 from _pytest.python import Module
-from _pytest.python_api import approx
 from _pytest.warning_types import PytestWarning
 
 
@@ -552,8 +552,7 @@ class DoctestModule(Module):
             else:
                 raise
 
-        # While doctests currently don't support fixtures directly, we still
-        # need to pick up autouse fixtures.
+        # doctests supports fixtures via `getfixture` and autouse.
         self.session._fixturemanager.parsefactories(self)
 
         # Uses internal doctest module parsing mechanism.

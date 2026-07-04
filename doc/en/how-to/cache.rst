@@ -214,11 +214,18 @@ across pytest invocations:
 
     @pytest.fixture
     def mydata(pytestconfig):
-        val = pytestconfig.cache.get("example/value", None)
+        cache = getattr(pytestconfig, "cache", None)
+        if cache is None:
+            # pytestconfig not having the cache attribute means the
+            # cache plugin is disabled.
+            expensive_computation()
+            return 42
+
+        val = cache.get("example/value", None)
         if val is None:
             expensive_computation()
             val = 42
-            pytestconfig.cache.set("example/value", val)
+            cache.set("example/value", val)
         return val
 
 
@@ -240,7 +247,7 @@ If you run this command for the first time, you can see the print statement:
     >       assert mydata == 23
     E       assert 42 == 23
 
-    test_caching.py:19: AssertionError
+    test_caching.py:26: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     running expensive computation...
     ========================= short test summary info ==========================
@@ -263,7 +270,7 @@ the cache and nothing will be printed:
     >       assert mydata == 23
     E       assert 42 == 23
 
-    test_caching.py:19: AssertionError
+    test_caching.py:26: AssertionError
     ========================= short test summary info ==========================
     FAILED test_caching.py::test_function - assert 42 == 23
     1 failed in 0.12s

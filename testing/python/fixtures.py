@@ -871,6 +871,115 @@ class TestRequestBasic:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 2 passed in *"])
 
+    def test_getfixturevalue_teardown_previously_requested_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was previously
+        requested is OK (#12882).
+
+        Note: this is still kinda dubious so don't let this test lock you in to
+        allowing this behavior forever...
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix(request, tmp_path):
+                yield
+                assert request.getfixturevalue("tmp_path") == tmp_path
+
+            def test_it(fix):
+                pass
+        """
+        )
+        result = pytester.runpytest("-Werror")
+        result.assert_outcomes(passed=1)
+
+    def test_getfixturevalue_teardown_new_fixture_deprecated(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises a deprecation warning (#12882).
+
+        Note: this is a case that previously worked but will become a hard
+        error after the deprecation is completed.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(scope="session")
+            def resource():
+                return "value"
+
+            @pytest.fixture
+            def fix(request):
+                yield
+                with pytest.warns(
+                    pytest.PytestRemovedIn10Warning,
+                    match=r'Calling request\\.getfixturevalue\\("resource"\\) during teardown is deprecated',
+                ):
+                    assert request.getfixturevalue("resource") == "value"
+
+            def test_it(fix):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
+    def test_getfixturevalue_teardown_new_inactive_fixture_errors(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises an error (#12882)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix(request):
+                yield
+                request.getfixturevalue("tmp_path")
+
+            def test_it(fix):
+                pass
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                (
+                    '*The fixture value for "tmp_path" is not available during '
+                    "teardown because it was not previously requested.*"
+                ),
+            ]
+        )
+
+    def test_getfixturevalue_teardown_new_inactive_fixture_errors_top_request(
+        self, pytester: Pytester
+    ) -> None:
+        """Test that requesting a fixture during teardown that was not
+        previously requested raises an error (tricky case) (#12882)."""
+        pytester.makepyfile(
+            """
+            def test_it(request):
+                request.addfinalizer(lambda: request.getfixturevalue("tmp_path"))
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1, errors=1)
+        result.stdout.fnmatch_lines(
+            [
+                (
+                    '*The fixture value for "tmp_path" is not available during '
+                    "teardown because it was not previously requested.*"
+                ),
+            ]
+        )
+
     def test_getfixturevalue(self, pytester: Pytester) -> None:
         item = pytester.getitem(
             """
@@ -1069,17 +1178,20 @@ class TestRequestBasic:
     def test_request_fixturenames_dynamic_fixture(self, pytester: Pytester) -> None:
         """Regression test for #3057"""
         pytester.copy_example("fixtures/test_getfixturevalue_dynamic.py")
-        result = pytester.runpytest()
+        result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_setupdecorator_and_xunit(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """
             import pytest
+
             values = []
+
             @pytest.fixture(scope='module', autouse=True)
             def setup_module():
                 values.append("module")
+
             @pytest.fixture(autouse=True)
             def setup_function():
                 values.append("function")
@@ -1087,18 +1199,28 @@ class TestRequestBasic:
             def test_func():
                 pass
 
-            class TestClass(object):
+            class TestClass:
                 @pytest.fixture(scope="class", autouse=True)
-                def setup_class(self):
+                @classmethod
+                def setup_class(cls):
                     values.append("class")
+
                 @pytest.fixture(autouse=True)
                 def setup_method(self):
                     values.append("method")
+
                 def test_method(self):
                     pass
+
             def test_all():
-                assert values == ["module", "function", "class",
-                             "function", "method", "function"]
+                assert values == [
+                    "module",
+                    "function",
+                    "class",
+                    "function",
+                    "method",
+                    "function",
+                ]
         """
         )
         reprec = pytester.inline_run("-v")
@@ -1794,6 +1916,38 @@ class TestFixtureManagerParseFactories:
         reprec = pytester.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
+    def test_register_fixture_ordered_by_visibility(self, pytester: Pytester) -> None:
+        """A fixturedef registered for a more specific node takes precedence
+        over one registered for a more general (ancestor) node, regardless of
+        the order in which they were registered (#14513)."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.hookimpl(wrapper=True)
+            def pytest_collection(session):
+                result = yield
+                item = session.items[0]
+                pytest.register_fixture(name="fix", func=lambda: "session1", node=session)
+                # For coverage; can be removed once nodeid= deprecation is over.
+                fm = session._fixturemanager
+                fm._register_fixture(name="fix", func=lambda: "session-legacy", nodeid="")
+                fm._register_fixture(name="fix", func=lambda: "broken-legacy", nodeid="broken")
+                pytest.register_fixture(name="fix", func=lambda fix: f"item1-{fix}", node=item)
+                pytest.register_fixture(name="fix", func=lambda fix: f"item2-{fix}", node=item)
+                pytest.register_fixture(name="fix", func=lambda: "session2", node=session)
+                return result
+            """
+        )
+        pytester.makepyfile(
+            """
+            def test(fix):
+                assert fix == "item2-item1-session2"
+            """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_parsefactories_relative_node_ids(
         self, pytester: Pytester, monkeypatch: MonkeyPatch
     ) -> None:
@@ -2315,30 +2469,44 @@ class TestAutouseManagement:
         pytester.makepyfile(
             """
             import pytest
+
             values = []
+
             def pytest_generate_tests(metafunc):
                 if metafunc.cls is None:
                     assert metafunc.function is test_finish
                 if metafunc.cls is not None:
                     metafunc.parametrize("item", [1,2], scope="class")
-            class TestClass(object):
+
+            class TestClass:
                 @pytest.fixture(scope="class", autouse=True)
-                def addteardown(self, item, request):
+                @classmethod
+                def setup_teardown(cls, item):
                     values.append("setup-%d" % item)
-                    request.addfinalizer(lambda: values.append("teardown-%d" % item))
+                    yield
+                    values.append("teardown-%d" % item)
+
                 def test_step1(self, item):
                     values.append("step1-%d" % item)
+
                 def test_step2(self, item):
                     values.append("step2-%d" % item)
 
             def test_finish():
-                print(values)
-                assert values == ["setup-1", "step1-1", "step2-1", "teardown-1",
-                             "setup-2", "step1-2", "step2-2", "teardown-2",]
-        """
+                assert values == [
+                    "setup-1",
+                    "step1-1",
+                    "step2-1",
+                    "teardown-1",
+                    "setup-2",
+                    "step1-2",
+                    "step2-2",
+                    "teardown-2",
+                ]
+            """
         )
-        reprec = pytester.inline_run("-s")
-        reprec.assertoutcome(passed=5)
+        result = pytester.inline_run("-vv")
+        result.assertoutcome(passed=5)
 
     def test_ordering_autouse_before_explicit(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -2466,6 +2634,32 @@ class TestFixtureMarker:
             def test_foo(fixt, val):
                 pass
         """
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_override_parametrized_fixture_with_indirect(
+        self, pytester: Pytester
+    ) -> None:
+        """Make sure a parametrized argument can override a parametrized fixture.
+
+        This was a regression introduced in the fix for #736.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture(params=["a"])
+            def fixt(request):
+                return request.param * 2
+
+            def test_fixt(fixt):
+                assert fixt == "aa"
+
+            @pytest.mark.parametrize("fixt", ['b'], indirect=True)
+            def test_indirect(fixt):
+                assert fixt == "bb"
+            """
         )
         reprec = pytester.inline_run()
         reprec.assertoutcome(passed=2)
@@ -3092,21 +3286,26 @@ class TestFixtureMarker:
             values = []
 
             class TestClass(object):
-                @classmethod
                 @pytest.fixture(scope="class", autouse=True)
-                def setup1(self, request, param1):
+                @classmethod
+                def setup1(cls, request, param1):
                     values.append(1)
-                    request.addfinalizer(self.teardown1)
+                    request.addfinalizer(cls.teardown1)
+
                 @classmethod
                 def teardown1(self):
                     assert values.pop() == 1
+
                 @pytest.fixture(scope="class", autouse=True)
-                def setup2(self, request, param1):
-                    values.append(2)
-                    request.addfinalizer(self.teardown2)
                 @classmethod
-                def teardown2(self):
+                def setup2(cls, request, param1):
+                    values.append(2)
+                    request.addfinalizer(cls.teardown2)
+
+                @classmethod
+                def teardown2(cls):
                     assert values.pop() == 2
+
                 def test(self):
                     pass
 
@@ -3482,8 +3681,8 @@ class TestRequestScopeAccess:
                 for x in {ok.split()}:
                     assert hasattr(request, x)
                 for x in {error.split()}:
-                    pytest.raises(AttributeError, lambda:
-                        getattr(request, x))
+                    with pytest.raises(AttributeError):
+                        getattr(request, x)
                 assert request.session
                 assert request.config
             def test_func():
@@ -3502,8 +3701,8 @@ class TestRequestScopeAccess:
                 for x in {ok.split()!r}:
                     assert hasattr(request, x)
                 for x in {error.split()!r}:
-                    pytest.raises(AttributeError, lambda:
-                        getattr(request, x))
+                    with pytest.raises(AttributeError):
+                        getattr(request, x)
                 assert request.session
                 assert request.config
             def test_func(arg):
@@ -4324,11 +4523,11 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
         [
             "test_fixtures.py::test_first ",
             "        SETUP    F my_fixture",
-            "        test_fixtures.py::test_first (fixtures used: my_fixture, request)PASSED",
+            "        test_fixtures.py::test_first (fixtures used: my_fixture, request) PASSED",
             "test_fixtures.py::test_first ERROR",
             "test_fixtures.py::test_second ",
             "        SETUP    F my_fixture",
-            "        test_fixtures.py::test_second (fixtures used: my_fixture, request)PASSED",
+            "        test_fixtures.py::test_second (fixtures used: my_fixture, request) PASSED",
             "        TEARDOWN F my_fixture",
         ],
         consecutive=True,
@@ -4375,62 +4574,74 @@ class TestScopeOrdering:
         request = TopRequest(items[0], _ispytest=True)
         assert request.fixturenames == "m1 f1".split()
 
-    def test_func_closure_with_native_fixtures(
-        self, pytester: Pytester, monkeypatch: MonkeyPatch
-    ) -> None:
-        """Sanity check that verifies the order returned by the closures and the actual fixture execution order:
-        The execution order may differ because of fixture inter-dependencies.
-        """
-        monkeypatch.setattr(pytest, "FIXTURE_ORDER", [], raising=False)
+    def test_func_closure_with_native_fixtures(self, pytester: Pytester) -> None:
+        """Sanity check that verifies the order returned by the closures and the
+        actual fixture execution order: the execution order may differ because
+        of fixture inter-dependencies."""
         pytester.makepyfile(
             """
             import pytest
 
-            FIXTURE_ORDER = pytest.FIXTURE_ORDER
+            fixture_order = []
 
             @pytest.fixture(scope="session")
             def s1():
-                FIXTURE_ORDER.append('s1')
+                fixture_order.append("s1")
 
             @pytest.fixture(scope="package")
             def p1():
-                FIXTURE_ORDER.append('p1')
+                fixture_order.append("p1")
 
             @pytest.fixture(scope="module")
             def m1():
-                FIXTURE_ORDER.append('m1')
+                fixture_order.append("m1")
 
-            @pytest.fixture(scope='session')
+            @pytest.fixture(scope="session")
             def my_tmp_path_factory():
-                FIXTURE_ORDER.append('my_tmp_path_factory')
+                fixture_order.append("my_tmp_path_factory")
 
             @pytest.fixture
             def my_tmp_path(my_tmp_path_factory):
-                FIXTURE_ORDER.append('my_tmp_path')
+                fixture_order.append("my_tmp_path")
 
             @pytest.fixture
             def f1(my_tmp_path):
-                FIXTURE_ORDER.append('f1')
+                fixture_order.append("f1")
 
             @pytest.fixture
             def f2():
-                FIXTURE_ORDER.append('f2')
+                fixture_order.append("f2")
 
-            def test_foo(f1, p1, m1, f2, s1): pass
+            def test_foo(f1, p1, m1, f2, s1):
+                # Actual fixture execution differs from static order: dependent
+                # fixtures must be created first ("my_tmp_path").
+                assert fixture_order == [
+                    "my_tmp_path_factory",
+                    "s1",
+                    "p1",
+                    "m1",
+                    "my_tmp_path",
+                    "f1",
+                    "f2",
+                ]
         """
         )
         items, _ = pytester.inline_genitems()
         assert isinstance(items[0], Function)
         request = TopRequest(items[0], _ispytest=True)
-        # order of fixtures based on their scope and position in the parameter list
-        assert (
-            request.fixturenames
-            == "s1 my_tmp_path_factory p1 m1 f1 f2 my_tmp_path".split()
-        )
-        pytester.runpytest()
-        # actual fixture execution differs: dependent fixtures must be created first ("my_tmp_path")
-        FIXTURE_ORDER = pytest.FIXTURE_ORDER  # type: ignore[attr-defined]
-        assert FIXTURE_ORDER == "s1 my_tmp_path_factory p1 m1 my_tmp_path f1 f2".split()
+        # Static order of fixtures based on their scope and position in the
+        # parameter list.
+        assert request.fixturenames == [
+            "my_tmp_path_factory",
+            "s1",
+            "p1",
+            "m1",
+            "f1",
+            "my_tmp_path",
+            "f2",
+        ]
+        result = pytester.runpytest("-vv")
+        result.assert_outcomes(passed=1)
 
     def test_func_closure_module(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -5342,6 +5553,47 @@ def test_fixture_closure_with_overrides_and_intermediary(pytester: Pytester) -> 
     result.assert_outcomes(passed=1)
 
 
+def test_fixture_closure_with_overrides_and_parametrization(pytester: Pytester) -> None:
+    """Test that an item's static fixture closure properly includes transitive
+    dependencies through overridden fixtures (#13773) when also including
+    parametrization (#14248)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        @pytest.fixture
+        def db(): pass
+
+        @pytest.fixture
+        def app(db): pass
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        # Overrides conftest-level `app` and requests it.
+        @pytest.fixture
+        def app(app): pass
+
+        class TestClass:
+            # Overrides module-level `app` and requests it.
+            @pytest.fixture
+            def app(self, app): pass
+
+            @pytest.mark.parametrize("a", [1])
+            def test_something(self, request, app, a):
+                # Both dynamic and static fixture closures should include 'db'.
+                assert 'db' in request.fixturenames
+                assert 'db' in request.node.fixturenames
+                # No dynamic dependencies, should be equal.
+                assert set(request.fixturenames) == set(request.node.fixturenames)
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
 def test_fixture_closure_with_broken_override_chain(pytester: Pytester) -> None:
     """Test that an item's static fixture closure properly includes transitive
     dependencies through overridden fixtures (#13773).
@@ -5418,7 +5670,7 @@ def test_fixture_closure_handles_circular_dependencies(pytester: Pytester) -> No
     )
     items, _hookrec = pytester.inline_genitems()
     assert isinstance(items[0], Function)
-    assert items[0].fixturenames == ["fix_a", "fix_x", "fix_b", "fix_y", "fix_z"]
+    assert items[0].fixturenames == ["fix_a", "fix_b", "fix_x", "fix_y", "fix_z"]
 
 
 def test_fixture_closure_handles_diamond_dependencies(pytester: Pytester) -> None:

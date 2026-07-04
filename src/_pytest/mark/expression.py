@@ -102,10 +102,10 @@ class Scanner:
                         (FILE_NAME, 1, pos + 1, input),
                     )
                 value = input[pos : end_quote_pos + 1]
-                if (backslash_pos := input.find("\\")) != -1:
+                if (backslash_pos := value.find("\\")) != -1:
                     raise SyntaxError(
                         r'escaping with "\" not supported in marker expression',
-                        (FILE_NAME, 1, backslash_pos + 1, input),
+                        (FILE_NAME, 1, pos + backslash_pos + 1, input),
                     )
                 yield Token(TokenType.STRING, value, pos)
                 pos += len(value)

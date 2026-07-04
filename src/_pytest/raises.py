@@ -95,14 +95,15 @@ def raises(*, check: Callable[[BaseException], bool]) -> RaisesExc[BaseException
 @overload
 def raises(
     expected_exception: type[E] | tuple[type[E], ...],
-    func: Callable[..., Any],
-    *args: Any,
-    **kwargs: Any,
+    func: Callable[P, object],
+    *args: P.args,
+    **kwargs: P.kwargs,
 ) -> ExceptionInfo[E]: ...
 
 
 def raises(
     expected_exception: type[E] | tuple[type[E], ...] | None = None,
+    func: Callable[P, object] | None = None,
     *args: Any,
     **kwargs: Any,
 ) -> RaisesExc[BaseException] | ExceptionInfo[E]:
@@ -237,25 +238,6 @@ def raises(
 
         :ref:`assertraises` for more examples and detailed discussion.
 
-    **Legacy form**
-
-    It is possible to specify a callable by passing a to-be-called lambda::
-
-        >>> raises(ZeroDivisionError, lambda: 1/0)
-        <ExceptionInfo ...>
-
-    or you can specify an arbitrary callable with arguments::
-
-        >>> def f(x): return 1/x
-        ...
-        >>> raises(ZeroDivisionError, f, 0)
-        <ExceptionInfo ...>
-        >>> raises(ZeroDivisionError, f, x=0)
-        <ExceptionInfo ...>
-
-    The form above is fully supported but discouraged for new code because the
-    context manager form is regarded as more readable and less error-prone.
-
     .. note::
         Similar to caught exception objects in Python, explicitly clearing
         local references to returned ``ExceptionInfo`` objects can
@@ -272,7 +254,7 @@ def raises(
     """
     __tracebackhide__ = True
 
-    if not args:
+    if func is None and not args:
         if set(kwargs) - {"match", "check", "expected_exception"}:
             msg = "Unexpected keyword arguments passed to pytest.raises: "
             msg += ", ".join(sorted(kwargs))
@@ -289,11 +271,10 @@ def raises(
             f"Raising exceptions is already understood as failing the test, so you don't need "
             f"any special code to say 'this should never raise an exception'."
         )
-    func = args[0]
     if not callable(func):
         raise TypeError(f"{func!r} object (type: {type(func)}) must be callable")
     with RaisesExc(expected_exception) as excinfo:
-        func(*args[1:], **kwargs)
+        func(*args, **kwargs)
     try:
         return excinfo
     finally:
@@ -363,14 +344,15 @@ def _check_raw_type(
 
 def is_fully_escaped(s: str) -> bool:
     # we know we won't compile with re.VERBOSE, so whitespace doesn't need to be escaped
-    metacharacters = "{}()+.*?^$[]"
-    return not any(
-        c in metacharacters and (i == 0 or s[i - 1] != "\\") for (i, c) in enumerate(s)
-    )
+    metacharacters = "{}()+.*?^$[]|"
+    # Strip all escape sequences (backslash + any char), then check if any
+    # metacharacter remains unescaped in the resulting string.
+    stripped = re.sub(r"\\.", "", s)
+    return not any(c in metacharacters for c in stripped)
 
 
 def unescape(s: str) -> str:
-    return re.sub(r"\\([{}()+-.*?^$\[\]\s\\])", r"\1", s)
+    return re.sub(r"\\([{}()+-.*?^$\[\]\s\\|])", r"\1", s)
 
 
 # These classes conceptually differ from ExceptionInfo in that ExceptionInfo is tied, and
@@ -510,12 +492,21 @@ class AbstractRaises(ABC, Generic[BaseExcT_co]):
             else ""
         )
         if isinstance(self.rawmatch, str):
-            # TODO: it instructs to use `-v` to print leading text, but that doesn't work
-            # I also don't know if this is the proper entry point, or tool to use at all
-            from _pytest.assertion.util import _diff_text
-            from _pytest.assertion.util import dummy_highlighter
+            from _pytest.assertion.compare_text import _diff_text
+            from _pytest.assertion.highlight import dummy_highlighter
+            from _pytest.assertion.util import _config
+            from _pytest.config import Config
 
-            diff = _diff_text(self.rawmatch, stringified_exception, dummy_highlighter)
+            verbose = (
+                _config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
+                if _config is not None
+                else 0
+            )
+            diff = list(
+                _diff_text(
+                    self.rawmatch, stringified_exception, dummy_highlighter, verbose
+                )
+            )
             self._fail_reason = ("\n" if diff[0][0] == "-" else "") + "\n".join(diff)
             return False
 
@@ -704,10 +695,11 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         if exc_type is None:
             if not self.expected_exceptions:
                 fail("DID NOT RAISE any exception")
-            if len(self.expected_exceptions) > 1:
-                fail(f"DID NOT RAISE any of {self.expected_exceptions!r}")
-
-            fail(f"DID NOT RAISE {self.expected_exceptions[0]!r}")
+            if len(self.expected_exceptions) == 1:
+                fail(f"DID NOT RAISE {self.expected_exceptions[0].__name__}")
+            else:
+                names = ", ".join(x.__name__ for x in self.expected_exceptions)
+                fail(f"DID NOT RAISE any of ({names})")
 
         assert self.excinfo is not None, (
             "Internal error - should have been constructed in __enter__"
@@ -716,7 +708,7 @@ class RaisesExc(AbstractRaises[BaseExcT_co_default]):
         if not self.matches(exc_val):
             if self._just_propagate:
                 return False
-            raise AssertionError(self._fail_reason)
+            raise AssertionError(self._fail_reason) from None
 
         # Cast to narrow the exception type now that it's verified....
         # even though the TypeGuard in self.matches should be narrowing
@@ -1019,30 +1011,27 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
         expected: str,
     ) -> type[BaseExcT_co] | RaisesExc[BaseExcT_1] | RaisesGroup[BaseExcT_2]:
         # verify exception type and set `self.is_baseexception`
-        if isinstance(exc, RaisesGroup):
-            if self.flatten_subgroups:
+        match exc:
+            case RaisesGroup() if self.flatten_subgroups:
                 raise ValueError(
                     "You cannot specify a nested structure inside a RaisesGroup with"
                     " `flatten_subgroups=True`. The parameter will flatten subgroups"
                     " in the raised exceptiongroup before matching, which would never"
                     " match a nested structure.",
                 )
-            self.is_baseexception |= exc.is_baseexception
-            exc._nested = True
-            return exc
-        elif isinstance(exc, RaisesExc):
-            self.is_baseexception |= exc.is_baseexception
-            exc._nested = True
-            return exc
-        elif isinstance(exc, tuple):
-            raise TypeError(
-                f"Expected {expected}, but got {type(exc).__name__!r}.\n"
-                "RaisesGroup does not support tuples of exception types when expecting one of "
-                "several possible exception types like RaisesExc.\n"
-                "If you meant to expect a group with multiple exceptions, list them as separate arguments."
-            )
-        else:
-            return super()._parse_exc(exc, expected)
+            case RaisesGroup() | RaisesExc():
+                self.is_baseexception |= exc.is_baseexception
+                exc._nested = True
+                return exc
+            case tuple():
+                raise TypeError(
+                    f"Expected {expected}, but got {type(exc).__name__!r}.\n"
+                    "RaisesGroup does not support tuples of exception types when expecting one of "
+                    "several possible exception types like RaisesExc.\n"
+                    "If you meant to expect a group with multiple exceptions, list them as separate arguments."
+                )
+            case _:
+                return super()._parse_exc(exc, expected)
 
     @overload
     def __enter__(
@@ -1365,7 +1354,7 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
                 f"\n{indent_1}{self._repr_expected(self.expected_exceptions[i_failed])}"
             )
             for i_actual, actual in enumerate(actual_exceptions):
-                if results.get_result(i_exp, i_actual) is None:
+                if results.get_result(i_failed, i_actual) is None:
                     # we print full repr of match target
                     s += (
                         f"\n{indent_2}It matches {backquote(repr(actual))} which was paired with "
@@ -1482,8 +1471,7 @@ class ResultHolder:
     def get_result(self, expected: int, actual: int) -> str | None:
         res = self.results[actual][expected]
         assert res is not NotChecked
-        # mypy doesn't support identity checking against anything but None
-        return res  # type: ignore[return-value]
+        return res
 
     def has_result(self, expected: int, actual: int) -> bool:
         return self.results[actual][expected] is not NotChecked

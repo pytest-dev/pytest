@@ -1,7 +1,10 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
+from collections.abc import Mapping
 from collections.abc import MutableSequence
+import dataclasses
 import sys
 import textwrap
 from typing import Any
@@ -13,18 +16,31 @@ from _pytest import outcomes
 import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.assertion._compare_any import _compare_eq_cls
+from _pytest.assertion._typing import TruncationBudget
+from _pytest.assertion.compare_text import _compare_eq_text
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 import pytest
 
 
-def mock_config(verbose: int = 0, assertion_override: int | None = None):
+def mock_config(
+    verbose: int = 0,
+    assertion_override: int | None = None,
+    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+):
     class TerminalWriter:
         def _highlight(self, source, lexer="python"):
             return source
 
+    class PluginManager:
+        def has_plugin(self, name: str) -> bool:
+            return True
+
     class Config:
+        pluginmanager = PluginManager()
+
         def get_terminal_writer(self):
             return TerminalWriter()
 
@@ -37,6 +53,11 @@ def mock_config(verbose: int = 0, assertion_override: int | None = None):
                 return verbose
 
             raise KeyError(f"Not mocked out: {verbosity_type}")
+
+        def getini(self, name: str) -> str:
+            if name == util.ASSERTION_TEXT_DIFF_STYLE_INI:
+                return assertion_text_diff_style
+            raise KeyError(f"Not mocked out: {name}")
 
     return Config()
 
@@ -74,6 +95,12 @@ class TestMockConfig:
 
         with pytest.raises(KeyError):
             config.get_verbosity("--- NOT A VERBOSITY LEVEL ---")
+
+    def test_getini_unsupported_error(self):
+        config = mock_config()
+
+        with pytest.raises(KeyError, match="Not mocked out: --- NOT AN INI ---"):
+            config.getini("--- NOT AN INI ---")
 
 
 class TestImportHookInstallation:
@@ -404,13 +431,33 @@ class TestBinReprIntegration:
         result.stdout.fnmatch_lines(["*test_hello*FAIL*", "*test_check*PASS*"])
 
 
-def callop(op: str, left: Any, right: Any, verbose: int = 0) -> list[str] | None:
-    config = mock_config(verbose=verbose)
+def callop(
+    op: str,
+    left: Any,
+    right: Any,
+    verbose: int = 0,
+    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+) -> list[str] | None:
+    config = mock_config(
+        verbose=verbose,
+        assertion_text_diff_style=assertion_text_diff_style,
+    )
     return plugin.pytest_assertrepr_compare(config, op, left, right)
 
 
-def callequal(left: Any, right: Any, verbose: int = 0) -> list[str] | None:
-    return callop("==", left, right, verbose)
+def callequal(
+    left: Any,
+    right: Any,
+    verbose: int = 0,
+    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+) -> list[str] | None:
+    return callop(
+        "==",
+        left,
+        right,
+        verbose,
+        assertion_text_diff_style=assertion_text_diff_style,
+    )
 
 
 class TestAssert_reprcompare:
@@ -431,12 +478,43 @@ class TestAssert_reprcompare:
             "+ spam",
         ]
 
+    def test_text_diff_ndiff_style(self) -> None:
+        assert list(
+            _compare_eq_text(
+                "spam",
+                "eggs",
+                util.dummy_highlighter,
+                0,
+                util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+            )
+        ) == [
+            "- eggs",
+            "+ spam",
+        ]
+
     def test_text_skipping(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs")
         assert lines is not None
         assert "Skipping" in lines[2]
         for line in lines:
             assert "a" * 50 not in line
+
+    def test_text_skipping_trailing(self) -> None:
+        # Same length, differ at index 1, then ~50 identical trailing chars.
+        # Exercises the trailing-skip branch in ``_diff_text``.
+        lines = callequal("a" + "x" + "z" * 50, "a" + "y" + "z" * 50)
+        assert lines is not None
+        assert any("identical trailing" in line for line in lines)
+        for line in lines:
+            assert "z" * 50 not in line
+
+    def test_text_skipping_trailing_when_prefix_differs(self) -> None:
+        # The trailing-skip branch must still work when the first characters differ.
+        lines = callequal("x" + "z" * 50, "y" + "z" * 50)
+        assert lines is not None
+        assert any("identical trailing" in line for line in lines)
+        for line in lines:
+            assert "z" * 50 not in line
 
     def test_text_skipping_verbose(self) -> None:
         lines = callequal("a" * 50 + "spam", "a" * 50 + "eggs", verbose=1)
@@ -451,6 +529,58 @@ class TestAssert_reprcompare:
         assert diff is not None
         assert "- eggs" in diff
         assert "+ spam" in diff
+
+    def test_multiline_text_diff_block(self) -> None:
+        assert callequal(
+            "foo\nspam\nbar",
+            "foo\neggs\nbar",
+            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+        ) == [
+            r"'foo\nspam\nbar' == 'foo\neggs\nbar'",
+            "",
+            "Left:",
+            "  foo",
+            "  spam",
+            "  bar",
+            "",
+            "Right:",
+            "  foo",
+            "  eggs",
+            "  bar",
+        ]
+
+    def test_multiline_text_diff_block_preserves_blank_lines(self) -> None:
+        assert callequal(
+            "\nfoo\n",
+            "\nbar",
+            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+        ) == [
+            r"'\nfoo\n' == '\nbar'",
+            "",
+            "Left:",
+            "  ",
+            "  foo",
+            "  ",
+            "",
+            "Right:",
+            "  ",
+            "  bar",
+        ]
+
+    def test_single_line_text_diff_block(self) -> None:
+        assert callequal(
+            "spam",
+            "eggs",
+            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+        ) == [
+            "'spam' == 'eggs'",
+            "",
+            "Left:",
+            "  spam",
+            "",
+            "Right:",
+            "  eggs",
+        ]
 
     def test_bytes_diff_normal(self) -> None:
         """Check special handling for bytes diff (#5260)"""
@@ -781,6 +911,38 @@ class TestAssert_reprcompare:
             "  }",
         ]
 
+    def test_mapping_different_items(self) -> None:
+        class SimpleMapping(Mapping[str, int]):
+            def __init__(self, values: dict[str, int]) -> None:
+                self._values = values
+
+            def __getitem__(self, key: str) -> int:
+                return self._values[key]
+
+            def __iter__(self) -> Iterator[str]:
+                return iter(self._values)
+
+            def __len__(self) -> int:  # pragma: no cover
+                return len(self._values)
+
+            def __repr__(self) -> str:
+                return f"SimpleMapping({self._values!r})"
+
+        lines = callequal(
+            SimpleMapping({"a": 0, "b": 1}),
+            SimpleMapping({"a": 1, "b": 1, "c": 2}),
+        )
+
+        assert lines is not None
+        assert lines[2:] == [
+            "Omitting 1 identical items, use -vv to show",
+            "Differing items:",
+            "{'a': 0} != {'a': 1}",
+            "Right contains 1 more item:",
+            "{'c': 2}",
+            "Use -v to get more diff",
+        ]
+
     def test_sequence_different_items(self) -> None:
         lines = callequal((1, 2), (3, 4, 5), verbose=2)
         assert lines == [
@@ -890,7 +1052,9 @@ class TestAssert_reprcompare:
         assert expl is not None
         assert expl[0].startswith("{} == <[ValueError")
         assert "raised in repr" in expl[0]
-        assert expl[2:] == [
+        # Streaming explanation: any per-line output produced before the
+        # bad repr is preserved, then the failure notice is appended.
+        assert expl[-2:] == [
             "(pytest_assertion plugin: representation of details failed:"
             f" {__file__}:{A.__repr__.__code__.co_firstlineno + 1}: ValueError: 42.",
             " Probably an object has a faulty __repr__.)",
@@ -1357,17 +1521,23 @@ class TestTruncateExplanation:
 
     def test_doesnt_truncate_when_input_is_empty_list(self) -> None:
         expl: list[str] = []
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=100)
+        )
         assert result == expl
 
     def test_doesnt_truncate_at_when_input_is_5_lines_and_LT_max_chars(self) -> None:
         expl = ["a" * 100 for x in range(5)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=8 * 80)
+        )
         assert result == expl
 
     def test_truncates_at_8_lines_when_given_list_of_empty_strings(self) -> None:
         expl = ["" for x in range(50)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=100)
+        )
         assert len(result) != len(expl)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
@@ -1379,7 +1549,9 @@ class TestTruncateExplanation:
     def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self) -> None:
         total_lines = 100
         expl = ["a" for x in range(total_lines)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=8 * 80)
+        )
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1390,14 +1562,18 @@ class TestTruncateExplanation:
     def test_truncates_at_8_lines_when_there_is_one_line_to_remove(self) -> None:
         """The number of line in the result is 9, the same number as if we truncated."""
         expl = ["a" for x in range(9)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=8 * 80)
+        )
         assert result == expl
         assert "truncated" not in result[-1]
 
     def test_truncates_full_line_because_of_max_chars(self) -> None:
         """A line is fully truncated because of the max_chars value."""
         expl = ["a" * 10, "b" * 71]
-        result = truncate._truncate_explanation(expl, max_lines=10, max_chars=10)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=10, max_chars=10)
+        )
         assert result == [
             "a" * 10,
             "...",
@@ -1410,7 +1586,9 @@ class TestTruncateExplanation:
     ) -> None:
         line = "a" * 10
         expl = [line, line]
-        result = truncate._truncate_explanation(expl, max_lines=10, max_chars=10)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=10, max_chars=10)
+        )
         assert result == [line, line]
 
     def test_truncates_edgecase_when_truncation_message_makes_the_result_longer_for_lines(
@@ -1418,12 +1596,16 @@ class TestTruncateExplanation:
     ) -> None:
         line = "a" * 10
         expl = [line, line]
-        result = truncate._truncate_explanation(expl, max_lines=1, max_chars=100)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=1, max_chars=100)
+        )
         assert result == [line, line]
 
     def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self) -> None:
         expl = [chr(97 + x) * 80 for x in range(16)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=8 * 80)
+        )
         assert result != expl
         assert len(result) == 16 - 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1433,7 +1615,9 @@ class TestTruncateExplanation:
 
     def test_truncates_at_4_lines_when_first_4_lines_are_GT_max_chars(self) -> None:
         expl = ["a" * 250 for x in range(10)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=999)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=999)
+        )
         assert result != expl
         assert len(result) == 4 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1443,7 +1627,9 @@ class TestTruncateExplanation:
 
     def test_truncates_at_1_line_when_first_line_is_GT_max_chars(self) -> None:
         expl = ["a" * 250 for x in range(1000)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        result = truncate._truncate_explanation(
+            expl, TruncationBudget(max_lines=8, max_chars=100)
+        )
         assert result != expl
         assert len(result) == 1 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -1595,6 +1781,42 @@ def test_reprcompare_notin() -> None:
     ]
 
 
+def test_reprcompare_notin_nontext() -> None:
+    # ``not in`` with non-text operands has no specialised explanation.
+    assert callop("not in", 1, [1, 2]) is None
+
+
+def test_reprcompare_notin_long_text() -> None:
+    # Long enough surrounding context to make the underlying ``_diff_text`` call
+    # emit a "Skipping ... identical leading characters" line, which
+    # ``_notin_text`` filters out.
+    lines = callop("not in", "x", "a" * 50 + "x")
+    assert lines is not None
+    assert not any("Skipping" in line for line in lines)
+
+
+def test_compare_eq_cls_no_comparable_fields() -> None:
+    # A dataclass with no compared fields always compares equal, so the
+    # comparison hook is never reached via a failed assertion. Call the
+    # helper directly to exercise the "nothing to report" path.
+    @dataclasses.dataclass
+    class NoCompare:
+        x: int = dataclasses.field(default=0, compare=False)
+
+    assert (
+        list(
+            _compare_eq_cls(
+                NoCompare(1),
+                NoCompare(2),
+                util.dummy_highlighter,
+                0,
+                util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+            )
+        )
+        == []
+    )
+
+
 def test_reprcompare_whitespaces() -> None:
     assert callequal("\r\n", "\n") == [
         r"'\r\n' == '\n'",
@@ -1678,6 +1900,38 @@ class TestSetAssertions:
                 "*E*Extra items*left*",
                 "*E*50*",
                 "*= 1 failed in*",
+            ]
+        )
+
+    @pytest.mark.parametrize("op", [">=", "<="])
+    def test_dict_items_view_subset(self, op, pytester: Pytester) -> None:
+        """dict.items() supports set-like comparisons; assert diff should show the missing items."""
+        if op == ">=":
+            pytester.makepyfile(
+                """
+                def test_hello():
+                    x = {"a": 1, "b": 2}
+                    y = {"a": 1, "b": 2, "c": 3}
+                    assert x.items() >= y.items()
+            """
+            )
+        else:
+            pytester.makepyfile(
+                """
+                def test_hello():
+                    x = {"a": 1, "b": 2, "c": 3}
+                    y = {"a": 1, "b": 2}
+                    assert x.items() <= y.items()
+            """
+            )
+        result = pytester.runpytest()
+        side = "right" if op == ">=" else "left"
+        result.stdout.fnmatch_lines(
+            [
+                "*def test_hello():*",
+                f"*assert x.items() {op} y.items()*",
+                f"*E*Extra items in the {side} set:*",
+                "*E*('c', 3)*",
             ]
         )
 
@@ -2003,10 +2257,12 @@ def test_issue_1944(pytester: Pytester) -> None:
 
 
 def test_exit_from_assertrepr_compare(monkeypatch) -> None:
+    from _pytest.assertion import _compare_any
+
     def raise_exit(obj):
         outcomes.exit("Quitting debugger")
 
-    monkeypatch.setattr(util, "istext", raise_exit)
+    monkeypatch.setattr(_compare_any, "istext", raise_exit)
 
     with pytest.raises(outcomes.Exit, match="Quitting debugger"):
         callequal(1, 1)
@@ -2174,6 +2430,94 @@ def test_fine_grained_assertion_verbosity(pytester: Pytester):
             "E         +     '4': 4,",
             "E           }",
             f"E       AssertionError: assert 'hello world' in '{long_text}'",
+        ]
+    )
+
+
+def test_assertion_text_diff_style_block_for_multiline_strings(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        r"""
+        actual = "alpha\n  beta\n"
+        expected = "alpha\n    beta"
+
+        def test_text_diff():
+            assert actual == expected
+        """
+    )
+    pytester.makeini(
+        f"""
+        [pytest]
+        assertion_text_diff_style = {util.ASSERTION_TEXT_DIFF_STYLE_BLOCK}
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+
+    result.stdout.fnmatch_lines(
+        [
+            "E         Left:",
+            "E           alpha",
+            "E             beta",
+            "E           ",
+            "E         Right:",
+            "E           alpha",
+            "E               beta",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*?     -*")
+
+
+def test_assertion_text_diff_style_block_for_single_line_strings(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        def test_text_diff():
+            assert "spam" == "eggs"
+        """
+    )
+    pytester.makeini(
+        f"""
+        [pytest]
+        assertion_text_diff_style = {util.ASSERTION_TEXT_DIFF_STYLE_BLOCK}
+        """
+    )
+
+    result = pytester.runpytest("-vv")
+
+    result.stdout.fnmatch_lines(
+        [
+            "E         Left:",
+            "E           spam",
+            "E         Right:",
+            "E           eggs",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*- eggs*")
+
+
+def test_assertion_text_diff_style_invalid(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        def test_ok():
+            pass
+        """
+    )
+    pytester.makeini(
+        """
+        [pytest]
+        assertion_text_diff_style = side-by-side
+        """
+    )
+
+    result = pytester.runpytest()
+
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            "*ERROR: assertion_text_diff_style must be one of 'ndiff', 'block'; got 'side-by-side'"
         ]
     )
 

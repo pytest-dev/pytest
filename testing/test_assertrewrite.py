@@ -1082,9 +1082,10 @@ def test_rewritten():
             """
             import os
             def test_no_bytecode():
-                assert "__pycache__" in __cached__
-                assert not os.path.exists(__cached__)
-                assert not os.path.exists(os.path.dirname(__cached__))"""
+                assert "__pycache__" in __spec__.cached
+                assert not os.path.exists(__spec__.cached)
+                assert not os.path.exists(os.path.dirname(__spec__.cached))
+            """
         )
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         assert pytester.runpytest_subprocess().ret == 0
@@ -2404,3 +2405,22 @@ class TestSafereprUnbounded:
             _saferepr(self.Help)
             == f"<class '{Path(__file__).stem}.{self.__class__.__name__}.Help'>"
         )
+
+
+def test_assertion_failure_when_terminalreporter_is_disabled(
+    pytester: Pytester,
+) -> None:
+    """Assertion rewriting doesn't crash when the terminalreporter plugin is
+    disabled (#14378)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test():
+            with pytest.raises(AssertionError) as excinfo:
+                assert 0 == 1
+            assert excinfo.value.args[0] == 'assert 0 == 1'
+        """
+    )
+    reprec = pytester.inline_run("-p", "no:terminalreporter")
+    reprec.assertoutcome(passed=1)

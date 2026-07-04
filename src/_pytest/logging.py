@@ -180,27 +180,24 @@ class PercentStyleMultiline(logging.PercentStyle):
             0 (auto-indent turned off) or
             >0 (explicitly set indentation position).
         """
-        if auto_indent_option is None:
-            return 0
-        elif isinstance(auto_indent_option, bool):
-            if auto_indent_option:
+        match auto_indent_option:
+            case None | False:
+                return 0
+            case True:
                 return -1
-            else:
+            case int():
+                return auto_indent_option
+            case str():
+                try:
+                    return int(auto_indent_option)
+                except ValueError:
+                    pass
+                try:
+                    if _strtobool(auto_indent_option):
+                        return -1
+                except ValueError:
+                    return 0
                 return 0
-        elif isinstance(auto_indent_option, int):
-            return int(auto_indent_option)
-        elif isinstance(auto_indent_option, str):
-            try:
-                return int(auto_indent_option)
-            except ValueError:
-                pass
-            try:
-                if _strtobool(auto_indent_option):
-                    return -1
-            except ValueError:
-                return 0
-
-        return 0
 
     def format(self, record: logging.LogRecord) -> str:
         if "\n" in record.message:
@@ -342,18 +339,34 @@ _HandlerType = TypeVar("_HandlerType", bound=logging.Handler)
 class catching_logs(Generic[_HandlerType]):
     """Context manager that prepares the whole logging machinery properly."""
 
-    __slots__ = ("handler", "level", "orig_level")
+    __slots__ = ("attached_loggers", "handler", "level", "orig_level")
 
     def __init__(self, handler: _HandlerType, level: int | None = None) -> None:
         self.handler = handler
         self.level = level
+        self.attached_loggers: list[logging.Logger] = []
 
     def __enter__(self) -> _HandlerType:
         root_logger = logging.getLogger()
         if self.level is not None:
             self.handler.setLevel(self.level)
+        # Attach to root logger.
         root_logger.addHandler(self.handler)
+        self.attached_loggers.append(root_logger)
+        # Attach to all non-propagating loggers (won't reach root).
+        # Note that will miss loggers that *become* non-propagating
+        # after the `__enter__`. Not worth the trouble for now.
+        for logger in root_logger.manager.loggerDict.values():
+            if (
+                isinstance(logger, logging.Logger)
+                and not logger.propagate
+                and logger is not root_logger
+            ):
+                logger.addHandler(self.handler)
+                self.attached_loggers.append(logger)
         if self.level is not None:
+            # Non-propagating loggers still inherit the level (unless a logger
+            # explicitly set level), so only do this on the root logger.
             self.orig_level = root_logger.level
             root_logger.setLevel(min(self.orig_level, self.level))
         return self.handler
@@ -367,7 +380,9 @@ class catching_logs(Generic[_HandlerType]):
         root_logger = logging.getLogger()
         if self.level is not None:
             root_logger.setLevel(self.orig_level)
-        root_logger.removeHandler(self.handler)
+        for logger in self.attached_loggers:
+            logger.removeHandler(self.handler)
+        self.attached_loggers.clear()
 
 
 class LogCaptureHandler(logging_StreamHandler):

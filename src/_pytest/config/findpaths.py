@@ -107,13 +107,21 @@ def load_config_dict_from_file(
 
         # pytest.toml and .pytest.toml use [pytest] table directly.
         if filepath.name in ("pytest.toml", ".pytest.toml"):
-            pytest_config = config.get("pytest", {})
-            if pytest_config:
+            if "pytest" in config:
                 # TOML mode - preserve native TOML types.
                 return {
                     k: ConfigValue(v, origin="file", mode="toml")
-                    for k, v in pytest_config.items()
+                    for k, v in config["pytest"].items()
                 }
+            top_level_options = [
+                key for key, value in config.items() if not isinstance(value, dict)
+            ]
+            if top_level_options:
+                raise UsageError(
+                    f"{filepath}: pytest configuration must be under a "
+                    f"[pytest] table (found top-level options: "
+                    f"{', '.join(top_level_options)})"
+                )
             # "pytest.toml" files are always the source of configuration, even if empty.
             return {}
 
@@ -233,7 +241,7 @@ def get_dirs_from_args(args: Iterable[str]) -> list[Path]:
         return x.startswith("-")
 
     def get_file_part_from_node_id(x: str) -> str:
-        return x.split("::")[0]
+        return x.split("::", maxsplit=1)[0]
 
     def get_dir_from_path(path: Path) -> Path:
         if path.is_dir():

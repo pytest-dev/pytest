@@ -162,7 +162,7 @@ objects, they are still using the default pytest representation:
     rootdir: /home/sweet/project
     collected 8 items
 
-    <Dir parametrize.rst-212>
+    <Dir parametrize.rst-215>
       <Module test_time.py>
         <Function test_timedistance_v0[a0-b0-expected0]>
         <Function test_timedistance_v0[a1-b1-expected1]>
@@ -239,7 +239,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
     rootdir: /home/sweet/project
     collected 4 items
 
-    <Dir parametrize.rst-212>
+    <Dir parametrize.rst-215>
       <Module test_scenarios.py>
         <Class TestSampleWithScenarios>
           <Function test_demo1[basic]>
@@ -318,7 +318,7 @@ Let's first see how it looks like at collection time:
     rootdir: /home/sweet/project
     collected 2 items
 
-    <Dir parametrize.rst-212>
+    <Dir parametrize.rst-215>
       <Module test_backends.py>
         <Function test_db_initialized[d1]>
         <Function test_db_initialized[d2]>
@@ -370,8 +370,18 @@ test:
     def test_indirect(fixt):
         assert len(fixt) == 3
 
+
 This can be used, for example, to do more expensive setup at test run time in
 the fixture, rather than having to run those setup steps at collection time.
+
+.. note::
+
+    The ``request`` argument used by the fixture is pytest's built-in
+    :py:class:`FixtureRequest <pytest.FixtureRequest>` fixture. For indirect
+    parametrization, the value supplied to the test parameter is passed to the
+    fixture and made available as ``request.param``.
+
+    For more information, see :ref:`fixture-parametrize`.
 
 .. regendoc:wipe
 
