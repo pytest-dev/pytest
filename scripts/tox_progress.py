@@ -111,6 +111,38 @@ def parse_progress_char(line: str, state: EnvState) -> None:
         return
 
 
+NON_PYTEST_ENVS = {
+    "linting",
+    "docs",
+    "docs-checklinks",
+    "regen",
+    "release",
+    "prepare-release-pr",
+    "generate-gh-release-notes",
+    "update-plugin-list",
+}
+
+
+def build_cmd(env_name: str) -> list[str]:
+    """Build the tox invocation for a single environment.
+
+    Pytest envs get '--no-header --tb=no' posargs (never '-q': it silences the
+    'collected N items' line and the '='-delimited summary this script's
+    parser depends on). xdist envs additionally re-request '-n auto' — tox
+    posargs REPLACE the env's default posargs, so pytest-xdist parallelism
+    must be re-fed explicitly. Only envs whose name has an 'xdist' dash-token
+    (not merely an 'xdist' substring) get it.
+    """
+    cmd = ["uvx", "tox", "run", "-e", env_name]
+    if env_name in NON_PYTEST_ENVS:
+        return cmd
+    posargs = []
+    if "xdist" in env_name.split("-"):
+        posargs += ["-n", "auto"]
+    posargs += ["--no-header", "--tb=no"]
+    return [*cmd, "--", *posargs]
+
+
 def parse_summary_line(line: str, state: EnvState) -> bool:
     """Parse the final summary line like '= 1234 passed, 5 failed in 45.2s ='."""
     clean = strip_ansi(line)
@@ -163,9 +195,7 @@ def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
         state.status = "running"
 
     try:
-        cmd = ["uvx", "tox", "run", "-e", state.name]
-        if is_pytest_env:
-            cmd += ["--", "-n", "auto", "-q", "--no-header", "--tb=no"]
+        cmd = build_cmd(state.name)
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -178,6 +208,7 @@ def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
 
         if proc.stdout is None:
             raise RuntimeError("Failed to capture subprocess stdout")
+        in_short_summary = False
         for raw_line in proc.stdout:
             line = raw_line.rstrip("\n")
             state.output_lines.append(line)
@@ -200,8 +231,15 @@ def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
             if parse_summary_line(line, state):
                 continue
 
+            # pytest's "short test summary info" recap re-lists each failure
+            # (e.g. "FAILED testing/test_x.py::test_b"). Those lines must not
+            # be re-counted on top of the live progress chars that already
+            # tallied them, so stop char/word counting once we're in it.
+            if "short test summary info" in clean_check:
+                in_short_summary = True
+
             # Track progress chars
-            if state.status == "running":
+            if state.status == "running" and not in_short_summary:
                 parse_progress_char(line, state)
 
             # Track current file being tested
