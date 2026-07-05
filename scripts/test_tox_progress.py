@@ -26,13 +26,18 @@ class TestStripAnsi:
         assert strip_ansi("no ansi here") == "no ansi here"
 
     def test_removes_multiple_codes(self) -> None:
-        assert strip_ansi("\033[31;1mERROR\033[0m: \033[33mwarning\033[0m") == "ERROR: warning"
+        assert (
+            strip_ansi("\033[31;1mERROR\033[0m: \033[33mwarning\033[0m")
+            == "ERROR: warning"
+        )
 
 
 class TestParseSummaryLine:
     def test_parses_real_summary(self) -> None:
         state = EnvState(name="py312")
-        result = parse_summary_line("= 100 passed, 5 failed, 10 skipped in 45.2s =", state)
+        result = parse_summary_line(
+            "= 100 passed, 5 failed, 10 skipped in 45.2s =", state
+        )
         assert result is True
         assert state.passed == 100
         assert state.failed == 5
@@ -55,7 +60,9 @@ class TestParseSummaryLine:
     def test_rejects_test_name_with_failed(self) -> None:
         """A test name containing 'failed' should NOT match."""
         state = EnvState(name="py312")
-        result = parse_summary_line("testing/test_auth.py::test_3_failed_attempts PASSED", state)
+        result = parse_summary_line(
+            "testing/test_auth.py::test_3_failed_attempts PASSED", state
+        )
         assert result is False
         assert state.failed == 0
 
@@ -70,7 +77,11 @@ class TestRunEnvStdoutCheck:
             run_env(state, semaphore=None)
         assert state.status == "error"
         # Should NOT be an AssertionError — should be RuntimeError
-        assert any("Failed to capture subprocess stdout" in line for line in state.output_lines)
+        assert any(
+            "Failed to capture subprocess stdout" in line for line in state.output_lines
+        )
+
+
 class TestBuildCmd:
     def test_plain_pytest_env_has_no_xdist_or_quiet_flags(self) -> None:
         """Non-xdist envs must not get '-n auto' (breaks: no xdist installed)."""
