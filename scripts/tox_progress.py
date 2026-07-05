@@ -173,6 +173,8 @@ def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
             text=True,
             bufsize=1,
         )
+        # Expose the process so callers can terminate it (e.g. on Ctrl-C).
+        state.proc = proc
 
         if proc.stdout is None:
             raise RuntimeError("Failed to capture subprocess stdout")
