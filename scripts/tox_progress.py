@@ -178,17 +178,7 @@ def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
     state.start_time = time.time()
 
     # Only pass pytest flags to environments that actually run pytest
-    non_pytest_envs = {
-        "linting",
-        "docs",
-        "docs-checklinks",
-        "regen",
-        "release",
-        "prepare-release-pr",
-        "generate-gh-release-notes",
-        "update-plugin-list",
-    }
-    is_pytest_env = state.name not in non_pytest_envs
+    is_pytest_env = state.name not in NON_PYTEST_ENVS
     state.is_pytest_env = is_pytest_env
 
     if not is_pytest_env:
@@ -263,6 +253,27 @@ def run_env(state: EnvState, semaphore: threading.Semaphore | None) -> None:
     finally:
         if semaphore:
             semaphore.release()
+
+
+def terminate_all(states: list[EnvState]) -> None:
+    """Terminate any still-running subprocesses tracked by the given states.
+
+    States with no ``proc`` are skipped, as are procs that have already
+    finished (``poll()`` returns an exit code rather than ``None``). A
+    ``ProcessLookupError`` from ``terminate()`` is swallowed to tolerate the
+    race where a process exits between the ``poll()`` check and the
+    ``terminate()`` call.
+    """
+    for state in states:
+        proc = state.proc
+        if proc is None:
+            continue
+        if proc.poll() is not None:
+            continue
+        try:
+            proc.terminate()
+        except ProcessLookupError:
+            pass
 
 
 def format_bar(state: EnvState, width: int) -> str:
@@ -398,6 +409,11 @@ def main() -> int:
         for line in output.split("\n"):
             print(f"{CLEAR_LINE}{line}")
         print()
+
+    except KeyboardInterrupt:
+        terminate_all(states)
+        print(f"\n{YELLOW}Interrupted — terminating running tox environments...{RESET}")
+        return 130
 
     finally:
         print(SHOW_CURSOR, end="", flush=True)

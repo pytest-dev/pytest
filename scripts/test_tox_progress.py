@@ -10,6 +10,8 @@ from tox_progress import EnvState
 from tox_progress import parse_summary_line
 from tox_progress import run_env
 from tox_progress import strip_ansi
+from tox_progress import terminate_all
+
 import pytest
 
 
@@ -124,6 +126,62 @@ class TestBuildCmd:
         assert "-q" not in build_cmd("py314-xdist")
 
 
+class TestTerminateAll:
+    def test_terminates_running_proc(self) -> None:
+        """A proc still running (poll() returns None) should be terminated."""
+        mock_proc = MagicMock()
+        mock_proc.poll.return_value = None
+        state = EnvState(name="py312")
+        state.proc = mock_proc
+
+        terminate_all([state])
+
+        mock_proc.terminate.assert_called_once()
+
+    def test_does_not_terminate_finished_proc(self) -> None:
+        """A proc that has already exited (poll() returns an exit code) is left alone."""
+        mock_proc = MagicMock()
+        mock_proc.poll.return_value = 0
+        state = EnvState(name="py312")
+        state.proc = mock_proc
+
+        terminate_all([state])
+
+        mock_proc.terminate.assert_not_called()
+
+    def test_skips_state_with_no_proc(self) -> None:
+        """A state whose proc is still None should be skipped without error."""
+        state = EnvState(name="py312")
+
+        terminate_all([state])  # must not raise
+
+    def test_terminates_only_running_procs_in_mixed_list(self) -> None:
+        """Only the still-running proc in a mixed list gets terminated."""
+        running_proc = MagicMock()
+        running_proc.poll.return_value = None
+        finished_proc = MagicMock()
+        finished_proc.poll.return_value = 1
+
+        running_state = EnvState(name="py312")
+        running_state.proc = running_proc
+        finished_state = EnvState(name="py313")
+        finished_state.proc = finished_proc
+        none_state = EnvState(name="py314")
+
+        terminate_all([running_state, finished_state, none_state])
+
+        running_proc.terminate.assert_called_once()
+        finished_proc.terminate.assert_not_called()
+
+    def test_swallows_process_lookup_error(self) -> None:
+        """A terminate() race (process exits between poll and terminate) must not propagate."""
+        mock_proc = MagicMock()
+        mock_proc.poll.return_value = None
+        mock_proc.terminate.side_effect = ProcessLookupError
+        state = EnvState(name="py312")
+        state.proc = mock_proc
+
+        terminate_all([state])  # must not raise
 
 
 class TestSubprocessCleanup:
