@@ -158,13 +158,17 @@ def getfuncargnames(
     # If this function should be treated as a bound method even though
     # it's passed as an unbound method or function, and its first parameter
     # wasn't defined as positional only, remove the first parameter name.
-    if not any(p.kind is Parameter.POSITIONAL_ONLY for p in parameters) and (
-        # Not using `getattr` because we don't want to resolve the staticmethod.
-        # Not using `cls.__dict__` because we want to check the entire MRO.
+    is_bound_method = inspect.ismethod(function) and function.__self__ is not None
+    # Not using `getattr` because we don't want to resolve the staticmethod.
+    # Not using `cls.__dict__` because we want to check the entire MRO.
+    is_static_method = cls is not None and isinstance(
+        inspect.getattr_static(cls, name, default=None), staticmethod
+    )
+    if (
         cls
-        and not isinstance(
-            inspect.getattr_static(cls, name, default=None), staticmethod
-        )
+        and not is_bound_method
+        and not is_static_method
+        and not any(p.kind is Parameter.POSITIONAL_ONLY for p in parameters)
     ):
         arg_names = arg_names[1:]
     # Remove any names that will be replaced with mocks.

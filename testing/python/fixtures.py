@@ -61,11 +61,18 @@ def test_getfuncargnames_methods():
         def k(self, /, arg1, *, arg2, arg3="hello"):
             raise NotImplementedError()
 
+        @classmethod
+        def cm(cls, arg1):
+            raise NotImplementedError()
+
     assert getfuncargnames(A().f) == ("arg1",)
     assert getfuncargnames(A().g) == ("arg1",)
     assert getfuncargnames(A().h) == ("arg1",)
     assert getfuncargnames(A().j) == ("arg1", "arg2")
     assert getfuncargnames(A().k) == ("arg1", "arg2")
+    assert getfuncargnames(A.f, name="f", cls=A) == ("arg1",)
+    assert getfuncargnames(A().f, name="f", cls=A) == ("arg1",)
+    assert getfuncargnames(A.cm, name="cm", cls=A) == ("arg1",)
 
 
 def test_getfuncargnames_staticmethod():
