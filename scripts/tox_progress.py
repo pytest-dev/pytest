@@ -1,9 +1,27 @@
 #!/usr/bin/env python3
 """Run tox environments in parallel with per-environment progress bars.
 
-Usage:
-    python3 tox_progress.py -e linting,py310,py311,py312,py313,py314
-    python3 tox_progress.py -e py312,py313 -p 2
+Usage (from the repository root):
+    uv run scripts/tox_progress.py -e py314
+    uv run scripts/tox_progress.py -e linting,py310,py311,py312,py313,py314
+    uv run scripts/tox_progress.py -e py312,py313 -p 2   # cap concurrency at 2
+
+Environments run concurrently in threads — all at once by default, or capped
+at N with `-p N` — each with a live progress bar. Every env is executed as
+`uvx tox run -e <env>`, so tox must be resolvable through uvx.
+
+Pytest envs get `--no-header --tb=no` posargs. Never add `-q`: it suppresses
+the 'collected N items' line and the '='-delimited final summary that this
+script's parser depends on. `-n auto` (pytest-xdist) is passed only to envs
+whose name carries an `xdist` dash-token (e.g. py314-xdist): tox.ini installs
+pytest-xdist only for that factor, and explicit posargs replace the env's
+default posargs, so the flag must be re-supplied here. Non-pytest envs
+(linting, docs, ...; see NON_PYTEST_ENVS) get no posargs and render a spinner
+instead of a bar.
+
+Ctrl-C terminates all running tox subprocesses and exits 130. Otherwise the
+exit code is 1 if any environment failed, else 0. Failed envs have their last
+30 output lines echoed after the final render.
 """
 
 from __future__ import annotations
