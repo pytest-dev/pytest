@@ -1,0 +1,1 @@
+The :confval:`truncation_limit_lines` and :confval:`truncation_limit_chars` configuration options now accept integer values in TOML configuration files, matching the behavior specified in the documentation.
