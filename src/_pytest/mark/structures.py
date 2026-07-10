@@ -214,7 +214,16 @@ class ParameterSet(NamedTuple):
         if parameters:
             # Check all parameter sets have the correct number of values.
             for param in parameters:
-                if len(param.values) != len(argnames):
+                try:
+                    values_len = len(param.values)
+                except TypeError:
+                    fail(
+                        f'{nodeid}: in "parametrize" expected a sequence of values, '
+                        f"got {param.values!r}",
+                        pytrace=False,
+                    )
+
+                if values_len != len(argnames):
                     msg = (
                         '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
                         "  {names}\n"
@@ -227,7 +236,7 @@ class ParameterSet(NamedTuple):
                             values=param.values,
                             names=argnames,
                             names_len=len(argnames),
-                            values_len=len(param.values),
+                            values_len=values_len,
                         ),
                         pytrace=False,
                     )

@@ -495,6 +495,26 @@ def test_parametrized_collect_with_wrong_args(pytester: Pytester) -> None:
     )
 
 
+def test_parametrized_collect_with_non_sequence_value(pytester: Pytester) -> None:
+    """Test parametrization reports non-sequence values without crashing."""
+    py_file = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("value,", [None])
+        def test_func(value):
+            pass
+    """
+    )
+
+    result = pytester.runpytest(py_file)
+    result.stdout.fnmatch_lines(
+        [
+            '*in "parametrize" expected a sequence of values, got None',
+        ]
+    )
+
+
 def test_parametrized_with_kwargs(pytester: Pytester) -> None:
     """Test collect parametrized func with wrong number of args."""
     py_file = pytester.makepyfile(
