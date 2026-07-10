@@ -1,0 +1,1 @@
+Parametrization now reports a clear collection error when a trailing-comma argument receives a non-sequence value, instead of raising an internal ``TypeError``.
