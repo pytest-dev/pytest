@@ -911,6 +911,54 @@ def test_conftest_fixture_from_ancestor_above_rootdir(
     result.stdout.fnmatch_lines(["*test_uses_ancestor*PASSED*", "*1 passed*"])
 
 
+def test_rootdir_conftest_visible_outside_rootdir(pytester: Pytester) -> None:
+    """A conftest located in the rootdir provides fixtures to items that are
+    collected from *outside* the rootdir.
+
+    Before pytest 9.1 the rootdir conftest got an empty baseid (which matches
+    every collected item), so its fixtures were visible session-wide. The
+    node-based scoping introduced in #14098 (pytest 9.1) inadvertently scoped
+    it to its own Directory node, making it invisible to items collected from
+    a parent/sibling of the rootdir. Regression test for #14683.
+
+    Layout::
+
+        project/                  <- pytest invoked here
+            xclim/                <- collected (``--doctest-modules xclim``)
+                testing/           <- rootdir (``--rootdir xclim/testing``)
+                    conftest.py    <- defines a fixture
+                core/
+                    test_it.py     <- collected from outside rootdir
+    """
+    root = pytester.path
+    testing = root / "xclim" / "testing"
+    testing.mkdir(parents=True)
+    testing.joinpath("conftest.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+
+            @pytest.fixture
+            def rootdir_fixture():
+                return "from-rootdir"
+        """),
+        encoding="utf-8",
+    )
+    core = root / "xclim" / "core"
+    core.mkdir()
+    core.joinpath("test_it.py").write_text(
+        textwrap.dedent("""\
+            def test_uses_rootdir(rootdir_fixture):
+                assert rootdir_fixture == "from-rootdir"
+        """),
+        encoding="utf-8",
+    )
+
+    result = pytester.runpytest(
+        "--rootdir", str(testing), "--doctest-modules", "xclim", "-v"
+    )
+    result.stdout.fnmatch_lines(["*test_uses_rootdir*PASSED*", "*1 passed*"])
+
+
 def test_required_option_help(pytester: Pytester) -> None:
     pytester.makeconftest("assert 0")
     x = pytester.mkdir("x")

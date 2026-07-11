@@ -1799,20 +1799,46 @@ class FixtureManager:
         if isinstance(collector, nodes.Directory):
             plugin = self._pending_conftests.pop(collector.path, None)
             if plugin is not None:
-                self.parsefactories(holder=plugin, node=collector)
+                # A conftest located in the rootdir historically got an empty
+                # baseid (matching the whole collection tree), so its fixtures
+                # stayed visible even to items collected from outside the
+                # rootdir. Keep that behavior by attaching it to the Session
+                # instead of this Directory node (#14683).
+                scope_node = (
+                    self.session
+                    if collector.path == self.config.rootpath
+                    else collector
+                )
+                self.parsefactories(holder=plugin, node=scope_node)
         return result
 
     def _flush_pending_conftests_to_session(self, session: Session) -> None:
-        """Assign Session scope to initial conftests whose directories won't
-        be collected as Directory nodes (e.g. ancestors above rootdir)."""
+        """Assign Session scope to initial conftests whose fixtures should be
+        visible to the entire collection tree.
+
+        This covers the conftests that, with the nodeid-based scoping used
+        before pytest 9.1, ended up with an empty baseid (which matches every
+        collected item) and were therefore visible session-wide:
+
+        * Conftests in directories above the rootdir. These never get their own
+          Directory collector, so they cannot be scoped to one.
+        * The conftest located directly in the rootdir. It used to get an empty
+          baseid, so its fixtures were available even to items collected from
+          *outside* the rootdir -- e.g. when a parent of the rootdir is passed
+          as a collection argument. Attach it to the Session to preserve that
+          behavior (regression in #14683).
+        """
         rootpath = session.config.rootpath
         orphaned: list[tuple[Path, object]] = []
         for conftest_dir, plugin in list(self._pending_conftests.items()):
-            # If the conftest dir is not under rootpath, it will never get
-            # a Directory collector — assign it to Session now.
+            # Conftests outside of the rootdir never get a Directory collector.
             try:
                 conftest_dir.relative_to(rootpath)
             except ValueError:
+                orphaned.append((conftest_dir, plugin))
+                continue
+            # The rootdir conftest used to have an empty baseid (matches all).
+            if conftest_dir == rootpath:
                 orphaned.append((conftest_dir, plugin))
         for conftest_dir, plugin in orphaned:
             del self._pending_conftests[conftest_dir]
