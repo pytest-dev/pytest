@@ -1,0 +1,1 @@
+Collection arguments now support existing file system paths containing square brackets.
