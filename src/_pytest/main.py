@@ -1125,11 +1125,25 @@ def resolve_collection_argument(
     If the path doesn't exist, raise UsageError.
     If the path is a directory and selection parts are present, raise UsageError.
     """
-    base, squacket, rest = arg.partition("[")
-    strpath, *parts = base.split("::")
-    if squacket and not parts:
-        raise UsageError(f"path cannot contain [] parametrization: {arg}")
-    parametrization = f"{squacket}{rest}" if squacket else None
+    strpath, *parts = arg.split("::")
+    fspath = absolutepath(invocation_path / strpath)
+
+    if "[" in strpath and safe_exists(fspath):
+        parametrization = None
+
+        if parts:
+            part, squacket, rest = parts[-1].partition("[")
+            if squacket:
+                parts[-1] = part
+                parametrization = f"{squacket}{rest}"
+    else:
+        base, squacket, rest = arg.partition("[")
+        strpath, *parts = base.split("::")
+        if squacket and not parts:
+            raise UsageError(f"path cannot contain [] parametrization: {arg}")
+        parametrization = f"{squacket}{rest}" if squacket else None
+        fspath = absolutepath(invocation_path / strpath)
+
     module_name = None
     if as_pypath:
         pyarg_strpath = search_pypath(
@@ -1138,8 +1152,7 @@ def resolve_collection_argument(
         if pyarg_strpath is not None:
             module_name = strpath
             strpath = pyarg_strpath
-    fspath = invocation_path / strpath
-    fspath = absolutepath(fspath)
+            fspath = absolutepath(invocation_path / strpath)
     if not safe_exists(fspath):
         msg = (
             "module or package not found: {arg} (missing __init__.py?)"

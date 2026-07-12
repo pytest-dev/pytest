@@ -188,6 +188,21 @@ class TestResolveCollectionArgument:
         ):
             resolve_collection_argument(invocation_path, "src/pkg::foo::bar", 0)
 
+    def test_dir_with_square_bracket(self, invocation_path: Path) -> None:
+        """Existing directories may contain square brackets in their path."""
+        dirname = invocation_path / "src/pkg[special]"
+        dirname.mkdir()
+
+        assert resolve_collection_argument(
+            invocation_path, "src/pkg[special]", 0
+        ) == CollectionArgument(
+            path=dirname,
+            parts=[],
+            parametrization=None,
+            module_name=None,
+            original_index=0,
+        )
+
     @pytest.mark.parametrize("namespace_package", [False, True])
     def test_pypath(self, namespace_package: bool, invocation_path: Path) -> None:
         """Dotted name and parts."""
