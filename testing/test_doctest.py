@@ -875,6 +875,9 @@ class TestDoctests:
         reportinfo = items[0].reportinfo()
         assert reportinfo[1] == 1
 
+    @pytest.mark.skipif(
+        sys.version_info < (3, 12), reason="requires Python 3.12 or later"
+    )
     def test_fixture_doctest_skip_has_line_number(self, pytester: Pytester):
         p = pytester.makepyfile(
             test_fixture_doctest_skip="""
