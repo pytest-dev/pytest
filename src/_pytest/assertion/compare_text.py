@@ -61,7 +61,7 @@ def _diff_text(
             left = left[i:]
             right = right[i:]
         if len(left) == len(right):
-            for i in range(len(left)):
+            for i in range(1, len(left) + 1):
                 if left[-i] != right[-i]:
                     break
             if i > 42:

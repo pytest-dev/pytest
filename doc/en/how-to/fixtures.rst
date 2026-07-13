@@ -1049,7 +1049,8 @@ without having to repeat all those steps again.
 
     class TestLandingPageSuccess:
         @pytest.fixture(scope="class", autouse=True)
-        def login(self, driver, base_url, user):
+        @classmethod
+        def login(cls, driver, base_url, user):
             driver.get(urljoin(base_url, "/login"))
             page = LoginPage(driver)
             page.login(user)
@@ -1092,7 +1093,8 @@ could handle it by adding something like this to the test file:
 
     class TestLandingPageBadCredentials:
         @pytest.fixture(scope="class")
-        def faux_user(self, user):
+        @classmethod
+        def faux_user(cls, user):
             _user = deepcopy(user)
             _user.password = "badpass"
             return _user
@@ -1423,7 +1425,7 @@ Running the above tests results in the following test IDs being used:
    rootdir: /home/sweet/project
    collected 12 items
 
-   <Dir fixtures.rst-235>
+   <Dir fixtures.rst-236>
      <Module test_anothersmtp.py>
        <Function test_showhelo[smtp.gmail.com]>
        <Function test_showhelo[mail.python.org]>
