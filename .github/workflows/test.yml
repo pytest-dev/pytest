@@ -223,7 +223,7 @@ jobs:
             use_coverage: true
 
           - name: "ubuntu-pypy3-xdist"
-            python: "pypy-3.10"
+            python: "pypy-3.11"
             os: ubuntu-latest
             tox_env: "pypy3-xdist"
 
