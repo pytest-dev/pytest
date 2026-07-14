@@ -1,0 +1,1 @@
+Fixed ``get_closest_marker`` returning a base class marker instead of the subclass marker when test classes use inheritance.
