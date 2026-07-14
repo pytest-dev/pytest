@@ -897,6 +897,13 @@ class Session(nodes.Collector):
                 # Re-collection (handle_dupes=False) creates fresh child nodes.
                 # Reuse previously-seen Directory children so that fixture
                 # registration (keyed by node identity) remains valid. (#14635)
+                #
+                # This post-processing reconciliation is intentional: the
+                # collection architecture is not ready for a session-global
+                # Directory node registry, and pushing deduplication into
+                # individual collectors (Dir.collect / Package.collect) would
+                # leak session-level concerns into node code and miss
+                # third-party Directory subclasses.
                 prev_result = self._collection_cache[node].result
                 prev_dirs = {
                     child.path: child
