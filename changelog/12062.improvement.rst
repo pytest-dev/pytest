@@ -1,0 +1,1 @@
+Clarified that :func:`pytest_assertrepr_compare <_pytest.hookspec.pytest_assertrepr_compare>` is also invoked for passing assertions when :confval:`enable_assertion_pass_hook` is enabled.
