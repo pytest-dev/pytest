@@ -73,7 +73,7 @@ class TestLoadConfigDictFromFile:
             load_config_dict_from_file(fn)
 
     def test_custom_toml_file(self, tmp_path: Path) -> None:
-        """.toml files without [tool.pytest] are not considered for configuration."""
+        """Custom .toml files without [pytest] have no configuration values."""
         fn = tmp_path / "myconfig.toml"
         fn.write_text(
             dedent(
@@ -84,12 +84,11 @@ class TestLoadConfigDictFromFile:
             ),
             encoding="utf-8",
         )
-        assert load_config_dict_from_file(fn) is None
+        assert load_config_dict_from_file(fn) == {}
 
-    def test_valid_toml_file(self, tmp_path: Path) -> None:
-        """.toml files with [tool.pytest.ini_options] are read correctly, including changing
-        data types to str/list for compatibility with other configuration options."""
-        fn = tmp_path / "myconfig.toml"
+    def test_pyproject_toml_ini_options(self, tmp_path: Path) -> None:
+        """[tool.pytest.ini_options] values are converted for INI compatibility."""
+        fn = tmp_path / "pyproject.toml"
         fn.write_text(
             dedent(
                 """
@@ -111,7 +110,35 @@ class TestLoadConfigDictFromFile:
             "heterogeneous_array": ConfigValue([1, "str"], origin="file", mode="ini"),
         }
 
-    def test_native_toml_config(self, tmp_path: Path) -> None:
+    def test_custom_toml_native_config(self, tmp_path: Path) -> None:
+        """Custom .toml files read native configuration from [pytest]."""
+        fn = tmp_path / "myconfig.toml"
+        fn.write_text(
+            dedent(
+                """
+                [pytest]
+                xfail_strict = true
+                testpaths = ["tests", "integration"]
+                """
+            ),
+            encoding="utf-8",
+        )
+
+        assert load_config_dict_from_file(fn) == {
+            "xfail_strict": ConfigValue(True, origin="file", mode="toml"),
+            "testpaths": ConfigValue(
+                ["tests", "integration"], origin="file", mode="toml"
+            ),
+        }
+
+    def test_custom_toml_ignores_pyproject_table(self, tmp_path: Path) -> None:
+        """Custom .toml files do not read configuration from [tool.pytest]."""
+        fn = tmp_path / "myconfig.toml"
+        fn.write_text("[tool.pytest]\nxfail_strict = true", encoding="utf-8")
+
+        assert load_config_dict_from_file(fn) == {}
+
+    def test_pyproject_native_toml_config(self, tmp_path: Path) -> None:
         """[tool.pytest] sections with native types are parsed correctly without coercion."""
         fn = tmp_path / "pyproject.toml"
         fn.write_text(

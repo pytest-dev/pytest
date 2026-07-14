@@ -32,6 +32,9 @@ pytest.toml
 
 Alternatively, the hidden version ``.pytest.toml`` can be used.
 
+A TOML configuration file with a custom name can be loaded using :option:`-c`;
+like ``pytest.toml``, it uses the ``[pytest]`` table.
+
 .. tab:: toml
 
     .. code-block:: toml
