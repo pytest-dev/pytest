@@ -21,6 +21,7 @@ import itertools
 import os
 from pathlib import Path
 import re
+import sys
 import textwrap
 import types
 from typing import Any
@@ -77,6 +78,14 @@ from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
+
+
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+
+    def override(func):
+        return func
 
 
 if TYPE_CHECKING:
@@ -751,6 +760,7 @@ class Class(PyCollector):
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
 
+    @override
     def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
         """own_markers stores MRO markers in base-first order
         (construction order). For closest-first iteration, reverse at the
@@ -763,7 +773,7 @@ class Class(PyCollector):
         mro_mark_ids: set[int] = set()
         for cls in self.obj.__mro__:
             cls_marks = cls.__dict__.get("pytestmark", [])
-            if not isinstance(cls_marks, list):
+            if not isinstance(cls_marks, Sequence):
                 cls_marks = [cls_marks]
             for mark in normalize_mark_list(cls_marks):
                 mro_mark_ids.add(id(mark))

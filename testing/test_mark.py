@@ -690,6 +690,40 @@ class TestFunctional:
         result = pytester.runpytest()
         result.assert_outcomes(passed=4)
 
+    def test_mark_closest_mro_with_dynamic_class_marker(
+        self, pytester: Pytester
+    ) -> None:
+        """Dynamic markers added to a Class collector via add_marker appear
+        alongside MRO markers in iter_markers (#14329)."""
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collectstart(collector):
+                if getattr(collector, "name", None) == "TestChild":
+                    collector.add_marker(pytest.mark.foo(99))
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.foo(0)
+            class TestBase:
+                pass
+
+            @pytest.mark.foo(1)
+            class TestChild(TestBase):
+                def test_it(self, request):
+                    names = [m.args[0] for m in request.node.iter_markers("foo")]
+                    # MRO markers (child=1, base=0) plus dynamic marker (99)
+                    assert 99 in names
+                    assert names.index(1) < names.index(0)
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(
             """
