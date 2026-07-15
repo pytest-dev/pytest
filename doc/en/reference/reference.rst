@@ -3005,6 +3005,12 @@ Debugging
 
     See :ref:`how-to-modifying-python-tb-printing` for more information.
 
+.. option:: --tb-hide-internal
+
+    Hide pytest/pluggy internal frames even with :option:`--full-trace`.
+
+    See :ref:`how-to-modifying-python-tb-printing` for more information.
+
 .. option:: --debug, --debug=DEBUG_FILE_NAME
 
     Store internal tracing debug information in this log file.
@@ -3472,6 +3478,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             Controls how captured stdout/stderr/log is shown on
                             failed tests. Default: all.
       --full-trace          Don't cut any tracebacks (default is to cut)
+      --tb-hide-internal    Hide pytest/pluggy internal frames even with --full-
+                            trace
       --color=color         Color terminal output (yes/no/auto)
       --code-highlight={yes,no}
                             Whether code should be highlighted (only if --color
