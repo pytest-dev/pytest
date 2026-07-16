@@ -1,0 +1,1 @@
+Pressing Ctrl+D (EOF) or otherwise triggering ``BdbQuit`` during a pdb debugging session now fails the current test and stops the entire test run, consistently across all Python versions. Previously on Python <3.14 the session would continue after ``BdbQuit``, while on Python 3.14+ it would quit the session entirely -- by :user:`EternalRights`
