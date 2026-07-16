@@ -211,26 +211,37 @@ class ParameterSet(NamedTuple):
         parameters = cls._parse_parametrize_parameters(argvalues, force_tuple)
         del argvalues
 
-        if parameters:
-            # Check all parameter sets have the correct number of values.
-            for param in parameters:
-                if len(param.values) != len(argnames):
-                    msg = (
-                        '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
-                        "  {names}\n"
-                        "must be equal to the number of values ({values_len}):\n"
-                        "  {values}"
+        for param in parameters:
+            try:
+                values_len = len(param.values)
+            except TypeError:
+                fail(
+                    "{nodeid}: in \"parametrize\" cannot determine the number of "
+                    "values: {values!r} is not iterable. This can happen when "
+                    "a trailing comma in the argnames string causes a scalar "
+                    "value to be parsed as a single-element tuple.".format(
+                        nodeid=nodeid,
+                        values=param.values,
                     )
-                    fail(
-                        msg.format(
-                            nodeid=nodeid,
-                            values=param.values,
-                            names=argnames,
-                            names_len=len(argnames),
-                            values_len=len(param.values),
-                        ),
-                        pytrace=False,
-                    )
+                )
+                return  # never reached, but appease type checkers
+            if values_len != len(argnames):
+                msg = (
+                    '{nodeid}: in "parametrize" the number of names ({names_len}):\n'
+                    "  {names}\n"
+                    "must be equal to the number of values ({values_len}):\n"
+                    "  {values}"
+                )
+                fail(
+                    msg.format(
+                        nodeid=nodeid,
+                        values=param.values,
+                        names=argnames,
+                        names_len=len(argnames),
+                        values_len=len(param.values),
+                    ),
+                    pytrace=False,
+                )
         else:
             # Empty parameter set (likely computed at runtime): create a single
             # parameter set with NOTSET values, with the "empty parameter set" mark applied to it.
