@@ -20,7 +20,6 @@ from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion.compare_text import _notin_text
-from _pytest.assertion.highlight import dummy_highlighter as dummy_highlighter
 from _pytest.config import Config
 from _pytest.config import UsageError
 
