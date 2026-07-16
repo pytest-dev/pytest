@@ -1696,6 +1696,39 @@ def test_ns_import_same_name_directory_12592(
     assert result.ret == ExitCode.OK
 
 
+def test_ns_import_shadowed_by_installed_package_13257(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    """Regression for #13257: with ``--import-mode=importlib``, a test path that reuses
+    the name of an installed package (``mypkg/tests/...`` next to the real ``mypkg/mypkg``
+    package) must not shadow the real package with a namespace package in ``sys.modules``.
+    """
+    pkg_root = pytester.path / "mypkg"
+    (pkg_root / "mypkg").mkdir(parents=True)
+    (pkg_root / "mypkg" / "__init__.py").write_text(
+        "version = '1.2.3'\n", encoding="UTF-8"
+    )
+    (pkg_root / "tests").mkdir()
+    (pkg_root / "tests" / "version_test.py").write_text(
+        dedent(
+            """
+            from mypkg import version
+
+
+            def test_version():
+                assert version == "1.2.3"
+            """
+        ),
+        encoding="UTF-8",
+    )
+    # Make `mypkg` importable as the real package, as a regular/editable install would.
+    monkeypatch.syspath_prepend(str(pkg_root))
+
+    result = pytester.runpytest("--import-mode=importlib", "mypkg/tests")
+    assert result.ret == ExitCode.OK
+    result.assert_outcomes(passed=1)
+
+
 def test_is_importable(pytester: Pytester) -> None:
     pytester.syspathinsert()
 
