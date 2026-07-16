@@ -92,7 +92,8 @@ def load_config_dict_from_file(
 
     # '.toml' files are considered if they contain a [tool.pytest] table (toml mode)
     # or [tool.pytest.ini_options] table (ini mode) for pyproject.toml,
-    # or [pytest] table (toml mode) for pytest.toml/.pytest.toml.
+    # or [pytest] table (toml mode) for pytest.toml/.pytest.toml and other custom
+    # TOML config files.
     elif filepath.suffix == ".toml":
         if sys.version_info >= (3, 11):
             import tomllib
@@ -126,7 +127,7 @@ def load_config_dict_from_file(
             return {}
 
         # pyproject.toml uses [tool.pytest] or [tool.pytest.ini_options].
-        else:
+        elif filepath.name == "pyproject.toml":
             tool_pytest = config.get("tool", {}).get("pytest", {})
 
             # Check for toml mode config: [tool.pytest] with content outside of ini_options.
@@ -159,6 +160,17 @@ def load_config_dict_from_file(
                     k: ConfigValue(make_scalar(v), origin="file", mode="ini")
                     for k, v in ini_config.items()
                 }
+
+        # Any other .toml file (custom config passed via --config-file) uses [pytest] table.
+        else:
+            if "pytest" in config:
+                # TOML mode - preserve native TOML types.
+                return {
+                    k: ConfigValue(v, origin="file", mode="toml")
+                    for k, v in config["pytest"].items()
+                }
+            # Custom TOML files are always the source of configuration, even if empty.
+            return {}
 
     return None
 
