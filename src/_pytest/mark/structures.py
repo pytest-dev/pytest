@@ -216,13 +216,10 @@ class ParameterSet(NamedTuple):
                 values_len = len(param.values)
             except TypeError:
                 fail(
-                    "{nodeid}: in \"parametrize\" cannot determine the number of "
-                    "values: {values!r} is not iterable. This can happen when "
+                    f'{nodeid}: in "parametrize" cannot determine the number of '
+                    f"values: {param.values!r} is not iterable. This can happen when "
                     "a trailing comma in the argnames string causes a scalar "
-                    "value to be parsed as a single-element tuple.".format(
-                        nodeid=nodeid,
-                        values=param.values,
-                    )
+                    "value to be parsed as a single-element tuple."
                 )
                 return  # never reached, but appease type checkers
             if values_len != len(argnames):
