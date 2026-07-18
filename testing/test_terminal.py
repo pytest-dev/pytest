@@ -494,9 +494,7 @@ class TestTerminal:
         # not silently dropped due to the narrow terminal.
         result.stdout.fnmatch_lines(["*no room*"])
         # The test must still be reported as SKIPPED.
-        result.stdout.fnmatch_lines(
-            ["*test_skip_with_a_very_long_name_here*SKIPPED*"]
-        )
+        result.stdout.fnmatch_lines(["*test_skip_with_a_very_long_name_here*SKIPPED*"])
 
     @pytest.mark.parametrize("isatty", [True, False])
     def test_isatty(self, pytester: Pytester, monkeypatch, isatty: bool) -> None:
