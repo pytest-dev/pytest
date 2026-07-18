@@ -1,0 +1,1 @@
+Fixed skip/xfail reason being silently dropped in verbose output (``-v``) when the terminal is too narrow to fit the reason on the test line: the reason is now shown on a new line instead.

@@ -680,8 +680,19 @@ class TerminalReporter:
                     else:
                         formatted_reason = f" ({reason})"
 
-                    if reason and formatted_reason is not None:
-                        self.wrap_write(formatted_reason)
+                    if reason:
+                        if formatted_reason is not None:
+                            self.wrap_write(formatted_reason)
+                        else:
+                            # The reason did not fit on the current line. Write
+                            # it on a new line instead of silently dropping it
+                            # (#11146), truncating it to the terminal width so a
+                            # very long reason does not wrap uncontrollably.
+                            self.ensure_newline()
+                            trimmed = _format_trimmed(
+                                "({})", reason, self._screen_width
+                            )
+                            self._tw.write(trimmed or f"({reason})")
                 if self._show_progress_info:
                     self._write_progress_information_filling_space()
             else:
