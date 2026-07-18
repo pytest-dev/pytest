@@ -1,0 +1,1 @@
+Fixed traceback formatting on ``KeyboardInterrupt``: the ``--tb`` option (e.g. ``--tb=native``) is now respected when displaying the traceback with ``--fulltrace``, instead of always using the "long" style.
