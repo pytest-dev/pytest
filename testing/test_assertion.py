@@ -1862,6 +1862,32 @@ class TestSetAssertions:
                 ]
             )
 
+    @pytest.mark.parametrize("op", ["==", "<="])
+    def test_dict_items_view_unhashable_values(self, op, pytester: Pytester) -> None:
+        """dict.items() comparisons must not require hashable values.
+
+        The set diff previously used set difference, which raises TypeError
+        for items views whose values are unhashable.
+        """
+        pytester.makepyfile(
+            f"""
+            def test_hello():
+                x = {{"a": [1], "c": [3]}}
+                y = {{"a": [1]}}
+                assert x.items() {op} y.items()
+        """
+        )
+
+        result = pytester.runpytest()
+        result.stdout.no_fnmatch_line("*representation of details failed*")
+        result.stdout.fnmatch_lines(
+            [
+                f"*assert x.items() {op} y.items()*",
+                "*E*Extra items in the left set:*",
+                "*E*('c', [[]3])*",
+            ]
+        )
+
     @pytest.mark.parametrize("op", [">", "<", "!="])
     def test_set_proper_superset_equal(self, pytester: Pytester, op) -> None:
         pytester.makepyfile(
