@@ -787,6 +787,40 @@ class TestConfigCmdlineParsing:
         ret = pytest.main(["--config-file", temp_ini_file_norm])
         assert ret == ExitCode.NO_TESTS_COLLECTED
 
+    @pytest.mark.parametrize(
+        ("filename", "contents", "expected_error"),
+        [
+            pytest.param(
+                "custom.in",
+                "[pytest]",
+                "unsupported extension '.in'",
+                id="unsupported-extension",
+            ),
+            pytest.param(
+                "missing.ini",
+                None,
+                "not found",
+                id="missing-file",
+            ),
+        ],
+    )
+    @pytest.mark.parametrize("option", ("-c", "--config-file"))
+    def test_explicitly_specified_invalid_config_file_errors(
+        self,
+        pytester: Pytester,
+        option: str,
+        filename: str,
+        contents: str | None,
+        expected_error: str,
+    ) -> None:
+        if contents is not None:
+            pytester.path.joinpath(filename).write_text(contents, encoding="utf-8")
+
+        result = pytester.runpytest(option, filename)
+
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines([f"ERROR: *{expected_error}*"])
+
 
 class TestConfigAPI:
     def test_config_trace(self, pytester: Pytester) -> None:
@@ -2057,6 +2091,38 @@ class TestRootdir:
         assert rootpath == tmp_path
         assert inipath == p
         assert ini_config["x"] == ConfigValue("10", origin="file", mode="ini")
+
+    @pytest.mark.parametrize(
+        ("filename", "contents", "expected_error"),
+        [
+            pytest.param(
+                "config.in",
+                "[pytest]\nx=10",
+                "unsupported extension '.in'",
+                id="unsupported-extension",
+            ),
+            pytest.param("missing.ini", None, "not found", id="missing-file"),
+        ],
+    )
+    def test_with_invalid_specific_inifile(
+        self,
+        tmp_path: Path,
+        filename: str,
+        contents: str | None,
+        expected_error: str,
+    ) -> None:
+        p = tmp_path / filename
+        if contents is not None:
+            p.write_text(contents, encoding="utf-8")
+
+        with pytest.raises(UsageError, match=re.escape(expected_error)):
+            determine_setup(
+                inifile=str(p),
+                override_ini=None,
+                args=[str(tmp_path)],
+                rootdir_cmd_arg=None,
+                invocation_dir=Path.cwd(),
+            )
 
     def test_explicit_config_file_sets_rootdir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
