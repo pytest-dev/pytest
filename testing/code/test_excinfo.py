@@ -1944,6 +1944,45 @@ def test_exceptiongroup_short_summary_info(pytester: Pytester):
     )
 
 
+@pytest.mark.parametrize("tbstyle", ("line", "no"))
+def test_compact_tb_styles_keep_reprfileloc_for_plugins(
+    pytester: Pytester, tbstyle: str
+) -> None:
+    """--tb line/no must still expose frame locations on longrepr (#14720).
+
+    Display can stay compact, but reporting plugins reading
+    ``report.longrepr.reprtraceback.reprentries`` need ``reprfileloc``.
+    """
+    pytester.makepyfile(
+        """
+        def inner():
+            raise ValueError("boom")
+
+        def middle():
+            inner()
+
+        def test_a():
+            middle()
+        """
+    )
+    reprec = pytester.inline_run(f"--tb={tbstyle}")
+    reports = [
+        r
+        for r in reprec.getreports("pytest_runtest_logreport")
+        if r.when == "call" and r.failed
+    ]
+    assert len(reports) == 1
+    longrepr = reports[0].longrepr
+    assert hasattr(longrepr, "reprtraceback")
+    entries = longrepr.reprtraceback.reprentries
+    assert len(entries) >= 1
+    located = [e for e in entries if getattr(e, "reprfileloc", None) is not None]
+    assert located, f"expected reprfileloc under --tb={tbstyle}, got {entries!r}"
+    for e in located:
+        assert e.reprfileloc.path
+        assert e.reprfileloc.lineno > 0
+
+
 @pytest.mark.parametrize("tbstyle", ("long", "short", "auto", "line", "native"))
 @pytest.mark.parametrize("group", (True, False), ids=("group", "bare"))
 def test_all_entries_hidden(pytester: Pytester, tbstyle: str, group: bool) -> None:

@@ -1113,9 +1113,18 @@ class ExceptionInfoFormatter:
                 lines.extend(str(excinfo.value).split("\n"))
             return ReprEntry(lines, None, None, None, style)
         else:
+            # Compact styles ("line", "no", …): still attach file/line metadata so
+            # reporting plugins can read frame locations from longrepr even when
+            # terminal display is suppressed or reduced (#14720). Display stays
+            # compact via ReprEntry.toterminal.
+            reprfileloc = None
+            if entry is not None:
+                path = self._makepath(entry.path)
+                message = (excinfo and excinfo.typename) or ""
+                reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
             if excinfo:
                 lines.extend(self.get_exconly(excinfo, indent=4))
-            return ReprEntry(lines, None, None, None, style)
+            return ReprEntry(lines, None, None, reprfileloc, style)
 
     def _makepath(self, path: Path | str) -> str:
         if not self.abspath and isinstance(path, Path):
@@ -1452,6 +1461,8 @@ class ReprEntry(TerminalRepr):
             tw.line(line, bold=True, red=True)
 
     def toterminal(self, tw: TerminalWriter) -> None:
+        # Display style is independent of the structural data we keep for plugins
+        # (reprfileloc under --tb=line/--tb=no; see #14720).
         if self.style == "short":
             if self.reprfileloc:
                 self.reprfileloc.toterminal(tw)
@@ -1468,7 +1479,10 @@ class ReprEntry(TerminalRepr):
         if self.reprlocals:
             tw.line("")
             self.reprlocals.toterminal(tw)
-        if self.reprfileloc:
+        # Compact styles keep reprfileloc for plugins/API consumers but do not
+        # dump per-frame locations into the terminal (terminal uses crashline
+        # for --tb=line and skips the FAILURES section for --tb=no).
+        if self.reprfileloc and self.style not in ("line", "no"):
             if self.lines:
                 tw.line("")
             self.reprfileloc.toterminal(tw)

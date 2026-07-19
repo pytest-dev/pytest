@@ -1,0 +1,1 @@
+Compact traceback styles (``--tb=line`` and ``--tb=no``) now keep frame file and line metadata on ``longrepr`` entries so reporting plugins can still read locations when terminal output is suppressed.
