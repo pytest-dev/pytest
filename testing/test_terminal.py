@@ -19,8 +19,8 @@ import pluggy
 from _pytest._io.wcwidth import wcswidth
 import _pytest.config
 from _pytest.config import Config
-from _pytest.config import ExitCode
 from _pytest.config import create_terminal_writer
+from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.reports import BaseReport
@@ -3573,7 +3573,9 @@ def test_hyperlinks_yes_percent_encodes_spaces(pytester: Pytester) -> None:
     spaced = pytester.path / "with space"
     spaced.mkdir()
     (spaced / "test_fail.py").write_text("def test_fail():\n    assert 0\n")
-    result = pytester.runpytest("--hyperlinks=yes", "--color=yes", str(spaced / "test_fail.py"))
+    result = pytester.runpytest(
+        "--hyperlinks=yes", "--color=yes", str(spaced / "test_fail.py")
+    )
     output = result.stdout.str()
     # The URL must encode the space; a raw space would make the URI invalid and
     # terminals would truncate the link at the space.
@@ -3594,7 +3596,7 @@ def test_hyperlinks_no_no_osc8(pytester: Pytester) -> None:
 
 
 def test_hyperlinks_auto_off_when_not_tty(pytester: Pytester) -> None:
-    """auto (the default) emits no OSC 8 when stdout is captured/not a tty.
+    """Auto (the default) emits no OSC 8 when stdout is captured/not a tty.
 
     pytester.runpytest captures the subprocess stdout, so it is not a tty —
     auto mode must not emit hyperlinks, keeping CI/captured output clean.
@@ -3610,7 +3612,7 @@ def test_hyperlinks_auto_off_when_not_tty(pytester: Pytester) -> None:
 
 
 def test_hyperlinks_auto_off_for_non_tty_sink(pytester: Pytester) -> None:
-    """auto must gate on isatty, not hasmarkup — --color=yes forces hasmarkup
+    """Auto must gate on isatty, not hasmarkup — --color=yes forces hasmarkup
     True even for a StringIO, so hasmarkup-only gating would leak OSC 8."""
     config = pytester.parseconfigure("--color=yes")  # --hyperlinks defaults to auto
     tw = create_terminal_writer(config, StringIO())

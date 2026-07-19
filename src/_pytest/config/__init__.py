@@ -2102,9 +2102,7 @@ def create_terminal_writer(
     # --color=yes, so callers reusing output as plain text must clear
     # tw.hyperlinks themselves. Mirrors terminalprogress per #13896.
     want = config.option.hyperlinks
-    tw.hyperlinks = want == "yes" or (
-        want == "auto" and tw.hasmarkup and tw.isatty
-    )
+    tw.hyperlinks = want == "yes" or (want == "auto" and tw.hasmarkup and tw.isatty)
 
     return tw
 
