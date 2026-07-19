@@ -593,3 +593,23 @@ enough number of frames (say ``20``, but that number is application dependent).
 
 For more information, consult the `Python Development Mode <https://docs.python.org/3/library/devmode.html>`__
 section in the Python documentation.
+
+Furthermore, a ``ResourceWarning`` is a special case in Python, because it is usually not triggered directly
+by the code causing the leak (like an unclosed file), but by the Python interpreter during
+garbage collection.
+
+Because of this, trying to use ``@pytest.mark.filterwarnings("error::ResourceWarning")`` or
+similar filters to turn them into errors will not work as expected because the warning is raised later and
+caught by pytest internally, emitting a :class:`pytest.PytestUnraisableExceptionWarning`.
+
+To properly catch and filter these, you must also add a filter for the unraisable exception:
+
+.. code-block:: python
+
+    import pytest
+
+
+    @pytest.mark.filterwarnings("error::ResourceWarning")
+    @pytest.mark.filterwarnings("error::pytest.PytestUnraisableExceptionWarning")
+    def test_resource_warning():
+        open("/dev/null")
