@@ -3636,3 +3636,26 @@ def test_hyperlinks_yes_forces_on(pytester: Pytester) -> None:
     assert not tw.isatty  # StringIO is not a tty
     assert not tw.hasmarkup  # --color=no
     assert tw.hyperlinks  # yes forces on anyway
+
+
+def test_format_path_hyperlink_branches() -> None:
+    """Cover _format_path_hyperlink's branches: disabled, lineno=None, lineno set."""
+    from _pytest._code.code import _format_path_hyperlink
+
+    class TW:
+        hyperlinks = False
+
+    tw = TW()
+    # Disabled: bare path returned unchanged.
+    assert _format_path_hyperlink(tw, "test_x.py", 5) == "test_x.py"
+
+    tw.hyperlinks = True
+    # lineno=None (e.g. doctest ReprFileLocation): URL has no :line suffix.
+    out = _format_path_hyperlink(tw, "test_x.py", None)
+    assert out.startswith("\x1b]8;;file://")
+    assert ":5" not in out
+    assert out.endswith("\x1b\\test_x.py\x1b]8;;\x1b\\")
+    # lineno set: URL carries :line.
+    out = _format_path_hyperlink(tw, "test_x.py", 5)
+    assert "\x1b]8;;file://" in out
+    assert ":5\x1b\\" in out
