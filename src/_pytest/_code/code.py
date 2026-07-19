@@ -1499,8 +1499,31 @@ class ReprFileLocation(TerminalRepr):
         i = msg.find("\n")
         if i != -1:
             msg = msg[:i]
-        tw.write(self.path, bold=True, red=True)
+        path = _format_path_hyperlink(tw, self.path, self.lineno)
+        tw.write(path, bold=True, red=True)
         tw.line(f":{self.lineno}: {msg}")
+
+
+def _format_path_hyperlink(
+    tw: TerminalWriter, path: str, lineno: int | None = None
+) -> str:
+    """Wrap ``path`` in an OSC 8 terminal hyperlink when enabled.
+
+    Uses :meth:`pathlib.Path.as_uri` so the URL is a proper ``file://`` URI:
+    it percent-encodes spaces and yields ``file:///C:/...`` on Windows — a
+    hand-rolled ``f"file://{path}"`` would misparse the drive letter or spaces
+    as a hostname.
+    """
+    # getattr: mock TerminalWriters may not expose `hyperlinks`; treat absence
+    # as off so we never crash a caller that predates this feature.
+    if not getattr(tw, "hyperlinks", False):
+        return path
+    url = Path(path).absolute().as_uri()
+    if lineno is not None:
+        # `:line` is a de-facto convention (iTerm2, VSCode, kitty), not RFC 8089 —
+        # mainstream OSC 8 handlers split it off and jump to the line.
+        url = f"{url}:{lineno}"
+    return f"\x1b]8;;{url}\x1b\\{path}\x1b]8;;\x1b\\"
 
 
 @dataclasses.dataclass(eq=False)
