@@ -3641,12 +3641,11 @@ def test_hyperlinks_yes_forces_on(pytester: Pytester) -> None:
 def test_format_path_hyperlink_branches() -> None:
     """Cover _format_path_hyperlink's branches: disabled, lineno=None, lineno set."""
     from _pytest._code.code import _format_path_hyperlink
+    from _pytest._io import TerminalWriter
 
-    class TW:
-        hyperlinks = False
-
-    tw = TW()
+    tw = TerminalWriter(file=StringIO())
     # Disabled: bare path returned unchanged.
+    tw.hyperlinks = False
     assert _format_path_hyperlink(tw, "test_x.py", 5) == "test_x.py"
 
     tw.hyperlinks = True
