@@ -3572,7 +3572,9 @@ def test_hyperlinks_yes_percent_encodes_spaces(pytester: Pytester) -> None:
     # path passed to Path.as_uri() contains a space that must be encoded.
     spaced = pytester.path / "with space"
     spaced.mkdir()
-    (spaced / "test_fail.py").write_text("def test_fail():\n    assert 0\n")
+    (spaced / "test_fail.py").write_text(
+        "def test_fail():\n    assert 0\n", encoding="utf-8"
+    )
     result = pytester.runpytest(
         "--hyperlinks=yes", "--color=yes", str(spaced / "test_fail.py")
     )
