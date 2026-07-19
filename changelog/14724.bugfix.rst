@@ -1,0 +1,4 @@
+``--no-summary`` no longer skips the ``pytest_terminal_summary`` hook.
+
+Built-in FAILURES/ERRORS/... sections stay suppressed, but third-party
+plugins (for example coverage) can still write their terminal summaries.

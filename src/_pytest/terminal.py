@@ -968,7 +968,10 @@ class TerminalReporter:
             ExitCode.NO_TESTS_COLLECTED,
             ExitCode.MAX_WARNINGS_ERROR,
         )
-        if exitstatus in summary_exit_codes and not self.no_summary:
+        # Always invoke pytest_terminal_summary so third-party plugins can report
+        # (e.g. coverage). --no-summary only suppresses TerminalReporter's own
+        # built-in summary sections; see TerminalReporter.pytest_terminal_summary.
+        if exitstatus in summary_exit_codes:
             self.config.hook.pytest_terminal_summary(
                 terminalreporter=self, exitstatus=exitstatus, config=self.config
             )
@@ -995,18 +998,22 @@ class TerminalReporter:
 
     @hookimpl(wrapper=True)
     def pytest_terminal_summary(self) -> Generator[None]:
-        self.summary_errors()
-        self.summary_failures()
-        self.summary_xfailures()
-        self.summary_warnings()
-        self.summary_passes()
-        self.summary_xpasses()
+        # With --no-summary, still yield so other plugins run their terminal
+        # summaries, but skip pytest's own FAILURES/ERRORS/... sections.
+        if not self.no_summary:
+            self.summary_errors()
+            self.summary_failures()
+            self.summary_xfailures()
+            self.summary_warnings()
+            self.summary_passes()
+            self.summary_xpasses()
         try:
             return (yield)
         finally:
-            self.short_test_summary()
-            # Display any extra warnings from teardown here (if any).
-            self.summary_warnings()
+            if not self.no_summary:
+                self.short_test_summary()
+                # Display any extra warnings from teardown here (if any).
+                self.summary_warnings()
 
     def pytest_keyboard_interrupt(self, excinfo: ExceptionInfo[BaseException]) -> None:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
