@@ -76,6 +76,7 @@ from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
 from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import warn_explicit_for
 
 
 if sys.version_info < (3, 11):
@@ -2034,23 +2035,18 @@ class FixtureManager:
         Returns the FixtureFunctionDefinition if found in the wrapper chain,
         None otherwise. Handles loops and special objects safely.
         """
-        from _pytest.compat import safe_getattr
-
         # Skip mock objects to avoid false positives when traversing
         # their wrapper chains (they have a _mock_name attribute).
         if safe_getattr(obj, "_mock_name", None) is not None:
             return None
 
         current = obj
-        seen: set[int] = set()
+        seen: set[int] = {id(None)}
 
         for _ in range(100):
-            if current is None:
-                break
-
             current_id = id(current)
             if current_id in seen:
-                return None
+                break
             seen.add(current_id)
 
             try:
@@ -2075,13 +2071,8 @@ class FixtureManager:
         fixture_def = self._find_wrapped_fixture_def(obj)
 
         if fixture_def is not None and fixture_def is not obj:
-            from types import FunctionType
-
-            from _pytest.warning_types import PytestWarning
-            from _pytest.warning_types import warn_explicit_for
-
             fixture_func = fixture_def._get_wrapped_function()
-            if isinstance(fixture_func, FunctionType):
+            if isinstance(fixture_func, types.FunctionType):
                 msg = f"cannot discover {name} due to being wrapped in decorators"
                 warn_explicit_for(fixture_func, PytestWarning(msg))
 
