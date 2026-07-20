@@ -55,6 +55,17 @@ dependencies = [
     "pygments>=2.15",
     "tomli>=2; python_version<'3.11'",
 ]
+# Compatibility alias for `pip install -e ".[dev]"` (see CONTRIBUTING.rst).
+# The fuller developer set used by tox/uv lives in [dependency-groups].dev.
+optional-dependencies.dev = [
+    "argcomplete",
+    "attrs>=23.1",
+    "hypothesis>=6.75",
+    "mock",
+    "requests",
+    "setuptools",
+    "xmlschema",
+]
 urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
 urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
 urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
