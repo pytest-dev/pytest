@@ -1733,7 +1733,7 @@ def test_unittest_skip_decorator_misuse_is_collection_error(
     result = pytester.runpytest()
 
     result.assert_outcomes(errors=1, skipped=0)
-    result.stdout.fnmatch_lines(["*unittest.case.SkipTest: broken*"])
+    result.stdout.fnmatch_lines(["*SkipTest: broken*"])
 
 
 def test_abstract_testcase_is_not_collected(pytester: Pytester) -> None:
