@@ -58,4 +58,3 @@ pip-wheel-metadata/
 
 # pytest debug logs generated via --debug
 pytestdebug.log
-.claude/settings.local.json
