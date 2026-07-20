@@ -912,7 +912,8 @@ class IdMaker:
         """
         resolved_ids = list(self._resolve_ids())
         # All IDs must be unique!
-        if len(resolved_ids) != len(set(resolved_ids)):
+        all_ids = set(resolved_ids)
+        if len(resolved_ids) != len(all_ids):
             # Record the number of occurrences of each ID.
             id_counts = Counter(resolved_ids)
 
@@ -945,6 +946,7 @@ class IdMaker:
             # Map the ID to its next suffix.
             id_suffixes: dict[str, int] = defaultdict(int)
             # Suffix non-unique IDs to make them unique.
+            used_ids = all_ids
             for index, id in enumerate(resolved_ids):
                 if id_counts[id] > 1:
                     if id is HIDDEN_PARAM:
@@ -953,10 +955,11 @@ class IdMaker:
                     if id and id[-1].isdigit():
                         suffix = "_"
                     new_id = f"{id}{suffix}{id_suffixes[id]}"
-                    while new_id in set(resolved_ids):
+                    while new_id in used_ids:
                         id_suffixes[id] += 1
                         new_id = f"{id}{suffix}{id_suffixes[id]}"
                     resolved_ids[index] = new_id
+                    used_ids.add(new_id)
                     id_suffixes[id] += 1
         assert len(resolved_ids) == len(set(resolved_ids)), (
             f"Internal error: {resolved_ids=}"
