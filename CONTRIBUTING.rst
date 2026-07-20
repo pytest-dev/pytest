@@ -372,9 +372,6 @@ Here is a simple overview, with pytest-specific bits:
 
        $ uv sync --group dev
 
-   The former ``.[dev]`` extra is an empty compatibility stub and will be removed in the next major release;
-   use the dependency group instead.
-
    Afterwards, you can edit the files and run pytest normally::
 
        $ pytest testing/test_config.py

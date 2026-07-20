@@ -55,21 +55,10 @@ dependencies = [
     "pygments>=2.15",
     "tomli>=2; python_version<'3.11'",
 ]
-# Empty compatibility stub so `pip install -e ".[dev]"` does not warn about an
-# unknown extra. Real developer dependencies live in [dependency-groups].dev.
-# Planned removal of this extra name in the next major release.
-optional-dependencies.dev = [  ]
-urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
-urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
-urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
-urls.Homepage = "https://docs.pytest.org/en/latest/"
-urls.Source = "https://github.com/pytest-dev/pytest"
-urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
-scripts."py.test" = "_pytest.config:_console_main"
-scripts.pytest = "_pytest.config:_console_main"
-
-[dependency-groups]
-dev = [
+# Kept as a published extra because many external repos still install
+# `pytest[dev]` / `.[dev]`. Prefer the `dev` dependency group for local
+# development of pytest itself (see CONTRIBUTING.rst).
+optional-dependencies.dev = [
     # Core test dependencies
     "argcomplete",
     "asynctest; python_version<'3.11'",
@@ -86,6 +75,20 @@ dev = [
     "requests",
     "setuptools",
     "xmlschema",
+]
+urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
+urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
+urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
+urls.Homepage = "https://docs.pytest.org/en/latest/"
+urls.Source = "https://github.com/pytest-dev/pytest"
+urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
+scripts."py.test" = "_pytest.config:_console_main"
+scripts.pytest = "_pytest.config:_console_main"
+
+[dependency-groups]
+# Preferred entry point for developing pytest; pulls from optional-dependencies.dev.
+dev = [
+    "pytest[dev]",
 ]
 
 [tool.setuptools.package-data]

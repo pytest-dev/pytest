@@ -520,17 +520,6 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "argcomplete" },
-    { name = "attrs" },
-    { name = "hypothesis" },
-    { name = "mock" },
-    { name = "requests" },
-    { name = "setuptools" },
-    { name = "xmlschema" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "argcomplete" },
     { name = "asynctest", marker = "python_full_version < '3.11'" },
     { name = "attrs" },
     { name = "coverage" },
@@ -546,18 +535,29 @@ dev = [
     { name = "xmlschema" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest", extra = ["dev"] },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "argcomplete", marker = "extra == 'dev'" },
+    { name = "asynctest", marker = "python_full_version < '3.11' and extra == 'dev'" },
     { name = "attrs", marker = "extra == 'dev'", specifier = ">=23.1" },
     { name = "colorama", marker = "sys_platform == 'win32'", specifier = ">=0.4" },
+    { name = "coverage", marker = "extra == 'dev'", specifier = ">=7.5" },
     { name = "exceptiongroup", marker = "python_full_version < '3.11'", specifier = ">=1" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.75" },
     { name = "iniconfig", specifier = ">=2" },
     { name = "mock", marker = "extra == 'dev'" },
+    { name = "numpy", marker = "extra == 'dev'", specifier = ">=1.26" },
     { name = "packaging", specifier = ">=24" },
+    { name = "pexpect", marker = "extra == 'dev'", specifier = ">=4.9" },
     { name = "pluggy", specifier = ">=1.5,<2" },
     { name = "pygments", specifier = ">=2.15" },
+    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.5" },
+    { name = "pyyaml", marker = "extra == 'dev'" },
     { name = "requests", marker = "extra == 'dev'" },
     { name = "setuptools", marker = "extra == 'dev'" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2" },
@@ -566,21 +566,7 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "argcomplete" },
-    { name = "asynctest", marker = "python_full_version < '3.11'" },
-    { name = "attrs", specifier = ">=23.1" },
-    { name = "coverage", specifier = ">=7.5" },
-    { name = "hypothesis", specifier = ">=6.75" },
-    { name = "mock" },
-    { name = "numpy", specifier = ">=1.26" },
-    { name = "pexpect", specifier = ">=4.9" },
-    { name = "pytest-xdist", specifier = ">=3.5" },
-    { name = "pyyaml" },
-    { name = "requests" },
-    { name = "setuptools" },
-    { name = "xmlschema" },
-]
+dev = [{ name = "pytest", extras = ["dev"] }]
 
 [[package]]
 name = "pytest-xdist"
