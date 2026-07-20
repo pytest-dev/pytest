@@ -82,11 +82,15 @@ def _chmod_rwx(p: str) -> bool:
     """
     try:
         old_mode = os.stat(p).st_mode
-        perm_mode = stat.S_IMODE(old_mode)
-        bits = stat.S_IRWXU if stat.S_ISDIR(old_mode) else stat.S_IRUSR | stat.S_IWUSR
-        new_mode = perm_mode | bits
-        if perm_mode == new_mode:
-            return False
+    except OSError:
+        # Path may have been removed concurrently, or be inaccessible.
+        return False
+    perm_mode = stat.S_IMODE(old_mode)
+    bits = stat.S_IRWXU if stat.S_ISDIR(old_mode) else stat.S_IRUSR | stat.S_IWUSR
+    new_mode = perm_mode | bits
+    if perm_mode == new_mode:
+        return False
+    try:
         os.chmod(p, new_mode)
     except OSError:
         return False
@@ -130,16 +134,17 @@ def on_rm_rf_error(
         # See: https://github.com/pytest-dev/pytest/issues/7940
         parent_changed = False
         parent = p.parent
+        # Never chmod outside the tree rooted at start_path.
         if parent not in (p, start_path):
             parent_changed = _chmod_rwx(str(parent))
-        path_changed = _chmod_rwx(path)
+        path_changed = _chmod_rwx(str(p))
         if not (parent_changed or path_changed):
             return False
         if p.is_dir():
             rm_rf(p)
         else:
             try:
-                os.unlink(path)
+                os.unlink(str(p))
             except OSError:
                 return False
         return True

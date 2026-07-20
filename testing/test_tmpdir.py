@@ -645,7 +645,7 @@ class TestRmRf:
         adir.mkdir()
         (adir / "child").mkdir()
         (adir / "child" / "file.txt").touch()
-        os.chmod(str(adir), 0o600)
+        os.chmod(str(adir), stat.S_IRUSR | stat.S_IWUSR)
 
         with warnings.catch_warnings(record=True) as w:
             exc_info = PermissionError()
@@ -664,7 +664,7 @@ class TestRmRf:
         child.mkdir()
         (child / "file.txt").touch()
         # Child has full perms, but parent lacks execute -> os.open(child) fails.
-        os.chmod(str(parent), 0o600)
+        os.chmod(str(parent), stat.S_IRUSR | stat.S_IWUSR)
 
         with warnings.catch_warnings(record=True) as w:
             exc_info = PermissionError()
@@ -683,11 +683,11 @@ class TestRmRf:
     ) -> None:
         """_chmod_rwx returns False when permissions are already sufficient."""
         d = tmp_path / "dir"
-        d.mkdir(mode=0o700)
+        d.mkdir(mode=stat.S_IRWXU)
         assert _chmod_rwx(str(d)) is False
 
         f = tmp_path / "file"
-        f.touch(mode=0o600)
+        f.touch(mode=stat.S_IRUSR | stat.S_IWUSR)
         assert _chmod_rwx(str(f)) is False
 
     def test_on_rm_rf_error_os_open_returns_false_when_chmod_ineffective(
@@ -696,7 +696,7 @@ class TestRmRf:
         """os.open handler returns False when neither parent nor path chmod
         changes anything (recursion guard)."""
         adir = tmp_path / "dir"
-        adir.mkdir(mode=0o700)
+        adir.mkdir(mode=stat.S_IRWXU)
         exc_info = PermissionError()
         result = on_rm_rf_error(os.open, str(adir), exc_info, start_path=tmp_path)
         assert result is False
@@ -730,7 +730,14 @@ class TestRmRf:
         for parent in fn.parents:  # pragma: no branch
             if parent == tmp_path:
                 break
-            parent.chmod(0o555)
+            parent.chmod(
+                stat.S_IRUSR
+                | stat.S_IXUSR
+                | stat.S_IRGRP
+                | stat.S_IXGRP
+                | stat.S_IROTH
+                | stat.S_IXOTH
+            )
 
         exc_info = PermissionError()
         on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
