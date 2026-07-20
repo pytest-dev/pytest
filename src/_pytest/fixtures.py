@@ -2037,11 +2037,7 @@ class FixtureManager:
         """
         if safe_isclass(owner):
             cls = cast(type, owner)
-            try:
-                mro = cls.__mro__
-            except AttributeError:
-                return None
-            for base in mro:
+            for base in cls.__mro__:
                 try:
                     return cast(object, base.__dict__[name])
                 except KeyError:
@@ -2096,18 +2092,16 @@ class FixtureManager:
         discovery may still succeed, but the first parameter can be treated as
         a fixture dependency instead of ``self``/``cls``.
         """
-        if obj is None:
-            return
-
         fixture_def = self._find_wrapped_fixture_def(obj)
+        # None: not a wrapped fixture. is obj: bare FixtureFunctionDefinition.
         if fixture_def is None or fixture_def is obj:
             return
 
         fixture_func = fixture_def._get_wrapped_function()
+        # warn_explicit_for needs a real function (__code__/__globals__).
         if type(fixture_func) is not types.FunctionType:
             return
 
-        # Exact-type checks avoid proxies that raise from isinstance (#4266).
         if type(obj) is classmethod:
             msg = (
                 f"cannot discover fixture {name!r} because it is wrapped by "
@@ -2118,12 +2112,7 @@ class FixtureManager:
             # the first parameter stays a fixture arg. Only warn when the
             # callable looks like a method (self/cls), where staticmethod
             # incorrectly keeps that name as a fixture dependency.
-            try:
-                first_param = next(
-                    iter(inspect.signature(fixture_func).parameters), None
-                )
-            except (TypeError, ValueError):
-                return
+            first_param = next(iter(inspect.signature(fixture_func).parameters), None)
             if first_param not in ("self", "cls"):
                 return
             msg = (
