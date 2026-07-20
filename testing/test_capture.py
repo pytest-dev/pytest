@@ -6,10 +6,12 @@ import contextlib
 import io
 from io import UnsupportedOperation
 import os
+from pathlib import Path
 import re
 import subprocess
 import sys
 import textwrap
+from types import SimpleNamespace
 from typing import BinaryIO
 from typing import cast
 from typing import TextIO
@@ -1526,6 +1528,83 @@ def test_windowsconsoleio_workaround_non_standard_streams() -> None:
 
     stream = cast(TextIO, DummyStream())
     _windowsconsoleio_workaround(stream)
+
+
+@pytest.mark.skipif(
+    hasattr(sys, "pypy_version_info"),
+    reason="_windowsconsoleio_workaround is a no-op on PyPy",
+)
+def test_windowsconsoleio_workaround_reopens_dunder_streams(
+    monkeypatch: MonkeyPatch, tmp_path: Path
+) -> None:
+    """The workaround must also rebind ``sys.__std{in,out,err}__`` to streams
+    backed by their file descriptor instead of the console handle.
+
+    Otherwise ``sys.__stdout__.isatty()`` keeps returning True while
+    ``FDCapture`` has redirected the fd, and writes to it bypass capturing
+    entirely or fail with "handle is invalid" (#12349).
+
+    The console environment is faked so that this runs on all platforms.
+    """
+    from _pytest.capture import _windowsconsoleio_workaround
+
+    class FakeConsoleRaw(io.FileIO):
+        pass
+
+    with (
+        (tmp_path / "stdin").open("w+") as stdin_f,
+        (tmp_path / "stdout").open("w+") as stdout_f,
+        (tmp_path / "stderr").open("w+") as stderr_f,
+    ):
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.setattr(io, "_WindowsConsoleIO", FakeConsoleRaw, raising=False)
+        monkeypatch.setattr(sys, "stdin", stdin_f)
+        monkeypatch.setattr(sys, "stdout", stdout_f)
+        monkeypatch.setattr(sys, "stderr", stderr_f)
+        monkeypatch.setattr(sys, "__stdin__", stdin_f)
+        monkeypatch.setattr(sys, "__stdout__", stdout_f)
+        monkeypatch.setattr(sys, "__stderr__", stderr_f)
+
+        with FakeConsoleRaw(stdout_f.fileno(), "w", closefd=False) as fake_raw:
+            stream = cast(TextIO, SimpleNamespace(buffer=SimpleNamespace(raw=fake_raw)))
+            _windowsconsoleio_workaround(stream)
+
+        try:
+            assert sys.__stdin__ is not None
+            assert sys.__stdout__ is not None
+            assert sys.__stderr__ is not None
+
+            # sys.std* are reopened on duplicated fds, isolating them from
+            # dup2 over the original fds.
+            assert sys.stdout is not stdout_f
+            assert sys.stdout.fileno() != stdout_f.fileno()
+
+            # The dunder streams are reopened backed by their *original* fd
+            # (through a regular FileIO, not a console IO), so that they
+            # follow fd redirection performed by FDCapture.
+            assert sys.__stdout__ is not stdout_f
+            assert sys.__stdout__.fileno() == stdout_f.fileno()
+            dunder_buffer = sys.__stdout__.buffer
+            assert isinstance(dunder_buffer, io.BufferedWriter)
+            assert type(dunder_buffer.raw) is io.FileIO
+            assert sys.__stdin__.fileno() == stdin_f.fileno()
+            assert sys.__stderr__.fileno() == stderr_f.fileno()
+
+            # Writes through the reopened dunder stream reach the fd target.
+            sys.__stdout__.write("hello")
+            sys.__stdout__.flush()
+            assert (tmp_path / "stdout").read_text() == "hello"
+        finally:
+            for reopened in (
+                sys.stdin,
+                sys.stdout,
+                sys.stderr,
+                sys.__stdin__,
+                sys.__stdout__,
+                sys.__stderr__,
+            ):
+                if reopened is not None:
+                    reopened.close()
 
 
 def test_dontreadfrominput_has_encoding(pytester: Pytester) -> None:

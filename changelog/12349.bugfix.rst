@@ -1,0 +1,3 @@
+On Windows, ``sys.__stdout__``, ``sys.__stderr__`` and ``sys.__stdin__`` are now reopened to be backed by their file descriptors when attached to a console and capturing is enabled (``--capture=fd``, the default).
+
+Previously they remained backed by the console handle, so while output was being captured ``sys.__stdout__.isatty()`` incorrectly returned ``True`` (unlike on POSIX systems, where it returns ``False``), and writes to ``sys.__stdout__`` either escaped capturing and were printed to the terminal or failed with ``OSError: [WinError 6] The handle is invalid``.
