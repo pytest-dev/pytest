@@ -2071,16 +2071,18 @@ class FixtureManager:
         try:
             # unwrap is typed for callables, but we also pass descriptors
             # (classmethod/staticmethod) that expose __wrapped__/__func__.
+            # Use type(...) is, not isinstance: some proxies raise on
+            # isinstance via a broken __class__ (see pytest#4266).
             unwrapped = inspect.unwrap(
                 cast(Callable[..., Any], obj),
-                stop=lambda o: isinstance(o, FixtureFunctionDefinition),
+                stop=lambda o: type(o) is FixtureFunctionDefinition,
             )
         except Exception:
             # ValueError for wrapper loops / depth; also "evil objects"
             # that raise on attribute access (see pytest#214).
             return None
 
-        if isinstance(unwrapped, FixtureFunctionDefinition):
+        if type(unwrapped) is FixtureFunctionDefinition:
             return unwrapped
         return None
 
@@ -2102,15 +2104,16 @@ class FixtureManager:
             return
 
         fixture_func = fixture_def._get_wrapped_function()
-        if not isinstance(fixture_func, types.FunctionType):
+        if type(fixture_func) is not types.FunctionType:
             return
 
-        if isinstance(obj, classmethod):
+        # Exact-type checks avoid proxies that raise from isinstance (#4266).
+        if type(obj) is classmethod:
             msg = (
                 f"cannot discover fixture {name!r} because it is wrapped by "
                 f"@classmethod; place @pytest.fixture above @classmethod"
             )
-        elif isinstance(obj, staticmethod):
+        elif type(obj) is staticmethod:
             # Plugin classes intentionally use @staticmethod above @fixture so
             # the first parameter stays a fixture arg. Only warn when the
             # callable looks like a method (self/cls), where staticmethod
@@ -2221,6 +2224,13 @@ class FixtureManager:
             # access below can raise. safe_getattr() ignores such exceptions.
             obj_ub = safe_getattr(holderobj_tp, name, None)
             if type(obj_ub) is FixtureFunctionDefinition:
+                # On Python 3.9-3.12, classmethod chains through descriptors, so
+                # getattr may return a FixtureFunctionDefinition even when the
+                # raw __dict__ entry is classmethod(fixture). Do not register
+                # that case; users must put @pytest.fixture above @classmethod.
+                if type(raw_obj) is classmethod:
+                    continue
+
                 marker = obj_ub._fixture_function_marker
                 if marker.name:
                     fixture_name = marker.name
