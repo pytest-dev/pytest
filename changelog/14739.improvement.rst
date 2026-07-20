@@ -1,0 +1,1 @@
+IdMaker.make_unique_parameterset_ids (used to generate ids for @pytest.mark.parametrize) no longer scales quadratically with the number of parameter sets when many of them produce colliding ids, significantly speeding up collection for large parametrized test suites with many duplicate ids.
