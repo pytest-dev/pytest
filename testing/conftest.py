@@ -73,17 +73,6 @@ def pytest_collection_modifyitems(items) -> Generator[None]:
                 co_names = item.function.__code__.co_names
                 if spawn_names.intersection(co_names):
                     item.add_marker(pytest.mark.uses_pexpect)
-                    # https://github.com/pexpect/pexpect/issues/827
-                    # os.forkpty() warns with stacklevel=1 (attributed to pty, not
-                    # ptyprocess). On 3.15+ the warning is no longer cleared, so
-                    # filterwarnings=error fails these pexpect/spawn tests when the
-                    # process already has multiple OS threads (common on macOS).
-                    item.add_marker(
-                        pytest.mark.filterwarnings(
-                            "ignore:.*use of forkpty\\(\\) may lead to deadlocks"
-                            " in the child:DeprecationWarning"
-                        )
-                    )
                     slowest_items.append(item)
                 elif "runpytest_subprocess" in co_names:
                     slowest_items.append(item)

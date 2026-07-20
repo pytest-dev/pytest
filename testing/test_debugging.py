@@ -538,9 +538,7 @@ class TestPDB:
 
         child.sendline("'i=%i.' % i")
         child.expect("Pdb")
-        # Avoid requiring exact CRLF framing: libedit/PyREPL may insert CSI
-        # sequences (e.g. bracketed-paste) around the evaluated value.
-        assert "'i=0.'" in child.before.decode("utf8")
+        assert "\r\n'i=0.'\r\n" in child.before.decode("utf8")
 
         child.sendeof()
         rest = child.read().decode("utf8")

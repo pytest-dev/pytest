@@ -1,0 +1,3 @@
+The ``dev`` extra is now empty and scheduled for removal in the next major release.
+Use the ``dev`` :pep:`735` dependency group instead (for example ``pip install -e . --group dev``
+or ``uv sync --group dev``).
