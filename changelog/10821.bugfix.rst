@@ -1,0 +1,1 @@
+Malformed uses of :func:`unittest.skip` during test module import now cause a collection error instead of silently skipping the module.

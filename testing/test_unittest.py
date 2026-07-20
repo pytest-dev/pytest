@@ -1715,6 +1715,27 @@ def test_raising_unittest_skiptest_during_collection(
     assert reprec.ret == ExitCode.NO_TESTS_COLLECTED
 
 
+def test_unittest_skip_decorator_misuse_is_collection_error(
+    pytester: Pytester,
+) -> None:
+    pytester.makepyfile(
+        """
+        import unittest
+
+        broken = unittest.skip("broken")
+
+        class TestIt(unittest.TestCase):
+            @broken("not a test")
+            def test_it(self): pass
+        """
+    )
+
+    result = pytester.runpytest()
+
+    result.assert_outcomes(errors=1, skipped=0)
+    result.stdout.fnmatch_lines(["*unittest.case.SkipTest: broken*"])
+
+
 def test_abstract_testcase_is_not_collected(pytester: Pytester) -> None:
     """Regression test for #12275."""
     pytester.makepyfile(
