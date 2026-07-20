@@ -2027,7 +2027,9 @@ class FixtureManager:
                 # Global plugin autouse fixtures go under Session.
                 self._node_autousenames.setdefault(self.session, []).append(name)
 
-    def _lookup_in_type_dict(self, owner: object, name: str) -> object | None:
+    def _lookup_in_type_dict(
+        self, owner: type | types.ModuleType, name: str
+    ) -> object | None:
         """Return ``name`` from ``owner``'s ``__dict__`` without invoking descriptors.
 
         For classes, walks the MRO so inherited ``staticmethod`` /
@@ -2035,16 +2037,13 @@ class FixtureManager:
         ``__get__`` would hide those wrappers (bound methods, or the bare
         :class:`FixtureFunctionDefinition` under a ``staticmethod``).
         """
-        if safe_isclass(owner):
-            cls = cast(type, owner)
-            for base in cls.__mro__:
-                try:
-                    return cast(object, base.__dict__[name])
-                except KeyError:
-                    continue
-            return None
         if isinstance(owner, types.ModuleType):
             return owner.__dict__.get(name)
+        for base in owner.__mro__:
+            try:
+                return cast(object, base.__dict__[name])
+            except KeyError:
+                continue
         return None
 
     def _find_wrapped_fixture_def(
@@ -2201,10 +2200,11 @@ class FixtureManager:
             effective_node = node_or_obj
 
         # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
+        holderobj_tp: type | types.ModuleType
         if not safe_isclass(holderobj) and not isinstance(holderobj, types.ModuleType):
-            holderobj_tp: object = type(holderobj)
+            holderobj_tp = type(holderobj)
         else:
-            holderobj_tp = holderobj
+            holderobj_tp = cast("type | types.ModuleType", holderobj)
 
         for name in dir(holderobj):
             # Read the raw __dict__ entry first so staticmethod/classmethod
@@ -2249,10 +2249,6 @@ class FixtureManager:
                     node=effective_node,
                     nodeid=effective_nodeid,
                 )
-            elif raw_obj is None and obj_ub is not None:
-                # No class/module __dict__ entry (e.g. some dynamic attributes);
-                # still check getattr result for functools.wraps chains.
-                self._check_for_wrapped_fixture(name, obj_ub)
 
     def getfixturedefs(
         self, argname: str, node: nodes.Node
