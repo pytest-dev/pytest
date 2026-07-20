@@ -941,6 +941,9 @@ def pytest_assertrepr_compare(
     *in* a string will be escaped. Note that all but the first line will
     be indented slightly, the intention is for the first line to be a summary.
 
+    If the :confval:`enable_assertion_pass_hook` configuration option is enabled,
+    this hook is also called for passing assertions.
+
     :param config: The pytest config object.
     :param op: The operator, e.g. `"=="`, `"!="`, `"not in"`.
     :param left: The left operand.
