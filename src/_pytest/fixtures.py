@@ -2097,9 +2097,13 @@ class FixtureManager:
         if fixture_def is None or fixture_def is obj:
             return
 
-        fixture_func = fixture_def._get_wrapped_function()
         # warn_explicit_for needs a real function (__code__/__globals__).
-        if type(fixture_func) is not types.FunctionType:
+        # @pytest.fixture above @classmethod/@staticmethod stores the descriptor
+        # as _fixture_function; peel once to reach the underlying def.
+        fixture_func: object = fixture_def._get_wrapped_function()
+        if type(fixture_func) is classmethod or type(fixture_func) is staticmethod:
+            fixture_func = fixture_func.__func__
+        if not isinstance(fixture_func, types.FunctionType):  # pragma: no cover
             return
 
         if type(obj) is classmethod:

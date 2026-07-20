@@ -5837,6 +5837,51 @@ def test_custom_decorated_fixture_warning(pytester: Pytester) -> None:
 
 
 @pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
+def test_custom_decorated_fixture_above_classmethod_warning(
+    pytester: Pytester,
+) -> None:
+    """Warn when wraps hides a fixture that itself wraps @classmethod.
+
+    The fixture definition stores the classmethod descriptor; warning emission
+    peels it to reach the underlying function for warn_explicit_for.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+        import functools
+
+        def custom_deco(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        class TestClass:
+            @custom_deco
+            @pytest.fixture(scope="class")
+            @classmethod
+            def my_fixture(cls):
+                return "fixture_value"
+
+            def test_fixture_usage(self, my_fixture):
+                assert my_fixture == "fixture_value"
+        """
+    )
+    result = pytester.runpytest_inprocess(
+        "-v", "-rw", "-W", "default::pytest.PytestWarning"
+    )
+
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestWarning: cannot discover fixture 'my_fixture' "
+            "due to being wrapped in decorators*"
+        ]
+    )
+    result.stdout.fnmatch_lines(["*fixture 'my_fixture' not found*"])
+    result.assert_outcomes(errors=1)
+
+
+@pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
 def test_classmethod_above_fixture_warning(pytester: Pytester) -> None:
     """@classmethod above @pytest.fixture hides the fixture (#13507)."""
     pytester.makepyfile(
