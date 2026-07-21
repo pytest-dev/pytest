@@ -930,6 +930,18 @@ class TestMetafunc:
         ):
             metafunc.parametrize("x, y", [("a", "b")], indirect={})  # type: ignore[arg-type]
 
+    def test_parametrize_positional_indirect_error(self) -> None:
+        """`indirect` and later arguments are keyword-only, so that extra
+        positional arguments (e.g. several argname strings, #8593) fail with
+        an understandable TypeError rather than being silently interpreted."""
+
+        def func(x, y):
+            pass
+
+        metafunc = self.Metafunc(func)
+        with pytest.raises(TypeError, match="positional arguments"):
+            metafunc.parametrize("x, y", [("a", "b")], ["x"])  # type: ignore[misc]
+
     def test_parametrize_indirect_list_functional(self, pytester: Pytester) -> None:
         """
         #714
@@ -2330,6 +2342,7 @@ class TestMarkersWithParametrization:
         )
 
     def test_parametrize_positional_args(self, pytester: Pytester) -> None:
+        """`indirect` and later arguments are keyword-only."""
         pytester.makepyfile(
             """
             import pytest
@@ -2340,7 +2353,8 @@ class TestMarkersWithParametrization:
         """
         )
         result = pytester.runpytest()
-        result.assert_outcomes(passed=1)
+        result.stdout.fnmatch_lines(["*TypeError*positional argument*"])
+        result.assert_outcomes(errors=1)
 
     def test_parametrize_iterator(self, pytester: Pytester) -> None:
         pytester.makepyfile(

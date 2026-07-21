@@ -1294,10 +1294,10 @@ class Metafunc:
         self,
         argnames: str | Sequence[str],
         argvalues: Iterable[ParameterSet | Sequence[object] | object],
+        *,
         indirect: bool | Sequence[str] = False,
         ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
         scope: ScopeName | None = None,
-        *,
         _param_mark: Mark | None = None,
     ) -> None:
         """Add new invocations to the underlying test function using the list
@@ -1372,6 +1372,10 @@ class Metafunc:
             The scope is used for grouping tests by parameter instances.
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
+
+        .. versionchanged:: 9.1
+
+            ``indirect``, ``ids`` and ``scope`` are now keyword-only.
         """
         nodeid = self.definition.nodeid
 
