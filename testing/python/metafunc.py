@@ -28,6 +28,35 @@ from _pytest.scope import Scope
 import pytest
 
 
+_IDMAKER_INI_DEFAULTS: dict[str, object] = {
+    "disable_test_id_escaping_and_forfeit_all_rights_to_community_support": False,
+    "parametrize_long_str_id_strategy": "short",
+    "strict_parametrization_ids": None,
+    "strict": False,
+}
+
+
+class _IdMakerConfig:
+    """Mock config for IdMaker tests.
+
+    Only serves known ini keys — raises KeyError on unknown ones
+    to catch accidental lookups for keys without proper defaults.
+    """
+
+    def __init__(self, overrides: dict[str, object] | None = None) -> None:
+        self._ini: dict[str, object] = {**_IDMAKER_INI_DEFAULTS, **(overrides or {})}
+
+    @property
+    def hook(self) -> _IdMakerConfig:
+        return self
+
+    def pytest_make_parametrize_id(self, **kw: object) -> None:
+        return None
+
+    def getini(self, name: str) -> object:
+        return self._ini[name]
+
+
 class TestMetafunc:
     def Metafunc(self, func, config=None) -> python.Metafunc:
         # The unit tests of this class check if things work correctly
@@ -373,26 +402,11 @@ class TestMetafunc:
         """Unit test for expected behavior to obtain ids with
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option (#5294)."""
-
-        class MockConfig:
-            def __init__(self, config):
-                self.config = config
-
-            @property
-            def hook(self):
-                return self
-
-            def pytest_make_parametrize_id(self, **kw):
-                pass
-
-            def getini(self, name):
-                return self.config[name]
-
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values: list[tuple[str, Any, str]] = [
-            ("ação", MockConfig({option: True}), "ação"),
-            ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
+            ("ação", _IdMakerConfig({option: True}), "ação"),
+            ("ação", _IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for val, config, expected in values:
             actual = IdMaker([], [], None, None, config, None)._idval(val, "a", 6)
@@ -595,26 +609,11 @@ class TestMetafunc:
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option (#5294).
         """
-
-        class MockConfig:
-            def __init__(self, config):
-                self.config = config
-
-            @property
-            def hook(self):
-                return self
-
-            def pytest_make_parametrize_id(self, **kw):
-                pass
-
-            def getini(self, name):
-                return self.config[name]
-
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values: list[tuple[Any, str]] = [
-            (MockConfig({option: True}), "ação"),
-            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+            (_IdMakerConfig({option: True}), "ação"),
+            (_IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = IdMaker(
@@ -632,26 +631,11 @@ class TestMetafunc:
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option (#5294).
         """
-
-        class MockConfig:
-            def __init__(self, config):
-                self.config = config
-
-            @property
-            def hook(self):
-                return self
-
-            def pytest_make_parametrize_id(self, **kw):
-                pass
-
-            def getini(self, name):
-                return self.config[name]
-
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values: list[tuple[Any, str]] = [
-            (MockConfig({option: True}), "ação"),
-            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+            (_IdMakerConfig({option: True}), "ação"),
+            (_IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = IdMaker(
@@ -659,24 +643,129 @@ class TestMetafunc:
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
+    @pytest.mark.parametrize("id_style", ["short", "sha256", "legacy"])
+    @pytest.mark.parametrize(
+        "kind",
+        [
+            pytest.param("a", id="str"),
+            pytest.param(b"a", id="bytes"),
+        ],
+    )
+    def test_idmaker_long_string(self, id_style: str, kind: str | bytes) -> None:
+        maker = IdMaker(
+            "a",
+            [pytest.param(kind * 1000)],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": id_style}),
+            ),
+            None,
+        )
+
+        res = maker.make_unique_parameterset_ids()
+        expected = {
+            "legacy": "a" * 1000,
+            "short": "a0",
+            "sha256": "41edece42d63e8d9bf515a9ba6932e1c20cbc9f5a5d134645adb5db1b9737ea3",
+        }
+        assert res == [expected[id_style]]
+
+    @pytest.mark.parametrize(
+        "kind",
+        [
+            pytest.param("a", id="str"),
+            pytest.param(b"a", id="bytes"),
+        ],
+    )
+    def test_idmaker_long_string_disallow(self, kind: str | bytes) -> None:
+        maker = IdMaker(
+            "a",
+            [pytest.param(kind * 1000)],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": "disallow"}),
+            ),
+            None,
+        )
+
+        with pytest.raises(Failed, match="too long for an auto-generated ID"):
+            maker.make_unique_parameterset_ids()
+
+    def test_idmaker_long_string_disallow_short_value(self) -> None:
+        """The disallow strategy should pass through short values normally."""
+        maker = IdMaker(
+            "a",
+            [pytest.param("short")],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": "disallow"}),
+            ),
+            None,
+        )
+        assert maker.make_unique_parameterset_ids() == ["short"]
+
+    def test_idmaker_long_string_no_config(self) -> None:
+        """Without config, defaults to 'short' strategy."""
+        maker = IdMaker(
+            "a",
+            [pytest.param("x" * 200)],
+            None,
+            None,
+            None,
+            None,
+        )
+        assert maker.make_unique_parameterset_ids() == ["a0"]
+
+    def test_idmaker_long_string_unknown_strategy(self) -> None:
+        """An unknown strategy value should raise UsageError."""
+        maker = IdMaker(
+            "a",
+            [pytest.param("x" * 200)],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": "bogus"}),
+            ),
+            None,
+        )
+        with pytest.raises(pytest.UsageError, match=r"Unknown.*bogus"):
+            maker.make_unique_parameterset_ids()
+
+    @pytest.mark.parametrize("id_style", ["short", "sha256", "disallow"])
+    def test_idmaker_long_string_explicit_ids_unaffected(self, id_style: str) -> None:
+        """Explicit ids=[...] with long strings should work regardless of strategy."""
+        long_id = "x" * 200
+        maker = IdMaker(
+            "a",
+            [pytest.param("value")],
+            None,
+            [long_id],
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": id_style}),
+            ),
+            None,
+        )
+        result = maker.make_unique_parameterset_ids()
+        assert result == [long_id]
+
     def test_idmaker_with_param_id_and_config(self) -> None:
         """Unit test for expected behavior to create ids with pytest.param(id=...) and
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option (#9037).
         """
-
-        class MockConfig:
-            def __init__(self, config):
-                self.config = config
-
-            def getini(self, name):
-                return self.config[name]
-
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values: list[tuple[Any, str]] = [
-            (MockConfig({option: True}), "ação"),
-            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+            (_IdMakerConfig({option: True}), "ação"),
+            (_IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = IdMaker(
