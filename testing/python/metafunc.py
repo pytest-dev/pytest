@@ -940,7 +940,7 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
         with pytest.raises(TypeError, match="positional arguments"):
-            metafunc.parametrize("x, y", [("a", "b")], ["x"])  # type: ignore[misc]
+            metafunc.parametrize("x, y", [("a", "b")], ["x"])  # type: ignore[call-arg]
 
     def test_parametrize_indirect_list_functional(self, pytester: Pytester) -> None:
         """
