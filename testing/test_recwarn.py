@@ -501,6 +501,54 @@ class TestWarns:
                 warnings.warn("v1 warning", UserWarning)
                 warnings.warn("non-matching v2 warning", UserWarning)
 
+    def test_re_emit_preserves_module_name(self, pytester: Pytester) -> None:
+        r"""Regression test for #11933.
+
+        :func:`pytest.warns` re-emits unmatched warnings via
+        :func:`warnings.warn_explicit`. The ``module`` argument must reflect the
+        originating module's importable name; otherwise user-installed
+        ``warnings.filterwarnings(..., module=...)`` rules silently fail to
+        match the re-emitted warning.
+
+        The package layout below makes the importable name (``regr_pkg.inner``)
+        differ from :func:`warnings.warn_explicit`'s filename-derived default
+        (which would be ``"<...>/regr_pkg/inner"``).  The regex
+        ``^regr_pkg\.inner$`` matches the former and nothing else, so the
+        outer ``"error"`` filter fires only when re-emit passes the correct
+        module name — distinguishing the fix from both the original
+        (``module="warnings"``) and from omitting the argument entirely.
+        """
+        pkg = pytester.mkpydir("regr_pkg")
+        pkg.joinpath("inner.py").write_text(
+            "import warnings\ndef emit(msg):\n    warnings.warn(msg, UserWarning)\n",
+            encoding="utf-8",
+        )
+        pytester.makepyfile(
+            test_module=r"""
+            import warnings
+            import pytest
+            from regr_pkg import inner
+
+            def test_module_filter_applies_to_reemitted_warning():
+                with warnings.catch_warnings():
+                    warnings.resetwarnings()
+                    warnings.simplefilter("always")
+                    warnings.filterwarnings(
+                        "error",
+                        category=UserWarning,
+                        module=r"^regr_pkg\.inner$",
+                    )
+                    with pytest.raises(UserWarning, match="from inner"):
+                        with pytest.warns(UserWarning, match="other"):
+                            # Unmatched -> re-emitted on pytest.warns __exit__.
+                            inner.emit("from inner")
+                            # Matched -> satisfies the inner assertion.
+                            warnings.warn("other", UserWarning)
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
     def test_catch_warning_within_raise(self) -> None:
         # warns-in-raises works since https://github.com/pytest-dev/pytest/pull/11129
         with pytest.raises(ValueError, match="some exception"):

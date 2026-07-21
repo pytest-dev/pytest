@@ -1,0 +1,4 @@
+Fixed :func:`pytest.warns` re-emitting unmatched warnings with the wrong
+``module`` argument, which prevented user-installed
+``warnings.filterwarnings(..., module=...)`` rules from matching the
+re-emitted warning.

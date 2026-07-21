@@ -8,6 +8,7 @@ from collections.abc import Generator
 from collections.abc import Iterator
 from pprint import pformat
 import re
+import sys
 from types import TracebackType
 from typing import Any
 from typing import final
@@ -31,6 +32,30 @@ from _pytest.outcomes import fail
 
 
 T = TypeVar("T")
+
+
+def _module_name_for_filename(filename: str | None) -> str | None:
+    """Recover the importable module name for a warning's ``filename``.
+
+    :class:`warnings.WarningMessage` does not preserve the ``module`` argument
+    that :func:`warnings.warn_explicit` was originally called with, so when
+    re-emitting an unmatched warning we cannot use ``w.__module__`` (that
+    attribute is the module *the WarningMessage class is defined in*, i.e.
+    ``"warnings"``).  As the next best thing, look up the module in
+    :data:`sys.modules` whose ``__file__`` matches the warning's filename.
+
+    Returns ``None`` if no module can be matched (for example, the warning
+    originated from ``exec``-ed code, a frozen / built-in module, or a file
+    that has since been unloaded).  In that case
+    :func:`warnings.warn_explicit` derives the module name from ``filename``
+    itself, matching its own default behavior.
+    """
+    if not filename:
+        return None
+    for name, mod in sys.modules.items():
+        if getattr(mod, "__file__", None) == filename:
+            return name
+    return None
 
 
 @fixture
@@ -347,7 +372,16 @@ class WarningsChecker(WarningsRecorder):
                         category=w.category,
                         filename=w.filename,
                         lineno=w.lineno,
-                        module=w.__module__,
+                        # ``w.__module__`` is always ``"warnings"`` (the module
+                        # ``WarningMessage`` is defined in), which causes
+                        # ``warnings.filterwarnings(..., module=...)`` rules
+                        # supplied by the user to never match this re-emit.
+                        # Recover the originating module's importable name from
+                        # its filename so the user's module-scoped filters can
+                        # still act on the re-emitted warning.  Falling back to
+                        # ``None`` lets :func:`warnings.warn_explicit` derive a
+                        # name from the filename, matching its default behavior.
+                        module=_module_name_for_filename(w.filename),
                         source=w.source,
                     )
 
