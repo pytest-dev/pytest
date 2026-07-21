@@ -135,6 +135,7 @@ PARSEFACTORIES_NODEID_DEPRECATED = PytestRemovedIn10Warning(
 
 CALLSPEC2_RENAMED = PytestRemovedIn10Warning(
     "_pytest.python.CallSpec2 has been renamed to CallSpec.\n"
+    "The CallSpec2 alias will be removed in pytest 10.\n"
     "Update imports to use CallSpec instead.\n"
     "See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed"
 )

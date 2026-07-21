@@ -24,8 +24,8 @@ Below is a complete list of all pytest features which are considered deprecated.
 
 The private ``_pytest.python.CallSpec2`` name has been renamed to ``CallSpec``.
 
-Plugins that import ``CallSpec2`` should update to ``CallSpec``. The old name
-remains available as a deprecated alias for a transitional period.
+Plugins that import ``CallSpec2`` should update to ``CallSpec``. The old
+``CallSpec2`` alias remains available for now and will be removed in pytest 10.
 
 
 .. _fixture-nodeid-deprecated:
