@@ -1744,6 +1744,68 @@ class TestTruncateExplanation:
                 ]
             )
 
+    @pytest.mark.parametrize(
+        "config",
+        [
+            # Native [tool.pytest] uses TOML types, so an int is accepted (#14675).
+            pytest.param(
+                """
+                [tool.pytest]
+                truncation_limit_lines = 3
+                truncation_limit_chars = 0
+                """,
+                id="native-toml-int",
+            ),
+            # A string in native [tool.pytest] must keep working (backward compat).
+            pytest.param(
+                """
+                [tool.pytest]
+                truncation_limit_lines = "3"
+                truncation_limit_chars = "0"
+                """,
+                id="native-toml-string",
+            ),
+            # [tool.pytest.ini_options] keeps the string-based INI behaviour.
+            pytest.param(
+                """
+                [tool.pytest.ini_options]
+                truncation_limit_lines = "3"
+                truncation_limit_chars = "0"
+                """,
+                id="ini-options-string",
+            ),
+            # ... and also accepts a bare int, coerced like the INI format does.
+            pytest.param(
+                """
+                [tool.pytest.ini_options]
+                truncation_limit_lines = 3
+                truncation_limit_chars = 0
+                """,
+                id="ini-options-int",
+            ),
+        ],
+    )
+    def test_truncation_limits_accept_int_and_string(
+        self, monkeypatch, pytester: Pytester, config: str
+    ) -> None:
+        """Truncation limits accept both int and string values in TOML (#14675)."""
+        pytester.makepyfile(
+            """\
+            string_a = "123456789\\n23456789\\n3"
+            string_b = "123456789\\n23456789\\n4"
+
+            def test():
+                assert string_a == string_b
+            """
+        )
+        monkeypatch.delenv("CI", raising=False)
+        pytester.makepyprojecttoml(config)
+
+        result = pytester.runpytest()
+
+        result.stdout.no_fnmatch_line("*TypeError*")
+        result.stdout.fnmatch_lines(["*truncated (3 lines hidden)*"])
+
 
 def test_python25_compile_issue257(pytester: Pytester) -> None:
     pytester.makepyfile(

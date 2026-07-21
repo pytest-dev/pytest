@@ -49,11 +49,13 @@ def pytest_addoption(parser: Parser) -> None:
 
     parser.addini(
         "truncation_limit_lines",
+        type=int | str,
         default=None,
         help="Set threshold of LINES after which truncation will take effect",
     )
     parser.addini(
         "truncation_limit_chars",
+        type=int | str,
         default=None,
         help=("Set threshold of CHARS after which truncation will take effect"),
     )
