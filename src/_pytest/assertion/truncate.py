@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.compat import running_on_ci
 from _pytest.config import Config
 
 
-DEFAULT_MAX_LINES = 8
-DEFAULT_MAX_CHARS = DEFAULT_MAX_LINES * 80
 USAGE_MSG = "use '-vv' to show"
 TRUNCATION_MSG = f"...Full output truncated, {USAGE_MSG}"
 
@@ -61,23 +60,18 @@ def materialize_with_truncation(lines: Iterable[str], config: Config) -> list[st
 
 def _get_truncation_parameters(config: Config) -> tuple[bool, TruncationBudget]:
     """Return the truncation parameters from the given config, as (should truncate, budget)."""
-    # We do not need to truncate if one of conditions is met:
+    # We do not need to truncate if one of these conditions is met:
     # 1. Verbosity level is 2 or more;
     # 2. Test is being run in CI environment;
     # 3. Both truncation_limit_lines and truncation_limit_chars
-    #    .ini parameters are set to 0 explicitly.
-    max_lines = config.getini("truncation_limit_lines")
-    max_lines = int(max_lines if max_lines is not None else DEFAULT_MAX_LINES)
-
-    max_chars = config.getini("truncation_limit_chars")
-    max_chars = int(max_chars if max_chars is not None else DEFAULT_MAX_CHARS)
-
+    #    are set to 0 explicitly.
     verbose = config.get_verbosity(Config.VERBOSITY_ASSERTIONS)
+    if verbose >= 2 or running_on_ci():
+        return False, NO_TRUNCATION_BUDGET
 
-    should_truncate = verbose < 2 and not running_on_ci()
-    should_truncate = should_truncate and (max_lines > 0 or max_chars > 0)
-
-    return should_truncate, TruncationBudget(max_lines=max_lines, max_chars=max_chars)
+    budget = TruncationBudget.from_config(config)
+    should_truncate = budget.max_lines > 0 or budget.max_chars > 0
+    return should_truncate, budget
 
 
 def _truncate_explanation(
