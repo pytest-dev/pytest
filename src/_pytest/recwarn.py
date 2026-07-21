@@ -342,12 +342,16 @@ class WarningsChecker(WarningsRecorder):
             # Whether or not any warnings matched, we want to re-emit all unmatched warnings.
             for w in self:
                 if not self.matches(w):
+                    # `w` is a `warnings.WarningMessage`, which does not record
+                    # the module name that the warning was originally emitted
+                    # with, so we cannot pass a `module` argument here without
+                    # misattributing the warning (#11933). Instead, leave it
+                    # unset and let `warn_explicit` derive it from `filename`.
                     warnings.warn_explicit(
                         message=w.message,
                         category=w.category,
                         filename=w.filename,
                         lineno=w.lineno,
-                        module=w.__module__,
                         source=w.source,
                     )
 
