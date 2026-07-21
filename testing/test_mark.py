@@ -1377,3 +1377,20 @@ def test_module_getattr_without_attributeerror(pytester: Pytester) -> None:
     # The module is buggy (__getattr__ returns None for all attributes),
     # so no tests are collected, but pytest should NOT crash with a TypeError.
     assert result.ret != ExitCode.INTERNAL_ERROR
+
+
+def test_package_level_pytestmark_propagates(pytester: Pytester) -> None:
+    """pytestmark in package __init__.py must apply to tests in the package (#14737)."""
+    pkg = pytester.mkpydir("skippedpkg")
+    pkg.joinpath("__init__.py").write_text(
+        "import pytest\n"
+        "pytestmark = pytest.mark.skip(reason=\"package is disabled\")\n",
+        encoding="utf-8",
+    )
+    pkg.joinpath("test_skipped.py").write_text(
+        "def test_should_be_skipped():\n"
+        "    assert False\n",
+        encoding="utf-8",
+    )
+    result = pytester.runpytest("-q")
+    result.assert_outcomes(skipped=1)

@@ -693,6 +693,18 @@ class Package(nodes.Directory):
             self.addfinalizer(func)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        # Apply package-level pytestmark from __init__.py so markers propagate
+        # to contained tests (regression from Package no longer being a Module).
+        try:
+            init_mod = importtestmodule(self.path / "__init__.py", self.config)
+        except nodes.Collector.CollectError:
+            init_mod = None
+        if init_mod is not None and not getattr(self, "_package_marks_applied", False):
+            marks = get_unpacked_marks(init_mod)
+            self.own_markers.extend(marks)
+            self.keywords.update((mark.name, mark) for mark in marks)
+            self._package_marks_applied = True  # type: ignore[attr-defined]
+
         # Always collect __init__.py first.
         def sort_key(entry: os.DirEntry[str]) -> object:
             return (entry.name != "__init__.py", entry.name)
