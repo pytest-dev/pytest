@@ -1,0 +1,2 @@
+The private ``_pytest.python.CallSpec2`` name has been renamed to ``CallSpec``.
+The old name remains available as a deprecated alias.

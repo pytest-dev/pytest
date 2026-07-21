@@ -51,6 +51,7 @@ from _pytest.compat import safe_isclass
 from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import CALLSPEC2_RENAMED
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
@@ -1151,6 +1152,11 @@ class CallSpec:
         return "-".join(self._idlist)
 
 
+if TYPE_CHECKING:
+    # Deprecated alias kept for type checkers; runtime access goes through __getattr__.
+    CallSpec2 = CallSpec
+
+
 def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
     return request.param
 
@@ -1759,3 +1765,10 @@ class FunctionDefinition(Function):
         raise RuntimeError("function definitions are not supposed to be run as tests")
 
     setup = runtest
+
+
+def __getattr__(name: str) -> object:
+    if name == "CallSpec2":
+        warnings.warn(CALLSPEC2_RENAMED, stacklevel=2)
+        return CallSpec
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
