@@ -1,12 +1,15 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+from collections.abc import Iterator
 import os
 import sys
 from typing import cast
 from unittest import mock
 
+from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config import RegisteredMarker
 from _pytest.config import UsageError
 from _pytest.mark import _validate_marker_names
 from _pytest.mark import MarkGenerator
@@ -241,13 +244,16 @@ class TestValidateMarkerNames:
         def getini(self, name: str) -> list[str] | bool | None:
             return self._ini[name]
 
+        def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
+            yield from Config._iter_registered_markers(cast(Config, self))
+
     def _make_config(
         self,
         strict_markers: bool | None = None,
         strict: bool = False,
-    ) -> pytest.Config:
+    ) -> Config:
         return cast(
-            pytest.Config,
+            Config,
             self.FakeConfig(
                 markers=["registered: a registered marker"],
                 strict_markers=strict_markers,
