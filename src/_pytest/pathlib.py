@@ -931,6 +931,7 @@ def compute_module_name(root: Path, module_path: Path) -> str | None:
         return None
     if names[-1] == "__init__":
         names.pop()
+    names = [p.replace(".", "_") for p in names]
     return ".".join(names)
 
 
