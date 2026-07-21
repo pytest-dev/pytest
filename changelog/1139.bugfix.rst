@@ -1,0 +1,2 @@
+Fixed tracebacks showing ``???`` instead of source lines for code compiled with a filename relative to a directory other than the current working directory -- e.g. compiled Cython modules, when running pytest from a subdirectory of the project root.
+The source lookup now falls back to searching ``sys.path`` for such filenames, as the standard :mod:`traceback` module does.
