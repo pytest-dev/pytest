@@ -6,6 +6,7 @@ from bisect import bisect_right
 from collections.abc import Iterable
 from collections.abc import Iterator
 import inspect
+import linecache
 import textwrap
 import tokenize
 import types
@@ -126,7 +127,20 @@ def findsource(obj) -> tuple[Source | None, int]:
     try:
         sourcelines, lineno = inspect.findsource(obj)
     except Exception:
-        return None, -1
+        # inspect.findsource() fails for code objects whose co_filename is
+        # relative to a directory other than the cwd, e.g. compiled Cython
+        # modules when running pytest from a subdirectory (#1139).
+        # Fall back to linecache, which also searches sys.path for bare
+        # filenames, as the standard traceback module does.
+        code = (
+            obj if isinstance(obj, types.CodeType) else getattr(obj, "__code__", None)
+        )
+        if code is None:
+            return None, -1
+        sourcelines = linecache.getlines(code.co_filename)
+        if not sourcelines:
+            return None, -1
+        lineno = code.co_firstlineno - 1
     source = Source()
     source.lines = [line.rstrip() for line in sourcelines]
     source.raw_lines = sourcelines
