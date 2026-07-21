@@ -7,11 +7,16 @@ from collections.abc import Sequence
 import os
 import sys
 import textwrap
+import types
 from typing import Any
+from typing import cast
 from typing import final
+from typing import get_args
+from typing import get_origin
 from typing import Literal
 from typing import NoReturn
 from typing import TypeAlias
+from typing import Union
 
 from .exceptions import UsageError
 import _pytest._io
@@ -28,7 +33,42 @@ _IniTypeTag: TypeAlias = Literal[
 
 #: The forms accepted by :meth:`Parser.addini` for its ``type`` argument;
 #: ``None`` means ``"string"``.
-_IniTypeArg: TypeAlias = _IniTypeTag | None
+_IniTypeArg: TypeAlias = (
+    _IniTypeTag | type[bool | int | float | str] | types.UnionType | None
+)
+
+#: An ini option type, as stored internally after normalization: either a
+#: single tag, or a tuple of tags meaning "accept a value of any of these
+#: types" (e.g. ``("int", "string")``, normalized from ``int | str``).
+IniType = _IniTypeTag | tuple[_IniTypeTag, ...]
+
+_INI_TYPE_TAGS: tuple[str, ...] = get_args(_IniTypeTag)
+
+#: Maps the plain Python types accepted by :meth:`Parser.addini` for its
+#: ``type`` argument to the equivalent string tag.
+_INI_TYPE_TO_TAG: dict[type, _IniTypeTag] = {
+    str: "string",
+    bool: "bool",
+    int: "int",
+    float: "float",
+}
+
+
+def _ini_type_to_tag(name: str, type_: object) -> _IniTypeTag:
+    """Normalize one member of an `addini(type=...)` argument to a string tag.
+
+    Raise ValueError for anything that is neither a known tag nor a supported
+    plain Python type.
+    """
+    if isinstance(type_, str) and type_ in _INI_TYPE_TAGS:
+        return cast("_IniTypeTag", type_)
+    if isinstance(type_, type) and type_ in _INI_TYPE_TO_TAG:
+        return _INI_TYPE_TO_TAG[type_]
+    raise ValueError(
+        f"invalid type for ini option {name!r}: {type_!r} (expected one of "
+        f"{', '.join(repr(tag) for tag in _INI_TYPE_TAGS)}, one of the types "
+        "str, bool, int, float, or a union of these types such as `int | str`)"
+    )
 
 
 def _get_argparse_dest(opts: Sequence[str]) -> str:
@@ -70,7 +110,7 @@ class Parser:
         file_or_dir_arg = self.optparser.add_argument(FILE_OR_DIR, nargs="*")
         file_or_dir_arg.completer = filescompleter  # type: ignore
 
-        self._inidict: dict[str, tuple[str, str, Any]] = {}
+        self._inidict: dict[str, tuple[str, IniType, Any]] = {}
         # Maps alias -> canonical name.
         self._ini_aliases: dict[str, str] = {}
 
@@ -223,6 +263,18 @@ class Parser:
 
                     The ``float`` and ``int`` types.
 
+            For the scalar types, the plain Python type may be passed instead
+            of the string tag: ``str``, ``bool``, ``int`` and ``float`` (for
+            example ``type=int``). A union of these types accepts a value of
+            any of its members, for example ``int | str``. In TOML
+            configuration files the value may then be any of the member types;
+            string-based formats (INI files, ``-o`` overrides) coerce it to the
+            first member that accepts it.
+
+            .. versionadded:: 9.1
+
+                Passing a type expression such as ``int`` or ``int | str``.
+
             For ``paths`` and ``pathlist`` types, they are considered relative to the config-file.
             In case the execution is happening without a config-file defined,
             they will be considered relative to the current working directory (for example with ``--override-ini``).
@@ -246,23 +298,26 @@ class Parser:
         The value of configuration keys can be retrieved via a call to
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
-        assert type in (
-            None,
-            "string",
-            "paths",
-            "pathlist",
-            "args",
-            "linelist",
-            "bool",
-            "int",
-            "float",
-        )
+        ini_type: IniType
         if type is None:
-            type = "string"
+            ini_type = "string"
+        elif get_origin(type) in (Union, types.UnionType):
+            ini_type = tuple(
+                _ini_type_to_tag(name, member) for member in get_args(type)
+            )
+        else:
+            ini_type = _ini_type_to_tag(name, type)
         if default is NOTSET:
-            default = get_ini_default_for_type(type)
+            if isinstance(ini_type, tuple):
+                # A union has no unambiguous implicit default; require an
+                # explicit one.
+                raise ValueError(
+                    f"ini option {name!r} has a union type, which has no "
+                    "implicit default; pass an explicit `default` to `addini`"
+                )
+            default = get_ini_default_for_type(ini_type)
 
-        self._inidict[name] = (help, type, default)
+        self._inidict[name] = (help, ini_type, default)
 
         for alias in aliases:
             if alias in self._inidict:

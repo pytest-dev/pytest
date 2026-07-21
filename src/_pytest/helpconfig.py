@@ -200,7 +200,8 @@ def showhelp(config: Config) -> None:
         help, type, _default = config._parser._inidict[name]
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
-        spec = f"{name} ({type}):"
+        type_repr = " | ".join(type) if isinstance(type, tuple) else type
+        spec = f"{name} ({type_repr}):"
         tw.write(f"  {spec}")
         spec_len = len(spec)
         if spec_len > (indent_len - 3):

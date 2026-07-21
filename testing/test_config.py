@@ -1088,6 +1088,91 @@ class TestConfigAPI:
         ):
             _ = config.getini("ini_param")
 
+    @pytest.mark.parametrize(
+        "section, value, expected",
+        [
+            # Native TOML: int and str are both accepted; the first union
+            # member that matches wins (int before str).
+            ("[tool.pytest]", '"7"', "7"),
+            ("[tool.pytest]", "7", 7),
+            # ini_options mode stringifies, then coerces to the first member.
+            ("[tool.pytest.ini_options]", '"7"', 7),
+            ("[tool.pytest.ini_options]", "7", 7),
+        ],
+        ids=["native-str", "native-int", "ini-options-str", "ini-options-int"],
+    )
+    def test_addini_union_type(
+        self, pytester: Pytester, section: str, value: str, expected: object
+    ) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type=int | str, default=None)
+        """
+        )
+        pytester.makepyprojecttoml(
+            f"""
+            {section}
+            ini_param = {value}
+            """
+        )
+        config = pytester.parseconfig()
+        result = config.getini("ini_param")
+        assert result == expected
+        assert type(result) is type(expected)
+
+    def test_addini_union_type_invalid_value(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type=int | str, default=None)
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            ini_param = [1, 2]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.raises(
+            TypeError, match=r"config option 'ini_param' expects one of int \| string"
+        ):
+            _ = config.getini("ini_param")
+
+    def test_addini_plain_type(self, pytester: Pytester) -> None:
+        """A plain Python type is accepted as an alias of its string tag."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type=int)
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            ini_param = 7
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.getini("ini_param") == 7
+
+    def test_addini_invalid_type(self, pytester: Pytester) -> None:
+        parser = Parser(_ispytest=True)
+        with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
+            parser.addini("ini_param", "", type="integer")  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
+            parser.addini("ini_param", "", type=dict)  # type: ignore[arg-type]
+        with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
+            parser.addini("ini_param", "", type=int | dict)
+
+    def test_addini_union_type_requires_default(self) -> None:
+        parser = Parser(_ispytest=True)
+        with pytest.raises(
+            ValueError, match="union type, which has no implicit default"
+        ):
+            parser.addini("ini_param", "", type=int | str)
+
     def test_addinivalue_line_existing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """

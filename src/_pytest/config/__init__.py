@@ -35,6 +35,7 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import IO
+from typing import Literal
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
@@ -1781,6 +1782,34 @@ class Config:
         value = selected.value
         mode = selected.mode
 
+        if not isinstance(type, tuple):
+            return self._getini_value(mode, name, canonical_name, type, value, default)
+
+        # A tuple type means "accept any of these types"; try each in order and
+        # return the first that accepts the value.
+        for tag in type:
+            try:
+                return self._getini_value(
+                    mode, name, canonical_name, tag, value, default
+                )
+            except (TypeError, ValueError):
+                pass
+        value_type = builtins.type(value).__name__
+        raise TypeError(
+            f"{self.inipath}: config option '{name}' expects one of "
+            f"{' | '.join(type)}, got {value_type}: {value!r}"
+        )
+
+    def _getini_value(
+        self,
+        mode: Literal["ini", "toml"],
+        name: str,
+        canonical_name: str,
+        type: str,
+        value: object,
+        default: Any,
+    ):
+        """Convert a config value, read in the given mode, to the option's type."""
         if mode == "ini":
             # In ini mode, values are always str | list[str].
             assert isinstance(value, (str, list))
