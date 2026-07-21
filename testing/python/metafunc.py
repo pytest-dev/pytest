@@ -1152,17 +1152,19 @@ class TestMetafunc:
         """
         )
         result = pytester.runpytest("--collect-only")
+        # Items are grouped by the *value* of the module-scoped arg1 (#8914),
+        # so arg1 is set up only once per distinct value: 0, 1, 2.
         result.stdout.re_match_lines(
             [
                 r"    <Function test1\[0-3\]>",
-                r"    <Function test3\[0\]>",
                 r"    <Function test1\[0-4\]>",
-                r"    <Function test3\[1\]>",
+                r"    <Function test3\[0\]>",
                 r"    <Function test1\[1-3\]>",
-                r"    <Function test3\[2\]>",
                 r"    <Function test1\[1-4\]>",
+                r"    <Function test3\[1\]>",
                 r"    <Function test1\[2-3\]>",
                 r"    <Function test1\[2-4\]>",
+                r"    <Function test3\[2\]>",
                 r"    <Function test2>",
             ]
         )
