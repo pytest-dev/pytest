@@ -1734,6 +1734,15 @@ def test_compute_module_name(tmp_path: Path) -> None:
         == "src.app.bar"
     )
 
+    assert (
+        compute_module_name(tmp_path, tmp_path / "foo.test.py")
+        == "foo_test"
+    )
+    assert (
+        compute_module_name(tmp_path, tmp_path / "src/app/foo.test.py")
+        == "src.app.foo_test"
+    )
+
 
 def validate_namespace_package(
     pytester: Pytester, paths: Sequence[Path], modules: Sequence[str]
