@@ -522,6 +522,42 @@ class TestAssert_reprcompare:
         assert "- " + "a" * 50 + "eggs" in lines
         assert "+ " + "a" * 50 + "spam" in lines
 
+    def test_text_diff_huge_is_capped(self) -> None:
+        # Diffing large texts in full can take a very long time while only a
+        # few lines get displayed anyway, so the diff computation is capped
+        # in non-verbose mode (#12406).
+        left = "\n".join(f"spam {i}" for i in range(300))
+        right = "\n".join(f"eggs {i}" for i in range(300))
+        lines = callequal(left, right)
+        assert lines is not None
+        assert (
+            "Skipping all but the first 100 lines of each text in diff, "
+            "use -v to diff the full text" in lines
+        )
+        assert "+ spam 99" in lines
+        assert not any("spam 100" in line for line in lines)
+
+    def test_text_diff_huge_not_capped_verbose(self) -> None:
+        # With -v the full diff is computed, however long it takes.
+        left = "\n".join(f"spam {i}" for i in range(300))
+        right = "\n".join(f"eggs {i}" for i in range(300))
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert "+ spam 299" in lines
+        assert not any("Skipping" in line for line in lines)
+
+    def test_text_diff_huge_cap_after_leading_skip(self) -> None:
+        # A huge identical prefix is skipped first; the line cap then
+        # applies to the remaining differing region.
+        common = "\n".join(f"common {i}" for i in range(200))
+        left = common + "\n" + "\n".join(f"spam {i}" for i in range(300))
+        right = common + "\n" + "\n".join(f"eggs {i}" for i in range(300))
+        lines = callequal(left, right)
+        assert lines is not None
+        assert any("identical leading characters" in line for line in lines)
+        assert any("Skipping all but the first 100 lines" in line for line in lines)
+        assert not any("spam 150" in line for line in lines)
+
     def test_multiline_text_diff(self) -> None:
         left = "foo\nspam\nbar"
         right = "foo\neggs\nbar"

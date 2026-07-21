@@ -1,0 +1,3 @@
+Failing string equality assertions on huge strings no longer take a very long time to report.
+
+At the default verbosity only a handful of diff lines are displayed, but the underlying diff was always computed over the full strings, which could take hours for multi-million-line texts. The diff is now computed over at most the first 100 lines of each string (after skipping any identical leading/trailing parts), with a message indicating that ``-v`` computes and shows the full diff.

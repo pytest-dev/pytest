@@ -9,6 +9,14 @@ from _pytest.assertion.highlight import dummy_highlighter
 from _pytest.compat import assert_never
 
 
+# In non-verbose mode only a handful of diff lines are displayed, but
+# ``difflib.ndiff``'s runtime blows up on large inputs, so computing the
+# full diff can take hours only for almost all of it to be thrown away
+# (#12406). Diffing this many lines is near-instant while still producing
+# far more output than the display truncation will ever show.
+_MAX_NON_VERBOSE_DIFF_LINES = 100
+
+
 def _compare_eq_text(
     left: str,
     right: str,
@@ -75,13 +83,22 @@ def _diff_text(
         left = repr(str(left))
         right = repr(str(right))
         yield "Strings contain only whitespace, escaping them using repr()"
+    left_lines = left.splitlines(keepends)
+    right_lines = right.splitlines(keepends)
+    if verbose < 1 and (
+        len(left_lines) > _MAX_NON_VERBOSE_DIFF_LINES
+        or len(right_lines) > _MAX_NON_VERBOSE_DIFF_LINES
+    ):
+        yield (
+            f"Skipping all but the first {_MAX_NON_VERBOSE_DIFF_LINES} lines "
+            "of each text in diff, use -v to diff the full text"
+        )
+        left_lines = left_lines[:_MAX_NON_VERBOSE_DIFF_LINES]
+        right_lines = right_lines[:_MAX_NON_VERBOSE_DIFF_LINES]
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     yield from highlighter(
-        "\n".join(
-            line.strip("\n")
-            for line in ndiff(right.splitlines(keepends), left.splitlines(keepends))
-        ),
+        "\n".join(line.strip("\n") for line in ndiff(right_lines, left_lines)),
         lexer="diff",
     ).splitlines()
 
