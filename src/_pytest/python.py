@@ -964,7 +964,8 @@ class IdMaker:
             # Map the ID to its next suffix.
             id_suffixes: dict[str, int] = defaultdict(int)
             # Suffix non-unique IDs to make them unique.
-            used_ids = all_ids
+            used_ids = set(all_ids)
+            remaining_id_counts = id_counts.copy()
             for index, id in enumerate(resolved_ids):
                 if id_counts[id] > 1:
                     if id is HIDDEN_PARAM:
@@ -976,6 +977,9 @@ class IdMaker:
                     while new_id in used_ids:
                         id_suffixes[id] += 1
                         new_id = f"{id}{suffix}{id_suffixes[id]}"
+                    remaining_id_counts[id] -= 1
+                    if remaining_id_counts[id] == 0:
+                        used_ids.discard(id)
                     resolved_ids[index] = new_id
                     used_ids.add(new_id)
                     id_suffixes[id] += 1

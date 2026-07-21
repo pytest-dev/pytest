@@ -785,6 +785,39 @@ class TestMetafunc:
         ).make_unique_parameterset_ids()
         assert result == ["0", "1"]
 
+    def test_idmaker_unique_ids_frees_renamed_away_ids(self) -> None:
+        """Suffix collision must see ids freed after all duplicates are renamed.
+
+        Simplified resolved-id sequence: ["a10", "a10"] + ["a"] * 11
+        After renaming both "a10" entries, "a10" must be available again for
+        the 11th "a". A set that only .add()s new ids and never discards old
+        ones incorrectly yields "a11" as the last id.
+        """
+        ids = ["a10", "a10"] + ["a"] * 11
+        result = IdMaker(
+            ("x",),
+            [pytest.param(i) for i in range(len(ids))],
+            None,
+            ids,
+            None,
+            None,
+        ).make_unique_parameterset_ids()
+        assert result == [
+            "a10_0",
+            "a10_1",
+            "a0",
+            "a1",
+            "a2",
+            "a3",
+            "a4",
+            "a5",
+            "a6",
+            "a7",
+            "a8",
+            "a9",
+            "a10",
+        ]
+
     def test_parametrize_ids_exception(self, pytester: Pytester) -> None:
         """
         :param pytester: the instance of Pytester class, a temporary
