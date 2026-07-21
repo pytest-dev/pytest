@@ -1,5 +1,5 @@
-anyio[trio]==4.14.1
-django==6.0.6
+anyio[trio]==4.14.2
+django==6.0.7
 pytest-asyncio==1.4.0
 pytest-bdd==8.1.0
 pytest-cov==7.1.0
@@ -7,7 +7,7 @@ pytest-django==4.12.0
 pytest-flakes==4.0.5
 pytest-html==4.2.0
 pytest-mock==3.15.1
-pytest-rerunfailures==16.3
+pytest-rerunfailures==16.4
 pytest-sugar==1.1.1
 pytest-trio==0.8.0
 pytest-twisted==1.14.3
