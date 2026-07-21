@@ -678,6 +678,20 @@ class TestRmRf:
         nonexistent = tmp_path / "does_not_exist"
         assert _chmod_rwx(str(nonexistent)) is False
 
+    def test_chmod_rwx_returns_false_when_chmod_fails(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """_chmod_rwx returns False when os.chmod raises OSError.
+
+        A real FS layout that makes chmod fail while the path remains
+        (immutable bit, RO mount, foreign ownership) is not portable in CI,
+        so pin this branch with a monkeypatch.
+        """
+        fn = tmp_path / "file.txt"
+        fn.touch(mode=0)  # needs bits so we reach os.chmod
+        monkeypatch.setattr(os, "chmod", _raise_oserror)
+        assert _chmod_rwx(str(fn)) is False
+
     def test_chmod_rwx_returns_false_when_already_sufficient(
         self, tmp_path: Path
     ) -> None:
