@@ -344,6 +344,37 @@ def test_findsource(monkeypatch) -> None:
     assert src[lineno] == "    def x():"
 
 
+def test_findsource_filename_relative_to_syspath_entry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """findsource() falls back to searching sys.path for code objects whose
+    co_filename is relative to a directory other than the cwd, like the
+    standard traceback module does (#1139).
+
+    This happens e.g. with compiled Cython modules, whose code objects
+    carry paths relative to the project root, when pytest is run from a
+    subdirectory.
+    """
+    from _pytest._code.source import findsource
+
+    filename = "findsource_syspath_demo.py"
+    lines = ["def f():\n", "    return 1\n"]
+    (tmp_path / filename).write_text("".join(lines), encoding="utf-8")
+    co = compile("".join(lines), filename, "exec")
+    d: dict[str, Any] = {}
+    eval(co, d)
+
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    monkeypatch.chdir(empty)
+    monkeypatch.syspath_prepend(str(tmp_path))
+
+    src, lineno = findsource(d["f"].__code__)
+    assert src is not None
+    assert lineno == 0
+    assert src[lineno] == "def f():"
+
+
 def test_getfslineno() -> None:
     def f(x) -> None:
         raise NotImplementedError()
