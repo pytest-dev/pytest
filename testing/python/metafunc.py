@@ -936,7 +936,7 @@ class TestMetafunc:
         an understandable TypeError rather than being silently interpreted."""
 
         def func(x, y):
-            pass
+            raise NotImplementedError()
 
         metafunc = self.Metafunc(func)
         with pytest.raises(TypeError, match="positional arguments"):
