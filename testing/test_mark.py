@@ -1380,16 +1380,14 @@ def test_module_getattr_without_attributeerror(pytester: Pytester) -> None:
 
 
 def test_package_level_pytestmark_propagates(pytester: Pytester) -> None:
-    """pytestmark in package __init__.py must apply to tests in the package (#14737)."""
+    """Pytestmark in package __init__.py must apply to tests in the package (#14737)."""
     pkg = pytester.mkpydir("skippedpkg")
     pkg.joinpath("__init__.py").write_text(
-        "import pytest\n"
-        "pytestmark = pytest.mark.skip(reason=\"package is disabled\")\n",
+        'import pytest\npytestmark = pytest.mark.skip(reason="package is disabled")\n',
         encoding="utf-8",
     )
     pkg.joinpath("test_skipped.py").write_text(
-        "def test_should_be_skipped():\n"
-        "    assert False\n",
+        "def test_should_be_skipped():\n    assert False\n",
         encoding="utf-8",
     )
     result = pytester.runpytest("-q")
