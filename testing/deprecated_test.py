@@ -104,7 +104,9 @@ def test_class_scope_instance_method_is_deprecated(pytester: Pytester) -> None:
     result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*PytestRemovedIn10Warning: Class-scoped fixtures defined as instance methods*"]
+        [
+            "*PytestRemovedIn10Warning: Class-scoped fixtures defined as instance methods*"
+        ]
     )
 
 
