@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from _pytest import nodes
 from _pytest._nodeid import NodeId
+from _pytest._nodeid import OpaqueNodeId
 from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
@@ -71,7 +72,7 @@ def pytest_sessionfinish(session: Session) -> None:
 @dataclasses.dataclass
 class StepwiseCacheInfo:
     # The nodeid of the last failed test.
-    last_failed: NodeId | None
+    last_failed: NodeId | OpaqueNodeId | None
 
     # The number of tests in the last time --stepwise was run.
     # We use this information as a simple way to invalidate the cache information, avoiding
@@ -114,7 +115,9 @@ class StepwisePlugin:
             try:
                 last_failed: str | None = cached_dict["last_failed"]
                 return StepwiseCacheInfo(
-                    NodeId.parse(last_failed) if last_failed is not None else None,
+                    OpaqueNodeId.parse(last_failed)
+                    if last_failed is not None
+                    else None,
                     cached_dict["last_test_count"],
                     cached_dict["last_cache_date_str"],
                 )
