@@ -1,6 +1,7 @@
 # mypy: allow-untyped-defs
 from __future__ import annotations
 
+import importlib.metadata
 import os
 import shutil
 import sys
@@ -323,6 +324,85 @@ class TestPytestPluginManager:
         monkeypatch.setenv("PYTEST_PLUGINS", "nonexisting", prepend=",")
         with pytest.raises(ImportError):
             pytestpm.consider_env()
+
+    def test_consider_env_entry_point_name(
+        self, monkeypatch: MonkeyPatch, pytestpm: PytestPluginManager
+    ) -> None:
+        """PYTEST_PLUGINS accepts entry point names of installed plugins,
+        in addition to importable module names (#12624)."""
+        plugin = types.ModuleType("mytestplugin_module")
+
+        class DummyEntryPoint:
+            name = "mytestplugin"
+            group = "pytest11"
+
+            def load(self):
+                return plugin
+
+        class DummyDist:
+            version = "1.0"
+            files = ()
+            metadata = {"name": "mytestplugin"}
+            entry_points = (DummyEntryPoint(),)
+
+        monkeypatch.setattr(importlib.metadata, "distributions", lambda: (DummyDist(),))
+        monkeypatch.setenv("PYTEST_PLUGINS", "mytestplugin")
+        pytestpm.consider_env()
+        assert pytestpm.get_plugin("mytestplugin") is plugin
+
+    def test_consider_module_entry_point_name(
+        self, monkeypatch: MonkeyPatch, pytestpm: PytestPluginManager
+    ) -> None:
+        """pytest_plugins accepts entry point names of installed plugins,
+        in addition to importable module names (#12624)."""
+        plugin = types.ModuleType("mytestplugin_module")
+
+        class DummyEntryPoint:
+            name = "mytestplugin"
+            group = "pytest11"
+
+            def load(self):
+                return plugin
+
+        class DummyDist:
+            version = "1.0"
+            files = ()
+            metadata = {"name": "mytestplugin"}
+            entry_points = (DummyEntryPoint(),)
+
+        monkeypatch.setattr(importlib.metadata, "distributions", lambda: (DummyDist(),))
+        mod = types.ModuleType("temp")
+        mod.__dict__["pytest_plugins"] = ["mytestplugin"]
+        pytestpm.consider_module(mod)
+        assert pytestpm.get_plugin("mytestplugin") is plugin
+
+    def test_consider_env_entry_point_reported_in_header(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Plugins loaded by entry point name via PYTEST_PLUGINS are shown in
+        the terminal header, like with -p (#12615)."""
+        plugin = types.ModuleType("mytestplugin_module")
+
+        class DummyEntryPoint:
+            name = "mytestplugin"
+            group = "pytest11"
+
+            def load(self):
+                return plugin
+
+        class DummyDist:
+            version = "1.2.3"
+            files = ()
+            metadata = {"name": "mytestplugin"}
+            entry_points = (DummyEntryPoint(),)
+
+        monkeypatch.setattr(importlib.metadata, "distributions", lambda: (DummyDist(),))
+        monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+        monkeypatch.setenv("PYTEST_PLUGINS", "mytestplugin")
+        pytester.makepyfile("def test_ok(): pass")
+        result = pytester.runpytest_inprocess()
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["plugins: *mytestplugin-1.2.3*"])
 
     @pytest.mark.filterwarnings("always")
     def test_plugin_skip(self, pytester: Pytester, monkeypatch: MonkeyPatch) -> None:

@@ -6,7 +6,6 @@ import dataclasses
 import importlib.metadata
 import os
 from pathlib import Path
-import platform
 import re
 import sys
 import textwrap
@@ -1711,17 +1710,11 @@ def test_disable_plugin_autoload(
         and not (enable_plugin_method in ("env_var", "") and not disable_plugin_method)
     )
 
-    # __spec__ is accessed in AssertionRewritingHook.exec_module, which would be
-    # eventually called if we did a full pytest run; but it's only accessed with
-    # enable_plugin_method=="env_var" because that will early-load it.
-    # Except when autoloads aren't disabled, in which case PytestPluginManager.import_plugin
-    # bails out before importing it.. because it knows it'll be loaded later?
-    # The above seems a bit weird, but I *think* it's true.
-    if platform.python_implementation() != "PyPy":
-        assert ("__spec__" in PseudoPlugin.attrs_used) == bool(
-            enable_plugin_method == "env_var" and disable_plugin_method
-        )
-    # __spec__ is present when testing locally on pypy, but not in CI ????
+    # __spec__ is accessed in AssertionRewritingHook.exec_module, which is never
+    # reached here: since PYTEST_PLUGINS also considers entry points (#12624),
+    # the plugin is loaded through its entry point (like with -p) instead of
+    # being imported through the rewrite hook.
+    assert "__spec__" not in PseudoPlugin.attrs_used
 
 
 def test_plugin_loading_order(pytester: Pytester) -> None:

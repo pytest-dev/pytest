@@ -1151,6 +1151,7 @@ contain glob patterns.
 
 Can be declared at the **global** level in *test modules* and *conftest.py files* to register additional plugins.
 Can be either a ``str`` or ``Sequence[str]``.
+Each entry can be the name of an importable module or the entry point name of an installed plugin.
 
 .. code-block:: python
 
@@ -1159,6 +1160,10 @@ Can be either a ``str`` or ``Sequence[str]``.
 .. code-block:: python
 
     pytest_plugins = ("myapp.testsupport.tools", "myapp.testsupport.regression")
+
+.. versionchanged:: 9.2
+   Entry point names of installed plugins are now also accepted, in addition
+   to importable module names.
 
 
 .. globalvar:: pytestmark
@@ -1228,13 +1233,18 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: PYTEST_PLUGINS
 
-   Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules or plugin entry point names that
+   should be loaded as plugins:
 
    .. code-block:: bash
 
        export PYTEST_PLUGINS=mymodule.plugin,xdist
 
    See also :option:`-p`.
+
+   .. versionchanged:: 9.2
+      Entry point names of installed plugins are now also accepted, in
+      addition to importable module names.
 
 .. envvar:: PYTEST_THEME
 
@@ -1491,6 +1501,54 @@ passed multiple times. The expected format is ``name=value``. For example::
    Keep in mind however that this might cause unwanted side effects and
    even bugs depending on the OS used and plugins currently installed,
    so use it at your own risk.
+
+   See :ref:`parametrizemark`.
+
+
+.. confval:: parametrize_long_str_id_strategy
+   :type: ``str``
+   :default: ``"short"``
+
+   .. versionadded:: 9.1
+
+   Strategy for handling long ``str`` or ``bytes`` parameter values when
+   auto-generating test IDs for ``@pytest.mark.parametrize``. This only
+   affects auto-generated IDs — explicit IDs set via ``ids=[...]`` or
+   ``pytest.param(..., id=...)`` are never affected.
+
+   Available strategies:
+
+   ``short``
+       Values over 100 characters are replaced with ``<argname><index>``
+       (e.g. ``a0``, ``a1``). This is the default.
+
+   ``sha256``
+       Replace the value with its SHA-256 hex digest, producing a
+       fixed-length, content-based ID.
+
+   ``legacy``
+       Keep the full value as the ID regardless of length. Use this for
+       temporary backward compatibility during migration.
+
+   ``disallow``
+       Raise an error for values over 100 characters, requiring the user
+       to set explicit IDs.
+
+   Example configuration:
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+           [pytest]
+           parametrize_long_str_id_strategy = "sha256"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+           [pytest]
+           parametrize_long_str_id_strategy = sha256
 
    See :ref:`parametrizemark`.
 

@@ -21,6 +21,12 @@ from _pytest.deprecated import check_ispytest
 FILE_OR_DIR = "file_or_dir"
 
 
+def _get_argparse_dest(opts: Sequence[str]) -> str:
+    long_opts = [opt for opt in opts if opt.startswith("--")]
+    opt = long_opts[0] if long_opts else opts[0]
+    return opt.lstrip("-").replace("-", "_")
+
+
 @final
 class Parser:
     """Parser for command line arguments and config-file values.
@@ -355,6 +361,18 @@ class OptionGroup:
         )
         if conflict:
             raise ValueError(f"option names {conflict} already added")
+
+        if self.parser and "dest" not in attrs:
+            dest = _get_argparse_dest(opts)
+            for group in self.parser._groups:
+                for option in group.options:
+                    if option.dest == dest:
+                        raise ValueError(
+                            f"option dest {dest!r} already used by "
+                            f"{option.names()!r} (this is the option that maps to "
+                            f"dest {dest!r}); pass dest={dest!r} explicitly "
+                            "to share the destination"
+                        )
         self._addoption_inner(opts, attrs, allow_reserved=False)
 
     def _addoption(self, *opts: str, **attrs: Any) -> None:
