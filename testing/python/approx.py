@@ -1251,6 +1251,21 @@ class TestApproxDatetime:
         with pytest.raises(ValueError, match="relative tolerance can't be NaN"):
             approx(timedelta(seconds=1), rel=float("nan"))
 
+    def test_timedelta_rel_infinite(self):
+        from datetime import timedelta
+
+        expected = timedelta(seconds=1)
+        assert timedelta.max == approx(expected, rel=inf)
+        assert timedelta.min == approx(expected, rel=inf)
+        assert "not a timedelta" != approx(expected, rel=inf)
+        assert repr(approx(expected, rel=inf)) == "0:00:01 ± inf"
+
+    def test_timedelta_rel_infinite_expecting_zero(self):
+        from datetime import timedelta
+
+        with pytest.raises(ValueError, match="relative tolerance can't be NaN"):
+            approx(timedelta(0), rel=inf)
+
     def test_timedelta_abs_must_be_non_negative(self):
         from datetime import timedelta
 
