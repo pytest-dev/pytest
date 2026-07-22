@@ -360,13 +360,17 @@ Here is a simple overview, with pytest-specific bits:
 
    When committing, ``pre-commit`` will re-format the files if necessary.
 
-#. If instead of using ``tox`` you prefer to run the tests directly, then we suggest to create a virtual environment and use
-   an editable install with the ``dev`` extra::
+#. If instead of using ``tox`` you prefer to run the tests directly, then we suggest to create a virtual environment and
+   install the project together with the ``dev`` :pep:`735` dependency group (requires ``pip`` 25.1+)::
 
        $ python3 -m venv .venv
        $ source .venv/bin/activate  # Linux
        $ .venv/Scripts/activate.bat  # Windows
-       $ pip install -e ".[dev]"
+       $ pip install -e . --group dev
+
+   Alternatively, with ``uv``::
+
+       $ uv sync --group dev
 
    Afterwards, you can edit the files and run pytest normally::
 

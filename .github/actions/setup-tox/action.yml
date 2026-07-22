@@ -1,0 +1,35 @@
+name: Set up tox
+description: >
+  Install uv and tox with the tox-uv plugin using the official
+  `uv tool install tox --with tox-uv` pattern.
+
+inputs:
+  python-version:
+    description: >
+      Python version for `uv tool install --python`. When omitted, uv uses the
+      interpreter already available on PATH (for example from actions/setup-python).
+    required: false
+    default: ""
+  enable-cache:
+    description: Enable the uv cache via astral-sh/setup-uv.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+      with:
+        enable-cache: ${{ inputs.enable-cache }}
+
+    - name: Install tox
+      shell: bash
+      env:
+        PYTHON_VERSION: ${{ inputs.python-version }}
+      run: |
+        if [ -n "$PYTHON_VERSION" ]; then
+          uv tool install --python "$PYTHON_VERSION" tox --with tox-uv
+        else
+          uv tool install tox --with tox-uv
+        fi

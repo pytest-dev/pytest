@@ -601,7 +601,7 @@ class TestAssert_reprcompare:
             "",
             "At index 0 diff: b's' != b'e'",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "- b'eggs'",
             "+ b'spam'",
         ]
@@ -618,7 +618,7 @@ class TestAssert_reprcompare:
                 [0, 1],
                 [0, 2],
                 """
-                Full diff:
+                Full diff: (-: missing in left side, +: extra in left side)
                   [
                       0,
                 -     2,
@@ -633,7 +633,7 @@ class TestAssert_reprcompare:
                 {0: 1},
                 {0: 2},
                 """
-                Full diff:
+                Full diff: (-: missing in left side, +: extra in left side)
                   {
                 -     0: 2,
                 ?        ^
@@ -647,7 +647,7 @@ class TestAssert_reprcompare:
                 {0, 1},
                 {0, 2},
                 """
-                Full diff:
+                Full diff: (-: missing in left side, +: extra in left side)
                   {
                       0,
                 -     2,
@@ -695,7 +695,9 @@ class TestAssert_reprcompare:
         )
         monkeypatch.setenv("CI", "true")
         result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["E         Full diff:"])
+        result.stdout.fnmatch_lines(
+            ["E         Full diff: (-: missing in left side, +: extra in left side)"]
+        )
 
         # Setting CI to empty string is same as having it undefined
         monkeypatch.setenv("CI", "")
@@ -724,7 +726,7 @@ class TestAssert_reprcompare:
             "",
             "Right contains one more item: '" + long_d + "'",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  [",
             "      'a',",
             "      'b',",
@@ -739,7 +741,7 @@ class TestAssert_reprcompare:
             "",
             "Left contains one more item: '" + long_d + "'",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  [",
             "      'a',",
             "      'b',",
@@ -760,7 +762,7 @@ class TestAssert_reprcompare:
             "",
             "At index 0 diff: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' != 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  [",
             "+     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',",
             "      'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',",
@@ -780,7 +782,7 @@ class TestAssert_reprcompare:
             "At index 0 diff: 'a' != 'should not get wrapped'",
             "Left contains 7 more items, first extra item: 'aaaaaaaaaa'",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  [",
             "-     'should not get wrapped',",
             "+     'a',",
@@ -806,7 +808,7 @@ class TestAssert_reprcompare:
             "Differing items:",
             "{'env': {'env1': 1, 'env2': 2}} != {'env': {'env1': 1}}",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  {",
             "      'common': 1,",
             "      'env': {",
@@ -828,7 +830,7 @@ class TestAssert_reprcompare:
             "Right contains 1 more item:",
             "{'new': 1}",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  {",
             "      'env': {",
             "          'sub': {",
@@ -883,7 +885,7 @@ class TestAssert_reprcompare:
             "Right contains 2 more items:",
             "{'b': 1, 'c': 2}",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  {",
             "-     'b': 1,",
             "?      ^   ^",
@@ -901,7 +903,7 @@ class TestAssert_reprcompare:
             "Right contains 1 more item:",
             "{'a': 0}",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  {",
             "-     'a': 0,",
             "?      ^   ^",
@@ -951,7 +953,7 @@ class TestAssert_reprcompare:
             "At index 0 diff: 1 != 3",
             "Right contains one more item: 5",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  (",
             "-     3,",
             "?     ^",
@@ -971,7 +973,7 @@ class TestAssert_reprcompare:
             "At index 0 diff: 1 != 4",
             "Left contains 2 more items, first extra item: 2",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  (",
             "-     4,",
             "?     ^",
@@ -987,7 +989,7 @@ class TestAssert_reprcompare:
             "",
             "At index 1 diff: 2 != 20",
             "",
-            "Full diff:",
+            "Full diff: (-: missing in left side, +: extra in left side)",
             "  (",
             "      1,",
             "-     20,",
@@ -2402,7 +2404,7 @@ def test_fine_grained_assertion_verbosity(pytester: Pytester):
         [
             f"{p.name} .FFF                            [100%]",
             "E         At index 2 diff: 'grapes' != 'orange'",
-            "E         Full diff:",
+            "E         Full diff: (-: missing in left side, +: extra in left side)",
             "E           [",
             "E               'banana',",
             "E               'apple',",
@@ -2413,7 +2415,7 @@ def test_fine_grained_assertion_verbosity(pytester: Pytester):
             "E               'melon',",
             "E               'kiwi',",
             "E           ]",
-            "E         Full diff:",
+            "E         Full diff: (-: missing in left side, +: extra in left side)",
             "E           {",
             "E               '0': 0,",
             "E         -     '10': 10,",
@@ -2575,7 +2577,7 @@ def test_dict_extra_items_preserve_insertion_order(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(
         [
             "*Left contains 5 more items:*",
-            "*Full diff:",
+            "*Full diff: (-: missing in left side, +: extra in left side)",
             "* + *'b': 2,",
             "* + *'a': 1,",
             "* + *'d': 4,",
