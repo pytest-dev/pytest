@@ -30,7 +30,6 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest._nodeid import NodeId
-from _pytest._nodeid import parse_nodeid_path_and_names
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -304,12 +303,6 @@ def _format_exception_group_all_skipped_longrepr(
     return longrepr
 
 
-def _coerce_node_id(nodeid: str | NodeId) -> NodeId:
-    if isinstance(nodeid, NodeId):
-        return nodeid
-    return parse_nodeid_path_and_names(nodeid)
-
-
 class _WithNodeId:
     """Mixin providing the ``nodeid``/``id`` property pair, backed by
     ``self._id: NodeId``.
@@ -329,11 +322,11 @@ class _WithNodeId:
 
     @nodeid.setter
     def nodeid(self, value: str) -> None:
-        self._id = parse_nodeid_path_and_names(value)
+        self._id = NodeId.parse(value)
 
     @property
     def id(self) -> NodeId:
-        """Structured collection tree address.
+        """The structured (non-string) form of :attr:`nodeid`.
 
         .. note::
 
@@ -376,7 +369,7 @@ class TestReport(_WithNodeId, BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self._id = _coerce_node_id(nodeid)
+        self._id = NodeId.coerce(nodeid)
 
         #: A (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
@@ -517,7 +510,7 @@ class CollectReport(_WithNodeId, BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self._id = _coerce_node_id(nodeid)
+        self._id = NodeId.coerce(nodeid)
 
         #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
