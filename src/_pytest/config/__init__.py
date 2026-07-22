@@ -1205,6 +1205,12 @@ class Config:
         *,
         record: bool,
     ) -> Generator[list[warnings.WarningMessage] | None]:
+        """Apply configured filters in a warnings-catching context.
+
+        Defined here instead of _pytest.warnings as _do_configure uses
+        it before the warnings module's pytest_configure hook runs, and
+        defining it there would create an import cycle.
+        """
         config_filters = self.getini("filterwarnings")
         cmdline_filters = self.known_args_namespace.pythonwarnings or []
         with warnings.catch_warnings(record=record) as log:
