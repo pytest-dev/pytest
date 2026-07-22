@@ -14,9 +14,12 @@ import attr
 
 from _pytest import outcomes
 import _pytest.assertion as plugin
+from _pytest.assertion import _diff
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 from _pytest.assertion._compare_any import _compare_eq_cls
+from _pytest.assertion._diff import ndiff_too_slow_for_lines
+from _pytest.assertion._diff import ndiff_too_slow_for_text
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _compare_eq_text
 from _pytest.config import Config as _Config
@@ -460,6 +463,45 @@ def callequal(
     )
 
 
+class TestNdiffTooSlow:
+    """Heuristic guarding against pathologically slow diffs (#8998)."""
+
+    def test_small_input_is_not_too_slow(self) -> None:
+        assert ndiff_too_slow_for_text("spam", "eggs") is False
+        assert ndiff_too_slow_for_lines(["spam"], ["eggs"]) is False
+
+    def test_too_many_characters(self, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.setattr(_diff, "NDIFF_MAX_INPUT_SIZE", 5)
+        assert ndiff_too_slow_for_text("abc", "abcd") is True
+        assert ndiff_too_slow_for_lines(["abc"], ["abcd"]) is True
+
+    def test_too_many_lines(self, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.setattr(_diff, "DIFF_MAX_LINES", 3)
+        assert ndiff_too_slow_for_text("a\nb\nc\nd\ne", "f") is True
+        assert ndiff_too_slow_for_lines(["a", "b", "c", "d"], ["e"]) is True
+
+    def test_bounded_prefix(self) -> None:
+        # All lines fit within both limits: everything is kept.
+        assert _diff._bounded_prefix(["a", "b"], max_lines=10, max_chars=100) == [
+            "a",
+            "b",
+        ]
+        # The line limit stops collection.
+        assert _diff._bounded_prefix(["a", "b", "c"], max_lines=2, max_chars=100) == [
+            "a",
+            "b",
+        ]
+        # The line crossing the character limit is kept truncated.
+        assert _diff._bounded_prefix(["abc", "defgh"], max_lines=10, max_chars=4) == [
+            "abc",
+            "d",
+        ]
+        # When the character limit is exactly full, the next line is dropped.
+        assert _diff._bounded_prefix(["abcd", "e"], max_lines=10, max_chars=4) == [
+            "abcd"
+        ]
+
+
 class TestAssert_reprcompare:
     def test_different_types(self) -> None:
         assert callequal([0, 1], "foo") is None
@@ -521,6 +563,34 @@ class TestAssert_reprcompare:
         assert lines is not None
         assert "- " + "a" * 50 + "eggs" in lines
         assert "+ " + "a" * 50 + "spam" in lines
+
+    def test_text_diff_large_input_is_truncated(self, monkeypatch: MonkeyPatch) -> None:
+        # Inputs over the character limit show a fast, truncated diff instead
+        # of the pathologically slow full ndiff (#8998).
+        monkeypatch.setattr(_diff, "NDIFF_MAX_INPUT_SIZE", 40)
+        left = "the answer is 41\nand a tail" + "x" * 100
+        right = "the answer is 42\nand a tail" + "x" * 100
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert any("Diff too large to show in full" in line for line in lines)
+        # ndiff is still used, so the character-level detail is kept.
+        assert any(line.startswith("? ") for line in lines)
+
+    def test_text_diff_many_lines_is_truncated(self, monkeypatch: MonkeyPatch) -> None:
+        # Inputs over the line limit are diffed over a bounded prefix only, so
+        # far fewer than all the lines are shown (#8998).
+        monkeypatch.setattr(_diff, "DIFF_MAX_LINES", 4)
+        left = "\n".join(f"left line {i}" for i in range(50))
+        right = "\n".join(f"right line {i}" for i in range(50))
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert any("Diff too large to show in full" in line for line in lines)
+        # The fallback still shows which of the first lines differ.
+        assert "- right line 0" in lines
+        assert "+ left line 0" in lines
+        # Only a bounded prefix is diffed, not all 50 lines.
+        differing = [line for line in lines if line.startswith(("- ", "+ "))]
+        assert 0 < len(differing) < 50
 
     def test_multiline_text_diff(self) -> None:
         left = "foo\nspam\nbar"
@@ -681,6 +751,20 @@ class TestAssert_reprcompare:
             "At index 0 diff: 1 != 10",
             "Use -v to get more diff",
         ]
+
+    def test_iterable_large_input_is_truncated(self, monkeypatch: MonkeyPatch) -> None:
+        # Large iterables show a truncated diff over a bounded prefix of their
+        # pprint output instead of the pathologically slow full ndiff (#8998).
+        monkeypatch.setattr(_diff, "DIFF_MAX_LINES", 6)
+        left = [f"item-{i}" for i in range(50)]
+        right = [f"other-{i}" for i in range(50)]
+        lines = callequal(left, right, verbose=1)
+        assert lines is not None
+        assert "Full diff:" in lines
+        assert any("Diff too large to show in full" in line for line in lines)
+        # Only a bounded prefix is diffed, not all 50+ pprint lines.
+        differing = [line for line in lines if line.startswith(("- ", "+ "))]
+        assert 0 < len(differing) < 50
 
     def test_iterable_full_diff_ci(
         self, monkeypatch: MonkeyPatch, pytester: Pytester
