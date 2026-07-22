@@ -290,7 +290,12 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def validate_basetemp(path: str) -> str:
-    # GH 7119
+    """Validate the ``--basetemp`` argument.
+
+    :raises argparse.ArgumentTypeError: If the path is empty, the current
+        working directory, or any parent directory of it.
+    :returns: The validated path.
+    """
     msg = "basetemp must not be empty, the current working directory or any parent directory of it"
 
     # empty path
@@ -374,6 +379,7 @@ def wrap_session(
 
 
 def pytest_cmdline_main(config: Config) -> int | ExitCode:
+    """Run the main command line routine, wrapping it in a session."""
     return wrap_session(config, _main)
 
 
@@ -391,10 +397,12 @@ def _main(config: Config, session: Session) -> int | ExitCode | None:
 
 
 def pytest_collection(session: Session) -> None:
+    """Perform the test collection for the given session."""
     session.perform_collect()
 
 
 def pytest_runtestloop(session: Session) -> bool:
+    """Run the test loop for the given session."""
     if session.testsfailed and not session.config.option.continue_on_collection_errors:
         raise session.Interrupted(
             f"{session.testsfailed} error{'s' if session.testsfailed != 1 else ''} during collection"
@@ -435,6 +443,12 @@ def _in_venv(path: Path) -> bool:
 
 
 def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
+    """Return ``True`` if the given path should be ignored during collection.
+
+    Checks against ``--ignore``, ``--ignore-glob``, ``collect_ignore``,
+    ``collect_ignore_glob``, ``norecursedirs``, and virtual environment
+    detection.
+    """
     if collection_path.name == "__pycache__":
         return True
 
@@ -475,10 +489,12 @@ def pytest_ignore_collect(collection_path: Path, config: Config) -> bool | None:
 def pytest_collect_directory(
     path: Path, parent: nodes.Collector
 ) -> nodes.Collector | None:
+    """Create a :class:`Dir` collector for the given directory path."""
     return Dir.from_parent(parent, path=path)
 
 
 def pytest_collection_modifyitems(items: list[nodes.Item], config: Config) -> None:
+    """Filter collected test items based on ``--deselect`` option."""
     deselect_prefixes = tuple(config.getoption("deselect") or [])
     if not deselect_prefixes:
         return
