@@ -435,7 +435,7 @@ The ``yield_fixture`` function/decorator
 
 .. deprecated:: 6.2
 
-``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture`.
+``pytest.yield_fixture`` is a deprecated alias for :func:`pytest.fixture` and will be removed in pytest 10.
 
 It has been so for a very long time, so it can be searched/replaced safely.
 
