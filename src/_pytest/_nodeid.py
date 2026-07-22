@@ -108,11 +108,6 @@ class NodeId:
         """Return a new NodeId for a child node with the given name."""
         return NodeId(self.path, (*self.names, name), params)
 
-    @property
-    def fspath(self) -> str:
-        """The path portion of this node id."""
-        return self.path
-
     @classmethod
     def parse(cls, nodeid: str) -> Self:
         """Split a nodeid string into its path and name segments.

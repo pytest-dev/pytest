@@ -38,10 +38,6 @@ class TestNodeId:
         assert child.params == params
         assert str(child) == "a/test_b.py::test_c[1]"
 
-    def test_fspath_property(self) -> None:
-        node_id = NodeId(path="a/test_b.py", names=("test_c",))
-        assert node_id.fspath == "a/test_b.py"
-
     def test_eq_and_hash(self) -> None:
         a = NodeId(path="a/test_b.py", names=("test_c",))
         b = NodeId(path="a/test_b.py", names=("test_c",))
