@@ -2724,7 +2724,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: usefixtures
     :type: ``list[str]``
 
-    List of fixtures that will be applied to all test functions; this is semantically the same to apply
+    List of fixtures that will be applied to all test functions; this is semantically the same as applying
     the ``@pytest.mark.usefixtures`` marker to all test functions.
 
 
