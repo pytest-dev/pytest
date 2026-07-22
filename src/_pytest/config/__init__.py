@@ -1199,9 +1199,37 @@ class Config:
         """
         self._cleanup_stack.callback(func)
 
+    @contextlib.contextmanager
+    def _catch_configured_warnings(
+        self,
+        *,
+        record: bool,
+    ) -> Generator[list[warnings.WarningMessage] | None]:
+        config_filters = self.getini("filterwarnings")
+        cmdline_filters = self.known_args_namespace.pythonwarnings or []
+        with warnings.catch_warnings(record=record) as log:
+            if not sys.warnoptions:
+                # If user is not explicitly configuring warning filters, show deprecation warnings by default (#2908).
+                warnings.filterwarnings("always", category=DeprecationWarning)
+                warnings.filterwarnings("always", category=PendingDeprecationWarning)
+
+            # To be enabled in pytest 10.0.0.
+            # warnings.filterwarnings("error", category=pytest.PytestRemovedIn10Warning)
+
+            apply_warning_filters(config_filters, cmdline_filters)
+            yield log
+
     def _do_configure(self) -> None:
         assert not self._configured
         self._configured = True
+        if self.pluginmanager.hasplugin("warnings"):
+            with contextlib.ExitStack() as stack:
+                # this disables recording because the terminalreporter has
+                # finished by the time it comes to reporting logged warnings
+                # from the end of config cleanup. So for now, this is only
+                # useful for setting a warning filter with an 'error' action.
+                stack.enter_context(self._catch_configured_warnings(record=False))
+                self.add_cleanup(stack.pop_all().close)
         self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
     def _ensure_unconfigure(self) -> None:

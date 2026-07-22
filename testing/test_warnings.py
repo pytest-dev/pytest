@@ -700,6 +700,35 @@ def test_pytest_configure_warning(pytester: Pytester, recwarn) -> None:
     assert str(warning.message) == "from pytest_configure"
 
 
+@pytest.mark.parametrize("tryfirst", [True, False])
+def test_pytest_configure_warning_filter(pytester: Pytester, tryfirst: bool) -> None:
+    """Issue 10128."""
+    pytester.makeini(
+        """
+        [pytest]
+        filterwarnings =
+            ignore::UserWarning
+        """
+    )
+    pytester.makeconftest(
+        f"""
+        import warnings
+        import pytest
+
+        @pytest.hookimpl(tryfirst={tryfirst})
+        def pytest_configure():
+            warnings.warn("from pytest_configure", UserWarning)
+        """
+    )
+    pytester.makepyfile("def test_it(): pass")
+
+    result = pytester.runpytest_subprocess()
+
+    result.assert_outcomes(passed=1)
+    result.stdout.no_fnmatch_line("*from pytest_configure*")
+    result.stderr.no_fnmatch_line("*from pytest_configure*")
+
+
 class TestStackLevel:
     @pytest.fixture
     def capwarn(self, pytester: Pytester):
