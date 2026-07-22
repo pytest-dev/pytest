@@ -251,8 +251,8 @@ class Testdir:
 
 
 class LegacyTestdirPlugin:
-    @staticmethod
     @fixture
+    @staticmethod
     def testdir(pytester: Pytester) -> Testdir:
         """
         Identical to :fixture:`pytester`, and provides an instance whose methods return
@@ -294,15 +294,15 @@ class TempdirFactory:
 
 
 class LegacyTmpdirPlugin:
-    @staticmethod
     @fixture(scope="session")
+    @staticmethod
     def tmpdir_factory(request: FixtureRequest) -> TempdirFactory:
         """Return a :class:`pytest.TempdirFactory` instance for the test session."""
         # Set dynamically by pytest_configure().
         return request.config._tmpdirhandler  # type: ignore
 
-    @staticmethod
     @fixture
+    @staticmethod
     def tmpdir(tmp_path: Path) -> LEGACY_PATH:
         """Return a temporary directory (as `legacy_path`_ object)
         which is unique to each test function invocation.

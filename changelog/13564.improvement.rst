@@ -1,5 +1,4 @@
 Issue a warning when fixtures are wrapped with a decorator that prevents
-correct discovery, including ``@classmethod`` above ``@pytest.fixture``, and
-``@staticmethod`` above ``@pytest.fixture`` when the fixture still takes
-``self``/``cls`` (which then becomes a fixture dependency). Put
-``@pytest.fixture`` above those decorators on test classes.
+correct discovery, including ``@classmethod`` above ``@pytest.fixture`` and
+``@staticmethod`` above ``@pytest.fixture``. Put ``@pytest.fixture`` above
+those decorators on test classes.

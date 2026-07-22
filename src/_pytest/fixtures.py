@@ -2087,9 +2087,10 @@ class FixtureManager:
         ``obj`` must be the raw class/module ``__dict__`` entry (see
         :meth:`_lookup_in_type_dict`), not the result of ``getattr``.
 
-        ``@staticmethod`` above ``@pytest.fixture`` is especially problematic:
-        discovery may still succeed, but the first parameter can be treated as
-        a fixture dependency instead of ``self``/``cls``.
+        ``@staticmethod`` above ``@pytest.fixture`` is always warned: discovery
+        may still succeed, but the decorator order is wrong. A leading
+        ``self``/``cls`` parameter already fails as a missing fixture and needs
+        no extra special-casing here.
         """
         fixture_def = self._find_wrapped_fixture_def(obj)
         # None: not a wrapped fixture. is obj: bare FixtureFunctionDefinition.
@@ -2111,18 +2112,9 @@ class FixtureManager:
                 f"@classmethod; place @pytest.fixture above @classmethod"
             )
         elif type(obj) is staticmethod:
-            # Plugin classes intentionally use @staticmethod above @fixture so
-            # the first parameter stays a fixture arg. Only warn when the
-            # callable looks like a method (self/cls), where staticmethod
-            # incorrectly keeps that name as a fixture dependency.
-            first_param = next(iter(inspect.signature(fixture_func).parameters), None)
-            if first_param not in ("self", "cls"):
-                return
             msg = (
                 f"fixture {name!r} is wrapped by @staticmethod above "
-                f"@pytest.fixture; place @pytest.fixture above @staticmethod "
-                f"so the first parameter is treated as self/cls, not as a "
-                f"fixture argument"
+                f"@pytest.fixture; place @pytest.fixture above @staticmethod"
             )
         else:
             msg = f"cannot discover fixture {name!r} due to being wrapped in decorators"

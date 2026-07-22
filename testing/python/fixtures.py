@@ -5917,11 +5917,11 @@ def test_classmethod_above_fixture_warning(pytester: Pytester) -> None:
     "default:fixture * is wrapped by @staticmethod*:pytest.PytestWarning"
 )
 def test_staticmethod_above_fixture_warning(pytester: Pytester) -> None:
-    """@staticmethod above @pytest.fixture warns: ``self`` becomes a fixture arg.
+    """@staticmethod above @pytest.fixture always warns.
 
     Unlike ``classmethod``, discovery still finds the fixture via
-    ``staticmethod.__get__``, but ``getfuncargnames`` then keeps the first
-    parameter as a fixture dependency.
+    ``staticmethod.__get__``, so the test can pass; a leading ``self``/``cls``
+    already fails as a missing fixture without special-casing here.
     """
     pytester.makepyfile(
         """
@@ -5930,7 +5930,7 @@ def test_staticmethod_above_fixture_warning(pytester: Pytester) -> None:
         class TestFixture:
             @staticmethod
             @pytest.fixture
-            def fixt(self):
+            def fixt():
                 return 1
 
             def test_fixt(self, fixt):
@@ -5945,13 +5945,10 @@ def test_staticmethod_above_fixture_warning(pytester: Pytester) -> None:
         [
             "*test_staticmethod_above_fixture_warning.py:*: "
             "PytestWarning: fixture 'fixt' is wrapped by @staticmethod above "
-            "@pytest.fixture; place @pytest.fixture above @staticmethod "
-            "so the first parameter is treated as self/cls, not as a "
-            "fixture argument*"
+            "@pytest.fixture; place @pytest.fixture above @staticmethod*"
         ]
     )
-    result.stdout.fnmatch_lines(["*fixture 'self' not found*"])
-    result.assert_outcomes(errors=1)
+    result.assert_outcomes(passed=1)
 
 
 def test_fixture_above_classmethod_still_works(pytester: Pytester) -> None:
@@ -5983,32 +5980,6 @@ def test_fixture_above_staticmethod_still_works(pytester: Pytester) -> None:
         class TestFixture:
             @pytest.fixture
             @staticmethod
-            def fixt():
-                return 1
-
-            def test_fixt(self, fixt):
-                assert fixt == 1
-        """
-    )
-    result = pytester.runpytest("-W", "error::pytest.PytestWarning", "-v")
-    result.assert_outcomes(passed=1)
-
-
-def test_staticmethod_fixture_without_self_does_not_warn(
-    pytester: Pytester,
-) -> None:
-    """@staticmethod above @fixture is OK when there is no self/cls parameter.
-
-    Plugin classes use this pattern so the first argument stays a fixture
-    dependency instead of being bound as ``self``.
-    """
-    pytester.makepyfile(
-        """
-        import pytest
-
-        class TestFixture:
-            @staticmethod
-            @pytest.fixture
             def fixt():
                 return 1
 
