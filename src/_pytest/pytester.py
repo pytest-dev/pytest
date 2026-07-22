@@ -368,7 +368,7 @@ class HookRecorder:
                 continue
             if when and rep.when != when:
                 continue
-            if not inamepart or inamepart in rep.nodeid.split("::"):
+            if not inamepart or inamepart in (rep.id.path, *rep.id.names):
                 values.append(rep)
         if not values:
             raise ValueError(

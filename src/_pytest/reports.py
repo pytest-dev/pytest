@@ -30,6 +30,8 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.config import Config
+from _pytest.nodeid import coerce_node_id
+from _pytest.nodeid import NodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import fail
@@ -65,11 +67,28 @@ class BaseReport:
         ExceptionInfo[BaseException] | tuple[str, int, str] | str | TerminalRepr | None
     )
     sections: list[tuple[str, str]]
-    nodeid: str
     outcome: Literal["passed", "failed", "skipped"]
+
+    _id: NodeId
 
     def __init__(self, **kw: Any) -> None:
         self.__dict__.update(kw)
+
+    @property
+    def nodeid(self) -> str:
+        return str(self._id)
+
+    @nodeid.setter
+    def nodeid(self, value: str) -> None:
+        self._id = NodeId.parse(value)
+
+    @property
+    def id(self) -> NodeId:
+        """The structured (non-string) form of ``nodeid``.
+
+        :meta private:
+        """
+        return self._id
 
     if TYPE_CHECKING:
         # Can have arbitrary fields given to __init__().
@@ -162,7 +181,7 @@ class BaseReport:
     @property
     def fspath(self) -> str:
         """The path portion of the reported node, as a string."""
-        return self.nodeid.split("::")[0]
+        return self._id.path
 
     @property
     def count_towards_summary(self) -> bool:
@@ -315,9 +334,16 @@ class TestReport(BaseReport):
     # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
     wasxfail: str
 
+    _id: NodeId
+
+    @property
+    def id(self) -> NodeId:
+        """The structured (non-string) form of ``nodeid``."""
+        return self._id
+
     def __init__(
         self,
-        nodeid: str,
+        nodeid: str | NodeId,
         location: tuple[str, int | None, str],
         keywords: Mapping[str, Any],
         outcome: Literal["passed", "failed", "skipped"],
@@ -335,7 +361,7 @@ class TestReport(BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self.nodeid = nodeid
+        self._id = coerce_node_id(nodeid)
 
         #: A (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
@@ -439,7 +465,7 @@ class TestReport(BaseReport):
         for rwhen, key, content in item._report_sections:
             sections.append((f"Captured {key} {rwhen}", content))
         return cls(
-            item.nodeid,
+            item.id,
             item.location,
             keywords,
             outcome,
@@ -462,9 +488,16 @@ class CollectReport(BaseReport):
 
     when = "collect"
 
+    _id: NodeId
+
+    @property
+    def id(self) -> NodeId:
+        """The structured (non-string) form of ``nodeid``."""
+        return self._id
+
     def __init__(
         self,
-        nodeid: str,
+        nodeid: str | NodeId,
         outcome: Literal["passed", "failed", "skipped"],
         longrepr: ExceptionInfo[BaseException]
         | tuple[str, int, str]
@@ -476,7 +509,7 @@ class CollectReport(BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self.nodeid = nodeid
+        self._id = nodeid if isinstance(nodeid, NodeId) else NodeId.parse(nodeid)
 
         #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
@@ -594,6 +627,12 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
         return result
 
     d = report.__dict__.copy()
+    if "_id" in d:
+        # nodeid is a property (backed by self._id) on TestReport/CollectReport,
+        # so it's absent from __dict__ -- emit the wire-format "nodeid" string
+        # key that xdist and other consumers expect, and never expose the
+        # internal structured id object on the wire.
+        d["nodeid"] = str(d.pop("_id"))
     if hasattr(report.longrepr, "toterminal"):
         if hasattr(report.longrepr, "reprtraceback") and hasattr(
             report.longrepr, "reprcrash"
