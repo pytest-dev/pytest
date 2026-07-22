@@ -7,7 +7,7 @@ from typing import Any
 from typing import TYPE_CHECKING
 
 from _pytest import nodes
-from _pytest._nodeid import NodeId
+from _pytest._nodeid import ItemNodeId
 from _pytest._nodeid import OpaqueNodeId
 from _pytest.cacheprovider import Cache
 from _pytest.config import Config
@@ -72,7 +72,7 @@ def pytest_sessionfinish(session: Session) -> None:
 @dataclasses.dataclass
 class StepwiseCacheInfo:
     # The nodeid of the last failed test.
-    last_failed: NodeId | OpaqueNodeId | None
+    last_failed: ItemNodeId | OpaqueNodeId | None
 
     # The number of tests in the last time --stepwise was run.
     # We use this information as a simple way to invalidate the cache information, avoiding

@@ -21,6 +21,7 @@ from .pathlib import rm_rf
 from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest._nodeid import ItemNodeId
 from _pytest._nodeid import NodeId
 from _pytest._nodeid import OpaqueNodeId
 from _pytest.config import Config
@@ -434,7 +435,7 @@ class NFPlugin:
         self.config = config
         self.active = config.option.newfirst
         assert config.cache is not None
-        self.cached_nodeids: set[NodeId | OpaqueNodeId] = {
+        self.cached_nodeids: set[ItemNodeId | OpaqueNodeId] = {
             OpaqueNodeId.parse(s) for s in config.cache.get("cache/nodeids", [])
         }
 
@@ -443,8 +444,8 @@ class NFPlugin:
         res = yield
 
         if self.active:
-            new_items: dict[NodeId, nodes.Item] = {}
-            other_items: dict[NodeId, nodes.Item] = {}
+            new_items: dict[ItemNodeId, nodes.Item] = {}
+            other_items: dict[ItemNodeId, nodes.Item] = {}
             for item in items:
                 if item.id not in self.cached_nodeids:
                     new_items[item.id] = item
