@@ -1275,6 +1275,9 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         )
         self._set_cached_result(request, _FixtureResult(request, [0], None))
 
+    def cache_key(self, request: SubRequest) -> object:
+        return [0]
+
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         pass
 
