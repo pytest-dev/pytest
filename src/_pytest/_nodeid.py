@@ -16,8 +16,13 @@ create a cycle. Importing :class:`~_pytest.scope.Scope` is safe, since
 from __future__ import annotations
 
 import dataclasses
+from typing import TYPE_CHECKING
 
 from _pytest.scope import Scope
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 @dataclasses.dataclass(frozen=True)
@@ -31,7 +36,7 @@ class ParamId:
 
     ``argnames``/``scope`` are only known when built from live collection
     data (see ``Function.__init__``); a :class:`NodeId` built from a plain
-    nodeid string (see :func:`parse_nodeid_path_and_names`) never
+    nodeid string (see :meth:`NodeId.parse`) never
     constructs one of these, since the individual per-call boundaries
     cannot be reliably recovered once flattened into a string.
     """
@@ -55,7 +60,7 @@ class NodeId:
         Ordered per-``parametrize()``-call ids. Only ever non-empty when
         this ``NodeId`` was built directly from live collection data (see
         ``Function.__init__``); a ``NodeId`` built from a plain string
-        (:func:`parse_nodeid_path_and_names`) always has ``params == ()``,
+        (:meth:`parse`) always has ``params == ()``,
         with any ``[params]`` bracket instead left glued, verbatim, onto
         the last element of :attr:`names`. Both forms stringify identically
         -- see :meth:`__str__`.
@@ -109,19 +114,27 @@ class NodeId:
         """The path portion of this node id."""
         return self.path
 
+    @classmethod
+    def parse(cls, nodeid: str) -> Self:
+        """Split a nodeid string into its path and name segments.
 
-def parse_nodeid_path_and_names(nodeid: str) -> NodeId:
-    """Split a nodeid string into its path and name segments.
+        This does **not** attempt to decompose any trailing ``[params]``
+        bracket into individual :class:`ParamId` entries -- that structure only
+        exists in live collection data (see ``Function.__init__``) and cannot
+        be reliably recovered from an already-flattened string (``"-"`` is used
+        both to join sub-ids *within* one ``parametrize()`` call and to join
+        separate stacked calls, and either may itself contain value-derived
+        text with dashes in it). Any bracket present stays glued, verbatim, to
+        the last name segment, and the returned NodeId's ``params`` is always
+        empty.
+        """
+        path, *names = nodeid.split("::")
+        return cls(path, tuple(names))
 
-    This does **not** attempt to decompose any trailing ``[params]``
-    bracket into individual :class:`ParamId` entries -- that structure only
-    exists in live collection data (see ``Function.__init__``) and cannot
-    be reliably recovered from an already-flattened string (``"-"`` is used
-    both to join sub-ids *within* one ``parametrize()`` call and to join
-    separate stacked calls, and either may itself contain value-derived
-    text with dashes in it). Any bracket present stays glued, verbatim, to
-    the last name segment, and the returned NodeId's ``params`` is always
-    empty.
-    """
-    path, *names = nodeid.split("::")
-    return NodeId(path, tuple(names))
+    @classmethod
+    def coerce(cls, nodeid: str | Self) -> Self:
+        """Return ``nodeid`` unchanged if already a :class:`NodeId`, otherwise
+        :meth:`parse` it."""
+        if isinstance(nodeid, str):
+            return cls.parse(nodeid)
+        return nodeid

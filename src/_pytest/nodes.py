@@ -28,7 +28,6 @@ from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
 from _pytest._nodeid import NodeId
-from _pytest._nodeid import parse_nodeid_path_and_names
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import signature
 from _pytest.config import Config
@@ -195,10 +194,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.extra_keyword_matches: set[str] = set()
 
         if nodeid is not None:
-            if isinstance(nodeid, str):
-                self._id = parse_nodeid_path_and_names(nodeid)
-            else:
-                self._id = nodeid
+            self._id = NodeId.coerce(nodeid)
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")
@@ -280,7 +276,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
 
     @property
     def id(self) -> NodeId:
-        """Structured collection tree address.
+        """The structured (non-string) form of :attr:`nodeid`.
 
         .. note::
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from _pytest._nodeid import NodeId
 from _pytest._nodeid import ParamId
-from _pytest._nodeid import parse_nodeid_path_and_names
 from _pytest.scope import Scope
 
 
@@ -74,7 +73,7 @@ class TestNodeId:
         via_child = NodeId(path="a/test_b.py").child(
             "test_c", (ParamId(id="1", argnames=("x",), scope=Scope.Function),)
         )
-        via_string = parse_nodeid_path_and_names("a/test_b.py::test_c[1]")
+        via_string = NodeId.parse("a/test_b.py::test_c[1]")
         assert str(via_child) == str(via_string)
         assert via_child.params != via_string.params  # structurally different...
         assert via_child == via_string  # ...but logically the same node.
@@ -82,25 +81,35 @@ class TestNodeId:
         assert {via_child: "value"}[via_string] == "value"
 
 
-class TestParseNodeidPathAndNames:
+class TestNodeIdCoerce:
+    def test_from_str(self) -> None:
+        node_id = NodeId.coerce("a/test_b.py::test_c")
+        assert node_id == NodeId(path="a/test_b.py", names=("test_c",))
+
+    def test_from_node_id_returns_same_object(self) -> None:
+        node_id = NodeId(path="a/test_b.py", names=("test_c",))
+        assert NodeId.coerce(node_id) is node_id
+
+
+class TestNodeIdParse:
     def test_root(self) -> None:
-        node_id = parse_nodeid_path_and_names("")
+        node_id = NodeId.parse("")
         assert node_id == NodeId(path="")
         assert str(node_id) == ""
 
     def test_path_only(self) -> None:
-        node_id = parse_nodeid_path_and_names("a/b/test_c.py")
+        node_id = NodeId.parse("a/b/test_c.py")
         assert node_id == NodeId(path="a/b/test_c.py")
 
     def test_with_names(self) -> None:
-        node_id = parse_nodeid_path_and_names("a/test_b.py::TestC::test_d")
+        node_id = NodeId.parse("a/test_b.py::TestC::test_d")
         assert node_id == NodeId(path="a/test_b.py", names=("TestC", "test_d"))
 
     def test_bracket_stays_glued_and_params_empty(self) -> None:
         """The [params] bracket cannot be reliably decomposed from a plain
         string, so it stays glued verbatim to the last name and params is
         always empty -- see NodeId's docstring."""
-        node_id = parse_nodeid_path_and_names("a/test_b.py::test_c[1-x]")
+        node_id = NodeId.parse("a/test_b.py::test_c[1-x]")
         assert node_id.names == ("test_c[1-x]",)
         assert node_id.params == ()
 
@@ -112,11 +121,11 @@ class TestParseNodeidPathAndNames:
             "a/test_b.py::TestC::test_d",
             "a/test_b.py::test_c[1-x]",
         ):
-            assert str(parse_nodeid_path_and_names(s)) == s
+            assert str(NodeId.parse(s)) == s
 
     def test_equivalent_to_child_when_no_params(self) -> None:
         """A NodeId built from a plain string and one built via .child()
         with no params stringify identically for the same logical id."""
-        via_string = parse_nodeid_path_and_names("a/test_b.py::test_c")
+        via_string = NodeId.parse("a/test_b.py::test_c")
         via_child = NodeId(path="a/test_b.py").child("test_c")
         assert str(via_string) == str(via_child)

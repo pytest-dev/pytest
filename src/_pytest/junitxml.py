@@ -22,7 +22,6 @@ from _pytest import timing
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
 from _pytest._nodeid import NodeId
-from _pytest._nodeid import parse_nodeid_path_and_names
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
@@ -504,17 +503,15 @@ class LogXML:
             reporter.finalize()
 
     def node_reporter(self, report: BaseReport | NodeId | str) -> _NodeReporter:
-        if isinstance(report, NodeId):
-            node_id = report
-        elif isinstance(report, str):
-            node_id = parse_nodeid_path_and_names(report)
+        if isinstance(report, (NodeId, str)):
+            node_id = NodeId.coerce(report)
         elif isinstance(report, _WithNodeId):
             # Covers both TestReport and CollectReport.
             node_id = report.id
         else:
             # Some callers (and tests) pass duck-typed report-like objects
             # that are neither of the above but do provide a nodeid.
-            node_id = parse_nodeid_path_and_names(report.nodeid)
+            node_id = NodeId.parse(report.nodeid)
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
 

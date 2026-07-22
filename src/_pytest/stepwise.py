@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 from _pytest import nodes
 from _pytest._nodeid import NodeId
-from _pytest._nodeid import parse_nodeid_path_and_names
 from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
@@ -115,9 +114,7 @@ class StepwisePlugin:
             try:
                 last_failed: str | None = cached_dict["last_failed"]
                 return StepwiseCacheInfo(
-                    parse_nodeid_path_and_names(last_failed)
-                    if last_failed is not None
-                    else None,
+                    NodeId.parse(last_failed) if last_failed is not None else None,
                     cached_dict["last_test_count"],
                     cached_dict["last_cache_date_str"],
                 )

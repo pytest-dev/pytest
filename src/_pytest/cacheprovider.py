@@ -22,7 +22,6 @@ from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest._nodeid import NodeId
-from _pytest._nodeid import parse_nodeid_path_and_names
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -319,7 +318,7 @@ class LFPlugin:
         self.active = any(config.getoption(key) for key in active_keys)
         assert config.cache
         self.lastfailed: dict[NodeId, bool] = {
-            parse_nodeid_path_and_names(k): v
+            NodeId.parse(k): v
             for k, v in config.cache.get("cache/lastfailed", {}).items()
         }
         self._previously_failed_count: int | None = None
@@ -435,8 +434,7 @@ class NFPlugin:
         self.active = config.option.newfirst
         assert config.cache is not None
         self.cached_nodeids = {
-            parse_nodeid_path_and_names(s)
-            for s in config.cache.get("cache/nodeids", [])
+            NodeId.parse(s) for s in config.cache.get("cache/nodeids", [])
         }
 
     @hookimpl(wrapper=True, tryfirst=True)
