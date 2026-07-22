@@ -109,8 +109,10 @@ class TestTerminal:
             )
         elif option.verbosity == 0:
             result.stdout.fnmatch_lines(["*test_pass_skip_fail.py .sF*"])
-        else:
+        elif option.verbosity == -1:
             result.stdout.fnmatch_lines([".sF*"])
+        else:
+            result.stdout.no_fnmatch_line(".sF*")
         result.stdout.fnmatch_lines(
             ["    def test_func():", ">       assert 0", "E       assert 0"]
         )
@@ -379,6 +381,39 @@ class TestTerminal:
         result.stdout.fnmatch_lines(
             color_mapping.format_for_fnmatch(["*{red}FOO{reset}*"])
         )
+
+    def test_report_teststatus_fallback_empty_markup(self, pytester: Pytester) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_report_teststatus(report):
+                return 'foo', 'F', 'FOO'
+
+            def pytest_collection_modifyitems(items, config):
+                items[:] = []
+                rep = pytest.TestReport(
+                    nodeid='test_foobar.py::test_foobar',
+                    location=('test_foobar.py', 0, 'test_foobar'),
+                    keywords={},
+                    outcome='foo',
+                    longrepr=None,
+                    when='call',
+                )
+                rep.duration = 0.1
+                config.hook.pytest_runtest_logreport(report=rep)
+        """
+        )
+        pytester.makepyfile(
+            """
+            def test_foobar():
+                pass
+        """
+        )
+
+        result = pytester.runpytest("-v")
+        assert not result.stderr.lines
+        result.stdout.fnmatch_lines(["*FOO*"])
 
     def test_verbose_skip_reason(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -1133,6 +1168,50 @@ class TestTerminalFunctional:
         assert p1.name not in s
         assert "===" not in s
         assert "passed" not in s
+
+    def test_more_quiet_logreport_does_not_write_progress_letter(
+        self, pytester: Pytester
+    ) -> None:
+        config = pytester.parseconfig("-qq", "-p", "no:subtests")
+        tr = TerminalReporter(config)
+        tr._tw.write = mock.Mock()  # type: ignore[method-assign]
+
+        report = pytest.TestReport(
+            nodeid="test_file.py::test_pass",
+            location=("test_file.py", 0, "test_pass"),
+            keywords={},
+            outcome="passed",
+            longrepr=None,
+            when="call",
+        )
+        report.duration = 0.1
+
+        tr.pytest_runtest_logreport(report)
+
+        tr._tw.write.assert_not_called()
+
+    def test_very_quiet_shows_only_failures(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def test_pass_1():
+                pass
+
+            def test_pass_2():
+                pass
+
+            def test_fail():
+                assert 0
+
+            def test_pass_3():
+                pass
+        """
+        )
+        result = pytester.runpytest("-qq")
+        result.stdout.no_fnmatch_line("*test session starts*")
+        result.stdout.no_fnmatch_line("*collected * item*")
+        result.stdout.no_fnmatch_line("*..*")
+        result.stdout.fnmatch_lines(["*def test_fail():*", "*E*assert 0*"])
+        assert result.ret == 1
 
     @pytest.mark.parametrize(
         "params", [(), ("--collect-only",)], ids=["no-params", "collect-only"]

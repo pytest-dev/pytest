@@ -1,0 +1,2 @@
+When ``-qq`` is given, per-test progress characters (dots and letters)
+are no longer printed. Only failure details are shown.
