@@ -312,9 +312,8 @@ class PyobjMixin(nodes.Node):
             # used to avoid Function marker duplication
             if self._ALLOW_MARKERS:
                 self.own_markers.extend(get_unpacked_marks(self.obj))
-                # This assumes that `obj` is called before there is a chance
-                # to add custom keys to `self.keywords`, so no fear of overriding.
-                self.keywords.update((mark.name, mark) for mark in self.own_markers)
+                # Marker names and obj.__dict__ keys are derived by NodeKeywords
+                # on read; no need to copy them into keywords here.
         return obj
 
     @obj.setter
@@ -513,7 +512,7 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
                     name=subname,
                     callspec=callspec,
                     fixtureinfo=fixtureinfo,
-                    keywords={callspec.id: True},
+                    # callspec.id is derived by NodeKeywords; no need to copy it in.
                     originalname=name,
                 )
 
@@ -1153,28 +1152,70 @@ class IdMaker:
             return ""
 
 
+class _CallSpecMap(Mapping[str, Any]):
+    """Dense zip-map over parallel argname/value tuples for CallSpec."""
+
+    __slots__ = ("_keys", "_values")
+
+    def __init__(self, keys: tuple[str, ...], values: tuple[Any, ...]) -> None:
+        self._keys = keys
+        self._values = values
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return self._values[self._keys.index(key)]
+        except ValueError:
+            raise KeyError(key) from None
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._keys)
+
+    def __len__(self) -> int:
+        return len(self._keys)
+
+    def __contains__(self, key: object) -> bool:
+        return isinstance(key, str) and key in self._keys
+
+    def __repr__(self) -> str:
+        return f"{{{', '.join(f'{k!r}: {v!r}' for k, v in self.items())}}}"
+
+
 @final
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class CallSpec:
     """A planned parameterized invocation of a test function.
 
     Calculated during collection for a given test function's Metafunc.
     Once collection is over, each callspec is turned into a single Item
     and stored in item.callspec.
+
+    Stored densely as parallel tuples (argnames/values/indices/scopes) instead
+    of per-item dicts. Dict-like views are exposed via :class:`_CallSpecMap`.
     """
 
-    # arg name -> arg value which will be passed to a fixture of the same name.
-    params: dict[str, object] = dataclasses.field(default_factory=dict)
-    # arg name -> arg index.
-    indices: dict[str, int] = dataclasses.field(default_factory=dict)
-    # arg name -> parameter scope.
-    # Used for sorting parametrized resources.
-    _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
-    # One entry per (possibly stacked) parametrize() call, in order. Joined
-    # with "-" they form the item's name `[..]` suffix (see NodeId.params).
-    _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
+    _argnames: tuple[str, ...] = ()
+    _values: tuple[object, ...] = ()
+    _indices: tuple[int, ...] = ()
+    _scopes: tuple[Scope, ...] = ()
+    # Parts which will be added to the item's name in `[..]` separated by "-".
+    _idlist: tuple[str, ...] = ()
     # Marks which will be applied to the item.
-    marks: list[Mark] = dataclasses.field(default_factory=list)
+    marks: tuple[Mark, ...] = ()
+
+    @property
+    def params(self) -> Mapping[str, object]:
+        """Arg name -> arg value which will be passed to a fixture of same name."""
+        return _CallSpecMap(self._argnames, self._values)
+
+    @property
+    def indices(self) -> Mapping[str, int]:
+        """Arg name -> arg index."""
+        return _CallSpecMap(self._argnames, self._indices)
+
+    @property
+    def _arg2scope(self) -> Mapping[str, Scope]:
+        """Arg name -> parameter scope (for sorting parametrized resources)."""
+        return _CallSpecMap(self._argnames, self._scopes)
 
     def setmulti(
         self,
@@ -1187,28 +1228,33 @@ class CallSpec:
         param_index: int,
         nodeid: str,
     ) -> CallSpec:
-        argnames = tuple(argnames)
-        params = self.params.copy()
-        indices = self.indices.copy()
-        arg2scope = dict(self._arg2scope)
-        for arg, val in zip(argnames, valset, strict=True):
-            if arg in params:
+        argnames_t = tuple(argnames)
+        values_t = tuple(valset)
+        if len(argnames_t) != len(values_t):
+            raise ValueError("argnames and valset must have the same length")
+        for arg in argnames_t:
+            if arg in self._argnames:
                 raise nodes.Collector.CollectError(
                     f"{nodeid}: duplicate parametrization of {arg!r}"
                 )
-            params[arg] = val
-            indices[arg] = param_index
-            arg2scope[arg] = scope
-        if id is HIDDEN_PARAM:
-            idlist = self._idlist
-        else:
-            idlist = [*self._idlist, id]
         return CallSpec(
-            params=params,
-            indices=indices,
-            _arg2scope=arg2scope,
-            _idlist=idlist,
-            marks=[*self.marks, *normalize_mark_list(marks)],
+            _argnames=self._argnames + argnames_t,
+            _values=self._values + values_t,
+            _indices=self._indices + (param_index,) * len(argnames_t),
+            _scopes=self._scopes + (scope,) * len(argnames_t),
+            _idlist=self._idlist if id is HIDDEN_PARAM else (*self._idlist, id),
+            marks=(*self.marks, *normalize_mark_list(marks)),
+        )
+
+    def with_indices(self, indices: Mapping[str, int]) -> CallSpec:
+        """Return a copy with replaced per-arg indices (used after parametrize)."""
+        return CallSpec(
+            _argnames=self._argnames,
+            _values=self._values,
+            _indices=tuple(indices[name] for name in self._argnames),
+            _scopes=self._scopes,
+            _idlist=self._idlist,
+            marks=self.marks,
         )
 
     def getparam(self, name: str) -> object:
@@ -1600,10 +1646,20 @@ class Metafunc:
                     )
 
     def _recompute_direct_params_indices(self) -> None:
-        for argname, param_type in self._params_directness.items():
-            if param_type == "direct":
-                for i, callspec in enumerate(self._calls):
-                    callspec.indices[argname] = i
+        direct_args = [
+            argname
+            for argname, param_type in self._params_directness.items()
+            if param_type == "direct"
+        ]
+        if not direct_args:
+            return
+        new_calls: list[CallSpec] = []
+        for i, callspec in enumerate(self._calls):
+            indices = dict(callspec.indices)
+            for argname in direct_args:
+                indices[argname] = i
+            new_calls.append(callspec.with_indices(indices))
+        self._calls = new_calls
 
 
 def _infer_parametrize_scope(
@@ -1730,11 +1786,8 @@ class Function(PyobjMixin, nodes.Item):
 
         # todo: this is a hell of a hack
         # https://github.com/pytest-dev/pytest/issues/4569
-        # Note: the order of the updates is important here; indicates what
-        # takes priority (ctor argument over function attributes over markers).
-        # Take own_markers only; NodeKeywords handles parent traversal on its own.
-        self.keywords.update((mark.name, mark) for mark in self.own_markers)
-        self.keywords.update(self.obj.__dict__)
+        # Marker names, function attributes and callspec.id are derived by
+        # NodeKeywords on read. Only retain explicit keyword overrides here.
         if keywords:
             self.keywords.update(keywords)
 
@@ -1743,7 +1796,9 @@ class Function(PyobjMixin, nodes.Item):
             fixtureinfo = fm.getfixtureinfo(self, self.obj, self.cls)
         self._fixtureinfo: FuncFixtureInfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
-        self._initrequest()
+        # Defer TopRequest until first access or test setup (see _request).
+        self.funcargs: dict[str, object] = {}
+        self.__dict__["_request"] = None
 
     # todo: determine sound type limitations
     @classmethod
@@ -1752,8 +1807,27 @@ class Function(PyobjMixin, nodes.Item):
         return super().from_parent(parent=parent, **kw)
 
     def _initrequest(self) -> None:
-        self.funcargs: dict[str, object] = {}
-        self._request = fixtures.TopRequest(self, _ispytest=True)
+        self.funcargs = {}
+        self.__dict__["_request"] = fixtures.TopRequest(self, _ispytest=True)
+
+    @property
+    def _request(self) -> fixtures.FixtureRequest | Literal[False] | None:
+        """Fixture request for this item.
+
+        ``None`` means not yet created (lazy); first read constructs a
+        :class:`~_pytest.fixtures.TopRequest`. ``False`` means cleared after a
+        run (see :func:`_pytest.runner.runtestprotocol`) and must be restored
+        via :meth:`_initrequest` before the next run.
+        """
+        req = self.__dict__["_request"]
+        if req is None:
+            self._initrequest()
+            req = self.__dict__["_request"]
+        return cast(fixtures.FixtureRequest | Literal[False] | None, req)
+
+    @_request.setter
+    def _request(self, value: fixtures.FixtureRequest | Literal[False] | None) -> None:
+        self.__dict__["_request"] = value
 
     @property
     def function(self):
@@ -1798,7 +1872,10 @@ class Function(PyobjMixin, nodes.Item):
         self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
     def setup(self) -> None:
-        self._request._fillfixtures()
+        # _request property lazily constructs TopRequest when still deferred.
+        if self.__dict__.get("_request") is False:
+            self._initrequest()
+        self._request._fillfixtures()  # type: ignore[union-attr]
 
     def _traceback_filter(self, excinfo: ExceptionInfo[BaseException]) -> Traceback:
         if hasattr(self, "_obj") and not self.config.getoption("fulltrace", False):
