@@ -124,6 +124,12 @@ class CollectionNodeId(_CachedStrEqHash):
         """Return a new ItemNodeId for a terminal item node."""
         return ItemNodeId(self.path, (*self.names, name), params)
 
+    def to_opaque(self) -> OpaqueNodeId:
+        """Return the OpaqueNodeId form of this id, for code that only ever
+        needs a single, non-structured lookup type (e.g. cache boundaries
+        that mix live and cache-sourced ids)."""
+        return OpaqueNodeId.parse(str(self))
+
 
 @dataclasses.dataclass(frozen=True, eq=False)
 class ItemNodeId(_CachedStrEqHash):
@@ -148,6 +154,12 @@ class ItemNodeId(_CachedStrEqHash):
         if self.params:
             base += "[" + "-".join(p.id for p in self.params) + "]"
         return base
+
+    def to_opaque(self) -> OpaqueNodeId:
+        """Return the OpaqueNodeId form of this id, for code that only ever
+        needs a single, non-structured lookup type (e.g. cache boundaries
+        that mix live and cache-sourced ids)."""
+        return OpaqueNodeId.parse(str(self))
 
 
 #: Either kind of live-collection node id, for code that genuinely needs to
@@ -203,3 +215,14 @@ def coerce_node_id(nodeid: str | NodeId) -> NodeId | OpaqueNodeId:
     if isinstance(nodeid, (CollectionNodeId, ItemNodeId)):
         return nodeid
     return OpaqueNodeId.parse(nodeid)
+
+
+def to_opaque_node_id(node_id: NodeId | OpaqueNodeId) -> OpaqueNodeId:
+    """Return ``node_id`` unchanged if already an :class:`OpaqueNodeId`,
+    otherwise convert it via :meth:`~CollectionNodeId.to_opaque`. Useful for
+    normalizing a mixed ``NodeId | OpaqueNodeId`` value (e.g. a report's
+    ``.id``, which may be live or reconstructed from JSON) down to a single
+    lookup type."""
+    if isinstance(node_id, OpaqueNodeId):
+        return node_id
+    return node_id.to_opaque()
