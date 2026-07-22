@@ -30,6 +30,8 @@ from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest._nodeid import coerce_node_id
+from _pytest._nodeid import CollectionNodeId
+from _pytest._nodeid import ItemNodeId
 from _pytest._nodeid import NodeId
 from _pytest._nodeid import OpaqueNodeId
 from _pytest.config import Config
@@ -356,9 +358,23 @@ class TestReport(_WithNodeId, BaseReport):
     # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
     wasxfail: str
 
+    _id: ItemNodeId | OpaqueNodeId
+
+    @property
+    def id(self) -> ItemNodeId | OpaqueNodeId:
+        """The structured (non-string) form of ``nodeid``.
+
+        .. note::
+
+            Experimental/internal: the shape of
+            :class:`~_pytest._nodeid.ItemNodeId` may change in future
+            releases.
+        """
+        return self._id
+
     def __init__(
         self,
-        nodeid: str | NodeId,
+        nodeid: str | ItemNodeId,
         location: tuple[str, int | None, str],
         keywords: Mapping[str, Any],
         outcome: Literal["passed", "failed", "skipped"],
@@ -503,9 +519,23 @@ class CollectReport(_WithNodeId, BaseReport):
 
     when = "collect"
 
+    _id: CollectionNodeId | OpaqueNodeId
+
+    @property
+    def id(self) -> CollectionNodeId | OpaqueNodeId:
+        """The structured (non-string) form of ``nodeid``.
+
+        .. note::
+
+            Experimental/internal: the shape of
+            :class:`~_pytest._nodeid.CollectionNodeId` may change in future
+            releases.
+        """
+        return self._id
+
     def __init__(
         self,
-        nodeid: str | NodeId,
+        nodeid: str | CollectionNodeId,
         outcome: Literal["passed", "failed", "skipped"],
         longrepr: None
         | ExceptionInfo[BaseException]

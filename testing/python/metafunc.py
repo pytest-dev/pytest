@@ -17,7 +17,7 @@ from hypothesis import strategies
 
 from _pytest import fixtures
 from _pytest import python
-from _pytest._nodeid import NodeId
+from _pytest._nodeid import ItemNodeId
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
@@ -81,13 +81,13 @@ class TestMetafunc:
 
         @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
-            _id: NodeId
+            _id: ItemNodeId
             obj: object
 
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(
-            obj=func, _id=NodeId(path="mock", names=("nodeid",))
+            obj=func, _id=ItemNodeId(path="mock", names=("nodeid",))
         )
         definition._fixtureinfo = fixtureinfo
         definition.session = SessionMock(config, FixtureManagerMock({}))

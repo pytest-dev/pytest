@@ -91,6 +91,8 @@ nitpick_ignore = [
     ("py:class", "_pytest.reports.BaseReport"),
     ("py:class", "_pytest.reports._WithNodeId"),
     ("py:class", "_pytest._nodeid.NodeId"),
+    ("py:class", "_pytest._nodeid.CollectionNodeId"),
+    ("py:class", "_pytest._nodeid.ItemNodeId"),
     ("py:class", "_pytest._nodeid.OpaqueNodeId"),
     # Sphinx bugs(?)
     ("py:class", "RewriteHook"),

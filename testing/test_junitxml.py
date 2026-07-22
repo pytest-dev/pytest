@@ -19,6 +19,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.pytester import RunResult
 from _pytest.reports import BaseReport
+from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.stash import Stash
 import _pytest.timing
@@ -1258,8 +1259,8 @@ def test_unicode_issue368(pytester: Pytester) -> None:
     log.pytest_sessionstart()
     node_reporter = log._opentestcase(test_report)
     node_reporter.append_failure(test_report)
-    node_reporter.append_collect_error(test_report)
-    node_reporter.append_collect_skipped(test_report)
+    node_reporter.append_collect_error(cast(CollectReport, test_report))
+    node_reporter.append_collect_skipped(cast(CollectReport, test_report))
     node_reporter.append_error(test_report)
     test_report.longrepr = "filename", 1, ustr
     node_reporter.append_skipped(test_report)

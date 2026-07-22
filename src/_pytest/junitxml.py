@@ -30,6 +30,7 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.reports import _WithNodeId
 from _pytest.reports import BaseReport
+from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.stash import StashKey
 from _pytest.terminal import TerminalReporter
@@ -116,19 +117,21 @@ class _NodeReporter:
             return properties
         return None
 
-    def record_testreport(self, testreport: TestReport) -> None:
+    def record_testreport(self, testreport: TestReport | CollectReport) -> None:
         names = mangle_test_address(testreport.nodeid)
         existing_attrs = self.attrs
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
+        location = testreport.location
+        assert location is not None
         attrs: dict[str, str] = {
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
-            "file": testreport.location[0],
+            "file": location[0],
         }
-        if testreport.location[1] is not None:
-            attrs["line"] = str(testreport.location[1])
+        if location[1] is not None:
+            attrs["line"] = str(location[1])
         if hasattr(testreport, "url"):
             attrs["url"] = testreport.url
         self.attrs = attrs
@@ -209,12 +212,12 @@ class _NodeReporter:
             message = bin_xml_escape(message)
             self._add_simple("failure", message, str(report.longrepr))
 
-    def append_collect_error(self, report: TestReport) -> None:
+    def append_collect_error(self, report: CollectReport) -> None:
         # msg = str(report.longrepr.reprtraceback.extraline)
         assert report.longrepr is not None
         self._add_simple("error", "collection failure", str(report.longrepr))
 
-    def append_collect_skipped(self, report: TestReport) -> None:
+    def append_collect_skipped(self, report: CollectReport) -> None:
         self._add_simple("skipped", "collection skipped", str(report.longrepr))
 
     def append_error(self, report: TestReport) -> None:
@@ -536,7 +539,7 @@ class LogXML:
         if key in self.stats:
             self.stats[key] += 1
 
-    def _opentestcase(self, report: TestReport) -> _NodeReporter:
+    def _opentestcase(self, report: TestReport | CollectReport) -> _NodeReporter:
         reporter = self.node_reporter(report)
         reporter.record_testreport(report)
         return reporter
@@ -643,7 +646,7 @@ class LogXML:
             reporter = self.node_reporter(report)
             reporter.duration += getattr(report, "duration", 0.0)
 
-    def pytest_collectreport(self, report: TestReport) -> None:
+    def pytest_collectreport(self, report: CollectReport) -> None:
         if not report.passed:
             reporter = self._opentestcase(report)
             if report.failed:

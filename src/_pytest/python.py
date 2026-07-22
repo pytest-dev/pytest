@@ -1170,7 +1170,7 @@ class CallSpec:
     # Used for sorting parametrized resources.
     _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
     # One entry per (possibly stacked) parametrize() call, in order. Joined
-    # with "-" they form the item's name `[..]` suffix; see NodeId.params.
+    # with "-" they form the item's name `[..]` suffix; see ItemNodeId.params.
     _idlist: Sequence[ParamId] = dataclasses.field(default_factory=tuple)
     # Marks which will be applied to the item.
     marks: list[Mark] = dataclasses.field(default_factory=list)
@@ -1705,15 +1705,15 @@ class Function(PyobjMixin, nodes.Item):
         fixtureinfo: FuncFixtureInfo | None = None,
         originalname: str | None = None,
     ) -> None:
-        # Build the NodeId explicitly from callspec (when parametrized)
+        # Build the ItemNodeId explicitly from callspec (when parametrized)
         # instead of going through Node.__init__'s generic
-        # `parent.id.child(name)` fallback, which would only see `name`
+        # `parent.id.leaf(name, ())` fallback, which would only see `name`
         # (with any "[params]" suffix already glued on) and couldn't
         # recover the per-parametrize()-call structure captured in
         # callspec.param_ids.
         base_name = originalname or name
         params = callspec.param_ids if callspec is not None else ()
-        node_id = parent.id.child(base_name, params)
+        node_id = parent.id.leaf(base_name, params)
         super().__init__(name, parent, config=config, session=session, nodeid=node_id)
 
         if callobj is not NOTSET:

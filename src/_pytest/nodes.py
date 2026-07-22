@@ -27,6 +27,8 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
+from _pytest._nodeid import CollectionNodeId
+from _pytest._nodeid import ItemNodeId
 from _pytest._nodeid import NodeId
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import signature
@@ -199,17 +201,25 @@ class Node(abc.ABC, metaclass=NodeMeta):
             else:
                 # Every real caller here passes either "" (session root) or
                 # a bare collector path (never containing "::") -- Function,
-                # the only node type with real params/brackets, always
-                # pre-builds a full NodeId via parent.id.child(...) instead
-                # of reaching this branch. So this split can never see a
-                # "[params]" bracket, and .params legitimately staying ()
-                # here is correct, not a lossy guess.
+                # the only Item with real params/brackets, always pre-builds
+                # a full ItemNodeId via parent.id.leaf(...) instead of
+                # reaching this branch. So this is always a Collector id.
                 node_path, *names = nodeid.split("::")
-                self._id = NodeId(node_path, tuple(names))
+                self._id = CollectionNodeId(node_path, tuple(names))
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")
-            self._id = self.parent.id.child(self.name)
+            # Node.parent is always structurally a Collector -- Items are
+            # always leaves and never have children. This assert is both a
+            # real runtime safety net and what lets mypy narrow
+            # self.parent.id to CollectionNodeId below.
+            assert isinstance(self.parent, Collector), (
+                "Node.parent is always a Collector; an Item can never be a parent"
+            )
+            if isinstance(self, Item):
+                self._id = self.parent.id.leaf(self.name, ())
+            else:
+                self._id = self.parent.id.child(self.name)
 
         #: A place where plugins can store information on the node for their
         #: own use.
@@ -517,6 +527,20 @@ class Collector(Node, abc.ABC):
     the collection tree.
     """
 
+    _id: CollectionNodeId
+
+    @property
+    def id(self) -> CollectionNodeId:
+        """The structured (non-string) form of ``nodeid``.
+
+        .. note::
+
+            Experimental/internal: the shape of
+            :class:`~_pytest._nodeid.CollectionNodeId` may change in future
+            releases.
+        """
+        return self._id
+
     class CollectError(Exception):
         """An error during collection, contains a custom message."""
 
@@ -672,6 +696,20 @@ class Item(Node, abc.ABC):
     Note that for a single function there might be multiple test invocation items.
     """
 
+    _id: ItemNodeId
+
+    @property
+    def id(self) -> ItemNodeId:
+        """The structured (non-string) form of ``nodeid``.
+
+        .. note::
+
+            Experimental/internal: the shape of
+            :class:`~_pytest._nodeid.ItemNodeId` may change in future
+            releases.
+        """
+        return self._id
+
     nextitem = None
 
     def __init__(
@@ -680,7 +718,7 @@ class Item(Node, abc.ABC):
         parent=None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: str | NodeId | None = None,
+        nodeid: ItemNodeId | None = None,
         **kw,
     ) -> None:
         # The first two arguments are intentionally passed positionally,
