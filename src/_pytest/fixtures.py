@@ -1273,9 +1273,10 @@ def resolve_fixture_function(
 ) -> _FixtureFunc[FixtureValue]:
     """Get the actual callable that can be called to obtain the fixture
     value."""
-    __tracebackhide__ = lambda e: issubclass(
-        e.type, CLASS_FIXTURE_INSTANCE_METHOD.category
-    )
+
+    def __tracebackhide__(e):
+        return issubclass(e.type, CLASS_FIXTURE_INSTANCE_METHOD.category)
+
     fixturefunc = fixturedef.func
     # The fixture function needs to be bound to the actual
     # request.instance so that code working with "fixturedef" behaves
