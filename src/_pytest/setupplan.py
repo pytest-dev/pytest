@@ -3,6 +3,7 @@ from __future__ import annotations
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import _FixtureResult
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import SubRequest
 import pytest
@@ -26,7 +27,7 @@ def pytest_fixture_setup(
     # Will return a dummy fixture if the setuponly option is provided.
     if request.config.option.setupplan:
         my_cache_key = fixturedef.cache_key(request)
-        fixturedef._set_cached_result(request, (None, my_cache_key, None))
+        fixturedef._set_cached_result(request, _FixtureResult(None, my_cache_key, None))
         return fixturedef._get_cached_result(request)
     return None
 

@@ -26,6 +26,7 @@ from typing import Final
 from typing import final
 from typing import Generic
 from typing import Literal
+from typing import NamedTuple
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -96,23 +97,22 @@ FixtureValue = TypeVar("FixtureValue", covariant=True)
 FixtureFunction = Callable[..., object]
 # The type of a fixture function (type alias generic in fixture value).
 _FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValue]]
+
+
+class _FixtureResult(NamedTuple, Generic[FixtureValue]):
+    value: FixtureValue
+    cache_key: object
+    exception_and_traceback: None
+
+
+class _FixtureException(NamedTuple):
+    value: None
+    cache_key: object
+    exception_and_traceback: tuple[BaseException, types.TracebackType | None]
+
+
 # The type of FixtureDef.cached_result (type alias generic in fixture value).
-_FixtureCachedResult = (
-    tuple[
-        # The result.
-        FixtureValue,
-        # Cache key.
-        object,
-        None,
-    ]
-    | tuple[
-        None,
-        # Cache key.
-        object,
-        # The exception and the original traceback.
-        tuple[BaseException, types.TracebackType | None],
-    ]
-)
+_FixtureCachedResult = _FixtureResult[FixtureValue] | _FixtureException
 
 
 def pytest_sessionstart(session: Session) -> None:
@@ -634,7 +634,7 @@ class FixtureRequest(abc.ABC):
             f'The fixture value for "{argname}" is not available.  '
             "This can happen when the fixture has already been torn down."
         )
-        return fixture_result[0]
+        return fixture_result.value
 
     def _iter_chain(self) -> Iterator[SubRequest]:
         """Yield all SubRequests in the chain, from self up.
@@ -1198,7 +1198,7 @@ class FixtureDef(Generic[FixtureValue]):
         # Check for (and return) cached value/exception.
         if (fixture_result := self._get_cached_result(request)) is not None:
             request_cache_key = self.cache_key(request)
-            cache_key = fixture_result[1]
+            cache_key = fixture_result.cache_key
             try:
                 # Attempt to make a normal == check: this might fail for objects
                 # which do not implement the standard comparison (like numpy arrays -- #6497).
@@ -1208,11 +1208,11 @@ class FixtureDef(Generic[FixtureValue]):
                 cache_hit = request_cache_key is cache_key
 
             if cache_hit:
-                if fixture_result[2] is not None:
-                    exc, exc_tb = fixture_result[2]
+                if fixture_result.exception_and_traceback is not None:
+                    exc, exc_tb = fixture_result.exception_and_traceback
                     raise exc.with_traceback(exc_tb)
                 else:
-                    return fixture_result[0]
+                    return fixture_result.value
             # We have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one.
             self.finish(request)
@@ -1270,7 +1270,7 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
             node=request.node,
             _ispytest=True,
         )
-        self._set_cached_result(request, (request, [0], None))
+        self._set_cached_result(request, _FixtureResult(request, [0], None))
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         pass
@@ -1350,10 +1350,11 @@ def pytest_fixture_setup(
             # wouldn't know which test skipped.
             e._use_item_location = True
         fixturedef._set_cached_result(
-            request, (None, my_cache_key, (e, e.__traceback__))
+            request,
+            _FixtureException(None, my_cache_key, (e, e.__traceback__)),
         )
         raise
-    fixturedef._set_cached_result(request, (result, my_cache_key, None))
+    fixturedef._set_cached_result(request, _FixtureResult(result, my_cache_key, None))
     return result
 
 
