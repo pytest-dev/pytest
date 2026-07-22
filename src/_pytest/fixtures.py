@@ -1139,6 +1139,9 @@ class FixtureDef(Generic[FixtureValue]):
     ) -> None:
         request.session._setupstate.fixture_cache[self] = value
 
+    def _invalidate_fixture_cache(self, request: FixtureRequest) -> None:
+        del request.session._setupstate.fixture_cache[self]
+
     @property
     def scope(self) -> ScopeName:
         """Scope string, one of "function", "class", "module", "package", "session"."""
@@ -1169,7 +1172,7 @@ class FixtureDef(Generic[FixtureValue]):
         # Even if finalization fails, we invalidate the cached fixture
         # value and remove all finalizers because they may be bound methods
         # which will keep instances alive.
-        self._set_cached_result(request, None)
+        self._invalidate_fixture_cache(request)
         self._finalizers.clear()
         if len(exceptions) == 1:
             raise exceptions[0]
