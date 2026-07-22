@@ -1,0 +1,1 @@
+``pytest.approx()`` now supports infinite relative tolerances for ``datetime.timedelta`` values instead of raising ``OverflowError``.
