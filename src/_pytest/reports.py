@@ -333,7 +333,7 @@ class _WithNodeId:
 
     @property
     def id(self) -> NodeId | OpaqueNodeId:
-        """The structured (non-string) form of :attr:`nodeid`.
+        """The structured (non-string) form of ``nodeid``.
 
         .. note::
 
