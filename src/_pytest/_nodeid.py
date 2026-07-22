@@ -81,29 +81,28 @@ class NodeId:
     path: str
     names: tuple[str, ...] = ()
     params: tuple[ParamId, ...] = ()
-    # Cached str(self) -- see __post_init__. Not a real constructor
-    # parameter: excluded from __init__/__repr__ via field(init=False).
-    _str: str = dataclasses.field(init=False, repr=False)
 
-    def __post_init__(self) -> None:
+    def __str__(self) -> str:
+        # Lazily compute and cache the joined string on first access -- it's
+        # used on every __eq__/__hash__ call (see the class docstring), so
+        # it's worth not repeating the join/format work on every comparison.
+        # Not a dataclass field: just an ad hoc cached attribute.
+        cached: str | None = getattr(self, "_str", None)
+        if cached is not None:
+            return cached
         base = "::".join((self.path, *self.names))
         if self.params:
             base += "[" + "-".join(p.id for p in self.params) + "]"
-        # NodeId is frozen and str(self) is used on every __eq__/__hash__
-        # call (see the class docstring) -- compute it once here rather
-        # than repeating the join/format work on every comparison.
         object.__setattr__(self, "_str", base)
-
-    def __str__(self) -> str:
-        return self._str
+        return base
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, NodeId):
             return NotImplemented
-        return self._str == other._str
+        return str(self) == str(other)
 
     def __hash__(self) -> int:
-        return hash(self._str)
+        return hash(str(self))
 
     def child(self, name: str, params: tuple[ParamId, ...] = ()) -> NodeId:
         """Return a new NodeId for a child node with the given name."""
