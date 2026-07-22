@@ -117,23 +117,22 @@ class NodeId:
     def parse(cls, nodeid: str) -> Self:
         """Split a nodeid string into its path and name segments.
 
-        This does **not** attempt to decompose any trailing ``[params]``
+        **Use with caution**: This does **not** attempt to decompose any trailing ``[params]``
         bracket into individual :class:`ParamId` entries -- that structure only
         exists in live collection data (see ``Function.__init__``) and cannot
-        be reliably recovered from an already-flattened string (``"-"`` is used
-        both to join sub-ids *within* one ``parametrize()`` call and to join
-        separate stacked calls, and either may itself contain value-derived
-        text with dashes in it). Any bracket present stays glued, verbatim, to
-        the last name segment, and the returned NodeId's ``params`` is always
-        empty.
+        be reliably recovered from an already-flattened string.
         """
         path, *names = nodeid.split("::")
         return cls(path, tuple(names))
 
     @classmethod
     def coerce(cls, nodeid: str | Self) -> Self:
-        """Return ``nodeid`` unchanged if already a :class:`NodeId`, otherwise
-        :meth:`parse` it."""
+        """
+        Return ``nodeid`` unchanged if already a :class:`NodeId`, otherwise
+        :meth:`parse` it.
+
+        **Use with caution**, see :meth:`parse`.
+        """
         if isinstance(nodeid, str):
             return cls.parse(nodeid)
         return nodeid
