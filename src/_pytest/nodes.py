@@ -194,7 +194,18 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.extra_keyword_matches: set[str] = set()
 
         if nodeid is not None:
-            self._id = NodeId.coerce(nodeid)
+            if isinstance(nodeid, NodeId):
+                self._id = nodeid
+            else:
+                # Every real caller here passes either "" (session root) or
+                # a bare collector path (never containing "::") -- Function,
+                # the only node type with real params/brackets, always
+                # pre-builds a full NodeId via parent.id.child(...) instead
+                # of reaching this branch. So this split can never see a
+                # "[params]" bracket, and .params legitimately staying ()
+                # here is correct, not a lossy guess.
+                node_path, *names = nodeid.split("::")
+                self._id = NodeId(node_path, tuple(names))
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")

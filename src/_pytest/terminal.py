@@ -39,6 +39,7 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 from _pytest._nodeid import NodeId
+from _pytest._nodeid import OpaqueNodeId
 import _pytest._version
 from _pytest.compat import running_on_ci
 from _pytest.config import _PluggyPlugin
@@ -401,8 +402,8 @@ class TerminalReporter:
         # isatty should be a method but was wrongly implemented as a boolean.
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
-        self._progress_nodeids_reported: set[NodeId] = set()
-        self._timing_nodeids_reported: set[NodeId] = set()
+        self._progress_nodeids_reported: set[NodeId | OpaqueNodeId] = set()
+        self._timing_nodeids_reported: set[NodeId | OpaqueNodeId] = set()
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -1170,7 +1171,7 @@ class TerminalReporter:
                         self._outrep_summary(rep)
                     self._handle_teardown_sections(rep.id)
 
-    def _get_teardown_reports(self, node_id: NodeId) -> list[TestReport]:
+    def _get_teardown_reports(self, node_id: NodeId | OpaqueNodeId) -> list[TestReport]:
         reports = self.getreports("")
         return [
             report
@@ -1178,7 +1179,7 @@ class TerminalReporter:
             if report.when == "teardown" and report.id == node_id
         ]
 
-    def _handle_teardown_sections(self, node_id: NodeId) -> None:
+    def _handle_teardown_sections(self, node_id: NodeId | OpaqueNodeId) -> None:
         for report in self._get_teardown_reports(node_id):
             self.print_teardown_sections(report)
 

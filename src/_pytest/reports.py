@@ -29,7 +29,9 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest._nodeid import coerce_node_id
 from _pytest._nodeid import NodeId
+from _pytest._nodeid import OpaqueNodeId
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -305,7 +307,12 @@ def _format_exception_group_all_skipped_longrepr(
 
 class _WithNodeId:
     """Mixin providing the ``nodeid``/``id`` property pair, backed by
-    ``self._id: NodeId``.
+    ``self._id: NodeId | OpaqueNodeId``.
+
+    A report's id is a ``NodeId`` when built from live collection data (see
+    ``TestReport.from_item_and_call``) and an ``OpaqueNodeId`` when built
+    from an external string (e.g. JSON-deserialized via ``_from_json``, or
+    assigned through the ``nodeid`` setter below).
 
     Deliberately not added to :class:`BaseReport` itself: several tests
     define ad hoc ``BaseReport`` subclasses that set ``nodeid`` as a plain
@@ -314,7 +321,7 @@ class _WithNodeId:
     those subclasses are unaffected regardless of this plumbing.
     """
 
-    _id: NodeId
+    _id: NodeId | OpaqueNodeId
 
     @property
     def nodeid(self) -> str:
@@ -322,10 +329,10 @@ class _WithNodeId:
 
     @nodeid.setter
     def nodeid(self, value: str) -> None:
-        self._id = NodeId.parse(value)
+        self._id = OpaqueNodeId.parse(value)
 
     @property
-    def id(self) -> NodeId:
+    def id(self) -> NodeId | OpaqueNodeId:
         """The structured (non-string) form of :attr:`nodeid`.
 
         .. note::
@@ -369,7 +376,7 @@ class TestReport(_WithNodeId, BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self._id = NodeId.coerce(nodeid)
+        self._id = coerce_node_id(nodeid)
 
         #: A (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
@@ -510,7 +517,7 @@ class CollectReport(_WithNodeId, BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self._id = NodeId.coerce(nodeid)
+        self._id = coerce_node_id(nodeid)
 
         #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome

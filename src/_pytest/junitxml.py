@@ -21,7 +21,9 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
+from _pytest._nodeid import coerce_node_id
 from _pytest._nodeid import NodeId
+from _pytest._nodeid import OpaqueNodeId
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
@@ -85,7 +87,7 @@ families["xunit2"] = families["_base"]
 
 
 class _NodeReporter:
-    def __init__(self, node_id: NodeId, xml: LogXML) -> None:
+    def __init__(self, node_id: NodeId | OpaqueNodeId, xml: LogXML) -> None:
         self.id = node_id
         self.xml = xml
         self.add_stats = self.xml.add_stats
@@ -478,7 +480,9 @@ class LogXML:
         self.stats: dict[str, int] = dict.fromkeys(
             ["error", "passed", "failure", "skipped"], 0
         )
-        self.node_reporters: dict[tuple[NodeId, object], _NodeReporter] = {}
+        self.node_reporters: dict[
+            tuple[NodeId | OpaqueNodeId, object], _NodeReporter
+        ] = {}
         self.node_reporters_ordered: list[_NodeReporter] = []
         self.global_properties: list[tuple[str, str]] = []
 
@@ -504,14 +508,14 @@ class LogXML:
 
     def node_reporter(self, report: BaseReport | NodeId | str) -> _NodeReporter:
         if isinstance(report, (NodeId, str)):
-            node_id = NodeId.coerce(report)
+            node_id = coerce_node_id(report)
         elif isinstance(report, _WithNodeId):
             # Covers both TestReport and CollectReport.
             node_id = report.id
         else:
             # Some callers (and tests) pass duck-typed report-like objects
             # that are neither of the above but do provide a nodeid.
-            node_id = NodeId.parse(report.nodeid)
+            node_id = OpaqueNodeId.parse(report.nodeid)
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
 

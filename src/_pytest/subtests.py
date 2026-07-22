@@ -21,6 +21,7 @@ import pluggy
 from _pytest._code import ExceptionInfo
 from _pytest._io.saferepr import saferepr
 from _pytest._nodeid import NodeId
+from _pytest._nodeid import OpaqueNodeId
 from _pytest.capture import CaptureFixture
 from _pytest.capture import FDCapture
 from _pytest.capture import SysCapture
@@ -355,9 +356,9 @@ def pytest_report_from_serializable(data: dict[str, Any]) -> SubtestReport | Non
     return None
 
 
-# Dict of NodeId -> number of failed subtests.
+# Dict of NodeId/OpaqueNodeId -> number of failed subtests.
 # Used to fail top-level tests that passed but contain failed subtests.
-failed_subtests_key = StashKey[defaultdict[NodeId, int]]()
+failed_subtests_key = StashKey[defaultdict[NodeId | OpaqueNodeId, int]]()
 
 
 def pytest_configure(config: Config) -> None:
