@@ -179,7 +179,11 @@ class OpaqueNodeId(_CachedStrEqHash):
     def parse(cls, nodeid: str) -> OpaqueNodeId:
         """Split a nodeid string into its path and an opaque remainder."""
         path, sep, rest = nodeid.partition("::")
-        return cls(path, rest if sep else None)
+        self = cls(path, rest if sep else None)
+        # We already have the original string in hand -- cache it directly
+        # as _str instead of letting __str__ reconstruct it later.
+        object.__setattr__(self, "_str", nodeid)
+        return self
 
     def _build_str(self) -> str:
         return self.path if self.rest is None else f"{self.path}::{self.rest}"
