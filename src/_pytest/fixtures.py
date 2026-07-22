@@ -76,6 +76,7 @@ from _pytest.scope import HIGH_SCOPES
 from _pytest.scope import Scope
 from _pytest.scope import ScopeName
 from _pytest.warning_types import PytestWarning
+from _pytest.warning_types import warn_explicit_for
 
 
 if sys.version_info < (3, 11):
@@ -1409,7 +1410,9 @@ class FixtureFunctionDefinition:
     def __repr__(self) -> str:
         return f"<pytest_fixture({self._fixture_function})>"
 
-    def __get__(self, instance, owner=None):
+    def __get__(
+        self, instance: object, owner: type | None = None
+    ) -> FixtureFunctionDefinition:
         """Behave like a method if the function it was applied to was a method."""
         return FixtureFunctionDefinition(
             function=self._fixture_function,
@@ -2024,6 +2027,99 @@ class FixtureManager:
                 # Global plugin autouse fixtures go under Session.
                 self._node_autousenames.setdefault(self.session, []).append(name)
 
+    def _lookup_in_type_dict(
+        self, owner: type | types.ModuleType, name: str
+    ) -> object | None:
+        """Return ``name`` from ``owner``'s ``__dict__`` without invoking descriptors.
+
+        For classes, walks the MRO so inherited ``staticmethod`` /
+        ``classmethod`` wrappers are visible. ``getattr`` / descriptor
+        ``__get__`` would hide those wrappers (bound methods, or the bare
+        :class:`FixtureFunctionDefinition` under a ``staticmethod``).
+        """
+        if isinstance(owner, types.ModuleType):
+            return owner.__dict__.get(name)
+        for base in owner.__mro__:
+            try:
+                return cast(object, base.__dict__[name])
+            except KeyError:
+                continue
+        return None
+
+    def _find_wrapped_fixture_def(
+        self, obj: object
+    ) -> FixtureFunctionDefinition | None:
+        """Find a FixtureFunctionDefinition in ``obj``'s ``__wrapped__`` chain.
+
+        Uses :func:`inspect.unwrap` with a ``stop`` callback so unwrapping does
+        not continue past :class:`FixtureFunctionDefinition` (which itself sets
+        ``__wrapped__`` via :func:`functools.update_wrapper`).
+
+        Returns the definition if found, else ``None``. Loops, excessive depth,
+        and objects that raise on attribute access are treated as not found.
+        """
+        # Skip mock objects to avoid false positives when traversing
+        # their wrapper chains (they have a _mock_name attribute).
+        if safe_getattr(obj, "_mock_name", None) is not None:
+            return None
+
+        try:
+            # unwrap is typed for callables, but we also pass descriptors
+            # (classmethod/staticmethod) that expose __wrapped__/__func__.
+            # Use type(...) is, not isinstance: some proxies raise on
+            # isinstance via a broken __class__ (see pytest#4266).
+            unwrapped = inspect.unwrap(
+                cast(Callable[..., Any], obj),
+                stop=lambda o: type(o) is FixtureFunctionDefinition,
+            )
+        except Exception:
+            # ValueError for wrapper loops / depth; also "evil objects"
+            # that raise on attribute access (see pytest#214).
+            return None
+
+        if type(unwrapped) is FixtureFunctionDefinition:
+            return unwrapped
+        return None
+
+    def _check_for_wrapped_fixture(self, name: str, obj: object) -> None:
+        """Warn if ``obj`` is a fixture hidden behind wrappers.
+
+        ``obj`` must be the raw class/module ``__dict__`` entry (see
+        :meth:`_lookup_in_type_dict`), not the result of ``getattr``.
+
+        ``@staticmethod`` above ``@pytest.fixture`` is always warned: discovery
+        may still succeed, but the decorator order is wrong. A leading
+        ``self``/``cls`` parameter already fails as a missing fixture and needs
+        no extra special-casing here.
+        """
+        fixture_def = self._find_wrapped_fixture_def(obj)
+        # None: not a wrapped fixture. is obj: bare FixtureFunctionDefinition.
+        if fixture_def is None or fixture_def is obj:
+            return
+
+        # warn_explicit_for needs a real function (__code__/__globals__).
+        # @pytest.fixture above @classmethod/@staticmethod stores the descriptor
+        # as _fixture_function; peel once to reach the underlying def.
+        fixture_func: object = fixture_def._get_wrapped_function()
+        if type(fixture_func) is classmethod or type(fixture_func) is staticmethod:
+            fixture_func = fixture_func.__func__
+        if not isinstance(fixture_func, types.FunctionType):  # pragma: no cover
+            return
+
+        if type(obj) is classmethod:
+            msg = (
+                f"cannot discover fixture {name!r} because it is wrapped by "
+                f"@classmethod; place @pytest.fixture above @classmethod"
+            )
+        elif type(obj) is staticmethod:
+            msg = (
+                f"fixture {name!r} is wrapped by @staticmethod above "
+                f"@pytest.fixture; place @pytest.fixture above @staticmethod"
+            )
+        else:
+            msg = f"cannot discover fixture {name!r} due to being wrapped in decorators"
+        warn_explicit_for(fixture_func, PytestWarning(msg))
+
     @overload
     def parsefactories(
         self,
@@ -2096,16 +2192,30 @@ class FixtureManager:
             effective_node = node_or_obj
 
         # Avoid accessing `@property` (and other descriptors) when iterating fixtures.
+        holderobj_tp: type | types.ModuleType
         if not safe_isclass(holderobj) and not isinstance(holderobj, types.ModuleType):
-            holderobj_tp: object = type(holderobj)
+            holderobj_tp = type(holderobj)
         else:
-            holderobj_tp = holderobj
+            holderobj_tp = cast("type | types.ModuleType", holderobj)
 
         for name in dir(holderobj):
+            # Read the raw __dict__ entry first so staticmethod/classmethod
+            # wrappers are not hidden by descriptor binding.
+            raw_obj = self._lookup_in_type_dict(holderobj_tp, name)
+            if raw_obj is not None:
+                self._check_for_wrapped_fixture(name, raw_obj)
+
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getattr() ignores such exceptions.
             obj_ub = safe_getattr(holderobj_tp, name, None)
             if type(obj_ub) is FixtureFunctionDefinition:
+                # On Python 3.9-3.12, classmethod chains through descriptors, so
+                # getattr may return a FixtureFunctionDefinition even when the
+                # raw __dict__ entry is classmethod(fixture). Do not register
+                # that case; users must put @pytest.fixture above @classmethod.
+                if type(raw_obj) is classmethod:
+                    continue
+
                 marker = obj_ub._fixture_function_marker
                 if marker.name:
                     fixture_name = marker.name
