@@ -30,8 +30,9 @@ external plugins, for all types.
 This module must stay a dependency-free leaf: it is imported from
 ``_pytest.nodes``, which is itself imported by ``_pytest.config``, so
 importing anything from ``_pytest.config``/``_pytest.nodes`` here would
-create a cycle. Importing :class:`~_pytest.scope.Scope` is safe, since
-``_pytest.scope`` is itself documented as a dependency-free leaf module.
+create a cycle. Importing :class:`~_pytest.scope.Scope` and
+``_pytest.compat`` is safe, since both are themselves dependency-free leaf
+modules.
 """
 
 from __future__ import annotations
@@ -40,6 +41,7 @@ import dataclasses
 from typing import overload
 from typing import TypeVar
 
+from _pytest.compat import override
 from _pytest.scope import Scope
 
 
@@ -113,6 +115,7 @@ class CollectionNodeId(_CachedStrEqHash):
     path: str
     names: tuple[str, ...] = ()
 
+    @override
     def _build_str(self) -> str:
         return "::".join((self.path, *self.names))
 
@@ -149,6 +152,7 @@ class ItemNodeId(_CachedStrEqHash):
     names: tuple[str, ...] = ()
     params: tuple[ParamId, ...] = ()
 
+    @override
     def _build_str(self) -> str:
         base = "::".join((self.path, *self.names))
         if self.params:
@@ -197,6 +201,7 @@ class OpaqueNodeId(_CachedStrEqHash):
         object.__setattr__(self, "_str", nodeid)
         return self
 
+    @override
     def _build_str(self) -> str:
         return self.path if self.rest is None else f"{self.path}::{self.rest}"
 

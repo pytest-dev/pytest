@@ -327,3 +327,14 @@ else:
                 return func
 
             return decorator
+
+
+if sys.version_info >= (3, 12):
+    from typing import override as override
+else:
+    if TYPE_CHECKING:
+        from typing_extensions import override as override
+    else:
+
+        def override(func):
+            return func
