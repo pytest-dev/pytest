@@ -38,6 +38,7 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
+from _pytest._nodeid import NodeId
 import _pytest._version
 from _pytest.compat import running_on_ci
 from _pytest.config import _PluggyPlugin
@@ -400,8 +401,8 @@ class TerminalReporter:
         # isatty should be a method but was wrongly implemented as a boolean.
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
-        self._progress_nodeids_reported: set[str] = set()
-        self._timing_nodeids_reported: set[str] = set()
+        self._progress_nodeids_reported: set[NodeId] = set()
+        self._timing_nodeids_reported: set[NodeId] = set()
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -650,7 +651,7 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
-        self._progress_nodeids_reported.add(rep.nodeid)
+        self._progress_nodeids_reported.add(rep.id)
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
@@ -741,7 +742,7 @@ class TerminalReporter:
             )
             current_location = all_reports[-1].location[0]
             not_reported = [
-                r for r in all_reports if r.nodeid not in self._timing_nodeids_reported
+                r for r in all_reports if r.id not in self._timing_nodeids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
@@ -753,7 +754,7 @@ class TerminalReporter:
             )
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
-                self._timing_nodeids_reported.update(r.nodeid for r in not_reported)
+                self._timing_nodeids_reported.update(r.id for r in not_reported)
                 return format_node_duration(
                     sum(r.duration for r in not_reported if isinstance(r, TestReport))
                 )
@@ -928,7 +929,7 @@ class TerminalReporter:
         test_cases_verbosity = self.config.get_verbosity(Config.VERBOSITY_TEST_CASES)
         if test_cases_verbosity < 0:
             if test_cases_verbosity < -1:
-                counts = Counter(item.nodeid.split("::", 1)[0] for item in items)
+                counts = Counter(item.id.path for item in items)
                 for name, count in sorted(counts.items()):
                     self._tw.line(f"{name}: {count}")
             else:
@@ -1167,18 +1168,18 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, green=True, bold=True)
                         self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.nodeid)
+                    self._handle_teardown_sections(rep.id)
 
-    def _get_teardown_reports(self, nodeid: str) -> list[TestReport]:
+    def _get_teardown_reports(self, node_id: NodeId) -> list[TestReport]:
         reports = self.getreports("")
         return [
             report
             for report in reports
-            if report.when == "teardown" and report.nodeid == nodeid
+            if report.when == "teardown" and report.id == node_id
         ]
 
-    def _handle_teardown_sections(self, nodeid: str) -> None:
-        for report in self._get_teardown_reports(nodeid):
+    def _handle_teardown_sections(self, node_id: NodeId) -> None:
+        for report in self._get_teardown_reports(node_id):
             self.print_teardown_sections(report)
 
     def print_teardown_sections(self, rep: TestReport) -> None:
@@ -1227,7 +1228,7 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
-                        self._handle_teardown_sections(rep.nodeid)
+                        self._handle_teardown_sections(rep.id)
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":

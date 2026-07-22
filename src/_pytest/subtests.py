@@ -20,6 +20,7 @@ import pluggy
 
 from _pytest._code import ExceptionInfo
 from _pytest._io.saferepr import saferepr
+from _pytest._nodeid import NodeId
 from _pytest.capture import CaptureFixture
 from _pytest.capture import FDCapture
 from _pytest.capture import SysCapture
@@ -266,7 +267,7 @@ class _SubTestContextManager:
 
         if sub_report.failed:
             failed_subtests = self.config.stash[failed_subtests_key]
-            failed_subtests[self.request.node.nodeid] += 1
+            failed_subtests[self.request.node.id] += 1
 
         with self.suspend_capture_ctx():
             self.ihook.pytest_runtest_logreport(report=sub_report)
@@ -354,9 +355,9 @@ def pytest_report_from_serializable(data: dict[str, Any]) -> SubtestReport | Non
     return None
 
 
-# Dict of nodeid -> number of failed subtests.
+# Dict of NodeId -> number of failed subtests.
 # Used to fail top-level tests that passed but contain failed subtests.
-failed_subtests_key = StashKey[defaultdict[str, int]]()
+failed_subtests_key = StashKey[defaultdict[NodeId, int]]()
 
 
 def pytest_configure(config: Config) -> None:
@@ -408,7 +409,7 @@ def pytest_report_teststatus(
                     return outcome, "-", f"SUBSKIPPED{description}"
 
     else:
-        failed_subtests_count = config.stash[failed_subtests_key][report.nodeid]
+        failed_subtests_count = config.stash[failed_subtests_key][report.id]
         # Top-level test, fail if it contains failed subtests and it has passed.
         if report.passed and failed_subtests_count > 0:
             report.outcome = "failed"

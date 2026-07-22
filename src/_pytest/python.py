@@ -42,6 +42,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._io.saferepr import saferepr
+from _pytest._nodeid import ParamId
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
@@ -1168,8 +1169,9 @@ class CallSpec:
     # arg name -> parameter scope.
     # Used for sorting parametrized resources.
     _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
-    # Parts which will be added to the item's name in `[..]` separated by "-".
-    _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
+    # One entry per (possibly stacked) parametrize() call, in order. Joined
+    # with "-" they form the item's name `[..]` suffix; see NodeId.params.
+    _idlist: Sequence[ParamId] = dataclasses.field(default_factory=tuple)
     # Marks which will be applied to the item.
     marks: list[Mark] = dataclasses.field(default_factory=list)
 
@@ -1184,6 +1186,7 @@ class CallSpec:
         param_index: int,
         nodeid: str,
     ) -> CallSpec:
+        argnames = tuple(argnames)
         params = self.params.copy()
         indices = self.indices.copy()
         arg2scope = dict(self._arg2scope)
@@ -1195,11 +1198,18 @@ class CallSpec:
             params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
+        if id is HIDDEN_PARAM:
+            idlist = self._idlist
+        else:
+            idlist = [
+                *self._idlist,
+                ParamId(id=id, argnames=argnames, scope=scope),
+            ]
         return CallSpec(
             params=params,
             indices=indices,
             _arg2scope=arg2scope,
-            _idlist=self._idlist if id is HIDDEN_PARAM else [*self._idlist, id],
+            _idlist=idlist,
             marks=[*self.marks, *normalize_mark_list(marks)],
         )
 
@@ -1211,7 +1221,13 @@ class CallSpec:
 
     @property
     def id(self) -> str:
-        return "-".join(self._idlist)
+        return "-".join(p.id for p in self._idlist)
+
+    @property
+    def param_ids(self) -> tuple[ParamId, ...]:
+        """The ordered per-parametrize()-call ids, with full argnames/scope
+        detail. See :class:`~_pytest._nodeid.ParamId`."""
+        return tuple(self._idlist)
 
 
 if TYPE_CHECKING:
@@ -1689,7 +1705,16 @@ class Function(PyobjMixin, nodes.Item):
         fixtureinfo: FuncFixtureInfo | None = None,
         originalname: str | None = None,
     ) -> None:
-        super().__init__(name, parent, config=config, session=session)
+        # Build the NodeId explicitly from callspec (when parametrized)
+        # instead of going through Node.__init__'s generic
+        # `parent.id.child(name)` fallback, which would only see `name`
+        # (with any "[params]" suffix already glued on) and couldn't
+        # recover the per-parametrize()-call structure captured in
+        # callspec.param_ids.
+        base_name = originalname or name
+        params = callspec.param_ids if callspec is not None else ()
+        node_id = parent.id.child(base_name, params)
+        super().__init__(name, parent, config=config, session=session, nodeid=node_id)
 
         if callobj is not NOTSET:
             self._obj = callobj

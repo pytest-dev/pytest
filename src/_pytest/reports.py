@@ -29,6 +29,8 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
+from _pytest._nodeid import NodeId
+from _pytest._nodeid import parse_nodeid_path_and_names
 from _pytest.config import Config
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -302,7 +304,46 @@ def _format_exception_group_all_skipped_longrepr(
     return longrepr
 
 
-class TestReport(BaseReport):
+def _coerce_node_id(nodeid: str | NodeId) -> NodeId:
+    if isinstance(nodeid, NodeId):
+        return nodeid
+    return parse_nodeid_path_and_names(nodeid)
+
+
+class _WithNodeId:
+    """Mixin providing the ``nodeid``/``id`` property pair, backed by
+    ``self._id: NodeId``.
+
+    Deliberately not added to :class:`BaseReport` itself: several tests
+    define ad hoc ``BaseReport`` subclasses that set ``nodeid`` as a plain
+    class attribute, relying on ``BaseReport.__init__``'s generic
+    ``self.__dict__.update(kw)``. Keeping ``BaseReport`` untouched means
+    those subclasses are unaffected regardless of this plumbing.
+    """
+
+    _id: NodeId
+
+    @property
+    def nodeid(self) -> str:
+        return str(self._id)
+
+    @nodeid.setter
+    def nodeid(self, value: str) -> None:
+        self._id = parse_nodeid_path_and_names(value)
+
+    @property
+    def id(self) -> NodeId:
+        """Structured collection tree address.
+
+        .. note::
+
+            Experimental/internal: the shape of :class:`~_pytest._nodeid.NodeId`
+            may change in future releases.
+        """
+        return self._id
+
+
+class TestReport(_WithNodeId, BaseReport):
     """Basic test report object (also used for setup and teardown calls if
     they fail).
 
@@ -317,7 +358,7 @@ class TestReport(BaseReport):
 
     def __init__(
         self,
-        nodeid: str,
+        nodeid: str | NodeId,
         location: tuple[str, int | None, str],
         keywords: Mapping[str, Any],
         outcome: Literal["passed", "failed", "skipped"],
@@ -335,7 +376,7 @@ class TestReport(BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self.nodeid = nodeid
+        self._id = _coerce_node_id(nodeid)
 
         #: A (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
@@ -439,7 +480,7 @@ class TestReport(BaseReport):
         for rwhen, key, content in item._report_sections:
             sections.append((f"Captured {key} {rwhen}", content))
         return cls(
-            item.nodeid,
+            item.id,
             item.location,
             keywords,
             outcome,
@@ -454,7 +495,7 @@ class TestReport(BaseReport):
 
 
 @final
-class CollectReport(BaseReport):
+class CollectReport(_WithNodeId, BaseReport):
     """Collection report object.
 
     Reports can contain arbitrary extra attributes.
@@ -464,7 +505,7 @@ class CollectReport(BaseReport):
 
     def __init__(
         self,
-        nodeid: str,
+        nodeid: str | NodeId,
         outcome: Literal["passed", "failed", "skipped"],
         longrepr: None
         | ExceptionInfo[BaseException]
@@ -476,7 +517,7 @@ class CollectReport(BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self.nodeid = nodeid
+        self._id = _coerce_node_id(nodeid)
 
         #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
@@ -594,6 +635,12 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
         return result
 
     d = report.__dict__.copy()
+    if "_id" in d:
+        # nodeid is a property (backed by self._id: NodeId) on TestReport/
+        # CollectReport, so it's absent from __dict__ -- emit the wire-format
+        # "nodeid" string key that xdist and other consumers expect, and
+        # never expose the internal NodeId object on the wire.
+        d["nodeid"] = str(d.pop("_id"))
     if hasattr(report.longrepr, "toterminal"):
         if hasattr(report.longrepr, "reprtraceback") and hasattr(
             report.longrepr, "reprcrash"
