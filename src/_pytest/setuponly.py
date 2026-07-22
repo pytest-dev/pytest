@@ -53,7 +53,7 @@ def pytest_fixture_setup(
 def pytest_fixture_post_finalizer(
     fixturedef: FixtureDef[object], request: SubRequest
 ) -> None:
-    if fixturedef.cached_result is not None:
+    if fixturedef._get_cached_result(request) is not None:
         config = request.config
         if config.option.setupshow:
             _show_fixture_action(fixturedef, request.config, "TEARDOWN")
