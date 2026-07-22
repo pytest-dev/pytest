@@ -677,15 +677,13 @@ class ApproxTimedelta(Approx[datetime | timedelta]):
                 raise ValueError(f"relative tolerance can't be negative: {rel}")
             if math.isnan(rel):
                 raise ValueError("relative tolerance can't be NaN.")
+            if math.isinf(rel):
+                raise ValueError("relative tolerance can't be infinite.")
         # Compute the effective tolerance. abs_tolerance is a timedelta, rel * expected
         # gives a timedelta (timedelta * float works in Python).
         abs_tolerance = abs
         if rel is None:
             rel_tolerance = None
-        elif math.isinf(rel):
-            if expected == timedelta(0):
-                raise ValueError("relative tolerance can't be NaN.")
-            rel_tolerance = timedelta.max
         else:
             # Checked above.
             assert not isinstance(expected, datetime)
@@ -697,16 +695,9 @@ class ApproxTimedelta(Approx[datetime | timedelta]):
         super().__init__(expected, rel=rel, abs=tolerance, nan_ok=False)
 
     def __repr__(self) -> str:
-        tolerance = (
-            "inf"
-            if isinstance(self.rel, (int, float)) and math.isinf(self.rel)
-            else self.abs
-        )
-        return f"{self.expected} ± {tolerance}"
+        return f"{self.expected} ± {self.abs}"
 
     def __eq__(self, actual) -> bool:
-        if isinstance(self.rel, (int, float)) and math.isinf(self.rel):
-            return isinstance(actual, timedelta)
         try:
             return bool(builtins.abs(self.expected - actual) <= self.abs)
         except (TypeError, OverflowError):
