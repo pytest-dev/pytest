@@ -799,6 +799,8 @@ def pytest_report_to_serializable(
     :param config: The pytest config object.
     :param report: The report.
 
+    Stops at first non-None result, see :ref:`firstresult`.
+
     Use in conftest plugins
     =======================
 
@@ -816,6 +818,8 @@ def pytest_report_from_serializable(
     :hook:`pytest_report_to_serializable`.
 
     :param config: The pytest config object.
+
+    Stops at first non-None result, see :ref:`firstresult`.
 
     Use in conftest plugins
     =======================
