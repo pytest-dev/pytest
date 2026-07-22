@@ -702,7 +702,11 @@ def test_pytest_configure_warning(pytester: Pytester, recwarn) -> None:
 
 @pytest.mark.parametrize("tryfirst", [True, False])
 def test_pytest_configure_warning_filter(pytester: Pytester, tryfirst: bool) -> None:
-    """Issue 10128."""
+    """Issue 10128.
+
+    Parametrize over ``tryfirst`` to guard against hooks that run early
+    from avoiding the filterwarnings configuration.
+    """
     pytester.makeini(
         """
         [pytest]
