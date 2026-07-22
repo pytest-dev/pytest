@@ -76,6 +76,20 @@ class TestReportSerialization:
         # Missing section attribute PR171
         assert added_section in a.longrepr.sections
 
+    def test_to_json_nodeid_wire_shape(self, pytester: Pytester) -> None:
+        """The JSON wire payload must keep a plain top-level string "nodeid"
+        key (never an internal NodeId object / "_id" key) -- pytest-xdist
+        depends on this exact shape to serialize reports across processes.
+        """
+        reprec = pytester.inline_runsource("def test_a(): pass")
+        reports = reprec.getreports("pytest_runtest_logreport")
+        rep = reports[1]
+        assert rep.when == "call"
+        d = rep._to_json()
+        assert d["nodeid"] == rep.nodeid
+        assert isinstance(d["nodeid"], str)
+        assert "_id" not in d
+
     def test_reprentries_serialization_170(self, pytester: Pytester) -> None:
         """Regarding issue pytest-xdist#170
 

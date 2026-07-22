@@ -27,6 +27,8 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
+from _pytest._nodeid import NodeId
+from _pytest._nodeid import parse_nodeid_path_and_names
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import signature
 from _pytest.config import Config
@@ -135,7 +137,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     # Note that __dict__ is still available.
     __slots__ = (
         "__dict__",
-        "_nodeid",
+        "_id",
         "_store",
         "config",
         "name",
@@ -152,7 +154,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         session: Session | None = None,
         fspath: None = None,
         path: Path | None = None,
-        nodeid: str | None = None,
+        nodeid: str | NodeId | None = None,
     ) -> None:
         #: A unique name within the scope of the parent node.
         self.name: str = name
@@ -193,12 +195,14 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.extra_keyword_matches: set[str] = set()
 
         if nodeid is not None:
-            assert "::()" not in nodeid
-            self._nodeid = nodeid
+            if isinstance(nodeid, str):
+                self._id = parse_nodeid_path_and_names(nodeid)
+            else:
+                self._id = nodeid
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")
-            self._nodeid = self.parent.nodeid + "::" + self.name
+            self._id = self.parent.id.child(self.name)
 
         #: A place where plugins can store information on the node for their
         #: own use.
@@ -272,10 +276,21 @@ class Node(abc.ABC, metaclass=NodeMeta):
     @property
     def nodeid(self) -> str:
         """A ::-separated string denoting its collection tree address."""
-        return self._nodeid
+        return str(self._id)
+
+    @property
+    def id(self) -> NodeId:
+        """Structured collection tree address.
+
+        .. note::
+
+            Experimental/internal: the shape of :class:`~_pytest._nodeid.NodeId`
+            may change in future releases.
+        """
+        return self._id
 
     def __hash__(self) -> int:
-        return hash(self._nodeid)
+        return hash(self._id)
 
     def setup(self) -> None:
         pass
@@ -658,7 +673,7 @@ class Item(Node, abc.ABC):
         parent=None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: str | None = None,
+        nodeid: str | NodeId | None = None,
         **kw,
     ) -> None:
         # The first two arguments are intentionally passed positionally,

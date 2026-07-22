@@ -5,6 +5,7 @@ import os
 import sys
 from unittest import mock
 
+from _pytest._nodeid import NodeId
 from _pytest.config import ExitCode
 from _pytest.mark import MarkGenerator
 from _pytest.mark.structures import _EmptyParameterSetMark
@@ -1148,6 +1149,7 @@ def test_addmarker_order(pytester) -> None:
     session.own_markers = []
     session.parent = None
     session.nodeid = ""
+    session.id = NodeId(path="")
     session.path = pytester.path
     node = Node.from_parent(session, name="Test")
     node.add_marker("foo")
