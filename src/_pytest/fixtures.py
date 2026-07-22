@@ -1135,7 +1135,7 @@ class FixtureDef(Generic[FixtureValue]):
         return request.session._setupstate.fixture_cache.get(self)
 
     def _set_cached_result(
-        self, request: FixtureRequest, value: _FixtureCachedResult[FixtureValue] | None
+        self, request: FixtureRequest, value: _FixtureCachedResult[FixtureValue]
     ) -> None:
         request.session._setupstate.fixture_cache[self] = value
 
