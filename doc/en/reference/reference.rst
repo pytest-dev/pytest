@@ -1151,6 +1151,7 @@ contain glob patterns.
 
 Can be declared at the **global** level in *test modules* and *conftest.py files* to register additional plugins.
 Can be either a ``str`` or ``Sequence[str]``.
+Each entry can be the name of an importable module or the entry point name of an installed plugin.
 
 .. code-block:: python
 
@@ -1159,6 +1160,10 @@ Can be either a ``str`` or ``Sequence[str]``.
 .. code-block:: python
 
     pytest_plugins = ("myapp.testsupport.tools", "myapp.testsupport.regression")
+
+.. versionchanged:: 9.2
+   Entry point names of installed plugins are now also accepted, in addition
+   to importable module names.
 
 
 .. globalvar:: pytestmark
@@ -1228,13 +1233,18 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: PYTEST_PLUGINS
 
-   Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules or plugin entry point names that
+   should be loaded as plugins:
 
    .. code-block:: bash
 
        export PYTEST_PLUGINS=mymodule.plugin,xdist
 
    See also :option:`-p`.
+
+   .. versionchanged:: 9.2
+      Entry point names of installed plugins are now also accepted, in
+      addition to importable module names.
 
 .. envvar:: PYTEST_THEME
 
