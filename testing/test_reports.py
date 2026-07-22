@@ -86,8 +86,8 @@ class TestReportSerialization:
         rep = reports[1]
         assert rep.when == "call"
         d = rep._to_json()
+        assert d["nodeid"] == "test_to_json_nodeid_wire_shape.py::test_a"
         assert d["nodeid"] == rep.nodeid
-        assert isinstance(d["nodeid"], str)
         assert "_id" not in d
 
     def test_reprentries_serialization_170(self, pytester: Pytester) -> None:
