@@ -641,51 +641,124 @@ MARK_GEN = MarkGenerator(_ispytest=True)
 
 @final
 class NodeKeywords(MutableMapping[str, Any]):
+    """Keyword mapping for a node.
+
+    Explicit writes go into ``_markers``, allocated lazily on first write.
+
+    Until then (and in addition), keywords are derived on read from:
+
+    * ``node.name``
+    * ``node.own_markers``
+    * ``node._obj.__dict__`` when present (test function attributes)
+    * ``node.callspec.id`` when the node is parametrized
+    * parent node keywords
+    """
+
     __slots__ = ("_markers", "node", "parent")
 
     def __init__(self, node: Node) -> None:
         self.node = node
         self.parent = node.parent
-        self._markers = {node.name: True}
+        # Lazily allocated on first write.
+        self._markers: dict[str, Any] | None = None
+
+    def _ensure_markers(self) -> dict[str, Any]:
+        markers = self._markers
+        if markers is None:
+            markers = {}
+            self._markers = markers
+        return markers
+
+    def _lookup_derived(self, key: str) -> Any:
+        """Return a derived keyword value or raise ``KeyError``."""
+        if key == self.node.name:
+            return True
+        callspec = getattr(self.node, "callspec", None)
+        if callspec is not None and key == callspec.id:
+            return True
+        obj = getattr(self.node, "_obj", None)
+        if obj is not None:
+            obj_dict = getattr(obj, "__dict__", None)
+            if obj_dict is not None and key in obj_dict:
+                return obj_dict[key]
+        for mark in getattr(self.node, "own_markers", ()):
+            if mark.name == key:
+                return mark
+        raise KeyError(key)
 
     def __getitem__(self, key: str) -> Any:
+        markers = self._markers
+        if markers is not None:
+            try:
+                return markers[key]
+            except KeyError:
+                pass
         try:
-            return self._markers[key]
+            return self._lookup_derived(key)
         except KeyError:
             if self.parent is None:
                 raise
             return self.parent.keywords[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
-        self._markers[key] = value
+        self._ensure_markers()[key] = value
 
     # Note: we could've avoided explicitly implementing some of the methods
     # below and use the collections.abc fallback, but that would be slow.
 
     def __contains__(self, key: object) -> bool:
-        return key in self._markers or (
-            self.parent is not None and key in self.parent.keywords
-        )
+        if not isinstance(key, str):
+            return False
+        markers = self._markers
+        if markers is not None and key in markers:
+            return True
+        try:
+            self._lookup_derived(key)
+            return True
+        except KeyError:
+            return self.parent is not None and key in self.parent.keywords
 
     def update(  # type: ignore[override]
         self,
         other: Mapping[str, Any] | Iterable[tuple[str, Any]] = (),
         **kwds: Any,
     ) -> None:
-        self._markers.update(other)
-        self._markers.update(kwds)
+        markers = self._ensure_markers()
+        markers.update(other)
+        markers.update(kwds)
 
     def __delitem__(self, key: str) -> None:
         raise ValueError("cannot delete key in keywords dict")
 
     def __iter__(self) -> Iterator[str]:
         # Doesn't need to be fast.
-        yield from self._markers
+        seen: set[str] = set()
+        markers = self._markers
+        if markers is not None:
+            for key in markers:
+                seen.add(key)
+                yield key
+        for key, _value in self._iter_derived():
+            if key not in seen:
+                seen.add(key)
+                yield key
         if self.parent is not None:
             for keyword in self.parent.keywords:
-                # self._marks and self.parent.keywords can have duplicates.
-                if keyword not in self._markers:
+                if keyword not in seen:
                     yield keyword
+
+    def _iter_derived(self) -> Iterator[tuple[str, Any]]:
+        yield self.node.name, True
+        callspec = getattr(self.node, "callspec", None)
+        if callspec is not None and callspec._idlist:
+            yield callspec.id, True
+        obj = getattr(self.node, "_obj", None)
+        if obj is not None:
+            obj_dict = getattr(obj, "__dict__", None)
+            if obj_dict is not None:
+                yield from obj_dict.items()
+        for mark in getattr(self.node, "own_markers", ()):
+            yield mark.name, mark
 
     def __len__(self) -> int:
         # Doesn't need to be fast.
