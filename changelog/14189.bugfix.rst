@@ -1,0 +1,1 @@
+Nested usage of :meth:`caplog.filtering <pytest.LogCaptureFixture.filtering>` no longer removes filters early if they were already present.
