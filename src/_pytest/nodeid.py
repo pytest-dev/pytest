@@ -60,7 +60,7 @@ class ParamId:
 
     Multiple ``ParamId``s are joined with ``"-"`` to form the legacy
     ``[bracket]`` content of a nodeid, mirroring
-    :attr:`_pytest.python.CallSpec2.param_ids`.
+    :attr:`_pytest.python.CallSpec.param_ids`.
 
     ``argnames``/``scope`` are only known when built from live collection
     data (see ``Function.__init__``) -- an :class:`ItemNodeId` never has one
