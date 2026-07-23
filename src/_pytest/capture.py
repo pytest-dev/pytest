@@ -147,9 +147,41 @@ def _windowsconsoleio_workaround(stream: TextIO) -> None:
             f.line_buffering,
         )
 
+    def _reopen_dunder(f, mode):
+        # Build the raw stream explicitly: ``open()`` on a console fd would
+        # produce another ``_WindowsConsoleIO``, which writes through the
+        # console handle rather than the fd.
+        raw = io.FileIO(f.fileno(), mode, closefd=False)
+        buffer = io.BufferedReader(raw) if mode == "r" else io.BufferedWriter(raw)
+        return io.TextIOWrapper(
+            buffer,
+            f.encoding,
+            f.errors,
+            f.newlines,
+            f.line_buffering,
+        )
+
     sys.stdin = _reopen_stdio(sys.stdin, "rb")
     sys.stdout = _reopen_stdio(sys.stdout, "wb")
     sys.stderr = _reopen_stdio(sys.stderr, "wb")
+
+    # The original sys.__std*__ streams are backed by the console handle
+    # rather than by their file descriptor, so while ``FDCapture`` has
+    # redirected the fd they keep reporting ``isatty() == True`` and their
+    # writes bypass the capture file entirely (or fail with EBADF once the
+    # console handle has been closed by ``dup2``) (#12349).
+    # Reopen them backed by their original file descriptors, so that they
+    # follow fd redirection just like on POSIX systems.
+    # The assignments are intentional, hence the type ignores: typeshed marks
+    # these as Final because they normally hold the interpreter's original
+    # streams, but the original console-backed streams misbehave under fd
+    # capturing, as described above.
+    if sys.__stdin__ is not None:
+        sys.__stdin__ = _reopen_dunder(sys.__stdin__, "r")  # type: ignore[misc]
+    if sys.__stdout__ is not None:
+        sys.__stdout__ = _reopen_dunder(sys.__stdout__, "w")  # type: ignore[misc]
+    if sys.__stderr__ is not None:
+        sys.__stderr__ = _reopen_dunder(sys.__stderr__, "w")  # type: ignore[misc]
 
 
 @hookimpl(wrapper=True)
