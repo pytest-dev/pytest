@@ -54,6 +54,7 @@ from _pytest.config import Config
 from _pytest.config import hookimpl
 from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import CALLSPEC2_RENAMED
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
@@ -1152,7 +1153,7 @@ class IdMaker:
 
 @final
 @dataclasses.dataclass(frozen=True)
-class CallSpec2:
+class CallSpec:
     """A planned parameterized invocation of a test function.
 
     Calculated during collection for a given test function's Metafunc.
@@ -1182,7 +1183,7 @@ class CallSpec2:
         scope: Scope,
         param_index: int,
         nodeid: str,
-    ) -> CallSpec2:
+    ) -> CallSpec:
         params = self.params.copy()
         indices = self.indices.copy()
         arg2scope = dict(self._arg2scope)
@@ -1194,7 +1195,7 @@ class CallSpec2:
             params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
-        return CallSpec2(
+        return CallSpec(
             params=params,
             indices=indices,
             _arg2scope=arg2scope,
@@ -1211,6 +1212,11 @@ class CallSpec2:
     @property
     def id(self) -> str:
         return "-".join(self._idlist)
+
+
+if TYPE_CHECKING:
+    # Deprecated alias kept for type checkers; runtime access goes through __getattr__.
+    CallSpec2 = CallSpec
 
 
 def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
@@ -1286,7 +1292,7 @@ class Metafunc:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
         # Result of parametrize().
-        self._calls: list[CallSpec2] = []
+        self._calls: list[CallSpec] = []
 
         self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
 
@@ -1474,7 +1480,7 @@ class Metafunc:
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls.
         newcalls = []
-        for callspec in self._calls or [CallSpec2()]:
+        for callspec in self._calls or [CallSpec()]:
             for param_index, (param_id, param_set) in enumerate(
                 zip(ids, parametersets, strict=True)
             ):
@@ -1676,7 +1682,7 @@ class Function(PyobjMixin, nodes.Item):
         name: str,
         parent,
         config: Config | None = None,
-        callspec: CallSpec2 | None = None,
+        callspec: CallSpec | None = None,
         callobj=NOTSET,
         keywords: Mapping[str, Any] | None = None,
         session: Session | None = None,
@@ -1825,3 +1831,10 @@ class FunctionDefinition(Function):
         raise RuntimeError("function definitions are not supposed to be run as tests")
 
     setup = runtest
+
+
+def __getattr__(name: str) -> object:
+    if name == "CallSpec2":
+        warnings.warn(CALLSPEC2_RENAMED, stacklevel=2)
+        return CallSpec
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
