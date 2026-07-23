@@ -11,6 +11,7 @@ from typing import Any
 from typing import final
 from typing import Literal
 from typing import NoReturn
+from typing import TypeAlias
 
 from .exceptions import UsageError
 import _pytest._io
@@ -19,6 +20,15 @@ from _pytest.deprecated import check_ispytest
 
 
 FILE_OR_DIR = "file_or_dir"
+
+#: The string tags accepted by :meth:`Parser.addini` for its ``type`` argument.
+_IniTypeTag: TypeAlias = Literal[
+    "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
+]
+
+#: The forms accepted by :meth:`Parser.addini` for its ``type`` argument;
+#: ``None`` means ``"string"``.
+_IniTypeArg: TypeAlias = _IniTypeTag | None
 
 
 def _get_argparse_dest(opts: Sequence[str]) -> str:
@@ -188,10 +198,7 @@ class Parser:
         self,
         name: str,
         help: str,
-        type: Literal[
-            "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
-        ]
-        | None = None,
+        type: _IniTypeArg = None,
         default: Any = NOTSET,
         *,
         aliases: Sequence[str] = (),
@@ -267,11 +274,7 @@ class Parser:
             self._ini_aliases[alias] = name
 
 
-def get_ini_default_for_type(
-    type: Literal[
-        "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
-    ],
-) -> Any:
+def get_ini_default_for_type(type: _IniTypeTag) -> Any:
     """
     Used by addini to get the default value for a given config option type, when
     default is not supplied.
