@@ -653,10 +653,10 @@ class FixtureRequest(abc.ABC):
     def _set_cached_exception(
         self,
         fixturedef: FixtureDef[FixtureValue],
-        exception_and_traceback: tuple[BaseException, types.TracebackType | None],
+        exception: BaseException,
     ) -> None:
         self.session._setupstate.fixture_cache[fixturedef] = _FixtureException(
-            None, self._cache_key(), exception_and_traceback
+            None, self._cache_key(), (exception, exception.__traceback__)
         )
 
     def _cache_key(self) -> object:
@@ -1366,7 +1366,7 @@ def pytest_fixture_setup(
             e._use_item_location = True
         request._set_cached_exception(
             fixturedef,
-            (e, e.__traceback__),
+            e,
         )
         raise
     request._set_cached_result(fixturedef, result)
