@@ -14,6 +14,7 @@ import warnings
 from _pytest import pathlib
 from _pytest.config import Config
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pathlib import _chmod_rwx
 from _pytest.pathlib import cleanup_numbered_dir
 from _pytest.pathlib import create_cleanup_lock
 from _pytest.pathlib import make_numbered_dir
@@ -522,6 +523,10 @@ class TestNumberedDir:
         assert dir.is_dir()
 
 
+def _raise_oserror(*args: object, **kwargs: object) -> None:
+    raise OSError("simulated failure")
+
+
 class TestRmRf:
     def test_rm_rf(self, tmp_path):
         adir = tmp_path / "adir"
@@ -566,6 +571,25 @@ class TestRmRf:
 
         assert not adir.is_dir()
 
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_rm_rf_with_no_exec_permission_directories(self, tmp_path):
+        """Ensure rm_rf can remove directories without S_IXUSR (#7940).
+
+        This is the exact scenario from the original issue: nested directories
+        and files with all permissions stripped.
+        """
+        p = tmp_path / "foo" / "bar" / "baz"
+        p.parent.mkdir(parents=True)
+        p.touch(mode=0)
+        for parent in p.parents:  # pragma: no branch
+            if parent == tmp_path:
+                break
+            parent.chmod(mode=0)
+
+        rm_rf(tmp_path / "foo")
+
+        assert not (tmp_path / "foo").exists()
+
     def test_on_rm_rf_error(self, tmp_path: Path) -> None:
         adir = tmp_path / "dir"
         adir.mkdir()
@@ -593,16 +617,145 @@ class TestRmRf:
             on_rm_rf_error(None, str(fn), exc_info3, start_path=tmp_path)
             assert fn.is_file()
 
-        # ignored function
-        with warnings.catch_warnings(record=True) as w:
-            exc_info4 = PermissionError()
-            on_rm_rf_error(os.open, str(fn), exc_info4, start_path=tmp_path)
-            assert fn.is_file()
-            assert not [x.message for x in w]
-
+        # os.unlink PermissionError is handled (chmod + retry)
         exc_info5 = PermissionError()
         on_rm_rf_error(os.unlink, str(fn), exc_info5, start_path=tmp_path)
         assert not fn.is_file()
+
+    def test_on_rm_rf_error_os_open_handles_file(self, tmp_path: Path) -> None:
+        """os.open PermissionError on a file is handled by fixing
+        permissions and removing it (#7940)."""
+        adir = tmp_path / "dir"
+        adir.mkdir()
+        fn = adir / "foo.txt"
+        fn.touch()
+        self.chmod_r(fn)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = PermissionError()
+            on_rm_rf_error(os.open, str(fn), exc_info, start_path=tmp_path)
+            assert not fn.exists()
+            assert not [x.message for x in w]
+
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_on_rm_rf_error_os_open_handles_directory(self, tmp_path: Path) -> None:
+        """os.open PermissionError on a directory is handled by fixing
+        permissions and recursively removing it (#7940)."""
+        adir = tmp_path / "dir"
+        adir.mkdir()
+        (adir / "child").mkdir()
+        (adir / "child" / "file.txt").touch()
+        os.chmod(str(adir), stat.S_IRUSR | stat.S_IWUSR)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = PermissionError()
+            on_rm_rf_error(os.open, str(adir), exc_info, start_path=tmp_path)
+            assert not adir.exists()
+            assert not [x.message for x in w]
+
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_on_rm_rf_error_os_open_parent_perms(self, tmp_path: Path) -> None:
+        """When the PermissionError is caused by the *parent* directory lacking
+        S_IXUSR, fixing the parent is sufficient even if the child already has
+        correct permissions."""
+        parent = tmp_path / "parent"
+        parent.mkdir()
+        child = parent / "child"
+        child.mkdir()
+        (child / "file.txt").touch()
+        # Child has full perms, but parent lacks execute -> os.open(child) fails.
+        os.chmod(str(parent), stat.S_IRUSR | stat.S_IWUSR)
+
+        with warnings.catch_warnings(record=True) as w:
+            exc_info = PermissionError()
+            result = on_rm_rf_error(os.open, str(child), exc_info, start_path=tmp_path)
+            assert result is True
+            assert not child.exists()
+            assert not [x.message for x in w]
+
+    def test_chmod_rwx_returns_false_on_nonexistent_path(self, tmp_path: Path) -> None:
+        """_chmod_rwx returns False when the path doesn't exist (OSError)."""
+        nonexistent = tmp_path / "does_not_exist"
+        assert _chmod_rwx(str(nonexistent)) is False
+
+    def test_chmod_rwx_returns_false_when_chmod_fails(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """_chmod_rwx returns False when os.chmod raises OSError.
+
+        A real FS layout that makes chmod fail while the path remains
+        (immutable bit, RO mount, foreign ownership) is not portable in CI,
+        so pin this branch with a monkeypatch.
+        """
+        fn = tmp_path / "file.txt"
+        fn.touch(mode=0)  # needs bits so we reach os.chmod
+        monkeypatch.setattr(os, "chmod", _raise_oserror)
+        assert _chmod_rwx(str(fn)) is False
+
+    def test_chmod_rwx_returns_false_when_already_sufficient(
+        self, tmp_path: Path
+    ) -> None:
+        """_chmod_rwx returns False when permissions are already sufficient."""
+        d = tmp_path / "dir"
+        d.mkdir(mode=stat.S_IRWXU)
+        assert _chmod_rwx(str(d)) is False
+
+        f = tmp_path / "file"
+        f.touch(mode=stat.S_IRUSR | stat.S_IWUSR)
+        assert _chmod_rwx(str(f)) is False
+
+    def test_on_rm_rf_error_os_open_returns_false_when_chmod_ineffective(
+        self, tmp_path: Path
+    ) -> None:
+        """os.open handler returns False when neither parent nor path chmod
+        changes anything (recursion guard)."""
+        adir = tmp_path / "dir"
+        adir.mkdir(mode=stat.S_IRWXU)
+        exc_info = PermissionError()
+        result = on_rm_rf_error(os.open, str(adir), exc_info, start_path=tmp_path)
+        assert result is False
+        assert adir.exists()
+
+    def test_on_rm_rf_error_os_open_unlink_fails(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        """os.open handler returns False when chmod succeeds but os.unlink
+        still raises OSError (e.g. sandbox or other mechanism)."""
+        fn = tmp_path / "stubborn.txt"
+        fn.touch(mode=0)
+
+        monkeypatch.setattr(os, "unlink", _raise_oserror)
+
+        exc_info = PermissionError()
+        result = on_rm_rf_error(os.open, str(fn), exc_info, start_path=tmp_path)
+        assert result is False
+        assert fn.exists()
+
+    @pytest.mark.skipif(not hasattr(os, "getuid"), reason="unix permissions")
+    def test_on_rm_rf_error_chmod_retry_walks_parents(self, tmp_path: Path) -> None:
+        """The os.rmdir/os.unlink handler walks up through multiple parent
+        directories to fix permissions before retrying."""
+        deep = tmp_path / "a" / "b" / "c"
+        deep.mkdir(parents=True)
+        fn = deep / "file.txt"
+        fn.touch()
+        # Remove write from intermediate dirs (keep exec so traversal works,
+        # but os.unlink needs write on the parent).
+        for parent in fn.parents:  # pragma: no branch
+            if parent == tmp_path:
+                break
+            parent.chmod(
+                stat.S_IRUSR
+                | stat.S_IXUSR
+                | stat.S_IRGRP
+                | stat.S_IXGRP
+                | stat.S_IROTH
+                | stat.S_IXOTH
+            )
+
+        exc_info = PermissionError()
+        on_rm_rf_error(os.unlink, str(fn), exc_info, start_path=tmp_path)
+        assert not fn.exists()
 
 
 def attempt_symlink_to(path, to_path):

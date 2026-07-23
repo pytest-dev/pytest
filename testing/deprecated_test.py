@@ -312,3 +312,17 @@ class TestFixtureNodeidDeprecations:
         )
         result = pytester.runpytest()
         result.assert_outcomes(passed=1)
+
+
+def test_callspec2_renamed() -> None:
+    """Importing/accessing CallSpec2 warns and returns CallSpec."""
+    import _pytest.python as python_mod
+    from _pytest.python import CallSpec
+
+    with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
+        from _pytest.python import CallSpec2
+
+    assert CallSpec2 is CallSpec
+
+    with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
+        assert python_mod.CallSpec2 is CallSpec

@@ -251,8 +251,8 @@ class Testdir:
 
 
 class LegacyTestdirPlugin:
-    @staticmethod
     @fixture
+    @staticmethod
     def testdir(pytester: Pytester) -> Testdir:
         """
         Identical to :fixture:`pytester`, and provides an instance whose methods return
@@ -294,15 +294,15 @@ class TempdirFactory:
 
 
 class LegacyTmpdirPlugin:
-    @staticmethod
     @fixture(scope="session")
+    @staticmethod
     def tmpdir_factory(request: FixtureRequest) -> TempdirFactory:
         """Return a :class:`pytest.TempdirFactory` instance for the test session."""
         # Set dynamically by pytest_configure().
         return request.config._tmpdirhandler  # type: ignore
 
-    @staticmethod
     @fixture
+    @staticmethod
     def tmpdir(tmp_path: Path) -> LEGACY_PATH:
         """Return a temporary directory (as `legacy_path`_ object)
         which is unique to each test function invocation.
@@ -456,7 +456,10 @@ def pytest_configure(config: Config) -> None:
             _tmpdirhandler = TempdirFactory(tmp_path_factory, _ispytest=True)
             mp.setattr(config, "_tmpdirhandler", _tmpdirhandler, raising=False)
 
-        config.pluginmanager.register(LegacyTmpdirPlugin, "legacypath-tmpdir")
+        # Register an instance so @fixture above @staticmethod unwraps to a bare
+        # function. Class registration would keep the staticmethod descriptor,
+        # which resolve_fixture_function then binds onto test instances (#13564).
+        config.pluginmanager.register(LegacyTmpdirPlugin(), "legacypath-tmpdir")
 
 
 @hookimpl
@@ -464,5 +467,5 @@ def pytest_plugin_registered(plugin: object, manager: PytestPluginManager) -> No
     # pytester is not loaded by default and is commonly loaded from a conftest,
     # so checking for it in `pytest_configure` is not enough.
     is_pytester = plugin is manager.get_plugin("pytester")
-    if is_pytester and not manager.is_registered(LegacyTestdirPlugin):
-        manager.register(LegacyTestdirPlugin, "legacypath-pytester")
+    if is_pytester and not manager.has_plugin("legacypath-pytester"):
+        manager.register(LegacyTestdirPlugin(), "legacypath-pytester")
