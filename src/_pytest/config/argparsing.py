@@ -200,6 +200,9 @@ class Parser:
 
         :param name:
             Name of the configuration.
+        :param help:
+            Description of the option, shown in pytest's help.
+            ``%(default)s`` in the text is replaced with the option's default value.
         :param type:
             Type of the configuration. Can be:
 

@@ -197,9 +197,10 @@ def showhelp(config: Config) -> None:
     indent_len = 24  # based on argparse's max_help_position=24
     indent = " " * indent_len
     for name in config._parser._inidict:
-        help, type, _default = config._parser._inidict[name]
+        help, type, default = config._parser._inidict[name]
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
+        help = help.replace("%(default)s", str(default))
         spec = f"{name} ({type}):"
         tw.write(f"  {spec}")
         spec_len = len(spec)
