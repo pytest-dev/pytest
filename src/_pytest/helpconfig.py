@@ -13,7 +13,7 @@ from typing import Any
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import PrintHelp
-from _pytest.config.argparsing import _IniLiteral
+from _pytest.config.argparsing import _ini_type_repr
 from _pytest.config.argparsing import Parser
 from _pytest.terminal import TerminalReporter
 import pytest
@@ -201,13 +201,7 @@ def showhelp(config: Config) -> None:
         help, type, _default = config._parser._inidict[name]
         if help is None:
             raise TypeError(f"help argument cannot be None for {name}")
-        if isinstance(type, _IniLiteral):
-            type_repr = " | ".join(repr(choice) for choice in type.choices)
-        elif isinstance(type, tuple):
-            type_repr = " | ".join(type)
-        else:
-            type_repr = type
-        spec = f"{name} ({type_repr}):"
+        spec = f"{name} ({_ini_type_repr(type)}):"
         tw.write(f"  {spec}")
         spec_len = len(spec)
         if spec_len > (indent_len - 3):

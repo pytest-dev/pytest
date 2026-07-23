@@ -10,7 +10,6 @@ import sys
 import textwrap
 import types
 from typing import Any
-from typing import cast
 from typing import final
 from typing import get_args
 from typing import get_origin
@@ -57,11 +56,9 @@ class _IniLiteral:
 #: ``Literal`` type.
 IniType: TypeAlias = _IniTypeTag | tuple[_IniTypeTag, ...] | _IniLiteral
 
-_INI_TYPE_TAGS: tuple[str, ...] = get_args(_IniTypeTag)
-
-#: Maps the plain Python types accepted by :meth:`Parser.addini` for its
-#: ``type`` argument to the equivalent string tag.
-_INI_TYPE_TO_TAG: dict[type, _IniTypeTag] = {
+#: Maps each string tag or plain Python type accepted by :meth:`Parser.addini`
+#: for its ``type`` argument to the normalized string tag.
+_INI_TYPES: dict[object, _IniTypeTag] = {tag: tag for tag in get_args(_IniTypeTag)} | {
     str: "string",
     bool: "bool",
     int: "int",
@@ -70,21 +67,25 @@ _INI_TYPE_TO_TAG: dict[type, _IniTypeTag] = {
 
 
 def _ini_type_to_tag(name: str, type_: object) -> _IniTypeTag:
-    """Normalize one member of an `addini(type=...)` argument to a string tag.
+    """Normalize one member of an `addini(type=...)` argument to a string tag."""
+    try:
+        return _INI_TYPES[type_]
+    except (KeyError, TypeError):  # TypeError: unhashable type_
+        raise ValueError(
+            f"invalid type for ini option {name!r}: {type_!r} (expected one of "
+            f"{', '.join(repr(tag) for tag in get_args(_IniTypeTag))}, one of "
+            "the types str, bool, int, float, a union of these types such as "
+            "`int | str`, or a `Literal` of strings)"
+        ) from None
 
-    Raise ValueError for anything that is neither a known tag nor a supported
-    plain Python type.
-    """
-    if isinstance(type_, str) and type_ in _INI_TYPE_TAGS:
-        return cast(_IniTypeTag, type_)
-    if isinstance(type_, type) and type_ in _INI_TYPE_TO_TAG:
-        return _INI_TYPE_TO_TAG[type_]
-    raise ValueError(
-        f"invalid type for ini option {name!r}: {type_!r} (expected one of "
-        f"{', '.join(repr(tag) for tag in _INI_TYPE_TAGS)}, one of the types "
-        "str, bool, int, float, a union of these types such as `int | str`, "
-        "or a `Literal` of strings)"
-    )
+
+def _ini_type_repr(type: IniType) -> str:
+    """Render an ini option type for --help output and error messages."""
+    if isinstance(type, _IniLiteral):
+        return " | ".join(repr(choice) for choice in type.choices)
+    if isinstance(type, tuple):
+        return " | ".join(type)
+    return type
 
 
 def _get_argparse_dest(opts: Sequence[str]) -> str:
@@ -287,10 +288,6 @@ class Parser:
             string-based formats (INI files, ``-o`` overrides) coerce it to the
             first member that accepts it.
 
-            .. versionadded:: 9.2
-
-                Passing a type expression such as ``int`` or ``int | str``.
-
             A ``Literal`` type of strings restricts the value to the given
             choices, for example ``Literal["auto", "long", "short"]``. Since
             the choices have no unambiguous implicit default, an explicit
@@ -298,7 +295,8 @@ class Parser:
 
             .. versionadded:: 9.2
 
-                Passing a ``Literal`` type.
+                Passing a type expression such as ``int``, ``int | str``, or
+                a ``Literal`` of strings.
 
             For ``paths`` and ``pathlist`` types, they are considered relative to the config-file.
             In case the execution is happening without a config-file defined,
@@ -324,18 +322,18 @@ class Parser:
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
         ini_type: IniType
+        origin = get_origin(type)
         if type is None:
             ini_type = "string"
-        elif get_origin(type) is Literal:
+        elif origin is Literal:
             choices = get_args(type)
-            for choice in choices:
-                if not isinstance(choice, str):
-                    raise ValueError(
-                        f"invalid type for ini option {name!r}: Literal "
-                        f"choices must be strings, got {choice!r}"
-                    )
+            if not all(isinstance(choice, str) for choice in choices):
+                raise ValueError(
+                    f"invalid type for ini option {name!r}: Literal choices "
+                    f"must be strings, got {choices!r}"
+                )
             ini_type = _IniLiteral(choices)
-        elif get_origin(type) in (Union, types.UnionType):
+        elif origin in (Union, types.UnionType):
             ini_type = tuple(
                 _ini_type_to_tag(name, member) for member in get_args(type)
             )

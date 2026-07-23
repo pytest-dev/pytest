@@ -1089,6 +1089,20 @@ class TestConfigAPI:
         ):
             _ = config.getini("ini_param")
 
+    UNION_CONFTEST = """
+        def pytest_addoption(parser):
+            parser.addini("ini_param", "", type=int | str, default=None)
+    """
+
+    LITERAL_CONFTEST = """
+        from typing import Literal
+
+        def pytest_addoption(parser):
+            parser.addini(
+                "ini_param", "", type=Literal["auto", "long"], default="auto"
+            )
+    """
+
     @pytest.mark.parametrize(
         "section, value, expected",
         [
@@ -1105,12 +1119,7 @@ class TestConfigAPI:
     def test_addini_union_type(
         self, pytester: Pytester, section: str, value: str, expected: object
     ) -> None:
-        pytester.makeconftest(
-            """
-            def pytest_addoption(parser):
-                parser.addini("ini_param", "", type=int | str, default=None)
-        """
-        )
+        pytester.makeconftest(self.UNION_CONFTEST)
         pytester.makepyprojecttoml(
             f"""
             {section}
@@ -1123,12 +1132,7 @@ class TestConfigAPI:
         assert type(result) is type(expected)
 
     def test_addini_union_type_invalid_value(self, pytester: Pytester) -> None:
-        pytester.makeconftest(
-            """
-            def pytest_addoption(parser):
-                parser.addini("ini_param", "", type=int | str, default=None)
-        """
-        )
+        pytester.makeconftest(self.UNION_CONFTEST)
         pytester.makepyprojecttoml(
             """
             [tool.pytest]
@@ -1158,14 +1162,11 @@ class TestConfigAPI:
         config = pytester.parseconfig()
         assert config.getini("ini_param") == 7
 
-    def test_addini_invalid_type(self, pytester: Pytester) -> None:
+    @pytest.mark.parametrize("bad_type", ["integer", dict, int | dict])
+    def test_addini_invalid_type(self, bad_type: object) -> None:
         parser = Parser(_ispytest=True)
         with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
-            parser.addini("ini_param", "", type="integer")  # type: ignore[arg-type]
-        with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
-            parser.addini("ini_param", "", type=dict)  # type: ignore[arg-type]
-        with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
-            parser.addini("ini_param", "", type=int | dict)  # type: ignore[arg-type]
+            parser.addini("ini_param", "", type=bad_type)  # type: ignore[arg-type]
 
     def test_addini_union_type_requires_default(self) -> None:
         parser = Parser(_ispytest=True)
@@ -1174,109 +1175,49 @@ class TestConfigAPI:
         ):
             parser.addini("ini_param", "", type=int | str)
 
-    def test_addini_literal_type_toml(self, pytester: Pytester) -> None:
+    @pytest.mark.parametrize(
+        "value, expected",
+        [('"long"', "long"), (None, "auto")],
+        ids=["value", "default"],
+    )
+    def test_addini_literal_type(
+        self, pytester: Pytester, value: str | None, expected: str
+    ) -> None:
         """A Literal of strings restricts the value to the given choices."""
-        pytester.makeconftest(
-            """
-            from typing import Literal
-
-            def pytest_addoption(parser):
-                parser.addini(
-                    "ini_param", "", type=Literal["auto", "long"], default="auto"
-                )
-        """
-        )
-        pytester.makepyprojecttoml(
-            """
-            [tool.pytest]
-            ini_param = "long"
-            """
-        )
+        pytester.makeconftest(self.LITERAL_CONFTEST)
+        if value is not None:
+            pytester.makepyprojecttoml(f"[tool.pytest]\nini_param = {value}")
         config = pytester.parseconfig()
-        assert config.getini("ini_param") == "long"
+        assert config.getini("ini_param") == expected
 
     def test_addini_literal_type_ini_and_override(self, pytester: Pytester) -> None:
-        pytester.makeconftest(
-            """
-            from typing import Literal
-
-            def pytest_addoption(parser):
-                parser.addini(
-                    "ini_param", "", type=Literal["auto", "long"], default="auto"
-                )
-        """
-        )
+        pytester.makeconftest(self.LITERAL_CONFTEST)
         pytester.makeini(
             """
             [pytest]
             ini_param = long
         """
         )
+        assert pytester.parseconfig().getini("ini_param") == "long"
+        assert (
+            pytester.parseconfig("-o", "ini_param=auto").getini("ini_param") == "auto"
+        )
+
+    @pytest.mark.parametrize(
+        "value, exc, match",
+        [
+            ('"short"', ValueError, r"expects one of 'auto' \| 'long', got 'short'"),
+            ("5", TypeError, r"expects a string, got int: 5"),
+        ],
+        ids=["bad-choice", "bad-type"],
+    )
+    def test_addini_literal_type_invalid_value(
+        self, pytester: Pytester, value: str, exc: type[Exception], match: str
+    ) -> None:
+        pytester.makeconftest(self.LITERAL_CONFTEST)
+        pytester.makepyprojecttoml(f"[tool.pytest]\nini_param = {value}")
         config = pytester.parseconfig()
-        assert config.getini("ini_param") == "long"
-        config = pytester.parseconfig("-o", "ini_param=auto")
-        assert config.getini("ini_param") == "auto"
-
-    def test_addini_literal_type_default(self, pytester: Pytester) -> None:
-        pytester.makeconftest(
-            """
-            from typing import Literal
-
-            def pytest_addoption(parser):
-                parser.addini(
-                    "ini_param", "", type=Literal["auto", "long"], default="auto"
-                )
-        """
-        )
-        config = pytester.parseconfig()
-        assert config.getini("ini_param") == "auto"
-
-    def test_addini_literal_type_invalid_value(self, pytester: Pytester) -> None:
-        pytester.makeconftest(
-            """
-            from typing import Literal
-
-            def pytest_addoption(parser):
-                parser.addini(
-                    "ini_param", "", type=Literal["auto", "long"], default="auto"
-                )
-        """
-        )
-        pytester.makepyprojecttoml(
-            """
-            [tool.pytest]
-            ini_param = "short"
-            """
-        )
-        config = pytester.parseconfig()
-        with pytest.raises(
-            ValueError,
-            match=r"config option 'ini_param' expects one of 'auto', 'long', "
-            r"got 'short'",
-        ):
-            _ = config.getini("ini_param")
-
-    def test_addini_literal_type_wrong_value_type(self, pytester: Pytester) -> None:
-        pytester.makeconftest(
-            """
-            from typing import Literal
-
-            def pytest_addoption(parser):
-                parser.addini(
-                    "ini_param", "", type=Literal["auto", "long"], default="auto"
-                )
-        """
-        )
-        pytester.makepyprojecttoml(
-            """
-            [tool.pytest]
-            ini_param = 5
-            """
-        )
-        config = pytester.parseconfig()
-        with pytest.raises(
-            TypeError, match=r"config option 'ini_param' expects a string, got int: 5"
-        ):
+        with pytest.raises(exc, match=f"config option 'ini_param' {match}"):
             _ = config.getini("ini_param")
 
     def test_addini_literal_type_requires_default(self) -> None:
