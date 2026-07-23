@@ -572,6 +572,28 @@ class TestAssertionRewrite:
         assert result.ret == 1
         result.stdout.re_match_lines([r".*AssertionError: A+$", ".*assert False"])
 
+    def test_assertion_message_verbosity_collection(self, pytester: Pytester) -> None:
+        """
+        With -vv, the "message" part of assertions must not elide collection
+        elements with "..." either (#12307).
+        """
+        pytester.makepyfile(
+            """
+            def test_assertion_verbosity_collection():
+                assert False, list(range(100))
+            """
+        )
+        # Normal verbosity: collection elements are elided.
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*AssertionError: [[]0, 1, 2, 3, 4, 5, ...*"])
+
+        # High-verbosity: show the collection in full.
+        result = pytester.runpytest("-vv")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*AssertionError: [[]0, 1, 2,*98, 99[]]*"])
+        result.stdout.no_fnmatch_line("*AssertionError: *...*")
+
     def test_boolop(self) -> None:
         def f1() -> None:
             f = g = False
