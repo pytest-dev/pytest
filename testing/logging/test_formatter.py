@@ -149,6 +149,18 @@ def test_multiline_message() -> None:
         "dummypath                   10 INFO     Test Message line1\n     line2"
     )
 
+    record.auto_indent = "-5"
+    output = ai_off_style.format(record)
+    assert output == (
+        "dummypath                   10 INFO     Test Message line1\nline2"
+    )
+
+    record.auto_indent = -5
+    output = ai_off_style.format(record)
+    assert output == (
+        "dummypath                   10 INFO     Test Message line1\nline2"
+    )
+
 
 def test_colored_short_level() -> None:
     logfmt = "%(levelname).1s %(message)s"
