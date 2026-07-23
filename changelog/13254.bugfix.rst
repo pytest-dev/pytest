@@ -1,0 +1,1 @@
+Fixed misleading node IDs displayed for tests collected from paths outside ``rootdir``; pytest no longer synthesizes a phantom path by joining ``rootdir`` with the bare node ID in that case.
