@@ -266,7 +266,7 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=None, *, reason=None, raises=None, run=True, strict=strict_xfail)
+.. py:function:: pytest.mark.xfail(condition=True, *, reason=None, raises=None, run=True, strict=strict_xfail)
 
     :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
