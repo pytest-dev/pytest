@@ -641,20 +641,22 @@ class FixtureRequest(abc.ABC):
     ) -> _FixtureCachedResult[FixtureValue] | None:
         return self.session._setupstate.fixture_cache.get(fixturedef)
 
-    def _set_cached_result(
+    def _cache_value(
         self,
         fixturedef: FixtureDef[FixtureValue],
         value: FixtureValue,  # type: ignore[misc]
     ) -> None:
+        """Write a value into the cache for a fixture definition."""
         self.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
             value, self._cache_key(), None
         )
 
-    def _set_cached_exception(
+    def _cache_exception(
         self,
         fixturedef: FixtureDef[FixtureValue],
         exception: BaseException,
     ) -> None:
+        """Write an exception result into the cache for a fixture definition."""
         self.session._setupstate.fixture_cache[fixturedef] = _FixtureException(
             None, self._cache_key(), (exception, exception.__traceback__)
         )
@@ -1286,7 +1288,7 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
             node=request.node,
             _ispytest=True,
         )
-        request._set_cached_result(self, request)
+        request._cache_value(self, request)
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         pass
@@ -1364,12 +1366,12 @@ def pytest_fixture_setup(
             # Don't show the fixture as the skip location, as then the user
             # wouldn't know which test skipped.
             e._use_item_location = True
-        request._set_cached_exception(
+        request._cache_exception(
             fixturedef,
             e,
         )
         raise
-    request._set_cached_result(fixturedef, result)
+    request._cache_value(fixturedef, result)
     return result
 
 
