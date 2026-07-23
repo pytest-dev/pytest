@@ -1,0 +1,1 @@
+Improvement gathering the ``wasxfail`` value when the ``pytest.mark.xfail`` fixture is combined with explicit calls to ``pytest.fail`` or ``pytest.xfail``.
