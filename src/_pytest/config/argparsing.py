@@ -287,7 +287,7 @@ class Parser:
             string-based formats (INI files, ``-o`` overrides) coerce it to the
             first member that accepts it.
 
-            .. versionadded:: 9.1
+            .. versionadded:: 9.2
 
                 Passing a type expression such as ``int`` or ``int | str``.
 
@@ -296,7 +296,7 @@ class Parser:
             the choices have no unambiguous implicit default, an explicit
             ``default`` must be passed.
 
-            .. versionadded:: 9.1
+            .. versionadded:: 9.2
 
                 Passing a ``Literal`` type.
 
