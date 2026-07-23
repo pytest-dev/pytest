@@ -1138,6 +1138,31 @@ def test_rewritten():
             glob.glob("__pycache__/*.pyc")
         )
 
+    def test_moved_test_file_updates_code_filename(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Moving a test module must keep ``co_filename`` synchronized with ``__file__``."""
+        monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+
+        pytester.makepyfile(
+            **{
+                "test1/test_a.py": """
+                from inspect import currentframe
+
+                def test_a():
+                    assert currentframe().f_code.co_filename == __file__
+                """
+            }
+        )
+
+        first = pytester.runpytest_subprocess("-s", "test1/test_a.py")
+        first.assert_outcomes(passed=1)
+
+        pytester.path.joinpath("test1").rename(pytester.path.joinpath("test2"))
+
+        second = pytester.runpytest_subprocess("-s", "test2/test_a.py")
+        second.assert_outcomes(passed=1)
+
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(
         self,
