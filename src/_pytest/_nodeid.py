@@ -42,6 +42,7 @@ from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
+from _pytest.compat import assert_never
 from _pytest.compat import override
 from _pytest.scope import Scope
 
@@ -233,6 +234,10 @@ def coerce_node_id(nodeid: str | NodeId) -> NodeId | OpaqueNodeId:
     """Return ``nodeid`` unchanged if already a :data:`NodeId` (live
     collection data); otherwise treat it as an external nodeid string and
     wrap it in an :class:`OpaqueNodeId`."""
-    if isinstance(nodeid, (CollectionNodeId, ItemNodeId)):
-        return nodeid
-    return OpaqueNodeId.parse(nodeid)
+    match nodeid:
+        case CollectionNodeId() | ItemNodeId():
+            return nodeid
+        case str():
+            return OpaqueNodeId.parse(nodeid)
+        case _:  # pragma: no cover
+            assert_never(nodeid)
