@@ -45,8 +45,8 @@ from pluggy import HookspecMarker
 from pluggy import HookspecOpts
 from pluggy import PluginManager
 
-from .exceptions import PrintHelp as PrintHelp
-from .exceptions import UsageError as UsageError
+from .exceptions import PrintHelp  # re-exported
+from .exceptions import UsageError  # re-exported
 from .findpaths import ConfigDict
 from .findpaths import ConfigValue
 from .findpaths import determine_setup
