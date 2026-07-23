@@ -1220,6 +1220,60 @@ class TestConfigAPI:
         with pytest.raises(exc, match=f"config option 'ini_param' {match}"):
             _ = config.getini("ini_param")
 
+    UNION_LITERAL_CONFTEST = """
+        from typing import Literal
+
+        def pytest_addoption(parser):
+            parser.addini(
+                "ini_param", "", type=int | Literal["auto"], default="auto"
+            )
+    """
+
+    @pytest.mark.parametrize(
+        "value, expected",
+        [("3", 3), ('"auto"', "auto"), (None, "auto")],
+        ids=["int", "literal", "default"],
+    )
+    def test_addini_union_with_literal_toml(
+        self, pytester: Pytester, value: str | None, expected: object
+    ) -> None:
+        """A Literal of strings may be a union member, e.g. int | Literal["auto"]."""
+        pytester.makeconftest(self.UNION_LITERAL_CONFTEST)
+        if value is not None:
+            pytester.makepyprojecttoml(f"[tool.pytest]\nini_param = {value}")
+        assert pytester.parseconfig().getini("ini_param") == expected
+
+    def test_addini_union_with_literal_ini_and_override(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(self.UNION_LITERAL_CONFTEST)
+        pytester.makeini(
+            """
+            [pytest]
+            ini_param = 3
+        """
+        )
+        assert pytester.parseconfig().getini("ini_param") == 3
+        assert (
+            pytester.parseconfig("-o", "ini_param=auto").getini("ini_param") == "auto"
+        )
+
+    def test_addini_union_with_literal_invalid_value(self, pytester: Pytester) -> None:
+        pytester.makeconftest(self.UNION_LITERAL_CONFTEST)
+        pytester.makepyprojecttoml('[tool.pytest]\nini_param = "3"')
+        config = pytester.parseconfig()
+        with pytest.raises(
+            TypeError,
+            match=r"config option 'ini_param' expects one of int \| 'auto', "
+            r"got str: '3'",
+        ):
+            _ = config.getini("ini_param")
+
+    def test_addini_union_with_literal_non_str_choice(self) -> None:
+        parser = Parser(_ispytest=True)
+        with pytest.raises(ValueError, match="Literal choices must be strings"):
+            parser.addini("ini_param", "", type=str | Literal[1], default="")
+
     def test_addini_literal_type_requires_default(self) -> None:
         parser = Parser(_ispytest=True)
         with pytest.raises(

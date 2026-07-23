@@ -51,10 +51,10 @@ class _IniLiteral:
 
 
 #: An ini option type, as stored internally after normalization: a single tag,
-#: a tuple of tags meaning "accept a value of these types" (e.g.
-#: ``("int", "string")``, normalized from ``int | str``), or the choices of a
-#: ``Literal`` type.
-IniType: TypeAlias = _IniTypeTag | tuple[_IniTypeTag, ...] | _IniLiteral
+#: the choices of a ``Literal`` type, or a tuple of members meaning "accept a
+#: value of any of these" (e.g. ``("int", "string")``, normalized from
+#: ``int | str``).
+IniType: TypeAlias = _IniTypeTag | _IniLiteral | tuple[_IniTypeTag | _IniLiteral, ...]
 
 #: Maps each string tag or plain Python type accepted by :meth:`Parser.addini`
 #: for its ``type`` argument to the normalized string tag.
@@ -79,12 +79,25 @@ def _ini_type_to_tag(name: str, type_: object) -> _IniTypeTag:
         ) from None
 
 
+def _ini_type_to_member(name: str, type_: object) -> _IniTypeTag | _IniLiteral:
+    """Normalize one member of an `addini(type=...)` argument."""
+    if get_origin(type_) is Literal:
+        choices = get_args(type_)
+        if not all(isinstance(choice, str) for choice in choices):
+            raise ValueError(
+                f"invalid type for ini option {name!r}: Literal choices "
+                f"must be strings, got {choices!r}"
+            )
+        return _IniLiteral(choices)
+    return _ini_type_to_tag(name, type_)
+
+
 def _ini_type_repr(type: IniType) -> str:
     """Render an ini option type for --help output and error messages."""
     if isinstance(type, _IniLiteral):
         return " | ".join(repr(choice) for choice in type.choices)
     if isinstance(type, tuple):
-        return " | ".join(type)
+        return " | ".join(_ini_type_repr(member) for member in type)
     return type
 
 
@@ -289,9 +302,10 @@ class Parser:
             first member that accepts it.
 
             A ``Literal`` type of strings restricts the value to the given
-            choices, for example ``Literal["auto", "long", "short"]``. Since
-            the choices have no unambiguous implicit default, an explicit
-            ``default`` must be passed.
+            choices, for example ``Literal["auto", "long", "short"]``, and may
+            also be a union member, for example ``int | Literal["auto"]``.
+            Since the choices have no unambiguous implicit default, an
+            explicit ``default`` must be passed.
 
             .. versionadded:: 9.2
 
@@ -322,23 +336,14 @@ class Parser:
         :py:func:`config.getini(name) <pytest.Config.getini>`.
         """
         ini_type: IniType
-        origin = get_origin(type)
         if type is None:
             ini_type = "string"
-        elif origin is Literal:
-            choices = get_args(type)
-            if not all(isinstance(choice, str) for choice in choices):
-                raise ValueError(
-                    f"invalid type for ini option {name!r}: Literal choices "
-                    f"must be strings, got {choices!r}"
-                )
-            ini_type = _IniLiteral(choices)
-        elif origin in (Union, types.UnionType):
+        elif get_origin(type) in (Union, types.UnionType):
             ini_type = tuple(
-                _ini_type_to_tag(name, member) for member in get_args(type)
+                _ini_type_to_member(name, member) for member in get_args(type)
             )
         else:
-            ini_type = _ini_type_to_tag(name, type)
+            ini_type = _ini_type_to_member(name, type)
         if default is NOTSET:
             if isinstance(ini_type, (tuple, _IniLiteral)):
                 kind = "union" if isinstance(ini_type, tuple) else "Literal"

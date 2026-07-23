@@ -63,6 +63,10 @@ def test_help_ini_union_and_literal_types(pytester: Pytester) -> None:
                 "ini_literal", "literal help", type=Literal["auto", "long"],
                 default="auto",
             )
+            parser.addini(
+                "ini_mixed", "mixed help", type=int | Literal["auto"],
+                default="auto",
+            )
     """
     )
     result = pytester.runpytest("--help")
@@ -73,6 +77,8 @@ def test_help_ini_union_and_literal_types(pytester: Pytester) -> None:
             "*union help*",
             "*ini_literal ('auto' | 'long'):*",
             "*literal help*",
+            "*ini_mixed (int | 'auto'):*",
+            "*mixed help*",
         ]
     )
 

@@ -1787,11 +1787,11 @@ class Config:
         if not isinstance(type, tuple):
             return self._getini_value(mode, name, canonical_name, type, value, default)
 
-        # Union: try each member; the first tag that accepts the value wins.
-        for tag in type:
+        # Union: try each member; the first one that accepts the value wins.
+        for member in type:
             try:
                 return self._getini_value(
-                    mode, name, canonical_name, tag, value, default
+                    mode, name, canonical_name, member, value, default
                 )
             except (TypeError, ValueError):
                 pass
