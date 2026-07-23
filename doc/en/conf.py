@@ -80,6 +80,7 @@ nitpick_ignore = [
     ("py:class", "_pytest.logging.LogCaptureHandler"),
     ("py:class", "_pytest.mark.structures.ParameterSet"),
     # Intentionally undocumented/private
+    ("py:class", "FSHookProxy"),
     ("py:class", "_pytest._code.code.Traceback"),
     ("py:class", "_pytest._py.path.LocalPath"),
     ("py:class", "_pytest.capture.CaptureResult"),

@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     # Imported here due to circular import.
+    from _pytest.main import FSHookProxy
     from _pytest.main import Session
 
 
@@ -225,7 +226,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         return cls._create(parent=parent, **kw)
 
     @property
-    def ihook(self) -> pluggy.HookRelay:
+    def ihook(self) -> pluggy.HookRelay | FSHookProxy:
         """Path-sensitive hook proxy used to call pytest hooks."""
         return self.session.gethookproxy(self.path)
 
