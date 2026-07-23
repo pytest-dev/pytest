@@ -912,6 +912,9 @@ class SubRequest(FixtureRequest):
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._fixturedef.addfinalizer(finalizer)
 
+    def cache_key(self) -> object:
+        return getattr(self, "param", None)
+
 
 @final
 class FixtureLookupError(LookupError):
@@ -1202,7 +1205,7 @@ class FixtureDef(Generic[FixtureValue]):
 
         # Check for (and return) cached value/exception.
         if (fixture_result := request._get_cached_result(self)) is not None:
-            request_cache_key = self.cache_key(request)
+            request_cache_key = request.cache_key()
             cache_key = fixture_result.cache_key
             try:
                 # Attempt to make a normal == check: this might fail for objects
@@ -1251,9 +1254,6 @@ class FixtureDef(Generic[FixtureValue]):
 
         return result
 
-    def cache_key(self, request: SubRequest) -> object:
-        return getattr(request, "param", None)
-
     def __repr__(self) -> str:
         return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
 
@@ -1276,9 +1276,6 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
             _ispytest=True,
         )
         request._set_cached_result(self, _FixtureResult(request, [0], None))
-
-    def cache_key(self, request: SubRequest) -> object:
-        return [0]
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         pass
@@ -1336,7 +1333,7 @@ def pytest_fixture_setup(
         kwargs[argname] = request.getfixturevalue(argname)
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
-    my_cache_key = fixturedef.cache_key(request)
+    my_cache_key = request.cache_key()
 
     if inspect.isasyncgenfunction(fixturefunc) or inspect.iscoroutinefunction(
         fixturefunc
