@@ -1,0 +1,1 @@
+Move fixture cache from *FixtureDef* to *SetupState*.
