@@ -1,0 +1,1 @@
+Allowed integer values for :confval:`truncation_limit_lines` and :confval:`truncation_limit_chars` in configurations.
