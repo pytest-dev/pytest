@@ -1,0 +1,1 @@
+Fixed duplicate evaluation of walrus assignments after assert statement rewrite.

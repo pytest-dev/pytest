@@ -1689,7 +1689,7 @@ class TestAssertionRewriteWalrusOperator:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert not (True and False is False)"])
+        result.stdout.fnmatch_lines(["*assert not (False and False is False)"])
 
     def test_assertion_walrus_operator_boolean_none_fails(
         self, pytester: Pytester
@@ -1703,7 +1703,7 @@ class TestAssertionRewriteWalrusOperator:
         )
         result = pytester.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines(["*assert not (True and None is None)"])
+        result.stdout.fnmatch_lines(["*assert not (None and None is None)"])
 
     def test_assertion_walrus_operator_value_changes_cleared_after_each_test(
         self, pytester: Pytester
@@ -1841,6 +1841,57 @@ class TestIssue11239:
             def test_2():
                 db = {"x": 2}
                 assert (state := db.get("x")) is not None
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 8), reason="walrus operator not available in py<38"
+)
+class TestIssue14445WalrusDoubleEval:
+    """Test that walrus operator (:=) is not evaluated twice by assertion rewriting.
+
+    The rewriter must not re-evaluate NamedExpr nodes when building the
+    failure message, as that causes side effects to fire twice.
+    """
+
+    def test_walrus_operator_not_double_evaluated(self, pytester: Pytester) -> None:
+        """Walrus assigns wrong value when rewriter evaluates := twice."""
+        pytester.makepyfile(
+            """
+            class Counter:
+                def __init__(self):
+                    self.value = 0
+
+                def increment(self):
+                    self.value += 1
+
+            def test_walrus_basic():
+                c = Counter()
+                assert (before := c.value) == 0
+                c.increment()
+                assert before != (after := c.value)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_walrus_operator_cumulative_not_doubled(self, pytester: Pytester) -> None:
+        """Cumulative walrus increments should not fire twice."""
+        pytester.makepyfile(
+            """
+            def test_walrus_running_counter():
+                count = 0
+                items = []
+                items.append("a")
+                assert (count := count + 1) == len(items)
+                items.append("b")
+                assert (count := count + 1) == len(items)
+                items.append("c")
+                assert (count := count + 1) == len(items)
+                assert count == 3
         """
         )
         result = pytester.runpytest()
