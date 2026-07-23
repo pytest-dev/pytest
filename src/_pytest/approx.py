@@ -677,6 +677,8 @@ class ApproxTimedelta(Approx[datetime | timedelta]):
                 raise ValueError(f"relative tolerance can't be negative: {rel}")
             if math.isnan(rel):
                 raise ValueError("relative tolerance can't be NaN.")
+            if math.isinf(rel):
+                raise ValueError("relative tolerance can't be infinite.")
         # Compute the effective tolerance. abs_tolerance is a timedelta, rel * expected
         # gives a timedelta (timedelta * float works in Python).
         abs_tolerance = abs
