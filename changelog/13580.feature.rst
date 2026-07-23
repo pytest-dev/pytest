@@ -1,0 +1,1 @@
+File paths in tracebacks can now be rendered as clickable OSC 8 terminal hyperlinks via the new ``--hyperlinks`` option (``yes``/``no``/``auto``, default ``auto``).

@@ -2131,6 +2131,13 @@ def create_terminal_writer(
     elif config.option.code_highlight == "no":
         tw.code_highlight = False
 
+    # auto gates on tw.isatty (the actual file, not sys.stdout) so a StringIO
+    # sink like the pastebin plugin stays clean; "yes" is unconditional like
+    # --color=yes, so callers reusing output as plain text must clear
+    # tw.hyperlinks themselves. Mirrors terminalprogress per #13896.
+    want = config.option.hyperlinks
+    tw.hyperlinks = want == "yes" or (want == "auto" and tw.hasmarkup and tw.isatty)
+
     return tw
 
 

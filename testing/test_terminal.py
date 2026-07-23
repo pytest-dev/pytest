@@ -19,6 +19,7 @@ import pluggy
 from _pytest._io.wcwidth import wcswidth
 import _pytest.config
 from _pytest.config import Config
+from _pytest.config import create_terminal_writer
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -3563,3 +3564,112 @@ class TestTerminalProgressPlugin:
         # Session finish - should remove progress.
         plugin.pytest_sessionfinish()
         assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
+
+
+def test_hyperlinks_yes_emits_osc8(pytester: Pytester) -> None:
+    """--hyperlinks=yes wraps file paths in OSC 8 escape sequences."""
+    pytester.makepyfile(
+        """
+        def test_fail():
+            assert 0
+        """
+    )
+    result = pytester.runpytest("--hyperlinks=yes", "--color=yes")
+    # OSC 8 hyperlink wrapper: \x1b]8;;URL\x1b\\TEXT\x1b]8;;\x1b\\
+    output = result.stdout.str()
+    assert "\x1b]8;;file://" in output
+    assert "\x1b\\test_hyperlinks_yes_emits_osc8.py\x1b]8;;\x1b\\" in output
+
+
+def test_hyperlinks_yes_percent_encodes_spaces(pytester: Pytester) -> None:
+    """Paths with spaces are percent-encoded in the file:// URL (#13580)."""
+    # Put the test file in a directory whose name has a space, so the absolute
+    # path passed to Path.as_uri() contains a space that must be encoded.
+    spaced = pytester.path / "with space"
+    spaced.mkdir()
+    (spaced / "test_fail.py").write_text(
+        "def test_fail():\n    assert 0\n", encoding="utf-8"
+    )
+    result = pytester.runpytest(
+        "--hyperlinks=yes", "--color=yes", str(spaced / "test_fail.py")
+    )
+    output = result.stdout.str()
+    # The URL must encode the space; a raw space would make the URI invalid and
+    # terminals would truncate the link at the space.
+    assert "file://" in output
+    assert "%20" in output
+
+
+def test_hyperlinks_no_no_osc8(pytester: Pytester) -> None:
+    """--hyperlinks=no never emits OSC 8 sequences, even with color on."""
+    pytester.makepyfile(
+        """
+        def test_fail():
+            assert 0
+        """
+    )
+    result = pytester.runpytest("--hyperlinks=no", "--color=yes")
+    assert "\x1b]8;;" not in result.stdout.str()
+
+
+def test_hyperlinks_auto_off_when_not_tty(pytester: Pytester) -> None:
+    """Auto (the default) emits no OSC 8 when stdout is captured/not a tty.
+
+    pytester.runpytest captures the subprocess stdout, so it is not a tty —
+    auto mode must not emit hyperlinks, keeping CI/captured output clean.
+    """
+    pytester.makepyfile(
+        """
+        def test_fail():
+            assert 0
+        """
+    )
+    result = pytester.runpytest("--color=yes")  # --hyperlinks defaults to auto
+    assert "\x1b]8;;" not in result.stdout.str()
+
+
+def test_hyperlinks_auto_off_for_non_tty_sink(pytester: Pytester) -> None:
+    """Auto must gate on isatty, not hasmarkup — --color=yes forces hasmarkup
+    True even for a StringIO, so hasmarkup-only gating would leak OSC 8."""
+    config = pytester.parseconfigure("--color=yes")  # --hyperlinks defaults to auto
+    tw = create_terminal_writer(config, StringIO())
+    assert tw.hasmarkup  # --color=yes forces markup on
+    assert not tw.isatty  # but StringIO is not a tty
+    assert not tw.hyperlinks  # so auto must keep hyperlinks off
+
+
+def test_hyperlinks_yes_forces_on(pytester: Pytester) -> None:
+    """--hyperlinks=yes forces on even for a non-tty sink, unlike auto.
+
+    ``yes`` is unconditional like ``--color=yes``: a user who explicitly asks
+    for hyperlinks gets them regardless of isatty/hasmarkup. Callers that
+    capture output for plain-text reuse (the pastebin plugin) must clear
+    ``tw.hyperlinks`` themselves — see pastebin.py.
+    """
+    config = pytester.parseconfigure("--hyperlinks=yes", "--color=no")
+    tw = create_terminal_writer(config, StringIO())
+    assert not tw.isatty  # StringIO is not a tty
+    assert not tw.hasmarkup  # --color=no
+    assert tw.hyperlinks  # yes forces on anyway
+
+
+def test_format_path_hyperlink_branches() -> None:
+    """Cover _format_path_hyperlink's branches: disabled, lineno=None, lineno set."""
+    from _pytest._code.code import _format_path_hyperlink
+    from _pytest._io import TerminalWriter
+
+    tw = TerminalWriter(file=StringIO())
+    # Disabled: bare path returned unchanged.
+    tw.hyperlinks = False
+    assert _format_path_hyperlink(tw, "test_x.py", 5) == "test_x.py"
+
+    tw.hyperlinks = True
+    # lineno=None (e.g. doctest ReprFileLocation): URL has no :line suffix.
+    out = _format_path_hyperlink(tw, "test_x.py", None)
+    assert out.startswith("\x1b]8;;file://")
+    assert ":5" not in out
+    assert out.endswith("\x1b\\test_x.py\x1b]8;;\x1b\\")
+    # lineno set: URL carries :line.
+    out = _format_path_hyperlink(tw, "test_x.py", 5)
+    assert "\x1b]8;;file://" in out
+    assert ":5\x1b\\" in out

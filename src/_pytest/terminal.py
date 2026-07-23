@@ -270,6 +270,16 @@ def pytest_addoption(parser: Parser) -> None:
         help="Whether code should be highlighted (only if --color is also enabled). "
         "Default: yes.",
     )
+    group.addoption(
+        "--hyperlinks",
+        metavar="hyperlinks",
+        action="store",
+        dest="hyperlinks",
+        default="auto",
+        choices=["yes", "no", "auto"],
+        help="Render file paths as OSC 8 terminal hyperlinks (yes/no/auto). "
+        "Auto enables them only when the terminal supports markup. Default: auto.",
+    )
 
     parser.addini(
         "console_output_style",
