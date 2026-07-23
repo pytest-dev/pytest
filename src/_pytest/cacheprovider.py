@@ -23,7 +23,6 @@ from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest._nodeid import ItemNodeId
 from _pytest._nodeid import OpaqueNodeId
-from _pytest._nodeid import to_opaque_node_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -274,7 +273,7 @@ class LFPluginCollWrapper:
 
                 # Only filter with known failures.
                 if not self._collected_at_least_one_failure:
-                    if not any(x.id.to_opaque() in lastfailed for x in result):
+                    if not any(x.id.as_opaque() in lastfailed for x in result):
                         return res
                     self.lfplugin.config.pluginmanager.register(
                         LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
@@ -285,7 +284,7 @@ class LFPluginCollWrapper:
                 result[:] = [
                     x
                     for x in result
-                    if x.id.to_opaque() in lastfailed
+                    if x.id.as_opaque() in lastfailed
                     # Include any passed arguments (not trivial to filter).
                     or session.isinitpath(x.path)
                     # Keep all sub-collectors.
@@ -351,21 +350,21 @@ class LFPlugin:
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         if (report.when == "call" and report.passed) or report.skipped:
-            self.lastfailed.pop(to_opaque_node_id(report.id), None)
+            self.lastfailed.pop(report.id.as_opaque(), None)
         elif report.failed:
-            self.lastfailed[to_opaque_node_id(report.id)] = True
+            self.lastfailed[report.id.as_opaque()] = True
 
     def pytest_collectreport(self, report: CollectReport) -> None:
         passed = report.outcome in ("passed", "skipped")
         if passed:
-            report_id = to_opaque_node_id(report.id)
+            report_id = report.id.as_opaque()
             if report_id in self.lastfailed:
                 self.lastfailed.pop(report_id)
                 self.lastfailed.update(
-                    (item.id.to_opaque(), True) for item in report.result
+                    (item.id.as_opaque(), True) for item in report.result
                 )
         else:
-            self.lastfailed[to_opaque_node_id(report.id)] = True
+            self.lastfailed[report.id.as_opaque()] = True
 
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
@@ -380,7 +379,7 @@ class LFPlugin:
             previously_failed = []
             previously_passed = []
             for item in items:
-                if item.id.to_opaque() in self.lastfailed:
+                if item.id.as_opaque() in self.lastfailed:
                     previously_failed.append(item)
                 else:
                     previously_passed.append(item)
@@ -450,7 +449,7 @@ class NFPlugin:
             new_items: dict[ItemNodeId, nodes.Item] = {}
             other_items: dict[ItemNodeId, nodes.Item] = {}
             for item in items:
-                if item.id.to_opaque() not in self.cached_nodeids:
+                if item.id.as_opaque() not in self.cached_nodeids:
                     new_items[item.id] = item
                 else:
                     other_items[item.id] = item
@@ -458,9 +457,9 @@ class NFPlugin:
             items[:] = self._get_increasing_order(
                 new_items.values()
             ) + self._get_increasing_order(other_items.values())
-            self.cached_nodeids.update(k.to_opaque() for k in new_items)
+            self.cached_nodeids.update(k.as_opaque() for k in new_items)
         else:
-            self.cached_nodeids.update(item.id.to_opaque() for item in items)
+            self.cached_nodeids.update(item.id.as_opaque() for item in items)
 
         return res
 
