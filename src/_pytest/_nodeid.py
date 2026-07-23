@@ -29,13 +29,6 @@ case: it only knows the ``path`` and an unparsed ``rest``, and makes no
 claim to structured names or params. The legacy ``::``-joined string form
 remains available (via ``str(node_id)``) for backward compatibility with
 external plugins, for all types.
-
-This module must stay a dependency-free leaf: it is imported from
-``_pytest.nodes``, which is itself imported by ``_pytest.config``, so
-importing anything from ``_pytest.config``/``_pytest.nodes`` here would
-create a cycle. Importing :class:`~_pytest.scope.Scope` and
-``_pytest.compat`` is safe, since both are themselves dependency-free leaf
-modules.
 """
 
 from __future__ import annotations
@@ -45,6 +38,12 @@ from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
+# This module must stay a dependency-free leaf: it is imported from
+# ``_pytest.nodes``, which is itself imported by ``_pytest.config``, so
+# importing anything from ``_pytest.config``/``_pytest.nodes`` here would
+# create a cycle. Importing :class:`~_pytest.scope.Scope` and
+# ``_pytest.compat`` is safe, since both are themselves dependency-free leaf
+# modules.
 from _pytest.compat import assert_never
 from _pytest.compat import override
 from _pytest.scope import Scope
