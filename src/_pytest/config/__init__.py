@@ -1578,6 +1578,20 @@ class Config:
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)
 
+        if ns.inifilename and not ns.rootdir:
+            if inipath is not None and inipath.parent != self.invocation_params.dir:
+                from pathlib import Path
+
+                rootdir_str = (
+                    str(self.invocation_params.dir)
+                    if isinstance(self.invocation_params.dir, Path)
+                    else self.invocation_params.dir
+                )
+                self._parser.extra_info["rootdir-warning"] = (
+                    f"rootdir set to {rootdir_str} because -c was given without --rootdir. "
+                    "Use --rootdir to explicitly disambiguate."
+                )
+
         self._parser.addini("addopts", "Extra command line options", "args")
         self._parser.addini("minversion", "Minimally required pytest version")
         self._parser.addini(

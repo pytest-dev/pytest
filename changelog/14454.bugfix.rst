@@ -1,0 +1,1 @@
+Fixed a regression where :option:`-c` pointing to a config file in a sub-directory would set :confval:`rootdir` to the config file's parent directory instead of the invocation directory, breaking conftest discovery. Patch by :user:`EternalRights`.
