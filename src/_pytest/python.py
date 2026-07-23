@@ -90,6 +90,29 @@ _LONG_STR_STRATEGIES: frozenset[LongStrIdStrategy] = frozenset(
     get_args(LongStrIdStrategy)
 )
 
+# Modes for the ``collect_function_definition`` option.
+# - "hidden": legacy flat layout; the FunctionDefinition is used transiently to
+#             drive parametrization and kept out of ("hidden" from) the tree.
+# - "pedantic": insert the FunctionDefinition node; function-level markers are
+#               scoped to it and each invocation only owns its callspec markers.
+# - "messy": insert the node, but transfer the function-level markers down onto
+#            each invocation to preserve the legacy marker layout. Emits a
+#            warning, as this defeats the purpose of the definition scope.
+FunctionDefinitionMode = Literal["hidden", "pedantic", "messy"]
+_FUNCTION_DEFINITION_MODES: frozenset[FunctionDefinitionMode] = frozenset(
+    get_args(FunctionDefinitionMode)
+)
+
+
+def _collect_function_definition_mode(config: Config) -> FunctionDefinitionMode:
+    value = config.getini("collect_function_definition")
+    if value not in _FUNCTION_DEFINITION_MODES:
+        raise UsageError(
+            f"Unknown collect_function_definition: {value!r}. "
+            f"Valid values: {', '.join(sorted(_FUNCTION_DEFINITION_MODES))}"
+        )
+    return cast(FunctionDefinitionMode, value)
+
 
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
@@ -160,6 +183,16 @@ def pytest_configure(config: Config) -> None:
         "all of the specified fixtures. see "
         "https://docs.pytest.org/en/stable/explanation/fixtures.html#usefixtures ",
     )
+
+
+def pytest_report_header(config: Config) -> list[str] | None:
+    if _collect_function_definition_mode(config) == "messy":
+        return [
+            "warning: collect_function_definition=messy transfers markers to the "
+            "individual invocations to preserve the legacy layout; prefer "
+            "'pedantic' once your plugins handle the definition scope",
+        ]
+    return None
 
 
 def async_fail(nodeid: str) -> None:
@@ -330,6 +363,11 @@ class PyobjMixin(nodes.Node):
         """Return Python path relative to the containing module."""
         parts = []
         for node in self.iter_parents():
+            # A FunctionDefinition parent contributes the same name as the
+            # Function collected under it, so skip it to avoid duplication
+            # (but keep it when it is the node itself).
+            if node is not self and isinstance(node, FunctionDefinition):
+                continue
             name = node.name
             if isinstance(node, Module):
                 name = os.path.splitext(name)[0]
@@ -466,54 +504,19 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
             result.extend(values)
         return result
 
-    def _genfunctions(self, name: str, funcobj) -> Iterator[Function]:
-        modulecol = self.getparent(Module)
-        assert modulecol is not None
-        module = modulecol.obj
-        clscol = self.getparent(Class)
-        cls = (clscol and clscol.obj) or None
-
+    def _genfunctions(
+        self, name: str, funcobj
+    ) -> Iterator[Function | FunctionDefinition]:
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
-        fixtureinfo = definition._fixtureinfo
-
-        # pytest_generate_tests impls call metafunc.parametrize() which fills
-        # metafunc._calls, the outcome of the hook.
-        metafunc = Metafunc(
-            definition=definition,
-            fixtureinfo=fixtureinfo,
-            config=self.config,
-            cls=cls,
-            module=module,
-            _ispytest=True,
-        )
-        methods = []
-        if hasattr(module, "pytest_generate_tests"):
-            methods.append(module.pytest_generate_tests)
-        if cls is not None and hasattr(cls, "pytest_generate_tests"):
-            methods.append(cls().pytest_generate_tests)
-        self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
-
-        if not metafunc._calls:
-            yield Function.from_parent(self, name=name, fixtureinfo=fixtureinfo)
+        if _collect_function_definition_mode(self.config) == "hidden":
+            # Legacy flat layout: the definition is used only to drive
+            # parametrization and is discarded ("hidden"), the invocations are
+            # collected directly under this collector.
+            yield from definition._generate_functions(self)
         else:
-            metafunc._recompute_direct_params_indices()
-            # Direct parametrizations taking place in module/class-specific
-            # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
-            # we update what the function really needs a.k.a its fixture closure. Note that
-            # direct parametrizations using `@pytest.mark.parametrize` have already been considered
-            # into making the closure using `ignore_args` arg to `getfixtureclosure`.
-            fixtureinfo.prune_dependency_tree()
-
-            for callspec in metafunc._calls:
-                subname = f"{name}[{callspec.id}]" if callspec._idlist else name
-                yield Function.from_parent(
-                    self,
-                    name=subname,
-                    callspec=callspec,
-                    fixtureinfo=fixtureinfo,
-                    keywords={callspec.id: True},
-                    originalname=name,
-                )
+            # Insert the function definition as a collector node into the tree;
+            # its ``collect()`` yields the (possibly parametrized) invocations.
+            yield definition
 
 
 def importtestmodule(
@@ -1682,8 +1685,9 @@ class Function(PyobjMixin, nodes.Item):
         session: Session | None = None,
         fixtureinfo: FuncFixtureInfo | None = None,
         originalname: str | None = None,
+        nodeid: str | None = None,
     ) -> None:
-        super().__init__(name, parent, config=config, session=session)
+        super().__init__(name, parent, config=config, session=session, nodeid=nodeid)
 
         if callobj is not NOTSET:
             self._obj = callobj
@@ -1700,7 +1704,12 @@ class Function(PyobjMixin, nodes.Item):
         # Note: when FunctionDefinition is introduced, we should change ``originalname``
         # to a readonly property that returns FunctionDefinition.name.
 
-        self.own_markers.extend(get_unpacked_marks(self.obj))
+        # Function-level markers are owned by the FunctionDefinition scope when
+        # that node is part of the collection tree; otherwise (flat layout) the
+        # Function owns them itself. In "messy" mode FunctionDefinition.collect()
+        # transfers them back onto each invocation for legacy compatibility.
+        if not isinstance(self.parent, FunctionDefinition):
+            self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
             self.own_markers.extend(callspec.marks)
@@ -1742,17 +1751,16 @@ class Function(PyobjMixin, nodes.Item):
         try:
             return self._instance
         except AttributeError:
-            if isinstance(self.parent, Class):
-                # Each Function gets a fresh class instance.
-                self._instance = self._getinstance()
-            else:
-                self._instance = None
+            self._instance = self._getinstance()
         return self._instance
 
     def _getinstance(self):
-        if isinstance(self.parent, Class):
+        # The containing class, if any -- skipping over an interposed
+        # FunctionDefinition node (see the ``collect_function_definition`` option).
+        cls = self.getparent(Class)
+        if cls is not None:
             # Each Function gets a fresh class instance.
-            return self.parent.newinstance()
+            return cls.newinstance()
         else:
             return None
 
@@ -1761,8 +1769,13 @@ class Function(PyobjMixin, nodes.Item):
         if instance is not None:
             parent_obj = instance
         else:
-            assert self.parent is not None
-            parent_obj = self.parent.obj  # type: ignore[attr-defined]
+            # The namespace this function was collected from -- a Module (or a
+            # Class handled above), skipping over an interposed FunctionDefinition.
+            parent = self.parent
+            while isinstance(parent, FunctionDefinition):
+                parent = parent.parent
+            assert parent is not None
+            parent_obj = parent.obj  # type: ignore[attr-defined]
         return getattr(parent_obj, self.originalname)
 
     @property
@@ -1817,11 +1830,126 @@ class Function(PyobjMixin, nodes.Item):
         return self._repr_failure_py(excinfo, style=style)
 
 
-class FunctionDefinition(Function):
-    """This class is a stop gap solution until we evolve to have actual function
-    definition nodes and manage to get rid of ``metafunc``."""
+class FunctionDefinition(PyCollector):
+    """Collector node for a single test function definition.
 
-    def runtest(self) -> None:
-        raise RuntimeError("function definitions are not supposed to be run as tests")
+    Its children are the (possibly parametrized) :class:`Function` invocations
+    generated from the definition via :hook:`pytest_generate_tests`.
 
-    setup = runtest
+    This node is only inserted into the collection tree when the
+    :confval:`collect_function_definition` option is enabled. Otherwise it is
+    created transiently to drive parametrization (backing :class:`Metafunc`)
+    and then discarded, with the resulting :class:`Function` items collected
+    directly under the containing :class:`Class`/:class:`Module`.
+    """
+
+    # Markers are handled explicitly below, mirroring Function.
+    _ALLOW_MARKERS = False
+
+    def __init__(
+        self,
+        name: str,
+        parent,
+        config: Config | None = None,
+        callobj=NOTSET,
+        session: Session | None = None,
+    ) -> None:
+        super().__init__(name, parent, config=config, session=session)
+
+        if callobj is not NOTSET:
+            self._obj = callobj
+
+        self.own_markers.extend(get_unpacked_marks(self.obj))
+        self.keywords.update((mark.name, mark) for mark in self.own_markers)
+        self.keywords.update(self.obj.__dict__)
+
+    def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        children = list(self._generate_functions(self))
+        if _collect_function_definition_mode(self.config) == "messy":
+            # Legacy marker layout: transfer this scope's markers back onto each
+            # invocation and drop them here, so marker resolution matches the flat
+            # layout exactly (no duplication when walking parents in iter_markers).
+            marks = self.own_markers
+            for child in children:
+                child.own_markers[:0] = marks
+                child.keywords.update((mark.name, mark) for mark in marks)
+            self.own_markers = []
+        return children
+
+    def _generate_functions(self, parent: nodes.Collector) -> Iterator[Function]:
+        """Run :hook:`pytest_generate_tests` and yield the resulting
+        :class:`Function` invocations under ``parent``.
+
+        ``parent`` is this definition node when it is part of the tree, or the
+        containing :class:`Class`/:class:`Module` in the legacy flat layout.
+        """
+        name = self.name
+        modulecol = self.getparent(Module)
+        assert modulecol is not None
+        module = modulecol.obj
+        clscol = self.getparent(Class)
+        cls = (clscol and clscol.obj) or None
+
+        # Compute the function's fixture closure. This drives parametrization and
+        # is shared with the generated invocations; it is intentionally *not*
+        # stored on the definition -- fixtures belong to the executed items, not
+        # to this collector.
+        # TODO(#3926): getfixtureinfo() is item-scoped, but here the definition
+        # (a collector) stands in for the not-yet-created invocations. Resolve by
+        # giving fixture-closure computation a node-level entry point instead of
+        # casting a collector to an item.
+        fixtureinfo = self.session._fixturemanager.getfixtureinfo(
+            cast(nodes.Item, self), self.obj, cls
+        )
+
+        # pytest_generate_tests impls call metafunc.parametrize() which fills
+        # metafunc._calls, the outcome of the hook.
+        metafunc = Metafunc(
+            definition=self,
+            fixtureinfo=fixtureinfo,
+            config=self.config,
+            cls=cls,
+            module=module,
+            _ispytest=True,
+        )
+        methods = []
+        if hasattr(module, "pytest_generate_tests"):
+            methods.append(module.pytest_generate_tests)
+        if cls is not None and hasattr(cls, "pytest_generate_tests"):
+            methods.append(cls().pytest_generate_tests)
+        self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
+
+        # The invocations keep a flat nodeid anchored at the collector containing
+        # the definition, regardless of whether the definition itself is part of
+        # the tree, so nodeids are stable across the ``collect_function_definition``
+        # option.
+        assert self.parent is not None
+        base_nodeid = self.parent.nodeid
+
+        if not metafunc._calls:
+            yield Function.from_parent(
+                parent,
+                name=name,
+                fixtureinfo=fixtureinfo,
+                nodeid=f"{base_nodeid}::{name}",
+            )
+        else:
+            metafunc._recompute_direct_params_indices()
+            # Direct parametrizations taking place in module/class-specific
+            # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
+            # we update what the function really needs a.k.a its fixture closure. Note that
+            # direct parametrizations using `@pytest.mark.parametrize` have already been considered
+            # into making the closure using `ignore_args` arg to `getfixtureclosure`.
+            fixtureinfo.prune_dependency_tree()
+
+            for callspec in metafunc._calls:
+                subname = f"{name}[{callspec.id}]" if callspec._idlist else name
+                yield Function.from_parent(
+                    parent,
+                    name=subname,
+                    callspec=callspec,
+                    fixtureinfo=fixtureinfo,
+                    keywords={callspec.id: True},
+                    originalname=name,
+                    nodeid=f"{base_nodeid}::{subname}",
+                )
