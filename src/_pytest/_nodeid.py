@@ -1,6 +1,6 @@
 """Structured representation of a pytest "nodeid".
 
-A nodeid is a ``::``-separated string identifying a node in the collection
+A nodeid is represented as a ``::``-separated string, identifying a node in the collection
 tree, e.g. ``path/to/test_file.py::TestClass::test_method[param]``.
 
 There are three structured, internal representations of this concept, all
@@ -13,6 +13,9 @@ boundary -- so that their fields can always be trusted:
   function). Carries ``params``; has no ``.child()``/``.leaf()`` at all, so
   building further collection-tree structure on top of one is a static
   type error, not just a runtime mistake.
+- :class:`OpaqueNodeId` -- A nodeid reconstructed from an external string
+  source, rather than from live collection. It this no claim to structured
+  names or params, given they cannot be inferred from the plain string.
 - :data:`NodeId` -- a type alias, ``CollectionNodeId | ItemNodeId``, for
   code that genuinely needs to accept/hold either kind.
 
@@ -71,7 +74,7 @@ class ParamId:
     scope: Scope | None = None
 
 
-class _CachedStrEqHash:
+class _CachedStrEqHashMixin:
     """Shared ``str(self)`` caching plus cross-type equality/hashing for
     :class:`CollectionNodeId`, :class:`ItemNodeId` and :class:`OpaqueNodeId`.
 
@@ -98,7 +101,7 @@ class _CachedStrEqHash:
         return base
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, (CollectionNodeId, ItemNodeId, OpaqueNodeId)):
+        if not isinstance(other, _CachedStrEqHashMixin):
             return NotImplemented
         return str(self) == str(other)
 
@@ -107,7 +110,7 @@ class _CachedStrEqHash:
 
 
 @dataclasses.dataclass(frozen=True, eq=False)
-class CollectionNodeId(_CachedStrEqHash):
+class CollectionNodeId(_CachedStrEqHashMixin):
     """Structured address for a ``Collector`` node -- one that can still
     have children built under it.
 
@@ -141,7 +144,7 @@ class CollectionNodeId(_CachedStrEqHash):
 
 
 @dataclasses.dataclass(frozen=True, eq=False)
-class ItemNodeId(_CachedStrEqHash):
+class ItemNodeId(_CachedStrEqHashMixin):
     """Structured address for an ``Item`` node -- a leaf, e.g. a test
     function. Has no ``.child()``/``.leaf()``: nothing ever builds further
     collection-tree structure on top of an item id.
@@ -178,7 +181,7 @@ NodeId = CollectionNodeId | ItemNodeId
 
 
 @dataclasses.dataclass(frozen=True, eq=False)
-class OpaqueNodeId(_CachedStrEqHash):
+class OpaqueNodeId(_CachedStrEqHashMixin):
     """A nodeid reconstructed from an external string source (an on-disk
     cache file, an xdist JSON wire payload, a duck-typed report-like
     object's ``.nodeid`` attribute, ...), rather than from live collection.
