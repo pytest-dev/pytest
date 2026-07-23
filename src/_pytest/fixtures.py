@@ -644,7 +644,14 @@ class FixtureRequest(abc.ABC):
     def _set_cached_result(
         self,
         fixturedef: FixtureDef[FixtureValue],
-        value: _FixtureCachedResult[FixtureValue],
+        value: _FixtureResult[FixtureValue],
+    ) -> None:
+        self.session._setupstate.fixture_cache[fixturedef] = value
+
+    def _set_cached_exception(
+        self,
+        fixturedef: FixtureDef[FixtureValue],
+        value: _FixtureException,
     ) -> None:
         self.session._setupstate.fixture_cache[fixturedef] = value
 
@@ -1354,7 +1361,7 @@ def pytest_fixture_setup(
             # Don't show the fixture as the skip location, as then the user
             # wouldn't know which test skipped.
             e._use_item_location = True
-        request._set_cached_result(
+        request._set_cached_exception(
             fixturedef,
             _FixtureException(None, my_cache_key, (e, e.__traceback__)),
         )
