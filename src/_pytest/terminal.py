@@ -38,9 +38,6 @@ from _pytest._code import ExceptionInfo
 from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
-from _pytest._nodeid import ItemNodeId
-from _pytest._nodeid import NodeId
-from _pytest._nodeid import OpaqueNodeId
 import _pytest._version
 from _pytest.compat import running_on_ci
 from _pytest.config import _PluggyPlugin
@@ -48,6 +45,9 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
+from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import NodeId
+from _pytest.nodeid import OpaqueNodeId
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.pathlib import absolutepath

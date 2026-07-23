@@ -21,13 +21,13 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
-from _pytest._nodeid import coerce_node_id
-from _pytest._nodeid import NodeId
-from _pytest._nodeid import OpaqueNodeId
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
+from _pytest.nodeid import coerce_node_id
+from _pytest.nodeid import NodeId
+from _pytest.nodeid import OpaqueNodeId
 from _pytest.reports import _WithNodeId
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport

@@ -7,12 +7,12 @@ from typing import Any
 from typing import TYPE_CHECKING
 
 from _pytest import nodes
-from _pytest._nodeid import ItemNodeId
-from _pytest._nodeid import OpaqueNodeId
 from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
+from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import OpaqueNodeId
 from _pytest.reports import TestReport
 
 

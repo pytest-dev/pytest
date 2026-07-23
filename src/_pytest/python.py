@@ -42,7 +42,6 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._io.saferepr import saferepr
-from _pytest._nodeid import ParamId
 from _pytest.compat import ascii_escaped
 from _pytest.compat import get_default_arg_names
 from _pytest.compat import get_real_func
@@ -71,6 +70,7 @@ from _pytest.mark.structures import HIDDEN_PARAM
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import normalize_mark_list
+from _pytest.nodeid import ParamId
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
@@ -1226,7 +1226,7 @@ class CallSpec:
     @property
     def param_ids(self) -> tuple[ParamId, ...]:
         """The ordered per-parametrize()-call ids, with full argnames/scope
-        detail. See :class:`~_pytest._nodeid.ParamId`."""
+        detail. See :class:`~_pytest.nodeid.ParamId`."""
         return tuple(self._idlist)
 
 

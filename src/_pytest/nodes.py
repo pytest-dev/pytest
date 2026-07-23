@@ -27,9 +27,6 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
-from _pytest._nodeid import CollectionNodeId
-from _pytest._nodeid import ItemNodeId
-from _pytest._nodeid import NodeId
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import signature
 from _pytest.config import Config
@@ -37,6 +34,9 @@ from _pytest.config import ConftestImportFailure
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
+from _pytest.nodeid import CollectionNodeId
+from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.stash import Stash
@@ -301,7 +301,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
 
         .. note::
 
-            Experimental/internal: the shape of :class:`~_pytest._nodeid.NodeId`
+            Experimental/internal: the shape of :class:`~_pytest.nodeid.NodeId`
             may change in future releases.
         """
         return self._id
@@ -536,7 +536,7 @@ class Collector(Node, abc.ABC):
         .. note::
 
             Experimental/internal: the shape of
-            :class:`~_pytest._nodeid.CollectionNodeId` may change in future
+            :class:`~_pytest.nodeid.CollectionNodeId` may change in future
             releases.
         """
         return self._id
@@ -705,7 +705,7 @@ class Item(Node, abc.ABC):
         .. note::
 
             Experimental/internal: the shape of
-            :class:`~_pytest._nodeid.ItemNodeId` may change in future
+            :class:`~_pytest.nodeid.ItemNodeId` may change in future
             releases.
         """
         return self._id

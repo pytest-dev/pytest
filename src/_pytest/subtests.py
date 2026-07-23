@@ -20,8 +20,6 @@ import pluggy
 
 from _pytest._code import ExceptionInfo
 from _pytest._io.saferepr import saferepr
-from _pytest._nodeid import ItemNodeId
-from _pytest._nodeid import OpaqueNodeId
 from _pytest.capture import CaptureFixture
 from _pytest.capture import FDCapture
 from _pytest.capture import SysCapture
@@ -34,6 +32,8 @@ from _pytest.fixtures import SubRequest
 from _pytest.logging import catching_logs
 from _pytest.logging import LogCaptureHandler
 from _pytest.logging import LoggingPlugin
+from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import OpaqueNodeId
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception

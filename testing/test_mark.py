@@ -5,10 +5,10 @@ import os
 import sys
 from unittest import mock
 
-from _pytest._nodeid import CollectionNodeId
 from _pytest.config import ExitCode
 from _pytest.mark import MarkGenerator
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
+from _pytest.nodeid import CollectionNodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
