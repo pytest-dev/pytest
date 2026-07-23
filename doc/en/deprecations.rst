@@ -15,6 +15,19 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _callspec2-renamed:
+
+``_pytest.python.CallSpec2`` renamed to ``CallSpec``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.1
+
+The private ``_pytest.python.CallSpec2`` name has been renamed to ``CallSpec``.
+
+Plugins that import ``CallSpec2`` should update to ``CallSpec``. The old
+``CallSpec2`` alias remains available for now and will be removed in pytest 10.
+
+
 .. _fixture-nodeid-deprecated:
 
 Passing ``baseid``/``nodeid`` strings to fixture registration APIs
