@@ -15,6 +15,7 @@ from typing import get_args
 from typing import get_origin
 from typing import Literal
 from typing import NoReturn
+from typing import TYPE_CHECKING
 from typing import TypeAlias
 from typing import Union
 
@@ -24,6 +25,10 @@ from _pytest.compat import NOTSET
 from _pytest.deprecated import check_ispytest
 
 
+if TYPE_CHECKING:
+    from typing_extensions import TypeForm
+
+
 FILE_OR_DIR = "file_or_dir"
 
 #: The string tags accepted by :meth:`Parser.addini` for its ``type`` argument.
@@ -31,16 +36,15 @@ _IniTypeTag: TypeAlias = Literal[
     "string", "paths", "pathlist", "args", "linelist", "bool", "int", "float"
 ]
 
-#: The forms accepted by :meth:`Parser.addini` for its ``type`` argument;
-#: ``None`` means ``"string"``.
-_IniTypeArg: TypeAlias = (
-    _IniTypeTag | type[bool | int | float | str] | types.UnionType | None
-)
+if TYPE_CHECKING:
+    #: The forms accepted by :meth:`Parser.addini` for its ``type`` argument;
+    #: ``None`` means ``"string"``.
+    _IniTypeArg: TypeAlias = _IniTypeTag | TypeForm[bool | int | float | str] | None
 
 #: An ini option type, as stored internally after normalization: either a
 #: single tag, or a tuple of tags meaning "accept a value of any of these
 #: types" (e.g. ``("int", "string")``, normalized from ``int | str``).
-IniType = _IniTypeTag | tuple[_IniTypeTag, ...]
+IniType: TypeAlias = _IniTypeTag | tuple[_IniTypeTag, ...]
 
 _INI_TYPE_TAGS: tuple[str, ...] = get_args(_IniTypeTag)
 
@@ -61,7 +65,7 @@ def _ini_type_to_tag(name: str, type_: object) -> _IniTypeTag:
     plain Python type.
     """
     if isinstance(type_, str) and type_ in _INI_TYPE_TAGS:
-        return cast("_IniTypeTag", type_)
+        return cast(_IniTypeTag, type_)
     if isinstance(type_, type) and type_ in _INI_TYPE_TO_TAG:
         return _INI_TYPE_TO_TAG[type_]
     raise ValueError(
@@ -309,8 +313,6 @@ class Parser:
             ini_type = _ini_type_to_tag(name, type)
         if default is NOTSET:
             if isinstance(ini_type, tuple):
-                # A union has no unambiguous implicit default; require an
-                # explicit one.
                 raise ValueError(
                     f"ini option {name!r} has a union type, which has no "
                     "implicit default; pass an explicit `default` to `addini`"

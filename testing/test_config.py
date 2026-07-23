@@ -1164,7 +1164,7 @@ class TestConfigAPI:
         with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
             parser.addini("ini_param", "", type=dict)  # type: ignore[arg-type]
         with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
-            parser.addini("ini_param", "", type=int | dict)
+            parser.addini("ini_param", "", type=int | dict)  # type: ignore[arg-type]
 
     def test_addini_union_type_requires_default(self) -> None:
         parser = Parser(_ispytest=True)
