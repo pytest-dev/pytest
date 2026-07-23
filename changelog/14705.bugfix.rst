@@ -1,0 +1,2 @@
+Custom TOML configuration files selected with :option:`-c` now read options from
+the ``[pytest]`` table instead of ``[tool.pytest]``.

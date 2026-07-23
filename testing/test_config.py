@@ -765,8 +765,8 @@ class TestConfigCmdlineParsing:
         pytester.makefile(
             ".toml",
             custom="""
-                [tool.pytest.ini_options]
-                custom = 1
+                [pytest]
+                custom = "1"
                 value = [
                 ]  # this is here on purpose, as it makes this an invalid '.ini' file
             """,
@@ -775,6 +775,29 @@ class TestConfigCmdlineParsing:
         assert config.getini("custom") == "1"
         config = pytester.parseconfig("--config-file", "custom.toml")
         assert config.getini("custom") == "1"
+
+    def test_custom_toml_config_file_is_loaded(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            bench_example="""
+            def bench_example():
+                pass
+            """
+        )
+        pytester.makefile(
+            ".toml",
+            pytest_benchmark="""
+            [pytest]
+            python_files = ["bench_*.py"]
+            python_functions = ["bench_*"]
+            """,
+        )
+
+        result = pytester.runpytest(
+            "-c", "pytest_benchmark.toml", "--collect-only", "-q"
+        )
+
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["bench_example.py::bench_example"])
 
     def test_absolute_win32_path(self, pytester: Pytester) -> None:
         temp_ini_file = pytester.makeini("[pytest]")
