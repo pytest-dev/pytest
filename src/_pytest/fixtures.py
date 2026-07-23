@@ -648,7 +648,7 @@ class FixtureRequest(abc.ABC):
     ) -> None:
         """Write a value into the cache for a fixture definition."""
         self.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
-            value, self._cache_key(), None
+            value, self._cache_key, None
         )
 
     def _cache_exception(
@@ -658,9 +658,10 @@ class FixtureRequest(abc.ABC):
     ) -> None:
         """Write an exception result into the cache for a fixture definition."""
         self.session._setupstate.fixture_cache[fixturedef] = _FixtureException(
-            None, self._cache_key(), (exception, exception.__traceback__)
+            None, self._cache_key, (exception, exception.__traceback__)
         )
 
+    @property
     def _cache_key(self) -> object:
         return getattr(self, "param", None)
 
@@ -1218,7 +1219,7 @@ class FixtureDef(Generic[FixtureValue]):
 
         # Check for (and return) cached value/exception.
         if (fixture_result := request._get_cached_result(self)) is not None:
-            request_cache_key = request._cache_key()
+            request_cache_key = request._cache_key
             cache_key = fixture_result.cache_key
             try:
                 # Attempt to make a normal == check: this might fail for objects
