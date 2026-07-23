@@ -644,6 +644,23 @@ class Directory(FSCollector, abc.ABC):
     """
 
 
+class ItemDefinition(Collector, abc.ABC):
+    """Base class for collectors standing for a single test *definition*.
+
+    Its children are the (possibly parametrized) items generated from that one
+    definition. Giving the definition a node of its own makes it addressable:
+    it owns the definition's markers, and node id matching looks through it --
+    the definition carries the bare name, while the ``[...]`` parametrization
+    lives on the items below it.
+
+    :class:`~_pytest.python.FunctionDefinition` is the implementation for
+    Python test functions, inserted into the tree by
+    :confval:`collect_function_definition`.
+
+    .. versionadded:: 9.2
+    """
+
+
 class Item(Node, abc.ABC):
     """Base class of all test invocation items.
 
