@@ -644,16 +644,23 @@ class FixtureRequest(abc.ABC):
     def _set_cached_result(
         self,
         fixturedef: FixtureDef[FixtureValue],
-        value: _FixtureResult[FixtureValue],
+        value: FixtureValue,  # type: ignore[misc]
     ) -> None:
-        self.session._setupstate.fixture_cache[fixturedef] = value
+        self.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
+            value, self._cache_key(), None
+        )
 
     def _set_cached_exception(
         self,
         fixturedef: FixtureDef[FixtureValue],
-        value: _FixtureException,
+        exception_and_traceback: tuple[BaseException, types.TracebackType | None],
     ) -> None:
-        self.session._setupstate.fixture_cache[fixturedef] = value
+        self.session._setupstate.fixture_cache[fixturedef] = _FixtureException(
+            None, self._cache_key(), exception_and_traceback
+        )
+
+    def _cache_key(self) -> object:
+        return getattr(self, "param", None)
 
     def _invalidate_fixture_cache(self, fixturedef: FixtureDef[FixtureValue]) -> None:
         del self.session._setupstate.fixture_cache[fixturedef]
@@ -918,9 +925,6 @@ class SubRequest(FixtureRequest):
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         self._fixturedef.addfinalizer(finalizer)
-
-    def cache_key(self) -> object:
-        return getattr(self, "param", None)
 
 
 @final
@@ -1212,7 +1216,7 @@ class FixtureDef(Generic[FixtureValue]):
 
         # Check for (and return) cached value/exception.
         if (fixture_result := request._get_cached_result(self)) is not None:
-            request_cache_key = request.cache_key()
+            request_cache_key = request._cache_key()
             cache_key = fixture_result.cache_key
             try:
                 # Attempt to make a normal == check: this might fail for objects
@@ -1282,7 +1286,7 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
             node=request.node,
             _ispytest=True,
         )
-        request._set_cached_result(self, _FixtureResult(request, [0], None))
+        request._set_cached_result(self, request)
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         pass
@@ -1340,7 +1344,6 @@ def pytest_fixture_setup(
         kwargs[argname] = request.getfixturevalue(argname)
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
-    my_cache_key = request.cache_key()
 
     if inspect.isasyncgenfunction(fixturefunc) or inspect.iscoroutinefunction(
         fixturefunc
@@ -1363,10 +1366,10 @@ def pytest_fixture_setup(
             e._use_item_location = True
         request._set_cached_exception(
             fixturedef,
-            _FixtureException(None, my_cache_key, (e, e.__traceback__)),
+            (e, e.__traceback__),
         )
         raise
-    request._set_cached_result(fixturedef, _FixtureResult(result, my_cache_key, None))
+    request._set_cached_result(fixturedef, result)
     return result
 
 
