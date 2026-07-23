@@ -29,12 +29,12 @@ from _pytest._code.code import ReprLocals
 from _pytest._code.code import ReprTraceback
 from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
-from _pytest._nodeid import coerce_node_id
-from _pytest._nodeid import CollectionNodeId
-from _pytest._nodeid import ItemNodeId
-from _pytest._nodeid import NodeId
-from _pytest._nodeid import OpaqueNodeId
 from _pytest.config import Config
+from _pytest.nodeid import coerce_node_id
+from _pytest.nodeid import CollectionNodeId
+from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import NodeId
+from _pytest.nodeid import OpaqueNodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import fail
@@ -339,7 +339,7 @@ class _WithNodeId:
 
         .. note::
 
-            Experimental/internal: the shape of :class:`~_pytest._nodeid.NodeId`
+            Experimental/internal: the shape of :class:`~_pytest.nodeid.NodeId`
             may change in future releases.
         """
         return self._id
@@ -367,7 +367,7 @@ class TestReport(_WithNodeId, BaseReport):
         .. note::
 
             Experimental/internal: the shape of
-            :class:`~_pytest._nodeid.ItemNodeId` may change in future
+            :class:`~_pytest.nodeid.ItemNodeId` may change in future
             releases.
         """
         return self._id
@@ -528,7 +528,7 @@ class CollectReport(_WithNodeId, BaseReport):
         .. note::
 
             Experimental/internal: the shape of
-            :class:`~_pytest._nodeid.CollectionNodeId` may change in future
+            :class:`~_pytest.nodeid.CollectionNodeId` may change in future
             releases.
         """
         return self._id

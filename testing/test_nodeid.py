@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from unittest import mock
 
-from _pytest._nodeid import coerce_node_id
-from _pytest._nodeid import CollectionNodeId
-from _pytest._nodeid import ItemNodeId
-from _pytest._nodeid import OpaqueNodeId
-from _pytest._nodeid import ParamId
+from _pytest.nodeid import coerce_node_id
+from _pytest.nodeid import CollectionNodeId
+from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import OpaqueNodeId
+from _pytest.nodeid import ParamId
 from _pytest.nodes import Node
 from _pytest.reports import TestReport
 from _pytest.scope import Scope

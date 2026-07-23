@@ -17,9 +17,9 @@ from hypothesis import strategies
 
 from _pytest import fixtures
 from _pytest import python
-from _pytest._nodeid import ItemNodeId
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
+from _pytest.nodeid import ItemNodeId
 from _pytest.outcomes import fail
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester

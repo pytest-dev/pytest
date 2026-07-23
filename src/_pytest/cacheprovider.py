@@ -21,8 +21,6 @@ from .pathlib import rm_rf
 from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
-from _pytest._nodeid import ItemNodeId
-from _pytest._nodeid import OpaqueNodeId
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -31,6 +29,8 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
+from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import OpaqueNodeId
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
