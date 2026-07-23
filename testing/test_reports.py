@@ -472,11 +472,11 @@ class TestReportSerialization:
         assert "ERROR at teardown" not in out
 
     @pytest.mark.parametrize(
-        "use_item_location, skip_file_location",
-        [(True, "test_it.py"), (False, "runner.py")],
+        "use_item_location",
+        [True, False],
     )
     def test_exception_group_skips_use_item_location(
-        self, pytester: Pytester, use_item_location: bool, skip_file_location: str
+        self, pytester: Pytester, use_item_location: bool
     ):
         """
         Regression for #13537:
@@ -508,8 +508,8 @@ class TestReportSerialization:
         out = result.stdout.str()
         # Both reasons should appear
         assert "A" and "B" in out
-        # Crucially, the skip should be attributed to the test item, not teardown
-        assert skip_file_location in out
+        # The short summary should identify the skipped test item.
+        assert "SKIPPED [1] test_it.py::test_both - A; B" in out
 
 
 class TestHooks:

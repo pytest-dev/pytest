@@ -1349,10 +1349,15 @@ class TerminalReporter:
             )
             markup_word = self._tw.markup(verbose_word, **verbose_markup)
             prefix = "Skipped: "
-            for num, fspath, lineno, reason in fskips:
+            for num, fspath, lineno, reason, single_report in fskips:
                 if reason.startswith(prefix):
                     reason = reason[len(prefix) :]
-                if lineno is not None:
+                if single_report is not None:
+                    nodeid = _get_node_id_with_markup(
+                        self._tw, self.config, single_report
+                    )
+                    lines.append(f"{markup_word} [{num}] {nodeid} - {reason}")
+                elif lineno is not None:
                     lines.append(f"{markup_word} [{num}] {fspath}:{lineno}: {reason}")
                 else:
                     lines.append(f"{markup_word} [{num}] {fspath}: {reason}")
@@ -1585,9 +1590,9 @@ def _get_line_with_reprcrash_message(
 
 def _folded_skips(
     startpath: Path,
-    skipped: Sequence[CollectReport],
-) -> list[tuple[int, str, int | None, str]]:
-    d: dict[tuple[str, int | None, str], list[CollectReport]] = {}
+    skipped: Sequence[BaseReport],
+) -> list[tuple[int, str, int | None, str, BaseReport | None]]:
+    d: dict[tuple[str, int | None, str], list[BaseReport]] = {}
     for event in skipped:
         assert event.longrepr is not None
         assert isinstance(event.longrepr, tuple), (event, event.longrepr)
@@ -1608,9 +1613,10 @@ def _folded_skips(
         else:
             key = (fspath, lineno, reason)
         d.setdefault(key, []).append(event)
-    values: list[tuple[int, str, int | None, str]] = []
+    values: list[tuple[int, str, int | None, str, BaseReport | None]] = []
     for key, events in d.items():
-        values.append((len(events), *key))
+        single_report = events[0] if len(events) == 1 else None
+        values.append((len(events), *key, single_report))
     return values
 
 

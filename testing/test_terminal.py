@@ -1195,7 +1195,7 @@ class TestTerminalFunctional:
             """
         )
         result = pytester.runpytest("-rsS")
-        expected = "SKIPPED [1] test_summary_s_alias.py:3: unconditional skip"
+        expected = "SKIPPED [1] test_summary_s_alias.py::test - unconditional skip"
         result.stdout.fnmatch_lines([expected])
         assert result.stdout.lines.count(expected) == 1
 
@@ -2559,11 +2559,12 @@ def test_skip_reasons_folding() -> None:
 
     values = _folded_skips(Path.cwd(), [ev1, ev2, ev3])
     assert len(values) == 1
-    num, fspath, lineno_, reason = values[0]
+    num, fspath, lineno_, reason, single_report = values[0]
     assert num == 3
     assert fspath == path
     assert lineno_ == lineno
     assert reason == message
+    assert single_report is None
 
 
 def test_line_with_reprcrash(monkeypatch: MonkeyPatch) -> None:
