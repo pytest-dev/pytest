@@ -10,6 +10,7 @@ from _pytest._nodeid import ParamId
 from _pytest.nodes import Node
 from _pytest.reports import TestReport
 from _pytest.scope import Scope
+import pytest
 
 
 class TestParamId:
@@ -200,16 +201,19 @@ class TestOpaqueNodeId:
         assert str(trailing_sep) == "a/test_b.py::"
         assert no_sep != trailing_sep
 
-    def test_round_trip_matches_original_string(self) -> None:
-        for s in (
+    @pytest.mark.parametrize(
+        "s",
+        [
             "",
             "a/test_b.py",
             "a/test_b.py::",
             "a/test_b.py::TestC",
             "a/test_b.py::TestC::test_d",
             "a/test_b.py::test_c[1-x]",
-        ):
-            assert str(OpaqueNodeId.parse(s)) == s
+        ],
+    )
+    def test_round_trip_matches_original_string(self, s: str) -> None:
+        assert str(OpaqueNodeId.parse(s)) == s
 
     def test_eq_and_hash(self) -> None:
         a = OpaqueNodeId.parse("a/test_b.py::test_c")
