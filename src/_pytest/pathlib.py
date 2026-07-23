@@ -705,6 +705,30 @@ def _import_module_using_spec(
             parent_module_name:         "a.b"
             parent_module_path:         Path("a/b/")
     """
+    # If ``module_path`` is a directory (a namespace-package candidate) but a real,
+    # importable package with the same fully-qualified name already lives *inside* it,
+    # importing it as a namespace package here would shadow the real one in
+    # ``sys.modules`` and break imports from it in the test modules -- for example an
+    # installed ``mypkg`` (at ``mypkg/mypkg/``) while the rootdir-relative path of the
+    # tests is ``mypkg/tests/...`` (#13257). Defer to the real package in that case.
+    #
+    # The "inside this directory" check is important: a test directory named after a
+    # standard-library module (``math``, ``time``, ...) must still be shadowed by a
+    # namespace package, since the real module lives elsewhere (see
+    # ``test_importlib_same_name_as_stl``).
+    if module_path.is_dir():
+        try:
+            existing_spec = importlib.util.find_spec(module_name)
+        except (ImportError, ValueError, ImportWarning):
+            existing_spec = None
+        if (
+            existing_spec is not None
+            and existing_spec.origin is not None
+            and not spec_matches_module_path(existing_spec, module_path)
+            and module_path in Path(existing_spec.origin).parents
+        ):
+            return importlib.import_module(module_name)
+
     # Attempt to import the parent module, seems is our responsibility:
     # https://github.com/python/cpython/blob/73906d5c908c1e0b73c5436faeff7d93698fc074/Lib/importlib/_bootstrap.py#L1308-L1311
     parent_module_name, _, name = module_name.rpartition(".")
