@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Callable
 from collections.abc import Sequence
+import dataclasses
 import os
 import sys
 import textwrap
@@ -41,10 +42,20 @@ if TYPE_CHECKING:
     #: ``None`` means ``"string"``.
     _IniTypeArg: TypeAlias = _IniTypeTag | TypeForm[bool | int | float | str] | None
 
-#: An ini option type, as stored internally after normalization: either a
-#: single tag, or a tuple of tags meaning "accept a value of any of these
-#: types" (e.g. ``("int", "string")``, normalized from ``int | str``).
-IniType: TypeAlias = _IniTypeTag | tuple[_IniTypeTag, ...]
+
+@final
+@dataclasses.dataclass(frozen=True)
+class _IniLiteral:
+    """The choices of an ini option registered with a ``Literal`` type."""
+
+    choices: tuple[str, ...]
+
+
+#: An ini option type, as stored internally after normalization: a single tag,
+#: a tuple of tags meaning "accept a value of these types" (e.g.
+#: ``("int", "string")``, normalized from ``int | str``), or the choices of a
+#: ``Literal`` type.
+IniType: TypeAlias = _IniTypeTag | tuple[_IniTypeTag, ...] | _IniLiteral
 
 _INI_TYPE_TAGS: tuple[str, ...] = get_args(_IniTypeTag)
 
@@ -71,7 +82,8 @@ def _ini_type_to_tag(name: str, type_: object) -> _IniTypeTag:
     raise ValueError(
         f"invalid type for ini option {name!r}: {type_!r} (expected one of "
         f"{', '.join(repr(tag) for tag in _INI_TYPE_TAGS)}, one of the types "
-        "str, bool, int, float, or a union of these types such as `int | str`)"
+        "str, bool, int, float, a union of these types such as `int | str`, "
+        "or a `Literal` of strings)"
     )
 
 
@@ -279,6 +291,15 @@ class Parser:
 
                 Passing a type expression such as ``int`` or ``int | str``.
 
+            A ``Literal`` type of strings restricts the value to the given
+            choices, for example ``Literal["auto", "long", "short"]``. Since
+            the choices have no unambiguous implicit default, an explicit
+            ``default`` must be passed.
+
+            .. versionadded:: 9.1
+
+                Passing a ``Literal`` type.
+
             For ``paths`` and ``pathlist`` types, they are considered relative to the config-file.
             In case the execution is happening without a config-file defined,
             they will be considered relative to the current working directory (for example with ``--override-ini``).
@@ -305,6 +326,15 @@ class Parser:
         ini_type: IniType
         if type is None:
             ini_type = "string"
+        elif get_origin(type) is Literal:
+            choices = get_args(type)
+            for choice in choices:
+                if not isinstance(choice, str):
+                    raise ValueError(
+                        f"invalid type for ini option {name!r}: Literal "
+                        f"choices must be strings, got {choice!r}"
+                    )
+            ini_type = _IniLiteral(choices)
         elif get_origin(type) in (Union, types.UnionType):
             ini_type = tuple(
                 _ini_type_to_tag(name, member) for member in get_args(type)
@@ -312,9 +342,10 @@ class Parser:
         else:
             ini_type = _ini_type_to_tag(name, type)
         if default is NOTSET:
-            if isinstance(ini_type, tuple):
+            if isinstance(ini_type, (tuple, _IniLiteral)):
+                kind = "union" if isinstance(ini_type, tuple) else "Literal"
                 raise ValueError(
-                    f"ini option {name!r} has a union type, which has no "
+                    f"ini option {name!r} has a {kind} type, which has no "
                     "implicit default; pass an explicit `default` to `addini`"
                 )
             default = get_ini_default_for_type(ini_type)

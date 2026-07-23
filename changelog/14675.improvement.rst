@@ -1,1 +1,0 @@
-:func:`parser.addini <pytest.Parser.addini>` now also accepts plain Python types (``str``, ``bool``, ``int``, ``float``) and unions of them (for example ``int | str``) for its ``type`` argument, in addition to the existing string tags. A union accepts a value of any of its member types.

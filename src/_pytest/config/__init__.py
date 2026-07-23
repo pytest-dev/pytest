@@ -61,6 +61,7 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import NOTSET
+from _pytest.config.argparsing import _IniLiteral
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
@@ -1781,6 +1782,23 @@ class Config:
         selected = max(candidates, key=lambda x: (x[0].origin == "override", x[1]))[0]
         value = selected.value
         mode = selected.mode
+
+        if isinstance(type, _IniLiteral):
+            # In both ini and toml modes, a Literal value is a plain string
+            # checked against the registered choices, without coercion.
+            if not isinstance(value, str):
+                value_type = builtins.type(value).__name__
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a string, "
+                    f"got {value_type}: {value!r}"
+                )
+            if value not in type.choices:
+                choices = ", ".join(repr(choice) for choice in type.choices)
+                raise ValueError(
+                    f"{self.inipath}: config option '{name}' expects one of "
+                    f"{choices}, got {value!r}"
+                )
+            return value
 
         if not isinstance(type, tuple):
             return self._getini_value(mode, name, canonical_name, type, value, default)
