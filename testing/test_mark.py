@@ -693,15 +693,25 @@ class TestFunctional:
     def test_mark_closest_mro_with_dynamic_class_marker(
         self, pytester: Pytester
     ) -> None:
-        """Dynamic markers added to a Class collector via add_marker appear
-        alongside MRO markers in iter_markers (#14329)."""
+        """Dynamic markers added to a Class collector via add_marker keep
+        their ``append`` semantics relative to the MRO markers (#14329).
+
+        MRO markers iterate closest-first (child=1, base=0); a marker
+        prepended with ``append=False`` must come before them, an appended
+        one (``append=True``) after them.
+        """
         pytester.makeconftest(
             """
             import pytest
 
             def pytest_collectstart(collector):
                 if getattr(collector, "name", None) == "TestChild":
-                    collector.add_marker(pytest.mark.foo(99))
+                    # resolve obj first so the MRO markers are already stored in
+                    # own_markers, giving add_marker(append=True) a defined slot
+                    # after them (prepend/insert(0) is closest regardless).
+                    collector.obj
+                    collector.add_marker(pytest.mark.foo("appended"))
+                    collector.add_marker(pytest.mark.foo("prepended"), append=False)
             """
         )
         pytester.makepyfile(
@@ -715,10 +725,10 @@ class TestFunctional:
             @pytest.mark.foo(1)
             class TestChild(TestBase):
                 def test_it(self, request):
-                    names = [m.args[0] for m in request.node.iter_markers("foo")]
-                    # MRO markers (child=1, base=0) plus dynamic marker (99)
-                    assert 99 in names
-                    assert names.index(1) < names.index(0)
+                    args = [m.args[0] for m in request.node.iter_markers("foo")]
+                    # prepended (closest), MRO child->base, then appended (farthest)
+                    assert args == ["prepended", 1, 0, "appended"]
+                    assert request.node.get_closest_marker("foo").args[0] == "prepended"
             """
         )
         result = pytester.runpytest()
