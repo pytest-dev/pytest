@@ -1,0 +1,1 @@
+Fixed nested :meth:`caplog.filtering() <pytest.LogCaptureFixture.filtering>` calls with the same filter removing the filter too early when the inner context exits.
