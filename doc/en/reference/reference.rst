@@ -1378,6 +1378,79 @@ passed multiple times. The expected format is ``name=value``. For example::
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
 
+.. confval:: collect_function_definition
+   :type: ``string``
+   :default: ``hidden``
+
+   .. versionadded:: 9.2
+
+   Controls whether a ``FunctionDefinition`` collector node is inserted into the
+   collection tree between a :class:`~pytest.Module`/:class:`~pytest.Class` and
+   its test functions, grouping the (possibly parametrized) invocations of a test
+   function *underneath* the definition node instead of as flat siblings.
+
+   It accepts three values:
+
+   ``hidden`` (default)
+       Keep the flat layout. The definition node is used only internally to drive
+       parametrization and is kept out of the collection tree.
+
+   ``pedantic``
+       Insert the definition node with correct marker scoping: function-level
+       markers (such as ``@pytest.mark.parametrize`` or custom marks) belong to
+       the definition node, and each invocation only owns its own parameter-set
+       markers. This is the intended target layout.
+
+   ``messy``
+       A stopgap for migration only. It inserts the definition node but transfers
+       the function-level markers back down onto each invocation, reproducing the
+       old (duplicated) marker layout so that code which is not yet prepared for
+       the definition scope keeps working. It emits a warning in the session
+       header and exists purely to buy time; fix the offending code and move to
+       ``pedantic``.
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+            [pytest]
+            collect_function_definition = "pedantic"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+            [pytest]
+            collect_function_definition = pedantic
+
+   For example, given a parametrized test:
+
+   .. code-block:: python
+
+       import pytest
+
+
+       @pytest.mark.parametrize("x", [1, 2])
+       def test_it(x): ...
+
+   the default (``hidden``) layout collects the invocations directly under the
+   module::
+
+       <Module test_it.py>
+         <Function test_it[1]>
+         <Function test_it[2]>
+
+   while ``pedantic`` and ``messy`` group them under a definition node::
+
+       <Module test_it.py>
+         <FunctionDefinition test_it>
+           <Function test_it[1]>
+           <Function test_it[2]>
+
+   This is an opt-in structural change. The node ids of the individual test
+   invocations are unchanged (for example ``test_it.py::test_it[1]``), so test
+   selection, caching and reporting behave exactly as before.
+
 .. confval:: collect_imported_tests
    :type: ``bool``
    :default: ``true``
@@ -3677,6 +3750,14 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       collect_imported_tests (bool):
                             Whether to collect tests in imported modules outside
                             `testpaths`
+      collect_function_definition (string):
+                            How the function-definition collector node
+                            participates in the collection tree. - hidden
+                            (default): keep the flat layout, no node in the tree
+                            - pedantic: insert the node and scope function-level
+                            markers to it - messy: insert the node but transfer
+                            markers down to each invocation to preserve the
+                            legacy marker layout (emits a warning)
       consider_namespace_packages (bool):
                             Consider namespace packages when resolving module
                             names during import
