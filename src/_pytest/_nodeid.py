@@ -39,10 +39,15 @@ from __future__ import annotations
 
 import dataclasses
 from typing import overload
+from typing import TYPE_CHECKING
 from typing import TypeVar
 
 from _pytest.compat import override
 from _pytest.scope import Scope
+
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 @dataclasses.dataclass(frozen=True)
@@ -127,7 +132,7 @@ class CollectionNodeId(_CachedStrEqHash):
         """Return a new ItemNodeId for a terminal item node."""
         return ItemNodeId(self.path, (*self.names, name), params)
 
-    def to_opaque(self) -> OpaqueNodeId:
+    def as_opaque(self) -> OpaqueNodeId:
         """Return the OpaqueNodeId form of this id, for code that only ever
         needs a single, non-structured lookup type (e.g. cache boundaries
         that mix live and cache-sourced ids)."""
@@ -159,7 +164,7 @@ class ItemNodeId(_CachedStrEqHash):
             base += "[" + "-".join(p.id for p in self.params) + "]"
         return base
 
-    def to_opaque(self) -> OpaqueNodeId:
+    def as_opaque(self) -> OpaqueNodeId:
         """Return the OpaqueNodeId form of this id, for code that only ever
         needs a single, non-structured lookup type (e.g. cache boundaries
         that mix live and cache-sourced ids)."""
@@ -205,6 +210,17 @@ class OpaqueNodeId(_CachedStrEqHash):
     def _build_str(self) -> str:
         return self.path if self.rest is None else f"{self.path}::{self.rest}"
 
+    def as_opaque(self) -> Self:
+        """Return self.
+
+        Only added for consistency and ease of use with
+        :meth:`CollectionNodeId.as_opaque`/:meth:`ItemNodeId.as_opaque`, so
+        callers holding a ``NodeId | OpaqueNodeId`` value can call
+        ``.as_opaque()`` unconditionally without checking which kind they
+        have.
+        """
+        return self
+
 
 _N = TypeVar("_N", bound=NodeId)
 
@@ -220,14 +236,3 @@ def coerce_node_id(nodeid: str | NodeId) -> NodeId | OpaqueNodeId:
     if isinstance(nodeid, (CollectionNodeId, ItemNodeId)):
         return nodeid
     return OpaqueNodeId.parse(nodeid)
-
-
-def to_opaque_node_id(node_id: NodeId | OpaqueNodeId) -> OpaqueNodeId:
-    """Return ``node_id`` unchanged if already an :class:`OpaqueNodeId`,
-    otherwise convert it via :meth:`~CollectionNodeId.to_opaque`. Useful for
-    normalizing a mixed ``NodeId | OpaqueNodeId`` value (e.g. a report's
-    ``.id``, which may be live or reconstructed from JSON) down to a single
-    lookup type."""
-    if isinstance(node_id, OpaqueNodeId):
-        return node_id
-    return node_id.to_opaque()

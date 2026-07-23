@@ -7,7 +7,6 @@ from _pytest._nodeid import CollectionNodeId
 from _pytest._nodeid import ItemNodeId
 from _pytest._nodeid import OpaqueNodeId
 from _pytest._nodeid import ParamId
-from _pytest._nodeid import to_opaque_node_id
 from _pytest.nodes import Node
 from _pytest.reports import TestReport
 from _pytest.scope import Scope
@@ -62,9 +61,9 @@ class TestCollectionNodeId:
         assert {a: 1}[b] == 1
         assert {a, b, c} == {a, c}
 
-    def test_to_opaque(self) -> None:
+    def test_as_opaque(self) -> None:
         node_id = CollectionNodeId(path="a/test_b.py", names=("TestC",))
-        opaque = node_id.to_opaque()
+        opaque = node_id.as_opaque()
         assert isinstance(opaque, OpaqueNodeId)
         assert opaque == node_id
         assert str(opaque) == str(node_id)
@@ -101,11 +100,11 @@ class TestItemNodeId:
         assert {a: 1}[b] == 1
         assert {a, b, c} == {a, c}
 
-    def test_to_opaque(self) -> None:
+    def test_as_opaque(self) -> None:
         node_id = ItemNodeId(
             path="a/test_b.py", names=("test_c",), params=(ParamId(id="1"),)
         )
-        opaque = node_id.to_opaque()
+        opaque = node_id.as_opaque()
         assert isinstance(opaque, OpaqueNodeId)
         assert opaque == node_id
         assert str(opaque) == str(node_id)
@@ -243,22 +242,13 @@ class TestCoerceNodeId:
         assert isinstance(result, ItemNodeId)
 
 
-class TestToOpaqueNodeId:
-    def test_from_collection_node_id(self) -> None:
-        node_id = CollectionNodeId(path="a/test_b.py", names=("TestC",))
-        opaque = to_opaque_node_id(node_id)
-        assert isinstance(opaque, OpaqueNodeId)
-        assert opaque == node_id
-
-    def test_from_item_node_id(self) -> None:
-        node_id = ItemNodeId(path="a/test_b.py", names=("test_c",))
-        opaque = to_opaque_node_id(node_id)
-        assert isinstance(opaque, OpaqueNodeId)
-        assert opaque == node_id
-
-    def test_from_opaque_node_id_returns_same_object(self) -> None:
+class TestOpaqueNodeIdAsOpaque:
+    def test_returns_self(self) -> None:
+        """OpaqueNodeId.as_opaque() exists only so that code holding a
+        NodeId | OpaqueNodeId value can call .as_opaque() unconditionally,
+        regardless of which concrete type it actually has."""
         node_id = OpaqueNodeId.parse("a/test_b.py::test_c")
-        assert to_opaque_node_id(node_id) is node_id
+        assert node_id.as_opaque() is node_id
 
 
 class TestWithNodeIdSetter:
