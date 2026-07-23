@@ -1752,7 +1752,10 @@ def test_escaped_setup_teardown_error(
     node = dom.get_first_by_tag("testcase")
     snode = node.get_first_by_tag("error")
     assert "#x1B[31mred#x1B[m" in snode["message"]
-    assert "#x1B[31mred#x1B[m" in snode.text
+    # TerminalRepr.__str__ strips ANSI escape codes before bin_xml_escape
+    # runs, so the text body contains the bare word without escape sequences.
+    assert "red" in snode.text
+    assert "#x1B" not in snode.text
 
 
 @parametrize_families
@@ -1837,3 +1840,30 @@ def test_no_message_quiet(pytester: Pytester) -> None:
 
     result = pytester.runpytest("--junitxml=pytest.xml", "--quiet")
     result.stdout.no_fnmatch_line("* generated xml file: *")
+
+
+def test_ansi_escape_codes_stripped_from_junitxml(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    """ANSI escape codes from assertion diffs must not leak into JUnit XML.
+
+    Pygments-highlighted assertion diffs pre-bake ANSI escape sequences into
+    the repr data.  TerminalRepr.__str__ now strips them so that plain-text
+    consumers (JUnit XML, pytest-xdist serialization) never see raw escape
+    codes.  See #12365.
+    """
+    pytester.makepyfile(
+        """
+        def test_fail():
+            assert "hello" == "world"
+    """
+    )
+    _, dom = run_and_parse("--color=yes")
+    node = dom.get_first_by_tag("testcase")
+    fnode = node.get_first_by_tag("failure")
+    # The failure text must not contain raw ANSI escape sequences.
+    assert "\x1b[" not in fnode.text
+    assert "#x1B" not in fnode.text
+    # But the actual assertion content should still be present.
+    assert "hello" in fnode.text
+    assert "world" in fnode.text
