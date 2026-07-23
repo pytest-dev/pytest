@@ -1000,7 +1000,8 @@ class TerminalReporter:
     def pytest_terminal_summary(self) -> Generator[None]:
         # With --no-summary, still yield so other plugins run their terminal
         # summaries, but skip pytest's own FAILURES/ERRORS/... sections.
-        if not self.no_summary:
+        show_summary = not self.no_summary
+        if show_summary:
             self.summary_errors()
             self.summary_failures()
             self.summary_xfailures()
@@ -1010,7 +1011,7 @@ class TerminalReporter:
         try:
             return (yield)
         finally:
-            if not self.no_summary:
+            if show_summary:
                 self.short_test_summary()
                 # Display any extra warnings from teardown here (if any).
                 self.summary_warnings()
