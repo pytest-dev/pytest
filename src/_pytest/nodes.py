@@ -330,6 +330,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def iter_markers(self, name: str | None = None) -> Iterator[Mark]:
         """Iterate over all markers of the node.
 
+        The markers are returned from closest to farthest.
+
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of the markers of the node.
         """
@@ -339,6 +341,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self, name: str | None = None
     ) -> Iterator[tuple[Node, Mark]]:
         """Iterate over all markers of the node.
+
+        The markers are returned from closest to farthest.
 
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
