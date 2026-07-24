@@ -53,7 +53,9 @@ def pytest_fixture_setup(
                 request.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
                     None, param, None
                 )
-            _show_fixture_action(request, fixturedef, "SETUP")
+            else:
+                param = _NO_PARAM
+            _show_fixture_action(request.config, fixturedef, param, "SETUP")
 
 
 def pytest_fixture_post_finalizer(
@@ -63,13 +65,12 @@ def pytest_fixture_post_finalizer(
     assert cached_result is not None, "As per the definition of this hook the fixture cache should not have been cleared"
     config = request.config
     if config.option.setupshow:
-        _show_fixture_action(request, fixturedef, "TEARDOWN")
+        _show_fixture_action(config, fixturedef, cached_result.param, "TEARDOWN")
 
 
 def _show_fixture_action(
-    request: SubRequest, fixturedef: FixtureDef[object], msg: str
+    config: Config, fixturedef: FixtureDef[object], param: object, msg: str
 ) -> None:
-    config = request.config
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:
         capman.suspend_global_capture()
@@ -88,9 +89,8 @@ def _show_fixture_action(
         if deps:
             tw.write(" (fixtures used: {})".format(", ".join(deps)))
 
-    if cache_entry := request.session._setupstate.fixture_cache.get(fixturedef):
-        if cache_entry.param is not _NO_PARAM:
-            tw.write(f"[{saferepr(cache_entry.param, maxsize=42)}]")
+    if param is not _NO_PARAM:
+        tw.write(f"[{saferepr(param, maxsize=42)}]")
 
     tw.flush()
 
