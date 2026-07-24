@@ -495,6 +495,30 @@ def test_parametrized_collect_with_wrong_args(pytester: Pytester) -> None:
     )
 
 
+def test_parametrized_collect_with_non_sequence_values(pytester: Pytester) -> None:
+    """Test collect parametrized func with tuple-style argnames and scalar values."""
+    py_file = pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("x,", [None])
+        def test_func(x):
+            pass
+    """
+    )
+
+    result = pytester.runpytest(py_file)
+    result.stdout.fnmatch_lines(
+        [
+            "test_parametrized_collect_with_non_sequence_values.py::test_func: "
+            'in "parametrize" expected a sequence of values, '
+            "for a single value use a one-element tuple like ('value',), "
+            "got NoneType:",
+            "  None",
+        ]
+    )
+
+
 def test_parametrized_with_kwargs(pytester: Pytester) -> None:
     """Test collect parametrized func with wrong number of args."""
     py_file = pytester.makepyfile(
