@@ -182,12 +182,14 @@ def pytest_runtest_protocol(item: Item) -> Generator[None, object, object]:
         )
         for new_expl in hook_result:
             if new_expl:
-                new_expl = truncate.truncate_if_required(new_expl, item)
-                new_expl = [line.replace("\n", "\\n") for line in new_expl]
-                res = "\n~".join(new_expl)
-                if item.config.getvalue("assertmode") == "rewrite":
-                    res = res.replace("%", "%%")
-                return res
+                new_expl = truncate.materialize_with_truncation(new_expl, item.config)
+                # A truthy-but-empty iterable materialises to [], so re-check.
+                if new_expl:
+                    new_expl = [line.replace("\n", "\\n") for line in new_expl]
+                    res = "\n~".join(new_expl)
+                    if item.config.getvalue("assertmode") == "rewrite":
+                        res = res.replace("%", "%%")
+                    return res
         return None
 
     saved_assert_hooks = util._reprcompare, util._assertion_pass

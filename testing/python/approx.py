@@ -314,7 +314,7 @@ class TestApprox:
                 rf"^  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}e-{SOME_INT}$",
                 rf"^  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}e-{SOME_INT}\.\.\.$",
                 "^  $",
-                rf"^  ...Full output truncated \({SOME_INT} lines hidden\), use '-vv' to show$",
+                r"^  ...Full output truncated, use '-vv' to show$",
             ],
             verbosity_level=0,
         )

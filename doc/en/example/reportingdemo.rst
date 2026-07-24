@@ -148,7 +148,7 @@ Here is a nice run of several failures and how ``pytest`` presents things:
     E           1
     E           1...
     E
-    E         ...Full output truncated (7 lines hidden), use '-vv' to show
+    E         ...Full output truncated, use '-vv' to show
 
     failure_demo.py:62: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_list _________________
