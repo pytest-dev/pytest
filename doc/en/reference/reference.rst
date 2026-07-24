@@ -3168,6 +3168,10 @@ Output and Reporting
     * ``log``: show captured logging
     * ``all`` (default): show all captured output
 
+.. option:: --name-only
+
+    Only display the name of the test when it fails, suppressing tracebacks and other detailed information.
+
 .. option:: --color=WHEN
 
     Color terminal output:

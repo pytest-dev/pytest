@@ -248,6 +248,13 @@ def pytest_addoption(parser: Parser) -> None:
         "Default: all.",
     )
     group.addoption(
+        "--name-only",
+        action="store_true",
+        default=False,
+        dest="name_only",
+        help="Only display the name of the test when it fails.",
+    )
+    group.addoption(
         "--fulltrace",
         "--full-trace",
         action="store_true",
@@ -1219,15 +1226,23 @@ class TerminalReporter:
                 self.write_sep("=", sep_title)
                 if style == "line":
                     for rep in reports:
-                        line = self._getcrashline(rep)
-                        self._outrep_summary(rep)
-                        self.write_line(line)
+                        if not self.config.option.name_only:
+                            line = self._getcrashline(rep)
+                            self._outrep_summary(rep)
+                            self.write_line(line)
+                        else:
+                            self._tw.line(
+                                self._getfailureheadline(rep), red=True, bold=True
+                            )
                 else:
                     for rep in reports:
                         msg = self._getfailureheadline(rep)
-                        self.write_sep("_", msg, red=True, bold=True)
-                        self._outrep_summary(rep)
-                        self._handle_teardown_sections(rep.nodeid)
+                        if self.config.option.name_only:
+                            self._tw.line(msg, red=True, bold=True)
+                        else:
+                            self.write_sep("_", msg, red=True, bold=True)
+                            self._outrep_summary(rep)
+                            self._handle_teardown_sections(rep.nodeid)
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":
@@ -1241,8 +1256,11 @@ class TerminalReporter:
                     msg = "ERROR collecting " + msg
                 else:
                     msg = f"ERROR at {rep.when} of {msg}"
-                self.write_sep("_", msg, red=True, bold=True)
-                self._outrep_summary(rep)
+                if self.config.option.name_only:
+                    self._tw.line(msg, red=True, bold=True)
+                else:
+                    self.write_sep("_", msg, red=True, bold=True)
+                    self._outrep_summary(rep)
 
     def _outrep_summary(self, rep: BaseReport) -> None:
         rep.toterminal(self._tw)
