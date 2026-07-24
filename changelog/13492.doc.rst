@@ -1,0 +1,1 @@
+Fixed outdated warning about ``faulthandler`` not working on Windows.
