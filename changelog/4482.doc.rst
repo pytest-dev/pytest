@@ -1,0 +1,5 @@
+Corrected the "Dynamically adding command line options" example so it no longer
+refers to the ``pytest_load_initial_conftests`` hook as living in a
+``conftest.py``. As noted in the hook reference, ``pytest_load_initial_conftests``
+is not called for ``conftest.py`` files and must be provided by an installable
+plugin.
