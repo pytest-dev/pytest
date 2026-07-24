@@ -1,0 +1,1 @@
+When an explicitly given config file is not a regular file (e.g. ``--config-file=/dev/null`` to disable config file loading), the rootdir is no longer derived from its parent directory. Previously this caused a confusing ``PytestCacheWarning`` as the cache plugin attempted to write to e.g. ``/dev/.pytest_cache``.
