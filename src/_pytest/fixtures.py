@@ -122,7 +122,6 @@ class _FixtureException(NamedTuple):
     exception_and_traceback: tuple[BaseException, types.TracebackType | None]
 
 
-# The type of FixtureDef.cached_result (type alias generic in fixture value).
 _FixtureCachedResult = _FixtureResult[FixtureValue] | _FixtureException  # type: ignore[type-arg]
 
 
@@ -1216,7 +1215,8 @@ class FixtureDef(Generic[FixtureValue]):
         # This needs to be done before checking if we have a cached value, since
         # if a dependent fixture has their cache invalidated, e.g. due to
         # parametrization, they finalize themselves and fixtures depending on it
-        # (which will likely include this fixture) setting `self.cached_result = None`.
+        # (which will likely include this fixture), invalidating the respective
+        # cached values.
         # See #4871
         requested_fixtures_that_should_finalize_us = []
         for argname in self.argnames:
