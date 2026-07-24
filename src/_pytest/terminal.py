@@ -255,6 +255,12 @@ def pytest_addoption(parser: Parser) -> None:
         help="Don't cut any tracebacks (default is to cut)",
     )
     group.addoption(
+        "--tb-hide-internal",
+        action="store_true",
+        default=False,
+        help="Hide pytest/pluggy internal frames even with --full-trace",
+    )
+    group.addoption(
         "--color",
         metavar="color",
         action="store",
