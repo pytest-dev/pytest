@@ -1,0 +1,1 @@
+The terminal reporter now writes to an unbuffered duplicate of stdout created before output capture can start, so output written through it (for example by plugins calling :func:`TerminalReporter.write() <_pytest.terminal.TerminalReporter.write>` from within a test) always reaches the terminal instead of disappearing into the capture buffers.
