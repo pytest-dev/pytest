@@ -305,9 +305,6 @@ class Node(abc.ABC, metaclass=NodeMeta):
         """
         return self._id
 
-    def __hash__(self) -> int:
-        return hash(self._id)
-
     def setup(self) -> None:
         pass
 
