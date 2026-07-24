@@ -19,6 +19,7 @@ from _pytest import fixtures
 from _pytest import python
 from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
+from _pytest.nodeid import ItemNodeId
 from _pytest.outcomes import fail
 from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
@@ -80,12 +81,14 @@ class TestMetafunc:
 
         @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
-            _nodeid: str
+            _id: ItemNodeId
             obj: object
 
         names = getfuncargnames(func)
         fixtureinfo: Any = FuncFixtureInfoMock(names)
-        definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
+        definition: Any = DefinitionMock._create(
+            obj=func, _id=ItemNodeId(path="mock", names=("nodeid",))
+        )
         definition._fixtureinfo = fixtureinfo
         definition.session = SessionMock(config, FixtureManagerMock({}))
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)

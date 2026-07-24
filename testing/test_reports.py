@@ -60,8 +60,17 @@ class TestReportSerialization:
         # Check assembled == rep
         assert a.__dict__.keys() == rep.__dict__.keys()
         for key in rep.__dict__.keys():
-            if key != "longrepr":
-                assert getattr(a, key) == getattr(rep, key)
+            if key == "longrepr":
+                continue
+            if key == "_id":
+                # _from_json() always reconstructs an OpaqueNodeId (built
+                # from the plain nodeid string on the wire), while the
+                # original live report's _id is a structured ItemNodeId --
+                # these are deliberately different, non-equal types (see
+                # _pytest/nodeid.py), so compare their string form instead.
+                assert str(a._id) == str(rep._id)
+                continue
+            assert getattr(a, key) == getattr(rep, key)
         assert rep.longrepr.reprcrash is not None
         assert a.longrepr.reprcrash is not None
         assert rep.longrepr.reprcrash.lineno == a.longrepr.reprcrash.lineno
@@ -75,6 +84,20 @@ class TestReportSerialization:
         assert rep.longrepr.sections == a.longrepr.sections
         # Missing section attribute PR171
         assert added_section in a.longrepr.sections
+
+    def test_to_json_nodeid_wire_shape(self, pytester: Pytester) -> None:
+        """The JSON wire payload must keep a plain top-level string "nodeid"
+        key (never an internal NodeId object / "_id" key) -- pytest-xdist
+        depends on this exact shape to serialize reports across processes.
+        """
+        reprec = pytester.inline_runsource("def test_a(): pass")
+        reports = reprec.getreports("pytest_runtest_logreport")
+        rep = reports[1]
+        assert rep.when == "call"
+        d = rep._to_json()
+        assert d["nodeid"] == "test_to_json_nodeid_wire_shape.py::test_a"
+        assert d["nodeid"] == rep.nodeid
+        assert "_id" not in d
 
     def test_reprentries_serialization_170(self, pytester: Pytester) -> None:
         """Regarding issue pytest-xdist#170

@@ -8,6 +8,7 @@ from unittest import mock
 from _pytest.config import ExitCode
 from _pytest.mark import MarkGenerator
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
+from _pytest.nodeid import CollectionNodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
 from _pytest.pytester import Pytester
@@ -1131,10 +1132,11 @@ def test_mark_expressions_no_smear(pytester: Pytester) -> None:
 
 
 def test_addmarker_order(pytester) -> None:
-    session = mock.Mock()
+    session = mock.Mock(spec=Collector)
     session.own_markers = []
     session.parent = None
     session.nodeid = ""
+    session.id = CollectionNodeId(path="")
     session.path = pytester.path
     node = Node.from_parent(session, name="Test")
     node.add_marker("foo")

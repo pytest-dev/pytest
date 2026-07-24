@@ -113,7 +113,7 @@ class TestNewAPI:
                 "*/cacheprovider.py:*",
                 "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
                 f"{unwritable_cache_dir}/v/cache/nodeids: *",
-                '    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))',
+                '    config.cache.set("cache/nodeids", sorted(str(n) for n in self.cached_nodeids))',
                 "*1 failed, 2 warnings in*",
             ]
         )

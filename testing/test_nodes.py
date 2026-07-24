@@ -40,7 +40,7 @@ def test_subclassing_both_item_and_collector_deprecated(
     with warnings.catch_warnings():
         warnings.simplefilter("error")
 
-        class SoWrong(nodes.Item, nodes.File):
+        class SoWrong(nodes.Item, nodes.File):  # type: ignore[misc]
             def __init__(self, parent: nodes.Collector, path: Path) -> None:
                 super().__init__(name="broken", parent=parent, path=path)
 

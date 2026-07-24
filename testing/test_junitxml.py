@@ -19,6 +19,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.pytester import RunResult
 from _pytest.reports import BaseReport
+from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
 from _pytest.stash import Stash
 import _pytest.timing
@@ -1248,18 +1249,18 @@ def test_unicode_issue368(pytester: Pytester) -> None:
     class Report(BaseReport):
         longrepr = ustr
         sections: list[tuple[str, str]] = []
-        nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
         when = "teardown"
 
     test_report = cast(TestReport, Report())
+    test_report.nodeid = "something"
 
     # hopefully this is not too brittle ...
     log.pytest_sessionstart()
     node_reporter = log._opentestcase(test_report)
     node_reporter.append_failure(test_report)
-    node_reporter.append_collect_error(test_report)
-    node_reporter.append_collect_skipped(test_report)
+    node_reporter.append_collect_error(cast(CollectReport, test_report))
+    node_reporter.append_collect_skipped(cast(CollectReport, test_report))
     node_reporter.append_error(test_report)
     test_report.longrepr = "filename", 1, ustr
     node_reporter.append_skipped(test_report)
@@ -1559,10 +1560,6 @@ def test_global_properties(pytester: Pytester, xunit_family: str) -> None:
     path = pytester.path.joinpath("test_global_properties.xml")
     log = LogXML(str(path), None, family=xunit_family)
 
-    class Report(BaseReport):
-        sections: list[tuple[str, str]] = []
-        nodeid = "test_node_id"
-
     log.pytest_sessionstart()
     log.add_global_property("foo", "1")
     log.add_global_property("bar", "2")
@@ -1597,11 +1594,11 @@ def test_url_property(pytester: Pytester) -> None:
     class Report(BaseReport):
         longrepr = "FooBarBaz"
         sections: list[tuple[str, str]] = []
-        nodeid = "something"
         location = "tests/filename.py", 42, "TestClass.method"
         url = test_url
 
     test_report = cast(TestReport, Report())
+    test_report.nodeid = "something"
 
     log.pytest_sessionstart()
     node_reporter = log._opentestcase(test_report)

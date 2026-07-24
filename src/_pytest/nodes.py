@@ -34,6 +34,9 @@ from _pytest.config import ConftestImportFailure
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
+from _pytest.nodeid import CollectionNodeId
+from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.stash import Stash
@@ -135,7 +138,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     # Note that __dict__ is still available.
     __slots__ = (
         "__dict__",
-        "_nodeid",
+        "_id",
         "_store",
         "config",
         "name",
@@ -152,7 +155,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         session: Session | None = None,
         fspath: None = None,
         path: Path | None = None,
-        nodeid: str | None = None,
+        nodeid: NodeId | None = None,
     ) -> None:
         #: A unique name within the scope of the parent node.
         self.name: str = name
@@ -193,12 +196,27 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.extra_keyword_matches: set[str] = set()
 
         if nodeid is not None:
-            assert "::()" not in nodeid
-            self._nodeid = nodeid
+            if not isinstance(nodeid, NodeId):  # pragma: no cover
+                raise ValueError(
+                    f"nodeid must be a NodeId (CollectionNodeId/ItemNodeId) instance "
+                    f"or None, got {nodeid!r}. Do not pass nodeid explicitly -- use "
+                    f"Node.from_parent() and let pytest compute it automatically."
+                )
+            self._id = nodeid
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")
-            self._nodeid = self.parent.nodeid + "::" + self.name
+            # Node.parent is always structurally a Collector -- Items are
+            # always leaves and never have children. This assert is both a
+            # real runtime safety net and what lets mypy narrow
+            # self.parent.id to CollectionNodeId below.
+            assert isinstance(self.parent, Collector), (
+                "Node.parent is always a Collector; an Item can never be a parent"
+            )
+            if isinstance(self, Item):
+                self._id = self.parent.id.leaf(self.name, ())
+            else:
+                self._id = self.parent.id.child(self.name)
 
         #: A place where plugins can store information on the node for their
         #: own use.
@@ -272,10 +290,20 @@ class Node(abc.ABC, metaclass=NodeMeta):
     @property
     def nodeid(self) -> str:
         """A ::-separated string denoting its collection tree address."""
-        return self._nodeid
+        return str(self._id)
 
-    def __hash__(self) -> int:
-        return hash(self._nodeid)
+    @property
+    def id(self) -> NodeId:
+        """The structured (non-string) form of :attr:`nodeid`.
+
+        :meta private:
+
+        .. note::
+
+            Experimental/internal: the shape of :class:`~_pytest.nodeid.NodeId`
+            may change in future releases.
+        """
+        return self._id
 
     def setup(self) -> None:
         pass
@@ -495,6 +523,20 @@ class Collector(Node, abc.ABC):
     the collection tree.
     """
 
+    _id: CollectionNodeId
+
+    @property
+    def id(self) -> CollectionNodeId:
+        """The structured (non-string) form of ``nodeid``.
+
+        .. note::
+
+            Experimental/internal: the shape of
+            :class:`~_pytest.nodeid.CollectionNodeId` may change in future
+            releases.
+        """
+        return self._id
+
     class CollectError(Exception):
         """An error during collection, contains a custom message."""
 
@@ -561,7 +603,7 @@ class FSCollector(Collector, abc.ABC):
         parent: Node | None = None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: str | None = None,
+        nodeid: CollectionNodeId | None = None,
     ) -> None:
         if path_or_parent:
             if isinstance(path_or_parent, Node):
@@ -590,12 +632,16 @@ class FSCollector(Collector, abc.ABC):
 
         if nodeid is None:
             try:
-                nodeid = str(self.path.relative_to(session.config.rootpath))
+                path_str: str | None = str(
+                    self.path.relative_to(session.config.rootpath)
+                )
             except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
+                path_str = _check_initialpaths_for_relpath(session._initialpaths, path)
 
-            if nodeid:
-                nodeid = norm_sep(nodeid)
+            if path_str:
+                path_str = norm_sep(path_str)
+            if path_str is not None:
+                nodeid = CollectionNodeId(path=path_str)
 
         super().__init__(
             name=name,
@@ -650,6 +696,20 @@ class Item(Node, abc.ABC):
     Note that for a single function there might be multiple test invocation items.
     """
 
+    _id: ItemNodeId
+
+    @property
+    def id(self) -> ItemNodeId:
+        """The structured (non-string) form of ``nodeid``.
+
+        .. note::
+
+            Experimental/internal: the shape of
+            :class:`~_pytest.nodeid.ItemNodeId` may change in future
+            releases.
+        """
+        return self._id
+
     nextitem = None
 
     def __init__(
@@ -658,7 +718,7 @@ class Item(Node, abc.ABC):
         parent=None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: str | None = None,
+        nodeid: ItemNodeId | None = None,
         **kw,
     ) -> None:
         # The first two arguments are intentionally passed positionally,
