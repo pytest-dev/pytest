@@ -302,7 +302,7 @@ class Argument:
 
     @property
     def dest(self) -> str:
-        return self._action.dest
+        return getattr(self._action, "dest", "<missing>")
 
     @property
     def default(self) -> Any:

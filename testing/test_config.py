@@ -2487,6 +2487,21 @@ def test_help_formatter_uses_py_get_terminal_width(monkeypatch: MonkeyPatch) -> 
     assert formatter._width == 42
 
 
+def test_argument_dest_does_not_crash_on_invalid_option() -> None:
+    """``Argument.dest`` should not raise ``AttributeError`` when accessed on an
+    Action that failed to initialize (e.g. with an invalid option string)."""
+    from _pytest.config.argparsing import Argument
+
+    # Simulate the crash path: an option name that fails _set_opt_strings
+    # may result in an Action without a `dest` attribute.
+    class BrokenAction:
+        pass
+
+    action = BrokenAction()
+    arg = Argument(action)  # type: ignore[arg-type]
+    assert arg.dest == "<missing>"
+
+
 def test_config_does_not_load_blocked_plugin_from_args(pytester: Pytester) -> None:
     """This tests that pytest's config setup handles "-p no:X"."""
     p = pytester.makepyfile("def test(capfd): pass")
