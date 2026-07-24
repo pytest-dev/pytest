@@ -59,10 +59,11 @@ def pytest_fixture_setup(
 def pytest_fixture_post_finalizer(
     fixturedef: FixtureDef[object], request: SubRequest
 ) -> None:
-    if request._get_cached_result(fixturedef) is not None:
-        config = request.config
-        if config.option.setupshow:
-            _show_fixture_action(request, fixturedef, "TEARDOWN")
+    cached_result = request._get_cached_result(fixturedef)
+    assert cached_result is not None, "As per the definition of this hook the fixture cache should not have been cleared"
+    config = request.config
+    if config.option.setupshow:
+        _show_fixture_action(request, fixturedef, "TEARDOWN")
 
 
 def _show_fixture_action(
