@@ -1133,6 +1133,7 @@ def test_mark_expressions_no_smear(pytester: Pytester) -> None:
 def test_addmarker_order(pytester) -> None:
     session = mock.Mock()
     session.own_markers = []
+    session._iter_own_markers_closest_first.return_value = session.own_markers
     session.parent = None
     session.nodeid = ""
     session.path = pytester.path
@@ -1180,6 +1181,39 @@ def test_markers_from_parametrize(pytester: Pytester) -> None:
 
     result = pytester.runpytest()
     result.assert_outcomes(passed=4)
+
+
+def test_parametrize_mark_is_closest(pytester: Pytester) -> None:
+    """Marks on a parameter set take precedence over function marks (#10406)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        pytestmark = pytest.mark.priority("module")
+
+        @pytest.mark.priority("class")
+        class TestMarkers:
+            @pytest.mark.priority("function")
+            @pytest.mark.parametrize(
+                "value",
+                [pytest.param(None, marks=pytest.mark.priority("parametrize"))],
+            )
+            def test_mark_order(self, value, request):
+                priorities = [
+                    mark.args[0]
+                    for mark in request.node.iter_markers("priority")
+                ]
+                assert priorities == [
+                    "parametrize",
+                    "function",
+                    "class",
+                    "module",
+                ]
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
 
 
 def test_pytest_param_id_requires_string() -> None:

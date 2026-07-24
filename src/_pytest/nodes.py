@@ -344,9 +344,13 @@ class Node(abc.ABC, metaclass=NodeMeta):
         :returns: An iterator of (node, mark) tuples.
         """
         for node in self.iter_parents():
-            for mark in node.own_markers:
+            for mark in node._iter_own_markers_closest_first():
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
+
+    def _iter_own_markers_closest_first(self) -> Iterable[Mark]:
+        """Iterate over this node's markers from closest to farthest."""
+        return self.own_markers
 
     @overload
     def get_closest_marker(self, name: str) -> Mark | None: ...

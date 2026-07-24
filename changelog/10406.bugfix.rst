@@ -1,0 +1,3 @@
+Parameter-set marks now take precedence over marks on the test function,
+class, or module. This also fixes ``filterwarnings`` precedence across those
+levels while preserving the documented ordering of filters defined together.
