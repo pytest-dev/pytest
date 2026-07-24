@@ -6,6 +6,8 @@ from _pytest._io.saferepr import saferepr
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import _FixtureResult
+from _pytest.fixtures import _NO_PARAM
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import SubRequest
 from _pytest.scope import Scope
@@ -46,23 +48,30 @@ def pytest_fixture_setup(
                         param = fixturedef.ids[request.param_index]
                 else:
                     param = request.param
-                fixturedef.cached_param = param  # type: ignore[attr-defined]
-            _show_fixture_action(fixturedef, request.config, "SETUP")
+                # Use None as a dummy value for resolving/caching the fixture
+                # --setup-show does not care about the actual value, only about the param
+                request.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
+                    None, param, None
+                )
+            else:
+                param = _NO_PARAM
+            _show_fixture_action(request.config, fixturedef, param, "SETUP")
 
 
 def pytest_fixture_post_finalizer(
     fixturedef: FixtureDef[object], request: SubRequest
 ) -> None:
-    if fixturedef.cached_result is not None:
-        config = request.config
-        if config.option.setupshow:
-            _show_fixture_action(fixturedef, request.config, "TEARDOWN")
-            if hasattr(fixturedef, "cached_param"):
-                del fixturedef.cached_param
+    cached_result = request._get_cached_result(fixturedef)
+    assert cached_result is not None, (
+        "As per the definition of this hook the fixture cache should not have been cleared"
+    )
+    config = request.config
+    if config.option.setupshow:
+        _show_fixture_action(config, fixturedef, cached_result.param, "TEARDOWN")
 
 
 def _show_fixture_action(
-    fixturedef: FixtureDef[object], config: Config, msg: str
+    config: Config, fixturedef: FixtureDef[object], param: object, msg: str
 ) -> None:
     capman = config.pluginmanager.getplugin("capturemanager")
     if capman:
@@ -82,8 +91,8 @@ def _show_fixture_action(
         if deps:
             tw.write(" (fixtures used: {})".format(", ".join(deps)))
 
-    if hasattr(fixturedef, "cached_param"):
-        tw.write(f"[{saferepr(fixturedef.cached_param, maxsize=42)}]")
+    if param is not _NO_PARAM:
+        tw.write(f"[{saferepr(param, maxsize=42)}]")
 
     tw.flush()
 

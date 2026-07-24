@@ -26,6 +26,7 @@ from typing import Final
 from typing import final
 from typing import Generic
 from typing import Literal
+from typing import NamedTuple
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -96,23 +97,32 @@ FixtureValue = TypeVar("FixtureValue", covariant=True)
 FixtureFunction = Callable[..., object]
 # The type of a fixture function (type alias generic in fixture value).
 _FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValue]]
-# The type of FixtureDef.cached_result (type alias generic in fixture value).
-_FixtureCachedResult = (
-    tuple[
-        # The result.
-        FixtureValue,
-        # Cache key.
-        object,
-        None,
-    ]
-    | tuple[
-        None,
-        # Cache key.
-        object,
-        # The exception and the original traceback.
-        tuple[BaseException, types.TracebackType | None],
-    ]
-)
+# Sentinel value for unset fixture params
+_NO_PARAM = object()
+
+
+# NamedTuples cannot take generic arguments before Python 3.11
+if TYPE_CHECKING and sys.version_info >= (3, 11):
+
+    class _FixtureResult(NamedTuple, Generic[FixtureValue]):
+        value: FixtureValue
+        param: object
+        exception_and_traceback: None
+else:
+
+    class _FixtureResult(NamedTuple):
+        value: Any
+        param: object
+        exception_and_traceback: None
+
+
+class _FixtureException(NamedTuple):
+    value: None
+    param: object
+    exception_and_traceback: tuple[BaseException, types.TracebackType | None]
+
+
+_FixtureCachedResult = _FixtureResult[FixtureValue] | _FixtureException  # type: ignore[type-arg]
 
 
 def pytest_sessionstart(session: Session) -> None:
@@ -629,11 +639,44 @@ class FixtureRequest(abc.ABC):
         # (using function parameters, autouse, etc).
 
         fixturedef = self._get_active_fixturedef(argname)
-        assert fixturedef.cached_result is not None, (
+        fixture_result = self._get_cached_result(fixturedef)
+        assert fixture_result is not None, (
             f'The fixture value for "{argname}" is not available.  '
             "This can happen when the fixture has already been torn down."
         )
-        return fixturedef.cached_result[0]
+        return fixture_result.value
+
+    def _get_cached_result(
+        self, fixturedef: FixtureDef[FixtureValue]
+    ) -> _FixtureCachedResult[FixtureValue] | None:
+        return self.session._setupstate.fixture_cache.get(fixturedef)
+
+    def _cache_value(
+        self,
+        fixturedef: FixtureDef[FixtureValue],
+        value: FixtureValue,  # type: ignore[misc]
+    ) -> None:
+        """Write a value into the cache for a fixture definition."""
+        self.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
+            value, self._active_param, None
+        )
+
+    def _cache_exception(
+        self,
+        fixturedef: FixtureDef[FixtureValue],
+        exception: BaseException,
+    ) -> None:
+        """Write an exception result into the cache for a fixture definition."""
+        self.session._setupstate.fixture_cache[fixturedef] = _FixtureException(
+            None, self._active_param, (exception, exception.__traceback__)
+        )
+
+    @property
+    def _active_param(self) -> object:
+        return getattr(self, "param", _NO_PARAM)
+
+    def _invalidate_fixture_cache(self, fixturedef: FixtureDef[FixtureValue]) -> None:
+        del self.session._setupstate.fixture_cache[fixturedef]
 
     def _iter_chain(self) -> Iterator[SubRequest]:
         """Yield all SubRequests in the chain, from self up.
@@ -1123,9 +1166,6 @@ class FixtureDef(Generic[FixtureValue]):
         self.ids: Final = ids
         # The names requested by the fixtures.
         self.argnames: Final = getfuncargnames(func, name=argname)
-        # If the fixture was executed, the current value of the fixture.
-        # Can change if the fixture is executed with different parameters.
-        self.cached_result: _FixtureCachedResult[FixtureValue] | None = None
         self._finalizers: Final[list[Callable[[], object]]] = []
 
         # only used to emit a deprecationwarning, can be removed in pytest9
@@ -1145,7 +1185,7 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
-        if self.cached_result is None:
+        if request._get_cached_result(self) is None:
             # Already finished. It is assumed that finalizers cannot be added in
             # this state.
             return
@@ -1161,7 +1201,7 @@ class FixtureDef(Generic[FixtureValue]):
         # Even if finalization fails, we invalidate the cached fixture
         # value and remove all finalizers because they may be bound methods
         # which will keep instances alive.
-        self.cached_result = None
+        request._invalidate_fixture_cache(self)
         self._finalizers.clear()
         if len(exceptions) == 1:
             raise exceptions[0]
@@ -1175,7 +1215,8 @@ class FixtureDef(Generic[FixtureValue]):
         # This needs to be done before checking if we have a cached value, since
         # if a dependent fixture has their cache invalidated, e.g. due to
         # parametrization, they finalize themselves and fixtures depending on it
-        # (which will likely include this fixture) setting `self.cached_result = None`.
+        # (which will likely include this fixture), invalidating the respective
+        # cached values.
         # See #4871
         requested_fixtures_that_should_finalize_us = []
         for argname in self.argnames:
@@ -1188,27 +1229,27 @@ class FixtureDef(Generic[FixtureValue]):
             requested_fixtures_that_should_finalize_us.append(fixturedef)
 
         # Check for (and return) cached value/exception.
-        if self.cached_result is not None:
-            request_cache_key = self.cache_key(request)
-            cache_key = self.cached_result[1]
+        if (cached_result := request._get_cached_result(self)) is not None:
+            active_param = request._active_param
+            cached_param = cached_result.param
             try:
                 # Attempt to make a normal == check: this might fail for objects
                 # which do not implement the standard comparison (like numpy arrays -- #6497).
-                cache_hit = bool(request_cache_key == cache_key)
+                cache_hit = bool(active_param == cached_param)
             except (ValueError, RuntimeError):
                 # If the comparison raises, use 'is' as fallback.
-                cache_hit = request_cache_key is cache_key
+                cache_hit = active_param is cached_param
 
             if cache_hit:
-                if self.cached_result[2] is not None:
-                    exc, exc_tb = self.cached_result[2]
+                if cached_result.exception_and_traceback is not None:
+                    exc, exc_tb = cached_result.exception_and_traceback
                     raise exc.with_traceback(exc_tb)
                 else:
-                    return self.cached_result[0]
+                    return cached_result.value  # type: ignore[no-any-return]
             # We have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one.
             self.finish(request)
-            assert self.cached_result is None
+            assert request._get_cached_result(self) is None
 
         # Add finalizer to requested fixtures we saved previously.
         # We make sure to do this after checking for cached value to avoid
@@ -1229,7 +1270,6 @@ class FixtureDef(Generic[FixtureValue]):
         ihook = request.node.ihook
         try:
             # Setup the fixture, run the code in it, and cache the value
-            # in self.cached_result.
             result: FixtureValue = ihook.pytest_fixture_setup(
                 fixturedef=self, request=request
             )
@@ -1238,9 +1278,6 @@ class FixtureDef(Generic[FixtureValue]):
             request.node.addfinalizer(finalizer)
 
         return result
-
-    def cache_key(self, request: SubRequest) -> object:
-        return getattr(request, "param", None)
 
     def __repr__(self) -> str:
         return f"<FixtureDef argname={self.argname!r} scope={self.scope!r} baseid={self.baseid!r}>"
@@ -1263,7 +1300,7 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
             node=request.node,
             _ispytest=True,
         )
-        self.cached_result = (request, [0], None)
+        request._cache_value(self, request)
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         pass
@@ -1321,7 +1358,6 @@ def pytest_fixture_setup(
         kwargs[argname] = request.getfixturevalue(argname)
 
     fixturefunc = resolve_fixture_function(fixturedef, request)
-    my_cache_key = fixturedef.cache_key(request)
 
     if inspect.isasyncgenfunction(fixturefunc) or inspect.iscoroutinefunction(
         fixturefunc
@@ -1342,9 +1378,12 @@ def pytest_fixture_setup(
             # Don't show the fixture as the skip location, as then the user
             # wouldn't know which test skipped.
             e._use_item_location = True
-        fixturedef.cached_result = (None, my_cache_key, (e, e.__traceback__))
+        request._cache_exception(
+            fixturedef,
+            e,
+        )
         raise
-    fixturedef.cached_result = (result, my_cache_key, None)
+    request._cache_value(fixturedef, result)
     return result
 
 
