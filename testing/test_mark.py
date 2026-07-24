@@ -656,6 +656,84 @@ class TestFunctional:
         assert has_inherited_marker.kwargs == {"location": "class"}
         assert has_own.get_closest_marker("missing") is None
 
+    def test_mark_closest_mro(self, pytester: Pytester) -> None:
+        """Marks should be collected from MRO from nearest to furthest (#14329)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+
+            @pytest.mark.foo(0)
+            class TestParent:
+                def test_only_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 0
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [0]
+
+                @pytest.mark.foo(1)
+                def test_function_and_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 1
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [1, 0]
+
+
+            @pytest.mark.foo(2)
+            class TestChild(TestParent):
+                def test_only_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 2
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [2, 0]
+
+                @pytest.mark.foo(3)
+                def test_function_and_class(self, request):
+                    assert request.node.get_closest_marker("foo").args[0] == 3
+                    assert [mark.args[0] for mark in request.node.iter_markers("foo")] == [3, 2, 0]
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=4)
+
+    def test_mark_closest_mro_with_dynamic_class_marker(
+        self, pytester: Pytester
+    ) -> None:
+        """Dynamic markers added to a Class collector via add_marker keep
+        their ``append`` semantics relative to the MRO markers (#14329).
+
+        MRO markers iterate closest-first (child=1, base=0); a marker
+        prepended with ``append=False`` must come before them, an appended
+        one (``append=True``) after them.
+        """
+        pytester.makeconftest(
+            """
+            import pytest
+
+            def pytest_collectstart(collector):
+                if getattr(collector, "name", None) == "TestChild":
+                    # resolve obj first so the MRO markers are already stored in
+                    # own_markers, giving add_marker(append=True) a defined slot
+                    # after them (prepend/insert(0) is closest regardless).
+                    collector.obj
+                    collector.add_marker(pytest.mark.foo("appended"))
+                    collector.add_marker(pytest.mark.foo("prepended"), append=False)
+            """
+        )
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.foo(0)
+            class TestBase:
+                pass
+
+            @pytest.mark.foo(1)
+            class TestChild(TestBase):
+                def test_it(self, request):
+                    args = [m.args[0] for m in request.node.iter_markers("foo")]
+                    # prepended (closest), MRO child->base, then appended (farthest)
+                    assert args == ["prepended", 1, 0, "appended"]
+                    assert request.node.get_closest_marker("foo").args[0] == "prepended"
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(
             """
@@ -1133,6 +1211,7 @@ def test_mark_expressions_no_smear(pytester: Pytester) -> None:
 def test_addmarker_order(pytester) -> None:
     session = mock.Mock()
     session.own_markers = []
+    session._iter_own_markers_closest_first.return_value = session.own_markers
     session.parent = None
     session.nodeid = ""
     session.path = pytester.path

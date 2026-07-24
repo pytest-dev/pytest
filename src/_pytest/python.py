@@ -22,6 +22,7 @@ import itertools
 import os
 from pathlib import Path
 import re
+import sys
 import textwrap
 import types
 from typing import Any
@@ -81,6 +82,14 @@ from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
+
+
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+
+    def override(func):
+        return func
 
 
 if TYPE_CHECKING:
@@ -769,6 +778,40 @@ class Class(PyCollector):
     def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
+
+    @override
+    def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
+        """Yield own markers closest-first.
+
+        ``own_markers`` stores the MRO-inherited markers in base-first order
+        (construction order), mixed with any markers added dynamically via
+        :meth:`~_pytest.nodes.Node.add_marker`. Iterate ``own_markers`` in its
+        stored order -- so dynamically added markers keep their ``append``
+        position, just like on a plain node -- but substitute the MRO markers
+        in closest-first (child before parent) order at the slots they occupy.
+        """
+        from _pytest.mark.structures import normalize_mark_list
+
+        # Walk the MRO in natural order (closest first: Child, Parent, ...),
+        # collecting each class's marks in their decorator-stacking order.
+        mro_marks_closest_first: list[Mark] = []
+        mro_mark_ids: set[int] = set()
+        for cls in self.obj.__mro__:
+            cls_marks = cls.__dict__.get("pytestmark", [])
+            if not isinstance(cls_marks, Sequence):
+                cls_marks = [cls_marks]
+            for mark in normalize_mark_list(cls_marks):
+                mro_marks_closest_first.append(mark)
+                mro_mark_ids.add(id(mark))
+
+        mro_marks = iter(mro_marks_closest_first)
+        for mark in self.own_markers:
+            if id(mark) in mro_mark_ids:
+                # Replace the base-first MRO run with its closest-first order,
+                # slot for slot, keeping surrounding dynamic markers in place.
+                yield next(mro_marks)
+            else:
+                yield mark
 
     def newinstance(self):
         return self.obj()
