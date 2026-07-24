@@ -9,6 +9,8 @@ import pprint
 from _pytest._io.pprint import _safe_key
 from _pytest._io.saferepr import saferepr
 from _pytest.assertion._typing import _HighlightFunc
+from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
+from _pytest.assertion._typing import TruncationBudget
 
 
 def _compare_eq_mapping(
@@ -16,7 +18,7 @@ def _compare_eq_mapping(
     right: Mapping[object, object],
     highlighter: _HighlightFunc,
     verbose: int = 0,
-    extra_items_max_lines: int | None = None,
+    truncation_budget: TruncationBudget = NO_TRUNCATION_BUDGET,
 ) -> Iterator[str]:
     set_left = set(left)
     set_right = set(right)
@@ -40,15 +42,13 @@ def _compare_eq_mapping(
     len_extra_left = len(extra_left)
     if len_extra_left:
         yield f"Left contains {len_extra_left} more item{'' if len_extra_left == 1 else 's'}:"
-        yield from _format_extra_items(
-            left, extra_left, highlighter, extra_items_max_lines
-        )
+        yield from _format_extra_items(left, extra_left, highlighter, truncation_budget)
     extra_right = set_right - set_left
     len_extra_right = len(extra_right)
     if len_extra_right:
         yield f"Right contains {len_extra_right} more item{'' if len_extra_right == 1 else 's'}:"
         yield from _format_extra_items(
-            right, extra_right, highlighter, extra_items_max_lines
+            right, extra_right, highlighter, truncation_budget
         )
 
 
@@ -56,10 +56,11 @@ def _format_extra_items(
     mapping: Mapping[object, object],
     keys: Collection[object],
     highlighter: _HighlightFunc,
-    max_lines: int | None,
+    truncation_budget: TruncationBudget,
 ) -> Iterator[str]:
     """Render the "X contains N more items" subdict."""
-    if max_lines is None or len(keys) <= max_lines:
+    max_lines = truncation_budget.max_lines
+    if max_lines == 0 or len(keys) <= max_lines:
         # If no need to truncate, let pprint handle it.
         yield from highlighter(
             pprint.pformat({k: mapping[k] for k in keys})

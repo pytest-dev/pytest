@@ -19,6 +19,8 @@ from _pytest.assertion._guards import isset
 from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
+from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
+from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _compare_eq_text
 
 
@@ -28,7 +30,7 @@ def _compare_eq_any(
     highlighter: _HighlightFunc,
     verbose: int,
     assertion_text_diff_style: _AssertionTextDiffStyle,
-    extra_items_max_lines: int | None = None,
+    truncation_budget: TruncationBudget = NO_TRUNCATION_BUDGET,
 ) -> Iterator[str]:
     """Yield the per-line explanation for ``left == right`` (without summary).
 
@@ -43,6 +45,7 @@ def _compare_eq_any(
             highlighter,
             verbose,
             assertion_text_diff_style,
+            truncation_budget,
         )
     else:
         from _pytest.approx import Approx
@@ -72,11 +75,13 @@ def _compare_eq_any(
             yield from _compare_eq_set(left, right, highlighter, verbose)
         elif ismapping(left) and ismapping(right):
             yield from _compare_eq_mapping(
-                left, right, highlighter, verbose, extra_items_max_lines
+                left, right, highlighter, verbose, truncation_budget
             )
 
         if isiterable(left) and isiterable(right):
-            yield from _compare_eq_iterable(left, right, highlighter, verbose)
+            yield from _compare_eq_iterable(
+                left, right, highlighter, verbose, truncation_budget
+            )
 
 
 def _compare_eq_cls(
