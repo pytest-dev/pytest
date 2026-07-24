@@ -1292,7 +1292,8 @@ class TestRequestBasic:
 
 class TestRequestSessionScoped:
     @pytest.fixture(scope="session")
-    def session_request(self, request):
+    @staticmethod
+    def session_request(request):
         return request
 
     @pytest.mark.parametrize("name", ["path", "module"])
