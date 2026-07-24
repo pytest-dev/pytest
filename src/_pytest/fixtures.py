@@ -101,13 +101,13 @@ _FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValu
 
 class _FixtureResult(NamedTuple, Generic[FixtureValue]):
     value: FixtureValue
-    cache_key: object
+    param: object
     exception_and_traceback: None
 
 
 class _FixtureException(NamedTuple):
     value: None
-    cache_key: object
+    param: object
     exception_and_traceback: tuple[BaseException, types.TracebackType | None]
 
 
@@ -648,7 +648,7 @@ class FixtureRequest(abc.ABC):
     ) -> None:
         """Write a value into the cache for a fixture definition."""
         self.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
-            value, self._cache_key, None
+            value, self._active_param, None
         )
 
     def _cache_exception(
@@ -658,11 +658,11 @@ class FixtureRequest(abc.ABC):
     ) -> None:
         """Write an exception result into the cache for a fixture definition."""
         self.session._setupstate.fixture_cache[fixturedef] = _FixtureException(
-            None, self._cache_key, (exception, exception.__traceback__)
+            None, self._active_param, (exception, exception.__traceback__)
         )
 
     @property
-    def _cache_key(self) -> object:
+    def _active_param(self) -> object:
         return getattr(self, "param", None)
 
     def _invalidate_fixture_cache(self, fixturedef: FixtureDef[FixtureValue]) -> None:
@@ -1218,23 +1218,23 @@ class FixtureDef(Generic[FixtureValue]):
             requested_fixtures_that_should_finalize_us.append(fixturedef)
 
         # Check for (and return) cached value/exception.
-        if (fixture_result := request._get_cached_result(self)) is not None:
-            request_cache_key = request._cache_key
-            cache_key = fixture_result.cache_key
+        if (cached_result := request._get_cached_result(self)) is not None:
+            active_param = request._active_param
+            cached_param = cached_result.param
             try:
                 # Attempt to make a normal == check: this might fail for objects
                 # which do not implement the standard comparison (like numpy arrays -- #6497).
-                cache_hit = bool(request_cache_key == cache_key)
+                cache_hit = bool(active_param == cached_param)
             except (ValueError, RuntimeError):
                 # If the comparison raises, use 'is' as fallback.
-                cache_hit = request_cache_key is cache_key
+                cache_hit = active_param is cached_param
 
             if cache_hit:
-                if fixture_result.exception_and_traceback is not None:
-                    exc, exc_tb = fixture_result.exception_and_traceback
+                if cached_result.exception_and_traceback is not None:
+                    exc, exc_tb = cached_result.exception_and_traceback
                     raise exc.with_traceback(exc_tb)
                 else:
-                    return fixture_result.value
+                    return cached_result.value
             # We have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one.
             self.finish(request)
