@@ -733,6 +733,79 @@ def test_pytest_configure_warning_filter(pytester: Pytester, tryfirst: bool) -> 
     result.stderr.no_fnmatch_line("*from pytest_configure*")
 
 
+class TestPluginImportWarning:
+    """filterwarnings apply to warnings emitted whilst importing plugins.
+
+    Issue #12697.
+    """
+
+    @staticmethod
+    def _make_plugin_with_import_warning(pytester: Pytester) -> None:
+        pytester.makepyfile(
+            warning_plugin="""
+                import warnings
+                warnings.warn("from plugin import", DeprecationWarning)
+            """,
+            test_it="def test_it(): pass",
+        )
+
+    def test_plugin_import_warning(self, pytester: Pytester) -> None:
+        self._make_plugin_with_import_warning(pytester)
+        pytester.plugins = ["warning_plugin"]
+
+        result = pytester.runpytest_subprocess()
+
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines("*DeprecationWarning: from plugin import")
+
+    def test_plugin_import_warning_without_warnings_plugin(
+        self,
+        pytester: Pytester,
+    ) -> None:
+        pytester.makeini(
+            """
+            [pytest]
+            filterwarnings =
+                error::DeprecationWarning
+            """
+        )
+        self._make_plugin_with_import_warning(pytester)
+        pytester.plugins = ["warning_plugin"]
+
+        result = pytester.runpytest_subprocess("-p", "no:warnings")
+
+        result.assert_outcomes(passed=1)
+        result.stdout.no_fnmatch_line("*from plugin import*")
+        result.stderr.no_fnmatch_line("*from plugin import*")
+
+    def test_plugin_import_warning_with_warnings_plugin_reenabled(
+        self,
+        pytester: Pytester,
+    ) -> None:
+        self._make_plugin_with_import_warning(pytester)
+        pytester.syspathinsert()
+
+        result = pytester.runpytest(
+            "-p", "warning_plugin", "-p", "no:warnings", "-p", "warnings"
+        )
+
+        result.assert_outcomes(passed=1)
+        result.stdout.fnmatch_lines("*DeprecationWarning: from plugin import")
+
+    def test_plugin_import_warning_from_pytest_plugins(
+        self,
+        pytester: Pytester,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        self._make_plugin_with_import_warning(pytester)
+        monkeypatch.setenv("PYTEST_PLUGINS", "warning_plugin")
+
+        result = pytester.runpytest_subprocess()
+
+        result.assert_outcomes(passed=1, warnings=1)
+        result.stdout.fnmatch_lines("*DeprecationWarning: from plugin import")
+
+
 class TestStackLevel:
     @pytest.fixture
     def capwarn(self, pytester: Pytester):
