@@ -299,6 +299,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def id(self) -> NodeId:
         """The structured (non-string) form of :attr:`nodeid`.
 
+        :meta private:
+
         .. note::
 
             Experimental/internal: the shape of :class:`~_pytest.nodeid.NodeId`
