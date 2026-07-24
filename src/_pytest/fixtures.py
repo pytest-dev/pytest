@@ -101,10 +101,19 @@ _FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValu
 _NO_PARAM = object()
 
 
-class _FixtureResult(NamedTuple, Generic[FixtureValue]):
-    value: FixtureValue
-    param: object
-    exception_and_traceback: None
+# NamedTuples cannot take generic arguments before Python 3.11
+if TYPE_CHECKING and sys.version_info >= (3, 11):
+
+    class _FixtureResult(NamedTuple, Generic[FixtureValue]):
+        value: FixtureValue
+        param: object
+        exception_and_traceback: None
+else:
+
+    class _FixtureResult(NamedTuple):
+        value: Any
+        param: object
+        exception_and_traceback: None
 
 
 class _FixtureException(NamedTuple):
@@ -114,7 +123,7 @@ class _FixtureException(NamedTuple):
 
 
 # The type of FixtureDef.cached_result (type alias generic in fixture value).
-_FixtureCachedResult = _FixtureResult[FixtureValue] | _FixtureException
+_FixtureCachedResult = _FixtureResult[FixtureValue] | _FixtureException  # type: ignore[type-arg]
 
 
 def pytest_sessionstart(session: Session) -> None:
@@ -1236,7 +1245,7 @@ class FixtureDef(Generic[FixtureValue]):
                     exc, exc_tb = cached_result.exception_and_traceback
                     raise exc.with_traceback(exc_tb)
                 else:
-                    return cached_result.value
+                    return cached_result.value  # type: ignore[no-any-return]
             # We have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one.
             self.finish(request)
