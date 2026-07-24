@@ -70,11 +70,33 @@ class BaseReport:
         None | ExceptionInfo[BaseException] | tuple[str, int, str] | str | TerminalRepr
     )
     sections: list[tuple[str, str]]
-    nodeid: str
     outcome: Literal["passed", "failed", "skipped"]
+
+    _id: NodeId | OpaqueNodeId
 
     def __init__(self, **kw: Any) -> None:
         self.__dict__.update(kw)
+
+    @property
+    def nodeid(self) -> str:
+        return str(self._id)
+
+    @nodeid.setter
+    def nodeid(self, value: str) -> None:
+        self._id = OpaqueNodeId.parse(value)
+
+    @property
+    def id(self) -> NodeId | OpaqueNodeId:
+        """The structured (non-string) form of ``nodeid``.
+
+        :meta private:
+
+        .. note::
+
+            Experimental/internal: the shape of :class:`~_pytest.nodeid.NodeId`
+            may change in future releases.
+        """
+        return self._id
 
     if TYPE_CHECKING:
         # Can have arbitrary fields given to __init__().
@@ -307,45 +329,7 @@ def _format_exception_group_all_skipped_longrepr(
     return longrepr
 
 
-class _WithNodeId:
-    """Mixin providing the ``nodeid``/``id`` property pair, backed by
-    ``self._id: NodeId | OpaqueNodeId``.
-
-    A report's id is a ``NodeId`` when built from live collection data (see
-    ``TestReport.from_item_and_call``) and an ``OpaqueNodeId`` when built
-    from an external string (e.g. JSON-deserialized via ``_from_json``, or
-    assigned through the ``nodeid`` setter below).
-
-    Deliberately not added to :class:`BaseReport` itself: several tests
-    define ad hoc ``BaseReport`` subclasses that set ``nodeid`` as a plain
-    class attribute, relying on ``BaseReport.__init__``'s generic
-    ``self.__dict__.update(kw)``. Keeping ``BaseReport`` untouched means
-    those subclasses are unaffected regardless of this plumbing.
-    """
-
-    _id: NodeId | OpaqueNodeId
-
-    @property
-    def nodeid(self) -> str:
-        return str(self._id)
-
-    @nodeid.setter
-    def nodeid(self, value: str) -> None:
-        self._id = OpaqueNodeId.parse(value)
-
-    @property
-    def id(self) -> NodeId | OpaqueNodeId:
-        """The structured (non-string) form of ``nodeid``.
-
-        .. note::
-
-            Experimental/internal: the shape of :class:`~_pytest.nodeid.NodeId`
-            may change in future releases.
-        """
-        return self._id
-
-
-class TestReport(_WithNodeId, BaseReport):
+class TestReport(BaseReport):
     """Basic test report object (also used for setup and teardown calls if
     they fail).
 
@@ -511,7 +495,7 @@ class TestReport(_WithNodeId, BaseReport):
 
 
 @final
-class CollectReport(_WithNodeId, BaseReport):
+class CollectReport(BaseReport):
     """Collection report object.
 
     Reports can contain arbitrary extra attributes.

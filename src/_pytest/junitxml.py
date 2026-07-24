@@ -21,14 +21,16 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
+from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodeid import coerce_node_id
+from _pytest.nodeid import CollectionNodeId
+from _pytest.nodeid import ItemNodeId
 from _pytest.nodeid import NodeId
 from _pytest.nodeid import OpaqueNodeId
-from _pytest.reports import _WithNodeId
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
@@ -508,15 +510,13 @@ class LogXML:
             reporter.finalize()
 
     def node_reporter(self, report: BaseReport | NodeId | str) -> _NodeReporter:
-        if isinstance(report, NodeId | str):
-            node_id = coerce_node_id(report).as_opaque()
-        elif isinstance(report, _WithNodeId):
-            # Covers both TestReport and CollectReport.
-            node_id = report.id.as_opaque()
-        else:
-            # Some callers (and tests) pass duck-typed report-like objects
-            # that are neither of the above but do provide a nodeid.
-            node_id = OpaqueNodeId.parse(report.nodeid)
+        match report:
+            case CollectionNodeId() | ItemNodeId() | str():
+                node_id = coerce_node_id(report).as_opaque()
+            case BaseReport():
+                node_id = report.id.as_opaque()
+            case _:  # pragma: no cover
+                assert_never(report)
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
 
