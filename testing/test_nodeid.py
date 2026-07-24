@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from unittest import mock
-
 from _pytest.nodeid import coerce_node_id
 from _pytest.nodeid import CollectionNodeId
 from _pytest.nodeid import ItemNodeId
 from _pytest.nodeid import OpaqueNodeId
 from _pytest.nodeid import ParamId
-from _pytest.nodes import Node
 from _pytest.reports import TestReport
 from _pytest.scope import Scope
 import pytest
@@ -107,19 +104,6 @@ class TestItemNodeId:
         opaque = node_id.as_opaque()
         assert isinstance(opaque, OpaqueNodeId)
         assert str(opaque) == str(node_id)
-
-
-def test_string_construction_via_node_init() -> None:
-    session = mock.Mock()
-    session.own_markers = []
-    session.parent = None
-    session.nodeid = ""
-    session.id = CollectionNodeId(path="")
-    node = Node.from_parent(
-        session, name="ignored", nodeid="a/test_b.py::TestC::test_d"
-    )
-    assert node.id == CollectionNodeId(path="a/test_b.py", names=("TestC", "test_d"))
-    assert node.nodeid == "a/test_b.py::TestC::test_d"
 
 
 class TestOpaqueNodeId:

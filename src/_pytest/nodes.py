@@ -155,7 +155,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         session: Session | None = None,
         fspath: None = None,
         path: Path | None = None,
-        nodeid: str | NodeId | None = None,
+        nodeid: NodeId | None = None,
     ) -> None:
         #: A unique name within the scope of the parent node.
         self.name: str = name
@@ -196,16 +196,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.extra_keyword_matches: set[str] = set()
 
         if nodeid is not None:
-            if isinstance(nodeid, NodeId):
-                self._id = nodeid
-            else:
-                # Every real caller here passes either "" (session root) or
-                # a bare collector path (never containing "::") -- Function,
-                # the only Item with real params/brackets, always pre-builds
-                # a full ItemNodeId via parent.id.leaf(...) instead of
-                # reaching this branch. So this is always a Collector id.
-                node_path, *names = nodeid.split("::")
-                self._id = CollectionNodeId(path=node_path, names=tuple(names))
+            self._id = nodeid
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")
@@ -609,7 +600,7 @@ class FSCollector(Collector, abc.ABC):
         parent: Node | None = None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: str | None = None,
+        nodeid: CollectionNodeId | None = None,
     ) -> None:
         if path_or_parent:
             if isinstance(path_or_parent, Node):
@@ -638,12 +629,16 @@ class FSCollector(Collector, abc.ABC):
 
         if nodeid is None:
             try:
-                nodeid = str(self.path.relative_to(session.config.rootpath))
+                path_str: str | None = str(
+                    self.path.relative_to(session.config.rootpath)
+                )
             except ValueError:
-                nodeid = _check_initialpaths_for_relpath(session._initialpaths, path)
+                path_str = _check_initialpaths_for_relpath(session._initialpaths, path)
 
-            if nodeid:
-                nodeid = norm_sep(nodeid)
+            if path_str:
+                path_str = norm_sep(path_str)
+            if path_str is not None:
+                nodeid = CollectionNodeId(path=path_str)
 
         super().__init__(
             name=name,
