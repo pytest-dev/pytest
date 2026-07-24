@@ -97,6 +97,8 @@ FixtureValue = TypeVar("FixtureValue", covariant=True)
 FixtureFunction = Callable[..., object]
 # The type of a fixture function (type alias generic in fixture value).
 _FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValue]]
+# Sentinel value for unset fixture params
+_NO_PARAM = object()
 
 
 class _FixtureResult(NamedTuple, Generic[FixtureValue]):
@@ -663,7 +665,7 @@ class FixtureRequest(abc.ABC):
 
     @property
     def _active_param(self) -> object:
-        return getattr(self, "param", None)
+        return getattr(self, "param", _NO_PARAM)
 
     def _invalidate_fixture_cache(self, fixturedef: FixtureDef[FixtureValue]) -> None:
         del self.session._setupstate.fixture_cache[fixturedef]
