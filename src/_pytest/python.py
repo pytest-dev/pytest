@@ -1706,7 +1706,10 @@ class Function(PyobjMixin, nodes.Item):
         # Note: when FunctionDefinition is introduced, we should change ``originalname``
         # to a readonly property that returns FunctionDefinition.name.
 
-        self.own_markers.extend(get_unpacked_marks(self.obj))
+        function_markers = get_unpacked_marks(self.obj)
+        self.own_markers.extend(function_markers)
+        self._function_markers_count = len(function_markers)
+        self._prepended_markers_count = 0
         if callspec:
             self.callspec = callspec
             self.own_markers.extend(callspec.marks)
@@ -1727,6 +1730,26 @@ class Function(PyobjMixin, nodes.Item):
         self._fixtureinfo: FuncFixtureInfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
+
+    def add_marker(self, marker: str | MarkDecorator, append: bool = True) -> None:
+        super().add_marker(marker, append=append)
+        if not append:
+            self._prepended_markers_count += 1
+
+    def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
+        """Yield parameter-set marks before function-level marks."""
+        if not hasattr(self, "callspec"):
+            yield from self.own_markers
+            return
+
+        function_start = self._prepended_markers_count
+        function_end = function_start + self._function_markers_count
+        callspec_end = function_end + len(self.callspec.marks)
+
+        yield from self.own_markers[:function_start]
+        yield from self.own_markers[function_end:callspec_end]
+        yield from self.own_markers[function_start:function_end]
+        yield from self.own_markers[callspec_end:]
 
     # todo: determine sound type limitations
     @classmethod

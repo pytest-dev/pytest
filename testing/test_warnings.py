@@ -425,6 +425,54 @@ def test_option_precedence_mark(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["* 1 failed in*"])
 
 
+def test_filterwarnings_mark_hierarchy_precedence(pytester: Pytester) -> None:
+    """The closest filterwarnings mark should take precedence (#10406)."""
+    pytester.makepyfile(
+        """
+        import warnings
+
+        import pytest
+
+
+        @pytest.mark.filterwarnings("error")
+        class TestWarnings:
+            @pytest.mark.parametrize(
+                "value",
+                [
+                    pytest.param(
+                        None,
+                        marks=pytest.mark.filterwarnings("ignore"),
+                    )
+                ],
+            )
+            def test_parametrize_over_class(self, value):
+                warnings.warn("parametrize over class")
+
+            @pytest.mark.filterwarnings("error")
+            @pytest.mark.parametrize(
+                "value",
+                [
+                    pytest.param(
+                        None,
+                        marks=pytest.mark.filterwarnings("ignore"),
+                    )
+                ],
+            )
+            def test_parametrize_over_function(self, value):
+                warnings.warn("parametrize over function")
+
+
+        @pytest.mark.filterwarnings("ignore:specific")
+        @pytest.mark.filterwarnings("error")
+        def test_same_level_decorator_order():
+            warnings.warn("specific")
+        """
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=3)
+
+
 def test_accept_unknown_category(pytester: Pytester) -> None:
     """Category types that can't be imported don't cause failure (#13732)."""
     pytester.makeini(
