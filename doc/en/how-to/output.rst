@@ -172,7 +172,7 @@ Now we can increase pytest's verbosity:
     E               'banana',
     E               'apple',...
     E
-    E         ...Full output truncated (7 lines hidden), use '-vv' to show
+    E         ...Full output truncated, use '-vv' to show
 
     test_verbosity_example.py:8: AssertionError
     ____________________________ test_numbers_fail _____________________________
@@ -190,7 +190,7 @@ Now we can increase pytest's verbosity:
     E         {'10': 10, '20': 20, '30': 30, '40': 40}
     E         ...
     E
-    E         ...Full output truncated (16 lines hidden), use '-vv' to show
+    E         ...Full output truncated, use '-vv' to show
 
     test_verbosity_example.py:14: AssertionError
     ___________________________ test_long_text_fail ____________________________
