@@ -6,23 +6,57 @@ terminal lines, unless running with an assertions verbosity level of at least 2 
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.compat import running_on_ci
 from _pytest.config import Config
-from _pytest.nodes import Item
 
 
 DEFAULT_MAX_LINES = 8
 DEFAULT_MAX_CHARS = DEFAULT_MAX_LINES * 80
 USAGE_MSG = "use '-vv' to show"
+TRUNCATION_MSG = f"...Full output truncated, {USAGE_MSG}"
+
+# Truncating appends a footer: ``...`` on the last kept line, a blank line,
+# then ``TRUNCATION_MSG``. A body may exceed the raw budget by the footer's
+# cost before truncating, so a body that nearly fits is not cut just to
+# make room for the footer.
+TRUNCATION_FOOTER_LINES = 2  # blank separator + message line
+TRUNCATION_FOOTER_CHARS = len("...") + len(TRUNCATION_MSG)
 
 
-def truncate_if_required(explanation: list[str], item: Item) -> list[str]:
-    """Truncate this assertion explanation if the given test item is eligible."""
-    should_truncate, budget = _get_truncation_parameters(item.config)
-    if should_truncate:
-        return _truncate_explanation(explanation, budget)
-    return explanation
+def materialize_with_truncation(lines: Iterable[str], config: Config) -> list[str]:
+    """Materialise a streaming explanation, applying truncation lazily.
+
+    Pulls from ``lines`` only until the truncation threshold is reached;
+    the rest of the iterator is dropped without being consumed.
+    """
+    should_truncate, budget = _get_truncation_parameters(config)
+    if not should_truncate:
+        return list(lines)
+
+    tolerable_max_chars = budget.max_chars + TRUNCATION_FOOTER_CHARS
+    # Pull one line past the point where ``_truncate_explanation`` keeps the
+    # body whole (``max_lines + TRUNCATION_FOOTER_LINES``) so it can detect the
+    # overflow, without us materialising more than we need.
+    line_cap = (
+        budget.max_lines + TRUNCATION_FOOTER_LINES + 1 if budget.max_lines > 0 else None
+    )
+    buffered: list[str] = []
+    char_count = 0
+    for line in lines:
+        buffered.append(line)
+        char_count += len(line)
+        if line_cap is not None and len(buffered) >= line_cap:
+            break
+        if budget.max_chars > 0 and char_count > tolerable_max_chars:
+            break
+    else:
+        # Iterator exhausted within limits — nothing to truncate.
+        return buffered
+
+    return _truncate_explanation(buffered, budget)
 
 
 def _get_truncation_parameters(config: Config) -> tuple[bool, TruncationBudget]:
@@ -62,22 +96,13 @@ def _truncate_explanation(
     When this function is launched we know max_lines > 0 or max_chars > 0
     because _get_truncation_parameters was called first.
     """
-    # The length of the truncation explanation depends on the number of lines
-    # removed but is at least 68 characters:
-    # The real value is
-    # 64 (for the base message:
-    # '...\n...Full output truncated (1 line hidden), use '-vv' to show")'
-    # )
-    # + 1 (for plural)
-    # + int(math.log10(len(input_lines) - max_lines)) (number of hidden line, at least 1)
-    # + 3 for the '...' added to the truncated line
-    # But if there's more than 100 lines it's very likely that we're going to
-    # truncate, so we don't need the exact value using log10.
-    tolerable_max_chars = (
-        budget.max_chars + 70  # 64 + 1 (for plural) + 2 (for '99') + 3 for '...'
-    )
-    # The truncation explanation add two lines to the output
-    if budget.max_lines == 0 or len(input_lines) <= budget.max_lines + 2:
+    # ``max_chars`` bounds the body only; the footer slack is added on top
+    # (see ``TRUNCATION_FOOTER_CHARS``).
+    tolerable_max_chars = budget.max_chars + TRUNCATION_FOOTER_CHARS
+    if (
+        budget.max_lines == 0
+        or len(input_lines) <= budget.max_lines + TRUNCATION_FOOTER_LINES
+    ):
         if (
             budget.max_chars == 0
             or sum(len(s) for s in input_lines) <= tolerable_max_chars
@@ -88,24 +113,19 @@ def _truncate_explanation(
         # Truncate first to max_lines, and then truncate to max_chars if necessary
         truncated_explanation = input_lines[: budget.max_lines]
     # We reevaluate the need to truncate chars following removal of some lines
-    need_to_truncate_char = (
+    if (
         budget.max_chars > 0
         and sum(len(e) for e in truncated_explanation) > tolerable_max_chars
-    )
-    if need_to_truncate_char:
+    ):
         truncated_explanation = _truncate_by_char_count(
             truncated_explanation, budget.max_chars
         )
     # Something was truncated, adding '...' at the end to show that
     truncated_explanation[-1] += "..."
-    truncated_line_count = (
-        len(input_lines) - len(truncated_explanation) + int(need_to_truncate_char)
-    )
     return [
         *truncated_explanation,
         "",
-        f"...Full output truncated ({truncated_line_count} line"
-        f"{'' if truncated_line_count == 1 else 's'} hidden), {USAGE_MSG}",
+        TRUNCATION_MSG,
     ]
 
 
