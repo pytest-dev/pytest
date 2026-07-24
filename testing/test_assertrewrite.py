@@ -1847,6 +1847,126 @@ class TestIssue11239:
         assert result.ret == 0
 
 
+class TestIssue14445:
+    """Regression tests for #14445: walrus operator double evaluation."""
+
+    def test_walrus_no_double_eval_basic(self, pytester: Pytester) -> None:
+        """Walrus captures the value at assignment time, not re-evaluated later."""
+        pytester.makepyfile(
+            """
+            class Counter:
+                def __init__(self):
+                    self.value = 0
+                def increment(self):
+                    self.value += 1
+
+            def test_walrus_in_assertion_basic():
+                c = Counter()
+                assert (before := c.value) == 0
+                c.increment()
+                assert before != (after := c.value)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_walrus_no_double_eval_running_counter(self, pytester: Pytester) -> None:
+        """Walrus increments fire exactly once per assert statement."""
+        pytester.makepyfile(
+            """
+            def test_walrus_running_counter():
+                count = 0
+                items = []
+                items.append("a")
+                assert (count := count + 1) == len(items)
+                items.append("b")
+                assert (count := count + 1) == len(items)
+                items.append("c")
+                assert (count := count + 1) == len(items)
+                assert count == 3
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_walrus_no_double_eval_in_function_call(self, pytester: Pytester) -> None:
+        """Walrus in function call arguments not evaluated twice."""
+        pytester.makepyfile(
+            """
+            call_count = 0
+
+            def side_effect():
+                global call_count
+                call_count += 1
+                return call_count
+
+            def test_walrus_side_effect():
+                assert (val := side_effect()) == 1
+                assert val == 1
+                assert (val := side_effect()) == 2
+                assert val == 2
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_walrus_no_double_eval_in_boolop(self, pytester: Pytester) -> None:
+        """Bare walrus as a BoolOp operand must not be evaluated twice."""
+        pytester.makepyfile(
+            """
+            call_count = 0
+
+            def side_effect():
+                global call_count
+                call_count += 1
+                return call_count
+
+            def test_walrus_boolop():
+                assert (x := side_effect()) and x == 1
+                assert call_count == 1
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_walrus_no_double_eval_chained_compare(self, pytester: Pytester) -> None:
+        """Same walrus target in chained comparison must evaluate each once."""
+        pytester.makepyfile(
+            """
+            call_count = 0
+
+            def track(value):
+                global call_count
+                call_count += 1
+                return value
+
+            def test_walrus_chained():
+                assert (x := track(1)) < (x := track(3)) < (x := track(5))
+                assert call_count == 3
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
+    def test_walrus_boolop_same_target_correct_explanation(
+        self, pytester: Pytester
+    ) -> None:
+        """Multiple walrus operators to the same name in a BoolOp must show
+        each operand's value at evaluation time, not the final value."""
+        pytester.makepyfile(
+            """
+            def side_effect():
+                return True
+
+            def test_walrus_boolop():
+                assert (x := side_effect()) and (x := False)
+        """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines(["*assert (True and False)"])
+
+
 @pytest.mark.skipif(
     sys.maxsize <= (2**31 - 1), reason="Causes OverflowError on 32bit systems"
 )
