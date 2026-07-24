@@ -35,6 +35,7 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import IO
+from typing import Literal
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
@@ -60,6 +61,8 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import NOTSET
+from _pytest.config.argparsing import _ini_type_repr
+from _pytest.config.argparsing import _IniLiteral
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
@@ -1781,6 +1784,46 @@ class Config:
         value = selected.value
         mode = selected.mode
 
+        if not isinstance(type, tuple):
+            return self._getini_value(mode, name, canonical_name, type, value, default)
+
+        # Union: try each member; the first one that accepts the value wins.
+        for member in type:
+            try:
+                return self._getini_value(
+                    mode, name, canonical_name, member, value, default
+                )
+            except (TypeError, ValueError):
+                pass
+        raise TypeError(
+            f"{self.inipath}: config option '{name}' expects one of "
+            f"{_ini_type_repr(type)}, got {builtins.type(value).__name__}: {value!r}"
+        )
+
+    def _getini_value(
+        self,
+        mode: Literal["ini", "toml"],
+        name: str,
+        canonical_name: str,
+        type: str | _IniLiteral,
+        value: object,
+        default: Any,
+    ):
+        """Convert a config value, read in the given mode, to the option's type."""
+        if isinstance(type, _IniLiteral):
+            # A Literal value is a plain string checked against the registered
+            # choices, without coercion, in both ini and toml modes.
+            if not isinstance(value, str):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a string, "
+                    f"got {builtins.type(value).__name__}: {value!r}"
+                )
+            if value not in type.choices:
+                raise ValueError(
+                    f"{self.inipath}: config option '{name}' expects one of "
+                    f"{_ini_type_repr(type)}, got {value!r}"
+                )
+            return value
         if mode == "ini":
             # In ini mode, values are always str | list[str].
             assert isinstance(value, (str, list))

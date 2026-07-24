@@ -51,6 +51,38 @@ def test_help(pytester: Pytester) -> None:
     )
 
 
+def test_help_ini_union_and_literal_types(pytester: Pytester) -> None:
+    """Union and Literal ini options display their members/choices in --help."""
+    pytester.makeconftest(
+        """
+        from typing import Literal
+
+        def pytest_addoption(parser):
+            parser.addini("ini_union", "union help", type=int | str, default=None)
+            parser.addini(
+                "ini_literal", "literal help", type=Literal["auto", "long"],
+                default="auto",
+            )
+            parser.addini(
+                "ini_mixed", "mixed help", type=int | Literal["auto"],
+                default="auto",
+            )
+    """
+    )
+    result = pytester.runpytest("--help")
+    assert result.ret == ExitCode.OK
+    result.stdout.fnmatch_lines(
+        [
+            "*ini_union (int | string):*",
+            "*union help*",
+            "*ini_literal ('auto' | 'long'):*",
+            "*literal help*",
+            "*ini_mixed (int | 'auto'):*",
+            "*mixed help*",
+        ]
+    )
+
+
 def test_none_help_param_raises_exception(pytester: Pytester) -> None:
     """Test that a None help param raises a TypeError."""
     pytester.makeconftest(

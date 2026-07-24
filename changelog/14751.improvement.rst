@@ -1,0 +1,1 @@
+:func:`parser.addini <pytest.Parser.addini>` now also accepts type expressions for its ``type`` argument, in addition to the existing string tags: the plain Python types ``str``, ``bool``, ``int``, ``float``, a ``Literal`` of strings, and unions of these (for example ``int | str`` or ``int | Literal["auto"]``).
