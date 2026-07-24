@@ -39,12 +39,6 @@ from typing import overload
 from typing import TYPE_CHECKING
 from typing import TypeVar
 
-# This module must stay a dependency-free leaf: it is imported from
-# ``_pytest.nodes``, which is itself imported by ``_pytest.config``, so
-# importing anything from ``_pytest.config``/``_pytest.nodes`` here would
-# create a cycle. Importing :class:`~_pytest.scope.Scope` and
-# ``_pytest.compat`` is safe, since both are themselves dependency-free leaf
-# modules.
 from _pytest.compat import assert_never
 from _pytest.compat import override
 from _pytest.scope import Scope
@@ -227,14 +221,6 @@ class OpaqueNodeId(_CachedStrEqHash):
         return self.path if self.rest is None else f"{self.path}::{self.rest}"
 
     def as_opaque(self) -> Self:
-        """Return self.
-
-        Only added for consistency and ease of use with
-        :meth:`CollectionNodeId.as_opaque`/:meth:`ItemNodeId.as_opaque`, so
-        callers holding a ``NodeId | OpaqueNodeId`` value can call
-        ``.as_opaque()`` unconditionally without checking which kind they
-        have.
-        """
         return self
 
 
