@@ -5,6 +5,7 @@ from _pytest import deprecated
 from _pytest.pytester import Pytester
 import pytest
 from pytest import PytestDeprecationWarning
+from pytest import PytestRemovedIn10Warning
 
 
 @pytest.mark.parametrize("plugin", sorted(deprecated.DEPRECATED_EXTERNAL_PLUGINS))
@@ -66,7 +67,7 @@ def test_hookimpl_via_function_attributes_are_deprecated():
 
 
 def test_yield_fixture_is_deprecated() -> None:
-    with pytest.warns(DeprecationWarning, match=r"yield_fixture is deprecated"):
+    with pytest.warns(PytestRemovedIn10Warning, match=r"yield_fixture is deprecated"):
 
         @pytest.yield_fixture  # type: ignore[deprecated]
         def fix():
