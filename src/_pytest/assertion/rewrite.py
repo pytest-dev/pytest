@@ -195,6 +195,12 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         tries to filter what we're sure won't be rewritten before getting to
         it.
         """
+        # stdlib modules are never rewritten; bail out early to avoid calling
+        # fnmatch_ex, which can trigger lazy import resolution and cause
+        # recursion with PYTHON_LAZY_IMPORTS=all (#14632).
+        if name.partition(".")[0] in sys.stdlib_module_names:
+            return True
+
         if self.session is not None and not self._session_paths_checked:
             self._session_paths_checked = True
             for initial_path in self.session._initialpaths:

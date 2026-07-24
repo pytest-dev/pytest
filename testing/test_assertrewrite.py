@@ -2424,3 +2424,35 @@ def test_assertion_failure_when_terminalreporter_is_disabled(
     )
     reprec = pytester.inline_run("-p", "no:terminalreporter")
     reprec.assertoutcome(passed=1)
+
+
+def test_rewrite_hook_stdlib_modules_skipped(pytestconfig: pytest.Config) -> None:
+    """AssertionRewritingHook.find_spec returns None for stdlib modules early
+    (via sys.stdlib_module_names in _early_rewrite_bailout) to prevent
+    recursion with PYTHON_LAZY_IMPORTS=all (#14632)."""
+    hook = AssertionRewritingHook(pytestconfig)
+    # stdlib modules are always skipped; this also breaks the recursion that
+    # PYTHON_LAZY_IMPORTS=all would cause when fnmatch resolves lazily inside
+    # _early_rewrite_bailout.
+    assert hook.find_spec("fnmatch") is None
+    assert hook.find_spec("os") is None
+    assert hook.find_spec("re") is None
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 15),
+    reason="PYTHON_LAZY_IMPORTS requires Python 3.15+",
+)
+def test_lazy_imports_all_does_not_crash_pytest(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """pytest does not crash with PYTHON_LAZY_IMPORTS=all (#14632)."""
+    pytester.makepyfile(
+        """
+        def test_foo():
+            assert 1 == 1
+        """
+    )
+    monkeypatch.setenv("PYTHON_LAZY_IMPORTS", "all")
+    result = pytester.runpytest_subprocess()
+    assert result.ret == 0
