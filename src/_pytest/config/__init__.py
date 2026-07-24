@@ -650,10 +650,17 @@ class PytestPluginManager(PluginManager):
             if not safe_exists(anchor):
                 continue
 
+            # With intermixed argument parsing, the path *value* of a command
+            # line option (e.g. ``--write-idents idents.txt``) can end up among
+            # the positional arguments. Such a file anchor must not prevent the
+            # conftest discovery for its directory (and its ``test*``
+            # sub-directories), otherwise conftests that register the option are
+            # not loaded as initial conftests and the option becomes
+            # "unrecognized" (#13913). Resolve file anchors to their directory.
+            anchor = self._get_directory(anchor)
             anchors.append(anchor)
             # Let's also consider test* subdirs.
-            if anchor.is_dir():
-                anchors.extend(x for x in anchor.glob("test*") if x.is_dir())
+            anchors.extend(x for x in anchor.glob("test*") if x.is_dir())
         if not anchors:
             anchors.append(invocation_dir)
             anchors.extend(x for x in invocation_dir.glob("test*") if x.is_dir())
