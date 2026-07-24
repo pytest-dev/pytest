@@ -464,6 +464,34 @@ class TestUnittestSubTest:
             ]
         )
 
+    def test_last_failed(
+        self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Check that --last-failed reruns tests with failed unittest subtests."""
+        monkeypatch.setenv("COLUMNS", "120")
+        pytester.makepyfile(
+            """
+            from unittest import TestCase
+
+            class T(TestCase):
+                def test_foo(self):
+                    for i in range(3):
+                        with self.subTest(index=i):
+                            assert i % 2 == 0
+            """
+        )
+        result = pytester.runpytest("-v")
+        result.stdout.fnmatch_lines(["* 1 failed, 1 passed, 2 subtests passed in *"])
+
+        result = pytester.runpytest("-v", "--last-failed")
+        result.stdout.fnmatch_lines(
+            [
+                "*collected 1 item",
+                "run-last-failure: rerun previous 1 failure",
+                "* 1 failed, 1 passed, 2 subtests passed in *",
+            ]
+        )
+
     def test_passes(
         self, pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:
