@@ -17,6 +17,7 @@ import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
 from _pytest.assertion._compare_any import _compare_eq_cls
+from _pytest.assertion._compare_mapping import _compare_eq_mapping
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _compare_eq_text
 from _pytest.config import Config as _Config
@@ -57,6 +58,11 @@ def mock_config(
         def getini(self, name: str) -> str:
             if name == util.ASSERTION_TEXT_DIFF_STYLE_INI:
                 return assertion_text_diff_style
+            # Disable truncation so ``callop``-style tests can compare
+            # against the full explanation; the extra-items cap is keyed off
+            # the same budget and is covered by its own dedicated tests.
+            if name in ("truncation_limit_lines", "truncation_limit_chars"):
+                return "0"
             raise KeyError(f"Not mocked out: {name}")
 
     return Config()
@@ -910,6 +916,35 @@ class TestAssert_reprcompare:
             "+     'c': 2,",
             "  }",
         ]
+
+    def test_dict_extra_items_bounded_under_budget(self) -> None:
+        """With more extra keys than the budget, only the smallest
+        ``max_lines`` keys are emitted, one per line."""
+        out = list(
+            _compare_eq_mapping(
+                {i: i for i in range(1000)},
+                {},
+                util.dummy_highlighter,
+                0,
+                5,
+            )
+        )
+        assert out[0] == "Left contains 1000 more items:"
+        body = out[1:]
+        assert body == [f"{{{i}: {i}}}" for i in range(5)]  # smallest 5, sorted
+
+    def test_dict_extra_items_small_keeps_pformat_block(self) -> None:
+        """Under the budget, the compact pprint block is unchanged."""
+        out = list(
+            _compare_eq_mapping(
+                {"b": 2, "a": 1},
+                {},
+                util.dummy_highlighter,
+                0,
+                5,
+            )
+        )
+        assert out == ["Left contains 2 more items:", "{'a': 1, 'b': 2}"]
 
     def test_mapping_different_items(self) -> None:
         class SimpleMapping(Mapping[str, int]):

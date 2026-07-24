@@ -140,6 +140,7 @@ def assertrepr_compare(
     verbose: int,
     highlighter: _HighlightFunc,
     assertion_text_diff_style: _AssertionTextDiffStyle,
+    extra_items_max_lines: int | None = None,
 ) -> Iterator[str]:
     """Yield specialised explanations for some operators/operands.
 
@@ -183,6 +184,7 @@ def assertrepr_compare(
                 highlighter,
                 verbose,
                 assertion_text_diff_style,
+                extra_items_max_lines,
             )
         elif op == "not in" and istext(left) and istext(right):
             source = _notin_text(left, right, verbose)

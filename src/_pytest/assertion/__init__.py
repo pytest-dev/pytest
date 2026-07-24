@@ -223,6 +223,14 @@ def pytest_assertrepr_compare(
     else:
         # Keep it plaintext when not using terminalrepoterer (#14377).
         highlighter = util.dummy_highlighter
+    # When the explanation is going to be truncated to ``max_lines`` anyway,
+    # tell the mapping comparison not to pretty-print a giant "N more items"
+    # subdict it would only throw away — the item count is already reported
+    # in the header, so this loses no information the user would have seen.
+    should_truncate, base_budget = truncate._get_truncation_parameters(config)
+    extra_items_max_lines = (
+        base_budget.max_lines if should_truncate and base_budget.max_lines > 0 else None
+    )
     explanation = list(
         util.assertrepr_compare(
             op=op,
@@ -231,6 +239,7 @@ def pytest_assertrepr_compare(
             verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
             highlighter=highlighter,
             assertion_text_diff_style=util.get_assertion_text_diff_style(config),
+            extra_items_max_lines=extra_items_max_lines,
         )
     )
     return explanation or None
