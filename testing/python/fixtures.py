@@ -10,6 +10,7 @@ import textwrap
 from _pytest.compat import getfuncargnames
 from _pytest.config import ExitCode
 from _pytest.fixtures import deduplicate_names
+from _pytest.fixtures import ParamValueKey
 from _pytest.fixtures import TopRequest
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
@@ -4534,6 +4535,61 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
     )
 
 
+class TestParamValueKey:
+    """Unit tests for the equivalence key used by `reorder_items` (#8914)."""
+
+    def test_equal_hashable_values(self) -> None:
+        # Build equal-but-not-identical values to exercise the ``==`` path
+        # rather than the identity shortcut.
+        v1, v2 = tuple([1, 2]), tuple([1, 2])
+        assert v1 is not v2
+        k1, k2 = ParamValueKey(v1, 0), ParamValueKey(v2, 1)
+        assert k1 == k2
+        assert hash(k1) == hash(k2)
+
+    def test_identical_value(self) -> None:
+        value = object()
+        assert ParamValueKey(value, 0) == ParamValueKey(value, 1)
+
+    def test_unequal_hashable_values(self) -> None:
+        assert ParamValueKey("a", 0) != ParamValueKey("b", 0)
+
+    def test_equal_values_of_different_type(self) -> None:
+        # 1 == True == 1.0 in Python, but grouping them could change which
+        # value an adjacent test's fixture is set up with, so the key keeps
+        # them apart.
+        assert ParamValueKey(1, 0) != ParamValueKey(True, 0)
+        assert ParamValueKey(1, 0) != ParamValueKey(1.0, 0)
+
+    def test_value_key_never_equals_index_key(self) -> None:
+        # hash(0) == hash(ParamValueKey({}, 0)._key) here, so these could
+        # collide in a dict bucket; they must still compare unequal.
+        assert ParamValueKey(0, 0) != ParamValueKey({}, 0)
+        assert ParamValueKey({}, 0) != ParamValueKey(0, 0)
+
+    def test_unhashable_values_compare_by_index(self) -> None:
+        assert ParamValueKey({"a": 1}, 0) == ParamValueKey({"b": 2}, 0)
+        assert ParamValueKey({"a": 1}, 0) != ParamValueKey({"a": 1}, 1)
+
+    def test_exotic_eq(self) -> None:
+        class Exotic:
+            def __eq__(self, other: object) -> bool:
+                raise ValueError("cannot compare")
+
+            def __hash__(self) -> int:
+                return 0
+
+        assert ParamValueKey(Exotic(), 0) != ParamValueKey(Exotic(), 0)
+
+    def test_other_types(self) -> None:
+        assert ParamValueKey("a", 0) != "a"
+        assert ParamValueKey("a", 0).__eq__("a") is NotImplemented
+
+    def test_repr(self) -> None:
+        assert repr(ParamValueKey("a", 0)) == "ParamValueKey(value='a')"
+        assert repr(ParamValueKey({}, 3)) == "ParamValueKey(index=3)"
+
+
 class TestScopeOrdering:
     """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
 
@@ -4817,6 +4873,150 @@ class TestScopeOrdering:
                 "  TEARDOWN P fix['b']",
             ],
         )
+
+    def test_reorder_by_param_value_across_parametrize_calls(
+        self, pytester: Pytester
+    ) -> None:
+        """Items parametrized by separate parametrize() calls are grouped by
+        the *value* of higher-scoped parameters, so that equal values share a
+        single fixture setup.
+
+        Regression test for #8914.
+        """
+        pytester.makepyfile(
+            test_8914="""
+                import pytest
+
+                @pytest.fixture(scope="session")
+                def prepare(request):
+                    return request.param
+
+                @pytest.mark.parametrize("prepare", ["dina"], indirect=True, scope="session")
+                def test_1(prepare): pass
+
+                @pytest.mark.parametrize("prepare", ["more"], indirect=True, scope="session")
+                def test_2(prepare): pass
+
+                @pytest.mark.parametrize("prepare", ["dina"], indirect=True, scope="session")
+                def test_3(prepare): pass
+            """
+        )
+        result = pytester.runpytest("--setup-plan")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(
+            [
+                "SETUP    S prepare['dina']",
+                "        test_8914.py::test_1[dina] (fixtures used: prepare, request)",
+                "        test_8914.py::test_3[dina] (fixtures used: prepare, request)",
+                "TEARDOWN S prepare['dina']",
+                "SETUP    S prepare['more']",
+                "        test_8914.py::test_2[more] (fixtures used: prepare, request)",
+                "TEARDOWN S prepare['more']",
+            ],
+        )
+
+    def test_reorder_unhashable_params_fall_back_to_index(
+        self, pytester: Pytester
+    ) -> None:
+        """Unhashable parameter values are grouped by their index within their
+        parametrize() call, as they were before #8914 was fixed.
+        """
+        pytester.makepyfile(
+            test_unhashable="""
+                import pytest
+
+                @pytest.fixture(scope="module")
+                def fix(request):
+                    return request.param
+
+                @pytest.mark.parametrize("fix", [{"a": 1}, {"b": 2}], indirect=True, scope="module")
+                def test_1(fix): pass
+
+                @pytest.mark.parametrize("fix", [{"a": 1}, {"b": 2}], indirect=True, scope="module")
+                def test_2(fix): pass
+            """
+        )
+        result = pytester.runpytest("--setup-plan")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(
+            [
+                "    SETUP    M fix[{'a': 1}]",
+                "        test_unhashable.py::test_1[fix0] (fixtures used: fix, request)",
+                "        test_unhashable.py::test_2[fix0] (fixtures used: fix, request)",
+                "    TEARDOWN M fix[{'a': 1}]",
+                "    SETUP    M fix[{'b': 2}]",
+                "        test_unhashable.py::test_1[fix1] (fixtures used: fix, request)",
+                "        test_unhashable.py::test_2[fix1] (fixtures used: fix, request)",
+                "    TEARDOWN M fix[{'b': 2}]",
+            ],
+        )
+
+    def test_reorder_mixed_hashable_unhashable_params(self, pytester: Pytester) -> None:
+        """Hashable and unhashable values parametrizing the same fixture only
+        group with their own kind: values with values, unhashables by index.
+        """
+        pytester.makepyfile(
+            test_mixed="""
+                import pytest
+
+                @pytest.fixture(scope="module")
+                def fix(request):
+                    return request.param
+
+                @pytest.mark.parametrize("fix", [{"a": 1}], indirect=True, scope="module")
+                def test_1(fix): pass
+
+                @pytest.mark.parametrize("fix", ["x"], indirect=True, scope="module")
+                def test_2(fix): pass
+
+                @pytest.mark.parametrize("fix", ["x"], indirect=True, scope="module")
+                def test_3(fix): pass
+            """
+        )
+        result = pytester.runpytest("--setup-plan")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(
+            [
+                "    SETUP    M fix[{'a': 1}]",
+                "        test_mixed.py::test_1[fix0] (fixtures used: fix, request)",
+                "    TEARDOWN M fix[{'a': 1}]",
+                "    SETUP    M fix['x']",
+                "        test_mixed.py::test_2[x] (fixtures used: fix, request)",
+                "        test_mixed.py::test_3[x] (fixtures used: fix, request)",
+                "    TEARDOWN M fix['x']",
+            ],
+        )
+
+    def test_reorder_params_with_exotic_eq(self, pytester: Pytester) -> None:
+        """Parameter values whose ``__eq__`` raises or returns non-booleans
+        (e.g. numpy arrays) do not break collection or reordering (#6497).
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            class Exotic:
+                def __init__(self, value):
+                    self.value = value
+                def __eq__(self, other):
+                    raise ValueError("cannot compare")
+                def __hash__(self):
+                    return 0
+
+            @pytest.fixture(scope="module")
+            def fix(request):
+                return request.param
+
+            @pytest.mark.parametrize("fix", [Exotic(1)], indirect=True, scope="module")
+            def test_1(fix): pass
+
+            @pytest.mark.parametrize("fix", [Exotic(2)], indirect=True, scope="module")
+            def test_2(fix): pass
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.OK
+        result.assert_outcomes(passed=2)
 
     def test_multiple_packages(self, pytester: Pytester) -> None:
         """Complex test involving multiple package fixtures. Make sure teardowns
