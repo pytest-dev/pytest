@@ -514,9 +514,6 @@ class SetupState:
         # Importing the appropriate types from the fixtures module lead to circular
         # imports, so we leave the cache untyped for now
         self.fixture_cache = {}  # type: ignore[var-annotated]
-        # Tracks the currently active param per fixturedef
-        # This is only used during --setup-show
-        self.active_param_by_fixture = {}  # type: ignore[var-annotated]
 
     def is_node_active(self, node: Node) -> bool:
         """Check if a node is currently active in the stack -- set up and not

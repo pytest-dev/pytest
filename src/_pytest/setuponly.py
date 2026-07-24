@@ -6,6 +6,8 @@ from _pytest._io.saferepr import saferepr
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import _FixtureResult
+from _pytest.fixtures import _NO_PARAM
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import SubRequest
 from _pytest.scope import Scope
@@ -46,7 +48,11 @@ def pytest_fixture_setup(
                         param = fixturedef.ids[request.param_index]
                 else:
                     param = request.param
-                request.session._setupstate.active_param_by_fixture[fixturedef] = param
+                # Use None as a dummy value for resolving/caching the fixture
+                # --setup-show does not care about the actual value, only about the param
+                request.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
+                    None, param, None
+                )
             _show_fixture_action(request, fixturedef, "SETUP")
 
 
@@ -57,8 +63,6 @@ def pytest_fixture_post_finalizer(
         config = request.config
         if config.option.setupshow:
             _show_fixture_action(request, fixturedef, "TEARDOWN")
-            if fixturedef in request.session._setupstate.active_param_by_fixture:
-                del request.session._setupstate.active_param_by_fixture[fixturedef]
 
 
 def _show_fixture_action(
@@ -83,9 +87,9 @@ def _show_fixture_action(
         if deps:
             tw.write(" (fixtures used: {})".format(", ".join(deps)))
 
-    if fixturedef in request.session._setupstate.active_param_by_fixture:
-        active_param = request.session._setupstate.active_param_by_fixture[fixturedef]
-        tw.write(f"[{saferepr(active_param, maxsize=42)}]")
+    if cache_entry := request.session._setupstate.fixture_cache.get(fixturedef):
+        if cache_entry.param is not _NO_PARAM:
+            tw.write(f"[{saferepr(cache_entry.param, maxsize=42)}]")
 
     tw.flush()
 
