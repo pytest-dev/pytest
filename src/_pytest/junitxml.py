@@ -93,7 +93,7 @@ families["xunit2"] = families["_base"]
 
 
 class _NodeReporter:
-    def __init__(self, node_id: NodeId | OpaqueNodeId, xml: LogXML) -> None:
+    def __init__(self, node_id: OpaqueNodeId, xml: LogXML) -> None:
         self.id = node_id
         self.xml = xml
         self.add_stats = self.xml.add_stats
@@ -489,9 +489,7 @@ class LogXML:
         self.stats: dict[str, int] = dict.fromkeys(
             ["error", "passed", "failure", "skipped"], 0
         )
-        self.node_reporters: dict[
-            tuple[NodeId | OpaqueNodeId, object], _NodeReporter
-        ] = {}
+        self.node_reporters: dict[tuple[OpaqueNodeId, object], _NodeReporter] = {}
         self.node_reporters_ordered: list[_NodeReporter] = []
         self.global_properties: list[tuple[str, str]] = []
 
@@ -504,7 +502,7 @@ class LogXML:
             self.family = "xunit1"
 
     def finalize(self, report: TestReport) -> None:
-        node_id = report.id
+        node_id = report.id.as_opaque()
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
         reporter = self.node_reporters.pop((node_id, workernode))
@@ -516,11 +514,11 @@ class LogXML:
             reporter.finalize()
 
     def node_reporter(self, report: BaseReport | NodeId | str) -> _NodeReporter:
-        if isinstance(report, (NodeId, str)):
-            node_id = coerce_node_id(report)
+        if isinstance(report, NodeId | str):
+            node_id = coerce_node_id(report).as_opaque()
         elif isinstance(report, _WithNodeId):
             # Covers both TestReport and CollectReport.
-            node_id = report.id
+            node_id = report.id.as_opaque()
         else:
             # Some callers (and tests) pass duck-typed report-like objects
             # that are neither of the above but do provide a nodeid.
@@ -588,7 +586,7 @@ class LogXML:
                         rep
                         for rep in self.open_reports
                         if (
-                            rep.id == report.id
+                            rep.id.as_opaque() == report.id.as_opaque()
                             and getattr(rep, "item_index", None) == report_ii
                             and getattr(rep, "worker_id", None) == report_wid
                         )
@@ -606,7 +604,7 @@ class LogXML:
                     # element for that item (#3850).
                     self.cnt_double_fail_tests += int(
                         (
-                            report.id,
+                            report.id.as_opaque(),
                             getattr(report, "node", None),
                         )
                         in self.node_reporters
@@ -635,7 +633,7 @@ class LogXML:
                     rep
                     for rep in self.open_reports
                     if (
-                        rep.id == report.id
+                        rep.id.as_opaque() == report.id.as_opaque()
                         and getattr(rep, "item_index", None) == report_ii
                         and getattr(rep, "worker_id", None) == report_wid
                     )

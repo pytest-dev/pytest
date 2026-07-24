@@ -60,8 +60,17 @@ class TestReportSerialization:
         # Check assembled == rep
         assert a.__dict__.keys() == rep.__dict__.keys()
         for key in rep.__dict__.keys():
-            if key != "longrepr":
-                assert getattr(a, key) == getattr(rep, key)
+            if key == "longrepr":
+                continue
+            if key == "_id":
+                # _from_json() always reconstructs an OpaqueNodeId (built
+                # from the plain nodeid string on the wire), while the
+                # original live report's _id is a structured ItemNodeId --
+                # these are deliberately different, non-equal types (see
+                # _pytest/nodeid.py), so compare their string form instead.
+                assert str(a._id) == str(rep._id)
+                continue
+            assert getattr(a, key) == getattr(rep, key)
         assert rep.longrepr.reprcrash is not None
         assert a.longrepr.reprcrash is not None
         assert rep.longrepr.reprcrash.lineno == a.longrepr.reprcrash.lineno
