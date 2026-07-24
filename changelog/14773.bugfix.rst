@@ -1,0 +1,1 @@
+Fixed a crash in ``Argument.dest`` when accessing an option with an invalid option string (for example, one that starts with a digit). Previously, this would raise an ``AttributeError`` because the underlying ``argparse.Action`` may not have a ``dest`` attribute when initialization fails.
