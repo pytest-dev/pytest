@@ -8,11 +8,13 @@ none of the code triggers any mypy errors.
 from __future__ import annotations
 
 import contextlib
+from typing import cast
 from typing import Literal
 
 from typing_extensions import assert_type
 
 import pytest
+from pytest import CaptureManager
 from pytest import MonkeyPatch
 from pytest import ScopeName
 from pytest import TestReport
@@ -53,6 +55,17 @@ def check_raises_is_a_context_manager(val: bool) -> None:
     with pytest.raises(RuntimeError) if val else contextlib.nullcontext() as excinfo:
         pass
     assert_type(excinfo, pytest.ExceptionInfo[RuntimeError] | None)
+
+
+# Issue #14186.
+def check_capture_manager_typing(
+    request: pytest.FixtureRequest,
+) -> None:
+    capture_manager = cast(
+        CaptureManager | None,
+        request.config.pluginmanager.getplugin("capturemanager"),
+    )
+    assert_type(capture_manager, CaptureManager | None)
 
 
 # Issue #12941.
