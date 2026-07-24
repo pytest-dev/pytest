@@ -196,6 +196,12 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self.extra_keyword_matches: set[str] = set()
 
         if nodeid is not None:
+            if not isinstance(nodeid, NodeId):  # pragma: no cover
+                raise ValueError(
+                    f"nodeid must be a NodeId (CollectionNodeId/ItemNodeId) instance "
+                    f"or None, got {nodeid!r}. Do not pass nodeid explicitly -- use "
+                    f"Node.from_parent() and let pytest compute it automatically."
+                )
             self._id = nodeid
         else:
             if not self.parent:
