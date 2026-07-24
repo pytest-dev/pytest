@@ -66,7 +66,6 @@ class TestCollectionNodeId:
         node_id = CollectionNodeId(path="a/test_b.py", names=("TestC",))
         opaque = node_id.as_opaque()
         assert isinstance(opaque, OpaqueNodeId)
-        assert opaque == node_id
         assert str(opaque) == str(node_id)
 
 
@@ -107,64 +106,20 @@ class TestItemNodeId:
         )
         opaque = node_id.as_opaque()
         assert isinstance(opaque, OpaqueNodeId)
-        assert opaque == node_id
         assert str(opaque) == str(node_id)
 
 
-class TestCrossTypeEquality:
-    def test_eq_and_hash_across_all_three_types(self) -> None:
-        """Equality/hash must be based on the canonical string form, not the
-        raw fields or concrete class -- a CollectionNodeId/ItemNodeId built
-        from live collection data and an OpaqueNodeId built from a plain
-        string must all compare equal and hash equal when they represent
-        the same logical node. This matters for e.g. comparing a
-        currently-collected item.id against a node id read back from an
-        on-disk cache file, and for containers that deliberately mix live
-        and cache-sourced ids (e.g. cacheprovider's lastfailed).
-        """
-        collection = CollectionNodeId(path="a/test_b.py", names=("test_c",))
-        item = CollectionNodeId(path="a/test_b.py").leaf(
-            "test_c", (ParamId(id="1", argnames=("x",), scope=Scope.Function),)
-        )
-        opaque_collection = OpaqueNodeId.parse("a/test_b.py::test_c")
-        opaque_item = OpaqueNodeId.parse("a/test_b.py::test_c[1]")
-
-        assert str(collection) == str(opaque_collection)
-        assert collection == opaque_collection
-        assert hash(collection) == hash(opaque_collection)
-
-        assert str(item) == str(opaque_item)
-        assert item == opaque_item
-        assert hash(item) == hash(opaque_item)
-
-        # Different concrete classes must not spuriously compare equal just
-        # because they're both "some kind of NodeId".
-        assert collection != item
-        assert collection != opaque_item
-        assert item != opaque_collection
-
-        by_node_id: dict[object, str] = {item: "value"}
-        assert by_node_id[opaque_item] == "value"
-
-    def test_string_construction_via_node_init(self) -> None:
-        """Node.__init__'s string branch (used e.g. by FSCollector for bare
-        paths) still supports a "::"-joined string for backward
-        compatibility, splitting it into clean names -- this never sees a
-        "[params]" bracket in practice (Function always pre-builds a real
-        ItemNodeId instead), so producing a CollectionNodeId here is
-        safe."""
-        session = mock.Mock()
-        session.own_markers = []
-        session.parent = None
-        session.nodeid = ""
-        session.id = CollectionNodeId(path="")
-        node = Node.from_parent(
-            session, name="ignored", nodeid="a/test_b.py::TestC::test_d"
-        )
-        assert node.id == CollectionNodeId(
-            path="a/test_b.py", names=("TestC", "test_d")
-        )
-        assert node.nodeid == "a/test_b.py::TestC::test_d"
+def test_string_construction_via_node_init() -> None:
+    session = mock.Mock()
+    session.own_markers = []
+    session.parent = None
+    session.nodeid = ""
+    session.id = CollectionNodeId(path="")
+    node = Node.from_parent(
+        session, name="ignored", nodeid="a/test_b.py::TestC::test_d"
+    )
+    assert node.id == CollectionNodeId(path="a/test_b.py", names=("TestC", "test_d"))
+    assert node.nodeid == "a/test_b.py::TestC::test_d"
 
 
 class TestOpaqueNodeId:

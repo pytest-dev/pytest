@@ -45,8 +45,6 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
-from _pytest.nodeid import ItemNodeId
-from _pytest.nodeid import NodeId
 from _pytest.nodeid import OpaqueNodeId
 from _pytest.nodes import Item
 from _pytest.nodes import Node
@@ -403,8 +401,8 @@ class TerminalReporter:
         # isatty should be a method but was wrongly implemented as a boolean.
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
-        self._progress_nodeids_reported: set[ItemNodeId | OpaqueNodeId] = set()
-        self._timing_nodeids_reported: set[NodeId | OpaqueNodeId] = set()
+        self._progress_nodeids_reported: set[OpaqueNodeId] = set()
+        self._timing_nodeids_reported: set[OpaqueNodeId] = set()
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -653,7 +651,7 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
-        self._progress_nodeids_reported.add(rep.id)
+        self._progress_nodeids_reported.add(rep.id.as_opaque())
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
@@ -744,7 +742,9 @@ class TerminalReporter:
             )
             current_location = all_reports[-1].location[0]
             not_reported = [
-                r for r in all_reports if r.id not in self._timing_nodeids_reported
+                r
+                for r in all_reports
+                if r.id.as_opaque() not in self._timing_nodeids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
@@ -756,7 +756,9 @@ class TerminalReporter:
             )
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
-                self._timing_nodeids_reported.update(r.id for r in not_reported)
+                self._timing_nodeids_reported.update(
+                    r.id.as_opaque() for r in not_reported
+                )
                 return format_node_duration(
                     sum(r.duration for r in not_reported if isinstance(r, TestReport))
                 )
@@ -1170,19 +1172,17 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, green=True, bold=True)
                         self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.id)
+                    self._handle_teardown_sections(rep.id.as_opaque())
 
-    def _get_teardown_reports(
-        self, node_id: ItemNodeId | OpaqueNodeId
-    ) -> list[TestReport]:
+    def _get_teardown_reports(self, node_id: OpaqueNodeId) -> list[TestReport]:
         reports = self.getreports("")
         return [
             report
             for report in reports
-            if report.when == "teardown" and report.id == node_id
+            if report.when == "teardown" and report.id.as_opaque() == node_id
         ]
 
-    def _handle_teardown_sections(self, node_id: ItemNodeId | OpaqueNodeId) -> None:
+    def _handle_teardown_sections(self, node_id: OpaqueNodeId) -> None:
         for report in self._get_teardown_reports(node_id):
             self.print_teardown_sections(report)
 
@@ -1232,7 +1232,7 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
-                        self._handle_teardown_sections(rep.id)
+                        self._handle_teardown_sections(rep.id.as_opaque())
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":
