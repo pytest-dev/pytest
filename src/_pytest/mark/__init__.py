@@ -134,12 +134,9 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.markers:
         config._do_configure()
         tw = _pytest.config.create_terminal_writer(config)
-        for line in config.getini("markers"):
-            parts = line.split(":", 1)
-            name = parts[0]
-            rest = parts[1] if len(parts) == 2 else ""
-            tw.write(f"@pytest.mark.{name}:", bold=True)
-            tw.line(rest)
+        for marker in config._iter_registered_markers():
+            tw.write(f"@pytest.mark.{marker.signature}:", bold=True)
+            tw.line(f" {marker.description}" if marker.description else "")
             tw.line()
         config._ensure_unconfigure()
         return 0
@@ -258,6 +255,10 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
         return
 
     expr = _parse_expression(matchexpr, "Wrong expression passed to '-m'")
+
+    # Validate marker names in the expression if strict_markers is enabled.
+    _validate_marker_names(expr, config)
+
     remaining: list[Item] = []
     deselected: list[Item] = []
     for item in items:
@@ -268,6 +269,27 @@ def deselect_by_mark(items: list[Item], config: Config) -> None:
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
+
+
+def _validate_marker_names(expr: Expression, config: Config) -> None:
+    """Validate that all marker names in the expression are registered.
+
+    Only validates when strict_markers is enabled.
+    """
+    strict_markers = config.getini("strict_markers")
+    if strict_markers is None:
+        strict_markers = config.getini("strict")
+    if not strict_markers:
+        return
+
+    registered_markers = {marker.name for marker in config._iter_registered_markers()}
+    unknown_markers = expr.idents() - registered_markers
+    if unknown_markers:
+        unknown_str = ", ".join(sorted(unknown_markers))
+        raise UsageError(
+            f"Unknown marker(s) in '-m' expression: {unknown_str}. "
+            "Use 'pytest --markers' to see available markers."
+        )
 
 
 def _parse_expression(expr: str, exc_message: str) -> Expression:
