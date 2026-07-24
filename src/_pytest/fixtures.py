@@ -1284,7 +1284,7 @@ def resolve_fixture_function(
     # as expected.
     instance = request.instance
 
-    if fixturedef._scope is Scope.Class:
+    if fixturedef._scope >= Scope.Class:
         # Check if fixture is an instance method (bound to instance, not class)
         if hasattr(fixturefunc, "__self__"):
             bound_to = fixturefunc.__self__
@@ -1293,7 +1293,8 @@ def resolve_fixture_function(
             if not isinstance(bound_to, type):
                 warnings.warn(
                     CLASS_FIXTURE_INSTANCE_METHOD.format(
-                        fixturename=request.fixturename
+                        scope=fixturedef._scope.name.capitalize(),
+                        fixturename=request.fixturename,
                     ),
                     stacklevel=2,
                 )
