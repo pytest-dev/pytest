@@ -28,6 +28,7 @@ def _compare_eq_any(
     highlighter: _HighlightFunc,
     verbose: int,
     assertion_text_diff_style: _AssertionTextDiffStyle,
+    extra_items_max_lines: int | None = None,
 ) -> Iterator[str]:
     """Yield the per-line explanation for ``left == right`` (without summary).
 
@@ -70,7 +71,9 @@ def _compare_eq_any(
         elif isset(left) and isset(right):
             yield from _compare_eq_set(left, right, highlighter, verbose)
         elif ismapping(left) and ismapping(right):
-            yield from _compare_eq_mapping(left, right, highlighter, verbose)
+            yield from _compare_eq_mapping(
+                left, right, highlighter, verbose, extra_items_max_lines
+            )
 
         if isiterable(left) and isiterable(right):
             yield from _compare_eq_iterable(left, right, highlighter, verbose)
