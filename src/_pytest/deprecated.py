@@ -34,12 +34,13 @@ YIELD_FIXTURE = PytestDeprecationWarning(
     "Use @pytest.fixture instead; they are the same."
 )
 
-CLASS_FIXTURE_INSTANCE_METHOD = PytestRemovedIn10Warning(
-    "Class-scoped fixture defined as instance method is deprecated.\n"
-    "Instance attributes set in this fixture will NOT be visible to test methods,\n"
+CLASS_FIXTURE_INSTANCE_METHOD = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "Class-scoped fixtures defined as instance methods are deprecated.\n"
+    "Instance attributes set in the {fixturename!r} fixture will NOT be visible to test methods,\n"
     "as each test gets a new instance while the fixture runs only once per class.\n"
-    "Use @classmethod decorator and set attributes on cls instead.\n"
-    "See https://docs.pytest.org/en/stable/deprecations.html#class-scoped-fixture-as-instance-method"
+    "Use a @classmethod decorator below @pytest.fixture and set attributes on cls instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#class-scoped-fixture-as-instance-method",
 )
 
 # This deprecation is never really meant to be removed.

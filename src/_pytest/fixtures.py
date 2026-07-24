@@ -1274,6 +1274,10 @@ def resolve_fixture_function(
 ) -> _FixtureFunc[FixtureValue]:
     """Get the actual callable that can be called to obtain the fixture
     value."""
+
+    def __tracebackhide__(e):
+        return issubclass(e.type, CLASS_FIXTURE_INSTANCE_METHOD.category)
+
     fixturefunc = fixturedef.func
     # The fixture function needs to be bound to the actual
     # request.instance so that code working with "fixturedef" behaves
@@ -1287,7 +1291,12 @@ def resolve_fixture_function(
             # classmethod: bound_to is the class itself (a type)
             # instance method: bound_to is an instance (not a type)
             if not isinstance(bound_to, type):
-                warnings.warn(CLASS_FIXTURE_INSTANCE_METHOD, stacklevel=2)
+                warnings.warn(
+                    CLASS_FIXTURE_INSTANCE_METHOD.format(
+                        fixturename=request.fixturename
+                    ),
+                    stacklevel=2,
+                )
 
     if instance is not None:
         # Handle the case where fixture is defined not in a test class, but some other class
