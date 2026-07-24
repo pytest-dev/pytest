@@ -3801,6 +3801,42 @@ class TestErrors:
         lines2 = failures[2].longrepr.reprtraceback.reprentries[0].lines
         assert len(lines1) == len(lines2)
 
+    def test_exception_before_fixture_func_called_is_cached(
+        self, pytester: Pytester
+    ) -> None:
+        """A failure that happens while resolving the fixture function itself
+        (e.g. a deprecation warning promoted to an error by ``-W error``, before
+        the fixture body ever runs) must be cached on the FixtureDef like any
+        other setup failure. Otherwise leftover finalizer state leaks into the
+        next test using the same class-scoped fixture and crashes pytest
+        internals instead of reporting the (repeated) original error (#14775).
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+
+            class TestFixt:
+                @pytest.fixture(scope="class")
+                def fixt(self):
+                    yield
+
+                def test_1(self, fixt):
+                    pass
+
+                def test_2(self, fixt):
+                    pass
+            """
+        )
+        result = pytester.runpytest("-Werror")
+        result.assert_outcomes(errors=2)
+        assert "AssertionError" not in result.stdout.str()
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn10Warning: Class-scoped fixtures defined as "
+                "instance methods are deprecated.*",
+            ]
+        )
+
 
 class TestShowFixtures:
     def test_funcarg_compat(self, pytester: Pytester) -> None:

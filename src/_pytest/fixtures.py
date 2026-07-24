@@ -1320,21 +1320,22 @@ def pytest_fixture_setup(
     for argname in fixturedef.argnames:
         kwargs[argname] = request.getfixturevalue(argname)
 
-    fixturefunc = resolve_fixture_function(fixturedef, request)
     my_cache_key = fixturedef.cache_key(request)
 
-    if inspect.isasyncgenfunction(fixturefunc) or inspect.iscoroutinefunction(
-        fixturefunc
-    ):
-        auto_str = " with autouse=True" if fixturedef._autouse else ""
-        fail(
-            f"{request.node.name!r} requested an async fixture {request.fixturename!r}{auto_str}, "
-            "with no plugin or hook that handled it. This is an error, as pytest does not natively support it.\n"
-            "See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
-            pytrace=False,
-        )
-
     try:
+        fixturefunc = resolve_fixture_function(fixturedef, request)
+
+        if inspect.isasyncgenfunction(fixturefunc) or inspect.iscoroutinefunction(
+            fixturefunc
+        ):
+            auto_str = " with autouse=True" if fixturedef._autouse else ""
+            fail(
+                f"{request.node.name!r} requested an async fixture {request.fixturename!r}{auto_str}, "
+                "with no plugin or hook that handled it. This is an error, as pytest does not natively support it.\n"
+                "See: https://docs.pytest.org/en/stable/deprecations.html#sync-test-depending-on-async-fixture",
+                pytrace=False,
+            )
+
         result = call_fixture_func(fixturefunc, request, kwargs)
     except TEST_OUTCOME as e:
         if isinstance(e, skip.Exception):
