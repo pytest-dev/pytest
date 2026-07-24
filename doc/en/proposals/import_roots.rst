@@ -112,6 +112,35 @@ explains which paths could not be classified and asks for explicit roots:
 The configuration syntax shown here is a sketch; the concrete spelling
 (including a TOML-native form in ``pyproject.toml``) is an open question.
 
+Interaction with ``testpaths``
+------------------------------
+
+``testpaths`` and import roots answer different questions and stay separate:
+``testpaths`` selects *what* is collected when no arguments are given, import
+roots declare *how* collected files are imported.  They interact in defined
+ways:
+
+* every collection target — whether it comes from ``testpaths``, command line
+  arguments, or full-tree collection — must fall under exactly one import
+  root.  A target that maps to no root is reported with the same
+  unclassified-path error as any other ambiguity, instead of falling back to
+  ``sys.path`` guessing.
+* ``testpaths`` entries serve as an additional signal for implied roots: an
+  entry that is not part of any installed distribution implies a ``local``
+  root.  The common ``testpaths = tests`` layout therefore needs no explicit
+  root configuration.
+* ``testpaths`` may point into an ``installed`` root — for example
+  ``testpaths = src`` together with ``--doctest-modules``.  Collection still
+  walks the worktree while imports resolve to the installed name, so the
+  staleness verification applies exactly as for test-driven imports.
+* command line arguments outside ``testpaths`` but inside a declared or
+  implied root behave normally; arguments outside every root fail with the
+  unclassified-path error.
+* conftest files between the rootdir and the ``testpaths`` entries are
+  loaded today without belonging to any test package; under import roots
+  these files still participate and need a defined module name (see the
+  open questions).
+
 Editable versus real versus stale installs
 ------------------------------------------
 
@@ -156,6 +185,8 @@ Open questions
 
 * the concrete configuration syntax (ini line format versus structured TOML),
 * interaction with the ``pythonpath`` ini option, ``--pyargs``, and rootdir,
+* the module name for conftest files that live above every import root
+  (for example a ``conftest.py`` next to ``pyproject.toml``),
 * which file (worktree or installed copy) appears in tracebacks and reports
   for real installs, and how assertion rewriting applies to the installed
   origin,
