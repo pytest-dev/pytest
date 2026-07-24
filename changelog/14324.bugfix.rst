@@ -1,0 +1,1 @@
+``pytest.RaisesGroup`` no longer raises an exception from the internal suggestion path when a ``check`` callable expects an exception group and cannot handle a contained exception.
