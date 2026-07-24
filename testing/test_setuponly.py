@@ -275,9 +275,7 @@ def test_suppress_capturing(pytester: Pytester) -> None:
     )
 
     result = pytester.runpytest("--setup-only", "-s", p)
-    result.stdout.no_fnmatch_line(
-        "this should not be captured"
-    )
+    result.stdout.no_fnmatch_line("this should not be captured")
 
 
 def test_show_fixtures_and_execute_test(pytester: Pytester) -> None:
