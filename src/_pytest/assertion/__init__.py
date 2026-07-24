@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
+from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.rewrite import assertstate_key
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -225,23 +227,29 @@ def pytest_assertrepr_compare(
     else:
         # Keep it plaintext when not using terminalrepoterer (#14377).
         highlighter = util.dummy_highlighter
-    # When the explanation is going to be truncated to ``max_lines`` anyway,
-    # tell the mapping comparison not to pretty-print a giant "N more items"
-    # subdict it would only throw away — the item count is already reported
-    # in the header, so this loses no information the user would have seen.
+    # When truncation is going to clip the explanation downstream, cap the
+    # comparison helpers' formatting at what the truncator will actually pull
+    # (the raw limits plus the footer slack) so no effort is spent formatting
+    # lines/chars that would be dropped anyway.
     should_truncate, base_budget = truncate._get_truncation_parameters(config)
-    extra_items_max_lines = (
-        base_budget.max_lines if should_truncate and base_budget.max_lines > 0 else None
-    )
-    explanation = list(
-        util.assertrepr_compare(
-            op=op,
-            left=left,
-            right=right,
-            verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
-            highlighter=highlighter,
-            assertion_text_diff_style=util.get_assertion_text_diff_style(config),
-            extra_items_max_lines=extra_items_max_lines,
+    if should_truncate:
+        truncation_budget = TruncationBudget(
+            max_lines=base_budget.max_lines + truncate.TRUNCATION_FOOTER_LINES + 1
+            if base_budget.max_lines > 0
+            else 0,
+            max_chars=base_budget.max_chars + truncate.TRUNCATION_FOOTER_CHARS
+            if base_budget.max_chars > 0
+            else 0,
         )
+    else:
+        truncation_budget = NO_TRUNCATION_BUDGET
+    lines = util.assertrepr_compare(
+        op=op,
+        left=left,
+        right=right,
+        verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
+        highlighter=highlighter,
+        assertion_text_diff_style=util.get_assertion_text_diff_style(config),
+        truncation_budget=truncation_budget,
     )
-    return explanation or None
+    return truncate.materialize_with_truncation(lines, config) or None
