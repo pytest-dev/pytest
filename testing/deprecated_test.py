@@ -12,9 +12,17 @@ from pytest import PytestDeprecationWarning
 def test_external_plugins_integrated(pytester: Pytester, plugin) -> None:
     pytester.syspathinsert()
     pytester.makepyfile(**{plugin: ""})
+    recorded = []
 
-    with pytest.warns(pytest.PytestConfigWarning):
-        pytester.parseconfig("-p", plugin)
+    class Recorder:
+        def pytest_warning_recorded(self, warning_message):
+            recorded.append(warning_message)
+
+    pytester.plugins = [Recorder()]
+    pytester.parseconfig("-p", plugin)
+
+    assert len(recorded) == 1
+    assert recorded[0].category is pytest.PytestConfigWarning
 
 
 def test_hookspec_via_function_attributes_are_deprecated():
