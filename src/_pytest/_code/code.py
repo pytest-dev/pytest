@@ -17,6 +17,8 @@ from traceback import extract_tb
 from traceback import format_exception
 from traceback import format_exception_only
 from traceback import FrameSummary
+from traceback import StackSummary
+from traceback import TracebackException
 from types import CodeType
 from types import FrameType
 from types import TracebackType
@@ -1204,19 +1206,16 @@ class ExceptionInfoFormatter:
                 # See https://github.com/pytest-dev/pytest/issues/9159
                 reprtraceback: ReprTraceback | ReprTracebackNative
                 if isinstance(e, BaseExceptionGroup):
-                    # don't filter any sub-exceptions since they shouldn't have any internal frames
                     traceback = filter_excinfo_traceback(self.tbfilter, excinfo)
                     extraline = (
                         "All traceback entries are hidden. Pass `--full-trace` to see hidden and internal frames."
                         if not traceback
                         else None
                     )
+                    tb_exc = TracebackException.from_exception(excinfo.value)
+                    _filter_tracebackexception(tb_exc, excinfo.value, self.tbfilter)
                     reprtraceback = ReprTracebackNative(
-                        format_exception(
-                            type(excinfo.value),
-                            excinfo.value,
-                            traceback[0]._rawentry if traceback else None,
-                        ),
+                        list(tb_exc.format()),
                         extraline=extraline,
                     )
 
@@ -1630,3 +1629,38 @@ def filter_excinfo_traceback(
         return excinfo.traceback.filter(excinfo)
     else:
         return excinfo.traceback
+
+
+def _filter_tracebackexception(
+    tb_exc: TracebackException,
+    e: BaseException,
+    tbfilter: TracebackFilter,
+) -> None:
+    """Filter a ``TracebackException`` in-place, respecting ``__tracebackhide__``.
+
+    This is used to filter native-style tracebacks (currently the only style
+    used for ``BaseExceptionGroup``) without mutating the original exception
+    objects. It recurses into exception group sub-exceptions and into
+    ``__cause__`` / ``__context__`` chains.
+
+    Frames are matched by ``(filename, lineno)``: ``TracebackEntry._rawentry.tb_lineno``
+    is 1-based absolute, matching ``FrameSummary.lineno``.
+    """
+    if e.__traceback__ is not None:
+        excinfo = ExceptionInfo.from_exception(e)
+        filtered = filter_excinfo_traceback(tbfilter, excinfo)
+        kept = {
+            (str(entry.frame.code.path), entry._rawentry.tb_lineno)
+            for entry in filtered
+        }
+        tb_exc.stack = StackSummary.from_list(
+            [fs for fs in tb_exc.stack if (fs.filename, fs.lineno) in kept]
+        )
+    if isinstance(e, BaseExceptionGroup):
+        sub_tb_excs = getattr(tb_exc, "exceptions", None) or []
+        for sub_tb_exc, sub_e in zip(sub_tb_excs, e.exceptions, strict=True):
+            _filter_tracebackexception(sub_tb_exc, sub_e, tbfilter)
+    if tb_exc.__cause__ is not None and e.__cause__ is not None:
+        _filter_tracebackexception(tb_exc.__cause__, e.__cause__, tbfilter)
+    if tb_exc.__context__ is not None and e.__context__ is not None:
+        _filter_tracebackexception(tb_exc.__context__, e.__context__, tbfilter)
