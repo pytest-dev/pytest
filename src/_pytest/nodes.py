@@ -205,7 +205,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
                 # a full ItemNodeId via parent.id.leaf(...) instead of
                 # reaching this branch. So this is always a Collector id.
                 node_path, *names = nodeid.split("::")
-                self._id = CollectionNodeId(node_path, tuple(names))
+                self._id = CollectionNodeId(path=node_path, names=tuple(names))
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")

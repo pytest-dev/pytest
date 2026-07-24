@@ -33,6 +33,7 @@ external plugins, for all types.
 
 from __future__ import annotations
 
+import abc
 import dataclasses
 from typing import overload
 from typing import TYPE_CHECKING
@@ -53,7 +54,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class ParamId:
     """One resolved id contributed by a single (possibly stacked)
     ``parametrize()`` call.
@@ -73,34 +74,43 @@ class ParamId:
     scope: Scope | None = None
 
 
-class _CachedStrEqHashMixin:
+class _CachedStrEqHash(abc.ABC):
     """Shared ``str(self)`` caching plus cross-type equality/hashing for
     :class:`CollectionNodeId`, :class:`ItemNodeId` and :class:`OpaqueNodeId`.
 
-    Not a dataclass itself -- just method bodies reused by all three, since
-    they must compare/hash equal to each other by canonical string form
-    (e.g. a currently-collected ``item.id`` must compare equal to a
-    matching entry read back from an on-disk cache file), but each builds
-    its string differently.
+    An ABC, not a dataclass itself -- just method bodies reused by all
+    three, since they must compare/hash equal to each other by canonical
+    string form (e.g. a currently-collected ``item.id`` must compare equal
+    to a matching entry read back from an on-disk cache file), but each
+    builds its string differently. Each concrete subclass declares its own
+    ``_str_cache`` dataclass field (rather than it living here) so that
+    ``slots=True`` gives it a real slot.
     """
 
+    # Without this, subclasses would get an instance __dict__ despite their
+    # own slots=True, since a __slots__-less base class in the MRO grants
+    # one to every subclass regardless -- abc.ABC's own __slots__ = () does
+    # not propagate down to subclasses that don't redeclare it themselves.
+    __slots__ = ()
+
+    _str_cache: str | None
+
+    @abc.abstractmethod
     def _build_str(self) -> str:
         raise NotImplementedError
 
     def __str__(self) -> str:
         # Lazily compute and cache the string on first access -- it's used
         # on every __eq__/__hash__ call, so it's worth not repeating the
-        # join/format work on every comparison. Not a dataclass field: just
-        # an ad hoc cached attribute.
-        cached: str | None = getattr(self, "_str", None)
-        if cached is not None:
-            return cached
+        # join/format work on every comparison.
+        if self._str_cache is not None:
+            return self._str_cache
         base = self._build_str()
-        object.__setattr__(self, "_str", base)
+        object.__setattr__(self, "_str_cache", base)
         return base
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, _CachedStrEqHashMixin):
+        if not isinstance(other, _CachedStrEqHash):
             return NotImplemented
         return str(self) == str(other)
 
@@ -108,8 +118,8 @@ class _CachedStrEqHashMixin:
         return hash(str(self))
 
 
-@dataclasses.dataclass(frozen=True, eq=False)
-class CollectionNodeId(_CachedStrEqHashMixin):
+@dataclasses.dataclass(frozen=True, eq=False, slots=True, kw_only=True)
+class CollectionNodeId(_CachedStrEqHash):
     """Structured address for a ``Collector`` node -- one that can still
     have children built under it.
 
@@ -122,6 +132,7 @@ class CollectionNodeId(_CachedStrEqHashMixin):
 
     path: str
     names: tuple[str, ...] = ()
+    _str_cache: str | None = dataclasses.field(default=None, init=False, repr=False)
 
     @override
     def _build_str(self) -> str:
@@ -129,11 +140,11 @@ class CollectionNodeId(_CachedStrEqHashMixin):
 
     def child(self, name: str) -> CollectionNodeId:
         """Return a new CollectionNodeId for a child collector node."""
-        return CollectionNodeId(self.path, (*self.names, name))
+        return CollectionNodeId(path=self.path, names=(*self.names, name))
 
     def leaf(self, name: str, params: tuple[ParamId, ...]) -> ItemNodeId:
         """Return a new ItemNodeId for a terminal item node."""
-        return ItemNodeId(self.path, (*self.names, name), params)
+        return ItemNodeId(path=self.path, names=(*self.names, name), params=params)
 
     def as_opaque(self) -> OpaqueNodeId:
         """Return the OpaqueNodeId form of this id, for code that only ever
@@ -142,8 +153,8 @@ class CollectionNodeId(_CachedStrEqHashMixin):
         return OpaqueNodeId.parse(str(self))
 
 
-@dataclasses.dataclass(frozen=True, eq=False)
-class ItemNodeId(_CachedStrEqHashMixin):
+@dataclasses.dataclass(frozen=True, eq=False, slots=True, kw_only=True)
+class ItemNodeId(_CachedStrEqHash):
     """Structured address for an ``Item`` node -- a leaf, e.g. a test
     function. Has no ``.child()``/``.leaf()``: nothing ever builds further
     collection-tree structure on top of an item id.
@@ -159,6 +170,7 @@ class ItemNodeId(_CachedStrEqHashMixin):
     path: str
     names: tuple[str, ...] = ()
     params: tuple[ParamId, ...] = ()
+    _str_cache: str | None = dataclasses.field(default=None, init=False, repr=False)
 
     @override
     def _build_str(self) -> str:
@@ -179,8 +191,8 @@ class ItemNodeId(_CachedStrEqHashMixin):
 NodeId = CollectionNodeId | ItemNodeId
 
 
-@dataclasses.dataclass(frozen=True, eq=False)
-class OpaqueNodeId(_CachedStrEqHashMixin):
+@dataclasses.dataclass(frozen=True, eq=False, slots=True, kw_only=True)
+class OpaqueNodeId(_CachedStrEqHash):
     """A nodeid reconstructed from an external string source (an on-disk
     cache file, an xdist JSON wire payload, a duck-typed report-like
     object's ``.nodeid`` attribute, ...), rather than from live collection.
@@ -198,15 +210,16 @@ class OpaqueNodeId(_CachedStrEqHashMixin):
     # "::" was present at all (distinct from "" after a trailing "::", for
     # lossless round-tripping through str.partition()).
     rest: str | None = None
+    _str_cache: str | None = dataclasses.field(default=None, init=False, repr=False)
 
     @classmethod
     def parse(cls, nodeid: str) -> OpaqueNodeId:
         """Split a nodeid string into its path and an opaque remainder."""
         path, sep, rest = nodeid.partition("::")
-        self = cls(path, rest if sep else None)
+        self = cls(path=path, rest=rest if sep else None)
         # We already have the original string in hand -- cache it directly
-        # as _str instead of letting __str__ reconstruct it later.
-        object.__setattr__(self, "_str", nodeid)
+        # as _str_cache instead of letting __str__ reconstruct it later.
+        object.__setattr__(self, "_str_cache", nodeid)
         return self
 
     @override
