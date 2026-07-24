@@ -12,6 +12,7 @@ from xml.dom import minidom
 
 import xmlschema
 
+from _pytest.compat import ItemLocation
 from _pytest.config import Config
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
@@ -1249,7 +1250,7 @@ def test_unicode_issue368(pytester: Pytester) -> None:
         longrepr = ustr
         sections: list[tuple[str, str]] = []
         nodeid = "something"
-        location = "tests/filename.py", 42, "TestClass.method"
+        location = ItemLocation("tests/filename.py", 42, "TestClass.method")
         when = "teardown"
 
     test_report = cast(TestReport, Report())
@@ -1598,7 +1599,7 @@ def test_url_property(pytester: Pytester) -> None:
         longrepr = "FooBarBaz"
         sections: list[tuple[str, str]] = []
         nodeid = "something"
-        location = "tests/filename.py", 42, "TestClass.method"
+        location = ItemLocation("tests/filename.py", 42, "TestClass.method")
         url = test_url
 
     test_report = cast(TestReport, Report())

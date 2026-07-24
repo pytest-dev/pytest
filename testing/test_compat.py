@@ -11,6 +11,7 @@ import warnings
 from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
+from _pytest.compat import ItemLocation
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
@@ -190,6 +191,20 @@ def test_assert_never_literal() -> None:
         pass
     else:
         assert_never(x)
+
+
+def test_itemlocation_str_no_lineno() -> None:
+    """ItemLocation.__str__ with lineindex=None omits the line number."""
+    loc = ItemLocation("tests/foo.py", None, "test_bar")
+    assert str(loc) == "tests/foo.py"
+    assert loc.lineno is None
+
+
+def test_itemlocation_str_with_lineno() -> None:
+    """ItemLocation.__str__ with a lineindex includes 1-based lineno."""
+    loc = ItemLocation("tests/foo.py", 9, "test_bar")
+    assert str(loc) == "tests/foo.py:10"
+    assert loc.lineno == 10
 
 
 def test_deprecated() -> None:
