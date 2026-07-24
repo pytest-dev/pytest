@@ -14,7 +14,7 @@ boundary -- so that their fields can always be trusted:
   building further collection-tree structure on top of one is a static
   type error, not just a runtime mistake.
 - :class:`OpaqueNodeId` -- A nodeid reconstructed from an external string
-  source, rather than from live collection. It this no claim to structured
+  source, rather than from live collection. It makes no claim to structured
   names or params, given they cannot be inferred from the plain string.
 - :data:`NodeId` -- a type alias, ``CollectionNodeId | ItemNodeId``, for
   code that genuinely needs to accept/hold either kind.
