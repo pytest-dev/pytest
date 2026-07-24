@@ -3563,3 +3563,29 @@ class TestTerminalProgressPlugin:
         # Session finish - should remove progress.
         plugin.pytest_sessionfinish()
         assert "\x1b]9;4;0;\x1b\\" in mock_file.getvalue()
+
+
+def test_terminalreporter_write_during_capture_reaches_terminal(
+    pytester: pytest.Pytester,
+) -> None:
+    """Output written via the terminal reporter from within a test reaches
+    the terminal even while output capture is active (#8973).
+
+    Runs in a subprocess: in-process runs replace stdout with an object
+    without a real file descriptor, so they cannot exercise the
+    capture-immune stdout duplicate.
+    """
+    pytester.makepyfile(
+        """
+        def test_foo(request):
+            reporter = request.config.pluginmanager.getplugin("terminalreporter")
+            reporter.ensure_newline()
+            reporter.write("MAGIC_MARKER", flush=True)
+            print("PLAIN_PRINT")
+        """
+    )
+    result = pytester.runpytest_subprocess()
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(["*MAGIC_MARKER*"])
+    # Regular output stays captured (the test passes, so it is never shown).
+    result.stdout.no_fnmatch_line("*PLAIN_PRINT*")
