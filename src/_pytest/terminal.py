@@ -41,6 +41,7 @@ from _pytest._io.wcwidth import wcswidth
 import _pytest._version
 from _pytest.compat import running_on_ci
 from _pytest.config import _PluggyPlugin
+from _pytest.config import capture_immune_stdout_key
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -289,7 +290,11 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
-    reporter = TerminalReporter(config, sys.stdout)
+    # Write to the capture-immune duplicate of stdout when available (#8973),
+    # fall back to sys.stdout otherwise (e.g. in-process pytester runs, where
+    # stdout has no real file descriptor to duplicate).
+    file = config.stash.get(capture_immune_stdout_key, None)
+    reporter = TerminalReporter(config, file)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
 
