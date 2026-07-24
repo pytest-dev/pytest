@@ -32,6 +32,9 @@ def mock_config(
     verbose: int = 0,
     assertion_override: int | None = None,
     assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+    truncation_limit_lines: str = "0",
+    truncation_limit_chars: str = "0",
+    has_terminalreporter: bool = True,
 ):
     class TerminalWriter:
         def _highlight(self, source, lexer="python"):
@@ -39,12 +42,18 @@ def mock_config(
 
     class PluginManager:
         def has_plugin(self, name: str) -> bool:
-            return True
+            return has_terminalreporter
 
     class Config:
         pluginmanager = PluginManager()
 
         def get_terminal_writer(self):
+            # When the terminalreporter plugin is absent the dispatcher must
+            # fall back to the plaintext highlighter without reaching for a
+            # terminal writer (#14377); make that misuse fail loudly.
+            assert has_terminalreporter, (
+                "get_terminal_writer() must not be called without terminalreporter"
+            )
             return TerminalWriter()
 
         def get_verbosity(self, verbosity_type: str | None = None) -> int:
@@ -60,11 +69,13 @@ def mock_config(
         def getini(self, name: str) -> str:
             if name == util.ASSERTION_TEXT_DIFF_STYLE_INI:
                 return assertion_text_diff_style
-            # Disable truncation so ``callop``-style tests can compare
-            # against the full explanation; the extra-items cap is keyed off
-            # the same budget and is covered by its own dedicated tests.
-            if name in ("truncation_limit_lines", "truncation_limit_chars"):
-                return "0"
+            # Truncation defaults to disabled (``"0"``) so ``callop``-style
+            # tests can compare against the full explanation; the dispatcher
+            # tests pass explicit limits to exercise the budget wiring.
+            if name == "truncation_limit_lines":
+                return truncation_limit_lines
+            if name == "truncation_limit_chars":
+                return truncation_limit_chars
             raise KeyError(f"Not mocked out: {name}")
 
     return Config()
@@ -1997,6 +2008,86 @@ class TestMaterializeWithTruncation:
         assert lines_small == lines_big
         assert reprs_small == reprs_big
         assert reprs_big < 200  # nowhere near the 100_000-element input
+
+
+class TestAssertReprCompareDispatcher:
+    """Tests for the budget wiring in ``plugin.pytest_assertrepr_compare``.
+
+    Unlike ``callequal``/``callop``, these tests pass explicit truncation
+    limits, covering the branch that derives a :class:`TruncationBudget`
+    for the comparison helpers.
+    """
+
+    def test_both_limits_truncate_without_formatting_everything(self) -> None:
+        """A huge list comparison is truncated to a few lines without the
+        element ``repr`` work scaling with the input."""
+
+        class Tracked:
+            reprs = 0
+
+            def __init__(self, v: int) -> None:
+                self.v = v
+
+            def __repr__(self) -> str:
+                Tracked.reprs += 1
+                return f"T({self.v})"
+
+            def __eq__(self, o: object) -> bool:
+                return isinstance(o, Tracked) and self.v == o.v
+
+        config = mock_config(
+            verbose=1,  # -v: emit the full diff that truncation then clips
+            truncation_limit_lines="4",
+            truncation_limit_chars="160",
+        )
+        left = [Tracked(i) for i in range(50_000)]
+        right = [Tracked(i) for i in range(50_000)]
+        right[0] = Tracked(-1)
+        Tracked.reprs = 0  # count only the formatting, not the construction
+        result = plugin.pytest_assertrepr_compare(config, "==", left, right)
+        assert result is not None
+        assert len(result) < 20
+        assert any("truncated" in line for line in result)
+        assert Tracked.reprs < 200  # nowhere near the 50k-element input
+
+    def test_chars_only_budget_still_truncates(self) -> None:
+        """With the line limit disabled, the char cap alone still bounds
+        the explanation."""
+        config = mock_config(
+            verbose=1,  # -v: emit the full diff that truncation then clips
+            truncation_limit_lines="0",
+            truncation_limit_chars="160",
+        )
+        left = list(range(1000))
+        right = list(range(1, 1001))
+        result = plugin.pytest_assertrepr_compare(config, "==", left, right)
+        assert result is not None
+        assert any("truncated" in line for line in result)
+        assert sum(len(line) for line in result) < 1000
+
+    def test_lines_only_budget_still_truncates(self) -> None:
+        """With the char limit disabled, the line cap alone still bounds
+        the explanation."""
+        config = mock_config(
+            verbose=1,  # -v: emit the full diff that truncation then clips
+            truncation_limit_lines="4",
+            truncation_limit_chars="0",
+        )
+        left = list(range(1000))
+        right = list(range(1, 1001))
+        result = plugin.pytest_assertrepr_compare(config, "==", left, right)
+        assert result is not None
+        assert len(result) < 20
+        assert any("truncated" in line for line in result)
+
+    def test_no_terminalreporter_uses_plaintext_highlighter(self) -> None:
+        """Without the terminalreporter plugin the dispatcher uses the
+        plaintext highlighter and never touches a terminal writer (#14377)."""
+        config = mock_config(has_terminalreporter=False)
+        result = plugin.pytest_assertrepr_compare(config, "==", {1, 2}, {1, 3})
+        assert result is not None
+        assert any("Extra items" in line for line in result)
+        assert not any("\x1b[" in line for line in result)
 
 
 def test_python25_compile_issue257(pytester: Pytester) -> None:
