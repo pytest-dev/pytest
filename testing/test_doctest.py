@@ -1573,6 +1573,59 @@ class TestDoctestNamespaceFixture:
         reprec = pytester.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
 
+    def test_namespace_fixture_from_rootdir_when_modules_outside_rootdir(
+        self, pytester: Pytester
+    ) -> None:
+        """doctest_namespace injection from a conftest in the rootdir still
+        applies when the doctest modules are collected from outside the
+        rootdir.
+
+        Regression test for #14683: setting ``--rootdir`` to a subdirectory
+        while collecting modules from a parent directory made the rootdir
+        conftest's ``doctest_namespace`` injection invisible.
+        """
+        testing = pytester.path / "xclim" / "testing"
+        testing.mkdir(parents=True)
+        testing.joinpath("conftest.py").write_text(
+            textwrap.dedent(
+                """\
+                import pytest
+
+                @pytest.fixture(autouse=True, scope="session")
+                def add_var(doctest_namespace):
+                    doctest_namespace["my_var"] = 42
+                """
+            ),
+            encoding="utf-8",
+        )
+        core = pytester.path / "xclim" / "core"
+        core.mkdir()
+        core.joinpath("mod.py").write_text(
+            textwrap.dedent(
+                """\
+                def func():
+                    '''
+                    >>> my_var
+                    42
+                    '''
+                """
+            ),
+            encoding="utf-8",
+        )
+
+        # The conftest is both the config file and at the rootdir, and the
+        # collection argument (``xclim``) is a *parent* of the rootdir
+        # (``xclim/testing``) -- the exact setup from #14683.
+        result = pytester.runpytest(
+            "--rootdir",
+            str(testing),
+            "--config-file",
+            str(testing / "conftest.py"),
+            "--doctest-modules",
+            "xclim",
+        )
+        result.assert_outcomes(passed=1)
+
 
 class TestDoctestReportingOption:
     def _run_doctest_report(self, pytester, format):
