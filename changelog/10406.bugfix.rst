@@ -1,0 +1,1 @@
+Parameter-set marks now take precedence over less specific function, class, and module marks when pytest resolves markers and per-test ``filterwarnings`` overrides.

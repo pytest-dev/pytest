@@ -209,6 +209,90 @@ def test_filterwarnings_mark(pytester: Pytester, default_config) -> None:
     result.stdout.fnmatch_lines(["*= 1 failed, 2 passed, 1 warning in *"])
 
 
+def test_filterwarnings_parametrize_mark_is_most_specific(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        import warnings
+
+        @pytest.mark.filterwarnings("error")
+        class TestMarkClass:
+            @pytest.mark.parametrize(
+                "_",
+                [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))],
+            )
+            def test_class_mark(self, _):
+                warnings.warn("class")
+
+        class TestMarkMethods:
+            @pytest.mark.filterwarnings("error")
+            @pytest.mark.parametrize(
+                "_",
+                [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))],
+            )
+            def test_function_mark_before_parametrize(self, _):
+                warnings.warn("function-before")
+
+            @pytest.mark.parametrize(
+                "_",
+                [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))],
+            )
+            @pytest.mark.filterwarnings("error")
+            def test_function_mark_after_parametrize(self, _):
+                warnings.warn("function-after")
+    """
+    )
+    result = pytester.runpytest_subprocess("-q")
+
+    result.stdout.fnmatch_lines(["*3 passed*"])
+
+
+def test_filterwarnings_mark_preserves_decorator_order(pytester: Pytester) -> None:
+    pytester.makepyfile(
+        """
+        import pytest
+        import warnings
+
+        @pytest.mark.filterwarnings("ignore:api v1")
+        @pytest.mark.filterwarnings("error")
+        def test_decorator_order():
+            warnings.warn(UserWarning("api v1"))
+    """
+    )
+    result = pytester.runpytest_subprocess("-q")
+
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+def test_filterwarnings_prepend_mark_is_most_specific(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        import pytest
+
+        def pytest_collection_modifyitems(items):
+            for item in items:
+                item.add_marker(pytest.mark.filterwarnings("error"), append=False)
+    """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        import warnings
+
+        @pytest.mark.parametrize(
+            "_",
+            [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))],
+        )
+        def test_prepend_mark(_, request):
+            assert request.node.get_closest_marker("filterwarnings").args[0] == "error"
+            warnings.warn("prepend")
+    """
+    )
+    result = pytester.runpytest_subprocess("-q")
+
+    result.stdout.fnmatch_lines(["*1 failed in *"])
+
+
 def test_non_string_warning_argument(pytester: Pytester) -> None:
     """Non-str argument passed to warning breaks pytest (#2956)"""
     pytester.makepyfile(

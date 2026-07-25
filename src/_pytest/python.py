@@ -1706,10 +1706,14 @@ class Function(PyobjMixin, nodes.Item):
         # Note: when FunctionDefinition is introduced, we should change ``originalname``
         # to a readonly property that returns FunctionDefinition.name.
 
+        self._prepended_mark_count = 0
         self.own_markers.extend(get_unpacked_marks(self.obj))
+        self._static_function_mark_count = len(self.own_markers)
+        self._callspec_mark_count = 0
         if callspec:
             self.callspec = callspec
             self.own_markers.extend(callspec.marks)
+            self._callspec_mark_count = len(callspec.marks)
 
         # todo: this is a hell of a hack
         # https://github.com/pytest-dev/pytest/issues/4569
@@ -1733,6 +1737,39 @@ class Function(PyobjMixin, nodes.Item):
     def from_parent(cls, parent, **kw) -> Self:
         """The public constructor."""
         return super().from_parent(parent=parent, **kw)
+
+    def add_marker(self, marker: str | MarkDecorator, append: bool = True) -> None:
+        super().add_marker(marker=marker, append=append)
+        if not append:
+            self._prepended_mark_count += 1
+
+    def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
+        if not self._callspec_mark_count:
+            yield from self.own_markers
+            return
+
+        prepended_end = self._prepended_mark_count
+        static_end = prepended_end + self._static_function_mark_count
+        callspec_end = static_end + self._callspec_mark_count
+
+        yield from self.own_markers[:prepended_end]
+        yield from self.own_markers[static_end:callspec_end]
+        yield from self.own_markers[prepended_end:static_end]
+        yield from self.own_markers[callspec_end:]
+
+    def _iter_own_markers_farthest_first(self) -> Iterator[Mark]:
+        if not self._callspec_mark_count and not self._prepended_mark_count:
+            yield from self.own_markers
+            return
+
+        prepended_end = self._prepended_mark_count
+        static_end = prepended_end + self._static_function_mark_count
+        callspec_end = static_end + self._callspec_mark_count
+
+        yield from self.own_markers[callspec_end:]
+        yield from self.own_markers[prepended_end:static_end]
+        yield from self.own_markers[static_end:callspec_end]
+        yield from self.own_markers[:prepended_end]
 
     def _initrequest(self) -> None:
         self.funcargs: dict[str, object] = {}
