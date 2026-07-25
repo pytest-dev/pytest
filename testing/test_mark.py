@@ -1184,26 +1184,9 @@ def test_markers_from_parametrize(pytester: Pytester) -> None:
 
 
 def test_parametrize_marks_are_closest(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        import pytest
-
-        @pytest.mark.custom_mark("module")
-        class TestMarkers:
-            @pytest.mark.custom_mark("function")
-            @pytest.mark.parametrize(
-                "_",
-                [pytest.param(None, marks=pytest.mark.custom_mark("parametrize"))],
-            )
-            def test_marker_order(self, _, request):
-                assert [mark.args[0] for mark in request.node.iter_markers("custom_mark")] == [
-                    "parametrize",
-                    "function",
-                    "module",
-                ]
-                assert request.node.get_closest_marker("custom_mark").args[0] == "parametrize"
-    """
-    )
+    # fmt: off
+    pytester.makepyfile('import pytest\n@pytest.mark.custom_mark("module")\nclass TestMarkers:\n    @pytest.mark.custom_mark("function")\n    @pytest.mark.parametrize("_", [pytest.param(None, marks=pytest.mark.custom_mark("parametrize"))])\n    def test_marker_order(self, _, request):\n        assert [mark.args[0] for mark in request.node.iter_markers("custom_mark")] == ["parametrize", "function", "module"]\n        assert request.node.get_closest_marker("custom_mark").args[0] == "parametrize"\n')  # noqa: E501
+    # fmt: on
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 

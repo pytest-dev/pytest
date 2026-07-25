@@ -210,86 +210,27 @@ def test_filterwarnings_mark(pytester: Pytester, default_config) -> None:
 
 
 def test_filterwarnings_parametrize_mark_is_most_specific(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        import pytest
-        import warnings
-
-        @pytest.mark.filterwarnings("error")
-        class TestMarkClass:
-            @pytest.mark.parametrize(
-                "_",
-                [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))],
-            )
-            def test_class_mark(self, _):
-                warnings.warn("class")
-
-        class TestMarkMethods:
-            @pytest.mark.filterwarnings("error")
-            @pytest.mark.parametrize(
-                "_",
-                [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))],
-            )
-            def test_function_mark_before_parametrize(self, _):
-                warnings.warn("function-before")
-
-            @pytest.mark.parametrize(
-                "_",
-                [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))],
-            )
-            @pytest.mark.filterwarnings("error")
-            def test_function_mark_after_parametrize(self, _):
-                warnings.warn("function-after")
-    """
-    )
-    result = pytester.runpytest_subprocess("-q")
-
+    # fmt: off
+    pytester.makepyfile('import pytest\nimport warnings\n@pytest.mark.filterwarnings("error")\nclass TestMarkClass:\n    @pytest.mark.parametrize("_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))])\n    def test_class_mark(self, _):\n        warnings.warn("class")\nclass TestMarkMethods:\n    @pytest.mark.filterwarnings("error")\n    @pytest.mark.parametrize("_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))])\n    def test_function_mark_before_parametrize(self, _):\n        warnings.warn("function-before")\n    @pytest.mark.parametrize("_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))])\n    @pytest.mark.filterwarnings("error")\n    def test_function_mark_after_parametrize(self, _):\n        warnings.warn("function-after")\n')  # noqa: E501
+    # fmt: on
+    result = pytester.runpytest("-q")
     result.stdout.fnmatch_lines(["*3 passed*"])
 
 
 def test_filterwarnings_mark_preserves_decorator_order(pytester: Pytester) -> None:
-    pytester.makepyfile(
-        """
-        import pytest
-        import warnings
-
-        @pytest.mark.filterwarnings("ignore:api v1")
-        @pytest.mark.filterwarnings("error")
-        def test_decorator_order():
-            warnings.warn(UserWarning("api v1"))
-    """
-    )
-    result = pytester.runpytest_subprocess("-q")
-
+    # fmt: off
+    pytester.makepyfile('import pytest\nimport warnings\n@pytest.mark.filterwarnings("ignore:api v1")\n@pytest.mark.filterwarnings("error")\ndef test_decorator_order():\n    warnings.warn(UserWarning("api v1"))\n')  # noqa: E501
+    # fmt: on
+    result = pytester.runpytest("-q")
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
 def test_filterwarnings_prepend_mark_is_most_specific(pytester: Pytester) -> None:
-    pytester.makeconftest(
-        """
-        import pytest
-
-        def pytest_collection_modifyitems(items):
-            for item in items:
-                item.add_marker(pytest.mark.filterwarnings("error"), append=False)
-    """
-    )
-    pytester.makepyfile(
-        """
-        import pytest
-        import warnings
-
-        @pytest.mark.parametrize(
-            "_",
-            [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))],
-        )
-        def test_prepend_mark(_, request):
-            assert request.node.get_closest_marker("filterwarnings").args[0] == "error"
-            warnings.warn("prepend")
-    """
-    )
-    result = pytester.runpytest_subprocess("-q")
-
+    # fmt: off
+    pytester.makeconftest('import pytest\ndef pytest_collection_modifyitems(items):\n    for item in items:\n        item.add_marker(pytest.mark.filterwarnings("error"), append=False)\n')  # noqa: E501
+    pytester.makepyfile('import pytest\nimport warnings\n@pytest.mark.parametrize("_", [pytest.param(None, marks=pytest.mark.filterwarnings("ignore"))])\ndef test_prepend_mark(_, request):\n    assert request.node.get_closest_marker("filterwarnings").args[0] == "error"\n    warnings.warn("prepend")\n')  # noqa: E501
+    # fmt: on
+    result = pytester.runpytest("-q")
     result.stdout.fnmatch_lines(["*1 failed in *"])
 
 
