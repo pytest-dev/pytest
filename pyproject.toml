@@ -171,6 +171,7 @@ lint.ignore = [
     "PLR0912", # Too many branches
     "PLR0913", # Too many arguments in function definition
     "PLR0915", # Too many statements
+    "PLR0917", # Too many positional arguments
     "PLR2004", # Magic value used in comparison
     "PLR2044", # Line with empty comment
     "PLR5501", # Use `elif` instead of `else` then `if`
@@ -182,6 +183,12 @@ lint.ignore = [
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF061", # Use context-manager form of `pytest.raises()`
 ]
+lint.per-file-ignores."doc/**/*.py" = [
+    "PLR0133", # Two constants compared in a comparison,
+    "RUF059",  # Unpacked variable is never used
+    "S102",    # Use of `exec` detected
+    "TRY002",  # Create your own exception
+]
 lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
     "B",
     "PYI",
@@ -189,8 +196,9 @@ lint.per-file-ignores."src/_pytest/_py/**/*.py" = [
 lint.per-file-ignores."src/_pytest/_version.py" = [
     "I001",
 ]
-# 'Unnecessary membership test on empty collection', always voluntary in tests
-lint.per-file-ignores."testing/**/*.py" = [ "RUF060" ]
+lint.per-file-ignores."testing/**/*.py" = [
+    "RUF060", # 'Unnecessary membership test on empty collection', always voluntary in tests
+]
 # can't be disabled on a line-by-line basis in file
 lint.per-file-ignores."testing/code/test_source.py" = [
     "F841",

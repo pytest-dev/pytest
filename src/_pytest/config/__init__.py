@@ -881,7 +881,7 @@ class PytestPluginManager(PluginManager):
         self._import_plugin_specs(getattr(mod, "pytest_plugins", []))
 
     def _import_plugin_specs(
-        self, spec: None | types.ModuleType | str | Sequence[str]
+        self, spec: types.ModuleType | str | Sequence[str] | None
     ) -> None:
         plugins = _get_plugin_specs_as_list(spec)
         for import_spec in plugins:
@@ -931,7 +931,7 @@ class PytestPluginManager(PluginManager):
 
 
 def _get_plugin_specs_as_list(
-    specs: None | types.ModuleType | str | Sequence[str],
+    specs: types.ModuleType | str | Sequence[str] | None,
 ) -> list[str]:
     """Parse a plugins specification into a list of plugin names."""
     # None means empty.

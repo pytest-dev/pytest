@@ -531,10 +531,10 @@ if TYPE_CHECKING:
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
-            raises: None
-            | type[BaseException]
+            raises: type[BaseException]
             | tuple[type[BaseException], ...]
-            | AbstractRaises[BaseException] = ...,
+            | AbstractRaises[BaseException]
+            | None = ...,
             strict: bool = ...,
         ) -> MarkDecorator: ...
 
@@ -548,7 +548,7 @@ if TYPE_CHECKING:
             # argvalues: Collection[ParameterSet | Sequence[object] | object],
             *,
             indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool | _HiddenParam]
+            ids: Iterable[str | float | int | bool | _HiddenParam | None]
             | Callable[[Any], object | None]
             | None = ...,
             scope: ScopeName | None = ...,
