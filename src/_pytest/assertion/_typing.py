@@ -21,6 +21,10 @@ class TruncationBudget:
     max_chars: int
 
 
+# Reusable "no cap" budget, used as a default argument (B008).
+NO_TRUNCATION_BUDGET = TruncationBudget(max_lines=0, max_chars=0)
+
+
 class _HighlightFunc(Protocol):  # noqa: PYI046
     def __call__(self, source: str, lexer: Literal["diff", "python"] = "python") -> str:
         """Apply highlighting to the given source."""
