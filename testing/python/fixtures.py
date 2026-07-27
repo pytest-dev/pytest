@@ -5794,3 +5794,230 @@ def test_overridden_fixture_depends_on_parametrized(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1)
+
+
+@pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
+def test_custom_decorated_fixture_warning(pytester: Pytester) -> None:
+    """Fixtures wrapped by custom decorators using functools.wraps warn."""
+    pytester.makepyfile(
+        """
+        import pytest
+        import functools
+
+        def custom_deco(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        class TestClass:
+            @custom_deco
+            @pytest.fixture
+            def my_fixture(self):
+                return "fixture_value"
+
+            def test_fixture_usage(self, my_fixture):
+                assert my_fixture == "fixture_value"
+        """
+    )
+    result = pytester.runpytest_inprocess(
+        "-v", "-rw", "-W", "default::pytest.PytestWarning"
+    )
+
+    result.stdout.fnmatch_lines(
+        [
+            "*test_custom_decorated_fixture_warning.py:*: "
+            "PytestWarning: cannot discover fixture 'my_fixture' "
+            "due to being wrapped in decorators*"
+        ]
+    )
+
+    result.stdout.fnmatch_lines(["*fixture 'my_fixture' not found*"])
+    result.assert_outcomes(errors=1)
+
+
+@pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
+def test_custom_decorated_fixture_above_classmethod_warning(
+    pytester: Pytester,
+) -> None:
+    """Warn when wraps hides a fixture that itself wraps @classmethod.
+
+    The fixture definition stores the classmethod descriptor; warning emission
+    peels it to reach the underlying function for warn_explicit_for.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+        import functools
+
+        def custom_deco(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
+
+        class TestClass:
+            @custom_deco
+            @pytest.fixture(scope="class")
+            @classmethod
+            def my_fixture(cls):
+                return "fixture_value"
+
+            def test_fixture_usage(self, my_fixture):
+                assert my_fixture == "fixture_value"
+        """
+    )
+    result = pytester.runpytest_inprocess(
+        "-v", "-rw", "-W", "default::pytest.PytestWarning"
+    )
+
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestWarning: cannot discover fixture 'my_fixture' "
+            "due to being wrapped in decorators*"
+        ]
+    )
+    result.stdout.fnmatch_lines(["*fixture 'my_fixture' not found*"])
+    result.assert_outcomes(errors=1)
+
+
+@pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
+def test_classmethod_above_fixture_warning(pytester: Pytester) -> None:
+    """@classmethod above @pytest.fixture hides the fixture (#13507)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestFixture:
+            @classmethod
+            @pytest.fixture(scope="class")
+            def fixt(cls):
+                return 1
+
+            def test_fixt(self, fixt):
+                assert fixt == 1
+        """
+    )
+    result = pytester.runpytest_inprocess(
+        "-v", "-rw", "-W", "default::pytest.PytestWarning"
+    )
+
+    result.stdout.fnmatch_lines(
+        [
+            "*test_classmethod_above_fixture_warning.py:*: "
+            "PytestWarning: cannot discover fixture 'fixt' because it is "
+            "wrapped by @classmethod; place @pytest.fixture above @classmethod*"
+        ]
+    )
+    result.stdout.fnmatch_lines(["*fixture 'fixt' not found*"])
+    result.assert_outcomes(errors=1)
+
+
+@pytest.mark.filterwarnings(
+    "default:fixture * is wrapped by @staticmethod*:pytest.PytestWarning"
+)
+def test_staticmethod_above_fixture_warning(pytester: Pytester) -> None:
+    """@staticmethod above @pytest.fixture always warns.
+
+    Unlike ``classmethod``, discovery still finds the fixture via
+    ``staticmethod.__get__``, so the test can pass; a leading ``self``/``cls``
+    already fails as a missing fixture without special-casing here.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestFixture:
+            @staticmethod
+            @pytest.fixture
+            def fixt():
+                return 1
+
+            def test_fixt(self, fixt):
+                assert fixt == 1
+        """
+    )
+    result = pytester.runpytest_inprocess(
+        "-v", "-rw", "-W", "default::pytest.PytestWarning"
+    )
+
+    result.stdout.fnmatch_lines(
+        [
+            "*test_staticmethod_above_fixture_warning.py:*: "
+            "PytestWarning: fixture 'fixt' is wrapped by @staticmethod above "
+            "@pytest.fixture; place @pytest.fixture above @staticmethod*"
+        ]
+    )
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_above_classmethod_still_works(pytester: Pytester) -> None:
+    """Documented order @pytest.fixture above @classmethod remains discoverable."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestFixture:
+            @pytest.fixture(scope="class")
+            @classmethod
+            def fixt(cls):
+                return 1
+
+            def test_fixt(self, fixt):
+                assert fixt == 1
+        """
+    )
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1)
+
+
+def test_fixture_above_staticmethod_still_works(pytester: Pytester) -> None:
+    """@pytest.fixture above @staticmethod remains discoverable without warning."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestFixture:
+            @pytest.fixture
+            @staticmethod
+            def fixt():
+                return 1
+
+            def test_fixt(self, fixt):
+                assert fixt == 1
+        """
+    )
+    result = pytester.runpytest("-W", "error::pytest.PytestWarning", "-v")
+    result.assert_outcomes(passed=1)
+
+
+@pytest.mark.filterwarnings("default:cannot discover fixture *:pytest.PytestWarning")
+def test_classmethod_above_fixture_warning_inherited(pytester: Pytester) -> None:
+    """MRO ``__dict__`` lookup finds @classmethod wrappers on a base class."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class Base:
+            @classmethod
+            @pytest.fixture(scope="class")
+            def fixt(cls):
+                return 1
+
+        class TestFixture(Base):
+            def test_fixt(self, fixt):
+                assert fixt == 1
+        """
+    )
+    result = pytester.runpytest_inprocess(
+        "-v", "-rw", "-W", "default::pytest.PytestWarning"
+    )
+
+    result.stdout.fnmatch_lines(
+        [
+            "*PytestWarning: cannot discover fixture 'fixt' because it is "
+            "wrapped by @classmethod; place @pytest.fixture above @classmethod*"
+        ]
+    )
+    result.stdout.fnmatch_lines(["*fixture 'fixt' not found*"])
+    result.assert_outcomes(errors=1)

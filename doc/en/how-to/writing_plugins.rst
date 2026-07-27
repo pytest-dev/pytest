@@ -251,6 +251,13 @@ application modules:
 
     pytest_plugins = "myapp.testsupport.myplugin"
 
+The entry point name of an installed plugin can also be used, just like with
+the :option:`-p` command-line option:
+
+.. code-block:: python
+
+    pytest_plugins = ("xdist",)
+
 :globalvar:`pytest_plugins` are processed recursively, so note that in the example above
 if ``myapp.testsupport.myplugin`` also declares :globalvar:`pytest_plugins`, the contents
 of the variable will also be loaded as plugins, and so on.

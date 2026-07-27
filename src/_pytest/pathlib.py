@@ -24,6 +24,7 @@ from pathlib import Path
 from pathlib import PurePath
 from posixpath import sep as posix_sep
 import shutil
+import stat
 import sys
 import types
 from types import ModuleType
@@ -69,6 +70,33 @@ def get_lock_path(path: _AnyPurePath) -> _AnyPurePath:
     return path.joinpath(".lock")
 
 
+def _chmod_rwx(p: str) -> bool:
+    """Grant owner sufficient permissions for deletion.
+
+    Directories get ``S_IRWXU`` (read+write+exec for traversal).
+    Regular files get ``S_IRUSR | S_IWUSR`` only, to avoid making
+    non-executable files executable as a side effect.
+
+    Returns True if permissions were actually changed, False if they were
+    already sufficient or couldn't be changed.
+    """
+    try:
+        old_mode = os.stat(p).st_mode
+    except OSError:
+        # Path may have been removed concurrently, or be inaccessible.
+        return False
+    perm_mode = stat.S_IMODE(old_mode)
+    bits = stat.S_IRWXU if stat.S_ISDIR(old_mode) else stat.S_IRUSR | stat.S_IWUSR
+    new_mode = perm_mode | bits
+    if perm_mode == new_mode:
+        return False
+    try:
+        os.chmod(p, new_mode)
+    except OSError:
+        return False
+    return True
+
+
 def on_rm_rf_error(
     func: Callable[..., Any] | None,
     path: str,
@@ -97,32 +125,48 @@ def on_rm_rf_error(
         )
         return False
 
+    p = Path(path)
+
+    if func in (os.open, os.scandir):
+        # Directory traversal failed (e.g. missing S_IXUSR). Fix permissions
+        # on the path and its parent (bounded by start_path), then remove it
+        # ourselves since rmtree skips entries after the error handler returns.
+        # See: https://github.com/pytest-dev/pytest/issues/7940
+        parent_changed = False
+        parent = p.parent
+        # Never chmod outside the tree rooted at start_path.
+        if parent not in (p, start_path):
+            parent_changed = _chmod_rwx(str(parent))
+        path_changed = _chmod_rwx(str(p))
+        if not (parent_changed or path_changed):
+            return False
+        if p.is_dir():
+            rm_rf(p)
+        else:
+            try:
+                os.unlink(str(p))
+            except OSError:
+                return False
+        return True
+
     if func not in (os.rmdir, os.remove, os.unlink):
-        if func not in (os.open,):
-            warnings.warn(
-                PytestWarning(
-                    f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
-                )
+        warnings.warn(
+            PytestWarning(
+                f"(rm_rf) unknown function {func} when removing {path}:\n{type(exc)}: {exc}"
             )
+        )
         return False
 
     # Chmod + retry.
-    import stat
-
-    def chmod_rw(p: str) -> None:
-        mode = os.stat(p).st_mode
-        os.chmod(p, mode | stat.S_IRUSR | stat.S_IWUSR)
-
     # For files, we need to recursively go upwards in the directories to
-    # ensure they all are also writable.
-    p = Path(path)
+    # ensure they all are also accessible and writable.
     if p.is_file():
-        for parent in p.parents:
-            chmod_rw(str(parent))
+        for parent in p.parents:  # pragma: no branch
+            _chmod_rwx(str(parent))
             # Stop when we reach the original path passed to rm_rf.
             if parent == start_path:
                 break
-    chmod_rw(str(path))
+    _chmod_rwx(str(path))
 
     func(path)
     return True

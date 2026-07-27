@@ -16,6 +16,7 @@ import dataclasses
 import enum
 import fnmatch
 from functools import partial
+import hashlib
 import inspect
 import itertools
 import os
@@ -26,6 +27,7 @@ import types
 from typing import Any
 from typing import cast
 from typing import final
+from typing import get_args
 from typing import Literal
 from typing import NoReturn
 from typing import TYPE_CHECKING
@@ -50,7 +52,9 @@ from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.config import Config
 from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
+from _pytest.deprecated import CALLSPEC2_RENAMED
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
@@ -81,6 +85,11 @@ from _pytest.warning_types import PytestReturnNotNoneWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Self
+
+LongStrIdStrategy = Literal["short", "sha256", "legacy", "disallow"]
+_LONG_STR_STRATEGIES: frozenset[LongStrIdStrategy] = frozenset(
+    get_args(LongStrIdStrategy)
+)
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -116,6 +125,16 @@ def pytest_addoption(parser: Parser) -> None:
         # None => fallback to `strict`.
         default=None,
         help="Emit an error if non-unique parameter set IDs are detected",
+    )
+    parser.addini(
+        "parametrize_long_str_id_strategy",
+        type="string",
+        default="short",
+        help="strategy for long str/bytes parameter values in auto-generated ids\n"
+        "- short (default): values over 100 chars fall back to argname+index\n"
+        "- sha256: replace value with its sha256 hex digest\n"
+        "- legacy: keep the full value (for temporary backward compatibility)\n"
+        "- disallow: raise an error requesting explicit ids",
     )
 
 
@@ -1003,10 +1022,54 @@ class IdMaker:
         idval = self._idval_from_hook(val, argname)
         if idval is not None:
             return idval
-        idval = self._idval_from_value(val)
-        if idval is not None:
-            return idval
+        if isinstance(val, str | bytes):
+            idval = self._apply_long_str_strategy(val, argname, idx)
+            if idval is not None:
+                return idval
+        else:
+            idval = self._idval_from_value(val)
+            if idval is not None:
+                return idval
         return self._idval_from_argname(argname, idx)
+
+    def _get_long_str_strategy(self) -> LongStrIdStrategy:
+        if not self.config:
+            return "short"
+        value = self.config.getini("parametrize_long_str_id_strategy")
+        if value not in _LONG_STR_STRATEGIES:
+            raise UsageError(
+                f"Unknown parametrize_long_str_id_strategy: {value!r}. "
+                f"Valid values: {', '.join(sorted(_LONG_STR_STRATEGIES))}"
+            )
+        return cast(LongStrIdStrategy, value)
+
+    def _apply_long_str_strategy(
+        self, val: str | bytes, argname: str, idx: int
+    ) -> str | None:
+        """Apply the configured strategy for long str/bytes parameter values.
+
+        Only used for auto-generated IDs (not explicit ids=[...] or
+        pytest.param(id=...)).
+        """
+        if len(val) <= 100:
+            return _ascii_escaped_by_config(val, self.config)
+        match self._get_long_str_strategy():
+            case "legacy":
+                return _ascii_escaped_by_config(val, self.config)
+            case "short":
+                return None
+            case "sha256":
+                encoded = val.encode("utf-8") if isinstance(val, str) else val
+                return hashlib.sha256(encoded).hexdigest()
+            case "disallow":  # pragma: no branch -- fail() raises, confuses coverage
+                prefix = self._make_error_prefix()
+                fail(
+                    f"{prefix}parametrize value for '{argname}' at index {idx} "
+                    f"is too long for an auto-generated ID ({len(val)} characters). "
+                    f"Use pytest.param(..., id=...) or parametrize(..., ids=...) "
+                    f"to set an explicit ID, or change parametrize_long_str_id_strategy.",
+                    pytrace=False,
+                )
 
     def _idval_from_function(self, val: object, argname: str, idx: int) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet using the
@@ -1090,7 +1153,7 @@ class IdMaker:
 
 @final
 @dataclasses.dataclass(frozen=True)
-class CallSpec2:
+class CallSpec:
     """A planned parameterized invocation of a test function.
 
     Calculated during collection for a given test function's Metafunc.
@@ -1120,7 +1183,7 @@ class CallSpec2:
         scope: Scope,
         param_index: int,
         nodeid: str,
-    ) -> CallSpec2:
+    ) -> CallSpec:
         params = self.params.copy()
         indices = self.indices.copy()
         arg2scope = dict(self._arg2scope)
@@ -1132,7 +1195,7 @@ class CallSpec2:
             params[arg] = val
             indices[arg] = param_index
             arg2scope[arg] = scope
-        return CallSpec2(
+        return CallSpec(
             params=params,
             indices=indices,
             _arg2scope=arg2scope,
@@ -1149,6 +1212,11 @@ class CallSpec2:
     @property
     def id(self) -> str:
         return "-".join(self._idlist)
+
+
+if TYPE_CHECKING:
+    # Deprecated alias kept for type checkers; runtime access goes through __getattr__.
+    CallSpec2 = CallSpec
 
 
 def get_direct_param_fixture_func(request: FixtureRequest) -> Any:
@@ -1224,7 +1292,7 @@ class Metafunc:
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
         # Result of parametrize().
-        self._calls: list[CallSpec2] = []
+        self._calls: list[CallSpec] = []
 
         self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
 
@@ -1232,10 +1300,10 @@ class Metafunc:
         self,
         argnames: str | Sequence[str],
         argvalues: Iterable[ParameterSet | Sequence[object] | object],
+        *,
         indirect: bool | Sequence[str] = False,
         ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
         scope: ScopeName | None = None,
-        *,
         _param_mark: Mark | None = None,
     ) -> None:
         """Add new invocations to the underlying test function using the list
@@ -1310,6 +1378,10 @@ class Metafunc:
             The scope is used for grouping tests by parameter instances.
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
+
+        .. versionchanged:: 9.1
+
+            ``indirect``, ``ids`` and ``scope`` are now keyword-only.
         """
         nodeid = self.definition.nodeid
 
@@ -1408,7 +1480,7 @@ class Metafunc:
         # more than once) then we accumulate those calls generating the cartesian product
         # of all calls.
         newcalls = []
-        for callspec in self._calls or [CallSpec2()]:
+        for callspec in self._calls or [CallSpec()]:
             for param_index, (param_id, param_set) in enumerate(
                 zip(ids, parametersets, strict=True)
             ):
@@ -1610,7 +1682,7 @@ class Function(PyobjMixin, nodes.Item):
         name: str,
         parent,
         config: Config | None = None,
-        callspec: CallSpec2 | None = None,
+        callspec: CallSpec | None = None,
         callobj=NOTSET,
         keywords: Mapping[str, Any] | None = None,
         session: Session | None = None,
@@ -1759,3 +1831,10 @@ class FunctionDefinition(Function):
         raise RuntimeError("function definitions are not supposed to be run as tests")
 
     setup = runtest
+
+
+def __getattr__(name: str) -> object:
+    if name == "CallSpec2":
+        warnings.warn(CALLSPEC2_RENAMED, stacklevel=2)
+        return CallSpec
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

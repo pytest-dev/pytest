@@ -26,7 +26,7 @@ def _compare_eq_iterable(
     right_formatting = PrettyPrinter().pformat(right).splitlines()
 
     yield ""
-    yield "Full diff:"
+    yield "Full diff: (-: missing in left side, +: extra in left side)"
     # "right" is the expected base against which we compare "left",
     # see https://github.com/pytest-dev/pytest/issues/3333
     yield from highlighter(

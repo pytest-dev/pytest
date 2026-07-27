@@ -304,6 +304,31 @@ class TestClass:
         result = pytester.runpytest()
         assert result.ret == ExitCode.NO_TESTS_COLLECTED
 
+    def test_does_not_eval_properties_when_collecting_tests(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #2568.
+
+        Properties on a test class must only be evaluated when a test accesses
+        them, not during collection or fixture parsing.
+        """
+        pytester.makepyfile(
+            """\
+            calls = []
+
+            class TestCase:
+                @property
+                def prop(self):
+                    calls.append(1)
+                    return len(calls)
+
+                def test_prop(self):
+                    assert self.prop == 1
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
     def test_abstract_class_is_not_collected(self, pytester: Pytester) -> None:
         """Regression test for #12275 (non-unittest version)."""
         pytester.makepyfile(
