@@ -154,13 +154,10 @@ class ParameterSet(NamedTuple):
             return parameterset
         if force_tuple:
             return cls.param(parameterset)
+        elif isinstance(parameterset, (tuple, list)):
+            return cls(parameterset, marks=[], id=None)
         else:
-            # TODO: Refactor to fix this type-ignore. Currently the following
-            # passes type-checking but crashes:
-            #
-            #   @pytest.mark.parametrize(('x', 'y'), [1, 2])
-            #   def test_foo(x, y): pass
-            return cls(parameterset, marks=[], id=None)  # type: ignore[arg-type]
+            return cls((parameterset,), marks=[], id=None)
 
     @staticmethod
     def _parse_parametrize_args(
