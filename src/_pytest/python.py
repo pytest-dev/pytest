@@ -696,6 +696,12 @@ class Package(nodes.Directory):
     def setup(self) -> None:
         init_mod = importtestmodule(self.path / "__init__.py", self.config)
 
+        # Read pytestmark from the __init__.py module.
+        init_marks = get_unpacked_marks(init_mod)
+        if init_marks:
+            self.own_markers.extend(init_marks)
+            self.keywords.update((mark.name, mark) for mark in init_marks)
+
         # Not using fixtures to call setup_module here because autouse fixtures
         # from packages are not called automatically (#4085).
         setup_module = _get_first_non_fixture_func(
