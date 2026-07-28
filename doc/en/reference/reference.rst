@@ -1443,7 +1443,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    .. versionadded:: 8.1
 
 .. confval:: console_output_style
-   :type: ``str``
+   :type: ``"classic" | "progress" | "count" | "times" | "progress-even-when-capture-no"``
    :default: ``"progress"``
 
    Sets the console output style while running tests:
@@ -3696,11 +3696,11 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       strict_parametrization_ids (bool):
                             Emit an error if non-unique parameter set IDs are
                             detected
-      console_output_style (string):
+      console_output_style ('classic' | 'progress' | 'count' | 'times' | 'progress-even-when-capture-no'):
                             Console output: "classic", or with additional
                             progress information ("progress" (percentage) |
-                            "count" | "progress-even-when-capture-no" (forces
-                            progress even when capture=no)
+                            "count" | "times" | "progress-even-when-capture-no"
+                            (forces progress even when capture=no)
       verbosity_test_cases (string):
                             Specify a verbosity level for test case execution,
                             overriding the main level. Higher levels will
