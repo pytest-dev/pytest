@@ -1,0 +1,1 @@
+Raise a clean :class:`~_pytest.config.UsageError` when explicit ``-c`` or ``--config-file`` paths do not exist or have unparseable configurations.
