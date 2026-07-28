@@ -1275,10 +1275,12 @@ class FixtureDef(Generic[FixtureValue]):
         # Register the pytest_fixture_post_finalizer as the first finalizer,
         # which is executed last.
         assert not self._finalizers
+
         def post_finalizer() -> None:
             request.node.ihook.pytest_fixture_post_finalizer(
                 fixturedef=self, request=request
             )
+
         self.addfinalizer(post_finalizer)
 
         ihook = request.node.ihook
