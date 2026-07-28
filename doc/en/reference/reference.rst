@@ -1733,7 +1733,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_duration_report
-    :type: ``str``
+    :type: ``"total" | "call"``
     :default: ``"total"``
 
     .. versionadded:: 4.1
@@ -3739,8 +3739,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       junit_log_passing_tests (bool):
                             Capture log information for passing tests to JUnit
                             report:
-      junit_duration_report (string):
-                            Duration time to report: one of total|call
+      junit_duration_report ('total' | 'call'):
+                            Duration time to report
       junit_family ('legacy' | 'xunit1' | 'xunit2'):
                             Emit XML for schema
       doctest_optionflags (args):

@@ -36,6 +36,7 @@ import pytest
 xml_key = StashKey["LogXML"]()
 
 _JunitLogging = Literal["no", "log", "system-out", "system-err", "out-err", "all"]
+_JunitDurationReport = Literal["total", "call"]
 _JunitFamily = Literal["legacy", "xunit1", "xunit2"]
 
 
@@ -413,9 +414,10 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "junit_duration_report",
-        "Duration time to report: one of total|call",
+        "Duration time to report",
+        type=_JunitDurationReport,
         default="total",
-    )  # choices=['total', 'call'])
+    )
     parser.addini(
         "junit_family",
         "Emit XML for schema",
@@ -431,6 +433,7 @@ def pytest_configure(config: Config) -> None:
         try:
             junit_family = config.getini("junit_family")
             junit_logging = config.getini("junit_logging")
+            junit_duration_report = config.getini("junit_duration_report")
         except (TypeError, ValueError) as e:
             raise UsageError(str(e)) from e
         config.stash[xml_key] = LogXML(
@@ -438,7 +441,7 @@ def pytest_configure(config: Config) -> None:
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             junit_logging,
-            config.getini("junit_duration_report"),
+            junit_duration_report,
             junit_family,
             config.getini("junit_log_passing_tests"),
         )
@@ -470,7 +473,7 @@ class LogXML:
         prefix: str | None,
         suite_name: str = "pytest",
         logging: _JunitLogging = "no",
-        report_duration: str = "total",
+        report_duration: _JunitDurationReport = "total",
         family: _JunitFamily = "xunit1",
         log_passing_tests: bool = True,
     ) -> None:

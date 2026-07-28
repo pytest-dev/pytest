@@ -13,6 +13,7 @@ from xml.dom import minidom
 import xmlschema
 
 from _pytest.config import Config
+from _pytest.junitxml import _JunitDurationReport
 from _pytest.junitxml import _JunitFamily
 from _pytest.junitxml import _JunitLogging
 from _pytest.junitxml import bin_xml_escape
@@ -321,7 +322,7 @@ class TestPython:
         self,
         pytester: Pytester,
         monkeypatch: MonkeyPatch,
-        duration_report: str,
+        duration_report: _JunitDurationReport,
         run_and_parse: RunAndParse,
     ) -> None:
         # mock LogXML.node_reporter so it always sets a known duration to each test report object
@@ -1866,6 +1867,7 @@ def test_no_message_quiet(pytester: Pytester) -> None:
     ("name", "value"),
     [
         ("junit_logging", "stdout"),
+        ("junit_duration_report", "setup"),
         ("junit_family", "xunit3"),
     ],
 )
