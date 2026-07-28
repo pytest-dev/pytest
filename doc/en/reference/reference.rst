@@ -2638,7 +2638,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: tmp_path_retention_policy
-   :type: ``str``
+   :type: ``"all" | "failed" | "none"``
    :default: ``"all"``
 
    Controls which directories created by the `tmp_path` fixture are kept around,
@@ -3713,10 +3713,9 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             How many sessions should we keep the `tmp_path`
                             directories, according to
                             `tmp_path_retention_policy`.
-      tmp_path_retention_policy (string):
+      tmp_path_retention_policy ('all' | 'failed' | 'none'):
                             Controls which directories created by the `tmp_path`
                             fixture are kept around, based on test outcome.
-                            (all/failed/none)
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
