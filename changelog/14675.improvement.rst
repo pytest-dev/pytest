@@ -1,0 +1,1 @@
+Native TOML integer values are now accepted for the :confval:`truncation_limit_lines` and :confval:`truncation_limit_chars` configuration options.

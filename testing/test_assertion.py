@@ -1796,10 +1796,12 @@ class TestTruncateExplanation:
             (1000, 0, 0),
         ),
     )
-    def test_truncation_with_ini(
+    @pytest.mark.parametrize("config_format", ["ini", "toml"])
+    def test_truncation_with_config(
         self,
         monkeypatch,
         pytester: Pytester,
+        config_format: str,
         truncation_lines: int | None,
         truncation_chars: int | None,
         expected_lines_hidden: int,
@@ -1820,12 +1822,15 @@ class TestTruncateExplanation:
 
         monkeypatch.delenv("CI", raising=False)
 
-        ini = "[pytest]\n"
+        ini = "[pytest]\n" if config_format == "ini" else "[tool.pytest]\n"
         if truncation_lines is not None:
             ini += f"truncation_limit_lines = {truncation_lines}\n"
         if truncation_chars is not None:
             ini += f"truncation_limit_chars = {truncation_chars}\n"
-        pytester.makeini(ini)
+        if config_format == "ini":
+            pytester.makeini(ini)
+        else:
+            pytester.makepyprojecttoml(ini)
 
         result = pytester.runpytest()
 
