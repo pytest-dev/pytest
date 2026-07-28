@@ -1,0 +1,1 @@
+Handle non-tuple and non-list parameter items cleanly in :meth:`ParameterSet.extract_from` when single parameter names use trailing commas in :func:`pytest.mark.parametrize`.
