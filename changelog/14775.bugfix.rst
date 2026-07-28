@@ -1,0 +1,1 @@
+Fixed an internal ``AssertionError`` that could occur when a class-scoped fixture defined as an instance method raised its deprecation warning as an error.
