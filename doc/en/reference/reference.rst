@@ -1759,7 +1759,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_family
-    :type: ``str``
+    :type: ``"legacy" | "xunit1" | "xunit2"``
     :default: ``"xunit2"``
 
     .. versionadded:: 4.2
@@ -3742,8 +3742,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             report:
       junit_duration_report (string):
                             Duration time to report: one of total|call
-      junit_family (string):
-                            Emit XML for schema: one of legacy|xunit1|xunit2
+      junit_family ('legacy' | 'xunit1' | 'xunit2'):
+                            Emit XML for schema
       doctest_optionflags (args):
                             Option flags for doctests
       doctest_encoding (string):

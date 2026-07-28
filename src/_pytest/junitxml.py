@@ -15,6 +15,7 @@ import functools
 import os
 import platform
 import re
+from typing import Literal
 import xml.etree.ElementTree as ET
 
 from _pytest import nodes
@@ -23,6 +24,7 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
 from _pytest.config import Config
 from _pytest.config import filename_arg
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
@@ -32,6 +34,8 @@ import pytest
 
 
 xml_key = StashKey["LogXML"]()
+
+_JunitFamily = Literal["legacy", "xunit1", "xunit2"]
 
 
 def bin_xml_escape(arg: object) -> str:
@@ -413,7 +417,8 @@ def pytest_addoption(parser: Parser) -> None:
     )  # choices=['total', 'call'])
     parser.addini(
         "junit_family",
-        "Emit XML for schema: one of legacy|xunit1|xunit2",
+        "Emit XML for schema",
+        type=_JunitFamily,
         default="xunit2",
     )
 
@@ -422,7 +427,10 @@ def pytest_configure(config: Config) -> None:
     xmlpath = config.option.xmlpath
     # Prevent opening xmllog on worker nodes (xdist).
     if xmlpath and not hasattr(config, "workerinput"):
-        junit_family = config.getini("junit_family")
+        try:
+            junit_family = config.getini("junit_family")
+        except (TypeError, ValueError) as e:
+            raise UsageError(str(e)) from e
         config.stash[xml_key] = LogXML(
             xmlpath,
             config.option.junitprefix,
@@ -461,7 +469,7 @@ class LogXML:
         suite_name: str = "pytest",
         logging: str = "no",
         report_duration: str = "total",
-        family="xunit1",
+        family: _JunitFamily = "xunit1",
         log_passing_tests: bool = True,
     ) -> None:
         logfile = os.path.expanduser(os.path.expandvars(logfile))
