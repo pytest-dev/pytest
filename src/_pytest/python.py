@@ -48,6 +48,7 @@ from _pytest.compat import get_real_func
 from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.compat import NOTSET
+from _pytest.compat import NotSetType
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.config import Config
@@ -1100,21 +1101,22 @@ class IdMaker:
     def _idval_from_value(self, val: object) -> str | None:
         """Try to make an ID for a parameter in a ParameterSet from its value,
         if the value type is supported."""
-        if isinstance(val, str | bytes):
-            return _ascii_escaped_by_config(val, self.config)
-        elif val is None or isinstance(val, float | int | bool | complex):
-            return str(val)
-        elif isinstance(val, re.Pattern):
-            return ascii_escaped(val.pattern)
-        elif val is NOTSET:
+        match val:
+            case str() | bytes():
+                return _ascii_escaped_by_config(val, self.config)
+            case None | float() | int() | bool() | complex():
+                return str(val)
+            case re.Pattern():
+                return ascii_escaped(val.pattern)
             # Fallback to default. Note that NOTSET is an enum.Enum.
-            pass
-        elif isinstance(val, enum.Enum):
-            return str(val)
-        elif isinstance(getattr(val, "__name__", None), str):
-            # Name of a class, function, module, etc.
-            name: str = getattr(val, "__name__")
-            return name
+            case NotSetType():
+                pass
+            case enum.Enum():
+                return str(val)
+            case _ if isinstance(getattr(val, "__name__", None), str):
+                # Name of a class, function, module, etc.
+                name: str = getattr(val, "__name__")
+                return name
         return None
 
     def _idval_from_value_required(self, val: object, idx: int) -> str:
