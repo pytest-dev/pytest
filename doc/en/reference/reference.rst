@@ -1568,7 +1568,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: empty_parameter_set_mark
-    :type: ``str``
+    :type: ``"skip" | "xfail" | "fail_at_collect"``
     :default: ``"skip"``
 
     Allows to pick the action for empty parametersets in parameterization
@@ -3654,7 +3654,7 @@ All the command-line flags can also be obtained by running ``pytest --help``::
     [pytest] configuration options in the first pytest.toml|pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
       markers (linelist):   Register new markers for test functions
-      empty_parameter_set_mark (string):
+      empty_parameter_set_mark ('skip' | 'xfail' | 'fail_at_collect'):
                             Default marker for empty parametersets
       strict_config (bool): Any warnings encountered while parsing the `pytest`
                             section of the configuration file raise errors

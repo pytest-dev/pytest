@@ -10,6 +10,7 @@ import dataclasses
 from typing import TYPE_CHECKING
 
 from .expression import Expression
+from .structures import _EmptyParameterSetMark
 from .structures import _HiddenParam
 from .structures import EMPTY_PARAMETERSET_OPTION
 from .structures import get_empty_parameterset_mark
@@ -124,7 +125,12 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
     parser.addini("markers", "Register new markers for test functions", "linelist")
-    parser.addini(EMPTY_PARAMETERSET_OPTION, "Default marker for empty parametersets")
+    parser.addini(
+        EMPTY_PARAMETERSET_OPTION,
+        "Default marker for empty parametersets",
+        type=_EmptyParameterSetMark,
+        default="skip",
+    )
 
 
 @hookimpl(tryfirst=True)
@@ -288,13 +294,11 @@ def pytest_configure(config: Config) -> None:
     config.stash[old_mark_config_key] = MARK_GEN._config
     MARK_GEN._config = config
 
-    empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
-
-    if empty_parameterset not in ("skip", "xfail", "fail_at_collect", None, ""):
-        raise UsageError(
-            f"{EMPTY_PARAMETERSET_OPTION!s} must be one of skip, xfail or fail_at_collect"
-            f" but it is {empty_parameterset!r}"
-        )
+    # Eagerly validate the value; it is only read lazily during collection.
+    try:
+        config.getini(EMPTY_PARAMETERSET_OPTION)
+    except (TypeError, ValueError) as e:
+        raise UsageError(str(e)) from e
 
 
 def pytest_unconfigure(config: Config) -> None:

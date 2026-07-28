@@ -14,6 +14,7 @@ import enum
 import inspect
 from typing import Any
 from typing import final
+from typing import Literal
 from typing import NamedTuple
 from typing import overload
 from typing import TYPE_CHECKING
@@ -23,6 +24,7 @@ import warnings
 from .._code import getfslineno
 from ..compat import NOTSET
 from ..compat import NotSetType
+from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.deprecated import check_ispytest
 from _pytest.deprecated import PARAMETRIZE_NON_COLLECTION_ITERABLE
@@ -38,6 +40,7 @@ if TYPE_CHECKING:
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
+_EmptyParameterSetMark = Literal["skip", "xfail", "fail_at_collect"]
 
 
 # Singleton type for HIDDEN_PARAM, as described in:
@@ -63,18 +66,18 @@ def get_empty_parameterset_mark(
 
     _fs, lineno = getfslineno(func)
     reason = f"got empty parameter set for ({argslisting})"
-    requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
-    if requested_mark in ("", None, "skip"):
-        mark = MARK_GEN.skip(reason=reason)
-    elif requested_mark == "xfail":
-        mark = MARK_GEN.xfail(reason=reason, run=False)
-    elif requested_mark == "fail_at_collect":
-        raise Collector.CollectError(
-            f"Empty parameter set in '{func.__name__}' at line {lineno + 1}"
-        )
-    else:
-        raise LookupError(requested_mark)
-    return mark
+    requested_mark: _EmptyParameterSetMark = config.getini(EMPTY_PARAMETERSET_OPTION)
+    match requested_mark:
+        case "skip":
+            return MARK_GEN.skip(reason=reason)
+        case "xfail":
+            return MARK_GEN.xfail(reason=reason, run=False)
+        case "fail_at_collect":
+            raise Collector.CollectError(
+                f"Empty parameter set in '{func.__name__}' at line {lineno + 1}"
+            )
+        case unreachable:
+            assert_never(unreachable)
 
 
 class ParameterSet(NamedTuple):
