@@ -44,14 +44,13 @@ ConfigDict: TypeAlias = dict[str, ConfigValue]
 
 
 def _parse_ini_config(path: Path) -> iniconfig.IniConfig:
-    """Parse the given generic '.ini' file using legacy IniConfig parser, returning
-    the parsed object.
+    """Parse an ini file.
 
     Raise UsageError if the file cannot be parsed.
     """
     try:
         return iniconfig.IniConfig(str(path))
-    except iniconfig.ParseError as exc:
+    except (FileNotFoundError, iniconfig.ParseError) as exc:
         raise UsageError(str(exc)) from exc
 
 
@@ -313,8 +312,12 @@ def determine_setup(
 
     if inifile:
         inipath_ = absolutepath(inifile)
+        if not inipath_.is_file():
+            raise UsageError(f"Config file not found: {inipath_}")
         inipath: Path | None = inipath_
-        inicfg = load_config_dict_from_file(inipath_) or {}
+        inicfg = load_config_dict_from_file(inipath_)
+        if inicfg is None:
+            raise UsageError(f"Unrecognized or invalid config file: {inipath_}")
         if rootdir_cmd_arg is None:
             rootdir = inipath_.parent
     else:
