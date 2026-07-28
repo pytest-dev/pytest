@@ -14,6 +14,7 @@ import xmlschema
 
 from _pytest.config import Config
 from _pytest.junitxml import _JunitFamily
+from _pytest.junitxml import _JunitLogging
 from _pytest.junitxml import bin_xml_escape
 from _pytest.junitxml import LogXML
 from _pytest.monkeypatch import MonkeyPatch
@@ -571,7 +572,7 @@ class TestPython:
     def test_failure_function(
         self,
         pytester: Pytester,
-        junit_logging: str,
+        junit_logging: _JunitLogging,
         run_and_parse: RunAndParse,
         xunit_family: _JunitFamily,
     ) -> None:
@@ -749,7 +750,10 @@ class TestPython:
         "junit_logging", ["no", "log", "system-out", "system-err", "out-err", "all"]
     )
     def test_xfail_captures_output_once(
-        self, pytester: Pytester, junit_logging: str, run_and_parse: RunAndParse
+        self,
+        pytester: Pytester,
+        junit_logging: _JunitLogging,
+        run_and_parse: RunAndParse,
     ) -> None:
         pytester.makepyfile(
             """
@@ -865,7 +869,10 @@ class TestPython:
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
     def test_pass_captures_stdout(
-        self, pytester: Pytester, run_and_parse: RunAndParse, junit_logging: str
+        self,
+        pytester: Pytester,
+        run_and_parse: RunAndParse,
+        junit_logging: _JunitLogging,
     ) -> None:
         pytester.makepyfile(
             """
@@ -888,7 +895,10 @@ class TestPython:
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-err"])
     def test_pass_captures_stderr(
-        self, pytester: Pytester, run_and_parse: RunAndParse, junit_logging: str
+        self,
+        pytester: Pytester,
+        run_and_parse: RunAndParse,
+        junit_logging: _JunitLogging,
     ) -> None:
         pytester.makepyfile(
             """
@@ -912,7 +922,10 @@ class TestPython:
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
     def test_setup_error_captures_stdout(
-        self, pytester: Pytester, run_and_parse: RunAndParse, junit_logging: str
+        self,
+        pytester: Pytester,
+        run_and_parse: RunAndParse,
+        junit_logging: _JunitLogging,
     ) -> None:
         pytester.makepyfile(
             """
@@ -941,7 +954,10 @@ class TestPython:
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-err"])
     def test_setup_error_captures_stderr(
-        self, pytester: Pytester, run_and_parse: RunAndParse, junit_logging: str
+        self,
+        pytester: Pytester,
+        run_and_parse: RunAndParse,
+        junit_logging: _JunitLogging,
     ) -> None:
         pytester.makepyfile(
             """
@@ -971,7 +987,10 @@ class TestPython:
 
     @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
     def test_avoid_double_stdout(
-        self, pytester: Pytester, run_and_parse: RunAndParse, junit_logging: str
+        self,
+        pytester: Pytester,
+        run_and_parse: RunAndParse,
+        junit_logging: _JunitLogging,
     ) -> None:
         pytester.makepyfile(
             """
@@ -1069,7 +1088,7 @@ class TestNonPython:
 
 
 @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
-def test_nullbyte(pytester: Pytester, junit_logging: str) -> None:
+def test_nullbyte(pytester: Pytester, junit_logging: _JunitLogging) -> None:
     # A null byte cannot occur in XML (see section 2.2 of the spec)
     pytester.makepyfile(
         """
@@ -1091,7 +1110,7 @@ def test_nullbyte(pytester: Pytester, junit_logging: str) -> None:
 
 
 @pytest.mark.parametrize("junit_logging", ["no", "system-out"])
-def test_nullbyte_replace(pytester: Pytester, junit_logging: str) -> None:
+def test_nullbyte_replace(pytester: Pytester, junit_logging: _JunitLogging) -> None:
     # Check if the null byte gets replaced
     pytester.makepyfile(
         """
@@ -1794,7 +1813,7 @@ def test_logging_passing_tests_disabled_does_not_log_test_output(
 @pytest.mark.parametrize("junit_logging", ["no", "system-out", "system-err"])
 def test_logging_passing_tests_disabled_logs_output_for_failing_test_issue5430(
     pytester: Pytester,
-    junit_logging: str,
+    junit_logging: _JunitLogging,
     run_and_parse: RunAndParse,
     xunit_family: _JunitFamily,
 ) -> None:
@@ -1846,6 +1865,7 @@ def test_no_message_quiet(pytester: Pytester) -> None:
 @pytest.mark.parametrize(
     ("name", "value"),
     [
+        ("junit_logging", "stdout"),
         ("junit_family", "xunit3"),
     ],
 )

@@ -1811,7 +1811,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_logging
-    :type: ``str``
+    :type: ``"no" | "log" | "system-out" | "system-err" | "out-err" | "all"``
     :default: ``"no"``
 
     .. versionadded:: 3.5
@@ -3734,9 +3734,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             detailed explanation when an assertion fails.
       junit_suite_name (string):
                             Test suite name for JUnit report
-      junit_logging (string):
-                            Write captured log messages to JUnit report: one of
-                            no|log|system-out|system-err|out-err|all
+      junit_logging ('no' | 'log' | 'system-out' | 'system-err' | 'out-err' | 'all'):
+                            Write captured log messages to JUnit report
       junit_log_passing_tests (bool):
                             Capture log information for passing tests to JUnit
                             report:

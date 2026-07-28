@@ -35,6 +35,7 @@ import pytest
 
 xml_key = StashKey["LogXML"]()
 
+_JunitLogging = Literal["no", "log", "system-out", "system-err", "out-err", "all"]
 _JunitFamily = Literal["legacy", "xunit1", "xunit2"]
 
 
@@ -400,8 +401,8 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "junit_logging",
-        "Write captured log messages to JUnit report: "
-        "one of no|log|system-out|system-err|out-err|all",
+        "Write captured log messages to JUnit report",
+        type=_JunitLogging,
         default="no",
     )
     parser.addini(
@@ -429,13 +430,14 @@ def pytest_configure(config: Config) -> None:
     if xmlpath and not hasattr(config, "workerinput"):
         try:
             junit_family = config.getini("junit_family")
+            junit_logging = config.getini("junit_logging")
         except (TypeError, ValueError) as e:
             raise UsageError(str(e)) from e
         config.stash[xml_key] = LogXML(
             xmlpath,
             config.option.junitprefix,
             config.getini("junit_suite_name"),
-            config.getini("junit_logging"),
+            junit_logging,
             config.getini("junit_duration_report"),
             junit_family,
             config.getini("junit_log_passing_tests"),
@@ -467,7 +469,7 @@ class LogXML:
         logfile,
         prefix: str | None,
         suite_name: str = "pytest",
-        logging: str = "no",
+        logging: _JunitLogging = "no",
         report_duration: str = "total",
         family: _JunitFamily = "xunit1",
         log_passing_tests: bool = True,
