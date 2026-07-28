@@ -12,11 +12,13 @@ from typing import TYPE_CHECKING
 from _pytest.assertion import rewrite
 from _pytest.assertion import truncate
 from _pytest.assertion import util
+from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.rewrite import assertstate_key
 from _pytest.config import Config
 from _pytest.config import hookimpl
+from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
 
@@ -65,12 +67,9 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "assertion_text_diff_style",
-        default=util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
-        help=(
-            "Choose how pytest renders diffs for string equality assertions: "
-            f"{util.ASSERTION_TEXT_DIFF_STYLE_NDIFF} or "
-            f"{util.ASSERTION_TEXT_DIFF_STYLE_BLOCK}"
-        ),
+        type=_AssertionTextDiffStyle,
+        default="ndiff",
+        help="Choose how pytest renders diffs for string equality assertions",
     )
 
     Config._add_verbosity_ini(
@@ -84,7 +83,11 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
-    util.validate_assertion_text_diff_style(config)
+    # Eagerly validate the value; it is only read lazily when an assertion fails.
+    try:
+        config.getini("assertion_text_diff_style")
+    except (TypeError, ValueError) as e:
+        raise UsageError(str(e)) from e
 
 
 def register_assert_rewrite(*names: str) -> None:
@@ -253,7 +256,7 @@ def pytest_assertrepr_compare(
         right=right,
         verbose=config.get_verbosity(Config.VERBOSITY_ASSERTIONS),
         highlighter=highlighter,
-        assertion_text_diff_style=util.get_assertion_text_diff_style(config),
+        assertion_text_diff_style=config.getini("assertion_text_diff_style"),
         truncation_budget=truncation_budget,
     )
     return truncate.materialize_with_truncation(lines, config) or None

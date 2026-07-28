@@ -2768,7 +2768,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: assertion_text_diff_style
-    :type: ``str``
+    :type: ``"ndiff" | "block"``
     :default: ``"ndiff"``
 
     Set how pytest renders diffs for string equality assertions.
@@ -3725,9 +3725,9 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       truncation_limit_chars (int | string):
                             Set threshold of CHARS after which truncation will
                             take effect
-      assertion_text_diff_style (string):
+      assertion_text_diff_style ('ndiff' | 'block'):
                             Choose how pytest renders diffs for string equality
-                            assertions: ndiff or block
+                            assertions
       verbosity_assertions (string):
                             Specify a verbosity level for assertions, overriding
                             the main level. Higher levels will provide more
