@@ -417,8 +417,10 @@ class TestReport(BaseReport):
                 )
                 if excinfo.value._use_item_location:
                     path, line = item.reportinfo()[:2]
-                    assert line is not None
-                    longrepr = (os.fspath(path), line + 1, r.message)
+                    # Items which cannot point at a line -- non-Python items may
+                    # legitimately report None -- get the location without one.
+                    lineno = line + 1 if line is not None else -1
+                    longrepr = (os.fspath(path), lineno, r.message)
                 else:
                     longrepr = (str(r.path), r.lineno, r.message)
             elif isinstance(excinfo.value, BaseExceptionGroup) and (

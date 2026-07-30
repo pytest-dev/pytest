@@ -937,6 +937,13 @@ Function
     :members:
     :show-inheritance:
 
+ItemDefinition
+~~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.nodes.ItemDefinition()
+    :members:
+    :show-inheritance:
+
 FunctionDefinition
 ~~~~~~~~~~~~~~~~~~
 
@@ -961,6 +968,12 @@ CallInfo
 ~~~~~~~~
 
 .. autoclass:: pytest.CallInfo()
+    :members:
+
+CallSpec
+~~~~~~~~
+
+.. autoclass:: _pytest.parametrize.CallSpec()
     :members:
 
 CollectReport
@@ -1035,6 +1048,13 @@ Metafunc
 ~~~~~~~~
 
 .. autoclass:: pytest.Metafunc()
+    :members:
+    :inherited-members:
+
+ParametrizeContext
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.parametrize.ParametrizeContext()
     :members:
 
 Parser
