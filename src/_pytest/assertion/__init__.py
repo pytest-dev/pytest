@@ -18,7 +18,6 @@ from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.rewrite import assertstate_key
 from _pytest.config import Config
 from _pytest.config import hookimpl
-from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.nodes import Item
 
@@ -84,10 +83,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 def pytest_configure(config: Config) -> None:
     # Eagerly validate the value; it is only read lazily when an assertion fails.
-    try:
-        config.getini("assertion_text_diff_style")
-    except (TypeError, ValueError) as e:
-        raise UsageError(str(e)) from e
+    config.getini("assertion_text_diff_style")
 
 
 def register_assert_rewrite(*names: str) -> None:

@@ -24,7 +24,6 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
 from _pytest.config import Config
 from _pytest.config import filename_arg
-from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.reports import TestReport
@@ -430,19 +429,13 @@ def pytest_configure(config: Config) -> None:
     xmlpath = config.option.xmlpath
     # Prevent opening xmllog on worker nodes (xdist).
     if xmlpath and not hasattr(config, "workerinput"):
-        try:
-            junit_family = config.getini("junit_family")
-            junit_logging = config.getini("junit_logging")
-            junit_duration_report = config.getini("junit_duration_report")
-        except (TypeError, ValueError) as e:
-            raise UsageError(str(e)) from e
         config.stash[xml_key] = LogXML(
             xmlpath,
             config.option.junitprefix,
             config.getini("junit_suite_name"),
-            junit_logging,
-            junit_duration_report,
-            junit_family,
+            config.getini("junit_logging"),
+            config.getini("junit_duration_report"),
+            config.getini("junit_family"),
             config.getini("junit_log_passing_tests"),
         )
         config.pluginmanager.register(config.stash[xml_key])

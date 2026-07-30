@@ -295,10 +295,7 @@ def pytest_configure(config: Config) -> None:
     MARK_GEN._config = config
 
     # Eagerly validate the value; it is only read lazily during collection.
-    try:
-        config.getini(EMPTY_PARAMETERSET_OPTION)
-    except (TypeError, ValueError) as e:
-        raise UsageError(str(e)) from e
+    config.getini(EMPTY_PARAMETERSET_OPTION)
 
 
 def pytest_unconfigure(config: Config) -> None:

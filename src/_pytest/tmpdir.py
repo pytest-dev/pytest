@@ -26,7 +26,6 @@ from _pytest.compat import get_user_id
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
-from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
@@ -99,10 +98,7 @@ class TempPathFactory:
                 f"tmp_path_retention_count must be >= 0. Current input: {count}."
             )
 
-        try:
-            policy: RetentionType = config.getini("tmp_path_retention_policy")
-        except (TypeError, ValueError) as e:
-            raise UsageError(str(e)) from e
+        policy: RetentionType = config.getini("tmp_path_retention_policy")
 
         return cls(
             given_basetemp=config.option.basetemp,
