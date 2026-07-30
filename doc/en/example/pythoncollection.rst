@@ -191,6 +191,24 @@ Now a simple invocation of ``pytest NAME`` will check
 if NAME exists as an importable package/module and otherwise
 treat it as a filesystem path.
 
+Choosing between ``--pyargs`` and ``testpaths``
+--------------------------------------------
+
+The :option:`--pyargs` option and the :confval:`testpaths` configuration setting
+control different parts of test collection:
+
+* ``--pyargs`` interprets the arguments that follow it as importable package or
+  module names and resolves them to filesystem paths. This is useful when the
+  tests are installed as a package.
+* ``testpaths`` lists filesystem paths, relative to the :ref:`rootdir <rootdir>`,
+  that pytest searches when no test paths or test identifiers are supplied on
+  the command line.
+
+``testpaths`` does not change how an explicitly supplied argument is resolved.
+If you want to pass package names explicitly, use ``--pyargs`` for that
+invocation. Conversely, a project that runs tests from its source tree can use
+``testpaths`` without installing the project first.
+
 Finding out what is collected
 -----------------------------------------------
 
