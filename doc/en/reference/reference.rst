@@ -228,10 +228,14 @@ pytest.mark.skipif
 
 Skip a test function if a condition is ``True``.
 
-.. py:function:: pytest.mark.skipif(condition, *, reason=None)
+.. py:function:: pytest.mark.skipif(condition, *conditions, reason=None)
 
     :type condition: bool or str
     :param condition: ``True/False`` if the condition should be skipped or a :ref:`condition string <string conditions>`.
+    :type conditions: bool or str
+    :param conditions:
+        Additional conditions, evaluated the same way as ``condition``. The test is
+        skipped if *any* of the conditions evaluate to ``True``.
     :keyword str reason: Reason why the test function is being skipped.
 
 
@@ -266,12 +270,15 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=True, *, reason=None, raises=None, run=True, strict=strict_xfail)
+.. py:function:: pytest.mark.xfail(condition=True, *conditions, reason=None, raises=None, run=True, strict=strict_xfail)
 
     :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
         :ref:`condition string <string conditions>`). If a ``bool``, you also have
         to specify ``reason`` (see :ref:`condition string <string conditions>`).
+    :keyword Union[bool, str] conditions:
+        Additional conditions, evaluated the same way as ``condition``. The test is
+        marked as xfail if *any* of the conditions evaluate to ``True``.
     :keyword str reason:
         Reason why the test function is marked as xfail.
     :keyword raises:
