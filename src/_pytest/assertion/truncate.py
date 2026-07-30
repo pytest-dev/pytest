@@ -69,9 +69,27 @@ def _get_truncation_parameters(config: Config) -> tuple[bool, TruncationBudget]:
     if verbose >= 2 or running_on_ci():
         return False, NO_TRUNCATION_BUDGET
 
-    budget = TruncationBudget.from_config(config)
+    budget = _budget_from_config(config)
     should_truncate = budget.max_lines > 0 or budget.max_chars > 0
     return should_truncate, budget
+
+
+def _budget_from_config(config: Config) -> TruncationBudget:
+    """Build a budget from the ``truncation_limit_*`` ini options.
+
+    ``getini`` returns ``None`` when an option is unset, which falls back to
+    the default limit.
+    """
+    max_lines = config.getini("truncation_limit_lines")
+    max_chars = config.getini("truncation_limit_chars")
+    return TruncationBudget(
+        max_lines=(
+            TruncationBudget.DEFAULT_MAX_LINES if max_lines is None else int(max_lines)
+        ),
+        max_chars=(
+            TruncationBudget.DEFAULT_MAX_CHARS if max_chars is None else int(max_chars)
+        ),
+    )
 
 
 def _truncate_explanation(
