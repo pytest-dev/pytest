@@ -1,0 +1,1 @@
+Updated outdated "Twitter" reference to "social media" in ``CONTRIBUTING.rst`` to align with the contact page which lists Bluesky, Mastodon, and Twitter/X.
