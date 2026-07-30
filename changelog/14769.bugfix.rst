@@ -1,0 +1,11 @@
+Selecting a parametrized test by its node id (``pytest test_x.py::test_a[1]``)
+now works when the test definition is a node of the collection tree
+(:confval:`collect_function_definition` set to ``pedantic`` or ``messy``). The
+argument matcher compares names level by level, and the definition node carries
+the bare name while the parametrization lives on the items below it; it now
+looks through the definition instead of failing to match.
+
+Relatedly, skipping a non-Python item whose ``reportinfo()`` reports no line
+number no longer crashes pytest with an ``INTERNALERROR``; the skip location is
+reported without a line instead. This became easy to hit now that non-Python
+definitions can carry ``pytest.param(..., marks=pytest.mark.skip(...))``.

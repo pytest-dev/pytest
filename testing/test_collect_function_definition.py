@@ -94,6 +94,32 @@ def test_selection_and_reporting(sample: Pytester) -> None:
     result.assert_outcomes(passed=1, deselected=5)
 
 
+@pytest.mark.parametrize("mode", ALL_MODES)
+@pytest.mark.parametrize(
+    ("selector", "expected"),
+    [
+        ("test_param[1]", 1),
+        ("test_param", 2),
+        ("test_plain", 1),
+        ("TestCls::test_method[3]", 1),
+        ("TestCls::test_single", 1),
+        ("TestCls", 3),
+    ],
+)
+def test_selection_by_nodeid(
+    sample: Pytester, mode: str, selector: str, expected: int
+) -> None:
+    """Addressing a test by its (flat) nodeid works in every mode.
+
+    The definition node carries the bare name while the parametrization lives on
+    the items below it, so the argument matcher has to look through it.
+    """
+    _set_mode(sample, mode)
+    module = next(sample.path.glob("test_*.py")).name
+    result = sample.runpytest(f"{module}::{selector}")
+    result.assert_outcomes(passed=expected)
+
+
 def test_collect_only_tree(sample: Pytester) -> None:
     _set_mode(sample, "pedantic")
     result = sample.runpytest("--collect-only")
