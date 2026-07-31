@@ -1000,10 +1000,6 @@ def check():
     assert d["a"] == 100
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="single-eval-walrus: the walrus expression runs twice",
-    )
     def test_walrus_in_compare_evaluated_once(self) -> None:
         assert_single_evaluation("""
 def check():
@@ -1013,10 +1009,6 @@ def check():
     assert (x := side_effect()) == 100
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="single-eval-walrus: the walrus expression runs twice",
-    )
     def test_walrus_in_boolean_evaluated_once(self) -> None:
         assert_single_evaluation("""
 def check():
@@ -1026,10 +1018,6 @@ def check():
     assert (x := side_effect()) and False
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="single-eval-walrus: the walrus expression runs twice",
-    )
     def test_walrus_in_chained_compare_evaluated_once(self) -> None:
         assert_single_evaluation("""
 def check():
@@ -1116,10 +1104,6 @@ class TestEvaluationOrder:
     visitors take expression types away from ``generic_visit``.
     """
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-compare-left: left operand is read after a walrus in the right one",
-    )
     def test_compare_left_operand_precedes_walrus(self) -> None:
         assert_evaluation_order("""
 def check():
@@ -1133,10 +1117,6 @@ def check():
     return "passed", value
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-compare-left: a failing comparison reports the post-walrus value",
-    )
     def test_compare_reports_left_operand(self) -> None:
         assert_introspects(
             """
@@ -1149,10 +1129,6 @@ def check():
             must_contain=["assert 2 == 3"],
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-call-argument: an earlier argument is read after a later walrus",
-    )
     def test_call_earlier_argument_precedes_walrus(self) -> None:
         assert_evaluation_order("""
 def check():
@@ -1168,10 +1144,6 @@ def check():
     return "passed", value
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-binop-left: left operand is read after a walrus in the right one",
-    )
     def test_binop_left_operand_precedes_walrus(self) -> None:
         assert_evaluation_order("""
 def check():
@@ -1204,10 +1176,6 @@ def check():
     return "passed", items
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-compare-left: a chained comparison re-reads its left operand",
-    )
     def test_chained_compare_operands_in_order(self) -> None:
         assert_evaluation_order("""
 def check():
@@ -1318,10 +1286,6 @@ def check():
     return "passed", obj
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-call-argument: a keyword argument is read after a later walrus",
-    )
     def test_keyword_argument_precedes_walrus(self) -> None:
         assert_evaluation_order("""
 def check():
@@ -1337,10 +1301,6 @@ def check():
     return "passed", value
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-call-argument: a ** argument is read after a later walrus",
-    )
     def test_double_star_argument_precedes_walrus(self) -> None:
         assert_evaluation_order("""
 def check():
