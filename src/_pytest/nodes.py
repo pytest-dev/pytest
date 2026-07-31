@@ -27,6 +27,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
+from _pytest.compat import ItemLocation
 from _pytest.compat import LEGACY_PATH
 from _pytest.compat import signature
 from _pytest.config import Config
@@ -751,14 +752,14 @@ class Item(Node, abc.ABC):
         return self.path, None, ""
 
     @cached_property
-    def location(self) -> tuple[str, int | None, str]:
+    def location(self) -> ItemLocation:
         """
-        Returns a tuple of ``(relfspath, lineno, testname)`` for this item
-        where ``relfspath`` is file path relative to ``config.rootpath``
-        and lineno is a 0-based line number.
+        Returns an :class:`ItemLocation <pytest.ItemLocation>` of ``(path, lineindex, testname)``
+        for this item where ``path`` is relative to ``config.rootpath``
+        and ``lineindex`` is a 0-based line number.
         """
         location = self.reportinfo()
         path = absolutepath(location[0])
         relfspath = self.session._node_location_to_relpath(path)
         assert type(location[2]) is str
-        return (relfspath, location[1], location[2])
+        return ItemLocation(relfspath, location[1], location[2])
