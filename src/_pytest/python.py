@@ -238,7 +238,7 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Module:
 @hookimpl(trylast=True)
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
-) -> None | nodes.Item | nodes.Collector | list[nodes.Item | nodes.Collector]:
+) -> nodes.Item | nodes.Collector | list[nodes.Item | nodes.Collector] | None:
     assert isinstance(collector, Class | Module), type(collector)
     # Nothing was collected elsewhere, let's do it here.
     if safe_isclass(obj):
@@ -765,10 +765,22 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | N
 class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
 
+    #: Explicitly provided class object, taking precedence over looking up
+    #: ``name`` on the parent's object (experimental).
+    _given_obj: type | None = None
+
     @classmethod
     def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
         """The public constructor."""
-        return super().from_parent(name=name, parent=parent, **kw)
+        node: Self = super().from_parent(name=name, parent=parent, **kw)
+        if obj is not None:
+            node._given_obj = obj
+        return node
+
+    def _getobj(self):
+        if self._given_obj is not None:
+            return self._given_obj
+        return super()._getobj()
 
     def newinstance(self):
         return self.obj()

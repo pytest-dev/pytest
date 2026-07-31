@@ -15,6 +15,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import get_public_names
 from _pytest.pytester import Pytester
 from _pytest.python import Function
+from _pytest.scenario import run_tests
 import pytest
 
 
@@ -1181,50 +1182,38 @@ class TestRequestBasic:
         result = pytester.runpytest("-vv")
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_setupdecorator_and_xunit(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            """
-            import pytest
+    def test_setupdecorator_and_xunit(self, tmp_path: Path) -> None:
+        values: list[str] = []
 
-            values = []
+        @pytest.fixture(scope="module", autouse=True)
+        def setup_module():
+            values.append("module")
 
-            @pytest.fixture(scope='module', autouse=True)
-            def setup_module():
-                values.append("module")
+        @pytest.fixture(autouse=True)
+        def setup_function():
+            values.append("function")
+
+        def test_func():
+            pass
+
+        class TestClass:
+            @pytest.fixture(scope="class", autouse=True)
+            @classmethod
+            def setup_class(cls):
+                values.append("class")
 
             @pytest.fixture(autouse=True)
-            def setup_function():
-                values.append("function")
+            def setup_method(self):
+                values.append("method")
 
-            def test_func():
+            def test_method(self):
                 pass
 
-            class TestClass:
-                @pytest.fixture(scope="class", autouse=True)
-                @classmethod
-                def setup_class(cls):
-                    values.append("class")
-
-                @pytest.fixture(autouse=True)
-                def setup_method(self):
-                    values.append("method")
-
-                def test_method(self):
-                    pass
-
-            def test_all():
-                assert values == [
-                    "module",
-                    "function",
-                    "class",
-                    "function",
-                    "method",
-                    "function",
-                ]
-        """
+        record = run_tests(
+            setup_module, setup_function, test_func, TestClass, rootpath=tmp_path
         )
-        reprec = pytester.inline_run("-v")
-        reprec.assertoutcome(passed=3)
+        record.assert_outcomes(passed=2)
+        assert values == ["module", "function", "class", "function", "method"]
 
     def test_fixtures_sub_subdir_normalize_sep(self, pytester: Pytester) -> None:
         # this tests that normalization of nodeids takes place

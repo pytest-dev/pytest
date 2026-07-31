@@ -1,0 +1,13 @@
+Added the experimental internal ``_pytest.scenario`` API for testing pytest with pytest:
+build a hermetic nested configuration from declarative data (``ConfigSpec``/``configured()``),
+collect test items from in-memory python objects instead of files on disk
+(``fake_module()``, ``collect_tests()``), run them through the standard runtest protocol,
+and assert on typed report objects (``RunRecord``) instead of glob-matching terminal output.
+
+In support of this:
+
+* ``Config.parse()`` was split into behavior-preserving phase methods, so programmatic
+  config construction shares real code with command line parsing.
+* ``Config.ArgsSource.SPEC`` marks args taken verbatim from a programmatic specification.
+* ``pytest.Class.from_parent()`` no longer silently discards a passed ``obj``.
+* ``_pytest.config.get_config()`` accepts an explicit invocation ``dir=``.
