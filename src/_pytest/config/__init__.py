@@ -22,6 +22,7 @@ import glob
 import importlib
 import importlib.metadata
 import inspect
+import io
 import os
 import pathlib
 import re
@@ -77,8 +78,43 @@ from _pytest.pathlib import ImportMode
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import safe_exists
 from _pytest.stash import Stash
+from _pytest.stash import StashKey
 from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import warn_explicit_for
+
+
+class _CaptureImmuneStdout(io.TextIOWrapper):
+    """See :data:`capture_immune_stdout_key`."""
+
+    #: The ``sys.stdout`` at creation time. Output that legitimately targets
+    #: the terminal may sit in its buffers (e.g. prints under ``-s`` or
+    #: ``capsys.disabled()``, block-buffered when stdout is not a tty);
+    #: it is pushed out before each of our writes to preserve ordering on
+    #: the terminal.
+    _original_stdout: TextIO | None = None
+
+    def write(self, s: str) -> int:
+        for stdout in (self._original_stdout, sys.stdout):
+            if stdout is not None and stdout is not self:
+                try:
+                    stdout.flush()
+                except (AttributeError, OSError, ValueError):
+                    pass
+        return super().write(s)
+
+
+capture_immune_stdout_key = StashKey[TextIO]()
+"""An unbuffered text file over a duplicate of stdout's file descriptor,
+created before output capture can start.
+
+Output capture redirects file descriptor 1 and/or replaces ``sys.stdout``,
+so anything written through them while capture is active ends up in the
+capture buffers. This file always refers to the original stdout (the same
+file capture restores on suspend) and is usable at any time no matter how
+capture is started, stopped, or reconfigured — writing to it neither goes
+through capture nor affects it. Used by the terminal reporter (#8973).
+
+Owned by the config: closed by its cleanup at teardown."""
 
 
 if TYPE_CHECKING:
@@ -402,6 +438,27 @@ def _prepareconfig(
         raise TypeError(msg.format(args, type(args)))
 
     initial_config = get_config(args, plugins, prog=prog)
+
+    # Duplicate stdout early, before any output capture can start, so the
+    # terminal reporter can always write to the real terminal (#8973).
+    try:
+        dup_stdout_fd = os.dup(sys.stdout.fileno())
+    except (AttributeError, OSError, ValueError):
+        # stdout has no usable file descriptor (e.g. in-process pytester
+        # runs); the terminal reporter falls back to sys.stdout.
+        pass
+    else:
+        capture_immune_stdout = _CaptureImmuneStdout(
+            io.FileIO(dup_stdout_fd, mode="wb", closefd=True),
+            encoding=getattr(sys.stdout, "encoding", None) or "utf-8",
+            errors=getattr(sys.stdout, "errors", None) or "replace",
+            # Unbuffered: writes must be visible on the terminal immediately.
+            write_through=True,
+        )
+        capture_immune_stdout._original_stdout = sys.stdout
+        initial_config.stash[capture_immune_stdout_key] = capture_immune_stdout
+        initial_config.add_cleanup(capture_immune_stdout.close)
+
     pluginmanager = initial_config.pluginmanager
     try:
         if plugins:
