@@ -916,6 +916,21 @@ class TestEvaluationOrder:
                 return "passed", value
             """)
 
+    def test_starred_argument_precedes_walrus(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                items = [1]
+                try:
+                    assert collect(*items, identity(items := [9])) == (1, [9])
+                except AssertionError:
+                    return "raised", items
+                return "passed", items
+            """)
+
     def test_chained_compare_operands_in_order(self) -> None:
         assert_evaluation_order("""
             def check():
@@ -927,6 +942,21 @@ class TestEvaluationOrder:
                 except AssertionError:
                     return "raised", value
                 return "passed", value
+            """)
+
+    def test_bare_walrus_argument_in_order(self) -> None:
+        """A walrus argument is evaluated in place, before the ones after it."""
+        assert_evaluation_order("""
+            def check():
+                def identity(v):
+                    return v
+                def collect(*values):
+                    return values
+                try:
+                    assert collect((x := 1), identity(x := 2)) == (1, 2)
+                except AssertionError:
+                    return "raised", x
+                return "passed", x
             """)
 
     def test_container_literal_operand_in_order(self) -> None:
