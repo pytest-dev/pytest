@@ -1,1 +1,0 @@
-Reduced the default number of ``gc.collect()`` passes in the ``unraisableexception`` plugin from 5 to 1 on CPython, where reference counting makes a single pass sufficient. PyPy retains 5 passes due to object resurrection via ``__del__``. This can noticeably speed up test suites that trigger many pytester runs.

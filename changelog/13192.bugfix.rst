@@ -1,1 +1,0 @@
-Fixed `|` (pipe) not being treated as a regex meta-character that needs escaping in :func:`pytest.raises(match=...) <pytest.raises>`.

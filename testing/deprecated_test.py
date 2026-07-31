@@ -104,7 +104,9 @@ def test_class_scope_instance_method_is_deprecated(pytester: Pytester) -> None:
     result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*PytestRemovedIn10Warning: Class-scoped fixture defined as instance method*"]
+        [
+            "*PytestRemovedIn10Warning: Class-scoped fixtures defined as instance methods*"
+        ]
     )
 
 
@@ -174,7 +176,7 @@ class TestFixtureNodeidDeprecations:
                     fm.parsefactories(mod_none, None)
 
                 nodeid_warns = [x for x in w if "parsefactories" in str(x.message)]
-                assert len(nodeid_warns) == 1, f"Expected 1 warning, got: {w}"
+                assert len(nodeid_warns) == 2, f"Expected 2 warning, got: {w}"
             """
         )
         pytester.makepyfile(
@@ -287,3 +289,40 @@ class TestFixtureNodeidDeprecations:
         )
         result = pytester.runpytest("-W", "ignore::pytest.PytestRemovedIn10Warning")
         result.assert_outcomes(passed=2)
+
+    def test_fixturedef_has_location_deprecated(self, pytester: Pytester) -> None:
+        """Accessing FixtureDef.has_location warns."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fix():
+                return 1
+
+            def test_it(request):
+                fixturedef = request._fixturemanager.getfixturedefs(
+                    "fix", request._pyfuncitem
+                )[0]
+                with pytest.warns(
+                    pytest.PytestRemovedIn10Warning, match="has_location"
+                ):
+                    assert fixturedef.has_location is True
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
+
+def test_callspec2_renamed() -> None:
+    """Importing/accessing CallSpec2 warns and returns CallSpec."""
+    import _pytest.python as python_mod
+    from _pytest.python import CallSpec
+
+    with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
+        from _pytest.python import CallSpec2
+
+    assert CallSpec2 is CallSpec
+
+    with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
+        assert python_mod.CallSpec2 is CallSpec

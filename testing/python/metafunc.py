@@ -10,6 +10,7 @@ import sys
 import textwrap
 from typing import Any
 from typing import cast
+from typing import ClassVar
 
 import hypothesis
 from hypothesis import strategies
@@ -25,6 +26,35 @@ from _pytest.python import Function
 from _pytest.python import IdMaker
 from _pytest.scope import Scope
 import pytest
+
+
+_IDMAKER_INI_DEFAULTS: dict[str, object] = {
+    "disable_test_id_escaping_and_forfeit_all_rights_to_community_support": False,
+    "parametrize_long_str_id_strategy": "short",
+    "strict_parametrization_ids": None,
+    "strict": False,
+}
+
+
+class _IdMakerConfig:
+    """Mock config for IdMaker tests.
+
+    Only serves known ini keys — raises KeyError on unknown ones
+    to catch accidental lookups for keys without proper defaults.
+    """
+
+    def __init__(self, overrides: dict[str, object] | None = None) -> None:
+        self._ini: dict[str, object] = {**_IDMAKER_INI_DEFAULTS, **(overrides or {})}
+
+    @property
+    def hook(self) -> _IdMakerConfig:
+        return self
+
+    def pytest_make_parametrize_id(self, **kw: object) -> None:
+        return None
+
+    def getini(self, name: str) -> object:
+        return self._ini[name]
 
 
 class TestMetafunc:
@@ -44,7 +74,9 @@ class TestMetafunc:
 
         @dataclasses.dataclass
         class SessionMock:
+            config: Any
             _fixturemanager: FixtureManagerMock
+            nodeid: ClassVar = ""
 
         @dataclasses.dataclass
         class DefinitionMock(python.FunctionDefinition):
@@ -55,7 +87,7 @@ class TestMetafunc:
         fixtureinfo: Any = FuncFixtureInfoMock(names)
         definition: Any = DefinitionMock._create(obj=func, _nodeid="mock::nodeid")
         definition._fixtureinfo = fixtureinfo
-        definition.session = SessionMock(FixtureManagerMock({}))
+        definition.session = SessionMock(config, FixtureManagerMock({}))
         return python.Metafunc(definition, fixtureinfo, config, _ispytest=True)
 
     def test_no_funcargs(self) -> None:
@@ -189,9 +221,9 @@ class TestMetafunc:
         ):
             metafunc.parametrize("request", [1])
 
-    def test_find_parametrized_scope(self) -> None:
-        """Unit test for _find_parametrized_scope (#3941)."""
-        from _pytest.python import _find_parametrized_scope
+    def test_infer_parametrize_scope(self) -> None:
+        """Unit test for _infer_parameterize_scope (#3941)."""
+        from _pytest.python import _infer_parametrize_scope
 
         @dataclasses.dataclass
         class DummyFixtureDef:
@@ -212,7 +244,7 @@ class TestMetafunc:
         # use arguments to determine narrow scope; the cause of the bug is that it would look on all
         # fixture defs given to the method
         def find_scope(argnames, indirect):
-            return _find_parametrized_scope(argnames, fixtures_defs, indirect=indirect)
+            return _infer_parametrize_scope(argnames, fixtures_defs, indirect=indirect)
 
         assert find_scope(["func_fix"], indirect=True) == Scope.Function
         assert find_scope(["class_fix"], indirect=True) == Scope.Class
@@ -370,26 +402,11 @@ class TestMetafunc:
         """Unit test for expected behavior to obtain ids with
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option (#5294)."""
-
-        class MockConfig:
-            def __init__(self, config):
-                self.config = config
-
-            @property
-            def hook(self):
-                return self
-
-            def pytest_make_parametrize_id(self, **kw):
-                pass
-
-            def getini(self, name):
-                return self.config[name]
-
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values: list[tuple[str, Any, str]] = [
-            ("ação", MockConfig({option: True}), "ação"),
-            ("ação", MockConfig({option: False}), "a\\xe7\\xe3o"),
+            ("ação", _IdMakerConfig({option: True}), "ação"),
+            ("ação", _IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for val, config, expected in values:
             actual = IdMaker([], [], None, None, config, None)._idval(val, "a", 6)
@@ -592,26 +609,11 @@ class TestMetafunc:
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option (#5294).
         """
-
-        class MockConfig:
-            def __init__(self, config):
-                self.config = config
-
-            @property
-            def hook(self):
-                return self
-
-            def pytest_make_parametrize_id(self, **kw):
-                pass
-
-            def getini(self, name):
-                return self.config[name]
-
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values: list[tuple[Any, str]] = [
-            (MockConfig({option: True}), "ação"),
-            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+            (_IdMakerConfig({option: True}), "ação"),
+            (_IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = IdMaker(
@@ -629,26 +631,11 @@ class TestMetafunc:
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option (#5294).
         """
-
-        class MockConfig:
-            def __init__(self, config):
-                self.config = config
-
-            @property
-            def hook(self):
-                return self
-
-            def pytest_make_parametrize_id(self, **kw):
-                pass
-
-            def getini(self, name):
-                return self.config[name]
-
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values: list[tuple[Any, str]] = [
-            (MockConfig({option: True}), "ação"),
-            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+            (_IdMakerConfig({option: True}), "ação"),
+            (_IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = IdMaker(
@@ -656,24 +643,129 @@ class TestMetafunc:
             ).make_unique_parameterset_ids()
             assert result == [expected]
 
+    @pytest.mark.parametrize("id_style", ["short", "sha256", "legacy"])
+    @pytest.mark.parametrize(
+        "kind",
+        [
+            pytest.param("a", id="str"),
+            pytest.param(b"a", id="bytes"),
+        ],
+    )
+    def test_idmaker_long_string(self, id_style: str, kind: str | bytes) -> None:
+        maker = IdMaker(
+            "a",
+            [pytest.param(kind * 1000)],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": id_style}),
+            ),
+            None,
+        )
+
+        res = maker.make_unique_parameterset_ids()
+        expected = {
+            "legacy": "a" * 1000,
+            "short": "a0",
+            "sha256": "41edece42d63e8d9bf515a9ba6932e1c20cbc9f5a5d134645adb5db1b9737ea3",
+        }
+        assert res == [expected[id_style]]
+
+    @pytest.mark.parametrize(
+        "kind",
+        [
+            pytest.param("a", id="str"),
+            pytest.param(b"a", id="bytes"),
+        ],
+    )
+    def test_idmaker_long_string_disallow(self, kind: str | bytes) -> None:
+        maker = IdMaker(
+            "a",
+            [pytest.param(kind * 1000)],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": "disallow"}),
+            ),
+            None,
+        )
+
+        with pytest.raises(Failed, match="too long for an auto-generated ID"):
+            maker.make_unique_parameterset_ids()
+
+    def test_idmaker_long_string_disallow_short_value(self) -> None:
+        """The disallow strategy should pass through short values normally."""
+        maker = IdMaker(
+            "a",
+            [pytest.param("short")],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": "disallow"}),
+            ),
+            None,
+        )
+        assert maker.make_unique_parameterset_ids() == ["short"]
+
+    def test_idmaker_long_string_no_config(self) -> None:
+        """Without config, defaults to 'short' strategy."""
+        maker = IdMaker(
+            "a",
+            [pytest.param("x" * 200)],
+            None,
+            None,
+            None,
+            None,
+        )
+        assert maker.make_unique_parameterset_ids() == ["a0"]
+
+    def test_idmaker_long_string_unknown_strategy(self) -> None:
+        """An unknown strategy value should raise UsageError."""
+        maker = IdMaker(
+            "a",
+            [pytest.param("x" * 200)],
+            None,
+            None,
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": "bogus"}),
+            ),
+            None,
+        )
+        with pytest.raises(pytest.UsageError, match=r"Unknown.*bogus"):
+            maker.make_unique_parameterset_ids()
+
+    @pytest.mark.parametrize("id_style", ["short", "sha256", "disallow"])
+    def test_idmaker_long_string_explicit_ids_unaffected(self, id_style: str) -> None:
+        """Explicit ids=[...] with long strings should work regardless of strategy."""
+        long_id = "x" * 200
+        maker = IdMaker(
+            "a",
+            [pytest.param("value")],
+            None,
+            [long_id],
+            cast(
+                pytest.Config,
+                _IdMakerConfig({"parametrize_long_str_id_strategy": id_style}),
+            ),
+            None,
+        )
+        result = maker.make_unique_parameterset_ids()
+        assert result == [long_id]
+
     def test_idmaker_with_param_id_and_config(self) -> None:
         """Unit test for expected behavior to create ids with pytest.param(id=...) and
         disable_test_id_escaping_and_forfeit_all_rights_to_community_support
         option (#9037).
         """
-
-        class MockConfig:
-            def __init__(self, config):
-                self.config = config
-
-            def getini(self, name):
-                return self.config[name]
-
         option = "disable_test_id_escaping_and_forfeit_all_rights_to_community_support"
 
         values: list[tuple[Any, str]] = [
-            (MockConfig({option: True}), "ação"),
-            (MockConfig({option: False}), "a\\xe7\\xe3o"),
+            (_IdMakerConfig({option: True}), "ação"),
+            (_IdMakerConfig({option: False}), "a\\xe7\\xe3o"),
         ]
         for config, expected in values:
             result = IdMaker(
@@ -837,6 +929,18 @@ class TestMetafunc:
             match="In mock::nodeid: expected Sequence or boolean for indirect, got dict",
         ):
             metafunc.parametrize("x, y", [("a", "b")], indirect={})  # type: ignore[arg-type]
+
+    def test_parametrize_positional_indirect_error(self) -> None:
+        """`indirect` and later arguments are keyword-only, so that extra
+        positional arguments (e.g. several argname strings, #8593) fail with
+        an understandable TypeError rather than being silently interpreted."""
+
+        def func(x, y):
+            raise NotImplementedError()
+
+        metafunc = self.Metafunc(func)
+        with pytest.raises(TypeError, match="positional arguments"):
+            metafunc.parametrize("x, y", [("a", "b")], ["x"])  # type: ignore[call-arg]
 
     def test_parametrize_indirect_list_functional(self, pytester: Pytester) -> None:
         """
@@ -1060,17 +1164,19 @@ class TestMetafunc:
         """
         )
         result = pytester.runpytest("--collect-only")
+        # Items are grouped by the *value* of the module-scoped arg1 (#8914),
+        # so arg1 is set up only once per distinct value: 0, 1, 2.
         result.stdout.re_match_lines(
             [
                 r"    <Function test1\[0-3\]>",
-                r"    <Function test3\[0\]>",
                 r"    <Function test1\[0-4\]>",
-                r"    <Function test3\[1\]>",
+                r"    <Function test3\[0\]>",
                 r"    <Function test1\[1-3\]>",
-                r"    <Function test3\[2\]>",
                 r"    <Function test1\[1-4\]>",
+                r"    <Function test3\[1\]>",
                 r"    <Function test1\[2-3\]>",
                 r"    <Function test1\[2-4\]>",
+                r"    <Function test3\[2\]>",
                 r"    <Function test2>",
             ]
         )
@@ -1740,7 +1846,8 @@ class TestMetafuncFunctional:
 
             class Test:
                 @pytest.fixture(scope="class")
-                def fixture(self, fixture):
+                @classmethod
+                def fixture(cls, fixture):
                     pass
 
                 @pytest.mark.parametrize("fixture", [0], indirect=True)
@@ -2237,6 +2344,7 @@ class TestMarkersWithParametrization:
         )
 
     def test_parametrize_positional_args(self, pytester: Pytester) -> None:
+        """`indirect` and later arguments are keyword-only."""
         pytester.makepyfile(
             """
             import pytest
@@ -2247,7 +2355,8 @@ class TestMarkersWithParametrization:
         """
         )
         result = pytester.runpytest()
-        result.assert_outcomes(passed=1)
+        result.stdout.fnmatch_lines(["*TypeError*positional argument*"])
+        result.assert_outcomes(errors=1)
 
     def test_parametrize_iterator(self, pytester: Pytester) -> None:
         pytester.makepyfile(

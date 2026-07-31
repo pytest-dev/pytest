@@ -1,1 +1,0 @@
-Added test coverage for compiled regex patterns in :func:`pytest.raises` match parameter.

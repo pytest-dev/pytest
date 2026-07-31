@@ -139,6 +139,11 @@ pytest.register_assert_rewrite
 
 .. autofunction:: pytest.register_assert_rewrite
 
+pytest.register_fixture
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: pytest.register_fixture
+
 pytest.warns
 ~~~~~~~~~~~~
 
@@ -209,7 +214,7 @@ pytest.mark.skip
 
 Unconditionally skip a test function.
 
-.. py:function:: pytest.mark.skip(reason=None)
+.. py:function:: pytest.mark.skip(reason="unconditional skip")
 
     :keyword str reason: Reason why the test function is being skipped.
 
@@ -261,7 +266,7 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=strict_xfail)
+.. py:function:: pytest.mark.xfail(condition=True, *, reason=None, raises=None, run=True, strict=strict_xfail)
 
     :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
@@ -272,7 +277,7 @@ Marks a test function as *expected to fail*.
     :keyword raises:
         Exception class (or tuple of classes) expected to be raised by the test function; other exceptions will fail the test.
         Note that subclasses of the classes passed will also result in a match (similar to how the ``except`` statement works).
-    :type raises: Type[:py:exc:`Exception`]
+    :type raises: Type[:py:exc:`Exception`] | Tuple[Type[:py:exc:`Exception`], ...] | None
 
     :keyword bool run:
         Whether the test function should actually be executed. If ``False``, the function will always xfail and will
@@ -946,6 +951,11 @@ Objects
 Objects accessible from :ref:`fixtures <fixture>` or :ref:`hooks <hook-reference>`
 or importable from ``pytest``.
 
+Approx
+~~~~~~
+
+.. autoclass:: pytest.Approx()
+    :members:
 
 CallInfo
 ~~~~~~~~
@@ -1141,6 +1151,7 @@ contain glob patterns.
 
 Can be declared at the **global** level in *test modules* and *conftest.py files* to register additional plugins.
 Can be either a ``str`` or ``Sequence[str]``.
+Each entry can be the name of an importable module or the entry point name of an installed plugin.
 
 .. code-block:: python
 
@@ -1149,6 +1160,10 @@ Can be either a ``str`` or ``Sequence[str]``.
 .. code-block:: python
 
     pytest_plugins = ("myapp.testsupport.tools", "myapp.testsupport.regression")
+
+.. versionchanged:: 9.2
+   Entry point names of installed plugins are now also accepted, in addition
+   to importable module names.
 
 
 .. globalvar:: pytestmark
@@ -1218,13 +1233,18 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: PYTEST_PLUGINS
 
-   Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules or plugin entry point names that
+   should be loaded as plugins:
 
    .. code-block:: bash
 
        export PYTEST_PLUGINS=mymodule.plugin,xdist
 
    See also :option:`-p`.
+
+   .. versionchanged:: 9.2
+      Entry point names of installed plugins are now also accepted, in
+      addition to importable module names.
 
 .. envvar:: PYTEST_THEME
 
@@ -1481,6 +1501,54 @@ passed multiple times. The expected format is ``name=value``. For example::
    Keep in mind however that this might cause unwanted side effects and
    even bugs depending on the OS used and plugins currently installed,
    so use it at your own risk.
+
+   See :ref:`parametrizemark`.
+
+
+.. confval:: parametrize_long_str_id_strategy
+   :type: ``str``
+   :default: ``"short"``
+
+   .. versionadded:: 9.1
+
+   Strategy for handling long ``str`` or ``bytes`` parameter values when
+   auto-generating test IDs for ``@pytest.mark.parametrize``. This only
+   affects auto-generated IDs — explicit IDs set via ``ids=[...]`` or
+   ``pytest.param(..., id=...)`` are never affected.
+
+   Available strategies:
+
+   ``short``
+       Values over 100 characters are replaced with ``<argname><index>``
+       (e.g. ``a0``, ``a1``). This is the default.
+
+   ``sha256``
+       Replace the value with its SHA-256 hex digest, producing a
+       fixed-length, content-based ID.
+
+   ``legacy``
+       Keep the full value as the ID regardless of length. Use this for
+       temporary backward compatibility during migration.
+
+   ``disallow``
+       Raise an error for values over 100 characters, requiring the user
+       to set explicit IDs.
+
+   Example configuration:
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+           [pytest]
+           parametrize_long_str_id_strategy = "sha256"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+           [pytest]
+           parametrize_long_str_id_strategy = sha256
 
    See :ref:`parametrizemark`.
 
@@ -2596,7 +2664,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_chars
-   :type: ``int``
+   :type: ``int | str``
    :default: ``640``
 
    Controls maximum number of characters to truncate assertion message contents.
@@ -2625,7 +2693,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_lines
-   :type: ``int``
+   :type: ``int | str``
    :default: ``8``
 
    Controls maximum number of lines to truncate assertion message contents.
@@ -2656,7 +2724,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: usefixtures
     :type: ``list[str]``
 
-    List of fixtures that will be applied to all test functions; this is semantically the same to apply
+    List of fixtures that will be applied to all test functions; this is semantically the same as applying
     the ``@pytest.mark.usefixtures`` marker to all test functions.
 
 
@@ -3443,7 +3511,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             verbosity level.
       -q, --quiet           Decrease verbosity
       --verbosity=VERBOSE   Set verbosity. Default: 0.
-      -r chars              Show extra test summary info as specified by chars:
+      -r, --report-chars chars
+                            Show extra test summary info as specified by chars:
                             (f)ailed, (E)rror, (s)kipped, (x)failed, (X)passed,
                             (p)assed, (P)assed with output, (a)ll except passed
                             (p/P), or (A)ll. (w)arnings are enabled by default
@@ -3475,8 +3544,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       -W, --pythonwarnings PYTHONWARNINGS
                             Set which warnings to report, see -W option of
                             Python itself
-      --max-warnings=num    Exit with error if the number of warnings exceeds
-                            this threshold
+      --max-warnings=num    Exit with error if all tests pass but the number of
+                            warnings exceeds this threshold
 
     collection:
       --collect-only, --co  Only collect tests, don't execute them
@@ -3600,8 +3669,8 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             warnings.filterwarnings. Processed after
                             -W/--pythonwarnings.
       max_warnings (string):
-                            Maximum number of warnings allowed before failing
-                            the test run
+                            Exit with error if all tests pass but the number of
+                            warnings exceeds this threshold
       norecursedirs (args): Directory patterns to avoid for recursion
       testpaths (args):     Directories to search for tests when no files or
                             directories are given on the command line
@@ -3651,12 +3720,15 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
-      truncation_limit_lines (string):
+      truncation_limit_lines (int | string):
                             Set threshold of LINES after which truncation will
                             take effect
-      truncation_limit_chars (string):
+      truncation_limit_chars (int | string):
                             Set threshold of CHARS after which truncation will
                             take effect
+      assertion_text_diff_style (string):
+                            Choose how pytest renders diffs for string equality
+                            assertions: ndiff or block
       verbosity_assertions (string):
                             Specify a verbosity level for assertions, overriding
                             the main level. Higher levels will provide more

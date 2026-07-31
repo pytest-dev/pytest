@@ -1,8 +1,0 @@
-When using :option:`--doctest-modules`, autouse fixtures with ``module``, ``package`` or ``session`` scope that are defined inline in Python test modules (not plugins or conftests) will now possibly execute twice.
-
-If this is undesirable, move the fixture definition to a ``conftest.py`` file if possible.
-
-Technical explanation for those interested:
-When using `--doctest-modules`, pytest possibly collects Python modules twice, once as :class:`pytest.Module` and once as a ``DoctestModule`` (depending on the configuration).
-Due to improvements in pytest's fixture implementation, if e.g. the ``DoctestModule`` collects a fixture, it is now visible to it only, and not to the ``Module``.
-This means that both need to register the fixtures independently.

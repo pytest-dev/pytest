@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import collections.abc
 from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 import dataclasses
 from typing import TypeGuard
 
@@ -18,8 +19,8 @@ def ismapping(x: object) -> TypeGuard[Mapping[object, object]]:
     return isinstance(x, Mapping)
 
 
-def isset(x: object) -> TypeGuard[set[object] | frozenset[object]]:
-    return isinstance(x, set | frozenset)
+def isset(x: object) -> TypeGuard[AbstractSet[object]]:
+    return isinstance(x, AbstractSet)
 
 
 def isnamedtuple(obj: object) -> bool:

@@ -1,0 +1,1 @@
+Fixed truncation of long collections (lists, dicts, sets, etc.) in the "message" part of failed assertions (as in ``assert condition, msg``) when using ``-vv``: the message now uses the same unlimited repr as the rest of the assertion output, instead of eliding collection elements with ``...``.

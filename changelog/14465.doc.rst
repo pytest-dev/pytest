@@ -1,1 +1,0 @@
-Updated the hooks how-to page to link the ``newhooks.py`` file in ``pytest-xdist`` at tag ``v3.8.0`` instead of an unrelated 2017-era commit under the old layout. Pointing at a tag keeps the example in sync with the version users actually install, while remaining stable when the project's main branch moves on.

@@ -21,7 +21,6 @@ from typing import TypeVar
 import warnings
 
 from .._code import getfslineno
-from ..compat import deprecated
 from ..compat import NOTSET
 from ..compat import NotSetType
 from _pytest.config import Config
@@ -537,31 +536,16 @@ if TYPE_CHECKING:
         ) -> MarkDecorator: ...
 
     class _ParametrizeMarkDecorator(MarkDecorator):
-        @overload  # type: ignore[override,no-overload-impl]
-        def __call__(
-            self,
-            argnames: str | Sequence[str],
-            argvalues: Collection[ParameterSet | Sequence[object] | object],
-            *,
-            indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool | _HiddenParam]
-            | Callable[[Any], object | None]
-            | None = ...,
-            scope: ScopeName | None = ...,
-        ) -> MarkDecorator: ...
-
-        @overload
-        @deprecated(
-            "Passing a non-Collection iterable to the 'argvalues' parameter of @pytest.mark.parametrize is deprecated. "
-            "Convert argvalues to a list or tuple.",
-        )
-        def __call__(
+        def __call__(  # type: ignore[override]
             self,
             argnames: str | Sequence[str],
             argvalues: Iterable[ParameterSet | Sequence[object] | object],
+            # TODO(pytest10): Change to below after PARAMETRIZE_NON_COLLECTION_ITERABLE deprecation.
+            #                 Overload doesn't work, see #14606.
+            # argvalues: Collection[ParameterSet | Sequence[object] | object],
             *,
             indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool]
+            ids: Iterable[None | str | float | int | bool | _HiddenParam]
             | Callable[[Any], object | None]
             | None = ...,
             scope: ScopeName | None = ...,

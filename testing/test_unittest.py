@@ -867,9 +867,11 @@ def test_unittest_setup_interaction(pytester: Pytester, stmt: str) -> None:
         import pytest
         class MyTestCase(unittest.TestCase):
             @pytest.fixture(scope="class", autouse=True)
-            def perclass(self, request):
+            @classmethod
+            def perclass(cls, request):
                 request.cls.hello = "world"
                 {stmt}
+
             @pytest.fixture(scope="function", autouse=True)
             def perfunction(self, request):
                 request.instance.funcname = request.function.__name__

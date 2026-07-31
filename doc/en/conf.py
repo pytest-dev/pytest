@@ -98,6 +98,7 @@ nitpick_ignore = [
     ("py:class", "_py_warnings.WarningMessage"),
     # Undocumented type aliases
     ("py:class", "LEGACY_PATH"),
+    ("py:class", "_IniTypeArg"),
     ("py:class", "_PluggyPlugin"),
     # TypeVars
     ("py:class", "_pytest._code.code.E"),

@@ -1131,7 +1131,7 @@ raise ValueError()
             mod.entry()
 
         for style in ("short", "long", "no"):
-            p = ExceptionInfoFormatter(style="short")
+            p = ExceptionInfoFormatter(style=style)
             reprtb = p.repr_traceback(excinfo)
             assert reprtb.extraline == "!!! Recursion detected (same locals & position)"
             assert str(reprtb)

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from collections.abc import Iterator
 from collections.abc import Sequence
 from typing import Literal
 from unicodedata import normalize
@@ -18,6 +19,8 @@ from _pytest.assertion._guards import isset
 from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
+from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
+from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _notin_text
 from _pytest.assertion.highlight import dummy_highlighter as dummy_highlighter
 from _pytest.config import Config
@@ -139,8 +142,19 @@ def assertrepr_compare(
     verbose: int,
     highlighter: _HighlightFunc,
     assertion_text_diff_style: _AssertionTextDiffStyle,
-) -> list[str] | None:
-    """Return specialised explanations for some operators/operands."""
+    truncation_budget: TruncationBudget = NO_TRUNCATION_BUDGET,
+) -> Iterator[str]:
+    """Yield specialised explanations for some operators/operands.
+
+    The first line yielded is always the summary (``left op right``);
+    subsequent lines are the detailed explanation. Yields nothing when no
+    specialised explanation applies, which lets consumers map an empty
+    iterator to "no explanation" without materialising anything.
+
+    The iterator is lazy on purpose: a streaming consumer can stop pulling
+    lines as soon as it has enough to show, so an enormous diff doesn't
+    have to be built in full just to be thrown away.
+    """
     # Strings which normalize equal are often hard to distinguish when printed; use ascii() to make this easier.
     # See issue #3246.
     use_ascii = (
@@ -164,37 +178,42 @@ def assertrepr_compare(
 
     summary = f"{left_repr} {op} {right_repr}"
 
-    explanation = None
     try:
         if op == "==":
-            explanation = _compare_eq_any(
+            source = _compare_eq_any(
                 left,
                 right,
                 highlighter,
                 verbose,
                 assertion_text_diff_style,
+                truncation_budget,
             )
-        elif op == "not in":
-            if istext(left) and istext(right):
-                explanation = list(_notin_text(left, right, verbose))
-        elif op in {"!=", ">=", "<=", ">", "<"}:
-            if isset(left) and isset(right):
-                explanation = SET_COMPARISON_FUNCTIONS[op](
-                    left, right, highlighter, verbose
-                )
+        elif op == "not in" and istext(left) and istext(right):
+            source = _notin_text(left, right, verbose, truncation_budget)
+        elif op in {"!=", ">=", "<=", ">", "<"} and isset(left) and isset(right):
+            source = SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
+        else:
+            source = iter(())
 
+        # Only yield the summary if there is a detailed explanation.
+        # Make sure there's a separating empty line after the summary.
+        summary_yielded = False
+        for line in source:
+            if not summary_yielded:
+                yield summary
+                if line != "":
+                    yield ""
+                summary_yielded = True
+            yield line
     except outcomes.Exit:
         raise
     except Exception:
         repr_crash = _pytest._code.ExceptionInfo.from_current()._getreprcrash()
-        explanation = [
-            f"(pytest_assertion plugin: representation of details failed: {repr_crash}.",
-            " Probably an object has a faulty __repr__.)",
-        ]
-
-    if not explanation:
-        return None
-
-    if explanation[0] != "":
-        explanation = ["", *explanation]
-    return [summary, *explanation]
+        if not summary_yielded:
+            yield summary
+            yield ""
+            summary_yielded = True
+        yield (
+            f"(pytest_assertion plugin: representation of details failed: {repr_crash}."
+        )
+        yield " Probably an object has a faulty __repr__.)"
