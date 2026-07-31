@@ -215,7 +215,14 @@ as plugins.  As an example consider the following package::
    pytest_foo/plugin.py
    pytest_foo/helper.py
 
-With the following typical ``setup.py`` extract:
+With the following typical ``pyproject.toml`` extract:
+
+.. code-block:: toml
+
+   [project.entry-points.pytest11]
+   foo = "pytest_foo.plugin"
+
+Or with a legacy ``setup.py`` extract:
 
 .. code-block:: python
 
