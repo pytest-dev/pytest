@@ -681,12 +681,8 @@ def check():
 
 
 class TestIntrospectionIfExp:
-    """Ternary / if-expression — currently hits generic_visit."""
+    """Ternary / if-expression — has a dedicated visitor."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-ifexp: ternaries are not decomposed",
-    )
     def test_ifexp_shows_condition_value(self) -> None:
         assert_introspects(
             """
@@ -704,10 +700,6 @@ def check():
     assert (0 if flag else 1) == 1
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-ifexp: ternaries are not decomposed",
-    )
     def test_ifexp_in_compare_shows_result(self) -> None:
         assert_introspects(
             """
@@ -1515,10 +1507,6 @@ def check():
             must_contain=["42", "100"],
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-ifexp: ternaries are not decomposed",
-    )
     def test_ifexp_with_call_condition(self) -> None:
         """IfExp where condition is a function call."""
         assert_introspects(

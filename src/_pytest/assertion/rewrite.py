@@ -1117,6 +1117,20 @@ class AssertionRewriter(ast.NodeVisitor):
         new_starred = ast.Starred(res, starred.ctx)
         return new_starred, "*" + expl
 
+    def visit_IfExp(self, ifexp: ast.IfExp) -> tuple[ast.Name, str]:
+        # Introspect the condition but keep the branches as they are: only the
+        # selected one may be evaluated, so neither can be hoisted.  That also
+        # keeps them ordered after the condition, which is where Python puts
+        # them, so no freeze is needed here.
+        cond_res, cond_expl = self.visit(ifexp.test)
+        res = self.assign(
+            ast.copy_location(ast.IfExp(cond_res, ifexp.body, ifexp.orelse), ifexp)
+        )
+        res_expl = self.explanation_param(self.display(res))
+        pat = "%s\n{%s = (... if %s else ...)\n}"
+        expl = pat % (res_expl, res_expl, cond_expl)
+        return res, expl
+
     def visit_Subscript(self, subscript: ast.Subscript) -> tuple[ast.Name, str]:
         if not isinstance(subscript.ctx, ast.Load):
             return self.generic_visit(subscript)
