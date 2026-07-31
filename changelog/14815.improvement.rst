@@ -1,0 +1,4 @@
+Assertion failure messages now decompose subscript expressions, showing the container and the key that produced a value::
+
+    assert 1 == 99
+     +  where 1 = {'a': 1, 'b': 2}['a']

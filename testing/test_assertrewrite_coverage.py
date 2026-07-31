@@ -535,6 +535,26 @@ class TestIntrospectionName:
 class TestIntrospectionSubscript:
     """Subscript / indexing."""
 
+    def test_dict_subscript_shows_key_and_container(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                d = {"a": 1, "b": 2}
+                assert d["a"] == 99
+            """,
+            must_contain=["where 1 = ", "['a']"],
+        )
+
+    def test_list_subscript_shows_index_and_container(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                items = [10, 20, 30]
+                assert items[1] == 99
+            """,
+            must_contain=["where 20 = ", "[1]"],
+        )
+
     def test_subscript_semantics_preserved(self) -> None:
         assert_semantically_equivalent("""
             def check():
@@ -1149,6 +1169,18 @@ class TestEvaluationOrder:
 
 class TestEdgeCases:
     """Regression and edge-case tests combining multiple expression types."""
+
+    def test_subscript_with_variable_key(self) -> None:
+        """Subscript where the key is a variable (not constant)."""
+        assert_introspects(
+            """
+            def check():
+                d = {"hello": 42}
+                key = "hello"
+                assert d[key] == 100
+            """,
+            must_contain=["where 42 = ", "['hello']"],
+        )
 
     def test_subscript_with_call_key(self) -> None:
         """Subscript where the key is a function call."""
