@@ -540,14 +540,19 @@ def traverse_node(node: ast.AST) -> Iterator[ast.AST]:
         yield from traverse_node(child)
 
 
-def _walrus_targets(nodes: Iterable[ast.expr]) -> set[str]:
-    """Return the names any walrus operator in *nodes* rebinds."""
-    return {
-        sub.target.id
+def _can_rebind(nodes: Iterable[ast.expr]) -> bool:
+    """Return whether evaluating *nodes* could rebind a name read before them.
+
+    A walrus operator rebinds its target outright.  A call -- including the
+    implicit one behind ``await`` -- can rebind anything it declares ``global``
+    or ``nonlocal``, and there is no way to tell from here which names those
+    are, so assume the worst.
+    """
+    return any(
+        isinstance(sub, ast.NamedExpr | ast.Call | ast.Await)
         for node in nodes
         for sub in ast.walk(node)
-        if isinstance(sub, ast.NamedExpr)
-    }
+    )
 
 
 @functools.lru_cache(maxsize=1)
@@ -974,30 +979,31 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_operand(
         self, operand: ast.expr, later: Sequence[ast.expr]
     ) -> tuple[ast.expr, str]:
-        """Visit an operand, freezing it against walrus operators in *later*.
+        """Visit an operand, freezing it against side effects in *later*.
 
         Operands are rewritten into statements that run in source order, but
         two of them stay unhoisted and are evaluated at the very end, when the
         enclosing expression is assembled -- after everything that follows
         them:
 
-        * a plain name, which a walrus operator in a later operand rebinds in
-          between, so the value used and the value reported would be the
-          post-walrus one;
+        * a plain name, whose binding anything in *later* may have changed by
+          then, so the value used and the value reported would be the new one;
         * a walrus operator itself, which would then assign in the wrong
           order, and be visible to the operands that were meant to precede it.
 
         Either way Python evaluates the earlier operand first, so copy it into
         a temporary here.  A starred argument is unwrapped and rewrapped, its
         value being subject to the same problem.
+
+        Only names need this.  Everything else either has no binding to lose
+        (a literal) or was already hoisted into a temporary when it was
+        visited, which is what keeps it ordered.
         """
         specifiers = set(self.explanation_specifiers)
         res, expl = self.visit(operand)
         value = res.value if isinstance(res, ast.Starred) else res
-        if isinstance(value, ast.NamedExpr):
-            needs_freeze = bool(later)
-        elif isinstance(value, ast.Name):
-            needs_freeze = value.id in _walrus_targets(later)
+        if isinstance(value, ast.NamedExpr | ast.Name):
+            needs_freeze = _can_rebind(later)
         else:
             needs_freeze = False
         if needs_freeze:
@@ -1019,9 +1025,8 @@ class AssertionRewriter(ast.NodeVisitor):
         body = save = self.statements
         fail_save = self.expl_stmts
         levels = len(boolop.values) - 1
-        later_walrus_targets = [
-            _walrus_targets(boolop.values[idx + 1 :])
-            for idx in range(len(boolop.values))
+        later_can_rebind = [
+            _can_rebind(boolop.values[idx + 1 :]) for idx in range(len(boolop.values))
         ]
         self.push_format_context()
         # Process each operand, short-circuiting as needed.
@@ -1038,10 +1043,10 @@ class AssertionRewriter(ast.NodeVisitor):
             # as a condition or explanation reference:
             #  - NamedExpr (non-last): reusing the node re-evaluates the
             #    walrus expression including any side effects.
-            #  - Name whose variable a later walrus overwrites: the
-            #    explanation would show the post-walrus value.
+            #  - Name whose binding a later operand may change: the
+            #    explanation would show the value it ended up with.
             needs_snapshot = (isinstance(v, ast.NamedExpr) and i < levels) or (
-                isinstance(v, ast.Name) and v.id in later_walrus_targets[i]
+                isinstance(v, ast.Name) and later_can_rebind[i]
             )
             if needs_snapshot:
                 snapshot = self.assign(ast.Name(res_var, ast.Load()))

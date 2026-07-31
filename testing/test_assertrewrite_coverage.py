@@ -21,7 +21,6 @@ so that a change can state which group it closes::
     order-call-argument           an earlier argument is read too late
     order-binop-left              a binary operator's left operand is read too late
     order-starred-argument        a starred argument is read too late
-    order-name-rebound-by-call    a call rebinding a name is not accounted for
     order-chained-compare-lazy    a chained comparison evaluates every comparator
 
 The xfails are strict on purpose: fixing the behaviour without flipping the
@@ -1284,10 +1283,6 @@ def check():
     return "passed", mapping
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-name-rebound-by-call: #14820, a call rebinding a global is not seen",
-    )
     def test_global_rebound_by_call_precedes_compare(self) -> None:
         assert_evaluation_order("""
 count = 0
@@ -1305,10 +1300,6 @@ def check():
     return "passed", count
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-name-rebound-by-call: #14820, a call rebinding a nonlocal is not seen",
-    )
     def test_nonlocal_rebound_by_call_precedes_compare(self) -> None:
         assert_evaluation_order("""
 def check():
@@ -1324,10 +1315,6 @@ def check():
     return "passed", value
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-name-rebound-by-call: #14820, an earlier argument is read after a rebinding call",
-    )
     def test_global_rebound_by_call_precedes_argument(self) -> None:
         assert_evaluation_order("""
 value = "a"
