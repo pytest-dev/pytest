@@ -1181,7 +1181,22 @@ class AssertionRewriter(ast.NodeVisitor):
         expls: list[ast.expr] = []
         syms: list[ast.expr] = []
         results = [left_res]
+        # A chain short-circuits: ``a < b < c`` leaves c unevaluated when a < b
+        # is false.  Everything past the first link therefore goes inside an
+        # ``if`` on the link before it, and the temporaries it would have
+        # produced are set to None up front -- the failure path builds a tuple
+        # of all of them, and the ones that never ran must still be readable.
+        # None is also falsey, so _call_reprcompare still stops at the link
+        # that actually failed.
+        body = self.statements
+        deferred_at = deferred_from = None
         for i, op, next_operand in it:
+            if i:
+                if deferred_at is None:
+                    deferred_at, deferred_from = len(body), len(self.variables)
+                inner: list[ast.stmt] = []
+                self.statements.append(ast.If(load_names[i - 1], inner, []))
+                self.statements = inner
             next_res, next_expl = self.visit_operand(
                 next_operand, comp.comparators[i + 1 :]
             )
@@ -1197,6 +1212,17 @@ class AssertionRewriter(ast.NodeVisitor):
             res_expr = ast.copy_location(ast.Compare(left_res, [op], [next_res]), comp)
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
+        self.statements = body
+        if deferred_at is not None:
+            assert deferred_from is not None
+            deferred = [*res_variables[1:], *self.variables[deferred_from:]]
+            body.insert(
+                deferred_at,
+                ast.Assign(
+                    [ast.Name(name, ast.Store()) for name in deferred],
+                    ast.Constant(None),
+                ),
+            )
         # Use pytest.assertion.util._reprcompare if that's available.
         expl_call = self.helper(
             "_call_reprcompare",
