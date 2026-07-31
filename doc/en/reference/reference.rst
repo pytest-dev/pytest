@@ -2664,7 +2664,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_chars
-   :type: ``int``
+   :type: ``int | str``
    :default: ``640``
 
    Controls maximum number of characters to truncate assertion message contents.
@@ -2693,7 +2693,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_lines
-   :type: ``int``
+   :type: ``int | str``
    :default: ``8``
 
    Controls maximum number of lines to truncate assertion message contents.
@@ -3720,10 +3720,10 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
-      truncation_limit_lines (string):
+      truncation_limit_lines (int | string):
                             Set threshold of LINES after which truncation will
                             take effect
-      truncation_limit_chars (string):
+      truncation_limit_chars (int | string):
                             Set threshold of CHARS after which truncation will
                             take effect
       assertion_text_diff_style (string):

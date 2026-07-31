@@ -49,13 +49,17 @@ def pytest_addoption(parser: Parser) -> None:
         "Make sure to delete any previously generated pyc cache files.",
     )
 
+    # ``int | str`` (not plain ``int``) for backward compatibility: INI files
+    # and ``-o`` overrides provide the value as a string.
     parser.addini(
         "truncation_limit_lines",
+        type=int | str,
         default=None,
         help="Set threshold of LINES after which truncation will take effect",
     )
     parser.addini(
         "truncation_limit_chars",
+        type=int | str,
         default=None,
         help=("Set threshold of CHARS after which truncation will take effect"),
     )

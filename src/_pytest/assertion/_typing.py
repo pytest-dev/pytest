@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar
 from typing import Literal
 from typing import Protocol
 
@@ -17,8 +18,12 @@ class TruncationBudget:
     dimension; ``0`` leaves it unbounded (the limit is disabled).
     """
 
-    max_lines: int
-    max_chars: int
+    #: Default limits applied when the corresponding ini option is left unset.
+    DEFAULT_MAX_LINES: ClassVar[int] = 8
+    DEFAULT_MAX_CHARS: ClassVar[int] = DEFAULT_MAX_LINES * 80
+
+    max_lines: int = DEFAULT_MAX_LINES
+    max_chars: int = DEFAULT_MAX_CHARS
 
 
 # Reusable "no cap" budget, used as a default argument (B008).
