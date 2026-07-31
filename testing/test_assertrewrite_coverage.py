@@ -1253,6 +1253,30 @@ class TestEvaluationOrder:
                 return "passed", value
             """)
 
+    def test_chained_compare_stops_at_the_first_false(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                trace = []
+                def rec(label, value):
+                    trace.append(label)
+                    return value
+                try:
+                    assert rec("a", 1) < rec("b", 0) < rec("c", 5)
+                except AssertionError:
+                    return "raised", trace
+                return "passed", trace
+            """)
+
+    def test_chained_compare_unreached_operand_does_not_raise(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                try:
+                    assert 1 < 0 < 1 / 0
+                except AssertionError:
+                    return "raised", None
+                return "passed", None
+            """)
+
     def test_method_lookup_precedes_arguments(self) -> None:
         """Guard: the bound method is looked up before the arguments run."""
         assert_evaluation_order("""
