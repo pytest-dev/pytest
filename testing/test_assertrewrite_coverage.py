@@ -577,12 +577,32 @@ class TestIntrospectionSubscript:
 class TestIntrospectionIfExp:
     """Ternary / if-expression."""
 
+    def test_ifexp_shows_condition_value(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                flag = True
+                assert (0 if flag else 1) == 1
+            """,
+            must_contain=["if True else"],
+        )
+
     def test_ifexp_semantics_preserved(self) -> None:
         assert_semantically_equivalent("""
             def check():
                 flag = True
                 assert (0 if flag else 1) == 1
             """)
+
+    def test_ifexp_in_compare_shows_result(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                flag = True
+                assert (0 if flag else 1) == 99
+            """,
+            must_contain=["assert 0 == 99", "if True else"],
+        )
 
     def test_ifexp_short_circuit_true(self) -> None:
         """Orelse branch must NOT be evaluated when condition is True."""
@@ -1160,6 +1180,18 @@ class TestEdgeCases:
                 assert s.get_data()["x"] == 100
             """,
             must_contain=["42", "100"],
+        )
+
+    def test_ifexp_with_call_condition(self) -> None:
+        """IfExp where condition is a function call."""
+        assert_introspects(
+            """
+            def check():
+                def is_ready():
+                    return False
+                assert (1 if is_ready() else 0) == 1
+            """,
+            must_contain=["if False else"],
         )
 
     def test_walrus_in_subscript(self) -> None:
