@@ -1201,6 +1201,58 @@ class TestEvaluationOrder:
                 return "passed", mapping
             """)
 
+    def test_global_rebound_by_call_precedes_compare(self) -> None:
+        assert_evaluation_order("""
+            count = 0
+
+            def bump():
+                global count
+                count = 99
+                return 0
+
+            def check():
+                try:
+                    assert count == bump()
+                except AssertionError:
+                    return "raised", count
+                return "passed", count
+            """)
+
+    def test_nonlocal_rebound_by_call_precedes_compare(self) -> None:
+        assert_evaluation_order("""
+            def check():
+                value = 1
+                def bump():
+                    nonlocal value
+                    value = 99
+                    return 1
+                try:
+                    assert value == bump()
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
+    def test_global_rebound_by_call_precedes_argument(self) -> None:
+        assert_evaluation_order("""
+            value = "a"
+
+            def bump():
+                global value
+                value = "b"
+                return "x"
+
+            def collect(*args):
+                return args
+
+            def check():
+                try:
+                    assert collect(value, bump()) == ("a", "x")
+                except AssertionError:
+                    return "raised", value
+                return "passed", value
+            """)
+
     def test_method_lookup_precedes_arguments(self) -> None:
         """Guard: the bound method is looked up before the arguments run."""
         assert_evaluation_order("""
