@@ -21,7 +21,6 @@ so that a change can state which group it closes::
     order-call-argument           an earlier argument is read too late
     order-binop-left              a binary operator's left operand is read too late
     order-starred-argument        a starred argument is read too late
-    order-chained-compare-lazy    a chained comparison evaluates every comparator
 
 The xfails are strict on purpose: fixing the behaviour without flipping the
 marker fails the suite.  A change may remove entries from that list, never add
@@ -1335,10 +1334,6 @@ def check():
     return "passed", value
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-chained-compare-lazy: #14819, every comparator is evaluated",
-    )
     def test_chained_compare_stops_at_the_first_false(self) -> None:
         assert_evaluation_order("""
 def check():
@@ -1353,10 +1348,6 @@ def check():
     return "passed", trace
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-chained-compare-lazy: #14819, an unreached comparator still raises",
-    )
     def test_chained_compare_unreached_operand_does_not_raise(self) -> None:
         assert_evaluation_order("""
 def check():
