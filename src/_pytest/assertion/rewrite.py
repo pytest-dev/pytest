@@ -1080,7 +1080,21 @@ class AssertionRewriter(ast.NodeVisitor):
         # The callee and every argument are evaluated left to right, so each of
         # them has to be frozen against walrus operators in what follows.
         operands = [*call.args, *(keyword.value for keyword in call.keywords)]
-        new_func, func_expl = self.visit_operand(call.func, operands)
+        if isinstance(call.func, ast.Attribute) and isinstance(call.func.ctx, ast.Load):
+            # obj.method(...) reads better flat -- "where 42 = Obj().compute()"
+            # rather than a separate "where compute = Obj().compute" line.  The
+            # bound method still gets a temporary of its own, because Python
+            # looks it up before evaluating the arguments; that is also what
+            # keeps the receiver ordered ahead of them.
+            receiver, receiver_expl = self.visit(call.func.value)
+            new_func: ast.expr = self.assign(
+                ast.copy_location(
+                    ast.Attribute(receiver, call.func.attr, ast.Load()), call.func
+                )
+            )
+            func_expl = f"{receiver_expl}.{call.func.attr}"
+        else:
+            new_func, func_expl = self.visit_operand(call.func, operands)
         arg_expls = []
         new_args = []
         new_kwargs = []
