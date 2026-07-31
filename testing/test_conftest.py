@@ -911,6 +911,163 @@ def test_conftest_fixture_from_ancestor_above_rootdir(
     result.stdout.fnmatch_lines(["*test_uses_ancestor*PASSED*", "*1 passed*"])
 
 
+def test_rootdir_conftest_visible_outside_rootdir(pytester: Pytester) -> None:
+    """A conftest located in the rootdir provides fixtures to items that are
+    collected from *outside* the rootdir.
+
+    Before pytest 9.1 the rootdir conftest got an empty baseid (which matches
+    every collected item), so its fixtures were visible session-wide. The
+    node-based scoping introduced in #14098 (pytest 9.1) inadvertently scoped
+    it to its own Directory node, making it invisible to items collected from
+    a parent/sibling of the rootdir. Regression test for #14683.
+
+    Layout::
+
+        project/                  <- pytest invoked here
+            xclim/                <- collected (``--doctest-modules xclim``)
+                testing/           <- rootdir (``--rootdir xclim/testing``)
+                    conftest.py    <- defines a fixture
+                core/
+                    test_it.py     <- collected from outside rootdir
+    """
+    root = pytester.path
+    testing = root / "xclim" / "testing"
+    testing.mkdir(parents=True)
+    testing.joinpath("conftest.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+
+            @pytest.fixture
+            def rootdir_fixture():
+                return "from-rootdir"
+        """),
+        encoding="utf-8",
+    )
+    core = root / "xclim" / "core"
+    core.mkdir()
+    core.joinpath("test_it.py").write_text(
+        textwrap.dedent("""\
+            def test_uses_rootdir(rootdir_fixture):
+                assert rootdir_fixture == "from-rootdir"
+        """),
+        encoding="utf-8",
+    )
+
+    result = pytester.runpytest(
+        "--rootdir", str(testing), "--doctest-modules", "xclim", "-v"
+    )
+    result.stdout.fnmatch_lines(["*test_uses_rootdir*PASSED*", "*1 passed*"])
+
+
+def test_fixture_closure_order_independence_with_parametrize(
+    pytester: Pytester,
+) -> None:
+    """Regression test for #14635.
+
+    A test's fixture closure (and thus parametrize validation) should be
+    independent of which unrelated paths were collected earlier in the session.
+
+    The scenario: a test uses @pytest.mark.parametrize("fixture_param", [...])
+    where fixture_param is NOT a direct arg of the test but IS an argname of a
+    fixture the test depends on transitively. Collecting unrelated directories
+    before the test's directory should not cause the fixture_param to drop out
+    of the closure.
+    """
+    root = pytester.path
+    tests = root / "tests"
+    tests.mkdir()
+    tests.joinpath("__init__.py").write_text("", encoding="utf-8")
+
+    # tests/conftest.py - empty (or with some unrelated fixture)
+    tests.joinpath("conftest.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+        """),
+        encoding="utf-8",
+    )
+
+    # tests/components/ with its conftest
+    components = tests / "components"
+    components.mkdir()
+    components.joinpath("__init__.py").write_text("", encoding="utf-8")
+    components.joinpath("conftest.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+
+            @pytest.fixture
+            def cache_dir_side_effect():
+                return None
+
+            @pytest.fixture
+            def mock_init_cache_dir(cache_dir_side_effect):
+                return cache_dir_side_effect
+
+            @pytest.fixture
+            def mock_cache_dir(mock_init_cache_dir):
+                return mock_init_cache_dir
+        """),
+        encoding="utf-8",
+    )
+
+    # tests/components/water_heater/ - unrelated test directory
+    water_heater = components / "water_heater"
+    water_heater.mkdir()
+    water_heater.joinpath("__init__.py").write_text("", encoding="utf-8")
+    water_heater.joinpath("test_water_heater.py").write_text(
+        textwrap.dedent("""\
+            def test_water_heater():
+                pass
+        """),
+        encoding="utf-8",
+    )
+
+    # tests/components/tts/ - the problematic test directory
+    tts = components / "tts"
+    tts.mkdir()
+    tts.joinpath("__init__.py").write_text("", encoding="utf-8")
+    tts.joinpath("conftest.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def mock_cache_dir(mock_cache_dir):
+                # Autouse override that requests the parent fixture of same name
+                return mock_cache_dir
+        """),
+        encoding="utf-8",
+    )
+    tts.joinpath("test_init.py").write_text(
+        textwrap.dedent("""\
+            import pytest
+
+            @pytest.mark.parametrize("cache_dir_side_effect", ["error_value"])
+            async def test_setup_no_access(mock_init_cache_dir):
+                assert mock_init_cache_dir == "error_value"
+        """),
+        encoding="utf-8",
+    )
+
+    # tests/test_config_entries.py - another unrelated test
+    tests.joinpath("test_config_entries.py").write_text(
+        textwrap.dedent("""\
+            def test_config():
+                pass
+        """),
+        encoding="utf-8",
+    )
+
+    # This order triggers the bug: collecting water_heater and config_entries
+    # BEFORE tts causes the fixture closure to be wrong.
+    result = pytester.runpytest(
+        "--collect-only",
+        str(water_heater),
+        str(tests / "test_config_entries.py"),
+        str(tts / "test_init.py"),
+    )
+    result.stdout.fnmatch_lines(["*test_setup_no_access*"])
+    assert result.ret == ExitCode.OK
+
+
 def test_required_option_help(pytester: Pytester) -> None:
     pytester.makeconftest("assert 0")
     x = pytester.mkdir("x")

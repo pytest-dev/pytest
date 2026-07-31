@@ -214,7 +214,7 @@ pytest.mark.skip
 
 Unconditionally skip a test function.
 
-.. py:function:: pytest.mark.skip(reason=None)
+.. py:function:: pytest.mark.skip(reason="unconditional skip")
 
     :keyword str reason: Reason why the test function is being skipped.
 
@@ -266,7 +266,7 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=strict_xfail)
+.. py:function:: pytest.mark.xfail(condition=True, *, reason=None, raises=None, run=True, strict=strict_xfail)
 
     :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
@@ -277,7 +277,7 @@ Marks a test function as *expected to fail*.
     :keyword raises:
         Exception class (or tuple of classes) expected to be raised by the test function; other exceptions will fail the test.
         Note that subclasses of the classes passed will also result in a match (similar to how the ``except`` statement works).
-    :type raises: Type[:py:exc:`Exception`]
+    :type raises: Type[:py:exc:`Exception`] | Tuple[Type[:py:exc:`Exception`], ...] | None
 
     :keyword bool run:
         Whether the test function should actually be executed. If ``False``, the function will always xfail and will
@@ -1151,6 +1151,7 @@ contain glob patterns.
 
 Can be declared at the **global** level in *test modules* and *conftest.py files* to register additional plugins.
 Can be either a ``str`` or ``Sequence[str]``.
+Each entry can be the name of an importable module or the entry point name of an installed plugin.
 
 .. code-block:: python
 
@@ -1159,6 +1160,10 @@ Can be either a ``str`` or ``Sequence[str]``.
 .. code-block:: python
 
     pytest_plugins = ("myapp.testsupport.tools", "myapp.testsupport.regression")
+
+.. versionchanged:: 9.2
+   Entry point names of installed plugins are now also accepted, in addition
+   to importable module names.
 
 
 .. globalvar:: pytestmark
@@ -1228,13 +1233,18 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: PYTEST_PLUGINS
 
-   Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules or plugin entry point names that
+   should be loaded as plugins:
 
    .. code-block:: bash
 
        export PYTEST_PLUGINS=mymodule.plugin,xdist
 
    See also :option:`-p`.
+
+   .. versionchanged:: 9.2
+      Entry point names of installed plugins are now also accepted, in
+      addition to importable module names.
 
 .. envvar:: PYTEST_THEME
 
@@ -2654,7 +2664,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_chars
-   :type: ``int``
+   :type: ``int | str``
    :default: ``640``
 
    Controls maximum number of characters to truncate assertion message contents.
@@ -2683,7 +2693,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_lines
-   :type: ``int``
+   :type: ``int | str``
    :default: ``8``
 
    Controls maximum number of lines to truncate assertion message contents.
@@ -2714,7 +2724,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: usefixtures
     :type: ``list[str]``
 
-    List of fixtures that will be applied to all test functions; this is semantically the same to apply
+    List of fixtures that will be applied to all test functions; this is semantically the same as applying
     the ``@pytest.mark.usefixtures`` marker to all test functions.
 
 
@@ -3710,10 +3720,10 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
-      truncation_limit_lines (string):
+      truncation_limit_lines (int | string):
                             Set threshold of LINES after which truncation will
                             take effect
-      truncation_limit_chars (string):
+      truncation_limit_chars (int | string):
                             Set threshold of CHARS after which truncation will
                             take effect
       assertion_text_diff_style (string):

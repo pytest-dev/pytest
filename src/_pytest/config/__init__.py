@@ -35,6 +35,7 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import IO
+from typing import Literal
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
@@ -60,6 +61,8 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import NOTSET
+from _pytest.config.argparsing import _ini_type_repr
+from _pytest.config.argparsing import _IniLiteral
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
@@ -882,7 +885,7 @@ class PytestPluginManager(PluginManager):
     ) -> None:
         plugins = _get_plugin_specs_as_list(spec)
         for import_spec in plugins:
-            self.import_plugin(import_spec)
+            self.import_plugin(import_spec, consider_entry_points=True)
 
     def import_plugin(self, modname: str, consider_entry_points: bool = False) -> None:
         """Import a plugin with ``modname``.
@@ -1199,9 +1202,43 @@ class Config:
         """
         self._cleanup_stack.callback(func)
 
+    @contextlib.contextmanager
+    def _catch_configured_warnings(
+        self,
+        *,
+        record: bool,
+    ) -> Generator[list[warnings.WarningMessage] | None]:
+        """Apply configured filters in a warnings-catching context.
+
+        Defined here instead of _pytest.warnings as _do_configure uses
+        it before the warnings module's pytest_configure hook runs, and
+        defining it there would create an import cycle.
+        """
+        config_filters = self.getini("filterwarnings")
+        cmdline_filters = self.known_args_namespace.pythonwarnings or []
+        with warnings.catch_warnings(record=record) as log:
+            if not sys.warnoptions:
+                # If user is not explicitly configuring warning filters, show deprecation warnings by default (#2908).
+                warnings.filterwarnings("always", category=DeprecationWarning)
+                warnings.filterwarnings("always", category=PendingDeprecationWarning)
+
+            # To be enabled in pytest 10.0.0.
+            # warnings.filterwarnings("error", category=pytest.PytestRemovedIn10Warning)
+
+            apply_warning_filters(config_filters, cmdline_filters)
+            yield log
+
     def _do_configure(self) -> None:
         assert not self._configured
         self._configured = True
+        if self.pluginmanager.hasplugin("warnings"):
+            with contextlib.ExitStack() as stack:
+                # this disables recording because the terminalreporter has
+                # finished by the time it comes to reporting logged warnings
+                # from the end of config cleanup. So for now, this is only
+                # useful for setting a warning filter with an 'error' action.
+                stack.enter_context(self._catch_configured_warnings(record=False))
+                self.add_cleanup(stack.pop_all().close)
         self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
     def _ensure_unconfigure(self) -> None:
@@ -1747,6 +1784,46 @@ class Config:
         value = selected.value
         mode = selected.mode
 
+        if not isinstance(type, tuple):
+            return self._getini_value(mode, name, canonical_name, type, value, default)
+
+        # Union: try each member; the first one that accepts the value wins.
+        for member in type:
+            try:
+                return self._getini_value(
+                    mode, name, canonical_name, member, value, default
+                )
+            except (TypeError, ValueError):
+                pass
+        raise TypeError(
+            f"{self.inipath}: config option '{name}' expects one of "
+            f"{_ini_type_repr(type)}, got {builtins.type(value).__name__}: {value!r}"
+        )
+
+    def _getini_value(
+        self,
+        mode: Literal["ini", "toml"],
+        name: str,
+        canonical_name: str,
+        type: str | _IniLiteral,
+        value: object,
+        default: Any,
+    ):
+        """Convert a config value, read in the given mode, to the option's type."""
+        if isinstance(type, _IniLiteral):
+            # A Literal value is a plain string checked against the registered
+            # choices, without coercion, in both ini and toml modes.
+            if not isinstance(value, str):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a string, "
+                    f"got {builtins.type(value).__name__}: {value!r}"
+                )
+            if value not in type.choices:
+                raise ValueError(
+                    f"{self.inipath}: config option '{name}' expects one of "
+                    f"{_ini_type_repr(type)}, got {value!r}"
+                )
+            return value
         if mode == "ini":
             # In ini mode, values are always str | list[str].
             assert isinstance(value, (str, list))

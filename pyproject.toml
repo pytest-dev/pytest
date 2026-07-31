@@ -49,17 +49,29 @@ dynamic = [
 dependencies = [
     "colorama>=0.4; sys_platform=='win32'",
     "exceptiongroup>=1; python_version<'3.11'",
-    "iniconfig>=1.0.1",
-    "packaging>=22",
+    "iniconfig>=2",
+    "packaging>=24",
     "pluggy>=1.5,<2",
-    "pygments>=2.7.2",
-    "tomli>=1; python_version<'3.11'",
+    "pygments>=2.15",
+    "tomli>=2; python_version<'3.11'",
 ]
+# Kept as a published extra because many external repos still install
+# `pytest[dev]` / `.[dev]`. Prefer the `dev` dependency group for local
+# development of pytest itself (see CONTRIBUTING.rst).
 optional-dependencies.dev = [
+    # Core test dependencies
     "argcomplete",
-    "attrs>=19.2",
-    "hypothesis>=3.56",
+    "asynctest; python_version<'3.11'",
+    "attrs>=23.1",
+    # Test execution and coverage
+    "coverage>=7.5",
+    "hypothesis>=6.75",
     "mock",
+    "numpy>=1.26",
+    "pexpect>=4.9",
+    "pytest-xdist>=3.5",
+    # Additional test dependencies
+    "pyyaml",
     "requests",
     "setuptools",
     "xmlschema",
@@ -72,6 +84,12 @@ urls.Source = "https://github.com/pytest-dev/pytest"
 urls.Tracker = "https://github.com/pytest-dev/pytest/issues"
 scripts."py.test" = "_pytest.config:_console_main"
 scripts.pytest = "_pytest.config:_console_main"
+
+[dependency-groups]
+# Preferred entry point for developing pytest; pulls from optional-dependencies.dev.
+dev = [
+    "pytest[dev]",
+]
 
 [tool.setuptools.package-data]
 "_pytest" = [
@@ -418,7 +436,13 @@ filterwarnings = [
     # https://github.com/pytest-dev/pytest/pull/13057
     'default::pytest.PytestFDWarning',
     # https://github.com/pexpect/pexpect/issues/827
-    'ignore:.*use of forkpty\(\) may lead to deadlocks in the child:DeprecationWarning:ptyprocess.*',
+    # CPython emits this from os.forkpty() with stacklevel=1, so it is attributed
+    # to stdlib pty (caller of os.forkpty via pty.fork), not ptyprocess. Match on
+    # message only: module attribution must not be required if stacklevel changes.
+    # Becomes a hard failure under filterwarnings=error only on 3.15+
+    # (python/cpython#136796 stopped clearing the warning). Often seen on macOS
+    # because Mach task_threads counts extra runtime threads.
+    'ignore:.*use of forkpty\(\) may lead to deadlocks in the child:DeprecationWarning',
 ]
 pytester_example_dir = "testing/example_scripts"
 markers = [
