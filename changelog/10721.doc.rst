@@ -1,0 +1,1 @@
+Document PEP 621 ``pyproject.toml`` entry point format for ``pytest11`` plugins in plugin writing guide.
