@@ -799,12 +799,8 @@ def check():
 
 
 class TestIntrospectionMethodCall:
-    """Method calls — currently show the bound method as its own "where" line."""
+    """Method calls — flat obj.method() display without bound-method noise."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-method-call-flat: the bound method is shown separately",
-    )
     def test_method_call_flat_format(self) -> None:
         """Method calls show 'where result = obj.method()' in one line."""
         assert_introspects(
@@ -821,10 +817,6 @@ def check():
             must_contain=["where 42 = Obj().compute()"],
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-method-call-flat: the bound method is shown separately",
-    )
     def test_method_call_no_bound_method_noise(self) -> None:
         """No separate 'where compute = obj.compute' line."""
         msg = get_failure_message("""
@@ -1388,6 +1380,24 @@ def check():
     return "passed", None
 """)
 
+    def test_method_lookup_precedes_arguments(self) -> None:
+        """Guard: the bound method is looked up before the arguments run."""
+        assert_evaluation_order("""
+def check():
+    trace = []
+    class Box:
+        @property
+        def take(self):
+            trace.append("lookup")
+            return lambda value: value
+    obj = Box()
+    try:
+        assert obj.take(trace.append("argument")) is None
+    except AssertionError:
+        return "raised", trace
+    return "passed", trace
+""")
+
     def test_ifexp_branches_in_order(self) -> None:
         """Guard: the condition is evaluated before the selected branch."""
         assert_evaluation_order("""
@@ -1447,10 +1457,6 @@ def check():
             must_contain=["42", "100"],
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-method-call-flat: the bound method is shown separately",
-    )
     def test_method_call_with_args(self) -> None:
         """Method call with arguments shows flat format."""
         assert_introspects(
@@ -1467,10 +1473,6 @@ def check():
             must_contain=["where 5 = Calc().add(2, 3)"],
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-method-call-flat: the bound method is shown separately",
-    )
     def test_chained_method_calls(self) -> None:
         """Chained method call: obj.method1().method2()."""
         assert_introspects(
@@ -1589,10 +1591,6 @@ def check():
 """)
         assert "custom failure message" in msg
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-method-call-flat: the bound method is shown separately",
-    )
     def test_method_call_on_global(self) -> None:
         """Method call on a global/module-level object."""
         assert_introspects(
