@@ -1,0 +1,4 @@
+Assertion failure messages now show a method call on a single line, without the bound method as a separate intermediate::
+
+    assert 42 == 100
+     +  where 42 = Obj().compute()
