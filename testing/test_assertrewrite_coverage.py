@@ -1157,10 +1157,6 @@ def check():
     return "passed", value
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-starred-argument: a starred argument is read after a later walrus",
-    )
     def test_starred_argument_precedes_walrus(self) -> None:
         assert_evaluation_order("""
 def check():
@@ -1189,10 +1185,6 @@ def check():
     return "passed", value
 """)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="order-call-argument: a walrus argument is substituted into a later one",
-    )
     def test_bare_walrus_argument_in_order(self) -> None:
         """A walrus argument is evaluated in place, before the ones after it."""
         assert_evaluation_order("""
