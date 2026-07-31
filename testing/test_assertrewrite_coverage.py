@@ -639,12 +639,8 @@ def check():
 
 
 class TestIntrospectionSubscript:
-    """Subscript / indexing — currently hits generic_visit."""
+    """Subscript / indexing — has a dedicated visitor."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-subscript: container[key] is not decomposed",
-    )
     def test_dict_subscript_shows_key_and_container(self) -> None:
         assert_introspects(
             """
@@ -655,10 +651,6 @@ def check():
             must_contain=["where 1 = ", "['a']"],
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-subscript: container[key] is not decomposed",
-    )
     def test_list_subscript_shows_index_and_container(self) -> None:
         assert_introspects(
             """
@@ -1427,10 +1419,6 @@ def check():
 class TestEdgeCases:
     """Regression and edge-case tests combining multiple expression types."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="introspect-subscript: container[key] is not decomposed",
-    )
     def test_subscript_with_variable_key(self) -> None:
         """Subscript where the key is a variable (not constant)."""
         assert_introspects(
