@@ -1109,6 +1109,21 @@ class AssertionRewriter(ast.NodeVisitor):
         new_starred = ast.Starred(res, starred.ctx)
         return new_starred, "*" + expl
 
+    def visit_Subscript(self, subscript: ast.Subscript) -> tuple[ast.Name, str]:
+        # For Slice objects (a[1:3]), fall back to generic — decomposing
+        # start/stop/step is rarely useful in assertion messages.
+        if isinstance(subscript.slice, ast.Slice):
+            return self.generic_visit(subscript)
+        value, value_expl = self.visit_operand(subscript.value, [subscript.slice])
+        slice_res, slice_expl = self.visit(subscript.slice)
+        res = self.assign(
+            ast.copy_location(ast.Subscript(value, slice_res, ast.Load()), subscript)
+        )
+        res_expl = self.explanation_param(self.display(res))
+        pat = "%s\n{%s = %s[%s]\n}"
+        expl = pat % (res_expl, res_expl, value_expl, slice_expl)
+        return res, expl
+
     def visit_Attribute(self, attr: ast.Attribute) -> tuple[ast.Name, str]:
         value, value_expl = self.visit(attr.value)
         res = self.assign(
