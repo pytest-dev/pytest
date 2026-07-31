@@ -678,7 +678,41 @@ class TestIntrospectionFString:
 
 
 class TestIntrospectionMethodCall:
-    """Method calls — currently show the bound method as its own "where" line."""
+    """Method calls — flat obj.method() display without bound-method noise."""
+
+    def test_method_call_flat_format(self) -> None:
+        """Method calls show 'where result = obj.method()' in one line."""
+        assert_introspects(
+            """
+            def check():
+                class Obj:
+                    def compute(self):
+                        return 42
+                    def __repr__(self):
+                        return "Obj()"
+                obj = Obj()
+                assert obj.compute() == 100
+            """,
+            must_contain=["where 42 = Obj().compute()"],
+        )
+
+    def test_method_call_no_bound_method_noise(self) -> None:
+        """No separate 'where compute = obj.compute' line."""
+        msg = get_failure_message("""
+            def check():
+                class Obj:
+                    def compute(self):
+                        return 42
+                    def __repr__(self):
+                        return "Obj()"
+                obj = Obj()
+                assert obj.compute() == 100
+            """)
+        lines = msg.splitlines()
+        for line in lines:
+            assert "where compute = " not in line, (
+                f"Noisy bound-method intermediate found:\n{msg}"
+            )
 
     def test_callable_variable_shows_result(self) -> None:
         # Current behavior: shows full function repr, not variable name
@@ -1107,6 +1141,24 @@ class TestEvaluationOrder:
                 return "passed", mapping
             """)
 
+    def test_method_lookup_precedes_arguments(self) -> None:
+        """Guard: the bound method is looked up before the arguments run."""
+        assert_evaluation_order("""
+            def check():
+                trace = []
+                class Box:
+                    @property
+                    def take(self):
+                        trace.append("lookup")
+                        return lambda value: value
+                obj = Box()
+                try:
+                    assert obj.take(trace.append("argument")) is None
+                except AssertionError:
+                    return "raised", trace
+                return "passed", trace
+            """)
+
     def test_ifexp_branches_in_order(self) -> None:
         """Guard: the condition is evaluated before the selected branch."""
         assert_evaluation_order("""
@@ -1164,6 +1216,42 @@ class TestEdgeCases:
                 assert d["a"]["b"] == 100
             """,
             must_contain=["42", "100"],
+        )
+
+    def test_method_call_with_args(self) -> None:
+        """Method call with arguments shows flat format."""
+        assert_introspects(
+            """
+            def check():
+                class Calculator:
+                    def add(self, a, b):
+                        return a + b
+                    def __repr__(self):
+                        return "Calc()"
+                c = Calculator()
+                assert c.add(2, 3) == 10
+            """,
+            must_contain=["where 5 = Calc().add(2, 3)"],
+        )
+
+    def test_chained_method_calls(self) -> None:
+        """Chained method call: obj.method1().method2()."""
+        assert_introspects(
+            """
+            def check():
+                class Builder:
+                    def __init__(self, val=0):
+                        self.val = val
+                    def add(self, n):
+                        return Builder(self.val + n)
+                    def result(self):
+                        return self.val
+                    def __repr__(self):
+                        return f"Builder({self.val})"
+                b = Builder()
+                assert b.add(5).result() == 100
+            """,
+            must_contain=["where 5 = ", ".result()"],
         )
 
     def test_subscript_on_method_result(self) -> None:
@@ -1263,3 +1351,14 @@ class TestEdgeCases:
                 assert d["key"] == 100, "custom failure message"
             """)
         assert "custom failure message" in msg
+
+    def test_method_call_on_global(self) -> None:
+        """Method call on a global/module-level object."""
+        assert_introspects(
+            """
+            items = [1, 2, 3]
+            def check():
+                assert items.count(99) == 1
+            """,
+            must_contain=["where 0 = [1, 2, 3].count(99)"],
+        )
