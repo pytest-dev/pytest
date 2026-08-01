@@ -1739,6 +1739,9 @@ class Config:
         If the specified name hasn't been registered through a prior
         :func:`parser.addini <pytest.Parser.addini>` call (usually from a
         plugin), a ValueError is raised.
+
+        If the value read from the configuration file does not match the
+        registered ``type``, a :class:`~pytest.UsageError` is raised.
         """
         canonical_name = self._parser._ini_aliases.get(name, name)
         try:
@@ -1784,21 +1787,28 @@ class Config:
         value = selected.value
         mode = selected.mode
 
-        if not isinstance(type, tuple):
-            return self._getini_value(mode, name, canonical_name, type, value, default)
-
-        # Union: try each member; the first one that accepts the value wins.
-        for member in type:
-            try:
+        # An invalid value is a user error, raised as UsageError so that it is
+        # reported as a short message rather than an internal error traceback.
+        try:
+            if not isinstance(type, tuple):
                 return self._getini_value(
-                    mode, name, canonical_name, member, value, default
+                    mode, name, canonical_name, type, value, default
                 )
-            except (TypeError, ValueError):
-                pass
-        raise TypeError(
-            f"{self.inipath}: config option '{name}' expects one of "
-            f"{_ini_type_repr(type)}, got {builtins.type(value).__name__}: {value!r}"
-        )
+
+            # Union: try each member; the first one that accepts the value wins.
+            for member in type:
+                try:
+                    return self._getini_value(
+                        mode, name, canonical_name, member, value, default
+                    )
+                except (TypeError, ValueError):
+                    pass
+            raise TypeError(
+                f"{self.inipath}: config option '{name}' expects one of "
+                f"{_ini_type_repr(type)}, got {builtins.type(value).__name__}: {value!r}"
+            )
+        except (TypeError, ValueError) as e:
+            raise UsageError(str(e)) from e
 
     def _getini_value(
         self,

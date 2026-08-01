@@ -2119,6 +2119,19 @@ class TestClassicOutputStyle:
         result.stdout.fnmatch_lines([".F..F", "*2 failed, 3 passed in*"])
 
 
+def test_console_output_style_invalid(pytester: Pytester) -> None:
+    """An invalid console_output_style fails with a clean usage error."""
+    result = pytester.runpytest("-o", "console_output_style=fancy")
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            "*ERROR: *config option 'console_output_style' expects one of "
+            "'classic' | 'progress' | 'count' | 'times' | "
+            "'progress-even-when-capture-no', got 'fancy'"
+        ]
+    )
+
+
 class TestProgressOutputStyle:
     @pytest.fixture
     def many_tests_files(self, pytester: Pytester) -> None:

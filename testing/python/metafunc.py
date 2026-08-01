@@ -338,7 +338,7 @@ class TestMetafunc:
 
         class MockConfig:
             def getini(self, name):
-                return ""
+                return "skip"
 
             @property
             def hook(self):

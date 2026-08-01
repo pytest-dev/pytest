@@ -880,3 +880,22 @@ def test_get_user_handles_getpass_oserror(monkeypatch: MonkeyPatch) -> None:
 
     monkeypatch.setattr(getpass, "getuser", _raise_oserror)
     assert get_user() is None
+
+
+def test_tmp_path_retention_policy_invalid(pytester: Pytester) -> None:
+    """An invalid tmp_path_retention_policy fails with a clean usage error."""
+    pytester.makepyprojecttoml(
+        """
+        [tool.pytest]
+        tmp_path_retention_policy = "compress"
+        """
+    )
+    pytester.makepyfile("def test(): pass")
+    result = pytester.runpytest()
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            "*ERROR: *config option 'tmp_path_retention_policy' expects one of "
+            "'all' | 'failed' | 'none', got 'compress'"
+        ]
+    )

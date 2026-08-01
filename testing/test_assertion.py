@@ -8,6 +8,7 @@ import dataclasses
 import sys
 import textwrap
 from typing import Any
+from typing import Literal
 from typing import NamedTuple
 
 import attr
@@ -18,6 +19,7 @@ from _pytest.assertion import truncate
 from _pytest.assertion import util
 from _pytest.assertion._compare_any import _compare_eq_cls
 from _pytest.assertion._compare_mapping import _compare_eq_mapping
+from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _compare_eq_text
@@ -31,7 +33,7 @@ import pytest
 def mock_config(
     verbose: int = 0,
     assertion_override: int | None = None,
-    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+    assertion_text_diff_style: _AssertionTextDiffStyle = "ndiff",
     truncation_limit_lines: str = "0",
     truncation_limit_chars: str = "0",
     has_terminalreporter: bool = True,
@@ -67,7 +69,7 @@ def mock_config(
             raise KeyError(f"Not mocked out: {verbosity_type}")
 
         def getini(self, name: str) -> str:
-            if name == util.ASSERTION_TEXT_DIFF_STYLE_INI:
+            if name == "assertion_text_diff_style":
                 return assertion_text_diff_style
             # Truncation defaults to disabled (``"0"``) so ``callop``-style
             # tests can compare against the full explanation; the dispatcher
@@ -455,7 +457,7 @@ def callop(
     left: Any,
     right: Any,
     verbose: int = 0,
-    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+    assertion_text_diff_style: _AssertionTextDiffStyle = "ndiff",
 ) -> list[str] | None:
     config = mock_config(
         verbose=verbose,
@@ -468,7 +470,7 @@ def callequal(
     left: Any,
     right: Any,
     verbose: int = 0,
-    assertion_text_diff_style: str = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+    assertion_text_diff_style: _AssertionTextDiffStyle = "ndiff",
 ) -> list[str] | None:
     return callop(
         "==",
@@ -504,7 +506,7 @@ class TestAssert_reprcompare:
                 "eggs",
                 util.dummy_highlighter,
                 0,
-                util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+                "ndiff",
             )
         ) == [
             "- eggs",
@@ -516,7 +518,7 @@ class TestAssert_reprcompare:
         bounded instead of growing with the input."""
         left = "\n".join(f"left {i}" for i in range(1000))
         right = "\n".join(f"right {i}" for i in range(1000))
-        ndiff_style = util.ASSERTION_TEXT_DIFF_STYLE_NDIFF
+        ndiff_style: Literal["ndiff"] = "ndiff"
         capped = list(
             _compare_eq_text(
                 left,
@@ -609,7 +611,7 @@ class TestAssert_reprcompare:
         assert callequal(
             "foo\nspam\nbar",
             "foo\neggs\nbar",
-            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+            assertion_text_diff_style="block",
         ) == [
             r"'foo\nspam\nbar' == 'foo\neggs\nbar'",
             "",
@@ -628,7 +630,7 @@ class TestAssert_reprcompare:
         assert callequal(
             "\nfoo\n",
             "\nbar",
-            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+            assertion_text_diff_style="block",
         ) == [
             r"'\nfoo\n' == '\nbar'",
             "",
@@ -646,7 +648,7 @@ class TestAssert_reprcompare:
         assert callequal(
             "spam",
             "eggs",
-            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_BLOCK,
+            assertion_text_diff_style="block",
         ) == [
             "'spam' == 'eggs'",
             "",
@@ -2008,7 +2010,7 @@ class TestMaterializeWithTruncation:
             right=right,
             verbose=1,
             highlighter=util.dummy_highlighter,
-            assertion_text_diff_style=util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+            assertion_text_diff_style="ndiff",
             truncation_budget=cap,
         )
         return truncate.materialize_with_truncation(src, config)
@@ -2221,7 +2223,7 @@ def test_compare_eq_cls_no_comparable_fields() -> None:
                 NoCompare(2),
                 util.dummy_highlighter,
                 0,
-                util.ASSERTION_TEXT_DIFF_STYLE_NDIFF,
+                "ndiff",
             )
         )
         == []
@@ -2950,9 +2952,9 @@ def test_assertion_text_diff_style_block_for_multiline_strings(
         """
     )
     pytester.makeini(
-        f"""
+        """
         [pytest]
-        assertion_text_diff_style = {util.ASSERTION_TEXT_DIFF_STYLE_BLOCK}
+        assertion_text_diff_style = block
         """
     )
 
@@ -2982,9 +2984,9 @@ def test_assertion_text_diff_style_block_for_single_line_strings(
         """
     )
     pytester.makeini(
-        f"""
+        """
         [pytest]
-        assertion_text_diff_style = {util.ASSERTION_TEXT_DIFF_STYLE_BLOCK}
+        assertion_text_diff_style = block
         """
     )
 
@@ -3020,7 +3022,8 @@ def test_assertion_text_diff_style_invalid(pytester: Pytester) -> None:
     assert result.ret == pytest.ExitCode.USAGE_ERROR
     result.stderr.fnmatch_lines(
         [
-            "*ERROR: assertion_text_diff_style must be one of 'ndiff', 'block'; got 'side-by-side'"
+            "*ERROR: *: config option 'assertion_text_diff_style' expects one of "
+            "'ndiff' | 'block', got 'side-by-side'"
         ]
     )
 
