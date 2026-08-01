@@ -709,6 +709,14 @@ class Pytester:
         tmphome = str(self.path)
         mp.setenv("HOME", tmphome)
         mp.setenv("USERPROFILE", tmphome)
+        # Ensure the user-level cache directory is isolated as well. HOME alone
+        # is not enough: XDG_CACHE_HOME takes precedence over it, and on Windows
+        # LOCALAPPDATA is not derived from USERPROFILE at all. XDG_CACHE_HOME is
+        # unset rather than pointed at tmphome, so that inner runs exercise the
+        # same platform-native path that real users get.
+        mp.delenv("XDG_CACHE_HOME", raising=False)
+        mp.delenv("PYTEST_CACHE_HOME", raising=False)
+        mp.setenv("LOCALAPPDATA", os.path.join(tmphome, "AppData", "Local"))
         # Do not use colors for inner runs by default.
         mp.setenv("PY_COLORS", "0")
 

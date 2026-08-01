@@ -720,6 +720,29 @@ def test_spawn_uses_tmphome(pytester: Pytester) -> None:
     assert child.wait() == 0, out.decode("utf8")
 
 
+def test_pytester_isolates_user_cache_env(pytester: Pytester) -> None:
+    tmphome = str(pytester.path)
+    assert "XDG_CACHE_HOME" not in os.environ
+    assert "PYTEST_CACHE_HOME" not in os.environ
+    assert os.environ["LOCALAPPDATA"] == os.path.join(tmphome, "AppData", "Local")
+
+    # The isolation must survive into subprocess runs, which copy os.environ.
+    p1 = pytester.makepyfile(
+        f"""
+        import os
+
+        def test():
+            assert "XDG_CACHE_HOME" not in os.environ
+            assert "PYTEST_CACHE_HOME" not in os.environ
+            assert os.environ["LOCALAPPDATA"] == os.path.join(
+                {tmphome!r}, "AppData", "Local"
+            )
+        """
+    )
+    result = pytester.runpytest_subprocess(str(p1))
+    result.assert_outcomes(passed=1)
+
+
 def test_run_result_repr() -> None:
     outlines = ["some", "normal", "output"]
     errlines = ["some", "nasty", "errors", "happened"]
