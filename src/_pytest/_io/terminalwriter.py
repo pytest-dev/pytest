@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from collections.abc import Sequence
 import os
 import shutil
@@ -47,6 +48,26 @@ def should_do_markup(file: TextIO) -> bool:
     )
 
 
+def should_do_hyperlinks(file: TextIO) -> bool:
+    """Whether OSC 8 hyperlinks should be emitted to ``file``.
+
+    There is no way to ask a terminal whether it understands OSC 8, so this is
+    allow-by-default with a deny-list: terminals which do not implement it
+    almost universally *ignore* unknown OSC sequences rather than printing
+    them, and an allow-list of known-good terminals would be permanently out of
+    date. ``should_do_markup`` already excludes files, pipes and ``NO_COLOR``.
+    """
+    if os.environ.get("PYTEST_HYPERLINKS") == "1":
+        return True
+    if os.environ.get("PYTEST_HYPERLINKS") == "0":
+        return False
+    if not should_do_markup(file):
+        return False
+    term = os.environ.get("TERM", "")
+    # The Linux virtual console and GNU screen do not pass OSC 8 through.
+    return term not in ("dumb", "linux") and not term.startswith(("screen", "eterm"))
+
+
 @final
 class TerminalWriter:
     _esctable = dict(
@@ -85,6 +106,7 @@ class TerminalWriter:
                 assert file is not None
         self._file = file
         self.hasmarkup = should_do_markup(file)
+        self.haslinks = should_do_hyperlinks(file)
         self._current_line = ""
         self._terminal_width: int | None = None
         self.code_highlight = True
@@ -113,6 +135,28 @@ class TerminalWriter:
             if esc:
                 text = "".join(f"\x1b[{cod}m" for cod in esc) + text + "\x1b[0m"
         return text
+
+    def hyperlink(self, text: str, url: str) -> str:
+        """Return ``text`` as an OSC 8 terminal hyperlink to ``url``.
+
+        Returns ``text`` unchanged when hyperlinks are disabled, so callers may
+        use this unconditionally.
+
+        The result contains zero-width escape sequences, so it must not be used
+        for width calculations - prefer ``write(..., link=...)``, which applies
+        the escapes after the line-width bookkeeping.
+        """
+        if not self.haslinks or not text:
+            return text
+        # A ";" would terminate the parameter field, and ESC/BEL the sequence
+        # itself; rather than mangle the terminal, degrade to plain text.
+        if any(c in url for c in "\x1b\x07;"):
+            return text
+        # ST ("\x1b\\") rather than BEL as the terminator, as the spec uses it
+        # and it survives tmux/screen passthrough. Any SGR markup is nested
+        # inside the link, as some terminals drop the link when the SGR reset
+        # comes after the closing sequence.
+        return f"\x1b]8;;{url}\x1b\\{text}\x1b]8;;\x1b\\"
 
     def sep(
         self,
@@ -152,6 +196,27 @@ class TerminalWriter:
         self.line(line, **markup)
 
     def write(self, msg: str, *, flush: bool = False, **markup: bool) -> None:
+        self._write(msg, flush=flush, link=None, markup=markup)
+
+    def write_link(
+        self, text: str, url: str, *, flush: bool = False, **markup: bool
+    ) -> None:
+        """Write ``text`` as an OSC 8 terminal hyperlink to ``url``.
+
+        Prefer this over wrapping the text with ``hyperlink()`` yourself: the
+        escapes are applied after the line-width bookkeeping, so they stay
+        invisible to ``width_of_current_line``.
+        """
+        self._write(text, flush=flush, link=url, markup=markup)
+
+    def _write(
+        self,
+        msg: str,
+        *,
+        flush: bool,
+        link: str | None,
+        markup: Mapping[str, bool],
+    ) -> None:
         if msg:
             current_line = msg.rsplit("\n", 1)[-1]
             if "\n" in msg:
@@ -159,7 +224,11 @@ class TerminalWriter:
             else:
                 self._current_line += current_line
 
+            # The bookkeeping above deliberately uses the raw message, so that
+            # the escapes added below stay invisible to the width accounting.
             msg = self.markup(msg, **markup)
+            if link is not None:
+                msg = self.hyperlink(msg, link)
 
             self.write_raw(msg, flush=flush)
 
@@ -181,6 +250,11 @@ class TerminalWriter:
 
     def line(self, s: str = "", **markup: bool) -> None:
         self.write(s, **markup)
+        self.write("\n")
+
+    def line_link(self, s: str, url: str, **markup: bool) -> None:
+        """Like ``line()``, but rendering ``s`` as a hyperlink to ``url``."""
+        self.write_link(s, url, **markup)
         self.write("\n")
 
     def flush(self) -> None:
