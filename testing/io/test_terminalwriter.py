@@ -231,6 +231,117 @@ def test_empty_NO_COLOR_and_FORCE_COLOR_ignored(monkeypatch: MonkeyPatch) -> Non
     assert_color(False, False)
 
 
+class TestHyperlinks:
+    @pytest.fixture
+    def file(self) -> StringIO:
+        return StringIO()
+
+    @pytest.fixture
+    def tw(self, file: StringIO) -> terminalwriter.TerminalWriter:
+        tw = terminalwriter.TerminalWriter(file)
+        tw.haslinks = True
+        return tw
+
+    def test_hyperlink(self, tw: terminalwriter.TerminalWriter) -> None:
+        assert (
+            tw.hyperlink("pytest", "file:///tmp/x")
+            == "\x1b]8;;file:///tmp/x\x1b\\pytest\x1b]8;;\x1b\\"
+        )
+
+    def test_hyperlink_disabled(self, tw: terminalwriter.TerminalWriter) -> None:
+        tw.haslinks = False
+        assert tw.hyperlink("pytest", "file:///tmp/x") == "pytest"
+
+    def test_hyperlink_empty_text(self, tw: terminalwriter.TerminalWriter) -> None:
+        assert tw.hyperlink("", "file:///tmp/x") == ""
+
+    @pytest.mark.parametrize("url", ["file:///a;b", "file:///a\x1bb", "file:///a\x07b"])
+    def test_hyperlink_rejects_unsafe_url(
+        self, tw: terminalwriter.TerminalWriter, url: str
+    ) -> None:
+        assert tw.hyperlink("pytest", url) == "pytest"
+
+    def test_write_link(
+        self, tw: terminalwriter.TerminalWriter, file: StringIO
+    ) -> None:
+        tw.write_link("pytest", "file:///tmp/x")
+        assert file.getvalue() == "\x1b]8;;file:///tmp/x\x1b\\pytest\x1b]8;;\x1b\\"
+
+    def test_line_link(self, tw: terminalwriter.TerminalWriter, file: StringIO) -> None:
+        tw.line_link("pytest", "file:///tmp/x")
+        assert file.getvalue() == "\x1b]8;;file:///tmp/x\x1b\\pytest\x1b]8;;\x1b\\\n"
+
+    def test_write_link_disabled(
+        self, tw: terminalwriter.TerminalWriter, file: StringIO
+    ) -> None:
+        tw.haslinks = False
+        tw.write_link("pytest", "file:///tmp/x")
+        assert file.getvalue() == "pytest"
+
+    def test_write_link_with_markup_nests_sgr_inside(
+        self, tw: terminalwriter.TerminalWriter, file: StringIO
+    ) -> None:
+        tw.hasmarkup = True
+        tw.write_link("pytest", "file:///tmp/x", bold=True)
+        assert (
+            file.getvalue()
+            == "\x1b]8;;file:///tmp/x\x1b\\\x1b[1mpytest\x1b[0m\x1b]8;;\x1b\\"
+        )
+
+    def test_write_link_keeps_width_accounting(
+        self, tw: terminalwriter.TerminalWriter
+    ) -> None:
+        tw.write_link("abc", "file:///tmp/x")
+        assert tw.width_of_current_line == 3
+
+
+def assert_hyperlinks(expected: bool) -> None:
+    file = io.StringIO()
+    file.isatty = lambda: True  # type: ignore
+    assert terminalwriter.should_do_hyperlinks(file) is expected
+
+
+def test_should_do_hyperlinks_PYTEST_HYPERLINKS_eq_1(monkeypatch: MonkeyPatch) -> None:
+    # Forced on even though markup is off.
+    monkeypatch.setitem(os.environ, "NO_COLOR", "1")
+    monkeypatch.setitem(os.environ, "PYTEST_HYPERLINKS", "1")
+    assert_hyperlinks(True)
+
+
+def test_should_not_do_hyperlinks_PYTEST_HYPERLINKS_eq_0(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(os.environ, "PY_COLORS", "1")
+    monkeypatch.setitem(os.environ, "PYTEST_HYPERLINKS", "0")
+    assert_hyperlinks(False)
+
+
+def test_should_not_do_hyperlinks_without_markup(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.delenv("PYTEST_HYPERLINKS", raising=False)
+    monkeypatch.setitem(os.environ, "NO_COLOR", "1")
+    assert_hyperlinks(False)
+
+
+@pytest.mark.parametrize(
+    ["term", "expected"],
+    [
+        ("xterm-256color", True),
+        ("foot", True),
+        ("linux", False),
+        ("screen-256color", False),
+        ("eterm-color", False),
+    ],
+)
+def test_should_do_hyperlinks_for_term(
+    monkeypatch: MonkeyPatch, term: str, expected: bool
+) -> None:
+    monkeypatch.delenv("PYTEST_HYPERLINKS", raising=False)
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setitem(os.environ, "PY_COLORS", "1")
+    monkeypatch.setenv("TERM", term)
+    assert_hyperlinks(expected)
+
+
 class TestTerminalWriterLineWidth:
     def test_init(self) -> None:
         tw = terminalwriter.TerminalWriter()
