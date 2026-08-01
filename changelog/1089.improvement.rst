@@ -1,0 +1,5 @@
+:class:`~_pytest.config.Config`'s terminal writer can now emit OSC 8 terminal hyperlinks, so that
+paths printed by pytest are clickable in terminals which support them.
+
+Hyperlinks are emitted only when colored output is enabled and the terminal is not known to mishandle
+them. They can be forced on or off with the ``PYTEST_HYPERLINKS`` environment variable (``1`` or ``0``).
