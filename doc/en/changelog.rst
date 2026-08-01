@@ -466,7 +466,7 @@ Packaging updates and notes for downstreams
 -------------------------------------------
 
 - `#13933 <https://github.com/pytest-dev/pytest/issues/13933>`_: The tox configuration has been adjusted to make sure the desired
-  version string can be passed into its :external+tox:ref:`package_env` through
+  version string can be passed into its `package_env <https://tox.wiki/en/latest/config.html#package_env>`_ through
   the ``SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST`` environment
   variable as a part of the release process -- by :user:`webknjaz`.
 
@@ -481,7 +481,7 @@ Contributor-facing changes
 
 
 - `#13933 <https://github.com/pytest-dev/pytest/issues/13933>`_: The tox configuration has been adjusted to make sure the desired
-  version string can be passed into its :external+tox:ref:`package_env` through
+  version string can be passed into its `package_env <https://tox.wiki/en/latest/config.html#package_env>`_ through
   the ``SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST`` environment
   variable as a part of the release process -- by :user:`webknjaz`.
 

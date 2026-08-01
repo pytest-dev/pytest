@@ -1,0 +1,1 @@
+Fix unresolved Sphinx cross-reference for ``package_env`` in changelog documentation.
