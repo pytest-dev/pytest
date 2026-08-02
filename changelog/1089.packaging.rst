@@ -1,0 +1,8 @@
+A new ``xdg`` extra is available: ``pip install pytest[xdg]`` pulls in platformdirs_, which pytest uses
+to locate the platform's user cache directory.
+
+The extra is only needed to store the cache outside the project directory; a plain ``pip install pytest``
+is unaffected, and platformdirs is imported lazily so it is never needed otherwise. Setting
+``PYTEST_CACHE_HOME`` to an explicit directory also works without the extra.
+
+.. _platformdirs: https://pypi.org/project/platformdirs/
