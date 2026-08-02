@@ -1,0 +1,7 @@
+Moved the parametrization core out of ``_pytest.python`` into the new
+``_pytest.parametrize`` module: ``CallSpec``, ``IdMaker`` and the new
+``ParametrizeContext``, of which :class:`pytest.Metafunc` is now the
+Python-specific subclass adding the fixture closure, signature validation and
+direct-parameter desugaring.
+
+``_pytest.python.CallSpec2`` keeps warning and resolving as before.

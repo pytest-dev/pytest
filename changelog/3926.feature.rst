@@ -1,0 +1,32 @@
+Added the ``"definition"`` fixture scope, which shares one fixture instance
+across all invocations generated from a single test definition -- that is,
+across the parameter sets of one parametrized test, but not between two
+different tests:
+
+.. code-block:: python
+
+    @pytest.fixture(scope="definition")
+    def resource(): ...
+
+
+    @pytest.mark.parametrize("n", [1, 2, 3])
+    def test_it(resource, n):
+        # one `resource` for all three parameter sets
+        ...
+
+The scope needs the test definition to be a node of the collection tree, so it
+requires :confval:`collect_function_definition` to be set to ``pedantic`` (or
+``messy``). Using it without that fails with an explicit error rather than
+silently degrading to function scope.
+
+``@pytest.mark.parametrize(..., scope="definition")`` is supported as well and
+groups the invocations of one definition by parameter value.
+
+Added :class:`_pytest.nodes.ItemDefinition`, the collector-agnostic base for "a
+definition which generates items". Subclassing it lets a non-Python collector
+have its test definitions parametrized through :hook:`pytest_generate_tests`,
+exactly like Python test functions: declare the accepted names in
+``parametrize_argnames``, build one item per parameter set in ``make_item()``,
+and the chosen values arrive on ``item.callspec.params``. Parameter ids,
+``pytest.param(...)`` marks and node-id selection all work as usual; there is no
+fixture resolution on that path. See :ref:`non-python parametrization`.

@@ -21,9 +21,9 @@ from _pytest.compat import getfuncargnames
 from _pytest.compat import NOTSET
 from _pytest.outcomes import fail
 from _pytest.outcomes import Failed
+from _pytest.parametrize import IdMaker
 from _pytest.pytester import Pytester
 from _pytest.python import Function
-from _pytest.python import IdMaker
 from _pytest.scope import Scope
 import pytest
 
@@ -223,7 +223,7 @@ class TestMetafunc:
 
     def test_infer_parametrize_scope(self) -> None:
         """Unit test for _infer_parameterize_scope (#3941)."""
-        from _pytest.python import _infer_parametrize_scope
+        from _pytest.parametrize import _infer_parametrize_scope
 
         @dataclasses.dataclass
         class DummyFixtureDef:
