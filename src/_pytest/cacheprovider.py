@@ -446,7 +446,9 @@ class LFPlugin:
         assert config.cache
         self.lastfailed: dict[NodeId, bool] = {
             NodeId.parse(k): v
-            for k, v in config.cache.get("cache/lastfailed", {}).items()
+            for k, v in config.cache.get(
+                "cache/lastfailed", {}, scope=CacheScope.ENV
+            ).items()
         }
         self._previously_failed_count: int | None = None
         self._report_status: str | None = None
@@ -549,9 +551,13 @@ class LFPlugin:
 
         assert config.cache is not None
         current_lastfailed = {str(k): v for k, v in self.lastfailed.items()}
-        saved_lastfailed = config.cache.get("cache/lastfailed", {})
+        saved_lastfailed = config.cache.get(
+            "cache/lastfailed", {}, scope=CacheScope.ENV
+        )
         if saved_lastfailed != current_lastfailed:
-            config.cache.set("cache/lastfailed", current_lastfailed)
+            config.cache.set(
+                "cache/lastfailed", current_lastfailed, scope=CacheScope.ENV
+            )
 
 
 class NFPlugin:
@@ -562,7 +568,8 @@ class NFPlugin:
         self.active = config.option.newfirst
         assert config.cache is not None
         self.cached_nodeids: set[NodeId] = {
-            NodeId.parse(s) for s in config.cache.get("cache/nodeids", [])
+            NodeId.parse(s)
+            for s in config.cache.get("cache/nodeids", [], scope=CacheScope.ENV)
         }
 
     @hookimpl(wrapper=True, tryfirst=True)
@@ -599,7 +606,11 @@ class NFPlugin:
             return
 
         assert config.cache is not None
-        config.cache.set("cache/nodeids", sorted(str(n) for n in self.cached_nodeids))
+        config.cache.set(
+            "cache/nodeids",
+            sorted(str(n) for n in self.cached_nodeids),
+            scope=CacheScope.ENV,
+        )
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -721,6 +732,20 @@ def pytest_report_header(config: Config) -> str | None:
     return None
 
 
+def _cache_roots(basedir: Path) -> list[tuple[str | None, Path]]:
+    """Yield ``(scope_id, root)`` for the shared scope and every scope present.
+
+    ``scope_id`` is None for the shared scope. Scopes are read off the
+    filesystem rather than from :class:`CacheScope`, so that scopes belonging
+    to other environments are included.
+    """
+    roots: list[tuple[str | None, Path]] = [(None, basedir)]
+    scopesdir = basedir / Cache._CACHE_PREFIX_SCOPES
+    if scopesdir.is_dir():
+        roots.extend((p.name, p) for p in sorted(scopesdir.iterdir()) if p.is_dir())
+    return roots
+
+
 def cacheshow(config: Config, session: Session) -> int:
     """Display cache contents when --cache-show is used.
 
@@ -757,22 +782,36 @@ def cacheshow(config: Config, session: Session) -> int:
 
     dummy = object()
     basedir = config.cache._cachedir
-    vdir = basedir / Cache._CACHE_PREFIX_VALUES
     tw.sep("-", f"cache values for {glob!r}")
-    for valpath in sorted(globfiles(vdir)):
-        key = str(valpath.relative_to(vdir))
-        val = config.cache.get(key, dummy)
-        if val is dummy:
-            tw.line(f"{key} contains unreadable content, will be ignored")
-        else:
-            tw.line(f"{key} contains:")
-            for line in pformat(val).splitlines():
-                tw.line("  " + line)
+    for scope_id, root in _cache_roots(basedir):
+        vdir = root / Cache._CACHE_PREFIX_VALUES
+        if not vdir.is_dir():
+            continue
+        for valpath in sorted(globfiles(vdir)):
+            key = str(valpath.relative_to(vdir))
+            if scope_id is not None:
+                key = f"{key} ({scope_id})"
+            # Read through the path rather than Cache.get, so that scopes
+            # belonging to other environments are shown too.
+            try:
+                with valpath.open("r", encoding="UTF-8") as f:
+                    val = json.load(f)
+            except (ValueError, OSError):
+                val = dummy
+            if val is dummy:
+                tw.line(f"{key} contains unreadable content, will be ignored")
+            else:
+                tw.line(f"{key} contains:")
+                for line in pformat(val).splitlines():
+                    tw.line("  " + line)
 
-    ddir = basedir / Cache._CACHE_PREFIX_DIRS
-    if ddir.is_dir():
+    ddirs = [root / Cache._CACHE_PREFIX_DIRS for _, root in _cache_roots(basedir)]
+    if any(ddir.is_dir() for ddir in ddirs):
         tw.sep("-", f"cache directories for {glob!r}")
-        for p in sorted(globfiles(ddir)):
-            key = str(p.relative_to(basedir))
-            tw.line(f"{key} is a file of length {p.stat().st_size}")
+        for ddir in ddirs:
+            if not ddir.is_dir():
+                continue
+            for p in sorted(globfiles(ddir)):
+                key = str(p.relative_to(basedir))
+                tw.line(f"{key} is a file of length {p.stat().st_size}")
     return 0
