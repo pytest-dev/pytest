@@ -54,8 +54,11 @@ Plugin discovery order at tool startup
      :confval:`testpaths` if defined and running from the rootdir, otherwise the
      current dir
    - for each test path, load ``conftest.py`` and ``test*/conftest.py`` relative
-     to the directory part of the test path, if exist. Before a ``conftest.py``
-     file is loaded, load ``conftest.py`` files in all of its parent directories.
+     to the directory part of the test path, if they exist. Before a ``conftest.py``
+     file is loaded, load ``conftest.py`` files in its parent directories up to
+     the :option:`--confcutdir` limit. When ``--confcutdir`` is not provided,
+     the cutoff defaults to the directory containing the config file, or to the
+     :ref:`rootdir <rootdir>` if no config file is found.
      After a ``conftest.py`` file is loaded, recursively load all plugins specified
      in its :globalvar:`pytest_plugins` variable if present.
 
@@ -250,6 +253,13 @@ application modules:
 .. code-block:: python
 
     pytest_plugins = "myapp.testsupport.myplugin"
+
+The entry point name of an installed plugin can also be used, just like with
+the :option:`-p` command-line option:
+
+.. code-block:: python
+
+    pytest_plugins = ("xdist",)
 
 :globalvar:`pytest_plugins` are processed recursively, so note that in the example above
 if ``myapp.testsupport.myplugin`` also declares :globalvar:`pytest_plugins`, the contents

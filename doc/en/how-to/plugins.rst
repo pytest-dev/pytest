@@ -188,9 +188,9 @@ manually specify each plugin with :option:`-p` or :envvar:`PYTEST_PLUGINS`, you 
 
    * :option:`-p` loads (or disables with ``-p no:<name>``) a plugin by name or entry point
      for a specific pytest invocation, and is processed early during startup.
-   * :envvar:`PYTEST_PLUGINS` is a comma-separated list of Python modules that are imported
-     and registered as plugins during startup. This mechanism is commonly used by test
-     suites, for example when testing a plugin.
+   * :envvar:`PYTEST_PLUGINS` is a comma-separated list of Python modules or plugin
+     entry point names that are loaded and registered as plugins during startup.
+     This mechanism is commonly used by test suites, for example when testing a plugin.
 
    When explicitly controlling plugin loading (especially with
    :envvar:`PYTEST_DISABLE_PLUGIN_AUTOLOAD` or :option:`--disable-plugin-autoload`),

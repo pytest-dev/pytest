@@ -7,6 +7,7 @@ from unittest import mock
 
 from _pytest.config import ExitCode
 from _pytest.mark import MarkGenerator
+from _pytest.mark.structures import _EmptyParameterSetMark
 from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
 from _pytest.nodes import Collector
 from _pytest.nodes import Node
@@ -996,9 +997,9 @@ class TestMarkDecorator:
         assert md.kwargs == {"three": 3}
 
 
-@pytest.mark.parametrize("mark", [None, "", "skip", "xfail"])
+@pytest.mark.parametrize("mark", [None, "skip", "xfail"])
 def test_parameterset_for_parametrize_marks(
-    pytester: Pytester, mark: str | None
+    pytester: Pytester, mark: _EmptyParameterSetMark | None
 ) -> None:
     if mark is not None:
         pytester.makeini(
@@ -1014,13 +1015,30 @@ def test_parameterset_for_parametrize_marks(
 
     pytest_configure(config)
     result_mark = get_empty_parameterset_mark(config, ["a"], all)
-    if mark in (None, ""):
-        # normalize to the requested name
+    if mark is None:
+        # normalize to the default
         mark = "skip"
     assert result_mark.name == mark
     assert result_mark.kwargs["reason"].startswith("got empty parameter set ")
     if mark == "xfail":
         assert result_mark.kwargs.get("run") is False
+
+
+def test_parameterset_for_parametrize_marks_invalid(pytester: Pytester) -> None:
+    pytester.makeini(
+        f"""
+        [pytest]
+        {EMPTY_PARAMETERSET_OPTION}=dontcare
+        """
+    )
+    result = pytester.runpytest()
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            f"*ERROR: *: config option '{EMPTY_PARAMETERSET_OPTION}' expects one of "
+            "'skip' | 'xfail' | 'fail_at_collect', got 'dontcare'"
+        ]
+    )
 
 
 def test_parameterset_for_fail_at_collect(pytester: Pytester) -> None:
@@ -1088,11 +1106,6 @@ def test_paramset_empty_no_idfunc(
             "*= 1 skipped in *",
         ]
     )
-
-
-def test_parameterset_for_parametrize_bad_markname(pytester: Pytester) -> None:
-    with pytest.raises(pytest.UsageError):
-        test_parameterset_for_parametrize_marks(pytester, "bad")
 
 
 def test_mark_expressions_no_smear(pytester: Pytester) -> None:
