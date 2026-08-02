@@ -1,0 +1,11 @@
+New :class:`pytest.CacheScope`, and a ``scope`` argument on :meth:`Cache.get <pytest.Cache.get>`,
+:meth:`Cache.set <pytest.Cache.set>` and :meth:`Cache.mkdir <pytest.Cache.mkdir>`.
+
+Cached data is not always valid everywhere a project is: last-failed test ids, for example, depend on
+what the interpreter actually collects. ``scope`` lets a value be pinned to the running Python version
+(:attr:`CacheScope.PYTHON <pytest.CacheScope.PYTHON>`) or environment
+(:attr:`CacheScope.ENV <pytest.CacheScope.ENV>`) inside the project's single cache directory, instead of
+needing a separate cache directory per environment.
+
+The default is :attr:`CacheScope.SHARED <pytest.CacheScope.SHARED>`, which behaves exactly as before, so
+existing cache directories and plugins are unaffected.

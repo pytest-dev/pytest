@@ -10,6 +10,7 @@ from _pytest.approx import Approx
 from _pytest.approx import approx
 from _pytest.assertion import register_assert_rewrite
 from _pytest.cacheprovider import Cache
+from _pytest.cacheprovider import CacheScope
 from _pytest.capture import CaptureFixture
 from _pytest.config import cmdline
 from _pytest.config import Config
@@ -102,6 +103,7 @@ __all__ = [
     "HIDDEN_PARAM",
     "Approx",
     "Cache",
+    "CacheScope",
     "CallInfo",
     "CaptureFixture",
     "Class",
