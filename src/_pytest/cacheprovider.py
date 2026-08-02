@@ -8,11 +8,15 @@ from __future__ import annotations
 from collections.abc import Generator
 from collections.abc import Iterable
 import dataclasses
+import enum
 import errno
+import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
+import sys
 import tempfile
 from typing import final
 
@@ -21,6 +25,7 @@ from .pathlib import rm_rf
 from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest.compat import assert_never
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -94,6 +99,68 @@ def _resolve_cache_dir(config: Config) -> Path:
     return resolve_from_str(config.getini("cache_dir"), config.rootpath)
 
 
+class CacheScope(enum.Enum):
+    """How far a cached value travels.
+
+    Cached data is not always valid everywhere the project is: last-failed test
+    ids, for instance, depend on what the interpreter in use actually collects.
+    Rather than giving each environment a whole cache directory of its own,
+    scoped values live in separate sub-directories of the one cache directory
+    belonging to the project.
+
+    .. versionadded:: 9.0
+    """
+
+    #: Valid for the project regardless of interpreter or environment.
+    SHARED = "shared"
+    #: Valid only for the running Python implementation and ``major.minor``
+    #: version. The patch version is deliberately not part of this, so that an
+    #: in-place upgrade does not invalidate the cache.
+    PYTHON = "python"
+    #: Valid only for the running environment, i.e. :data:`sys.prefix`.
+    ENV = "env"
+
+
+def _realpath_or_self(path: str) -> str:
+    try:
+        return os.path.realpath(path)
+    except OSError:
+        # E.g. a dead NFS mount. A stable-but-unresolved key beats crashing.
+        return path
+
+
+_LABEL_UNSAFE = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def _label(name: str, *, maxlen: int = 32) -> str:
+    """Make ``name`` safe and readable as a single path component.
+
+    A whitelist rather than a blacklist, so spaces, separators, colons and
+    non-ASCII all collapse to ``-``. Leading dots are stripped so the result is
+    not hidden. Callers always combine this with a digest, so losing
+    information here is fine - and it also means Windows reserved device names
+    (``CON``, ``NUL``, ...) are harmless, since the label is never the whole
+    basename.
+    """
+    return _LABEL_UNSAFE.sub("-", name)[:maxlen].strip("-.") or "root"
+
+
+def _scope_id(scope: CacheScope) -> str | None:
+    """Return the sub-directory name for ``scope``, or None if unscoped."""
+    if scope is CacheScope.SHARED:
+        return None
+    if scope is CacheScope.PYTHON:
+        major, minor = sys.version_info[:2]
+        return f"py-{_label(sys.implementation.name)}-{major}.{minor}"
+    if scope is CacheScope.ENV:
+        # normcase because on Windows `C:\Foo` and `c:\foo` are one directory
+        # and the casing varies with how the shell was launched.
+        prefix = os.path.normcase(_realpath_or_self(sys.prefix))
+        digest = hashlib.sha256(prefix.encode("utf-8", "surrogatepass")).hexdigest()
+        return f"env-{_label(os.path.basename(prefix), maxlen=16)}-{digest[:8]}"
+    assert_never(scope)
+
+
 @final
 @dataclasses.dataclass
 class Cache:
@@ -107,6 +174,10 @@ class Cache:
 
     # Sub-directory under cache-dir for values created by `set()`.
     _CACHE_PREFIX_VALUES = "v"
+
+    # Sub-directory under cache-dir holding one directory per non-shared
+    # CacheScope, each with its own `d` and `v` sub-directories.
+    _CACHE_PREFIX_SCOPES = "s"
 
     def __init__(
         self, cachedir: Path, config: Config, *, _ispytest: bool = False
@@ -134,7 +205,11 @@ class Cache:
         :meta private:
         """
         check_ispytest(_ispytest)
-        for prefix in (cls._CACHE_PREFIX_DIRS, cls._CACHE_PREFIX_VALUES):
+        for prefix in (
+            cls._CACHE_PREFIX_DIRS,
+            cls._CACHE_PREFIX_VALUES,
+            cls._CACHE_PREFIX_SCOPES,
+        ):
             d = cachedir / prefix
             if d.is_dir():
                 rm_rf(d)
@@ -168,7 +243,13 @@ class Cache:
         self._ensure_cache_dir_and_supporting_files()
         path.mkdir(exist_ok=True, parents=True)
 
-    def mkdir(self, name: str) -> Path:
+    def _scope_root(self, scope: CacheScope) -> Path:
+        scope_id = _scope_id(scope)
+        if scope_id is None:
+            return self._cachedir
+        return self._cachedir.joinpath(self._CACHE_PREFIX_SCOPES, scope_id)
+
+    def mkdir(self, name: str, *, scope: CacheScope = CacheScope.SHARED) -> Path:
         """Return a directory path object with the given name.
 
         If the directory does not yet exist, it will be created. You can use
@@ -181,18 +262,23 @@ class Cache:
             Must be a string not containing a ``/`` separator.
             Make sure the name contains your plugin or application
             identifiers to prevent clashes with other cache users.
+        :param scope:
+            How far the directory's contents travel; see :class:`CacheScope`.
+            Defaults to :attr:`CacheScope.SHARED`.
+
+            .. versionadded:: 9.0
         """
         path = Path(name)
         if len(path.parts) > 1:
             raise ValueError("name is not allowed to contain path separators")
-        res = self._cachedir.joinpath(self._CACHE_PREFIX_DIRS, path)
+        res = self._scope_root(scope).joinpath(self._CACHE_PREFIX_DIRS, path)
         self._mkdir(res)
         return res
 
-    def _getvaluepath(self, key: str) -> Path:
-        return self._cachedir.joinpath(self._CACHE_PREFIX_VALUES, Path(key))
+    def _getvaluepath(self, key: str, scope: CacheScope = CacheScope.SHARED) -> Path:
+        return self._scope_root(scope).joinpath(self._CACHE_PREFIX_VALUES, Path(key))
 
-    def get(self, key: str, default):
+    def get(self, key: str, default, *, scope: CacheScope = CacheScope.SHARED):
         """Return the cached value for the given key.
 
         If no value was yet cached or the value cannot be read, the specified
@@ -203,15 +289,23 @@ class Cache:
             name is the name of your plugin or your application.
         :param default:
             The value to return in case of a cache-miss or invalid cache value.
+        :param scope:
+            Which scope to read the value from; see :class:`CacheScope`. Must
+            match the scope it was written with. Defaults to
+            :attr:`CacheScope.SHARED`.
+
+            .. versionadded:: 9.0
         """
-        path = self._getvaluepath(key)
+        path = self._getvaluepath(key, scope)
         try:
             with path.open("r", encoding="UTF-8") as f:
                 return json.load(f)
         except (ValueError, OSError):
             return default
 
-    def set(self, key: str, value: object) -> None:
+    def set(
+        self, key: str, value: object, *, scope: CacheScope = CacheScope.SHARED
+    ) -> None:
         """Save value for the given key.
 
         :param key:
@@ -220,8 +314,14 @@ class Cache:
         :param value:
             Must be of any combination of basic python types,
             including nested types like lists of dictionaries.
+        :param scope:
+            How far the value travels; see :class:`CacheScope`. Pin values
+            which are not valid across interpreters or environments, such as
+            collected test ids. Defaults to :attr:`CacheScope.SHARED`.
+
+            .. versionadded:: 9.0
         """
-        path = self._getvaluepath(key)
+        path = self._getvaluepath(key, scope)
         try:
             self._mkdir(path.parent)
         except OSError as exc:

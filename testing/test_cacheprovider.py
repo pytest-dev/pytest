@@ -7,8 +7,13 @@ from enum import Enum
 import os
 from pathlib import Path
 import shutil
+import sys
 from typing import Any
 
+from _pytest.cacheprovider import _label
+from _pytest.cacheprovider import _scope_id
+from _pytest.cacheprovider import Cache
+from _pytest.cacheprovider import CacheScope
 from _pytest.compat import assert_never
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
@@ -1357,6 +1362,107 @@ def test_cachedir_tag(pytester: Pytester) -> None:
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
     assert cachedir_tag_path.read_bytes() == CACHEDIR_FILES["CACHEDIR.TAG"]
+
+
+class TestCacheScopes:
+    @pytest.fixture
+    def cache(self, pytester: Pytester) -> Cache:
+        return Cache.for_config(pytester.parseconfig(), _ispytest=True)
+
+    def test_shared_scope_keeps_the_flat_layout(self, cache: Cache) -> None:
+        # The shared scope must stay where it has always been, so that existing
+        # caches and third-party plugins need no migration.
+        cache.set("foo/bar", 1)
+        assert (cache._cachedir / "v" / "foo" / "bar").is_file()
+        assert not (cache._cachedir / "s").exists()
+
+    @pytest.mark.parametrize("scope", [CacheScope.PYTHON, CacheScope.ENV])
+    def test_scoped_values_round_trip(self, cache: Cache, scope: CacheScope) -> None:
+        cache.set("foo/bar", 1, scope=scope)
+        assert cache.get("foo/bar", None, scope=scope) == 1
+
+        scope_id = _scope_id(scope)
+        assert scope_id is not None
+        assert (cache._cachedir / "s" / scope_id / "v" / "foo" / "bar").is_file()
+
+    def test_scopes_do_not_see_each_other(self, cache: Cache) -> None:
+        for scope in CacheScope:
+            cache.set("foo", scope.value, scope=scope)
+        for scope in CacheScope:
+            assert cache.get("foo", None, scope=scope) == scope.value
+
+    def test_mkdir_is_scoped(self, cache: Cache) -> None:
+        shared = cache.mkdir("name")
+        scoped = cache.mkdir("name", scope=CacheScope.ENV)
+        assert shared.is_dir() and scoped.is_dir()
+        assert shared != scoped
+
+    def test_mkdir_rejects_separators_in_any_scope(self, cache: Cache) -> None:
+        with pytest.raises(ValueError):
+            cache.mkdir("key/name", scope=CacheScope.ENV)
+
+    def test_clear_cache_removes_scopes(self, cache: Cache) -> None:
+        cache.set("foo", 1)
+        cache.set("foo", 1, scope=CacheScope.ENV)
+        Cache.clear_cache(cache._cachedir, _ispytest=True)
+        assert not (cache._cachedir / "s").exists()
+        assert not (cache._cachedir / "v").exists()
+        # ... but the supporting files survive, as for `d` and `v` (#6290).
+        assert (cache._cachedir / "CACHEDIR.TAG").is_file()
+
+    def test_scope_ids_are_stable(self) -> None:
+        assert _scope_id(CacheScope.SHARED) is None
+        for scope in (CacheScope.PYTHON, CacheScope.ENV):
+            assert _scope_id(scope) == _scope_id(scope)
+
+    def test_python_scope_id_tracks_minor_version_only(
+        self, monkeypatch: MonkeyPatch
+    ) -> None:
+        before = _scope_id(CacheScope.PYTHON)
+
+        # A patch release upgrade must not invalidate the cache.
+        major, minor, micro = sys.version_info[:3]
+        monkeypatch.setattr(sys, "version_info", (major, minor, micro + 1))
+        assert _scope_id(CacheScope.PYTHON) == before
+
+        monkeypatch.setattr(sys, "version_info", (major, minor + 1, 0))
+        assert _scope_id(CacheScope.PYTHON) != before
+
+    def test_env_scope_id_tracks_sys_prefix(self, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.setattr(sys, "prefix", "/somewhere/one/.venv")
+        one = _scope_id(CacheScope.ENV)
+        monkeypatch.setattr(sys, "prefix", "/somewhere/two/.venv")
+        two = _scope_id(CacheScope.ENV)
+
+        assert one != two
+        # Both stay readable, and the leading dot is stripped so they are not
+        # hidden directories.
+        assert one is not None and two is not None
+        assert one.startswith("env-venv-") and two.startswith("env-venv-")
+
+    def test_env_scope_id_ignores_python_version(
+        self, monkeypatch: MonkeyPatch
+    ) -> None:
+        before = _scope_id(CacheScope.ENV)
+        monkeypatch.setattr(sys, "version_info", (99, 9, 9))
+        assert _scope_id(CacheScope.ENV) == before
+
+    @pytest.mark.parametrize(
+        ("name", "expected"),
+        [
+            ("myproj", "myproj"),
+            ("my project (v2)", "my-project-v2"),
+            (".hidden", "hidden"),
+            ("with/sep", "with-sep"),
+            ("ünïcode", "n-code"),
+            ("", "root"),
+            ("/", "root"),
+            ("!!!", "root"),
+            ("x" * 60, "x" * 32),
+        ],
+    )
+    def test_label_sanitisation(self, name: str, expected: str) -> None:
+        assert _label(name) == expected
 
 
 def test_clioption_with_cacheshow_and_help(pytester: Pytester) -> None:
