@@ -89,6 +89,16 @@ def _make_cachedir(target: Path) -> None:
         shutil.rmtree(path, ignore_errors=True)
 
 
+def _resolve_cache_dir(config: Config) -> Path:
+    """Determine the cache directory for a Config.
+
+    The single place where the cache directory location is decided. The path
+    is returned as configured, not symlink-resolved: callers resolve it, and
+    the containment check needs both forms.
+    """
+    return resolve_from_str(config.getini("cache_dir"), config.rootpath)
+
+
 @final
 @dataclasses.dataclass
 class Cache:
@@ -117,8 +127,9 @@ class Cache:
         :meta private:
         """
         check_ispytest(_ispytest)
-        cachedir = cls.cache_dir_from_config(config, _ispytest=True)
-        _check_cache_dir_containment(config, _cache_dir_unresolved(config), cachedir)
+        configured = _resolve_cache_dir(config)
+        cachedir = configured.resolve()
+        _check_cache_dir_containment(config, configured, cachedir)
         if config.getoption("cacheclear") and cachedir.is_dir():
             if cachedir.joinpath("CACHEDIR.TAG").is_file():
                 cls.clear_cache(cachedir, _ispytest=True)
@@ -155,7 +166,7 @@ class Cache:
         check_ispytest(_ispytest)
         # resolve(), not normpath(): the key containment check in _join_within
         # needs a canonical base, and on POSIX normpath gets "symlink/.." wrong.
-        return _cache_dir_unresolved(config).resolve()
+        return _resolve_cache_dir(config).resolve()
 
     def warn(self, fmt: str, *, _ispytest: bool = False, **args: object) -> None:
         """Issue a cache warning.
@@ -566,10 +577,6 @@ def pytest_addoption(parser: Parser) -> None:
         "``all`` (the default) runs the full test suite again. "
         "``none`` just emits a message about no known failures and exits successfully.",
     )
-
-
-def _cache_dir_unresolved(config: Config) -> Path:
-    return resolve_from_str(config.getini("cache_dir"), config.rootpath)
 
 
 def _strictly_within(path: Path, root: Path) -> bool:
