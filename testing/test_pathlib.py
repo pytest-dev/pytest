@@ -17,10 +17,14 @@ from types import ModuleType
 from typing import Any
 import unittest.mock
 
+from _pytest.compat import get_user_id
 from _pytest.config import ExitCode
+from _pytest.config import UsageError
 from _pytest.monkeypatch import MonkeyPatch
+import _pytest.pathlib as pathlib_module
 from _pytest.pathlib import _import_module_using_spec
 from _pytest.pathlib import bestrelpath
+from _pytest.pathlib import check_user_cache_root
 from _pytest.pathlib import commonpath
 from _pytest.pathlib import compute_module_name
 from _pytest.pathlib import CouldNotResolvePathError
@@ -35,6 +39,7 @@ from _pytest.pathlib import insert_missing_modules
 from _pytest.pathlib import is_importable
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import module_name_from_path
+from _pytest.pathlib import pytest_user_cache_dir
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
@@ -527,6 +532,92 @@ def test_bestrelpath() -> None:
     assert bestrelpath(curdir, curdir.parent / "sister") == ".." + os.sep + "sister"
     assert bestrelpath(curdir, curdir.parent) == ".."
     assert bestrelpath(curdir, Path("hello")) == "hello"
+
+
+class TestUserCacheDir:
+    def test_cache_home_override(self, tmp_path: Path) -> None:
+        environ = {"PYTEST_CACHE_HOME": str(tmp_path / "explicit")}
+        assert pytest_user_cache_dir(environ=environ) == tmp_path / "explicit"
+
+    def test_cache_home_override_is_expanded(self, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.setenv("SOMEWHERE", "elsewhere")
+        environ = {"PYTEST_CACHE_HOME": os.path.join("~", "$SOMEWHERE")}
+        assert pytest_user_cache_dir(environ=environ) == Path(
+            os.path.expanduser("~")
+        ).joinpath("elsewhere")
+
+    def test_cache_home_override_wins_over_xdg(self, tmp_path: Path) -> None:
+        environ = {
+            "PYTEST_CACHE_HOME": str(tmp_path / "explicit"),
+            "XDG_CACHE_HOME": str(tmp_path / "xdg"),
+        }
+        assert pytest_user_cache_dir(environ=environ) == tmp_path / "explicit"
+
+    def test_cache_home_override_needs_no_platformdirs(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        # The escape hatch has to work on installs without the `xdg` extra.
+        monkeypatch.setitem(sys.modules, "platformdirs", None)
+        environ = {"PYTEST_CACHE_HOME": str(tmp_path / "explicit")}
+        assert pytest_user_cache_dir(environ=environ) == tmp_path / "explicit"
+
+    def test_delegates_to_platformdirs(self, monkeypatch: MonkeyPatch) -> None:
+        # The per-platform conventions are platformdirs' business; all we test
+        # is that we ask it the right question.
+        platformdirs = pytest.importorskip("platformdirs")
+        calls = []
+
+        def user_cache_path(*args: object, **kwargs: object) -> Path:
+            calls.append((args, kwargs))
+            return Path("/somewhere/pytest")
+
+        monkeypatch.setattr(platformdirs, "user_cache_path", user_cache_path)
+        assert pytest_user_cache_dir(environ={}) == Path("/somewhere/pytest")
+        assert calls == [(("pytest",), {"appauthor": False})]
+
+    def test_without_platformdirs(self, monkeypatch: MonkeyPatch) -> None:
+        monkeypatch.setitem(sys.modules, "platformdirs", None)
+        with pytest.raises(UsageError, match=r"pip install pytest\[xdg\]"):
+            pytest_user_cache_dir(environ={})
+
+
+class TestCheckUserCacheRoot:
+    def test_missing_root_is_accepted(self, tmp_path: Path) -> None:
+        check_user_cache_root(tmp_path / "does-not-exist")
+
+    def test_plain_root_is_accepted(self, tmp_path: Path) -> None:
+        check_user_cache_root(tmp_path)
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="no symlink ownership on win32")
+    def test_symlinked_root_is_accepted(self, tmp_path: Path) -> None:
+        # Pointing ~/.cache at another volume is legitimate; unlike the tmpdir
+        # equivalent we must not reject it.
+        target = tmp_path / "target"
+        target.mkdir()
+        symlink_or_skip(target, tmp_path / "link")
+        check_user_cache_root(tmp_path / "link")
+
+    def test_foreign_owner_is_rejected(
+        self, tmp_path: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        uid = get_user_id()
+        if uid is None:
+            pytest.skip("no user id on this platform")
+        monkeypatch.setattr(pathlib_module, "get_user_id", lambda: uid + 1)
+        with pytest.raises(UsageError, match="not owned by the current user"):
+            check_user_cache_root(tmp_path)
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="no mode bits on win32")
+    def test_world_writable_root_is_rejected(self, tmp_path: Path) -> None:
+        tmp_path.chmod(0o777)
+        with pytest.raises(UsageError, match="world-writable"):
+            check_user_cache_root(tmp_path)
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="no mode bits on win32")
+    def test_world_writable_sticky_root_is_accepted(self, tmp_path: Path) -> None:
+        # /tmp itself is world-writable but sticky, which is safe enough.
+        tmp_path.chmod(0o1777)
+        check_user_cache_root(tmp_path)
 
 
 def test_commonpath() -> None:
