@@ -86,6 +86,14 @@ def _make_cachedir(target: Path) -> None:
         shutil.rmtree(path, ignore_errors=True)
 
 
+def _resolve_cache_dir(config: Config) -> Path:
+    """Determine the cache directory for a Config.
+
+    The single place where the cache directory location is decided.
+    """
+    return resolve_from_str(config.getini("cache_dir"), config.rootpath)
+
+
 @final
 @dataclasses.dataclass
 class Cache:
@@ -114,7 +122,7 @@ class Cache:
         :meta private:
         """
         check_ispytest(_ispytest)
-        cachedir = cls.cache_dir_from_config(config, _ispytest=True)
+        cachedir = _resolve_cache_dir(config)
         if config.getoption("cacheclear") and cachedir.is_dir():
             cls.clear_cache(cachedir, _ispytest=True)
         return cls(cachedir, config, _ispytest=True)
@@ -138,7 +146,7 @@ class Cache:
         :meta private:
         """
         check_ispytest(_ispytest)
-        return resolve_from_str(config.getini("cache_dir"), config.rootpath)
+        return _resolve_cache_dir(config)
 
     def warn(self, fmt: str, *, _ispytest: bool = False, **args: object) -> None:
         """Issue a cache warning.
