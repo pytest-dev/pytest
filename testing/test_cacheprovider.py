@@ -27,6 +27,13 @@ import pytest
 pytest_plugins = ("pytester",)
 
 
+def env_scope_values(cachedir: str | Path = ".pytest_cache") -> Path:
+    """Path of the env-scoped value directory inside ``cachedir``."""
+    scope_id = _scope_id(CacheScope.ENV)
+    assert scope_id is not None
+    return Path(cachedir, "s", scope_id, "v")
+
+
 class TestNewAPI:
     def test_config_cache_mkdir(self, pytester: Pytester) -> None:
         pytester.makeini("[pytest]")
@@ -178,8 +185,8 @@ class TestNewAPI:
                 "*= warnings summary =*",
                 "*/cacheprovider.py:*",
                 "  */cacheprovider.py:*: PytestCacheWarning: could not create cache path "
-                f"{unwritable_cache_dir}/v/cache/nodeids: *",
-                '    config.cache.set("cache/nodeids", sorted(str(n) for n in self.cached_nodeids))',
+                f"{env_scope_values(unwritable_cache_dir)}/cache/nodeids: *",
+                "    config.cache.set(",
                 "*1 failed, 2 warnings in*",
             ]
         )
@@ -313,7 +320,10 @@ def test_cache_dir_with_dotdot(pytester: Pytester) -> None:
     result = pytester.runpytest(rootdir, "--lf")
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["run-last-failure: rerun previous 1 failure"])
-    assert pytester.path.joinpath(".pytest_cache", "v", "cache", "lastfailed").is_file()
+    lastfailed = (
+        env_scope_values(pytester.path / ".pytest_cache") / "cache" / "lastfailed"
+    )
+    assert lastfailed.is_file()
 
 
 def test_cache_dir_dotdot_through_symlinked_rootdir(
@@ -342,7 +352,9 @@ def test_cache_dir_dotdot_through_symlinked_rootdir(
     expected, other = elsewhere, pytester.path
     if sys.platform == "win32":
         expected, other = other, expected
-    assert expected.joinpath("cache", "v", "cache", "lastfailed").is_file()
+    assert (
+        env_scope_values(expected / "cache").joinpath("cache", "lastfailed").is_file()
+    )
     assert not other.joinpath("cache").exists()
 
 
@@ -358,7 +370,7 @@ def test_tox_env_dir_with_dotdot(pytester: Pytester, monkeypatch: MonkeyPatch) -
     result.assert_outcomes(failed=1, warnings=0)
     result.stdout.fnmatch_lines(["run-last-failure: rerun previous 1 failure"])
     tox_cache = pytester.path.joinpath(".tox", "py", ".pytest_cache")
-    assert tox_cache.joinpath("v", "cache", "lastfailed").is_file()
+    assert env_scope_values(tox_cache).joinpath("cache", "lastfailed").is_file()
     assert not rootdir.joinpath(".pytest_cache").exists()
 
 
@@ -462,18 +474,21 @@ def test_cache_dir_symlink_within_rootdir_is_fine(pytester: Pytester) -> None:
     symlink_or_skip(target, pytester.path / ".pytest_cache")
     pytester.makepyfile("def test_pass(): pass")
     pytester.runpytest().assert_outcomes(passed=1, warnings=0)
-    assert target.joinpath("v").is_dir()
+    assert env_scope_values(target).joinpath("cache", "nodeids").is_file()
 
 
 def test_cache_clear_clears_pytest_created_dir(pytester: Pytester) -> None:
     pytester.makepyfile("def test_pass(): pass")
     pytester.runpytest()
-    lastfailed = pytester.path.joinpath(".pytest_cache", "v", "cache", "nodeids")
-    assert lastfailed.is_file()
+    nodeids = env_scope_values(pytester.path / ".pytest_cache") / "cache" / "nodeids"
+    assert nodeids.is_file()
     pytester.makeconftest(
         """
+        import pytest
+
         def pytest_configure(config):
-            assert config.cache.get("cache/nodeids", None) is None
+            nodeids = config.cache.get("cache/nodeids", None, scope=pytest.CacheScope.ENV)
+            assert nodeids is None
         """
     )
     pytester.runpytest("--cache-clear").assert_outcomes(passed=1)
@@ -502,11 +517,13 @@ def test_cache_show(pytester: Pytester) -> None:
         [
             "*cachedir:*",
             "*- cache values for '[*]' -*",
-            "cache/nodeids contains:",
             "my/name contains:",
             "  [1, 2, 3]",
             "other/some contains:",
             "  {*'1': 2}",
+            # Env-scoped values are listed after the shared ones, tagged with
+            # the scope they belong to.
+            "cache/nodeids (env-*) contains:",
             "*- cache directories for '[*]' -*",
             "*mydb/hello*length 0*",
             "*mydb/world*length 0*",
@@ -692,7 +709,7 @@ class TestLastFailed:
         )
         config = pytester.parseconfigure()
         assert config.cache is not None
-        lastfailed = config.cache.get("cache/lastfailed", -1)
+        lastfailed = config.cache.get("cache/lastfailed", -1, scope=CacheScope.ENV)
         assert lastfailed == -1
 
     def test_non_serializable_parametrize(self, pytester: Pytester) -> None:
@@ -811,7 +828,7 @@ class TestLastFailed:
             pytester.runpytest("-q")
             config = pytester.parseconfigure()
             assert config.cache is not None
-            lastfailed = config.cache.get("cache/lastfailed", -1)
+            lastfailed = config.cache.get("cache/lastfailed", -1, scope=CacheScope.ENV)
             return lastfailed
 
         lastfailed = rlf(fail_import=0, fail_run=0)
@@ -861,7 +878,7 @@ class TestLastFailed:
             result = pytester.runpytest("-q", "--lf", *args)
             config = pytester.parseconfigure()
             assert config.cache is not None
-            lastfailed = config.cache.get("cache/lastfailed", -1)
+            lastfailed = config.cache.get("cache/lastfailed", -1, scope=CacheScope.ENV)
             return result, lastfailed
 
         result, lastfailed = rlf(fail_import=0, fail_run=0)
@@ -883,17 +900,19 @@ class TestLastFailed:
 
     def test_lastfailed_creates_cache_when_needed(self, pytester: Pytester) -> None:
         # Issue #1342
+        lastfailed = env_scope_values() / "cache" / "lastfailed"
+
         pytester.makepyfile(test_empty="")
         pytester.runpytest("-q", "--lf")
-        assert not os.path.exists(".pytest_cache/v/cache/lastfailed")
+        assert not lastfailed.exists()
 
         pytester.makepyfile(test_successful="def test_success():\n    assert True")
         pytester.runpytest("-q", "--lf")
-        assert not os.path.exists(".pytest_cache/v/cache/lastfailed")
+        assert not lastfailed.exists()
 
         pytester.makepyfile(test_errored="def test_error():\n    assert False")
         pytester.runpytest("-q", "--lf")
-        assert os.path.exists(".pytest_cache/v/cache/lastfailed")
+        assert lastfailed.exists()
 
     def test_xfail_not_considered_failure(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -971,7 +990,7 @@ class TestLastFailed:
     def get_cached_last_failed(self, pytester: Pytester) -> list[str]:
         config = pytester.parseconfigure()
         assert config.cache is not None
-        return sorted(config.cache.get("cache/lastfailed", {}))
+        return sorted(config.cache.get("cache/lastfailed", {}, scope=CacheScope.ENV))
 
     def test_cache_cumulative(self, pytester: Pytester) -> None:
         """Test workflow where user fixes errors gradually file by file using --lf."""
@@ -1631,6 +1650,69 @@ def test_cachedir_tag(pytester: Pytester) -> None:
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
     assert cachedir_tag_path.read_bytes() == CACHEDIR_FILES["CACHEDIR.TAG"]
+
+
+class TestEnvScopedBuiltins:
+    """The built-in cache keys are pinned to the environment.
+
+    Which environment collected which tests is not portable, so `--lf`, `--nf`
+    and `--sw` state must not be shared between them. Previously the only way
+    to get that was to move the whole cache directory, which is what the
+    TOX_ENV_DIR special case does.
+    """
+
+    def test_lastfailed_lives_in_the_env_scope(self, pytester: Pytester) -> None:
+        pytester.makepyfile(test_a="def test_error(): assert False")
+        pytester.runpytest("-q")
+
+        assert (env_scope_values() / "cache" / "lastfailed").is_file()
+        assert not (Path(".pytest_cache") / "v" / "cache" / "lastfailed").exists()
+
+    def test_nodeids_lives_in_the_env_scope(self, pytester: Pytester) -> None:
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        pytester.runpytest("-q")
+
+        assert (env_scope_values() / "cache" / "nodeids").is_file()
+        assert not (Path(".pytest_cache") / "v" / "cache" / "nodeids").exists()
+
+    def test_environments_do_not_clobber_each_other(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        pytester.makepyfile(
+            test_a="""
+            import os
+            def test_one(): assert not os.environ.get("FAIL_ONE")
+            def test_two(): assert not os.environ.get("FAIL_TWO")
+            """
+        )
+        # Two runs which fail different tests, as two different environments.
+        # Patched at conftest import time, i.e. before cacheprovider's
+        # tryfirst pytest_configure builds the Cache.
+        pytester.makeconftest(
+            """
+            import os, sys
+            sys.prefix = os.environ["FAKE_PREFIX"]
+            """
+        )
+
+        monkeypatch.setenv("FAKE_PREFIX", str(pytester.path / "venv-one"))
+        monkeypatch.setenv("FAIL_ONE", "1")
+        pytester.runpytest_subprocess("-q").assert_outcomes(passed=1, failed=1)
+
+        monkeypatch.delenv("FAIL_ONE")
+        monkeypatch.setenv("FAKE_PREFIX", str(pytester.path / "venv-two"))
+        monkeypatch.setenv("FAIL_TWO", "1")
+        pytester.runpytest_subprocess("-q").assert_outcomes(passed=1, failed=1)
+
+        # Each environment still remembers its own failure, rather than the
+        # second run having overwritten the first.
+        monkeypatch.delenv("FAIL_TWO")
+        monkeypatch.setenv("FAKE_PREFIX", str(pytester.path / "venv-one"))
+        result = pytester.runpytest_subprocess("--lf", "-v")
+        result.stdout.fnmatch_lines(
+            ["*rerun previous 1 failure*", "*test_a.py::test_one*PASSED*"]
+        )
+        result.assert_outcomes(passed=1)
 
 
 class TestCacheScopes:
