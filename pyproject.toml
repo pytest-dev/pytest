@@ -76,6 +76,10 @@ optional-dependencies.dev = [
     "setuptools",
     "xmlschema",
 ]
+# Needed to locate the platform's user cache directory, for `cache_policy = user`.
+optional-dependencies.xdg = [
+    "platformdirs>=4",
+]
 urls.Changelog = "https://docs.pytest.org/en/stable/changelog.html"
 urls.Contact = "https://docs.pytest.org/en/stable/contact.html"
 urls.Funding = "https://docs.pytest.org/en/stable/sponsor.html"
@@ -87,8 +91,10 @@ scripts.pytest = "_pytest.config:_console_main"
 
 [dependency-groups]
 # Preferred entry point for developing pytest; pulls from optional-dependencies.dev.
+# `xdg` is included so the user-level cache is covered locally and in CI; the
+# tests which need it skip when it is absent, so a minimal install stays green.
 dev = [
-    "pytest[dev]",
+    "pytest[dev,xdg]",
 ]
 
 [tool.setuptools.package-data]
