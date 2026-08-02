@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from _pytest import nodes
 from _pytest.cacheprovider import Cache
+from _pytest.cacheprovider import CacheScope
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
@@ -109,7 +110,9 @@ class StepwisePlugin:
         self.cached_info = self._load_cached_info()
 
     def _load_cached_info(self) -> StepwiseCacheInfo:
-        cached_dict: dict[str, Any] | None = self.cache.get(STEPWISE_CACHE_DIR, None)
+        cached_dict: dict[str, Any] | None = self.cache.get(
+            STEPWISE_CACHE_DIR, None, scope=CacheScope.ENV
+        )
         if cached_dict:
             try:
                 last_failed: str | None = cached_dict["last_failed"]
@@ -216,4 +219,5 @@ class StepwisePlugin:
                 "last_test_count": self.cached_info.last_test_count,
                 "last_cache_date_str": self.cached_info.last_cache_date_str,
             },
+            scope=CacheScope.ENV,
         )
