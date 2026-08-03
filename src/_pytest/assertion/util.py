@@ -162,11 +162,7 @@ def assertrepr_compare(
                 )
             case (str(), "not in", str()):
                 source = _notin_text(left, right, verbose, truncation_budget)
-            case (
-                AbstractSet(),
-                "!=" | ">=" | "<=" | ">" | "<",
-                AbstractSet(),
-            ):
+            case (AbstractSet(), "!=" | ">=" | "<=" | ">" | "<", AbstractSet()):
                 source = SET_COMPARISON_FUNCTIONS[op](left, right, highlighter, verbose)
             case _:
                 source = iter(())
