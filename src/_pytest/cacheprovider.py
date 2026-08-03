@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from collections.abc import Iterable
+from collections.abc import Mapping
 import dataclasses
 import enum
 import errno
@@ -18,11 +19,14 @@ import re
 import shutil
 import sys
 import tempfile
+import time
+from typing import Any
 from typing import final
 
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
 from .reports import CollectReport
+from _pytest import __version__
 from _pytest import nodes
 from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
@@ -60,12 +64,15 @@ Signature: 8a477f597d28d172789f06886806bc55
 }
 
 
-def _make_cachedir(target: Path) -> None:
+def _make_cachedir(
+    target: Path, extra_files: Mapping[str, bytes] | None = None
+) -> None:
     """Create the pytest cache directory atomically with supporting files.
 
     Creates a temporary directory with README.md, .gitignore, and CACHEDIR.TAG,
-    then atomically renames it to the target location. If another process wins
-    the race, the temporary directory is cleaned up.
+    plus any ``extra_files``, then atomically renames it to the target
+    location. If another process wins the race, the temporary directory is
+    cleaned up.
     """
     target.parent.mkdir(parents=True, exist_ok=True)
     path = Path(tempfile.mkdtemp(prefix="pytest-cache-files-", dir=target.parent))
@@ -76,7 +83,7 @@ def _make_cachedir(target: Path) -> None:
         os.umask(umask)
         path.chmod(0o777 - umask)
 
-        for name, content in CACHEDIR_FILES.items():
+        for name, content in {**CACHEDIR_FILES, **(extra_files or {})}.items():
             path.joinpath(name).write_bytes(content)
 
         path.rename(target)
@@ -161,6 +168,62 @@ def _scope_id(scope: CacheScope) -> str | None:
     assert_never(scope)
 
 
+def _scope_info(scope: CacheScope) -> dict[str, str]:
+    """Describe ``scope`` for the cache metadata."""
+    major, minor = sys.version_info[:2]
+    info = {
+        "scope": scope.value,
+        "python": f"{sys.implementation.name}-{major}.{minor}",
+    }
+    if scope is CacheScope.ENV:
+        # Recorded unresolved, i.e. as the user sees it, since this is what
+        # gets shown when listing caches.
+        info["prefix"] = sys.prefix
+    return info
+
+
+#: Name of the metadata file written at the top level of a cache directory.
+#: Not dot-prefixed: someone browsing a cache directory far from the project it
+#: belongs to needs to be able to see what it is for.
+CACHE_INFO_NAME = "cache-info.json"
+
+#: Version of the `cache-info.json` format. Readers must tolerate a missing,
+#: unparsable or newer file, and still offer to remove the directory.
+CACHE_INFO_SCHEMA = 1
+
+
+def _now() -> float:
+    """Indirection so that tests can freeze time."""
+    return time.time()
+
+
+def _write_json_atomic(path: Path, data: object) -> None:
+    payload = json.dumps(data, ensure_ascii=False, indent=2)
+    # A temp file in the same directory guarantees os.replace is atomic, as it
+    # is then guaranteed to be on the same filesystem.
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f"{path.name}-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="UTF-8") as f:
+            f.write(payload)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def read_cache_info(cachedir: Path) -> dict[str, Any] | None:
+    """Read a cache directory's metadata, or None if it has none readable."""
+    try:
+        with (cachedir / CACHE_INFO_NAME).open("r", encoding="UTF-8") as f:
+            data = json.load(f)
+    except (ValueError, OSError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
 @final
 @dataclasses.dataclass
 class Cache:
@@ -185,6 +248,10 @@ class Cache:
         check_ispytest(_ispytest)
         self._cachedir = cachedir
         self._config = config
+        # Scopes touched this session, and the set already recorded in the
+        # metadata file, so a scope used later still gets recorded.
+        self._used_scopes: dict[str, dict[str, str]] = {}
+        self._recorded_scopes: frozenset[str] | None = None
 
     @classmethod
     def for_config(cls, config: Config, *, _ispytest: bool = False) -> Cache:
@@ -247,6 +314,7 @@ class Cache:
         scope_id = _scope_id(scope)
         if scope_id is None:
             return self._cachedir
+        self._used_scopes[scope_id] = _scope_info(scope)
         return self._cachedir.joinpath(self._CACHE_PREFIX_SCOPES, scope_id)
 
     def mkdir(self, name: str, *, scope: CacheScope = CacheScope.SHARED) -> Path:
@@ -342,10 +410,53 @@ class Cache:
             with f:
                 f.write(data)
 
+    def _cache_info(self, previous: dict[str, Any] | None) -> dict[str, Any]:
+        """Build the metadata to record, merged over ``previous`` if any.
+
+        Unknown keys in ``previous`` are preserved, so that a newer pytest's
+        fields survive an older pytest touching the same directory.
+        """
+        now = _now()
+        info: dict[str, Any] = dict(previous) if previous else {}
+        info["schema"] = CACHE_INFO_SCHEMA
+        info["origin"] = {
+            "rootdir": str(self._config.rootpath),
+            "inipath": str(self._config.inipath) if self._config.inipath else None,
+        }
+        info["pytest_version"] = __version__
+        info.setdefault("created_at", now)
+        info["last_used_at"] = now
+
+        recorded = info.get("scopes")
+        scopes: dict[str, Any] = dict(recorded) if isinstance(recorded, dict) else {}
+        for scope_id, scope_info in self._used_scopes.items():
+            scopes[scope_id] = {**scope_info, "last_used_at": now}
+        info["scopes"] = scopes
+        return info
+
     def _ensure_cache_dir_and_supporting_files(self) -> None:
-        """Create the cache dir and its supporting files."""
+        """Create the cache dir, its supporting files and its metadata."""
+        used_scopes = frozenset(self._used_scopes)
         if not self._cachedir.is_dir():
-            _make_cachedir(self._cachedir)
+            info = json.dumps(self._cache_info(None), ensure_ascii=False, indent=2)
+            _make_cachedir(self._cachedir, {CACHE_INFO_NAME: info.encode("UTF-8")})
+        elif self._recorded_scopes != used_scopes:
+            # Either the metadata has not been refreshed this session yet, or a
+            # scope has been used since it last was. Note this also backfills
+            # the file into cache directories created by an older pytest.
+            try:
+                _write_json_atomic(
+                    self._cachedir / CACHE_INFO_NAME,
+                    self._cache_info(read_cache_info(self._cachedir)),
+                )
+            except OSError:
+                # Deliberately silent, unlike `set()`. The metadata only feeds
+                # listing and pruning, so failing to write it costs the user
+                # nothing they asked for - and whatever made it fail will have
+                # made the actual cache writes warn already. Such a directory
+                # simply lists as having no metadata.
+                pass
+        self._recorded_scopes = used_scopes
 
 
 class LFPluginCollWrapper:

@@ -4,16 +4,21 @@ from collections.abc import Generator
 from collections.abc import Sequence
 from enum import auto
 from enum import Enum
+import json
 import os
 from pathlib import Path
 import shutil
 import sys
 from typing import Any
 
+from _pytest import cacheprovider
 from _pytest.cacheprovider import _label
 from _pytest.cacheprovider import _scope_id
 from _pytest.cacheprovider import Cache
+from _pytest.cacheprovider import CACHE_INFO_NAME
+from _pytest.cacheprovider import CACHE_INFO_SCHEMA
 from _pytest.cacheprovider import CacheScope
+from _pytest.cacheprovider import read_cache_info
 from _pytest.compat import assert_never
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
@@ -23,6 +28,19 @@ import pytest
 
 
 pytest_plugins = ("pytester",)
+
+
+@pytest.fixture
+def unwritable_cache_dir(pytester: Pytester) -> Generator[Path]:
+    cache_dir = pytester.path.joinpath(".pytest_cache")
+    cache_dir.mkdir()
+    mode = cache_dir.stat().st_mode
+    cache_dir.chmod(0)
+    if os.access(cache_dir, os.W_OK):
+        pytest.skip("Failed to make cache dir unwritable")
+
+    yield cache_dir
+    cache_dir.chmod(mode)
 
 
 def env_scope_values(cachedir: str | Path = ".pytest_cache") -> Path:
@@ -80,18 +98,6 @@ class TestNewAPI:
         cache = config.cache
         assert cache is not None
         cache.set("test/broken", [])
-
-    @pytest.fixture
-    def unwritable_cache_dir(self, pytester: Pytester) -> Generator[Path]:
-        cache_dir = pytester.path.joinpath(".pytest_cache")
-        cache_dir.mkdir()
-        mode = cache_dir.stat().st_mode
-        cache_dir.chmod(0)
-        if os.access(cache_dir, os.W_OK):
-            pytest.skip("Failed to make cache dir unwritable")
-
-        yield cache_dir
-        cache_dir.chmod(mode)
 
     @pytest.mark.filterwarnings(
         "ignore:could not create cache path:pytest.PytestWarning"
@@ -1373,6 +1379,128 @@ def test_cachedir_tag(pytester: Pytester) -> None:
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
     assert cachedir_tag_path.read_bytes() == CACHEDIR_FILES["CACHEDIR.TAG"]
+
+
+class TestCacheInfo:
+    @pytest.fixture
+    def cache(self, pytester: Pytester) -> Cache:
+        return Cache.for_config(pytester.parseconfig(), _ispytest=True)
+
+    def info(self, cache: Cache) -> dict[str, Any]:
+        info = read_cache_info(cache._cachedir)
+        assert info is not None
+        return info
+
+    def test_written_on_creation(self, pytester: Pytester) -> None:
+        pytester.makeini("[pytest]")
+        cache = Cache.for_config(pytester.parseconfig(), _ispytest=True)
+        cache.set("foo", 1)
+        info = self.info(cache)
+
+        assert info["schema"] == CACHE_INFO_SCHEMA
+        assert info["origin"] == {
+            "rootdir": str(pytester.path),
+            "inipath": str(pytester.path / "tox.ini"),
+        }
+        assert info["pytest_version"] == pytest.__version__
+        assert info["created_at"] == info["last_used_at"]
+        assert info["scopes"] == {}
+
+    def test_origin_inipath_is_null_without_a_config_file(self, cache: Cache) -> None:
+        cache.set("foo", 1)
+        assert self.info(cache)["origin"]["inipath"] is None
+
+    def test_not_written_when_cache_is_unused(self, cache: Cache) -> None:
+        # A run which never writes to the cache must still not create it.
+        assert not cache._cachedir.exists()
+
+    def test_records_scopes_as_they_are_used(self, cache: Cache) -> None:
+        cache.set("foo", 1)
+        assert self.info(cache)["scopes"] == {}
+
+        cache.set("foo", 1, scope=CacheScope.ENV)
+        scopes = self.info(cache)["scopes"]
+        scope_id = _scope_id(CacheScope.ENV)
+        assert set(scopes) == {scope_id}
+        assert scopes[scope_id]["scope"] == "env"
+        assert scopes[scope_id]["prefix"] == sys.prefix
+
+        cache.set("foo", 1, scope=CacheScope.PYTHON)
+        assert set(self.info(cache)["scopes"]) == {
+            scope_id,
+            _scope_id(CacheScope.PYTHON),
+        }
+
+    def test_last_used_at_refreshed_but_created_at_kept(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(cacheprovider, "_now", lambda: 1000.0)
+        first = Cache.for_config(pytester.parseconfig(), _ispytest=True)
+        first.set("foo", 1)
+
+        monkeypatch.setattr(cacheprovider, "_now", lambda: 2000.0)
+        second = Cache.for_config(pytester.parseconfig(), _ispytest=True)
+        second.set("foo", 2)
+
+        info = self.info(second)
+        assert info["created_at"] == 1000.0
+        assert info["last_used_at"] == 2000.0
+
+    def test_preserves_unknown_keys(self, cache: Cache) -> None:
+        # A newer pytest's fields must survive an older pytest touching the
+        # same directory.
+        cache.set("foo", 1)
+        path = cache._cachedir / CACHE_INFO_NAME
+        info = json.loads(path.read_text(encoding="UTF-8"))
+        info["from_the_future"] = {"hello": "world"}
+        path.write_text(json.dumps(info), encoding="UTF-8")
+
+        cache.set("foo", 1, scope=CacheScope.ENV)
+        assert self.info(cache)["from_the_future"] == {"hello": "world"}
+
+    def test_backfilled_into_a_preexisting_dir(self, cache: Cache) -> None:
+        cache.set("foo", 1)
+        (cache._cachedir / CACHE_INFO_NAME).unlink()
+
+        later = Cache.for_config(cache._config, _ispytest=True)
+        later.set("foo", 2)
+        assert self.info(later)["schema"] == CACHE_INFO_SCHEMA
+
+    def test_survives_cache_clear(self, pytester: Pytester) -> None:
+        # Like README.md and CACHEDIR.TAG, the metadata is a supporting file:
+        # clearing a cache must not make it anonymous (#6290).
+        pytester.makepyfile(test_a="def test_error(): assert False")
+        pytester.runpytest("-q")
+        cachedir = pytester.path / ".pytest_cache"
+        before = read_cache_info(cachedir)
+        assert before is not None
+
+        pytester.runpytest("-q", "--cache-clear")
+
+        after = read_cache_info(cachedir)
+        assert after is not None
+        assert after["created_at"] == before["created_at"]
+
+    def test_unreadable_metadata_is_tolerated(self, cache: Cache) -> None:
+        cache.set("foo", 1)
+        (cache._cachedir / CACHE_INFO_NAME).write_text("{not json", encoding="UTF-8")
+        assert read_cache_info(cache._cachedir) is None
+
+        # ... and gets rewritten rather than making the run fail.
+        later = Cache.for_config(cache._config, _ispytest=True)
+        later.set("foo", 2)
+        assert self.info(later)["schema"] == CACHE_INFO_SCHEMA
+
+    @pytest.mark.filterwarnings("default")
+    def test_write_failure_is_silent(
+        self, pytester: Pytester, unwritable_cache_dir: Path
+    ) -> None:
+        # The value writes warn about the same cause already; a second warning
+        # for the metadata would be noise.
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        result = pytester.runpytest()
+        assert result.ret == 0
+        result.stdout.no_fnmatch_line("*cache metadata*")
 
 
 class TestEnvScopedBuiltins:
