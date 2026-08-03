@@ -1432,14 +1432,16 @@ class RaisesGroup(AbstractRaises[BaseExceptionGroup[BaseExcT_co]]):
     def expected_type(self) -> str:
         subexcs = []
         for e in self.expected_exceptions:
-            if isinstance(e, RaisesExc):
-                subexcs.append(repr(e))
-            elif isinstance(e, RaisesGroup):
-                subexcs.append(e.expected_type())
-            elif isinstance(e, type):
-                subexcs.append(e.__name__)
-            else:  # pragma: no cover
-                raise AssertionError("unknown type")
+            match e:
+                case RaisesExc():
+                    subexc = repr(e)
+                case RaisesGroup():
+                    subexc = e.expected_type()
+                case type():
+                    subexc = e.__name__
+                case _:  # pragma: no cover
+                    raise AssertionError("unknown type")
+            subexcs.append(subexc)
         group_type = "Base" if self.is_baseexception else ""
         return f"{group_type}ExceptionGroup({', '.join(subexcs)})"
 
