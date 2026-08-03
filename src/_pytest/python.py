@@ -238,7 +238,7 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Module:
 @hookimpl(trylast=True)
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
-) -> None | nodes.Item | nodes.Collector | list[nodes.Item | nodes.Collector]:
+) -> nodes.Item | nodes.Collector | list[nodes.Item | nodes.Collector] | None:
     assert isinstance(collector, Class | Module), type(collector)
     # Nothing was collected elsewhere, let's do it here.
     if safe_isclass(obj):
