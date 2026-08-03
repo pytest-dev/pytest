@@ -2675,7 +2675,7 @@ def test_exit_from_assertrepr_compare(monkeypatch) -> None:
     def raise_exit(obj):
         outcomes.exit("Quitting debugger")
 
-    monkeypatch.setattr(_compare_any, "istext", raise_exit)
+    monkeypatch.setattr(_compare_any, "isdatacls", raise_exit)
 
     with pytest.raises(outcomes.Exit, match="Quitting debugger"):
         callequal(1, 1)
@@ -2762,9 +2762,9 @@ def test_exception_before_first_yield_emits_summary_and_notice(monkeypatch) -> N
     def raise_value_error(obj):
         raise ValueError("synthetic repr failure")
 
-    # ``istext`` is called before the first yield, so this triggers the
+    # ``isdatacls`` is called before the first yield, so this triggers the
     # failure path on the very first ``next()``.
-    monkeypatch.setattr(_compare_any, "istext", raise_value_error)
+    monkeypatch.setattr(_compare_any, "isdatacls", raise_value_error)
 
     expl = callequal(1, 1)
     assert expl is not None

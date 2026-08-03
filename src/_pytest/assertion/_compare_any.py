@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 import dataclasses
 import pprint
 
@@ -12,11 +14,8 @@ from _pytest.assertion._guards import has_default_eq
 from _pytest.assertion._guards import isattrs
 from _pytest.assertion._guards import isdatacls
 from _pytest.assertion._guards import isiterable
-from _pytest.assertion._guards import ismapping
 from _pytest.assertion._guards import isnamedtuple
 from _pytest.assertion._guards import issequence
-from _pytest.assertion._guards import isset
-from _pytest.assertion._guards import istext
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
@@ -38,24 +37,24 @@ def _compare_eq_any(
     can stream the output and bail out early (e.g. for truncation) without
     materialising the entire diff first.
     """
-    if istext(left) and istext(right):
-        yield from _compare_eq_text(
-            left,
-            right,
-            highlighter,
-            verbose,
-            assertion_text_diff_style,
-            truncation_budget,
-        )
-    else:
-        from _pytest.approx import Approx
+    from _pytest.approx import Approx
 
+    match (left, right):
+        case (str(), str()):
+            yield from _compare_eq_text(
+                left,
+                right,
+                highlighter,
+                verbose,
+                assertion_text_diff_style,
+                truncation_budget,
+            )
         # Although the common order should be obtained == approx(...), allow both ways.
-        if isinstance(right, Approx):
+        case (_, Approx()):
             yield from right._repr_compare(left)
-        elif isinstance(left, Approx):
+        case (Approx(), _):
             yield from left._repr_compare(right)
-        elif type(left) is type(right) and (
+        case _ if type(left) is type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
             # Note: unlike dataclasses/attrs, namedtuples compare only the
@@ -69,19 +68,22 @@ def _compare_eq_any(
                 verbose,
                 assertion_text_diff_style,
             )
-        elif issequence(left) and issequence(right):
+        # A guard, since a ``Sequence()`` pattern would also match ``str``,
+        # which ``issequence`` excludes.
+        case _ if issequence(left) and issequence(right):
             yield from _compare_eq_sequence(left, right, highlighter, verbose)
-        elif isset(left) and isset(right):
+        case (AbstractSet(), AbstractSet()):
             yield from _compare_eq_set(left, right, highlighter, verbose)
-        elif ismapping(left) and ismapping(right):
+        case (Mapping(), Mapping()):
             yield from _compare_eq_mapping(
                 left, right, highlighter, verbose, truncation_budget
             )
 
-        if isiterable(left) and isiterable(right):
-            yield from _compare_eq_iterable(
-                left, right, highlighter, verbose, truncation_budget
-            )
+    # Note: ``isiterable`` does not apply to ``str``.
+    if isiterable(left) and isiterable(right):
+        yield from _compare_eq_iterable(
+            left, right, highlighter, verbose, truncation_budget
+        )
 
 
 def _compare_eq_cls(
