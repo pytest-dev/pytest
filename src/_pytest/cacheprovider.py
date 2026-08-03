@@ -729,7 +729,7 @@ class LFPlugin:
 
     def pytest_sessionfinish(self, session: Session) -> None:
         config = self.config
-        if config.getoption("cacheshow") or hasattr(config, "workerinput"):
+        if _cache_command_active(config) or hasattr(config, "workerinput"):
             return
 
         assert config.cache is not None
@@ -778,7 +778,7 @@ class NFPlugin:
 
     def pytest_sessionfinish(self) -> None:
         config = self.config
-        if config.getoption("cacheshow") or hasattr(config, "workerinput"):
+        if _cache_command_active(config) or hasattr(config, "workerinput"):
             return
 
         if config.getoption("collectonly"):
@@ -877,11 +877,34 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
+def _cache_command_active(config: Config) -> bool:
+    """Whether a short-circuiting cache command is running.
+
+    Such a run must not write to the cache: merely inspecting it should not
+    rewrite the very state being inspected.
+    """
+    return bool(config.getoption("cacheshow") or config.getoption("cachelist"))
+
+
 def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
-    if config.option.cacheshow and not config.option.help:
+    if config.option.help:
+        # Let helpconfig's implementation handle it. The hook is firstresult,
+        # so returning None here is what lets --help win over these.
+        return None
+    if config.option.cacheshow:
         from _pytest.main import wrap_session
 
         return wrap_session(config, cacheshow)
+    if config.option.cachelist:
+        # The session-less pattern from helpconfig: no Session means
+        # pytest_sessionfinish never fires, so LFPlugin/NFPlugin cannot clobber
+        # the cache as a side effect of listing it. There is also nothing to
+        # collect - the command is about the machine, not this project.
+        config._do_configure()
+        try:
+            return cache_list(config)
+        finally:
+            config._ensure_unconfigure()
     return None
 
 
@@ -1016,4 +1039,245 @@ def cacheshow(config: Config, session: Session) -> int:
                 if p.is_file():
                     key = str(p.relative_to(basedir))
                     tw.line(f"{key} is a file of length {p.stat().st_size}")
+    return 0
+
+
+@dataclasses.dataclass(frozen=True)
+class _CacheDirEntry:
+    """A cache directory found under the user-level cache root."""
+
+    path: Path
+    info: dict[str, Any] | None
+    size: int
+
+    @property
+    def origin(self) -> str | None:
+        if self.info is None:
+            return None
+        origin = self.info.get("origin")
+        if not isinstance(origin, dict):
+            return None
+        rootdir = origin.get("rootdir")
+        return rootdir if isinstance(rootdir, str) else None
+
+    @property
+    def last_used_at(self) -> float | None:
+        return _as_timestamp(
+            None if self.info is None else self.info.get("last_used_at")
+        )
+
+    @property
+    def status(self) -> str:
+        if self.info is None or self.info.get("schema") != CACHE_INFO_SCHEMA:
+            # Unreadable, absent, or written by a pytest which knows more than
+            # we do. Still listed, so that it can still be removed.
+            return "broken"
+        origin = self.origin
+        if origin is None or not os.path.exists(origin):
+            return "orphaned"
+        return "ok"
+
+    def scopes(self) -> list[_CacheScopeEntry]:
+        recorded = {} if self.info is None else self.info.get("scopes")
+        if not isinstance(recorded, dict):
+            recorded = {}
+        scopedir = self.path / Cache._CACHE_PREFIX_SCOPES
+        found = sorted(p.name for p in scopedir.iterdir()) if scopedir.is_dir() else []
+        return [
+            _CacheScopeEntry(
+                name=name,
+                info=recorded.get(name)
+                if isinstance(recorded.get(name), dict)
+                else None,
+                size=_dir_size(scopedir / name),
+            )
+            for name in found
+        ]
+
+
+@dataclasses.dataclass(frozen=True)
+class _CacheScopeEntry:
+    """One scope directory inside a cache directory."""
+
+    name: str
+    info: dict[str, Any] | None
+    size: int
+
+    @property
+    def prefix(self) -> str | None:
+        if self.info is None:
+            return None
+        prefix = self.info.get("prefix")
+        return prefix if isinstance(prefix, str) else None
+
+    @property
+    def last_used_at(self) -> float | None:
+        return _as_timestamp(
+            None if self.info is None else self.info.get("last_used_at")
+        )
+
+    @property
+    def status(self) -> str:
+        if self.info is None:
+            return "broken"
+        prefix = self.prefix
+        # Only env scopes name an environment which can go away; a python
+        # scope stays meaningful as long as that interpreter is around.
+        if prefix is not None and not os.path.exists(prefix):
+            return "stale"
+        return "ok"
+
+
+def _as_timestamp(value: object) -> float | None:
+    """Coerce a recorded timestamp, tolerating anything hand-edited into it."""
+    return (
+        value
+        if isinstance(value, (int, float)) and not isinstance(value, bool)
+        else None
+    )
+
+
+def _dir_size(path: Path) -> int:
+    """Total size of ``path``, ignoring anything unreadable."""
+    total = 0
+    stack = [path]
+    while stack:
+        try:
+            entries = list(os.scandir(stack.pop()))
+        except OSError:
+            continue
+        for entry in entries:
+            try:
+                if entry.is_dir(follow_symlinks=False):
+                    stack.append(Path(entry.path))
+                else:
+                    total += entry.stat(follow_symlinks=False).st_size
+            except OSError:
+                continue
+    return total
+
+
+def _format_size(size: int) -> str:
+    value = float(size)
+    for unit in ("B", "KiB", "MiB", "GiB"):
+        if value < 1024 or unit == "GiB":
+            return f"{value:.0f} {unit}" if unit == "B" else f"{value:.1f} {unit}"
+        value /= 1024
+    raise AssertionError("unreachable")
+
+
+def _format_age(last_used_at: float | None, now: float) -> str:
+    if last_used_at is None:
+        return "-"
+    seconds = max(now - last_used_at, 0)
+    for amount, unit in ((86400, "day"), (3600, "hour"), (60, "minute")):
+        if seconds >= amount:
+            count = int(seconds // amount)
+            return f"{count} {unit}{'s' if count != 1 else ''}"
+    return "just now"
+
+
+def collect_cache_dirs(root: Path) -> list[_CacheDirEntry]:
+    """Every cache directory under ``root``, newest first."""
+    try:
+        candidates = sorted(p for p in root.iterdir() if p.is_dir())
+    except OSError:
+        return []
+    entries = [
+        _CacheDirEntry(path=p, info=read_cache_info(p), size=_dir_size(p))
+        for p in candidates
+    ]
+    # Oldest last, so the ones worth pruning sit next to the totals.
+    return sorted(entries, key=lambda e: e.last_used_at or 0.0, reverse=True)
+
+
+@dataclasses.dataclass(frozen=True)
+class _ListRow:
+    """One rendered row of ``--cache-list``."""
+
+    name: str
+    size: str
+    age: str
+    status: str
+    origin: str | None
+    #: Set for a cache directory, None for a scope row nested under one.
+    link: Path | None
+
+    @property
+    def cells(self) -> tuple[str, str, str, str]:
+        """The width-relevant cells, as plain text."""
+        return (self.name, self.size, self.age, self.status)
+
+
+def cache_list(config: Config) -> int:
+    """Display the cache directories under the user-level cache root."""
+    tw = config.get_terminal_writer()
+    root = user_cache_root()
+    tw.line(f"user cache directory: {root}")
+
+    entries = collect_cache_dirs(root)
+    if not entries:
+        tw.line("no managed cache directories found")
+        return 0
+
+    now = _now()
+    rows: list[_ListRow] = []
+    for entry in entries:
+        rows.append(
+            _ListRow(
+                name=entry.path.name,
+                size=_format_size(entry.size),
+                age=_format_age(entry.last_used_at, now),
+                status=entry.status,
+                origin=entry.origin,
+                link=entry.path,
+            )
+        )
+        rows.extend(
+            _ListRow(
+                name=f"  {scope.name}",
+                size=_format_size(scope.size),
+                age=_format_age(scope.last_used_at, now),
+                status=scope.status,
+                origin=scope.prefix,
+                link=None,
+            )
+            for scope in entry.scopes()
+        )
+
+    header = ("DIRECTORY", "SIZE", "LAST USED", "STATUS")
+    # Widths come from the plain text, before any link escapes are applied.
+    # ORIGIN is last and so may overflow rather than being truncated: a
+    # truncated path is useless.
+    columns = zip(*(row.cells for row in rows), strict=True)
+    widths = [
+        max(len(head), *(len(cell) for cell in column))
+        for head, column in zip(header, columns, strict=True)
+    ]
+
+    tw.line("")
+    heading = "  ".join(h.ljust(w) for h, w in zip(header, widths, strict=True))
+    tw.line(f"  {heading}  ORIGIN")
+    for row in rows:
+        tw.write("  ")
+        if row.link is not None:
+            tw.write_link(row.name.ljust(widths[0]), row.link.as_uri())
+        else:
+            tw.write(row.name.ljust(widths[0]))
+        tw.write(f"  {row.size.rjust(widths[1])}")
+        tw.write(f"  {row.age.ljust(widths[2])}")
+        tw.write(f"  {row.status.ljust(widths[3])}")
+        tw.write("  ")
+        # Only link an origin which is still there; a dangling link is worse
+        # than no link at all.
+        if row.origin is not None and os.path.isdir(row.origin):
+            tw.write_link(row.origin, Path(row.origin).as_uri())
+        else:
+            tw.write(row.origin or "-")
+        tw.line("")
+
+    scopes = sum(1 for row in rows if row.link is None)
+    total = sum(entry.size for entry in entries)
+    tw.line("")
+    tw.line(f"{len(entries)} directories, {scopes} scopes, {_format_size(total)} total")
     return 0

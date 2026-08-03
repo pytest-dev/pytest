@@ -1644,6 +1644,159 @@ class TestCachePolicy:
         result.stderr.fnmatch_lines(["*pip install pytest?xdg?*"])
 
 
+class TestCacheList:
+    @pytest.fixture
+    def user_cache(self, monkeypatch: MonkeyPatch, tmp_path: Path) -> Path:
+        root = tmp_path / "user-cache"
+        monkeypatch.setenv("PYTEST_CACHE_HOME", str(root))
+        return root
+
+    def populate(self, pytester: Pytester, name: str) -> Path:
+        """Run a failing test in a fresh project, returning its rootdir."""
+        project = pytester.path / name
+        project.mkdir()
+        project.joinpath("test_x.py").write_text(
+            "def test_bad(): assert False\n", encoding="UTF-8"
+        )
+        project.joinpath("tox.ini").write_text(
+            "[pytest]\ncache_policy = user\n", encoding="UTF-8"
+        )
+        pytester.runpytest_subprocess(str(project), "--rootdir", str(project))
+        return project
+
+    def test_empty(self, pytester: Pytester, user_cache: Path) -> None:
+        result = pytester.runpytest("--cache-list")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(
+            [
+                f"user cache directory: {user_cache}",
+                "no managed cache directories found",
+            ]
+        )
+
+    def test_lists_entries_with_scopes(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        project = self.populate(pytester, "alpha")
+
+        result = pytester.runpytest("--cache-list")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(
+            [
+                "*DIRECTORY*SIZE*LAST USED*STATUS*ORIGIN*",
+                f"  alpha-*  * ok  *{project}",
+                "    env-*  *  ok  *",
+                "1 directories, 1 scopes, * total",
+            ]
+        )
+
+    def test_marks_orphaned_when_the_origin_is_gone(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        project = self.populate(pytester, "alpha")
+        shutil.rmtree(project)
+
+        result = pytester.runpytest("--cache-list")
+        result.stdout.fnmatch_lines([f"  alpha-*orphaned*{project}"])
+
+    def test_marks_scope_stale_when_the_env_is_gone(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        self.populate(pytester, "alpha")
+        cachedir = next(user_cache.iterdir())
+        info = json.loads((cachedir / CACHE_INFO_NAME).read_text(encoding="UTF-8"))
+        for scope in info["scopes"].values():
+            scope["prefix"] = str(pytester.path / "deleted-venv")
+        (cachedir / CACHE_INFO_NAME).write_text(json.dumps(info), encoding="UTF-8")
+
+        result = pytester.runpytest("--cache-list")
+        # The directory itself stays fine; only the scope is collectable.
+        result.stdout.fnmatch_lines(["  alpha-*  ok  *", "    env-*  stale  *"])
+
+    @pytest.mark.parametrize("content", ["", "{not json", '{"schema": 99}'])
+    def test_tolerates_unusable_metadata(
+        self, pytester: Pytester, user_cache: Path, content: str
+    ) -> None:
+        # A directory we cannot understand must still be listed, or it becomes
+        # invisible but undeletable.
+        cachedir = user_cache / "mystery-0123456789abcdef"
+        cachedir.mkdir(parents=True)
+        if content:
+            (cachedir / CACHE_INFO_NAME).write_text(content, encoding="UTF-8")
+
+        result = pytester.runpytest("--cache-list")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["  mystery-*broken*"])
+
+    def test_works_regardless_of_this_project_policy(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        # Listing must work after switching back to the local policy, or you
+        # could never clean up what you left behind.
+        self.populate(pytester, "alpha")
+        pytester.makeini("[pytest]\ncache_policy = local\n")
+
+        result = pytester.runpytest("--cache-list")
+        result.stdout.fnmatch_lines(["  alpha-*"])
+
+    def test_creates_nothing(self, pytester: Pytester, user_cache: Path) -> None:
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        pytester.runpytest("--cache-list")
+        assert not user_cache.exists()
+
+    def test_does_not_collect_or_run_tests(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        pytester.makepyfile(test_a="raise RuntimeError('should not be collected')")
+        result = pytester.runpytest("--cache-list")
+        assert result.ret == 0
+        result.stdout.no_fnmatch_line("*RuntimeError*")
+
+    def test_does_not_clobber_the_cache(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        """Listing must not rewrite the state being listed.
+
+        LFPlugin/NFPlugin write on pytest_sessionfinish, which is why this
+        command deliberately runs without a Session.
+        """
+        self.populate(pytester, "alpha")
+        cachedir = next(user_cache.iterdir())
+        lastfailed = next(cachedir.glob("s/*/v/cache/lastfailed"))
+        before = lastfailed.read_bytes()
+
+        pytester.runpytest("--cache-list")
+        assert lastfailed.read_bytes() == before
+
+    def test_with_help(self, pytester: Pytester, user_cache: Path) -> None:
+        result = pytester.runpytest("--cache-list", "--help")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["*--cache-list*"])
+
+    def test_hyperlinks(
+        self, pytester: Pytester, user_cache: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        project = self.populate(pytester, "alpha")
+        # Pytester forces PY_COLORS=0 for inner runs, so ask explicitly.
+        monkeypatch.setenv("PY_COLORS", "1")
+        monkeypatch.setenv("PYTEST_HYPERLINKS", "1")
+
+        result = pytester.runpytest_subprocess("--cache-list")
+        assert result.ret == 0
+        cachedir = next(user_cache.iterdir())
+        stdout = result.stdout.str()
+        assert f"\x1b]8;;{cachedir.as_uri()}\x1b\\" in stdout
+        assert f"\x1b]8;;{project.as_uri()}\x1b\\" in stdout
+
+    def test_no_hyperlinks_when_piped(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        self.populate(pytester, "alpha")
+        result = pytester.runpytest_subprocess("--cache-list")
+        assert "\x1b]8;;" not in result.stdout.str()
+
+
 class TestCacheInfo:
     @pytest.fixture
     def cache(self, pytester: Pytester) -> Cache:
