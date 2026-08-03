@@ -212,11 +212,12 @@ as plugins.  As an example consider the following package::
    pytest_foo/plugin.py
    pytest_foo/helper.py
 
-With the following typical ``setup.py`` extract:
+With the following typical ``pyproject.toml`` extract:
 
-.. code-block:: python
+.. code-block:: toml
 
-   setup(..., entry_points={"pytest11": ["foo = pytest_foo.plugin"]}, ...)
+   [project.entry-points.pytest11]
+   foo = "pytest_foo.plugin"
 
 In this case only ``pytest_foo/plugin.py`` will be rewritten.  If the
 helper module also contains assert statements which need to be
