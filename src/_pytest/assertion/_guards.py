@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import collections.abc
-from collections.abc import Mapping
-from collections.abc import Set as AbstractSet
 import dataclasses
 from typing import TypeGuard
 
@@ -13,14 +11,6 @@ def issequence(x: object) -> TypeGuard[collections.abc.Sequence[object]]:
 
 def istext(x: object) -> TypeGuard[str]:
     return isinstance(x, str)
-
-
-def ismapping(x: object) -> TypeGuard[Mapping[object, object]]:
-    return isinstance(x, Mapping)
-
-
-def isset(x: object) -> TypeGuard[AbstractSet[object]]:
-    return isinstance(x, AbstractSet)
 
 
 def isnamedtuple(obj: object) -> bool:
