@@ -1,1 +1,0 @@
-Corrected the Tox ``package_env`` references in the changelog so they resolve to the external Tox documentation.
