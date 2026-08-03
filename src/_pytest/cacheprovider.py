@@ -8,9 +8,11 @@ from __future__ import annotations
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Mapping
+from collections.abc import Sequence
 import dataclasses
 import enum
 import errno
+import fnmatch
 import hashlib
 import json
 import os
@@ -845,6 +847,18 @@ def pytest_addoption(parser: Parser) -> None:
             "don't perform collection or tests."
         ),
     )
+    group.addoption(
+        "--cache-prune",
+        action="append",
+        dest="cacheprune",
+        metavar="SELECTOR",
+        help=(
+            "Remove cache directories or scopes under the user-level cache root, "
+            "don't perform collection or tests. SELECTOR is 'all', 'orphaned', "
+            "'stale', or a glob matched against the directory name and the origin "
+            "path. May be given more than once. See --cache-list first."
+        ),
+    )
     # Empty by default so that "not configured" is detectable, in which case
     # cache_policy decides the location.
     parser.addini(
@@ -883,7 +897,11 @@ def _cache_command_active(config: Config) -> bool:
     Such a run must not write to the cache: merely inspecting it should not
     rewrite the very state being inspected.
     """
-    return bool(config.getoption("cacheshow") or config.getoption("cachelist"))
+    return bool(
+        config.getoption("cacheshow")
+        or config.getoption("cachelist")
+        or config.getoption("cacheprune")
+    )
 
 
 def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
@@ -895,13 +913,15 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
         from _pytest.main import wrap_session
 
         return wrap_session(config, cacheshow)
-    if config.option.cachelist:
+    if config.option.cachelist or config.option.cacheprune:
         # The session-less pattern from helpconfig: no Session means
         # pytest_sessionfinish never fires, so LFPlugin/NFPlugin cannot clobber
-        # the cache as a side effect of listing it. There is also nothing to
-        # collect - the command is about the machine, not this project.
+        # the cache as a side effect of inspecting it. There is also nothing to
+        # collect - these commands are about the machine, not this project.
         config._do_configure()
         try:
+            if config.option.cacheprune:
+                return cache_prune(config, config.option.cacheprune)
             return cache_list(config)
         finally:
             config._ensure_unconfigure()
@@ -1281,3 +1301,70 @@ def cache_list(config: Config) -> int:
     tw.line("")
     tw.line(f"{len(entries)} directories, {scopes} scopes, {_format_size(total)} total")
     return 0
+
+
+def _matches_selector(entry: _CacheDirEntry, selector: str) -> bool:
+    if selector == "all":
+        return True
+    if selector == "orphaned":
+        return entry.status in ("orphaned", "broken")
+    if selector == "stale":
+        # Handled per scope rather than per directory.
+        return False
+    return fnmatch.fnmatch(entry.path.name, selector) or (
+        entry.origin is not None and fnmatch.fnmatch(entry.origin, selector)
+    )
+
+
+def cache_prune(config: Config, selectors: Sequence[str]) -> int:
+    """Remove cache directories and scopes matching ``selectors``."""
+    tw = config.get_terminal_writer()
+    root = user_cache_root()
+    tw.line(f"user cache directory: {root}")
+
+    # Never remove the directory this very invocation would use.
+    assert config.cache is not None
+    current = config.cache._cachedir
+
+    removed = 0
+    failed = False
+    prune_stale = "stale" in selectors
+    for entry in collect_cache_dirs(root):
+        # Never remove the directory this run is itself using. Note this
+        # guards whole-directory removal only: a *stale* scope can never be
+        # the one in use, since the running environment exists by definition,
+        # and pruning the current project's dead environments is the most
+        # likely thing anyone wants.
+        if entry.path != current and any(
+            _matches_selector(entry, selector) for selector in selectors
+        ):
+            tw.line(f"removing {entry.path.name} ({_format_size(entry.size)})")
+            try:
+                rm_rf(entry.path)
+            except OSError as exc:
+                tw.line(f"  failed: {exc}")
+                failed = True
+            else:
+                removed += entry.size
+            continue
+
+        if not prune_stale:
+            continue
+        for scope in entry.scopes():
+            if scope.status != "stale":
+                continue
+            path = entry.path / Cache._CACHE_PREFIX_SCOPES / scope.name
+            tw.line(
+                f"removing {entry.path.name}/{scope.name} ({_format_size(scope.size)})"
+            )
+            try:
+                rm_rf(path)
+            except OSError as exc:
+                tw.line(f"  failed: {exc}")
+                failed = True
+            else:
+                removed += scope.size
+
+    if removed or not failed:
+        tw.line(f"reclaimed {_format_size(removed)}")
+    return ExitCode.USAGE_ERROR if failed else ExitCode.OK

@@ -1797,6 +1797,197 @@ class TestCacheList:
         assert "\x1b]8;;" not in result.stdout.str()
 
 
+class TestCachePrune:
+    @pytest.fixture
+    def user_cache(self, monkeypatch: MonkeyPatch, tmp_path: Path) -> Path:
+        root = tmp_path / "user-cache"
+        monkeypatch.setenv("PYTEST_CACHE_HOME", str(root))
+        return root
+
+    def populate(self, pytester: Pytester, name: str) -> Path:
+        project = pytester.path / name
+        project.mkdir()
+        project.joinpath("test_x.py").write_text(
+            "def test_bad(): assert False\n", encoding="UTF-8"
+        )
+        project.joinpath("tox.ini").write_text(
+            "[pytest]\ncache_policy = user\n", encoding="UTF-8"
+        )
+        pytester.runpytest_subprocess(str(project), "--rootdir", str(project))
+        return project
+
+    def names(self, user_cache: Path) -> set[str]:
+        return {p.name for p in user_cache.iterdir()}
+
+    def test_requires_a_selector(self, pytester: Pytester, user_cache: Path) -> None:
+        # No default, so a bare invocation can never be destructive.
+        result = pytester.runpytest("--cache-prune")
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(["*--cache-prune: expected one argument*"])
+
+    def test_all(self, pytester: Pytester, user_cache: Path) -> None:
+        self.populate(pytester, "alpha")
+        self.populate(pytester, "beta")
+
+        result = pytester.runpytest("--cache-prune=all")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["removing alpha-*", "reclaimed *"])
+        assert self.names(user_cache) == set()
+
+    def test_all_skips_the_current_directory(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        self.populate(pytester, "alpha")
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        # Give this project a cache directory of its own to protect.
+        pytester.makepyfile(test_a="def test_bad(): assert False")
+        pytester.runpytest("-q")
+        mine = _label(pytester.path.name)
+
+        pytester.runpytest("--cache-prune=all")
+        remaining = self.names(user_cache)
+        assert not any(n.startswith("alpha-") for n in remaining)
+        assert any(n.startswith(f"{mine}-") for n in remaining)
+
+    def test_orphaned(self, pytester: Pytester, user_cache: Path) -> None:
+        alpha = self.populate(pytester, "alpha")
+        self.populate(pytester, "beta")
+        shutil.rmtree(alpha)
+
+        pytester.runpytest("--cache-prune=orphaned")
+        assert not any(n.startswith("alpha-") for n in self.names(user_cache))
+        assert any(n.startswith("beta-") for n in self.names(user_cache))
+
+    def test_orphaned_removes_broken_directories(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        user_cache.mkdir(parents=True, exist_ok=True)
+        (user_cache / "mystery-0123456789abcdef").mkdir()
+
+        pytester.runpytest("--cache-prune=orphaned")
+        assert self.names(user_cache) == set()
+
+    def test_stale_removes_only_the_scope(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        self.populate(pytester, "alpha")
+        cachedir = next(user_cache.iterdir())
+        info = json.loads((cachedir / CACHE_INFO_NAME).read_text(encoding="UTF-8"))
+        for scope in info["scopes"].values():
+            scope["prefix"] = str(pytester.path / "deleted-venv")
+        (cachedir / CACHE_INFO_NAME).write_text(json.dumps(info), encoding="UTF-8")
+
+        result = pytester.runpytest("--cache-prune=stale")
+        assert result.ret == ExitCode.OK
+        result.stdout.fnmatch_lines(["removing alpha-*/env-*"])
+        # The project's own cache directory survives; only the dead
+        # environment's state goes.
+        assert cachedir.is_dir()
+        assert not list((cachedir / "s").iterdir())
+
+    def test_stale_applies_to_the_current_project_too(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        """Self-exclusion must not block pruning your own stale scopes.
+
+        It guards whole-directory removal; a stale scope can never be the one
+        in use, since the running environment exists by definition - and
+        clearing out a deleted virtualenv of the project you are standing in
+        is the most likely reason to run this at all.
+        """
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        pytester.makepyfile(test_a="def test_bad(): assert False")
+        pytester.runpytest("-q")
+
+        cachedir = next(user_cache.iterdir())
+        info = json.loads((cachedir / CACHE_INFO_NAME).read_text(encoding="UTF-8"))
+        for scope in info["scopes"].values():
+            scope["prefix"] = str(pytester.path / "deleted-venv")
+        (cachedir / CACHE_INFO_NAME).write_text(json.dumps(info), encoding="UTF-8")
+
+        result = pytester.runpytest("--cache-prune=stale")
+        result.stdout.fnmatch_lines(["removing *env-*"])
+        assert cachedir.is_dir()
+        assert not list((cachedir / "s").iterdir())
+
+    def test_glob_matches_name_or_origin(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        self.populate(pytester, "alpha")
+        self.populate(pytester, "beta")
+
+        pytester.runpytest("--cache-prune=alpha-*")
+        assert not any(n.startswith("alpha-") for n in self.names(user_cache))
+        assert any(n.startswith("beta-") for n in self.names(user_cache))
+
+        pytester.runpytest(f"--cache-prune={pytester.path}/beta")
+        assert self.names(user_cache) == set()
+
+    def test_selectors_are_repeatable(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        self.populate(pytester, "alpha")
+        self.populate(pytester, "beta")
+        self.populate(pytester, "gamma")
+
+        pytester.runpytest("--cache-prune=alpha-*", "--cache-prune=beta-*")
+        assert {n.split("-")[0] for n in self.names(user_cache)} == {"gamma"}
+
+    def test_no_match_removes_nothing(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        self.populate(pytester, "alpha")
+        result = pytester.runpytest("--cache-prune=nothing-matches-this")
+        assert result.ret == ExitCode.OK
+        assert any(n.startswith("alpha-") for n in self.names(user_cache))
+
+    def test_does_not_clobber_the_cache(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        """Pruning must not rewrite the caches it leaves alone.
+
+        The direct regression test for the LFPlugin/NFPlugin sessionfinish
+        hazard: a no-match prune has to be a complete no-op.
+        """
+        project = self.populate(pytester, "alpha")
+        cachedir = next(user_cache.iterdir())
+        values = {
+            p: p.read_bytes() for p in cachedir.glob("s/*/v/cache/*") if p.is_file()
+        }
+        assert values
+
+        pytester.runpytest("--cache-prune=nothing-matches-this")
+        assert {p: p.read_bytes() for p in values} == values
+
+        # ... and --lf still works afterwards.
+        result = pytester.runpytest_subprocess(
+            str(project), "--rootdir", str(project), "--lf", "-v"
+        )
+        result.stdout.fnmatch_lines(["*rerun previous 1 failure*"])
+
+    def test_with_help(self, pytester: Pytester, user_cache: Path) -> None:
+        result = pytester.runpytest("--cache-prune=all", "--help")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["*--cache-prune*"])
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="no chmod on win32")
+    def test_reports_failures_and_continues(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        self.populate(pytester, "alpha")
+        self.populate(pytester, "beta")
+        alpha = next(p for p in user_cache.iterdir() if p.name.startswith("alpha-"))
+        user_cache.chmod(0o500)
+        try:
+            result = pytester.runpytest("--cache-prune=all")
+        finally:
+            user_cache.chmod(0o700)
+
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stdout.fnmatch_lines(["*failed: *"])
+        assert alpha.exists()
+
+
 class TestCacheInfo:
     @pytest.fixture
     def cache(self, pytester: Pytester) -> Cache:
