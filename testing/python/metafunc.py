@@ -175,7 +175,7 @@ class TestMetafunc:
             def __repr__(self):
                 return "Exc(from_gen)"
 
-        def gen() -> Iterator[int | None | Exc]:
+        def gen() -> Iterator[int | Exc | None]:
             yield 0
             yield None
             yield Exc()
@@ -338,7 +338,7 @@ class TestMetafunc:
 
         class MockConfig:
             def getini(self, name):
-                return ""
+                return "skip"
 
             @property
             def hook(self):

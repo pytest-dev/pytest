@@ -76,6 +76,10 @@ KNOWN_TYPES = (
 
 _REPORTCHARS_DEFAULT = "fE"
 
+_ConsoleOutputStyle = Literal[
+    "classic", "progress", "count", "times", "progress-even-when-capture-no"
+]
+
 
 class MoreQuietAction(argparse.Action):
     """A modified copy of the argparse count action which counts down and updates
@@ -274,8 +278,9 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "console_output_style",
         help='Console output: "classic", or with additional progress information '
-        '("progress" (percentage) | "count" | "progress-even-when-capture-no" (forces '
-        "progress even when capture=no)",
+        '("progress" (percentage) | "count" | "times" | "progress-even-when-capture-no" '
+        "(forces progress even when capture=no)",
+        type=_ConsoleOutputStyle,
         default="progress",
     )
     Config._add_verbosity_ini(
@@ -289,6 +294,8 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
+    # Eagerly validate the value; it is only read lazily during reporting.
+    config.getini("console_output_style")
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
@@ -393,7 +400,7 @@ class TerminalReporter:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
-        self.currentfspath: None | Path | str | int = None
+        self.currentfspath: Path | str | int | None = None
         self.reportchars = getreportopt(config)
         self.foldskipped = config.option.fold_skipped
         self.hasmarkup = self._tw.hasmarkup
@@ -422,15 +429,18 @@ class TerminalReporter:
         # do not show progress if we are showing fixture setup/teardown
         if self.config.getoption("setupshow", False):
             return False
-        cfg: str = self.config.getini("console_output_style")
-        if cfg in {"progress", "progress-even-when-capture-no"}:
-            return "progress"
-        elif cfg == "count":
-            return "count"
-        elif cfg == "times":
-            return "times"
-        else:
-            return False
+        cfg: _ConsoleOutputStyle = self.config.getini("console_output_style")
+        match cfg:
+            case "progress" | "progress-even-when-capture-no":
+                return "progress"
+            case "count":
+                return "count"
+            case "times":
+                return "times"
+            case "classic":
+                return False
+            case unreachable:
+                compat.assert_never(unreachable)
 
     @property
     def verbosity(self) -> int:

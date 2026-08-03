@@ -1046,7 +1046,7 @@ class TestConfigAPI:
         )
         config = pytester.parseconfig()
         with pytest.raises(
-            TypeError, match="Expected an int string for option ini_param"
+            UsageError, match="Expected an int string for option ini_param"
         ):
             _ = config.getini("ini_param")
 
@@ -1085,7 +1085,7 @@ class TestConfigAPI:
         )
         config = pytester.parseconfig()
         with pytest.raises(
-            TypeError, match="Expected a float string for option ini_param"
+            UsageError, match="Expected a float string for option ini_param"
         ):
             _ = config.getini("ini_param")
 
@@ -1141,7 +1141,7 @@ class TestConfigAPI:
         )
         config = pytester.parseconfig()
         with pytest.raises(
-            TypeError, match=r"config option 'ini_param' expects one of int \| string"
+            UsageError, match=r"config option 'ini_param' expects one of int \| string"
         ):
             _ = config.getini("ini_param")
 
@@ -1204,20 +1204,20 @@ class TestConfigAPI:
         )
 
     @pytest.mark.parametrize(
-        "value, exc, match",
+        "value, match",
         [
-            ('"short"', ValueError, r"expects one of 'auto' \| 'long', got 'short'"),
-            ("5", TypeError, r"expects a string, got int: 5"),
+            ('"short"', r"expects one of 'auto' \| 'long', got 'short'"),
+            ("5", r"expects a string, got int: 5"),
         ],
         ids=["bad-choice", "bad-type"],
     )
     def test_addini_literal_type_invalid_value(
-        self, pytester: Pytester, value: str, exc: type[Exception], match: str
+        self, pytester: Pytester, value: str, match: str
     ) -> None:
         pytester.makeconftest(self.LITERAL_CONFTEST)
         pytester.makepyprojecttoml(f"[tool.pytest]\nini_param = {value}")
         config = pytester.parseconfig()
-        with pytest.raises(exc, match=f"config option 'ini_param' {match}"):
+        with pytest.raises(UsageError, match=f"config option 'ini_param' {match}"):
             _ = config.getini("ini_param")
 
     UNION_LITERAL_CONFTEST = """
@@ -1263,7 +1263,7 @@ class TestConfigAPI:
         pytester.makepyprojecttoml('[tool.pytest]\nini_param = "3"')
         config = pytester.parseconfig()
         with pytest.raises(
-            TypeError,
+            UsageError,
             match=r"config option 'ini_param' expects one of int \| 'auto', "
             r"got str: '3'",
         ):
@@ -3164,7 +3164,7 @@ class TestNativeTomlConfig:
             pytester.parseconfig()
 
     def test_type_errors(self, pytester: Pytester) -> None:
-        """Test all possible TypeError cases in getini."""
+        """Test all invalid-type cases in getini, reported as UsageError."""
         pytester.maketoml(
             """
             [pytest]
@@ -3208,49 +3208,51 @@ class TestNativeTomlConfig:
         config = pytester.parseconfig()
 
         with pytest.raises(
-            TypeError, match=r"expects a list for type 'paths'.*got str"
+            UsageError, match=r"expects a list for type 'paths'.*got str"
         ):
             config.getini("paths_not_list")
 
         with pytest.raises(
-            TypeError, match=r"expects a list of strings.*item at index 0 is int"
+            UsageError, match=r"expects a list of strings.*item at index 0 is int"
         ):
             config.getini("paths_list_with_int")
 
-        with pytest.raises(TypeError, match=r"expects a list for type 'args'.*got int"):
+        with pytest.raises(
+            UsageError, match=r"expects a list for type 'args'.*got int"
+        ):
             config.getini("args_not_list")
 
         with pytest.raises(
-            TypeError, match=r"expects a list of strings.*item at index 1 is int"
+            UsageError, match=r"expects a list of strings.*item at index 1 is int"
         ):
             config.getini("args_list_with_int")
 
         with pytest.raises(
-            TypeError, match=r"expects a list for type 'linelist'.*got bool"
+            UsageError, match=r"expects a list for type 'linelist'.*got bool"
         ):
             config.getini("linelist_not_list")
 
         with pytest.raises(
-            TypeError, match=r"expects a list of strings.*item at index 1 is bool"
+            UsageError, match=r"expects a list of strings.*item at index 1 is bool"
         ):
             config.getini("linelist_list_with_bool")
 
-        with pytest.raises(TypeError, match=r"expects a bool.*got str"):
+        with pytest.raises(UsageError, match=r"expects a bool.*got str"):
             config.getini("bool_not_bool")
 
-        with pytest.raises(TypeError, match=r"expects an int.*got str"):
+        with pytest.raises(UsageError, match=r"expects an int.*got str"):
             config.getini("int_not_int")
 
-        with pytest.raises(TypeError, match=r"expects an int.*got bool"):
+        with pytest.raises(UsageError, match=r"expects an int.*got bool"):
             config.getini("int_is_bool")
 
-        with pytest.raises(TypeError, match=r"expects a float.*got str"):
+        with pytest.raises(UsageError, match=r"expects a float.*got str"):
             config.getini("float_not_float")
 
-        with pytest.raises(TypeError, match=r"expects a float.*got bool"):
+        with pytest.raises(UsageError, match=r"expects a float.*got bool"):
             config.getini("float_is_bool")
 
-        with pytest.raises(TypeError, match=r"expects a string.*got int"):
+        with pytest.raises(UsageError, match=r"expects a string.*got int"):
             config.getini("string_not_string")
 
 
