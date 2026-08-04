@@ -657,6 +657,18 @@ class TestFunctional:
         assert has_inherited_marker.kwargs == {"location": "class"}
         assert has_own.get_closest_marker("missing") is None
 
+    def test_mark_closest_default_mark_decorator(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            def test_without_mark():
+                pass
+        """
+        )
+        items, _rec = pytester.inline_genitems(p)
+        (item,) = items
+        default = pytest.mark.foo(location="default")
+        assert item.get_closest_marker("foo", default) is default.mark
+
     def test_mark_with_wrong_marker(self, pytester: Pytester) -> None:
         reprec = pytester.inline_runsource(
             """
