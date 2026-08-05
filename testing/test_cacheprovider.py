@@ -7,12 +7,14 @@ from enum import Enum
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 from typing import Any
 
 from _pytest import cacheprovider
 from _pytest.cacheprovider import _label
+from _pytest.cacheprovider import _project_digest
 from _pytest.cacheprovider import _scope_id
 from _pytest.cacheprovider import Cache
 from _pytest.cacheprovider import CACHE_INFO_NAME
@@ -22,6 +24,7 @@ from _pytest.cacheprovider import read_cache_info
 from _pytest.compat import assert_never
 from _pytest.config import ExitCode
 from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
 from _pytest.tmpdir import TempPathFactory
 import pytest
@@ -227,6 +230,45 @@ def test_cache_reportheader(
         expected = ".pytest_cache"
     result = pytester.runpytest("-v")
     result.stdout.fnmatch_lines([f"cachedir: {expected}"])
+
+
+def test_cache_reportheader_hidden_by_default(pytester: Pytester) -> None:
+    pytester.makepyfile("""def test_foo(): pass""")
+    result = pytester.runpytest()
+    result.stdout.no_fnmatch_line("cachedir:*")
+
+
+def test_cache_reportheader_hidden_for_explicit_default(pytester: Pytester) -> None:
+    """Setting cache_dir to the default explicitly is still the default.
+
+    The check compares the resolved path, rather than the configured string
+    against a hardcoded ".pytest_cache".
+    """
+    pytester.makepyfile("""def test_foo(): pass""")
+    pytester.makeini("[pytest]\ncache_dir = .pytest_cache\n")
+    result = pytester.runpytest()
+    result.stdout.no_fnmatch_line("cachedir:*")
+
+
+def test_cache_reportheader_user_policy(
+    pytester: Pytester, monkeypatch: MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("PYTEST_CACHE_HOME", str(tmp_path / "user-cache"))
+    pytester.makepyfile("""def test_foo(): pass""")
+    pytester.makeini("[pytest]\ncache_policy = user\n")
+    result = pytester.runpytest("-v")
+    # Outside the rootdir, so shown as an absolute path (#3745).
+    result.stdout.fnmatch_lines([f"cachedir: {tmp_path / 'user-cache'}*"])
+
+
+def test_cache_reportheader_hyperlinked(
+    pytester: Pytester, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PY_COLORS", "1")
+    monkeypatch.setenv("PYTEST_HYPERLINKS", "1")
+    pytester.makepyfile("""def test_foo(): pass""")
+    result = pytester.runpytest_subprocess("-v")
+    result.stdout.fnmatch_lines(["*\x1b]8;;file://*.pytest_cache*"])
 
 
 def test_cache_reportheader_external_abspath(
@@ -1379,6 +1421,140 @@ def test_cachedir_tag(pytester: Pytester) -> None:
     cache.set("foo", "bar")
     cachedir_tag_path = cache._cachedir.joinpath("CACHEDIR.TAG")
     assert cachedir_tag_path.read_bytes() == CACHEDIR_FILES["CACHEDIR.TAG"]
+
+
+class TestCachePolicy:
+    @pytest.fixture
+    def user_cache(self, monkeypatch: MonkeyPatch, tmp_path: Path) -> Path:
+        root = tmp_path / "user-cache"
+        monkeypatch.setenv("PYTEST_CACHE_HOME", str(root))
+        return root
+
+    def resolve(self, pytester: Pytester, **ini: str) -> Path:
+        body = "".join(f"{k} = {v}\n" for k, v in ini.items())
+        pytester.makeini(f"[pytest]\n{body}")
+        return Cache.for_config(pytester.parseconfig(), _ispytest=True)._cachedir
+
+    def test_local_is_the_default(self, pytester: Pytester) -> None:
+        assert self.resolve(pytester) == pytester.path / ".pytest_cache"
+
+    def test_user_policy(self, pytester: Pytester, user_cache: Path) -> None:
+        cachedir = self.resolve(pytester, cache_policy="user")
+        assert cachedir.parent == user_cache
+        assert cachedir.name.startswith(f"{pytester.path.name}-")
+
+    def test_cache_dir_wins_over_policy(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        cachedir = self.resolve(pytester, cache_policy="user", cache_dir="explicit")
+        assert cachedir == pytester.path / "explicit"
+
+    def test_unknown_policy_is_a_usage_error(self, pytester: Pytester) -> None:
+        pytester.makeini("[pytest]\ncache_policy = bogus\n")
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(["*cache_policy*expects one of*got 'bogus'*"])
+
+    def test_env_var_sets_the_default(
+        self, pytester: Pytester, user_cache: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTEST_CACHE_POLICY", "user")
+        assert self.resolve(pytester).parent == user_cache
+
+    def test_explicit_setting_beats_the_env_var(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTEST_CACHE_POLICY", "user")
+        assert self.resolve(pytester, cache_policy="local") == (
+            pytester.path / ".pytest_cache"
+        )
+
+    def test_project_key_is_stable(self, pytester: Pytester, user_cache: Path) -> None:
+        first = self.resolve(pytester, cache_policy="user")
+        second = self.resolve(pytester, cache_policy="user")
+        assert first == second
+        assert re.fullmatch(r"[A-Za-z0-9._-]{1,32}-[0-9a-f]{16}", first.name)
+
+    def test_project_key_ignores_the_environment(
+        self, pytester: Pytester, user_cache: Path, monkeypatch: MonkeyPatch
+    ) -> None:
+        # The whole point of scopes: one project gets one directory, however
+        # many interpreters run it.
+        before = self.resolve(pytester, cache_policy="user")
+        monkeypatch.setattr(sys, "prefix", "/somewhere/else")
+        monkeypatch.setattr(sys, "version_info", (9, 9, 9))
+        assert self.resolve(pytester, cache_policy="user") == before
+
+    def test_project_key_resolves_symlinks(
+        self, pytester: Pytester, user_cache: Path, tmp_path: Path
+    ) -> None:
+        real = self.resolve(pytester, cache_policy="user")
+
+        link = tmp_path / "link"
+        symlink_or_skip(pytester.path, link)
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        config = pytester.parseconfig(f"--rootdir={link}", str(link))
+        assert Cache.for_config(config, _ispytest=True)._cachedir == real
+
+    def test_project_key_collision_extends_the_name(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        cachedir = self.resolve(pytester, cache_policy="user")
+        # Squat the short name with a directory belonging to something else.
+        cachedir.mkdir(parents=True)
+        (cachedir / CACHE_INFO_NAME).write_text(
+            json.dumps({"schema": 1, "digest": "f" * 64}), encoding="UTF-8"
+        )
+
+        extended = self.resolve(pytester, cache_policy="user")
+        assert extended != cachedir
+        assert extended.name.endswith(_project_digest(pytester.path)[:32])
+
+    def test_user_policy_records_the_digest(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        cache = Cache.for_config(
+            pytester.parseconfig("-o", "cache_policy=user"), _ispytest=True
+        )
+        cache.set("foo", 1)
+        info = read_cache_info(cache._cachedir)
+        assert info is not None
+        assert info["policy"] == "user"
+        assert info["digest"] == _project_digest(pytester.path)
+
+    def test_user_policy_creates_nothing_when_unused(
+        self, pytester: Pytester, user_cache: Path
+    ) -> None:
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        pytester.runpytest("--collect-only")
+        assert not user_cache.exists()
+
+    def test_lastfailed_round_trips(self, pytester: Pytester, user_cache: Path) -> None:
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        pytester.makepyfile(
+            test_a="def test_ok(): pass\ndef test_bad(): assert False\n"
+        )
+        pytester.runpytest("-q").assert_outcomes(passed=1, failed=1)
+        assert not (pytester.path / ".pytest_cache").exists()
+
+        result = pytester.runpytest("-q", "--lf")
+        result.assert_outcomes(failed=1)
+
+    def test_user_policy_without_platformdirs(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("PYTEST_CACHE_HOME", raising=False)
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        pytester.syspathinsert()
+        # Hide platformdirs from the inner run.
+        pytester.makepyfile(platformdirs="raise ImportError('hidden')")
+
+        result = pytester.runpytest_subprocess()
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(["*pip install pytest?xdg?*"])
 
 
 class TestCacheInfo:

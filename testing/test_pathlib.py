@@ -39,13 +39,13 @@ from _pytest.pathlib import insert_missing_modules
 from _pytest.pathlib import is_importable
 from _pytest.pathlib import maybe_delete_a_numbered_dir
 from _pytest.pathlib import module_name_from_path
-from _pytest.pathlib import pytest_user_cache_dir
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
 from _pytest.pathlib import scandir
 from _pytest.pathlib import spec_matches_module_path
 from _pytest.pathlib import symlink_or_skip
+from _pytest.pathlib import user_cache_root
 from _pytest.pathlib import visit
 from _pytest.pytester import Pytester
 from _pytest.pytester import RunResult
@@ -537,12 +537,12 @@ def test_bestrelpath() -> None:
 class TestUserCacheDir:
     def test_cache_home_override(self, tmp_path: Path) -> None:
         environ = {"PYTEST_CACHE_HOME": str(tmp_path / "explicit")}
-        assert pytest_user_cache_dir(environ=environ) == tmp_path / "explicit"
+        assert user_cache_root(environ=environ) == tmp_path / "explicit"
 
     def test_cache_home_override_is_expanded(self, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.setenv("SOMEWHERE", "elsewhere")
         environ = {"PYTEST_CACHE_HOME": os.path.join("~", "$SOMEWHERE")}
-        assert pytest_user_cache_dir(environ=environ) == Path(
+        assert user_cache_root(environ=environ) == Path(
             os.path.expanduser("~")
         ).joinpath("elsewhere")
 
@@ -551,7 +551,7 @@ class TestUserCacheDir:
             "PYTEST_CACHE_HOME": str(tmp_path / "explicit"),
             "XDG_CACHE_HOME": str(tmp_path / "xdg"),
         }
-        assert pytest_user_cache_dir(environ=environ) == tmp_path / "explicit"
+        assert user_cache_root(environ=environ) == tmp_path / "explicit"
 
     def test_cache_home_override_needs_no_platformdirs(
         self, tmp_path: Path, monkeypatch: MonkeyPatch
@@ -559,7 +559,7 @@ class TestUserCacheDir:
         # The escape hatch has to work on installs without the `xdg` extra.
         monkeypatch.setitem(sys.modules, "platformdirs", None)
         environ = {"PYTEST_CACHE_HOME": str(tmp_path / "explicit")}
-        assert pytest_user_cache_dir(environ=environ) == tmp_path / "explicit"
+        assert user_cache_root(environ=environ) == tmp_path / "explicit"
 
     def test_delegates_to_platformdirs(self, monkeypatch: MonkeyPatch) -> None:
         # The per-platform conventions are platformdirs' business; all we test
@@ -572,13 +572,13 @@ class TestUserCacheDir:
             return Path("/somewhere/pytest")
 
         monkeypatch.setattr(platformdirs, "user_cache_path", user_cache_path)
-        assert pytest_user_cache_dir(environ={}) == Path("/somewhere/pytest")
+        assert user_cache_root(environ={}) == Path("/somewhere/pytest")
         assert calls == [(("pytest",), {"appauthor": False})]
 
     def test_without_platformdirs(self, monkeypatch: MonkeyPatch) -> None:
         monkeypatch.setitem(sys.modules, "platformdirs", None)
         with pytest.raises(UsageError, match=r"pip install pytest\[xdg\]"):
-            pytest_user_cache_dir(environ={})
+            user_cache_root(environ={})
 
 
 class TestCheckUserCacheRoot:

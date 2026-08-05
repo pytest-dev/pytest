@@ -22,9 +22,12 @@ import tempfile
 import time
 from typing import Any
 from typing import final
+from typing import Literal
 
+from .pathlib import check_user_cache_root
 from .pathlib import resolve_from_str
 from .pathlib import rm_rf
+from .pathlib import user_cache_root
 from .reports import CollectReport
 from _pytest import __version__
 from _pytest import nodes
@@ -98,12 +101,71 @@ def _make_cachedir(
         shutil.rmtree(path, ignore_errors=True)
 
 
+def _project_key_path(rootpath: Path) -> str:
+    """Normalised rootdir, as used to identify a project.
+
+    Symlinks are resolved even though ``Config.rootpath`` itself is not:
+    reaching one project through two paths must not give it two caches, which
+    is the duplication the ``user`` policy exists to avoid. Cache *content* is
+    unaffected either way, since node ids are stored relative to the rootdir.
+
+    normcase matters on Windows, where two spellings differing only in case
+    are one directory, and the casing varies with how the shell was launched.
+    """
+    return os.path.normcase(_realpath_or_self(str(rootpath)))
+
+
+def _project_digest(rootpath: Path) -> str:
+    """Digest identifying a project for the ``user`` cache policy."""
+    key = _project_key_path(rootpath)
+    return hashlib.sha256(key.encode("utf-8", "surrogatepass")).hexdigest()
+
+
+def _user_cache_dir(config: Config) -> Path:
+    root = user_cache_root()
+    check_user_cache_root(root)
+
+    digest = _project_digest(config.rootpath)
+    # From the same normalised path as the digest, so that reaching a project
+    # through a symlink gives the same directory name and not just the same
+    # digest.
+    label = _label(os.path.basename(_project_key_path(config.rootpath)))
+    candidate = root / f"{label}-{digest[:16]}"
+
+    existing = read_cache_info(candidate)
+    if existing is None or existing.get("digest") in (None, digest):
+        return candidate
+    # A genuine 64-bit collision, or a hand-made directory. Deterministic and
+    # stateless: no counters, no lock files.
+    return root / f"{label}-{digest[:32]}"
+
+
+def _cache_policy(config: Config) -> str:
+    """The effective cache policy, or ``explicit`` if ``cache_dir`` is set."""
+    if config.getini("cache_dir"):
+        return "explicit"
+    policy: str = config.getini("cache_policy")
+    return policy
+
+
 def _resolve_cache_dir(config: Config) -> Path:
     """Determine the cache directory for a Config.
 
     The single place where the cache directory location is decided.
+
+    ``cache_dir`` is an explicit path override and always wins; ``cache_policy``
+    only decides the location when ``cache_dir`` is unset.
     """
-    return resolve_from_str(config.getini("cache_dir"), config.rootpath)
+    cache_dir = config.getini("cache_dir")
+    if cache_dir:
+        # resolve_from_str applies expanduser/expandvars.
+        return resolve_from_str(cache_dir, config.rootpath)
+
+    policy: str = config.getini("cache_policy")
+    if policy == "local":
+        return config.rootpath / ".pytest_cache"
+    assert policy == "user", policy
+    return _user_cache_dir(config)
 
 
 class CacheScope(enum.Enum):
@@ -419,6 +481,12 @@ class Cache:
         now = _now()
         info: dict[str, Any] = dict(previous) if previous else {}
         info["schema"] = CACHE_INFO_SCHEMA
+        policy = _cache_policy(self._config)
+        info["policy"] = policy
+        if policy == "user":
+            # Recorded in full, so that a directory name collision can be
+            # detected rather than silently sharing a cache.
+            info["digest"] = _project_digest(self._config.rootpath)
         info["origin"] = {
             "rootdir": str(self._config.rootpath),
             "inipath": str(self._config.inipath) if self._config.inipath else None,
@@ -742,10 +810,26 @@ def pytest_addoption(parser: Parser) -> None:
         dest="cacheclear",
         help="Remove all cache contents at start of test run",
     )
-    cache_dir_default = ".pytest_cache"
+    # Empty by default so that "not configured" is detectable, in which case
+    # cache_policy decides the location.
+    cache_dir_default = ""
     if "TOX_ENV_DIR" in os.environ:
-        cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], cache_dir_default)
-    parser.addini("cache_dir", default=cache_dir_default, help="Cache directory path")
+        cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], ".pytest_cache")
+    parser.addini(
+        "cache_dir",
+        default=cache_dir_default,
+        help="Cache directory path; overrides cache_policy",
+    )
+    parser.addini(
+        "cache_policy",
+        type=Literal["local", "user"],
+        default=os.environ.get("PYTEST_CACHE_POLICY") or "local",
+        help=(
+            "Where the cache directory lives: 'local' (rootdir/.pytest_cache) "
+            "or 'user' (the platform's user cache directory, keyed by "
+            "project). Ignored if cache_dir is set."
+        ),
+    )
     group.addoption(
         "--lfnf",
         "--last-failed-no-failures",
@@ -801,18 +885,29 @@ def cache(request: FixtureRequest) -> Cache:
 
 def pytest_report_header(config: Config) -> str | None:
     """Display cachedir with --cache-show and if non-default."""
-    if config.option.verbose > 0 or config.getini("cache_dir") != ".pytest_cache":
-        assert config.cache is not None
-        cachedir = config.cache._cachedir
-        # TODO: evaluate generating upward relative paths
-        # starting with .., ../.. if sensible
+    assert config.cache is not None
+    cachedir = config.cache._cachedir
+    # Compare the resolved path rather than the configured value, so that
+    # setting cache_dir to the default explicitly is treated as the default.
+    if config.option.verbose <= 0 and cachedir == config.rootpath / ".pytest_cache":
+        return None
 
-        try:
-            displaypath = cachedir.relative_to(config.rootpath)
-        except ValueError:
-            displaypath = cachedir
-        return f"cachedir: {displaypath}"
-    return None
+    # TODO: evaluate generating upward relative paths
+    # starting with .., ../.. if sensible
+    try:
+        displaypath: Path | str = cachedir.relative_to(config.rootpath)
+    except ValueError:
+        # Not below the rootdir (#3745); show the absolute path.
+        displaypath = cachedir
+
+    # A plain string is returned to the hook caller, so the escapes have to be
+    # applied here rather than via write_link(). The line is flushed with a
+    # newline immediately, which resets the writer's width bookkeeping, so the
+    # transient over-count does not affect anything downstream.
+    if config.pluginmanager.get_plugin("terminalreporter") is not None:
+        tw = config.get_terminal_writer()
+        displaypath = tw.hyperlink(str(displaypath), cachedir.as_uri())
+    return f"cachedir: {displaypath}"
 
 
 def _cache_roots(basedir: Path) -> list[tuple[str | None, Path]]:
