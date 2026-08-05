@@ -32,18 +32,18 @@ class TestNodeId:
         grandchild = child.child("test_d")
         assert grandchild == NodeId(path="a/test_b.py", names=("TestC", "test_d"))
 
-    def test_leaf_no_params(self) -> None:
+    def test_with_params_no_params(self) -> None:
         parent = NodeId(path="a/test_b.py")
-        leaf = parent.leaf("test_c", None)
-        assert isinstance(leaf, NodeId)
-        assert leaf.params is None
-        assert str(leaf) == "a/test_b.py::test_c"
+        item = parent.child("test_c").with_params(None)
+        assert isinstance(item, NodeId)
+        assert item.params is None
+        assert str(item) == "a/test_b.py::test_c"
 
-    def test_leaf_with_params(self) -> None:
+    def test_with_params(self) -> None:
         parent = NodeId(path="a/test_b.py")
-        leaf = parent.leaf("test_c", "1")
-        assert leaf.params == "1"
-        assert str(leaf) == "a/test_b.py::test_c[1]"
+        item = parent.child("test_c").with_params("1")
+        assert item.params == "1"
+        assert str(item) == "a/test_b.py::test_c[1]"
 
     def test_child_raises_on_parameterised_id(self) -> None:
         """Cannot build further tree structure on a node that already has
@@ -52,12 +52,11 @@ class TestNodeId:
         with pytest.raises(ValueError, match=r"\.child\(\)"):
             leaf.child("more")
 
-    def test_leaf_raises_on_parameterised_id(self) -> None:
-        """Cannot build further tree structure on a node that already has
-        params (i.e., a leaf item)."""
+    def test_with_params_raises_on_parameterised_id(self) -> None:
+        """Cannot attach params to a node that is already parameterised."""
         leaf = NodeId(path="a/test_b.py", names=("test_c",), params="x")
-        with pytest.raises(ValueError, match=r"\.leaf\(\)"):
-            leaf.leaf("more", None)
+        with pytest.raises(ValueError, match=r"\.with_params\(\)"):
+            leaf.with_params(None)
 
     # -- Equality and hashing --
 

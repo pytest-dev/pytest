@@ -1699,12 +1699,12 @@ class Function(PyobjMixin, nodes.Item):
     ) -> None:
         # Build the NodeId explicitly from callspec (when parametrized)
         # instead of going through Node.__init__'s generic
-        # `parent.id.leaf(name, None)` fallback, which would only see `name`
-        # (with any "[params]" suffix already glued on) and couldn't
-        # recover the per-parametrize()-call structure from callspec.
+        # `parent.id.child(name).with_params(None)` fallback, which would
+        # only see `name` (with any "[params]" suffix already glued on) and
+        # couldn't recover the per-parametrize()-call structure from callspec.
         base_name = originalname or name
         params = callspec.id if callspec is not None and callspec._idlist else None
-        node_id = parent.id.leaf(base_name, params)
+        node_id = parent.id.child(base_name).with_params(params)
         super().__init__(name, parent, config=config, session=session, nodeid=node_id)
 
         if callobj is not NOTSET:

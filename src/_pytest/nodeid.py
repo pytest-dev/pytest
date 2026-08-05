@@ -3,21 +3,9 @@
 A nodeid is represented as a ``::``-separated string, identifying a node in the collection
 tree, e.g. ``path/to/test_file.py::TestClass::test_method[param]``.
 
-There is a single structured type for nodeids:
-
-- :class:`NodeId` -- Represents any node in the collection tree, whether a
-  ``Collector`` or an ``Item`` (test leaf). Collector ids have
-  ``params=None``; item ids carry the raw ``[params]`` bracket as a string.
-  ``.child()``/``.leaf()`` build further ids on top of a collector id; both
-  raise :class:`ValueError` if called on a node that already has params
-  (i.e., a leaf). Also serves as the boundary type for nodeids reconstructed
-  from external strings (on-disk cache files, xdist JSON wire payloads,
-  duck-typed report-like objects' ``.nodeid`` attributes) -- use
-  :meth:`NodeId.parse` for that case. It recovers ``names`` and the raw
-  ``[params]`` bracket contents (a single opaque string); the internal
-  ``"-"`` delimiter joining separate ``parametrize()``-call ids cannot be
-  reliably distinguished from a literal ``"-"`` in a param value, so
-  ``params`` is left as one unparsed string rather than split further.
+The :class:`NodeId` class represents that information in a proper dataclass with the relevant
+parts readily available, avoiding reparsing that information when needed and also making for
+a better type than `str`.
 
 The legacy ``::``-joined string form remains available (via ``str(node_id)``)
 for backward compatibility with external plugins.
@@ -98,10 +86,6 @@ class NodeId:
     def rest(self) -> str | None:
         """Everything after the first ``"::"`` as a single string, or
         ``None`` when there is no ``"::"`` (i.e. ``names`` is empty).
-
-        This derived property exists so that code which only needs to
-        re-emit the tail (e.g. ``cwd_relative_nodeid``) can work with a
-        plain string without caring about the internal structure.
         """
         if not self.names:
             return None
@@ -124,19 +108,18 @@ class NodeId:
             )
         return NodeId(path=self.path, names=(*self.names, name))
 
-    def leaf(self, name: str, params: str | None) -> NodeId:
-        """Return a new :class:`NodeId` for a terminal item node.
+    def with_params(self, params: str | None) -> NodeId:
+        """Return a new :class:`NodeId` with ``params`` set.
 
-        :raises ValueError: if called on a node that already has params
-            (i.e., a leaf item) -- only collector ids (``params=None``) can
-            have children.
+        :raises ValueError: if ``self`` is already parameterised (i.e. an
+            item id with ``params is not None``).
         """
         if self.params is not None:
             raise ValueError(
-                f"cannot call .leaf() on a parameterised id {self!r}; "
-                "only collector ids (params=None) can have children"
+                f"cannot call .with_params() on a parameterised id {self!r}; "
+                "only collector ids (params=None) can be parameterised"
             )
-        return NodeId(path=self.path, names=(*self.names, name), params=params)
+        return NodeId(path=self.path, names=self.names, params=params)
 
 
 def coerce_node_id(nodeid: str | NodeId) -> NodeId:

@@ -210,7 +210,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
                 "Node.parent is always a Collector; an Item can never be a parent"
             )
             if isinstance(self, Item):
-                self._id = self.parent.id.leaf(self.name, None)
+                self._id = self.parent.id.child(self.name).with_params(None)
             else:
                 self._id = self.parent.id.child(self.name)
 
