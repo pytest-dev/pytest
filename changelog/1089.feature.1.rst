@@ -1,0 +1,24 @@
+New :confval:`cache_policy` config option, choosing *where* the cache directory lives by name rather than
+by spelling out a path:
+
+.. code-block:: ini
+
+    [pytest]
+    cache_policy = user
+
+``local`` (the default) keeps the current ``<rootdir>/.pytest_cache``. ``user`` puts the cache in the
+platform's user cache directory - ``$XDG_CACHE_HOME/pytest`` on Linux - under a sub-directory keyed by the
+project, so nothing is written into the project at all.
+
+The ``user`` policy requires the ``xdg`` extra: ``pip install pytest[xdg]``.
+
+It can also be set for a whole machine with the ``PYTEST_CACHE_POLICY`` environment variable, so that
+individual projects need no configuration. :confval:`cache_dir` remains an explicit path override and
+always wins over the policy.
+
+Because the interpreter in use is now distinguished by :class:`pytest.CacheScope` within a single cache
+directory, one project gets one cache directory whatever runs it.
+
+The ``cachedir:`` line in the report header now compares the resolved path against the default, so setting
+:confval:`cache_dir` to ``.pytest_cache`` explicitly no longer forces the line to be shown. Where it is
+shown, it is a clickable link in terminals which support hyperlinks.
