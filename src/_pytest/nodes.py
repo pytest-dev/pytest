@@ -288,11 +288,6 @@ class Node(abc.ABC, metaclass=NodeMeta):
         """The structured (non-string) form of :attr:`nodeid`.
 
         :meta private:
-
-        .. note::
-
-            Experimental/internal: the shape of :class:`~_pytest.nodeid.NodeId`
-            may change in future releases.
         """
         return self._id
 
@@ -518,14 +513,7 @@ class Collector(Node, abc.ABC):
 
     @property
     def id(self) -> NodeId:
-        """The structured (non-string) form of ``nodeid``.
-
-        .. note::
-
-            Experimental/internal: the shape of
-            :class:`~_pytest.nodeid.NodeId` may change in future
-            releases.
-        """
+        """The structured (non-string) form of ``nodeid``."""
         return self._id
 
     class CollectError(Exception):
@@ -691,14 +679,7 @@ class Item(Node, abc.ABC):
 
     @property
     def id(self) -> NodeId:
-        """The structured (non-string) form of ``nodeid``.
-
-        .. note::
-
-            Experimental/internal: the shape of
-            :class:`~_pytest.nodeid.NodeId` may change in future
-            releases.
-        """
+        """The structured (non-string) form of ``nodeid``."""
         return self._id
 
     nextitem = None

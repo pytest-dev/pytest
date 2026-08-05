@@ -87,11 +87,6 @@ class BaseReport:
         """The structured (non-string) form of ``nodeid``.
 
         :meta private:
-
-        .. note::
-
-            Experimental/internal: the shape of :class:`~_pytest.nodeid.NodeId`
-            may change in future releases.
         """
         return self._id
 
@@ -343,14 +338,7 @@ class TestReport(BaseReport):
 
     @property
     def id(self) -> NodeId:
-        """The structured (non-string) form of ``nodeid``.
-
-        .. note::
-
-            Experimental/internal: the shape of
-            :class:`~_pytest.nodeid.NodeId` may change in future
-            releases.
-        """
+        """The structured (non-string) form of ``nodeid``."""
         return self._id
 
     def __init__(
@@ -504,14 +492,7 @@ class CollectReport(BaseReport):
 
     @property
     def id(self) -> NodeId:
-        """The structured (non-string) form of ``nodeid``.
-
-        .. note::
-
-            Experimental/internal: the shape of
-            :class:`~_pytest.nodeid.NodeId` may change in future
-            releases.
-        """
+        """The structured (non-string) form of ``nodeid``."""
         return self._id
 
     def __init__(
