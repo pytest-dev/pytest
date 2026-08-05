@@ -148,7 +148,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def __init__(
         self,
         name: str,
-        parent: Node | None = None,
+        parent: Collector | None = None,
         config: Config | None = None,
         session: Session | None = None,
         fspath: None = None,
@@ -204,11 +204,6 @@ class Node(abc.ABC, metaclass=NodeMeta):
         else:
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")
-            # Node.parent is always structurally a Collector -- Items are
-            # always leaves and never have children.
-            assert isinstance(self.parent, Collector), (
-                "Node.parent is always a Collector; an Item can never be a parent"
-            )
             if isinstance(self, Item):
                 self._id = self.parent.id.child(self.name).with_params(None)
             else:
@@ -221,7 +216,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         self._store = self.stash
 
     @classmethod
-    def from_parent(cls, parent: Node, **kw) -> Self:
+    def from_parent(cls, parent: Collector, **kw) -> Self:
         """Public constructor for Nodes.
 
         This indirection got introduced in order to enable removing
@@ -596,7 +591,7 @@ class FSCollector(Collector, abc.ABC):
         path_or_parent: Path | Node | None = None,
         path: Path | None = None,
         name: str | None = None,
-        parent: Node | None = None,
+        parent: Collector | None = None,
         config: Config | None = None,
         session: Session | None = None,
         nodeid: NodeId | None = None,
