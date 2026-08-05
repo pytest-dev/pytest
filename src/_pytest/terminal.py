@@ -39,9 +39,9 @@ from _pytest._code.code import ExceptionRepr
 from _pytest._io import TerminalWriter
 from _pytest._io.wcwidth import wcswidth
 import _pytest._version
+from _pytest.capture import get_terminal_stdout
 from _pytest.compat import running_on_ci
 from _pytest.config import _PluggyPlugin
-from _pytest.config import capture_immune_stdout_key
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -290,11 +290,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 def pytest_configure(config: Config) -> None:
-    # Write to the capture-immune duplicate of stdout when available (#8973),
-    # fall back to sys.stdout otherwise (e.g. in-process pytester runs, where
-    # stdout has no real file descriptor to duplicate).
-    file = config.stash.get(capture_immune_stdout_key, None)
-    reporter = TerminalReporter(config, file)
+    reporter = TerminalReporter(config)
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
 
@@ -395,7 +391,11 @@ class TerminalReporter:
         self._known_types: list[str] | None = None
         self.startpath = config.invocation_params.dir
         if file is None:
-            file = sys.stdout
+            # The terminal channel writes past output capture (#8973); it falls
+            # back to sys.stdout when there is none. Resolved here rather than
+            # in pytest_configure so that plugins subclassing TerminalReporter
+            # and registering their own (pytest-sugar) get it too.
+            file = get_terminal_stdout(config)
         self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
         self.currentfspath: None | Path | str | int = None

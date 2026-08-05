@@ -1614,11 +1614,27 @@ class TestConfigAPI:
 
 
 class TestConfigFromdictargs:
-    def test_basic_behavior(self, _sys_snapshot) -> None:
+    @pytest.fixture
+    def fromdictargs(self, request: pytest.FixtureRequest):
+        """``Config.fromdictargs`` with teardown.
+
+        It parses, so ``pytest_load_initial_conftests`` runs and acquires
+        resources (capturing, the terminal channel); nothing unconfigures the
+        config otherwise, and those would leak into unrelated tests.
+        """
+
+        def make(option_dict: dict[str, object], args: list[str]) -> Config:
+            config = Config.fromdictargs(option_dict, args)
+            request.addfinalizer(config._ensure_unconfigure)
+            return config
+
+        return make
+
+    def test_basic_behavior(self, _sys_snapshot, fromdictargs) -> None:
         option_dict = {"verbose": 444, "foo": "bar", "capture": "no"}
         args = ["a", "b"]
 
-        config = Config.fromdictargs(option_dict, args)
+        config = fromdictargs(option_dict, args)
         with pytest.raises(AssertionError):
             config.parse(["should refuse to parse again"])
         assert config.option.verbose == 444
@@ -1626,18 +1642,18 @@ class TestConfigFromdictargs:
         assert config.option.capture == "no"
         assert config.args == args
 
-    def test_invocation_params_args(self, _sys_snapshot) -> None:
+    def test_invocation_params_args(self, _sys_snapshot, fromdictargs) -> None:
         """Show that fromdictargs can handle args in their "orig" format"""
         option_dict: dict[str, object] = {}
         args = ["-vvvv", "-s", "a", "b"]
 
-        config = Config.fromdictargs(option_dict, args)
+        config = fromdictargs(option_dict, args)
         assert config.args == ["a", "b"]
         assert config.invocation_params.args == tuple(args)
         assert config.option.verbose == 4
         assert config.option.capture == "no"
 
-    def test_inifilename(self, tmp_path: Path) -> None:
+    def test_inifilename(self, tmp_path: Path, fromdictargs) -> None:
         d1 = tmp_path.joinpath("foo")
         d1.mkdir()
         p1 = d1.joinpath("bar.ini")
@@ -1671,7 +1687,7 @@ class TestConfigFromdictargs:
         )
         with MonkeyPatch.context() as mp:
             mp.chdir(cwd)
-            config = Config.fromdictargs(option_dict, [])
+            config = fromdictargs(option_dict, [])
             inipath = absolutepath(inifilename)
 
         assert config.args == [str(cwd)]

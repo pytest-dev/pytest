@@ -3572,8 +3572,8 @@ def test_terminalreporter_write_during_capture_reaches_terminal(
     the terminal even while output capture is active (#8973).
 
     Runs in a subprocess: in-process runs replace stdout with an object
-    without a real file descriptor, so they cannot exercise the
-    capture-immune stdout duplicate.
+    without a real file descriptor, so they take the sys.stdout fallback
+    instead of the terminal channel under test.
     """
     pytester.makepyfile(
         """
@@ -3589,3 +3589,29 @@ def test_terminalreporter_write_during_capture_reaches_terminal(
     result.stdout.fnmatch_lines(["*MAGIC_MARKER*"])
     # Regular output stays captured (the test passes, so it is never shown).
     result.stdout.no_fnmatch_line("*PLAIN_PRINT*")
+
+
+def test_terminalreporter_write_keeps_order_with_uncaptured_print(
+    pytester: pytest.Pytester,
+) -> None:
+    """Writes through the terminal reporter interleave correctly with output
+    that legitimately reaches the terminal via sys.stdout (#8973).
+
+    Under ``-s`` with a piped (non-tty) stdout, prints are block buffered, so
+    without flushing them first the reporter's write would overtake them.
+    """
+    pytester.makepyfile(
+        """
+        def test_foo(request):
+            reporter = request.config.pluginmanager.getplugin("terminalreporter")
+            print("FIRST_PRINT")
+            reporter.ensure_newline()
+            reporter.write("SECOND_WRITE\\n", flush=True)
+            print("THIRD_PRINT")
+        """
+    )
+    result = pytester.runpytest_subprocess("-s")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        ["*FIRST_PRINT*", "*SECOND_WRITE*", "*THIRD_PRINT*"],
+    )
