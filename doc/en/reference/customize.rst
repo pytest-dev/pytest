@@ -187,7 +187,10 @@ Finding the ``rootdir``
 
 Here is the algorithm which finds the rootdir from ``args``:
 
-- If :option:`-c` is passed in the command-line, use that as configuration file, and its directory as ``rootdir``.
+- If :option:`-c` is passed in the command-line, use that as configuration file.
+  When test paths are supplied, its directory participates in ``rootdir``
+  determination together with those paths; otherwise, its directory becomes the
+  ``rootdir``.
 
 - Determine the common ancestor directory for the specified ``args`` that are
   recognised as paths that exist in the file system. If no such paths are
