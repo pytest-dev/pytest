@@ -459,13 +459,15 @@ def pytest_unconfigure(config: Config) -> None:
 
 
 def mangle_test_address(address: str) -> list[str]:
-    path, possible_open_bracket, params = address.partition("[")
-    names = path.split("::")
+    oid = OpaqueNodeId.parse(address)
+    names = [oid.path, *oid.names]
     # Convert file path to dotted path.
     names[0] = names[0].replace(nodes.SEP, ".")
     names[0] = re.sub(r"\.py$", "", names[0])
-    # Put any params back.
-    names[-1] += possible_open_bracket + params
+    # Put any params back as one opaque bracket (the '-'-separated
+    # param-call-boundary structure inside cannot be reliably recovered).
+    if oid.params is not None:
+        names[-1] += f"[{oid.params}]"
     return names
 
 

@@ -14,21 +14,18 @@ boundary -- so that their fields can always be trusted:
   building further collection-tree structure on top of one is a static
   type error, not just a runtime mistake.
 - :class:`OpaqueNodeId` -- A nodeid reconstructed from an external string
-  source, rather than from live collection. It makes no claim to structured
-  names or params, given they cannot be inferred from the plain string.
+  source, rather than from live collection. It recovers the ``::``-separated
+  ``names`` and the raw ``[params]`` bracket contents (a single opaque
+  string), but makes no claim to the *internal* structure of the params
+  string: the ``"-"`` delimiter joining separate ``parametrize()``-call ids
+  cannot be reliably distinguished from a literal ``"-"`` in a param value,
+  so :class:`OpaqueNodeId` deliberately leaves ``params`` as one unparsed
+  string rather than fabricating :class:`ParamId` boundaries.
 - :data:`NodeId` -- a type alias, ``CollectionNodeId | ItemNodeId``, for
   code that genuinely needs to accept/hold either kind.
 
-A nodeid string's trailing ``[params]`` bracket cannot be reliably
-decomposed back into individual ``parametrize()``-call boundaries once
-flattened (``"-"`` is used both to join sub-ids within one call and to join
-separate stacked calls), so a :class:`ItemNodeId` built from an external
-string would either have to fabricate that structure or silently lie about
-not having it. :class:`OpaqueNodeId` is the honest alternative for that
-case: it only knows the ``path`` and an unparsed ``rest``, and makes no
-claim to structured names or params. The legacy ``::``-joined string form
-remains available (via ``str(node_id)``) for backward compatibility with
-external plugins, for all types.
+The legacy ``::``-joined string form remains available (via ``str(node_id)``)
+for backward compatibility with external plugins, for all types.
 """
 
 from __future__ import annotations
@@ -158,27 +155,43 @@ class OpaqueNodeId:
     object's ``.nodeid`` attribute, ...), rather than from live collection.
 
     Unlike :class:`CollectionNodeId`/:class:`ItemNodeId`, this makes no
-    claim to structured names or params: everything after the first ``"::"``
-    is left opaque and unsplit, since it cannot be reliably decomposed (see
-    the module docstring). There is no ``.child()``/``.leaf()`` -- nothing
-    ever builds further collection-tree structure on top of a
-    boundary-sourced id.
+    claim to the *internal* structure of the params string: the ``"-"``
+    delimiter is used both to join sub-ids within one ``parametrize()`` call
+    and to join separate stacked calls, so it cannot be reliably decomposed
+    back into :class:`ParamId` boundaries. ``params`` is therefore kept as a
+    single raw string rather than guessing. There is no
+    ``.child()``/``.leaf()`` -- nothing ever builds further collection-tree
+    structure on top of a boundary-sourced id.
     """
 
     path: str
-    # Everything after the first "::", left opaque/unsplit. None means no
-    # "::" was present at all (distinct from "" after a trailing "::", for
-    # lossless round-tripping through str.partition()).
-    rest: str | None = None
+    #: ``::``-separated name segments, recovered reliably from the string.
+    #: Empty tuple when there is no ``::`` in the nodeid.
+    names: tuple[str, ...] = ()
+    #: Raw contents inside the outermost ``[...]`` bracket, kept as one
+    #: opaque string (the param-call-boundary structure cannot be recovered).
+    #: ``None`` means no bracket at all; ``""`` means an empty ``[]``.
+    params: str | None = None
     _str_cache: str | None = dataclasses.field(
         default=None, init=False, repr=False, compare=False
     )
 
     @classmethod
     def parse(cls, nodeid: str) -> OpaqueNodeId:
-        """Split a nodeid string into its path and an opaque remainder."""
-        path, sep, rest = nodeid.partition("::")
-        self = cls(path=path, rest=rest if sep else None)
+        """Parse a nodeid string into its path, names, and raw params."""
+        path, sep, tail = nodeid.partition("::")
+        if not sep:
+            # No "::" -- everything is the path.  Never interpret a bracket
+            # here: file paths can legitimately contain "[" (e.g. test[1].py).
+            self = cls(path=path)
+        else:
+            # Peel the params bracket off the tail FIRST, so a "::" that
+            # appears *inside* a params bracket is never mistaken for a name
+            # separator.
+            name_part, bracket, param_part = tail.partition("[")
+            names = tuple(name_part.split("::"))
+            params = param_part.removesuffix("]") if bracket else None
+            self = cls(path=path, names=names, params=params)
         # We already have the original string in hand -- cache it directly
         # as _str_cache instead of letting __str__ reconstruct it later.
         object.__setattr__(self, "_str_cache", nodeid)
@@ -187,8 +200,22 @@ class OpaqueNodeId:
     def __str__(self) -> str:
         if self._str_cache is not None:
             return self._str_cache
-        s = self.path if self.rest is None else f"{self.path}::{self.rest}"
+        s = "::".join((self.path, *self.names))
+        if self.params is not None:
+            s += f"[{self.params}]"
         object.__setattr__(self, "_str_cache", s)
+        return s
+
+    @property
+    def rest(self) -> str | None:
+        """Everything after the first ``"::"`` as a single string, or
+        ``None`` when there is no ``"::"`` (i.e. ``names`` is empty).
+        """
+        if not self.names:
+            return None
+        s = "::".join(self.names)
+        if self.params is not None:
+            s += f"[{self.params}]"
         return s
 
     def as_opaque(self) -> Self:

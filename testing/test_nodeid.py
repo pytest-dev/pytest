@@ -114,23 +114,47 @@ class TestOpaqueNodeId:
 
     def test_path_only(self) -> None:
         node_id = OpaqueNodeId.parse("a/b/test_c.py")
-        assert node_id == OpaqueNodeId(path="a/b/test_c.py", rest=None)
+        assert node_id == OpaqueNodeId(path="a/b/test_c.py")
+        assert node_id.names == ()
+        assert node_id.params is None
         assert str(node_id) == "a/b/test_c.py"
 
-    def test_with_rest(self) -> None:
+    def test_with_names(self) -> None:
         node_id = OpaqueNodeId.parse("a/test_b.py::TestC::test_d")
-        assert node_id == OpaqueNodeId(path="a/test_b.py", rest="TestC::test_d")
+        assert node_id == OpaqueNodeId(path="a/test_b.py", names=("TestC", "test_d"))
+        assert node_id.names == ("TestC", "test_d")
+        assert node_id.params is None
 
-    def test_rest_stays_opaque_including_brackets(self) -> None:
-        """The [params] bracket (and everything else past the first "::")
-        cannot be reliably decomposed from a plain string, so it stays
-        opaque, verbatim, in .rest -- see OpaqueNodeId's docstring."""
+    def test_names_and_params(self) -> None:
         node_id = OpaqueNodeId.parse("a/test_b.py::test_c[1-x]")
+        assert node_id.names == ("test_c",)
+        assert node_id.params == "1-x"
         assert node_id.rest == "test_c[1-x]"
+
+    def test_params_boundary_not_inferred(self) -> None:
+        """The '-' inside params is used both to join sub-ids within one
+        parametrize() call and to join separate stacked calls, so the internal
+        ParamId boundaries cannot be reliably recovered.  params is therefore
+        a single opaque string, not decomposed further."""
+        node_id = OpaqueNodeId.parse("a/test_b.py::test_c[a-b-c]")
+        assert node_id.params == "a-b-c"
+
+    def test_double_colon_inside_params(self) -> None:
+        """A '::' inside the [params] bracket must NOT be mistaken for a
+        name separator (issue #469, e.g. a param value 'double::colon')."""
+        node_id = OpaqueNodeId.parse("a/test_b.py::test_func[double::colon]")
+        assert node_id.names == ("test_func",)
+        assert node_id.params == "double::colon"
+        assert str(node_id) == "a/test_b.py::test_func[double::colon]"
+
+    def test_empty_params(self) -> None:
+        node_id = OpaqueNodeId.parse("a/test_b.py::test_c[]")
+        assert node_id.names == ("test_c",)
+        assert node_id.params == ""
 
     def test_rest_none_vs_empty_string(self) -> None:
         """None means no "::" was present at all, distinct from "" after a
-        trailing "::" -- both must round-trip losslessly via str.partition().
+        trailing "::" -- both must round-trip losslessly.
         """
         no_sep = OpaqueNodeId.parse("a/test_b.py")
         trailing_sep = OpaqueNodeId.parse("a/test_b.py::")
@@ -149,6 +173,8 @@ class TestOpaqueNodeId:
             "a/test_b.py::TestC",
             "a/test_b.py::TestC::test_d",
             "a/test_b.py::test_c[1-x]",
+            "a/test_b.py::test_func[double::colon]",
+            "a/test_b.py::TestC::test_d[a-b]",
         ],
     )
     def test_round_trip_matches_original_string(self, s: str) -> None:
@@ -168,7 +194,7 @@ class TestOpaqueNodeId:
 class TestCoerceNodeId:
     def test_from_str(self) -> None:
         node_id = coerce_node_id("a/test_b.py::test_c")
-        assert node_id == OpaqueNodeId(path="a/test_b.py", rest="test_c")
+        assert node_id == OpaqueNodeId(path="a/test_b.py", names=("test_c",))
 
     def test_from_collection_node_id_returns_same_object(self) -> None:
         node_id = CollectionNodeId(path="a/test_b.py", names=("test_c",))
@@ -205,5 +231,5 @@ class TestWithNodeIdSetter:
             when="call",
         )
         report.nodeid = "a/test_b.py::test_d"
-        assert report.id == OpaqueNodeId(path="a/test_b.py", rest="test_d")
+        assert report.id == OpaqueNodeId(path="a/test_b.py", names=("test_d",))
         assert report.nodeid == "a/test_b.py::test_d"
