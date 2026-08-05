@@ -217,6 +217,7 @@ class TestNewAPI:
         assert pytester.path.joinpath("custom_cache_dir").is_dir()
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestRemovedIn10Warning")
 @pytest.mark.parametrize("env", ((), ("TOX_ENV_DIR", "mydir/tox-env")))
 def test_cache_reportheader(
     env: Sequence[str], pytester: Pytester, monkeypatch: MonkeyPatch
@@ -228,8 +229,94 @@ def test_cache_reportheader(
     else:
         monkeypatch.delenv("TOX_ENV_DIR", raising=False)
         expected = ".pytest_cache"
-    result = pytester.runpytest("-v")
+    result = pytester.runpytest("-v", "-W", "ignore::pytest.PytestRemovedIn10Warning")
     result.stdout.fnmatch_lines([f"cachedir: {expected}"])
+
+
+class TestToxEnvDirDeprecation:
+    def test_warns_when_the_legacy_default_is_used(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        result = pytester.runpytest("-W", "default")
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestRemovedIn10Warning: Defaulting the cache directory to "
+                "$TOX_ENV_DIR/.pytest_cache is deprecated*",
+                "*cache_dir = $TOX_ENV_DIR/.pytest_cache*",
+            ]
+        )
+
+    def test_the_advice_reproduces_the_legacy_location(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """The deprecation advice has to actually be true.
+
+        It names the very expression the legacy default was built from, so it
+        lands in the same place by construction - whatever TOX_ENV_DIR happens
+        to point at.
+        """
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makepyfile(test_a="def test_bad(): assert False")
+
+        legacy = Cache.for_config(pytester.parseconfig(), _ispytest=True)._cachedir
+        pytester.makeini("[pytest]\ncache_dir = $TOX_ENV_DIR/.pytest_cache\n")
+        migrated = Cache.for_config(pytester.parseconfig(), _ispytest=True)._cachedir
+        assert legacy == migrated == pytester.path / "tox-env" / ".pytest_cache"
+
+    def test_silent_without_tox_env_dir(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("TOX_ENV_DIR", raising=False)
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        result = pytester.runpytest("-W", "default")
+        result.stdout.no_fnmatch_line("*TOX_ENV_DIR*")
+
+    @pytest.mark.parametrize("ini", ["cache_policy = user", "cache_dir = elsewhere"])
+    def test_silent_when_configured_explicitly(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch, tmp_path: Path, ini: str
+    ) -> None:
+        monkeypatch.setenv("PYTEST_CACHE_HOME", str(tmp_path / "user-cache"))
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makeini(f"[pytest]\n{ini}\n")
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        result = pytester.runpytest("-W", "default")
+        result.stdout.no_fnmatch_line("*TOX_ENV_DIR*")
+
+    def test_configured_policy_is_not_overridden_by_tox(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """A configured cache_policy must win over the legacy tox location.
+
+        The legacy path is only consulted by the `local` policy for exactly
+        this reason - as a `cache_dir` default it would have silently beaten
+        every policy, since cache_dir takes precedence.
+        """
+        user_cache = tmp_path / "user-cache"
+        monkeypatch.setenv("PYTEST_CACHE_HOME", str(user_cache))
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        pytester.makepyfile(test_a="def test_bad(): assert False")
+        pytester.runpytest("-q")
+
+        assert list(user_cache.iterdir())
+        assert not (pytester.path / "tox-env").exists()
+
+    def test_local_policy_is_indistinguishable_from_the_default(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Writing `cache_policy = local` under tox still gets the legacy path.
+
+        `local` is the default value, so there is nothing to tell an explicit
+        setting apart from an absent one. The warning points at `cache_dir` for
+        anyone who wants out.
+        """
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makeini("[pytest]\ncache_policy = local\n")
+        pytester.makepyfile(test_a="def test_bad(): assert False")
+        pytester.runpytest("-q", "-W", "ignore::pytest.PytestRemovedIn10Warning")
+        assert (pytester.path / "tox-env" / ".pytest_cache").is_dir()
 
 
 def test_cache_reportheader_hidden_by_default(pytester: Pytester) -> None:

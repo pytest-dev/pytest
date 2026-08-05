@@ -38,6 +38,7 @@ from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.deprecated import TOX_ENV_DIR_CACHE_DIR
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -140,6 +141,28 @@ def _user_cache_dir(config: Config) -> Path:
     return root / f"{label}-{digest[:32]}"
 
 
+def _tox_legacy_cache_dir(config: Config) -> Path | None:
+    """The legacy ``$TOX_ENV_DIR/.pytest_cache`` location, if it applies.
+
+    Only consulted by the ``local`` policy, so that setting ``cache_policy``
+    explicitly is not silently overridden when running under tox.
+
+    .. deprecated:: 9.2
+        Superseded by :attr:`CacheScope.ENV`, which keeps ``--lf``/``--nf``/
+        ``--sw`` state apart between environments without moving the cache
+        directory - and does so for every tool rather than only for tox.
+        Anyone who wants this exact location can spell it out as
+        ``cache_dir = $TOX_ENV_DIR/.pytest_cache``.
+    """
+    tox_env_dir = os.environ.get("TOX_ENV_DIR")
+    if not tox_env_dir:
+        return None
+    # Warnings raised during pytest_configure escape the reporter, so this has
+    # to go through the config rather than warnings.warn.
+    config.issue_config_time_warning(TOX_ENV_DIR_CACHE_DIR, stacklevel=3)
+    return resolve_from_str(os.path.join(tox_env_dir, ".pytest_cache"), config.rootpath)
+
+
 def _cache_policy(config: Config) -> str:
     """The effective cache policy, or ``explicit`` if ``cache_dir`` is set."""
     if config.getini("cache_dir"):
@@ -163,6 +186,9 @@ def _resolve_cache_dir(config: Config) -> Path:
 
     policy: str = config.getini("cache_policy")
     if policy == "local":
+        legacy = _tox_legacy_cache_dir(config)
+        if legacy is not None:
+            return legacy
         return config.rootpath / ".pytest_cache"
     assert policy == "user", policy
     return _user_cache_dir(config)
@@ -810,14 +836,20 @@ def pytest_addoption(parser: Parser) -> None:
         dest="cacheclear",
         help="Remove all cache contents at start of test run",
     )
+    group.addoption(
+        "--cache-list",
+        action="store_true",
+        dest="cachelist",
+        help=(
+            "List the cache directories under the user-level cache root, "
+            "don't perform collection or tests."
+        ),
+    )
     # Empty by default so that "not configured" is detectable, in which case
     # cache_policy decides the location.
-    cache_dir_default = ""
-    if "TOX_ENV_DIR" in os.environ:
-        cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], ".pytest_cache")
     parser.addini(
         "cache_dir",
-        default=cache_dir_default,
+        default="",
         help="Cache directory path; overrides cache_policy",
     )
     parser.addini(
