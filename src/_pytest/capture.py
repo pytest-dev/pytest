@@ -41,6 +41,7 @@ from _pytest.nodes import Collector
 from _pytest.nodes import File
 from _pytest.nodes import Item
 from _pytest.reports import CollectReport
+from _pytest.stash import StashKey
 
 
 _CaptureMethod = Literal["fd", "sys", "no", "tee-sys"]
@@ -152,6 +153,71 @@ def _windowsconsoleio_workaround(stream: TextIO) -> None:
     sys.stderr = _reopen_stdio(sys.stderr, "wb")
 
 
+@final
+class TerminalStdout(io.TextIOWrapper):
+    """An unbuffered text file over a duplicate of stdout's file descriptor.
+
+    Capture redirects file descriptor 1 and/or replaces ``sys.stdout``, so
+    anything written through them while capture is active ends up in the
+    capture buffers. This file is a duplicate made before capture can start: it
+    always refers to the original stdout -- the same file capture restores on
+    suspend -- and stays usable no matter how capture is started, stopped or
+    reconfigured. Writing to it neither goes through capture nor affects its
+    state (#8973).
+
+    Owned by the config: closed by its cleanup at teardown.
+    """
+
+    def __init__(self, fd: int, *, original_stdout: TextIO) -> None:
+        super().__init__(
+            # Buffered rather than raw: a raw stream may write fewer bytes
+            # than asked for, and TextIOWrapper does not retry those.
+            io.BufferedWriter(io.FileIO(fd, mode="w", closefd=True)),
+            encoding=getattr(original_stdout, "encoding", None) or "utf-8",
+            errors=getattr(original_stdout, "errors", None) or "replace",
+            write_through=True,
+        )
+        self._original_stdout = original_stdout
+
+    def write(self, s: str) -> int:
+        # Output that legitimately targets the terminal may still be sitting in
+        # the buffers of the stream we duplicated (prints under ``-s`` or
+        # ``capsys.disabled()`` are block buffered when stdout is not a tty).
+        # Push it out first, so that the terminal keeps the order in which the
+        # writes were made. While capture is active this merely moves pending
+        # test output into the capture buffers, where it belongs.
+        streams = [self._original_stdout]
+        if sys.stdout is not self._original_stdout:
+            streams.append(sys.stdout)
+        for stream in streams:
+            if stream is not None and stream is not self:
+                try:
+                    stream.flush()
+                except (AttributeError, OSError, ValueError):
+                    pass
+        written = super().write(s)
+        # ``write_through`` only hands the text to the buffer; flush so the
+        # write is visible on the terminal immediately.
+        self.flush()
+        return written
+
+
+terminal_stdout_key = StashKey[TerminalStdout]()
+
+
+def get_terminal_stdout(config: Config) -> TextIO:
+    """Return the file terminal output should be written to.
+
+    Always usable. Falls back to ``sys.stdout`` when stdout could not be
+    duplicated (in-process pytester runs), or when the capture plugin is
+    disabled (``-p no:capture``) and ``sys.stdout`` is the terminal anyway.
+    """
+    terminal_stdout = config.stash.get(terminal_stdout_key, None)
+    if terminal_stdout is None:
+        return sys.stdout
+    return terminal_stdout
+
+
 @hookimpl(wrapper=True)
 def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
     ns = early_config.known_args_namespace
@@ -159,6 +225,24 @@ def pytest_load_initial_conftests(early_config: Config) -> Generator[None]:
         _windowsconsoleio_workaround(sys.stdout)
     _colorama_workaround()
     _readline_workaround()
+
+    # Duplicate stdout before any capture starts, so that terminal output can
+    # sidestep it (#8973). Must come after the windows console workaround,
+    # which replaces ``sys.stdout``, and before ``start_global_capturing()``.
+    # Registering the cleanup here -- before the capture manager's -- makes the
+    # LIFO cleanup stack close it last.
+    try:
+        fd = os.dup(sys.stdout.fileno())
+    except (AttributeError, OSError, ValueError):
+        # No usable file descriptor: in-process pytester runs, or a sys.stdout
+        # replaced by something not backed by a file. get_terminal_stdout()
+        # falls back to sys.stdout.
+        pass
+    else:
+        terminal_stdout = TerminalStdout(fd, original_stdout=sys.stdout)
+        early_config.stash[terminal_stdout_key] = terminal_stdout
+        early_config.add_cleanup(terminal_stdout.close)
+
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
