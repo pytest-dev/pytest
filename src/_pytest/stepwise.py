@@ -11,7 +11,7 @@ from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
-from _pytest.nodeid import OpaqueNodeId
+from _pytest.nodeid import ItemNodeId
 from _pytest.reports import TestReport
 
 
@@ -71,7 +71,7 @@ def pytest_sessionfinish(session: Session) -> None:
 @dataclasses.dataclass
 class StepwiseCacheInfo:
     # The nodeid of the last failed test.
-    last_failed: OpaqueNodeId | None
+    last_failed: ItemNodeId | None
 
     # The number of tests in the last time --stepwise was run.
     # We use this information as a simple way to invalidate the cache information, avoiding
@@ -114,9 +114,7 @@ class StepwisePlugin:
             try:
                 last_failed: str | None = cached_dict["last_failed"]
                 return StepwiseCacheInfo(
-                    OpaqueNodeId.parse(last_failed)
-                    if last_failed is not None
-                    else None,
+                    ItemNodeId.parse(last_failed) if last_failed is not None else None,
                     cached_dict["last_test_count"],
                     cached_dict["last_cache_date_str"],
                 )
@@ -155,7 +153,7 @@ class StepwisePlugin:
         # Check all item nodes until we find a match on last failed.
         failed_index = None
         for index, item in enumerate(items):
-            if item.id.as_opaque() == self.cached_info.last_failed:
+            if item.id == self.cached_info.last_failed:
                 failed_index = index
                 break
 
@@ -180,13 +178,13 @@ class StepwisePlugin:
             if self.skip:
                 # Remove test from the failed ones (if it exists) and unset the skip option
                 # to make sure the following tests will not be skipped.
-                if report.id.as_opaque() == self.cached_info.last_failed:
+                if report.id == self.cached_info.last_failed:
                     self.cached_info.last_failed = None
 
                 self.skip = False
             else:
                 # Mark test as the last failing and interrupt the test session.
-                self.cached_info.last_failed = report.id.as_opaque()
+                self.cached_info.last_failed = report.id
                 assert self.session is not None
                 self.session.shouldstop = (
                     "Test failed, continuing from this test next run."
@@ -196,7 +194,7 @@ class StepwisePlugin:
             # If the test was actually run and did pass.
             if report.when == "call":
                 # Remove test from the failed ones, if exists.
-                if report.id.as_opaque() == self.cached_info.last_failed:
+                if report.id == self.cached_info.last_failed:
                     self.cached_info.last_failed = None
 
     def pytest_report_collectionfinish(self) -> list[str] | None:

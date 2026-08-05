@@ -3,21 +3,8 @@ from __future__ import annotations
 from _pytest.nodeid import coerce_node_id
 from _pytest.nodeid import CollectionNodeId
 from _pytest.nodeid import ItemNodeId
-from _pytest.nodeid import OpaqueNodeId
-from _pytest.nodeid import ParamId
 from _pytest.reports import TestReport
-from _pytest.scope import Scope
 import pytest
-
-
-class TestParamId:
-    def test_eq_and_hash(self) -> None:
-        p1 = ParamId(id="1", argnames=("x",), scope=Scope.Function)
-        p2 = ParamId(id="1", argnames=("x",), scope=Scope.Function)
-        p3 = ParamId(id="1", argnames=("y",), scope=Scope.Function)
-        assert p1 == p2
-        assert hash(p1) == hash(p2)
-        assert p1 != p3
 
 
 class TestCollectionNodeId:
@@ -42,11 +29,16 @@ class TestCollectionNodeId:
 
     def test_leaf(self) -> None:
         parent = CollectionNodeId(path="a/test_b.py")
-        params = (ParamId(id="1", argnames=("x",), scope=Scope.Function),)
-        leaf = parent.leaf("test_c", params)
+        leaf = parent.leaf("test_c", "1")
         assert isinstance(leaf, ItemNodeId)
-        assert leaf.params == params
+        assert leaf.params == "1"
         assert str(leaf) == "a/test_b.py::test_c[1]"
+
+    def test_leaf_no_params(self) -> None:
+        parent = CollectionNodeId(path="a/test_b.py")
+        leaf = parent.leaf("test_c", None)
+        assert leaf.params is None
+        assert str(leaf) == "a/test_b.py::test_c"
 
     def test_eq_and_hash(self) -> None:
         a = CollectionNodeId(path="a/test_b.py", names=("TestC",))
@@ -59,11 +51,22 @@ class TestCollectionNodeId:
         assert {a: 1}[b] == 1
         assert {a, b, c} == {a, c}
 
-    def test_as_opaque(self) -> None:
+    def test_parse(self) -> None:
+        node_id = CollectionNodeId.parse("a/test_b.py::TestC::test_d")
+        assert node_id == CollectionNodeId(
+            path="a/test_b.py", names=("TestC", "test_d")
+        )
+        assert str(node_id) == "a/test_b.py::TestC::test_d"
+
+    def test_parse_path_only(self) -> None:
+        node_id = CollectionNodeId.parse("a/b/test_c.py")
+        assert node_id == CollectionNodeId(path="a/b/test_c.py")
+
+    def test_as_leaf(self) -> None:
         node_id = CollectionNodeId(path="a/test_b.py", names=("TestC",))
-        opaque = node_id.as_opaque()
-        assert isinstance(opaque, OpaqueNodeId)
-        assert str(opaque) == str(node_id)
+        leaf = node_id.as_leaf()
+        assert isinstance(leaf, ItemNodeId)
+        assert str(leaf) == str(node_id)
 
 
 class TestItemNodeId:
@@ -72,11 +75,7 @@ class TestItemNodeId:
         assert str(node_id) == "a/test_b.py::test_c"
 
     def test_str_with_params(self) -> None:
-        node_id = ItemNodeId(
-            path="a/test_b.py",
-            names=("test_c",),
-            params=(ParamId(id="1"), ParamId(id="x")),
-        )
+        node_id = ItemNodeId(path="a/test_b.py", names=("test_c",), params="1-x")
         assert str(node_id) == "a/test_b.py::test_c[1-x]"
 
     def test_has_no_child_or_leaf(self) -> None:
@@ -97,67 +96,57 @@ class TestItemNodeId:
         assert {a: 1}[b] == 1
         assert {a, b, c} == {a, c}
 
-    def test_as_opaque(self) -> None:
-        node_id = ItemNodeId(
-            path="a/test_b.py", names=("test_c",), params=(ParamId(id="1"),)
-        )
-        opaque = node_id.as_opaque()
-        assert isinstance(opaque, OpaqueNodeId)
-        assert str(opaque) == str(node_id)
+    def test_as_leaf_returns_self(self) -> None:
+        """ItemNodeId.as_leaf() is a no-op: it returns self so that code
+        holding a NodeId value can call .as_leaf() unconditionally."""
+        node_id = ItemNodeId(path="a/test_b.py", names=("test_c",))
+        assert node_id.as_leaf() is node_id
 
-
-class TestOpaqueNodeId:
-    def test_root(self) -> None:
-        node_id = OpaqueNodeId.parse("")
-        assert node_id == OpaqueNodeId(path="")
-        assert str(node_id) == ""
-
-    def test_path_only(self) -> None:
-        node_id = OpaqueNodeId.parse("a/b/test_c.py")
-        assert node_id == OpaqueNodeId(path="a/b/test_c.py")
+    def test_parse_path_only(self) -> None:
+        node_id = ItemNodeId.parse("a/b/test_c.py")
+        assert node_id == ItemNodeId(path="a/b/test_c.py")
         assert node_id.names == ()
         assert node_id.params is None
         assert str(node_id) == "a/b/test_c.py"
 
-    def test_with_names(self) -> None:
-        node_id = OpaqueNodeId.parse("a/test_b.py::TestC::test_d")
-        assert node_id == OpaqueNodeId(path="a/test_b.py", names=("TestC", "test_d"))
-        assert node_id.names == ("TestC", "test_d")
+    def test_parse_with_names(self) -> None:
+        node_id = ItemNodeId.parse("a/test_b.py::TestC::test_d")
+        assert node_id == ItemNodeId(path="a/test_b.py", names=("TestC", "test_d"))
         assert node_id.params is None
 
-    def test_names_and_params(self) -> None:
-        node_id = OpaqueNodeId.parse("a/test_b.py::test_c[1-x]")
+    def test_parse_names_and_params(self) -> None:
+        node_id = ItemNodeId.parse("a/test_b.py::test_c[1-x]")
         assert node_id.names == ("test_c",)
         assert node_id.params == "1-x"
         assert node_id.rest == "test_c[1-x]"
 
-    def test_params_boundary_not_inferred(self) -> None:
+    def test_parse_params_boundary_not_inferred(self) -> None:
         """The '-' inside params is used both to join sub-ids within one
-        parametrize() call and to join separate stacked calls, so the internal
-        ParamId boundaries cannot be reliably recovered.  params is therefore
-        a single opaque string, not decomposed further."""
-        node_id = OpaqueNodeId.parse("a/test_b.py::test_c[a-b-c]")
+        parametrize() call and to join separate stacked calls, so the
+        internal call-boundary structure cannot be recovered.  params is
+        therefore a single opaque string, not decomposed further."""
+        node_id = ItemNodeId.parse("a/test_b.py::test_c[a-b-c]")
         assert node_id.params == "a-b-c"
 
-    def test_double_colon_inside_params(self) -> None:
+    def test_parse_double_colon_inside_params(self) -> None:
         """A '::' inside the [params] bracket must NOT be mistaken for a
         name separator (issue #469, e.g. a param value 'double::colon')."""
-        node_id = OpaqueNodeId.parse("a/test_b.py::test_func[double::colon]")
+        node_id = ItemNodeId.parse("a/test_b.py::test_func[double::colon]")
         assert node_id.names == ("test_func",)
         assert node_id.params == "double::colon"
         assert str(node_id) == "a/test_b.py::test_func[double::colon]"
 
-    def test_empty_params(self) -> None:
-        node_id = OpaqueNodeId.parse("a/test_b.py::test_c[]")
+    def test_parse_empty_params(self) -> None:
+        node_id = ItemNodeId.parse("a/test_b.py::test_c[]")
         assert node_id.names == ("test_c",)
         assert node_id.params == ""
 
-    def test_rest_none_vs_empty_string(self) -> None:
+    def test_parse_rest_none_vs_empty_string(self) -> None:
         """None means no "::" was present at all, distinct from "" after a
         trailing "::" -- both must round-trip losslessly.
         """
-        no_sep = OpaqueNodeId.parse("a/test_b.py")
-        trailing_sep = OpaqueNodeId.parse("a/test_b.py::")
+        no_sep = ItemNodeId.parse("a/test_b.py")
+        trailing_sep = ItemNodeId.parse("a/test_b.py::")
         assert no_sep.rest is None
         assert trailing_sep.rest == ""
         assert str(no_sep) == "a/test_b.py"
@@ -177,24 +166,15 @@ class TestOpaqueNodeId:
             "a/test_b.py::TestC::test_d[a-b]",
         ],
     )
-    def test_round_trip_matches_original_string(self, s: str) -> None:
-        assert str(OpaqueNodeId.parse(s)) == s
-
-    def test_eq_and_hash(self) -> None:
-        a = OpaqueNodeId.parse("a/test_b.py::test_c")
-        b = OpaqueNodeId.parse("a/test_b.py::test_c")
-        c = OpaqueNodeId.parse("a/test_b.py::test_d")
-        assert a == b
-        assert hash(a) == hash(b)
-        assert a != c
-        assert {a: 1}[b] == 1
-        assert {a, b, c} == {a, c}
+    def test_parse_round_trip_matches_original_string(self, s: str) -> None:
+        assert str(ItemNodeId.parse(s)) == s
 
 
 class TestCoerceNodeId:
     def test_from_str(self) -> None:
         node_id = coerce_node_id("a/test_b.py::test_c")
-        assert node_id == OpaqueNodeId(path="a/test_b.py", names=("test_c",))
+        assert isinstance(node_id, ItemNodeId)
+        assert node_id == ItemNodeId(path="a/test_b.py", names=("test_c",))
 
     def test_from_collection_node_id_returns_same_object(self) -> None:
         node_id = CollectionNodeId(path="a/test_b.py", names=("test_c",))
@@ -211,17 +191,8 @@ class TestCoerceNodeId:
         assert isinstance(result, ItemNodeId)
 
 
-class TestOpaqueNodeIdAsOpaque:
-    def test_returns_self(self) -> None:
-        """OpaqueNodeId.as_opaque() exists only so that code holding a
-        NodeId | OpaqueNodeId value can call .as_opaque() unconditionally,
-        regardless of which concrete type it actually has."""
-        node_id = OpaqueNodeId.parse("a/test_b.py::test_c")
-        assert node_id.as_opaque() is node_id
-
-
 class TestWithNodeIdSetter:
-    def test_nodeid_setter_builds_opaque_node_id(self) -> None:
+    def test_nodeid_setter_builds_item_node_id(self) -> None:
         report = TestReport(
             nodeid="a/test_b.py::test_c",
             location=("a/test_b.py", 0, "test_c"),
@@ -231,5 +202,5 @@ class TestWithNodeIdSetter:
             when="call",
         )
         report.nodeid = "a/test_b.py::test_d"
-        assert report.id == OpaqueNodeId(path="a/test_b.py", names=("test_d",))
+        assert report.id == ItemNodeId(path="a/test_b.py", names=("test_d",))
         assert report.nodeid == "a/test_b.py::test_d"

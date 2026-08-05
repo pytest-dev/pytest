@@ -33,7 +33,6 @@ from _pytest.logging import catching_logs
 from _pytest.logging import LogCaptureHandler
 from _pytest.logging import LoggingPlugin
 from _pytest.nodeid import ItemNodeId
-from _pytest.nodeid import OpaqueNodeId
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.runner import check_interactive_exception
@@ -356,9 +355,9 @@ def pytest_report_from_serializable(data: dict[str, Any]) -> SubtestReport | Non
     return None
 
 
-# Dict of ItemNodeId/OpaqueNodeId -> number of failed subtests.
+# Dict of ItemNodeId -> number of failed subtests.
 # Used to fail top-level tests that passed but contain failed subtests.
-failed_subtests_key = StashKey[defaultdict[ItemNodeId | OpaqueNodeId, int]]()
+failed_subtests_key = StashKey[defaultdict[ItemNodeId, int]]()
 
 
 def pytest_configure(config: Config) -> None:

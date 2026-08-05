@@ -45,7 +45,7 @@ from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
 from _pytest.config.argparsing import Parser
-from _pytest.nodeid import OpaqueNodeId
+from _pytest.nodeid import ItemNodeId
 from _pytest.nodes import Item
 from _pytest.nodes import Node
 from _pytest.pathlib import absolutepath
@@ -408,8 +408,8 @@ class TerminalReporter:
         # isatty should be a method but was wrongly implemented as a boolean.
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
-        self._progress_nodeids_reported: set[OpaqueNodeId] = set()
-        self._timing_nodeids_reported: set[OpaqueNodeId] = set()
+        self._progress_nodeids_reported: set[ItemNodeId] = set()
+        self._timing_nodeids_reported: set[ItemNodeId] = set()
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -487,7 +487,7 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
-        fspath = self.config.rootpath / OpaqueNodeId.parse(nodeid).path
+        fspath = self.config.rootpath / ItemNodeId.parse(nodeid).path
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
@@ -661,7 +661,7 @@ class TerminalReporter:
                 markup = {"yellow": True}
             else:
                 markup = {}
-        self._progress_nodeids_reported.add(rep.id.as_opaque())
+        self._progress_nodeids_reported.add(rep.id.as_leaf())
         if self.config.get_verbosity(Config.VERBOSITY_TEST_CASES) <= 0:
             self._tw.write(letter, **markup)
             # When running in xdist, the logreport and logfinish of multiple
@@ -754,7 +754,7 @@ class TerminalReporter:
             not_reported = [
                 r
                 for r in all_reports
-                if r.id.as_opaque() not in self._timing_nodeids_reported
+                if r.id.as_leaf() not in self._timing_nodeids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
@@ -767,7 +767,7 @@ class TerminalReporter:
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
                 self._timing_nodeids_reported.update(
-                    r.id.as_opaque() for r in not_reported
+                    r.id.as_leaf() for r in not_reported
                 )
                 return format_node_duration(
                     sum(r.duration for r in not_reported if isinstance(r, TestReport))
@@ -1070,7 +1070,7 @@ class TerminalReporter:
         if fspath:
             res = mkrel(nodeid)
             if self.verbosity >= 2 and (
-                OpaqueNodeId.parse(nodeid).path != nodes.norm_sep(fspath)
+                ItemNodeId.parse(nodeid).path != nodes.norm_sep(fspath)
             ):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
@@ -1138,7 +1138,7 @@ class TerminalReporter:
                     return "\n".join(map(str, locations))
 
                 counts_by_filename = Counter(
-                    OpaqueNodeId.parse(str(loc)).path for loc in locations
+                    ItemNodeId.parse(str(loc)).path for loc in locations
                 )
                 return "\n".join(
                     "{}: {} warning{}".format(k, v, "s" if v > 1 else "")
@@ -1182,17 +1182,17 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, green=True, bold=True)
                         self._outrep_summary(rep)
-                    self._handle_teardown_sections(rep.id.as_opaque())
+                    self._handle_teardown_sections(rep.id.as_leaf())
 
-    def _get_teardown_reports(self, node_id: OpaqueNodeId) -> list[TestReport]:
+    def _get_teardown_reports(self, node_id: ItemNodeId) -> list[TestReport]:
         reports = self.getreports("")
         return [
             report
             for report in reports
-            if report.when == "teardown" and report.id.as_opaque() == node_id
+            if report.when == "teardown" and report.id.as_leaf() == node_id
         ]
 
-    def _handle_teardown_sections(self, node_id: OpaqueNodeId) -> None:
+    def _handle_teardown_sections(self, node_id: ItemNodeId) -> None:
         for report in self._get_teardown_reports(node_id):
             self.print_teardown_sections(report)
 
@@ -1242,7 +1242,7 @@ class TerminalReporter:
                         msg = self._getfailureheadline(rep)
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
-                        self._handle_teardown_sections(rep.id.as_opaque())
+                        self._handle_teardown_sections(rep.id.as_leaf())
 
     def summary_errors(self) -> None:
         if self.config.option.tbstyle != "no":
@@ -1529,7 +1529,7 @@ class TerminalReporter:
 
 def _get_node_id_with_markup(tw: TerminalWriter, config: Config, rep: BaseReport):
     nodeid = config.cwd_relative_nodeid(rep.nodeid)
-    oid = OpaqueNodeId.parse(nodeid)
+    oid = ItemNodeId.parse(nodeid)
     if oid.rest is not None:
         return f"{oid.path}::{tw.markup(oid.rest, bold=True)}"
     return oid.path

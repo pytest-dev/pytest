@@ -30,7 +30,6 @@ from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from _pytest.nodeid import ItemNodeId
-from _pytest.nodeid import OpaqueNodeId
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
@@ -273,7 +272,7 @@ class LFPluginCollWrapper:
 
                 # Only filter with known failures.
                 if not self._collected_at_least_one_failure:
-                    if not any(x.id.as_opaque() in lastfailed for x in result):
+                    if not any(x.id.as_leaf() in lastfailed for x in result):
                         return res
                     self.lfplugin.config.pluginmanager.register(
                         LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
@@ -284,7 +283,7 @@ class LFPluginCollWrapper:
                 result[:] = [
                     x
                     for x in result
-                    if x.id.as_opaque() in lastfailed
+                    if x.id.as_leaf() in lastfailed
                     # Include any passed arguments (not trivial to filter).
                     or session.isinitpath(x.path)
                     # Keep all sub-collectors.
@@ -318,8 +317,8 @@ class LFPlugin:
         active_keys = "lf", "failedfirst"
         self.active = any(config.getoption(key) for key in active_keys)
         assert config.cache
-        self.lastfailed: dict[OpaqueNodeId, bool] = {
-            OpaqueNodeId.parse(k): v
+        self.lastfailed: dict[ItemNodeId, bool] = {
+            ItemNodeId.parse(k): v
             for k, v in config.cache.get("cache/lastfailed", {}).items()
         }
         self._previously_failed_count: int | None = None
@@ -350,21 +349,21 @@ class LFPlugin:
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         if (report.when == "call" and report.passed) or report.skipped:
-            self.lastfailed.pop(report.id.as_opaque(), None)
+            self.lastfailed.pop(report.id, None)
         elif report.failed:
-            self.lastfailed[report.id.as_opaque()] = True
+            self.lastfailed[report.id] = True
 
     def pytest_collectreport(self, report: CollectReport) -> None:
         passed = report.outcome in ("passed", "skipped")
         if passed:
-            report_id = report.id.as_opaque()
+            report_id = report.id.as_leaf()
             if report_id in self.lastfailed:
                 self.lastfailed.pop(report_id)
                 self.lastfailed.update(
-                    (item.id.as_opaque(), True) for item in report.result
+                    (item.id.as_leaf(), True) for item in report.result
                 )
         else:
-            self.lastfailed[report.id.as_opaque()] = True
+            self.lastfailed[report.id.as_leaf()] = True
 
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
@@ -379,7 +378,7 @@ class LFPlugin:
             previously_failed = []
             previously_passed = []
             for item in items:
-                if item.id.as_opaque() in self.lastfailed:
+                if item.id in self.lastfailed:
                     previously_failed.append(item)
                 else:
                     previously_passed.append(item)
@@ -437,8 +436,8 @@ class NFPlugin:
         self.config = config
         self.active = config.option.newfirst
         assert config.cache is not None
-        self.cached_nodeids: set[OpaqueNodeId] = {
-            OpaqueNodeId.parse(s) for s in config.cache.get("cache/nodeids", [])
+        self.cached_nodeids: set[ItemNodeId] = {
+            ItemNodeId.parse(s) for s in config.cache.get("cache/nodeids", [])
         }
 
     @hookimpl(wrapper=True, tryfirst=True)
@@ -449,7 +448,7 @@ class NFPlugin:
             new_items: dict[ItemNodeId, nodes.Item] = {}
             other_items: dict[ItemNodeId, nodes.Item] = {}
             for item in items:
-                if item.id.as_opaque() not in self.cached_nodeids:
+                if item.id not in self.cached_nodeids:
                     new_items[item.id] = item
                 else:
                     other_items[item.id] = item
@@ -457,9 +456,9 @@ class NFPlugin:
             items[:] = self._get_increasing_order(
                 new_items.values()
             ) + self._get_increasing_order(other_items.values())
-            self.cached_nodeids.update(k.as_opaque() for k in new_items)
+            self.cached_nodeids.update(new_items)
         else:
-            self.cached_nodeids.update(item.id.as_opaque() for item in items)
+            self.cached_nodeids.update(item.id for item in items)
 
         return res
 

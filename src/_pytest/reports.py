@@ -34,7 +34,6 @@ from _pytest.nodeid import coerce_node_id
 from _pytest.nodeid import CollectionNodeId
 from _pytest.nodeid import ItemNodeId
 from _pytest.nodeid import NodeId
-from _pytest.nodeid import OpaqueNodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
 from _pytest.outcomes import fail
@@ -72,7 +71,7 @@ class BaseReport:
     sections: list[tuple[str, str]]
     outcome: Literal["passed", "failed", "skipped"]
 
-    _id: NodeId | OpaqueNodeId
+    _id: NodeId
 
     def __init__(self, **kw: Any) -> None:
         self.__dict__.update(kw)
@@ -83,10 +82,10 @@ class BaseReport:
 
     @nodeid.setter
     def nodeid(self, value: str) -> None:
-        self._id = OpaqueNodeId.parse(value)
+        self._id = ItemNodeId.parse(value)
 
     @property
-    def id(self) -> NodeId | OpaqueNodeId:
+    def id(self) -> NodeId:
         """The structured (non-string) form of ``nodeid``.
 
         :meta private:
@@ -342,10 +341,10 @@ class TestReport(BaseReport):
     # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
     wasxfail: str
 
-    _id: ItemNodeId | OpaqueNodeId
+    _id: ItemNodeId
 
     @property
-    def id(self) -> ItemNodeId | OpaqueNodeId:
+    def id(self) -> ItemNodeId:
         """The structured (non-string) form of ``nodeid``.
 
         .. note::
@@ -503,10 +502,10 @@ class CollectReport(BaseReport):
 
     when = "collect"
 
-    _id: CollectionNodeId | OpaqueNodeId
+    _id: CollectionNodeId
 
     @property
-    def id(self) -> CollectionNodeId | OpaqueNodeId:
+    def id(self) -> CollectionNodeId:
         """The structured (non-string) form of ``nodeid``.
 
         .. note::
@@ -531,7 +530,11 @@ class CollectReport(BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self._id = coerce_node_id(nodeid)
+        self._id = (
+            nodeid
+            if isinstance(nodeid, CollectionNodeId)
+            else CollectionNodeId.parse(nodeid)
+        )
 
         #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
@@ -650,10 +653,10 @@ def _report_to_json(report: BaseReport) -> dict[str, Any]:
 
     d = report.__dict__.copy()
     if "_id" in d:
-        # nodeid is a property (backed by self._id: NodeId) on TestReport/
-        # CollectReport, so it's absent from __dict__ -- emit the wire-format
-        # "nodeid" string key that xdist and other consumers expect, and
-        # never expose the internal NodeId object on the wire.
+        # nodeid is a property (backed by self._id) on TestReport/CollectReport,
+        # so it's absent from __dict__ -- emit the wire-format "nodeid" string
+        # key that xdist and other consumers expect, and never expose the
+        # internal structured id object on the wire.
         d["nodeid"] = str(d.pop("_id"))
     if hasattr(report.longrepr, "toterminal"):
         if hasattr(report.longrepr, "reprtraceback") and hasattr(

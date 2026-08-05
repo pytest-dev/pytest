@@ -71,7 +71,6 @@ from _pytest.mark.structures import HIDDEN_PARAM
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import normalize_mark_list
-from _pytest.nodeid import ParamId
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.pathlib import fnmatch_ex
@@ -1172,8 +1171,8 @@ class CallSpec:
     # Used for sorting parametrized resources.
     _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
     # One entry per (possibly stacked) parametrize() call, in order. Joined
-    # with "-" they form the item's name `[..]` suffix; see ItemNodeId.params.
-    _idlist: Sequence[ParamId] = dataclasses.field(default_factory=tuple)
+    # with "-" they form the item's name `[..]` suffix (see ItemNodeId.params).
+    _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
     # Marks which will be applied to the item.
     marks: list[Mark] = dataclasses.field(default_factory=list)
 
@@ -1203,10 +1202,7 @@ class CallSpec:
         if id is HIDDEN_PARAM:
             idlist = self._idlist
         else:
-            idlist = [
-                *self._idlist,
-                ParamId(id=id, argnames=argnames, scope=scope),
-            ]
+            idlist = [*self._idlist, id]
         return CallSpec(
             params=params,
             indices=indices,
@@ -1223,13 +1219,7 @@ class CallSpec:
 
     @property
     def id(self) -> str:
-        return "-".join(p.id for p in self._idlist)
-
-    @property
-    def param_ids(self) -> tuple[ParamId, ...]:
-        """The ordered per-parametrize()-call ids, with full argnames/scope
-        detail. See :class:`~_pytest.nodeid.ParamId`."""
-        return tuple(self._idlist)
+        return "-".join(self._idlist)
 
 
 if TYPE_CHECKING:
@@ -1709,12 +1699,11 @@ class Function(PyobjMixin, nodes.Item):
     ) -> None:
         # Build the ItemNodeId explicitly from callspec (when parametrized)
         # instead of going through Node.__init__'s generic
-        # `parent.id.leaf(name, ())` fallback, which would only see `name`
+        # `parent.id.leaf(name, None)` fallback, which would only see `name`
         # (with any "[params]" suffix already glued on) and couldn't
-        # recover the per-parametrize()-call structure captured in
-        # callspec.param_ids.
+        # recover the per-parametrize()-call structure from callspec.
         base_name = originalname or name
-        params = callspec.param_ids if callspec is not None else ()
+        params = callspec.id if callspec is not None and callspec._idlist else None
         node_id = parent.id.leaf(base_name, params)
         super().__init__(name, parent, config=config, session=session, nodeid=node_id)
 
