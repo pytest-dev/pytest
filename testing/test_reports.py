@@ -63,11 +63,9 @@ class TestReportSerialization:
             if key == "longrepr":
                 continue
             if key == "_id":
-                # _from_json() always reconstructs an OpaqueNodeId (built
-                # from the plain nodeid string on the wire), while the
-                # original live report's _id is a structured ItemNodeId --
-                # these are deliberately different, non-equal types (see
-                # _pytest/nodeid.py), so compare their string form instead.
+                # _from_json() reconstructs a NodeId via NodeId.parse() from
+                # the plain nodeid string on the wire; compare by string form
+                # to be independent of any cached state on the instance.
                 assert str(a._id) == str(rep._id)
                 continue
             assert getattr(a, key) == getattr(rep, key)

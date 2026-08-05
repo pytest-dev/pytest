@@ -29,7 +29,7 @@ from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
-from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import NodeId
 from _pytest.nodes import Directory
 from _pytest.nodes import File
 from _pytest.reports import TestReport
@@ -272,7 +272,7 @@ class LFPluginCollWrapper:
 
                 # Only filter with known failures.
                 if not self._collected_at_least_one_failure:
-                    if not any(x.id.as_leaf() in lastfailed for x in result):
+                    if not any(x.id in lastfailed for x in result):
                         return res
                     self.lfplugin.config.pluginmanager.register(
                         LFPluginCollSkipfiles(self.lfplugin), "lfplugin-collskip"
@@ -283,7 +283,7 @@ class LFPluginCollWrapper:
                 result[:] = [
                     x
                     for x in result
-                    if x.id.as_leaf() in lastfailed
+                    if x.id in lastfailed
                     # Include any passed arguments (not trivial to filter).
                     or session.isinitpath(x.path)
                     # Keep all sub-collectors.
@@ -317,8 +317,8 @@ class LFPlugin:
         active_keys = "lf", "failedfirst"
         self.active = any(config.getoption(key) for key in active_keys)
         assert config.cache
-        self.lastfailed: dict[ItemNodeId, bool] = {
-            ItemNodeId.parse(k): v
+        self.lastfailed: dict[NodeId, bool] = {
+            NodeId.parse(k): v
             for k, v in config.cache.get("cache/lastfailed", {}).items()
         }
         self._previously_failed_count: int | None = None
@@ -356,14 +356,12 @@ class LFPlugin:
     def pytest_collectreport(self, report: CollectReport) -> None:
         passed = report.outcome in ("passed", "skipped")
         if passed:
-            report_id = report.id.as_leaf()
+            report_id = report.id
             if report_id in self.lastfailed:
                 self.lastfailed.pop(report_id)
-                self.lastfailed.update(
-                    (item.id.as_leaf(), True) for item in report.result
-                )
+                self.lastfailed.update((item.id, True) for item in report.result)
         else:
-            self.lastfailed[report.id.as_leaf()] = True
+            self.lastfailed[report.id] = True
 
     @hookimpl(wrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(
@@ -436,8 +434,8 @@ class NFPlugin:
         self.config = config
         self.active = config.option.newfirst
         assert config.cache is not None
-        self.cached_nodeids: set[ItemNodeId] = {
-            ItemNodeId.parse(s) for s in config.cache.get("cache/nodeids", [])
+        self.cached_nodeids: set[NodeId] = {
+            NodeId.parse(s) for s in config.cache.get("cache/nodeids", [])
         }
 
     @hookimpl(wrapper=True, tryfirst=True)
@@ -445,8 +443,8 @@ class NFPlugin:
         res = yield
 
         if self.active:
-            new_items: dict[ItemNodeId, nodes.Item] = {}
-            other_items: dict[ItemNodeId, nodes.Item] = {}
+            new_items: dict[NodeId, nodes.Item] = {}
+            other_items: dict[NodeId, nodes.Item] = {}
             for item in items:
                 if item.id not in self.cached_nodeids:
                     new_items[item.id] = item

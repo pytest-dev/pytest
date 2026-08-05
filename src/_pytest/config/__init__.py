@@ -68,7 +68,7 @@ from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
 import _pytest.deprecated
 import _pytest.hookspec
-from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.outcomes import Skipped
 from _pytest.pathlib import absolutepath
@@ -647,7 +647,7 @@ class PytestPluginManager(PluginManager):
 
         anchors = []
         for initial_path in args:
-            path = ItemNodeId.parse(str(initial_path)).path
+            path = NodeId.parse(str(initial_path)).path
             anchor = absolutepath(invocation_dir / path)
             # Ensure we do not break if what appears to be an anchor
             # is in fact a very long option (#10169, #11394).
@@ -1330,7 +1330,7 @@ class Config:
     def cwd_relative_nodeid(self, nodeid: str) -> str:
         # nodeid's are relative to the rootpath, compute relative to cwd.
         if self.invocation_params.dir != self.rootpath:
-            oid = ItemNodeId.parse(nodeid)
+            oid = NodeId.parse(nodeid)
             fullpath = self.rootpath / oid.path
             relative_path = bestrelpath(self.invocation_params.dir, fullpath)
             nodeid = (

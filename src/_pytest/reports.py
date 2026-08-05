@@ -31,8 +31,6 @@ from _pytest._code.code import TerminalRepr
 from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.nodeid import coerce_node_id
-from _pytest.nodeid import CollectionNodeId
-from _pytest.nodeid import ItemNodeId
 from _pytest.nodeid import NodeId
 from _pytest.nodes import Collector
 from _pytest.nodes import Item
@@ -82,7 +80,7 @@ class BaseReport:
 
     @nodeid.setter
     def nodeid(self, value: str) -> None:
-        self._id = ItemNodeId.parse(value)
+        self._id = NodeId.parse(value)
 
     @property
     def id(self) -> NodeId:
@@ -341,23 +339,23 @@ class TestReport(BaseReport):
     # xfail reason if xfailed, otherwise not defined. Use hasattr to distinguish.
     wasxfail: str
 
-    _id: ItemNodeId
+    _id: NodeId
 
     @property
-    def id(self) -> ItemNodeId:
+    def id(self) -> NodeId:
         """The structured (non-string) form of ``nodeid``.
 
         .. note::
 
             Experimental/internal: the shape of
-            :class:`~_pytest.nodeid.ItemNodeId` may change in future
+            :class:`~_pytest.nodeid.NodeId` may change in future
             releases.
         """
         return self._id
 
     def __init__(
         self,
-        nodeid: str | ItemNodeId,
+        nodeid: str | NodeId,
         location: tuple[str, int | None, str],
         keywords: Mapping[str, Any],
         outcome: Literal["passed", "failed", "skipped"],
@@ -502,23 +500,23 @@ class CollectReport(BaseReport):
 
     when = "collect"
 
-    _id: CollectionNodeId
+    _id: NodeId
 
     @property
-    def id(self) -> CollectionNodeId:
+    def id(self) -> NodeId:
         """The structured (non-string) form of ``nodeid``.
 
         .. note::
 
             Experimental/internal: the shape of
-            :class:`~_pytest.nodeid.CollectionNodeId` may change in future
+            :class:`~_pytest.nodeid.NodeId` may change in future
             releases.
         """
         return self._id
 
     def __init__(
         self,
-        nodeid: str | CollectionNodeId,
+        nodeid: str | NodeId,
         outcome: Literal["passed", "failed", "skipped"],
         longrepr: ExceptionInfo[BaseException]
         | tuple[str, int, str]
@@ -530,11 +528,7 @@ class CollectReport(BaseReport):
         **extra,
     ) -> None:
         #: Normalized collection nodeid.
-        self._id = (
-            nodeid
-            if isinstance(nodeid, CollectionNodeId)
-            else CollectionNodeId.parse(nodeid)
-        )
+        self._id = nodeid if isinstance(nodeid, NodeId) else NodeId.parse(nodeid)
 
         #: Test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome

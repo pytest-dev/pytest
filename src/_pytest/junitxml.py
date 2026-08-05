@@ -28,8 +28,6 @@ from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureRequest
 from _pytest.nodeid import coerce_node_id
-from _pytest.nodeid import CollectionNodeId
-from _pytest.nodeid import ItemNodeId
 from _pytest.nodeid import NodeId
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
@@ -94,7 +92,7 @@ families["xunit2"] = families["_base"]
 
 
 class _NodeReporter:
-    def __init__(self, node_id: ItemNodeId, xml: LogXML) -> None:
+    def __init__(self, node_id: NodeId, xml: LogXML) -> None:
         self.id = node_id
         self.xml = xml
         self.add_stats = self.xml.add_stats
@@ -458,7 +456,7 @@ def pytest_unconfigure(config: Config) -> None:
 
 
 def mangle_test_address(address: str) -> list[str]:
-    oid = ItemNodeId.parse(address)
+    oid = NodeId.parse(address)
     names = [oid.path, *oid.names]
     # Convert file path to dotted path.
     names[0] = names[0].replace(nodes.SEP, ".")
@@ -492,7 +490,7 @@ class LogXML:
         self.stats: dict[str, int] = dict.fromkeys(
             ["error", "passed", "failure", "skipped"], 0
         )
-        self.node_reporters: dict[tuple[ItemNodeId, object], _NodeReporter] = {}
+        self.node_reporters: dict[tuple[NodeId, object], _NodeReporter] = {}
         self.node_reporters_ordered: list[_NodeReporter] = []
         self.global_properties: list[tuple[str, str]] = []
 
@@ -505,7 +503,7 @@ class LogXML:
             self.family = "xunit1"
 
     def finalize(self, report: TestReport) -> None:
-        node_id = report.id.as_leaf()
+        node_id = report.id
         # Local hack to handle xdist report order.
         workernode = getattr(report, "node", None)
         reporter = self.node_reporters.pop((node_id, workernode))
@@ -518,10 +516,10 @@ class LogXML:
 
     def node_reporter(self, report: BaseReport | NodeId | str) -> _NodeReporter:
         match report:
-            case CollectionNodeId() | ItemNodeId() | str():
-                node_id = coerce_node_id(report).as_leaf()
+            case NodeId() | str():
+                node_id = coerce_node_id(report)
             case BaseReport():
-                node_id = report.id.as_leaf()
+                node_id = report.id
             case _:  # pragma: no cover
                 assert_never(report)
         # Local hack to handle xdist report order.
@@ -587,7 +585,7 @@ class LogXML:
                         rep
                         for rep in self.open_reports
                         if (
-                            rep.id.as_leaf() == report.id.as_leaf()
+                            rep.id == report.id
                             and getattr(rep, "item_index", None) == report_ii
                             and getattr(rep, "worker_id", None) == report_wid
                         )
@@ -605,7 +603,7 @@ class LogXML:
                     # element for that item (#3850).
                     self.cnt_double_fail_tests += int(
                         (
-                            report.id.as_leaf(),
+                            report.id,
                             getattr(report, "node", None),
                         )
                         in self.node_reporters
@@ -634,7 +632,7 @@ class LogXML:
                     rep
                     for rep in self.open_reports
                     if (
-                        rep.id.as_leaf() == report.id.as_leaf()
+                        rep.id == report.id
                         and getattr(rep, "item_index", None) == report_ii
                         and getattr(rep, "worker_id", None) == report_wid
                     )

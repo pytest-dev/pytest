@@ -1171,7 +1171,7 @@ class CallSpec:
     # Used for sorting parametrized resources.
     _arg2scope: Mapping[str, Scope] = dataclasses.field(default_factory=dict)
     # One entry per (possibly stacked) parametrize() call, in order. Joined
-    # with "-" they form the item's name `[..]` suffix (see ItemNodeId.params).
+    # with "-" they form the item's name `[..]` suffix (see NodeId.params).
     _idlist: Sequence[str] = dataclasses.field(default_factory=tuple)
     # Marks which will be applied to the item.
     marks: list[Mark] = dataclasses.field(default_factory=list)
@@ -1697,7 +1697,7 @@ class Function(PyobjMixin, nodes.Item):
         fixtureinfo: FuncFixtureInfo | None = None,
         originalname: str | None = None,
     ) -> None:
-        # Build the ItemNodeId explicitly from callspec (when parametrized)
+        # Build the NodeId explicitly from callspec (when parametrized)
         # instead of going through Node.__init__'s generic
         # `parent.id.leaf(name, None)` fallback, which would only see `name`
         # (with any "[params]" suffix already glued on) and couldn't

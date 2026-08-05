@@ -11,7 +11,7 @@ from _pytest.cacheprovider import Cache
 from _pytest.config import Config
 from _pytest.config.argparsing import Parser
 from _pytest.main import Session
-from _pytest.nodeid import ItemNodeId
+from _pytest.nodeid import NodeId
 from _pytest.reports import TestReport
 
 
@@ -71,7 +71,7 @@ def pytest_sessionfinish(session: Session) -> None:
 @dataclasses.dataclass
 class StepwiseCacheInfo:
     # The nodeid of the last failed test.
-    last_failed: ItemNodeId | None
+    last_failed: NodeId | None
 
     # The number of tests in the last time --stepwise was run.
     # We use this information as a simple way to invalidate the cache information, avoiding
@@ -114,7 +114,7 @@ class StepwisePlugin:
             try:
                 last_failed: str | None = cached_dict["last_failed"]
                 return StepwiseCacheInfo(
-                    ItemNodeId.parse(last_failed) if last_failed is not None else None,
+                    NodeId.parse(last_failed) if last_failed is not None else None,
                     cached_dict["last_test_count"],
                     cached_dict["last_cache_date_str"],
                 )

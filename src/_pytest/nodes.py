@@ -34,8 +34,6 @@ from _pytest.config import ConftestImportFailure
 from _pytest.mark.structures import Mark
 from _pytest.mark.structures import MarkDecorator
 from _pytest.mark.structures import NodeKeywords
-from _pytest.nodeid import CollectionNodeId
-from _pytest.nodeid import ItemNodeId
 from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
@@ -198,7 +196,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
         if nodeid is not None:
             if not isinstance(nodeid, NodeId):  # pragma: no cover
                 raise ValueError(
-                    f"nodeid must be a NodeId (CollectionNodeId/ItemNodeId) instance "
+                    f"nodeid must be a NodeId instance "
                     f"or None, got {nodeid!r}. Do not pass nodeid explicitly -- use "
                     f"Node.from_parent() and let pytest compute it automatically."
                 )
@@ -207,9 +205,7 @@ class Node(abc.ABC, metaclass=NodeMeta):
             if not self.parent:
                 raise TypeError("nodeid or parent must be provided")
             # Node.parent is always structurally a Collector -- Items are
-            # always leaves and never have children. This assert is both a
-            # real runtime safety net and what lets mypy narrow
-            # self.parent.id to CollectionNodeId below.
+            # always leaves and never have children.
             assert isinstance(self.parent, Collector), (
                 "Node.parent is always a Collector; an Item can never be a parent"
             )
@@ -523,16 +519,16 @@ class Collector(Node, abc.ABC):
     the collection tree.
     """
 
-    _id: CollectionNodeId
+    _id: NodeId
 
     @property
-    def id(self) -> CollectionNodeId:
+    def id(self) -> NodeId:
         """The structured (non-string) form of ``nodeid``.
 
         .. note::
 
             Experimental/internal: the shape of
-            :class:`~_pytest.nodeid.CollectionNodeId` may change in future
+            :class:`~_pytest.nodeid.NodeId` may change in future
             releases.
         """
         return self._id
@@ -603,7 +599,7 @@ class FSCollector(Collector, abc.ABC):
         parent: Node | None = None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: CollectionNodeId | None = None,
+        nodeid: NodeId | None = None,
     ) -> None:
         if path_or_parent:
             if isinstance(path_or_parent, Node):
@@ -641,7 +637,7 @@ class FSCollector(Collector, abc.ABC):
             if path_str:
                 path_str = norm_sep(path_str)
             if path_str is not None:
-                nodeid = CollectionNodeId(path=path_str)
+                nodeid = NodeId(path=path_str)
 
         super().__init__(
             name=name,
@@ -696,16 +692,16 @@ class Item(Node, abc.ABC):
     Note that for a single function there might be multiple test invocation items.
     """
 
-    _id: ItemNodeId
+    _id: NodeId
 
     @property
-    def id(self) -> ItemNodeId:
+    def id(self) -> NodeId:
         """The structured (non-string) form of ``nodeid``.
 
         .. note::
 
             Experimental/internal: the shape of
-            :class:`~_pytest.nodeid.ItemNodeId` may change in future
+            :class:`~_pytest.nodeid.NodeId` may change in future
             releases.
         """
         return self._id
@@ -718,7 +714,7 @@ class Item(Node, abc.ABC):
         parent=None,
         config: Config | None = None,
         session: Session | None = None,
-        nodeid: ItemNodeId | None = None,
+        nodeid: NodeId | None = None,
         **kw,
     ) -> None:
         # The first two arguments are intentionally passed positionally,
