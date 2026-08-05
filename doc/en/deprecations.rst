@@ -27,8 +27,7 @@ pytest 10. This includes absolute paths and ``..``. Such a directory is usually
 not a pytest cache, and :option:`--cache-clear` deletes ``v/`` and ``d/`` from it.
 
 Move the cache directory inside the rootdir, or remove the setting to use the
-default ``.pytest_cache``. Defaults are not affected: the ``$TOX_ENV_DIR`` default
-is never warned about, wherever the tox work directory lies.
+default ``.pytest_cache``.
 
 .. code-block:: ini
 
