@@ -1,0 +1,15 @@
+Defaulting :confval:`cache_dir` to ``$TOX_ENV_DIR/.pytest_cache`` when ``TOX_ENV_DIR`` is set in the
+environment is deprecated, and will be removed in pytest 10.
+
+It existed because ``--lf``, ``--nf`` and ``--sw`` state is not valid across interpreters, so a tox matrix
+would otherwise have each environment overwrite the previous one's. pytest now keeps that state apart on
+its own using :attr:`CacheScope.ENV <pytest.CacheScope.ENV>`, for every tool rather than only for tox.
+
+Nothing needs to replace it. To keep the cache in the tox environment anyway, spell out the location that
+was previously implied - :confval:`cache_dir` expands environment variables, so this is the same
+expression the old default was built from::
+
+    [pytest]
+    cache_dir = $TOX_ENV_DIR/.pytest_cache
+
+See :ref:`tox-env-dir-cache-dir`.
