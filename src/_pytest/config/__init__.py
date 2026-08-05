@@ -35,6 +35,7 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import IO
+from typing import Literal
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
@@ -60,6 +61,8 @@ from _pytest._io import TerminalWriter
 from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import NOTSET
+from _pytest.config.argparsing import _ini_type_repr
+from _pytest.config.argparsing import _IniLiteral
 from _pytest.config.argparsing import Argument
 from _pytest.config.argparsing import FILE_OR_DIR
 from _pytest.config.argparsing import Parser
@@ -195,6 +198,10 @@ def main(
         List of command line arguments. If `None` or not given, defaults to reading
         arguments directly from the process command line (:data:`sys.argv`).
     :param plugins: List of plugin objects to be auto-registered during initialization.
+
+    .. warning::
+        pytest's warning filters do not apply whilst importing module
+        names passed via ``plugins``.
 
     :returns: An exit code.
     """
@@ -878,11 +885,11 @@ class PytestPluginManager(PluginManager):
         self._import_plugin_specs(getattr(mod, "pytest_plugins", []))
 
     def _import_plugin_specs(
-        self, spec: None | types.ModuleType | str | Sequence[str]
+        self, spec: types.ModuleType | str | Sequence[str] | None
     ) -> None:
         plugins = _get_plugin_specs_as_list(spec)
         for import_spec in plugins:
-            self.import_plugin(import_spec)
+            self.import_plugin(import_spec, consider_entry_points=True)
 
     def import_plugin(self, modname: str, consider_entry_points: bool = False) -> None:
         """Import a plugin with ``modname``.
@@ -928,7 +935,7 @@ class PytestPluginManager(PluginManager):
 
 
 def _get_plugin_specs_as_list(
-    specs: None | types.ModuleType | str | Sequence[str],
+    specs: types.ModuleType | str | Sequence[str] | None,
 ) -> list[str]:
     """Parse a plugins specification into a list of plugin names."""
     # None means empty.
@@ -1199,9 +1206,62 @@ class Config:
         """
         self._cleanup_stack.callback(func)
 
+    @contextlib.contextmanager
+    def _catch_configured_warnings(
+        self,
+        *,
+        record: bool,
+    ) -> Generator[list[warnings.WarningMessage] | None]:
+        """Apply configured filters in a warnings-catching context.
+
+        Defined here instead of _pytest.warnings as _do_configure uses
+        it before the warnings module's pytest_configure hook runs, and
+        defining it there would create an import cycle.
+        """
+        config_filters = self.getini("filterwarnings")
+        cmdline_filters = self.known_args_namespace.pythonwarnings or []
+        with warnings.catch_warnings(record=record) as log:
+            if not sys.warnoptions:
+                # If user is not explicitly configuring warning filters, show deprecation warnings by default (#2908).
+                warnings.filterwarnings("always", category=DeprecationWarning)
+                warnings.filterwarnings("always", category=PendingDeprecationWarning)
+
+            # To be enabled in pytest 10.0.0.
+            # warnings.filterwarnings("error", category=pytest.PytestRemovedIn10Warning)
+
+            apply_warning_filters(config_filters, cmdline_filters)
+            yield log
+
+    @contextlib.contextmanager
+    def _capture_plugin_import_warnings(self) -> Iterator[None]:
+        with self._catch_configured_warnings(record=True) as records:
+            # mypy can't infer that record=True means log is not None; help it.
+            assert records is not None
+
+            try:
+                yield
+            finally:
+                for warning_message in records:
+                    self.hook.pytest_warning_recorded.call_historic(
+                        kwargs=dict(
+                            warning_message=warning_message,
+                            nodeid="",
+                            when="config",
+                            location=None,
+                        )
+                    )
+
     def _do_configure(self) -> None:
         assert not self._configured
         self._configured = True
+        if self.pluginmanager.hasplugin("warnings"):
+            with contextlib.ExitStack() as stack:
+                # this disables recording because the terminalreporter has
+                # finished by the time it comes to reporting logged warnings
+                # from the end of config cleanup. So for now, this is only
+                # useful for setting a warning filter with an 'error' action.
+                stack.enter_context(self._catch_configured_warnings(record=False))
+                self.add_cleanup(stack.pop_all().close)
         self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
     def _ensure_unconfigure(self) -> None:
@@ -1573,17 +1633,31 @@ class Config:
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()
-        self.pluginmanager.consider_preparse(args, exclude_only=False)
-        if (
-            not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
-            and not self.known_args_namespace.disable_plugin_autoload
+
+        # Apply filterwarnings to whilst importing plugins.
+        warnings_plugin_enabled = self.pluginmanager.hasplugin("warnings")
+        for plugin in self.known_args_namespace.plugins:
+            plugin = plugin.strip()
+            if plugin == "no:warnings":
+                warnings_plugin_enabled = False
+            elif plugin == "warnings":
+                warnings_plugin_enabled = True
+        with (
+            self._capture_plugin_import_warnings()
+            if warnings_plugin_enabled
+            else contextlib.nullcontext()
         ):
-            # Autoloading from distribution package entry point has
-            # not been disabled.
-            self.pluginmanager.load_setuptools_entrypoints("pytest11")
-        # Otherwise only plugins explicitly specified in PYTEST_PLUGINS
-        # are going to be loaded.
-        self.pluginmanager.consider_env()
+            self.pluginmanager.consider_preparse(args, exclude_only=False)
+            if (
+                not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+                and not self.known_args_namespace.disable_plugin_autoload
+            ):
+                # Autoloading from distribution package entry point has
+                # not been disabled.
+                self.pluginmanager.load_setuptools_entrypoints("pytest11")
+            # Otherwise only plugins explicitly specified in PYTEST_PLUGINS
+            # are going to be loaded.
+            self.pluginmanager.consider_env()
 
         # Parse again, now including options added in pytest_addoption
         # by third-party plugins loaded above. This way they're available
@@ -1702,6 +1776,9 @@ class Config:
         If the specified name hasn't been registered through a prior
         :func:`parser.addini <pytest.Parser.addini>` call (usually from a
         plugin), a ValueError is raised.
+
+        If the value read from the configuration file does not match the
+        registered ``type``, a :class:`~pytest.UsageError` is raised.
         """
         canonical_name = self._parser._ini_aliases.get(name, name)
         try:
@@ -1747,6 +1824,53 @@ class Config:
         value = selected.value
         mode = selected.mode
 
+        # An invalid value is a user error, raised as UsageError so that it is
+        # reported as a short message rather than an internal error traceback.
+        try:
+            if not isinstance(type, tuple):
+                return self._getini_value(
+                    mode, name, canonical_name, type, value, default
+                )
+
+            # Union: try each member; the first one that accepts the value wins.
+            for member in type:
+                try:
+                    return self._getini_value(
+                        mode, name, canonical_name, member, value, default
+                    )
+                except (TypeError, ValueError):
+                    pass
+            raise TypeError(
+                f"{self.inipath}: config option '{name}' expects one of "
+                f"{_ini_type_repr(type)}, got {builtins.type(value).__name__}: {value!r}"
+            )
+        except (TypeError, ValueError) as e:
+            raise UsageError(str(e)) from e
+
+    def _getini_value(
+        self,
+        mode: Literal["ini", "toml"],
+        name: str,
+        canonical_name: str,
+        type: str | _IniLiteral,
+        value: object,
+        default: Any,
+    ):
+        """Convert a config value, read in the given mode, to the option's type."""
+        if isinstance(type, _IniLiteral):
+            # A Literal value is a plain string checked against the registered
+            # choices, without coercion, in both ini and toml modes.
+            if not isinstance(value, str):
+                raise TypeError(
+                    f"{self.inipath}: config option '{name}' expects a string, "
+                    f"got {builtins.type(value).__name__}: {value!r}"
+                )
+            if value not in type.choices:
+                raise ValueError(
+                    f"{self.inipath}: config option '{name}' expects one of "
+                    f"{_ini_type_repr(type)}, got {value!r}"
+                )
+            return value
         if mode == "ini":
             # In ini mode, values are always str | list[str].
             assert isinstance(value, (str, list))

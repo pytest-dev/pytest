@@ -3,12 +3,9 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from contextlib import ExitStack
-import sys
 from typing import Literal
 import warnings
 
-from _pytest.config import apply_warning_filters
 from _pytest.config import Config
 from _pytest.config import parse_warning_filter
 from _pytest.main import Session
@@ -33,19 +30,7 @@ def catch_warnings_for_item(
 
     Each warning captured triggers the ``pytest_warning_recorded`` hook.
     """
-    config_filters = config.getini("filterwarnings")
-    cmdline_filters = config.known_args_namespace.pythonwarnings or []
-    with warnings.catch_warnings(record=record) as log:
-        if not sys.warnoptions:
-            # If user is not explicitly configuring warning filters, show deprecation warnings by default (#2908).
-            warnings.filterwarnings("always", category=DeprecationWarning)
-            warnings.filterwarnings("always", category=PendingDeprecationWarning)
-
-        # To be enabled in pytest 10.0.0.
-        # warnings.filterwarnings("error", category=pytest.PytestRemovedIn10Warning)
-
-        apply_warning_filters(config_filters, cmdline_filters)
-
+    with config._catch_configured_warnings(record=record) as log:
         # apply filters from "filterwarnings" marks
         nodeid = "" if item is None else item.nodeid
         if item is not None:
@@ -130,23 +115,8 @@ def pytest_load_initial_conftests(
 
 
 def pytest_configure(config: Config) -> None:
-    with ExitStack() as stack:
-        stack.enter_context(
-            catch_warnings_for_item(
-                config=config,
-                ihook=config.hook,
-                when="config",
-                item=None,
-                # this disables recording because the terminalreporter has
-                # finished by the time it comes to reporting logged warnings
-                # from the end of config cleanup. So for now, this is only
-                # useful for setting a warning filter with an 'error' action.
-                record=False,
-            )
-        )
-        config.addinivalue_line(
-            "markers",
-            "filterwarnings(warning): add a warning filter to the given test. "
-            "see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#pytest-mark-filterwarnings ",
-        )
-        config.add_cleanup(stack.pop_all().close)
+    config.addinivalue_line(
+        "markers",
+        "filterwarnings(warning): add a warning filter to the given test. "
+        "see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#pytest-mark-filterwarnings ",
+    )

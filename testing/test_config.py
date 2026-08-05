@@ -6,11 +6,11 @@ import dataclasses
 import importlib.metadata
 import os
 from pathlib import Path
-import platform
 import re
 import sys
 import textwrap
 from typing import Any
+from typing import Literal
 
 import _pytest._code
 from _pytest.config import _get_plugin_specs_as_list
@@ -1046,7 +1046,7 @@ class TestConfigAPI:
         )
         config = pytester.parseconfig()
         with pytest.raises(
-            TypeError, match="Expected an int string for option ini_param"
+            UsageError, match="Expected an int string for option ini_param"
         ):
             _ = config.getini("ini_param")
 
@@ -1085,9 +1085,206 @@ class TestConfigAPI:
         )
         config = pytester.parseconfig()
         with pytest.raises(
-            TypeError, match="Expected a float string for option ini_param"
+            UsageError, match="Expected a float string for option ini_param"
         ):
             _ = config.getini("ini_param")
+
+    UNION_CONFTEST = """
+        def pytest_addoption(parser):
+            parser.addini("ini_param", "", type=int | str, default=None)
+    """
+
+    LITERAL_CONFTEST = """
+        from typing import Literal
+
+        def pytest_addoption(parser):
+            parser.addini(
+                "ini_param", "", type=Literal["auto", "long"], default="auto"
+            )
+    """
+
+    @pytest.mark.parametrize(
+        "section, value, expected",
+        [
+            # Native TOML: int and str are both accepted; the first union
+            # member that matches wins (int before str).
+            ("[tool.pytest]", '"7"', "7"),
+            ("[tool.pytest]", "7", 7),
+            # ini_options mode stringifies, then coerces to the first member.
+            ("[tool.pytest.ini_options]", '"7"', 7),
+            ("[tool.pytest.ini_options]", "7", 7),
+        ],
+        ids=["native-str", "native-int", "ini-options-str", "ini-options-int"],
+    )
+    def test_addini_union_type(
+        self, pytester: Pytester, section: str, value: str, expected: object
+    ) -> None:
+        pytester.makeconftest(self.UNION_CONFTEST)
+        pytester.makepyprojecttoml(
+            f"""
+            {section}
+            ini_param = {value}
+            """
+        )
+        config = pytester.parseconfig()
+        result = config.getini("ini_param")
+        assert result == expected
+        assert type(result) is type(expected)
+
+    def test_addini_union_type_invalid_value(self, pytester: Pytester) -> None:
+        pytester.makeconftest(self.UNION_CONFTEST)
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            ini_param = [1, 2]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.raises(
+            UsageError, match=r"config option 'ini_param' expects one of int \| string"
+        ):
+            _ = config.getini("ini_param")
+
+    def test_addini_plain_type(self, pytester: Pytester) -> None:
+        """A plain Python type is accepted as an alias of its string tag."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("ini_param", "", type=int)
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest]
+            ini_param = 7
+            """
+        )
+        config = pytester.parseconfig()
+        assert config.getini("ini_param") == 7
+
+    @pytest.mark.parametrize("bad_type", ["integer", dict, int | dict])
+    def test_addini_invalid_type(self, bad_type: object) -> None:
+        parser = Parser(_ispytest=True)
+        with pytest.raises(ValueError, match="invalid type for ini option 'ini_param'"):
+            parser.addini("ini_param", "", type=bad_type)  # type: ignore[arg-type]
+
+    def test_addini_union_type_requires_default(self) -> None:
+        parser = Parser(_ispytest=True)
+        with pytest.raises(
+            ValueError, match="union type, which has no implicit default"
+        ):
+            parser.addini("ini_param", "", type=int | str)
+
+    @pytest.mark.parametrize(
+        "value, expected",
+        [('"long"', "long"), (None, "auto")],
+        ids=["value", "default"],
+    )
+    def test_addini_literal_type(
+        self, pytester: Pytester, value: str | None, expected: str
+    ) -> None:
+        """A Literal of strings restricts the value to the given choices."""
+        pytester.makeconftest(self.LITERAL_CONFTEST)
+        if value is not None:
+            pytester.makepyprojecttoml(f"[tool.pytest]\nini_param = {value}")
+        config = pytester.parseconfig()
+        assert config.getini("ini_param") == expected
+
+    def test_addini_literal_type_ini_and_override(self, pytester: Pytester) -> None:
+        pytester.makeconftest(self.LITERAL_CONFTEST)
+        pytester.makeini(
+            """
+            [pytest]
+            ini_param = long
+        """
+        )
+        assert pytester.parseconfig().getini("ini_param") == "long"
+        assert (
+            pytester.parseconfig("-o", "ini_param=auto").getini("ini_param") == "auto"
+        )
+
+    @pytest.mark.parametrize(
+        "value, match",
+        [
+            ('"short"', r"expects one of 'auto' \| 'long', got 'short'"),
+            ("5", r"expects a string, got int: 5"),
+        ],
+        ids=["bad-choice", "bad-type"],
+    )
+    def test_addini_literal_type_invalid_value(
+        self, pytester: Pytester, value: str, match: str
+    ) -> None:
+        pytester.makeconftest(self.LITERAL_CONFTEST)
+        pytester.makepyprojecttoml(f"[tool.pytest]\nini_param = {value}")
+        config = pytester.parseconfig()
+        with pytest.raises(UsageError, match=f"config option 'ini_param' {match}"):
+            _ = config.getini("ini_param")
+
+    UNION_LITERAL_CONFTEST = """
+        from typing import Literal
+
+        def pytest_addoption(parser):
+            parser.addini(
+                "ini_param", "", type=int | Literal["auto"], default="auto"
+            )
+    """
+
+    @pytest.mark.parametrize(
+        "value, expected",
+        [("3", 3), ('"auto"', "auto"), (None, "auto")],
+        ids=["int", "literal", "default"],
+    )
+    def test_addini_union_with_literal_toml(
+        self, pytester: Pytester, value: str | None, expected: object
+    ) -> None:
+        """A Literal of strings may be a union member, e.g. int | Literal["auto"]."""
+        pytester.makeconftest(self.UNION_LITERAL_CONFTEST)
+        if value is not None:
+            pytester.makepyprojecttoml(f"[tool.pytest]\nini_param = {value}")
+        assert pytester.parseconfig().getini("ini_param") == expected
+
+    def test_addini_union_with_literal_ini_and_override(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(self.UNION_LITERAL_CONFTEST)
+        pytester.makeini(
+            """
+            [pytest]
+            ini_param = 3
+        """
+        )
+        assert pytester.parseconfig().getini("ini_param") == 3
+        assert (
+            pytester.parseconfig("-o", "ini_param=auto").getini("ini_param") == "auto"
+        )
+
+    def test_addini_union_with_literal_invalid_value(self, pytester: Pytester) -> None:
+        pytester.makeconftest(self.UNION_LITERAL_CONFTEST)
+        pytester.makepyprojecttoml('[tool.pytest]\nini_param = "3"')
+        config = pytester.parseconfig()
+        with pytest.raises(
+            UsageError,
+            match=r"config option 'ini_param' expects one of int \| 'auto', "
+            r"got str: '3'",
+        ):
+            _ = config.getini("ini_param")
+
+    def test_addini_union_with_literal_non_str_choice(self) -> None:
+        parser = Parser(_ispytest=True)
+        with pytest.raises(ValueError, match="Literal choices must be strings"):
+            parser.addini("ini_param", "", type=str | Literal[1], default="")
+
+    def test_addini_literal_type_requires_default(self) -> None:
+        parser = Parser(_ispytest=True)
+        with pytest.raises(
+            ValueError, match="Literal type, which has no implicit default"
+        ):
+            parser.addini("ini_param", "", type=Literal["auto", "long"])
+
+    def test_addini_literal_type_non_str_choice(self) -> None:
+        parser = Parser(_ispytest=True)
+        with pytest.raises(ValueError, match="Literal choices must be strings"):
+            parser.addini("ini_param", "", type=Literal["auto", 1], default="auto")
 
     def test_addinivalue_line_existing(self, pytester: Pytester) -> None:
         pytester.makeconftest(
@@ -1711,17 +1908,11 @@ def test_disable_plugin_autoload(
         and not (enable_plugin_method in ("env_var", "") and not disable_plugin_method)
     )
 
-    # __spec__ is accessed in AssertionRewritingHook.exec_module, which would be
-    # eventually called if we did a full pytest run; but it's only accessed with
-    # enable_plugin_method=="env_var" because that will early-load it.
-    # Except when autoloads aren't disabled, in which case PytestPluginManager.import_plugin
-    # bails out before importing it.. because it knows it'll be loaded later?
-    # The above seems a bit weird, but I *think* it's true.
-    if platform.python_implementation() != "PyPy":
-        assert ("__spec__" in PseudoPlugin.attrs_used) == bool(
-            enable_plugin_method == "env_var" and disable_plugin_method
-        )
-    # __spec__ is present when testing locally on pypy, but not in CI ????
+    # __spec__ is accessed in AssertionRewritingHook.exec_module, which is never
+    # reached here: since PYTEST_PLUGINS also considers entry points (#12624),
+    # the plugin is loaded through its entry point (like with -p) instead of
+    # being imported through the rewrite hook.
+    assert "__spec__" not in PseudoPlugin.attrs_used
 
 
 def test_plugin_loading_order(pytester: Pytester) -> None:
@@ -2973,7 +3164,7 @@ class TestNativeTomlConfig:
             pytester.parseconfig()
 
     def test_type_errors(self, pytester: Pytester) -> None:
-        """Test all possible TypeError cases in getini."""
+        """Test all invalid-type cases in getini, reported as UsageError."""
         pytester.maketoml(
             """
             [pytest]
@@ -3017,49 +3208,51 @@ class TestNativeTomlConfig:
         config = pytester.parseconfig()
 
         with pytest.raises(
-            TypeError, match=r"expects a list for type 'paths'.*got str"
+            UsageError, match=r"expects a list for type 'paths'.*got str"
         ):
             config.getini("paths_not_list")
 
         with pytest.raises(
-            TypeError, match=r"expects a list of strings.*item at index 0 is int"
+            UsageError, match=r"expects a list of strings.*item at index 0 is int"
         ):
             config.getini("paths_list_with_int")
 
-        with pytest.raises(TypeError, match=r"expects a list for type 'args'.*got int"):
+        with pytest.raises(
+            UsageError, match=r"expects a list for type 'args'.*got int"
+        ):
             config.getini("args_not_list")
 
         with pytest.raises(
-            TypeError, match=r"expects a list of strings.*item at index 1 is int"
+            UsageError, match=r"expects a list of strings.*item at index 1 is int"
         ):
             config.getini("args_list_with_int")
 
         with pytest.raises(
-            TypeError, match=r"expects a list for type 'linelist'.*got bool"
+            UsageError, match=r"expects a list for type 'linelist'.*got bool"
         ):
             config.getini("linelist_not_list")
 
         with pytest.raises(
-            TypeError, match=r"expects a list of strings.*item at index 1 is bool"
+            UsageError, match=r"expects a list of strings.*item at index 1 is bool"
         ):
             config.getini("linelist_list_with_bool")
 
-        with pytest.raises(TypeError, match=r"expects a bool.*got str"):
+        with pytest.raises(UsageError, match=r"expects a bool.*got str"):
             config.getini("bool_not_bool")
 
-        with pytest.raises(TypeError, match=r"expects an int.*got str"):
+        with pytest.raises(UsageError, match=r"expects an int.*got str"):
             config.getini("int_not_int")
 
-        with pytest.raises(TypeError, match=r"expects an int.*got bool"):
+        with pytest.raises(UsageError, match=r"expects an int.*got bool"):
             config.getini("int_is_bool")
 
-        with pytest.raises(TypeError, match=r"expects a float.*got str"):
+        with pytest.raises(UsageError, match=r"expects a float.*got str"):
             config.getini("float_not_float")
 
-        with pytest.raises(TypeError, match=r"expects a float.*got bool"):
+        with pytest.raises(UsageError, match=r"expects a float.*got bool"):
             config.getini("float_is_bool")
 
-        with pytest.raises(TypeError, match=r"expects a string.*got int"):
+        with pytest.raises(UsageError, match=r"expects a string.*got int"):
             config.getini("string_not_string")
 
 

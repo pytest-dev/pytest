@@ -214,7 +214,7 @@ pytest.mark.skip
 
 Unconditionally skip a test function.
 
-.. py:function:: pytest.mark.skip(reason=None)
+.. py:function:: pytest.mark.skip(reason="unconditional skip")
 
     :keyword str reason: Reason why the test function is being skipped.
 
@@ -266,7 +266,7 @@ pytest.mark.xfail
 
 Marks a test function as *expected to fail*.
 
-.. py:function:: pytest.mark.xfail(condition=False, *, reason=None, raises=None, run=True, strict=strict_xfail)
+.. py:function:: pytest.mark.xfail(condition=True, *, reason=None, raises=None, run=True, strict=strict_xfail)
 
     :keyword Union[bool, str] condition:
         Condition for marking the test function as xfail (``True/False`` or a
@@ -277,7 +277,7 @@ Marks a test function as *expected to fail*.
     :keyword raises:
         Exception class (or tuple of classes) expected to be raised by the test function; other exceptions will fail the test.
         Note that subclasses of the classes passed will also result in a match (similar to how the ``except`` statement works).
-    :type raises: Type[:py:exc:`Exception`]
+    :type raises: Type[:py:exc:`Exception`] | Tuple[Type[:py:exc:`Exception`], ...] | None
 
     :keyword bool run:
         Whether the test function should actually be executed. If ``False``, the function will always xfail and will
@@ -1151,6 +1151,7 @@ contain glob patterns.
 
 Can be declared at the **global** level in *test modules* and *conftest.py files* to register additional plugins.
 Can be either a ``str`` or ``Sequence[str]``.
+Each entry can be the name of an importable module or the entry point name of an installed plugin.
 
 .. code-block:: python
 
@@ -1159,6 +1160,10 @@ Can be either a ``str`` or ``Sequence[str]``.
 .. code-block:: python
 
     pytest_plugins = ("myapp.testsupport.tools", "myapp.testsupport.regression")
+
+.. versionchanged:: 9.2
+   Entry point names of installed plugins are now also accepted, in addition
+   to importable module names.
 
 
 .. globalvar:: pytestmark
@@ -1228,13 +1233,18 @@ Environment variables that can be used to change pytest's behavior.
 
 .. envvar:: PYTEST_PLUGINS
 
-   Contains comma-separated list of modules that should be loaded as plugins:
+   Contains comma-separated list of modules or plugin entry point names that
+   should be loaded as plugins:
 
    .. code-block:: bash
 
        export PYTEST_PLUGINS=mymodule.plugin,xdist
 
    See also :option:`-p`.
+
+   .. versionchanged:: 9.2
+      Entry point names of installed plugins are now also accepted, in
+      addition to importable module names.
 
 .. envvar:: PYTEST_THEME
 
@@ -1433,7 +1443,7 @@ passed multiple times. The expected format is ``name=value``. For example::
    .. versionadded:: 8.1
 
 .. confval:: console_output_style
-   :type: ``str``
+   :type: ``"classic" | "progress" | "count" | "times" | "progress-even-when-capture-no"``
    :default: ``"progress"``
 
    Sets the console output style while running tests:
@@ -1494,6 +1504,54 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    See :ref:`parametrizemark`.
 
+
+.. confval:: parametrize_long_str_id_strategy
+   :type: ``str``
+   :default: ``"short"``
+
+   .. versionadded:: 9.1
+
+   Strategy for handling long ``str`` or ``bytes`` parameter values when
+   auto-generating test IDs for ``@pytest.mark.parametrize``. This only
+   affects auto-generated IDs — explicit IDs set via ``ids=[...]`` or
+   ``pytest.param(..., id=...)`` are never affected.
+
+   Available strategies:
+
+   ``short``
+       Values over 100 characters are replaced with ``<argname><index>``
+       (e.g. ``a0``, ``a1``). This is the default.
+
+   ``sha256``
+       Replace the value with its SHA-256 hex digest, producing a
+       fixed-length, content-based ID.
+
+   ``legacy``
+       Keep the full value as the ID regardless of length. Use this for
+       temporary backward compatibility during migration.
+
+   ``disallow``
+       Raise an error for values over 100 characters, requiring the user
+       to set explicit IDs.
+
+   Example configuration:
+
+   .. tab:: toml
+
+       .. code-block:: toml
+
+           [pytest]
+           parametrize_long_str_id_strategy = "sha256"
+
+   .. tab:: ini
+
+       .. code-block:: ini
+
+           [pytest]
+           parametrize_long_str_id_strategy = sha256
+
+   See :ref:`parametrizemark`.
+
 .. confval:: doctest_encoding
    :type: ``str``
    :default: ``"utf-8"``
@@ -1510,7 +1568,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: empty_parameter_set_mark
-    :type: ``str``
+    :type: ``"skip" | "xfail" | "fail_at_collect"``
     :default: ``"skip"``
 
     Allows to pick the action for empty parametersets in parameterization
@@ -1675,7 +1733,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_duration_report
-    :type: ``str``
+    :type: ``"total" | "call"``
     :default: ``"total"``
 
     .. versionadded:: 4.1
@@ -1701,7 +1759,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_family
-    :type: ``str``
+    :type: ``"legacy" | "xunit1" | "xunit2"``
     :default: ``"xunit2"``
 
     .. versionadded:: 4.2
@@ -1753,7 +1811,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: junit_logging
-    :type: ``str``
+    :type: ``"no" | "log" | "system-out" | "system-err" | "out-err" | "all"``
     :default: ``"no"``
 
     .. versionadded:: 3.5
@@ -2580,7 +2638,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: tmp_path_retention_policy
-   :type: ``str``
+   :type: ``"all" | "failed" | "none"``
    :default: ``"all"``
 
    Controls which directories created by the `tmp_path` fixture are kept around,
@@ -2606,7 +2664,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_chars
-   :type: ``int``
+   :type: ``int | str``
    :default: ``640``
 
    Controls maximum number of characters to truncate assertion message contents.
@@ -2635,7 +2693,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: truncation_limit_lines
-   :type: ``int``
+   :type: ``int | str``
    :default: ``8``
 
    Controls maximum number of lines to truncate assertion message contents.
@@ -2666,7 +2724,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 .. confval:: usefixtures
     :type: ``list[str]``
 
-    List of fixtures that will be applied to all test functions; this is semantically the same to apply
+    List of fixtures that will be applied to all test functions; this is semantically the same as applying
     the ``@pytest.mark.usefixtures`` marker to all test functions.
 
 
@@ -2710,7 +2768,7 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. confval:: assertion_text_diff_style
-    :type: ``str``
+    :type: ``"ndiff" | "block"``
     :default: ``"ndiff"``
 
     Set how pytest renders diffs for string equality assertions.
@@ -3596,7 +3654,7 @@ All the command-line flags can also be obtained by running ``pytest --help``::
     [pytest] configuration options in the first pytest.toml|pytest.ini|tox.ini|setup.cfg|pyproject.toml file found:
 
       markers (linelist):   Register new markers for test functions
-      empty_parameter_set_mark (string):
+      empty_parameter_set_mark ('skip' | 'xfail' | 'fail_at_collect'):
                             Default marker for empty parametersets
       strict_config (bool): Any warnings encountered while parsing the `pytest`
                             section of the configuration file raise errors
@@ -3638,11 +3696,11 @@ All the command-line flags can also be obtained by running ``pytest --help``::
       strict_parametrization_ids (bool):
                             Emit an error if non-unique parameter set IDs are
                             detected
-      console_output_style (string):
+      console_output_style ('classic' | 'progress' | 'count' | 'times' | 'progress-even-when-capture-no'):
                             Console output: "classic", or with additional
                             progress information ("progress" (percentage) |
-                            "count" | "progress-even-when-capture-no" (forces
-                            progress even when capture=no)
+                            "count" | "times" | "progress-even-when-capture-no"
+                            (forces progress even when capture=no)
       verbosity_test_cases (string):
                             Specify a verbosity level for test case execution,
                             overriding the main level. Higher levels will
@@ -3655,38 +3713,36 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             How many sessions should we keep the `tmp_path`
                             directories, according to
                             `tmp_path_retention_policy`.
-      tmp_path_retention_policy (string):
+      tmp_path_retention_policy ('all' | 'failed' | 'none'):
                             Controls which directories created by the `tmp_path`
                             fixture are kept around, based on test outcome.
-                            (all/failed/none)
       enable_assertion_pass_hook (bool):
                             Enables the pytest_assertion_pass hook. Make sure to
                             delete any previously generated pyc cache files.
-      truncation_limit_lines (string):
+      truncation_limit_lines (int | string):
                             Set threshold of LINES after which truncation will
                             take effect
-      truncation_limit_chars (string):
+      truncation_limit_chars (int | string):
                             Set threshold of CHARS after which truncation will
                             take effect
-      assertion_text_diff_style (string):
+      assertion_text_diff_style ('ndiff' | 'block'):
                             Choose how pytest renders diffs for string equality
-                            assertions: ndiff or block
+                            assertions
       verbosity_assertions (string):
                             Specify a verbosity level for assertions, overriding
                             the main level. Higher levels will provide more
                             detailed explanation when an assertion fails.
       junit_suite_name (string):
                             Test suite name for JUnit report
-      junit_logging (string):
-                            Write captured log messages to JUnit report: one of
-                            no|log|system-out|system-err|out-err|all
+      junit_logging ('no' | 'log' | 'system-out' | 'system-err' | 'out-err' | 'all'):
+                            Write captured log messages to JUnit report
       junit_log_passing_tests (bool):
                             Capture log information for passing tests to JUnit
                             report:
-      junit_duration_report (string):
-                            Duration time to report: one of total|call
-      junit_family (string):
-                            Emit XML for schema: one of legacy|xunit1|xunit2
+      junit_duration_report ('total' | 'call'):
+                            Duration time to report
+      junit_family ('legacy' | 'xunit1' | 'xunit2'):
+                            Emit XML for schema
       doctest_optionflags (args):
                             Option flags for doctests
       doctest_encoding (string):

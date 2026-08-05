@@ -1,0 +1,4 @@
+Large assertion comparison diffs are now built lazily and capped to the
+truncation budget, so a huge diff is no longer formatted in full just to
+be truncated. As a result the truncation footer no longer
+reports the exact number of hidden lines.

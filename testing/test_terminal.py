@@ -1079,6 +1079,21 @@ class TestTerminalFunctional:
         result = pytester.runpytest(p1, "--no-summary")
         result.stdout.no_fnmatch_line("*= FAILURES =*")
 
+    def test_no_summary_still_runs_terminal_summary_hook(
+        self, pytester: Pytester
+    ) -> None:
+        """--no-summary must not skip pytest_terminal_summary for plugins (#14724)."""
+        pytester.makeconftest(
+            """
+            def pytest_terminal_summary(terminalreporter, exitstatus, config):
+                terminalreporter.write_line("PLUGIN_TERMINAL_SUMMARY_RAN")
+            """
+        )
+        p1 = pytester.makepyfile("def test_ok(): assert True")
+        result = pytester.runpytest(p1, "--no-summary")
+        result.stdout.fnmatch_lines(["PLUGIN_TERMINAL_SUMMARY_RAN"])
+        result.stdout.no_fnmatch_line("*= FAILURES =*")
+
     def test_showlocals(self, pytester: Pytester) -> None:
         p1 = pytester.makepyfile(
             """
@@ -2166,6 +2181,19 @@ class TestClassicOutputStyle:
     def test_quiet(self, pytester: Pytester, test_files) -> None:
         result = pytester.runpytest("-o", "console_output_style=classic", "-q")
         result.stdout.fnmatch_lines([".F..F", "*2 failed, 3 passed in*"])
+
+
+def test_console_output_style_invalid(pytester: Pytester) -> None:
+    """An invalid console_output_style fails with a clean usage error."""
+    result = pytester.runpytest("-o", "console_output_style=fancy")
+    assert result.ret == ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines(
+        [
+            "*ERROR: *config option 'console_output_style' expects one of "
+            "'classic' | 'progress' | 'count' | 'times' | "
+            "'progress-even-when-capture-no', got 'fancy'"
+        ]
+    )
 
 
 class TestProgressOutputStyle:

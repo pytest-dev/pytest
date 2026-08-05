@@ -12,9 +12,17 @@ from pytest import PytestDeprecationWarning
 def test_external_plugins_integrated(pytester: Pytester, plugin) -> None:
     pytester.syspathinsert()
     pytester.makepyfile(**{plugin: ""})
+    recorded = []
 
-    with pytest.warns(pytest.PytestConfigWarning):
-        pytester.parseconfig("-p", plugin)
+    class Recorder:
+        def pytest_warning_recorded(self, warning_message):
+            recorded.append(warning_message)
+
+    pytester.plugins = [Recorder()]
+    pytester.parseconfig("-p", plugin)
+
+    assert len(recorded) == 1
+    assert recorded[0].category is pytest.PytestConfigWarning
 
 
 def test_hookspec_via_function_attributes_are_deprecated():
@@ -104,7 +112,9 @@ def test_class_scope_instance_method_is_deprecated(pytester: Pytester) -> None:
     result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(
-        ["*PytestRemovedIn10Warning: Class-scoped fixture defined as instance method*"]
+        [
+            "*PytestRemovedIn10Warning: Class-scoped fixtures defined as instance methods*"
+        ]
     )
 
 
@@ -310,3 +320,17 @@ class TestFixtureNodeidDeprecations:
         )
         result = pytester.runpytest()
         result.assert_outcomes(passed=1)
+
+
+def test_callspec2_renamed() -> None:
+    """Importing/accessing CallSpec2 warns and returns CallSpec."""
+    import _pytest.python as python_mod
+    from _pytest.python import CallSpec
+
+    with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
+        from _pytest.python import CallSpec2
+
+    assert CallSpec2 is CallSpec
+
+    with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
+        assert python_mod.CallSpec2 is CallSpec
