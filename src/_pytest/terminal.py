@@ -487,7 +487,7 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, nodeid: str, res: str, **markup: bool) -> None:
-        fspath = self.config.rootpath / nodeid.split("::", maxsplit=1)[0]
+        fspath = self.config.rootpath / OpaqueNodeId.parse(nodeid).path
         if self.currentfspath is None or fspath != self.currentfspath:
             if self.currentfspath is not None and self._show_progress_info:
                 self._write_progress_information_filling_space()
@@ -1070,7 +1070,7 @@ class TerminalReporter:
         if fspath:
             res = mkrel(nodeid)
             if self.verbosity >= 2 and (
-                nodeid.split("::", maxsplit=1)[0] != nodes.norm_sep(fspath)
+                OpaqueNodeId.parse(nodeid).path != nodes.norm_sep(fspath)
             ):
                 res += " <- " + bestrelpath(self.startpath, Path(fspath))
         else:
@@ -1138,7 +1138,7 @@ class TerminalReporter:
                     return "\n".join(map(str, locations))
 
                 counts_by_filename = Counter(
-                    str(loc).split("::", 1)[0] for loc in locations
+                    OpaqueNodeId.parse(str(loc)).path for loc in locations
                 )
                 return "\n".join(
                     "{}: {} warning{}".format(k, v, "s" if v > 1 else "")
@@ -1529,12 +1529,10 @@ class TerminalReporter:
 
 def _get_node_id_with_markup(tw: TerminalWriter, config: Config, rep: BaseReport):
     nodeid = config.cwd_relative_nodeid(rep.nodeid)
-    path, *parts = nodeid.split("::")
-    if parts:
-        parts_markup = tw.markup("::".join(parts), bold=True)
-        return path + "::" + parts_markup
-    else:
-        return path
+    oid = OpaqueNodeId.parse(nodeid)
+    if oid.rest is not None:
+        return f"{oid.path}::{tw.markup(oid.rest, bold=True)}"
+    return oid.path
 
 
 def _format_trimmed(format: str, msg: str, available_width: int) -> str | None:

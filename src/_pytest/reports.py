@@ -189,7 +189,7 @@ class BaseReport:
     @property
     def fspath(self) -> str:
         """The path portion of the reported node, as a string."""
-        return self.nodeid.split("::")[0]
+        return self._id.path
 
     @property
     def count_towards_summary(self) -> bool:
