@@ -285,12 +285,75 @@ def test_cache_reportheader(
     pytester.makepyfile("""def test_foo(): pass""")
     if env:
         monkeypatch.setenv(*env)
-        expected = os.path.join(env[1], ".pytest_cache")
     else:
         monkeypatch.delenv("TOX_ENV_DIR", raising=False)
-        expected = ".pytest_cache"
     result = pytester.runpytest("-v")
-    result.stdout.fnmatch_lines([f"cachedir: {expected}"])
+    result.stdout.fnmatch_lines(["cachedir: .pytest_cache"])
+
+
+class TestToxEnvDir:
+    def test_cache_stays_in_the_project(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makepyfile(test_a="def test_bad(): assert False")
+        pytester.runpytest("-q")
+
+        assert (env_scope_values() / "cache" / "lastfailed").is_file()
+        assert not (pytester.path / "tox-env").exists()
+
+    def test_the_old_location_can_be_spelled_out(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makeini("[pytest]\ncache_dir = $TOX_ENV_DIR/.pytest_cache\n")
+        cachedir = Cache.for_config(pytester.parseconfig(), _ispytest=True)._cachedir
+        assert cachedir == pytester.path / "tox-env" / ".pytest_cache"
+
+    def test_header_names_an_ignored_legacy_cache(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        """Without the note, a --lf that forgot its failures is a mystery."""
+        legacy = pytester.path / "tox-env" / ".pytest_cache"
+        legacy.joinpath("v", "cache").mkdir(parents=True)
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines([f"cache: ignoring {legacy} from an older pytest"])
+
+    def test_no_note_without_legacy_state(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        pytester.path.joinpath("tox-env").mkdir()
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        result = pytester.runpytest("-v")
+        result.stdout.no_fnmatch_line("cache: ignoring*")
+
+    @pytest.mark.parametrize("ini", ["cache_policy = user", "cache_dir = elsewhere"])
+    def test_no_note_when_configured_explicitly(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch, tmp_path: Path, ini: str
+    ) -> None:
+        pytester.path.joinpath("tox-env", ".pytest_cache", "v").mkdir(parents=True)
+        monkeypatch.setenv("PYTEST_CACHE_HOME", str(tmp_path / "user-cache"))
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makeini(f"[pytest]\n{ini}\n")
+        pytester.makepyfile(test_a="def test_ok(): pass")
+        result = pytester.runpytest("-v")
+        result.stdout.no_fnmatch_line("cache: ignoring*")
+
+    def test_configured_policy_is_not_overridden_by_tox(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch, tmp_path: Path
+    ) -> None:
+        user_cache = tmp_path / "user-cache"
+        monkeypatch.setenv("PYTEST_CACHE_HOME", str(user_cache))
+        monkeypatch.setenv("TOX_ENV_DIR", str(pytester.path / "tox-env"))
+        pytester.makeini("[pytest]\ncache_policy = user\n")
+        pytester.makepyfile(test_a="def test_bad(): assert False")
+        pytester.runpytest("-q")
+
+        assert list(user_cache.iterdir())
+        assert not (pytester.path / "tox-env").exists()
 
 
 def test_cache_reportheader_hidden_by_default(pytester: Pytester) -> None:
@@ -1769,7 +1832,7 @@ class TestEnvScopedBuiltins:
     Which environment collected which tests is not portable, so `--lf`, `--nf`
     and `--sw` state must not be shared between them. Previously the only way
     to get that was to move the whole cache directory, which is what the
-    TOX_ENV_DIR special case does.
+    TOX_ENV_DIR special case did.
     """
 
     def test_lastfailed_lives_in_the_env_scope(self, pytester: Pytester) -> None:

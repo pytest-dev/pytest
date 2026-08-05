@@ -141,6 +141,25 @@ def _user_cache_dir(config: Config) -> Path:
     return root / f"{label}-{digest[:32]}"
 
 
+def _ignored_tox_cache_dir(config: Config) -> Path | None:
+    """The ``$TOX_ENV_DIR/.pytest_cache`` of an older pytest, if it holds state.
+
+    pytest used to put the cache there when running under tox. The ``env``
+    scope now keeps ``--lf``/``--nf``/``--sw`` state apart between environments
+    inside the project's cache, so the old directory is no longer read; this
+    only finds it to say so in the header.
+    """
+    tox_env_dir = os.environ.get("TOX_ENV_DIR")
+    if not tox_env_dir or _cache_policy(config) != "local":
+        return None
+    legacy = resolve_from_str(
+        os.path.join(tox_env_dir, ".pytest_cache"), config.rootpath
+    )
+    if not (legacy / "v").is_dir():
+        return None
+    return legacy
+
+
 def _cache_policy(config: Config) -> str:
     """The effective cache policy, or ``explicit`` if ``cache_dir`` is set."""
     if config.getini("cache_dir"):
@@ -833,14 +852,20 @@ def pytest_addoption(parser: Parser) -> None:
         dest="cacheclear",
         help="Remove all cache contents at start of test run",
     )
+    group.addoption(
+        "--cache-list",
+        action="store_true",
+        dest="cachelist",
+        help=(
+            "List the cache directories under the user-level cache root, "
+            "don't perform collection or tests."
+        ),
+    )
     # Empty by default so that "not configured" is detectable, in which case
     # cache_policy decides the location.
-    cache_dir_default = ""
-    if "TOX_ENV_DIR" in os.environ:
-        cache_dir_default = os.path.join(os.environ["TOX_ENV_DIR"], ".pytest_cache")
     parser.addini(
         "cache_dir",
-        default=cache_dir_default,
+        default="",
         help="Cache directory path; overrides cache_policy",
     )
     parser.addini(
@@ -906,14 +931,20 @@ def cache(request: FixtureRequest) -> Cache:
     return request.config.cache
 
 
-def pytest_report_header(config: Config) -> str | None:
-    """Display cachedir with --cache-show and if non-default."""
+def pytest_report_header(config: Config) -> list[str] | None:
+    """Display cachedir with --cache-show and if non-default.
+
+    Also say that an older pytest's tox cache directory is ignored, so a
+    ``--lf`` that forgot its failures is not a mystery.
+    """
     assert config.cache is not None
     cachedir = config.cache._cachedir
+    ignored = _ignored_tox_cache_dir(config)
+    notes = [f"cache: ignoring {ignored} from an older pytest"] if ignored else []
     # Compare the resolved path rather than the configured value, so that
     # setting cache_dir to the default explicitly is treated as the default.
     if config.option.verbose <= 0 and cachedir == config.rootpath / ".pytest_cache":
-        return None
+        return notes or None
 
     # TODO: evaluate generating upward relative paths
     # starting with .., ../.. if sensible
@@ -930,7 +961,7 @@ def pytest_report_header(config: Config) -> str | None:
     if config.pluginmanager.get_plugin("terminalreporter") is not None:
         tw = config.get_terminal_writer()
         displaypath = tw.hyperlink(str(displaypath), cachedir.as_uri())
-    return f"cachedir: {displaypath}"
+    return [f"cachedir: {displaypath}", *notes]
 
 
 def _cache_roots(basedir: Path) -> list[tuple[str | None, Path]]:
