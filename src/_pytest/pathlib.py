@@ -475,7 +475,7 @@ def resolve_from_str(input: str, rootpath: Path) -> Path:
         return rootpath.joinpath(input)
 
 
-def pytest_user_cache_dir(*, environ: Mapping[str, str] | None = None) -> Path:
+def user_cache_root(*, environ: Mapping[str, str] | None = None) -> Path:
     """Return the root directory for pytest's user-level caches.
 
     Creates nothing.
