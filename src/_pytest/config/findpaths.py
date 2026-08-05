@@ -123,14 +123,15 @@ def _load_cfg_file(path: Path) -> ConfigDict | None:
     return None
 
 
-def _load_pytest_toml(path: Path) -> ConfigDict | None:
-    """Load a dedicated pytest TOML file (``pytest.toml``/``.pytest.toml``).
+def _config_from_pytest_table(
+    path: Path, config: dict[str, object]
+) -> ConfigDict | None:
+    """Return the configuration in the ``[pytest]`` table of a parsed TOML
+    document, or None if it has none.
 
-    Configuration is read from the ``[pytest]`` table in TOML mode. These files
-    are always the source of configuration, even if empty.
+    Raise UsageError for options written outside of any table, which is the
+    usual way of getting the table wrong.
     """
-    config = _parse_toml_file(path)
-
     if "pytest" in config:
         # TOML mode - preserve native TOML types.
         return {
@@ -147,18 +148,14 @@ def _load_pytest_toml(path: Path) -> ConfigDict | None:
             f"[pytest] table (found top-level options: "
             f"{', '.join(top_level_options)})"
         )
-    # "pytest.toml" files are always the source of configuration, even if empty.
-    return {}
+    return None
 
 
-def _load_pyproject_toml(path: Path) -> ConfigDict | None:
-    """Load a ``pyproject.toml``-style file.
-
-    Configuration is read from ``[tool.pytest]`` (TOML mode) or
-    ``[tool.pytest.ini_options]`` (INI mode).
-    """
-    config = _parse_toml_file(path)
-
+def _config_from_tool_pytest(
+    path: Path, config: dict[str, object]
+) -> ConfigDict | None:
+    """Return the configuration in the ``[tool.pytest]`` tables of a parsed
+    TOML document, or None if it has none."""
     tool_pytest = config.get("tool", {}).get("pytest", {})  # type: ignore[attr-defined]
 
     # Check for toml mode config: [tool.pytest] with content outside of ini_options.
@@ -195,6 +192,50 @@ def _load_pyproject_toml(path: Path) -> ConfigDict | None:
     return None
 
 
+def _load_pytest_toml(path: Path) -> ConfigDict | None:
+    """Load a dedicated pytest TOML file (``pytest.toml``/``.pytest.toml``).
+
+    Configuration is read from the ``[pytest]`` table in TOML mode. These files
+    are always the source of configuration, even if empty.
+    """
+    config = _config_from_pytest_table(path, _parse_toml_file(path))
+    return config if config is not None else {}
+
+
+def _load_custom_toml(path: Path) -> ConfigDict | None:
+    """Load a TOML file with an arbitrary name, as passed via ``-c``.
+
+    Such a file reads its configuration from ``[pytest]``, like ``pytest.toml``
+    does -- the table pytest documents for its own files (#14705). The
+    ``pyproject.toml`` tables ``[tool.pytest]``/``[tool.pytest.ini_options]``,
+    which arbitrary TOML files used to be parsed with exclusively, keep
+    working; using both styles in one file is an error.
+    """
+    document = _parse_toml_file(path)
+
+    tool_pytest_config = _config_from_tool_pytest(path, document)
+    if tool_pytest_config is None:
+        return _config_from_pytest_table(path, document)
+
+    if "pytest" in document:
+        raise UsageError(
+            f"{path}: Cannot use both [pytest] and [tool.pytest]/"
+            "[tool.pytest.ini_options] in the same file. Please use [pytest], "
+            "which is what pytest's own configuration files use; the "
+            "[tool.pytest] tables are meant for pyproject.toml."
+        )
+    return tool_pytest_config
+
+
+def _load_pyproject_toml(path: Path) -> ConfigDict | None:
+    """Load a ``pyproject.toml``-style file.
+
+    Configuration is read from ``[tool.pytest]`` (TOML mode) or
+    ``[tool.pytest.ini_options]`` (INI mode).
+    """
+    return _config_from_tool_pytest(path, _parse_toml_file(path))
+
+
 #: Loaders for the config files pytest discovers by name, in precedence order.
 #:
 #: This mapping is the single source of truth for both *which* files are
@@ -219,8 +260,16 @@ CONFIG_LOADERS_BY_NAME: dict[str, Callable[[Path], ConfigDict | None]] = {
 CONFIG_LOADERS_BY_SUFFIX: dict[str, Callable[[Path], ConfigDict | None]] = {
     ".ini": _load_ini_file,
     ".cfg": _load_cfg_file,
-    ".toml": _load_pyproject_toml,
+    ".toml": _load_custom_toml,
 }
+
+
+def _get_config_loader(filepath: Path) -> Callable[[Path], ConfigDict | None] | None:
+    """Return the loader responsible for the given path, if any."""
+    loader = CONFIG_LOADERS_BY_NAME.get(filepath.name)
+    if loader is None:
+        loader = CONFIG_LOADERS_BY_SUFFIX.get(filepath.suffix)
+    return loader
 
 
 def load_config_dict_from_file(
@@ -230,9 +279,7 @@ def load_config_dict_from_file(
 
     Return None if the file does not contain valid pytest configuration.
     """
-    loader = CONFIG_LOADERS_BY_NAME.get(filepath.name)
-    if loader is None:
-        loader = CONFIG_LOADERS_BY_SUFFIX.get(filepath.suffix)
+    loader = _get_config_loader(filepath)
     if loader is None:
         return None
     return loader(filepath)
@@ -381,10 +428,44 @@ def determine_setup(
 
     if inifile:
         inipath_ = absolutepath(inifile)
+        if not inipath_.exists():
+            raise UsageError(
+                f"Config file '{inipath_}' not found. "
+                f"Check your '-c/--config-file' option."
+            )
+        if inipath_.is_dir():
+            raise UsageError(
+                f"Config file '{inipath_}' is a directory. "
+                f"Check your '-c/--config-file' option."
+            )
         inipath: Path | None = inipath_
-        inicfg = load_config_dict_from_file(inipath_) or {}
+        loader = _get_config_loader(inipath_)
+        if loader is not None:
+            inicfg = loader(inipath_) or {}
+        elif inipath_.is_file():
+            supported = ", ".join(sorted(CONFIG_LOADERS_BY_SUFFIX))
+            raise UsageError(
+                f"Config file '{inipath_}' has an unsupported format. "
+                f"Supported extensions are: {supported}."
+            )
+        else:
+            # A file pytest has no loader for is an error, but a path that is
+            # not a regular file to begin with cannot hold configuration at
+            # all: it is the way to ask for no configuration, as with
+            # ``--config-file=/dev/null``.
+            inicfg = {}
         if rootdir_cmd_arg is None:
-            rootdir = inipath_.parent
+            if inipath_.is_file():
+                rootdir = inipath_.parent
+            else:
+                # Such a path also says nothing about where the project lives,
+                # so the rootdir must not be derived from it -- otherwise
+                # ``--config-file=/dev/null`` roots at ``/dev`` and the cache
+                # plugin warns that it cannot write ``/dev/.pytest_cache``
+                # (#11502).
+                rootdir = get_common_ancestor(invocation_dir, dirs)
+                if is_fs_root(rootdir):
+                    rootdir = invocation_dir
     else:
         ancestor = get_common_ancestor(invocation_dir, dirs)
         rootdir, inipath, inicfg, ignored_config_files = locate_config(
