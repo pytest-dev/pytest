@@ -1,0 +1,1 @@
+Fix ``pytest.RaisesGroup`` incorrectly calling the ``check`` callback with contained exceptions instead of only the exception group.
