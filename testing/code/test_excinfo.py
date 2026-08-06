@@ -2011,6 +2011,59 @@ def test_hidden_entries_of_chained_exceptions_are_not_shown(pytester: Pytester) 
     )
 
 
+def test_tracebackhide_in_exceptiongroup_is_respected(pytester: Pytester) -> None:
+    """ExceptionGroup tracebacks respect __tracebackhide__ (#14036)."""
+    p = pytester.makepyfile(
+        """
+        import sys
+        if sys.version_info < (3, 11):
+            from exceptiongroup import ExceptionGroup
+
+        def g1():
+            __tracebackhide__ = True
+            str.does_not_exist
+
+        def f3():
+            __tracebackhide__ = True
+            1 / 0
+
+        def f2():
+            __tracebackhide__ = True
+            exc = None
+            try:
+                f3()
+            except Exception as e:
+                exc = e
+            exc2 = None
+            try:
+                g1()
+            except Exception as e:
+                exc2 = e
+            raise ExceptionGroup("blah", [exc, exc2])
+
+        def f1():
+            __tracebackhide__ = True
+            f2()
+
+        def test():
+            f1()
+        """
+    )
+    result = pytester.runpytest(str(p), "--tb=short")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(
+        [
+            "*ExceptionGroup: blah (2 sub-exceptions)*",
+            "*ZeroDivisionError: division by zero*",
+            "*AttributeError*does_not_exist*",
+        ]
+    )
+    result.stdout.no_fnmatch_line("*in f1*")
+    result.stdout.no_fnmatch_line("*in f2*")
+    result.stdout.no_fnmatch_line("*in f3*")
+    result.stdout.no_fnmatch_line("*in g1*")
+
+
 def add_note(err: BaseException, msg: str) -> None:
     """Adds a note to an exception inplace."""
     if sys.version_info < (3, 11):
