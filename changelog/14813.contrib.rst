@@ -1,0 +1,1 @@
+Added a systematic coverage matrix for assertion rewriting in ``testing/test_assertrewrite_coverage.py``, checking introspection depth, semantic equivalence, single evaluation and evaluation order across expression types. Known gaps are recorded as strict xfails tagged with a group name, so a change can state which group it closes.
