@@ -462,6 +462,36 @@ def test_conftests_in_invocation_dir_tests_is_initial(pytester: Pytester) -> Non
     result.assert_outcomes(passed=1)
 
 
+def test_initial_conftest_loaded_when_option_value_is_existing_file(
+    pytester: Pytester,
+) -> None:
+    """An initial conftest registering a command line option is still loaded
+    when the option's value happens to be the path of an existing file.
+
+    With intermixed argument parsing, such a value ends up among the
+    positional arguments during pre-parsing and used to be treated as a test
+    path anchor, which suppressed the ``test*`` conftest discovery and left
+    the option "unrecognized". Regression test for #13913.
+    """
+    pytester.makepyfile(
+        **{
+            "tests/conftest.py": """
+                def pytest_addoption(parser):
+                    parser.addoption("--write-idents", action="store", default=None)
+            """,
+            "test_it.py": """
+                def test_it(request):
+                    assert request.config.getoption("--write-idents") == "idents.txt"
+            """,
+        }
+    )
+    # The option value is a path to an existing file on disk.
+    pytester.makefile(".txt", idents="")
+    result = pytester.runpytest("--write-idents", "idents.txt")
+    assert result.ret == ExitCode.OK
+    result.assert_outcomes(passed=1)
+
+
 def test_conftest_import_order(pytester: Pytester, monkeypatch: MonkeyPatch) -> None:
     ct1 = pytester.makeconftest("")
     sub = pytester.mkdir("sub")
