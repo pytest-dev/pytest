@@ -1,0 +1,1 @@
+Explicit ``-c``/``--config-file`` paths now raise a clean usage error when the file is missing or uses an unsupported extension.

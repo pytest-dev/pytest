@@ -43,6 +43,9 @@ class ConfigValue:
 ConfigDict: TypeAlias = dict[str, ConfigValue]
 
 
+SUPPORTED_CONFIG_FILE_EXTENSIONS = {".cfg", ".ini", ".toml"}
+
+
 def _parse_ini_config(path: Path) -> iniconfig.IniConfig:
     """Parse the given generic '.ini' file using legacy IniConfig parser, returning
     the parsed object.
@@ -313,6 +316,17 @@ def determine_setup(
 
     if inifile:
         inipath_ = absolutepath(inifile)
+        if not inipath_.is_file():
+            raise UsageError(
+                f"Config file '{inipath_}' not found. "
+                "Check your '-c/--config-file' option."
+            )
+        if inipath_.suffix not in SUPPORTED_CONFIG_FILE_EXTENSIONS:
+            supported = ", ".join(sorted(SUPPORTED_CONFIG_FILE_EXTENSIONS))
+            raise UsageError(
+                f"Config file '{inipath_}' has unsupported extension "
+                f"{inipath_.suffix!r}. Supported extensions are: {supported}."
+            )
         inipath: Path | None = inipath_
         inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
