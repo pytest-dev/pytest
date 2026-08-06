@@ -14,6 +14,7 @@ from typing import TypeAlias
 import iniconfig
 
 from .exceptions import UsageError
+from _pytest.nodeid import NodeId
 from _pytest.outcomes import fail
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import commonpath
@@ -356,7 +357,7 @@ def get_dirs_from_args(args: Iterable[str]) -> list[Path]:
         return x.startswith("-")
 
     def get_file_part_from_node_id(x: str) -> str:
-        return x.split("::", maxsplit=1)[0]
+        return NodeId.parse(x).path
 
     def get_dir_from_path(path: Path) -> Path:
         if path.is_dir():
