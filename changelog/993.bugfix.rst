@@ -1,0 +1,15 @@
+Fixed a plugin which fails to load during startup escaping as an unhandled exception, printing a raw traceback and exiting with the accidental exit code ``1``
+-- indistinguishable from :attr:`ExitCode.TESTS_FAILED <pytest.ExitCode.TESTS_FAILED>`. The failure is now reported and classified:
+
+* A plugin which cannot be found -- requested via ``-p``, ``pytest_plugins`` or the ``PYTEST_PLUGINS`` environment variable --
+  now exits with :attr:`ExitCode.USAGE_ERROR <pytest.ExitCode.USAGE_ERROR>` (``4``), the same code already used for a ``conftest.py`` which fails to import.
+
+* A plugin which is found but raises while being imported -- including an installed plugin loaded through a ``pytest11`` entry point,
+  and a plugin whose own dependencies are missing -- now exits with :attr:`ExitCode.INTERNAL_ERROR <pytest.ExitCode.INTERNAL_ERROR>` (``3``),
+  since this is a defect in the plugin rather than a misuse of pytest. The plugin's traceback is still shown.
+
+As a consequence, :func:`pytest.main` now returns these exit codes instead of propagating the exception to its caller.
+
+A ``conftest.py`` which fails to import is unaffected and keeps returning :attr:`ExitCode.USAGE_ERROR <pytest.ExitCode.USAGE_ERROR>` (``4``).
+
+This also fixes an ``IndexError`` raised from pytest's internals when a plugin raised an exception with no arguments, such as a bare ``raise ImportError``.

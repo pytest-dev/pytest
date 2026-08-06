@@ -13,6 +13,7 @@ import types
 import setuptools
 
 from _pytest.config import ExitCode
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pytester import Pytester
 import pytest
@@ -510,9 +511,10 @@ class TestGeneralUsage:
     ) -> None:
         """Test that str values passed to main() as `plugins` arg are
         interpreted as module names to be imported and registered (#855)."""
-        with pytest.raises(ImportError) as excinfo:
-            pytest.main([str(pytester.path)], plugins=["invalid.module"])
-        assert "invalid" in str(excinfo.value)
+        # A plugin which cannot be found is a usage error, reported through the
+        # return value rather than raised out of pytest.main() (#993).
+        ret = pytest.main([str(pytester.path)], plugins=["invalid.module"])
+        assert ret == ExitCode.USAGE_ERROR
 
         p = pytester.path.joinpath("test_test_plugins_given_as_strings.py")
         p.write_text("def test_foo(): pass", encoding="utf-8")
@@ -1086,6 +1088,128 @@ def test_zipimport_hook(pytester: Pytester) -> None:
     assert result.ret == 0
     result.stderr.fnmatch_lines(["*not found*foo*"])
     result.stdout.no_fnmatch_line("*INTERNALERROR>*")
+
+
+class TestStartupPluginImportErrors:
+    """Exit codes for plugins which fail to load at startup (#993).
+
+    A plugin which cannot be found means pytest was pointed at something which
+    is not there, which is a usage error; a plugin which is found but blows up
+    while importing is a defect in the plugin, reported as an internal error.
+    """
+
+    @pytest.fixture
+    def broken_plugin(self, pytester: Pytester) -> Pytester:
+        pytester.syspathinsert()
+        pytester.makepyfile(myplugin="raise ValueError('plugin is broken')")
+        pytester.makepyfile("def test_foo(): pass")
+        return pytester
+
+    @pytest.fixture
+    def missing_plugin(self, pytester: Pytester) -> Pytester:
+        pytester.syspathinsert()
+        pytester.makepyfile("def test_foo(): pass")
+        return pytester
+
+    def test_missing_via_cmdline(self, missing_plugin: Pytester) -> None:
+        result = missing_plugin.runpytest("-p", "nosuchplugin")
+        assert result.ret == ExitCode.USAGE_ERROR
+        result.stderr.fnmatch_lines(['*Error importing plugin "nosuchplugin"*'])
+
+    def test_missing_via_conftest(self, missing_plugin: Pytester) -> None:
+        missing_plugin.makeconftest("pytest_plugins = ['nosuchplugin']")
+        result = missing_plugin.runpytest()
+        assert result.ret == ExitCode.USAGE_ERROR
+
+    def test_missing_via_env(
+        self, missing_plugin: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTEST_PLUGINS", "nosuchplugin")
+        result = missing_plugin.runpytest()
+        assert result.ret == ExitCode.USAGE_ERROR
+
+    def test_broken_via_cmdline(self, broken_plugin: Pytester) -> None:
+        result = broken_plugin.runpytest("-p", "myplugin")
+        assert result.ret == ExitCode.INTERNAL_ERROR
+        result.stderr.fnmatch_lines(
+            [
+                'Error while loading plugin "myplugin".',
+                "*myplugin.py:1: in <module>*",
+                "E*ValueError: plugin is broken",
+            ]
+        )
+
+    def test_broken_via_conftest(self, broken_plugin: Pytester) -> None:
+        broken_plugin.makeconftest("pytest_plugins = ['myplugin']")
+        result = broken_plugin.runpytest()
+        assert result.ret == ExitCode.INTERNAL_ERROR
+
+    def test_broken_via_env(
+        self, broken_plugin: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("PYTEST_PLUGINS", "myplugin")
+        result = broken_plugin.runpytest()
+        assert result.ret == ExitCode.INTERNAL_ERROR
+
+    def test_broken_via_entry_point(
+        self, pytester: Pytester, monkeypatch: MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+
+        class DummyEntryPoint:
+            name = "myplugin"
+            group = "pytest11"
+
+            def load(self):
+                raise ValueError("plugin is broken")
+
+        class Distribution:
+            version = "1.0"
+            files = ("foo.txt",)
+            metadata = {"name": "foo"}
+            entry_points = (DummyEntryPoint(),)
+
+        monkeypatch.setattr(
+            importlib.metadata, "distributions", lambda: (Distribution(),)
+        )
+        pytester.makepyfile("def test_foo(): pass")
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.INTERNAL_ERROR
+
+    def test_import_error_without_args(self, pytester: Pytester) -> None:
+        """A bare ``raise ImportError`` used to crash with an IndexError (#993)."""
+        pytester.syspathinsert()
+        pytester.makepyfile(myplugin="raise ImportError")
+        pytester.makepyfile("def test_foo(): pass")
+        result = pytester.runpytest("-p", "myplugin")
+        assert result.ret == ExitCode.INTERNAL_ERROR
+        result.stderr.no_fnmatch_line("*IndexError*")
+        result.stderr.fnmatch_lines(['Error while loading plugin "myplugin".'])
+
+    def test_missing_dependency_is_not_a_usage_error(self, pytester: Pytester) -> None:
+        """The plugin was found; one of *its* imports is unsatisfied (#993)."""
+        pytester.syspathinsert()
+        pytester.makepyfile(myplugin="import nosuchdependency")
+        pytester.makepyfile("def test_foo(): pass")
+        result = pytester.runpytest("-p", "myplugin")
+        assert result.ret == ExitCode.INTERNAL_ERROR
+
+    def test_missing_submodule_of_existing_package(self, pytester: Pytester) -> None:
+        """The package exists but the requested plugin module within it does not."""
+        pytester.syspathinsert()
+        pytester.mkpydir("mypkg")
+        pytester.makepyfile("def test_foo(): pass")
+        result = pytester.runpytest("-p", "mypkg.nosuchmodule")
+        assert result.ret == ExitCode.USAGE_ERROR
+
+    def test_conftest_import_failure_stays_a_usage_error(
+        self, pytester: Pytester
+    ) -> None:
+        """conftest.py is not a plugin; it keeps reporting a usage error (#993)."""
+        pytester.makeconftest("raise ValueError('conftest is broken')")
+        pytester.makepyfile("def test_foo(): pass")
+        result = pytester.runpytest()
+        assert result.ret == ExitCode.USAGE_ERROR
 
 
 def test_import_plugin_unicode_name(pytester: Pytester) -> None:
