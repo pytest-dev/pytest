@@ -252,6 +252,17 @@ def pytest_addoption(parser: Parser) -> None:
         default=True,
     )
     parser.addini(
+        "collect_function_definition",
+        "How the function-definition collector node participates in the "
+        "collection tree.\n"
+        "- hidden (default): keep the flat layout, no node in the tree\n"
+        "- pedantic: insert the node and scope function-level markers to it\n"
+        "- messy: insert the node but transfer markers down to each invocation "
+        "to preserve the legacy marker layout (emits a warning)",
+        type="string",
+        default="hidden",
+    )
+    parser.addini(
         "consider_namespace_packages",
         type="bool",
         default=False,

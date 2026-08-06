@@ -1,0 +1,15 @@
+Added the :confval:`collect_function_definition` option, which can promote the
+internal ``FunctionDefinition`` to a real node in the collection tree.
+
+When set to ``pedantic``, a ``FunctionDefinition`` collector node is inserted
+between a :class:`~pytest.Module`/:class:`~pytest.Class` and its test functions,
+so that the (possibly parametrized) invocations of each test are collected
+underneath a shared definition node instead of as flat siblings. Function-level
+markers are scoped to the definition node in this mode.
+
+The default ``hidden`` keeps the previous flat layout, and the transitional
+``messy`` value keeps the definition node out of marker resolution for code that
+is not yet prepared for the new scope.
+
+The node ids of the individual test invocations are unchanged in all modes, so
+test selection, caching and reporting behave exactly as before.
