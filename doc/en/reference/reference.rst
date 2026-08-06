@@ -457,6 +457,11 @@ Under the hood, the cache plugin uses the simple
 .. autoclass:: pytest.Cache()
    :members:
 
+How far a cached value travels is given by its :class:`pytest.CacheScope`; see :ref:`cache_scopes`.
+
+.. autoclass:: pytest.CacheScope()
+   :members:
+
 
 .. fixture:: doctest_namespace
 
@@ -1215,6 +1220,20 @@ Environment variables that can be used to change pytest's behavior.
    This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
    processes can inspect it, see :ref:`pytest current test env` for more information.
 
+.. envvar:: PYTEST_CACHE_HOME
+
+   Overrides the user-level cache root used by ``cache_policy = user``, instead of asking the platform
+   for it. Useful for a shared, explicit location in CI. See :ref:`cache_location`.
+
+   .. versionadded:: 9.2
+
+.. envvar:: PYTEST_CACHE_POLICY
+
+   Sets the default for :confval:`cache_policy`, so that the cache can be relocated for a whole machine
+   without editing every project. An explicit :confval:`cache_policy` still wins over it.
+
+   .. versionadded:: 9.2
+
 .. envvar:: PYTEST_DEBUG
 
    When set, pytest will print tracing and debug information.
@@ -1245,6 +1264,14 @@ Environment variables that can be used to change pytest's behavior.
    .. versionchanged:: 9.2
       Entry point names of installed plugins are now also accepted, in
       addition to importable module names.
+
+.. envvar:: PYTEST_HYPERLINKS
+
+   When set to ``1``, pytest emits OSC 8 terminal hyperlinks, so that paths it prints are clickable.
+   When set to ``0``, it never does. Otherwise they are emitted whenever terminal color is in use and
+   the terminal is not one known to mishandle them.
+
+   .. versionadded:: 9.2
 
 .. envvar:: PYTEST_THEME
 
@@ -1370,13 +1397,37 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: cache_dir
    :type: ``str``
-   :default: ``".pytest_cache"``
+   :default: ``""``
 
-   Sets the directory where the cache plugin's content is stored.
+   Sets the directory where the cache plugin's content is stored, overriding :confval:`cache_policy`.
    Directory may be relative or absolute path. If setting relative path, then directory is created
    relative to :ref:`rootdir <rootdir>`. Additionally, a path may contain environment
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
+
+   When unset, the location is decided by :confval:`cache_policy` instead.
+
+   .. versionchanged:: 9.2
+
+      The default is now empty rather than ``".pytest_cache"``, so that leaving it unset can be told
+      apart from setting it. The resulting location is unchanged.
+
+.. confval:: cache_policy
+   :type: ``Literal["local", "user"]``
+   :default: ``"local"``
+
+   .. versionadded:: 9.2
+
+   Chooses where the cache directory lives, without spelling out a path:
+
+   * ``local`` - ``<rootdir>/.pytest_cache``.
+   * ``user`` - a per-project directory inside the platform's user cache directory. Requires the
+     ``xdg`` extra (``pip install pytest[xdg]``).
+
+   Ignored when :confval:`cache_dir` is set. The default can be set for a whole machine with the
+   :envvar:`PYTEST_CACHE_POLICY` environment variable.
+
+   See :ref:`cache_location` and :ref:`cache_pruning`.
 
 .. confval:: collect_imported_tests
    :type: ``bool``
@@ -3237,6 +3288,21 @@ Cache
     Remove all cache contents at start of test run.
     See :ref:`cache`.
 
+.. option:: --cache-list
+
+    List the cache directories under the user-level cache root, don't perform collection or tests.
+    See :ref:`cache_pruning`.
+
+    .. versionadded:: 9.2
+
+.. option:: --cache-prune=SELECTOR
+
+    Remove cache directories or scopes under the user-level cache root, don't perform collection or
+    tests. ``SELECTOR`` is ``all``, ``orphaned``, ``stale``, or a glob matched against the directory
+    name and the origin path. May be given more than once. See :ref:`cache_pruning`.
+
+    .. versionadded:: 9.2
+
 Warnings
 ~~~~~~~~
 
@@ -3482,6 +3548,15 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             Show cache contents, don't perform collection or
                             tests. Optional argument: glob (default: '*').
       --cache-clear         Remove all cache contents at start of test run
+      --cache-list          List the cache directories under the user-level
+                            cache root, don't perform collection or tests.
+      --cache-prune=SELECTOR
+                            Remove cache directories or scopes under the user-
+                            level cache root, don't perform collection or tests.
+                            SELECTOR is 'all', 'orphaned', 'stale', or a glob
+                            matched against the directory name and the origin
+                            path. May be given more than once. See --cache-list
+                            first.
       --lfnf, --last-failed-no-failures={all,none}
                             With ``--lf``, determines whether to execute tests
                             when there are no previously (known) failures or
@@ -3747,7 +3822,12 @@ All the command-line flags can also be obtained by running ``pytest --help``::
                             Option flags for doctests
       doctest_encoding (string):
                             Encoding used for doctest files
-      cache_dir (string):   Cache directory path
+      cache_dir (string):   Cache directory path; overrides cache_policy
+      cache_policy ('local' | 'user'):
+                            Where the cache directory lives: 'local'
+                            (rootdir/.pytest_cache) or 'user' (the platform's
+                            user cache directory, keyed by project). Ignored if
+                            cache_dir is set.
       log_level (string):   Default value for --log-level
       log_format (string):  Default value for --log-format
       log_date_format (string):
