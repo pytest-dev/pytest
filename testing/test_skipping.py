@@ -70,6 +70,43 @@ class TestEvaluation:
         assert skipped
         assert skipped.reason == "hello world"
 
+    def test_marked_multiple_args_skipif(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.skipif(False, True, reason="hello world")
+            def test_func():
+                pass
+        """
+        )
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == "hello world"
+
+    def test_marked_multiple_args_skipif_all_false(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.skipif(False, False, reason="hello world")
+            def test_func():
+                pass
+        """
+        )
+        assert evaluate_skip_marks(item) is None
+
+    def test_marked_multiple_args_xfail(self, pytester: Pytester) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+            @pytest.mark.xfail(False, True, reason="hello world")
+            def test_func():
+                pass
+        """
+        )
+        xfailed = evaluate_xfail_marks(item)
+        assert xfailed
+        assert xfailed.reason == "hello world"
+
     def test_marked_one_arg_twice(self, pytester: Pytester) -> None:
         lines = [
             """@pytest.mark.skipif("not hasattr(os, 'murks')")""",
