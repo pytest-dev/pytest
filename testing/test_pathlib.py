@@ -129,9 +129,10 @@ class TestImportPath:
     """
 
     @pytest.fixture(scope="session")
-    def path1(self, tmp_path_factory: TempPathFactory) -> Generator[Path]:
+    @classmethod
+    def path1(cls, tmp_path_factory: TempPathFactory) -> Generator[Path]:
         path = tmp_path_factory.mktemp("path")
-        self.setuptestfs(path)
+        cls.setuptestfs(path)
         yield path
         assert path.joinpath("samplefile").exists()
 
@@ -141,7 +142,8 @@ class TestImportPath:
             with unittest.mock.patch.object(sys, "path", list(sys.path)):
                 yield
 
-    def setuptestfs(self, path: Path) -> None:
+    @staticmethod
+    def setuptestfs(path: Path) -> None:
         # print "setting up test fs for", repr(path)
         samplefile = path / "samplefile"
         samplefile.write_text("samplefile\n", encoding="utf-8")

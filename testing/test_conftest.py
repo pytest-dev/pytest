@@ -43,7 +43,8 @@ def conftest_setinitial(
 @pytest.mark.usefixtures("_sys_snapshot")
 class TestConftestValueAccessGlobal:
     @pytest.fixture(scope="module", params=["global", "inpackage"])
-    def basedir(self, request, tmp_path_factory: TempPathFactory) -> Generator[Path]:
+    @staticmethod
+    def basedir(request, tmp_path_factory: TempPathFactory) -> Generator[Path]:
         tmp_path = tmp_path_factory.mktemp("basedir", numbered=True)
         tmp_path.joinpath("adir/b").mkdir(parents=True)
         tmp_path.joinpath("adir/conftest.py").write_text(
