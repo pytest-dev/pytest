@@ -352,15 +352,22 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def get_closest_marker(self, name: str) -> Mark | None: ...
 
     @overload
-    def get_closest_marker(self, name: str, default: Mark) -> Mark: ...
+    def get_closest_marker(self, name: str, default: Mark | MarkDecorator) -> Mark: ...
 
-    def get_closest_marker(self, name: str, default: Mark | None = None) -> Mark | None:
+    def get_closest_marker(
+        self, name: str, default: Mark | MarkDecorator | None = None
+    ) -> Mark | None:
         """Return the first marker matching the name, from closest (for
         example function) to farther level (for example module level).
 
-        :param default: Fallback return value if no marker was found.
+        :param default:
+            Fallback return value if no marker was found. A
+            :class:`~pytest.MarkDecorator` such as ``pytest.mark.foo(1)`` is
+            also accepted, in which case its :class:`~pytest.Mark` is returned.
         :param name: Name to filter by.
         """
+        if isinstance(default, MarkDecorator):
+            default = default.mark
         return next(self.iter_markers(name=name), default)
 
     def listextrakeywords(self) -> set[str]:
