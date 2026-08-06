@@ -24,6 +24,7 @@ import pluggy
 import _pytest._code
 from _pytest._code import getfslineno
 from _pytest._code.code import ExceptionInfo
+from _pytest._code.code import filter_traceback
 from _pytest._code.code import TerminalRepr
 from _pytest._code.code import Traceback
 from _pytest._code.code import TracebackStyle
@@ -415,7 +416,13 @@ class Node(abc.ABC, metaclass=NodeMeta):
         tbfilter: bool | Callable[[ExceptionInfo[BaseException]], Traceback]
         if self.config.getoption("fulltrace", False):
             style = "long"
-            tbfilter = False
+            if self.config.getoption("tb_hide_internal", False):
+
+                def tbfilter(excinfo: ExceptionInfo[BaseException]) -> Traceback:
+                    return excinfo.traceback.filter(filter_traceback)
+
+            else:
+                tbfilter = False
         else:
             tbfilter = self._traceback_filter
             if style == "auto":
