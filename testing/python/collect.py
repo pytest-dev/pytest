@@ -2,18 +2,20 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import sys
 import textwrap
 from typing import Any
 
 import _pytest._code
 from _pytest.config import ExitCode
-from _pytest.main import Session
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.nodes import Collector
 from _pytest.pytester import Pytester
 from _pytest.python import Class
 from _pytest.python import Function
+from _pytest.scenario import collect_tests
+from _pytest.scenario import run_tests
 import pytest
 
 
@@ -180,54 +182,49 @@ class TestClass:
             ]
         )
 
-    def test_class_subclassobject(self, pytester: Pytester) -> None:
-        pytester.getmodulecol(
-            """
-            class test(object):
-                pass
-        """
-        )
-        result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*collected 0*"])
+    def test_class_subclassobject(self, tmp_path: Path) -> None:
+        class test:
+            pass
 
-    def test_static_method(self, pytester: Pytester) -> None:
+        assert collect_tests(test, rootpath=tmp_path) == []
+
+    def test_static_method(self, tmp_path: Path) -> None:
         """Support for collecting staticmethod tests (#2528, #2699)"""
-        pytester.getmodulecol(
-            """
-            import pytest
-            class Test(object):
-                @staticmethod
-                def test_something():
-                    pass
 
-                @pytest.fixture
-                def fix(self):
-                    return 1
+        class Test:
+            @staticmethod
+            def test_something():
+                pass
 
-                @staticmethod
-                def test_fix(fix):
-                    assert fix == 1
-        """
-        )
-        result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*collected 2 items*", "*2 passed in*"])
+            @pytest.fixture
+            def fix(self):
+                return 1
 
-    def test_setup_teardown_class_as_classmethod(self, pytester: Pytester) -> None:
-        pytester.makepyfile(
-            test_mod1="""
-            class TestClassMethod(object):
-                @classmethod
-                def setup_class(cls):
-                    pass
-                def test_1(self):
-                    pass
-                @classmethod
-                def teardown_class(cls):
-                    pass
-        """
-        )
-        result = pytester.runpytest()
-        result.stdout.fnmatch_lines(["*1 passed*"])
+            @staticmethod
+            def test_fix(fix):
+                assert fix == 1
+
+        record = run_tests(Test, rootpath=tmp_path)
+        record.assert_outcomes(passed=2)
+
+    def test_setup_teardown_class_as_classmethod(self, tmp_path: Path) -> None:
+        events = []
+
+        class TestClassMethod:
+            @classmethod
+            def setup_class(cls):
+                events.append("setup")
+
+            def test_1(self):
+                pass
+
+            @classmethod
+            def teardown_class(cls):
+                events.append("teardown")
+
+        record = run_tests(TestClassMethod, rootpath=tmp_path)
+        record.assert_outcomes(passed=1)
+        assert events == ["setup", "teardown"]
 
     def test_issue1035_obj_has_getattr(self, pytester: Pytester) -> None:
         modcol = pytester.getmodulecol(
@@ -384,32 +381,32 @@ class TestFunction:
         )
 
     @staticmethod
-    def make_function(pytester: Pytester, **kwargs: Any) -> Any:
-        from _pytest.fixtures import FixtureManager
+    def make_function(tmp_path: Path, **kwargs: Any) -> Any:
+        from _pytest.scenario import ConfigSpec
+        from _pytest.scenario import configured
+        from _pytest.scenario import running_session
 
-        config = pytester.parseconfigure()
-        session = Session.from_config(config)
-        session._fixturemanager = FixtureManager(session)
+        with configured(ConfigSpec(rootpath=tmp_path)) as config:
+            with running_session(config) as session:
+                return pytest.Function.from_parent(parent=session, **kwargs)
 
-        return pytest.Function.from_parent(parent=session, **kwargs)
-
-    def test_function_equality(self, pytester: Pytester) -> None:
+    def test_function_equality(self, tmp_path: Path) -> None:
         def func1():
             pass
 
         def func2():
             pass
 
-        f1 = self.make_function(pytester, name="name", callobj=func1)
+        f1 = self.make_function(tmp_path, name="name", callobj=func1)
         assert f1 == f1
         f2 = self.make_function(
-            pytester, name="name", callobj=func2, originalname="foobar"
+            tmp_path, name="name", callobj=func2, originalname="foobar"
         )
         assert f1 != f2
 
-    def test_repr_produces_actual_test_id(self, pytester: Pytester) -> None:
+    def test_repr_produces_actual_test_id(self, tmp_path: Path) -> None:
         f = self.make_function(
-            pytester, name=r"test[\xe5]", callobj=self.test_repr_produces_actual_test_id
+            tmp_path, name=r"test[\xe5]", callobj=self.test_repr_produces_actual_test_id
         )
         assert repr(f) == r"<Function test[\xe5]>"
 

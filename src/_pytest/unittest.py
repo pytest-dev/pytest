@@ -399,7 +399,7 @@ class TestCaseFunction(Function):
             # We need to consider if the test itself is skipped, or the whole class.
             assert isinstance(self.parent, UnitTestCase)
             skipped = _is_skipped(self.obj) or _is_skipped(self.parent.obj)
-            if self.config.getoption("usepdb") and not skipped:
+            if self.config.getoption("usepdb", False) and not skipped:
                 self._explicit_tearDown = testcase.tearDown
                 setattr(testcase, "tearDown", lambda *args: None)
 

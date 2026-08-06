@@ -5,6 +5,7 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 import dataclasses
 import itertools
+from pathlib import Path
 import re
 import sys
 import textwrap
@@ -24,6 +25,8 @@ from _pytest.outcomes import Failed
 from _pytest.pytester import Pytester
 from _pytest.python import Function
 from _pytest.python import IdMaker
+from _pytest.scenario import fake_module
+from _pytest.scenario import run_tests
 from _pytest.scope import Scope
 import pytest
 
@@ -1302,29 +1305,23 @@ class TestMetafuncFunctional:
         result = pytester.runpytest(p, "-v")
         result.assert_outcomes(passed=2)
 
-    def test_two_functions(self, pytester: Pytester) -> None:
-        p = pytester.makepyfile(
-            """
-            def pytest_generate_tests(metafunc):
-                metafunc.parametrize('arg1', [10, 20], ids=['0', '1'])
+    def test_two_functions(self, tmp_path: Path) -> None:
+        def pytest_generate_tests(metafunc):
+            metafunc.parametrize("arg1", [10, 20], ids=["0", "1"])
 
-            def test_func1(arg1):
-                assert arg1 == 10
+        def test_func1(arg1):
+            assert arg1 == 10
 
-            def test_func2(arg1):
-                assert arg1 in (10, 20)
-        """
+        def test_func2(arg1):
+            assert arg1 in (10, 20)
+
+        module = fake_module(
+            "test_two_functions", pytest_generate_tests, test_func1, test_func2
         )
-        result = pytester.runpytest("-v", p)
-        result.stdout.fnmatch_lines(
-            [
-                "*test_func1*0*PASS*",
-                "*test_func1*1*FAIL*",
-                "*test_func2*PASS*",
-                "*test_func2*PASS*",
-                "*1 failed, 3 passed*",
-            ]
-        )
+        record = run_tests(module, rootpath=tmp_path)
+        record.assert_outcomes(passed=3, failed=1)
+        assert record["test_two_functions.py::test_func1[0]"].passed
+        assert record["test_two_functions.py::test_func1[1]"].failed
 
     def test_noself_in_method(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(
