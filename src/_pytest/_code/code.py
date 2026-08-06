@@ -1230,7 +1230,9 @@ class ExceptionInfoFormatter:
                 reprcrash = None
             repr_chain.append((reprtraceback, reprcrash, description))
 
-            if e.__cause__ is not None and self.chain:
+            if isinstance(e, BaseExceptionGroup) and self.chain:
+                e = None
+            elif e.__cause__ is not None and self.chain:
                 e = e.__cause__
                 excinfo_ = ExceptionInfo.from_exception(e) if e.__traceback__ else None
                 description = "The above exception was the direct cause of the following exception:"

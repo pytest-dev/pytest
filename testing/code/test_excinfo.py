@@ -1592,6 +1592,29 @@ raise ValueError()
             ]
         )
 
+    def test_exc_chain_repr_exception_group_with_cause(self) -> None:
+        """An exception group raised from another exception must not print that
+        exception's cause chain twice."""
+        try:
+            try:
+                raise RuntimeError("original cause")
+            except RuntimeError as exc:
+                raise ExceptionGroup("group", [ValueError("inner")]) from exc
+        except ExceptionGroup:
+            excinfo = ExceptionInfo.from_current()
+
+        r = excinfo.getrepr()
+        file = io.StringIO()
+        tw = TerminalWriter(file=file)
+        tw.hasmarkup = False
+        r.toterminal(tw)
+
+        output = file.getvalue()
+        assert output.count("RuntimeError: original cause") == 1
+        assert output.count("ExceptionGroup: group") == 1
+        assert output.count("ValueError: inner") == 1
+        assert output.count("The above exception was the direct cause") == 1
+
     def test_exc_chain_repr_cycle(self, importasmod, tw_mock):
         __tracebackhide__ = True
         mod = importasmod(
