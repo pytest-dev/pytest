@@ -316,7 +316,17 @@ def determine_setup(
         inipath: Path | None = inipath_
         inicfg = load_config_dict_from_file(inipath_) or {}
         if rootdir_cmd_arg is None:
-            rootdir = inipath_.parent
+            if inipath_.is_file():
+                rootdir = inipath_.parent
+            else:
+                # The given config file is not a regular file (e.g.
+                # `--config-file=/dev/null` to disable config file loading):
+                # its location is unrelated to the project, so do not derive
+                # the rootdir from it -- the cache plugin would attempt to
+                # write to e.g. `/dev/.pytest_cache` otherwise (#11502).
+                rootdir = get_common_ancestor(invocation_dir, dirs)
+                if is_fs_root(rootdir):
+                    rootdir = invocation_dir
     else:
         ancestor = get_common_ancestor(invocation_dir, dirs)
         rootdir, inipath, inicfg, ignored_config_files = locate_config(
