@@ -1925,6 +1925,11 @@ class Config:
         elif type == "bool":
             return _strtobool(str(value).strip())
         elif type == "string":
+            if not isinstance(value, str):
+                warnings.warn(
+                    _pytest.deprecated.INI_STRING_TYPE_NON_STR_VALUE,
+                    stacklevel=2,
+                )
             return value
         elif type == "int":
             if not isinstance(value, str):

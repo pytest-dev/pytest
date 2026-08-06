@@ -1152,6 +1152,30 @@ class TestConfigAPI:
         ):
             _ = config.getini("ini_param")
 
+    def test_addini_string_non_str_deprecated(self, pytester: Pytester) -> None:
+        """Passing a non-string value to a 'string'-typed ini option emits a
+        deprecation warning. The value is still returned as-is for now, but will
+        raise TypeError in pytest 10."""
+        pytester.makeconftest(
+            """
+            def pytest_addoption(parser):
+                parser.addini("myname", "", type="string")
+        """
+        )
+        pytester.makepyprojecttoml(
+            """
+            [tool.pytest.ini_options]
+            myname = ["value1", "value2"]
+            """
+        )
+        config = pytester.parseconfig()
+        with pytest.warns(
+            pytest.PytestRemovedIn10Warning,
+            match="Passing a value that is not a string to a 'string'-typed ini option",
+        ):
+            result = config.getini("myname")
+        assert result == ["value1", "value2"]
+
     UNION_CONFTEST = """
         def pytest_addoption(parser):
             parser.addini("ini_param", "", type=int | str, default=None)
