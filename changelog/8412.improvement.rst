@@ -1,0 +1,3 @@
+Defining an xunit setup/teardown function (such as ``setup_method``) as a fixture without ``autouse=True`` now emits the new :class:`pytest.PytestUnusedXunitFixtureWarning`.
+
+Such a fixture is never requested by anything, so it silently never runs -- and if it shadows a working xunit function inherited from a base class, that one stops running too. On a :class:`unittest.TestCase` this previously failed with a confusing ``Fixture "setup_method" called directly`` error instead.
