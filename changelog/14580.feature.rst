@@ -1,0 +1,7 @@
+Added an ``ordered`` parameter to :class:`pytest.RaisesGroup`.
+
+By default :class:`~pytest.RaisesGroup` ignores the order of the exceptions in the
+group. Passing ``ordered=True`` makes it match the expected exceptions against the
+raised exceptions positionally, so the order is asserted. This also sidesteps the
+greedy matching algorithm, which can otherwise fail to find a valid pairing even when
+one exists.
