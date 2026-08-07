@@ -581,9 +581,11 @@ class Module(nodes.File, PyCollector):
         return importtestmodule(self.path, self.config)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        self.session._fixturemanager.parsefactories(self)
+        # Registered after parsefactories so the xunit setup functions are
+        # ordered *after* the autouse fixtures defined in this module (#8412).
         self._register_setup_module_fixture()
         self._register_setup_function_fixture()
-        self.session._fixturemanager.parsefactories(self)
         return super().collect()
 
     def _register_setup_module_fixture(self) -> None:
@@ -796,12 +798,15 @@ class Class(PyCollector):
             )
             return []
 
-        self._register_setup_class_fixture()
-        self._register_setup_method_fixture()
-
         self.session._fixturemanager.parsefactories(
             holder=self.newinstance(), node=self
         )
+
+        # Registered after parsefactories so the xunit setup functions are
+        # ordered *after* the autouse fixtures visible on this class, matching
+        # both unittest's setUp and an equivalent autouse fixture (#8412).
+        self._register_setup_class_fixture()
+        self._register_setup_method_fixture()
 
         return super().collect()
 
