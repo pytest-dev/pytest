@@ -357,6 +357,82 @@ def test_fixtures_setup_setUpClass_issue8394(pytester: Pytester) -> None:
     result.stdout.fnmatch_lines(["*no docstring available*"])
 
 
+def test_xunit_functions_run_after_autouse_fixtures(pytester: Pytester) -> None:
+    """On a TestCase the pytest-style xunit functions run after the autouse
+    fixtures of the same scope, as they do on a plain class (#8412).
+
+    setUpClass keeps running first, since unittest guarantees it precedes
+    everything else in the class.
+    """
+    pytester.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        order = []
+
+        class Mixin:
+            @pytest.fixture(scope="class", autouse=True)
+            @classmethod
+            def cls_autouse(cls):
+                order.append("cls_autouse")
+
+            @pytest.fixture(autouse=True)
+            def fn_autouse(self):
+                order.append("fn_autouse")
+
+        class TestIt(Mixin, unittest.TestCase):
+            @classmethod
+            def setUpClass(cls):
+                order.append("setUpClass")
+
+            @classmethod
+            def setup_class(cls):
+                order.append("setup_class")
+
+            def setup_method(self, method):
+                order.append("setup_method")
+
+            def setUp(self):
+                order.append("setUp")
+
+            def test_it(self):
+                assert order == [
+                    "setUpClass",
+                    "cls_autouse",
+                    "setup_class",
+                    "fn_autouse",
+                    "setup_method",
+                    "setUp",
+                ]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_setup_method_as_non_autouse_fixture_warns(pytester: Pytester) -> None:
+    """A fixture-marked setup_method on a TestCase warns like on a plain class,
+    instead of failing with "Fixture called directly" (#8412)."""
+    pytester.makepyfile(
+        """
+        import unittest
+        import pytest
+
+        class TestIt(unittest.TestCase):
+            @pytest.fixture
+            def setup_method(self):
+                raise AssertionError("never called")
+
+            def test_it(self):
+                pass
+        """
+    )
+    result = pytester.runpytest("-W", "always::pytest.PytestUnusedXunitFixtureWarning")
+    result.stdout.fnmatch_lines(["*PytestUnusedXunitFixtureWarning*"])
+    result.assert_outcomes(passed=1, warnings=1)
+
+
 def test_setup_class(pytester: Pytester) -> None:
     testpath = pytester.makepyfile(
         """
