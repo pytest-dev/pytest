@@ -378,11 +378,17 @@ class TestXFail:
         [
             (
                 ["-rs"],
-                ["SKIPPED [1] test_sample.py:2: unconditional skip", "*1 skipped*"],
+                [
+                    "SKIPPED [[]1[]] test_sample.py::test_skip_location - unconditional skip",
+                    "*1 skipped*",
+                ],
             ),
             (
                 ["-rs", "--runxfail"],
-                ["SKIPPED [1] test_sample.py:2: unconditional skip", "*1 skipped*"],
+                [
+                    "SKIPPED [[]1[]] test_sample.py::test_skip_location - unconditional skip",
+                    "*1 skipped*",
+                ],
             ),
         ],
     )
@@ -1009,9 +1015,9 @@ def test_skipped_reasons_functional(pytester: Pytester) -> None:
     result = pytester.runpytest("-rs")
     result.stdout.fnmatch_lines_random(
         [
-            "SKIPPED [[]1[]] test_one.py:7: setup function",
-            "SKIPPED [[]1[]] helpers.py:4: test method",
-            "SKIPPED [[]1[]] test_one.py:14: via_decorator",
+            "SKIPPED [[]1[]] test_one.py::test_func - setup function",
+            "SKIPPED [[]1[]] test_one.py::TestClass::test_method - test method",
+            "SKIPPED [[]1[]] test_one.py::TestClass::test_deco - via_decorator",
         ]
     )
     assert result.ret == 0
@@ -1426,7 +1432,7 @@ def test_relpath_rootdir(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-rs", "tests/test_1.py", "--rootdir=tests")
     result.stdout.fnmatch_lines(
-        ["SKIPPED [[]1[]] tests/test_1.py:2: unconditional skip"]
+        ["SKIPPED [[]1[]] tests/test_1.py::test_pass - unconditional skip"]
     )
 
 
@@ -1447,7 +1453,7 @@ def test_skip_from_fixture(pytester: Pytester) -> None:
     )
     result = pytester.runpytest("-rs", "tests/test_1.py", "--rootdir=tests")
     result.stdout.fnmatch_lines(
-        ["SKIPPED [[]1[]] tests/test_1.py:2: Fixture conditional skip"]
+        ["SKIPPED [[]1[]] tests/test_1.py::test_pass - Fixture conditional skip"]
     )
 
 

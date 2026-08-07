@@ -1,0 +1,1 @@
+Single skipped tests in the short test summary now include the test node id instead of only the file and line number.
