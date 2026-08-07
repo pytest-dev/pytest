@@ -1,0 +1,1 @@
+Dots in test module filenames are now escaped with underscores to prevent ``pytest`` from misinterpreting them as package notation when computing the module name.
