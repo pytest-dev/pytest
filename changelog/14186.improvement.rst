@@ -1,0 +1,4 @@
+Expose `CaptureManager` as a public API type.
+
+Plugin authors can now annotate capture-manager lookups with
+`pytest.CaptureManager` instead of importing from `_pytest.capture`.

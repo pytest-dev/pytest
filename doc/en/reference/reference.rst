@@ -417,6 +417,9 @@ capsys
 .. autoclass:: pytest.CaptureFixture()
     :members:
 
+.. autoclass:: pytest.CaptureManager()
+    :members:
+
 .. fixture:: capteesys
 
 capteesys
