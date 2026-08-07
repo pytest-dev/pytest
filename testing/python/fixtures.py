@@ -1748,6 +1748,99 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["* 2 passed in *"])
 
+    def test_setup_functions_run_after_autouse_fixtures(
+        self, pytester: Pytester
+    ) -> None:
+        """The xunit setup functions run after the autouse fixtures of the same
+        scope which are visible at the same node (#8412)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            order = []
+
+            @pytest.fixture(scope="module", autouse=True)
+            def module_fixture():
+                order.append("module_fixture")
+
+            @pytest.fixture(autouse=True)
+            def function_fixture():
+                order.append("function_fixture")
+
+            def setup_module():
+                order.append("setup_module")
+
+            def setup_function(function):
+                order.append("setup_function")
+
+            class TestClass:
+                @pytest.fixture(scope="class", autouse=True)
+                def class_fixture(self):
+                    order.append("class_fixture")
+
+                @pytest.fixture(autouse=True)
+                def method_fixture(self):
+                    order.append("method_fixture")
+
+                def setup_class(cls):
+                    order.append("setup_class")
+
+                def setup_method(self, method):
+                    order.append("setup_method")
+
+                def test_it(self):
+                    assert order == [
+                        "module_fixture",
+                        "setup_module",
+                        "class_fixture",
+                        "setup_class",
+                        "function_fixture",
+                        "method_fixture",
+                        "setup_method",
+                    ]
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=1)
+
+    def test_setup_method_runs_after_inherited_autouse_fixture(
+        self, pytester: Pytester
+    ) -> None:
+        """An autouse fixture inherited from a base class runs before
+        setup_method, just like it does before unittest's setUp (#8412)."""
+        pytester.makepyfile(
+            """
+            import unittest
+            import pytest
+
+            class Mixin:
+                @pytest.fixture(autouse=True)
+                def _monkeypatch(self, monkeypatch):
+                    self._envpatcher = monkeypatch
+
+                def set_environ(self, name, value):
+                    self._envpatcher.setenv(name, value)
+
+            class TestPlain(Mixin):
+                def setup_method(self):
+                    self.set_environ("X", "1")
+
+                def test_it(self):
+                    import os
+                    assert os.environ["X"] == "1"
+
+            class TestUnittest(Mixin, unittest.TestCase):
+                def setUp(self):
+                    self.set_environ("X", "1")
+
+                def test_it(self):
+                    import os
+                    assert os.environ["X"] == "1"
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2)
+
     def test_parameterized_fixture_caching(self, pytester: Pytester) -> None:
         """Regression test for #12600."""
         pytester.makepyfile(
