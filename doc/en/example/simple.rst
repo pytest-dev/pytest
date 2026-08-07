@@ -1048,6 +1048,32 @@ such as ``cx_freeze`` or ``py2exe``, you can use ``pytest.freeze_includes()``
 to obtain the full list of internal pytest modules. How to configure the tools
 to find the internal modules varies from tool to tool, however.
 
+Test modules must still be available as files for pytest to collect them.
+Adding a test package as a PyInstaller hidden import makes it importable from
+the embedded Python archive, but does not expose the test source files to
+pytest's filesystem-based collectors. Consequently, ``--pyargs`` cannot
+collect tests which exist only inside that archive.
+
+Package the test sources as data, or distribute them next to the frozen
+application. For example, with PyInstaller:
+
+.. code-block:: bash
+
+    pyinstaller --add-data "myapp/test:myapp/test" app_main.py
+
+The frozen application can locate data files relative to its ``__file__`` and
+pass that filesystem path to pytest:
+
+.. code-block:: python
+
+    import sys
+    from pathlib import Path
+
+    import pytest
+
+    tests = Path(__file__).resolve().parent / "myapp" / "test"
+    sys.exit(pytest.main([*sys.argv[2:], str(tests)]))
+
 Instead of freezing the pytest runner as a separate executable, you can make
 your frozen program work as the pytest runner by some clever
 argument handling during program startup. This allows you to
