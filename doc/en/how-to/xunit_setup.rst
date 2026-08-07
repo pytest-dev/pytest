@@ -117,3 +117,8 @@ Remarks:
 
   Now the xunit-style functions are integrated with the fixture mechanism and obey the proper
   scope rules of fixtures involved in the call.
+
+* As of pytest-9.2, an xunit-style function runs *after* the autouse fixtures of the same scope
+  which are visible at the same module or class -- including autouse fixtures inherited from base
+  classes. This matches the ordering of :meth:`unittest.TestCase.setUp` and of an equivalent
+  autouse fixture written in place of the xunit-style function.
