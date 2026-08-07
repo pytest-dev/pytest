@@ -1,0 +1,3 @@
+The xunit setup/teardown functions (``setup_module``, ``setup_function``, ``setup_class``, ``setup_method`` and their teardown counterparts) now run *after* the autouse fixtures of the same scope that are visible at the same collection node, instead of before them.
+
+Previously an autouse fixture inherited from a base class ran *after* ``setup_method``, while the same fixture ran *before* :meth:`unittest.TestCase.setUp` and before an equivalent autouse fixture declared in the class body. The ordering is now consistent in all three cases.
