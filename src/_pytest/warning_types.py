@@ -44,6 +44,13 @@ class PytestCollectionWarning(PytestWarning):
     __module__ = "pytest"
 
 
+class PytestUnusedXunitFixtureWarning(PytestWarning):
+    """Warning emitted when an xunit setup/teardown function is defined as a
+    fixture without ``autouse=True``, so it is never invoked."""
+
+    __module__ = "pytest"
+
+
 class PytestDeprecationWarning(PytestWarning, DeprecationWarning):
     """Warning class for features that will be removed in a future version."""
 
