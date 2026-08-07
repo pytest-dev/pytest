@@ -1841,6 +1841,81 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.assert_outcomes(passed=2)
 
+    def test_xunit_function_as_non_autouse_fixture_warns(
+        self, pytester: Pytester
+    ) -> None:
+        """A non-autouse fixture named like an xunit function never runs (#8412)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            class TestClass:
+                @pytest.fixture
+                def setup_method(self):
+                    raise AssertionError("never called")
+
+                def test_it(self):
+                    pass
+            """
+        )
+        result = pytester.runpytest(
+            "-W", "always::pytest.PytestUnusedXunitFixtureWarning"
+        )
+        result.stdout.fnmatch_lines(
+            [
+                "*PytestUnusedXunitFixtureWarning: 'setup_method' is defined as a "
+                "fixture without autouse=True*"
+            ]
+        )
+        result.assert_outcomes(passed=1, warnings=1)
+
+    def test_xunit_function_shadowed_by_fixture_warns(self, pytester: Pytester) -> None:
+        """Shadowing an inherited xunit function with a non-autouse fixture
+        silently disables both -- warn about it (#8412)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            class Base:
+                def setup_method(self, method):
+                    raise AssertionError("shadowed, so never called")
+
+            class TestClass(Base):
+                @pytest.fixture
+                def setup_method(self):
+                    raise AssertionError("never requested")
+
+                def test_it(self):
+                    pass
+            """
+        )
+        result = pytester.runpytest(
+            "-W", "always::pytest.PytestUnusedXunitFixtureWarning"
+        )
+        result.stdout.fnmatch_lines(["*PytestUnusedXunitFixtureWarning*"])
+        result.assert_outcomes(passed=1, warnings=1)
+
+    def test_xunit_function_as_autouse_fixture_does_not_warn(
+        self, pytester: Pytester
+    ) -> None:
+        """An autouse fixture named like an xunit function does run, so it is
+        not warned about (#8412)."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            class TestClass:
+                @pytest.fixture(autouse=True)
+                def setup_method(self):
+                    self.value = 1
+
+                def test_it(self):
+                    assert self.value == 1
+            """
+        )
+        result = pytester.runpytest("-W", "error")
+        result.assert_outcomes(passed=1)
+
     def test_parameterized_fixture_caching(self, pytester: Pytester) -> None:
         """Regression test for #12600."""
         pytester.makepyfile(

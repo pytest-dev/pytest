@@ -91,6 +91,7 @@ from _pytest.warning_types import PytestReturnNotNoneWarning
 from _pytest.warning_types import PytestUnhandledThreadExceptionWarning
 from _pytest.warning_types import PytestUnknownMarkWarning
 from _pytest.warning_types import PytestUnraisableExceptionWarning
+from _pytest.warning_types import PytestUnusedXunitFixtureWarning
 from _pytest.warning_types import PytestWarning
 
 
@@ -143,6 +144,7 @@ __all__ = [
     "PytestUnhandledThreadExceptionWarning",
     "PytestUnknownMarkWarning",
     "PytestUnraisableExceptionWarning",
+    "PytestUnusedXunitFixtureWarning",
     "PytestWarning",
     "Pytester",
     "RaisesExc",

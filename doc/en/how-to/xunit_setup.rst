@@ -120,5 +120,15 @@ Remarks:
 
 * As of pytest-9.2, an xunit-style function runs *after* the autouse fixtures of the same scope
   which are visible at the same module or class -- including autouse fixtures inherited from base
-  classes. This matches the ordering of :meth:`unittest.TestCase.setUp` and of an equivalent
-  autouse fixture written in place of the xunit-style function.
+  classes. This matches the ordering of :meth:`unittest.TestCase.setUp`, and holds whether or not
+  the class inherits from :class:`unittest.TestCase`.
+
+  :meth:`~unittest.TestCase.setUpClass` is the exception: for a :class:`unittest.TestCase` it still
+  runs before the class' autouse fixtures, since unittest guarantees it precedes everything else in
+  the class.
+
+* An xunit-style function must be a plain function. Decorating it with :func:`@pytest.fixture
+  <pytest.fixture>` means pytest leaves it to the fixture mechanism, so unless it is declared
+  ``autouse=True`` nothing ever requests it and it never runs -- which also disables an
+  xunit-style function of the same name inherited from a base class. pytest warns about this with
+  :class:`pytest.PytestUnusedXunitFixtureWarning`.
