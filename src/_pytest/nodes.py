@@ -330,6 +330,8 @@ class Node(abc.ABC, metaclass=NodeMeta):
     def iter_markers(self, name: str | None = None) -> Iterator[Mark]:
         """Iterate over all markers of the node.
 
+        The markers are returned from closest to farthest.
+
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of the markers of the node.
         """
@@ -340,13 +342,24 @@ class Node(abc.ABC, metaclass=NodeMeta):
     ) -> Iterator[tuple[Node, Mark]]:
         """Iterate over all markers of the node.
 
+        The markers are returned from closest to farthest.
+
         :param name: If given, filter the results by the name attribute.
         :returns: An iterator of (node, mark) tuples.
         """
         for node in self.iter_parents():
-            for mark in node.own_markers:
+            for mark in node._iter_own_markers_closest_first():
                 if name is None or getattr(mark, "name", None) == name:
                     yield node, mark
+
+    def _iter_own_markers_closest_first(self) -> Iterable[Mark]:
+        """Yield own markers in closest-first order.
+
+        For most nodes this is just own_markers in order.
+        Overridden by nodes whose own_markers contain markers from
+        multiple levels (e.g. Class nodes with MRO-inherited markers).
+        """
+        return self.own_markers
 
     @overload
     def get_closest_marker(self, name: str) -> Mark | None: ...
