@@ -1,0 +1,5 @@
+Fixed a crash on startup when running under lazy imports (:pep:`810`, ``PYTHON_LAZY_IMPORTS=all`` on Python 3.15+).
+
+Resolving a lazy import runs the meta path finders, so the assertion rewriting hook was asked to find the very modules it needs in order to answer -- which ended in unbounded recursion or an ``ImportCycleError``.
+
+Modules of the standard library and of pytest itself are now skipped up front and never rewritten, which breaks that cycle and also speeds up importing them slightly. Modules registered via :func:`pytest.register_assert_rewrite` keep being rewritten even if they shadow a stdlib name.

@@ -1993,6 +1993,32 @@ class TestEarlyRewriteBailout:
         assert hook.find_spec("foobar") is not None
         assert self.find_spec_calls == ["conftest", "test_foo", "foobar"]
 
+    def test_stdlib_and_pytest_modules(
+        self, pytester: Pytester, hook: AssertionRewritingHook
+    ) -> None:
+        """The stdlib and pytest itself never hold test code, so they bail out
+        without consulting PathFinder - even for a catch-all "python_files"
+        pattern that would match them (#14632).
+        """
+        with mock.patch.object(hook, "fnpats", ["*.py"]):
+            assert hook.find_spec("fnmatch") is None
+            assert hook.find_spec("os.path") is None
+            assert hook.find_spec("pytest") is None
+            assert hook.find_spec("_pytest.pathlib") is None
+        assert self.find_spec_calls == []
+
+    def test_marked_for_rewrite_beats_stdlib_name(
+        self, pytester: Pytester, hook: AssertionRewritingHook
+    ) -> None:
+        """A local module shadowing a stdlib name is still rewritten when it was
+        explicitly registered via `register_assert_rewrite` (#14632).
+        """
+        pytester.makepyfile(turtle="def check(x): assert x")
+        hook.mark_rewrite("turtle")
+
+        assert hook.find_spec("turtle") is not None
+        assert self.find_spec_calls == ["turtle"]
+
     def test_pattern_contains_subdirectories(
         self, pytester: Pytester, hook: AssertionRewritingHook
     ) -> None:
@@ -2446,3 +2472,29 @@ def test_assertion_failure_when_terminalreporter_is_disabled(
     )
     reprec = pytester.inline_run("-p", "no:terminalreporter")
     reprec.assertoutcome(passed=1)
+
+
+def test_lazy_imports_keep_assertion_rewriting_working(
+    pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Assertion rewriting survives PEP 810 lazy imports (#14632).
+
+    With ``PYTHON_LAZY_IMPORTS=all`` (Python 3.15+) an attribute access can
+    resolve an import, so the rewrite hook is asked for the very modules it
+    needs to answer at all. Interpreters without lazy imports ignore the
+    environment variable, which makes this a plain smoke test there.
+    """
+    pytester.makepyfile(
+        """
+        def test_rewritten():
+            x = 1
+            assert x == 2
+        """
+    )
+    monkeypatch.setenv("PYTHON_LAZY_IMPORTS", "all")
+
+    result = pytester.runpytest_subprocess()
+
+    # the rewritten assertion reports the value of `x`, an unrewritten one would not
+    result.stdout.fnmatch_lines(["E*assert 1 == 2"])
+    result.assert_outcomes(failed=1)
