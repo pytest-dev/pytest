@@ -1942,6 +1942,10 @@ class FixtureManager:
         # Reverse order (farthest to closest) is more natural for usefixtures,
         # e.g. want a module-level usefixture to be requested before a class one,
         # a parent class' before a child's, etc.
+        # This deliberately reverses the markers of a single node as well:
+        # stacked ``usefixtures`` decorators are stored bottom-up, so reversing
+        # requests them in source order -- the same order a single
+        # ``usefixtures("a", "b")`` marker gives.
         for marker_node, mark in reversed(
             list(node.iter_markers_with_node(name="usefixtures"))
         ):

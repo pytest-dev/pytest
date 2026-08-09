@@ -22,7 +22,6 @@ import itertools
 import os
 from pathlib import Path
 import re
-import sys
 import textwrap
 import types
 from typing import Any
@@ -50,6 +49,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
+from _pytest.compat import override
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.config import Config
@@ -67,6 +67,7 @@ from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import _HiddenParam
+from _pytest.mark.structures import get_mro_mark_groups
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import HIDDEN_PARAM
 from _pytest.mark.structures import Mark
@@ -83,14 +84,6 @@ from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
-
-
-if sys.version_info >= (3, 12):
-    from typing import override
-else:
-
-    def override(func):
-        return func
 
 
 if TYPE_CHECKING:
@@ -772,6 +765,18 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | N
     return None
 
 
+def _find_identity_run(haystack: Sequence[Mark], needle: Sequence[Mark]) -> int | None:
+    """Return the index of the first run in ``haystack`` whose elements are
+    identical (``is``) to ``needle``'s, or None if there is no such run.
+
+    An empty ``needle`` matches at index 0.
+    """
+    for start in range(len(haystack) - len(needle) + 1):
+        if all(haystack[start + i] is mark for i, mark in enumerate(needle)):
+            return start
+    return None
+
+
 class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
 
@@ -784,35 +789,36 @@ class Class(PyCollector):
     def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
         """Yield own markers closest-first.
 
-        ``own_markers`` stores the MRO-inherited markers in base-first order
-        (construction order), mixed with any markers added dynamically via
-        :meth:`~_pytest.nodes.Node.add_marker`. Iterate ``own_markers`` in its
-        stored order -- so dynamically added markers keep their ``append``
-        position, just like on a plain node -- but substitute the MRO markers
-        in closest-first (child before parent) order at the slots they occupy.
+        ``own_markers`` holds the MRO-inherited markers as one contiguous run
+        in base-first order (the order :func:`get_unpacked_marks` produced them
+        in), possibly surrounded by markers added dynamically via
+        :meth:`~_pytest.nodes.Node.add_marker`. Yield ``own_markers`` as stored
+        -- so dynamic markers keep their ``append`` position, just like on a
+        plain node -- but with that run replaced by its closest-first
+        (child before parent) counterpart.
         """
-        from _pytest.mark.structures import normalize_mark_list
+        obj = getattr(self, "_obj", None)
+        if obj is None:
+            # ``obj`` was not resolved yet, so own_markers cannot contain
+            # MRO markers - and resolving it here would be a nasty side effect.
+            yield from self.own_markers
+            return
 
-        # Walk the MRO in natural order (closest first: Child, Parent, ...),
-        # collecting each class's marks in their decorator-stacking order.
-        mro_marks_closest_first: list[Mark] = []
-        mro_mark_ids: set[int] = set()
-        for cls in self.obj.__mro__:
-            cls_marks = cls.__dict__.get("pytestmark", [])
-            if not isinstance(cls_marks, Sequence):
-                cls_marks = [cls_marks]
-            for mark in normalize_mark_list(cls_marks):
-                mro_marks_closest_first.append(mark)
-                mro_mark_ids.add(id(mark))
+        groups = get_mro_mark_groups(obj)
+        closest_first = [mark for group in groups for mark in group]
+        base_first = [mark for group in reversed(groups) for mark in group]
 
-        mro_marks = iter(mro_marks_closest_first)
-        for mark in self.own_markers:
-            if id(mark) in mro_mark_ids:
-                # Replace the base-first MRO run with its closest-first order,
-                # slot for slot, keeping surrounding dynamic markers in place.
-                yield next(mro_marks)
-            else:
-                yield mark
+        own_markers = self.own_markers
+        start = _find_identity_run(own_markers, base_first)
+        if start is None:
+            # own_markers was rearranged behind our back - there is no run left
+            # to reorder, so leave the order alone.
+            yield from own_markers
+            return
+
+        yield from own_markers[:start]
+        yield from closest_first
+        yield from own_markers[start + len(base_first) :]
 
     def newinstance(self):
         return self.obj()

@@ -1366,6 +1366,72 @@ def test_mark_fixture_order_mro(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
+def test_mark_fixture_order_usefixtures_stacking(pytester: Pytester) -> None:
+    """Stacked ``usefixtures`` markers on a single node request their fixtures
+    in source order, same as a single marker with several arguments (#14329)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        order = []
+
+        @pytest.fixture
+        def mod(): order.append("mod")
+
+        @pytest.fixture
+        def first(): order.append("first")
+
+        @pytest.fixture
+        def second(): order.append("second")
+
+        pytestmark = pytest.mark.usefixtures("mod")
+
+        @pytest.mark.usefixtures("first")
+        @pytest.mark.usefixtures("second")
+        class TestThings:
+            def test_order(self):
+                assert order == ["mod", "first", "second"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_mark_mro_marker_object_reused_by_add_marker(pytester: Pytester) -> None:
+    """A mark object applied via the MRO *and* added dynamically must not
+    confuse the closest-first reordering of a Class collector (#14329)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        shared = pytest.mark.foo("shared")
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.obj  # resolve, so the MRO markers are in own_markers
+                collector.add_marker(shared)
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        from conftest import shared
+
+        @shared
+        class TestBase:
+            pass
+
+        class TestChild(TestBase):
+            def test_it(self, request):
+                args = [m.args[0] for m in request.node.iter_markers("foo")]
+                assert args == ["shared", "shared"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
     """Check that applying marks works as intended on classmethods and staticmethods.
 
