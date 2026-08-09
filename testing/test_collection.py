@@ -973,6 +973,29 @@ class TestNodeKeywords:
         assert "bar" not in mod.keywords
         assert "baz" not in mod.keywords
 
+    def test_same_named_marks_resolve_to_the_closest(self, pytester: Pytester) -> None:
+        """When one node owns several markers of the same name -- as a Class
+        does for MRO-inherited markers, which are stored base class first --
+        ``keywords`` exposes the closest one."""
+        item = pytester.getitem(
+            """
+            import pytest
+
+            @pytest.mark.foo("base")
+            class TestBase:
+                pass
+
+            @pytest.mark.foo("child")
+            class TestChild(TestBase):
+                def test_method(self): pass
+        """,
+            "test_method",
+        )
+        cls = item.getparent(pytest.Class)
+        assert cls is not None
+        assert [mark.args[0] for mark in cls.own_markers] == ["base", "child"]
+        assert cls.keywords["foo"].args[0] == "child"
+
 
 class TestCollectDirectoryHook:
     def test_custom_directory_example(self, pytester: Pytester) -> None:

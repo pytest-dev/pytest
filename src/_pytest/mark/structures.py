@@ -681,7 +681,10 @@ class NodeKeywords(MutableMapping[str, Any]):
             obj_dict = getattr(obj, "__dict__", None)
             if obj_dict is not None and key in obj_dict:
                 return obj_dict[key]
-        for mark in getattr(self.node, "own_markers", ()):
+        # Scanned in reverse: the eager `keywords.update(...)` this replaces let
+        # later markers win, and `own_markers` holds MRO-inherited markers base
+        # class first, so the closest marker is the last one with a given name.
+        for mark in reversed(getattr(self.node, "own_markers", ())):
             if mark.name == key:
                 return mark
         raise KeyError(key)
