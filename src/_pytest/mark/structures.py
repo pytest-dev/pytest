@@ -420,6 +420,21 @@ class MarkDecorator:
         return self.with_args(*args, **kwargs)
 
 
+def get_mro_mark_groups(cls: type) -> list[list[Mark]]:
+    """Obtain the marks applied directly to each class of ``cls``'s MRO.
+
+    The groups are returned closest-first (``cls`` itself, then its bases in
+    MRO order); within a group the marks keep their decorator stacking order.
+    """
+    groups = []
+    for klass in cls.__mro__:
+        marks = klass.__dict__.get("pytestmark", [])
+        if not isinstance(marks, Sequence):
+            marks = [marks]
+        groups.append(list(normalize_mark_list(marks)))
+    return groups
+
+
 def get_unpacked_marks(
     obj: object | type,
     *,
@@ -428,15 +443,16 @@ def get_unpacked_marks(
     """Obtain the unpacked marks that are stored on an object.
 
     If obj is a class and consider_mro is true, return marks applied to
-    this class and all of its super-classes in MRO order. If consider_mro
-    is false, only return marks applied directly to this class.
+    this class and all of its super-classes in reversed MRO order (farthest
+    base class first). If consider_mro is false, only return marks applied
+    directly to this class.
     """
     if isinstance(obj, type):
         if not consider_mro:
             mark_lists = [obj.__dict__.get("pytestmark", [])]
         else:
-            mark_lists = [
-                x.__dict__.get("pytestmark", []) for x in reversed(obj.__mro__)
+            return [
+                mark for group in reversed(get_mro_mark_groups(obj)) for mark in group
             ]
         mark_list = []
         for item in mark_lists:

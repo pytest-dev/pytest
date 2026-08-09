@@ -6,6 +6,7 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import MutableMapping
+from collections.abc import Sequence
 from functools import cached_property
 from functools import lru_cache
 import os
@@ -326,6 +327,14 @@ class Node(abc.ABC, metaclass=NodeMeta):
             self.own_markers.append(marker_.mark)
         else:
             self.own_markers.insert(0, marker_.mark)
+
+    def _extend_own_markers(self, marks: Sequence[Mark]) -> None:
+        """Append freshly unpacked markers to ``own_markers``.
+
+        A hook for nodes that need to remember where in ``own_markers`` those
+        markers landed (e.g. :class:`~pytest.Class`, for its MRO run).
+        """
+        self.own_markers.extend(marks)
 
     def iter_markers(self, name: str | None = None) -> Iterator[Mark]:
         """Iterate over all markers of the node.

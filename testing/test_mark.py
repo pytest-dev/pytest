@@ -1493,6 +1493,107 @@ def test_mark_fixture_order_mro(pytester: Pytester):
     result.assert_outcomes(passed=1)
 
 
+def test_mark_usefixtures_order_unaffected_by_mro(pytester: Pytester) -> None:
+    """Closest-first marker *lookup* must not reorder ``usefixtures`` setup.
+
+    ``usefixtures`` markers compose rather than shadow each other, so they keep
+    following ``own_markers`` storage order: base class before subclass, and
+    stacked decorators bottom-up (#14329).
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        order = []
+
+        @pytest.fixture
+        def mod(): order.append("mod")
+
+        @pytest.fixture
+        def base(): order.append("base")
+
+        @pytest.fixture
+        def first(): order.append("first")
+
+        @pytest.fixture
+        def second(): order.append("second")
+
+        pytestmark = pytest.mark.usefixtures("mod")
+
+        @pytest.mark.usefixtures("base")
+        class Base:
+            pass
+
+        @pytest.mark.usefixtures("first")
+        @pytest.mark.usefixtures("second")
+        class TestThings(Base):
+            def test_order(self):
+                assert order == ["base", "second", "first", "mod"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
+def test_mark_parametrize_ids_unaffected_by_mro(pytester: Pytester) -> None:
+    """Closest-first marker *lookup* must not reorder ``parametrize`` IDs.
+
+    An inherited class-level ``parametrize`` keeps composing base-first, so the
+    generated IDs stay what they were before #14329.
+    """
+    pytester.makepyfile(
+        """
+        import pytest
+
+        @pytest.mark.parametrize("a", ["x"])
+        class Base:
+            pass
+
+        @pytest.mark.parametrize("b", [1])
+        class TestChild(Base):
+            def test_it(self, a, b):
+                pass
+        """
+    )
+    result = pytester.runpytest("--collect-only", "-q")
+    result.stdout.fnmatch_lines(["*::TestChild::test_it[[]x-1[]]"])
+
+
+def test_mark_mro_marker_object_reused_by_add_marker(pytester: Pytester) -> None:
+    """A mark object applied via the MRO *and* added dynamically must not
+    confuse the closest-first reordering of a Class collector (#14329)."""
+    pytester.makeconftest(
+        """
+        import pytest
+
+        shared = pytest.mark.foo("shared")
+
+        def pytest_collectstart(collector):
+            if getattr(collector, "name", None) == "TestChild":
+                collector.obj  # resolve, so the MRO markers are in own_markers
+                collector.add_marker(shared)
+        """
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+
+        from conftest import shared
+
+        @shared
+        class TestBase:
+            pass
+
+        class TestChild(TestBase):
+            def test_it(self, request):
+                args = [m.args[0] for m in request.node.iter_markers("foo")]
+                assert args == ["shared", "shared"]
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_mark_parametrize_over_staticmethod(pytester: Pytester) -> None:
     """Check that applying marks works as intended on classmethods and staticmethods.
 
