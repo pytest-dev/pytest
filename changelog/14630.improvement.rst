@@ -1,0 +1,2 @@
+``pytestmark`` may now be any sequence of marks, for example a tuple, instead of only a
+``list`` or a single mark. This applies consistently to modules, classes and functions.

@@ -1331,6 +1331,68 @@ def test_mark_mro() -> None:
     assert get_unpacked_marks(C, consider_mro=False) == [xfail("c").mark]
 
 
+def test_pytestmark_accepts_any_sequence() -> None:
+    """``pytestmark`` may be any sequence of marks, not just a list."""
+    from _pytest.mark.structures import get_unpacked_marks
+
+    xfail = pytest.mark.xfail
+
+    class A:
+        pytestmark: tuple[pytest.MarkDecorator, ...] = (xfail("a"), xfail("b"))
+
+    class B(A):
+        pytestmark = (xfail("c"),)
+
+    assert get_unpacked_marks(A, consider_mro=False) == [
+        xfail("a").mark,
+        xfail("b").mark,
+    ]
+    assert get_unpacked_marks(B) == [
+        xfail("a").mark,
+        xfail("b").mark,
+        xfail("c").mark,
+    ]
+
+    class Single:
+        pytestmark = xfail("single")
+
+    assert get_unpacked_marks(Single) == [xfail("single").mark]
+
+
+def test_pytestmark_string_reports_the_string() -> None:
+    """A ``str`` is not unpacked as a sequence, so the error names it."""
+    from _pytest.mark.structures import get_unpacked_marks
+
+    class Oops:
+        pytestmark = "xfail"
+
+    with pytest.raises(TypeError, match="got 'xfail' instead of Mark"):
+        get_unpacked_marks(Oops)
+
+
+def test_pytestmark_tuple_on_module_and_class(pytester: Pytester) -> None:
+    """End to end: tuple ``pytestmark`` works at module and class level."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        pytestmark = (pytest.mark.mod_a, pytest.mark.mod_b)
+
+        class TestBase:
+            pytestmark = (pytest.mark.base,)
+
+        class TestChild(TestBase):
+            pytestmark = (pytest.mark.child,)
+
+            def test_it(self, request):
+                names = [mark.name for mark in request.node.iter_markers()]
+                assert names == ["child", "base", "mod_a", "mod_b"]
+        """
+    )
+    result = pytester.runpytest("-W", "ignore::pytest.PytestUnknownMarkWarning")
+    result.assert_outcomes(passed=1)
+
+
 # @pytest.mark.issue("https://github.com/pytest-dev/pytest/issues/10447")
 def test_mark_fixture_order_mro(pytester: Pytester):
     """This ensures we walk marks of the mro starting with the base classes
