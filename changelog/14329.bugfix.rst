@@ -2,8 +2,8 @@
 now walk the class MRO closest-first, so a marker on a subclass takes precedence over the
 same marker on one of its base classes.
 
-``own_markers`` keeps its previous (base class first) order.
-
-As a consequence, :ref:`usefixtures <usefixtures>` markers are now iterated in reverse, which
-keeps base class fixtures being requested before subclass ones, and additionally makes stacked
-``usefixtures`` markers on a single node request their fixtures in source order.
+``own_markers`` keeps its previous (base class first) order, and so do the consumers that
+compose markers rather than look one up: :ref:`usefixtures <usefixtures>` fixtures are still
+requested in the same order as before, and inherited class level
+:ref:`parametrize <pytest.mark.parametrize ref>` markers still compose their test IDs the
+same way.
