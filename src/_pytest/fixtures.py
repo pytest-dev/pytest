@@ -26,7 +26,6 @@ from typing import Final
 from typing import final
 from typing import Generic
 from typing import Literal
-from typing import NamedTuple
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -99,30 +98,6 @@ FixtureFunction = Callable[..., object]
 _FixtureFunc = Callable[..., FixtureValue] | Callable[..., Generator[FixtureValue]]
 # Sentinel value for unset fixture params
 _NO_PARAM = object()
-
-
-# NamedTuples cannot take generic arguments before Python 3.11
-if TYPE_CHECKING and sys.version_info >= (3, 11):
-
-    class _FixtureResult(NamedTuple, Generic[FixtureValue]):
-        value: FixtureValue
-        param: object
-        exception_and_traceback: None
-else:
-
-    class _FixtureResult(NamedTuple):
-        value: Any
-        param: object
-        exception_and_traceback: None
-
-
-class _FixtureException(NamedTuple):
-    value: None
-    param: object
-    exception_and_traceback: tuple[BaseException, types.TracebackType | None]
-
-
-_FixtureCachedResult = _FixtureResult[FixtureValue] | _FixtureException  # type: ignore[type-arg]
 
 
 def pytest_sessionstart(session: Session) -> None:
@@ -699,44 +674,17 @@ class FixtureRequest(abc.ABC):
         # (using function parameters, autouse, etc).
 
         fixturedef = self._get_active_fixturedef(argname)
-        fixture_result = self._get_cached_result(fixturedef)
+        fixture_cache = self.session._setupstate.fixture_cache
+        fixture_result = fixture_cache.get(fixturedef)
         assert fixture_result is not None, (
             f'The fixture value for "{argname}" is not available.  '
             "This can happen when the fixture has already been torn down."
         )
         return fixture_result.value
 
-    def _get_cached_result(
-        self, fixturedef: FixtureDef[FixtureValue]
-    ) -> _FixtureCachedResult[FixtureValue] | None:
-        return self.session._setupstate.fixture_cache.get(fixturedef)
-
-    def _cache_value(
-        self,
-        fixturedef: FixtureDef[FixtureValue],
-        value: FixtureValue,  # type: ignore[misc]
-    ) -> None:
-        """Write a value into the cache for a fixture definition."""
-        self.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
-            value, self._active_param, None
-        )
-
-    def _cache_exception(
-        self,
-        fixturedef: FixtureDef[FixtureValue],
-        exception: BaseException,
-    ) -> None:
-        """Write an exception result into the cache for a fixture definition."""
-        self.session._setupstate.fixture_cache[fixturedef] = _FixtureException(
-            None, self._active_param, (exception, exception.__traceback__)
-        )
-
     @property
     def _active_param(self) -> object:
         return getattr(self, "param", _NO_PARAM)
-
-    def _invalidate_fixture_cache(self, fixturedef: FixtureDef[FixtureValue]) -> None:
-        del self.session._setupstate.fixture_cache[fixturedef]
 
     def _iter_chain(self) -> Iterator[SubRequest]:
         """Yield all SubRequests in the chain, from self up.
@@ -1245,7 +1193,8 @@ class FixtureDef(Generic[FixtureValue]):
         self._finalizers.append(finalizer)
 
     def finish(self, request: SubRequest) -> None:
-        if request._get_cached_result(self) is None:
+        fixture_cache = request.session._setupstate.fixture_cache
+        if fixture_cache.get(self) is None:
             # Already finished. It is assumed that finalizers cannot be added in
             # this state.
             return
@@ -1261,7 +1210,7 @@ class FixtureDef(Generic[FixtureValue]):
         # Even if finalization fails, we invalidate the cached fixture
         # value and remove all finalizers because they may be bound methods
         # which will keep instances alive.
-        request._invalidate_fixture_cache(self)
+        fixture_cache.invalidate(self)
         self._finalizers.clear()
         if len(exceptions) == 1:
             raise exceptions[0]
@@ -1289,7 +1238,8 @@ class FixtureDef(Generic[FixtureValue]):
             requested_fixtures_that_should_finalize_us.append(fixturedef)
 
         # Check for (and return) cached value/exception.
-        if (cached_result := request._get_cached_result(self)) is not None:
+        fixture_cache = request.session._setupstate.fixture_cache
+        if (cached_result := fixture_cache.get(self)) is not None:
             active_param = request._active_param
             cached_param = cached_result.param
             try:
@@ -1309,7 +1259,7 @@ class FixtureDef(Generic[FixtureValue]):
             # We have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one.
             self.finish(request)
-            assert request._get_cached_result(self) is None
+            assert fixture_cache.get(self) is None
 
         # Add finalizer to requested fixtures we saved previously.
         # We make sure to do this after checking for cached value to avoid
@@ -1360,7 +1310,8 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
             node=request.node,
             _ispytest=True,
         )
-        request._cache_value(self, request)
+        fixture_cache = request.session._setupstate.fixture_cache
+        fixture_cache.set_value(self, request._active_param, request)
 
     def addfinalizer(self, finalizer: Callable[[], object]) -> None:
         pass
@@ -1430,6 +1381,7 @@ def pytest_fixture_setup(
             pytrace=False,
         )
 
+    fixture_cache = request.session._setupstate.fixture_cache
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
     except TEST_OUTCOME as e:
@@ -1438,12 +1390,13 @@ def pytest_fixture_setup(
             # Don't show the fixture as the skip location, as then the user
             # wouldn't know which test skipped.
             e._use_item_location = True
-        request._cache_exception(
+        fixture_cache.set_exception(
             fixturedef,
+            request._active_param,
             e,
         )
         raise
-    request._cache_value(fixturedef, result)
+    fixture_cache.set_value(fixturedef, request._active_param, result)
     return result
 
 

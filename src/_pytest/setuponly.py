@@ -6,7 +6,6 @@ from _pytest._io.saferepr import saferepr
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
-from _pytest.fixtures import _FixtureResult
 from _pytest.fixtures import _NO_PARAM
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import SubRequest
@@ -48,11 +47,10 @@ def pytest_fixture_setup(
                         param = fixturedef.ids[request.param_index]
                 else:
                     param = request.param
+                fixture_cache = request.session._setupstate.fixture_cache
                 # Use None as a dummy value for resolving/caching the fixture
                 # --setup-show does not care about the actual value, only about the param
-                request.session._setupstate.fixture_cache[fixturedef] = _FixtureResult(
-                    None, param, None
-                )
+                fixture_cache.set_value(fixturedef, param, None)
             else:
                 param = _NO_PARAM
             _show_fixture_action(request.config, fixturedef, param, "SETUP")
@@ -61,7 +59,8 @@ def pytest_fixture_setup(
 def pytest_fixture_post_finalizer(
     fixturedef: FixtureDef[object], request: SubRequest
 ) -> None:
-    cached_result = request._get_cached_result(fixturedef)
+    fixture_cache = request.session._setupstate.fixture_cache
+    cached_result = fixture_cache.get(fixturedef)
     assert cached_result is not None, (
         "As per the definition of this hook the fixture cache should not have been cleared"
     )
