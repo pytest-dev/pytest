@@ -1110,8 +1110,6 @@ class AssertionRewriter(ast.NodeVisitor):
         return new_starred, "*" + expl
 
     def visit_Attribute(self, attr: ast.Attribute) -> tuple[ast.Name, str]:
-        if not isinstance(attr.ctx, ast.Load):
-            return self.generic_visit(attr)
         value, value_expl = self.visit(attr.value)
         res = self.assign(
             ast.copy_location(ast.Attribute(value, attr.attr, ast.Load()), attr)
