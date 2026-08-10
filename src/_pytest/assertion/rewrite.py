@@ -1126,8 +1126,6 @@ class AssertionRewriter(ast.NodeVisitor):
         left_res, left_expl = self.visit_operand(comp.left, comp.comparators)
         if isinstance(comp.left, ast.Compare | ast.BoolOp):
             left_expl = f"({left_expl})"
-        if isinstance(left_res, ast.NamedExpr):
-            left_res = self.assign(left_res)
         res_variables = [self.variable() for i in range(len(comp.ops))]
         load_names: list[ast.expr] = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
