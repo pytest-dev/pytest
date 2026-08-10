@@ -286,13 +286,7 @@ def _validate_marker_names(expr: Expression, config: Config) -> None:
     if not strict_markers:
         return
 
-    registered_markers: set[str] = set()
-    for line in config.getini("markers"):
-        # example lines: "skipif(condition): skip the given test if..."
-        # or "hypothesis: tests which use Hypothesis", so to get the
-        # marker name we split on both `:` and `(`.
-        marker = line.split(":")[0].split("(")[0].strip()
-        registered_markers.add(marker)
+    registered_markers = {m.name for m in config._iter_registered_markers()}
 
     unknown_markers = expr.idents() - registered_markers
     if unknown_markers:
