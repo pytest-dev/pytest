@@ -358,7 +358,14 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         __tracebackhide__ = True
 
         for index, x in enumerate(expected):
-            if isinstance(x, type(expected)):
+            # Use the same predicate the dispatcher uses to recognise a sequence,
+            # so that nesting is rejected consistently. Comparing against
+            # `type(expected)` only caught an element of the *same* type, which let
+            # a tuple inside a list (and a list inside a tuple) through to
+            # ApproxScalar, where it was compared exactly instead of approximately.
+            # Mappings are left alone: they are not sequences, and rejecting them
+            # here would change behaviour beyond this fix.
+            if _is_sequence_like(x) and not isinstance(x, Mapping):
                 msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
                 raise TypeError(msg.format(x, index, pprint.pformat(expected)))
 
