@@ -165,7 +165,14 @@ def test_staticmethod_fixture_not_deprecated(pytester: Pytester, scope: Scope) -
                 pass
         """
     )
-    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    # The definition scope only exists once function definitions are part of
+    # the collection tree, which is opt-in.
+    extra_args = (
+        ["-o", "collect_function_definition=pedantic"]
+        if scope is Scope.Definition
+        else []
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning", *extra_args)
     result.assert_outcomes(passed=1)
 
 
