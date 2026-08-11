@@ -1,0 +1,3 @@
+``ParametrizeContext`` is now the collector-agnostic base of
+:class:`pytest.Metafunc`, which adds the fixture closure, signature validation
+and direct-parameter desugaring on top of it.
