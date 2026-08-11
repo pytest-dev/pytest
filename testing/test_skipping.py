@@ -1386,6 +1386,29 @@ def test_mark_xfail_item(pytester: Pytester) -> None:
     assert xfailed
 
 
+def test_mark_skip_item_without_line_number(pytester: Pytester) -> None:
+    # A non-Python Item may report no line number; skipping it used to
+    # crash with an INTERNALERROR on `assert line is not None`.
+    pytester.makeconftest(
+        """
+        import pytest
+
+        class MyItem(pytest.Item):
+            def runtest(self):
+                raise AssertionError("should not run")
+
+        def pytest_collect_file(file_path, parent):
+            item = MyItem.from_parent(name="foo", parent=parent)
+            item.add_marker(pytest.mark.skip(reason="no line here"))
+            return item
+    """
+    )
+    result = pytester.runpytest("-rs")
+    assert "INTERNALERROR" not in result.stdout.str()
+    result.stdout.fnmatch_lines(["*no line here*"])
+    result.assert_outcomes(skipped=1)
+
+
 def test_summary_list_after_errors(pytester: Pytester) -> None:
     """Ensure the list of errors/fails/xfails/skips appears after tracebacks in terminal reporting."""
     pytester.makepyfile(
