@@ -166,9 +166,20 @@ class Skip:
     reason: str = "unconditional skip"
 
 
+_SKIPIF_KNOWN_KWARGS = frozenset({"condition", "reason"})
+
+
 def evaluate_skip_marks(item: Item) -> Skip | None:
     """Evaluate skip and skipif marks on item, returning Skip if triggered."""
     for mark in item.iter_markers(name="skipif"):
+        unknown = set(mark.kwargs) - _SKIPIF_KNOWN_KWARGS
+        if unknown:
+            formatted = ", ".join(f"{k!r}" for k in sorted(unknown))
+            raise TypeError(
+                f"pytest.mark.skipif() got unexpected keyword argument(s): {formatted}. "
+                f"Valid arguments are: condition, reason."
+            )
+
         if "condition" not in mark.kwargs:
             conditions = mark.args
         else:

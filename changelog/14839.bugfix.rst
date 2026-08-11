@@ -1,0 +1,1 @@
+:func:`pytest.mark.skipif` now raises :class:`TypeError` for unknown keyword arguments (e.g. ``strict=True``, which is only valid for :func:`pytest.mark.xfail`). Previously such arguments were silently ignored. This matches the validation already present for :func:`pytest.mark.skip`.

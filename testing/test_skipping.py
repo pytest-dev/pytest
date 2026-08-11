@@ -944,6 +944,47 @@ class TestSkipif:
         )
         assert result.ret == 0
 
+    def test_skipif_unknown_kwarg_raises_type_error(
+        self, pytester: Pytester
+    ) -> None:
+        """pytest.mark.skipif() must raise TypeError for unknown kwargs.
+
+        Previously extra kwargs like ``strict=True`` (a common mistake when
+        confusing skipif with xfail) were silently ignored. They now raise
+        a clear TypeError, matching the validation already present for
+        pytest.mark.skip(). Fixes #14839.
+        """
+        pytester.makepyfile(
+            """
+            import pytest
+            @pytest.mark.skipif(True, reason="r", strict=True)
+            def test_x():
+                pass
+        """
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            ["*TypeError*pytest.mark.skipif()*unexpected keyword argument*'strict'*"]
+        )
+        assert result.ret != 0
+
+    def test_skipif_multiple_unknown_kwargs_all_reported(
+        self, pytester: Pytester
+    ) -> None:
+        """All unknown kwargs are reported in a single TypeError at once."""
+        pytester.makepyfile(
+            """
+            import pytest
+            @pytest.mark.skipif(False, reason="r", strict=True, run=False)
+            def test_y():
+                pass
+        """
+        )
+        result = pytester.runpytest()
+        # Both unknown kwargs must appear in the error message.
+        result.stdout.fnmatch_lines(["*TypeError*pytest.mark.skipif()*'run'*'strict'*"])
+        assert result.ret != 0
+
 
 def test_skip_not_report_default(pytester: Pytester) -> None:
     p = pytester.makepyfile(
