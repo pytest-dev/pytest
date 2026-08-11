@@ -1226,7 +1226,9 @@ class ExceptionInfoFormatter:
             else:
                 # Fallback to native repr if the exception doesn't have a traceback:
                 # ExceptionInfo objects require a full traceback to work.
-                reprtraceback = ReprTracebackNative(format_exception(type(e), e, None))
+                reprtraceback = ReprTracebackNative(
+                    format_exception(type(e), e, None, chain=False)
+                )
                 reprcrash = None
             repr_chain.append((reprtraceback, reprcrash, description))
 
