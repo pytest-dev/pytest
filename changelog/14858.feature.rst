@@ -1,0 +1,8 @@
+Added :class:`_pytest.nodes.ItemDefinition`, the collector-agnostic base for "a
+definition which generates items". Subclassing it lets a non-Python collector
+have its test definitions parametrized through :hook:`pytest_generate_tests`,
+exactly like Python test functions: declare the accepted names in
+``parametrize_argnames``, build one item per parameter set in ``make_item()``,
+and the chosen values arrive on ``item.callspec.params``. Parameter ids,
+``pytest.param(...)`` marks and node-id selection all work as usual; there is no
+fixture resolution on that path. See :ref:`non-python parametrization`.
