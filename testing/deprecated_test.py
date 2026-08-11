@@ -324,8 +324,8 @@ class TestFixtureNodeidDeprecations:
 
 def test_callspec2_renamed() -> None:
     """Importing/accessing CallSpec2 warns and returns CallSpec."""
+    from _pytest.parametrize import CallSpec
     import _pytest.python as python_mod
-    from _pytest.python import CallSpec
 
     with pytest.warns(pytest.PytestRemovedIn10Warning, match="CallSpec2"):
         from _pytest.python import CallSpec2
