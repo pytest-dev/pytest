@@ -1090,12 +1090,25 @@ class Metafunc:
         # Add direct parametrizations as fixturedefs to arg2fixturedefs by
         # registering artificial DirectParamFixtureDef's such that later at test
         # setup time we can rely on FixtureDefs to exist for all argnames.
-        node = None
+        node: nodes.Node | None = None
         # For scopes higher than function, a DirectParamFixtureDef might have
         # already been created for the scope. We thus store and cache the
         # DirectParamFixtureDef on the node related to the scope.
         if scope_ is Scope.Function:
             name2directparamfixturedef = None
+        elif scope_ is Scope.Definition:
+            if not self.definition.in_collection_tree:
+                fixtures.fail_definition_scope_unavailable(
+                    self.definition.nodeid,
+                    f"parametrize(scope='definition') in {self.function.__name__}",
+                )
+            # The definition is the scope node for its own invocations; unlike
+            # the other scopes it is not found by looking at ancestors.
+            node = self.definition
+            default_def: dict[str, DirectParamFixtureDef[object]] = {}
+            name2directparamfixturedef = node.stash.setdefault(
+                name2directparamfixturedef_key, default_def
+            )
         else:
             collector = self.definition.parent
             assert collector is not None
@@ -1511,6 +1524,17 @@ class FunctionDefinition(PyCollector, nodes.ItemDefinition):
         self.own_markers.extend(get_unpacked_marks(self.obj))
         self.keywords.update((mark.name, mark) for mark in self.own_markers)
         self.keywords.update(self.obj.__dict__)
+
+    @property
+    def in_collection_tree(self) -> bool:
+        """Whether this definition is a node of the collection tree.
+
+        False in the default ``hidden`` mode of
+        :confval:`collect_function_definition`, where the definition only exists
+        transiently during collection -- and thus cannot anchor anything at run
+        time, such as a ``"definition"`` scoped fixture.
+        """
+        return _collect_function_definition_mode(self.config) != "hidden"
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
         children = list(self._generate_functions(self))
