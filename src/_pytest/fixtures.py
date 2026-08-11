@@ -25,7 +25,6 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import Generic
-from typing import Literal
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -70,6 +69,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
+from _pytest.parametrize import _resolve_args_directness
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.scope import HIGH_SCOPES
@@ -85,8 +85,8 @@ if sys.version_info < (3, 11):
 
 if TYPE_CHECKING:
     from _pytest.parametrize import CallSpec
+    from _pytest.parametrize import ParametrizeContext
     from _pytest.python import Function
-    from _pytest.python import Metafunc
     from _pytest.reports import CollectReport
 
 
@@ -326,7 +326,8 @@ def get_param_argkeys(item: nodes.Item, scope: Scope) -> Iterator[ParamArgKey]:
         scoped_item_path = item.path
     elif scope is Scope.Class:
         scoped_item_path = item.path
-        item_cls = item.cls  # type: ignore[attr-defined]
+        # Items which are not Python test functions have no class.
+        item_cls = getattr(item, "cls", None)
     elif scope is Scope.Definition:
         scoped_item_path = item.path
     else:
@@ -1721,45 +1722,6 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-def _resolve_args_directness(
-    argnames: Sequence[str],
-    indirect: bool | Sequence[str],
-    nodeid: str,
-) -> dict[str, Literal["indirect", "direct"]]:
-    """Resolve if each parametrized argument must be considered an indirect
-    parameter to a fixture of the same name, or a direct parameter to the
-    parametrized function, based on the ``indirect`` parameter of the
-    parametrize() call.
-
-    :param argnames:
-        List of argument names passed to ``parametrize()``.
-    :param indirect:
-        Same as the ``indirect`` parameter of ``parametrize()``.
-    :param nodeid:
-        Node ID to which the parametrization is applied.
-    :returns:
-        A dict mapping each arg name to either "indirect" or "direct".
-    """
-    arg_directness: dict[str, Literal["indirect", "direct"]]
-    if isinstance(indirect, bool):
-        arg_directness = dict.fromkeys(argnames, "indirect" if indirect else "direct")
-    elif isinstance(indirect, Sequence):
-        arg_directness = dict.fromkeys(argnames, "direct")
-        for arg in indirect:
-            if arg not in argnames:
-                fail(
-                    f"In {nodeid}: indirect fixture '{arg}' doesn't exist",
-                    pytrace=False,
-                )
-            arg_directness[arg] = "indirect"
-    else:
-        fail(
-            f"In {nodeid}: expected Sequence or boolean for indirect, got {type(indirect).__name__}",
-            pytrace=False,
-        )
-    return arg_directness
-
-
 def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
     if config.option.showfixtures:
         showfixtures(config)
@@ -2043,8 +2005,14 @@ class FixtureManager:
 
         return fixturenames_closure, arg2fixturedefs
 
-    def pytest_generate_tests(self, metafunc: Metafunc) -> None:
+    def pytest_generate_tests(self, metafunc: ParametrizeContext) -> None:
         """Generate new tests based on parametrized fixtures used by the given metafunc"""
+        from _pytest.python import Metafunc
+
+        if not isinstance(metafunc, Metafunc):
+            # The definition's parametrization is not backed by fixtures, so
+            # there are no parametrized fixtures to expand.
+            return
 
         def get_parametrize_mark_argnames(mark: Mark) -> Sequence[str]:
             args, _ = ParameterSet._parse_parametrize_args(*mark.args, **mark.kwargs)

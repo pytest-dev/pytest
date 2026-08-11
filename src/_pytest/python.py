@@ -13,7 +13,6 @@ from collections.abc import Sequence
 import fnmatch
 from functools import partial
 import inspect
-import itertools
 import os
 from pathlib import Path
 import types
@@ -46,27 +45,23 @@ from _pytest.config import UsageError
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import CALLSPEC2_RENAMED
 from _pytest.deprecated import check_ispytest
-from _pytest.fixtures import _resolve_args_directness
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import FixtureRequest
 from _pytest.fixtures import FixtureValue
 from _pytest.fixtures import FuncFixtureInfo
 from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
-from _pytest.mark import ParameterSet
-from _pytest.mark.structures import _HiddenParam
 from _pytest.mark.structures import get_unpacked_marks
-from _pytest.mark.structures import Mark
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
+from _pytest.parametrize import _infer_parametrize_scope
 from _pytest.parametrize import CallSpec
-from _pytest.parametrize import IdMaker
+from _pytest.parametrize import ParametrizeContext
 from _pytest.pathlib import fnmatch_ex
 from _pytest.pathlib import import_path
 from _pytest.pathlib import ImportPathMismatchError
 from _pytest.pathlib import scandir
 from _pytest.scope import Scope
-from _pytest.scope import ScopeName
 from _pytest.stash import StashKey
 from _pytest.warning_types import PytestCollectionWarning
 from _pytest.warning_types import PytestReturnNotNoneWarning
@@ -74,7 +69,6 @@ from _pytest.warning_types import PytestReturnNotNoneWarning
 
 if TYPE_CHECKING:
     from typing_extensions import Self
-
 
 # Modes for the ``collect_function_definition`` option.
 # - "hidden": legacy flat layout; the FunctionDefinition is used transiently to
@@ -492,13 +486,13 @@ class PyCollector(PyobjMixin, nodes.Collector, abc.ABC):
 
     def _genfunctions(
         self, name: str, funcobj
-    ) -> Iterator[Function | FunctionDefinition]:
+    ) -> Iterator[nodes.Item | FunctionDefinition]:
         definition = FunctionDefinition.from_parent(self, name=name, callobj=funcobj)
-        if _collect_function_definition_mode(self.config) == "hidden":
+        if not definition.in_collection_tree:
             # Legacy flat layout: the definition is used only to drive
             # parametrization and is discarded ("hidden"), the invocations are
             # collected directly under this collector.
-            yield from definition._generate_functions(self)
+            yield from definition.generate_items(self)
         else:
             # Insert the function definition as a collector node into the tree;
             # its ``collect()`` yields the (possibly parametrized) invocations.
@@ -909,13 +903,19 @@ name2directparamfixturedef_key = StashKey[dict[str, DirectParamFixtureDef[object
 
 
 @final
-class Metafunc:
+class Metafunc(ParametrizeContext):
     """Objects passed to the :hook:`pytest_generate_tests` hook.
 
     They help to inspect a test function and to generate tests according to
     test configuration or values specified in the class or module where a
     test function is defined.
+
+    The Python-specific :class:`~_pytest.parametrize.ParametrizeContext`: it
+    resolves ``argnames`` against the test function's fixture closure and
+    signature, and desugars direct parametrization into fixtures.
     """
+
+    definition: FunctionDefinition
 
     def __init__(
         self,
@@ -928,12 +928,19 @@ class Metafunc:
         _ispytest: bool = False,
     ) -> None:
         check_ispytest(_ispytest)
-
         #: Access to the underlying :class:`_pytest.python.FunctionDefinition`.
-        self.definition = definition
-
-        #: Access to the :class:`pytest.Config` object for the test session.
-        self.config = config
+        #:
+        #: Access to the :class:`pytest.Config` object for the test session is
+        #: available as ``config``, and the set of fixture names required by the
+        #: test function as ``fixturenames``.
+        super().__init__(
+            definition,
+            config,
+            # Note: passed through by reference, so that a later
+            # prune_dependency_tree() is reflected in ``fixturenames``.
+            argnames=fixtureinfo.names_closure,
+            _ispytest=True,
+        )
 
         #: The module object where the test function is defined in.
         self.module = module
@@ -941,190 +948,53 @@ class Metafunc:
         #: Underlying Python test function.
         self.function = definition.obj
 
-        #: Set of fixture names required by the test function.
-        self.fixturenames = fixtureinfo.names_closure
-
         #: Class object where the test function is defined in or ``None``.
         self.cls = cls
 
+        # The fixture closure driving this parametrization, handed on to the
+        # generated Functions by FunctionDefinition.make_item().
+        self._fixtureinfo = fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
-        # Result of parametrize().
-        self._calls: list[CallSpec] = []
+    @property
+    def _introspection_target(self) -> object:
+        return self.function
 
-        self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
+    @property
+    def _target_name(self) -> str:
+        return cast(str, self.function.__name__)
 
-    def parametrize(
+    def _infer_scope(
+        self, argnames: Sequence[str], indirect: bool | Sequence[str]
+    ) -> Scope:
+        return _infer_parametrize_scope(argnames, self._arg2fixturedefs, indirect)
+
+    def _validate_argnames(
         self,
-        argnames: str | Sequence[str],
-        argvalues: Iterable[ParameterSet | Sequence[object] | object],
-        *,
-        indirect: bool | Sequence[str] = False,
-        ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
-        scope: ScopeName | None = None,
-        _param_mark: Mark | None = None,
+        argnames: Sequence[str],
+        indirect: bool | Sequence[str],
     ) -> None:
-        """Add new invocations to the underlying test function using the list
-        of argvalues for the given argnames. Parametrization is performed
-        during the collection phase. If you need to setup expensive resources
-        see about setting ``indirect`` to do it at test setup time instead.
-
-        Can be called multiple times per test function (but only on different
-        argument names), in which case each call parametrizes all previous
-        parametrizations, e.g.
-
-        ::
-
-            unparametrized:         t
-            parametrize ["x", "y"]: t[x], t[y]
-            parametrize [1, 2]:     t[x-1], t[x-2], t[y-1], t[y-2]
-
-        :param argnames:
-            A comma-separated string denoting one or more argument names, or
-            a list/tuple of argument strings.
-
-        :param argvalues:
-            The list of argvalues determines how often a test is invoked with
-            different argument values.
-
-            If only one argname was specified argvalues is a list of values.
-            If N argnames were specified, argvalues must be a list of
-            N-tuples, where each tuple-element specifies a value for its
-            respective argname.
-
-            .. versionchanged:: 9.1
-
-                Passing a non-:class:`~collections.abc.Collection` iterable
-                (such as a generator or iterator) is deprecated. See
-                :ref:`parametrize-iterators` for details.
-
-        :param indirect:
-            A list of arguments' names (subset of argnames) or a boolean.
-            If True the list contains all names from the argnames. Each
-            argvalue corresponding to an argname in this list will
-            be passed as request.param to its respective argname fixture
-            function so that it can perform more expensive setups during the
-            setup phase of a test rather than at collection time.
-
-        :param ids:
-            Sequence of (or generator for) ids for ``argvalues``,
-            or a callable to return part of the id for each argvalue.
-
-            With sequences (and generators like ``itertools.count()``) the
-            returned ids should be of type ``string``, ``int``, ``float``,
-            ``bool``, or ``None``.
-            They are mapped to the corresponding index in ``argvalues``.
-            ``None`` means to use the auto-generated id.
-
-            .. versionadded:: 8.4
-                :ref:`hidden-param` means to hide the parameter set
-                from the test name. Can only be used at most 1 time, as
-                test names need to be unique.
-
-            If it is a callable it will be called for each entry in
-            ``argvalues``, and the return value is used as part of the
-            auto-generated id for the whole set (where parts are joined with
-            dashes ("-")).
-            This is useful to provide more specific ids for certain items, e.g.
-            dates.  Returning ``None`` will use an auto-generated id.
-
-            If no ids are provided they will be generated automatically from
-            the argvalues.
-
-        :param scope:
-            If specified it denotes the scope of the parameters.
-            The scope is used for grouping tests by parameter instances.
-            It will also override any fixture-function defined scope, allowing
-            to set a dynamic scope using test context or configuration.
-
-        .. versionchanged:: 9.1
-
-            ``indirect``, ``ids`` and ``scope`` are now keyword-only.
-        """
-        nodeid = self.definition.nodeid
-
-        argnames, parametersets = ParameterSet._for_parametrize(
-            argnames,
-            argvalues,
-            self.function,
-            self.config,
-            nodeid=self.definition.nodeid,
-        )
-        del argvalues
-
-        if "request" in argnames:
-            fail(
-                f"{nodeid}: 'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
-                pytrace=False,
-            )
-
-        if scope is not None:
-            scope_ = Scope.from_user(
-                scope, descr=f"parametrize() call in {self.function.__name__}"
-            )
-        else:
-            scope_ = _infer_parametrize_scope(argnames, self._arg2fixturedefs, indirect)
-
         self._validate_if_using_arg_names(argnames, indirect)
 
-        # Use any already (possibly) generated ids with parametrize Marks.
-        if _param_mark and _param_mark._param_ids_from:
-            generated_ids = _param_mark._param_ids_from._param_ids_generated
-            if generated_ids is not None:
-                ids = generated_ids
+    def _register_direct_params(
+        self,
+        argnames: Sequence[str],
+        arg_directness: Mapping[str, Literal["indirect", "direct"]],
+        scope: Scope,
+    ) -> None:
+        """Desugar direct parametrizations into artificial fixturedefs.
 
-        ids = self._resolve_parameter_set_ids(
-            argnames, ids, parametersets, nodeid=self.definition.nodeid
-        )
-
-        # Store used (possibly generated) ids with parametrize Marks.
-        if _param_mark and _param_mark._param_ids_from and generated_ids is None:
-            object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
-
-        # Calculate directness.
-        arg_directness = _resolve_args_directness(
-            argnames, indirect, self.definition.nodeid
-        )
-        self._params_directness.update(arg_directness)
-
-        # Add direct parametrizations as fixturedefs to arg2fixturedefs by
-        # registering artificial DirectParamFixtureDef's such that later at test
-        # setup time we can rely on FixtureDefs to exist for all argnames.
-        node: nodes.Node | None = None
+        Registering a :class:`DirectParamFixtureDef` for every direct argname
+        means that at test setup time we can rely on a FixtureDef existing for
+        all argnames.
+        """
         # For scopes higher than function, a DirectParamFixtureDef might have
         # already been created for the scope. We thus store and cache the
         # DirectParamFixtureDef on the node related to the scope.
-        if scope_ is Scope.Function:
+        if scope is Scope.Function:
             name2directparamfixturedef = None
-        elif scope_ is Scope.Definition:
-            if not self.definition.in_collection_tree:
-                fixtures.fail_definition_scope_unavailable(
-                    self.definition.nodeid,
-                    f"parametrize(scope='definition') in {self.function.__name__}",
-                )
-            # The definition is the scope node for its own invocations; unlike
-            # the other scopes it is not found by looking at ancestors.
-            node = self.definition
-            default_def: dict[str, DirectParamFixtureDef[object]] = {}
-            name2directparamfixturedef = node.stash.setdefault(
-                name2directparamfixturedef_key, default_def
-            )
         else:
-            collector = self.definition.parent
-            assert collector is not None
-            node = get_scope_node(collector, scope_)
-            if node is None:
-                # If used class scope and there is no class, use module-level
-                # collector (for now).
-                if scope_ is Scope.Class:
-                    assert isinstance(collector, Module)
-                    node = collector
-                # If used package scope and there is no package, use session
-                # (for now).
-                elif scope_ is Scope.Package:
-                    node = collector.session
-                else:
-                    assert False, f"Unhandled missing scope: {scope}"
+            node = self._scope_node_for_direct_params(scope)
             default: dict[str, DirectParamFixtureDef[object]] = {}
             name2directparamfixturedef = node.stash.setdefault(
                 name2directparamfixturedef_key, default
@@ -1141,96 +1011,39 @@ class Metafunc:
                 fixturedef = DirectParamFixtureDef(
                     node=self.definition.session,
                     argname=argname,
-                    scope=scope_,
+                    scope=scope,
                 )
                 if name2directparamfixturedef is not None:
                     name2directparamfixturedef[argname] = fixturedef
             self._arg2fixturedefs[argname] = [fixturedef]
 
-        # Create the new calls: if we are parametrize() multiple times (by applying the decorator
-        # more than once) then we accumulate those calls generating the cartesian product
-        # of all calls.
-        newcalls = []
-        for callspec in self._calls or [CallSpec()]:
-            for param_index, (param_id, param_set) in enumerate(
-                zip(ids, parametersets, strict=True)
-            ):
-                newcallspec = callspec.setmulti(
-                    argnames=argnames,
-                    valset=param_set.values,
-                    id=param_id,
-                    marks=param_set.marks,
-                    scope=scope_,
-                    param_index=param_index,
-                    nodeid=nodeid,
+    def _scope_node_for_direct_params(self, scope: Scope) -> nodes.Node:
+        """The node the DirectParamFixtureDefs for ``scope`` are cached on."""
+        if scope is Scope.Definition:
+            if not self.definition.in_collection_tree:
+                fixtures.fail_definition_scope_unavailable(
+                    self.definition.nodeid,
+                    f"parametrize(scope='definition') in {self._target_name}",
                 )
-                newcalls.append(newcallspec)
-        self._calls = newcalls
-
-    def _resolve_parameter_set_ids(
-        self,
-        argnames: Sequence[str],
-        ids: Iterable[object | None] | Callable[[Any], object | None] | None,
-        parametersets: Sequence[ParameterSet],
-        nodeid: str,
-    ) -> list[str | _HiddenParam]:
-        """Resolve the actual ids for the given parameter sets.
-
-        :param argnames:
-            Argument names passed to ``parametrize()``.
-        :param ids:
-            The `ids` parameter of the ``parametrize()`` call (see docs).
-        :param parametersets:
-            The parameter sets, each containing a set of values corresponding
-            to ``argnames``.
-        :param nodeid str:
-            The nodeid of the definition item that generated this
-            parametrization.
-        :returns:
-            List with ids for each parameter set given.
-        """
-        if ids is None:
-            idfn = None
-            ids_ = None
-        elif callable(ids):
-            idfn = ids
-            ids_ = None
-        else:
-            idfn = None
-            ids_ = self._validate_ids(ids, parametersets)
-        id_maker = IdMaker(
-            argnames,
-            parametersets,
-            idfn,
-            ids_,
-            self.config,
-            nodeid=nodeid,
-        )
-        return id_maker.make_unique_parameterset_ids()
-
-    def _validate_ids(
-        self,
-        ids: Iterable[object | None],
-        parametersets: Sequence[ParameterSet],
-    ) -> list[object | None]:
-        try:
-            num_ids = len(ids)  # type: ignore[arg-type]
-        except TypeError:
-            try:
-                iter(ids)
-            except TypeError as e:
-                raise TypeError("ids must be a callable or an iterable") from e
-            num_ids = len(parametersets)
-
-        # num_ids == 0 is a special case: https://github.com/pytest-dev/pytest/issues/1849
-        if num_ids != len(parametersets) and num_ids != 0:
-            nodeid = self.definition.nodeid
-            fail(
-                f"In {nodeid}: {len(parametersets)} parameter sets specified, with different number of ids: {num_ids}",
-                pytrace=False,
-            )
-
-        return list(itertools.islice(ids, num_ids))
+            # The definition is the scope node for its own invocations; unlike
+            # the other scopes it is not found by looking at ancestors.
+            return self.definition
+        collector = self.definition.parent
+        assert collector is not None
+        node = get_scope_node(collector, scope)
+        if node is None:
+            # If used class scope and there is no class, use module-level
+            # collector (for now).
+            if scope is Scope.Class:
+                assert isinstance(collector, Module)
+                node = collector
+            # If used package scope and there is no package, use session
+            # (for now).
+            elif scope is Scope.Package:
+                node = collector.session
+            else:
+                assert False, f"Unhandled missing scope: {scope}"
+        return node
 
     def _validate_if_using_arg_names(
         self,
@@ -1261,46 +1074,6 @@ class Metafunc:
                         f"In {nodeid}: function uses no {name} '{arg}'",
                         pytrace=False,
                     )
-
-    def _recompute_direct_params_indices(self) -> None:
-        for argname, param_type in self._params_directness.items():
-            if param_type == "direct":
-                for i, callspec in enumerate(self._calls):
-                    callspec.indices[argname] = i
-
-
-def _infer_parametrize_scope(
-    argnames: Sequence[str],
-    arg2fixturedefs: Mapping[str, Sequence[fixtures.FixtureDef[object]]],
-    indirect: bool | Sequence[str],
-) -> Scope:
-    """Infer the most appropriate scope for a parametrize() call based on its
-    arguments, for when the scope is not explicitly specified.
-
-    When there's at least one direct argument, always use "function" scope.
-
-    When a test function is parametrized and all its arguments are indirect
-    (e.g. fixtures), return the most narrow scope based on the fixtures used.
-
-    Related to issue #1832, based on code posted by @Kingdread.
-    """
-    if isinstance(indirect, Sequence):
-        all_arguments_are_fixtures = len(indirect) == len(argnames)
-    else:
-        all_arguments_are_fixtures = bool(indirect)
-
-    if all_arguments_are_fixtures:
-        # Takes the most narrow scope from used fixtures.
-        used_scopes = (
-            # Higher scope can't request lower scope, so it's OK to only
-            # look at the first fixturedef in the override chain.
-            arg2fixturedefs[argname][-1]._scope
-            for argname in argnames
-            if argname in arg2fixturedefs
-        )
-        return min(used_scopes, default=Scope.Function)
-
-    return Scope.Function
 
 
 class Function(PyobjMixin, nodes.Item):
@@ -1491,7 +1264,7 @@ class Function(PyobjMixin, nodes.Item):
         return self._repr_failure_py(excinfo, style=style)
 
 
-class FunctionDefinition(PyCollector, nodes.ItemDefinition):
+class FunctionDefinition(nodes.ItemDefinition, PyCollector):
     """Collector node for a single test function definition.
 
     Its children are the (possibly parametrized) :class:`Function` invocations
@@ -1537,7 +1310,7 @@ class FunctionDefinition(PyCollector, nodes.ItemDefinition):
         return _collect_function_definition_mode(self.config) != "hidden"
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
-        children = list(self._generate_functions(self))
+        children = list(super().collect())
         if _collect_function_definition_mode(self.config) == "messy":
             # Legacy marker layout: transfer this scope's markers back onto each
             # invocation and drop them here, so marker resolution matches the flat
@@ -1549,23 +1322,24 @@ class FunctionDefinition(PyCollector, nodes.ItemDefinition):
             self.own_markers = []
         return children
 
-    def _generate_functions(self, parent: nodes.Collector) -> Iterator[Function]:
-        """Run :hook:`pytest_generate_tests` and yield the resulting
-        :class:`Function` invocations under ``parent``.
+    # The generate-tests protocol, see nodes.ItemDefinition.
 
-        ``parent`` is this definition node when it is part of the tree, or the
-        containing :class:`Class`/:class:`Module` in the legacy flat layout.
-        """
-        name = self.name
+    @property
+    def _module_obj(self) -> types.ModuleType:
         modulecol = self.getparent(Module)
         assert modulecol is not None
-        module = modulecol.obj
-        clscol = self.getparent(Class)
-        cls = (clscol and clscol.obj) or None
+        return cast(types.ModuleType, modulecol.obj)
 
+    @property
+    def _cls_obj(self) -> type | None:
+        clscol = self.getparent(Class)
+        return (clscol and clscol.obj) or None
+
+    def make_parametrize_context(self) -> Metafunc:
+        cls = self._cls_obj
         # Compute the function's fixture closure. This drives parametrization and
-        # is shared with the generated invocations; it is intentionally *not*
-        # stored on the definition -- fixtures belong to the executed items, not
+        # is shared with the generated invocations; it is carried by the Metafunc
+        # rather than stored here -- fixtures belong to the executed items, not
         # to this collector.
         # TODO(#3926): getfixtureinfo() is item-scoped, but here the definition
         # (a collector) stands in for the not-yet-created invocations. Resolve by
@@ -1574,58 +1348,62 @@ class FunctionDefinition(PyCollector, nodes.ItemDefinition):
         fixtureinfo = self.session._fixturemanager.getfixtureinfo(
             cast(nodes.Item, self), self.obj, cls
         )
-
-        # pytest_generate_tests impls call metafunc.parametrize() which fills
-        # metafunc._calls, the outcome of the hook.
-        metafunc = Metafunc(
+        return Metafunc(
             definition=self,
             fixtureinfo=fixtureinfo,
             config=self.config,
             cls=cls,
-            module=module,
+            module=self._module_obj,
             _ispytest=True,
         )
+
+    def parametrize_hook_extras(self) -> Sequence[Callable[..., object]]:
+        module = self._module_obj
+        cls = self._cls_obj
         methods = []
         if hasattr(module, "pytest_generate_tests"):
             methods.append(module.pytest_generate_tests)
         if cls is not None and hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
-        self.ihook.pytest_generate_tests.call_extra(methods, dict(metafunc=metafunc))
+        return methods
 
-        # The invocations keep a flat nodeid anchored at the collector containing
-        # the definition, regardless of whether the definition itself is part of
-        # the tree, so nodeids are stable across the ``collect_function_definition``
-        # option.
-        assert self.parent is not None
-        base_nodeid = self.parent.nodeid
+    def finalize_parametrization(self, context: ParametrizeContext) -> None:
+        super().finalize_parametrization(context)
+        # Direct parametrizations taking place in module/class-specific
+        # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
+        # we update what the function really needs a.k.a its fixture closure. Note that
+        # direct parametrizations using `@pytest.mark.parametrize` have already been considered
+        # into making the closure using `ignore_args` arg to `getfixtureclosure`.
+        assert isinstance(context, Metafunc)
+        context._fixtureinfo.prune_dependency_tree()
 
-        if not metafunc._calls:
-            yield Function.from_parent(
+    def make_item(
+        self,
+        parent: nodes.Collector,
+        *,
+        name: str,
+        callspec: CallSpec | None,
+        nodeid: str,
+        context: ParametrizeContext,
+    ) -> Function:
+        assert isinstance(context, Metafunc)
+        fixtureinfo = context._fixtureinfo
+        if callspec is None:
+            return Function.from_parent(
                 parent,
                 name=name,
                 fixtureinfo=fixtureinfo,
-                nodeid=f"{base_nodeid}::{name}",
+                nodeid=nodeid,
             )
-        else:
-            metafunc._recompute_direct_params_indices()
-            # Direct parametrizations taking place in module/class-specific
-            # `metafunc.parametrize` calls may have shadowed some fixtures, so make sure
-            # we update what the function really needs a.k.a its fixture closure. Note that
-            # direct parametrizations using `@pytest.mark.parametrize` have already been considered
-            # into making the closure using `ignore_args` arg to `getfixtureclosure`.
-            fixtureinfo.prune_dependency_tree()
-
-            for callspec in metafunc._calls:
-                subname = f"{name}[{callspec.id}]" if callspec._idlist else name
-                yield Function.from_parent(
-                    parent,
-                    name=subname,
-                    callspec=callspec,
-                    fixtureinfo=fixtureinfo,
-                    keywords={callspec.id: True},
-                    originalname=name,
-                    nodeid=f"{base_nodeid}::{subname}",
-                )
+        return Function.from_parent(
+            parent,
+            name=name,
+            callspec=callspec,
+            fixtureinfo=fixtureinfo,
+            keywords={callspec.id: True},
+            originalname=self.name,
+            nodeid=nodeid,
+        )
 
 
 def __getattr__(name: str) -> object:

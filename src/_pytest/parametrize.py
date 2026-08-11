@@ -1,13 +1,14 @@
-"""The parametrization core.
+"""The parametrization core: turning ``parametrize()`` calls into callspecs.
 
-Holds the pieces which turn a set of parameter sets into planned invocations,
-independent of what is being parametrized:
+This machinery is deliberately independent of the Python test collector, so
+that any :class:`~_pytest.nodes.ItemDefinition` -- not only
+:class:`~_pytest.python.FunctionDefinition` -- can be parametrized through
+:hook:`pytest_generate_tests`.
 
-* :class:`IdMaker` -- derives the ``[...]`` ids of a parametrization.
-* :class:`CallSpec` -- one planned invocation and its parameters.
-
-:class:`~_pytest.python.Metafunc` drives these for Python test functions and
-re-exports them, so ``_pytest.python.CallSpec`` keeps working.
+:class:`~_pytest.python.Metafunc` is the Python-specific subclass of
+:class:`ParametrizeContext` and remains the object plugins receive for Python
+tests. ``CallSpec``, ``IdMaker`` and friends live here rather than in
+``python.py`` for the same reason, and are re-exported from there.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from collections.abc import Sequence
 import dataclasses
 import enum
 import hashlib
+import itertools
 import re
 import textwrap
 from typing import Any
@@ -29,12 +31,14 @@ from typing import final
 from typing import get_args
 from typing import Literal
 from typing import NoReturn
+from typing import TYPE_CHECKING
 
 from _pytest._io.saferepr import saferepr
 from _pytest.compat import ascii_escaped
 from _pytest.compat import NotSetType
 from _pytest.config import Config
 from _pytest.config import UsageError
+from _pytest.deprecated import check_ispytest
 from _pytest.mark.structures import _HiddenParam
 from _pytest.mark.structures import HIDDEN_PARAM
 from _pytest.mark.structures import Mark
@@ -43,6 +47,12 @@ from _pytest.mark.structures import normalize_mark_list
 from _pytest.mark.structures import ParameterSet
 from _pytest.outcomes import fail
 from _pytest.scope import Scope
+from _pytest.scope import ScopeName
+
+
+if TYPE_CHECKING:
+    from _pytest import nodes
+    from _pytest.fixtures import FixtureDef
 
 
 LongStrIdStrategy = Literal["short", "sha256", "legacy", "disallow"]
@@ -54,7 +64,8 @@ _LONG_STR_STRATEGIES: frozenset[LongStrIdStrategy] = frozenset(
 def _collect_error(msg: str) -> Exception:
     """Build a ``Collector.CollectError``.
 
-    Imported lazily so that ``nodes`` stays free to import this module.
+    ``nodes`` imports this module (for :class:`~_pytest.nodes.ItemDefinition`),
+    so it can only be imported here lazily.
     """
     from _pytest.nodes import Collector
 
@@ -401,3 +412,399 @@ def _ascii_escaped_by_config(val: str | bytes, config: Config | None) -> str:
     #       will return a bytes. For now we ignore this but the
     #       code *probably* doesn't handle this case.
     return val if escape_option else ascii_escaped(val)  # type: ignore
+
+
+def _infer_parametrize_scope(
+    argnames: Sequence[str],
+    arg2fixturedefs: Mapping[str, Sequence[FixtureDef[object]]],
+    indirect: bool | Sequence[str],
+) -> Scope:
+    """Infer the most appropriate scope for a parametrize() call based on its
+    arguments, for when the scope is not explicitly specified.
+
+    When there's at least one direct argument, always use "function" scope.
+
+    When a test function is parametrized and all its arguments are indirect
+    (e.g. fixtures), return the most narrow scope based on the fixtures used.
+
+    Related to issue #1832, based on code posted by @Kingdread.
+    """
+    if isinstance(indirect, Sequence):
+        all_arguments_are_fixtures = len(indirect) == len(argnames)
+    else:
+        all_arguments_are_fixtures = bool(indirect)
+
+    if all_arguments_are_fixtures:
+        # Takes the most narrow scope from used fixtures.
+        used_scopes = (
+            # Higher scope can't request lower scope, so it's OK to only
+            # look at the first fixturedef in the override chain.
+            arg2fixturedefs[argname][-1]._scope
+            for argname in argnames
+            if argname in arg2fixturedefs
+        )
+        return min(used_scopes, default=Scope.Function)
+
+    return Scope.Function
+
+
+def _resolve_args_directness(
+    argnames: Sequence[str],
+    indirect: bool | Sequence[str],
+    nodeid: str,
+) -> dict[str, Literal["indirect", "direct"]]:
+    """Resolve if each parametrized argument must be considered an indirect
+    parameter to a fixture of the same name, or a direct parameter to the
+    parametrized function, based on the ``indirect`` parameter of the
+    parametrize() call.
+
+    :param argnames:
+        List of argument names passed to ``parametrize()``.
+    :param indirect:
+        Same as the ``indirect`` parameter of ``parametrize()``.
+    :param nodeid:
+        Node ID to which the parametrization is applied.
+    :returns:
+        A dict mapping each arg name to either "indirect" or "direct".
+    """
+    arg_directness: dict[str, Literal["indirect", "direct"]]
+    if isinstance(indirect, bool):
+        arg_directness = dict.fromkeys(argnames, "indirect" if indirect else "direct")
+    elif isinstance(indirect, Sequence):
+        arg_directness = dict.fromkeys(argnames, "direct")
+        for arg in indirect:
+            if arg not in argnames:
+                fail(
+                    f"In {nodeid}: indirect fixture '{arg}' doesn't exist",
+                    pytrace=False,
+                )
+            arg_directness[arg] = "indirect"
+    else:
+        fail(
+            f"In {nodeid}: expected Sequence or boolean for indirect, got {type(indirect).__name__}",
+            pytrace=False,
+        )
+    return arg_directness
+
+
+class ParametrizeContext:
+    """The object passed to :hook:`pytest_generate_tests`.
+
+    Accumulates :meth:`parametrize` calls into a list of :class:`CallSpec`
+    objects, which the owning :class:`~_pytest.nodes.ItemDefinition` then turns
+    into items.
+
+    For Python tests this is subclassed by :class:`pytest.Metafunc`, which adds
+    the fixture-aware behaviour: scope inference from fixture scopes, indirect
+    parametrization and validation against the test function's signature.
+
+    A non-Python definition can use this class as-is. It declares the names it
+    accepts up front (``argnames``), and the values chosen for them are handed
+    to the generated items on ``item.callspec.params``; there is no fixture
+    resolution involved.
+    """
+
+    def __init__(
+        self,
+        definition: nodes.ItemDefinition,
+        config: Config,
+        *,
+        argnames: Sequence[str] = (),
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+
+        #: The definition being parametrized.
+        self.definition = definition
+
+        #: Access to the :class:`pytest.Config` object for the test session.
+        self.config = config
+
+        #: The names this definition can be parametrized on.
+        #:
+        #: Named ``fixturenames`` rather than ``argnames`` because that is what
+        #: :hook:`pytest_generate_tests` implementations in the wild inspect --
+        #: keeping the name is what lets them work with non-Python definitions.
+        #:
+        #: Stored by reference, so that a caller which later narrows the
+        #: sequence in place (as the Python fixture closure does) is reflected
+        #: here.
+        self.fixturenames: Sequence[str] = argnames
+
+        # Result of parametrize().
+        self._calls: list[CallSpec] = []
+
+        self._params_directness: dict[str, Literal["indirect", "direct"]] = {}
+
+    # Seams for subclasses. The Python implementation (Metafunc) overrides
+    # these to bring fixtures and the test function's signature into play.
+
+    @property
+    def _introspection_target(self) -> object:
+        """The object to introspect for a signature and a source location.
+
+        Used when reporting an empty parameter set. Defaults to the definition
+        node, for which the source location degrades to "unknown"; Metafunc
+        returns the test function.
+        """
+        return self.definition
+
+    @property
+    def _target_name(self) -> str:
+        """Human readable name of what is being parametrized."""
+        return self.definition.name
+
+    def _infer_scope(
+        self, argnames: Sequence[str], indirect: bool | Sequence[str]
+    ) -> Scope:
+        """Determine the scope of a parametrize() call that did not specify one."""
+        return Scope.Function
+
+    def _validate_argnames(
+        self, argnames: Sequence[str], indirect: bool | Sequence[str]
+    ) -> None:
+        """Check that the definition actually accepts all of ``argnames``."""
+        for argname in argnames:
+            if argname not in self.fixturenames:
+                kind = "fixture" if indirect else "argument"
+                fail(
+                    f"In {self.definition.nodeid}: definition uses no {kind} '{argname}'",
+                    pytrace=False,
+                )
+
+    def _register_direct_params(
+        self,
+        argnames: Sequence[str],
+        arg_directness: Mapping[str, Literal["indirect", "direct"]],
+        scope: Scope,
+    ) -> None:
+        """Hook for making the chosen params reachable at setup time.
+
+        Only meaningful where parametrization feeds a fixture system; the
+        generic path delivers params on ``item.callspec.params`` instead.
+        """
+
+    def parametrize(
+        self,
+        argnames: str | Sequence[str],
+        argvalues: Iterable[ParameterSet | Sequence[object] | object],
+        *,
+        indirect: bool | Sequence[str] = False,
+        ids: Iterable[object | None] | Callable[[Any], object | None] | None = None,
+        scope: ScopeName | None = None,
+        _param_mark: Mark | None = None,
+    ) -> None:
+        """Add new invocations to the underlying test function using the list
+        of argvalues for the given argnames. Parametrization is performed
+        during the collection phase. If you need to setup expensive resources
+        see about setting ``indirect`` to do it at test setup time instead.
+
+        Can be called multiple times per test function (but only on different
+        argument names), in which case each call parametrizes all previous
+        parametrizations, e.g.
+
+        ::
+
+            unparametrized:         t
+            parametrize ["x", "y"]: t[x], t[y]
+            parametrize [1, 2]:     t[x-1], t[x-2], t[y-1], t[y-2]
+
+        :param argnames:
+            A comma-separated string denoting one or more argument names, or
+            a list/tuple of argument strings.
+
+        :param argvalues:
+            The list of argvalues determines how often a test is invoked with
+            different argument values.
+
+            If only one argname was specified argvalues is a list of values.
+            If N argnames were specified, argvalues must be a list of
+            N-tuples, where each tuple-element specifies a value for its
+            respective argname.
+
+            .. versionchanged:: 9.1
+
+                Passing a non-:class:`~collections.abc.Collection` iterable
+                (such as a generator or iterator) is deprecated. See
+                :ref:`parametrize-iterators` for details.
+
+        :param indirect:
+            A list of arguments' names (subset of argnames) or a boolean.
+            If True the list contains all names from the argnames. Each
+            argvalue corresponding to an argname in this list will
+            be passed as request.param to its respective argname fixture
+            function so that it can perform more expensive setups during the
+            setup phase of a test rather than at collection time.
+
+        :param ids:
+            Sequence of (or generator for) ids for ``argvalues``,
+            or a callable to return part of the id for each argvalue.
+
+            With sequences (and generators like ``itertools.count()``) the
+            returned ids should be of type ``string``, ``int``, ``float``,
+            ``bool``, or ``None``.
+            They are mapped to the corresponding index in ``argvalues``.
+            ``None`` means to use the auto-generated id.
+
+            .. versionadded:: 8.4
+                :ref:`hidden-param` means to hide the parameter set
+                from the test name. Can only be used at most 1 time, as
+                test names need to be unique.
+
+            If it is a callable it will be called for each entry in
+            ``argvalues``, and the return value is used as part of the
+            auto-generated id for the whole set (where parts are joined with
+            dashes ("-")).
+            This is useful to provide more specific ids for certain items, e.g.
+            dates.  Returning ``None`` will use an auto-generated id.
+
+            If no ids are provided they will be generated automatically from
+            the argvalues.
+
+        :param scope:
+            If specified it denotes the scope of the parameters.
+            The scope is used for grouping tests by parameter instances.
+            It will also override any fixture-function defined scope, allowing
+            to set a dynamic scope using test context or configuration.
+
+        .. versionchanged:: 9.1
+
+            ``indirect``, ``ids`` and ``scope`` are now keyword-only.
+        """
+        nodeid = self.definition.nodeid
+
+        argnames, parametersets = ParameterSet._for_parametrize(
+            argnames,
+            argvalues,
+            self._introspection_target,
+            self.config,
+            nodeid=nodeid,
+        )
+        del argvalues
+
+        if "request" in argnames:
+            fail(
+                f"{nodeid}: 'request' is a reserved name and cannot be used in @pytest.mark.parametrize",
+                pytrace=False,
+            )
+
+        if scope is not None:
+            scope_ = Scope.from_user(
+                scope, descr=f"parametrize() call in {self._target_name}"
+            )
+        else:
+            scope_ = self._infer_scope(argnames, indirect)
+
+        self._validate_argnames(argnames, indirect)
+
+        # Use any already (possibly) generated ids with parametrize Marks.
+        generated_ids = None
+        if _param_mark and _param_mark._param_ids_from:
+            generated_ids = _param_mark._param_ids_from._param_ids_generated
+            if generated_ids is not None:
+                ids = generated_ids
+
+        ids = self._resolve_parameter_set_ids(
+            argnames, ids, parametersets, nodeid=nodeid
+        )
+
+        # Store used (possibly generated) ids with parametrize Marks.
+        if _param_mark and _param_mark._param_ids_from and generated_ids is None:
+            object.__setattr__(_param_mark._param_ids_from, "_param_ids_generated", ids)
+
+        # Calculate directness.
+        arg_directness = _resolve_args_directness(argnames, indirect, nodeid)
+        self._params_directness.update(arg_directness)
+
+        self._register_direct_params(argnames, arg_directness, scope_)
+
+        # Create the new calls: if we are parametrize() multiple times (by applying the decorator
+        # more than once) then we accumulate those calls generating the cartesian product
+        # of all calls.
+        newcalls = []
+        for callspec in self._calls or [CallSpec()]:
+            for param_index, (param_id, param_set) in enumerate(
+                zip(ids, parametersets, strict=True)
+            ):
+                newcallspec = callspec.setmulti(
+                    argnames=argnames,
+                    valset=param_set.values,
+                    id=param_id,
+                    marks=param_set.marks,
+                    scope=scope_,
+                    param_index=param_index,
+                    nodeid=nodeid,
+                )
+                newcalls.append(newcallspec)
+        self._calls = newcalls
+
+    def _resolve_parameter_set_ids(
+        self,
+        argnames: Sequence[str],
+        ids: Iterable[object | None] | Callable[[Any], object | None] | None,
+        parametersets: Sequence[ParameterSet],
+        nodeid: str,
+    ) -> list[str | _HiddenParam]:
+        """Resolve the actual ids for the given parameter sets.
+
+        :param argnames:
+            Argument names passed to ``parametrize()``.
+        :param ids:
+            The `ids` parameter of the ``parametrize()`` call (see docs).
+        :param parametersets:
+            The parameter sets, each containing a set of values corresponding
+            to ``argnames``.
+        :param nodeid str:
+            The nodeid of the definition item that generated this
+            parametrization.
+        :returns:
+            List with ids for each parameter set given.
+        """
+        if ids is None:
+            idfn = None
+            ids_ = None
+        elif callable(ids):
+            idfn = ids
+            ids_ = None
+        else:
+            idfn = None
+            ids_ = self._validate_ids(ids, parametersets)
+        id_maker = IdMaker(
+            argnames,
+            parametersets,
+            idfn,
+            ids_,
+            self.config,
+            nodeid=nodeid,
+        )
+        return id_maker.make_unique_parameterset_ids()
+
+    def _validate_ids(
+        self,
+        ids: Iterable[object | None],
+        parametersets: Sequence[ParameterSet],
+    ) -> list[object | None]:
+        try:
+            num_ids = len(ids)  # type: ignore[arg-type]
+        except TypeError:
+            try:
+                iter(ids)
+            except TypeError as e:
+                raise TypeError("ids must be a callable or an iterable") from e
+            num_ids = len(parametersets)
+
+        # num_ids == 0 is a special case: https://github.com/pytest-dev/pytest/issues/1849
+        if num_ids != len(parametersets) and num_ids != 0:
+            nodeid = self.definition.nodeid
+            fail(
+                f"In {nodeid}: {len(parametersets)} parameter sets specified, with different number of ids: {num_ids}",
+                pytrace=False,
+            )
+
+        return list(itertools.islice(ids, num_ids))
+
+    def _recompute_direct_params_indices(self) -> None:
+        for argname, param_type in self._params_directness.items():
+            if param_type == "direct":
+                for i, callspec in enumerate(self._calls):
+                    callspec.indices[argname] = i

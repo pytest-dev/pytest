@@ -235,7 +235,7 @@ class TestMetafunc:
 
     def test_infer_parametrize_scope(self) -> None:
         """Unit test for _infer_parameterize_scope (#3941)."""
-        from _pytest.python import _infer_parametrize_scope
+        from _pytest.parametrize import _infer_parametrize_scope
 
         @dataclasses.dataclass
         class DummyFixtureDef:
