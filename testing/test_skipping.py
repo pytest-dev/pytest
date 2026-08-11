@@ -944,9 +944,7 @@ class TestSkipif:
         )
         assert result.ret == 0
 
-    def test_skipif_unknown_kwarg_raises_type_error(
-        self, pytester: Pytester
-    ) -> None:
+    def test_skipif_unknown_kwarg_raises_type_error(self, pytester: Pytester) -> None:
         """pytest.mark.skipif() must raise TypeError for unknown kwargs.
 
         Previously extra kwargs like ``strict=True`` (a common mistake when
