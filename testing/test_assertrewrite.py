@@ -356,6 +356,90 @@ class TestAssertionRewrite:
         result = pytester.runpytest_subprocess()
         assert "warning" not in "".join(result.outlines)
 
+    def test_dont_rewrite_class_body_assert(self) -> None:
+        """Asserts in class bodies are not rewritten (#9582)."""
+        # Note: body[0] and body[1] are the special imports inserted by the
+        # rewriter; the class definition starts at body[2].
+        m = rewrite("class A:\n    assert True")
+        assert isinstance(m.body[2], ast.ClassDef)
+        assert isinstance(m.body[2].body[0], ast.Assert)
+
+        # Asserts in control flow of a class body are not rewritten either.
+        m = rewrite("class A:\n    if True:\n        assert True")
+        class_def = m.body[2]
+        assert isinstance(class_def, ast.ClassDef)
+        if_stmt = class_def.body[0]
+        assert isinstance(if_stmt, ast.If)
+        assert isinstance(if_stmt.body[0], ast.Assert)
+
+        # But asserts in methods are still rewritten.
+        m = rewrite("class A:\n    def f(self):\n        assert True")
+        class_def = m.body[2]
+        assert isinstance(class_def, ast.ClassDef)
+        func_def = class_def.body[0]
+        assert isinstance(func_def, ast.FunctionDef)
+        assert not any(isinstance(node, ast.Assert) for node in ast.walk(func_def))
+
+    def test_assert_in_enum_class_body(self, pytester: Pytester) -> None:
+        """Asserts in Enum class bodies no longer break collection (#9582)."""
+        pytester.makepyfile(
+            """
+            from enum import Enum
+
+            STEP = 100
+
+            class SomeEnum(Enum):
+                FIRST = 100
+                SECOND = FIRST + STEP
+                THIRD = SECOND + STEP
+
+                assert THIRD == 300
+
+            def test_enum():
+                assert SomeEnum.THIRD.value == 300
+            """
+        )
+        pytester.runpytest().assert_outcomes(passed=1)
+
+    def test_asserts_in_enum_class_body(self, pytester: Pytester) -> None:
+        """Multiple asserts in one Enum class body (#9582)."""
+        pytester.makepyfile(
+            """
+            from enum import Enum
+
+            class SomeEnum(Enum):
+                FIRST = 100
+                SECOND = 200
+
+                assert FIRST < SECOND
+                assert SECOND == 200
+
+            def test_enum():
+                assert SomeEnum.SECOND.value == 200
+            """
+        )
+        pytester.runpytest().assert_outcomes(passed=1)
+
+    def test_assert_in_class_method_still_rewritten(self, pytester: Pytester) -> None:
+        """Asserts inside methods of classes are still rewritten (#9582)."""
+        pytester.makepyfile(
+            """
+            from enum import Enum
+
+            class SomeEnum(Enum):
+                FIRST = 1
+
+                def check(self):
+                    assert self.value == 2
+
+            def test_method():
+                SomeEnum.FIRST.check()
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(failed=1)
+        result.stdout.fnmatch_lines(["*assert 1 == 2*"])
+
     def test_rewrites_plugin_as_a_package(self, pytester: Pytester) -> None:
         pkgdir = pytester.mkpydir("plugin")
         pkgdir.joinpath("__init__.py").write_text(

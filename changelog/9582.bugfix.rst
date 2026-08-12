@@ -1,0 +1,1 @@
+Fixed a ``TypeError`` during collection when a class body contained an ``assert`` statement and the class used a namespace with restricted semantics, such as :class:`enum.Enum` subclasses: asserts in class bodies are no longer rewritten, while asserts inside methods remain rewritten as before.

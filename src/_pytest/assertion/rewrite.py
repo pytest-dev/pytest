@@ -744,8 +744,18 @@ class AssertionRewriter(ast.NodeVisitor):
                     new: list[ast.AST] = []
                     for i, child in enumerate(field):
                         if isinstance(child, ast.Assert):
-                            # Transform assert.
-                            new.extend(self.visit(child))
+                            if isinstance(self.scope[-1], ast.ClassDef):
+                                # Don't rewrite asserts directly in class
+                                # bodies: the class execution namespace may
+                                # have special semantics (e.g. Enum forbids
+                                # reusing keys), which our temporary variables
+                                # would break (#9582). Asserts inside methods
+                                # are still rewritten, as functions get their
+                                # own scope.
+                                new.append(child)
+                            else:
+                                # Transform assert.
+                                new.extend(self.visit(child))
                         else:
                             new.append(child)
                             if isinstance(child, ast.AST):
