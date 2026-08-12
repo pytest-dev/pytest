@@ -38,8 +38,8 @@ from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
-from _pytest.pathlib import scandir
 from _pytest.pathlib import samefile_nofollow
+from _pytest.pathlib import scandir
 from _pytest.pathlib import spec_matches_module_path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
