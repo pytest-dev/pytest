@@ -570,6 +570,65 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
     assert getattr(module, "foo")() == 42
 
 
+def test_samefile_nofollow_st_ino_zero(tmp_path: Path, monkeypatch) -> None:
+    """Regression test for #14864.
+
+    On some filesystems (Windows network drives mounted via sshfs, FAT32,
+    certain /proc configurations) ``os.stat().st_ino`` is reported as 0
+    for every file. ``os.path.samestat`` then returns True for any pair of
+    files on the same device, which makes ``Session.collect`` treat every
+    node as a match and walk the entire suite instead of the requested
+    file.
+
+    ``samefile_nofollow`` must detect the st_ino == 0 case and fall back to
+    a string comparison of the (normalized) paths.
+    """
+    from _pytest.pathlib import samefile_nofollow
+
+    a = tmp_path / "a.py"
+    b = tmp_path / "b.py"
+    a.write_text("")
+    b.write_text("")
+
+    # Force lstat to return st_ino == 0 (simulating a problematic filesystem).
+    real_lstat = os.lstat
+
+    def fake_lstat(path):
+        st = real_lstat(path)
+        # Build a copy that always reports st_ino == 0
+        from os import stat_result
+
+        st_no_ino = stat_result(
+            (
+                st.st_mode,
+                st.st_ino,
+                st.st_dev,
+                st.st_nlink,
+                st.st_uid,
+                st.st_gid,
+                st.st_size,
+                st.st_atime,
+                st.st_mtime,
+                st.st_ctime,
+            )
+        )
+        # Replace st_ino with 0 via a fresh stat_result using the
+        # named-tuple-ish construction: easiest is to patch the field
+        # by rebuilding from the sequence.
+        new_seq = list(st)
+        new_seq[1] = 0  # st_ino index in stat_result sequence
+        return stat_result(tuple(new_seq))
+
+    monkeypatch.setattr(os, "lstat", fake_lstat)
+
+    # Same path: should still be True (string comparison fallback).
+    assert samefile_nofollow(a, a) is True
+    # Different paths on the same device where st_ino == 0: must now be
+    # False, otherwise every node matches in Session.collect and the user
+    # sees the entire suite collected instead of just the requested file.
+    assert samefile_nofollow(a, b) is False
+
+
 def test_scandir_with_non_existent_directory() -> None:
     # Test with a directory that does not exist
     non_existent_dir = "path_to_non_existent_dir"

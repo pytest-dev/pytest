@@ -1095,4 +1095,16 @@ def samefile_nofollow(p1: Path, p2: Path) -> bool:
 
     Unlike Path.samefile(), does not resolve symlinks.
     """
-    return os.path.samestat(p1.lstat(), p2.lstat())
+    s1 = p1.lstat()
+    s2 = p2.lstat()
+    # On some filesystems (e.g. Windows network drives mapped via sshfs,
+    # FAT32, /proc on some Linux configs) ``st_ino`` is reported as 0 for
+    # every file. ``os.path.samestat`` then returns True for any pair of
+    # files on the same device, which causes ``Session.collect`` to treat
+    # every node as a match and walk the entire suite instead of the file
+    # the user asked for. Detect that case and bail out by comparing path
+    # strings instead, which is what ``Path.samefile`` falls back to in
+    # this situation. See issue #14864.
+    if s1.st_ino == 0 or s2.st_ino == 0:
+        return os.path.normcase(str(p1)) == os.path.normcase(str(p2))
+    return os.path.samestat(s1, s2)
