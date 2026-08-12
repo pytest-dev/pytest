@@ -321,6 +321,37 @@ class Mark:
 Markable = TypeVar("Markable", bound=Callable[..., object] | type)
 
 
+# Allowed keyword arguments per built-in mark name. Marks not in this
+# mapping (e.g. user-registered custom marks) accept any kwargs. This is
+# used by ``MarkDecorator.with_args`` to reject typos like
+# ``skipif(True, strict=True)`` or ``skip(strict=True)`` at definition
+# time, so the user gets a clear error instead of a silently-no-op mark.
+# See issue #14839.
+_BUILTIN_MARK_KWARGS: dict[str, frozenset[str]] = {
+    "skip": frozenset({"reason"}),
+    "skipif": frozenset({"reason"}),
+    "xfail": frozenset({"condition", "reason", "run", "raises", "strict"}),
+}
+
+
+def _validate_mark_kwargs(name: str, kwargs: Mapping[str, object]) -> None:
+    """raise TypeError if ``kwargs`` contains names unknown to built-in mark ``name``.
+
+    User-registered marks (anything not in ``_BUILTIN_MARK_KWARGS``) are
+    not validated here; we cannot know their parameter schema.
+    """
+    allowed = _BUILTIN_MARK_KWARGS.get(name)
+    if allowed is None:
+        return
+    unknown = set(kwargs) - allowed
+    if unknown:
+        raise TypeError(
+            f"pytest.mark.{name}() got unexpected keyword argument(s): "
+            f"{', '.join(sorted(unknown))}. "
+            f"Allowed: {', '.join(sorted(allowed)) or '(none)'}."
+        )
+
+
 @dataclasses.dataclass
 class MarkDecorator:
     """A decorator for applying a mark on test functions and classes.
@@ -389,7 +420,14 @@ class MarkDecorator:
 
         Unlike calling the MarkDecorator, with_args() can be used even
         if the sole argument is a callable/class.
+
+        Validates keyword arguments against the built-in mark name's known
+        parameter set, so that typos like ``skipif(..., strict=True)`` or
+        ``skip(strict=True)`` raise ``TypeError`` instead of silently being
+        stored on the mark. Custom (user-registered) marks accept any kwargs.
+        See issue #14839.
         """
+        _validate_mark_kwargs(self.name, kwargs)
         mark = Mark(self.name, args, kwargs, _ispytest=True)
         return MarkDecorator(self.mark.combined_with(mark), _ispytest=True)
 

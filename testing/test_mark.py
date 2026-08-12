@@ -1112,6 +1112,48 @@ class TestMarkDecorator:
         assert md.kwargs == {"three": 3}
 
 
+class TestBuiltinMarkKwargsValidation:
+    """Built-in marks must reject unknown kwargs at definition time.
+
+    Regression tests for #14839: ``skipif(strict=True)`` and ``skip(strict=True)``
+    used to be silently accepted, masking user mistakes (e.g. mixing up
+    ``xfail`` and ``skipif`` and accidentally passing ``strict=True``).
+    """
+
+    def test_skip_rejects_unknown_kwarg(self) -> None:
+        with pytest.raises(TypeError, match="unexpected keyword argument"):
+            pytest.mark.skip(strict=True, reason="x")
+
+    def test_skipif_rejects_unknown_kwarg(self) -> None:
+        with pytest.raises(TypeError, match="unexpected keyword argument"):
+            pytest.mark.skipif(True, strict=True, reason="x")
+
+    def test_xfail_still_accepts_its_kwargs(self) -> None:
+        # xfail accepts condition/reason/run/raises/strict, so these must work.
+        m = pytest.mark.xfail(strict=True, reason="x")
+        assert m.kwargs == {"strict": True, "reason": "x"}
+
+    def test_skip_still_accepts_reason(self) -> None:
+        m = pytest.mark.skip(reason="x")
+        assert m.kwargs == {"reason": "x"}
+
+    def test_skipif_still_accepts_reason(self) -> None:
+        m = pytest.mark.skipif(True, reason="x")
+        assert m.kwargs == {"reason": "x"}
+
+    def test_custom_marks_accept_any_kwargs(self) -> None:
+        # Custom (user-registered) marks are not validated by
+        # ``_validate_mark_kwargs`` because we don't know their parameter
+        # schema. The validator should short-circuit when the mark name is
+        # not in ``_BUILTIN_MARK_KWARGS``.
+        from _pytest.mark.structures import _validate_mark_kwargs
+
+        # should not raise — name not in the builtin map
+        _validate_mark_kwargs("some_custom_user_mark", {"whatever": 42, "more": "stuff"})
+        _validate_mark_kwargs("slow", {"reason": "too slow"})  # custom mark
+        _validate_mark_kwargs("", {})  # empty name (edge case)
+
+
 @pytest.mark.parametrize("mark", [None, "skip", "xfail"])
 def test_parameterset_for_parametrize_marks(
     pytester: Pytester, mark: _EmptyParameterSetMark | None
