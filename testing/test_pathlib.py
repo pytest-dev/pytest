@@ -39,6 +39,7 @@ from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
 from _pytest.pathlib import scandir
+from _pytest.pathlib import samefile_nofollow
 from _pytest.pathlib import spec_matches_module_path
 from _pytest.pathlib import symlink_or_skip
 from _pytest.pathlib import visit
@@ -568,6 +569,20 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
             module_path, root=tmp_path, consider_namespace_packages=False
         )
     assert getattr(module, "foo")() == 42
+
+
+@pytest.mark.parametrize("inodes", [(0, 0), (0, 1), (1, 0)])
+def test_samefile_nofollow_rejects_zero_inodes(
+    inodes: tuple[int, int], monkeypatch: MonkeyPatch
+) -> None:
+    stats = [unittest.mock.Mock(st_ino=inode) for inode in inodes]
+    lstat = unittest.mock.Mock(side_effect=stats)
+    samestat = unittest.mock.Mock(return_value=True)
+    monkeypatch.setattr(Path, "lstat", lstat)
+    monkeypatch.setattr(os.path, "samestat", samestat)
+
+    assert not samefile_nofollow(Path("first"), Path("second"))
+    samestat.assert_not_called()
 
 
 def test_scandir_with_non_existent_directory() -> None:
