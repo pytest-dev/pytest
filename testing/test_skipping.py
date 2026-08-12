@@ -184,6 +184,21 @@ class TestEvaluation:
         res.stdout.fnmatch_lines(["*1 skipped*"])
         res.stdout.fnmatch_lines(["*1 passed*"])
 
+    def test_skipif_unexpected_keyword_args(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+
+            @pytest.mark.skipif(True, unexpected_arg=123)
+            def test_func():
+                pass
+            """
+        )
+        res = pytester.runpytest(p)
+        assert res.ret != 0
+        res.stdout.fnmatch_lines(["*Unexpected keyword argument(s) for skipif mark: unexpected_arg*"])
+
+
     def test_skipif_markeval_namespace_multiple(self, pytester: Pytester) -> None:
         """Keys defined by ``pytest_markeval_namespace()`` in nested plugins override top-level ones."""
         root = pytester.mkdir("root")

@@ -169,6 +169,11 @@ class Skip:
 def evaluate_skip_marks(item: Item) -> Skip | None:
     """Evaluate skip and skipif marks on item, returning Skip if triggered."""
     for mark in item.iter_markers(name="skipif"):
+        unexpected_kwargs = set(mark.kwargs) - {"condition", "reason"}
+        if unexpected_kwargs:
+            raise TypeError(
+                f"Unexpected keyword argument(s) for skipif mark: {', '.join(sorted(unexpected_kwargs))}"
+            )
         if "condition" not in mark.kwargs:
             conditions = mark.args
         else:
