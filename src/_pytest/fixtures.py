@@ -1454,6 +1454,12 @@ class FixtureFunctionMarker:
 
 # TODO: paramspec/return type annotation tracking and storing
 class FixtureFunctionDefinition:
+    """The type of a fixture function after decoration by :func:`pytest.fixture`.
+
+    This type is public for type annotations. It should not be instantiated
+    or subclassed by users, and its attributes are not part of the public API.
+    """
+
     def __init__(
         self,
         *,
