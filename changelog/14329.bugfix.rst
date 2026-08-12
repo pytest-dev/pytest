@@ -1,0 +1,14 @@
+:meth:`~_pytest.nodes.Node.iter_markers` and :meth:`~_pytest.nodes.Node.get_closest_marker`
+now walk the class MRO closest-first, so a marker on a subclass takes precedence over the
+same marker on one of its base classes.
+
+``own_markers`` keeps its previous (base class first) order.
+
+As a consequence, :ref:`usefixtures <usefixtures>` markers are now iterated in reverse, which
+keeps base class fixtures being requested before subclass ones, and additionally makes stacked
+``usefixtures`` markers on a single node request their fixtures in source order.
+
+Note that inherited class level :ref:`parametrize <pytest.mark.parametrize ref>` markers are
+applied closest-first as well, so the generated test IDs compose in the opposite order --
+``TestChild::test_it[1-x]`` becomes ``TestChild::test_it[x-1]``. Selections pinned to such IDs
+(and the :ref:`cache <cache>` used by ``--last-failed`` and friends) need to be regenerated.

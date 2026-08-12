@@ -49,6 +49,7 @@ from _pytest.compat import getimfunc
 from _pytest.compat import is_async_function
 from _pytest.compat import NOTSET
 from _pytest.compat import NotSetType
+from _pytest.compat import override
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.config import Config
@@ -66,6 +67,7 @@ from _pytest.fixtures import get_scope_node
 from _pytest.main import Session
 from _pytest.mark import ParameterSet
 from _pytest.mark.structures import _HiddenParam
+from _pytest.mark.structures import get_mro_mark_groups
 from _pytest.mark.structures import get_unpacked_marks
 from _pytest.mark.structures import HIDDEN_PARAM
 from _pytest.mark.structures import Mark
@@ -763,6 +765,18 @@ def _get_first_non_fixture_func(obj: object, names: Iterable[str]) -> object | N
     return None
 
 
+def _find_identity_run(haystack: Sequence[Mark], needle: Sequence[Mark]) -> int | None:
+    """Return the index of the first run in ``haystack`` whose elements are
+    identical (``is``) to ``needle``'s, or None if there is no such run.
+
+    An empty ``needle`` matches at index 0.
+    """
+    for start in range(len(haystack) - len(needle) + 1):
+        if all(haystack[start + i] is mark for i, mark in enumerate(needle)):
+            return start
+    return None
+
+
 class Class(PyCollector):
     """Collector for test methods (and nested classes) in a Python class."""
 
@@ -770,6 +784,41 @@ class Class(PyCollector):
     def from_parent(cls, parent, *, name, obj=None, **kw) -> Self:  # type: ignore[override]
         """The public constructor."""
         return super().from_parent(name=name, parent=parent, **kw)
+
+    @override
+    def _iter_own_markers_closest_first(self) -> Iterator[Mark]:
+        """Yield own markers closest-first.
+
+        ``own_markers`` holds the MRO-inherited markers as one contiguous run
+        in base-first order (the order :func:`get_unpacked_marks` produced them
+        in), possibly surrounded by markers added dynamically via
+        :meth:`~_pytest.nodes.Node.add_marker`. Yield ``own_markers`` as stored
+        -- so dynamic markers keep their ``append`` position, just like on a
+        plain node -- but with that run replaced by its closest-first
+        (child before parent) counterpart.
+        """
+        obj = getattr(self, "_obj", None)
+        if obj is None:
+            # ``obj`` was not resolved yet, so own_markers cannot contain
+            # MRO markers - and resolving it here would be a nasty side effect.
+            yield from self.own_markers
+            return
+
+        groups = get_mro_mark_groups(obj)
+        closest_first = [mark for group in groups for mark in group]
+        base_first = [mark for group in reversed(groups) for mark in group]
+
+        own_markers = self.own_markers
+        start = _find_identity_run(own_markers, base_first)
+        if start is None:
+            # own_markers was rearranged behind our back - there is no run left
+            # to reorder, so leave the order alone.
+            yield from own_markers
+            return
+
+        yield from own_markers[:start]
+        yield from closest_first
+        yield from own_markers[start + len(base_first) :]
 
     def newinstance(self):
         return self.obj()

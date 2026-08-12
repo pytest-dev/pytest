@@ -315,6 +315,17 @@ def running_on_ci() -> bool:
     return any(os.environ.get(var) for var in env_vars)
 
 
+if sys.version_info >= (3, 12):
+    from typing import override as override
+else:
+    if TYPE_CHECKING:
+        from typing_extensions import override as override
+    else:
+
+        def override(func):
+            return func
+
+
 if sys.version_info >= (3, 13):
     from warnings import deprecated as deprecated
 else:
