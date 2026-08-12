@@ -335,7 +335,7 @@ _BUILTIN_MARK_KWARGS: dict[str, frozenset[str]] = {
 
 
 def _validate_mark_kwargs(name: str, kwargs: Mapping[str, object]) -> None:
-    """raise TypeError if ``kwargs`` contains names unknown to built-in mark ``name``.
+    """Raise TypeError if ``kwargs`` contains names unknown to built-in mark ``name``.
 
     User-registered marks (anything not in ``_BUILTIN_MARK_KWARGS``) are
     not validated here; we cannot know their parameter schema.

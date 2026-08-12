@@ -1149,7 +1149,9 @@ class TestBuiltinMarkKwargsValidation:
         from _pytest.mark.structures import _validate_mark_kwargs
 
         # should not raise — name not in the builtin map
-        _validate_mark_kwargs("some_custom_user_mark", {"whatever": 42, "more": "stuff"})
+        _validate_mark_kwargs(
+            "some_custom_user_mark", {"whatever": 42, "more": "stuff"}
+        )
         _validate_mark_kwargs("slow", {"reason": "too slow"})  # custom mark
         _validate_mark_kwargs("", {})  # empty name (edge case)
 
