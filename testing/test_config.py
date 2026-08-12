@@ -131,10 +131,12 @@ class TestParseIni:
     def test_getini_string_type_invalid_list(self, pytester: Pytester) -> None:
         config = pytester.parseconfig()
         config._parser.addini("custom_str_opt", "custom string option", type="string")
-        with pytest.raises(TypeError, match="Expected a string for option custom_str_opt"):
-            config._getini_ini("custom_str_opt", "custom_str_opt", "string", ["invalid", "list"], None)
-
-
+        with pytest.raises(
+            TypeError, match="Expected a string for option custom_str_opt"
+        ):
+            config._getini_ini(
+                "custom_str_opt", "custom_str_opt", "string", ["invalid", "list"], None
+            )
 
     @pytest.mark.parametrize(
         "section, name",
