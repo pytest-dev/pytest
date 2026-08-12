@@ -61,7 +61,7 @@ class TestEvaluation:
         item = pytester.getitem(
             """
             import pytest
-            @pytest.mark.skipif("hasattr(os, 'sep')", attr=2, reason="hello world")
+            @pytest.mark.skipif("hasattr(os, 'sep')", reason="hello world")
             def test_func():
                 pass
         """
@@ -882,6 +882,22 @@ class TestSkip:
 
 
 class TestSkipif:
+    def test_skipif_invalid_kwarg(self, pytester: Pytester) -> None:
+        p = pytester.makepyfile(
+            """
+            import pytest
+            @pytest.mark.skipif(True, strict=True, reason="")
+            def test_func():
+                pass
+            """
+        )
+        result = pytester.runpytest(p)
+        result.stdout.fnmatch_lines(
+            [
+                "*TypeError: pytest.mark.skipif() got an unexpected keyword argument 'strict'*",
+            ]
+        )
+
     def test_skipif_conditional(self, pytester: Pytester) -> None:
         item = pytester.getitem(
             """

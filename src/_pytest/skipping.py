@@ -174,6 +174,11 @@ def evaluate_skip_marks(item: Item) -> Skip | None:
         else:
             conditions = (mark.kwargs["condition"],)
 
+        for invalid_kwarg in set(mark.kwargs) - {"condition", "reason"}:
+            raise TypeError(
+                f"pytest.mark.skipif() got an unexpected keyword argument {invalid_kwarg!r}"
+            )
+
         # Unconditional.
         if not conditions:
             reason = mark.kwargs.get("reason", "")
