@@ -14,7 +14,6 @@ from datetime import timedelta
 from decimal import Decimal
 import math
 from numbers import Complex
-import pprint
 import sys
 from typing import Any
 from typing import Generic
@@ -22,6 +21,8 @@ from typing import SupportsAbs
 from typing import TYPE_CHECKING
 from typing import TypeGuard
 from typing import TypeVar
+
+from _pytest.compat import pformat
 
 
 if TYPE_CHECKING:
@@ -262,7 +263,7 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         for key, value in expected.items():
             if isinstance(value, type(expected)):
                 msg = "pytest.approx() does not support nested dictionaries: key={!r} value={!r}\n  full mapping={}"
-                raise TypeError(msg.format(key, value, pprint.pformat(expected)))
+                raise TypeError(msg.format(key, value, pformat(expected)))
 
         super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 
@@ -360,7 +361,7 @@ class ApproxSequenceLike(Approx[Sequence[Any]]):
         for index, x in enumerate(expected):
             if isinstance(x, type(expected)):
                 msg = "pytest.approx() does not support nested data structures: {!r} at index {}\n  full sequence: {}"
-                raise TypeError(msg.format(x, index, pprint.pformat(expected)))
+                raise TypeError(msg.format(x, index, pformat(expected)))
 
         super().__init__(expected, rel=rel, abs=abs, nan_ok=nan_ok)
 

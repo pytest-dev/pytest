@@ -6,7 +6,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterator
-from pprint import pformat
 import re
 from types import TracebackType
 from typing import Any
@@ -24,6 +23,7 @@ if TYPE_CHECKING:
 
 import warnings
 
+from _pytest.compat import pformat
 from _pytest.deprecated import check_ispytest
 from _pytest.fixtures import fixture
 from _pytest.outcomes import Exit

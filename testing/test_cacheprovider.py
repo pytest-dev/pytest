@@ -7,6 +7,7 @@ from enum import Enum
 import os
 from pathlib import Path
 import shutil
+import sys
 from typing import Any
 
 from _pytest.compat import assert_never
@@ -278,6 +279,48 @@ def test_cache_show(pytester: Pytester) -> None:
     stdout = result.stdout.str()
     assert "other/some" not in stdout
     assert "d/mydb/world" not in stdout
+    assert result.ret == 0
+
+
+@pytest.mark.skipif(sys.version_info < (3, 15), reason="requires Python 3.15+")
+def test_cache_show_uses_expanded_pformat(pytester: Pytester) -> None:
+    pytester.makeconftest(
+        """
+        def pytest_configure(config):
+            config.cache.set(
+                "nested",
+                {
+                    "a" * 12: 1,
+                    "b" * 20: 2,
+                    "c" * 30: {
+                        "d" * 5: 3,
+                        "e" * 20: 4,
+                        "f" * 10: 5,
+                        "g" * 20: 6,
+                    },
+                },
+            )
+        """
+    )
+    pytester.runpytest()
+
+    result = pytester.runpytest("--cache-show", "nested")
+
+    result.stdout.fnmatch_lines(
+        [
+            "nested contains:",
+            "  {",
+            "   'aaaaaaaaaaaa': 1,",
+            "   'bbbbbbbbbbbbbbbbbbbb': 2,",
+            "   'cccccccccccccccccccccccccccccc': {",
+            "    'ddddd': 3,",
+            "    'eeeeeeeeeeeeeeeeeeee': 4,",
+            "    'ffffffffff': 5,",
+            "    'gggggggggggggggggggg': 6,",
+            "   },",
+            "  }",
+        ]
+    )
     assert result.ret == 0
 
 
