@@ -1949,6 +1949,10 @@ class Config:
         elif type == "bool":
             return _strtobool(str(value).strip())
         elif type == "string":
+            if not isinstance(value, str):
+                raise TypeError(
+                    f"Expected a string for option {name} of type string, but got: {value!r}"
+                ) from None
             return value
         elif type == "int":
             if not isinstance(value, str):
