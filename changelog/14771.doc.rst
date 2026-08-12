@@ -1,0 +1,3 @@
+Clarify that frozen applications must expose test modules as filesystem data
+for pytest to collect them; hidden imports inside an embedded archive are not
+sufficient for ``--pyargs`` collection.
