@@ -79,7 +79,9 @@ class TestEvaluation:
                 pass
         """
         )
-        with pytest.raises(TypeError, match=r"skipif\(\) got an unexpected keyword argument 'invalid'"):
+        with pytest.raises(
+            TypeError, match=r"skipif\(\) got an unexpected keyword argument 'invalid'"
+        ):
             evaluate_skip_marks(item)
 
     def test_marked_skipif_strict_kwarg(self, pytester: Pytester) -> None:
