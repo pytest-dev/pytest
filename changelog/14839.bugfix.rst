@@ -1,0 +1,1 @@
+:func:`pytest.mark.skipif` now validates its keyword arguments and raises a :xcp:`TypeError` when unexpected keyword arguments (such as ``strict``) are passed.

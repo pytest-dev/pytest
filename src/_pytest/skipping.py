@@ -169,6 +169,14 @@ class Skip:
 def evaluate_skip_marks(item: Item) -> Skip | None:
     """Evaluate skip and skipif marks on item, returning Skip if triggered."""
     for mark in item.iter_markers(name="skipif"):
+        unexpected_kwargs = set(mark.kwargs) - {"condition", "reason"}
+        if unexpected_kwargs:
+            unexpected = sorted(unexpected_kwargs)[0]
+            msg = f"skipif() got an unexpected keyword argument {unexpected!r}"
+            if unexpected == "strict":
+                msg += " - maybe you meant pytest.mark.xfail?"
+            raise TypeError(msg)
+
         if "condition" not in mark.kwargs:
             conditions = mark.args
         else:
