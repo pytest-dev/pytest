@@ -34,6 +34,12 @@ DEFAULT_PLUGINS: Final[tuple[str, ...]] = (
     "monkeypatch",
     "recwarn",
     "tmpdir",
+    # Not for the rewriting - that is installed from Config._preparse, which
+    # an ensemble never runs - but for the failure *explanation*. Without
+    # this plugin ``assertion.util._reprcompare`` stays bound to whatever the
+    # host installed, so an ensemble silently renders its assertions with the
+    # host's verbosity, ini values and pytest_assertrepr_compare hooks.
+    "assertion",
 )
 
 
