@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import warnings as warnings_module
 
 from _pytest.config import Config
+from _pytest.ensemble.config import config_warnings_key
 from _pytest.main import Session
 from _pytest.nodes import Item
 from _pytest.reports import CollectReport
@@ -160,10 +161,14 @@ class RunRecord:
             name_map[name] = None if name in name_map else record
         by_name = {name: rec for name, rec in name_map.items() if rec is not None}
 
+        # Warnings raised while configuring come before the recorder exists;
+        # configured() holds on to them so they are not simply lost.
+        config_warnings = config.stash.get(config_warnings_key, [])
+
         return cls(
             reports=list(recorder.test_reports),
             collect_reports=list(recorder.collect_reports),
-            warnings=list(recorder.warnings),
+            warnings=[*config_warnings, *recorder.warnings],
             deselected=recorder.deselected,
             by_test=by_test,
             _by_name=by_name,

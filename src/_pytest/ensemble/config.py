@@ -10,13 +10,22 @@ import dataclasses
 import pathlib
 from typing import Final
 from typing import TextIO
+import warnings
 
 from _pytest.config import Config
 from _pytest.config import essential_plugins
 from _pytest.config import PytestPluginManager
 from _pytest.config.findpaths import ConfigValue
 from _pytest.config.findpaths import parse_override_ini
+from _pytest.stash import StashKey
 from _pytest.terminal import terminal_file_key
+
+
+#: Warnings raised while the ensemble config was being configured or
+#: unconfigured. They are recorded rather than allowed out, so that an
+#: ensemble cannot make its *host* fail - this suite runs with
+#: ``filterwarnings = error``.
+config_warnings_key = StashKey[list[warnings.WarningMessage]]()
 
 
 #: Plugins loaded into an ensemble config by default: the essential core
@@ -196,11 +205,16 @@ def configured(spec: ConfigSpec) -> Iterator[Config]:
             config._inicache.clear()
 
         config._finalize_parse(args, decide_args=False)
+        config.stash[config_warnings_key] = []
         if spec.output is not None:
             # Must be stashed before configure: the terminal reporter binds
             # its stream when it is constructed, and must never bind ours.
             config.stash[terminal_file_key] = spec.output
-        config._do_configure()
+        with warnings.catch_warnings(record=True) as caught:
+            config._do_configure()
+        config.stash[config_warnings_key].extend(caught)
         yield config
     finally:
-        config._ensure_unconfigure()
+        with warnings.catch_warnings(record=True) as caught:
+            config._ensure_unconfigure()
+        config.stash[config_warnings_key].extend(caught)
