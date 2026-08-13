@@ -117,6 +117,7 @@ class Ensemble:
         self._sources = sources
         self._name = name
         self._collected = False
+        self._round = 0
         self._stack: contextlib.ExitStack | None = None
 
     def __enter__(self) -> Self:
@@ -157,7 +158,21 @@ class Ensemble:
         return [report for report in recorder.collect_reports if report.failed]
 
     def collect(self, *sources: Source) -> list[Item]:
-        """Collect the ensemble's sources (plus any given extra ones)."""
+        """Collect the ensemble's sources (plus any given extra ones).
+
+        Idempotent: calling it again without new sources returns the items
+        already collected, rather than registering the same collectors a
+        second time and reporting every test twice.
+        """
+        if self._collected:
+            if not sources:
+                return list(self.session.items)
+            # Later rounds get their own synthesized module, so that loose
+            # sources do not land on a module path already in the tree.
+            self._round += 1
+            return collect_sources(
+                self.session, *sources, name=f"{self._name}_{self._round}"
+            )
         self._collected = True
         return collect_sources(self.session, *self._sources, *sources, name=self._name)
 
