@@ -9,12 +9,14 @@ import copy
 import dataclasses
 import pathlib
 from typing import Final
+from typing import TextIO
 
 from _pytest.config import Config
 from _pytest.config import essential_plugins
 from _pytest.config import PytestPluginManager
 from _pytest.config.findpaths import ConfigValue
 from _pytest.config.findpaths import parse_override_ini
+from _pytest.terminal import terminal_file_key
 
 
 #: Plugins loaded into an ensemble config by default: the essential core
@@ -68,6 +70,11 @@ class ConfigSpec:
 
     #: Not supported yet; ensemble configs never load conftest files.
     load_conftests: bool = False
+
+    #: Stream the terminal plugin writes to, when it is loaded at all. An
+    #: ensemble must never be given the stdout of whatever is running it,
+    #: so this is bound at construction rather than redirected around it.
+    output: TextIO | None = None
 
     def replace(self, **kw: object) -> ConfigSpec:
         return dataclasses.replace(self, **kw)  # type: ignore[arg-type]
@@ -183,6 +190,10 @@ def configured(spec: ConfigSpec) -> Iterator[Config]:
             config._inicache.clear()
 
         config._finalize_parse(args, decide_args=False)
+        if spec.output is not None:
+            # Must be stashed before configure: the terminal reporter binds
+            # its stream when it is constructed, and must never bind ours.
+            config.stash[terminal_file_key] = spec.output
         config._do_configure()
         yield config
     finally:

@@ -215,6 +215,54 @@ class TestTerminalLessConfig:
         assert len(entered) == 1
 
 
+class TestCapturedOutput:
+    def test_rendered_report_is_captured(self, tmp_path: Path) -> None:
+        def test_ok() -> None: ...
+
+        def test_bad() -> None:
+            left = 1
+            assert left == 2
+
+        record = run_tests(test_ok, test_bad, rootpath=tmp_path, capture_output=True)
+        record.assert_outcomes(passed=1, failed=1)
+        record.stdout.fnmatch_lines(
+            [
+                "*test session starts*",
+                "*FAILURES*",
+                "*1 failed, 1 passed*",
+            ]
+        )
+        # the structured view still agrees with the rendered one
+        assert record["test_bad"].failed
+
+    def test_output_never_reaches_the_outer_stdout(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An ensemble must not be handed the stdout of whatever runs it."""
+
+        class Tripwire:
+            def write(self, text: str) -> int:
+                raise AssertionError(f"ensemble wrote to the outer stdout: {text!r}")
+
+            def flush(self) -> None: ...
+
+            def isatty(self) -> bool:
+                return False
+
+        def test_ok() -> None: ...
+
+        monkeypatch.setattr(sys, "stdout", Tripwire())
+        record = run_tests(test_ok, rootpath=tmp_path, capture_output=True)
+        assert "1 passed" in record.output
+
+    def test_not_captured_by_default(self, tmp_path: Path) -> None:
+        def test_ok() -> None: ...
+
+        record = run_tests(test_ok, rootpath=tmp_path)
+        assert record.output == ""
+        assert record.stdout.lines == []
+
+
 class TestCollection:
     def test_collect_loose_functions(self, tmp_path: Path) -> None:
         def test_one() -> None: ...
