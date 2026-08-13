@@ -180,6 +180,32 @@ class TestConfigSpec:
         assert len(raw) == 1  # type: ignore[arg-type]
         assert len(set(seen)) == 1, f"config saw growing marker lists: {seen}"
 
+    def test_assertion_explanation_is_the_ensemble_s(self, tmp_path: Path) -> None:
+        """The failure explanation must be configured by the ensemble.
+
+        ``assertion.util._reprcompare`` is process-global; without the
+        assertion plugin it stays bound to whatever the host installed, so
+        an explanation is still produced and the test goes green while
+        silently reflecting the host's configuration.
+        """
+        seen: list[tuple[str, object, object]] = []
+
+        class Comparer:
+            def pytest_assertrepr_compare(
+                self, op: str, left: object, right: object
+            ) -> list[str]:
+                seen.append((op, left, right))
+                return ["ensemble-owned explanation"]
+
+        def test_fails() -> None:
+            assert 1 == 2
+
+        spec = ConfigSpec(rootpath=tmp_path, extra_plugins=(Comparer(),))
+        record = run_tests(test_fails, spec=spec)
+        record.assert_outcomes(failed=1)
+        assert seen == [("==", 1, 2)]
+        assert "ensemble-owned explanation" in record["test_fails"].call.longreprtext  # type: ignore[union-attr]
+
     def test_extra_plugin_by_name(self, tmp_path: Path) -> None:
         """String entries in extra_plugins are imported, objects registered."""
         spec = ConfigSpec(rootpath=tmp_path, extra_plugins=("_pytest.setuponly",))
