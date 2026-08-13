@@ -15,6 +15,7 @@ import functools
 import os
 import platform
 import re
+from typing import Literal
 import xml.etree.ElementTree as ET
 
 from _pytest import nodes
@@ -32,6 +33,10 @@ import pytest
 
 
 xml_key = StashKey["LogXML"]()
+
+_JunitLogging = Literal["no", "log", "system-out", "system-err", "out-err", "all"]
+_JunitDurationReport = Literal["total", "call"]
+_JunitFamily = Literal["legacy", "xunit1", "xunit2"]
 
 
 def bin_xml_escape(arg: object) -> str:
@@ -396,8 +401,8 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "junit_logging",
-        "Write captured log messages to JUnit report: "
-        "one of no|log|system-out|system-err|out-err|all",
+        "Write captured log messages to JUnit report",
+        type=_JunitLogging,
         default="no",
     )
     parser.addini(
@@ -408,12 +413,14 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addini(
         "junit_duration_report",
-        "Duration time to report: one of total|call",
+        "Duration time to report",
+        type=_JunitDurationReport,
         default="total",
-    )  # choices=['total', 'call'])
+    )
     parser.addini(
         "junit_family",
-        "Emit XML for schema: one of legacy|xunit1|xunit2",
+        "Emit XML for schema",
+        type=_JunitFamily,
         default="xunit2",
     )
 
@@ -422,14 +429,13 @@ def pytest_configure(config: Config) -> None:
     xmlpath = config.option.xmlpath
     # Prevent opening xmllog on worker nodes (xdist).
     if xmlpath and not hasattr(config, "workerinput"):
-        junit_family = config.getini("junit_family")
         config.stash[xml_key] = LogXML(
             xmlpath,
             config.option.junitprefix,
             config.getini("junit_suite_name"),
             config.getini("junit_logging"),
             config.getini("junit_duration_report"),
-            junit_family,
+            config.getini("junit_family"),
             config.getini("junit_log_passing_tests"),
         )
         config.pluginmanager.register(config.stash[xml_key])
@@ -459,9 +465,9 @@ class LogXML:
         logfile,
         prefix: str | None,
         suite_name: str = "pytest",
-        logging: str = "no",
-        report_duration: str = "total",
-        family="xunit1",
+        logging: _JunitLogging = "no",
+        report_duration: _JunitDurationReport = "total",
+        family: _JunitFamily = "xunit1",
         log_passing_tests: bool = True,
     ) -> None:
         logfile = os.path.expanduser(os.path.expandvars(logfile))

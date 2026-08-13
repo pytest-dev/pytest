@@ -98,11 +98,7 @@ class TempPathFactory:
                 f"tmp_path_retention_count must be >= 0. Current input: {count}."
             )
 
-        policy = config.getini("tmp_path_retention_policy")
-        if policy not in ("all", "failed", "none"):
-            raise ValueError(
-                f"tmp_path_retention_policy must be either all, failed, none. Current input: {policy}."
-            )
+        policy: RetentionType = config.getini("tmp_path_retention_policy")
 
         return cls(
             given_basetemp=config.option.basetemp,
@@ -265,9 +261,8 @@ def pytest_addoption(parser: Parser) -> None:
 
     parser.addini(
         "tmp_path_retention_policy",
-        help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome. "
-        "(all/failed/none)",
-        type="string",
+        help="Controls which directories created by the `tmp_path` fixture are kept around, based on test outcome.",
+        type=RetentionType,
         default="all",
     )
 

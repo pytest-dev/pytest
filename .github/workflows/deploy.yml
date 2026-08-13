@@ -31,7 +31,7 @@ jobs:
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df
+      uses: hynek/build-and-inspect-python-package@2abe76da66d0a6a4a227101f9348ee855797cfa5
       with:
         attest-build-provenance-github: 'true'
 
@@ -47,15 +47,10 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - name: Set up tox
+      uses: ./.github/actions/setup-tox
       with:
         python-version: "3.13"
-
-    - name: Install tox
-      run: |
-        python -m pip install --upgrade pip
-        pip install tox
 
     - name: Generate release notes
       env:
@@ -88,7 +83,7 @@ jobs:
         path: dist
 
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
+      uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
       with:
         attestations: true
 

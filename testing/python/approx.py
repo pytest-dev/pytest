@@ -314,7 +314,7 @@ class TestApprox:
                 rf"^  \(0,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}e-{SOME_INT}$",
                 rf"^  \(1,\)\s+\| {SOME_FLOAT} \| {SOME_FLOAT} ± {SOME_FLOAT}e-{SOME_INT}\.\.\.$",
                 "^  $",
-                rf"^  ...Full output truncated \({SOME_INT} lines hidden\), use '-vv' to show$",
+                r"^  ...Full output truncated, use '-vv' to show$",
             ],
             verbosity_level=0,
         )
@@ -1250,6 +1250,12 @@ class TestApproxDatetime:
 
         with pytest.raises(ValueError, match="relative tolerance can't be NaN"):
             approx(timedelta(seconds=1), rel=float("nan"))
+
+    def test_timedelta_rel_must_not_be_infinite(self):
+        from datetime import timedelta
+
+        with pytest.raises(ValueError, match="relative tolerance can't be infinite"):
+            approx(timedelta(seconds=1), rel=inf)
 
     def test_timedelta_abs_must_be_non_negative(self):
         from datetime import timedelta

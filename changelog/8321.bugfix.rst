@@ -1,0 +1,1 @@
+Fixed exception chains being duplicated in the traceback output when an exception in the chain (``__cause__``/``__context__``) has no traceback of its own, and that exception is itself linked to further exceptions.

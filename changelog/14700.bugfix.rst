@@ -1,0 +1,1 @@
+Fixed an internal error on Python 3.12 when a doctest on a fixture-decorated function was skipped.
