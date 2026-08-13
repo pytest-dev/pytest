@@ -488,6 +488,31 @@ class TestRunning:
         record.assert_outcomes(passed=1)
         assert list(record.by_test) == ["test_ensemble.py::test_a"]
 
+    def test_configure_warnings_do_not_escape(self, tmp_path: Path) -> None:
+        """An ensemble must not warn into whatever is running it.
+
+        A host suite running with ``filterwarnings = error`` would fail a
+        test for a warning that is not its own.
+        """
+
+        class WarnsAtConfigure:
+            def pytest_configure(self, config: object) -> None:
+                warnings.warn(UserWarning("from-the-ensemble"))
+
+        def test_ok() -> None: ...
+
+        spec = ConfigSpec(
+            rootpath=tmp_path,
+            extra_plugins=(WarnsAtConfigure(),),
+            inicfg={"filterwarnings": ["always"]},
+        )
+        with warnings.catch_warnings(record=True) as escaped:
+            warnings.simplefilter("always")
+            record = run_tests(test_ok, spec=spec)
+
+        assert [str(w.message) for w in escaped] == []
+        assert "from-the-ensemble" in [str(w.message) for w in record.warnings]
+
     def test_session_teardown_is_in_the_record(self, tmp_path: Path) -> None:
         """A record built during the run predates pytest_sessionfinish.
 
