@@ -15,6 +15,7 @@ from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.exceptions import UsageError
+from _pytest.config.findpaths import ConfigValue
 from _pytest.ensemble import build_module
 from _pytest.ensemble import collect_tests
 from _pytest.ensemble import ConfigSpec
@@ -156,6 +157,27 @@ class TestConfigSpec:
         record = run_tests(test_fn, spec=spec)
         assert ran == []
         assert record["test_fn"].call is None
+
+    @pytest.mark.parametrize("wrap", [False, True], ids=["plain-list", "ConfigValue"])
+    def test_spec_survives_reuse(self, tmp_path: Path, wrap: bool) -> None:
+        """A frozen spec must not grow when it is configured repeatedly.
+
+        ``addinivalue_line`` appends to the cached list, so handing the
+        caller's own list to the config made every reuse accumulate.
+        """
+        value: object = ["mine: a marker"]
+        if wrap:
+            value = ConfigValue(value, origin="file", mode="ini")
+        spec = ConfigSpec(rootpath=tmp_path, inicfg={"markers": value})
+
+        seen = []
+        for _ in range(3):
+            with configured(spec) as config:
+                seen.append(len(config.getini("markers")))
+        stored = spec.inicfg["markers"]
+        raw = stored.value if isinstance(stored, ConfigValue) else stored
+        assert len(raw) == 1  # type: ignore[arg-type]
+        assert len(set(seen)) == 1, f"config saw growing marker lists: {seen}"
 
     def test_extra_plugin_by_name(self, tmp_path: Path) -> None:
         """String entries in extra_plugins are imported, objects registered."""
