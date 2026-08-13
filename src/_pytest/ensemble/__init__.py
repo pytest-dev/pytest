@@ -196,13 +196,33 @@ class Ensemble:
         return collect_sources(self.session, *self._sources, *sources, name=self._name)
 
     def run(self, items: list[Item] | None = None) -> RunRecord:
-        """Run the collected items (collecting first if needed)."""
+        """Run the collected items (collecting first if needed).
+
+        Anything the session emits while tearing down - late warnings, the
+        rendered summary - necessarily arrives after this returns; see
+        :meth:`final_record`.
+        """
         if not self._collected:
             self.collect()
         record = run_items(self.session, items)
         if self._sink is not None:
             record = dataclasses.replace(record, output=self.output)
         return record
+
+    def final_record(self, record: RunRecord) -> RunRecord:
+        """Refresh *record* with everything session teardown produced.
+
+        ``pytest_sessionfinish`` runs as the ensemble is left, and plugins
+        emit warnings (and the terminal writes its summary) from there.
+        A record built during :meth:`run` predates all of it, which makes
+        ``assert_outcomes(warnings=...)`` quietly wrong.
+        """
+        refreshed = RunRecord.from_recorder(
+            ensure_recorder(self.config), config=self.config
+        )
+        return dataclasses.replace(
+            refreshed, output=self.output, stopped=record.stopped
+        )
 
 
 def run_tests(
@@ -228,12 +248,11 @@ def run_tests(
     )
     with ensemble:
         record = ensemble.run()
-    # The failure sections and the summary line are written as the session
-    # finishes, i.e. on the way out of the block - so the complete text is
-    # only available once it has been left.
-    if capture_output:
-        record = dataclasses.replace(record, output=ensemble.output)
-    return record
+    # Session teardown happens on the way out of the block, and it both
+    # emits reports and warnings of its own and writes the failure sections
+    # and summary line - so the complete picture only exists once the block
+    # has been left.
+    return ensemble.final_record(record)
 
 
 def collect_tests(

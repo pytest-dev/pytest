@@ -198,7 +198,8 @@ class TestConfigSpec:
                 return ["ensemble-owned explanation"]
 
         def test_fails() -> None:
-            assert 1 == 2
+            # deliberately false, so the comparison hook has something to explain
+            assert 1 == 2  # type: ignore[comparison-overlap]
 
         spec = ConfigSpec(rootpath=tmp_path, extra_plugins=(Comparer(),))
         record = run_tests(test_fails, spec=spec)
@@ -486,6 +487,28 @@ class TestRunning:
             record = ensemble.run(items[:1])
         record.assert_outcomes(passed=1)
         assert list(record.by_test) == ["test_ensemble.py::test_a"]
+
+    def test_session_teardown_is_in_the_record(self, tmp_path: Path) -> None:
+        """A record built during the run predates pytest_sessionfinish.
+
+        Plugins emit warnings from there, so a record that stopped at
+        run() made assert_outcomes(warnings=...) quietly wrong.
+        """
+
+        class WarnsLate:
+            def pytest_sessionfinish(self, session: object, exitstatus: object) -> None:
+                warnings.warn(UserWarning("late"))
+
+        def test_ok() -> None: ...
+
+        spec = ConfigSpec(
+            rootpath=tmp_path,
+            extra_plugins=(WarnsLate(),),
+            inicfg={"filterwarnings": ["always"]},
+        )
+        record = run_tests(test_ok, spec=spec)
+        record.assert_outcomes(passed=1, warnings=1)
+        assert [str(w.message) for w in record.warnings] == ["late"]
 
     def test_maxfail_stops_the_run(self, tmp_path: Path) -> None:
         """--maxfail/-x must not be silently inert.
