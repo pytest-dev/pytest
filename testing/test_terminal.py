@@ -174,6 +174,43 @@ class TestTerminal:
         for line in subpassed_lines + passed_lines:
             assert "0.000us" not in line
 
+    def test_console_output_style_times_with_subtests_xdist(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        pytest.importorskip("xdist")
+        monkeypatch.delenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", raising=False)
+        pytester.makepyfile(
+            test_repro="""
+                def test_subtests(subtests):
+                    for i in range(2):
+                        with subtests.test(i=i):
+                            pass
+            """
+        )
+        result = pytester.runpytest(
+            "test_repro.py",
+            "-n2",
+            "-v",
+            "-o",
+            "console_output_style=times",
+            "-o",
+            "verbosity_subtests=1",
+        )
+
+        lines = result.stdout.lines
+        subpassed_lines = [
+            line_content for line_content in lines if "SUBPASSED" in line_content
+        ]
+        passed_lines = [
+            line_content
+            for line_content in lines
+            if "PASSED" in line_content and "SUBPASSED" not in line_content
+        ]
+        assert len(subpassed_lines) == 2
+        assert len(passed_lines) == 1
+        for line in subpassed_lines + passed_lines:
+            assert "0.000us" not in line
+
     def test_progress_information_message_no_current_report(
         self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
     ) -> None:

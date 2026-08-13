@@ -408,7 +408,7 @@ class TerminalReporter:
         # We use CallableBool here to support both.
         self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[str] = set()
-        self._timing_nodeids_reported: set[int] = set()
+        self._timing_report_ids_reported: set[int] = set()
         self._current_logreport: TestReport | None = None
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
@@ -762,7 +762,7 @@ class TerminalReporter:
                 current_location = all_reports[-1].location[0] if all_reports else ""
 
             not_reported = [
-                r for r in all_reports if id(r) not in self._timing_nodeids_reported
+                r for r in all_reports if id(r) not in self._timing_report_ids_reported
             ]
             tests_in_module = sum(
                 i.location[0] == current_location for i in self._session.items
@@ -774,7 +774,7 @@ class TerminalReporter:
             )
             last_in_module = tests_completed == tests_in_module
             if self.showlongtestinfo or last_in_module:
-                self._timing_nodeids_reported.update(id(r) for r in not_reported)
+                self._timing_report_ids_reported.update(id(r) for r in not_reported)
                 return format_node_duration(
                     sum(r.duration for r in not_reported if isinstance(r, TestReport))
                 )
