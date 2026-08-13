@@ -131,6 +131,32 @@ class TestConfigSpec:
         spec = ConfigSpec(rootpath=tmp_path, args=("-m", "nowhere_registered"))
         run_tests(test_fn, spec=spec).assert_outcomes(deselected=1)
 
+    def test_setup_plan_normalizes_options(self, tmp_path: Path) -> None:
+        """--setup-plan implies --setup-only/--setup-show.
+
+        The implication used to live in ``pytest_cmdline_main``, which an
+        ensemble never reaches, so the flag was accepted and then ignored.
+        """
+        spec = ConfigSpec(rootpath=tmp_path, args=("--setup-plan",)).with_plugins(
+            "setuponly", "setupplan"
+        )
+        with configured(spec) as config:
+            assert config.getoption("setuponly") is True
+            assert config.getoption("setupshow") is True
+
+    def test_setup_plan_skips_the_call_phase(self, tmp_path: Path) -> None:
+        ran = []
+
+        def test_fn() -> None:
+            ran.append(1)
+
+        spec = ConfigSpec(rootpath=tmp_path, args=("--setup-plan",)).with_plugins(
+            "setuponly", "setupplan"
+        )
+        record = run_tests(test_fn, spec=spec)
+        assert ran == []
+        assert record["test_fn"].call is None
+
     def test_extra_plugin_by_name(self, tmp_path: Path) -> None:
         """String entries in extra_plugins are imported, objects registered."""
         spec = ConfigSpec(rootpath=tmp_path, extra_plugins=("_pytest.setuponly",))
