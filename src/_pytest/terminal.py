@@ -52,6 +52,7 @@ from _pytest.pathlib import bestrelpath
 from _pytest.reports import BaseReport
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+from _pytest.stash import StashKey
 
 
 if TYPE_CHECKING:
@@ -293,10 +294,17 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
+#: Stream the terminal reporter should write to, if it must not be the
+#: process stdout. Set on the config's stash *before* it is configured; a
+#: nested run has to be given its own sink rather than inheriting the
+#: stdout of whatever is running it.
+terminal_file_key = StashKey[TextIO]()
+
+
 def pytest_configure(config: Config) -> None:
     # Eagerly validate the value; it is only read lazily during reporting.
     config.getini("console_output_style")
-    reporter = TerminalReporter(config, sys.stdout)
+    reporter = TerminalReporter(config, config.stash.get(terminal_file_key, sys.stdout))
     config.pluginmanager.register(reporter, "terminalreporter")
     if config.option.debug or config.option.traceconfig:
 
