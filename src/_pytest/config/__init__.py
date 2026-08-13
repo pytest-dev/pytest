@@ -1117,6 +1117,9 @@ class Config:
         INCOVATION_DIR = INVOCATION_DIR  # backwards compatibility alias
         #: 'testpaths' configuration value.
         TESTPATHS = enum.auto()
+        #: Programmatic specification; args are taken verbatim, without
+        #: filesystem-based fallbacks (experimental).
+        SPEC = enum.auto()
 
     # Set by cacheprovider plugin.
     cache: Cache
@@ -1693,21 +1696,34 @@ class Config:
             else:
                 raise
 
-    def _finalize_parse(self, args: list[str]) -> None:
-        """Fully parse args into self.option and decide the initial args."""
+    def _finalize_parse(self, args: list[str], *, decide_args: bool = True) -> None:
+        """Fully parse args into self.option and decide the initial args.
+
+        With ``decide_args=False`` (experimental), the positional args are
+        taken verbatim without the testpaths/invocation-dir fallbacks and
+        ``args_source`` is set to :attr:`ArgsSource.SPEC`.
+        """
+        if not hasattr(self, "known_args_namespace"):
+            self.known_args_namespace = self._parser.parse_known_args(
+                args, namespace=copy.copy(self.option)
+            )
         try:
             self._parser.parse(args, namespace=self.option)
         except PrintHelp:
             return
 
-        self.args, self.args_source = self._decide_args(
-            args=getattr(self.option, FILE_OR_DIR),
-            pyargs=self.option.pyargs,
-            testpaths=self.getini("testpaths"),
-            invocation_dir=self.invocation_params.dir,
-            rootpath=self.rootpath,
-            warn=True,
-        )
+        if decide_args:
+            self.args, self.args_source = self._decide_args(
+                args=getattr(self.option, FILE_OR_DIR),
+                pyargs=self.option.pyargs,
+                testpaths=self.getini("testpaths"),
+                invocation_dir=self.invocation_params.dir,
+                rootpath=self.rootpath,
+                warn=True,
+            )
+        else:
+            self.args = list(getattr(self.option, FILE_OR_DIR))
+            self.args_source = Config.ArgsSource.SPEC
 
     def parse(self, args: list[str], addopts: bool = True) -> None:
         # Parse given cmdline arguments into this config object.
