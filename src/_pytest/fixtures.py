@@ -1118,7 +1118,7 @@ class FixtureDef(Generic[FixtureValue]):
     def __init__(
         self,
         config: Config,
-        baseid: str | None | NotSetType,
+        baseid: str | NotSetType | None,
         argname: str,
         func: _FixtureFunc[FixtureValue],
         scope: Scope | ScopeName | Callable[[str, Config], ScopeName] | None,
@@ -2049,7 +2049,7 @@ class FixtureManager:
         *,
         name: str,
         func: _FixtureFunc[object],
-        nodeid: str | None | NotSetType = NOTSET,
+        nodeid: str | NotSetType | None = NOTSET,
         scope: Scope | ScopeName | Callable[[str, Config], ScopeName] = "function",
         params: Sequence[object] | None = None,
         ids: tuple[object | None, ...] | Callable[[Any], object | None] | None = None,
@@ -2247,7 +2247,7 @@ class FixtureManager:
     def parsefactories(
         self,
         node_or_obj: nodes.Node | object | NotSetType = NOTSET,
-        nodeid: str | None | NotSetType = NOTSET,
+        nodeid: str | NotSetType | None = NOTSET,
         *,
         holder: object | NotSetType = NOTSET,
         node: nodes.Node | NotSetType = NOTSET,
@@ -2267,7 +2267,7 @@ class FixtureManager:
         # Translate legacy API to holder/node sources of truth
         # Either effective_node or effective_nodeid will be set, not both
         effective_node: nodes.Node | NotSetType = NOTSET
-        effective_nodeid: str | None | NotSetType = NOTSET
+        effective_nodeid: str | NotSetType | None = NOTSET
 
         if holder is not NOTSET:
             # New API: holder and node explicitly provided

@@ -2479,6 +2479,9 @@ passed multiple times. The expected format is ``name=value``. For example::
 
     If set to ``true``, markers not registered in the ``markers`` section of the configuration file will raise errors.
 
+    This applies both to markers applied to tests (e.g. ``@pytest.mark.slow``) and to marker
+    names used in :option:`-m` expressions.
+
     .. tab:: toml
 
         .. code-block:: toml

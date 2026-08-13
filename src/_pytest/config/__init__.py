@@ -36,6 +36,7 @@ from typing import Final
 from typing import final
 from typing import IO
 from typing import Literal
+from typing import NamedTuple
 from typing import TextIO
 from typing import TYPE_CHECKING
 import warnings
@@ -198,6 +199,10 @@ def main(
         List of command line arguments. If `None` or not given, defaults to reading
         arguments directly from the process command line (:data:`sys.argv`).
     :param plugins: List of plugin objects to be auto-registered during initialization.
+
+    .. warning::
+        pytest's warning filters do not apply whilst importing module
+        names passed via ``plugins``.
 
     :returns: An exit code.
     """
@@ -881,7 +886,7 @@ class PytestPluginManager(PluginManager):
         self._import_plugin_specs(getattr(mod, "pytest_plugins", []))
 
     def _import_plugin_specs(
-        self, spec: None | types.ModuleType | str | Sequence[str]
+        self, spec: types.ModuleType | str | Sequence[str] | None
     ) -> None:
         plugins = _get_plugin_specs_as_list(spec)
         for import_spec in plugins:
@@ -931,7 +936,7 @@ class PytestPluginManager(PluginManager):
 
 
 def _get_plugin_specs_as_list(
-    specs: None | types.ModuleType | str | Sequence[str],
+    specs: types.ModuleType | str | Sequence[str] | None,
 ) -> list[str]:
     """Parse a plugins specification into a list of plugin names."""
     # None means empty.
@@ -1038,6 +1043,17 @@ class _DeprecatedInicfgProxy(MutableMapping[str, Any]):
 
     def __len__(self) -> int:
         return len(self._config._inicfg)
+
+
+class RegisteredMarker(NamedTuple):
+    """A marker registered in the configuration."""
+
+    #: The marker name (e.g., ``skipif``).
+    name: str
+    #: The full marker signature (e.g., ``skipif(condition)``).
+    signature: str
+    #: The marker description.
+    description: str
 
 
 @final
@@ -1227,6 +1243,25 @@ class Config:
 
             apply_warning_filters(config_filters, cmdline_filters)
             yield log
+
+    @contextlib.contextmanager
+    def _capture_plugin_import_warnings(self) -> Iterator[None]:
+        with self._catch_configured_warnings(record=True) as records:
+            # mypy can't infer that record=True means log is not None; help it.
+            assert records is not None
+
+            try:
+                yield
+            finally:
+                for warning_message in records:
+                    self.hook.pytest_warning_recorded.call_historic(
+                        kwargs=dict(
+                            warning_message=warning_message,
+                            nodeid="",
+                            when="config",
+                            location=None,
+                        )
+                    )
 
     def _do_configure(self) -> None:
         assert not self._configured
@@ -1610,17 +1645,31 @@ class Config:
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()
-        self.pluginmanager.consider_preparse(args, exclude_only=False)
-        if (
-            not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
-            and not self.known_args_namespace.disable_plugin_autoload
+
+        # Apply filterwarnings to whilst importing plugins.
+        warnings_plugin_enabled = self.pluginmanager.hasplugin("warnings")
+        for plugin in self.known_args_namespace.plugins:
+            plugin = plugin.strip()
+            if plugin == "no:warnings":
+                warnings_plugin_enabled = False
+            elif plugin == "warnings":
+                warnings_plugin_enabled = True
+        with (
+            self._capture_plugin_import_warnings()
+            if warnings_plugin_enabled
+            else contextlib.nullcontext()
         ):
-            # Autoloading from distribution package entry point has
-            # not been disabled.
-            self.pluginmanager.load_setuptools_entrypoints("pytest11")
-        # Otherwise only plugins explicitly specified in PYTEST_PLUGINS
-        # are going to be loaded.
-        self.pluginmanager.consider_env()
+            self.pluginmanager.consider_preparse(args, exclude_only=False)
+            if (
+                not os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD")
+                and not self.known_args_namespace.disable_plugin_autoload
+            ):
+                # Autoloading from distribution package entry point has
+                # not been disabled.
+                self.pluginmanager.load_setuptools_entrypoints("pytest11")
+            # Otherwise only plugins explicitly specified in PYTEST_PLUGINS
+            # are going to be loaded.
+            self.pluginmanager.consider_env()
 
         # Parse again, now including options added in pytest_addoption
         # by third-party plugins loaded above. This way they're available
@@ -1750,6 +1799,18 @@ class Config:
             pass
         self._inicache[canonical_name] = val = self._getini(canonical_name)
         return val
+
+    def _iter_registered_markers(self) -> Iterator[RegisteredMarker]:
+        """Iterate over all markers registered in the configuration."""
+        for line in self.getini("markers"):
+            # Example lines: "skipif(condition): skip the given test if..."
+            # or "hypothesis: tests which use Hypothesis", so to get the
+            # marker name we split on both `:` and `(`.
+            parts = line.split(":", 1)
+            signature = parts[0]
+            description = parts[1].strip() if len(parts) == 2 else ""
+            name = signature.split("(")[0].strip()
+            yield RegisteredMarker(name, signature, description)
 
     # Meant for easy monkeypatching by legacypath plugin.
     # Can be inlined back (with no cover removed) once legacypath is gone.

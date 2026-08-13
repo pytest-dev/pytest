@@ -1613,14 +1613,16 @@ class TestDoctestNamespaceFixture:
             encoding="utf-8",
         )
 
-        # The conftest is both the config file and at the rootdir, and the
+        testing.joinpath("pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+
+        # The config file sits next to the conftest at the rootdir, and the
         # collection argument (``xclim``) is a *parent* of the rootdir
         # (``xclim/testing``) -- the exact setup from #14683.
         result = pytester.runpytest(
             "--rootdir",
             str(testing),
             "--config-file",
-            str(testing / "conftest.py"),
+            str(testing / "pytest.ini"),
             "--doctest-modules",
             "xclim",
         )
