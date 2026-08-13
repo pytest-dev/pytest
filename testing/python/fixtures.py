@@ -1817,6 +1817,35 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.assert_outcomes(passed=2)
 
+    def test_fixture_function_definition_in_public_api(self, pytester: Pytester) -> None:
+        """FixtureFunctionDefinition is exposed as part of the public API and usable as an annotation."""
+        pytester.makepyfile(
+            """
+            import pytest
+
+            from pytest import FixtureFunctionDefinition
+
+            def make_fixture(value: str) -> FixtureFunctionDefinition:
+                @pytest.fixture
+                def my_fixture() -> str:
+                    return value
+
+                return my_fixture
+
+
+            def test_annotation_type():
+                result = make_fixture("hello")
+                assert isinstance(result, FixtureFunctionDefinition)
+                assert result.name == "my_fixture"
+
+
+            def test_public_namespace():
+                assert "FixtureFunctionDefinition" in pytest.__all__
+            """
+        )
+        result = pytester.runpytest()
+        result.assert_outcomes(passed=2)
+
     def test_fixture_wrapped_looks_liked_wrapped_function(
         self, pytester: Pytester
     ) -> None:

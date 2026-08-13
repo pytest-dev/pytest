@@ -1,0 +1,1 @@
+Exposed ``pytest.FixtureFunctionDefinition`` as part of the public API, so it can be used in type annotations for the return value of functions/factories that create fixtures via ``@pytest.fixture``.
