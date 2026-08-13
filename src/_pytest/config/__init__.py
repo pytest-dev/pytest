@@ -361,13 +361,14 @@ def get_config(
     plugins: Sequence[str | _PluggyPlugin] | None = None,
     *,
     prog: str | None = None,
+    dir: pathlib.Path | None = None,
 ) -> Config:
     # Subsequent calls to main will create a fresh instance.
     pluginmanager = PytestPluginManager()
     invocation_params = Config.InvocationParams(
         args=args or (),
         plugins=plugins,
-        dir=pathlib.Path.cwd(),
+        dir=dir if dir is not None else pathlib.Path.cwd(),
     )
     config = Config(pluginmanager, invocation_params=invocation_params, prog=prog)
 
