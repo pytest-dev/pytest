@@ -190,6 +190,20 @@ class TestClass:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*collected 0*"])
 
+    def test_class_from_parent_without_obj_resolves_by_name(
+        self, pytester: Pytester
+    ) -> None:
+        """Without an explicit obj, the class is looked up on the parent's object."""
+        modcol = pytester.getmodulecol(
+            """
+            class TestGroup:
+                def test_method(self):
+                    pass
+            """
+        )
+        cls = pytest.Class.from_parent(modcol, name="TestGroup")
+        assert cls.obj is modcol.obj.TestGroup
+
     def test_static_method(self, pytester: Pytester) -> None:
         """Support for collecting staticmethod tests (#2528, #2699)"""
         pytester.getmodulecol(
