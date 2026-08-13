@@ -149,6 +149,11 @@ class RunRecord:
             _counts=dict(counts),
         )
 
+    @property
+    def collect_errors(self) -> list[CollectReport]:
+        """The collect reports that failed, if any."""
+        return [report for report in self.collect_reports if report.failed]
+
     def __getitem__(self, name: str) -> ItemRecord:
         if name in self.by_test:
             return self.by_test[name]
