@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from collections.abc import Mapping
 import contextlib
+import copy
 import dataclasses
 import pathlib
 from typing import Final
@@ -13,6 +14,7 @@ from _pytest.config import Config
 from _pytest.config import essential_plugins
 from _pytest.config import PytestPluginManager
 from _pytest.config.findpaths import ConfigValue
+from _pytest.config.findpaths import parse_override_ini
 
 
 #: Plugins loaded into an ensemble config by default: the essential core
@@ -154,7 +156,22 @@ def configured(spec: ConfigSpec) -> Iterator[Config]:
             ignored_config_files=(),
         )
         config._register_core_ini_options()
-        config._finalize_parse(list(spec.args), decide_args=False)
+
+        # Mirror the addopts/override-ini handling of Config.parse: without
+        # it every OverrideIniAction option (--strict-markers, --strict-config,
+        # ...) and every -o name=value would be parsed into the namespace and
+        # then silently dropped, so a spec asking for them would get a config
+        # that quietly ignores them.
+        args = config._validate_args(config.getini("addopts"), "via addopts config")
+        args += spec.args
+        config.known_args_namespace = config._parser.parse_known_args(
+            args, namespace=copy.copy(config.option)
+        )
+        if overrides := parse_override_ini(config.known_args_namespace.override_ini):
+            config._inicfg.update(overrides)
+            config._inicache.clear()
+
+        config._finalize_parse(args, decide_args=False)
         config._do_configure()
         yield config
     finally:
