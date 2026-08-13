@@ -24,6 +24,7 @@ from _pytest.ensemble import Ensemble
 from _pytest.ensemble import EnsembleModule
 from _pytest.ensemble import run_tests
 from _pytest.ensemble import running_session
+from _pytest.nodes import Collector
 from _pytest.pytester import Pytester
 import pytest
 
@@ -418,6 +419,34 @@ class TestRunning:
 
         record = run_tests(test_bad, rootpath=tmp_path)
         record.assert_outcomes(errors=1)
+        assert [r.nodeid for r in record.collect_errors] == ["test_ensemble.py"]
+
+    def test_collect_tests_raises_on_collection_failure(self, tmp_path: Path) -> None:
+        """An empty item list must not stand in for a collection failure."""
+
+        @pytest.mark.parametrize("absent", [1])
+        def test_bad() -> None: ...
+
+        with pytest.raises(Collector.CollectError, match="uses no argument"):
+            collect_tests(test_bad, rootpath=tmp_path)
+
+    def test_collect_errors_reachable_stepwise(self, tmp_path: Path) -> None:
+        """Ensemble.collect() stays permissive, but says what went wrong."""
+
+        @pytest.mark.parametrize("absent", [1])
+        def test_bad() -> None: ...
+
+        with Ensemble(test_bad, rootpath=tmp_path) as ensemble:
+            assert ensemble.collect() == []
+            assert [r.nodeid for r in ensemble.collect_errors] == ["test_ensemble.py"]
+
+    def test_no_collect_errors_when_nothing_matches(self, tmp_path: Path) -> None:
+        """Genuinely collecting nothing is not an error."""
+
+        class NotATest:
+            pass
+
+        assert collect_tests(NotATest, rootpath=tmp_path) == []
 
     def test_outcome_empty_when_no_call_phase(self, tmp_path: Path) -> None:
         """--setup-only produces setup/teardown reports whose status
