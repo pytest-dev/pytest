@@ -1817,7 +1817,9 @@ class TestFixtureUsages:
         result = pytester.runpytest()
         result.assert_outcomes(passed=2)
 
-    def test_fixture_function_definition_in_public_api(self, pytester: Pytester) -> None:
+    def test_fixture_function_definition_in_public_api(
+        self, pytester: Pytester
+    ) -> None:
         """FixtureFunctionDefinition is exposed as part of the public API and usable as an annotation."""
         pytester.makepyfile(
             """
