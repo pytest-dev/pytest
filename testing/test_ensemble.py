@@ -488,6 +488,33 @@ class TestEnsembleLifecycle:
         with pytest.raises(RuntimeError, match="boom"), ExitStack() as stack:
             stack.enter_context(ensemble)
 
+    def test_collect_is_idempotent(self, tmp_path: Path) -> None:
+        """A second collect() must not register the same sources again."""
+
+        def test_a() -> None: ...
+
+        with Ensemble(test_a, rootpath=tmp_path) as ensemble:
+            first = ensemble.collect()
+            second = ensemble.collect()
+            assert [i.nodeid for i in first] == [i.nodeid for i in second]
+            ensemble.run().assert_outcomes(passed=1)
+
+    def test_collect_accepts_extra_sources(self, tmp_path: Path) -> None:
+        """Later rounds add to the tree without colliding with earlier ones."""
+
+        def test_a() -> None: ...
+
+        def test_b() -> None: ...
+
+        with Ensemble(test_a, rootpath=tmp_path) as ensemble:
+            ensemble.collect()
+            ensemble.collect(test_b)
+            assert [i.nodeid for i in ensemble.session.items] == [
+                "test_ensemble.py::test_a",
+                "test_ensemble_1.py::test_b",
+            ]
+            ensemble.run().assert_outcomes(passed=2)
+
     def test_exception_in_body_reaches_session_teardown(self, tmp_path: Path) -> None:
         """A failure inside the ensemble body is forwarded to the session
         teardown, not swallowed by closing the stack blind."""
