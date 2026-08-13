@@ -1299,10 +1299,18 @@ class Config:
                 self._cleanup_stack = contextlib.ExitStack()
 
     def get_terminal_writer(self) -> TerminalWriter:
+        """The writer the terminal plugin reports through.
+
+        Without that plugin - as in a programmatically constructed config -
+        a plain writer over the current stdout is returned instead, so that
+        code needing to render something does not have to care whether
+        anything is reporting.
+        """
         terminalreporter: TerminalReporter | None = self.pluginmanager.get_plugin(
             "terminalreporter"
         )
-        assert terminalreporter is not None
+        if terminalreporter is None:
+            return create_terminal_writer(self)
         return terminalreporter._tw
 
     def pytest_cmdline_parse(
@@ -2290,17 +2298,23 @@ def create_terminal_writer(
 
     Every code which requires a TerminalWriter object and has access to a
     config object should use this function.
+
+    The presentation options are read defensively: they are registered by the
+    terminal plugin, which a programmatically constructed config need not
+    load, and a writer is still useful without them.
     """
     tw = TerminalWriter(file=file)
 
-    if config.option.color == "yes":
+    color = getattr(config.option, "color", None)
+    if color == "yes":
         tw.hasmarkup = True
-    elif config.option.color == "no":
+    elif color == "no":
         tw.hasmarkup = False
 
-    if config.option.code_highlight == "yes":
+    code_highlight = getattr(config.option, "code_highlight", None)
+    if code_highlight == "yes":
         tw.code_highlight = True
-    elif config.option.code_highlight == "no":
+    elif code_highlight == "no":
         tw.code_highlight = False
 
     return tw

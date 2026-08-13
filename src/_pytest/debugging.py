@@ -340,11 +340,13 @@ def _enter_pdb(
 ) -> BaseReport:
     # XXX we reuse the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
-    # for not completely clear reasons.
-    tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
+    # for not completely clear reasons. Falls back to a plain writer when
+    # nothing is reporting, rather than crashing on entry to the debugger.
+    tw = node.config.get_terminal_writer()
     tw.line()
 
-    showcapture = node.config.option.showcapture
+    # Registered by the terminal plugin; default to its default when absent.
+    showcapture = node.config.getoption("showcapture", "all")
 
     for sectionname, content in (
         ("stdout", rep.capstdout),
