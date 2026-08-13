@@ -22,7 +22,9 @@ from _pytest.config import hookimpl
 from _pytest.config import PytestPluginManager
 from _pytest.config.argparsing import Parser
 from _pytest.config.exceptions import UsageError
+from _pytest.nodes import Item
 from _pytest.nodes import Node
+from _pytest.python import Function
 from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
 
@@ -302,9 +304,15 @@ class PdbInvoke:
 
 
 class PdbTrace:
-    @hookimpl(wrapper=True)
-    def pytest_pyfunc_call(self, pyfuncitem) -> Generator[None, object, object]:
-        wrap_pytest_function_for_tracing(pyfuncitem)
+    # trylast so this is the innermost wrapper, i.e. runs inside
+    # CaptureManager's - _init_pdb() suspends capturing, and an outer wrapper
+    # would have that undone again by the capture manager.
+    @hookimpl(wrapper=True, trylast=True)
+    def pytest_runtest_call(self, item: Item) -> Generator[None, object, object]:
+        # Not every item is function-backed (doctests, custom items), and
+        # TestCaseFunction never reaches pytest_pyfunc_call at all.
+        if isinstance(item, Function):
+            wrap_pytest_function_for_tracing(item)
         return (yield)
 
 
@@ -325,13 +333,6 @@ def wrap_pytest_function_for_tracing(pyfuncitem) -> None:
         _pdb.runcall(func)
 
     pyfuncitem.obj = wrapper
-
-
-def maybe_wrap_pytest_function_for_tracing(pyfuncitem) -> None:
-    """Wrap the given pytestfunct item for tracing support if --trace was given in
-    the command line."""
-    if pyfuncitem.config.getvalue("trace"):
-        wrap_pytest_function_for_tracing(pyfuncitem)
 
 
 def _enter_pdb(
