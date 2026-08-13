@@ -29,6 +29,8 @@ Known limitations (by design, for now):
 from __future__ import annotations
 
 import contextlib
+import dataclasses
+import io
 import pathlib
 from typing import TYPE_CHECKING
 
@@ -112,6 +114,7 @@ class Ensemble:
         rootpath: pathlib.Path | None = None,
         spec: ConfigSpec | None = None,
         name: str = DEFAULT_MODULE_NAME,
+        capture_output: bool = False,
     ) -> None:
         self._spec = _resolve_spec(spec, rootpath)
         self._sources = sources
@@ -119,6 +122,22 @@ class Ensemble:
         self._collected = False
         self._round = 0
         self._stack: contextlib.ExitStack | None = None
+        self._sink: io.StringIO | None = None
+        if capture_output:
+            self._sink = io.StringIO()
+            self._spec = self._spec.replace(output=self._sink)
+            if "terminal" not in self._spec.plugins:
+                self._spec = self._spec.with_plugins("terminal")
+
+    @property
+    def output(self) -> str:
+        """What the terminal plugin has rendered so far, if capturing.
+
+        Failure sections and the summary line are only written as the
+        session finishes, so read this after leaving the context manager to
+        get the whole report.
+        """
+        return self._sink.getvalue() if self._sink is not None else ""
 
     def __enter__(self) -> Self:
         if self._stack is not None:
@@ -180,7 +199,10 @@ class Ensemble:
         """Run the collected items (collecting first if needed)."""
         if not self._collected:
             self.collect()
-        return run_items(self.session, items)
+        record = run_items(self.session, items)
+        if self._sink is not None:
+            record = dataclasses.replace(record, output=self.output)
+        return record
 
 
 def run_tests(
@@ -188,11 +210,30 @@ def run_tests(
     rootpath: pathlib.Path | None = None,
     spec: ConfigSpec | None = None,
     name: str = DEFAULT_MODULE_NAME,
+    capture_output: bool = False,
 ) -> RunRecord:
     """Collect and run the given in-memory sources in a nested config;
-    return the structured results."""
-    with Ensemble(*sources, rootpath=rootpath, spec=spec, name=name) as ensemble:
-        return ensemble.run()
+    return the structured results.
+
+    With ``capture_output``, the terminal plugin is loaded and what it
+    renders is captured into :attr:`RunRecord.output` (and
+    :attr:`RunRecord.stdout`) instead of reaching the real stdout.
+    """
+    ensemble = Ensemble(
+        *sources,
+        rootpath=rootpath,
+        spec=spec,
+        name=name,
+        capture_output=capture_output,
+    )
+    with ensemble:
+        record = ensemble.run()
+    # The failure sections and the summary line are written as the session
+    # finishes, i.e. on the way out of the block - so the complete text is
+    # only available once it has been left.
+    if capture_output:
+        record = dataclasses.replace(record, output=ensemble.output)
+    return record
 
 
 def collect_tests(

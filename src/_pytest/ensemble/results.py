@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Sequence
 import dataclasses
+from typing import TYPE_CHECKING
 import warnings as warnings_module
 
 from _pytest.config import Config
@@ -12,6 +13,10 @@ from _pytest.main import Session
 from _pytest.nodes import Item
 from _pytest.reports import CollectReport
 from _pytest.reports import TestReport
+
+
+if TYPE_CHECKING:
+    from _pytest.pytester import LineMatcher
 
 
 class RunRecorder:
@@ -82,8 +87,8 @@ class ItemRecord:
 class RunRecord:
     """Typed, structured results of an ensemble run.
 
-    Everything is derived from real report objects — nothing is scraped
-    from rendered output.
+    Everything except :attr:`output` is derived from real report objects —
+    nothing is scraped from rendered output.
     """
 
     reports: list[TestReport]
@@ -93,6 +98,19 @@ class RunRecord:
     by_test: dict[str, ItemRecord]
     _by_name: dict[str, ItemRecord]
     _counts: dict[str, int]
+    #: What the terminal plugin rendered, when the ensemble was asked to
+    #: capture output; empty otherwise.
+    output: str = ""
+
+    @property
+    def stdout(self) -> LineMatcher:
+        """The rendered output as a matcher, for ``fnmatch_lines`` and friends."""
+        # Imported lazily: pytester is a heavyweight module, and the intended
+        # direction of travel is pytester building on this package, not the
+        # other way round.
+        from _pytest.pytester import LineMatcher
+
+        return LineMatcher(self.output.splitlines())
 
     @classmethod
     def from_recorder(cls, recorder: RunRecorder, *, config: Config) -> RunRecord:
