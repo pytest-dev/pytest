@@ -101,6 +101,9 @@ class RunRecord:
     #: What the terminal plugin rendered, when the ensemble was asked to
     #: capture output; empty otherwise.
     output: str = ""
+    #: Why the run stopped before every item had been run - the
+    #: ``shouldfail``/``shouldstop`` reason - or None if it ran to the end.
+    stopped: str | None = None
 
     @property
     def stdout(self) -> LineMatcher:
@@ -227,11 +230,27 @@ class RunRecord:
 
 def run_items(session: Session, items: Sequence[Item] | None = None) -> RunRecord:
     """Run items through the standard runtest protocol hook and return
-    the structured results recorded so far on this config."""
+    the structured results recorded so far on this config.
+
+    Honours ``session.shouldfail``/``shouldstop`` between items, the way
+    :func:`_pytest.main.pytest_runtestloop` does, so ``--maxfail`` and
+    ``-x`` mean something here too. Where that hook raises ``Failed`` /
+    ``Interrupted`` for ``wrap_session`` to catch, an ensemble has no such
+    wrapper, so the loop simply stops and the reason is recorded on
+    :attr:`RunRecord.stopped`.
+    """
     if items is None:
         items = list(session.items)
     recorder = ensure_recorder(session.config)
+    stopped: str | None = None
     for i, item in enumerate(items):
         nextitem = items[i + 1] if i + 1 < len(items) else None
         item.ihook.pytest_runtest_protocol(item=item, nextitem=nextitem)
-    return RunRecord.from_recorder(recorder, config=session.config)
+        if session.shouldfail:
+            stopped = str(session.shouldfail)
+            break
+        if session.shouldstop:
+            stopped = str(session.shouldstop)
+            break
+    record = RunRecord.from_recorder(recorder, config=session.config)
+    return dataclasses.replace(record, stopped=stopped)
