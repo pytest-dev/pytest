@@ -42,11 +42,14 @@ from _pytest.ensemble.collection import Source
 from _pytest.ensemble.config import ConfigSpec
 from _pytest.ensemble.config import configured
 from _pytest.ensemble.config import DEFAULT_PLUGINS
+from _pytest.ensemble.results import ensure_recorder
 from _pytest.ensemble.results import ItemRecord
 from _pytest.ensemble.results import run_items
 from _pytest.ensemble.results import RunRecord
 from _pytest.main import Session
+from _pytest.nodes import Collector
 from _pytest.nodes import Item
+from _pytest.reports import CollectReport
 
 
 if TYPE_CHECKING:
@@ -142,6 +145,17 @@ class Ensemble:
         # managers suppresses, so the result is not propagated.
         stack.__exit__(exc_type, exc, tb)
 
+    @property
+    def collect_errors(self) -> list[CollectReport]:
+        """The collect reports that failed, if any.
+
+        Collection failures do not raise, so an ensemble that collects
+        nothing because something blew up looks exactly like one that had
+        nothing to collect; this is how the two are told apart.
+        """
+        recorder = ensure_recorder(self.config)
+        return [report for report in recorder.collect_reports if report.failed]
+
     def collect(self, *sources: Source) -> list[Item]:
         """Collect the ensemble's sources (plus any given extra ones)."""
         self._collected = True
@@ -176,6 +190,18 @@ def collect_tests(
 
     The nested config and session are torn down before returning; the
     items remain usable for structural assertions (names, nodeids, marks).
+
+    Raises :class:`~_pytest.nodes.Collector.CollectError` if collection
+    failed: an empty list is otherwise indistinguishable from "collection
+    blew up", which would quietly turn a "collects nothing" assertion into
+    one that holds for the wrong reason. Use :class:`Ensemble` directly, or
+    :func:`run_tests`, to inspect collection failures instead.
     """
     with Ensemble(*sources, rootpath=rootpath, spec=spec, name=name) as ensemble:
-        return ensemble.collect()
+        items = ensemble.collect()
+        if errors := ensemble.collect_errors:
+            raise Collector.CollectError(
+                "collection failed:\n"
+                + "\n".join(f"{r.nodeid}: {r.longrepr}" for r in errors)
+            )
+        return items
