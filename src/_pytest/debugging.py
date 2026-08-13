@@ -9,6 +9,8 @@ from collections.abc import Callable
 from collections.abc import Generator
 import functools
 import importlib
+import importlib.machinery
+import importlib.util
 import sys
 import types
 from typing import Any
@@ -62,18 +64,70 @@ def pytest_addoption(parser: Parser) -> None:
     )
 
 
-def pytest_configure(config: Config) -> None:
-    import pdb
+class SetTracePatcher:
+    """Triggered on --pdb CLI opt and when a test fails.
 
+    Importing pdb on 3.14 imports asyncio, ssl and socket
+    """
+
+    def __init__(self) -> None:
+        self.module: Any = None
+        self.original: Callable[..., None] | None = None
+
+    def install(self) -> None:
+        module = sys.modules.get("pdb")
+        if module is not None:
+            self.patch(module)
+        else:
+            sys.meta_path.insert(0, self)
+
+    def uninstall(self) -> None:
+        if self.module is not None:
+            self.module.set_trace = self.original
+            self.module = None
+        elif self in sys.meta_path:
+            sys.meta_path.remove(self)
+
+    def find_spec(
+        self,
+        name: str,
+        path: Any = None,
+        target: types.ModuleType | None = None,
+    ) -> importlib.machinery.ModuleSpec | None:
+        if name != "pdb":
+            return None
+
+        sys.meta_path.remove(self)
+        spec = importlib.util.find_spec(name)
+        if spec is None or spec.loader is None or isinstance(spec.loader, type):
+            sys.meta_path.insert(0, self)
+            return None
+
+        exec_module = spec.loader.exec_module
+
+        def patching_exec_module(module: types.ModuleType) -> None:
+            exec_module(module)
+            self.patch(module)
+
+        spec.loader.exec_module = patching_exec_module  # type: ignore[method-assign]
+        return spec
+
+    def patch(self, module: Any) -> None:
+        self.module = module
+        self.original = module.set_trace
+        module.set_trace = pytestPDB.set_trace
+
+
+def pytest_configure(config: Config) -> None:
     if config.getvalue("trace"):
         config.pluginmanager.register(PdbTrace(), "pdbtrace")
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), "pdbinvoke")
 
-    pytestPDB._saved.append(
-        (pdb.set_trace, pytestPDB._pluginmanager, pytestPDB._config)
-    )
-    pdb.set_trace = pytestPDB.set_trace
+    patcher = SetTracePatcher()
+    patcher.install()
+
+    pytestPDB._saved.append((patcher, pytestPDB._pluginmanager, pytestPDB._config))
     pytestPDB._pluginmanager = config.pluginmanager
     pytestPDB._config = config
 
@@ -81,10 +135,11 @@ def pytest_configure(config: Config) -> None:
     #       pytest_configure was not (if another plugin raises UsageError).
     def fin() -> None:
         (
-            pdb.set_trace,
+            saved_patcher,
             pytestPDB._pluginmanager,
             pytestPDB._config,
         ) = pytestPDB._saved.pop()
+        saved_patcher.uninstall()
 
     config.add_cleanup(fin)
 
@@ -94,9 +149,7 @@ class pytestPDB:
 
     _pluginmanager: PytestPluginManager | None = None
     _config: Config | None = None
-    _saved: list[
-        tuple[Callable[..., None], PytestPluginManager | None, Config | None]
-    ] = []
+    _saved: list[tuple[SetTracePatcher, PytestPluginManager | None, Config | None]] = []
     _recursive_debug = 0
     _wrapped_pdb_cls: tuple[type[Any], type[Any]] | None = None
 

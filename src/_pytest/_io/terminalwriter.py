@@ -9,15 +9,15 @@ import sys
 from typing import final
 from typing import Literal
 from typing import TextIO
-
-import pygments
-from pygments.formatters.terminal import TerminalFormatter
-from pygments.lexer import Lexer
-from pygments.lexers.diff import DiffLexer
-from pygments.lexers.python import PythonLexer
+from typing import TYPE_CHECKING
 
 from ..compat import assert_never
 from .wcwidth import wcswidth
+
+
+if TYPE_CHECKING:
+    from pygments.formatters.terminal import TerminalFormatter
+    from pygments.lexer import Lexer
 
 
 # This code was initially copied from py 1.8.1, file _io/terminalwriter.py.
@@ -207,13 +207,20 @@ class TerminalWriter:
 
     def _get_pygments_lexer(self, lexer: Literal["python", "diff"]) -> Lexer:
         if lexer == "python":
+            from pygments.lexers.python import PythonLexer
+
             return PythonLexer()
         elif lexer == "diff":
+            from pygments.lexers.diff import DiffLexer
+
             return DiffLexer()
         else:
             assert_never(lexer)
 
     def _get_pygments_formatter(self) -> TerminalFormatter:
+        from pygments.formatters.terminal import TerminalFormatter
+        import pygments.util
+
         from _pytest.config.exceptions import UsageError
 
         theme = os.getenv("PYTEST_THEME")
@@ -238,6 +245,8 @@ class TerminalWriter:
         """Highlight the given source if we have markup support."""
         if not source or not self.hasmarkup or not self.code_highlight:
             return source
+
+        import pygments
 
         pygments_lexer = self._get_pygments_lexer(lexer)
         pygments_formatter = self._get_pygments_formatter()
