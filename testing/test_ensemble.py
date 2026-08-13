@@ -13,6 +13,7 @@ import warnings
 
 from _pytest.config import Config
 from _pytest.config import ExitCode
+from _pytest.config.exceptions import UsageError
 from _pytest.ensemble import build_module
 from _pytest.ensemble import collect_tests
 from _pytest.ensemble import ConfigSpec
@@ -84,6 +85,50 @@ class TestConfigSpec:
         assert "unittest" not in derived.plugins
         # frozen: original unchanged
         assert "capture" not in spec.plugins
+
+    @pytest.mark.parametrize(
+        "spec_kwargs",
+        [
+            pytest.param({"args": ("--strict-markers",)}, id="override-ini-action"),
+            pytest.param({"args": ("-o", "strict_markers=true")}, id="dash-o"),
+            pytest.param(
+                {"inicfg": {"addopts": "--strict-markers"}}, id="addopts-in-inicfg"
+            ),
+        ],
+    )
+    def test_ini_overrides_are_applied(
+        self, tmp_path: Path, spec_kwargs: dict[str, object]
+    ) -> None:
+        """Options that override ini values must not be silently dropped."""
+        with configured(ConfigSpec(rootpath=tmp_path, **spec_kwargs)) as config:  # type: ignore[arg-type]
+            assert config.getini("strict_markers") is True
+
+    def test_ini_overrides_are_not_invented(self, tmp_path: Path) -> None:
+        with configured(ConfigSpec(rootpath=tmp_path)) as config:
+            assert config.getini("strict_markers") is None
+
+    def test_unregistered_marker_is_strict(self, tmp_path: Path) -> None:
+        """The end the overrides serve: --strict-markers actually bites.
+
+        Enforcement is asserted through ``-m`` expression validation rather
+        than a ``@pytest.mark.unregistered`` decorator, because decorators in
+        the enclosing test body are resolved against the *host* config at
+        decoration time, long before the ensemble config exists.
+        """
+
+        def test_fn() -> None: ...
+
+        spec = ConfigSpec(
+            rootpath=tmp_path, args=("--strict-markers", "-m", "nowhere_registered")
+        )
+        with pytest.raises(UsageError, match="Unknown marker"):
+            run_tests(test_fn, spec=spec)
+
+    def test_unregistered_marker_allowed_without_strict(self, tmp_path: Path) -> None:
+        def test_fn() -> None: ...
+
+        spec = ConfigSpec(rootpath=tmp_path, args=("-m", "nowhere_registered"))
+        run_tests(test_fn, spec=spec).assert_outcomes(deselected=1)
 
     def test_extra_plugin_by_name(self, tmp_path: Path) -> None:
         """String entries in extra_plugins are imported, objects registered."""
