@@ -487,6 +487,38 @@ class TestRunning:
         record.assert_outcomes(passed=1)
         assert list(record.by_test) == ["test_ensemble.py::test_a"]
 
+    def test_maxfail_stops_the_run(self, tmp_path: Path) -> None:
+        """--maxfail/-x must not be silently inert.
+
+        The early exit lives in pytest_runtestloop, which an ensemble does
+        not go through, so without this the whole run proceeded and a test
+        about stopping early would assert the opposite of its subject.
+        """
+
+        def test_a() -> None:
+            raise AssertionError
+
+        def test_b() -> None:
+            raise AssertionError
+
+        def test_c() -> None: ...
+
+        spec = ConfigSpec(rootpath=tmp_path, args=("--maxfail=1",))
+        record = run_tests(test_a, test_b, test_c, spec=spec)
+        record.assert_outcomes(failed=1)
+        assert list(record.by_test) == ["test_ensemble.py::test_a"]
+        assert record.stopped == "stopping after 1 failures"
+
+    def test_runs_to_the_end_without_maxfail(self, tmp_path: Path) -> None:
+        def test_a() -> None:
+            raise AssertionError
+
+        def test_b() -> None: ...
+
+        record = run_tests(test_a, test_b, rootpath=tmp_path)
+        record.assert_outcomes(failed=1, passed=1)
+        assert record.stopped is None
+
     def test_collection_error_counts_as_error(self, tmp_path: Path) -> None:
         @pytest.mark.parametrize("absent", [1])
         def test_bad() -> None: ...
