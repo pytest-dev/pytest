@@ -379,12 +379,8 @@ class TestCaseFunction(Function):
         pass
 
     def runtest(self) -> None:
-        from _pytest.debugging import maybe_wrap_pytest_function_for_tracing
-
         testcase = self.instance
         assert testcase is not None
-
-        maybe_wrap_pytest_function_for_tracing(self)
 
         # Let the unittest framework handle async functions.
         if is_async_function(self.obj):
@@ -399,7 +395,7 @@ class TestCaseFunction(Function):
             # We need to consider if the test itself is skipped, or the whole class.
             assert isinstance(self.parent, UnitTestCase)
             skipped = _is_skipped(self.obj) or _is_skipped(self.parent.obj)
-            if self.config.getoption("usepdb") and not skipped:
+            if self.config.getoption("usepdb", False) and not skipped:
                 self._explicit_tearDown = testcase.tearDown
                 setattr(testcase, "tearDown", lambda *args: None)
 
