@@ -94,6 +94,22 @@ class ConfigSpec:
         return self.replace(plugins=tuple(p for p in self.plugins if p not in names))
 
 
+def _own(value: object) -> ConfigValue:
+    """Wrap a spec's ini value in a ConfigValue the config may own.
+
+    Mutable values are copied: ``Config.addinivalue_line`` appends to the
+    cached list, and the cache would otherwise hold the caller's own object,
+    so a reused (frozen!) spec would grow every time it was configured.
+    """
+    if isinstance(value, ConfigValue):
+        if isinstance(value.value, list):
+            value = dataclasses.replace(value, value=list(value.value))
+        return value
+    if isinstance(value, list):
+        value = list(value)
+    return ConfigValue(value, origin="file", mode="ini")
+
+
 @contextlib.contextmanager
 def configured(spec: ConfigSpec) -> Iterator[Config]:
     """Build a parsed *and* configured :class:`Config` from a spec.
@@ -143,12 +159,7 @@ def configured(spec: ConfigSpec) -> Iterator[Config]:
         config.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=pluginmanager)
         )
-        inicfg = {
-            name: value
-            if isinstance(value, ConfigValue)
-            else ConfigValue(value, origin="file", mode="ini")
-            for name, value in spec.inicfg.items()
-        }
+        inicfg = {name: _own(value) for name, value in spec.inicfg.items()}
         config._apply_rootdir(
             rootpath=spec.rootpath,
             inipath=None,
