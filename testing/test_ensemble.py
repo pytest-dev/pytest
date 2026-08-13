@@ -11,6 +11,7 @@ import types
 import unittest
 import warnings
 
+from _pytest._io import TerminalWriter
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config.exceptions import UsageError
@@ -135,6 +136,34 @@ class TestConfigSpec:
         spec = ConfigSpec(rootpath=tmp_path, extra_plugins=("_pytest.setuponly",))
         with configured(spec) as config:
             assert config.pluginmanager.get_plugin("_pytest.setuponly") is not None
+
+
+class TestTerminalLessConfig:
+    """A config without the terminal plugin still has to render sometimes."""
+
+    def test_get_terminal_writer_falls_back(self, tmp_path: Path) -> None:
+        with configured(ConfigSpec(rootpath=tmp_path)) as config:
+            assert config.pluginmanager.get_plugin("terminalreporter") is None
+            assert isinstance(config.get_terminal_writer(), TerminalWriter)
+
+    def test_pdb_on_failure_does_not_crash(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """--pdb used to die reaching into a terminalreporter that is absent."""
+        entered: list[object] = []
+
+        def fake_post_mortem(tb_or_exc: object) -> None:
+            entered.append(tb_or_exc)
+
+        monkeypatch.setattr("_pytest.debugging.post_mortem", fake_post_mortem)
+
+        def test_fails() -> None:
+            raise AssertionError("boom")
+
+        spec = ConfigSpec(rootpath=tmp_path, args=("--pdb",)).with_plugins("debugging")
+        record = run_tests(test_fails, spec=spec)
+        record.assert_outcomes(failed=1)
+        assert len(entered) == 1
 
 
 class TestCollection:
