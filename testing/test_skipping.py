@@ -766,6 +766,56 @@ class TestXFailwithSetupTeardown:
         result = pytester.runpytest()
         result.stdout.fnmatch_lines(["*1 xfail*"])
 
+    def test_xfail_call_and_teardown_reports_show_phase(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makepyfile(
+            test_case="""
+            import pytest
+
+            @pytest.fixture
+            def my_fix():
+                yield
+                raise Exception("teardown")
+
+            @pytest.mark.xfail(reason="Some reason")
+            def test_func(my_fix):
+                raise Exception("call")
+            """
+        )
+
+        result = pytester.runpytest("-rx")
+
+        result.stdout.fnmatch_lines(
+            [
+                "*XFAIL*test_case.py::test_func*",
+                "*XFAIL at teardown of*test_case.py::test_func*",
+            ]
+        )
+
+    def test_xfail_setup_report_shows_phase(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            test_case="""
+            import pytest
+
+            @pytest.fixture
+            def my_fix():
+                raise Exception("setup")
+
+            @pytest.mark.xfail(reason="Some reason")
+            def test_func(my_fix):
+                pass
+            """
+        )
+
+        result = pytester.runpytest("-rx")
+
+        result.stdout.fnmatch_lines(
+            [
+                "*XFAIL at setup of*test_case.py::test_func*",
+            ]
+        )
+
 
 class TestSkip:
     def test_skip_class(self, pytester: Pytester) -> None:
