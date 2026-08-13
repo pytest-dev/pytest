@@ -13,17 +13,38 @@ glob-matching rendered terminal output.
 Known limitations (by design, for now):
 
 * Ensembles never load conftest files; pass plugin objects via
-  ``ConfigSpec.extra_plugins`` instead.
-* The ``capture`` and ``terminal`` plugins are not loaded by default:
-  ``capsys``/``capfd`` are unavailable inside an ensemble and no terminal
-  output exists. Capture nesting is a planned follow-up.
-* Assertion rewriting is not applied to ensemble sources; sources defined
-  in the host test suite's own files are already rewritten by the host.
+  ``ConfigSpec.extra_plugins`` instead. A plugin object is equivalent to a
+  conftest at the *rootdir*; nothing below rootdir is expressible, so
+  per-directory conftest scoping has no analogue.
+* **Capture does not nest.** ``capture`` is not loaded by default, and
+  loading it via ``with_plugins("capture")`` registers a ``CaptureManager``
+  without ever starting global capturing - ``pytest_load_initial_conftests``
+  is where that happens, and an ensemble does not run it. Fixture-level
+  ``capsys``/``capfd`` inside the ensemble therefore work, but output from
+  the item itself is neither captured nor reported: **it escapes to the
+  stdout of whatever is running the ensemble.** Starting global capturing
+  here would redirect the process's streams underneath the host that is
+  already capturing them; making that safe is the stack-aware
+  ``CaptureManager`` work, not something this package can paper over.
+* The ``terminal`` plugin is not loaded by default, so by default there is
+  no rendered output at all. ``capture_output=True`` loads it bound to a
+  private buffer, which is also what makes terminal-only options such as
+  ``--tb``, ``-v`` and ``--color`` available. Note the progress column
+  stays off regardless: the terminal reporter decides it from the
+  ``capture`` option, which an ensemble does not have.
+* Assertion *rewriting* is not applied to ensemble sources; sources defined
+  in the host test suite's own files are already rewritten by the host. The
+  assertion *explanation* is the ensemble's own, because the ``assertion``
+  plugin is loaded by default - without it ``util._reprcompare`` would stay
+  bound to the host's.
 * Sources without real code objects (``exec``'d, lambdas) degrade
-  ``reportinfo``/traceback quality.
+  ``reportinfo``/traceback quality. Items also report the *host* file as
+  their location, so anything rendering ``file:line`` names the host.
 * Process-global warning filters active around the ensemble (e.g. the
   host suite's ``filterwarnings = error``) are inherited; an ensemble's
   own ``inicfg={"filterwarnings": [...]}`` takes precedence over them.
+  Warnings the ensemble itself raises do not escape: those from configure
+  and unconfigure are captured and reported on :attr:`RunRecord.warnings`.
 """
 
 from __future__ import annotations
