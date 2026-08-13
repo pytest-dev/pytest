@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from _pytest.config import Config
-from _pytest.config import ExitCode
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureDef
 from _pytest.fixtures import SubRequest
@@ -32,8 +31,10 @@ def pytest_fixture_setup(
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
+def pytest_configure(config: Config) -> None:
+    # Normalizing at configure time rather than in pytest_cmdline_main means
+    # it also applies to programmatically constructed configs, which are
+    # configured but never go through the command line entry point.
     if config.option.setupplan:
         config.option.setuponly = True
         config.option.setupshow = True
-    return None
