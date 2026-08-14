@@ -327,3 +327,14 @@ else:
                 return func
 
             return decorator
+
+
+if sys.version_info >= (3, 15):
+    import pprint
+
+    pformat = functools.partial(pprint.pformat, expand=True)
+else:
+    import pprint
+
+    pformat = pprint.pformat
+

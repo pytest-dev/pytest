@@ -202,3 +202,13 @@ def test_deprecated() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         assert old_way() == "human intelligence"  # type: ignore[deprecated]
+
+
+def test_pformat() -> None:
+    from _pytest.compat import pformat
+
+    data = {"key": "value", "items": [1, 2, 3]}
+    result = pformat(data)
+    assert "key" in result
+    assert "value" in result
+
