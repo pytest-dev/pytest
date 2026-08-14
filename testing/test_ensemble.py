@@ -290,6 +290,37 @@ class TestCapturedOutput:
         assert record.stdout.lines == []
 
 
+class TestRunLoop:
+    def test_goes_through_pytest_runtestloop(self, tmp_path: Path) -> None:
+        """Plugins wrapping the loop hook must see an ensemble run."""
+        seen: list[str] = []
+
+        class LoopWatcher:
+            @pytest.hookimpl(wrapper=True)
+            def pytest_runtestloop(
+                self, session: object
+            ) -> Generator[None, object, object]:
+                seen.append("loop")
+                return (yield)
+
+        def test_ok() -> None: ...
+
+        spec = ConfigSpec(rootpath=tmp_path, extra_plugins=(LoopWatcher(),))
+        run_tests(test_ok, spec=spec).assert_outcomes(passed=1)
+        assert seen == ["loop"]
+
+    def test_progress_column_is_rendered(self, tmp_path: Path) -> None:
+        """The terminal's deferred final fill needs the loop hook, and the
+        progress column needs somewhere safe to write."""
+
+        def test_a() -> None: ...
+
+        def test_b() -> None: ...
+
+        record = run_tests(test_a, test_b, rootpath=tmp_path, capture_output=True)
+        record.stdout.fnmatch_lines(["*test_ensemble.py ..*[[]100%[]]*"])
+
+
 class TestCollection:
     def test_collect_loose_functions(self, tmp_path: Path) -> None:
         def test_one() -> None: ...
