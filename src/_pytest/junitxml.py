@@ -22,6 +22,7 @@ from _pytest import nodes
 from _pytest import timing
 from _pytest._code.code import ExceptionRepr
 from _pytest._code.code import ReprFileLocation
+from _pytest.assertion.highlight import strip_deferred_highlight
 from _pytest.config import Config
 from _pytest.config import filename_arg
 from _pytest.config.argparsing import Parser
@@ -61,7 +62,9 @@ def bin_xml_escape(arg: object) -> str:
     # Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
     # For an unknown(?) reason, we disallow #x7F (DEL) as well.
     illegal_xml_re = "[^\u0009\u000a\u000d\u0020-\u007e\u0080-\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]"
-    return re.sub(illegal_xml_re, repl, str(arg))
+    # Drop pytest highlight markers before escaping so they cannot leak as #x01.
+    text = strip_deferred_highlight(str(arg))
+    return re.sub(illegal_xml_re, repl, text)
 
 
 def merge_family(left, right) -> None:
