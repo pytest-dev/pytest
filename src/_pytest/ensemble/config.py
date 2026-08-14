@@ -169,6 +169,10 @@ def configured(spec: ConfigSpec) -> Iterator[Config]:
             dir=invocation_dir,
         ),
     )
+    # Before anything that can fail: the teardown below reads this, and a
+    # UsageError raised while parsing args would otherwise surface as a
+    # KeyError with the real error buried in __context__.
+    config.stash[config_warnings_key] = []
     try:
         for name in spec.plugins:
             pluginmanager.import_plugin(name)
@@ -205,7 +209,6 @@ def configured(spec: ConfigSpec) -> Iterator[Config]:
             config._inicache.clear()
 
         config._finalize_parse(args, decide_args=False)
-        config.stash[config_warnings_key] = []
         if spec.output is not None:
             # Must be stashed before configure: the terminal reporter binds
             # its stream when it is constructed, and must never bind ours.
