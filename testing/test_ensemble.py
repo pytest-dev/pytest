@@ -580,6 +580,18 @@ class TestRunning:
         record.assert_outcomes(passed=1)
         assert list(record.by_test) == ["test_ensemble.py::test_a"]
 
+    def test_argument_errors_are_not_masked(self, tmp_path: Path) -> None:
+        """A bad argument must report itself, not a KeyError from teardown.
+
+        The teardown reads the config-warnings stash unconditionally, so
+        initialising it late meant an error raised while parsing arguments
+        surfaced as ``KeyError`` with the real cause only in __context__.
+        """
+        spec = ConfigSpec(rootpath=tmp_path, args=("--not-an-option",))
+        with pytest.raises(UsageError, match="unrecognized arguments"):
+            with configured(spec):
+                pass
+
     def test_configure_warnings_do_not_escape(self, tmp_path: Path) -> None:
         """An ensemble must not warn into whatever is running it.
 
