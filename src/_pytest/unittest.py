@@ -56,6 +56,11 @@ _SysExcInfoType = (
 )
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
 ) -> UnitTestCase | None:

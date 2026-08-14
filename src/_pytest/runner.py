@@ -48,6 +48,11 @@ if TYPE_CHECKING:
 # pytest plugin hooks.
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "Reporting", after="general")
     group.addoption(
