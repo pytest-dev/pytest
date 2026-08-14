@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
+from typing import cast
 from typing import Literal
 import warnings
 
@@ -27,9 +28,14 @@ def _copy_filters() -> list[Any]:
     return list(warnings.filters)
 
 
+def _filter_list() -> list[Any]:
+    # typeshed types warnings.filters as Sequence; it is a mutable list.
+    return cast(list[Any], warnings.filters)
+
+
 def _prepend_filters(filters: list[Any]) -> None:
     if filters:
-        warnings.filters[:0] = filters
+        _filter_list()[:0] = filters
 
 
 def _filters_added(before: list[Any], after: list[Any]) -> list[Any]:
