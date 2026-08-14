@@ -531,10 +531,10 @@ if TYPE_CHECKING:
             *conditions: str | bool,
             reason: str = ...,
             run: bool = ...,
-            raises: None
-            | type[BaseException]
+            raises: type[BaseException]
             | tuple[type[BaseException], ...]
-            | AbstractRaises[BaseException] = ...,
+            | AbstractRaises[BaseException]
+            | None = ...,
             strict: bool = ...,
         ) -> MarkDecorator: ...
 
@@ -548,7 +548,7 @@ if TYPE_CHECKING:
             # argvalues: Collection[ParameterSet | Sequence[object] | object],
             *,
             indirect: bool | Sequence[str] = ...,
-            ids: Iterable[None | str | float | int | bool | _HiddenParam]
+            ids: Iterable[str | float | int | bool | _HiddenParam | None]
             | Callable[[Any], object | None]
             | None = ...,
             scope: ScopeName | None = ...,
@@ -604,12 +604,9 @@ class MarkGenerator:
             # name is in the set we definitely know it, but a mark may be known and
             # not in the set.  We therefore start by updating the set!
             if name not in self._markers:
-                for line in self._config.getini("markers"):
-                    # example lines: "skipif(condition): skip the given test if..."
-                    # or "hypothesis: tests which use Hypothesis", so to get the
-                    # marker name we split on both `:` and `(`.
-                    marker = line.split(":")[0].split("(")[0].strip()
-                    self._markers.add(marker)
+                self._markers.update(
+                    m.name for m in self._config._iter_registered_markers()
+                )
 
             # If the name is not in the set of known marks after updating,
             # then it really is time to issue a warning or an error.

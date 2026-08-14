@@ -1615,6 +1615,73 @@ raise ValueError()
         assert output.count("ValueError: inner") == 1
         assert output.count("The above exception was the direct cause") == 1
 
+    def test_exc_chain_repr_without_traceback_multiple_links(self) -> None:
+        """
+        Exceptions without a traceback that are themselves part of a longer
+        chain must not have their remaining chain printed twice: once by
+        Python's own ``traceback.format_exception`` (used as a fallback when
+        an exception has no ``__traceback__``) and once more by pytest's own
+        chain-walking loop (#8321).
+        """
+        exc1 = ValueError("abcd")
+        exc2 = IndexError("efgh")
+        exc3 = KeyError("ijkl")
+        exc4 = RuntimeError("mnop")
+        exc1.__cause__ = exc2
+        exc2.__context__ = exc3
+        exc3.__cause__ = exc4
+
+        try:
+            raise exc1
+        except ValueError:
+            excinfo = ExceptionInfo.from_current()
+
+        r = excinfo.getrepr()
+        file = io.StringIO()
+        tw = TerminalWriter(file=file)
+        tw.hasmarkup = False
+        r.toterminal(tw)
+
+        output = file.getvalue()
+        for message in (
+            "ValueError: abcd",
+            "IndexError: efgh",
+            "KeyError: 'ijkl'",
+            "RuntimeError: mnop",
+        ):
+            assert output.count(message) == 1, (
+                f"{message!r} should appear exactly once in the output, "
+                f"got {output.count(message)} occurrences:\n{output}"
+            )
+        assert output.count("The above exception was the direct cause") == 2
+        assert output.count("During handling of the above exception") == 1
+
+    def test_exc_chain_repr_mixed_traceback(self) -> None:
+        """
+        An exception without a traceback whose chain member has a traceback
+        must have that member printed once, in pytest's own style.
+        """
+        exc1 = ValueError("outer without traceback")
+        try:
+            raise RuntimeError("inner with traceback")
+        except RuntimeError as exc:
+            exc1.__cause__ = exc
+        try:
+            raise exc1
+        except ValueError:
+            excinfo = ExceptionInfo.from_current()
+
+        r = excinfo.getrepr()
+        file = io.StringIO()
+        tw = TerminalWriter(file=file)
+        tw.hasmarkup = False
+        r.toterminal(tw)
+
+        output = file.getvalue()
+        assert output.count("ValueError: outer without traceback") == 1
+        assert output.count("RuntimeError: inner with traceback") == 1
+        assert output.count("The above exception was the direct cause") == 1
+
     def test_exc_chain_repr_cycle(self, importasmod, tw_mock):
         __tracebackhide__ = True
         mod = importasmod(

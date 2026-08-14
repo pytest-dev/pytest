@@ -400,7 +400,7 @@ class TerminalReporter:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
         self._screen_width = self._tw.fullwidth
-        self.currentfspath: None | Path | str | int = None
+        self.currentfspath: Path | str | int | None = None
         self.reportchars = getreportopt(config)
         self.foldskipped = config.option.fold_skipped
         self.hasmarkup = self._tw.hasmarkup

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import textwrap
 
+from _pytest._code import ExceptionInfo
 from _pytest.pytester import Pytester
 from _pytest.runner import runtestprotocol
 from _pytest.skipping import evaluate_skip_marks
@@ -452,6 +453,32 @@ class TestXFail:
                 "*1 passed*",
             ]
         )
+
+    def test_xfail_not_run_does_not_format_traceback(
+        self, pytester: Pytester, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        item = pytester.getitem(
+            """
+            import pytest
+
+            @pytest.mark.xfail(run=False, reason="noway")
+            def test_func():
+                assert 0
+            """
+        )
+        getrepr = ExceptionInfo.getrepr
+        styles = []
+
+        def spy_getrepr(self, *args, **kwargs):
+            styles.append(kwargs["style"])
+            return getrepr(self, *args, **kwargs)
+
+        monkeypatch.setattr(ExceptionInfo, "getrepr", spy_getrepr)
+
+        reports = runtestprotocol(item, log=False)
+
+        assert reports[0].skipped
+        assert styles == ["value"]
 
     def test_xfail_not_run_no_setup_run(self, pytester: Pytester) -> None:
         p = pytester.makepyfile(

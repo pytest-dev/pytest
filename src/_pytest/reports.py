@@ -62,7 +62,7 @@ class BaseReport:
     when: str | None
     location: tuple[str, int | None, str] | None
     longrepr: (
-        None | ExceptionInfo[BaseException] | tuple[str, int, str] | str | TerminalRepr
+        ExceptionInfo[BaseException] | tuple[str, int, str] | str | TerminalRepr | None
     )
     sections: list[tuple[str, str]]
     nodeid: str
@@ -321,11 +321,11 @@ class TestReport(BaseReport):
         location: tuple[str, int | None, str],
         keywords: Mapping[str, Any],
         outcome: Literal["passed", "failed", "skipped"],
-        longrepr: None
-        | ExceptionInfo[BaseException]
+        longrepr: ExceptionInfo[BaseException]
         | tuple[str, int, str]
         | str
-        | TerminalRepr,
+        | TerminalRepr
+        | None,
         when: Literal["setup", "call", "teardown"],
         sections: Iterable[tuple[str, str]] = (),
         duration: float = 0,
@@ -399,11 +399,11 @@ class TestReport(BaseReport):
         if not call.excinfo:
             outcome: Literal["passed", "failed", "skipped"] = "passed"
             longrepr: (
-                None
-                | ExceptionInfo[BaseException]
+                ExceptionInfo[BaseException]
                 | tuple[str, int, str]
                 | str
                 | TerminalRepr
+                | None
             ) = None
         else:
             if not isinstance(excinfo, ExceptionInfo):
@@ -466,11 +466,11 @@ class CollectReport(BaseReport):
         self,
         nodeid: str,
         outcome: Literal["passed", "failed", "skipped"],
-        longrepr: None
-        | ExceptionInfo[BaseException]
+        longrepr: ExceptionInfo[BaseException]
         | tuple[str, int, str]
         | str
-        | TerminalRepr,
+        | TerminalRepr
+        | None,
         result: list[Item | Collector] | None,
         sections: Iterable[tuple[str, str]] = (),
         **extra,

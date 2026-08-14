@@ -31,7 +31,7 @@ jobs:
         persist-credentials: false
 
     - name: Build and Check Package
-      uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df
+      uses: hynek/build-and-inspect-python-package@2abe76da66d0a6a4a227101f9348ee855797cfa5
       with:
         attest-build-provenance-github: 'true'
 
@@ -83,7 +83,7 @@ jobs:
         path: dist
 
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
+      uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
       with:
         attestations: true
 

@@ -508,7 +508,7 @@ def pytest_pycollect_makemodule(module_path: Path, parent) -> Module | None:
 @hookspec(firstresult=True)
 def pytest_pycollect_makeitem(
     collector: Module | Class, name: str, obj: object
-) -> None | Item | Collector | list[Item | Collector]:
+) -> Item | Collector | list[Item | Collector] | None:
     """Return a custom item/collector for a Python object in a module, or None.
 
     Stops at first non-None result, see :ref:`firstresult`.
