@@ -29,17 +29,21 @@ Known limitations (by design, for now):
 * The ``terminal`` plugin is not loaded by default, so by default there is
   no rendered output at all. ``capture_output=True`` loads it bound to a
   private buffer, which is also what makes terminal-only options such as
-  ``--tb``, ``-v`` and ``--color`` available. Note the progress column
-  stays off regardless: the terminal reporter decides it from the
-  ``capture`` option, which an ensemble does not have.
+  ``--tb``, ``-v`` and ``--color`` available. Writing to a buffer of its
+  own counts as capturing, so the progress column renders - which in turn
+  means ``--capture=no`` cannot switch it off in an ensemble.
 * Assertion *rewriting* is not applied to ensemble sources; sources defined
   in the host test suite's own files are already rewritten by the host. The
   assertion *explanation* is the ensemble's own, because the ``assertion``
   plugin is loaded by default - without it ``util._reprcompare`` would stay
   bound to the host's.
 * Sources without real code objects (``exec``'d, lambdas) degrade
-  ``reportinfo``/traceback quality. Items also report the *host* file as
-  their location, so anything rendering ``file:line`` names the host.
+  ``reportinfo``/traceback quality.
+* An item's location comes from its function's code object, so a source
+  written inline in a test body reports the *host* file - anything
+  rendering ``file:line`` names the host, and the terminal groups all such
+  items as one module. Use :func:`module_from_path` to run a script that
+  exists on disk as itself; its items then report their own path and line.
 * Process-global warning filters active around the ensemble (e.g. the
   host suite's ``filterwarnings = error``) are inherited; an ensemble's
   own ``inicfg={"filterwarnings": [...]}`` takes precedence over them.
