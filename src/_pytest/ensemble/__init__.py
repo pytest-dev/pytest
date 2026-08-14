@@ -60,6 +60,7 @@ from _pytest.ensemble.collection import build_module
 from _pytest.ensemble.collection import collect_sources
 from _pytest.ensemble.collection import DEFAULT_MODULE_NAME
 from _pytest.ensemble.collection import EnsembleModule
+from _pytest.ensemble.collection import module_from_path
 from _pytest.ensemble.collection import running_session
 from _pytest.ensemble.collection import Source
 from _pytest.ensemble.config import ConfigSpec
@@ -94,6 +95,7 @@ __all__ = [
     "collect_sources",
     "collect_tests",
     "configured",
+    "module_from_path",
     "run_items",
     "run_tests",
     "running_session",
