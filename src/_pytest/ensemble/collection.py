@@ -7,6 +7,7 @@ from collections.abc import Iterator
 import contextlib
 import importlib.util
 import pathlib
+import sys
 import types
 from typing import Final
 
@@ -156,7 +157,9 @@ def module_from_path(path: pathlib.Path, name: str | None = None) -> types.Modul
     line numbers.
 
     Staying out of ``sys.modules`` keeps the ensemble hermetic and lets the
-    same file be imported more than once in a session.
+    same file be imported more than once in a session. Bytecode writing is
+    suppressed for the same reason: importing a script must not leave a
+    ``__pycache__`` beside it.
     """
     if name is None:
         name = path.stem
@@ -164,7 +167,12 @@ def module_from_path(path: pathlib.Path, name: str | None = None) -> types.Modul
     if spec is None or spec.loader is None:
         raise ImportError(f"cannot import {path} as a module")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    written = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = written
     return module
 
 
