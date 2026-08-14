@@ -2038,7 +2038,7 @@ def test_namespace_packages(pytester: Pytester, import_mode: str):
 
 class TestOverlappingCollectionArguments:
     """Test that overlapping collection arguments (e.g. `pytest a/b a
-    a/c::TestIt) are handled correctly (#12083)."""
+    a/c::TestIt) are handled correctly (#12083, #13319)."""
 
     @pytest.mark.parametrize("args", [("a", "a/b"), ("a/b", "a")])
     def test_parent_child(self, pytester: Pytester, args: tuple[str, ...]) -> None:
@@ -2069,6 +2069,51 @@ class TestOverlappingCollectionArguments:
                 "    <Module test_a.py>",
                 "      <Function test_a1>",
                 "      <Function test_a2>",
+                "",
+            ],
+            consecutive=True,
+        )
+
+    @pytest.mark.parametrize(
+        "args",
+        [
+            ("parent/sub1", "parent/"),
+            ("parent/", "parent/sub1"),
+            ("parent/sub1", "parent"),
+            ("parent", "parent/sub1"),
+        ],
+    )
+    def test_parent_and_subfolder_collects_sibling_dirs(
+        self, pytester: Pytester, args: tuple[str, ...]
+    ) -> None:
+        """Collecting a parent dir plus one subfolder must include sibling folders.
+
+        The parent directory has no tests of its own — only tests in subfolders.
+        Regression test for #13319.
+        """
+        pytester.makepyfile(
+            **{
+                "parent/sub1/test_sub1.py": "def test_sub1(): pass",
+                "parent/sub2/test_sub2.py": "def test_sub2(): pass",
+                "parent/sub3/test_sub3.py": "def test_sub3(): pass",
+            }
+        )
+
+        result = pytester.runpytest("--collect-only", *args)
+
+        result.stdout.fnmatch_lines(
+            [
+                "<Dir *>",
+                "  <Dir parent>",
+                "    <Dir sub1>",
+                "      <Module test_sub1.py>",
+                "        <Function test_sub1>",
+                "    <Dir sub2>",
+                "      <Module test_sub2.py>",
+                "        <Function test_sub2>",
+                "    <Dir sub3>",
+                "      <Module test_sub3.py>",
+                "        <Function test_sub3>",
                 "",
             ],
             consecutive=True,

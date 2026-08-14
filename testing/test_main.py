@@ -9,6 +9,7 @@ import re
 from _pytest.config import ExitCode
 from _pytest.config import UsageError
 from _pytest.main import CollectionArgument
+from _pytest.main import normalize_collection_arguments
 from _pytest.main import resolve_collection_argument
 from _pytest.main import validate_basetemp
 from _pytest.pytester import Pytester
@@ -300,6 +301,41 @@ class TestResolveCollectionArgument:
             module_name=None,
             original_index=0,
         )
+
+
+class TestNormalizeCollectionArguments:
+    def _arg(
+        self, path: Path, index: int, parts: tuple[str, ...] = ()
+    ) -> CollectionArgument:
+        return CollectionArgument(
+            path=path,
+            parts=parts,
+            parametrization=None,
+            module_name=None,
+            original_index=index,
+        )
+
+    def test_parent_dir_subsumes_child_dir(self, tmp_path: Path) -> None:
+        """A parent directory argument must replace a more specific subfolder.
+
+        Regression test for #13319: `pytest parent/sub1 parent/` should collect
+        as if only `parent/` was given, so sibling folders are not skipped.
+        """
+        parent = tmp_path / "parent"
+        child = parent / "sub1"
+        args = [self._arg(child, 0), self._arg(parent, 1)]
+        assert normalize_collection_arguments(args) == [self._arg(parent, 1)]
+
+        args = [self._arg(parent, 0), self._arg(child, 1)]
+        assert normalize_collection_arguments(args) == [self._arg(parent, 0)]
+
+    def test_sibling_dirs_are_kept(self, tmp_path: Path) -> None:
+        parent = tmp_path / "parent"
+        args = [
+            self._arg(parent / "sub1", 0),
+            self._arg(parent / "sub2", 1),
+        ]
+        assert normalize_collection_arguments(args) == args
 
 
 def test_module_full_path_without_drive(pytester: Pytester) -> None:
