@@ -107,6 +107,16 @@ def _get_argparse_dest(opts: Sequence[str]) -> str:
     return opt.lstrip("-").replace("-", "_")
 
 
+def _check_option_names(opts: Sequence[str]) -> None:
+    for opt in opts:
+        if not opt.startswith("-"):
+            hint = f". Did you mean '--{opt}'?" if opt else ""
+            raise ValueError(
+                f"invalid option name {opt!r}: addoption() registers options only; "
+                f"names must start with '-' or '--'{hint}"
+            )
+
+
 @final
 class Parser:
     """Parser for command line arguments and config-file values.
@@ -192,7 +202,8 @@ class Parser:
         """Register a command line option.
 
         :param opts:
-            Option names, can be short or long options.
+            Option names, can be short or long options (must start with
+            ``-`` or ``--``).
         :param attrs:
             Same attributes as the argparse library's :meth:`add_argument()
             <argparse.ArgumentParser.add_argument>` function accepts.
@@ -444,12 +455,14 @@ class OptionGroup:
         accepted **and** the automatic destination is in ``args.twowords``.
 
         :param opts:
-            Option names, can be short or long options.
+            Option names, can be short or long options (must start with
+            ``-`` or ``--``).
             Note that lower-case short options (e.g. `-x`) are reserved.
         :param attrs:
             Same attributes as the argparse library's :meth:`add_argument()
             <argparse.ArgumentParser.add_argument>` function accepts.
         """
+        _check_option_names(opts)
         conflict = set(opts).intersection(
             name for opt in self.options for name in opt.names()
         )
@@ -477,6 +490,7 @@ class OptionGroup:
     def _addoption_inner(
         self, opts: tuple[str, ...], attrs: dict[str, Any], allow_reserved: bool
     ) -> None:
+        _check_option_names(opts)
         if not allow_reserved:
             for opt in opts:
                 if len(opt) >= 2 and opt[0] == "-" and opt[1].islower():
