@@ -29,7 +29,7 @@ def _copy_filters() -> list[Any]:
 
 
 def _filter_list() -> list[Any]:
-    # typeshed types warnings.filters as Sequence; it is a mutable list.
+    # warnings.filters is a mutable list; the stub types it as Sequence.
     return cast(list[Any], warnings.filters)
 
 
