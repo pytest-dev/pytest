@@ -211,4 +211,3 @@ def test_pformat() -> None:
     result = pformat(data)
     assert "key" in result
     assert "value" in result
-
