@@ -324,7 +324,10 @@ See :ref:`@pytest.mark.filterwarnings <filterwarnings>` and
 
     Also pytest doesn't follow :pep:`565` suggestion of resetting all warning filters because
     it might break test suites that configure warning filters themselves
-    by calling :func:`warnings.simplefilter` (see :issue:`2430` for an example of that).
+    by calling :func:`warnings.simplefilter` or :func:`warnings.filterwarnings`
+    (see :issue:`2430` and :issue:`13485`).
+    Filters installed at module level in test modules or ``conftest.py`` during
+    collection are kept for the test run.
 
 
 .. _`ensuring a function triggers a deprecation warning`:

@@ -150,9 +150,8 @@ def test_unicode(pytester: Pytester) -> None:
     )
 
 
-@pytest.mark.skip("issue #13485")
 def test_works_with_filterwarnings(pytester: Pytester) -> None:
-    """Ensure our warnings capture does not mess with pre-installed filters (#2430)."""
+    """Module-level warnings.filterwarnings during collection apply at run (#2430, #13485)."""
     pytester.makepyfile(
         """
         import warnings
@@ -162,7 +161,7 @@ def test_works_with_filterwarnings(pytester: Pytester) -> None:
 
         warnings.filterwarnings("error", category=MyWarning)
 
-        class TestWarnings(object):
+        class TestWarnings:
             def test_my_warning(self):
                 try:
                     warnings.warn(MyWarning("warn!"))
@@ -171,8 +170,70 @@ def test_works_with_filterwarnings(pytester: Pytester) -> None:
                     assert True
     """
     )
-    result = pytester.runpytest()
-    result.stdout.fnmatch_lines(["*== 1 passed in *"])
+    # Subprocess + -Wdefault so this does not pass only because the outer
+    # suite uses filterwarnings=error (#13480).
+    result = pytester.runpytest_subprocess("-W", "default")
+    result.assert_outcomes(passed=1)
+
+
+def test_collection_filterwarnings_ignore_during_run(pytester: Pytester) -> None:
+    """Ignore filters registered while collecting a module apply during the test run."""
+    pytester.makepyfile(
+        """
+        import warnings
+
+        warnings.filterwarnings("ignore", category=UserWarning)
+
+        def test_hidden():
+            warnings.warn(UserWarning("from collected module"))
+        """
+    )
+    result = pytester.runpytest_subprocess("-W", "always")
+    result.assert_outcomes(passed=1, warnings=0)
+    assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+
+
+def test_collection_filterwarnings_from_conftest(pytester: Pytester) -> None:
+    """Filters set in conftest.py apply during the test run (#13485)."""
+    pytester.makeconftest(
+        """
+        import warnings
+
+        warnings.filterwarnings("ignore", category=UserWarning)
+        """
+    )
+    pytester.makepyfile(
+        """
+        import warnings
+
+        def test_hidden():
+            warnings.warn(UserWarning("from test"))
+        """
+    )
+    result = pytester.runpytest_subprocess("-W", "always")
+    result.assert_outcomes(passed=1, warnings=0)
+    assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+
+
+def test_mark_filterwarnings_overrides_collection_filters(
+    pytester: Pytester,
+) -> None:
+    """@mark.filterwarnings still takes precedence over collection-time filters."""
+    pytester.makepyfile(
+        """
+        import warnings
+        import pytest
+
+        warnings.filterwarnings("ignore", category=UserWarning)
+
+        @pytest.mark.filterwarnings("error::UserWarning")
+        def test_mark_wins():
+            with pytest.raises(UserWarning):
+                warnings.warn(UserWarning("from test"))
+        """
+    )
+    result = pytester.runpytest_subprocess("-W", "default")
+    result.assert_outcomes(passed=1)
 
 
 @pytest.mark.parametrize("default_config", ["ini", "cmdline"])
