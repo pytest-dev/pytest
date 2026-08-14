@@ -47,6 +47,11 @@ __all__ = [
 old_mark_config_key = StashKey[Config | None]()
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def param(
     *values: object,
     marks: MarkDecorator | Collection[MarkDecorator | Mark] = (),

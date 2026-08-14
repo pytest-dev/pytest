@@ -29,6 +29,11 @@ from _pytest.reports import BaseReport
 from _pytest.runner import CallInfo
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def _validate_usepdb_cls(value: str) -> tuple[str, str]:
     """Validate syntax of --pdbcls option."""
     try:

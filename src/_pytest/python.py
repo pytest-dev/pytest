@@ -93,6 +93,11 @@ _LONG_STR_STRATEGIES: frozenset[LongStrIdStrategy] = frozenset(
 )
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def pytest_addoption(parser: Parser) -> None:
     parser.addini(
         "python_files",
