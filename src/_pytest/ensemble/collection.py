@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterator
 import contextlib
+import importlib.util
+import pathlib
 import types
 from typing import Final
 
@@ -26,12 +28,26 @@ Source = types.ModuleType | type | Callable[..., object]
 DEFAULT_MODULE_NAME: Final[str] = "test_ensemble"
 
 
+def _real_path(obj: types.ModuleType) -> pathlib.Path | None:
+    """The module's own file, if it was imported from one that still exists."""
+    filename = getattr(obj, "__file__", None)
+    if filename is None:
+        return None
+    path = pathlib.Path(filename)
+    return path if path.is_file() else None
+
+
 class EnsembleModule(Module):
     """A Module collector backed by an in-memory python object.
 
-    The synthetic ``path`` is rootdir-relative (giving well-formed nodeids)
-    but never touched on disk; the standard import chokepoint is bypassed
-    by serving the preset object from ``_getobj``.
+    For a synthesized module the ``path`` is rootdir-relative - giving
+    well-formed nodeids - but never touched on disk. A module that was
+    genuinely imported keeps its real ``__file__`` instead, so its items
+    report true locations and a rendered ``file:line`` names the source it
+    actually came from.
+
+    Either way the standard import chokepoint is bypassed: ``_getobj``
+    serves the object it was handed.
     """
 
     _preset_obj: types.ModuleType
@@ -43,11 +59,13 @@ class EnsembleModule(Module):
         *,
         obj: types.ModuleType,
         name: str | None = None,
+        path: pathlib.Path | None = None,
     ) -> EnsembleModule:
         """The public constructor."""
         if name is None:
             name = obj.__name__
-        path = parent.config.rootpath / f"{name}.py"
+        if path is None:
+            path = _real_path(obj) or parent.config.rootpath / f"{name}.py"
         node: EnsembleModule = super().from_parent(parent, path=path)
         node._preset_obj = obj
         return node
@@ -126,6 +144,27 @@ def build_module(
         setattr(module, member_name, member)
     for member_name, member in named_members.items():
         setattr(module, member_name, member)
+    return module
+
+
+def module_from_path(path: pathlib.Path, name: str | None = None) -> types.ModuleType:
+    """Import *path* as a module without registering it in ``sys.modules``.
+
+    For running an example script that lives on disk as itself, rather than
+    copying it somewhere first: the resulting module keeps its real
+    ``__file__``, so :class:`EnsembleModule` gives its items true paths and
+    line numbers.
+
+    Staying out of ``sys.modules`` keeps the ensemble hermetic and lets the
+    same file be imported more than once in a session.
+    """
+    if name is None:
+        name = path.stem
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot import {path} as a module")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
     return module
 
 
