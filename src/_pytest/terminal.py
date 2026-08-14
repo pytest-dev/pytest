@@ -427,9 +427,13 @@ class TerminalReporter:
     ) -> Literal["progress", "count", "times", False]:
         """Return whether we should display progress information based on the current config."""
         # do not show progress if we are not capturing output (#3038) unless explicitly
-        # overridden by progress-even-when-capture-no
+        # overridden by progress-even-when-capture-no.
+        # Writing to a stream of our own counts as captured: the concern is
+        # progress interleaving with test output, and nothing else is writing
+        # there.
         if (
             self.config.getoption("capture", "no") == "no"
+            and self.config.stash.get(terminal_file_key, None) is None
             and self.config.getini("console_output_style")
             != "progress-even-when-capture-no"
         ):
