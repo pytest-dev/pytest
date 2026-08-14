@@ -22,6 +22,7 @@ from _pytest.ensemble import ConfigSpec
 from _pytest.ensemble import configured
 from _pytest.ensemble import Ensemble
 from _pytest.ensemble import EnsembleModule
+from _pytest.ensemble import module_from_path
 from _pytest.ensemble import run_tests
 from _pytest.ensemble import running_session
 from _pytest.nodes import Collector
@@ -319,6 +320,38 @@ class TestRunLoop:
 
         record = run_tests(test_a, test_b, rootpath=tmp_path, capture_output=True)
         record.stdout.fnmatch_lines(["*test_ensemble.py ..*[[]100%[]]*"])
+
+
+class TestRealSources:
+    """Sources that exist on disk keep their own identity."""
+
+    def test_imported_module_keeps_its_path(self, tmp_path: Path) -> None:
+        example = (
+            Path(__file__).parent
+            / "example_scripts/fixtures/fill_fixtures/test_funcarg_basic.py"
+        )
+        module = module_from_path(example)
+        items = collect_tests(module, rootpath=example.parent)
+        assert items[0].path == example
+        assert items[0].location[0] == "test_funcarg_basic.py"
+        run_tests(module, rootpath=example.parent).assert_outcomes(passed=1)
+
+    def test_module_from_path_stays_out_of_sys_modules(self) -> None:
+        example = (
+            Path(__file__).parent
+            / "example_scripts/fixtures/fill_fixtures/test_funcarg_basic.py"
+        )
+        before = set(sys.modules)
+        module_from_path(example)
+        assert set(sys.modules) == before
+
+    def test_synthesized_module_still_gets_a_synthetic_path(
+        self, tmp_path: Path
+    ) -> None:
+        def test_fn() -> None: ...
+
+        items = collect_tests(test_fn, rootpath=tmp_path)
+        assert items[0].path == tmp_path / "test_ensemble.py"
 
 
 class TestCollection:
