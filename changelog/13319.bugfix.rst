@@ -1,0 +1,1 @@
+Fixed test collection when both a parent directory and one of its subfolders are specified on the command line, so tests in sibling folders are collected as well.
