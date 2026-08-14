@@ -26,6 +26,11 @@ from _pytest.runner import CallInfo
 from _pytest.stash import StashKey
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group.addoption(
