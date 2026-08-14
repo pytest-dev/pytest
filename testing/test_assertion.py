@@ -17,7 +17,6 @@ from _pytest import outcomes
 import _pytest.assertion as plugin
 from _pytest.assertion import truncate
 from _pytest.assertion import util
-from _pytest.assertion.highlight import strip_deferred_highlight
 from _pytest.assertion._compare_any import _compare_eq_cls
 from _pytest.assertion._compare_mapping import _compare_eq_mapping
 from _pytest.assertion._typing import _AssertionTextDiffStyle
@@ -25,6 +24,7 @@ from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _compare_eq_text
 from _pytest.assertion.compare_text import _notin_text
+from _pytest.assertion.highlight import strip_deferred_highlight
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
