@@ -24,6 +24,11 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 class ThreadExceptionMeta(NamedTuple):
     msg: str
     cause_msg: str

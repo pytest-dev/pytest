@@ -291,6 +291,34 @@ class TestCapturedOutput:
         assert record.stdout.lines == []
 
 
+def test_no_fixtures_optout_is_truthful() -> None:
+    """Every plugin claiming to hold no fixtures must actually hold none.
+
+    The opt-out makes the fixture manager skip a plugin entirely, so a
+    fixture added to one of these later would silently never be collected.
+    This is the guard against that.
+    """
+    import inspect
+
+    from _pytest.config import get_config
+    from _pytest.fixtures import FixtureFunctionDefinition
+
+    config = get_config([])
+    config.pluginmanager.import_plugin("python")
+
+    lying = []
+    for plugin in config.pluginmanager.get_plugins():
+        if plugin is None or not getattr(plugin, "__pytest_no_fixtures__", False):
+            continue
+        holder = plugin if inspect.ismodule(plugin) else type(plugin)
+        for name in dir(holder):
+            if type(getattr(holder, name, None)) is FixtureFunctionDefinition:
+                lying.append(
+                    f"{getattr(plugin, '__name__', type(plugin).__name__)}.{name}"
+                )
+    assert lying == [], f"declared __pytest_no_fixtures__ but define fixtures: {lying}"
+
+
 class TestRunLoop:
     def test_goes_through_pytest_runtestloop(self, tmp_path: Path) -> None:
         """Plugins wrapping the loop hook must see an ensemble run."""

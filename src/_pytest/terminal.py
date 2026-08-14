@@ -82,6 +82,11 @@ _ConsoleOutputStyle = Literal[
 ]
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 class MoreQuietAction(argparse.Action):
     """A modified copy of the argparse count action which counts down and updates
     the legacy quiet attribute at the same time.
@@ -392,6 +397,8 @@ class WarningReport:
 
 @final
 class TerminalReporter:
+    __pytest_no_fixtures__ = True
+
     def __init__(self, config: Config, file: TextIO | None = None) -> None:
         import _pytest.config
 
