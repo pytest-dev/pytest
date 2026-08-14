@@ -234,28 +234,35 @@ class RunRecord:
 
 
 def run_items(session: Session, items: Sequence[Item] | None = None) -> RunRecord:
-    """Run items through the standard runtest protocol hook and return
-    the structured results recorded so far on this config.
+    """Run the session's items and return the structured results.
 
-    Honours ``session.shouldfail``/``shouldstop`` between items, the way
-    :func:`_pytest.main.pytest_runtestloop` does, so ``--maxfail`` and
-    ``-x`` mean something here too. Where that hook raises ``Failed`` /
-    ``Interrupted`` for ``wrap_session`` to catch, an ensemble has no such
-    wrapper, so the loop simply stops and the reason is recorded on
-    :attr:`RunRecord.stopped`.
+    With no explicit *items*, this goes through ``pytest_runtestloop``, the
+    hook a real run uses - so plugins wrapping it see what they expect, and
+    the terminal reporter gets to write its deferred final progress fill.
+    That hook signals early exit by raising ``Failed``/``Interrupted`` for
+    ``wrap_session`` to catch; an ensemble has no such wrapper, so the
+    reason is caught here and recorded on :attr:`RunRecord.stopped`.
+
+    Given an explicit subset, the protocol hook is driven directly - the
+    loop hook has no way to express "just these" - while still honouring
+    ``shouldfail``/``shouldstop`` between items.
     """
-    if items is None:
-        items = list(session.items)
     recorder = ensure_recorder(session.config)
     stopped: str | None = None
-    for i, item in enumerate(items):
-        nextitem = items[i + 1] if i + 1 < len(items) else None
-        item.ihook.pytest_runtest_protocol(item=item, nextitem=nextitem)
-        if session.shouldfail:
-            stopped = str(session.shouldfail)
-            break
-        if session.shouldstop:
-            stopped = str(session.shouldstop)
-            break
+    if items is None:
+        try:
+            session.config.hook.pytest_runtestloop(session=session)
+        except (Session.Failed, Session.Interrupted) as exc:
+            stopped = str(exc)
+    else:
+        for i, item in enumerate(items):
+            nextitem = items[i + 1] if i + 1 < len(items) else None
+            item.ihook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+            if session.shouldfail:
+                stopped = str(session.shouldfail)
+                break
+            if session.shouldstop:
+                stopped = str(session.shouldstop)
+                break
     record = RunRecord.from_recorder(recorder, config=session.config)
     return dataclasses.replace(record, stopped=stopped)
