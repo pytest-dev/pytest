@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from collections.abc import Mapping
+from collections.abc import Sequence
 from collections.abc import Set as AbstractSet
 import dataclasses
 import pprint
@@ -15,7 +16,6 @@ from _pytest.assertion._guards import isattrs
 from _pytest.assertion._guards import isdatacls
 from _pytest.assertion._guards import isiterable
 from _pytest.assertion._guards import isnamedtuple
-from _pytest.assertion._guards import issequence
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
@@ -49,11 +49,15 @@ def _compare_eq_any(
                 assertion_text_diff_style,
                 truncation_budget,
             )
+            return
         # Although the common order should be obtained == approx(...), allow both ways.
         case (_, Approx()):
             yield from right._repr_compare(left)
         case (Approx(), _):
             yield from left._repr_compare(right)
+        # ``str`` is a ``Sequence``/iterable; stop before it gets diffed per character.
+        case (str(), _) | (_, str()):
+            return
         case _ if type(left) is type(right) and (
             isdatacls(left) or isattrs(left) or isnamedtuple(left)
         ):
@@ -68,9 +72,7 @@ def _compare_eq_any(
                 verbose,
                 assertion_text_diff_style,
             )
-        # A guard, since a ``Sequence()`` pattern would also match ``str``,
-        # which ``issequence`` excludes.
-        case _ if issequence(left) and issequence(right):
+        case (Sequence(), Sequence()):
             yield from _compare_eq_sequence(left, right, highlighter, verbose)
         case (AbstractSet(), AbstractSet()):
             yield from _compare_eq_set(left, right, highlighter, verbose)
@@ -79,7 +81,6 @@ def _compare_eq_any(
                 left, right, highlighter, verbose, truncation_budget
             )
 
-    # Note: ``isiterable`` does not apply to ``str``.
     if isiterable(left) and isiterable(right):
         yield from _compare_eq_iterable(
             left, right, highlighter, verbose, truncation_budget
