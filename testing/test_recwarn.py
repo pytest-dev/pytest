@@ -302,7 +302,7 @@ class TestWarns:
                     warnings.warn("user", UserWarning)
         excinfo.match(
             r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) were emitted.\n"
-            r" Emitted warnings: \[UserWarning\('user',?\)\]."
+            r" Emitted warnings: \[\n  UserWarning\('user'\),\n\]."
         )
 
         with pytest.warns():
@@ -311,7 +311,7 @@ class TestWarns:
                     warnings.warn("runtime", RuntimeWarning)
         excinfo.match(
             r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) were emitted.\n"
-            r" Emitted warnings: \[RuntimeWarning\('runtime',?\)]."
+            r" Emitted warnings: \[\n  RuntimeWarning\('runtime'\),\n\]."
         )
 
         with pytest.raises(pytest.fail.Exception) as excinfo:
@@ -329,10 +329,12 @@ class TestWarns:
                     warnings.warn("runtime", RuntimeWarning)
                     warnings.warn("import", ImportWarning)
 
+        from _pytest._io.pprint import pformat
+
         messages = [each.message for each in warninfo]
         expected_str = (
             f"DID NOT WARN. No warnings of type {warning_classes} were emitted.\n"
-            f" Emitted warnings: {messages}."
+            f" Emitted warnings: {pformat(messages, indent=2)}."
         )
 
         assert str(excinfo.value) == expected_str

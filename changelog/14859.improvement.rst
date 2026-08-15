@@ -1,0 +1,1 @@
+Use the expanded pretty-printed format for the warnings summary in ``pytest.warns`` failures, ``approx`` error messages, and the full local-variable listing in tracebacks, by formatting them with pytest's own pretty-printer. The output is now uniform across Python versions, matching the style introduced by the ``expand`` option of ``pprint.pformat`` in Python 3.15.
