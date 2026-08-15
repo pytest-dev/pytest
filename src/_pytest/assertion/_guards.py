@@ -5,10 +5,6 @@ import dataclasses
 from typing import TypeGuard
 
 
-def issequence(x: object) -> TypeGuard[collections.abc.Sequence[object]]:
-    return isinstance(x, collections.abc.Sequence) and not isinstance(x, str)
-
-
 def isnamedtuple(obj: object) -> bool:
     return isinstance(obj, tuple) and getattr(obj, "_fields", None) is not None
 
@@ -23,7 +19,7 @@ def isattrs(obj: object) -> bool:
 def isiterable(obj: object) -> TypeGuard[collections.abc.Iterable[object]]:
     try:
         iter(obj)  # type: ignore[call-overload]
-        return not isinstance(obj, str)
+        return True
     except Exception:
         return False
 
