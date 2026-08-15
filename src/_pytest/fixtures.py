@@ -2298,7 +2298,24 @@ class FixtureManager:
             # wrappers are not hidden by descriptor binding.
             raw_obj = self._lookup_in_type_dict(holderobj_tp, name)
             if raw_obj is not None:
-                self._check_for_wrapped_fixture(name, raw_obj)
+                # Only attributes which could hide a fixture definition behind
+                # another decorator need the (potentially expensive) unwrap:
+                # ``staticmethod``/``classmethod`` descriptors and objects with
+                # a ``__wrapped__`` chain (e.g. from ``functools.wraps``).
+                # Skipping everything else keeps the scan of large plugin
+                # objects (most of whose attributes are plain functions,
+                # classes, or values) cheap. Note that a bare
+                # :class:`FixtureFunctionDefinition` also sets ``__wrapped__``
+                # (via ``functools.update_wrapper``), so genuine fixtures still
+                # take this path - where ``_check_for_wrapped_fixture`` is a
+                # cheap no-op returning immediately.
+                # ``safe_getattr`` (not ``hasattr``) so that objects with a
+                # broken ``__getattr__`` (see pytest#214) do not raise.
+                if (
+                    type(raw_obj) in (classmethod, staticmethod)
+                    or safe_getattr(raw_obj, "__wrapped__", None) is not None
+                ):
+                    self._check_for_wrapped_fixture(name, raw_obj)
 
             # The attribute can be an arbitrary descriptor, so the attribute
             # access below can raise. safe_getattr() ignores such exceptions.
