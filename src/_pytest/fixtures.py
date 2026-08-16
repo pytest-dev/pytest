@@ -1454,6 +1454,8 @@ class FixtureFunctionMarker:
 
 # TODO: paramspec/return type annotation tracking and storing
 class FixtureFunctionDefinition:
+    """The object returned by :func:`pytest.fixture`, describing a fixture."""
+
     def __init__(
         self,
         *,
