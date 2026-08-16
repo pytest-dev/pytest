@@ -40,6 +40,14 @@ def _compare_eq_any(
     from _pytest.approx import Approx
 
     match (left, right):
+        # Although the common order should be obtained == approx(...), allow both ways.
+        # ``approx()`` can wrap a string, so it comes before the ``str`` cases.
+        case (_, Approx()):
+            yield from right._repr_compare(left)
+        case (Approx(), _):
+            yield from left._repr_compare(right)
+        # ``str`` is a ``Sequence``/iterable: diff two of them as text, and stop for
+        # any other pairing before it gets diffed per character below.
         case (str(), str()):
             yield from _compare_eq_text(
                 left,
@@ -50,12 +58,6 @@ def _compare_eq_any(
                 truncation_budget,
             )
             return
-        # Although the common order should be obtained == approx(...), allow both ways.
-        case (_, Approx()):
-            yield from right._repr_compare(left)
-        case (Approx(), _):
-            yield from left._repr_compare(right)
-        # ``str`` is a ``Sequence``/iterable; stop before it gets diffed per character.
         case (str(), _) | (_, str()):
             return
         case _ if type(left) is type(right) and (
