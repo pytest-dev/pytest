@@ -5,11 +5,30 @@ from collections.abc import Sequence
 import json
 from pathlib import Path
 
+from _pytest.cacheprovider import _scope_id
 from _pytest.cacheprovider import Cache
+from _pytest.cacheprovider import CacheScope
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
 from _pytest.stepwise import STEPWISE_CACHE_DIR
 import pytest
+
+
+def stepwise_cache_file(cachedir: Path) -> Path:
+    """Path of the stepwise cache value inside ``cachedir``.
+
+    Stepwise state is pinned to the environment, so it lives in a scope
+    sub-directory rather than directly under ``v/``.
+    """
+    scope_id = _scope_id(CacheScope.ENV)
+    assert scope_id is not None
+    return (
+        cachedir
+        / Cache._CACHE_PREFIX_SCOPES
+        / scope_id
+        / Cache._CACHE_PREFIX_VALUES
+        / STEPWISE_CACHE_DIR
+    )
 
 
 @pytest.fixture
@@ -50,14 +69,6 @@ def test_success_after_last_fail():
 def test_success():
     assert 1
 """
-    )
-
-    # customize cache directory so we don't use the tox's cache directory, which makes tests in this module flaky
-    pytester.makeini(
-        """
-        [pytest]
-        cache_dir = .cache
-    """
     )
 
     return pytester
@@ -316,10 +327,7 @@ def test_one():
     result = pytester.runpytest("--stepwise")
     assert result.ret == pytest.ExitCode.INTERRUPTED
 
-    stepwise_cache_file = (
-        pytester.path / Cache._CACHE_PREFIX_VALUES / STEPWISE_CACHE_DIR
-    )
-    assert not Path(stepwise_cache_file).exists()
+    assert not stepwise_cache_file(pytester.path).exists()
 
 
 def test_disabled_stepwise_xdist_dont_clear_cache(pytester: Pytester) -> None:
@@ -328,13 +336,10 @@ def test_disabled_stepwise_xdist_dont_clear_cache(pytester: Pytester) -> None:
         pytest=f"[pytest]\ncache_dir = {pytester.path}\n",
     )
 
-    stepwise_cache_file = (
-        pytester.path / Cache._CACHE_PREFIX_VALUES / STEPWISE_CACHE_DIR
-    )
-    stepwise_cache_dir = stepwise_cache_file.parent
-    stepwise_cache_dir.mkdir(exist_ok=True, parents=True)
+    cache_file = stepwise_cache_file(pytester.path)
+    cache_file.parent.mkdir(exist_ok=True, parents=True)
 
-    stepwise_cache_file_relative = f"{Cache._CACHE_PREFIX_VALUES}/{STEPWISE_CACHE_DIR}"
+    stepwise_cache_file_relative = cache_file.relative_to(pytester.path).as_posix()
 
     expected_value = '"test_one.py::test_one"'
     content = {f"{stepwise_cache_file_relative}": expected_value}
@@ -359,8 +364,8 @@ def test_one():
     result = pytester.runpytest()
     assert result.ret == 0
 
-    assert Path(stepwise_cache_file).exists()
-    with stepwise_cache_file.open(encoding="utf-8") as file_handle:
+    assert cache_file.exists()
+    with cache_file.open(encoding="utf-8") as file_handle:
         observed_value = file_handle.readlines()
     assert [expected_value] == observed_value
 
@@ -529,7 +534,7 @@ def test_cache_error(pytester: Pytester) -> None:
     )
 
     # Corrupt the cache.
-    cache_file = pytester.path / f".pytest_cache/v/{STEPWISE_CACHE_DIR}"
+    cache_file = stepwise_cache_file(pytester.path / ".pytest_cache")
     assert cache_file.is_file()
     cache_file.write_text(json.dumps({"invalid": True}), encoding="UTF-8")
 

@@ -15,6 +15,37 @@ Below is a complete list of all pytest features which are considered deprecated.
 :class:`~pytest.PytestWarning` or subclasses, which can be filtered using :ref:`standard warning filters <warnings>`.
 
 
+.. _tox-env-dir-cache-dir:
+
+Defaulting ``cache_dir`` to ``$TOX_ENV_DIR/.pytest_cache``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+When ``TOX_ENV_DIR`` is set in the environment, :confval:`cache_dir` has defaulted to
+``$TOX_ENV_DIR/.pytest_cache`` rather than to a directory inside the project. This is deprecated and
+will be removed in pytest 10.
+
+It existed because ``--lf``, ``--nf`` and ``--sw`` state is not valid across interpreters, so a tox
+matrix would otherwise have each environment overwrite the previous one's. pytest now keeps that state
+apart on its own, using :attr:`CacheScope.ENV <pytest.CacheScope.ENV>` within a single cache directory,
+so the special case is no longer needed - and it only ever helped tox, not nox or a plain second
+virtualenv.
+
+**Nothing needs to replace it.** Once the warning is gone, the cache lands in the project like any
+other, and per-environment state stays separate as it does everywhere else.
+
+To keep the cache in the tox environment anyway, spell out the location that was previously implied:
+
+.. code-block:: ini
+
+    [pytest]
+    cache_dir = $TOX_ENV_DIR/.pytest_cache
+
+:confval:`cache_dir` expands environment variables, so this is the same expression the old default was
+built from and resolves to exactly the same directory.
+
+
 .. _callspec2-renamed:
 
 ``_pytest.python.CallSpec2`` renamed to ``CallSpec``

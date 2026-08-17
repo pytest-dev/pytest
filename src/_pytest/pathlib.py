@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
+from collections.abc import Mapping
 import contextlib
 from enum import Enum
 from errno import EBADF
@@ -34,6 +35,7 @@ import uuid
 import warnings
 
 from _pytest.compat import assert_never
+from _pytest.compat import get_user_id
 from _pytest.outcomes import skip
 from _pytest.warning_types import PytestWarning
 
@@ -471,6 +473,83 @@ def resolve_from_str(input: str, rootpath: Path) -> Path:
         return Path(input)
     else:
         return rootpath.joinpath(input)
+
+
+def user_cache_root(*, environ: Mapping[str, str] | None = None) -> Path:
+    """Return the root directory for pytest's user-level caches.
+
+    Creates nothing.
+
+    ``PYTEST_CACHE_HOME`` overrides the location entirely; it is what pytest's
+    own test suite uses, and what CI setups wanting an explicit shared location
+    should set. Otherwise the platform convention is delegated to
+    ``platformdirs``, which is an optional dependency (``pytest[xdg]``).
+
+    :raises UsageError:
+        If ``platformdirs`` is not installed and ``PYTEST_CACHE_HOME`` is unset.
+    """
+    if environ is None:
+        environ = os.environ
+    override = environ.get("PYTEST_CACHE_HOME")
+    if override:
+        return Path(expanduser(expandvars(override)))
+    try:
+        import platformdirs
+    except ImportError:
+        # Imported lazily and only on this path, so that installations which
+        # never opt into the user-level cache do not need the dependency.
+        from _pytest.config.exceptions import UsageError
+
+        raise UsageError(
+            "the user-level pytest cache requires the 'platformdirs' package; "
+            "install it with `pip install pytest[xdg]`, or set PYTEST_CACHE_HOME "
+            "to an explicit directory."
+        ) from None
+    # platformdirs is an optional dependency and so is untyped as far as our
+    # checker is concerned; re-wrap to keep the declared return annotation.
+    return Path(platformdirs.user_cache_path("pytest", appauthor=False))
+
+
+def check_user_cache_root(root: Path) -> None:
+    """Reject a user cache root we clearly should not be writing into.
+
+    Deliberately weaker than :meth:`TempPathFactory.getbasetemp`'s equivalent
+    checks. That guards a directory in the world-writable, shared ``/tmp``,
+    where name-squatting is a real attack; the user cache home is neither
+    shared nor world-writable. Two of those checks would actively cause harm
+    here:
+
+    * rejecting a symlinked root would break pointing ``~/.cache`` at another
+      volume, which is legitimate and common;
+    * forcing ``0o700`` would fight #12308, which is exactly why
+      ``_make_cachedir`` re-applies the umask default instead.
+
+    So only ownership is checked, plus a world-writable root without the sticky
+    bit - which catches the one genuinely dangerous configuration,
+    ``XDG_CACHE_HOME=/tmp``.
+    """
+    uid = get_user_id()
+    if uid is None:  # Windows, emscripten, ...
+        return
+    try:
+        # Follow symlinks: a symlinked root is fine, what matters is the target.
+        st = root.stat()
+    except OSError:
+        # Does not exist yet, or is unreadable; creating it will report that.
+        return
+
+    from _pytest.config.exceptions import UsageError
+
+    if st.st_uid != uid:
+        raise UsageError(
+            f"The pytest user cache directory {root} is not owned by the "
+            f"current user. Fix this, or set PYTEST_CACHE_HOME."
+        )
+    if st.st_mode & stat.S_IWOTH and not st.st_mode & stat.S_ISVTX:
+        raise UsageError(
+            f"The pytest user cache directory {root} is world-writable without "
+            f"the sticky bit set. Refusing to use it."
+        )
 
 
 def fnmatch_ex(pattern: str, path: str | os.PathLike[str]) -> bool:

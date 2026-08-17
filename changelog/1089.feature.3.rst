@@ -1,0 +1,15 @@
+New ``--cache-prune=SELECTOR`` option, removing cache directories or scopes under the user-level cache
+root. ``SELECTOR`` is one of:
+
+* ``all`` - every cache directory except the one this invocation would itself use;
+* ``orphaned`` - directories whose project no longer exists, and directories with unreadable metadata;
+* ``stale`` - *scopes* whose environment no longer exists, leaving the project's cache directory itself
+  in place;
+* anything else - a glob, matched against the directory name and against the origin project path.
+
+The option may be given more than once, and requires a selector: there is no default, so no bare
+invocation can delete anything. Use ``--cache-list`` to preview.
+
+Removal is not interactive, matching ``--cache-clear``. Note that nothing locks the cache, so pruning
+while another pytest run is using the same cache can race; failures are reported per directory and the
+command exits non-zero.

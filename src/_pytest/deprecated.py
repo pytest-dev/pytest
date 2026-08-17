@@ -134,6 +134,16 @@ PARSEFACTORIES_NODEID_DEPRECATED = PytestRemovedIn10Warning(
     "Use parsefactories(holder=obj, node=node) instead."
 )
 
+TOX_ENV_DIR_CACHE_DIR = PytestRemovedIn10Warning(
+    "Defaulting the cache directory to $TOX_ENV_DIR/.pytest_cache is deprecated and "
+    "will be removed in pytest 10.\n"
+    "It existed to keep --lf/--nf/--sw state apart between tox environments, which "
+    "pytest now does on its own within a single cache directory.\n"
+    "Nothing needs to replace it. To keep the current location anyway, set\n"
+    "    cache_dir = $TOX_ENV_DIR/.pytest_cache\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#tox-env-dir-cache-dir"
+)
+
 CALLSPEC2_RENAMED = PytestRemovedIn10Warning(
     "_pytest.python.CallSpec2 has been renamed to CallSpec.\n"
     "The CallSpec2 alias will be removed in pytest 10.\n"
