@@ -200,7 +200,7 @@ class UnitTestCase(Class):
         setup = getattr(cls, "setup_method", None)
         teardown = getattr(cls, "teardown_method", None)
         if setup is None and teardown is None:
-            return None
+            return
 
         def unittest_setup_method_fixture(
             request: FixtureRequest,

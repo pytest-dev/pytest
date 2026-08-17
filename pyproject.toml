@@ -218,8 +218,6 @@ lint.ignore = [
     # flake8-use-pathlib ignore
     "PTH124", # `py.path` is in maintenance mode, use `pathlib` instead
     "PTH210", # Invalid suffix passed to `.with_suffix()`
-    # flake8-return ignore
-    "RET501", # Do not explicitly `return None` in function if it is the only possible return value
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF061", # Use context-manager form of `pytest.raises()`
