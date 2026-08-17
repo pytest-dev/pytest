@@ -1,0 +1,2 @@
+Tests which pass their call phase but fail during teardown are now reported only
+as errors instead of being reported as both passed and errored.

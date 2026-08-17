@@ -1629,7 +1629,7 @@ class TestClassCleanupErrors:
         """
         )
         result = pytester.runpytest("-s", testpath)
-        result.assert_outcomes(passed=1, errors=1)
+        result.assert_outcomes(errors=1)
         result.stdout.fnmatch_lines(
             [
                 "*Unittest class cleanup errors *2 sub-exceptions*",
@@ -1653,7 +1653,7 @@ class TestClassCleanupErrors:
         """
         )
         result = pytester.runpytest("-s", testpath)
-        result.assert_outcomes(passed=1, errors=1)
+        result.assert_outcomes(errors=1)
         result.stdout.fnmatch_lines(
             [
                 "*ERROR at teardown of MyTestCase.test*",

@@ -1623,13 +1623,13 @@ def test_stop_iteration_runtest_protocol(pytester: Pytester) -> None:
     )
     result = pytester.runpytest()
     assert result.ret == ExitCode.TESTS_FAILED
-    result.assert_outcomes(failed=1, passed=1, errors=2)
+    result.assert_outcomes(failed=1, errors=2)
     result.stdout.fnmatch_lines(
         [
             "=* short test summary info =*",
             "FAILED test_it.py::test_fail_call - StopIteration: 3",
             "ERROR test_it.py::test_fail_setup - StopIteration: 1",
             "ERROR test_it.py::test_fail_teardown - StopIteration: 2",
-            "=* 1 failed, 1 passed, 2 errors in * =*",
+            "=* 1 failed, 2 errors in * =*",
         ]
     )

@@ -949,7 +949,7 @@ class TestRequestBasic:
             """
         )
         result = pytester.runpytest()
-        result.assert_outcomes(passed=1, errors=1)
+        result.assert_outcomes(errors=1)
         result.stdout.fnmatch_lines(
             [
                 (
@@ -971,7 +971,7 @@ class TestRequestBasic:
             """
         )
         result = pytester.runpytest()
-        result.assert_outcomes(passed=1, errors=1)
+        result.assert_outcomes(errors=1)
         result.stdout.fnmatch_lines(
             [
                 (
@@ -1134,7 +1134,7 @@ class TestRequestBasic:
         """
         )
         result = pytester.runpytest()
-        result.assert_outcomes(passed=2, errors=1)
+        result.assert_outcomes(passed=1, errors=1)
         result.stdout.fnmatch_lines(
             [
                 '  | *ExceptionGroup: errors while tearing down fixture "subrequest" of <Function test_first> (2 sub-exceptions)',  # noqa: E501
@@ -3759,7 +3759,7 @@ class TestErrors:
             *KeyError*
             *ERROR*teardown*test_2*
             *KeyError*
-            *3 pass*2 errors*
+            *1 pass*2 errors*
         """
         )
 
@@ -4185,7 +4185,7 @@ class TestContextManagerFixtureFuncs:
         result.stdout.fnmatch_lines(
             """
             *pytest.fail*teardown*
-            *1 passed*1 error*
+            *1 error*
         """
         )
 
@@ -4511,7 +4511,7 @@ def test_fixture_post_finalizer_hook_exception(pytester: Pytester) -> None:
         """
     )
     result = pytester.runpytest("-v", "--setup-show")
-    result.assert_outcomes(passed=2, errors=1)
+    result.assert_outcomes(passed=1, errors=1)
     result.stdout.fnmatch_lines(
         [
             "*test_first*PASSED",

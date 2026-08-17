@@ -409,6 +409,7 @@ class TerminalReporter:
         self.isatty = compat.CallableBool(file.isatty())
         self._progress_nodeids_reported: set[str] = set()
         self._timing_nodeids_reported: set[str] = set()
+        self._pending_passed_reports: dict[str, list[tuple[str, TestReport]]] = {}
         self._show_progress_info = self._determine_show_progress_info()
         self._collect_report_last_write = timing.Instant()
         self._already_displayed_warnings: int | None = None
@@ -634,6 +635,26 @@ class TerminalReporter:
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         self._tests_ran = True
+
+        if report.when == "call" and report.passed:
+            category = self._process_test_report(report)
+            self._pending_passed_reports.setdefault(report.nodeid, []).append(
+                (category, report)
+            )
+            return
+
+        if report.when == "teardown":
+            pending_passed = self._pending_passed_reports.pop(report.nodeid, [])
+            if report.failed:
+                for category, passed_report in pending_passed:
+                    reports = self.stats.get(category, [])
+                    self.stats[category] = [
+                        rep for rep in reports if rep is not passed_report
+                    ]
+
+        self._process_test_report(report)
+
+    def _process_test_report(self, report: TestReport) -> str:
         rep = report
 
         res = TestShortLogReport(
@@ -647,7 +668,7 @@ class TerminalReporter:
         self._add_stats(category, [rep])
         if not letter and not word:
             # Probably passed setup/teardown.
-            return
+            return category
         if markup is None:
             was_xfail = hasattr(report, "wasxfail")
             if rep.passed and not was_xfail:
@@ -707,6 +728,7 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
         self.flush()
+        return category
 
     @property
     def _is_last_item(self) -> bool:

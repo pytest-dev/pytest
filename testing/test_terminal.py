@@ -693,9 +693,10 @@ class TestFixtureReporting:
                 "*assert 0*",
                 "*Captured stdout*",
                 "*teardown func*",
-                "*1 passed*1 error*",
+                "*1 error*",
             ]
         )
+        result.stdout.no_fnmatch_line("*1 passed*")
 
     def test_teardown_fixture_error_and_test_failure(self, pytester: Pytester) -> None:
         pytester.makepyfile(
@@ -2453,7 +2454,7 @@ class TestProgressOutputStyle:
 
 
 class TestProgressWithTeardown:
-    """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
+    """Test progress for tests that fail during teardown (#1004, #3088)."""
 
     @pytest.fixture
     def contest_with_teardown_fixture(self, pytester: Pytester) -> None:
@@ -2531,9 +2532,10 @@ class TestProgressWithTeardown:
                     "test_bar.py::test_bar[0] PASSED  * [  5%]",
                     "test_bar.py::test_bar[0] ERROR   * [  5%]",
                     "test_bar.py::test_bar[4] PASSED  * [ 25%]",
+                    "test_bar.py::test_bar[4] ERROR   * [ 25%]",
                     "test_foo.py::test_foo[14] PASSED * [100%]",
                     "test_foo.py::test_foo[14] ERROR  * [100%]",
-                    "=* 20 passed, 20 errors in *",
+                    "=* 20 errors in *",
                 ]
             )
         )
