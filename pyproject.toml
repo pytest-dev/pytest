@@ -113,7 +113,7 @@ src = [
     "src",
 ]
 format.docstring-code-format = true
-lint.select = [
+lint.extend-select = [
     "B",       # bugbear
     "D",       # pydocstyle
     "E",       # pycodestyle
@@ -134,6 +134,8 @@ lint.select = [
     "W",       # pycodestyle
 ]
 lint.ignore = [
+    # flake8-async ignore
+    "ASYNC115", # Use `lowlevel.checkpoint()` instead of `sleep(0)`
     # bugbear ignore
     "B004", # Using `hasattr(x, "__call__")` to test if x is callable is unreliable.
     "B007", # Loop control variable `i` not used within loop body
@@ -141,6 +143,15 @@ lint.ignore = [
     "B010", # [*] Do not call `setattr` with a constant attribute value.
     "B011", # Do not `assert False` (`python -O` removes these calls)
     "B028", # No explicit `stacklevel` keyword argument found
+    # flake8-blind-except ignore
+    "BLE001", # Do not catch blind exception
+    # flake8-comprehensions ignore
+    "C400", # Unnecessary generator (rewrite using `list()`)
+    "C408", # Unnecessary `dict()`/`list()`/`tuple()` call (rewrite as a literal)
+    "C409", # Unnecessary list literal passed to `tuple()` (rewrite as a tuple literal)
+    "C410", # Unnecessary list literal passed to `list()` (remove the outer call to `list()`)
+    "C414", # Unnecessary double cast or process
+    "C417", # Unnecessary `map()` usage (rewrite using a comprehension)
     # pydocstyle ignore
     "D100", # Missing docstring in public module
     "D101", # Missing docstring in public class
@@ -157,9 +168,30 @@ lint.ignore = [
     "D402", # First line should not be the function's signature
     "D404", # First word of the docstring should not be "This"
     "D415", # First line should end with a period, question mark, or exclamation point
+    # flake8-datetimez ignore
+    "DTZ001", # `datetime.datetime()` called without a `tzinfo` argument
+    "DTZ005", # `datetime.datetime.now()` called without a `tz` argument
     # pytest can do weird low-level things, and we usually know
     # what we're doing when we use type(..) is ...
     "E721", # Do not compare types, use `isinstance()`
+    # flake8-future-annotations ignore
+    "FA102", # Missing `from __future__ import annotations`, but uses PEP 585/604 syntax
+    # flynt ignore
+    "FLY002", # Consider an f-string instead of string join
+    # refurb ignore
+    "FURB157", # Verbose expression in `Decimal` constructor
+    "FURB188", # Prefer `str.removeprefix()` over conditionally replacing with slice
+    # flake8-implicit-str-concat ignore
+    "ISC004", # Unparenthesized implicit string concatenation in collection
+    # flake8-logging ignore
+    "LOG009", # Use of undocumented `logging.WARN` constant
+    "LOG015", # Call on root logger
+    # pep8-naming ignore
+    "N999", # Invalid module name
+    # perflint ignore
+    "PERF102", # When using only the keys or values of a dict use the `keys()`/`values()` method
+    # pygrep-hooks ignore
+    "PGH005", # Mock method should be called
     # pylint ignore
     "PLC0105", # `TypeVar` name "E" does not reflect its covariance;
     "PLC0414", # Import alias does not rename original package
@@ -179,9 +211,41 @@ lint.ignore = [
     "PLW0603", # Using the global statement
     "PLW1641", # Does not implement the __hash__ method
     "PLW2901", # for loop variable overwritten by assignment target
+    # flake8-pytest-style ignore
+    "PT020", # `@pytest.yield_fixture` is deprecated, use `@pytest.fixture`
+    "PT025", # `pytest.mark.usefixtures` has no effect on fixtures
+    "PT031", # `pytest.warns()` block should contain a single simple statement
+    # flake8-use-pathlib ignore
+    "PTH124", # `py.path` is in maintenance mode, use `pathlib` instead
+    "PTH210", # Invalid suffix passed to `.with_suffix()`
+    # flake8-return ignore
+    "RET501", # Do not explicitly `return None` in function if it is the only possible return value
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF061", # Use context-manager form of `pytest.raises()`
+    # flake8-bandit ignore
+    "S102", # Use of `exec` detected
+    "S110", # `try`-`except`-`pass` detected, consider logging the exception
+    "S112", # `try`-`except`-`continue` detected, consider logging the exception
+    # flake8-simplify ignore
+    "SIM102", # Use a single `if` statement instead of nested `if` statements
+    "SIM103", # Return the condition directly
+    "SIM114", # Combine `if` branches using logical `or` operator
+    "SIM115", # Use a context manager for opening files
+    "SIM117", # Use a single `with` statement with multiple contexts instead of nested `with` statements
+    "SIM118", # Use `key in dict` instead of `key in dict.keys()`
+    "SIM201", # Use `!=` instead of `not ... == ...`
+    "SIM202", # Use `==` instead of `not ... != ...`
+    "SIM210", # Remove unnecessary `True if ... else False`
+    "SIM211", # Use `not ...` instead of `False if ... else True`
+    "SIM222", # Use the simplified expression instead of `... or True`
+    "SIM223", # Use the simplified expression instead of `... and False`
+    "SIM905", # Consider using a list literal instead of `str.split()`
+    # flake8-type-checking ignore
+    "TC005", # Found empty type-checking block
+    # tryceratops ignore
+    "TRY002", # Create your own exception
+    "TRY004", # Prefer `TypeError` exception for invalid type
 ]
 lint.per-file-ignores."doc/**/*.py" = [
     "PLR0133", # Two constants compared in a comparison,
