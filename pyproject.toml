@@ -182,8 +182,6 @@ lint.ignore = [
     "LOG015", # Call on root logger
     # pep8-naming ignore
     "N999", # Invalid module name
-    # perflint ignore
-    "PERF102", # When using only the keys or values of a dict use the `keys()`/`values()` method
     # pygrep-hooks ignore
     "PGH005", # Mock method should be called
     # pylint ignore
