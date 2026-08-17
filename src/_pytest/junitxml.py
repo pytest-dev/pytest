@@ -234,16 +234,14 @@ class _NodeReporter:
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):
             xfailreason = report.wasxfail
-            if xfailreason.startswith("reason: "):
-                xfailreason = xfailreason[8:]
+            xfailreason = xfailreason.removeprefix("reason: ")
             xfailreason = bin_xml_escape(xfailreason)
             skipped = ET.Element("skipped", type="pytest.xfail", message=xfailreason)
             self.append(skipped)
         else:
             assert isinstance(report.longrepr, tuple)
             filename, lineno, skipreason = report.longrepr
-            if skipreason.startswith("Skipped: "):
-                skipreason = skipreason[9:]
+            skipreason = skipreason.removeprefix("Skipped: ")
             details = f"{filename}:{lineno}: {skipreason}"
 
             skipped = ET.Element(

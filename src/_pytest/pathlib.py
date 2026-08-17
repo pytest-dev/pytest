@@ -651,8 +651,7 @@ def import_path(
 
         if module_file.endswith((".pyc", ".pyo")):
             module_file = module_file[:-1]
-        if module_file.endswith(os.sep + "__init__.py"):
-            module_file = module_file[: -(len(os.sep + "__init__.py"))]
+        module_file = module_file.removesuffix(os.sep + "__init__.py")
 
         try:
             is_same = _is_same(str(path), module_file)

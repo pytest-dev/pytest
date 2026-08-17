@@ -178,8 +178,6 @@ lint.ignore = [
     "FA102", # Missing `from __future__ import annotations`, but uses PEP 585/604 syntax
     # flynt ignore
     "FLY002", # Consider an f-string instead of string join
-    # refurb ignore
-    "FURB188", # Prefer `str.removeprefix()` over conditionally replacing with slice
     # flake8-implicit-str-concat ignore
     "ISC004", # Unparenthesized implicit string concatenation in collection
     # flake8-logging ignore
