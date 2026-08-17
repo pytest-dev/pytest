@@ -512,6 +512,18 @@ def _check_if_assertion_pass_impl() -> bool:
     return True if util._assertion_pass else False
 
 
+def _contains_arbitrary_code(node: ast.expr) -> bool:
+    """Return whether evaluating *node* can run arbitrary code.
+
+    A bare name used as a left-hand operand must be read before a later
+    operand that can run arbitrary code (a call or an await), because that
+    code may rebind the name (e.g. via ``global``/``nonlocal``). See #14820.
+    """
+    return any(
+        isinstance(child, ast.Call | ast.Await) for child in ast.walk(node)
+    )
+
+
 UNARY_MAP = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
 
 BINOP_MAP = {
@@ -776,6 +788,30 @@ class AssertionRewriter(ast.NodeVisitor):
         self.statements.append(ast.Assign([ast.Name(name, ast.Store())], expr))
         return ast.copy_location(ast.Name(name, ast.Load()), expr)
 
+    def visit_operand(
+        self, operand: ast.expr, later: Sequence[ast.expr]
+    ) -> tuple[ast.expr, str]:
+        """Visit an operand, freezing it against arbitrary code in *later*.
+
+        A plain name is left as a bare load evaluated when the enclosing
+        expression is assembled, after any statements hoisted for the operands
+        that follow it. If one of those can run arbitrary code (a call or an
+        await), it may rebind the name via ``global``/``nonlocal``, so both the
+        value used and the value reported would be the post-rebind one — Python
+        evaluates the earlier operand first. Copy the value into a temporary
+        instead (see #14820).
+        """
+        if not any(_contains_arbitrary_code(node) for node in later):
+            return self.visit(operand)
+        specifiers = set(self.explanation_specifiers)
+        res, expl = self.visit(operand)
+        if isinstance(res, ast.Name) and not res.id.startswith("@py_assert"):
+            snapshot = self.assign(res)
+            for key in set(self.explanation_specifiers) - specifiers:
+                self.explanation_specifiers[key] = self.display(snapshot)
+            res = snapshot
+        return res, expl
+
     def display(self, expr: ast.expr) -> ast.expr:
         """Call saferepr on the expression."""
         return self.helper("_saferepr", expr)
@@ -1039,7 +1075,7 @@ class AssertionRewriter(ast.NodeVisitor):
 
     def visit_BinOp(self, binop: ast.BinOp) -> tuple[ast.Name, str]:
         symbol = BINOP_MAP[binop.op.__class__]
-        left_expr, left_expl = self.visit(binop.left)
+        left_expr, left_expl = self.visit_operand(binop.left, [binop.right])
         right_expr, right_expl = self.visit(binop.right)
         explanation = f"({left_expl} {symbol} {right_expl})"
         res = self.assign(
@@ -1048,25 +1084,28 @@ class AssertionRewriter(ast.NodeVisitor):
         return res, explanation
 
     def visit_Call(self, call: ast.Call) -> tuple[ast.Name, str]:
-        new_func, func_expl = self.visit(call.func)
+        # The callee and every argument are evaluated left to right, so each
+        # is frozen against arbitrary code in what follows (#14820).
+        operands = [*call.args, *(keyword.value for keyword in call.keywords)]
+        new_func, func_expl = self.visit_operand(call.func, operands)
         arg_expls = []
         new_args = []
         new_kwargs = []
-        for arg in call.args:
+        for i, arg in enumerate(call.args):
             if isinstance(arg, ast.Name) and arg.id in self.variables_overwrite.get(
                 self.scope, {}
             ):
                 arg = self.variables_overwrite[self.scope][arg.id]  # type:ignore[assignment]
-            res, expl = self.visit(arg)
+            res, expl = self.visit_operand(arg, operands[i + 1 :])
             arg_expls.append(expl)
             new_args.append(res)
-        for keyword in call.keywords:
+        for i, keyword in enumerate(call.keywords, start=len(call.args)):
             match keyword.value:
                 case ast.Name(id=id) if id in self.variables_overwrite.get(
                     self.scope, {}
                 ):
                     keyword.value = self.variables_overwrite[self.scope][id]  # type:ignore[assignment]
-            res, expl = self.visit(keyword.value)
+            res, expl = self.visit_operand(keyword.value, operands[i + 1 :])
             new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
                 arg_expls.append(keyword.arg + "=" + expl)
@@ -1108,7 +1147,7 @@ class AssertionRewriter(ast.NodeVisitor):
                 comp.left = self.variables_overwrite[self.scope][name_id]  # type: ignore[assignment]
             case ast.NamedExpr(target=ast.Name(id=target_id)):
                 self.variables_overwrite[self.scope][target_id] = comp.left  # type: ignore[assignment]
-        left_res, left_expl = self.visit(comp.left)
+        left_res, left_expl = self.visit_operand(comp.left, comp.comparators)
         if isinstance(comp.left, ast.Compare | ast.BoolOp):
             left_expl = f"({left_expl})"
         res_variables = [self.variable() for i in range(len(comp.ops))]
@@ -1127,7 +1166,9 @@ class AssertionRewriter(ast.NodeVisitor):
                     next_operand.target.id = self.variable()
                     self.variables_overwrite[self.scope][name_id] = next_operand  # type: ignore[assignment]
 
-            next_res, next_expl = self.visit(next_operand)
+            next_res, next_expl = self.visit_operand(
+                next_operand, comp.comparators[i + 1 :]
+            )
             if isinstance(next_operand, ast.Compare | ast.BoolOp):
                 next_expl = f"({next_expl})"
             results.append(next_res)

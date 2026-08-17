@@ -685,6 +685,58 @@ class TestAssertionRewrite:
 
         getmsg(f2, must_pass=True)
 
+    def test_operand_read_order_before_later_call(self, pytester: Pytester) -> None:
+        # A bare name used as an operand must be read before a later call that
+        # rebinds it (see #14820).
+        pytester.makepyfile(
+            """
+            count = 0
+
+            def bump():
+                global count
+                count = 99
+                return 0
+
+            def test_left_operand_is_read_too_late():
+                assert count == bump()
+
+            total = 0
+
+            def bump_total():
+                global total
+                total = 99
+                return 1
+
+            def test_binop_left_operand_is_read_too_late():
+                assert total + bump_total() == 1
+
+            middle = 0
+
+            def bump_middle():
+                global middle
+                middle = 99
+                return 0
+
+            def test_chained_middle_operand_is_read_too_late():
+                assert 0 == middle == bump_middle()
+
+            argument = "x"
+
+            def bump_argument():
+                global argument
+                argument = "y"
+                return "x"
+
+            def pair(first, second):
+                return first, second
+
+            def test_earlier_argument_is_read_too_late():
+                assert pair(argument, bump_argument()) == ("x", "x")
+            """
+        )
+        result = pytester.runpytest()
+        assert result.ret == 0
+
     def test_unary_op(self) -> None:
         def f1() -> None:
             x = True

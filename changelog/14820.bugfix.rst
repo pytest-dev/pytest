@@ -1,0 +1,1 @@
+Assertion rewriting now reads a bare-name operand before evaluating a later operand that can run arbitrary code (a call or an await), preserving Python's left-to-right evaluation order when that code rebinds the name.
