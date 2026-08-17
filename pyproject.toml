@@ -239,8 +239,6 @@ lint.ignore = [
     "SIM222", # Use the simplified expression instead of `... or True`
     "SIM223", # Use the simplified expression instead of `... and False`
     "SIM905", # Consider using a list literal instead of `str.split()`
-    # flake8-type-checking ignore
-    "TC005", # Found empty type-checking block
     # tryceratops ignore
     "TRY002", # Create your own exception
     "TRY004", # Prefer `TypeError` exception for invalid type
