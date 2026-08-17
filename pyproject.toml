@@ -235,7 +235,6 @@ lint.ignore = [
     "SIM211", # Use `not ...` instead of `False if ... else True`
     "SIM222", # Use the simplified expression instead of `... or True`
     "SIM223", # Use the simplified expression instead of `... and False`
-    "SIM905", # Consider using a list literal instead of `str.split()`
     # tryceratops ignore
     "TRY002", # Create your own exception
     "TRY004", # Prefer `TypeError` exception for invalid type
