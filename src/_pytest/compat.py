@@ -11,6 +11,7 @@ from inspect import Parameter
 from inspect import Signature
 import os
 from pathlib import Path
+import pprint
 import sys
 from typing import Any
 from typing import Final
@@ -327,3 +328,9 @@ else:
                 return func
 
             return decorator
+
+
+if sys.version_info >= (3, 15):
+    pformat = functools.partial(pprint.pformat, expand=True)
+else:
+    pformat = pprint.pformat

@@ -21,6 +21,7 @@ from .pathlib import rm_rf
 from .reports import CollectReport
 from _pytest import nodes
 from _pytest._io import TerminalWriter
+from _pytest.compat import pformat
 from _pytest.config import Config
 from _pytest.config import ExitCode
 from _pytest.config import hookimpl
@@ -599,8 +600,6 @@ def cacheshow(config: Config, session: Session) -> int:
     :param session: pytest session object.
     :returns: Exit code (0 for success).
     """
-    from pprint import pformat
-
     assert config.cache is not None
 
     tw = TerminalWriter()

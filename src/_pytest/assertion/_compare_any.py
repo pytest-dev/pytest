@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 import dataclasses
-import pprint
 
 from _pytest.assertion._compare_mapping import _compare_eq_mapping
 from _pytest.assertion._compare_sequence import _compare_eq_iterable
@@ -22,6 +21,7 @@ from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _compare_eq_text
+from _pytest.compat import pformat
 
 
 def _compare_eq_any(
@@ -119,10 +119,10 @@ def _compare_eq_cls(
         yield f"Omitting {len(same)} identical items, use -vv to show"
     elif same:
         yield "Matching attributes:"
-        yield from highlighter(pprint.pformat(same)).splitlines()
+        yield from highlighter(pformat(same)).splitlines()
     if diff:
         yield "Differing attributes:"
-        yield from highlighter(pprint.pformat(diff)).splitlines()
+        yield from highlighter(pformat(diff)).splitlines()
         for field in diff:
             field_left = getattr(left, field)
             field_right = getattr(right, field)

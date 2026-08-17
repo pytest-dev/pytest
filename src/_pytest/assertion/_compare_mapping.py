@@ -4,13 +4,13 @@ from collections.abc import Collection
 from collections.abc import Iterator
 from collections.abc import Mapping
 import heapq
-import pprint
 
 from _pytest._io.pprint import _safe_key
 from _pytest._io.saferepr import saferepr
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
+from _pytest.compat import pformat
 
 
 def _compare_eq_mapping(
@@ -28,7 +28,7 @@ def _compare_eq_mapping(
         yield f"Omitting {len(same)} identical items, use -vv to show"
     elif same:
         yield "Common items:"
-        yield from highlighter(pprint.pformat(same)).splitlines()
+        yield from highlighter(pformat(same)).splitlines()
     diff = {k for k in common if left[k] != right[k]}
     if diff:
         yield "Differing items:"
@@ -62,9 +62,7 @@ def _format_extra_items(
     max_lines = truncation_budget.max_lines
     if max_lines == 0 or len(keys) <= max_lines:
         # If no need to truncate, let pprint handle it.
-        yield from highlighter(
-            pprint.pformat({k: mapping[k] for k in keys})
-        ).splitlines()
+        yield from highlighter(pformat({k: mapping[k] for k in keys})).splitlines()
     else:
         # To avoid spending effort on formatting entries that would be truncated,
         # only format the needed entries, keeping the sorting that pprint would use.
