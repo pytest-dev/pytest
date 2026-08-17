@@ -799,11 +799,13 @@ class AssertionRewriter(ast.NodeVisitor):
         evaluates the earlier operand first. Copy the value into a temporary
         instead (see #14820).
         """
-        if not any(_contains_arbitrary_code(node) for node in later):
-            return self.visit(operand)
         specifiers = set(self.explanation_specifiers)
         res, expl = self.visit(operand)
-        if isinstance(res, ast.Name) and not res.id.startswith("@py_assert"):
+        if (
+            isinstance(res, ast.Name)
+            and not res.id.startswith("@py_assert")
+            and any(_contains_arbitrary_code(node) for node in later)
+        ):
             snapshot = self.assign(res)
             for key in set(self.explanation_specifiers) - specifiers:
                 self.explanation_specifiers[key] = self.display(snapshot)
