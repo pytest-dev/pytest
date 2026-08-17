@@ -148,7 +148,6 @@ lint.ignore = [
     # flake8-comprehensions ignore
     "C408", # Unnecessary `dict()`/`list()`/`tuple()` call (rewrite as a literal)
     "C409", # Unnecessary list literal passed to `tuple()` (rewrite as a tuple literal)
-    "C414", # Unnecessary double cast or process
     "C417", # Unnecessary `map()` usage (rewrite using a comprehension)
     # pydocstyle ignore
     "D100", # Missing docstring in public module
