@@ -179,7 +179,6 @@ lint.ignore = [
     # flynt ignore
     "FLY002", # Consider an f-string instead of string join
     # refurb ignore
-    "FURB157", # Verbose expression in `Decimal` constructor
     "FURB188", # Prefer `str.removeprefix()` over conditionally replacing with slice
     # flake8-implicit-str-concat ignore
     "ISC004", # Unparenthesized implicit string concatenation in collection
