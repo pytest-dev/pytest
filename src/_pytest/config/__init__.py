@@ -1943,7 +1943,7 @@ class Config:
             return shlex.split(value) if isinstance(value, str) else value
         elif type == "linelist":
             if isinstance(value, str):
-                return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+                return [t for t in (x.strip() for x in value.split("\n")) if t]
             else:
                 return value
         elif type == "bool":
