@@ -146,7 +146,6 @@ lint.ignore = [
     # flake8-blind-except ignore
     "BLE001", # Do not catch blind exception
     # flake8-comprehensions ignore
-    "C400", # Unnecessary generator (rewrite using `list()`)
     "C408", # Unnecessary `dict()`/`list()`/`tuple()` call (rewrite as a literal)
     "C409", # Unnecessary list literal passed to `tuple()` (rewrite as a tuple literal)
     "C410", # Unnecessary list literal passed to `list()` (remove the outer call to `list()`)
