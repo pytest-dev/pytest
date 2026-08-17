@@ -519,9 +519,7 @@ def _contains_arbitrary_code(node: ast.expr) -> bool:
     operand that can run arbitrary code (a call or an await), because that
     code may rebind the name (e.g. via ``global``/``nonlocal``). See #14820.
     """
-    return any(
-        isinstance(child, ast.Call | ast.Await) for child in ast.walk(node)
-    )
+    return any(isinstance(child, ast.Call | ast.Await) for child in ast.walk(node))
 
 
 UNARY_MAP = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
