@@ -226,7 +226,6 @@ lint.ignore = [
     "SIM118", # Use `key in dict` instead of `key in dict.keys()`
     "SIM201", # Use `!=` instead of `not ... == ...`
     "SIM202", # Use `==` instead of `not ... != ...`
-    "SIM210", # Remove unnecessary `True if ... else False`
     "SIM211", # Use `not ...` instead of `False if ... else True`
     "SIM222", # Use the simplified expression instead of `... or True`
     "SIM223", # Use the simplified expression instead of `... and False`
