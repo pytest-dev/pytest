@@ -1328,7 +1328,12 @@ class TerminalReporter:
                 )
                 markup_word = self._tw.markup(verbose_word, **verbose_markup)
                 nodeid = _get_node_id_with_markup(self._tw, self.config, rep)
-                line = f"{markup_word} {nodeid}"
+
+                if rep.when == "call":
+                    line = f"{markup_word} {nodeid}"
+                else:
+                    line = f"{markup_word} at {rep.when} of {nodeid}"
+
                 reason = rep.wasxfail
                 if reason:
                     line += " - " + str(reason)

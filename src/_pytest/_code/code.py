@@ -494,6 +494,13 @@ def stringify_exception(
 E = TypeVar("E", bound=BaseException, covariant=True)
 
 
+def _syntax_error_location(exc: BaseException) -> tuple[str, int, int] | None:
+    """Return (filename, lineno, offset) for a SyntaxError with location info, else None."""
+    if isinstance(exc, SyntaxError) and exc.offset is not None:
+        return (exc.filename or "", exc.lineno or 0, exc.offset)
+    return None
+
+
 @final
 @dataclasses.dataclass
 class ExceptionInfo(Generic[E]):
@@ -690,12 +697,15 @@ class ExceptionInfo(Generic[E]):
     def _getreprcrash(self) -> ReprFileLocation | None:
         # A SyntaxError carries its own location, which is more useful than
         # the traceback entry where it was raised (#2388).
-        if isinstance(self.value, SyntaxError) and self.value.offset:
+        loc = _syntax_error_location(self.value)
+        if loc is not None:
+            filename, lineno, offset = loc
+            assert isinstance(self.value, SyntaxError)
             return ReprFileLocation(
-                self.value.filename or "",
-                self.value.lineno or 0,
+                filename,
+                lineno,
                 f"SyntaxError: {self.value.msg}",
-                column=self.value.offset,
+                column=offset,
             )
         # Find last non-hidden traceback entry that led to the exception of the
         # traceback, or None if all hidden.
@@ -1114,7 +1124,16 @@ class ExceptionInfoFormatter:
                 message = (excinfo and excinfo.typename) or ""
             entry_path = entry.path
             path = self._makepath(entry_path)
-            reprfileloc = ReprFileLocation(path, entry.lineno + 1, message)
+            lineno = entry.lineno + 1
+            # A SyntaxError carries its own location, which is more useful
+            # than the traceback entry where it was raised (#2388).
+            loc = _syntax_error_location(excinfo.value) if excinfo else None
+            if loc is not None:
+                filename, lineno, column = loc
+                path = self._makepath(filename or path)
+            else:
+                column = None
+            reprfileloc = ReprFileLocation(path, lineno, message, column=column)
             localsrepr = self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, reprfileloc, style)
         elif style == "value":
@@ -1241,7 +1260,9 @@ class ExceptionInfoFormatter:
                 reprcrash = None
             repr_chain.append((reprtraceback, reprcrash, description))
 
-            if e.__cause__ is not None and self.chain:
+            if isinstance(e, BaseExceptionGroup) and self.chain:
+                e = None
+            elif e.__cause__ is not None and self.chain:
                 e = e.__cause__
                 excinfo_ = ExceptionInfo.from_exception(e) if e.__traceback__ else None
                 description = "The above exception was the direct cause of the following exception:"
@@ -1492,7 +1513,7 @@ class ReprEntry(TerminalRepr):
 
 @dataclasses.dataclass(eq=False)
 class ReprFileLocation(TerminalRepr):
-    """A message at a file location, using the `<path>:<lineno>: <message>`
+    """A message at a file location, using the `<path>:<lineno>[:<column>]: <message>`
     format that most editors understand.
 
     Only the first line of the message is emitted.

@@ -1609,7 +1609,7 @@ class TestClassCleanupErrors:
         result.stdout.fnmatch_lines(
             [
                 "* ERROR at setup of MyTestCase.test *",
-                "E * Exception: fail 0",
+                "*Exception: fail 0",
             ]
         )
 

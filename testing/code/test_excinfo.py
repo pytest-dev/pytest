@@ -1155,6 +1155,55 @@ raise ValueError()
         assert repr.reprcrash.message == "SyntaxError: bad syntax"
         assert str(repr.reprcrash) == "file.py:1:5: SyntaxError: bad syntax"
 
+    def test_syntax_error_default_tb_long(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=long")
+        result.stdout.fnmatch_lines(["file.py:1:5: SyntaxError"])
+
+    def test_syntax_error_default_tb_short(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=short")
+        result.stdout.fnmatch_lines(["file.py:1:5: in entry"])
+        result.stdout.fnmatch_lines(["*SyntaxError: bad syntax*"])
+
+    def test_syntax_error_tb_line(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=line")
+        result.stdout.fnmatch_lines(["file.py:1:5: SyntaxError: bad syntax"])
+
+    def test_syntax_error_no_offset_fallback(self, pytester: Pytester) -> None:
+        pytester.makepyfile(
+            """
+            def entry():
+                raise SyntaxError("no location")
+            def test_x():
+                entry()
+        """
+        )
+        result = pytester.runpytest("--tb=long")
+        result.stdout.fnmatch_lines(["*SyntaxError: no location*"])
+
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(
             """
@@ -1631,6 +1680,66 @@ raise ValueError()
             ]
         )
 
+    def _render_output(self, excinfo: ExceptionInfo[BaseException]) -> str:
+        r = excinfo.getrepr()
+        file = io.StringIO()
+        tw = TerminalWriter(file=file)
+        tw.hasmarkup = False
+        r.toterminal(tw)
+        return file.getvalue()
+
+    def test_exc_chain_repr_exception_group_with_cause(self) -> None:
+        """An exception group raised from another exception must not print that
+        exception's cause chain twice."""
+        try:
+            try:
+                raise RuntimeError("original cause")
+            except RuntimeError as exc:
+                raise ExceptionGroup("group", [ValueError("inner")]) from exc
+        except ExceptionGroup:
+            excinfo = ExceptionInfo.from_current()
+
+        output = self._render_output(excinfo)
+        assert output.count("RuntimeError: original cause") == 1
+        assert output.count("ExceptionGroup: group") == 1
+        assert output.count("ValueError: inner") == 1
+        assert output.count("The above exception was the direct cause") == 1
+
+    def test_exc_chain_repr_exception_group_with_context(self) -> None:
+        """An exception group raised during handling must not print the
+        implicit context chain twice."""
+        exc1 = RuntimeError("implicit context")
+        try:
+            raise exc1
+        except RuntimeError as exc:
+            group = ExceptionGroup("group", [ValueError("inner")])
+            group.__context__ = exc
+        try:
+            raise group
+        except ExceptionGroup:
+            excinfo = ExceptionInfo.from_current()
+
+        output = self._render_output(excinfo)
+        assert output.count("RuntimeError: implicit context") == 1
+        assert output.count("During handling of the above exception") == 1
+
+    def test_exc_chain_repr_nested_exception_group_with_cause(self) -> None:
+        """A nested exception group raised from another exception must not
+        print the cause chain twice."""
+        try:
+            try:
+                raise RuntimeError("root cause")
+            except RuntimeError as exc:
+                raise ExceptionGroup(
+                    "outer", [ExceptionGroup("inner", [ValueError("v")])]
+                ) from exc
+        except ExceptionGroup:
+            excinfo = ExceptionInfo.from_current()
+
+        output = self._render_output(excinfo)
+        assert output.count("RuntimeError: root cause") == 1
+        assert output.count("The above exception was the direct cause") == 1
+
     def test_exc_chain_repr_without_traceback_multiple_links(self) -> None:
         """
         Exceptions without a traceback that are themselves part of a longer
@@ -1652,13 +1761,7 @@ raise ValueError()
         except ValueError:
             excinfo = ExceptionInfo.from_current()
 
-        r = excinfo.getrepr()
-        file = io.StringIO()
-        tw = TerminalWriter(file=file)
-        tw.hasmarkup = False
-        r.toterminal(tw)
-
-        output = file.getvalue()
+        output = self._render_output(excinfo)
         for message in (
             "ValueError: abcd",
             "IndexError: efgh",
@@ -1687,13 +1790,7 @@ raise ValueError()
         except ValueError:
             excinfo = ExceptionInfo.from_current()
 
-        r = excinfo.getrepr()
-        file = io.StringIO()
-        tw = TerminalWriter(file=file)
-        tw.hasmarkup = False
-        r.toterminal(tw)
-
-        output = file.getvalue()
+        output = self._render_output(excinfo)
         assert output.count("ValueError: outer without traceback") == 1
         assert output.count("RuntimeError: inner with traceback") == 1
         assert output.count("The above exception was the direct cause") == 1
