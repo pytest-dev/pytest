@@ -1877,6 +1877,47 @@ def test_exception_repr_extraction_error_on_recursion():
 
 
 @pytest.mark.usefixtures("limited_recursion_depth")
+def test_undetectable_recursion_is_truncated() -> None:
+    """A recursion whose origin cannot be located is shown ends-only (#10745)."""
+
+    def f(x):
+        # The locals differ in every frame, so recursionindex() finds nothing.
+        f(x + 1)
+
+    with pytest.raises(RecursionError) as excinfo:
+        f(0)
+
+    p = ExceptionInfoFormatter(style="long", tbfilter=True)
+    traceback, extraline = p._truncate_recursive_traceback(excinfo.traceback)
+    assert len(traceback) == 20
+    assert extraline is not None
+    matcher = LineMatcher(extraline.splitlines())
+    matcher.fnmatch_lines(
+        [
+            "!!! Recursion error detected, but the origin of the recursion could not be located.",
+            "*Displaying first and last 10 stack frames out of *",
+            "*--full-trace*",
+        ]
+    )
+
+
+@pytest.mark.usefixtures("limited_recursion_depth")
+def test_undetectable_recursion_kept_with_full_trace() -> None:
+    """``--full-trace`` (tbfilter=False) still renders every frame (#10745)."""
+
+    def f(x):
+        f(x + 1)
+
+    with pytest.raises(RecursionError) as excinfo:
+        f(0)
+
+    p = ExceptionInfoFormatter(style="long", tbfilter=False)
+    traceback, extraline = p._truncate_recursive_traceback(excinfo.traceback)
+    assert len(traceback) == len(excinfo.traceback)
+    assert extraline is None
+
+
+@pytest.mark.usefixtures("limited_recursion_depth")
 def test_no_recursion_index_on_recursion_error():
     """
     Ensure that we don't break in case we can't find the recursion index
