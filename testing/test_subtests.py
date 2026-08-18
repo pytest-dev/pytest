@@ -166,7 +166,7 @@ def test_skip(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> Non
         [
             "test_*.py .s    *     [[]100%[]]",
             "*=== short test summary info ===*",
-            "SKIPPED [[]1[]] test_skip.py:9: skip test_bar",
+            "SKIPPED [[]1[]] test_skip.py::test_bar - skip test_bar",
             "* 1 passed, 1 skipped in *",
         ]
     )
@@ -179,9 +179,9 @@ def test_skip(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> Non
             "*.py::test_bar SUBSKIPPED[[]bar subtest[]] (skip bar subtest)  * [[]100%[]]",
             "*.py::test_bar SKIPPED (skip test_bar)                         * [[]100%[]]",
             "*=== short test summary info ===*",
-            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip foo subtest",
-            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip bar subtest",
-            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip test_bar",
+            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py::test_foo - skip foo subtest",
+            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py::test_bar - skip bar subtest",
+            "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py::test_bar - skip test_bar",
             "* 1 passed, 3 skipped in *",
         ]
     )
@@ -204,10 +204,10 @@ def test_skip(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> Non
     result.stdout.no_fnmatch_line("*.py::test_foo SUBPASSED[[]foo subtest[]]*")
     result.stdout.no_fnmatch_line("*.py::test_bar SUBPASSED[[]bar subtest[]]*")
     result.stdout.no_fnmatch_line(
-        "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip foo subtest"
+        "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py::test_foo - skip foo subtest"
     )
     result.stdout.no_fnmatch_line(
-        "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py:*: skip test_bar"
+        "SUBSKIPPED[[]foo subtest[]] [[]1[]] *.py::test_bar - skip test_bar"
     )
 
 
@@ -584,7 +584,9 @@ class TestUnittestSubTest:
         )
         result = pytester.runpytest("-v", "-rsf")
         result.stdout.fnmatch_lines(
-            ["SKIPPED [1] test_only_original_skip_is_called.py:6: skip this test"]
+            [
+                "SKIPPED [[]1[]] test_only_original_skip_is_called.py::T::test_foo - skip this test"
+            ]
         )
 
     def test_skip_with_failure(
@@ -623,7 +625,7 @@ class TestUnittestSubTest:
                 "*.py::T::test_foo SUBSKIPPED[[]subtest 1[]] (skip subtest 1)      *            [[]100%[]]",
                 "*.py::T::test_foo SUBFAILED[[]subtest 2[]]                        *            [[]100%[]]",
                 "*.py::T::test_foo PASSED                                          *            [[]100%[]]",
-                "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py:*: skip subtest 1",
+                "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py::T::test_foo - skip subtest 1",
                 "SUBFAILED[[]subtest 2[]] *.py::T::test_foo - AssertionError: fail subtest 2",
                 "* 1 failed, 1 passed, 1 skipped in *",
             ]
@@ -649,7 +651,7 @@ class TestUnittestSubTest:
             "*.py::T::test_foo SUBSKIPPED[[]subtest 1[]] (skip subtest 1) * [[]100%[]]"
         )
         result.stdout.no_fnmatch_line(
-            "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py:*: skip subtest 1"
+            "SUBSKIPPED[[]subtest 1[]] [[]1[]] *.py::T::test_foo - skip subtest 1"
         )
 
     def test_msg_not_a_string(
