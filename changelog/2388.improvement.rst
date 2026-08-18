@@ -1,0 +1,1 @@
+SyntaxError crash lines now use the ``FILE:LINE:COLUMN: MSG`` format that editors understand.

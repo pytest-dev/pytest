@@ -688,6 +688,15 @@ class ExceptionInfo(Generic[E]):
         return isinstance(self.value, exc)
 
     def _getreprcrash(self) -> ReprFileLocation | None:
+        # A SyntaxError carries its own location, which is more useful than
+        # the traceback entry where it was raised (#2388).
+        if isinstance(self.value, SyntaxError) and self.value.offset:
+            return ReprFileLocation(
+                self.value.filename or "",
+                self.value.lineno or 0,
+                f"SyntaxError: {self.value.msg}",
+                column=self.value.offset,
+            )
         # Find last non-hidden traceback entry that led to the exception of the
         # traceback, or None if all hidden.
         for i in range(-1, -len(self.traceback) - 1, -1):
@@ -1492,6 +1501,7 @@ class ReprFileLocation(TerminalRepr):
     path: str
     lineno: int
     message: str
+    column: int | None = None
 
     def __post_init__(self) -> None:
         self.path = str(self.path)
@@ -1502,7 +1512,8 @@ class ReprFileLocation(TerminalRepr):
         if i != -1:
             msg = msg[:i]
         tw.write(self.path, bold=True, red=True)
-        tw.line(f":{self.lineno}: {msg}")
+        column = f":{self.column}" if self.column is not None else ""
+        tw.line(f":{self.lineno}{column}: {msg}")
 
 
 @dataclasses.dataclass(eq=False)

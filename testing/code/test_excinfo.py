@@ -339,6 +339,28 @@ class TestTraceback_f_g_h:
             f()
         assert excinfo._getreprcrash() is None
 
+    def test_getreprcrash_syntax_error(self):
+        with pytest.raises(SyntaxError) as excinfo:
+            raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.path == "file.py"
+        assert reprcrash.lineno == 1
+        assert reprcrash.column == 5
+        assert reprcrash.message == "SyntaxError: bad syntax"
+        assert str(reprcrash) == "file.py:1:5: SyntaxError: bad syntax"
+
+    def test_getreprcrash_syntax_error_without_offset(self):
+        def f():
+            raise SyntaxError("no location")
+
+        with pytest.raises(SyntaxError) as excinfo:
+            f()
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        assert reprcrash.column is None
+        assert reprcrash.message == "SyntaxError: no location"
+
 
 def test_excinfo_exconly():
     with pytest.raises(ValueError) as excinfo:
@@ -1115,6 +1137,23 @@ raise ValueError()
         assert repr.reprcrash.lineno == 3
         assert repr.reprcrash.message == "ValueError"
         assert str(repr.reprcrash).endswith("mod.py:3: ValueError")
+
+    def test_repr_excinfo_reprcrash_syntax_error(self, importasmod) -> None:
+        mod = importasmod(
+            """
+            def entry():
+                raise SyntaxError("bad syntax", ("file.py", 1, 5, "def foo(:", 1, 6))
+        """
+        )
+        with pytest.raises(SyntaxError) as excinfo:
+            mod.entry()
+        repr = excinfo.getrepr()
+        assert repr.reprcrash is not None
+        assert repr.reprcrash.path == "file.py"
+        assert repr.reprcrash.lineno == 1
+        assert repr.reprcrash.column == 5
+        assert repr.reprcrash.message == "SyntaxError: bad syntax"
+        assert str(repr.reprcrash) == "file.py:1:5: SyntaxError: bad syntax"
 
     def test_repr_traceback_recursion(self, importasmod):
         mod = importasmod(
