@@ -166,10 +166,19 @@ def deindent(lines: Iterable[str]) -> list[str]:
     return textwrap.dedent("\n".join(lines)).splitlines()
 
 
-def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None]:
+def _statement_linenos(node: ast.AST) -> list[int]:
+    """Sorted 0-based line numbers of all statements below ``node``.
+
+    Walking the tree is proportional to the size of the whole module, while a
+    traceback asks for many line numbers of the same module -- so the result is
+    memoized on the node, which shares the lifetime of the caller's ast cache.
+    """
+    values: list[int] | None = getattr(node, "_pytest_statement_linenos", None)
+    if values is not None:
+        return values
     # Flatten all statements and except handlers into one lineno-list.
     # AST's line numbers start indexing at 1.
-    values: list[int] = []
+    values = []
     for x in ast.walk(node):
         if isinstance(x, ast.stmt | ast.ExceptHandler):
             # The lineno points to the class/def, so need to include the decorators.
@@ -183,6 +192,15 @@ def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None
                     # Treat the finally/orelse part as its own statement.
                     values.append(val[0].lineno - 1 - 1)
     values.sort()
+    try:
+        node._pytest_statement_linenos = values  # type: ignore[attr-defined]
+    except AttributeError:  # pragma: no cover - defensive
+        pass
+    return values
+
+
+def get_statement_startend2(lineno: int, node: ast.AST) -> tuple[int, int | None]:
+    values = _statement_linenos(node)
     insert_index = bisect_right(values, lineno)
     if insert_index == 0:
         return 0, None
