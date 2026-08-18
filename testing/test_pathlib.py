@@ -38,6 +38,7 @@ from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
+from _pytest.pathlib import samefile_nofollow
 from _pytest.pathlib import scandir
 from _pytest.pathlib import spec_matches_module_path
 from _pytest.pathlib import symlink_or_skip
@@ -1237,6 +1238,38 @@ def test_safe_exists(tmp_path: Path) -> None:
         side_effect=ValueError("name too long"),
     ):
         assert safe_exists(p) is False
+
+
+def test_samefile_nofollow_zero_inode(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    """Regression test for #14864.
+
+    On some filesystems (e.g. network drives on Windows), ``st_ino`` is always
+    0, which made ``os.path.samestat()`` consider any two paths to be the same
+    file, causing pytest to collect the whole suite instead of just the
+    specified file.
+    """
+    p1 = tmp_path.joinpath("a.py")
+    p2 = tmp_path.joinpath("b.py")
+    p1.touch()
+    p2.touch()
+
+    monkeypatch.setattr(
+        Path,
+        "lstat",
+        lambda self: os.stat_result((0,) * 10),
+    )
+
+    assert samefile_nofollow(p1, p2) is False
+    assert samefile_nofollow(p1, p1) is False
+
+
+def test_samefile_nofollow_real_files(tmp_path: Path) -> None:
+    p1 = tmp_path.joinpath("a.py")
+    p2 = tmp_path.joinpath("b.py")
+    p1.touch()
+    p2.touch()
+    assert samefile_nofollow(p1, p2) is False
+    assert samefile_nofollow(p1, p1) is True
 
 
 def test_import_sets_module_as_attribute(pytester: Pytester) -> None:

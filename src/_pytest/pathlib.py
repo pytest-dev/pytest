@@ -1095,4 +1095,10 @@ def samefile_nofollow(p1: Path, p2: Path) -> bool:
 
     Unlike Path.samefile(), does not resolve symlinks.
     """
-    return os.path.samestat(p1.lstat(), p2.lstat())
+    s1, s2 = p1.lstat(), p2.lstat()
+    if not s1.st_ino or not s2.st_ino:
+        # On some filesystems (e.g. some network drives on Windows), st_ino is
+        # always 0, in which case samestat() would consider any two paths to
+        # be the same file, causing incorrect matches when collecting (#14864).
+        return False
+    return os.path.samestat(s1, s2)

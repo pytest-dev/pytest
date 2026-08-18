@@ -1,0 +1,1 @@
+Fix collection on Windows when a file path is given on the command line and the file system reports an inode number of 0 (e.g. some network drives), which previously caused the whole suite to be collected instead of the specified file.
