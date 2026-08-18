@@ -38,6 +38,7 @@ from _pytest.pathlib import module_name_from_path
 from _pytest.pathlib import resolve_package_path
 from _pytest.pathlib import resolve_pkg_root_and_module_name
 from _pytest.pathlib import safe_exists
+from _pytest.pathlib import samefile_nofollow
 from _pytest.pathlib import scandir
 from _pytest.pathlib import spec_matches_module_path
 from _pytest.pathlib import symlink_or_skip
@@ -568,6 +569,38 @@ def test_samefile_false_negatives(tmp_path: Path, monkeypatch: MonkeyPatch) -> N
             module_path, root=tmp_path, consider_namespace_packages=False
         )
     assert getattr(module, "foo")() == 42
+
+
+def test_samefile_nofollow(tmp_path: Path) -> None:
+    p1 = tmp_path / "test_one.py"
+    p2 = tmp_path / "test_two.py"
+    p1.touch()
+    p2.touch()
+
+    assert samefile_nofollow(p1, p1)
+    assert not samefile_nofollow(p1, p2)
+
+
+def test_samefile_nofollow_zero_file_id(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    """On Windows file systems which do not support file IDs, st_ino is 0 for every
+    file, which must not make two distinct files compare equal (#14864)."""
+    p1 = tmp_path / "test_one.py"
+    p2 = tmp_path / "test_two.py"
+    p1.touch()
+    p2.touch()
+
+    # st_dev is a real value (the volume serial number), only the file ID is missing.
+    zero_file_id = os.stat_result((0o100644, 0, 3816903231, 1, 0, 0, 0, 0, 0, 0))
+    with monkeypatch.context() as mp:
+        # Use a context to narrow the patch as much as possible, given how central
+        # Path.lstat() is.
+        mp.setattr(Path, "lstat", lambda self: zero_file_id)
+
+        assert not samefile_nofollow(p1, p2)
+        # Also for the same file -- the caller compares paths first anyway.
+        assert not samefile_nofollow(p1, p1)
 
 
 def test_scandir_with_non_existent_directory() -> None:
