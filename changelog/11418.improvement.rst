@@ -1,1 +1,11 @@
-Added hash comparison for pyc cache files.
+The cached rewritten modules in ``__pycache__`` are now invalidated by a hash of
+the source instead of its modification time, using the checked-hash pyc format
+from :pep:`552`.
+
+Timestamps make the cache useless wherever source files get fresh modification
+times, most notably in CI: a checkout gives every file a new mtime, so a
+restored cache is discarded in full and every test module is rewritten again.
+Hashing the source costs roughly 15 microseconds per file and makes the cache
+survive that.
+
+Existing timestamp based caches are ignored and rewritten once.
