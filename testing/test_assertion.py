@@ -905,7 +905,9 @@ class TestAssert_reprcompare:
             "",
             "Omitting 1 identical items, use -vv to show",
             "Right contains 1 more item:",
-            "{'new': 1}",
+            "{",
+            "    'new': 1,",
+            "}",
             "",
             "Full diff: (-: missing in left side, +: extra in left side)",
             "  {",
@@ -950,7 +952,7 @@ class TestAssert_reprcompare:
         assert lines is not None
         assert lines[2].startswith("Common items:")
         assert "Omitting" not in lines[2]
-        assert lines[3] == "{'b': 1}"
+        assert lines[3:6] == ["{", "    'b': 1,", "}"]
 
     def test_dict_different_items(self) -> None:
         lines = callequal({"a": 0}, {"b": 1, "c": 2}, verbose=2)
@@ -958,9 +960,14 @@ class TestAssert_reprcompare:
             "{'a': 0} == {'b': 1, 'c': 2}",
             "",
             "Left contains 1 more item:",
-            "{'a': 0}",
+            "{",
+            "    'a': 0,",
+            "}",
             "Right contains 2 more items:",
-            "{'b': 1, 'c': 2}",
+            "{",
+            "    'b': 1,",
+            "    'c': 2,",
+            "}",
             "",
             "Full diff: (-: missing in left side, +: extra in left side)",
             "  {",
@@ -976,9 +983,14 @@ class TestAssert_reprcompare:
             "{'b': 1, 'c': 2} == {'a': 0}",
             "",
             "Left contains 2 more items:",
-            "{'b': 1, 'c': 2}",
+            "{",
+            "    'b': 1,",
+            "    'c': 2,",
+            "}",
             "Right contains 1 more item:",
-            "{'a': 0}",
+            "{",
+            "    'a': 0,",
+            "}",
             "",
             "Full diff: (-: missing in left side, +: extra in left side)",
             "  {",
@@ -1006,8 +1018,8 @@ class TestAssert_reprcompare:
         body = out[1:]
         assert body == [f"{{{i}: {i}}}" for i in range(5)]  # smallest 5, sorted
 
-    def test_dict_extra_items_small_keeps_pformat_block(self) -> None:
-        """Under the budget, the compact pprint block is unchanged."""
+    def test_dict_extra_items_small_uses_expanded_format(self) -> None:
+        """Under the budget, the internal pprint block is expanded."""
         out = list(
             _compare_eq_mapping(
                 {"b": 2, "a": 1},
@@ -1017,7 +1029,26 @@ class TestAssert_reprcompare:
                 TruncationBudget(max_lines=5, max_chars=350),
             )
         )
-        assert out == ["Left contains 2 more items:", "{'a': 1, 'b': 2}"]
+        assert out == [
+            "Left contains 2 more items:",
+            "{",
+            "    'a': 1,",
+            "    'b': 2,",
+            "}",
+        ]
+
+    def test_dict_extra_items_nested_respects_line_budget(self) -> None:
+        out = list(
+            _compare_eq_mapping(
+                {"items": list(range(100))},
+                {},
+                util.dummy_highlighter,
+                0,
+                TruncationBudget(max_lines=5, max_chars=350),
+            )
+        )
+        assert out[0] == "Left contains 1 more item:"
+        assert len(out[1:]) <= 6
 
     def test_mapping_different_items(self) -> None:
         class SimpleMapping(Mapping[str, int]):
@@ -1047,7 +1078,9 @@ class TestAssert_reprcompare:
             "Differing items:",
             "{'a': 0} != {'a': 1}",
             "Right contains 1 more item:",
-            "{'c': 2}",
+            "{",
+            "    'c': 2,",
+            "}",
             "Use -v to get more diff",
         ]
 
@@ -1248,12 +1281,12 @@ class TestAssert_reprcompare_dataclass:
             [
                 "E         Omitting 1 identical items, use -vv to show",
                 "E         Differing attributes:",
-                "E         ['field_b']",
+                "E         [",
+                "E             'field_b',",
+                "E         ]",
+                "E         ...",
                 "E         ",
-                "E         Drill down into differing attribute field_b:",
-                "E           field_b: 'b' != 'c'",
-                "E           - c",
-                "E           + b",
+                "E         ...Full output truncated, use '-vv' to show",
             ],
             consecutive=True,
         )
@@ -1266,10 +1299,10 @@ class TestAssert_reprcompare_dataclass:
             [
                 "E         Omitting 1 identical items, use -vv to show",
                 "E         Differing attributes:",
-                "E         ['g', 'h', 'j']",
-                "E         ",
-                "E         Drill down into differing attribute g:",
-                "E           g: S(a=10, b='ten') != S(a=20, b='xxx')...",
+                "E         [",
+                "E             'g',",
+                "E             'h',",
+                "E             'j',...",
                 "E         ",
                 "E         ...Full output truncated, use '-vv' to show",
             ],
@@ -1283,15 +1316,24 @@ class TestAssert_reprcompare_dataclass:
         result.stdout.fnmatch_lines(
             [
                 "E         Matching attributes:",
-                "E         ['i']",
+                "E         [",
+                "E             'i',",
+                "E         ]",
                 "E         Differing attributes:",
-                "E         ['g', 'h', 'j']",
+                "E         [",
+                "E             'g',",
+                "E             'h',",
+                "E             'j',",
+                "E         ]",
                 "E         ",
                 "E         Drill down into differing attribute g:",
                 "E           g: S(a=10, b='ten') != S(a=20, b='xxx')",
                 "E           ",
                 "E           Differing attributes:",
-                "E           ['a', 'b']",
+                "E           [",
+                "E               'a',",
+                "E               'b',",
+                "E           ]",
                 "E           ",
                 "E           Drill down into differing attribute a:",
                 "E             a: 10 != 20",
@@ -1422,7 +1464,7 @@ class TestAssert_reprcompare_attrsclass:
         assert lines is not None
         assert lines[2].startswith("Matching attributes:")
         assert "Omitting" not in lines[2]
-        assert lines[3] == "['field_a']"
+        assert lines[3:6] == ["[", "    'field_a',", "]"]
 
     def test_attrs_with_attribute_comparison_off(self) -> None:
         @attr.s
@@ -1437,7 +1479,7 @@ class TestAssert_reprcompare_attrsclass:
         assert lines is not None
         assert lines[2].startswith("Matching attributes:")
         assert "Omitting" not in lines[1]
-        assert lines[3] == "['field_a']"
+        assert lines[3:6] == ["[", "    'field_a',", "]"]
         for line in lines[3:]:
             assert "field_b" not in line
 
@@ -1504,7 +1546,9 @@ class TestAssert_reprcompare_namedtuple:
             "",
             "Omitting 1 identical items, use -vv to show",
             "Differing attributes:",
-            "['b']",
+            "[",
+            "    'b',",
+            "]",
             "",
             "Drill down into differing attribute b:",
             "  b: 'b' != 'c'",
@@ -2832,11 +2876,17 @@ def test_reprcompare_verbose_long() -> None:
             """,
             [
                 "{bold}{red}E         Common items:{reset}",
-                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-1{hl-reset}{str}'{hl-reset}: {number}1*",
+                "{bold}{red}E         {reset}{{*",
+                "{bold}{red}E         {reset}    {str}'{hl-reset}{str}"
+                "number-is-1{hl-reset}{str}'{hl-reset}: {number}1*",
                 "{bold}{red}E         Left contains 1 more item:{reset}",
-                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-5{hl-reset}{str}'{hl-reset}: {number}5*",
+                "{bold}{red}E         {reset}{{*",
+                "{bold}{red}E         {reset}    {str}'{hl-reset}{str}"
+                "number-is-5{hl-reset}{str}'{hl-reset}: {number}5*",
                 "{bold}{red}E         Right contains 1 more item:{reset}",
-                "{bold}{red}E         {reset}{{{str}'{hl-reset}{str}number-is-0{hl-reset}{str}'{hl-reset}: {number}0*",
+                "{bold}{red}E         {reset}{{*",
+                "{bold}{red}E         {reset}    {str}'{hl-reset}{str}"
+                "number-is-0{hl-reset}{str}'{hl-reset}: {number}0*",
                 "{bold}{red}E         {reset}{light-gray} {hl-reset} {{{endline}{reset}",
                 "{bold}{red}E         {reset}{light-gray} {hl-reset}     'number-is-1': 1,{endline}{reset}",
                 "{bold}{red}E         {reset}{light-green}+     'number-is-5': 5,{hl-reset}{endline}{reset}",

@@ -4,9 +4,9 @@ from collections.abc import Collection
 from collections.abc import Iterator
 from collections.abc import Mapping
 import heapq
-import pprint
 
 from _pytest._io.pprint import _safe_key
+from _pytest._io.pprint import PrettyPrinter
 from _pytest._io.saferepr import saferepr
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
@@ -23,12 +23,13 @@ def _compare_eq_mapping(
     set_left = set(left)
     set_right = set(right)
     common = set_left.intersection(set_right)
-    same = {k: left[k] for k in common if left[k] == right[k]}
+    same = {k: left[k] for k in sorted(common, key=_safe_key) if left[k] == right[k]}
+    pp = PrettyPrinter()
     if same and verbose < 2:
         yield f"Omitting {len(same)} identical items, use -vv to show"
     elif same:
         yield "Common items:"
-        yield from highlighter(pprint.pformat(same)).splitlines()
+        yield from (highlighter(line) for line in pp.pformat_lines(same))
     diff = {k for k in common if left[k] != right[k]}
     if diff:
         yield "Differing items:"
@@ -61,12 +62,15 @@ def _format_extra_items(
     """Render the "X contains N more items" subdict."""
     max_lines = truncation_budget.max_lines
     if max_lines == 0 or len(keys) <= max_lines:
-        # If no need to truncate, let pprint handle it.
-        yield from highlighter(
-            pprint.pformat({k: mapping[k] for k in keys})
-        ).splitlines()
+        # If no need to truncate, let the pretty printer handle it.
+        lines = PrettyPrinter().pformat_lines(
+            {k: mapping[k] for k in sorted(keys, key=_safe_key)},
+            max_lines=max_lines or None,
+            max_chars=truncation_budget.max_chars or None,
+        )
+        yield from (highlighter(line) for line in lines)
     else:
         # To avoid spending effort on formatting entries that would be truncated,
-        # only format the needed entries, keeping the sorting that pprint would use.
+        # only format the needed entries, keeping deterministic key sorting.
         for k in heapq.nsmallest(max_lines, keys, key=_safe_key):
             yield highlighter(saferepr({k: mapping[k]}))
