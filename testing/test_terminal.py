@@ -675,6 +675,37 @@ class TestFixtureReporting:
         )
         assert result.ret != 0
 
+    def test_setup_fixture_errors_with_same_test_name(
+        self, pytester: Pytester
+    ) -> None:
+        pytester.makeconftest(
+            """
+            import pytest
+
+            @pytest.fixture
+            def fixture():
+                raise Exception
+            """
+        )
+        pytester.makepyfile(
+            test_1="""
+            def test(fixture):
+                pass
+            """,
+            test_2="""
+            def test(fixture):
+                pass
+            """,
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines(
+            [
+                "*ERROR at setup of test_1.py::test*",
+                "*ERROR at setup of test_2.py::test*",
+            ]
+        )
+        assert result.ret != 0
+
     def test_teardown_fixture_error(self, pytester: Pytester) -> None:
         pytester.makepyfile(
             """

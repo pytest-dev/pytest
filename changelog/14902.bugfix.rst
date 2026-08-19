@@ -1,0 +1,4 @@
+Bug fixes
+---------
+
+- `#14902 <https://github.com/pytest-dev/pytest/issues/14902>`_: Fixed ambiguous terminal error and failure summary headings for tests with identical names in different files. When headings collide, pytest now displays the full test node ID.

@@ -1072,7 +1072,9 @@ class TerminalReporter:
             res = "[location]"
         return res + " "
 
-    def _getfailureheadline(self, rep):
+    def _getfailureheadline(self, rep, *, full_nodeid: bool = False):
+        if full_nodeid:
+            return _get_node_id_with_markup(self._tw, self.config, rep)
         head_line = rep.head_line
         if head_line:
             return head_line
@@ -1233,8 +1235,12 @@ class TerminalReporter:
                         self._outrep_summary(rep)
                         self.write_line(line)
                 else:
+                    headlines = Counter(self._getfailureheadline(rep) for rep in reports)
                     for rep in reports:
-                        msg = self._getfailureheadline(rep)
+                        short_headline = self._getfailureheadline(rep)
+                        msg = self._getfailureheadline(
+                            rep, full_nodeid=headlines[short_headline] > 1
+                        )
                         self.write_sep("_", msg, red=True, bold=True)
                         self._outrep_summary(rep)
                         self._handle_teardown_sections(rep.nodeid)
@@ -1245,8 +1251,12 @@ class TerminalReporter:
             if not reports:
                 return
             self.write_sep("=", "ERRORS")
-            for rep in self.stats["error"]:
-                msg = self._getfailureheadline(rep)
+            headlines = Counter(self._getfailureheadline(rep) for rep in reports)
+            for rep in reports:
+                short_headline = self._getfailureheadline(rep)
+                msg = self._getfailureheadline(
+                    rep, full_nodeid=headlines[short_headline] > 1
+                )
                 if rep.when == "collect":
                     msg = "ERROR collecting " + msg
                 else:
