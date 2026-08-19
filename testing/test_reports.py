@@ -59,7 +59,7 @@ class TestReportSerialization:
         assert isinstance(a.longrepr, ExceptionRepr)
         # Check assembled == rep
         assert a.__dict__.keys() == rep.__dict__.keys()
-        for key in rep.__dict__.keys():
+        for key in rep.__dict__:
             if key != "longrepr":
                 assert getattr(a, key) == getattr(rep, key)
         assert rep.longrepr.reprcrash is not None

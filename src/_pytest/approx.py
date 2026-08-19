@@ -341,7 +341,7 @@ class ApproxMapping(Approx[Mapping[Any, Any]]):
         return super().__eq__(actual)
 
     def _yield_comparisons(self, actual):
-        for k in self.expected.keys():
+        for k in self.expected:
             yield actual[k], self.expected[k]
 
 

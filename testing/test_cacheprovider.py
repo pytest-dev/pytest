@@ -654,7 +654,7 @@ class TestLastFailed:
         result.stdout.fnmatch_lines(["*3 passed*"])
 
         result, lastfailed = rlf(fail_import=1, fail_run=0)
-        assert sorted(list(lastfailed)) == ["test_maybe.py", "test_maybe2.py"]
+        assert sorted(lastfailed) == ["test_maybe.py", "test_maybe2.py"]
 
         result, lastfailed = rlf(fail_import=0, fail_run=0, args=("test_maybe2.py",))
         assert list(lastfailed) == ["test_maybe.py"]
