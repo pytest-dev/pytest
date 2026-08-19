@@ -43,6 +43,15 @@ CLASS_FIXTURE_INSTANCE_METHOD = UnformattedWarning(
     "See https://docs.pytest.org/en/stable/deprecations.html#class-scoped-fixture-as-instance-method",
 )
 
+WIDER_SCOPED_FIXTURE_INSTANCE_METHOD = UnformattedWarning(
+    PytestRemovedIn10Warning,
+    "{scope}-scoped fixtures defined as instance methods are deprecated.\n"
+    "Instance attributes set in the {fixturename!r} fixture will NOT be visible to test methods,\n"
+    "as each test gets a new instance while the fixture runs only once per {scope}.\n"
+    "Use a @staticmethod decorator below @pytest.fixture instead.\n"
+    "See https://docs.pytest.org/en/stable/deprecations.html#wider-scoped-fixture-as-instance-method",
+)
+
 # This deprecation is never really meant to be removed.
 PRIVATE = PytestDeprecationWarning("A private pytest class or function was used.")
 

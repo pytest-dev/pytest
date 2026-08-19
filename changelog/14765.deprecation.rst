@@ -1,0 +1,6 @@
+Defining a ``module``, ``package`` or ``session``-scoped fixture as an instance method inside a
+test class is now deprecated, extending the existing ``class``-scoped deprecation.
+
+Attributes set on ``self`` in such a fixture are never visible to the tests, because each test
+runs on a new instance while the fixture runs once per module, package or session. Use a
+``@staticmethod`` and request the returned value as a fixture argument instead.

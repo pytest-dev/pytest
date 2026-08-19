@@ -277,6 +277,50 @@ Using ``@classmethod`` ensures attributes are set on the class itself, making th
 to all test methods.
 
 
+.. _wider-scoped-fixture-as-instance-method:
+
+Module, package and session-scoped fixture as instance method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 9.2
+
+Defining a ``module``, ``package`` or ``session``-scoped fixture as an instance method is
+deprecated and will be removed in pytest 10.0.
+
+This is the same problem as :ref:`class-scoped-fixture-as-instance-method`, and for the same
+reason. pytest creates a new instance of the test class for each test method, so attributes set
+on ``self`` inside the fixture are never seen by the tests.
+
+**Before** (deprecated):
+
+.. code-block:: python
+
+    class TestExample:
+        @pytest.fixture(scope="module")
+        def setup_data(self):
+            self.data = [1, 2, 3]  # This won't be visible to tests!
+
+        def test_something(self, setup_data):
+            assert self.data == [1, 2, 3]  # AttributeError
+
+**After** (recommended):
+
+.. code-block:: python
+
+    class TestExample:
+        @pytest.fixture(scope="module")
+        @staticmethod
+        def setup_data():
+            return [1, 2, 3]
+
+        def test_something(self, setup_data):
+            assert setup_data == [1, 2, 3]  # Works correctly
+
+Unlike the class-scoped case, ``@classmethod`` is not suggested here. These scopes outlive the
+class body, so storing state on the class is rarely what you want. Return the value from a
+``@staticmethod`` and request it as a fixture argument instead.
+
+
 .. _monkeypatch-fixup-namespace-packages:
 
 ``monkeypatch.syspath_prepend`` with legacy namespace packages

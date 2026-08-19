@@ -138,6 +138,76 @@ def test_class_scope_classmethod_fixture_not_deprecated(pytester: Pytester) -> N
     result.assert_outcomes(passed=1)
 
 
+@pytest.mark.parametrize("scope", ["module", "package", "session"])
+def test_wider_scope_instance_method_is_deprecated(
+    pytester: Pytester, scope: str
+) -> None:
+    pytester.makepyfile(
+        __init__="",
+        test_it=f"""
+        import pytest
+
+        class TestClass:
+            @pytest.fixture(scope="{scope}")
+            def fix(self):
+                self.attr = True
+
+            def test_foo(self, fix):
+                pass
+        """,
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines(
+        [
+            f"*PytestRemovedIn10Warning: {scope.capitalize()}-scoped fixtures defined "
+            "as instance methods*"
+        ]
+    )
+
+
+@pytest.mark.parametrize("scope", ["module", "package", "session"])
+def test_wider_scope_staticmethod_fixture_not_deprecated(
+    pytester: Pytester, scope: str
+) -> None:
+    pytester.makepyfile(
+        __init__="",
+        test_it=f"""
+        import pytest
+
+        class TestClass:
+            @pytest.fixture(scope="{scope}")
+            @staticmethod
+            def fix():
+                return True
+
+            def test_foo(self, fix):
+                assert fix is True
+        """,
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(passed=1)
+
+
+def test_function_scope_instance_method_not_deprecated(pytester: Pytester) -> None:
+    """Function scope shares one instance with the test, so self works."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        class TestClass:
+            @pytest.fixture
+            def fix(self):
+                self.attr = True
+
+            def test_foo(self, fix):
+                assert self.attr is True
+        """
+    )
+    result = pytester.runpytest("-Werror::pytest.PytestRemovedIn10Warning")
+    result.assert_outcomes(passed=1)
+
+
 class TestFixtureNodeidDeprecations:
     """Tests for deprecated baseid/nodeid string APIs in fixture registration.
 

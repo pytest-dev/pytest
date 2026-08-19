@@ -62,6 +62,7 @@ from _pytest.deprecated import FIXTURE_GETFIXTUREVALUE_DURING_TEARDOWN
 from _pytest.deprecated import FIXTURE_NODEID_DEPRECATED
 from _pytest.deprecated import FIXTUREDEF_HAS_LOCATION_DEPRECATED
 from _pytest.deprecated import PARSEFACTORIES_NODEID_DEPRECATED
+from _pytest.deprecated import WIDER_SCOPED_FIXTURE_INSTANCE_METHOD
 from _pytest.deprecated import YIELD_FIXTURE
 from _pytest.main import Session
 from _pytest.mark import Mark
@@ -1329,6 +1330,14 @@ class RequestFixtureDef(FixtureDef[FixtureRequest]):
         pass
 
 
+# Scopes where a fixture defined as an instance method silently fails to share
+# state with tests, because the fixture and the tests run on different
+# instances. Function scope is exempt since both run on the same instance.
+_INSTANCE_METHOD_DEPRECATED_SCOPES = frozenset(
+    {Scope.Class, Scope.Module, Scope.Package, Scope.Session}
+)
+
+
 def resolve_fixture_function(
     fixturedef: FixtureDef[FixtureValue], request: FixtureRequest
 ) -> _FixtureFunc[FixtureValue]:
@@ -1344,19 +1353,25 @@ def resolve_fixture_function(
     # as expected.
     instance = request.instance
 
-    if fixturedef._scope is Scope.Class:
+    if fixturedef._scope in _INSTANCE_METHOD_DEPRECATED_SCOPES:
         # Check if fixture is an instance method (bound to instance, not class)
         if hasattr(fixturefunc, "__self__"):
             bound_to = fixturefunc.__self__
             # classmethod: bound_to is the class itself (a type)
             # instance method: bound_to is an instance (not a type)
             if not isinstance(bound_to, type):
-                warnings.warn(
-                    CLASS_FIXTURE_INSTANCE_METHOD.format(
+                if fixturedef._scope is Scope.Class:
+                    warning = CLASS_FIXTURE_INSTANCE_METHOD.format(
                         fixturename=request.fixturename
-                    ),
-                    stacklevel=2,
-                )
+                    )
+                else:
+                    # Wider scopes outlive the class body, so cls is no more
+                    # useful than self here and @staticmethod is the fix.
+                    warning = WIDER_SCOPED_FIXTURE_INSTANCE_METHOD.format(
+                        fixturename=request.fixturename,
+                        scope=fixturedef._scope.value.capitalize(),
+                    )
+                warnings.warn(warning, stacklevel=2)
 
     if instance is not None:
         # Handle the case where fixture is defined not in a test class, but some other class
