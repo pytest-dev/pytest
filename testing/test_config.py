@@ -2467,7 +2467,7 @@ class TestRootdir:
 
 
 class TestOverrideIniArgs:
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    @pytest.mark.parametrize("name", ["setup.cfg", "tox.ini", "pytest.ini"])
     def test_override_ini_names(self, pytester: Pytester, name: str) -> None:
         section = "[pytest]" if name != "setup.cfg" else "[tool:pytest]"
         pytester.path.joinpath(name).write_text(

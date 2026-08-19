@@ -178,9 +178,6 @@ lint.ignore = [
     "FA102", # Missing `from __future__ import annotations`, but uses PEP 585/604 syntax
     # flynt ignore
     "FLY002", # Consider an f-string instead of string join
-    # refurb ignore
-    "FURB157", # Verbose expression in `Decimal` constructor
-    "FURB188", # Prefer `str.removeprefix()` over conditionally replacing with slice
     # flake8-implicit-str-concat ignore
     "ISC004", # Unparenthesized implicit string concatenation in collection
     # flake8-logging ignore
@@ -218,8 +215,6 @@ lint.ignore = [
     # flake8-use-pathlib ignore
     "PTH124", # `py.path` is in maintenance mode, use `pathlib` instead
     "PTH210", # Invalid suffix passed to `.with_suffix()`
-    # flake8-return ignore
-    "RET501", # Do not explicitly `return None` in function if it is the only possible return value
     # ruff ignore
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF061", # Use context-manager form of `pytest.raises()`
@@ -240,9 +235,6 @@ lint.ignore = [
     "SIM211", # Use `not ...` instead of `False if ... else True`
     "SIM222", # Use the simplified expression instead of `... or True`
     "SIM223", # Use the simplified expression instead of `... and False`
-    "SIM905", # Consider using a list literal instead of `str.split()`
-    # flake8-type-checking ignore
-    "TC005", # Found empty type-checking block
     # tryceratops ignore
     "TRY002", # Create your own exception
     "TRY004", # Prefer `TypeError` exception for invalid type
