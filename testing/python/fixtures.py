@@ -4541,7 +4541,7 @@ class TestParamValueKey:
     def test_equal_hashable_values(self) -> None:
         # Build equal-but-not-identical values to exercise the ``==`` path
         # rather than the identity shortcut.
-        v1, v2 = tuple([1, 2]), tuple([1, 2])
+        v1, v2 = tuple([1, 2]), tuple([1, 2])  # noqa: C409
         assert v1 is not v2
         k1, k2 = ParamValueKey(v1, 0), ParamValueKey(v2, 1)
         assert k1 == k2
