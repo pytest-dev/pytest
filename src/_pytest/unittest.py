@@ -129,8 +129,6 @@ class UnitTestCase(Class):
         tearDownClass (#517)."""
         setup = getattr(cls, "setUpClass", None)
         teardown = getattr(cls, "tearDownClass", None)
-        if setup is None and teardown is None:
-            return None
         cleanup = getattr(cls, "doClassCleanups", lambda: None)
 
         def process_teardown_exceptions() -> None:
