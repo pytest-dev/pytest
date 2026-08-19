@@ -1235,7 +1235,9 @@ class TerminalReporter:
                         self._outrep_summary(rep)
                         self.write_line(line)
                 else:
-                    headlines = Counter(self._getfailureheadline(rep) for rep in reports)
+                    headlines = Counter(
+                        self._getfailureheadline(rep) for rep in reports
+                    )
                     for rep in reports:
                         short_headline = self._getfailureheadline(rep)
                         msg = self._getfailureheadline(

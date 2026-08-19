@@ -675,9 +675,7 @@ class TestFixtureReporting:
         )
         assert result.ret != 0
 
-    def test_setup_fixture_errors_with_same_test_name(
-        self, pytester: Pytester
-    ) -> None:
+    def test_setup_fixture_errors_with_same_test_name(self, pytester: Pytester) -> None:
         pytester.makeconftest(
             """
             import pytest
