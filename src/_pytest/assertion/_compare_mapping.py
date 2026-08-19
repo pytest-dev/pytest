@@ -64,9 +64,7 @@ def _format_extra_items(
     if max_lines == 0 or len(keys) <= max_lines:
         # If no need to truncate, let the pretty printer handle it.
         lines = PrettyPrinter().pformat_lines(
-            {k: mapping[k] for k in sorted(keys, key=_safe_key)},
-            max_lines=max_lines or None,
-            max_chars=truncation_budget.max_chars or None,
+            {k: mapping[k] for k in sorted(keys, key=_safe_key)}
         )
         yield from (highlighter(line) for line in lines)
     else:

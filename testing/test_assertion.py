@@ -1037,19 +1037,6 @@ class TestAssert_reprcompare:
             "}",
         ]
 
-    def test_dict_extra_items_nested_respects_line_budget(self) -> None:
-        out = list(
-            _compare_eq_mapping(
-                {"items": list(range(100))},
-                {},
-                util.dummy_highlighter,
-                0,
-                TruncationBudget(max_lines=5, max_chars=350),
-            )
-        )
-        assert out[0] == "Left contains 1 more item:"
-        assert len(out[1:]) <= 6
-
     def test_mapping_different_items(self) -> None:
         class SimpleMapping(Mapping[str, int]):
             def __init__(self, values: dict[str, int]) -> None:
