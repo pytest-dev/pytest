@@ -1,0 +1,5 @@
+A ``RecursionError`` whose recursion origin cannot be located now shows only the
+first and last 10 stack frames, matching what pytest already did when locating
+the origin failed outright. Previously the full traceback -- often around a
+thousand near-identical frames -- was rendered, which was both slow and
+unreadable. Pass ``--full-trace`` to see every frame.

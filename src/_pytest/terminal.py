@@ -1305,8 +1305,7 @@ class TerminalReporter:
 
         if display_sep:
             markup_for_end_sep = self._tw.markup("", **main_markup)
-            if markup_for_end_sep.endswith("\x1b[0m"):
-                markup_for_end_sep = markup_for_end_sep[:-4]
+            markup_for_end_sep = markup_for_end_sep.removesuffix("\x1b[0m")
             fullwidth += len(markup_for_end_sep)
             msg += markup_for_end_sep
 
@@ -1376,8 +1375,7 @@ class TerminalReporter:
             markup_word = self._tw.markup(verbose_word, **verbose_markup)
             prefix = "Skipped: "
             for num, fspath, lineno, reason in fskips:
-                if reason.startswith(prefix):
-                    reason = reason[len(prefix) :]
+                reason = reason.removeprefix(prefix)
                 if lineno is not None:
                     lines.append(f"{markup_word} [{num}] {fspath}:{lineno}: {reason}")
                 else:
@@ -1670,8 +1668,7 @@ def _plugin_nameversions(plugininfo) -> list[str]:
         # Gets us name and version!
         name = f"{dist.project_name}-{dist.version}"
         # Questionable convenience, but it keeps things short.
-        if name.startswith("pytest-"):
-            name = name[7:]
+        name = name.removeprefix("pytest-")
         # We decided to print python package names they can have more than one plugin.
         if name not in values:
             values.append(name)
@@ -1717,8 +1714,7 @@ def _get_raw_skip_reason(report: TestReport) -> str:
     """
     if hasattr(report, "wasxfail"):
         reason = report.wasxfail
-        if reason.startswith("reason: "):
-            reason = reason[len("reason: ") :]
+        reason = reason.removeprefix("reason: ")
         return reason
     else:
         assert report.skipped

@@ -676,8 +676,7 @@ class ExceptionInfo(Generic[E]):
         text = "".join(lines)
         text = text.rstrip()
         if tryshort:
-            if text.startswith(self._striptext):
-                text = text[len(self._striptext) :]
+            text = text.removeprefix(self._striptext)
         return text
 
     def errisinstance(self, exc: EXCEPTION_OR_MORE) -> bool:
@@ -1167,10 +1166,10 @@ class ExceptionInfoFormatter:
         TypeError), in which case we do our best to warn the user of the
         error and show a limited traceback.
         """
+        max_frames = 10
         try:
             recursionindex = traceback.recursionindex()
         except Exception as e:
-            max_frames = 10
             extraline: str | None = (
                 "!!! Recursion error detected, but an error occurred locating the origin of recursion.\n"
                 "  The following exception happened when comparing locals in the stack frame:\n"
@@ -1184,6 +1183,18 @@ class ExceptionInfoFormatter:
             if recursionindex is not None:
                 extraline = "!!! Recursion detected (same locals & position)"
                 traceback = traceback[: recursionindex + 1]
+            elif self.tbfilter is not False and len(traceback) > 2 * max_frames:
+                # The origin of the recursion could not be pinned down (the frames
+                # differ), but rendering hundreds of near-identical entries is both
+                # slow and unreadable -- show the ends only, as above.
+                extraline = (
+                    "!!! Recursion error detected, but the origin of the recursion "
+                    "could not be located.\n"
+                    f"  Displaying first and last {max_frames} stack frames out of {len(traceback)}.\n"
+                    "  Pass `--full-trace` to see all frames."
+                )
+                # Type ignored for the same reason as above.
+                traceback = traceback[:max_frames] + traceback[-max_frames:]  # type: ignore
             else:
                 extraline = None
 

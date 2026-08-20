@@ -67,7 +67,7 @@ def bin_xml_escape(arg: object) -> str:
 def merge_family(left, right) -> None:
     result = {}
     for kl, vl in left.items():
-        for kr, vr in right.items():
+        for vr in right.values():
             if not isinstance(vl, list):
                 raise TypeError(type(vl))
             result[kl] = vl + vr
@@ -234,16 +234,14 @@ class _NodeReporter:
     def append_skipped(self, report: TestReport) -> None:
         if hasattr(report, "wasxfail"):
             xfailreason = report.wasxfail
-            if xfailreason.startswith("reason: "):
-                xfailreason = xfailreason[8:]
+            xfailreason = xfailreason.removeprefix("reason: ")
             xfailreason = bin_xml_escape(xfailreason)
             skipped = ET.Element("skipped", type="pytest.xfail", message=xfailreason)
             self.append(skipped)
         else:
             assert isinstance(report.longrepr, tuple)
             filename, lineno, skipreason = report.longrepr
-            if skipreason.startswith("Skipped: "):
-                skipreason = skipreason[9:]
+            skipreason = skipreason.removeprefix("Skipped: ")
             details = f"{filename}:{lineno}: {skipreason}"
 
             skipped = ET.Element(
