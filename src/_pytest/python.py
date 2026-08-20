@@ -713,6 +713,51 @@ class Package(nodes.Directory):
             self.addfinalizer(func)
 
     def collect(self) -> Iterable[nodes.Item | nodes.Collector]:
+        # Propagate pytestmark from the package __init__.py to this Package
+        # collector so that its children inherit the marker via
+        # Node.iter_markers (fix #14737).  This restores the behaviour that
+        # was lost when Package stopped being a Module/File (#6197) without
+        # re-collecting __init__.py as a test file (avoiding #6194).
+        # Do it here (not in setup) so marks are visible during collection
+        # and before pytest_runtest_setup evaluates skip/xfail (skipping is
+        # tryfirst, while Package.setup runs after).
+        import sys
+
+        before_modules: set[str] | None = None
+        before_path: list[str] | None = None
+        applied_here = False
+        try:
+            before_modules = set(sys.modules.keys())
+            before_path = list(sys.path)
+            init_mod = importtestmodule(self.path / "__init__.py", self.config)
+            package_marks = get_unpacked_marks(init_mod)
+            if package_marks:
+                if not getattr(self, "_pytestmark_applied", False):
+                    self.own_markers.extend(package_marks)
+                    self.keywords.update((mark.name, mark) for mark in package_marks)
+                    self._pytestmark_applied = True  # type: ignore[attr-defined]
+                    applied_here = True
+        except Exception:
+            # If __init__.py fails to import, let setup() report it;
+            # don't block collection of the rest of the package.
+            pass
+        finally:
+            # Cleanup sys.modules / sys.path only if we did NOT apply marks
+            # here.  For Packages that carry a pytestmark, we keep the import
+            # (and its sys.path entry) so that Package.setup does not need to
+            # re-execute __init__.py.  For packages without marks (the common
+            # case, e.g. src/nope), we restore to avoid polluting unrelated
+            # imports (see test_does_not_put_src_on_path).
+            try:
+                if not applied_here and before_modules is not None:
+                    for name in list(sys.modules.keys()):
+                        if name not in before_modules:
+                            del sys.modules[name]
+                    if before_path is not None:
+                        sys.path[:] = before_path
+            except Exception:
+                pass
+
         # Always collect __init__.py first.
         def sort_key(entry: os.DirEntry[str]) -> object:
             return (entry.name != "__init__.py", entry.name)
