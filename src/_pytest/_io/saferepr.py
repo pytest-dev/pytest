@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from itertools import islice
-import pprint
 import reprlib
+
+from _pytest.compat import pformat
 
 
 def _try_repr_or_str(obj: object) -> str:
@@ -112,7 +113,7 @@ def safeformat(obj: object) -> str:
     with a short exception info.
     """
     try:
-        return pprint.pformat(obj)
+        return pformat(obj)
     except Exception as exc:
         return _format_repr_exception(exc, obj)
 
