@@ -1108,7 +1108,25 @@ class AssertionRewriter(ast.NodeVisitor):
         expls: list[ast.expr] = []
         syms: list[ast.expr] = []
         results = [left_res]
+        # Python evaluates a comparison chain lazily: in "a < b < c", "c" is
+        # never evaluated when "a < b" is false. Nest every comparison after the
+        # first inside an "if" on the previous result so the rewritten form does
+        # the same, the way visit_BoolOp already does for "and" and "or".
+        outer_statements = self.statements
+        # comp.left is already emitted; the chain's own work starts here.
+        chain_starts_at = len(self.statements)
+        # Whatever a skipped operand would have bound is set to None up front:
+        # the explanation builds its arguments eagerly, and _call_reprcompare
+        # stops at the first false result, so it never reads those values.
+        may_be_skipped: list[str] = []
         for i, op, next_operand in it:
+            if i:
+                self.statements.append(ast.If(load_names[i - 1], (inner := []), []))
+                self.statements = inner
+                first_new_variable = len(self.variables)
+                # format_variables only exists with the assertion_pass hook on.
+                format_variables = getattr(self, "format_variables", None)
+                first_new_format_variable = len(format_variables or ())
             match (next_operand, left_res):
                 case (
                     ast.NamedExpr(target=ast.Name(id=target_id)),
@@ -1127,7 +1145,21 @@ class AssertionRewriter(ast.NodeVisitor):
             expls.append(ast.Constant(expl))
             res_expr = ast.copy_location(ast.Compare(left_res, [op], [next_res]), comp)
             self.statements.append(ast.Assign([store_names[i]], res_expr))
+            if i:
+                may_be_skipped.append(res_variables[i])
+                may_be_skipped.extend(self.variables[first_new_variable:])
+                if format_variables is not None:
+                    may_be_skipped.extend(format_variables[first_new_format_variable:])
             left_res, left_expl = next_res, next_expl
+        self.statements = outer_statements
+        if may_be_skipped:
+            self.statements.insert(
+                chain_starts_at,
+                ast.Assign(
+                    [ast.Name(name, ast.Store()) for name in may_be_skipped],
+                    ast.Constant(None),
+                ),
+            )
         # Use pytest.assertion.util._reprcompare if that's available.
         expl_call = self.helper(
             "_call_reprcompare",

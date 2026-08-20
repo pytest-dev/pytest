@@ -889,6 +889,35 @@ class TestAssertionRewrite:
 
         getmsg(f5, must_pass=True)
 
+    def test_comparison_chain_short_circuits(self) -> None:
+        def f1() -> None:
+            assert 1 < 0 < 1 / 0
+
+        # Not a ZeroDivisionError: Python never evaluates the last comparator.
+        assert getmsg(f1) == """assert 1 < 0"""
+
+        def f2() -> None:
+            calls = []
+
+            def sentinel() -> int:
+                calls.append("called")
+                return 5
+
+            try:
+                assert 1 < 0 < sentinel()
+            except AssertionError:
+                pass
+            assert calls == []
+
+        getmsg(f2, must_pass=True)
+
+        def f3() -> None:
+            a, b, c = range(3)
+            assert c < b < a < 1 / 0  # type: ignore[operator]
+
+        # The chain is walked left to right, so the failure at "2 < 1" stops it.
+        assert getmsg(f3) == """assert 2 < 1"""
+
     def test_len(self, request) -> None:
         def f():
             values = list(range(10))

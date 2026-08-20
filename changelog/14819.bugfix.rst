@@ -1,0 +1,6 @@
+Comparison chains in an ``assert`` are now evaluated lazily, as Python evaluates them.
+
+Previously the rewriter evaluated every comparator, so ``assert a < b < c`` could
+evaluate ``c`` even when ``a < b`` was false. A rewritten assertion could therefore
+call what Python would not, or fail with an unrelated exception instead of
+``AssertionError``. ``and`` and ``or`` already short-circuited; chains now do too.
