@@ -7,6 +7,12 @@ rewriting behavior across all expression types, checking:
 2. Semantic correctness: rewritten code has identical behavior to original
 3. Single evaluation: side-effecting expressions are not evaluated multiple times
 4. Evaluation order: operands see the values Python would give them
+
+Two known gaps remain, recorded as strict xfails whose reason starts with a
+group name, so that a change can state which group it closes::
+
+    introspect-container-literal  list/dict/set literals are not decomposed
+    introspect-callable-variable  a called variable shows <function ...>
 """
 
 from __future__ import annotations
@@ -486,6 +492,23 @@ class TestIntrospectionCall:
             must_contain=["where 6 = ", "(3)"],
         )
 
+    @pytest.mark.xfail(
+        strict=True,
+        reason="introspect-callable-variable: a called name shows its <function ...> repr",
+    )
+    def test_simple_call_clean_name(self) -> None:
+        """Ideally the message should show 'f()' not '<function ... at 0x...>()'."""
+        assert_introspects(
+            """
+            def check():
+                def f():
+                    return 42
+                assert f() == 100
+            """,
+            must_contain=["where 42 = f()"],
+            must_not_contain=["<function"],
+        )
+
     def test_method_call_shows_result(self) -> None:
         assert_introspects(
             """
@@ -624,6 +647,21 @@ class TestIntrospectionIfExp:
 class TestIntrospectionContainerLiteral:
     """Container literals ([...], {...}, {k:v})."""
 
+    @pytest.mark.xfail(
+        strict=True,
+        reason="introspect-container-literal: list/dict/set literals are not decomposed",
+    )
+    def test_list_literal_shows_elements(self) -> None:
+        assert_introspects(
+            """
+            def check():
+                def f():
+                    return 99
+                assert [f(), 2, 3] == [1, 2, 3]
+            """,
+            must_contain=["where 99 = f()"],
+        )
+
     def test_list_literal_semantics_preserved(self) -> None:
         assert_semantically_equivalent("""
             def check():
@@ -725,6 +763,24 @@ class TestIntrospectionMethodCall:
                 assert fn() == 100
             """,
             must_contain=["where 42 = ", "()"],
+        )
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="introspect-callable-variable: a called name shows its <function ...> repr",
+    )
+    def test_callable_variable_clean_name(self) -> None:
+        """Ideally should show 'fn()' not '<function factory at 0x...>()'."""
+        assert_introspects(
+            """
+            def check():
+                def factory():
+                    return 42
+                fn = factory
+                assert fn() == 100
+            """,
+            must_contain=["where 42 = fn()"],
+            must_not_contain=["<function"],
         )
 
 
