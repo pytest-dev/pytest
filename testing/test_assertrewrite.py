@@ -913,7 +913,7 @@ class TestAssertionRewrite:
 
         def f3() -> None:
             a, b, c = range(3)
-            assert c < b < a < 1 / 0  # type: ignore[operator]
+            assert c < b < a < 1 / 0
 
         # The chain is walked left to right, so the failure at "2 < 1" stops it.
         assert getmsg(f3) == """assert 2 < 1"""

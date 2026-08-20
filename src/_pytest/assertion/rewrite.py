@@ -1121,7 +1121,8 @@ class AssertionRewriter(ast.NodeVisitor):
         may_be_skipped: list[str] = []
         for i, op, next_operand in it:
             if i:
-                self.statements.append(ast.If(load_names[i - 1], (inner := []), []))
+                inner: list[ast.stmt] = []
+                self.statements.append(ast.If(load_names[i - 1], inner, []))
                 self.statements = inner
                 first_new_variable = len(self.variables)
                 # format_variables only exists with the assertion_pass hook on.
