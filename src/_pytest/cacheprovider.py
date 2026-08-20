@@ -614,7 +614,7 @@ def cacheshow(config: Config, session: Session) -> int:
     :param session: pytest session object.
     :returns: Exit code (0 for success).
     """
-    from pprint import pformat
+    from _pytest.compat import pformat
 
     assert config.cache is not None
 

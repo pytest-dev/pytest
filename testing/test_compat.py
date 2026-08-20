@@ -5,12 +5,15 @@ import enum
 from functools import cached_property
 from functools import partial
 from functools import wraps
+import pprint
+import sys
 from typing import Literal
 import warnings
 
 from _pytest.compat import assert_never
 from _pytest.compat import deprecated
 from _pytest.compat import get_real_func
+from _pytest.compat import pformat
 from _pytest.compat import safe_getattr
 from _pytest.compat import safe_isclass
 from _pytest.outcomes import OutcomeException
@@ -118,6 +121,17 @@ def test_safe_isclass() -> None:
             assert False, "Should be ignored"
 
     assert safe_isclass(CrappyClass()) is False
+
+
+def test_pformat() -> None:
+    data = {"foo": {"bar": 1, "baz": 2}}
+
+    expected = (
+        pprint.pformat(data, expand=True)  # type: ignore[call-arg]
+        if sys.version_info >= (3, 15)
+        else pprint.pformat(data)
+    )
+    assert pformat(data) == expected
 
 
 def test_cached_property() -> None:

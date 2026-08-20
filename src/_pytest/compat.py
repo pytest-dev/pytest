@@ -11,6 +11,7 @@ from inspect import Parameter
 from inspect import Signature
 import os
 from pathlib import Path
+import pprint
 import sys
 from typing import Any
 from typing import Final
@@ -22,6 +23,11 @@ import py
 
 if sys.version_info >= (3, 14):
     from annotationlib import Format
+
+if sys.version_info >= (3, 15):
+    pformat = functools.partial(pprint.pformat, expand=True)
+else:
+    pformat = pprint.pformat
 
 
 #: constant to prepare valuing pylib path replacements/lazy proxies later on
