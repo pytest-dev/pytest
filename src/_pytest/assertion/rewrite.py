@@ -1113,21 +1113,26 @@ class AssertionRewriter(ast.NodeVisitor):
         # first inside an "if" on the previous result so the rewritten form does
         # the same, the way visit_BoolOp already does for "and" and "or".
         outer_statements = self.statements
+        outer_expl_stmts = self.expl_stmts
         # comp.left is already emitted; the chain's own work starts here.
         chain_starts_at = len(self.statements)
-        # Whatever a skipped operand would have bound is set to None up front:
-        # the explanation builds its arguments eagerly, and _call_reprcompare
-        # stops at the first false result, so it never reads those values.
-        may_be_skipped: list[str] = []
+        conditional_blocks: list[list[ast.stmt]] = []
+        fail_ifs: list[tuple[list[ast.stmt], ast.If]] = []
         for i, op, next_operand in it:
             if i:
                 inner: list[ast.stmt] = []
                 self.statements.append(ast.If(load_names[i - 1], inner, []))
                 self.statements = inner
-                first_new_variable = len(self.variables)
-                # format_variables only exists with the assertion_pass hook on.
-                format_variables = getattr(self, "format_variables", None)
-                first_new_format_variable = len(format_variables or ())
+                # An operand can also contribute statements that run only when
+                # the assertion fails, such as a nested boolop appending to its
+                # explanation list. Skip those too, or they run against names
+                # the skipped operand never bound.
+                fail_inner: list[ast.stmt] = []
+                fail_if = ast.If(load_names[i - 1], fail_inner, [])
+                fail_ifs.append((self.expl_stmts, fail_if))
+                self.expl_stmts.append(fail_if)
+                self.expl_stmts = fail_inner
+                conditional_blocks += (inner, fail_inner)
             match (next_operand, left_res):
                 case (
                     ast.NamedExpr(target=ast.Name(id=target_id)),
@@ -1146,13 +1151,25 @@ class AssertionRewriter(ast.NodeVisitor):
             expls.append(ast.Constant(expl))
             res_expr = ast.copy_location(ast.Compare(left_res, [op], [next_res]), comp)
             self.statements.append(ast.Assign([store_names[i]], res_expr))
-            if i:
-                may_be_skipped.append(res_variables[i])
-                may_be_skipped.extend(self.variables[first_new_variable:])
-                if format_variables is not None:
-                    may_be_skipped.extend(format_variables[first_new_format_variable:])
             left_res, left_expl = next_res, next_expl
         self.statements = outer_statements
+        self.expl_stmts = outer_expl_stmts
+        # Most operands contribute nothing to the explanation, and an "if" with
+        # an empty body is not valid ast.
+        for parent, fail_if in reversed(fail_ifs):  # innermost first
+            if not fail_if.body:
+                parent.remove(fail_if)
+        # The explanation builds its arguments eagerly, so whatever the skipped
+        # statements would have bound is set to None first. Nothing reads those
+        # values: _call_reprcompare stops at the first false result, and a chain
+        # only short-circuits after one.
+        may_be_skipped = dict.fromkeys(
+            node.id
+            for block in conditional_blocks
+            for stmt in block
+            for node in ast.walk(stmt)
+            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store)
+        )
         if may_be_skipped:
             self.statements.insert(
                 chain_starts_at,

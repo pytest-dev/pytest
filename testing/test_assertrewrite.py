@@ -918,6 +918,14 @@ class TestAssertionRewrite:
         # The chain is walked left to right, so the failure at "2 < 1" stops it.
         assert getmsg(f3) == """assert 2 < 1"""
 
+        def f4() -> None:
+            a = b = 0
+            # A boolop in a skipped comparator also contributes statements that
+            # only run when the assertion fails. Those have to be skipped too.
+            assert 1 < 0 < (a or b)
+
+        assert getmsg(f4) == """assert 1 < 0"""
+
     def test_len(self, request) -> None:
         def f():
             values = list(range(10))
