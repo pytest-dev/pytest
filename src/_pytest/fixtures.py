@@ -25,7 +25,6 @@ from typing import cast
 from typing import Final
 from typing import final
 from typing import Generic
-from typing import Literal
 from typing import NoReturn
 from typing import overload
 from typing import TYPE_CHECKING
@@ -70,6 +69,7 @@ from _pytest.mark.structures import MarkDecorator
 from _pytest.outcomes import fail
 from _pytest.outcomes import skip
 from _pytest.outcomes import TEST_OUTCOME
+from _pytest.parametrize import _resolve_args_directness
 from _pytest.pathlib import absolutepath
 from _pytest.pathlib import bestrelpath
 from _pytest.scope import HIGH_SCOPES
@@ -84,9 +84,9 @@ if sys.version_info < (3, 11):
 
 
 if TYPE_CHECKING:
-    from _pytest.python import CallSpec
+    from _pytest.parametrize import CallSpec
+    from _pytest.parametrize import ParametrizeContext
     from _pytest.python import Function
-    from _pytest.python import Metafunc
     from _pytest.reports import CollectReport
 
 
@@ -136,6 +136,23 @@ def get_scope_package(
     return node.session
 
 
+def fail_definition_scope_unavailable(nodeid: str, what: str) -> NoReturn:
+    """Fail because the ``"definition"`` scope was used where no
+    :class:`~_pytest.nodes.ItemDefinition` node exists to anchor it on.
+
+    Unlike the other scopes, ``"definition"`` needs the test definition to be a
+    node of the collection tree; there is nothing to fall back to that would
+    preserve its meaning of "shared by all invocations of one definition".
+    """
+    fail(
+        f"ScopeUnavailable: {what} needs the 'definition' scope, but {nodeid} "
+        f"has no definition node in the collection tree.\n"
+        f"For Python tests, set the collect_function_definition ini option to "
+        f"'pedantic' to make function definitions part of the tree.",
+        pytrace=False,
+    )
+
+
 def is_visibility_more_specific(
     candidate: FixtureDef[Any], other: FixtureDef[Any]
 ) -> bool:
@@ -174,6 +191,9 @@ def get_scope_node(node: nodes.Node, scope: Scope) -> nodes.Node | None:
         # Type ignored because this is actually safe, see:
         # https://github.com/python/mypy/issues/4717
         return node.getparent(nodes.Item)  # type: ignore[type-abstract]
+    elif scope is Scope.Definition:
+        # Type ignored for the same reason as Scope.Function above.
+        return node.getparent(nodes.ItemDefinition)  # type: ignore[type-abstract]
     elif scope is Scope.Class:
         return node.getparent(_pytest.python.Class)
     elif scope is Scope.Module:
@@ -277,6 +297,9 @@ class ParamArgKey:
     scoped_item_path: Path | None
     #: For Class scope, the class where the item is defined.
     item_cls: type | None
+    #: For Definition scope, the nodeid of the definition the item was
+    #: generated from.
+    scoped_definition_id: str | None = None
 
 
 _V = TypeVar("_V")
@@ -293,6 +316,7 @@ def get_param_argkeys(item: nodes.Item, scope: Scope) -> Iterator[ParamArgKey]:
         return
 
     item_cls = None
+    scoped_definition_id = None
     if scope is Scope.Session:
         scoped_item_path = None
     elif scope is Scope.Package:
@@ -302,15 +326,28 @@ def get_param_argkeys(item: nodes.Item, scope: Scope) -> Iterator[ParamArgKey]:
         scoped_item_path = item.path
     elif scope is Scope.Class:
         scoped_item_path = item.path
-        item_cls = item.cls  # type: ignore[attr-defined]
+        # Items which are not Python test functions have no class.
+        item_cls = getattr(item, "cls", None)
+    elif scope is Scope.Definition:
+        scoped_item_path = item.path
     else:
         assert_never(scope)
 
     for argname, param in callspec.params.items():
         if callspec._arg2scope[argname] != scope:
             continue
+        if scope is Scope.Definition and scoped_definition_id is None:
+            # Resolved only once a definition-scoped param is actually found:
+            # items without one need not have a definition node at all. A param
+            # at this scope can only have been created while the definition was
+            # a node, so the lookup cannot come up empty here.
+            definition = get_scope_node(item, Scope.Definition)
+            assert definition is not None
+            scoped_definition_id = definition.nodeid
         param_key = ParamValueKey(param, callspec.indices[argname])
-        yield ParamArgKey(argname, param_key, scoped_item_path, item_cls)
+        yield ParamArgKey(
+            argname, param_key, scoped_item_path, item_cls, scoped_definition_id
+        )
 
 
 def reorder_items(items: Sequence[nodes.Item]) -> list[nodes.Item]:
@@ -546,7 +583,8 @@ class FixtureRequest(abc.ABC):
 
     @property
     def scope(self) -> ScopeName:
-        """Scope string, one of "function", "class", "module", "package", "session"."""
+        """Scope string, one of "function", "definition", "class", "module",
+        "package", "session"."""
         return self._scope.value
 
     @abc.abstractmethod
@@ -908,6 +946,10 @@ class SubRequest(FixtureRequest):
         if node is None and scope is Scope.Class:
             # Fallback to function item itself.
             node = self._pyfuncitem
+        if node is None and scope is Scope.Definition:
+            fail_definition_scope_unavailable(
+                self._pyfuncitem.nodeid, f"fixture {fixturedef.argname!r}"
+            )
         assert node, (
             f'Could not obtain a node for scope "{scope}" for function {self._pyfuncitem!r}'
         )
@@ -1193,7 +1235,8 @@ class FixtureDef(Generic[FixtureValue]):
 
     @property
     def scope(self) -> ScopeName:
-        """Scope string, one of "function", "class", "module", "package", "session"."""
+        """Scope string, one of "function", "definition", "class", "module",
+        "package", "session"."""
         return self._scope.value
 
     @property
@@ -1557,7 +1600,13 @@ def fixture(
 
     :param scope:
         The scope for which this fixture is shared; one of ``"function"``
-        (default), ``"class"``, ``"module"``, ``"package"`` or ``"session"``.
+        (default), ``"definition"``, ``"class"``, ``"module"``, ``"package"``
+        or ``"session"``.
+
+        ``"definition"`` shares the fixture across all invocations generated
+        from one test definition, i.e. across the parameter sets of a
+        parametrized test. It requires the definition to be a node of the
+        collection tree, see :confval:`collect_function_definition`.
 
         This parameter may also be a callable which receives ``(fixture_name, config)``
         as parameters, and must return a ``str`` with one of the values mentioned above.
@@ -1682,45 +1731,6 @@ def pytest_cmdline_main(config: Config) -> int | ExitCode | None:
         show_fixtures_per_test(config)
         return 0
     return None
-
-
-def _resolve_args_directness(
-    argnames: Sequence[str],
-    indirect: bool | Sequence[str],
-    nodeid: str,
-) -> dict[str, Literal["indirect", "direct"]]:
-    """Resolve if each parametrized argument must be considered an indirect
-    parameter to a fixture of the same name, or a direct parameter to the
-    parametrized function, based on the ``indirect`` parameter of the
-    parametrize() call.
-
-    :param argnames:
-        List of argument names passed to ``parametrize()``.
-    :param indirect:
-        Same as the ``indirect`` parameter of ``parametrize()``.
-    :param nodeid:
-        Node ID to which the parametrization is applied.
-    :returns:
-        A dict mapping each arg name to either "indirect" or "direct".
-    """
-    arg_directness: dict[str, Literal["indirect", "direct"]]
-    if isinstance(indirect, bool):
-        arg_directness = dict.fromkeys(argnames, "indirect" if indirect else "direct")
-    elif isinstance(indirect, Sequence):
-        arg_directness = dict.fromkeys(argnames, "direct")
-        for arg in indirect:
-            if arg not in argnames:
-                fail(
-                    f"In {nodeid}: indirect fixture '{arg}' doesn't exist",
-                    pytrace=False,
-                )
-            arg_directness[arg] = "indirect"
-    else:
-        fail(
-            f"In {nodeid}: expected Sequence or boolean for indirect, got {type(indirect).__name__}",
-            pytrace=False,
-        )
-    return arg_directness
 
 
 def _get_direct_parametrize_args(node: nodes.Node) -> set[str]:
@@ -1996,8 +2006,14 @@ class FixtureManager:
 
         return fixturenames_closure, arg2fixturedefs
 
-    def pytest_generate_tests(self, metafunc: Metafunc) -> None:
+    def pytest_generate_tests(self, metafunc: ParametrizeContext) -> None:
         """Generate new tests based on parametrized fixtures used by the given metafunc"""
+        from _pytest.python import Metafunc
+
+        if not isinstance(metafunc, Metafunc):
+            # The definition's parametrization is not backed by fixtures, so
+            # there are no parametrized fixtures to expand.
+            return
 
         def get_parametrize_mark_argnames(mark: Mark) -> Sequence[str]:
             args, _ = ParameterSet._parse_parametrize_args(*mark.args, **mark.kwargs)
