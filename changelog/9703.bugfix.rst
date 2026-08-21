@@ -1,0 +1,1 @@
+Fixed ``rootdir`` determination when an explicit configuration file is used with test paths outside the configuration directory.
