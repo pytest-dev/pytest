@@ -696,3 +696,20 @@ def _wrap_bytes_repr(object: Any, width: int, allowance: int) -> Iterator[str]:
             current = candidate
     if current:
         yield repr(current)
+
+
+def pformat(
+    object: Any,
+    indent: int = 4,
+    width: int = 80,
+    depth: int | None = None,
+) -> str:
+    """Return the pretty-printed representation of ``object`` as a string.
+
+    A convenience entry point to :class:`PrettyPrinter` mirroring the
+    stdlib ``pprint.pformat`` signature (minus the ``compact``/
+    ``sort_dicts``/``underscore_numbers`` options). Unlike the stdlib,
+    formatting is lazy and containers are always expanded, so the output
+    has a uniform layout on every supported Python version.
+    """
+    return PrettyPrinter(indent=indent, width=width, depth=depth).pformat(object)

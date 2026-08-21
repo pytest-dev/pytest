@@ -16,6 +16,7 @@ from typing import Any
 
 from _pytest._io.pprint import _safe_tuple
 from _pytest._io.pprint import _wrap_bytes_repr
+from _pytest._io.pprint import pformat
 from _pytest._io.pprint import PrettyPrinter
 import pytest
 
@@ -517,6 +518,22 @@ class DataclassWithTwoItems:
 )
 def test_consistent_pretty_printer(data: Any, expected: str) -> None:
     assert PrettyPrinter().pformat(data) == textwrap.dedent(expected).strip()
+
+
+def test_pformat_helper_matches_pretty_printer_defaults() -> None:
+    data = {"a": 1, "b": [1, 2, 3]}
+    assert pformat(data) == PrettyPrinter().pformat(data)
+
+
+def test_pformat_helper_respects_indent() -> None:
+    data = {"a": 1}
+    assert pformat(data, indent=2) == PrettyPrinter(indent=2).pformat(data)
+    assert pformat(data, indent=1) == PrettyPrinter(indent=1).pformat(data)
+
+
+def test_pformat_helper_respects_depth() -> None:
+    data = {"a": {"b": {"c": 1}}}
+    assert pformat(data, depth=1) == PrettyPrinter(depth=1).pformat(data)
 
 
 class TestPformatLines:
