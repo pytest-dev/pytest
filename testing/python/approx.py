@@ -933,6 +933,20 @@ class TestApprox:
         ):
             approx(x)
 
+    def test_nested_mapping_error_uses_expanded_format(self) -> None:
+        with pytest.raises(TypeError) as excinfo:
+            approx({"outer": {"inner": 1}})
+
+        assert str(excinfo.value) == (
+            "pytest.approx() does not support nested dictionaries: "
+            "key='outer' value={'inner': 1}\n"
+            "  full mapping={\n"
+            "    'outer': {\n"
+            "        'inner': 1,\n"
+            "    },\n"
+            "}"
+        )
+
     @pytest.mark.parametrize(
         "x",
         [
