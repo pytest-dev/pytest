@@ -1,0 +1,1 @@
+Fixed ANSI escape sequences from colored assertion diffs leaking into JUnit XML reports when running with verbosity and Pygments installed.

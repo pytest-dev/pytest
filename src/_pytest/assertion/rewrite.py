@@ -41,6 +41,8 @@ from _pytest._io.saferepr import saferepr
 from _pytest._io.saferepr import saferepr_unlimited
 from _pytest._version import version
 from _pytest.assertion import util
+from _pytest.assertion.highlight import DEFERRED_HL_ATTR
+from _pytest.assertion.highlight import strip_deferred_highlight
 from _pytest.config import Config
 from _pytest.fixtures import FixtureFunctionDefinition
 from _pytest.main import Session
@@ -493,7 +495,20 @@ def _call_reprcompare(
 
 def _call_assertion_pass(lineno: int, orig: str, expl: str) -> None:
     if util._assertion_pass is not None:
-        util._assertion_pass(lineno, orig, expl)
+        util._assertion_pass(lineno, orig, strip_deferred_highlight(expl))
+
+
+def _assertion_error(msg: str) -> AssertionError:
+    """Build an AssertionError whose public message has no highlight markers.
+
+    The marked-up explanation is kept on the exception so traceback formatting
+    can still apply Pygments when writing to a color terminal.
+    """
+    plain = strip_deferred_highlight(msg)
+    err = AssertionError(plain)
+    if msg != plain:
+        setattr(err, DEFERRED_HL_ATTR, msg)
+    return err
 
 
 def _check_if_assertion_pass_impl() -> bool:
@@ -883,9 +898,8 @@ class AssertionRewriter(ast.NodeVisitor):
                 gluestr = "assert "
             err_explanation = ast.BinOp(ast.Constant(gluestr), ast.Add(), msg)
             err_msg = ast.BinOp(assertmsg, ast.Add(), err_explanation)
-            err_name = ast.Name("AssertionError", ast.Load())
             fmt = self.helper("_format_explanation", err_msg)
-            exc = ast.Call(err_name, [fmt], [])
+            exc = self.helper("_assertion_error", fmt)
             raise_ = ast.Raise(exc, None)
             statements_fail = []
             statements_fail.extend(self.expl_stmts)
@@ -933,8 +947,7 @@ class AssertionRewriter(ast.NodeVisitor):
             template = ast.BinOp(assertmsg, ast.Add(), ast.Constant(explanation))
             msg = self.pop_format_context(template)
             fmt = self.helper("_format_explanation", msg)
-            err_name = ast.Name("AssertionError", ast.Load())
-            exc = ast.Call(err_name, [fmt], [])
+            exc = self.helper("_assertion_error", fmt)
             raise_ = ast.Raise(exc, None)
 
             body.append(raise_)

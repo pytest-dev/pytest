@@ -24,6 +24,7 @@ from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
 from _pytest.assertion.compare_text import _compare_eq_text
 from _pytest.assertion.compare_text import _notin_text
+from _pytest.assertion.highlight import strip_deferred_highlight
 from _pytest.config import Config as _Config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pytester import Pytester
@@ -463,7 +464,12 @@ def callop(
         verbose=verbose,
         assertion_text_diff_style=assertion_text_diff_style,
     )
-    return plugin.pytest_assertrepr_compare(config, op, left, right)
+    result = plugin.pytest_assertrepr_compare(config, op, left, right)
+    if result is None:
+        return None
+    # Explanations are stored with deferred-highlight markers; tests assert
+    # the visible text.
+    return [strip_deferred_highlight(line) for line in result]
 
 
 def callequal(
@@ -2147,8 +2153,8 @@ class TestAssertReprCompareDispatcher:
         assert any("truncated" in line for line in result)
 
     def test_no_terminalreporter_uses_plaintext_highlighter(self) -> None:
-        """Without the terminalreporter plugin the dispatcher uses the
-        plaintext highlighter and never touches a terminal writer (#14377)."""
+        """Explanations are built with deferred markers and never touch a
+        terminal writer, even when terminalreporter is absent (#14377)."""
         config = mock_config(has_terminalreporter=False)
         result = plugin.pytest_assertrepr_compare(config, "==", {1, 2}, {1, 3})
         assert result is not None
@@ -2868,6 +2874,21 @@ def test_comparisons_handle_colors(
     )
 
     result.stdout.fnmatch_lines(formatter(expected_lines), consecutive=False)
+
+
+def test_raises_match_ignores_highlight_markers(pytester: Pytester) -> None:
+    """pytest.raises matches the plain assertion message, not highlight markers (#12365)."""
+    pytester.makepyfile(
+        """
+        import pytest
+
+        def test_match():
+            with pytest.raises(AssertionError, match=r"At index 0 diff: 1 != 3"):
+                assert [1, 2, 3] == [3, 2, 1]
+        """
+    )
+    result = pytester.runpytest("--color=yes", "-vv")
+    result.assert_outcomes(passed=1)
 
 
 def test_fine_grained_assertion_verbosity(pytester: Pytester):

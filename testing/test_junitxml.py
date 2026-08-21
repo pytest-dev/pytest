@@ -1779,6 +1779,45 @@ def test_escaped_setup_teardown_error(
     assert "#x1B[31mred#x1B[m" in snode.text
 
 
+def test_verbose_assertion_diff_does_not_leak_ansi(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    """Pygments colors in verbose assertion diffs must not appear in JUnit XML (#12365)."""
+    pytester.makepyfile(
+        """
+        def test_foo():
+            assert [1, 2, 3] == [3, 2, 1]
+        """
+    )
+    _, dom = run_and_parse("--color=yes", "-vv")
+    failure = dom.get_first_by_tag("testcase").get_first_by_tag("failure")
+    for part in (failure.text, failure["message"]):
+        assert "\x1b" not in part
+        assert "#x1B" not in part
+    assert "At index 0 diff: 1 != 3" in failure.text
+    assert "+     1," in failure.text
+
+
+def test_user_ansi_in_compared_strings_is_preserved(
+    pytester: Pytester, run_and_parse: RunAndParse
+) -> None:
+    """Escape sequences that belong to the values under test stay visible in XML (#12365)."""
+    pytester.makepyfile(
+        r"""
+        def test_color():
+            assert "\x1b[31mred\x1b[0m" == "\x1b[32mgreen\x1b[0m"
+        """
+    )
+    _, dom = run_and_parse("--color=yes", "-vv")
+    failure = dom.get_first_by_tag("testcase").get_first_by_tag("failure")
+    # Pytest's own Pygments reset sequence must not be baked in.
+    assert "#x1B[39;49;00m" not in failure.text
+    assert "\x1b" not in failure.text
+    # The compared strings still show the user's color codes (repr or raw).
+    assert "\\x1b[31m" in failure.text or "#x1B[31m" in failure.text
+    assert "\\x1b[32m" in failure.text or "#x1B[32m" in failure.text
+
+
 @parametrize_families
 def test_logging_passing_tests_disabled_does_not_log_test_output(
     pytester: Pytester, run_and_parse: RunAndParse, xunit_family: _JunitFamily

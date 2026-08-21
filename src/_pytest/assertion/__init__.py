@@ -15,6 +15,7 @@ from _pytest.assertion import util
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
+from _pytest.assertion.highlight import deferred_highlighter
 from _pytest.assertion.rewrite import assertstate_key
 from _pytest.config import Config
 from _pytest.config import hookimpl
@@ -225,11 +226,11 @@ def pytest_sessionfinish(session: Session) -> None:
 def pytest_assertrepr_compare(
     config: Config, op: str, left: Any, right: Any
 ) -> list[str] | None:
-    if config.pluginmanager.has_plugin("terminalreporter"):
-        highlighter = config.get_terminal_writer()._highlight
-    else:
-        # Keep it plaintext when not using terminalrepoterer (#14377).
-        highlighter = util.dummy_highlighter
+    # Mark highlight spans instead of applying Pygments now. Terminal output
+    # resolves the markers later; JUnit XML and ``str(exc)`` stay plain (#12365).
+    # Never touch the terminal writer here so this works without terminalreporter
+    # (#14377).
+    highlighter = deferred_highlighter
     # When truncation is going to clip the explanation downstream, cap the
     # comparison helpers' formatting at what the truncator will actually pull
     # (the raw limits plus the footer slack) so no effort is spent formatting

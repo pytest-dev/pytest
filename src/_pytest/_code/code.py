@@ -1029,6 +1029,16 @@ class ExceptionInfoFormatter:
         indentstr = " " * indent
         # Get the real exception information out.
         exlines = excinfo.exconly(tryshort=True).split("\n")
+        # Swap in the marked-up explanation (same text, with highlight spans)
+        # so terminal output can still apply Pygments later.
+        from _pytest.assertion.highlight import DEFERRED_HL_ATTR
+
+        tagged = getattr(excinfo.value, DEFERRED_HL_ATTR, None)
+        if isinstance(tagged, str):
+            plain = str(excinfo.value)
+            text = "\n".join(exlines)
+            if plain and plain in text:
+                exlines = text.replace(plain, tagged, 1).split("\n")
         failindent = self.fail_marker + indentstr[1:]
         for line in exlines:
             lines.append(failindent + line)
@@ -1437,7 +1447,10 @@ class ReprEntry(TerminalRepr):
             # Using tw.write instead of tw.line for testing purposes due to TWMock implementation;
             # lines written with TWMock.line and TWMock._write_source cannot be distinguished
             # from each other, whereas lines written with TWMock.write are marked with TWMock.WRITE
-            for line in self.lines:
+            from _pytest.assertion.highlight import resolve_highlight_for_writer
+
+            resolved = resolve_highlight_for_writer("\n".join(self.lines), tw)
+            for line in resolved.splitlines():
                 tw.write(line)
                 tw.write("\n")
             return
@@ -1463,8 +1476,12 @@ class ReprEntry(TerminalRepr):
         tw._write_source(source_lines, indents)
 
         # failure lines are always completely red and bold
-        for line in failure_lines:
-            tw.line(line, bold=True, red=True)
+        from _pytest.assertion.highlight import resolve_highlight_for_writer
+
+        if failure_lines:
+            resolved = resolve_highlight_for_writer("\n".join(failure_lines), tw)
+            for line in resolved.splitlines():
+                tw.line(line, bold=True, red=True)
 
     def toterminal(self, tw: TerminalWriter) -> None:
         if self.style == "short":
@@ -1489,8 +1506,12 @@ class ReprEntry(TerminalRepr):
             self.reprfileloc.toterminal(tw)
 
     def __str__(self) -> str:
+        from _pytest.assertion.highlight import strip_deferred_highlight
+
         return "{}\n{}\n{}".format(
-            "\n".join(self.lines), self.reprlocals, self.reprfileloc
+            "\n".join(strip_deferred_highlight(line) for line in self.lines),
+            self.reprlocals,
+            self.reprfileloc,
         )
 
 

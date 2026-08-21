@@ -10,6 +10,7 @@ from collections.abc import Iterable
 
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
 from _pytest.assertion._typing import TruncationBudget
+from _pytest.assertion.highlight import strip_deferred_highlight
 from _pytest.compat import running_on_ci
 from _pytest.config import Config
 
@@ -46,7 +47,7 @@ def materialize_with_truncation(lines: Iterable[str], config: Config) -> list[st
     char_count = 0
     for line in lines:
         buffered.append(line)
-        char_count += len(line)
+        char_count += _visible_len(line)
         if line_cap is not None and len(buffered) >= line_cap:
             break
         if budget.max_chars > 0 and char_count > tolerable_max_chars:
@@ -117,7 +118,7 @@ def _truncate_explanation(
     ):
         if (
             budget.max_chars == 0
-            or sum(len(s) for s in input_lines) <= tolerable_max_chars
+            or sum(_visible_len(s) for s in input_lines) <= tolerable_max_chars
         ):
             return input_lines
         truncated_explanation = input_lines
@@ -127,7 +128,7 @@ def _truncate_explanation(
     # We reevaluate the need to truncate chars following removal of some lines
     if (
         budget.max_chars > 0
-        and sum(len(e) for e in truncated_explanation) > tolerable_max_chars
+        and sum(_visible_len(e) for e in truncated_explanation) > tolerable_max_chars
     ):
         truncated_explanation = _truncate_by_char_count(
             truncated_explanation, budget.max_chars
@@ -141,19 +142,26 @@ def _truncate_explanation(
     ]
 
 
+def _visible_len(line: str) -> int:
+    """Character length of a line as the user will see it (no highlight markers)."""
+    return len(strip_deferred_highlight(line))
+
+
 def _truncate_by_char_count(input_lines: list[str], max_chars: int) -> list[str]:
     # Find point at which input length exceeds total allowed length
     iterated_char_count = 0
     for iterated_index, input_line in enumerate(input_lines):
-        if iterated_char_count + len(input_line) > max_chars:
+        if iterated_char_count + _visible_len(input_line) > max_chars:
             break
-        iterated_char_count += len(input_line)
+        iterated_char_count += _visible_len(input_line)
 
     # Create truncated explanation with modified final line
     truncated_result = input_lines[:iterated_index]
     final_line = input_lines[iterated_index]
     if final_line:
         final_line_truncate_point = max_chars - iterated_char_count
-        final_line = final_line[:final_line_truncate_point]
+        # Slice the visible text so markers cannot shift the cut point.
+        visible = strip_deferred_highlight(final_line)
+        final_line = visible[:final_line_truncate_point]
     truncated_result.append(final_line)
     return truncated_result
