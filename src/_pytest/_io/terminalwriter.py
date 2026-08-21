@@ -88,6 +88,18 @@ class TerminalWriter:
         self._current_line = ""
         self._terminal_width: int | None = None
         self.code_highlight = True
+        # OSC 8 hyperlinks: only meaningful when the terminal can render
+        # escape sequences. `create_terminal_writer` refines this from the
+        # `--hyperlinks` option; default False keeps output bare.
+        self.hyperlinks = False
+
+    @property
+    def isatty(self) -> bool:
+        """True iff the underlying file is a tty. Unlike :attr:`hasmarkup`,
+        ``--color=yes`` does not force this True, so OSC 8 auto-mode can detect
+        non-tty sinks (e.g. the pastebin plugin's StringIO)."""
+        file = self._file
+        return bool(getattr(file, "isatty", None)) and file.isatty()
 
     @property
     def fullwidth(self) -> int:
