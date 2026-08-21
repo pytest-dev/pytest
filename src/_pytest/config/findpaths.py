@@ -456,7 +456,23 @@ def determine_setup(
             inicfg = {}
         if rootdir_cmd_arg is None:
             if inipath_.is_file():
-                rootdir = inipath_.parent
+                # The config file's directory takes part in determining the
+                # rootdir, but must not decide it on its own: a config kept in
+                # a subdirectory -- or in a sibling of the directory pytest was
+                # invoked from -- would otherwise drag the rootdir along with
+                # it, breaking conftest discovery and node ids (#13246, #9703).
+                # Without test paths to anchor against, the invocation
+                # directory plays their part.
+                candidates = (
+                    [inipath_.parent, *dirs]
+                    if dirs
+                    else [inipath_.parent, invocation_dir]
+                )
+                rootdir = get_common_ancestor(invocation_dir, candidates)
+                if is_fs_root(rootdir):
+                    # Config file and test paths live in unrelated trees; keep
+                    # the config file's directory rather than the whole disk.
+                    rootdir = inipath_.parent
             else:
                 # Such a path also says nothing about where the project lives,
                 # so the rootdir must not be derived from it -- otherwise
