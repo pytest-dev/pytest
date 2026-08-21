@@ -1,0 +1,1 @@
+Fixed ``--log-cli-level`` increasing test progress verbosity.
