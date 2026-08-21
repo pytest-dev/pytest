@@ -71,6 +71,18 @@ PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 # Special marker that denotes we have just left a scope definition
 _SCOPE_END_MARKER = Sentinel()
 
+# Top level packages that never contain test code, so they can be excluded from
+# rewriting without looking at the file system at all.
+#
+# Besides being a small speedup, this is what keeps ``find_spec()`` from calling
+# itself: with PEP 810 lazy imports enabled (``PYTHON_LAZY_IMPORTS=all``, Python
+# 3.15+) a plain attribute access can resolve an import, and resolving an import
+# runs the meta path finders - this one included. The names ``find_spec()``
+# needs in order to answer at all (``_pytest.pathlib.fnmatch_ex``, and
+# ``fnmatch`` in turn) are exactly the ones it would then be asked about,
+# which used to end in unbounded recursion resp. an ``ImportCycleError`` (#14632).
+_NEVER_REWRITTEN_ROOTS = frozenset({"pytest", "_pytest"}) | sys.stdlib_module_names
+
 
 class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """PEP302/PEP451 import hook which rewrites asserts."""
@@ -194,6 +206,13 @@ class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader)
         tries to filter what we're sure won't be rewritten before getting to
         it.
         """
+        # Answered without touching anything else, so that this stays usable
+        # while the imports the checks below rely on are still being resolved
+        # (see _NEVER_REWRITTEN_ROOTS).  Explicit `register_assert_rewrite()`
+        # still wins, so a local module shadowing a stdlib name keeps working.
+        if name.partition(".")[0] in _NEVER_REWRITTEN_ROOTS:
+            return not self._is_marked_for_rewrite(name, state)
+
         if self.session is not None and not self._session_paths_checked:
             self._session_paths_checked = True
             for initial_path in self.session._initialpaths:
