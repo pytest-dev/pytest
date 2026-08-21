@@ -78,3 +78,12 @@ def check_scope_typing() -> None:
 @pytest.mark.parametrize("x", [ImportError, AttributeError])
 def check_mypy_bug_with_argvalues(x) -> None:
     pass
+
+
+# Issue #14853.
+def check_fixture_factory(value: str) -> pytest.FixtureFunctionDefinition:
+    @pytest.fixture
+    def generated_fixture() -> str:
+        return value
+
+    return generated_fixture
