@@ -1,0 +1,1 @@
+Added new CLI argument ``--name-only`` to only display the name of the test when it fails, suppressing tracebacks and other detailed information.
