@@ -27,6 +27,7 @@ from _pytest._code.code import ExceptionInfo
 from _pytest._code.code import TerminalRepr
 from _pytest.config.argparsing import Parser
 from _pytest.deprecated import check_ispytest
+from _pytest.fixture_cache import FixtureCache
 from _pytest.nodes import Collector
 from _pytest.nodes import Directory
 from _pytest.nodes import Item
@@ -511,6 +512,7 @@ class SetupState:
                 tuple[OutcomeException | Exception, types.TracebackType | None] | None,
             ],
         ] = {}
+        self.fixture_cache = FixtureCache()
 
     def is_node_active(self, node: Node) -> bool:
         """Check if a node is currently active in the stack -- set up and not
