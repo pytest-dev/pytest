@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 from _pytest._io.saferepr import saferepr
+from _pytest.assertion._diff import ndiff_too_slow_for_text
+from _pytest.assertion._diff import truncated_ndiff
 from _pytest.assertion._typing import _AssertionTextDiffStyle
 from _pytest.assertion._typing import _HighlightFunc
 from _pytest.assertion._typing import NO_TRUNCATION_BUDGET
@@ -86,6 +88,11 @@ def _diff_text(
         left = repr(str(left))
         right = repr(str(right))
         yield "Strings contain only whitespace, escaping them using repr()"
+    if ndiff_too_slow_for_text(left, right):
+        yield from truncated_ndiff(
+            left.splitlines(keepends), right.splitlines(keepends), highlighter
+        )
+        return
     left_lines = _cap_ndiff_input(left, keepends, truncation_budget)
     right_lines = _cap_ndiff_input(right, keepends, truncation_budget)
     # "right" is the expected base against which we compare "left",
