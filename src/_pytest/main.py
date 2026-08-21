@@ -54,6 +54,11 @@ if TYPE_CHECKING:
     from _pytest.fixtures import FixtureManager
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def pytest_addoption(parser: Parser) -> None:
     group = parser.getgroup("general")
     group._addoption(  # private to use reserved lower-case short option

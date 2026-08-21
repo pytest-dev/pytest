@@ -361,13 +361,14 @@ def get_config(
     plugins: Sequence[str | _PluggyPlugin] | None = None,
     *,
     prog: str | None = None,
+    dir: pathlib.Path | None = None,
 ) -> Config:
     # Subsequent calls to main will create a fresh instance.
     pluginmanager = PytestPluginManager()
     invocation_params = Config.InvocationParams(
         args=args or (),
         plugins=plugins,
-        dir=pathlib.Path.cwd(),
+        dir=dir if dir is not None else pathlib.Path.cwd(),
     )
     config = Config(pluginmanager, invocation_params=invocation_params, prog=prog)
 
@@ -1116,9 +1117,16 @@ class Config:
         INCOVATION_DIR = INVOCATION_DIR  # backwards compatibility alias
         #: 'testpaths' configuration value.
         TESTPATHS = enum.auto()
+        #: Programmatic specification; args are taken verbatim, without
+        #: filesystem-based fallbacks (experimental).
+        SPEC = enum.auto()
 
     # Set by cacheprovider plugin.
     cache: Cache
+
+    # The parsed command line namespace, including only options known at
+    # the time of parsing. Set during parse().
+    known_args_namespace: argparse.Namespace
 
     def __init__(
         self,
@@ -1291,10 +1299,18 @@ class Config:
                 self._cleanup_stack = contextlib.ExitStack()
 
     def get_terminal_writer(self) -> TerminalWriter:
+        """The writer the terminal plugin reports through.
+
+        Without that plugin - as in a programmatically constructed config -
+        a plain writer over the current stdout is returned instead, so that
+        code needing to render something does not have to care whether
+        anything is reporting.
+        """
         terminalreporter: TerminalReporter | None = self.pluginmanager.get_plugin(
             "terminalreporter"
         )
-        assert terminalreporter is not None
+        if terminalreporter is None:
+            return create_terminal_writer(self)
         return terminalreporter._tw
 
     def pytest_cmdline_parse(
@@ -1581,34 +1597,28 @@ class Config:
         known_keys = self._parser._inidict.keys() | self._parser._ini_aliases.keys()
         return self._inicfg.keys() - known_keys
 
-    def parse(self, args: list[str], addopts: bool = True) -> None:
-        # Parse given cmdline arguments into this config object.
-        assert self.args == [], (
-            "can only parse cmdline args at most once per Config object"
-        )
+    def _preparse_addopts(self, args: list[str]) -> None:
+        """Prepend options from the PYTEST_ADDOPTS environment variable (in place)."""
+        env_addopts = os.environ.get("PYTEST_ADDOPTS", "")
+        if len(env_addopts):
+            args[:] = (
+                self._validate_args(shlex.split(env_addopts), "via PYTEST_ADDOPTS")
+                + args
+            )
 
-        self.hook.pytest_addhooks.call_historic(
-            kwargs=dict(pluginmanager=self.pluginmanager)
-        )
+    def _apply_rootdir(
+        self,
+        *,
+        rootpath: pathlib.Path,
+        inipath: pathlib.Path | None,
+        inicfg: ConfigDict,
+        ignored_config_files: Sequence[str],
+    ) -> None:
+        """Apply an already-determined rootdir/inifile setup to this config.
 
-        if addopts:
-            env_addopts = os.environ.get("PYTEST_ADDOPTS", "")
-            if len(env_addopts):
-                args[:] = (
-                    self._validate_args(shlex.split(env_addopts), "via PYTEST_ADDOPTS")
-                    + args
-                )
-
-        # At this point, self.option contains only defaults from the _processopt
-        # callback.
-        ns = self._parser.parse_known_args(args, namespace=copy.copy(self.option))
-        rootpath, inipath, inicfg, ignored_config_files = determine_setup(
-            inifile=ns.inifilename,
-            override_ini=ns.override_ini,
-            args=ns.file_or_dir,
-            rootdir_cmd_arg=ns.rootdir or None,
-            invocation_dir=self.invocation_params.dir,
-        )
+        Normally fed by :func:`determine_setup`, but usable with explicitly
+        constructed values as well (experimental).
+        """
         self._rootpath = rootpath
         self._inipath = inipath
         self._ignored_config_files = ignored_config_files
@@ -1616,6 +1626,8 @@ class Config:
         self._parser.extra_info["rootdir"] = str(self.rootpath)
         self._parser.extra_info["inifile"] = str(self.inipath)
 
+    def _register_core_ini_options(self) -> None:
+        """Register the ini options which parse() itself consumes."""
         self._parser.addini("addopts", "Extra command line options", "args")
         self._parser.addini("minversion", "Minimally required pytest version")
         self._parser.addini(
@@ -1628,20 +1640,8 @@ class Config:
             default=[],
         )
 
-        if addopts:
-            args[:] = (
-                self._validate_args(self.getini("addopts"), "via addopts config") + args
-            )
-
-        self.known_args_namespace = self._parser.parse_known_args(
-            args, namespace=copy.copy(self.option)
-        )
-        if addopts:
-            # addopts may have added overrides (especially via OverrideIniAction).
-            # The thing can be endlessly circular but we only do one level (#14442).
-            if overrides := parse_override_ini(self.known_args_namespace.override_ini):
-                self._inicfg.update(overrides)
-                self._inicache.clear()
+    def _load_plugins_phase(self, args: list[str]) -> None:
+        """Load plugins from args, entry points and environment; reparse known args."""
         self._checkversion()
         self._consider_importhook()
         self._configure_python_path()
@@ -1681,6 +1681,8 @@ class Config:
         self._validate_plugins()
         self._warn_about_skipped_plugins()
 
+    def _load_initial_conftests_phase(self, args: list[str]) -> None:
+        """Default confcutdir and fire the pytest_load_initial_conftests hook."""
         if self.known_args_namespace.confcutdir is None:
             if self.inipath is not None:
                 confcutdir = str(self.inipath.parent)
@@ -1702,19 +1704,83 @@ class Config:
             else:
                 raise
 
+    def _finalize_parse(self, args: list[str], *, decide_args: bool = True) -> None:
+        """Fully parse args into self.option and decide the initial args.
+
+        With ``decide_args=False`` (experimental), the positional args are
+        taken verbatim without the testpaths/invocation-dir fallbacks and
+        ``args_source`` is set to :attr:`ArgsSource.SPEC`.
+        """
+        if not hasattr(self, "known_args_namespace"):
+            self.known_args_namespace = self._parser.parse_known_args(
+                args, namespace=copy.copy(self.option)
+            )
         try:
             self._parser.parse(args, namespace=self.option)
         except PrintHelp:
             return
 
-        self.args, self.args_source = self._decide_args(
-            args=getattr(self.option, FILE_OR_DIR),
-            pyargs=self.option.pyargs,
-            testpaths=self.getini("testpaths"),
-            invocation_dir=self.invocation_params.dir,
-            rootpath=self.rootpath,
-            warn=True,
+        if decide_args:
+            self.args, self.args_source = self._decide_args(
+                args=getattr(self.option, FILE_OR_DIR),
+                pyargs=self.option.pyargs,
+                testpaths=self.getini("testpaths"),
+                invocation_dir=self.invocation_params.dir,
+                rootpath=self.rootpath,
+                warn=True,
+            )
+        else:
+            self.args = list(getattr(self.option, FILE_OR_DIR))
+            self.args_source = Config.ArgsSource.SPEC
+
+    def parse(self, args: list[str], addopts: bool = True) -> None:
+        # Parse given cmdline arguments into this config object.
+        assert self.args == [], (
+            "can only parse cmdline args at most once per Config object"
         )
+
+        self.hook.pytest_addhooks.call_historic(
+            kwargs=dict(pluginmanager=self.pluginmanager)
+        )
+
+        if addopts:
+            self._preparse_addopts(args)
+
+        # At this point, self.option contains only defaults from the _processopt
+        # callback.
+        ns = self._parser.parse_known_args(args, namespace=copy.copy(self.option))
+        rootpath, inipath, inicfg, ignored_config_files = determine_setup(
+            inifile=ns.inifilename,
+            override_ini=ns.override_ini,
+            args=ns.file_or_dir,
+            rootdir_cmd_arg=ns.rootdir or None,
+            invocation_dir=self.invocation_params.dir,
+        )
+        self._apply_rootdir(
+            rootpath=rootpath,
+            inipath=inipath,
+            inicfg=inicfg,
+            ignored_config_files=ignored_config_files,
+        )
+        self._register_core_ini_options()
+
+        if addopts:
+            args[:] = (
+                self._validate_args(self.getini("addopts"), "via addopts config") + args
+            )
+
+        self.known_args_namespace = self._parser.parse_known_args(
+            args, namespace=copy.copy(self.option)
+        )
+        if addopts:
+            # addopts may have added overrides (especially via OverrideIniAction).
+            # The thing can be endlessly circular but we only do one level (#14442).
+            if overrides := parse_override_ini(self.known_args_namespace.override_ini):
+                self._inicfg.update(overrides)
+                self._inicache.clear()
+        self._load_plugins_phase(args)
+        self._load_initial_conftests_phase(args)
+        self._finalize_parse(args)
 
     def issue_config_time_warning(self, warning: Warning, stacklevel: int) -> None:
         """Issue and handle a warning during the "configure" stage.
@@ -2234,17 +2300,23 @@ def create_terminal_writer(
 
     Every code which requires a TerminalWriter object and has access to a
     config object should use this function.
+
+    The presentation options are read defensively: they are registered by the
+    terminal plugin, which a programmatically constructed config need not
+    load, and a writer is still useful without them.
     """
     tw = TerminalWriter(file=file)
 
-    if config.option.color == "yes":
+    color = getattr(config.option, "color", None)
+    if color == "yes":
         tw.hasmarkup = True
-    elif config.option.color == "no":
+    elif color == "no":
         tw.hasmarkup = False
 
-    if config.option.code_highlight == "yes":
+    code_highlight = getattr(config.option, "code_highlight", None)
+    if code_highlight == "yes":
         tw.code_highlight = True
-    elif config.option.code_highlight == "no":
+    elif code_highlight == "no":
         tw.code_highlight = False
 
     return tw

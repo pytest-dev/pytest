@@ -1220,6 +1220,18 @@ class TestTraceOption:
         TestPDB.flush(child)
 
 
+def test_trace_ignores_non_function_items(pytester: Pytester) -> None:
+    """--trace only wraps python function items; others run untouched."""
+    pytester.maketxtfile(
+        test_doc="""
+        >>> 1 + 1
+        2
+        """
+    )
+    result = pytester.runpytest("--trace", "--doctest-glob=*.txt")
+    result.assert_outcomes(passed=1)
+
+
 def test_trace_after_runpytest(pytester: Pytester) -> None:
     """Test that debugging's pytest_configure is reentrant."""
     p1 = pytester.makepyfile(

@@ -19,6 +19,11 @@ from _pytest.terminal import TerminalReporter
 import pytest
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 class HelpAction(argparse.Action):
     """An argparse Action that will raise a PrintHelp exception in order to skip
     the rest of the argument parsing when --help is passed.

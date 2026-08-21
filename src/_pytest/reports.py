@@ -46,6 +46,11 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
 
 
+#: This plugin defines no fixtures, so the fixture manager need not read
+#: every attribute it has looking for them.
+__pytest_no_fixtures__ = True
+
+
 def getworkerinfoline(node):
     try:
         return node._workerinfocache
