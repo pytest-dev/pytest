@@ -1,0 +1,3 @@
+Fixed ``--pyargs`` not finding modules in the current directory when running pytest from a subdirectory, particularly when using tox.
+
+The invocation directory is now added to ``sys.path`` early during initialization when ``--pyargs`` is used, ensuring that ``importlib.util.find_spec()`` can locate modules in the current working directory.
