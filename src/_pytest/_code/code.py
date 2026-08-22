@@ -496,8 +496,8 @@ E = TypeVar("E", bound=BaseException, covariant=True)
 
 def _syntax_error_location(exc: BaseException) -> tuple[str, int, int] | None:
     """Return (filename, lineno, offset) for a SyntaxError with location info, else None."""
-    if isinstance(exc, SyntaxError) and exc.offset is not None:
-        return (exc.filename or "", exc.lineno or 0, exc.offset)
+    if isinstance(exc, SyntaxError) and exc.offset is not None and exc.filename:
+        return (exc.filename, exc.lineno or 0, exc.offset)
     return None
 
 

@@ -361,6 +361,20 @@ class TestTraceback_f_g_h:
         assert reprcrash.column is None
         assert reprcrash.message == "SyntaxError: no location"
 
+    def test_getreprcrash_syntax_error_without_filename(self):
+        def f():
+            raise SyntaxError("bad syntax", (None, 1, 5, "def foo(:", 1, 6))
+
+        with pytest.raises(SyntaxError) as excinfo:
+            f()
+        reprcrash = excinfo._getreprcrash()
+        assert reprcrash is not None
+        co = _pytest._code.Code.from_function(f)
+        assert reprcrash.path == str(co.path)
+        assert reprcrash.lineno == co.firstlineno + 1 + 1
+        assert reprcrash.column is None
+        assert reprcrash.message.endswith("SyntaxError: bad syntax")
+
 
 def test_excinfo_exconly():
     with pytest.raises(ValueError) as excinfo:
