@@ -146,12 +146,8 @@ lint.ignore = [
     # flake8-blind-except ignore
     "BLE001", # Do not catch blind exception
     # flake8-comprehensions ignore
-    "C400", # Unnecessary generator (rewrite using `list()`)
     "C408", # Unnecessary `dict()`/`list()`/`tuple()` call (rewrite as a literal)
     "C409", # Unnecessary list literal passed to `tuple()` (rewrite as a tuple literal)
-    "C410", # Unnecessary list literal passed to `list()` (remove the outer call to `list()`)
-    "C414", # Unnecessary double cast or process
-    "C417", # Unnecessary `map()` usage (rewrite using a comprehension)
     # pydocstyle ignore
     "D100", # Missing docstring in public module
     "D101", # Missing docstring in public class
@@ -185,8 +181,6 @@ lint.ignore = [
     "LOG015", # Call on root logger
     # pep8-naming ignore
     "N999", # Invalid module name
-    # perflint ignore
-    "PERF102", # When using only the keys or values of a dict use the `keys()`/`values()` method
     # pygrep-hooks ignore
     "PGH005", # Mock method should be called
     # pylint ignore
@@ -228,10 +222,8 @@ lint.ignore = [
     "SIM114", # Combine `if` branches using logical `or` operator
     "SIM115", # Use a context manager for opening files
     "SIM117", # Use a single `with` statement with multiple contexts instead of nested `with` statements
-    "SIM118", # Use `key in dict` instead of `key in dict.keys()`
     "SIM201", # Use `!=` instead of `not ... == ...`
     "SIM202", # Use `==` instead of `not ... != ...`
-    "SIM210", # Remove unnecessary `True if ... else False`
     "SIM211", # Use `not ...` instead of `False if ... else True`
     "SIM222", # Use the simplified expression instead of `... or True`
     "SIM223", # Use the simplified expression instead of `... and False`

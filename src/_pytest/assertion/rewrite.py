@@ -499,7 +499,7 @@ def _call_assertion_pass(lineno: int, orig: str, expl: str) -> None:
 def _check_if_assertion_pass_impl() -> bool:
     """Check if any plugins implement the pytest_assertion_pass hook
     in order not to generate explanation unnecessarily (might be expensive)."""
-    return True if util._assertion_pass else False
+    return bool(util._assertion_pass)
 
 
 UNARY_MAP = {ast.Not: "not %s", ast.Invert: "~%s", ast.USub: "-%s", ast.UAdd: "+%s"}
@@ -817,7 +817,7 @@ class AssertionRewriter(ast.NodeVisitor):
         current = self.stack.pop()
         if self.stack:
             self.explanation_specifiers = self.stack[-1]
-        keys: list[ast.expr | None] = [ast.Constant(key) for key in current.keys()]
+        keys: list[ast.expr | None] = [ast.Constant(key) for key in current]
         format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))

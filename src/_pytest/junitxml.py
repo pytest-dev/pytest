@@ -67,7 +67,7 @@ def bin_xml_escape(arg: object) -> str:
 def merge_family(left, right) -> None:
     result = {}
     for kl, vl in left.items():
-        for kr, vr in right.items():
+        for vr in right.values():
             if not isinstance(vl, list):
                 raise TypeError(type(vl))
             result[kl] = vl + vr

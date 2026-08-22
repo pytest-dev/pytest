@@ -973,7 +973,7 @@ class FixtureLookupError(LookupError):
         tblines: list[str] = []
         addline = tblines.append
         stack = [self.request._pyfuncitem.obj]
-        stack.extend(map(lambda x: x.func, self.fixturestack))
+        stack.extend(x.func for x in self.fixturestack)
         msg = self.msg
         if msg is not None and len(stack) > 1:
             # The last fixture raise an error, let's present
@@ -1349,7 +1349,7 @@ def resolve_fixture_function(
     # as expected.
     instance = request.instance
 
-    if fixturedef._scope is Scope.Class:
+    if fixturedef._scope >= Scope.Class:
         # Check if fixture is an instance method (bound to instance, not class)
         if hasattr(fixturefunc, "__self__"):
             bound_to = fixturefunc.__self__
@@ -1358,7 +1358,8 @@ def resolve_fixture_function(
             if not isinstance(bound_to, type):
                 warnings.warn(
                     CLASS_FIXTURE_INSTANCE_METHOD.format(
-                        fixturename=request.fixturename
+                        scope=fixturedef._scope.name.capitalize(),
+                        fixturename=request.fixturename,
                     ),
                     stacklevel=2,
                 )
