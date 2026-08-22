@@ -683,8 +683,7 @@ class ExceptionInfo(Generic[E]):
         text = "".join(lines)
         text = text.rstrip()
         if tryshort:
-            if text.startswith(self._striptext):
-                text = text[len(self._striptext) :]
+            text = text.removeprefix(self._striptext)
         return text
 
     def errisinstance(self, exc: EXCEPTION_OR_MORE) -> bool:
