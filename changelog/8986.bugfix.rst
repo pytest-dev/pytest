@@ -1,0 +1,2 @@
+Warn when a plugin raises :class:`SystemExit` from the
+:hook:`pytest_cmdline_main` hook.

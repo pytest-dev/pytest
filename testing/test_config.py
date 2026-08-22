@@ -32,6 +32,7 @@ from _pytest.config.findpaths import locate_config
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.pathlib import absolutepath
 from _pytest.pytester import Pytester
+from _pytest.warning_types import PytestConfigWarning
 from _pytest.warning_types import PytestDeprecationWarning
 import pytest
 
@@ -852,6 +853,20 @@ class TestConfigCmdlineParsing:
 
 
 class TestConfigAPI:
+    @pytest.mark.parametrize("code", [0, 42])
+    def test_cmdline_main_system_exit(self, code: int) -> None:
+        class Plugin:
+            def pytest_cmdline_main(self, config: Config) -> None:
+                raise SystemExit(code)
+
+        with pytest.warns(
+            PytestConfigWarning,
+            match="plugin raised SystemExit from the pytest_cmdline_main hook",
+        ), pytest.raises(SystemExit) as exc_info:
+            pytest.main([], plugins=[Plugin()])
+
+        assert exc_info.value.code == code
+
     def test_config_trace(self, pytester: Pytester) -> None:
         config = pytester.parseconfig()
         values: list[str] = []

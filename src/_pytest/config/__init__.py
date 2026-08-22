@@ -234,7 +234,15 @@ def _main(
             return ExitCode.USAGE_ERROR
 
         try:
-            ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+            try:
+                ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+            except SystemExit:
+                warnings.warn(
+                    PytestConfigWarning(
+                        "A plugin raised SystemExit from the pytest_cmdline_main hook"
+                    )
+                )
+                raise
             try:
                 return ExitCode(ret)
             except ValueError:
