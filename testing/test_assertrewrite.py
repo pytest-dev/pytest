@@ -9,6 +9,7 @@ import errno
 from functools import partial
 import glob
 import importlib
+from importlib.util import source_hash
 import inspect
 import marshal
 import os
@@ -1324,13 +1325,14 @@ class TestAssertionRewriteHookDetails:
         config = pytester.parseconfig()
         state = AssertionState(config, "rewrite")
         tmp_path.joinpath("source.py").touch()
-        source_path = str(tmp_path)
+        source_bytes = tmp_path.joinpath("source.py").read_bytes()
         pycpath = tmp_path.joinpath("pyc")
         co = compile("1", "f.py", "single")
-        assert _write_pyc(state, co, os.stat(source_path), pycpath)
+        hash = source_hash(source_bytes)
+        assert _write_pyc(state, co, hash, pycpath)
 
         with mock.patch.object(os, "replace", side_effect=OSError):
-            assert not _write_pyc(state, co, os.stat(source_path), pycpath)
+            assert not _write_pyc(state, co, hash, pycpath)
 
     def test_resources_provider_for_loader(self, pytester: Pytester) -> None:
         """
@@ -1403,8 +1405,37 @@ class TestAssertionRewriteHookDetails:
 
         fn.write_text("def test(): assert True", encoding="utf-8")
 
-        source_stat, co = _rewrite_test(fn, config)
-        _write_pyc(state, co, source_stat, pyc)
+        hash, co = _rewrite_test(fn, config)
+        _write_pyc(state, co, hash, pyc)
+        assert _read_pyc(fn, pyc, state.trace) is not None
+
+        pyc_bytes = pyc.read_bytes()
+        assert pyc_bytes[4] == 3  # checked-hash flag set
+        assert pyc_bytes[8:16] == hash[:8]
+
+    def test_read_pyc_ignores_mtime(self, tmp_path: Path, pytester: Pytester) -> None:
+        """A pyc stays valid when only the mtime of the source changes.
+
+        This is what makes the cache survive a fresh checkout or a restored
+        CI cache, where every source file gets a new mtime.
+        """
+        from _pytest.assertion import AssertionState
+        from _pytest.assertion.rewrite import _read_pyc
+        from _pytest.assertion.rewrite import _rewrite_test
+        from _pytest.assertion.rewrite import _write_pyc
+
+        config = pytester.parseconfig()
+        state = AssertionState(config, "rewrite")
+
+        fn = tmp_path / "source.py"
+        pyc = Path(str(fn) + "c")
+        fn.write_text("def test(): assert True", encoding="utf-8")
+
+        hash, co = _rewrite_test(fn, config)
+        _write_pyc(state, co, hash, pyc)
+
+        new_mtime = os.stat(fn).st_mtime + 3600
+        os.utime(fn, (new_mtime, new_mtime))
         assert _read_pyc(fn, pyc, state.trace) is not None
 
     def test_read_pyc_more_invalid(self, tmp_path: Path) -> None:
@@ -1417,40 +1448,71 @@ class TestAssertionRewriteHookDetails:
         source.write_bytes(source_bytes)
 
         magic = importlib.util.MAGIC_NUMBER
-
-        flags = b"\x00\x00\x00\x00"
-
-        mtime = b"\x58\x3c\xb0\x5f"
-        mtime_int = int.from_bytes(mtime, "little")
-        os.utime(source, (mtime_int, mtime_int))
-
-        size = len(source_bytes).to_bytes(4, "little")
-
+        flags = b"\x03\x00\x00\x00"
+        hash = source_hash(source_bytes)[:8]
         code = marshal.dumps(compile(source_bytes, str(source), "exec"))
 
         # Good header.
-        pyc.write_bytes(magic + flags + mtime + size + code)
+        pyc.write_bytes(magic + flags + hash + code)
         assert _read_pyc(source, pyc, print) is not None
 
         # Too short.
-        pyc.write_bytes(magic + flags + mtime)
+        pyc.write_bytes(magic + flags + hash[:4])
         assert _read_pyc(source, pyc, print) is None
 
         # Bad magic.
-        pyc.write_bytes(b"\x12\x34\x56\x78" + flags + mtime + size + code)
+        pyc.write_bytes(b"\x12\x34\x56\x78" + flags + hash + code)
         assert _read_pyc(source, pyc, print) is None
 
-        # Unsupported flags.
-        pyc.write_bytes(magic + b"\x00\xff\x00\x00" + mtime + size + code)
+        # Unsupported flags -- including the timestamp based pycs written by
+        # pytest<9.3 and by CPython itself.
+        for bad_flags in (
+            b"\x00\x00\x00\x00",
+            b"\x01\x00\x00\x00",
+            b"\x00\xff\x00\x00",
+        ):
+            pyc.write_bytes(magic + bad_flags + hash + code)
+            assert _read_pyc(source, pyc, print) is None
+
+        # Bad hash.
+        pyc.write_bytes(magic + flags + b"\x00" * 8 + code)
         assert _read_pyc(source, pyc, print) is None
 
-        # Bad mtime.
-        pyc.write_bytes(magic + flags + b"\x58\x3d\xb0\x5f" + size + code)
+        # Missing source.
+        pyc.write_bytes(magic + flags + hash + code)
+        source.unlink()
         assert _read_pyc(source, pyc, print) is None
 
-        # Bad size.
-        pyc.write_bytes(magic + flags + mtime + b"\x99\x00\x00\x00" + code)
-        assert _read_pyc(source, pyc, print) is None
+    def test_rewrite_picks_up_edit_within_one_mtime_second(
+        self, pytester: Pytester
+    ) -> None:
+        """Regression test for #13292.
+
+        The pyc header can only hold a whole-second timestamp, so a file
+        edited twice within the same second used to be served from a stale
+        pyc. Hashing the source instead sidesteps the resolution problem.
+        """
+        source = pytester.path / "test_edited.py"
+        pyc_dir = source.parent / "__pycache__"
+
+        # both revisions are the same size, so only the content differs
+        before = "def test_aaa(): assert True\n"
+        after = "def test_bbb(): assert None\n"
+        assert len(before) == len(after)
+
+        source.write_text(before, encoding="utf-8")
+        assert pytester.runpytest_subprocess("-q").ret == 0
+        (pyc,) = pyc_dir.glob("test_edited.*.pyc")
+        mtime = os.stat(source).st_mtime
+
+        source.write_text(after, encoding="utf-8")
+        # pin the mtime so the edit is indistinguishable by timestamp
+        os.utime(source, (mtime, mtime))
+        assert pyc.exists()  # the pyc written by the first run is still there
+
+        result = pytester.runpytest_subprocess("-q")
+        result.stdout.fnmatch_lines(["*test_bbb*"])
+        assert result.ret != 0
 
     def test_reload_is_same_and_reloads(self, pytester: Pytester) -> None:
         """Reloading a (collected) module after change picks up the change."""
